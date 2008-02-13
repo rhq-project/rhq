@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.inventory.resource;
 
-import javax.faces.model.DataModel;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -31,7 +30,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * The JSF managed bean for the Groups Containing this Resource section of the Resource Inventory page
- * (/jon/resource/inventory/view.xhtml).
+ * (/rhq/resource/inventory/view.xhtml).
  *
  * @author Ian Springer
  */

@@ -20,11 +20,7 @@ package org.rhq.enterprise.gui.legacy.taglib;
 
 import java.io.IOException;
 import java.util.List;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.TagSupport;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -44,7 +40,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public class InventoryHierarchyTag extends TagSupport {
-    private static final String BASE_RESOURCE_URL = "/jon/resource/inventory/view.xhtml";
+    private static final String BASE_RESOURCE_URL = "/rhq/resource/inventory/view.xhtml";
 
     //private static final String BASE_GROUP_URL = "/Resource.do?type=GROUP";
     private static final String BASE_GROUP_URL = "/resource/group/monitor/Visibility.do?mode=currentHealth";

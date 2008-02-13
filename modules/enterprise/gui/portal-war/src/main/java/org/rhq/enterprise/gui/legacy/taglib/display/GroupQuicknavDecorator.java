@@ -20,7 +20,7 @@ package org.rhq.enterprise.gui.legacy.taglib.display;
 
 import java.util.HashMap;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
+
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -35,11 +35,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class GroupQuicknavDecorator extends QuicknavDecorator {
     private static final String MONITOR_URL = "/resource/group/monitor/Visibility.do?mode=currentHealth";
-    private static final String INVENTORY_URL = "/jon/group/inventory/view.xhtml";
-    private static final String CONFIGURE_URL = "/jon/group/configuration/current.xhtml";
-    private static final String OPERATIONS_URL = "/jon/group/operation/groupOperationScheduleNew.xhtml";
-    private static final String ALERT_URL = "/jon/group/alert/listAlertDefinitions.xhtml";
-    private static final String CONTENT_URL = "/jon/group/content/view.xhtml?mode=view";
+    private static final String INVENTORY_URL = "/rhq/group/inventory/view.xhtml";
+    private static final String CONFIGURE_URL = "/rhq/group/configuration/current.xhtml";
+    private static final String OPERATIONS_URL = "/rhq/group/operation/groupOperationScheduleNew.xhtml";
+    private static final String ALERT_URL = "/rhq/group/alert/listAlertDefinitions.xhtml";
+    private static final String CONTENT_URL = "/rhq/group/content/view.xhtml?mode=view";
 
     private ResourceGroupComposite resourceGroupComposite;
 

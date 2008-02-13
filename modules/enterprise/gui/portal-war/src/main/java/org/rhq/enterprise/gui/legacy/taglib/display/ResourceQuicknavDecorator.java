@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.legacy.taglib.display;
 
-import javax.servlet.http.HttpServletRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
@@ -31,11 +30,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ResourceQuicknavDecorator extends QuicknavDecorator {
     private static final String MONITOR_URL = "/resource/common/monitor/Visibility.do?mode=currentHealth";
-    private static final String INVENTORY_URL = "/jon/resource/inventory/view.xhtml";
-    private static final String CONFIGURE_URL = "/jon/resource/configuration/view.xhtml";
-    private static final String OPERATIONS_URL = "/jon/resource/operation/resourceOperationScheduleNew.xhtml";
-    private static final String ALERT_URL = "/jon/resource/alert/listAlertDefinitions.xhtml";
-    private static final String CONTENT_URL = "/jon/resource/content/view.xhtml?mode=view";
+    private static final String INVENTORY_URL = "/rhq/resource/inventory/view.xhtml";
+    private static final String CONFIGURE_URL = "/rhq/resource/configuration/view.xhtml";
+    private static final String OPERATIONS_URL = "/rhq/resource/operation/resourceOperationScheduleNew.xhtml";
+    private static final String ALERT_URL = "/rhq/resource/alert/listAlertDefinitions.xhtml";
+    private static final String CONTENT_URL = "/rhq/resource/content/view.xhtml?mode=view";
 
     private ResourceComposite resourceComposite;
 

@@ -20,10 +20,7 @@ package org.rhq.enterprise.gui.inventory.resource;
 
 import java.io.IOException;
 import java.util.List;
-import javax.faces.component.UIComponent;
-import javax.faces.context.FacesContext;
-import javax.faces.context.ResponseWriter;
-import javax.faces.render.Renderer;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -34,7 +31,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public class ResourceLineageRenderer extends Renderer {
-    private static final String BASE_RESOURCE_URL = "/jon/resource/inventory/view.xhtml";
+    private static final String BASE_RESOURCE_URL = "/rhq/resource/inventory/view.xhtml";
     private static final String SEPARATOR = " > ";
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();

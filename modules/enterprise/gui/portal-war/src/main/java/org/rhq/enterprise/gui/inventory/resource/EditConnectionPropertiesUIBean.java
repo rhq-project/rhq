@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.inventory.resource;
 
-import javax.faces.application.FacesMessage;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
@@ -30,7 +29,7 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * A JSF managed bean that backs the /jon/resource/inventory/edit-connection.xhtml page.
+ * A JSF managed bean that backs the /rhq/resource/inventory/edit-connection.xhtml page.
  *
  * @author Ian Springer
  */

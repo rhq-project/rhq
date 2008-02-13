@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.inventory.resource;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
@@ -28,7 +26,7 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * A JSF managed bean that backs the Connection Properties section of the /jon/resource/inventory/view.xhtml page.
+ * A JSF managed bean that backs the Connection Properties section of the /rhq/resource/inventory/view.xhtml page.
  *
  * @author Ian Springer
  */

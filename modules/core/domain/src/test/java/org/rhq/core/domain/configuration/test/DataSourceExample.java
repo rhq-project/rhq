@@ -18,7 +18,6 @@
  */
 package org.rhq.core.domain.configuration.test;
 
-import org.testng.annotations.Test;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -43,7 +42,7 @@ public class DataSourceExample {
         configuration.put(new PropertySimple("jndi-name", "DefaultDS"));
 
         configuration.put(new PropertySimple("connection-url",
-            "jdbc:postgresql://localhost:9432/jon14?protocolVersion=2"));
+            "jdbc:postgresql://localhost:9432/rhq14?protocolVersion=2"));
         configuration.put(new PropertySimple("use-java-context", Boolean.TRUE));
         configuration.put(new PropertySimple("min-pool-size", 2));
         configuration.put(new PropertySimple("max-pool-size", null));

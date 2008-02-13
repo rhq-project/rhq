@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.inventory.resource;
 
-import javax.faces.application.FacesMessage;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -26,7 +25,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * The JSF managed bean for the Edit General Properties page (/jon/resource/inventory/edit-general.xhtml), which is
+ * The JSF managed bean for the Edit General Properties page (/rhq/resource/inventory/edit-general.xhtml), which is
  * linked off the General Properties section of the main Inventory page.
  *
  * @author Ian Springer

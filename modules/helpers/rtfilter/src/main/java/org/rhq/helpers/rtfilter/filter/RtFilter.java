@@ -234,14 +234,14 @@ public class RtFilter implements Filter {
             /*
              * Default to "${jboss.server.home.dir}/log/rt"; this is the same location that the JON jbossas plugin
              * defaults to. If, for some reason, the jboss.server.home.dir sysprop is not set, fall back to
-             * "${java.io.tmpdir}/jon/rt".
+             * "${java.io.tmpdir}/rhq/rt".
              */
             String jbossServerHomeDirPath = System.getProperty(JBOSS_SERVER_HOME_DIR_SYSPROP);
             if (jbossServerHomeDirPath != null) {
                 File jbossServerLogDir = new File(jbossServerHomeDirPath, "log");
                 this.logDirectory = new File(jbossServerLogDir, "rt");
             } else {
-                this.logDirectory = new File(System.getProperty(JAVA_IO_TMPDIR_SYSPROP), "jon/rt");
+                this.logDirectory = new File(System.getProperty(JAVA_IO_TMPDIR_SYSPROP), "rhq/rt");
                 log.warn(JBOSS_SERVER_HOME_DIR_SYSPROP + " system property is not set - defaulting log directory to '"
                     + this.logDirectory + "'...");
             }

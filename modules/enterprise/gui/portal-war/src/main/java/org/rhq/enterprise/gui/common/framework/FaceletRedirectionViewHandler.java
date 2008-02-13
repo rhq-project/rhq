@@ -18,10 +18,6 @@
  */
 package org.rhq.enterprise.gui.common.framework;
 
-import javax.el.ValueExpression;
-import javax.faces.application.ViewHandler;
-import javax.faces.context.FacesContext;
-import com.sun.facelets.FaceletViewHandler;
 import org.rhq.core.gui.util.FacesExpressionUtility;
 
 /**
@@ -35,7 +31,7 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
     @Override
     public String getActionURL(FacesContext facesContext, String viewId) {
         // Evaluate any EL variables that are contained in the view id.
-        // (e.g. "/jon/resource/artifact/view.xhtml?id=#{param.id}")
+        // (e.g. "/rhq/resource/artifact/view.xhtml?id=#{param.id}")
         ValueExpression valueExpression = FacesExpressionUtility.createValueExpression(viewId, String.class);
         String actionURL = FacesExpressionUtility.getValue(valueExpression, String.class);
         return actionURL;

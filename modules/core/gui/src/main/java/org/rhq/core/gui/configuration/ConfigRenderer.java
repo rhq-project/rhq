@@ -22,19 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import javax.faces.application.FacesMessage;
-import javax.faces.component.NamingContainer;
-import javax.faces.component.UIComponent;
-import javax.faces.component.UIInput;
-import javax.faces.component.UIParameter;
-import javax.faces.component.UISelectItem;
-import javax.faces.component.html.HtmlPanelGroup;
-import javax.faces.component.html.HtmlSelectOneRadio;
-import javax.faces.context.FacesContext;
-import javax.faces.render.Renderer;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.richfaces.component.html.HtmlSimpleTogglePanel;
+
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -47,6 +35,8 @@ import org.rhq.core.gui.RequestParameterNameConstants;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
+
+import sun.rmi.runtime.Log;
 
 /**
  * A renderer that renders a {@link ConfigUIComponent} component as XHTML.
@@ -62,7 +52,7 @@ public class ConfigRenderer extends Renderer {
     protected static final String GROUP_DESCRIPTION_PANEL_STYLE_CLASS = "group-description-panel";
     protected static final String GROUP_DESCRIPTION_TEXT_PANEL_STYLE_CLASS = "group-description-text-panel";
 
-    private static final String JAVASCRIPT_INCLUDES = "\n<script type='text/javascript' src='/js/jon.js'></script>\n\n";
+    private static final String JAVASCRIPT_INCLUDES = "\n<script type='text/javascript' src='/js/rhq.js'></script>\n\n";
 
     private final Log LOG = LogFactory.getLog(ConfigRenderer.class);
 

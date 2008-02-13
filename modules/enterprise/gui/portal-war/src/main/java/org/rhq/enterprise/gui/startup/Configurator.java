@@ -23,16 +23,14 @@ import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.logging.LogManager;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.server.util.LookupUtil;
+
+import sun.rmi.runtime.Log;
 
 /**
  * This is a servlet context listener defined in web.xml that loads several files and puts data in the servlet context:
@@ -51,7 +49,7 @@ public final class Configurator implements ServletContextListener {
     private static final String SERVER_INTERNALS_FILE = "/WEB-INF/rhq-server-internals.properties";
     private static final String DEFAULT_USER_PREFERENCES_FILE = "/WEB-INF/DefaultUserPreferences.properties";
     private static final String TAGLIB_PROPERTIES_FILE = "/WEB-INF/taglib.properties";
-    private static final String LOGGING_PROPERTIES_RESOURCE = "/jon-logging.properties";
+    private static final String LOGGING_PROPERTIES_RESOURCE = "logging.properties";
 
     // If any name in the server internals properties file starts with this, it defines a system property.
     // Therefore, the name/value will not go into the servlet context, but will be a system property.

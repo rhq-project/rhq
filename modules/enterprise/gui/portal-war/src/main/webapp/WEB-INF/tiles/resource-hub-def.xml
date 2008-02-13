@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!-- -*- Mode: XML; indent-tabs-mode: nil; -*- -->
+<!DOCTYPE tiles-definitions PUBLIC
+     "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN"
+     "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+
+<tiles-definitions>
+
+  <definition name=".group.hub"
+              path="/resource/hub/GroupHub.jsp">
+        <put name="linkDestination" value="/GroupHub.do"/>
+        <put name="nameSort" value="true"/>
+        <put name="typeSort" value=""/>
+  </definition>
+
+  <definition name=".resource.hub"
+              path="/resource/hub/ResourceHub.jsp">
+        <put name="linkDestination" value="/ResourceHub.do"/>
+        <put name="nameSort" value="true"/>
+        <put name="typeSort" value=""/>
+  </definition>
+
+  <definition name=".navigation.hub"
+              path="/resource/hub/ResourceHub.jsp">
+        <put name="linkDestination" value="/NavigationHub.do"/>
+        <put name="nameSort" value=""/>
+        <put name="typeSort" value="true"/>
+  </definition>
+
+  <!-- deals with the floating links in the upper right (new group, etc) -->
+  <definition name=".page.title.resource.hub"
+              extends=".page.title">
+    <put name="titleBgStyle" value="PageTitleGroupBg"/>
+    <put name="titleImg" value="spacer.gif"/>
+    <put name="linkUrl" value="/resource/hub/ResourceHubLinks.jsp"/>
+    <put name="showSearch" value="true"/>
+  </definition>
+  
+  <definition name=".header.tab.resource.hub"
+              extends=".header.tab">
+    <put name="tabKey" value="resource.hub.ListResourcesTab"/>
+  </definition>
+
+  <definition name=".resource.hub.minichart"
+              path="/resource/hub/MiniChart.jsp"
+              controllerUrl="/resource/hub/MiniChart.do"/>
+
+</tiles-definitions>

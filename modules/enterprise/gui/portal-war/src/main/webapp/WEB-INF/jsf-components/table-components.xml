@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <component>
+      <component-type>org.jboss.on.Select</component-type>
+      <component-class>org.rhq.enterprise.gui.common.table.Select</component-class>
+      <component-extension>
+         <component-family>org.jboss.on.Select</component-family>
+         <renderer-type>org.jboss.on.Select</renderer-type>
+      </component-extension>
+   </component>
+
+   <component>
+      <component-type>org.jboss.on.AllSelect</component-type>
+      <component-class>org.rhq.enterprise.gui.common.table.AllSelect</component-class>
+      <component-extension>
+         <component-family>org.jboss.on.AllSelect</component-family>
+         <renderer-type>org.jboss.on.AllSelect</renderer-type>
+      </component-extension>
+   </component>
+
+   <component>
+      <component-type>org.jboss.on.SelectCommandButton</component-type>
+      <component-class>org.rhq.enterprise.gui.common.table.SelectCommandButton</component-class>
+      <component-extension>
+         <component-family>org.jboss.on.SelectCommandButton</component-family>
+         <renderer-type>org.jboss.on.SelectCommandButton</renderer-type>
+      </component-extension>
+   </component>
+   
+   <render-kit>
+
+      <renderer>
+         <description>renders either a set of radio buttons or checkboxs for the Select component</description>
+         <component-family>org.jboss.on.Select</component-family>
+         <renderer-type>org.jboss.on.Select</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.common.table.SelectRenderer</renderer-class>
+      </renderer>
+
+      <renderer>
+         <description>registered against a Select component, will select all or none of them</description>
+         <component-family>org.jboss.on.AllSelect</component-family>
+         <renderer-type>org.jboss.on.AllSelect</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.common.table.AllSelectRenderer</renderer-class>
+      </renderer>
+
+      <renderer>
+         <description>registered against a Select component, will enable/disable itself upon state of current selections</description>
+         <component-family>org.jboss.on.SelectCommandButton</component-family>
+         <renderer-type>org.jboss.on.SelectCommandButton</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.common.table.SelectCommandButtonRenderer</renderer-class>
+      </renderer>
+
+   </render-kit>
+
+</faces-config>

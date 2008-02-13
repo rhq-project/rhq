@@ -1,0 +1,158 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/group/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="List Connection Property Update History for Resource Group '#{ResourceGroupUIBean.name}'"/>
+   <ui:param name="selectedTabName" value="Inventory"/>
+   <ui:define name="content">
+   
+      <h:form id="updateHistoryForm">
+         <input type="hidden" name="groupId" value="${param.groupId}"/>
+         <input type="hidden" name="category" value="${param.category}"/>
+         
+         <h:outputLink value="/rhq/group/inventory/view.xhtml">
+            <f:param name="groupId" value="#{param.groupId}" />
+            <f:param name="category" value="#{param.category}" />
+            <h:outputText value="&lt; Return to Inventory"/>
+         </h:outputLink>
+         
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Plugin Configuration Update History"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="90%" style="min-width: 800px;">
+
+            <ui:param name="groupConnectionPropertyHistoryDataModel" value="#{ViewGroupConnectionPropertyHistoryUIBean.dataModel}"/>
+            <rich:dataTable binding="#{ViewGroupConnectionPropertyHistoryUIBean.dataTable}"
+                            id="groupConnectionPropertyHistoryDataTable"
+                            rows="#{PageControl.GroupConnectionPropertyUpdateHistory.pageSize}"
+                            value="#{groupConnectionPropertyHistoryDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 20%, 20%, 20%, 30%, 9%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="GroupConnectionPropertyUpdateHistory" />
+               </f:facet>
+      
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedUpdates" />
+                  </f:facet>
+                  
+                  <onc:select name="selectedUpdates" value="#{item.id}" />
+               </rich:column>
+      
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="apcu.id">
+                        <h:outputText styleClass="headerText" value="ID" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputText value="#{item.id}"/>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="apcu.status">
+                        <h:outputText styleClass="headerText" value="Status" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                 
+                  <h:outputText value="#{item.status}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                      <h:outputText styleClass="headerText" value="Details" />
+                  </f:facet>
+                 
+                  <h:outputText value="#{item.errorMessage}"/>
+               </rich:column>
+ 
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="apcu.createdTime">
+                        <h:outputText styleClass="headerText" value="Date Created" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputLink value="/rhq/group/inventory/view-plugin-configuration-update-details.xhtml">
+                     <f:param name="groupId" value="#{param.groupId}" />
+                     <f:param name="category" value="#{param.category}" />
+                     <f:param name="apcuId" value="#{item.id}" />
+                     <h:outputText value="#{item.createdTime}">
+                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                     </h:outputText>
+                  </h:outputLink>
+               </rich:column>
+ 
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="apcu.modifiedTime">
+                        <h:outputText styleClass="headerText" value="Last Updated" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.modifiedTime}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="apcu.subjectName">
+                        <h:outputText styleClass="headerText" value="Subject" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{item.subjectName}" />
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="7">
+                        <onc:selectCommandButton action="#{ViewGroupConnectionPropertyHistoryUIBean.deleteSelected}"
+                                                 value="Delete Selected" target="selectedUpdates" styleClass="on-pager-button buttonsmall"/>
+
+                        <ui:param name="paginationDataTableName" value="groupConnectionPropertyHistoryDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{groupConnectionPropertyHistoryDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.GroupConnectionPropertyUpdateHistory}"/>
+                        <ui:include src="/rhq/resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+ 
+            </h:panelGrid>
+
+         </rich:panel>
+         
+         <h:outputLink value="/rhq/group/inventory/view.xhtml">
+            <f:param name="groupId" value="#{param.groupId}" />
+            <f:param name="category" value="#{param.category}" />
+            <h:outputText value="&lt; Return to Inventory"/>
+         </h:outputLink>
+         
+      </h:form>
+
+   </ui:define>
+</ui:composition>
+
+</html>

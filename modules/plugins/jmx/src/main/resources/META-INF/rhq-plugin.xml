@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="JMX"
+        displayName="Generic JMX"
+        package="org.rhq.plugins.jmx"
+        description="Supports management of JMX MBean Servers via various remoting systems."
+        version="2.0"
+        ampsVersion="2.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+   <server name="JMX Server" discovery="JMXDiscoveryComponent" class="JMXServerComponent"
+           description="Generic JMX Server">
+
+      <!-- Properties are connection/lookup configurations. They are values that the
+         plugin components need to connect and interact with the resource. -->
+      <plugin-configuration>
+         <c:simple-property name="type" type="string" description="The EMS connection type for this JMX Server">
+            <c:property-options>
+               <c:option value="LocalVMTypeDescriptor" name="Local" default="true"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.JBossConnectionTypeDescriptor" name="JBoss"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.Tomcat55ConnectionTypeDescriptor" name="Tomcat"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.JDMKConnectionTypeDescriptor" name="JDMK"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor" name="Java SE 5"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.JSR160ConnectionTypeDescriptor" name="JSR 160"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.GeronimoConnectionTypeDescriptor" name="Geronimo"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.Mx4jConnectionTypeDescriptor" name="Mx4j"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.Oc4jConnectionTypeDescriptor" name="Oc4j"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.PramatiConnectionTypeDescriptor" name="Pramati"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.SJSASConnectionTypeDescriptor" name="SJSAS"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.WeblogicConnectionTypeDescriptor" name="Weblogic"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.Weblogic9ConnectionTypeDescriptor" name="Weblogic 9"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.Weblogic9Jsr77ConnectionTypeDescriptor" name="Weblogic 9 JSR 77"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.WebsphereConnectionTypeDescriptor" name="WebSphere"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.WebsphereStudioConnectionTypeDescriptor" name="WebSphere Studio"/>
+            </c:property-options>
+         </c:simple-property>
+
+         <c:simple-property name="url" required="false" type="string" description="The connection url in the form of a JMXServiceURL"/>
+         <c:simple-property name="principal" required="false" description="The login principal/username"/>
+         <c:simple-property name="credentials" required="false" description="The login credentials/password"/>
+
+
+         <c:template name="Weblogic 9" description="Connect to the standard WebLogic 9 MBean Server">
+            <c:simple-property name="type" default="org.mc4j.ems.connection.support.metadata.Weblogic9ConnectionTypeDescriptor"/>
+            <c:simple-property name="url" default="http://127.0.0.1:7080"/>
+            <c:simple-property name="principal" default="weblogic"/>
+            <c:simple-property name="credentials" default="weblogic"/>
+         </c:template>
+
+         <c:template name="WebSphere" description="Connect to WebSphere 6+">
+            <c:simple-property name="type" default="org.mc4j.ems.connection.support.metadata.WebsphereConnectionTypeDescriptor"/>
+            <c:simple-property name="url" default="http://127.0.0.1:8083"/>
+            <c:simple-property name="principal" default="admin"/>
+         </c:template>
+
+      </plugin-configuration>
+
+
+      <!-- Constituted services -->
+      <!--<service name="Virtual Machine" type="virtual">
+         <metric property="Operating System" displayName="Free Memory"/>
+      </service>-->
+
+      <!-- JVM level services (One service per mbean) -->
+      <service name="Operating System" discovery="MBeanResourceDiscoveryComponent" class="MBeanResourceComponent"
+               createDeletePolicy="neither" singleton="true">
+         <plugin-configuration>
+            <c:simple-property name="objectName" default="java.lang:type=OperatingSystem"/>
+            <c:simple-property name="nameTemplate" default="Operating system information"/>
+            <c:simple-property name="descriptionTemplate" default="Operating system information provided by the JVM."/>
+
+         </plugin-configuration>
+         <!--<components>
+            <component type="measurement" class="JMXMeasurementComponent"/>
+            <component type="control" class="JMXControlComponent"/>
+         </components>-->
+
+         <metric displayName="Free Physical Memory"
+                 defaultOn="true"
+                 displayType="summary"
+                 category="performance"
+                 property="FreePhysicalMemorySize"
+                 description="The amount of free physical memory for the OS"
+                 units="bytes"/>
+         <metric displayName="Free Swap Memory"
+                 displayType="summary"
+                 category="performance"
+                 property="FreeSwapSpaceSize"
+                 description="The amount of free swap space for the OS"
+                 units="bytes"/>
+         <metric displayName="Process CPU Time"
+                 displayType="summary"
+                 category="performance"
+                 property="ProcessCpuTime"
+                 description="The cpu time used by this process"
+                 units="nanoseconds"/>
+         <metric displayName="Committed Virtual Memory"
+                 defaultOn="true"
+                 category="utilization"
+                 property="CommittedVirtualMemorySize"
+                 description="Size of virtual memory used by this process"
+                 units="bytes"/>
+
+
+
+      </service>
+
+
+      <service name="Threading" discovery="MBeanResourceDiscoveryComponent" class="ThreadDataMeasurementComponent"
+               description="Information on threading in the VM"
+               createDeletePolicy="neither" singleton="true">
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true" default="java.lang:type=Threading"/>
+            <c:simple-property name="nameTemplate" default="Threading"/>
+         </plugin-configuration>
+
+         <operation
+            displayName="Reset Peak Thread Metrics"
+            name="resetPeakThreadCount"
+            description="Reset the peak number of threads"/>
+
+         <operation name="findMonitorDeadlockedThreads" description="Finds cycles of threads that are in deadlock waiting to acquire object monitors"/>
+
+         <operation name="threadDump">
+            <results>
+               <c:simple-property name="totalCount"/>
+               <c:list-property name="threadList">
+                  <c:map-property name="thread">
+                     <c:simple-property name="name" summary="true"/>
+                     <c:simple-property name="id" summary="true"/>
+                     <c:simple-property name="state" summary="true"/>
+                     <c:simple-property name="stack" type="longString"/>
+                  </c:map-property>
+               </c:list-property>
+            </results>
+         </operation>
+
+         <metric displayName="Thread Count"
+                 defaultOn="true"
+                 displayType="summary"
+                 category="performance"
+                 property="ThreadCount"
+                 description="Active threads in the system"/>
+         <metric displayName="Peak Thread Count"
+                 defaultOn="true"
+                 category="performance"
+                 property="PeakThreadCount"
+                 description="Peak count of active threads in the system"/>
+         <metric displayName="Total Started Thread Count"
+                 defaultOn="true"
+                 category="performance"
+                 property="TotalStartedThreadCount"
+                 description="Count of threads started since system start"/>
+         <metric displayName="Daemon Thread Count"
+                 defaultOn="true"
+                 category="performance"
+                 property="DaemonThreadCount"
+                 description="Count of threads marked as daemons in the system"/>
+
+         <!-- complex data not yet supported
+         <metric displayName="Thread Data"
+                 dataType="complex"
+                 defaultOn="false"
+                 category="performance"
+                 property="ThreadData"
+                 description="Detailed thread information"/>-->
+                 <!--class="ThreadDataMeasurementComponent"-->
+
+         <resource-configuration>
+            <c:simple-property name="ThreadContentionMonitoringEnabled" type="boolean"/>
+            <c:simple-property name="ThreadCpuTimeEnabled" type="boolean"/>
+         </resource-configuration>
+
+      </service>
+
+      <service name="VM Memory System" discovery="MBeanResourceDiscoveryComponent" class="MBeanResourceComponent"
+         description="The memory system of the Java virtual machine including both the heap and non-heap memory."
+         createDeletePolicy="neither" singleton="true">
+
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true" default="java.lang:type=Memory"/>
+            <c:simple-property name="nameTemplate" default="Memory Subsystem"/>
+         </plugin-configuration>
+
+         <operation name="gc" displayName="Run Garbage Collection" description="Runs the garbage collector."/>
+
+         <metric displayName="Heap Usage" property="{HeapMemoryUsage.used}" displayType="summary" description="Current heap memory usage" units="bytes"/>
+         <metric displayName="Non-Heap Usage" property="{NonHeapMemoryUsage.used}" displayType="summary" description="Current memory usage outside the heap" units="bytes"/>
+         <metric displayName="Objects Pending Finalization" property="ObjectPendingFinalizationCount" description="The approximate number of objects for which finalization is pending."/>
+
+         <service name="Memory Pool" discovery="MBeanResourceDiscoveryComponent" class="MBeanResourceComponent"
+            description="A memory pool represents the memory resource managed by the Java virtual machine and is managed by one or more memory managers.">
+
+            <plugin-configuration>
+               <c:simple-property name="objectName" readOnly="true" default="java.lang:type=MemoryPool,name=%name%"/>
+               <c:simple-property name="nameTemplate" default="{name} Memory Pool"/>
+               <c:simple-property name="descriptionTemplate" default="The {name} memory pool for this VM."/>
+               <c:simple-property name="name" type="string" description="The memory pool's name"/>
+            </plugin-configuration>
+
+            <metric displayName="Used" property="{Usage.used}" displayType="summary" description="Current memory usage" units="bytes"/>
+            <metric displayName="Committed" property="{Usage.committed}" displayType="summary" description="Current memory allocated" units="bytes"/>
+
+            <metric property="MemoryManagerNames" displayType="summary" dataType="trait" description="Garbage collectors for this space"/>
+            <metric property="Type" displayType="summary" dataType="trait" description="Pool location"/>
+
+         </service>
+
+         <service name="Garbage Collector" discovery="MBeanResourceDiscoveryComponent" class="MBeanResourceComponent"
+            description="A garbage collector that collects one or more memory pool.">
+
+            <plugin-configuration>
+               <c:simple-property name="objectName" readOnly="true" default="java.lang:type=GarbageCollector,name=%name%"/>
+               <c:simple-property name="nameTemplate" default="{name} Garbage Collection"/>
+               <c:simple-property name="descriptionTemplate" default="The {name} Garbage Collector for this VM."/>
+               <c:simple-property name="name" type="string" description="The garbage collector's name"/>
+            </plugin-configuration>
+
+            <metric property="CollectionCount" measurementType="trendsup" displayType="summary" description="Number of collections"/>
+            <metric property="CollectionTime" measurementType="trendsup" displayType="summary" description="Time spent in collection" units="milliseconds"/>
+
+            <metric property="MemoryPoolNames" displayType="summary" dataType="trait"/>
+         </service>
+
+      </service>
+
+
+      <service name="VM Compilation System" discovery="MBeanResourceDiscoveryComponent" class="MBeanResourceComponent"
+         description="The compilation system of the Java virtual machine"
+         createDeletePolicy="neither" singleton="true">
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true" default="java.lang:type=Compilation"/>
+            <c:simple-property name="nameTemplate" default="Compilation"/>
+         </plugin-configuration>
+         <metric property="TotalCompilationTime" 
+            displayType="summary"
+            description="The approximate accumulated elapsed time spent in compilation"
+            units="milliseconds"/>
+      </service>
+
+
+      <service name="VM Class Loading System" discovery="MBeanResourceDiscoveryComponent" class="MBeanResourceComponent"
+         description="The class loading system of the Java virtual machine"
+         createDeletePolicy="neither" singleton="true">
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true" default="java.lang:type=ClassLoading"/>
+            <c:simple-property name="nameTemplate" default="Class Loading"/>
+         </plugin-configuration>
+         <metric displayName="Loaded Classes" property="LoadedClassCount" displayType="summary" description="The number of classes currently loaded in the VM"/>
+         <metric displayName="Total Classes Loaded" property="TotalLoadedClassCount" description="The total number of classes loaded since the start of the VM"/>
+         <metric displayName="Unloaded Classes" property="UnloadedClassCount" displayType="summary" description="The total number of classes unloaded since the start of the VM"/>
+      </service>
+
+      <service name="java.util.logging" discovery="MBeanResourceDiscoveryComponent" class="JavaUtilLoggingResourceComponent"
+         description="Logging control for the java.util.logging subsystem"
+         createDeletePolicy="neither" singleton="true">
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true" default="java.util.logging:type=Logging"/>
+            <c:simple-property name="nameTemplate" default="Logging"/>
+         </plugin-configuration>
+
+         <resource-configuration>
+            <c:list-property name="AppenderList" readOnly="true">
+               <c:map-property name="Appender">
+                  <c:simple-property name="name"/>
+                  <c:simple-property name="level">
+                     <c:property-options>
+                        <c:option value="SEVERE"/>
+                        <c:option value="WARNING"/>
+                        <c:option value="INFO"/>
+                        <c:option value="CONFIG"/>
+                        <c:option value="FINE"/>
+                        <c:option value="FINER"/>
+                        <c:option value="FINEST"/>
+                     </c:property-options>
+                  </c:simple-property>
+               </c:map-property>
+            </c:list-property>
+         </resource-configuration>
+
+      </service>
+
+
+   </server>
+</plugin>

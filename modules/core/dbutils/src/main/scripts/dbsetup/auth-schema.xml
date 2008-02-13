@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dbsetup name="auth-schema.xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-dbsetup-schema">
+
+    <table name="RHQ_PRINCIPAL">
+
+        <column name="ID" default="sequence-only" initial="1"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="PRINCIPAL" required="true" type="VARCHAR2" size="100"/>
+        <column name="PASSWORD" required="true" type="VARCHAR2" size="64"/>
+
+        <!-- ensure that principals are unique -->
+        <index name="RHQ_PRINCIPAL_PRINCIPAL_KEY" unique="true">
+            <field ref="PRINCIPAL" />
+        </index>
+    
+    </table>
+    
+</dbsetup>

@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+
+   <!-- /rhq/group/operation/groupOperationScheduleNew.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ResourceGroupOperationDefinitionUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.operation.definition.group.ResourceGroupOperationDefinitionUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ResourceGroupOperationScheduleUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.operation.schedule.group.ResourceGroupOperationScheduleUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+   <!-- /rhq/group/operation/groupOperationScheduleDetails.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ResourceGroupOperationScheduleDetailsUIBean</managed-bean-name>
+      <managed-bean-class>
+         org.rhq.enterprise.gui.operation.schedule.group.ResourceGroupOperationScheduleDetailsUIBean
+      </managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/group/operation/groupOperationHistory.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ResourceGroupOperationCompletedHistoryUIBean</managed-bean-name>
+      <managed-bean-class>
+         org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationCompletedHistoryUIBean
+      </managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ResourceGroupOperationPendingHistoryUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationPendingHistoryUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+   <!-- /rhq/group/operation/groupOperationHistoryDetails.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ResourceGroupOperationHistoryDetailsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationHistoryDetailsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+     
+</faces-config>

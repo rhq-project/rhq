@@ -1,0 +1,45 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+  
+   <platform name="myPlatform6">
+         
+      <resource-configuration>
+         <c:list-property name="myList1">
+            <c:description>Just a simple list</c:description>
+            <c:simple-property name="foo"/>
+         </c:list-property>
+         <c:list-property name="myList2">
+            <c:list-property name="embeddedList">
+               <c:simple-property name="foo"/>
+            </c:list-property>
+         </c:list-property>
+         <c:list-property name="myList3">
+            <c:simple-property name="baz"/>
+         </c:list-property>
+         <c:list-property name="rec1" min="1" max="10">
+            <c:list-property name="rec2" min="2" max="20">
+               <c:list-property name="rec3" min="3" max="30">
+                  <c:list-property name="rec4" min="4" max="40">
+                     <c:simple-property name="rec5">
+                        <c:description>Deeply nested</c:description>
+                        <c:property-options>
+                           <c:option value="a"/>
+                           <c:option value="b"/>
+                           <c:option value="c"/>
+                           <c:option value="d"/>
+                        </c:property-options>
+                        <c:constraint>
+                           <c:integer-constraint maximum="5" minimum="2"/>
+                        </c:constraint>
+                     </c:simple-property>
+                  </c:list-property>
+               </c:list-property>
+            </c:list-property>
+         </c:list-property>
+      </resource-configuration>
+         
+   </platform>
+</plugin>
+   

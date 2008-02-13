@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" 
+              xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <managed-bean>
+      <managed-bean-name>configurationBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.installer.ConfigurationBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <navigation-rule>
+      <from-view-id>/start.jsp</from-view-id>
+      <navigation-case>
+         <from-outcome>SUCCESS</from-outcome>
+         <to-view-id>/welcome.jsp</to-view-id>
+         <redirect/>
+      </navigation-case>
+      <navigation-case>
+         <from-outcome>DBINVALID</from-outcome>
+         <to-view-id>/invalid_database.jsp</to-view-id>
+      </navigation-case>
+      <navigation-case>
+         <from-outcome>ERROR</from-outcome>
+         <to-view-id>/save_error.jsp</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+ 
+   <application>
+      <message-bundle>InstallerMessages</message-bundle>
+      <resource-bundle>
+         <base-name>InstallerMessages</base-name>
+         <var>i18nmsg</var>
+      </resource-bundle>
+      <locale-config>
+         <default-locale>en</default-locale>
+         <supported-locale>de</supported-locale>
+      </locale-config>
+   </application>
+
+</faces-config>

@@ -1,0 +1,224 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.core.domain.configuration;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Holds an indexed list of child {@link Property properties}. This can hold any number of properties, including
+ * additional lists and maps of properties (which means you can have N-levels of hierarchical data).
+ *
+ * <p>This list will store the properties in the order they are {@link #add(Property) added}.</p>
+ *
+ * <p>Caution must be used when accessing this object. This class is not thread safe and, for entity persistence, the
+ * child properties must have their {@link Property#getParentList()} field set. This is done for you when using the
+ * {@link #add(Property)} method.</p>
+ *
+ * @author Jason Dobies
+ * @author Greg Hinkle
+ */
+@DiscriminatorValue("list")
+@Entity
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlRootElement
+public class PropertyList extends Property {
+    private static final long serialVersionUID = 1L;
+
+    @Cascade(value = { CascadeType.ALL, CascadeType.DELETE_ORPHAN })
+    @OneToMany(mappedBy = "parentList", targetEntity = Property.class, fetch = FetchType.EAGER)
+    //@IndexColumn(name = "list_index")  TODO GH: This seems broken
+    private List<Property> list;
+
+    @Transient
+    String memberPropertyName;
+
+    /* no-arg constructor required by EJB spec and Externalizable (Externalizable also requires it to be public) */
+    public PropertyList() {
+    }
+
+    /**
+     * Creates a new, empty {@link PropertyList} object that is associated with the given name.
+     *
+     * @param name the name of the list itself
+     */
+    public PropertyList(@NotNull
+    String name) {
+        setName(name);
+    }
+
+    /**
+     * Creates a new {@link PropertyList} object that is associated with the given name and has the given properties as
+     * its initial list of child properties. All properties found in <code>startingList</code> will have their
+     * {@link Property#setParentList(PropertyList) parent list} set to this newly constructed list.
+     *
+     * @param name         the name of the list itself
+     * @param startingList a list of properties to be immediately added to this list
+     */
+    public PropertyList(@NotNull
+    String name, @NotNull
+    Property... startingList) {
+        this(name);
+        for (Property property : startingList) {
+            add(property);
+        }
+    }
+
+    /**
+     * Returns the children of this list.
+     *
+     * <p><b>Warning:</b> Caution should be used when accessing the returned list. Please see
+     * {@link PropertyList the javadoc for this class} for more information.</p>
+     *
+     * @return the list of child properties
+     */
+    @NotNull
+    public List<Property> getList() {
+        if (this.list == null) {
+            this.list = new ArrayList<Property>();
+        }
+
+        return this.list;
+    }
+
+    /**
+     * Sets the list of child properties directly to the given <code>list</code> reference. This means the actual <code>
+     * list</code> object is stored internally in this object. Changes made to <code>list</code> will be reflected back
+     * into this object.
+     *
+     * <p><b>Warning:</b> Caution should be used when setting this object's internal list. Please see
+     * {@link PropertyList the javadoc for this class} for more information.</p>
+     *
+     * @param list the new list used internally by this object
+     */
+    public void setList(List<Property> list) {
+        if (list != null) {
+            for (Property property : list) {
+                add(property);
+            }
+        }
+    }
+
+    /**
+     * Adds a child property to the end of this list. This method also sets the
+     * {@link Property#setParentList(PropertyList) parent list} for the child property to make persistence work.
+     *
+     * @param property the property to add to this list
+     */
+    public void add(@NotNull
+    Property property) {
+        if (this.memberPropertyName == null) {
+            this.memberPropertyName = property.getName();
+        }
+
+        if (!property.getName().equals(this.memberPropertyName)) {
+            throw new IllegalStateException("All properties in a PropertyList must have the same name.");
+        }
+
+        getList().add(property);
+        property.setParentList(this);
+    }
+
+    /**
+     * @see org.rhq.core.domain.configuration.Property#writeExternal(java.io.ObjectOutput)
+     */
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        if (list == null) {
+            out.writeObject(null);
+        } else if (list.getClass().getName().contains("hibernate")) {
+            out.writeObject(new ArrayList<Property>(list));
+        } else {
+            out.writeObject(list);
+        }
+    }
+
+    /**
+     * @see org.rhq.core.domain.configuration.Property#readExternal(java.io.ObjectInput)
+     */
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        list = (List<Property>) in.readObject();
+    }
+
+    /**
+     * NOTE: An PropertyList containing a null list is considered equal to a PropertyList containing an empty list.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if ((obj == null) || !(obj instanceof PropertyList)) {
+            return false;
+        }
+
+        if (!super.equals(obj)) {
+            return false; // superclass checks equality of the name fields
+        }
+
+        PropertyList that = (PropertyList) obj;
+        if ((this.list == null) || this.list.isEmpty()) {
+            return (that.list == null) || that.list.isEmpty();
+        }
+
+        return this.list.containsAll(that.list) && that.list.containsAll(this.list);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode(); // superclass hashCode is derived from the name field
+        result = (31 * result) + (((this.list != null) && !this.list.isEmpty()) ? this.list.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    protected void appendToStringInternals(StringBuilder str) {
+        super.appendToStringInternals(str);
+        str.append(", list=").append(getList());
+    }
+
+    /**
+     * This listener runs after jaxb unmarshalling and reconnects children properties to their parent list (as we don't
+     * send them avoiding cyclic references).
+     */
+    public void afterUnmarshal(Unmarshaller u, Object parent) {
+        for (Property p : this.list) {
+            p.setParentList(this);
+        }
+    }
+}

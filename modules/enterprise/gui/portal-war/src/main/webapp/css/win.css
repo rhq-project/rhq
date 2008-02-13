@@ -1,0 +1,2153 @@
+/* GLOBAL RULES */
+BODY, FORM {
+   margin: 0;
+}
+
+BODY, P, TD, TH, OPTION, INPUT, TEXTAREA, SELECT {
+   font-size: 11px;
+   color: #000;
+   font-family: Verdana, Arial, sans-serif;
+}
+
+IMG {
+   border-style: none;
+}
+
+HR {
+   width: 100%;
+   height: 1px;
+   border: 0;
+   text-align: center;
+   margin-left: 0;
+   margin-right: 0;
+   background-color: #AAA;
+   color: #AAA;
+}
+
+A:link {
+   color: #003399;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+A:visited {
+   color: #003399;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+A:hover {
+   color: #003399;
+   font-weight: bold;
+   text-decoration: underline;
+}
+
+A.NotBold:link {
+   color: #003399;
+   text-decoration: none;
+   font-weight: normal;
+}
+
+A.NotBold:visited {
+   color: #003399;
+   text-decoration: none;
+   font-weight: normal;
+}
+
+A.NotBold:hover {
+   color: #003399;
+   font-weight: normal;
+   text-decoration: underline;
+}
+
+/* TEXT */
+.CaptionText {
+   font-size: 10px;
+   font-weight: normal;
+   color: #000000;
+}
+
+.SearchText {
+   font-size: 11px;
+   font-weight: bold;
+   color: #666666;
+}
+
+/* fixme: only on /common/components/FilterToolbar.jsp */
+.TextSelected {
+   color: #663300;
+}
+
+/* fixme: only on /common/components/PageTitle.jsp */
+.ButtonCaptionText {
+   font-size: 11px;
+   color: #999999;
+}
+
+.InactiveText {
+   color: #999999;
+}
+
+.NormalText {
+   color: #000000;
+   font-weight: normal;
+}
+
+.BoldText {
+   font-weight: bold;
+}
+
+.StackTrace {
+   font-size: 9px;
+   font-family: Courier New, Courier, monospace;
+   white-space: pre-wrap;
+}
+
+/* INPUTS */
+.SmallButton
+{
+   height: 13px;
+   line-height: 13px; /* This has the same effect that valign="middle" would have on a TD element. */
+   background-color: #366CD9;
+   border: 1px solid #568CF9;
+   font-size: 8px;
+   font-family: Verdana, Arial, sans-serif;
+   font-weight: bold;
+   color: #FFFFFF;
+}
+
+/* BUTTONS */
+
+.buttonsmall
+{
+   font-size: 10px;
+   font-weight: bold;
+   color: #666666;
+   background-color: #FFFFFF;
+   border: 1px solid #B0B0B0;
+   padding: 0px 5px;
+   cursor: pointer;
+}
+
+.buttonmed
+{
+   font-size: 11px;
+   font-weight: bold;
+   color: #E6E8ED;
+   background-color: #828CA3;
+   border: 1px outset #626C83;
+   padding: 1px 10px;
+   cursor: pointer;
+}
+
+.buttonmed-disabled 
+{
+   font-size: 11px;
+   font-weight: bold;
+   color: #B6B8BD;
+   background-color: #828CA3;
+   border: 1px outset #626C83;
+   padding: 1px 10px;
+   cursor: default;
+}
+
+/* PAGE TITLE */
+.PageTitle {
+   font-size: 17px;
+   color: #DE652D;
+   font-weight: bold;
+   background-color: #CCCCCC;
+}
+
+.PageTitleGroupBg, .PageTitleRoleBg, .PageTitleUserBg {
+   background-color: #E5E5E5;
+}
+
+.PageTitleServerBg {
+   background-color: #E4F2E4;
+}
+
+.PageTitlePlatformBg {
+   background-color: #F2EAE4;
+}
+
+.PageTitleServiceBg {
+   background-color: #E1EFF0;
+}
+
+.PageTitleApplicationBg {
+   background-color: #ECE6F7;
+}
+
+.PageTitleSmallText {
+   font-size: 11px;
+   color: #666666;
+   line-height: 14px;
+}
+
+/* BLOCK & LIST */
+.ListTitle, .BlockTitle {
+   font-size: 12px;
+   color: #DE652D;
+   font-weight: bold;
+   background-color: #CCCCCC;
+   padding: 3px;
+}
+
+.BlockSubtitle {
+   font-size: 11px;
+   color: #000000;
+   font-weight: normal;
+}
+
+.BlockBottomLine {
+   background-color: #D5D8DE;
+   padding: 0;
+}
+
+/* BLOCK */
+.BlockContent {
+   background-color: #EBEDF2;
+   padding: 3px;
+}
+
+.BlockContentNoPadding {
+   background-color: #EBEDF2;
+   padding: 0;
+}
+
+.BlockLabel {
+   background-color: #EBEDF2;
+   padding: 3px;
+   font-weight: bold;
+   text-align: right;
+   vertical-align: top;
+}
+
+.BlockCheckboxLabel, .BlockLeftAlignLabel {
+   background-color: #EBEDF2;
+   padding: 3px;
+   font-weight: bold;
+   text-align: left;
+}
+
+.BlockContentSmallText {
+   background-color: #EBEDF2;
+   padding: 3px;
+   font-size: 11px;
+   color: #000000;
+}
+
+.BlockBg {
+   background-color: #EBEDF2;
+}
+
+/* LIST */
+A.ListHeaderLink:link {
+   color: #004680;
+   text-decoration: none;
+}
+
+A.ListHeaderLink:visited {
+   color: #004680;
+   text-decoration: none;
+}
+
+A.ListHeaderLink:hover {
+   color: #004680;
+   text-decoration: underline;
+}
+
+.ListHeader, .ListHeaderCheckbox, .ListHeaderSorted, .ListHeaderInactive, .tableRowHeader, .tableRowSorted, .tableCellHeader, .tableRowInactive {
+   text-align: left;
+   font-weight: bold;
+   color: #004680;
+   background-color: #DBE3F5;
+   padding: 3px;
+   border-top: solid #ABB1C7;
+   border-bottom: solid #D5D8DE;
+   border-width: 1px;
+}
+
+.ListHeaderCheckbox {
+   text-align: center;
+   padding: 0px;
+}
+
+.ListHeaderInactiveSorted {
+   font-weight: bold;
+   background-color: #C6CFE5;
+   padding: 3px;
+   border-top: solid #ABB1C7;
+   border-bottom: solid #C6CFE5;
+   border-width: 1px;
+}
+
+.ListHeaderOff {
+   text-align: left;
+   font-weight: bold;
+   background-color: #DBE3F5;
+   padding: 3px;
+   border-top: solid #ABB1C7;
+   border-bottom: solid #C6CFE5;
+   border-width: 1px;
+   color: #999999;
+}
+
+.ListHeaderInactiveCenter {
+   text-align: center;
+   font-weight: bold;
+   background-color: #DBE3F5;
+   padding: 3px;
+   border-top: solid #ABB1C7;
+   border-bottom: solid #C6CFE5;
+   border-width: 1px;
+}
+
+.ListRow, .tableRowEven, .tableRowOdd {
+   background-color: #F2F4F7;
+}
+
+.ListRowSelected, .tableRowAction {
+   text-align: left;
+   background-color: #EBEDF2;
+}
+
+.ListCell, .ListCellSelected, .tableCell, .redTableCell, .tableCellTop {
+   padding: 3px;
+   border-style: none;
+   border-bottom: solid 1px #D5D8DE;
+   vertical-align: middle;
+}
+
+.ListCellSmall8 {
+   font-size: 8px;
+   border-bottom: solid #D5D8DE;
+   border-width: 1px;
+   padding: 3px;
+}
+
+.ListCellSmall10 {
+   font-size: 10px;
+   border-bottom: solid #D5D8DE;
+   border-width: 1px;
+   padding: 3px;
+}
+
+.ListCellSmall12 {
+   font-size: 12px;
+   border-bottom: solid #D5D8DE;
+   border-width: 1px;
+   padding: 3px;
+}
+
+.ListCellNoPadding {
+   padding: 1px;
+   border-bottom: solid #D5D8DE;
+   border-width: 1px;
+}
+
+.ListCellCheckbox {
+   padding: 0;
+   border-bottom: solid #D5D8DE;
+   border-width: 1px;
+   text-align: center;
+   vertical-align: middle;
+}
+
+.ListCellCheckboxSelected {
+   padding: 0;
+   background-color: #E6EEFF;
+   border-bottom: solid #D5D8DE;
+   border-width: 1px;
+}
+
+/* only in RolePermissionsForm.jsp*/
+.ListCellSelected, .tableCellAction {
+   background-color: #E6EEFF;
+}
+
+/* only in RolePermissionsForm.jsp*/
+.ListCellCheckAll {
+   padding: 3px;
+   font-size: 11px;
+   font-weight: bold;
+}
+
+/* Edit Role page, RolePermissionsForm.jsp */
+.ListCellLine {
+   background-color: #D5D8DE;
+}
+
+.ListCellLineEmpty {
+   background-color: #FFFFFF;
+   padding: 0;
+}
+
+.ListCellPrimary {
+   padding: 3px;
+   border-bottom: solid #D5D8DE;
+   border-width: 1px;
+   font-weight: bold;
+}
+
+.tableCellTop {
+   vertical-align: top;
+}
+
+.LinkBox {
+   padding: 3px;
+   border: solid #D5D8DE;
+   border-width: 1px;
+   background-color: #F2F9FF
+}
+
+.LinkBoxCell {
+   padding: 2px;
+   border-style: none;
+   vertical-align: top;
+}
+
+/* list for MONITOR */
+.ListHeaderLight {
+   background-color: #DBE3F5;
+}
+
+.ListHeaderDark {
+   background-color: #C6CFE5;
+}
+
+.ListHeaderCheckboxLeftLine {
+   text-align: center;
+   font-weight: bold;
+   padding: 0;
+   border-top: solid #ABB1C7;
+   border-bottom: solid #D5D8DE;
+   border-left: solid #C6CFE5;
+   border-width: 1px;
+}
+
+.ListCellHeader {
+   font-weight: bold;
+   background-color: #DBE3F5;
+   padding: 3px;
+   border-bottom: solid #DBE3F5;
+   border-width: 1px;
+}
+
+.ListCellHeaderSorted {
+   font-weight: bold;
+   background-color: #C6CFE5;
+   padding: 3px;
+   border-bottom: solid #C6CFE5;
+   border-width: 1px;
+}
+
+.MonitorListHeaderCheckbox {
+   text-align: center;
+   font-weight: bold;
+   background-color: #DBE3F5;
+   padding: 0;
+   border-bottom: solid #D5D8DE;
+   border-width: 1px;
+}
+
+.ListCellCheckboxLeftLine {
+   padding: 3px;
+   border-bottom: solid #D5D8DE;
+   border-left: solid #D5D8DE;
+   border-width: 1px;
+   text-align: center;
+   vertical-align: middle;
+}
+
+.ListCellLeftLine {
+   padding: 3px;
+   border-bottom: solid #DBE3F5;
+   border-left: solid #C6CFE5;
+   border-width: 1px;
+}
+
+.ListCellLeftLineNoPadding {
+   border-bottom: solid #DBE3F5;
+   border-left: solid #C6CFE5;
+   border-width: 1px;
+}
+
+.MetricRed {
+   background-color: #F7DEE7;
+   width: 100%;
+   text-align: right;
+}
+
+.MetricGreen {
+   background-color: #CEEFDE;
+   width: 100%;
+   text-align: right;
+}
+
+.MetricYellow {
+   background-color: #FFF1B3;
+   width: 100%;
+   text-align: right;
+}
+
+.MetricGray {
+   background-color: #D5D8DE;
+   width: 100%;
+   text-align: right;
+}
+
+.ListCellRight {
+   padding: 3px;
+   border-bottom: solid #D5D8DE;
+   border-left: solid #D5D8DE;
+   border-width: 1px;
+   text-align: right;
+}
+
+.ListCellRightSelected {
+   padding: 3px;
+   border-bottom: solid #D5D8DE;
+   border-left: solid #C6CFE5;
+   border-width: 1px;
+   text-align: right;
+   background-color: #FFEEA1;
+}
+
+.ListCellRightNoLine {
+   padding: 3px;
+   border-bottom: solid #D5D8DE;
+   border-width: 1px;
+   text-align: right;
+   vertical-align: middle
+}
+
+.ListCellPrimaryInactive {
+   color: #999999;
+   padding: 3px;
+   border-bottom: solid #D5D8DE;
+   border-width: 1px;
+   font-weight: bold;
+}
+
+.ListCellCompareMetrics {
+   padding: 3px 3px 3px 20px;
+   border-bottom: solid #D5D8DE;
+   border-width: 1px;
+}
+
+/* list for Config Properties */
+.ConfigPropHeader {
+   font-weight: bold;
+   background-color: #D5D8DE;
+   padding: 3px 3px 3px 15px;
+   border-top: solid #ABB1C7;
+   border-bottom: solid #99A5C0;
+   border-width: 1px;
+}
+
+.ConfigPropHeaderHelp {
+   font-size: 14px;
+   font-weight: bold;
+   background-color: #FFFFFF;
+   padding: 3px 3px 3px 15px;
+   border: solid #ABB1C7;
+   border-width: 1px;
+}
+
+/* INTRO/GUIDE SYSTEM */
+.GuideTitle {
+   font-size: 18px;
+   color: #DE652D;
+   font-weight: bold;
+   background-color: #CCCCCC;
+   padding: 6px;
+}
+
+A.GuideLink:link {
+   color: #003399;
+   text-decoration: none;
+   font-weight: bold;
+   font-size: 16px;
+}
+
+A.GuideLink:visited {
+   color: #003399;
+   text-decoration: none;
+   font-weight: bold;
+   font-size: 16px;
+}
+
+A.GuideLink:hover {
+   color: #003399;
+   font-weight: bold;
+   text-decoration: underline;
+   font-size: 16px;
+}
+
+.GuideText {
+   font-size: 13px;
+   color: #000000;
+   font-family: arial, sans-serif;
+}
+
+.GuideTextSmall {
+   font-size: 11px;
+   color: #000000;
+   font-family: arial, sans-serif;
+}
+
+/* TOOLBAR */
+.ToolbarContent {
+   background-color: #E5E5E5;
+}
+
+.ToolbarLine {
+   background-color: #DE652D;
+}
+
+/* ERROR & CONFIRMATION */
+.ErrorField {
+   background-color: #FFFD99; /* light yellow */
+   padding: 3px;
+}
+
+.ErrorFieldContent {
+   font-size: 10px;
+   font-style: italic;
+}
+
+.InfoBlock, .ConfirmationBlock, .WarnBlock, .ErrorBlock, .FatalBlock {
+   padding: 4px;
+   border-width: 1px;
+   border-top-style: solid;
+   font-size: 10px;
+   color: #000000;
+}
+
+.InfoBlock, .ConfirmationBlock {
+   background-color: #BFF1B5; /* light green */
+   border-top-color: #00AC3D; /* medium green */
+}
+
+.WarnBlock {
+   background-color: #FFFD99; /* light yellow */
+   border-top-color: #FF9C15; /* medium orange */
+}
+
+.ErrorBlock {
+   background-color: #FF9999; /* light red */
+   border-top-color: #EE4444; /* medium red */
+}
+
+.FatalBlock {
+   background-color: #FF6666; /* slightly darker light red */
+   border-top-color: #EE1111; /* slightly darker medium red */
+}
+
+.ValidationErrorText {
+   color: #AA2222; /* dark red */
+   font-weight: bold;
+}
+
+/* TABS */
+.TabCell {
+   border-bottom: solid #DE6329;
+   border-width: 2px;
+}
+
+.SubTabCell {
+   background-color: #D9D9D9;
+}
+
+.DashTabs {
+   margin-bottom: 4px;
+}
+
+/* MASTHEAD */
+.MastheadBgTop {
+   background-color: #C6CFE5;
+}
+
+.MastheadBgBottom {
+   background-color: #DBE3F5;
+}
+
+A.MastheadLink:link {
+   font-weight: normal;
+   color: #366CD9;
+   text-decoration: none;
+}
+
+A.MastheadLink:visited {
+   font-weight: normal;
+   color: #366CD9;
+   text-decoration: none;
+}
+
+A.MastheadLink:hover {
+   font-weight: normal;
+   color: #366CD9;
+   text-decoration: underline;
+}
+
+A.MastheadLink:active {
+   font-weight: normal;
+   color: #666666;
+   text-decoration: none;
+}
+
+.MastheadContent, .RecentAlerts {
+   font-size: 10px;
+   color: #666666;
+}
+
+.RecentPlaces {
+   color: #000000;
+   font-weight: bold;
+}
+
+.MastheadBottomLine {
+   background-color: #DE652D;
+}
+
+/* FOOTER */
+.FooterBold {
+   font-weight: bold;
+   padding: 3px;
+}
+
+.FooterRegular {
+   font-weight: normal;
+   font-size: 9px;
+   color: black;
+   text-align: center;
+}
+
+.FooterSmall {
+   font-size: 8px;
+   font-weight: normal;
+   padding: 3px;
+}
+
+/* DASHBOARD */
+.DashboardPadding {
+   padding: 5px;
+}
+
+/* only in /portal/MultiColumnLayout.jsp */
+.DashboardControlActionsContainer {
+   background-color: #EBEDF2;
+   padding: 10px;
+}
+
+.FormLabel {
+   font-weight: bold;
+   text-align: left;
+}
+
+.FormLabelRight {
+   font-weight: bold;
+   text-align: right;
+}
+
+.Subhead {
+   font-weight: bold;
+   text-align: left;
+   color: #DE652D;
+   background-color: #CCCCCC;
+   padding: 3px;
+}
+
+A.dashlink:link {
+   font-size: 11px;
+   font-weight: bold;
+   color: #003399;
+   text-decoration: none;
+}
+
+A.dashlink:visited {
+   font-size: 11px;
+   font-weight: bold;
+   color: #003399;
+   text-decoration: none;
+}
+
+A.dashlink:hover {
+   font-size: 11px;
+   font-weight: bold;
+   color: #003399;
+   text-decoration: underline;
+}
+
+/* FILTER */
+.FilterLabelText {
+   font-size: 11px;
+   background-color: #D5D8DE;
+   font-weight: bold;
+   padding: 5px;
+}
+
+.FilterNonBoldText {
+   font-size: 11px;
+   background-color: #D5D8DE;
+   padding: 5px;
+}
+
+.FilterFormText {
+   font-size: 11px;
+   color: #000000;
+   font-weight: normal;
+}
+
+.FilterLine {
+   background-color: #ABB1C7;
+}
+
+.FilterEmptyCellRight {
+   background-color: #D5D8DE;
+   border-left: solid #FFFFFF;
+   border-width: 5px;
+}
+
+.FilterLineLeft {
+   background-color: #ABB1C7;
+   border-right: solid #FFFFFF;
+   border-right-width: 5px;
+}
+
+.FilterLineRight {
+   background-color: #ABB1C7;
+   border-left: solid #FFFFFF;
+   border-left-width: 5px;
+}
+
+.FilterImage {
+   background-color: #D5D8DE;
+   padding-left: 1px;
+   padding-right: 1px;
+}
+
+/* SEARCH */
+.SearchBold {
+   font-weight: bold;
+   padding: 3px;
+}
+
+.SearchRegular {
+   font-weight: normal;
+   padding: 3px;
+}
+
+/* ABOUT PAGE */
+.DisplayContent, .DisplayLabel {
+   font-size: 11px;
+}
+
+.DisplayLabel {
+   font-weight: bold;
+}
+
+.DisplaySubhead {
+   font-weight: bolder;
+   font-size: 16px;
+   color: #DE652D;
+}
+
+A.displaylink:link {
+   font-size: 11px;
+   color: #003399;
+   text-decoration: none;
+}
+
+A.displaylink:visited {
+   font-size: 11px;
+   color: #003399;
+   text-decoration: none;
+}
+
+A.displaylink:hover {
+   font-size: 11px;
+   color: #003399;
+   text-decoration: underline;
+}
+
+/* MONITORING */
+.MonitorBlockContainer {
+   background-color: #EBEDF2;
+   padding-top: 10px;
+   border-spacing: 3px;
+}
+
+.MonitorBlock {
+   background-color: #D5D8DE;
+}
+
+.MonitorBlockTopLine {
+   border-top: solid #949CBD;
+   border-width: 1px;
+}
+
+.MonitorToolbar {
+   background-color: #D5D8DE;
+   border-top: solid #ABB1C7;
+   border-width: 1px 0 0 0;
+}
+
+.MonitorMetricsBaseline {
+   color: #003399;
+   font-weight: bold;
+}
+
+.MonitorMetricsValue {
+   color: #000000;
+   font-weight: bold;
+}
+
+.MonitorMetricsSelected {
+   color: #000000;
+   font-weight: bold;
+   background-color: #FFEEA1;
+   width: 100%;
+}
+
+.MonitorCurrentHealthChartHeader {
+   font-weight: bold;
+   background-color: #EFEFF7;
+   padding: 3px;
+}
+
+.MonitorCurrentHealthChartCell {
+   background-color: #FFFFFF;
+   padding: 3px;
+}
+
+.MonitorListRow {
+   background-color: #FFFFFF;
+}
+
+.MonitorServiceList {
+   padding: 3px 3px 3px 10px;
+   font-weight: bold;
+}
+
+.MonitorChartBlock {
+   background-color: #FFFFFF;
+}
+
+.MonitorChartCell {
+   background-color: #FFFFFF;
+   padding: 10px;
+}
+
+.MonitorChartBlockPadding {
+   background-color: #FFFFFF;
+   padding: 5px;
+}
+
+/* MONITORING: MINI TABS */
+.MiniTabOn {
+   background-color: #D9D9D9;
+   padding: 0;
+   border-top: solid #DE652D;
+   border-width: 1px;
+   font-size: 12px;
+   font-weight: bold;
+   color: #DE652D;
+}
+
+.MiniTabOff {
+   background-color: #C3CEE5;
+   padding: 0;
+   border-bottom: solid #DE652D;
+   border-width: 1px;
+   font-size: 12px;
+   font-weight: bold;
+   color: #003399;
+   text-decoration: none;
+}
+
+.MiniTabEmpty {
+   padding: 0;
+   border-bottom: solid #DE652D;
+   border-width: 1px;
+}
+
+.SubMiniTab {
+   color: #DE652D;
+   background-color: #D9D9D9;
+   padding: 3px;
+   font-weight: bold;
+}
+
+/* CONTROL */
+.ControlBlockContainer {
+   background-color: #EFEFF7;
+   padding: 20px;
+}
+
+/* SCHEDULE */
+.CalBody {
+   padding: 5px 10px 0 10px;
+}
+
+.CalHeader {
+   background-color: #EBEDF2;
+   padding: 3px;
+   border-top: solid #DE652D;
+   border-bottom: solid #D5D8DE;
+   border-width: 2px 0 1px 0;
+}
+
+.CalDays {
+   color: #DE652D;
+}
+
+.CalInactiveDay {
+   color: #999999;
+}
+
+/* AUTO-DISCOVERY */
+.AutoDiscRowIgnored {
+   background-color: #F5F5F5;
+}
+
+.AutoDiscRowNew {
+   background-color: #F5FFF9;
+}
+
+.AutoDiscRowModified {
+   background-color: #FCF9E3;
+}
+
+.AutoDiscContent {
+   padding: 3px;
+}
+
+.AutoDiscLabel {
+   padding: 3px;
+   font-weight: bold;
+   text-align: right;
+}
+
+/* SERVICE, INVENTORY, CONFIG */
+.multiSelect {
+   width: 250px;
+}
+
+/* RESOURCE HUB */
+.ResourceHubBlockTitle {
+   font-size: 12px;
+   color: #DE652D;
+   font-weight: bold;
+   background-color: #CCCCCC;
+   padding: 3px;
+}
+
+/* ADD/REMOVE WIDGET */
+.AddRemoveListCellLeft {
+   padding: 3px;
+   border-bottom: solid #D5D8DE 1px;
+   border-right: solid #D5D8DE 5px;
+}
+
+.AddRemoveListCellRight {
+   padding: 3px;
+   border-bottom: solid #D5D8DE 1px;
+   border-left: solid #D5D8DE 5px;
+}
+
+.AddRemoveListCellCheckboxRight {
+   padding: 0;
+   border-bottom: solid #D5D8DE 1px;
+   text-align: center;
+   border-left: solid #D5D8DE 5px;
+}
+
+.AddRemoveListHeaderLeft {
+   font-weight: bold;
+   background-color: #DBE3F5;
+   padding: 3px;
+   border-top: solid #ABB1C7 1px;
+   border-bottom: solid #C6CFE5 1px;
+   border-right: solid #D5D8DE 5px;
+}
+
+.AddRemoveListHeaderCheckboxRight {
+   text-align: center;
+   font-weight: bold;
+   background-color: #DBE3F5;
+   padding: 0;
+   border-top: solid #ABB1C7 1px;
+   border-bottom: solid #D5D8DE 1px;
+   border-left: solid #D5D8DE 5px;
+}
+
+.AddRemoveFilterLabelTextLeft {
+   font-size: 11px;
+   background-color: #D5D8DE;
+   font-weight: bold;
+   padding: 5px;
+   border-right: solid #FFFFFF 5px;
+}
+
+.AddRemoveFilterLabelTextRight {
+   font-size: 11px;
+   background-color: #D5D8DE;
+   font-weight: bold;
+   padding: 5px;
+   border-left: solid #FFFFFF 5px;
+}
+
+/* MINI CHARTS */
+.MiniChartHeader {
+   font-weight: bold;
+   color: #004680;
+   padding: 2px;
+   font-size: 11px;
+   text-align: left;
+   vertical-align: middle;
+}
+
+.MiniChartTitle {
+   background-color: #EBEDF2;
+   padding: 3px;
+   font-size: 10px;
+   color: #004680;
+}
+
+.MetricResourceType {
+   font-size: 9px;
+   font-weight: normal;
+   padding-left: 2em;
+}
+
+/* NAVIGATION MAP DIAGRAM */
+#diagramDiv {
+   position: absolute;
+   z-index: 100;
+   visibility: hidden;
+   /* TURN THIS OFF B/C OF DROP-SHADOW
+   filter: alpha(opacity=85);
+   -moz-opacity: 1; // should be 0.85 -- see http://bugzilla.mozilla.org/show_bug.cgi?id=201209
+   */
+
+}
+
+/* These are the style specifications for the menu layers.  
+   Set width to get more browsers corporation  */
+div.menu {
+   position: absolute;
+   visibility: hidden;
+   width: 24em;
+   left: 0;
+   top: 0;
+   font-size: 10px;
+   background-color: #e6e6e6;
+   color: #000;
+   border: 2px solid;
+   border-color: #f7faff #99a #99a #f7faff;
+   z-index: 500;
+}
+
+div.menu table{
+   width: 100%;
+   border: 0px;
+}
+
+div.menu table th{
+   text-align: left;
+} 
+
+/* Style specifications for menu items and links  */
+div.menu ul {
+   margin: 0;
+   padding: 0
+}
+
+/* Need to set padding of at least one pixel or ie sets very large margin */
+div.menu ul li {
+   padding: .3em .4em;
+   margin: 0;
+   list-style-type: none
+}
+
+/* Set display block and position relative so clicks on list items activate links  */
+div.menu a, div.eventsSummary a {
+   cursor: default;
+   background-color: transparent;
+   display: block;
+   position: relative;
+   text-decoration: none
+}
+
+div.menu a:link {
+   color: #33b
+}
+
+div.menu a:visited {
+   color: #339
+}
+
+div.menu a:hover {
+   color: #fff;
+   background-color: #338
+}
+
+/* These are the styles for the link popups */
+a.ListCellPopup1 {
+   position: relative;
+   z-index: 24;
+   color: #000;
+   text-decoration: underline;
+   font-weight: normal;
+}
+
+a.ListCellPopup1:hover {
+   z-index: 25;
+}
+
+a.ListCellPopup1 span {
+   display: none
+}
+
+a.ListCellPopup1:hover span {
+   display: block;
+   position: absolute;
+   top: 0.2em;
+   left: -19em;
+   width: 40em;
+   padding: 4px;
+   border: 2px solid;
+   border-color: #f7faff #99a #99a #f7faff;
+   background-color: #DBE3F5;
+   color: #000;
+   text-align: left
+}
+
+a.ListCellPopup2 {
+   position: relative;
+   z-index: 24;
+   color: #000;
+   text-decoration: underline;
+   font-weight: normal;
+}
+
+a.ListCellPopup2:hover {
+   z-index: 25;
+}
+
+a.ListCellPopup2 span {
+   display: none
+}
+
+a.ListCellPopup2:hover span {
+   display: block;
+   position: absolute;
+   top: 0.2em;
+   left: -13em;
+   width: 48em;
+   padding: 4px;
+   border: 2px solid;
+   border-color: #f7faff #99a #99a #f7faff;
+   background-color: #DBE3F5;
+   color: #000;
+   text-align: left
+}
+
+/* For popups that are also real links, so the color gets set correctly */
+a.ListCellPopup3:link {
+   position: relative;
+   z-index: 24;
+   color: #003399;
+   text-decoration: underline;
+   font-weight: bold;
+}
+
+a.ListCellPopup3:visited {
+   position: relative;
+   z-index: 24;
+   color: #003399;
+   text-decoration: underline;
+   font-weight: bold;
+}
+
+a.ListCellPopup3:hover {
+   position: relative;
+   z-index: 25;
+   color: #003399;
+   text-decoration: underline;
+   font-weight: bold;
+}
+
+a.ListCellPopup3 span {
+   display: none
+}
+
+a.ListCellPopup3:hover span {
+   display: block;
+   position: absolute;
+   top: 0.2em;
+   left: -19em;
+   width: 40em;
+   padding: 4px;
+   border: 2px solid;
+   border-color: #f7faff #99a #99a #f7faff;
+   background-color: #DBE3F5;
+   color: #000;
+   text-align: left
+}
+
+/* For popups that are also real links, so the color gets set correctly */
+a.ListCellPopup4:link, a.ListCellPopup5:link {
+   z-index: 24;
+   color: #000000;
+   text-decoration: none;
+   font-weight: normal;
+}
+
+a.ListCellPopup4:visited, a.ListCellPopup5:visited {
+   z-index: 24;
+   color: #000000;
+   text-decoration: underline;
+   font-weight: bold;
+}
+
+a.ListCellPopup4:hover, a.ListCellPopup5:hover {
+   position: relative;
+   z-index: 25;
+}
+
+a.ListCellPopup4 span, a.ListCellPopup5 span {
+   display: none
+}
+
+a.ListCellPopup4:hover span, a.ListCellPopup5:hover span {
+   display: block;
+   position: absolute;
+   top: -.3em;
+   left: -.3em;
+   width: auto;
+   padding: 2px;
+   border: 1px solid;
+   border-color: #000000;
+   background-color: #E6E6E6;
+   color: #000;
+   text-align: left
+}
+
+a.ListCellPopup5:link {
+   font-size: 11px;
+   color: #666666;
+   line-height: 14px;
+}
+
+a.ListCellPopup5:visited {
+   font-size: 11px;
+   color: #666666;
+   line-height: 14px;
+}
+
+a.ListCellPopup5:hover span {
+   width: 30em;
+   height: auto;
+}
+
+div.overlay {
+   position: absolute;
+   visibility: hidden;
+   width: 9px;
+   height: 0;
+   left: 0;
+   top: 200px;
+   font-size: 10px;
+   background-color: #777777;
+   color: #000;
+   border: 0;
+   z-index: 200;
+   opacity: 0.3;
+   filter: alpha( opacity = 30 );
+   -moz-opacity: 0.3;
+}
+
+/* .99 opacity is for safari bug */
+div.timepopup {
+   position: absolute;
+   visibility: hidden;
+   width: 70px;
+   left: 0;
+   top: -20px;
+   font-size: 10px;
+   padding: 3px;
+   text-align: center;
+   background-color: #e6e6e6;
+   color: #000;
+   border: 1px solid;
+   z-index: 210;
+   opacity: 0.99;
+}
+
+div.scrollable {
+   top: 100px;
+   left: 400px;
+   width: auto;
+   height: 165px;
+   margin-right: -6px;
+   overflow: auto;
+}
+
+div.eventDetails {
+   position: absolute;
+   width: 672px;
+   background-color: #AACCFF;
+   margin-top: 2px;
+   border: 1px solid;
+   font-size: 10px;
+   opacity: 0.99;
+}
+
+div.eventsSummary {
+   position: relative;
+   height: 200px;
+   overflow: auto;
+   padding: 6px;
+   z-index: 500;
+}
+
+td.eventsTab, td.eventsTabOn {
+   text-align: center;
+   border-right: solid;
+   border-bottom: solid;
+   border-width: 1px;
+   border-color: #000000;
+   padding-left: 2px;
+   padding-right: 2px;
+}
+
+td.eventsTabOn {
+   border-bottom: none;
+}
+
+.red, .redTableCell {
+   color: #990000;
+}
+
+A.red:link {
+   color: #990000;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+A.red:visited {
+   color: #990000;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+A.red:hover {
+   color: #FF0000;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+.green {
+   color: #009900;
+}
+
+A.green:link {
+   color: #009900;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+A.green:visited {
+   color: #009900;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+A.green:hover {
+   color: #00CC00;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+.yellow {
+   color: #FFFF00;
+}
+
+A.yellow:link {
+   color: #FFFF00;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+A.yellow:visited {
+   color: #FFFF00;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+A.yellow:hover {
+   color: #FFFFAA;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+.navy {
+   color: #000080;
+}
+
+A.navy:link {
+   color: #000080;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+A.navy:visited {
+   color: #000080;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+A.navy:hover {
+   color: #0000FF;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+.black {
+   color: black;
+}
+
+A.black:link {
+   color: black;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+A.black:visited {
+   color: black;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+A.black:hover {
+   color: #808080;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+BODY {
+   z-index: 0;
+}
+
+b.rtop, b.rbottom {
+   display: block;
+   background: #FFF
+}
+
+b.rtop b, b.rbottom b {
+   display: block;
+   height: 1px;
+   overflow: hidden;
+   background: #CCCCCC
+}
+
+b.r1 {
+   margin-left: 4px
+}
+
+b.r2 {
+   margin-left: 2px
+}
+
+b.r3 {
+   margin-left: 1px
+}
+
+div.effectsContainer div.effectsPortlet {
+   height: 100%;
+}
+
+/* Events */
+div.eventBlock {
+   background-color: #003399;
+   height: 8px;
+   width: 8px;
+   font-size: 8px; /* For I.E., even if there's no text, it sets the height */
+   position: relative;
+   z-index: 201; /* Just above the overlay */
+}
+
+ul.boxy {
+   list-style-type: none;
+   padding: 0;
+   margin: 0;
+}
+
+ul.boxy li {
+   padding-left: 4px;
+   margin: 0;
+}
+
+/* JBoss Overrides */
+body {
+   margin: 0;
+   position: absolute;
+   top: 0;
+   width: 100%;
+   background: white;
+   font: normal 10pt verdana, arial, helvetica;
+}
+
+/* TOP MENU -------------------------------------------- */
+#TopMenu {
+   position: absolute;
+   right: 0;
+   top: 0;
+   z-index: 5;
+}
+
+#TopMenu td {
+   height: 22px;
+   text-align: center;
+   font: bold 11.5px Verdana, Helvetica, Arial, sans-serif;
+}
+
+#TopMenu a {
+   display: block;
+   width: 120px;
+   height: 20px;
+   padding-top: 2px;
+   color: white;
+   text-decoration: none;
+}
+
+#TopMenu td.menu_JBnetwork {
+   background: #B70000
+}
+
+#TopMenu td.menu_JBnetwork a:hover {
+   background: #800000
+}
+
+#TopMenu td.menu_JBcom {
+   background: #B70000
+}
+
+#TopMenu td.menu_JBcom a:hover {
+   background: #800000
+}
+
+#TopMenu td.menu_JBjems {
+   background: #B70000
+}
+
+#TopMenu td.menu_JBjems a:hover {
+   background: #800000
+}
+
+#TopMenu td.menu_JBfed {
+   background: #B70000
+}
+
+#TopMenu td.menu_JBfed a:hover {
+   background: #800000
+}
+
+/* PAGE HEADER ------------------------------------------*/
+#PageHeader {
+   position: relative;
+   top: 30px;
+   margin-left: 250px;
+   margin-right: 20px;
+   margin-bottom: 20px;
+   height: 98px;
+}
+
+#PageHeader h1 {
+   font: bold 16px Verdana, Helvetica, Arial, sans-serif;
+   text-align: right
+}
+
+#AppMenu {
+   margin-top: 10px;
+   color: #d8d8d8;
+   font: 8pt Verdana, Helvetica, Arial, sans-serif;
+   text-align: right
+}
+
+#AppMenu a {
+   color: #666666;
+   text-decoration: none;
+   margin-left: 5px;
+   margin-right: 5px
+}
+
+#AppMenu a:hover {
+   text-decoration: underline
+}
+
+#Breadcrumb {
+   color: #333333;
+   font: 8pt Verdana, Helvetica, Arial, sans-serif
+}
+
+#Breadcrumb span.root {
+   color: #666666;
+   font-weight: bold
+}
+
+#Breadcrumb a {
+   color: #008FD6;
+   text-decoration: none
+}
+
+#Breadcrumb a:hover {
+   text-decoration: underline
+}
+
+/* OVERLOADING -----------------------------------------*/
+.ListTitle, .BlockTitle {
+   color: black;
+   background-color: #C6CFE5
+}
+
+.ListHeader, .tableRowHeader, .tableCellHeader, .ListHeaderInactive, .tableRowInactive, .ListHeaderInactiveSorted, .ListHeaderInactiveCenter, .ListHeaderCheckbox, .ListHeaderSorted, .tableRowSorted {
+   color: #444444;
+   font-size: 9px;
+   font-weight: normal;
+   background-color: #d8d8d8;
+   border-top: solid #ABB1C7;
+   border-bottom: solid #D5D8DE;
+   border-width: 1px
+}
+
+.ListRow, .tableRowEven, .tableRowOdd {
+   background-color: #f4f4f4
+}
+
+.Subhead {
+   color: black
+}
+
+/* EXTENSIONS ------------------------------------------*/
+.ListCell a, .tableCell a,
+   .ListCell a:link, .tableCell a:link,
+   .ListCell a:visited, .tableCell a:visited {
+   color: black;
+   text-decoration: none;
+   font-weight: normal;
+}
+
+.ListCell a:hover, .tableCell a:hover {
+   text-decoration: underline
+}
+
+/* Show/Hide functionality -----------------------------*/
+.switchcontent {
+   background-color: #D8D8D8;
+   border: 1px solid #A5A5A5;
+   padding: 2px;
+}
+
+.showHideSwitch {
+   cursor: hand;
+   cursor: pointer;
+}
+
+P.compact {
+   margin-top: 8px;
+   margin-bottom: 8px;
+}
+
+.data-table {
+   width: 100%;
+   border-style: none;
+   border-collapse: collapse;
+   padding: 2px 2px 2px 2px;
+}
+
+
+/*--- Summary ---------------------*/
+
+.summary-content {
+   padding: 0 15px 0 15px;
+   width: 80%
+}
+
+.summary-props-table {
+   width: 100%;
+   border-style: none;
+   border-collapse: collapse;   
+}
+
+.summary-prop-cell {
+   width: 50%;
+   border-style: none;
+   padding: 2px;
+   vertical-align: top;
+}
+
+
+/*--- Configuration ---------------------*/
+
+.property-group-header {
+   padding: 4px;
+   background: #50667C;
+   color: #FFF;
+}
+
+.property-group-header a {
+   text-decoration: none;
+   font-weight: bold;
+   color: #fff;
+}
+
+.property-group-header a:hover {
+   font-weight: bold;
+   color: #ccc;
+}
+
+.spinner {
+   font-size: .6em;
+   margin-left: 40px;
+}
+
+.group-description-panel {
+   background-color: #DDD;
+}
+
+.group-description-text-panel {
+   margin-top: 5px;
+   margin-bottom: 5px;
+   font-size: 1em;
+   font-style: italic;
+   font-weight: bold;
+   color: #444;
+}
+
+.properties-table, .nested-properties-table {
+   width: 100%;
+   border-style: none;
+   border-collapse: collapse;
+}
+
+.nested-properties-table {
+   border: 1px solid #BBB;
+}
+
+.properties-table-header-cell, .nested-properties-table-header-cell {
+/*   background-color: #DDD;*/
+   color: #339;
+/*   border: 1px solid #BBB;*/
+   border-style: none;
+   border-bottom: 1px solid #BBB;   
+   padding: 4px;
+   text-align: center;
+}
+
+.nested-properties-table-header-cell {
+   background-color: #737373;
+}
+
+.nested-properties-table-indent-cell {
+   width: 9px;
+}
+
+.property-display-name-cell, .property-enabled-cell, .property-value-cell, .property-description-cell, .property-error-cell {
+   border-bottom: 1px solid #6666BB;
+   padding: 4px;
+   vertical-align: top;
+}
+
+.property-display-name-cell {
+   width: 200px;
+}
+
+.property-enabled-cell {
+   width: 22px;
+   text-align: center;
+}
+
+.property-value-cell {
+   width: 175px;
+}
+
+.list-property-display-name-cell, .list-property-value-cell, .list-property-description-cell, .list-property-enabled-cell, .list-property-error-cell {
+   padding: 4px;
+   vertical-align: top;
+}
+
+.list-property-display-name-cell {
+   width: 200px;
+}
+
+.list-property-value-cell {
+   width: 175px;
+}
+
+.list-property-enabled-cell {
+   width: 22px;
+   text-align: center;
+}
+
+.list-property-children-cell {
+   border-bottom: 1px solid #6666BB;
+}
+
+.display-name {
+   margin-right: 10px;
+   font-weight: bold;
+   font-size: 1em;
+}
+
+.buttons-table {
+   border-style: none;
+   border-collapse: collapse;
+   margin-top: 3px;
+   margin-left: 3px;
+   margin-bottom: 3px;
+}
+
+.button-cell {
+   padding: 3px;
+}
+
+.description {
+   color: #444;
+   font-size: 1em;
+   font-style: italic;
+   font-weight: normal;
+}
+
+.required-marker-text {
+   color: #AA2222;
+   font-weight: bold;
+}
+
+ul.radio-group {
+   border: none;
+   list-style-type: none;
+   margin-left: 0;
+   margin-top: 2px;
+   padding-left: 5px;
+   font-size: .8em;
+}
+
+ul.radio-group .unspecified {
+   font-style: italic;
+}
+
+.links {
+   font-size: 1em;
+   font-weight: bold;
+   margin-top: 5px;
+   margin-bottom: 5px;
+   margin-left: 5px;
+}
+
+.note-panel {
+   font-size: .9em;
+   font-style: italic;
+   margin-top: 5px;
+   margin-bottom: 5px;
+}
+
+.property-map-summary-table {
+   margin-left: 15px;
+   border: 2px solid #DDD;
+   border-collapse: collapse;
+}
+
+.property-map-summary-data-header-cell, .property-map-summary-buttons-cell, .property-map-summary-data-cell {
+   border: 1px solid #DDD;
+   padding: 4px;
+   vertical-align: top;
+   text-align: center;
+}
+
+.property-map-summary-data-header-cell {
+   width: 110px;
+   background-color: #DDD;
+}
+
+.property-map-summary-data-cell {
+   width: 110px;
+}
+
+.property-map-summary-header-text {
+   font-size: .9em;
+   font-weight: bolder;
+   color: #444;
+}
+
+.property-map-summary-data-text {
+   font-size: .9em;
+   font-weight: normal;
+}
+
+.property-display-name-text {
+   font-weight: bold;
+   font-size: 1em;
+}
+
+
+/*--- Inventory ---------------------*/
+
+.general-props-table {
+   width: 100%;
+   border-style: none;
+   border-collapse: collapse;
+   margin: 0 2px 0 0;
+}
+
+.general-prop-cell {
+   width: 50%;
+   border-style: none;
+   padding: 2px;
+   vertical-align: top;
+}
+
+.resources-table {
+   width: 100%;
+   border-style: none;
+   border-collapse: collapse;
+}
+
+.resource-checkbox, .resource-quicknav-cell, .resource-name-cell, .resource-category-cell, .resource-type-cell, .resource-description-cell, .resource-availability-cell, .count-cell, group-category-cell {
+   border-style: none;
+   border-bottom: 1px solid #999;
+   padding: 4px;
+   vertical-align: top;
+}
+
+.count-cell {
+   width: 60px;
+   text-align: center;
+}
+
+.resource-checkbox {
+   width: 20px;
+   text-align: center;
+}
+
+.resource-quicknav-cell {
+   width: 120px;
+   text-align: center;
+}
+
+.resource-name-cell {
+   width: 170px;
+}
+
+.resource-category-cell {
+   width: 70px;
+}
+
+.group-category-cell {
+   width: 100px;
+}
+
+.resource-type-cell {
+   width: 170px;
+}
+
+.resource-availability-cell {
+   width: 65px;
+   text-align: center;
+}
+
+.resources-control-cell {
+   border-style: none;
+   padding: 4px;
+   vertical-align: top;
+   width: 33%;
+}
+
+.quicknav-cell {
+   border-style: none;
+   padding: 0;
+}
+
+.quicknav-block {
+   width: 15px;
+}
+
+/*--- Artifacts ---------------------*/
+
+.revision-data-table {
+}
+
+.revision-data-table-header {
+   text-align: left;
+   background: #d9d9d9;
+}
+.revision-data-table-even-row {
+   background: #f0f0f0;
+}
+.revision-data-table-odd-row {
+}
+
+/*--- Pagination ---------------------*/
+
+.on-pager-footer {
+   background: #E5E5E5;
+}
+.on-pager-button {
+   float: left;
+   margin-left: 10px;
+   margin-bottom: 4px;
+}
+
+.rich-datascr {
+   background: transparent;
+   border-style: none;
+   width: 16em;
+   float: right;
+   margin-right: 4px;
+}
+
+.rich-datascr-button, .rich-datascr-ctrls-separator {
+	background-color: transparent;
+	border-style: none;
+	width: auto;
+}
+
+.rich-datascr-ctrls-separator {
+	padding: 0px 7px 0px 7px;
+	color:#8f8f8f;
+	cursor:default;
+}
+.rich-dtascroller-table {
+   border-style: none;
+   width: auto;
+   margin-top: 0;
+   background: transparent;
+}
+
+.rich-datascr-act {
+   color: #000000; 
+   border-top-style: none;
+	width: inherit;
+	padding: 0px 2px;
+}
+.rich-datascr-inact {
+   color: #003399;
+   border-top-style: none;
+   font-weight: bold;
+   width:inherit;
+	padding: 0px 2px;
+}
+
+.rich-datascr-textdisabled {
+	 color:#b3b3b3;
+	 cursor:default;
+}
+
+.rich-datascr-textlinks {
+	color: #527fa8;
+	text-decoration:underline;
+}

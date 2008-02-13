@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!-- -*- Mode: XML; indent-tabs-mode: nil; -*- -->
+<!DOCTYPE tiles-definitions PUBLIC
+     "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN"
+     "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+
+<tiles-definitions>
+  
+  <definition name=".page.title.admin.admin"
+              extends=".page.title">
+    <put name="titleBgStyle" value="PageTitle"/>
+    <put name="titleImg" value="spacer.gif"/>
+  </definition>              
+	
+  <definition name=".page.title.admin.role"
+              extends=".page.title">
+    <put name="titleBgStyle" value="PageTitleRoleBg"/>
+    <put name="titleImg" value="title_role.gif"/>
+  </definition>              
+  
+  <definition name=".page.title.admin.user"
+              extends=".page.title">
+    <put name="titleKey" value="admin.user.ListUsers"/>  
+    <put name="titleBgStyle" value="PageTitleUserBg"/>
+    <put name="titleImg" value="title_user.gif"/>
+  </definition>   
+               
+    <definition name=".page.title.admin.user.view"
+              extends=".page.title">    
+    <put name="titleBgStyle" value="PageTitleUserBg"/>
+    <put name="titleImg" value="title_user.gif"/>
+  </definition>   
+  
+  <!-- admin portlets -->
+  <definition name=".admin.home"
+              path="/admin/AdminHome.jsp"/>
+
+  <!-- license manager -->
+  <definition name=".admin.license.View"
+              controllerUrl="/admin/license/View.do"
+              path="/admin/license/License.jsp"/>
+
+  <definition name=".admin.license.Edit"
+              path="/admin/license/LicenseEdit.jsp"/>
+
+  <!-- admin role portlets -->
+  <definition name=".admin.role.List"
+              controllerUrl="/admin/role/List.do"
+              path="/admin/role/ListRoles.jsp"/>  
+
+  <definition name=".admin.role.New"
+              controllerUrl="/admin/role/NewFormPrepare.do"
+              path="/admin/role/NewRole.jsp"/>
+
+  <definition name=".admin.role.View"
+              controllerUrl="/admin/role/View.do"
+              path="/admin/role/ViewRole.jsp"/>
+
+  <definition name=".admin.role.Edit"
+              controllerUrl="/admin/role/EditFormPrepare.do"
+              path="/admin/role/EditRole.jsp"/>
+
+  <definition name=".admin.role.AddUsers"
+              controllerUrl="/admin/role/AddUsersFormPrepare.do"
+              path="/admin/role/AddRoleUsers.jsp"/>
+
+  <definition name=".admin.user.AddUserRoles"
+              controllerUrl="/admin/user/AddUserRolesFormPrepare.do"
+              path="/admin/user/AddUserRoles.jsp"/>
+
+  <definition name=".admin.role.AddGroups"
+              controllerUrl="/admin/role/AddResourceGroupsFormPrepare.do"
+              path="/admin/role/AddRoleGroups.jsp"/>
+
+  <definition name=".admin.role.ChangeOwner"
+              controllerUrl="/admin/role/ChangeOwnerFormPrepare.do"
+              path="/admin/role/ChangeRoleOwner.jsp"/>
+
+  <!--admin user portlets-->      
+  <definition name=".admin.user.List"
+              controllerUrl="/admin/user/List.do"
+              path="/admin/user/ListUsers.jsp"/>
+  
+  <definition name=".admin.user.Edit"
+              controllerUrl="/admin/user/EditUserFormPrepare.do"
+              path="/admin/user/EditUser.jsp"/>
+
+  <definition name=".admin.user.New"
+              controllerUrl="/admin/user/NewFormPrepare.do"
+              path="/admin/user/NewUser.jsp"/>
+
+  <!-- used to aggregate ViewProperties and ViewRoles for a user -->
+  <definition name=".admin.user.View"
+              controllerUrl="/admin/user/View.do"
+              path="/admin/user/ViewUser.jsp"/>  
+    
+  <definition name=".admin.user.ViewProperties"
+              path="/admin/user/ViewUserProperties.jsp"/>
+
+  <definition name=".admin.user.ViewRoles"
+              controllerUrl="/admin/user/ViewRoles.do"
+              path="/admin/user/ViewUserRoles.jsp"/> 
+
+  <definition name=".admin.user.UserRoles"
+              path="/admin/user/UserRoles.jsp"/>
+
+  <definition name=".admin.user.EditPassword"
+              controllerUrl="/admin/user/EditPasswordFormPrepare.do"
+              path="/admin/user/EditUserPassword.jsp">
+              <put name="administrator"      value="false"/>
+  </definition>
+
+  <definition name=".admin.user.RegisterUser"
+              controllerUrl="/admin/user/RegisterFormPrepare.do"
+              path="/admin/user/RegisterUser.jsp"/>
+
+  <definition name=".admin.config.EditConfig"
+              controllerUrl="/admin/config/EditConfigPrep.do"
+              path="/admin/config/EditServerConfig.jsp"/> 
+
+  <definition name=".admin.config.EditMonitorConfig"
+              path="/admin/config/ChangeResourceTemplate.jsp"/>
+  
+  <definition name=".admin.alerts.List"
+              controllerUrl="/alerts/ListDefinitions.do"
+              path="/admin/config/ListDefinitions.jsp"/>
+</tiles-definitions>

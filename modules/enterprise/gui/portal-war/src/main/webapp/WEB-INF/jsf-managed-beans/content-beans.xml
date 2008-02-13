@@ -1,0 +1,163 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <!-- /rhq/resource/content/view.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ListPackagesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ListPackagesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ListInProgressContentRequestsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ListInProgressContentRequestsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ListCompletedContentRequestsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ListCompletedContentRequestsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/resource/content/package_history.xhtml -->
+   <managed-bean>
+      <managed-bean-name>RetrieveContentUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.RetrieveContentUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/resource/content/create.xhtml -->
+   <managed-bean>
+      <managed-bean-name>CreateNewPackageUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.CreateNewPackageUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ListPackageTypesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ListPackageTypesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/resource/content/package_history.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ListPackageHistoryUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ListPackageHistoryUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/content/listContentSources.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ListContentSourcesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ListContentSourcesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+   <!-- /rhq/content/listChannels.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ListChannelsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ListChannelsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/content/createContentSource.xhtml -->
+   <managed-bean>
+      <managed-bean-name>CreateContentSourceUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.CreateContentSourceUIBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/content/contentSource.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ContentSourceDetailsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ContentSourceDetailsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ContentSourceSyncResultsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ContentSourceSyncResultsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ContentSourceChannelsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ContentSourceChannelsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ContentSourcePackageVersionsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ContentSourcePackageVersionsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/content/createChannel.xhtml -->
+   <managed-bean>
+      <managed-bean-name>CreateChannelUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.CreateChannelUIBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/content/channel.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ChannelDetailsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ChannelDetailsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ChannelContentSourcesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ChannelContentSourcesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ChannelResourcesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ChannelResourcesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ResourceChannelsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ResourceChannelsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>AvailableResourceChannelsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.AvailableResourceChannelsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ChannelPackageVersionsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ChannelPackageVersionsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/content/packageVersion.xhtml -->
+   <managed-bean>
+      <managed-bean-name>PackageVersionDetailsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.PackageVersionDetailsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/content/channelAssociations.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ChannelAssociationsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ChannelAssociationsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ChannelDisassociationsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ChannelDisassociationsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/content/channelSubscriptions.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ChannelSubscriptionsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ChannelSubscriptionsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ChannelUnsubscriptionsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ChannelUnsubscriptionsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+</faces-config>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- $Id: jboss-service.xml,v 1.3.2.12 2006/03/10 19:26:40 asaldhana Exp $ -->
+
+<server> 
+
+   <mbean code="org.rhq.enterprise.server.agent.EmbeddedAgentBootstrapService"
+          name="rhq:service=EmbeddedAgentBootstrap">
+
+      <attribute name="AgentEnabled">${rhq.server.embedded-agent.enabled:false}</attribute>
+      <attribute name="ResetConfiguration">${rhq.server.embedded-agent.reset-configuration:false}</attribute>
+      
+      <attribute name="ConfigurationOverrides" serialDataType="jbxb">
+         <java:properties xmlns:java="urn:jboss:java-properties"
+                          xmlns:xs="http://www.w3.org/2001/XMLSchema-instance"
+                          xs:schemaLocation="urn:jboss:java-properties resource:java-properties_1_0.xsd">
+
+            <!-- name of the embedded agent - the server's bind address will be part of the name -->
+
+            <java:property>
+               <java:key>rhq.agent.name</java:key>
+               <java:value>${rhq.server.embedded-agent.name:embedded-agent}</java:value>
+            </java:property>
+
+            <!-- the agent's server will point to the location of the server where it is embedded -->
+            
+            <java:property>
+               <java:key>rhq.agent.server.transport</java:key>
+               <java:value>${rhq.communications.connector.transport:servlet}</java:value>
+            </java:property>
+            <java:property>
+               <java:key>rhq.agent.server.bind-address</java:key>
+               <java:value>${rhq.communications.connector.bind-address}</java:value>
+            </java:property>
+            <java:property>
+               <java:key>rhq.agent.server.bind-port</java:key>
+               <java:value>${rhq.communications.connector.bind-port:7080}</java:value>
+            </java:property>
+            <java:property>
+               <java:key>rhq.agent.server.transport-params</java:key>
+               <java:value>${rhq.communications.connector.transport-params:/jboss-remoting-servlet-invoker/ServerInvokerServlet}</java:value>
+            </java:property>
+            
+            <!-- location where data files can be stored -->
+
+            <java:property>
+               <java:key>rhq.agent.data-directory</java:key>
+               <java:value>${jboss.server.data.dir}/embedded-agent</java:value>
+            </java:property>
+
+            <!-- location of the plugins -->
+            
+            <java:property>
+               <java:key>rhq.agent.plugins.directory</java:key>
+               <java:value>${jboss.server.home.dir}/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</java:value>
+            </java:property>
+            
+            <!-- Client-side SSL Security Configuration (for sending messages to the server) -->
+
+            <java:property>
+               <java:key>rhq.agent.client.security.secure-socket-protocol</java:key>
+               <java:value>${rhq.communications.connector.security.secure-socket-protocol:TLS}</java:value>
+            </java:property>
+            <java:property>
+               <java:key>rhq.agent.client.security.keystore.file</java:key>
+               <java:value>${rhq.communications.connector.security.keystore.file}</java:value>
+            </java:property>
+            <java:property>
+               <java:key>rhq.agent.client.security.keystore.algorithm</java:key>
+               <java:value>${rhq.communications.connector.security.keystore.algorithm:SunX509}</java:value>
+            </java:property>
+            <java:property>
+               <java:key>rhq.agent.client.security.keystore.type</java:key>
+               <java:value>${rhq.communications.connector.security.keystore.type:JKS}</java:value>
+            </java:property>
+            <java:property>
+               <java:key>rhq.agent.client.security.keystore.password</java:key>
+               <java:value>${rhq.communications.connector.security.keystore.password:rhqpw}</java:value>
+            </java:property>
+            <java:property>
+               <java:key>rhq.agent.client.security.keystore.key-password</java:key>
+               <java:value>${rhq.communications.connector.security.keystore.key-password:rhqpw}</java:value>
+            </java:property>
+            <java:property>
+               <java:key>rhq.agent.client.security.keystore.alias</java:key>
+               <java:value>${rhq.communications.connector.security.keystore.alias:rhq}</java:value>
+            </java:property>
+            <java:property>
+               <java:key>rhq.agent.client.security.truststore.file</java:key>
+               <java:value>${rhq.communications.connector.security.truststore.file}</java:value>
+            </java:property>
+            <java:property>
+               <java:key>rhq.agent.client.security.truststore.algorithm</java:key>
+               <java:value>${rhq.communications.connector.security.truststore.algorithm:SunX509}</java:value>
+            </java:property>
+            <java:property>
+               <java:key>rhq.agent.client.security.truststore.type</java:key>
+               <java:value>${rhq.communications.connector.security.truststore.type:JKS}</java:value>
+            </java:property>
+            <java:property>
+               <java:key>rhq.agent.client.security.truststore.password</java:key>
+               <java:value>${rhq.communications.connector.security.truststore.password:rhqpw}</java:value>
+            </java:property>
+            <java:property>
+               <java:key>rhq.agent.client.security.server-auth-mode-enabled</java:key>
+               <java:value>${rhq.server.client.security.server-auth-mode-enabled:true}</java:value>
+            </java:property>
+
+            <!-- indicate if you do not want the native system to be used by the embedded agent -->
+
+            <java:property>
+               <java:key>rhq.agent.disable-native-system</java:key>
+               <java:value>${rhq.server.embedded-agent.disable-native-system:false}</java:value>
+            </java:property>
+
+         </java:properties> 
+      </attribute> 
+      
+      <attribute name="EmbeddedAgentDirectory">${jboss.server.home.dir}/deploy/rhq-agent.sar/META-INF/embedded-agent</attribute>
+      
+      <!-- comma-separated arguments passed to agent main method; do not pass the -c or -p arguments -->
+      <attribute name="AgentArguments">--daemon,--output=${jboss.home.dir}/../logs/embedded-agent.out</attribute> 
+      
+   </mbean>
+
+</server>

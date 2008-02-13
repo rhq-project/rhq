@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<datasources>
+   <no-tx-datasource>
+      <jndi-name>jndiName</jndi-name>
+     <security-domain>domain</security-domain>
+      <!-- corresponding type-mapping in the standardjbosscmp-jdbc.xml (optional) -->
+      <metadata>
+         <type-mapping>Hypersonic SQL</type-mapping>
+      </metadata>
+
+      <!-- This mbean can be used when using in process persistent hypersonic -->
+      <depends>jboss:service=Hypersonic,database=localDB</depends>
+   </no-tx-datasource>
+
+   <mbean code="org.jboss.jdbc.HypersonicDatabase" 
+     name="jboss:service=Hypersonic">
+     <attribute name="Port">1701</attribute>
+     <attribute name="Silent">true</attribute>
+     <attribute name="Database">default</attribute>
+     <attribute name="Trace">false</attribute>
+     <attribute name="No_system_exit">true</attribute>
+   </mbean>
+
+
+
+   <mbean code="org.jboss.jdbc.HypersonicDatabase" 
+     name="jboss:service=Hypersonic,database=localDB">
+     <attribute name="Database">localDB</attribute>
+     <attribute name="InProcessMode">true</attribute>
+   </mbean>
+</datasources>

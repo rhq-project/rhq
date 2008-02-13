@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC
+      "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+      "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <property name="hibernate.connection.url">jdbc:postgresql://localhost:5432/rhq</property>
+        <property name="hibernate.connection.username">rhqadmin</property>
+        <property name="hibernate.connection.password">rhqadmin</property>
+        <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
+        <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+        <property name="hibernate.default_schema">public</property>
+
+        <!--
+        <property name="hibernate.connection.url">jdbc:oracle:thin:@dev01.qa.atl.jboss.com:1521:qadb01</property>
+        <property name="hibernate.connection.username">***</property>
+        <property name="hibernate.connection.password">***</property>
+        <property name="hibernate.connection.driver_class">oracle.jdbc.driver.OracleDriver</property>
+        <property name="hibernate.dialect">org.hibernate.dialect.OracleDialect</property>
+        -->
+        
+        <property name="hibernate.cache.use_second_level_cache">false</property> 
+        <property name="hibernate.cache.use_query_cache">false</property>
+
+        <mapping class="org.rhq.core.domain.auth.Principal" />
+        <mapping class="org.rhq.core.domain.auth.Subject" />
+        <mapping class="org.rhq.core.domain.authz.Role" />
+        <mapping class="org.rhq.core.domain.common.SystemConfiguration" />
+        <mapping class="org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate" />
+        <mapping class="org.rhq.core.domain.configuration.Configuration" />
+        <mapping class="org.rhq.core.domain.configuration.PluginConfigurationUpdate" />
+        <mapping class="org.rhq.core.domain.configuration.Property" />
+        <mapping class="org.rhq.core.domain.configuration.PropertyList" />
+        <mapping class="org.rhq.core.domain.configuration.PropertyMap" />
+        <mapping class="org.rhq.core.domain.configuration.PropertySimple" />
+        <mapping class="org.rhq.core.domain.configuration.ResourceConfigurationUpdate" />
+        <mapping class="org.rhq.core.domain.content.Architecture" />
+        <mapping class="org.rhq.core.domain.content.Channel" />
+        <mapping class="org.rhq.core.domain.content.ChannelContentSource" />
+        <mapping class="org.rhq.core.domain.content.ChannelPackageVersion" />
+        <mapping class="org.rhq.core.domain.content.ContentServiceRequest" />
+        <mapping class="org.rhq.core.domain.content.ContentSource" />
+        <mapping class="org.rhq.core.domain.content.ContentSourceSyncResults" />
+        <mapping class="org.rhq.core.domain.content.ContentSourceType" />
+        <mapping class="org.rhq.core.domain.content.InstalledPackage" />
+        <mapping class="org.rhq.core.domain.content.InstalledPackageHistory" />
+        <mapping class="org.rhq.core.domain.content.Package" />
+        <mapping class="org.rhq.core.domain.content.PackageBits" />
+        <mapping class="org.rhq.core.domain.content.PackageInstallationStep" />
+        <mapping class="org.rhq.core.domain.content.PackageType" />
+        <mapping class="org.rhq.core.domain.content.PackageVersion" />
+        <mapping class="org.rhq.core.domain.content.PackageVersionContentSource" />
+        <mapping class="org.rhq.core.domain.content.ProductVersionPackageVersion" />
+        <mapping class="org.rhq.core.domain.content.ResourceChannel" />
+        <mapping class="org.rhq.core.domain.event.EventLog" />
+        <mapping class="org.rhq.core.domain.measurement.Availability" />
+        <mapping class="org.rhq.core.domain.measurement.MeasurementBaseline" />
+        <mapping class="org.rhq.core.domain.measurement.MeasurementData" />
+        <mapping class="org.rhq.core.domain.measurement.MeasurementDataNumeric1D" />
+        <mapping class="org.rhq.core.domain.measurement.MeasurementDataNumeric1H" />
+        <mapping class="org.rhq.core.domain.measurement.MeasurementDataNumeric6H" />
+        <mapping class="org.rhq.core.domain.measurement.MeasurementDataTrait" />
+        <mapping class="org.rhq.core.domain.measurement.MeasurementDefinition" />
+        <mapping class="org.rhq.core.domain.measurement.MeasurementSchedule" />
+        <mapping class="org.rhq.core.domain.operation.GroupOperationHistory" />
+        <mapping class="org.rhq.core.domain.operation.GroupOperationScheduleEntity" />
+        <mapping class="org.rhq.core.domain.operation.OperationDefinition" />
+        <mapping class="org.rhq.core.domain.operation.OperationHistory" />
+        <mapping class="org.rhq.core.domain.operation.OperationScheduleEntity" />
+        <mapping class="org.rhq.core.domain.operation.ResourceOperationHistory" />
+        <mapping class="org.rhq.core.domain.operation.ResourceOperationScheduleEntity" />
+        <mapping class="org.rhq.core.domain.plugin.Plugin" />
+        <mapping class="org.rhq.core.domain.resource.Agent" />
+        <mapping class="org.rhq.core.domain.resource.CreateResourceHistory" />
+        <mapping class="org.rhq.core.domain.resource.DeleteResourceHistory" />
+        <mapping class="org.rhq.core.domain.resource.ProcessScan" />
+        <mapping class="org.rhq.core.domain.resource.ProductVersion" />
+        <mapping class="org.rhq.core.domain.resource.Resource" />
+        <mapping class="org.rhq.core.domain.resource.ResourceError" />
+        <mapping class="org.rhq.core.domain.resource.ResourceSubCategory" />
+        <mapping class="org.rhq.core.domain.resource.ResourceType" />
+        <mapping class="org.rhq.core.domain.configuration.definition.ConfigurationDefinition" />
+        <mapping class="org.rhq.core.domain.configuration.definition.ConfigurationTemplate" />
+        <mapping class="org.rhq.core.domain.configuration.definition.PropertyDefinition" />
+        <mapping class="org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration" />
+        <mapping class="org.rhq.core.domain.configuration.definition.PropertyDefinitionList" />
+        <mapping class="org.rhq.core.domain.configuration.definition.PropertyDefinitionMap" />
+        <mapping class="org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple" />
+        <mapping class="org.rhq.core.domain.configuration.definition.PropertyGroupDefinition" />
+        <mapping class="org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate" />
+        <mapping class="org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate" />
+        <mapping class="org.rhq.core.domain.configuration.group.AggregateResourceConfigurationUpdate" />
+        <mapping class="org.rhq.core.domain.event.alert.Alert" />
+        <mapping class="org.rhq.core.domain.event.alert.AlertCondition" />
+        <mapping class="org.rhq.core.domain.event.alert.AlertConditionLog" />
+        <mapping class="org.rhq.core.domain.event.alert.AlertDampeningEvent" />
+        <mapping class="org.rhq.core.domain.event.alert.AlertDefinition" />
+        <mapping class="org.rhq.core.domain.measurement.calltime.CallTimeDataKey" />
+        <mapping class="org.rhq.core.domain.measurement.calltime.CallTimeDataValue" />
+        <mapping class="org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds" />
+        <mapping class="org.rhq.core.domain.resource.group.Group" />
+        <mapping class="org.rhq.core.domain.resource.group.GroupDefinition" />
+        <mapping class="org.rhq.core.domain.resource.group.ResourceGroup" />
+        <mapping class="org.rhq.core.domain.configuration.definition.constraint.Constraint" />
+        <mapping class="org.rhq.core.domain.configuration.definition.constraint.FloatRangeConstraint" />
+        <mapping class="org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint" />
+        <mapping class="org.rhq.core.domain.configuration.definition.constraint.RegexConstraint" />
+        <mapping class="org.rhq.core.domain.event.alert.notification.AlertNotification" />
+        <mapping class="org.rhq.core.domain.event.alert.notification.AlertNotificationLog" />
+        <mapping class="org.rhq.core.domain.event.alert.notification.EmailNotification" />
+        <mapping class="org.rhq.core.domain.event.alert.notification.RoleNotification" />
+        <mapping class="org.rhq.core.domain.event.alert.notification.SnmpNotification" />
+        <mapping class="org.rhq.core.domain.event.alert.notification.SubjectNotification" />
+
+   </session-factory>
+</hibernate-configuration>

@@ -1,0 +1,64 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.enterprise.gui.legacy.portlet.savedqueries;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.StringTokenizer;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
+import org.apache.struts.tiles.ComponentContext;
+import org.apache.struts.tiles.actions.TilesAction;
+import org.rhq.core.clientapi.util.StringUtil;
+import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
+import org.rhq.enterprise.gui.legacy.util.SessionUtils;
+
+public class PrepareAction extends TilesAction {
+    @Override
+    public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
+        HttpServletRequest request, HttpServletResponse response) throws Exception {
+        PropertiesForm pForm = (PropertiesForm) form;
+
+        WebUser user = SessionUtils.getWebUser(request.getSession());
+        pForm.setDisplayOnDash(true);
+
+        List chartList = StringUtil.explode(user.getPreference(Constants.USER_DASHBOARD_CHARTS),
+            DashboardUtils.DASHBOARD_DELIMITER);
+
+        HashMap charts = new HashMap();
+
+        for (Iterator i = chartList.iterator(); i.hasNext();) {
+            StringTokenizer st = new StringTokenizer((String) i.next(), ",");
+            if (st.countTokens() >= 2) {
+                charts.put(st.nextToken(), st.nextToken());
+            }
+        }
+
+        request.setAttribute("charts", charts);
+        request.setAttribute("chartsize", String.valueOf(charts.size()));
+
+        return null;
+    }
+}

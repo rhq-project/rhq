@@ -1,0 +1,132 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-parent</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-plugins-parent</artifactId>
+  <packaging>pom</packaging>
+
+  <name>RHQ Plugins</name>
+  <description>parent POM for all JON plugins</description>
+
+  <scm>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/</connection>
+    <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/plugins/</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>modules/plugins/</scm.module.path>
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+     <groupId>${rhq.groupId}</groupId>
+     <artifactId>rhq-core-domain</artifactId>
+     <version>${project.version}</version>
+     <scope>provided</scope> <!-- by PC -->
+    </dependency>
+
+    <dependency>
+     <groupId>${rhq.groupId}</groupId>
+     <artifactId>rhq-core-plugin-api</artifactId>
+     <version>${project.version}</version>
+     <scope>provided</scope> <!-- by PC -->
+    </dependency>
+
+    <dependency>
+     <groupId>${rhq.groupId}</groupId>
+     <artifactId>rhq-core-native-system</artifactId>
+     <version>${project.version}</version>
+     <scope>provided</scope> <!-- by PC -->
+    </dependency>
+
+    <dependency>
+     <groupId>${rhq.groupId}</groupId>
+     <artifactId>rhq-core-plugin-container</artifactId>
+     <version>${project.version}</version>
+     <scope>test</scope>
+    </dependency>
+
+    <!-- TODO: This is a fix for the Javac bug requiring annotations to be
+               available when compiling dependent classes. It is fixed in JDK 6. -->
+    <dependency>
+      <groupId>javax.persistence</groupId>
+      <artifactId>persistence-api</artifactId>
+      <version>1.0</version>
+      <scope>provided</scope> <!-- by ON container -->
+    </dependency>
+
+    <!-- TODO: This is a fix for the Javac bug requiring annotations to be
+               available when compiling dependent classes; it is fixed in JDK 6. -->
+    <dependency>
+      <groupId>jboss.jboss-embeddable-ejb3</groupId>
+      <artifactId>hibernate-all</artifactId>
+      <version>1.0.0.Alpha9</version>
+      <scope>provided</scope> <!-- by ON container -->
+    </dependency>
+
+  </dependencies>
+
+  <modules>
+
+    <!-- plugins that are used by both enterprise and embedded -->
+    <module>platform</module>
+    <module>jmx</module>    
+    <module>jboss-as-5</module>
+    
+    <!-- plugins that are used only by enterprise -->
+    <module>rhq-agent</module>
+    <module>rhq-server</module>
+    <module>tomcat</module>
+    <module>jboss-as</module>    
+    <module>hibernate</module>
+    <module>apache</module>
+    <module>perftest</module>
+    <module>custom-jmx</module>
+
+    <module>database</module>
+    <module>postgres</module>
+
+  </modules>
+
+  <profiles>
+
+    <profile>
+      <id>embedded</id>
+      <activation>
+        <property>
+          <name>embedded</name>
+        </property>
+      </activation>
+      <!-- plugins that are used only by embedded -->
+      <modules>
+        <module>mock-jboss</module>
+        <module>jboss-as-5</module>
+        <module>jboss-as-5/testsuite</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>prod</id>
+      <activation>
+        <property>
+          <name>prod</name>
+        </property>
+      </activation>
+      <!-- plugins that should only be built for production builds -->
+      <modules>
+        <module>oracle</module>
+      </modules>
+    </profile>
+
+  </profiles>
+
+</project>

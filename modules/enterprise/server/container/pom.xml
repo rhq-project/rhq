@@ -1,0 +1,304 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-parent</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+    <relativePath>../../../../pom.xml</relativePath>
+  </parent>
+
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-enterprise-server-container</artifactId>
+  <packaging>zip</packaging>
+
+  <name>RHQ Enterprise Server Container</name>
+  <description>The full container build, including the JBossAS container and all config/deploy files</description>
+
+  <scm>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/container/</connection>
+    <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/container/</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>modules/enterprise/server/container/</scm.module.path>
+
+    <!-- dependency versions -->
+    <jboss.version>4.2.1.GAws201</jboss.version>
+    <jboss.ejb3.version>3.0.RC9</jboss.ejb3.version>
+    <jboss.ejb3.root-dir>jboss-EJB-3.0_RC9-FD</jboss.ejb3.root-dir> <!-- the distro zip's root directory -->
+
+    <rhq.webappsReloadable>false</rhq.webappsReloadable>
+
+    <!-- installer defaults for datasource config -->
+    <rhq.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhq</rhq.ds.connection-url>
+    <rhq.ds.driver-class>org.postgresql.Driver</rhq.ds.driver-class>
+    <rhq.ds.user-name>rhqadmin</rhq.ds.user-name>
+    <rhq.ds.password>rhqadmin</rhq.ds.password>
+    <rhq.ds.type-mapping>PostgreSQL</rhq.ds.type-mapping>
+  </properties>
+
+  <dependencies>
+
+    <!-- Internal Deps -->
+
+    <!-- 3rd Party Deps -->
+
+    <!-- TODO: Why do we need this?? -->
+    <dependency>
+      <groupId>commons-modeler</groupId>
+      <artifactId>commons-modeler</artifactId>
+      <version>1.1</version>
+    </dependency>
+
+   <dependency>
+      <groupId>javax.faces</groupId>
+      <artifactId>jsf-api</artifactId>
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+   </dependency>
+
+   <dependency>
+      <groupId>javax.faces</groupId>
+      <artifactId>jsf-impl</artifactId>
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+   </dependency>
+
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss</artifactId>
+      <version>${jboss.version}</version>
+      <type>zip</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>safe-invoker</artifactId>
+      <version>1.0.2</version>
+    </dependency>
+
+<!--
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-ejb</artifactId>
+      <version>${jboss.ejb3.version}</version>
+      <type>zip</type>
+    </dependency>
+-->
+    <dependency>
+      <groupId>jgroups</groupId>
+      <artifactId>jgroups-all</artifactId>
+      <version>2.2.9.1</version>
+    </dependency>
+
+    <!-- Uncomment the below block to pull down the Oracle JDBC jar from an internal repo.
+         The jar is optional, but if it is available in the local repo, the build will
+         include it in the container distribution. -->
+    <!--
+    <dependency>
+      <groupId>ojdbc14</groupId>
+      <artifactId>ojdbc14</artifactId>
+    </dependency>
+    -->
+
+    <dependency>
+      <groupId>postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <finalName>rhq-server-${project.version}</finalName>
+    <outputDirectory>target/${project.build.finalName}</outputDirectory>
+
+    <resources>
+
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+
+      <resource>
+        <directory>src/main/bin-resources</directory>
+        <filtering>false</filtering>
+      </resource>
+
+    </resources>
+
+    <plugins>
+
+      <plugin>
+        <groupId>org.jboss.maven.plugins</groupId>
+        <artifactId>maven-zip-plugin</artifactId>
+        <version>1.0</version>
+        <extensions>true</extensions>  <!-- allows Maven to grok the zip packaging type -->
+        <configuration>
+           <includeSourceDirectory>true</includeSourceDirectory>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.1</version>
+        <executions>
+
+          <execution>
+            <id>prepare-container</id>
+            <phase>generate-resources</phase>
+            <configuration>
+              <tasks>
+                <echo>settings.localRepository=${settings.localRepository}</echo>
+                <echo>project.build.outputDirectory=${project.build.outputDirectory}</echo>
+                <ant antfile="src/main/scripts/rhq-container.build.xml" target="prepare-container">
+                  <property name="settings.localRepository" value="${settings.localRepository}" />
+                  <property name="project.build.outputDirectory" value="${project.build.outputDirectory}" />
+                  <property name="jboss.ejb3.root-dir" value="${jboss.ejb3.root-dir}" />
+                  <property name="rhq.earName" value="${rhq.earName}" />
+
+                  <!-- dependency versions -->
+                  <property name="rhq.version" value="${project.version}" />
+                  <property name="jboss.version" value="${jboss.version}" />
+                  <property name="jboss.ejb3.version" value="${jboss.ejb3.version}" />
+                  <property name="ojdbc14.version" value="${ojdbc14.version}" />
+                  <property name="postgresql.version" value="${postgresql.version}" />
+                  <property name="jsf-api.version" value="${jsf-api.version}" />
+                  <property name="jsf-impl.version" value="${jsf-impl.version}" />
+                  <property name="el.version" value="${el.version}" />
+
+                  <!-- default server settings -->
+                  <property name="rhq.server.http.port" value="${rhq.server.http.port}" />
+                  <property name="rhq.server.https.port" value="${rhq.server.https.port}" />
+                  <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
+                  <property name="rhq.ds.driver-class" value="${rhq.ds.driver-class}" />
+                  <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
+                  <property name="rhq.ds.password" value="${rhq.ds.password}" />
+                  <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                </ant>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+
+          <execution>
+            <id>prepare-release</id>
+            <phase>process-resources</phase>
+            <configuration>
+              <tasks>
+                <echo>Preparing the release at ${project.build.outputDirectory}</echo>
+                <ant antfile="src/main/scripts/rhq-container.build.xml" target="prepare-release">
+                  <property name="project.build.outputDirectory" value="${project.build.outputDirectory}" />
+
+                  <!-- the 'dev.profile.active' prop is set to true by the root POM if the dev profile is active; -->
+                  <!-- if 'dev.profile.active' != "true", the container will be made packageable -->
+                  <!-- (i.e. running the installer first will be required); -->
+                  <!-- if 'dev.profile.active' == "true", the ear, datasource and JMS backend will be predeployed; -->
+                  <!-- developers will normally want to do this to avoid having to run the installer -->
+                  <!-- [mazz] added the ability to say -Ddeveloper to also predeploy, even if not in dev profile -->
+                  <property name="dev.profile.active" value="${dev.profile.active}" />
+                  <property name="developer" value="${developer}" />
+                  <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                  <property name="rhq.earName" value="${rhq.earName}" />
+                </ant>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+
+   <repositories>
+
+      <!-- for javax.faces and com.sun.facelets dependencies -->
+      <repository>
+         <id>java.net-m1-releases</id>
+         <name>Java.net Maven1 Repository</name>
+         <url>https://maven-repository.dev.java.net/repository/</url>
+         <layout>legacy</layout>
+      </repository>
+
+      <!-- for javax.el and com.sun.el dependencies -->
+      <repository>
+          <id>java.net-m2-releases</id>
+          <name>Java.net Maven2 Repository</name>
+          <url>http://download.java.net/maven/2/</url>
+      </repository>
+
+   </repositories>
+
+   <profiles>
+
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+
+            <rhq.webappsReloadable>true</rhq.webappsReloadable>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>package</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.containerDir}"/>
+                            <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
+                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                               <fileset dir="${basedir}/target/${project.build.finalName}"/>
+                            </copy>
+                            <!-- Make sure shell scripts are readable and executable. -->
+                            <chmod perm="ug+x" verbose="true">
+                               <fileset dir="${deployment.dir}/bin" includes="*.sh"/>
+                               <fileset dir="${deployment.dir}/jbossas/bin" includes="*.sh"/>
+                            </chmod>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.containerDir}"/>
+                            <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                            <delete dir="${deployment.dir}"/>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                  </executions>
+               </plugin>
+
+        </plugins>
+      </build>
+    </profile>
+
+  </profiles>
+
+</project>

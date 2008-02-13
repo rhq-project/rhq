@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax">
+
+   <body>
+
+      <f:view>
+
+         Usage: The following parameters must be set in the calling page
+
+         paginationDataTableName - Name of the data table to be controlled
+         paginationDataModel - Data model of the underlying table being controlled (used for total row count)
+         paginationPageControl - Page control value to set when changing the number of rows per page
+
+         <ui:composition>
+
+            <ui:param name="paginationDataScrollerName" value="#{paginationDataTableName}Scroller"/>
+            
+            <rich:datascroller id="#{paginationDataScrollerName}"
+                               for="#{paginationDataTableName}"
+                               rendered="true"
+                               stepControls="show" fastControls="hide" boundaryControls="hide"
+                               style="margin-top: .5ex;">
+               <f:facet name="next">
+                  <h:panelGroup>
+                     <h:graphicImage value="/images/tbb_pageright.gif" style="padding: 0px 5px 0px 7px;" />
+                  </h:panelGroup>
+               </f:facet>
+               <f:facet name="next_disabled">
+                  <h:panelGroup>
+                     <h:graphicImage value="/images/tbb_pageright_gray.gif" style="padding: 0px 5px 0px 7px;" />
+                  </h:panelGroup>
+               </f:facet>
+               <f:facet name="previous">
+                  <h:panelGroup>
+                     <h:graphicImage value="/images/tbb_pageleft.gif" style="padding: 0px 5px 0px 7px;" />
+                  </h:panelGroup>
+               </f:facet>
+               <f:facet name="previous_disabled">
+                  <h:panelGroup>
+                     <h:graphicImage value="/images/tbb_pageleft_gray.gif" style="padding: 0px 5px 0px 7px;" />
+                  </h:panelGroup>
+               </f:facet>
+            </rich:datascroller>
+
+            <h:panelGroup layout="block" style="margin-top: .4ex; float: right;">
+               <h:outputText value="Total: #{paginationDataModel.rowCount}" style="margin-right: 1em; font-weight: bold; "/>
+               <h:outputText value="Items Per Page:" style="margin-right: 2em; font-weight: bold; "/>
+               <h:selectOneListbox id="currentPageSize" size="1"
+                                   value="#{paginationPageControl.pageSize}">
+                  <a4j:support event="onchange" reRender="#{paginationDataTableName}, #{paginationDataScrollerName}"/>
+                  <f:selectItems value="#{PageControlSettingsUIBean.pageSizes}" />
+               </h:selectOneListbox>
+
+            </h:panelGroup>
+
+            <div style="clear: both;"/>
+
+         </ui:composition>
+      </f:view>
+
+   </body>
+</html>

@@ -1,0 +1,140 @@
+<plugin name="TestPlugin" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <help>This is a test help</help>
+
+   <!-- The configuration for this server should not throw any errors. -->
+   <server name="testServer1">
+
+      <content name="artifact1" displayName="Artifact One" category="configuration" description="Artifact Description"/>
+      
+      <content name="artifact2" displayName="Artifact Two" category="configuration" discoveryInterval="5000" />
+      
+      <resource-configuration>
+
+         <c:simple-property name="serverProperty1" default="DEFAULT TEMPLATE VALUE"/>
+
+         <c:simple-property name="serverProperty2" type="boolean"/>
+         <c:simple-property name="serverProperty3" type="directory"/>
+         <c:simple-property name="serverProperty4" type="file"/>
+         <c:simple-property name="serverProperty5" type="float"/>
+         <c:simple-property name="serverProperty5a" type="double"/>
+         <c:simple-property name="serverProperty6" type="integer"/>
+         <c:simple-property name="serverProperty6a" type="long"/>
+         <c:simple-property name="serverProperty7" type="longString"/>
+         <c:simple-property name="serverProperty8" type="password"/>
+         <c:simple-property name="serverProperty9" type="string"/>
+
+         <c:simple-property name="serverProperty10" activationPolicy="immediate"/>
+         <c:simple-property name="serverProperty11" activationPolicy="restart"/>
+         <c:simple-property name="serverProperty12" activationPolicy="shutdown"/>
+
+         <c:simple-property name="serverProperty15" type="string" default="Default String"/>
+         <c:simple-property name="serverProperty16" type="integer" default="5"/>
+
+         <c:simple-property name="serverProperty20" description="Test Description" displayName="Server Property"
+                          units="epoch_milliseconds"/>
+         <c:simple-property name="serverProperty21">
+            <c:description>
+               External Description
+            </c:description>
+         </c:simple-property>
+         <c:simple-property name="serverProperty22" description="Internal Description">
+            <c:description>External Description</c:description>
+         </c:simple-property>
+         <c:simple-property name="serverProperty23" defaultValue="Internal Default Value">
+            <c:defaultValueDescription>External Default Value</c:defaultValueDescription>
+         </c:simple-property>
+         <c:simple-property name="serverProperty24">
+            <c:defaultValueDescription>External Default Value</c:defaultValueDescription>
+         </c:simple-property>
+
+         <c:simple-property name="serverProperty25" required="false" readOnly="true"/>
+         <c:simple-property name="serverProperty26" required="true" readOnly="false"/>
+
+         <c:simple-property name="serverProperty31" type="integer">
+            <c:constraint>
+               <c:integer-constraint minimum="0"/>
+            </c:constraint>
+            <c:constraint>
+               <c:integer-constraint maximum="100"/>
+            </c:constraint>
+            <c:constraint>
+               <c:integer-constraint minimum="20" maximum="80"/>
+            </c:constraint>
+         </c:simple-property>
+
+         <c:simple-property name="serverProperty32" type="float">
+            <c:constraint>
+               <c:float-constraint minimum="0.5"/>
+               <c:float-constraint maximum="99.9"/>
+               <c:float-constraint minimum="20.2" maximum="80.8"/>
+            </c:constraint>
+         </c:simple-property>
+
+         <c:list-property name="serverProperty40">
+         </c:list-property>
+
+         <c:list-property name="serverProperty41">
+            <c:simple-property name="listProperty41" type="integer"/>
+         </c:list-property>
+
+         <c:list-property name="serverProperty42" description="List Description" displayName="List Property"/>
+         <c:list-property name="serverProperty43">
+            <c:description>
+               External Description
+            </c:description>
+         </c:list-property>
+         <c:list-property name="serverProperty44" description="Internal Description">
+            <c:description>External Description</c:description>
+         </c:list-property>
+
+         <c:map-property name="serverProperty50"/>
+         <c:map-property name="serverProperty51">
+            <c:simple-property name="simpleProperty51"/>
+            <c:list-property name="listProperty51"/>
+            <c:map-property name="mapProperty51"/>
+         </c:map-property>
+         <c:map-property name="serverProperty52" description="Map Description" displayName="Map Property"/>
+         <c:map-property name="serverProperty53">
+            <c:description>
+               External Description
+            </c:description>
+         </c:map-property>
+         <c:map-property name="serverProperty54" description="Internal Description">
+            <c:description>External Description</c:description>
+         </c:map-property>
+
+         <c:simple-property name="myJDBCAcronymProperty"/>
+         <c:simple-property name="myJDBC33Property"/>
+
+      </resource-configuration>
+
+   </server>
+
+   <!-- Invalid Configuration: A float range assigned to an integer type. -->
+   <server name="testServer2">
+      <resource-configuration>
+         <c:simple-property name="property1" type="integer">
+            <c:constraint>
+               <c:float-constraint minimum="0"/>
+            </c:constraint>
+         </c:simple-property>
+      </resource-configuration>   
+   </server>
+
+   <!-- Invalid Configuration: An integer range assigned without either min or max values. -->
+   <server name="testServer3">
+      <resource-configuration>
+         <c:simple-property name="property1" type="integer">
+            <c:constraint>
+               <c:integer-constraint/>
+            </c:constraint>
+         </c:simple-property>
+      </resource-configuration>
+   </server> 
+
+</plugin>
+   

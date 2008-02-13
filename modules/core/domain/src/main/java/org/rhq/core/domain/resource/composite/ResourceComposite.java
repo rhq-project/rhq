@@ -1,0 +1,111 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.core.domain.resource.composite;
+
+import java.util.Set;
+import javax.xml.bind.annotation.XmlElement;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+
+/**
+ * @author Greg Hinkle
+ * @author Ian Springer
+ */
+public class ResourceComposite {
+    @XmlElement
+    private Resource resource;
+
+    @XmlElement
+    private ResourcePermission resourcePermission;
+
+    @XmlElement
+    private AvailabilityType availability;
+
+    private ResourceFacets resourceFacets;
+
+    public ResourceComposite() {
+    }
+
+    /**
+     * Provides full access permissions - used for admin queries.
+     */
+    public ResourceComposite(Resource resource, AvailabilityType availability) {
+        this(resource, availability, new ResourcePermission());
+    }
+
+    /**
+     * Provides specified permissions - used for non-admin queries.
+     */
+    public ResourceComposite(Resource resource, AvailabilityType availability, Number measure, Number inventory,
+        Number control, Number alert, Number configure, Number software) {
+        this(resource, availability, new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0, control
+            .intValue() > 0, alert.intValue() > 0, configure.intValue() > 0, software.intValue() > 0));
+    }
+
+    /**
+     * Private constructor that both public constructors delegate to.
+     */
+    private ResourceComposite(Resource resource, AvailabilityType availability, ResourcePermission resourcePermission) {
+        this.resource = resource;
+        this.availability = availability;
+        this.resourcePermission = resourcePermission;
+
+        // TODO: Add support for retrieving the supported facets to the Resource.QUERY_FIND_COMPOSITE_COUNT query.
+        ResourceType resourceType = this.resource.getResourceType();
+        this.resourceFacets = new ResourceFacets(!resourceType.getMetricDefinitions().isEmpty(), resourceType
+            .getResourceConfigurationDefinition() != null, !resourceType.getOperationDefinitions().isEmpty(),
+            !resourceType.getPackageTypes().isEmpty(), exposesCallTimeMetrics(resourceType));
+    }
+
+    public Resource getResource() {
+        return resource;
+    }
+
+    public AvailabilityType getAvailability() {
+        return availability;
+    }
+
+    public ResourcePermission getResourcePermission() {
+        return resourcePermission;
+    }
+
+    public ResourceFacets getResourceFacets() {
+        return resourceFacets;
+    }
+
+    @Override
+    public String toString() {
+        return "[ResourceComposite] Resource: " + resource + "\n\tAvailability: " + availability + "\n\tPermissions: "
+            + resourcePermission + "\n\tFacets: " + resourceFacets;
+    }
+
+    private static boolean exposesCallTimeMetrics(ResourceType resourceType) {
+        Set<MeasurementDefinition> measurementDefs = resourceType.getMetricDefinitions();
+        for (MeasurementDefinition measurementDef : measurementDefs) {
+            if (measurementDef.getDataType() == DataType.CALLTIME) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}

@@ -1,0 +1,288 @@
+<?xml version="1.0"?>
+
+<!--
+This task is responsible for concatenating all DBSetup -data and -schema .xml files
+and then to run DBSetup to prepare the database.  It can also perform a DBUpgrade.
+
+To run the default target, you must set one of the following properties to true:
+  - dbsetup:            to run the full clean and install of a new schema
+  - dbsetup-uninstall:  to fully uninstall the schema and all its data
+  - dbsetup-upgrade:    to just update an existing schema
+  - dbsetup-export:     to export an existing schema to XML
+-->
+
+<project name="dbsetup" default="dbsetup-only-if-do-dbsetup" basedir="..\..\..">
+
+   <!-- set the do-dbsetup-X property to indicate what needs to be done -->  
+   <condition property="do-dbsetup-setup">
+      <equals arg1="${dbsetup}" arg2="true"/>
+   </condition>
+   <condition property="do-dbsetup-uninstall">
+      <equals arg1="${dbsetup-uninstall}" arg2="true"/>
+   </condition>
+   <condition property="do-dbsetup-upgrade">
+      <equals arg1="${dbsetup-upgrade}" arg2="true"/>
+   </condition>
+   <condition property="do-dbsetup-export">
+      <equals arg1="${dbsetup-export}" arg2="true"/>
+   </condition>
+  
+   <!-- load in the development environment properties - used as replacements for the @@@ strings in the dbsetup xml files -->
+   <property file="${basedir}/src/main/scripts/dbsetup.properties"/>
+
+   <!-- define the location of things we are going to generate -->
+   <property name="dbsetup.scripts.dir"     value="${basedir}/src/main/scripts/dbsetup" />
+   <property name="dbsetup.output.dir"      value="${basedir}/target/dbsetup" /> <!-- away from classes so it doesn't go into the jar -->
+   <property name="dbsetup.subsystems"      value="config,inventory,auth,authz,operation,events,sysconfig,scheduler,amps,measurement,content,resource-request"/>
+   <property name="dbsetup.combined.schema" value="${dbsetup.output.dir}/all-schema.xml" />
+   <property name="dbsetup.combined.data"   value="${dbsetup.output.dir}/all-data.xml" />
+   <property name="dbsetup.tstamp.file"     value="${dbsetup.output.dir}/dbsetup-combine.tstamp" />
+   <property name="dbsetup.sql.log"         value="${dbsetup.output.dir}/dbsetup-install-${rhq.ds.type-mapping}.log" />
+
+   <!-- the installer will need these, so put them in the jar someplace -->
+   <property name="jar.dbsetup.output.dir"      value="${basedir}/target/classes" />
+   <property name="jar.dbsetup.combined.schema" value="${jar.dbsetup.output.dir}/db-schema-combined.xml" />
+   <property name="jar.dbsetup.combined.data"   value="${jar.dbsetup.output.dir}/db-data-combined.xml" />
+   <property name="jar.dbupgrade.file"          value="${jar.dbsetup.output.dir}/db-upgrade.xml" />
+   
+   <!-- define our custom ANT tasks -->
+   <target name="dbsetup-init-taskdefs"
+           unless="dbsetup-init-taskdefs.notrequired">
+     <path id="full.task.classpath">
+        <pathelement path="${task.classpath.property}" />
+        <pathelement location="${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar" />
+     </path>
+     <property name="full.task.classpath.property" refid="full.task.classpath" /> 
+     
+     <echo message="Task Classpath: ${full.task.classpath.property}"/>
+      
+     <taskdef resource="db-ant-tasks.properties">
+        <classpath refid="full.task.classpath" />
+     </taskdef>
+     <property name="dbsetup-init-taskdefs.notrequired" value="true" />
+   </target>
+
+   <!-- performs some initialization steps prior to starting the DBSetup -->
+   <target name="dbsetup-init"
+           depends="dbsetup-init-taskdefs"
+           unless="dbsetup-init.notrequired">
+  
+      <delete file="${dbsetup.output.dir}/dbsetup-${rhq.ds.type-mapping}-install.log" />
+
+      <echo message="Database:  ${rhq.ds.type-mapping}" />
+      <echo message="JDBC URL:  ${rhq.ds.connection-url}" />
+      <echo message="JDBC User: ${rhq.ds.user-name}" />
+
+      <mkdir dir="${dbsetup.output.dir}"/>
+      <property name="dbsetup-init.notrequired" value="true"/>
+   </target>
+
+   <!-- do a timestamp check to see if we really need to combine all the dbsetup subsystem files -->
+   <target name="dbsetup-combine-check">
+      <uptodate property="dbsetup-combine.notrequired"
+                targetfile="${dbsetup.tstamp.file}">
+         <srcfiles dir="${dbsetup.scripts.dir}">
+            <include name="*.xml"/>
+         </srcfiles>
+      </uptodate>
+   </target>
+
+   <!-- combine all the DBSetup subsystem XML files into two - one for schema and one for data -->
+   <target name="dbsetup-combine"
+           depends="dbsetup-init,dbsetup-combine-check"
+           unless="dbsetup-combine.notrequired">
+
+      <delete file="${dbsetup.combined.schema}"/>
+      <dbsetup-cat destfile="${dbsetup.combined.schema}"
+                   name="schema"
+                   order="${dbsetup.subsystems}">
+         <fileset dir="${dbsetup.scripts.dir}">
+            <include name="*-schema.xml"/>
+         </fileset>
+         <sysproperty key="i18nlog.dump-keys" value="false" />
+         <sysproperty key="i18nlog.log-locale-is-default" value="true" />
+      </dbsetup-cat>
+
+      <delete file="${dbsetup.combined.data}"/>
+      <dbsetup-cat destfile="${dbsetup.combined.data}"
+                   name="data.xml"
+                   order="${dbsetup.subsystems}">
+         <fileset dir="${dbsetup.scripts.dir}">
+            <include name="*.xml"/>
+            <exclude name="*-schema.xml"/>
+         </fileset>
+         <sysproperty key="i18nlog.dump-keys" value="false" />
+         <sysproperty key="i18nlog.log-locale-is-default" value="true" />
+      </dbsetup-cat>
+
+      <!-- these need to be replaced for all copies of the combined files -->  
+      <replace file="${dbsetup.combined.data}">
+         <replacefilter token="@@@SERVER_VERSION@@@"    value="${project.version}"/>
+         <replacefilter token="@@@DB_SCHEMA_VERSION@@@" value="${db.schema.version}"/>
+      </replace>
+  
+      <!-- copy the combined files to the jar; note that in those jar copies, -->
+      <!-- we do not replace the other replacement strings, the installer will do that -->  
+      <copy file="${dbsetup.combined.data}" tofile="${jar.dbsetup.combined.data}" />  
+      <copy file="${dbsetup.combined.schema}" tofile="${jar.dbsetup.combined.schema}" />  
+      <copy file="${dbsetup.scripts.dir}/../dbupgrade/db-upgrade.xml" tofile="${jar.dbupgrade.file}" />  
+      
+      <touch file="${dbsetup.tstamp.file}"/>
+   </target>
+
+   <!-- This replaces @@@ tokens found in the DBSetup XML files with their respective custom settings -->
+   <!-- Note this is only done in our development builds - the installer will do its own replacements -->  
+   <!-- If you add new/remove replacement @@@ tokens, you must modify the installer class ServerInformation -->  
+   <target name="dbsetup-replace" depends="dbsetup-combine">
+
+      <replace file="${dbsetup.combined.schema}">
+         <replacefilter token="@@@LARGE_TABLESPACE_FOR_DATA@@@" value="${server.tablespace.large-data}"/>
+         <replacefilter token="@@@LARGE_TABLESPACE_FOR_INDEX@@@" value="${server.tablespace.large-index}"/>
+      </replace>
+
+      <md5 value="${server.admin.password}" property="server.admin.password.encrypted"/>
+
+      <replace file="${dbsetup.combined.data}">
+         <replacefilter token="@@@ADMINUSERNAME@@@"    value="${server.admin.username}"/>
+         <replacefilter token="@@@ADMINPASSWORD@@@"    value="${server.admin.password.encrypted}"/>
+         <replacefilter token="@@@ADMINEMAIL@@@"       value="${server.admin.email}"/>
+         <replacefilter token="@@@BASEURL@@@"          value="${server.webapp.baseurl}"/>
+         <replacefilter token="@@@JAASPROVIDER@@@"     value="${server.jaas.provider}"/>
+         <replacefilter token="@@@LDAPURL@@@"          value="${server.ldap.url}"/>
+         <replacefilter token="@@@LDAPPROTOCOL@@@"     value="${server.ldap.protocol}"/>
+         <replacefilter token="@@@LDAPLOGINPROP@@@"    value="${server.ldap.loginProperty}"/>
+         <replacefilter token="@@@LDAPBASEDN@@@"       value="${server.ldap.baseDN}"/>
+         <replacefilter token="@@@LDAPSEARCHFILTER@@@" value="${server.ldap.searchFilter}"/>
+         <replacefilter token="@@@LDAPBINDDN@@@"       value="${server.ldap.bindDN}"/>
+         <replacefilter token="@@@LDAPBINDPW@@@"       value="${server.ldap.bindPW}"/>
+         <replacefilter token="@@@MULTICAST_ADDR@@@"   value="${server.highavail.address}"/>
+         <replacefilter token="@@@MULTICAST_PORT@@@"   value="${server.highavail.port}"/>
+      </replace>
+   </target>
+
+   <!-- Creates the schema but does not insert any data.  Assumes the schema does not yet exist -->
+   <target name="dbsetup-create-schema"
+           depends="dbsetup-init,dbsetup-replace"
+           description="Initialize the database schema but not the data - assumes the schema does not yet exist">
+
+      <antcall target="dbsetup-process-file">
+         <param name="_xmlfile" value="${dbsetup.combined.schema}"/>
+         <param name="_dataonly" value="false"/>
+         <param name="_uninstall" value="false"/>
+      </antcall>
+   </target>
+
+   <!-- Inserts the dbsetup data.  Assumes the schema already exists. -->
+   <target name="dbsetup-data"
+           depends="dbsetup-init,dbsetup-replace"
+           description="Initialize the data - assumes the schema already exists">
+
+      <antcall target="dbsetup-process-file">
+         <param name="_xmlfile" value="${dbsetup.combined.data}"/>
+         <param name="_dataonly" value="true"/>
+         <param name="_uninstall" value="false"/>
+      </antcall>
+   </target>
+
+   <!-- Deletes all data and uninstalls the schema tables, views and indexes -->
+   <target name="dbsetup-uninstall"
+           depends="dbsetup-init,dbsetup-replace"
+           description="Drop the schema and all its data">
+
+      <antcall target="dbsetup-process-file">
+         <param name="_xmlfile" value="${dbsetup.combined.schema}"/>
+         <param name="_dataonly" value="false"/>
+         <param name="_uninstall" value="true"/>
+      </antcall>
+   </target>
+
+   <!-- Exports the schema and its data to a xml file for debugging - cannot reimport this XML file -->
+   <target name="dbsetup-export"
+           depends="dbsetup-init,dbsetup-replace"
+           description="Exports the schema info and its data - for informational purposes only; cannot be reimported">
+
+      <echo>Exporting schema to file ${dbsetup.output.dir}/db-export.xml ...</echo>  
+      <dbsetup xmlFile="${dbsetup.output.dir}/db-export.xml"
+               jdbcUrl="${rhq.ds.connection-url}"
+               jdbcUser="${rhq.ds.user-name}"
+               jdbcPassword="${rhq.ds.password}"
+               exportXml="true">
+         <sysproperty key="i18nlog.dump-keys" value="false" />
+         <sysproperty key="i18nlog.log-locale-is-default" value="true" />
+         <sysproperty key="jdbcLogSqlOnly" value="true" />
+      </dbsetup>  
+   </target>
+
+   <!-- This target is used via antcall by other targets in this script. The params expected are:
+          _xmlfile   : the full pathname of the combined DBSetup xml file
+          _dataonly  : if the dbsetup file is creating/dropping tables, this is false.
+                       if the dbsetup file is inserting data and is not to create tables, this is true.
+          _uninstall : if the dbsetup file is creating stuff, this is false.
+                       if the dbsetup file is dropping stuff, this is true.
+   -->
+   <target name="dbsetup-process-file" depends="dbsetup-init-taskdefs">
+
+      <echo>Processing DBSetup file ${_xmlfile}...</echo>  
+      <dbsetup xmlFile="${_xmlfile}"
+               jdbcUrl="${rhq.ds.connection-url}"
+               jdbcUser="${rhq.ds.user-name}"
+               jdbcPassword="${rhq.ds.password}"
+               dataOnly="${_dataonly}"
+               sqlFile="${dbsetup.sql.log}"
+               uninstall="${_uninstall}">
+         <sysproperty key="i18nlog.dump-keys" value="false" />
+         <sysproperty key="i18nlog.log-locale-is-default" value="true" />
+         <sysproperty key="jdbcLogSqlOnly" value="true" />
+      </dbsetup>  
+   </target>
+
+   <!-- the gateway to the main target - rhq-dbsetup-X properties control what actually is executed -->
+   <target name="dbsetup-only-if-do-dbsetup"
+           depends="dbsetup-only-if-prop-set,
+                    dbsetup-uninstall-only-if-prop-set,
+                    dbsetup-upgrade-only-if-prop-set,
+                    dbsetup-export-only-if-prop-set" />
+   
+   <!-- these targets will trigger the appropriate dbsetup but only if a property of the same name as the target was set -->
+   <target name="dbsetup-only-if-prop-set" if="do-dbsetup-setup" >
+      <antcall target="dbsetup" />
+   </target>
+   <target name="dbsetup-uninstall-only-if-prop-set" if="do-dbsetup-uninstall" >
+      <antcall target="dbsetup-uninstall" />
+   </target>
+   <target name="dbsetup-upgrade-only-if-prop-set" if="do-dbsetup-upgrade" >
+      <antcall target="dbsetup-upgrade" />
+   </target>
+   <target name="dbsetup-export-only-if-prop-set" if="do-dbsetup-export" >
+      <antcall target="dbsetup-export" />
+   </target>
+
+   <!-- Does the full drop and recreate -->
+   <target name="dbsetup"
+           depends="dbsetup-schema-only,dbsetup-data,dbsetup-upgrade"
+           description="Full drop, creation then upgrade to the latest schema" />
+
+   <!-- Drops any schema if one exists and then creates a new empty schema without data -->
+   <target name="dbsetup-schema-only"
+           depends="dbsetup-combine,dbsetup-replace,dbsetup-uninstall,dbsetup-create-schema"
+           description="Create schema but without any data. Drops schema if it already existed."/>
+
+   <!-- Updates an existing schema and its data to a schema version defined by target.schema.version property -->
+   <target name="dbsetup-upgrade"
+           depends="dbsetup-init-taskdefs,dbsetup-replace"
+           description="Updates an existing schema to the latest schema version">
+
+      <ant antfile="${dbsetup.scripts.dir}/../dbupgrade/db-upgrade.xml"
+           target="upgrade"
+           inheritAll="true"
+           inheritRefs="true">
+         <property name="jdbc.url" value="${rhq.ds.connection-url}"/>
+         <property name="jdbc.user" value="${rhq.ds.user-name}"/>
+         <property name="jdbc.password" value="${rhq.ds.password}"/>
+         <property name="target.schema.version" value="${target.schema.version}"/>
+         <property name="i18nlog.dump-keys" value="false" />
+         <property name="i18nlog.log-locale-is-default" value="true" />  
+      </ant>
+   </target>
+
+</project>

@@ -1,0 +1,512 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:config="urn:xmlns:rhq-configuration"
+           targetNamespace="urn:xmlns:rhq-configuration"
+           elementFormDefault="qualified"
+           jaxb:version="2.0"
+           xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" blockDefault="">
+
+   <xs:annotation>
+      <xs:documentation>Schema for the definition of generic configuration data.
+      </xs:documentation>
+      <xs:appinfo>
+         <jaxb:schemaBindings>
+            <jaxb:package name="org.rhq.core.clientapi.descriptor.configuration"/>
+         </jaxb:schemaBindings>
+      </xs:appinfo>
+   </xs:annotation>
+
+   <xs:complexType name="configuration">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class name="ConfigurationDescriptor"/>
+         </xs:appinfo>
+         <xs:documentation>Describes all configurable elements of a resource.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="notes" type="xs:string" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>General notes on the overall configuration.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element ref="config:configuration-property" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element name="group" type="config:propertyGroup" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element name="template" type="config:configurationTemplate" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+   </xs:complexType>
+
+
+   <xs:complexType name="configurationTemplate">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class name="ConfigurationTemplateDescriptor"/>
+         </xs:appinfo>
+         <xs:documentation>Describes a template of configuration values.</xs:documentation>
+      </xs:annotation>
+
+      <xs:complexContent>
+         <xs:extension base="config:configuration">
+            <xs:attribute name="name" type="xs:string" use="required"/>
+            <xs:attribute name="description" use="required">
+               <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                     <xs:whiteSpace value="collapse" fixed="true"/>
+                  </xs:restriction>
+               </xs:simpleType>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+
+   <xs:complexType name="propertyGroup">
+      <xs:sequence>
+         <xs:element name="description" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>Description of types of properties contained in this group.</xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"/>
+                  <xs:minLength value="1"/>
+                  <xs:maxLength value="250"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element ref="config:configuration-property" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="name" use="required">
+         <xs:annotation>
+            <xs:documentation>Name of the group as it is internally known to the plugin</xs:documentation>
+         </xs:annotation>
+         <xs:simpleType>
+            <xs:restriction base="xs:string">
+               <xs:whiteSpace value="collapse"/>
+               <xs:minLength value="1"/>
+               <xs:maxLength value="100"/>
+            </xs:restriction>
+         </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="displayName" use="optional">
+         <xs:annotation>
+            <xs:documentation>Descriptive name of the group.</xs:documentation>
+         </xs:annotation>
+         <xs:simpleType>
+            <xs:restriction base="xs:string">
+               <xs:whiteSpace value="collapse"/>
+               <xs:minLength value="1"/>
+               <xs:maxLength value="100"/>
+            </xs:restriction>
+         </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="hiddenByDefault" type="xs:boolean" default="false">
+         <xs:annotation>
+            <xs:documentation>If true, this group would not be shown to the user by default, but require an extra click
+               to see (e.g. to expand a collapsible panel).
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:element name="configuration-property" abstract="true" type="config:configurationProperty"/>
+   <xs:complexType name="configurationProperty">
+      <xs:annotation>
+         <xs:documentation>Base class for all configuration properties.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+
+         <xs:element name="description" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>a more detailed description of the property's purpose</xs:documentation>
+               <xs:appinfo>
+                  <jaxb:property name="longDescription"/>
+               </xs:appinfo>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"/>
+                  <xs:minLength value="1"/>
+                  <xs:maxLength value="4000"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+
+      </xs:sequence>
+
+      <xs:attribute name="name" use="required">
+         <xs:annotation>
+            <xs:documentation>the name of the property as it is internally known to the plugin</xs:documentation>
+         </xs:annotation>
+         <xs:simpleType>
+            <xs:restriction base="xs:string">
+               <xs:whiteSpace value="collapse"/>
+               <xs:minLength value="1"/>
+               <xs:maxLength value="100"/>
+            </xs:restriction>
+         </xs:simpleType>
+      </xs:attribute>
+
+      <xs:attribute name="displayName" use="optional">
+         <xs:annotation>
+            <xs:documentation>Descriptive name of the property. If not provided, a camel case property will be English
+               translated. (e.g myName -> My Name)
+            </xs:documentation>
+         </xs:annotation>
+         <xs:simpleType>
+            <xs:restriction base="xs:string">
+               <xs:whiteSpace value="collapse"/>
+               <xs:minLength value="1"/>
+               <xs:maxLength value="100"/>
+            </xs:restriction>
+         </xs:simpleType>
+      </xs:attribute>
+
+      <xs:attribute name="description" use="optional">
+         <xs:simpleType>
+            <xs:restriction base="xs:string">
+               <xs:whiteSpace value="collapse"/>
+               <xs:minLength value="1"/>
+               <xs:maxLength value="1000"/>
+            </xs:restriction>
+         </xs:simpleType>
+      </xs:attribute>
+
+      <xs:attribute name="required" type="xs:boolean" use="optional" default="true">
+         <xs:annotation>
+            <xs:documentation>If true, the property must be set for the configuration to be considered valid.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+
+      <xs:attribute name="readOnly" type="xs:boolean" use="optional" default="false">
+         <xs:annotation>
+            <xs:documentation>If true, the property can only be read via JON, but not set.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+
+      <xs:attribute name="summary" type="xs:boolean" use="optional" default="false">
+         <xs:annotation>
+            <xs:documentation>If true, this property is marked as part of the summary information for the parent
+               object.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+
+   </xs:complexType>
+
+   <xs:element name="simple-property" type="config:simpleProperty" substitutionGroup="config:configuration-property"/>
+   <xs:complexType name="simpleProperty">
+      <xs:complexContent>
+         <xs:extension base="config:configurationProperty">
+
+            <xs:sequence>
+
+               <xs:element name="property-options" type="config:propertyOptions" minOccurs="0" maxOccurs="1"/>
+
+               <xs:element name="constraint" type="config:constraintType" minOccurs="0" maxOccurs="unbounded"/>
+
+               <xs:element name="defaultValueDescription" minOccurs="0" maxOccurs="1">
+                  <xs:annotation>
+                     <xs:documentation>a description of the property's default value (if it has one)</xs:documentation>
+                  </xs:annotation>
+                  <xs:simpleType>
+                     <xs:restriction base="xs:string">
+                        <xs:whiteSpace value="collapse"/>
+                        <xs:minLength value="1"/>
+                        <xs:maxLength value="1000"/>
+                     </xs:restriction>
+                  </xs:simpleType>
+               </xs:element>
+
+            </xs:sequence>
+
+            <xs:attribute name="type" type="config:propertyType" default="string" use="optional">
+               <xs:annotation>
+                  <xs:documentation>data type of the property's value (default type is "string")</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+
+            <xs:attribute name="defaultValue" use="optional">
+               <xs:annotation>
+                  <xs:documentation>the property's default value; this element should be defined for properties whose
+                     required attribute is "false" (i.e. for optional properties); conversely, this element should not
+                     be defined for properties whose required attribute is "true" (i.e. for required properties); not
+                     to be confused with the 'default' attribute, which specifies the initial value for a property
+                     when a new configuration is created</xs:documentation>
+               </xs:annotation>
+               <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                     <!-- NOTE: No collapse restriction is defined, since the property's default value could be a string containing significant whitespace. -->
+                     <!-- NOTE: No minLength restriction is defined, since the property's default value could be an empty string. -->
+                     <xs:maxLength value="2000"/>
+                  </xs:restriction>
+               </xs:simpleType>
+            </xs:attribute>
+
+            <!-- TODO: Rename this attribute to "initialValue", so it will not be confused with the "defaultValue"
+                 attribute. (ips, 07/20/07) -->
+            <xs:attribute name="default" use="optional">
+               <xs:annotation>
+                  <xs:documentation>the initial value for this property when a new configuration is created; not to be
+                     confused with the 'defaultValue' attribute, which specifies the default value for an optional
+                     property that is not defined in a configuration</xs:documentation>
+                  <xs:appinfo>
+                     <jaxb:property name="initialValue"/>
+                  </xs:appinfo>                  
+               </xs:annotation>
+               <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                     <!-- NOTE: No collapse restriction is defined, since the property's default initial value could be a string containing significant whitespace. -->
+                     <!-- NOTE: No minLength restriction is defined, since the property's default initial value could be an empty string. -->
+                     <xs:maxLength value="2000"/>
+                  </xs:restriction>
+               </xs:simpleType>
+            </xs:attribute>
+
+            <xs:attribute name="units" type="config:measurementUnitsDescriptor" use="optional">
+               <xs:annotation>
+                  <xs:documentation>units the property value is measured in (if applicable) - typically should only be
+                     set for properties with type="integer" or type="float"</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+
+            <xs:attribute name="activationPolicy" default="immediate" type="config:activationPolicy" use="optional">
+               <xs:annotation>
+                  <xs:documentation>conditions under which a change to this property will become effective
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:element name="map-property" type="config:mapProperty" substitutionGroup="config:configuration-property"/>
+   <xs:complexType name="mapProperty">
+      <xs:annotation>
+         <xs:documentation>The definition of a child map of properties.</xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension base="config:configurationProperty">
+            <xs:sequence>
+               <xs:element ref="config:configuration-property" minOccurs="0" maxOccurs="unbounded">
+                  <xs:annotation>
+                     <xs:documentation>The map of child property definitions. If not supplied, the map can contain
+                        artitrary child properties.
+                     </xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:simpleType name="maxCount">
+      <xs:annotation>
+         <xs:documentation>
+            for max counts of lists
+         </xs:documentation>
+      </xs:annotation>
+      <xs:union memberTypes="xs:nonNegativeInteger">
+         <xs:simpleType>
+            <xs:restriction base="xs:NMTOKEN">
+               <xs:enumeration value="unbounded"/>
+            </xs:restriction>
+         </xs:simpleType>
+      </xs:union>
+   </xs:simpleType>
+
+   <xs:element name="list-property" type="config:listProperty" substitutionGroup="config:configuration-property"/>
+   <xs:complexType name="listProperty">
+      <xs:annotation>
+         <xs:documentation>The definition of a child list of properties.</xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension base="config:configurationProperty">
+            <xs:sequence>
+               <xs:element ref="config:configuration-property" minOccurs="0" maxOccurs="1">
+                  <xs:annotation>
+                     <xs:documentation>The type of child property. If not supplied properties can be arbitrary.
+                     </xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+            </xs:sequence>
+            <xs:attribute name="min" type="xs:nonNegativeInteger" default="0"/>
+            <xs:attribute name="max" type="config:maxCount" default="unbounded"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:simpleType name="activationPolicy">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="immediate"/>
+         <xs:enumeration value="restart"/>
+         <xs:enumeration value="shutdown"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+   <!-- == Property Details ======================= -->
+
+   <xs:simpleType name="propertyType">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="string"/>
+         <xs:enumeration value="longString"/>
+         <xs:enumeration value="password"/>
+         <xs:enumeration value="boolean"/>
+         <xs:enumeration value="integer"/>
+         <xs:enumeration value="long"/>
+         <xs:enumeration value="float"/>
+         <xs:enumeration value="double"/>
+         <xs:enumeration value="file"/>
+         <xs:enumeration value="directory"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:complexType name="propertyOptions">
+      <xs:annotation>
+         <xs:documentation>
+            Contains the elements of an enumerated property.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="option" type="config:option" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="allowCustomValue" type="xs:boolean" use="optional" default="false">
+         <xs:annotation>
+            <xs:documentation>
+               If false, indicates that the value of the property must
+               be one of the enumerated option values. If true, the user
+               is free to enter any value, which does not necessarily
+               have to be one of the enumerated option values.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType name="option">
+      <xs:annotation>
+         <xs:documentation>Used to describe items available in a property with a list type.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:attribute name="name" use="optional">
+         <xs:annotation>
+            <xs:documentation>Display name to be used for the item. Defaults to the value if not supplied.
+            </xs:documentation>
+         </xs:annotation>
+         <xs:simpleType>
+            <xs:restriction base="xs:string"/>
+         </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="value" use="required">
+         <xs:annotation>
+            <xs:documentation>Value to use as the property value if this item is selected.
+            </xs:documentation>
+         </xs:annotation>
+         <xs:simpleType>
+            <xs:restriction base="xs:string"/>
+         </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="default" default="false" use="optional">
+         <xs:annotation>
+            <xs:documentation>Indicates this item is the default item in the list. Default value is false.
+            </xs:documentation>
+         </xs:annotation>
+         <xs:simpleType>
+            <xs:restriction base="xs:boolean"/>
+         </xs:simpleType>
+      </xs:attribute>
+   </xs:complexType>
+
+   <!-- == Property Constraints ================= -->
+
+   <xs:complexType name="constraintType">
+      <xs:annotation>
+         <xs:documentation>
+             A constraint on a property value.  Allows you to define what a value's
+             type should be as well as additional constraints such as matching
+             a regular expression or a number falling within a range.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:choice maxOccurs="unbounded" minOccurs="1">
+         <xs:element name="integer-constraint" type="config:integerConstraintType"/>
+         <xs:element name="float-constraint" type="config:floatConstraintType"/>
+         <xs:element name="regex-constraint" type="config:regexConstraintType"/>
+      </xs:choice>
+   </xs:complexType>
+
+   <xs:complexType name="integerConstraintType">
+      <xs:annotation>
+         <xs:documentation>
+            Constraint to indicate a value must be an integer. If specified, the
+            minimum and maximum values will indicate the range in which the value must fall.
+            This range is inclusive, so a value that is equal to either the minimum or the
+            maximum will be considered valid.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:attribute name="minimum" type="xs:integer">
+         <xs:annotation><xs:documentation>Minimum integer value (inclusive) for the property value.</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="maximum" type="xs:integer">
+         <xs:annotation><xs:documentation>Maximum integer value (inclusive) for the property value.</xs:documentation></xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType name="floatConstraintType">
+      <xs:annotation>
+         <xs:documentation>
+            Constraint to indicate a value must be an decimal. If specified, the
+            minimum and maximum values will indicate the range in which the value must fall.
+            This range is inclusive, so a value that is equal to either the minimum or the
+            maximum will be considered valid.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:attribute name="minimum" type="xs:float">
+         <xs:annotation><xs:documentation>Minimum decimal value (inclusive) for the property value.</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="maximum" type="xs:float">
+         <xs:annotation><xs:documentation>Maximum decimal value (inclusive) for the property value.</xs:documentation></xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType name="regexConstraintType">
+      <xs:annotation>
+         <xs:documentation>
+            Constraint to indicate a value must match the specified
+            regular expression.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:attribute name="expression" type="xs:string" use="required">
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:simpleType name="measurementUnitsDescriptor">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="none"/>
+         <xs:enumeration value="percentage">
+            <xs:annotation>
+               <xs:documentation>
+                  Values expected in decimal [0.00,1.00]
+               </xs:documentation>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="bits"/>
+         <xs:enumeration value="kilobits" />
+         <xs:enumeration value="megabits" />
+         <xs:enumeration value="gigabits" />
+         <xs:enumeration value="terabits" />
+         <xs:enumeration value="petabits" />
+         <xs:enumeration value="bytes"/>
+         <xs:enumeration value="kilobytes"/>
+         <xs:enumeration value="megabytes"/>
+         <xs:enumeration value="gigabytes"/>
+         <xs:enumeration value="terabytes"/>
+         <xs:enumeration value="epoch_milliseconds"/>
+         <xs:enumeration value="nanoseconds"/>
+         <xs:enumeration value="milliseconds"/>
+         <xs:enumeration value="seconds"/>
+         <xs:enumeration value="minutes"/>
+         <xs:enumeration value="hours"/>
+         <xs:enumeration value="days"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+</xs:schema>

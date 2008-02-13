@@ -1,0 +1,42 @@
+<plugin name="JBossAS"
+        displayName="JBossAS"
+        package="org.rhq.plugins.test2"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="JMX" />
+   <depends plugin="Tomcat" />
+
+   <server name="JBossASServer"
+           discovery="JBossASDiscoveryComponent"
+           class="JBossASServerComponent"
+           description="JBoss Application Server Description">
+      
+      <operation name="stop" displayName="Stop JBossAS Server" description="Kills the server" timeout="30">
+         <parameters>
+            <c:simple-property name="force"
+                             displayName="Force Kill"
+                             type="boolean"
+                             required="false"
+                             default="false"
+                             description="If true, use operating system to kill the process; otherwise, use JBoss remote JMX method to shut it down"/>
+         </parameters>
+         <results>
+            <c:simple-property name="confirmed"
+                             displayName="Confirmed Down"
+                             type="boolean"
+                             required="true"
+                             description="If true, the server is definitely down; otherwise, the shutdown was issued but it is unclear if it really died"/>
+         </results>
+      </operation>     
+      <server name="EmbeddedTomcatServer"
+              description="Embedded Tomcat Web Server Description"
+              sourcePlugin="Tomcat"
+              sourceType="TomcatServer"
+              discovery="JBossASTomcatDiscoveryComponent"
+              class="JBossASTomcatServerComponent">
+      </server>
+      
+   </server>
+</plugin>

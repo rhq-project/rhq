@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <component>
+      <component-type>org.jboss.on.SortableColumnHeader</component-type>
+      <component-class>org.rhq.enterprise.gui.common.sorting.SortableColumnHeader</component-class>
+      <property>
+         <description>the fragment to use when generating the JPQL</description>
+         <property-name>sort</property-name>
+         <property-class>java.lang.String</property-class>
+      </property>
+
+      <component-extension>
+         <component-family>javax.faces.Link</component-family>
+         <renderer-type>org.jboss.on.SortableColumnHeader</renderer-type>
+      </component-extension>
+   </component>
+   
+   <render-kit>
+
+      <renderer>
+         <description>render for a SortableColumnHeader component</description>
+         <component-family>org.jboss.on.SortableColumnHeader</component-family>
+         <renderer-type>org.jboss.on.SortableColumnHeader</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.common.sorting.SortableColumnHeaderRenderer</renderer-class>
+      </renderer>
+
+   </render-kit>
+
+</faces-config>

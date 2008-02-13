@@ -1,0 +1,966 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!DOCTYPE form-validation PUBLIC
+          "-//Apache Software Foundation//DTD Commons Validator Rules Configuration 1.1.3//EN"
+          "http://jakarta.apache.org/commons/dtds/validator_1_1_3.dtd">
+
+<form-validation>
+  <formset>
+
+    <constant>
+     <constant-name>noSpace</constant-name>
+     <constant-value>^[\S]*$</constant-value>
+    </constant>
+
+    <constant>
+     <constant-name>alphanumeric</constant-name>
+     <constant-value>^[a-zA-Z0-9]*$</constant-value>
+    </constant>
+
+    <constant>
+     <constant-name>alphaNoSpaces</constant-name>
+     <constant-value>^[a-zA-Z0-9]*$</constant-value>
+    </constant>
+
+    <constant>
+     <constant-name>numeric</constant-name>
+     <constant-value>^[0-9]*$</constant-value>
+    </constant>
+
+    <constant>
+     <constant-name>humanName</constant-name>
+     <constant-value>^[a-zA-Z0-9 \-']*$</constant-value>
+    </constant>
+    <constant>
+
+    <constant-name>UserName</constant-name>
+     <constant-value>^[a-zA-Z0-9 @ \. \-']*$</constant-value>
+    </constant>
+
+    <constant>
+     <constant-name>ipAddress</constant-name>
+     <constant-value>^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$</constant-value>
+    </constant>
+
+    <constant>
+     <constant-name>oid</constant-name>
+     <constant-value>^[0-9]+\.[0-9]+(\.[0-9]+)+$</constant-value>
+    </constant>
+
+    <form name="LoginForm">
+      <field property="j_username" depends="required">
+        <arg key="login.field.username"/>
+      </field>
+      <field property="j_password" depends="required">
+        <arg key="login.field.password"/>
+      </field>
+    </form>
+
+    <!-- role admin forms -->
+    <form name="RoleForm">
+      <field property="name" depends="required">
+        <msg name="required" key="admin.role.error.RoleNameIsRequired"/>
+      </field>
+      <field property="description" depends="maxlength">
+        <var>
+          <var-name>maxlength</var-name>
+          <var-value>100</var-value>
+        </var>
+        <msg name="maxlength" key="admin.role.error.RoleDescriptionMaxLength"/>
+      </field>
+    </form>
+
+    <!-- resource forms -->
+    <form name="ServerControlForm">
+       <field property="controlAction" depends="required">
+        <arg0 key="resource.common.control.Action"/>
+       </field>
+       <field property="description" depends="maxlength">
+        <arg0 key="common.header.Description"/>
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>100</var-value>
+        </var>
+       </field>
+    </form>
+
+    <form name="GroupControlForm">
+       <field property="controlAction" depends="required">
+        <arg0 key="resource.common.control.Action"/>
+       </field>
+       <field property="description" depends="maxlength">
+        <arg0 key="common.header.Description"/>
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>100</var-value>
+        </var>
+       </field>
+    </form>
+
+    <form name="ResourceForm">
+      <field property="name" depends="required,maxlength">
+        <msg name="required"
+             key="resource.common.inventory.error.ResourceNameIsRequired"/>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>100</var-value>
+        </var>
+        <msg name="maxlength" key="resource.common.inventory.error.NameMaxLength"/>
+      </field>
+      <field property="description" depends="maxlength">
+        <arg0 key="common.header.Description"/>
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>100</var-value>
+        </var>
+       </field>
+    </form>
+
+    <form name="NewPlatformForm">
+      <field property="name" depends="required,maxlength">
+        <msg name="required"
+             key="resource.platform.inventory.error.PlatformNameIsRequired"/>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>100</var-value>
+        </var>
+        <msg name="maxlength" key="resource.common.inventory.error.NameMaxLength"/>
+      </field>
+
+      <field property="fqdn" depends="required">
+        <msg name="required"
+             key="resource.platform.inventory.error.FQDNIsRequired"/>
+      </field>
+
+      <field property="description" depends="maxlength">
+        <arg0 key="common.header.Description"/>
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>100</var-value>
+        </var>
+       </field>
+
+      <!-- the value must be a positive integer -->
+      <field property="resourceType" depends="required,intRange">
+        <arg0 key="resource.platform.inventory.type.field.MachineType"/>
+        <arg1 name="intRange" key="${var:min}" resource="false"/>
+        <arg2 name="intRange" key="${var:max}" resource="false"/>
+        <var>
+          <var-name>min</var-name>
+          <var-value>1</var-value>
+        </var>
+        <var>
+          <var-name>max</var-name>
+          <var-value>99999</var-value>
+        </var>
+        <msg name="required"
+             key="resource.platform.inventory.error.MachineTypeIsRequired"/>
+        <msg name="intRange"
+             key="resource.platform.inventory.error.MachineTypeIsRequired"/>
+      </field>
+
+      <!-- The IP addresses -->
+      <field property="ip[0].address" depends="required,mask">
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${ipAddress}</var-value>
+        </var>
+        <msg name="required"
+             key="resource.platform.inventory.error.IpAddressIsRequired"/>
+        <msg name="mask"
+             key="resource.platform.inventory.error.IpAddressInvalid"/>
+      </field>
+
+      <!-- The netmasks -->
+      <field property="ip[0].netmask" depends="mask">
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${ipAddress}</var-value>
+        </var>
+        <msg name="mask"
+             key="resource.platform.inventory.error.NetmaskInvalid"/>
+      </field>
+
+    </form>
+
+     <form name="SystemConfigForm">
+
+      <field property="deleteUnitsVal" depends="required,intRange">
+        <arg0 key="common.field.value"/>
+        <arg1 name="intRange" key="${var:min}" resource="false"/>
+        <arg2 name="intRange" key="${var:max}" resource="false"/>
+        <var>
+          <var-name>min</var-name>
+          <var-value>1</var-value>
+        </var>
+        <var>
+          <var-name>max</var-name>
+          <var-value>7</var-value>
+        </var>
+        <msg name="required"
+              key="admin.settings.error.DeleteUnitsField"/>
+        <msg name="intRange"
+              key="admin.settings.error.DeleteUnitsField"/>
+      </field>
+
+      <field property="ldapUrl" depends="validwhen">
+        <arg0 key="admin.settings.LDAPUrlLabel"/>
+        <var>
+          <var-name>test</var-name>
+          <var-value>((*this* != null) or (ldapEnabled == null))</var-value>
+        </var>
+      </field>
+
+      <field property="ldapUsername" depends="validwhen">
+        <arg0 key="admin.settings.LDAPUsernameLabel"/>
+        <var>
+          <var-name>test</var-name>
+          <var-value>((*this* != null) or (ldapEnabled == null))</var-value>
+        </var>
+      </field>
+
+      <field property="ldapSearchBase" depends="validwhen">
+        <arg0 key="admin.settings.LDAPSearchBaseLabel"/>
+        <var>
+          <var-name>test</var-name>
+          <var-value>((*this* != null) or (ldapEnabled == null))</var-value>
+        </var>
+      </field>
+
+      <field property="snmpTrapOID" depends="mask">
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${oid}</var-value>
+        </var>
+        <msg name="mask"
+             key="admin.settings.error.InvalidSNMPTrapOID"/>
+      </field>
+
+      <!-- SNMP passhrase fields validated in the form class    -->
+
+      <field property="snmpEngineID" depends="mask">
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${numeric}</var-value>
+        </var>
+        <msg name="mask"
+             key="admin.settings.error.InvalidSNMPEngineID"/>
+      </field>
+
+      <field property="snmpGenericID" depends="mask">
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${numeric}</var-value>
+        </var>
+        <msg name="mask"
+             key="admin.settings.error.InvalidSNMPGenericID"/>
+      </field>
+
+    </form>
+
+    <form name="SnmpTrapForm">
+
+       <field property="host" depends="required">
+         <msg name="required"
+              key="errors.required"/>
+       </field>
+
+       <field property="port" depends="intRange">
+         <arg0 key="alert.config.edit.snmp.port"/>
+         <arg1 name="intRange" key="${var:min}" resource="false"/>
+         <arg2 name="intRange" key="${var:max}" resource="false"/>
+         <var>
+           <var-name>min</var-name>
+           <var-value>1</var-value>
+         </var>
+         <var>
+           <var-name>max</var-name>
+           <var-value>65535</var-value>
+         </var>
+         <msg name="intRange"
+              key="alert.config.edit.snmp.error.invalidPort"/>
+       </field>
+
+      <field property="oid" depends="required,mask">
+        <arg0 key="alert.config.edit.snmp.oid"/>
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${oid}</var-value>
+        </var>
+        <msg name="required"
+             key="errors.required"/>
+        <msg name="mask"
+             key="common.error.invalid.oid"/>
+      </field>
+
+    </form>
+
+    <!-- for validating the general properties of an application:
+    Name, description, location, resourceType -->
+    <form name="ApplicationForm">
+      <field property="name" depends="required,maxlength">
+        <arg0 name="required"
+              key="resource.application.inventory.ApplicationName"/>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>100</var-value>
+        </var>
+        <msg name="maxlength" key="resource.common.inventory.error.NameMaxLength"/>
+      </field>
+      <field property="description" depends="maxlength">
+        <arg0 key="common.header.Description"/>
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>100</var-value>
+        </var>
+       </field>
+      <!-- the value must be a positive integer -->
+      <field property="resourceType" depends="required,intRange">
+        <arg0 key="resource.application.inventory.ApplicationTypeField"/>
+        <arg1 name="intRange" key="${var:min}" resource="false"/>
+        <var>
+          <var-name>min</var-name>
+          <var-value>1</var-value>
+        </var>
+        <var>
+          <var-name>max</var-name>
+          <var-value>99999</var-value>
+        </var>
+        <msg  name="intRange"
+              key="errors.required"/>
+      </field>
+    </form>
+
+    <!-- for validating editing properties of an application resourceType -->
+    <form name="EditApplicationForm">
+      <!-- the value must be a positive integer -->
+      <field property="resourceType" depends="required,intRange">
+        <arg0 key="resource.application.inventory.ApplicationTypeField"/>
+        <arg1 name="intRange" key="${var:min}" resource="false"/>
+        <arg2 name="intRange" key="${var:max}" resource="false"/>
+        <var>
+          <var-name>min</var-name>
+          <var-value>1</var-value>
+        </var>
+        <var>
+          <var-name>max</var-name>
+          <var-value>99999</var-value>
+        </var>
+        <msg  name="intRange"
+              key="errors.required"/>
+      </field>
+    </form>
+
+    <!-- for validating the general properties of an application Name, description, location -->
+    <form name="EditGeneralApplicationForm">
+      <field property="name" depends="required,maxlength">
+        <arg0 name="required"
+              key="resource.application.inventory.ApplicationName"/>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>100</var-value>
+        </var>
+        <msg name="maxlength" key="resource.common.inventory.error.NameMaxLength"/>
+      </field>
+      <field property="description" depends="maxlength">
+        <arg0 key="common.header.Description"/>
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>100</var-value>
+        </var>
+       </field>
+    </form>
+
+    <form name="EditPlatformTypeNetworkPropertiesForm">
+      <field property="fqdn" depends="required">
+        <msg name="required"
+             key="resource.platform.inventory.error.FQDNIsRequired"/>
+      </field>
+
+      <!-- the value must be a positive integer -->
+      <!--      commented the editPlatform form checks for machineId
+      <field property="resourceType" depends="required,integer,range">
+        <var>
+          <var-name>min</var-name>
+          <var-value>1</var-value>
+        </var>
+        <var>
+          <var-name>max</var-name>
+          <var-value>99999</var-value>
+        </var>
+        <msg name="required"
+             key="resource.platform.inventory.error.MachineTypeIsRequired"/>
+        <msg name="integer"
+             key="resource.platform.inventory.error.MachineTypeIsRequired"/>
+        <msg name="range"
+             key="resource.platform.inventory.error.MachineTypeIsRequired"/>
+      </field>
+     ****(end comment but leave the form element)
+     -->
+   </form>
+    <!-- this is for general properties, don't need resourceType validation -->
+    <form name="GeneralServerForm">
+      <field property="name" depends="required,maxlength">
+        <msg name="required"
+             key="resource.server.inventory.error.ServerNameIsRequired"/>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>100</var-value>
+        </var>
+        <msg name="maxlength" key="resource.common.inventory.error.NameMaxLength"/>
+      </field>
+      <field property="description" depends="maxlength">
+        <arg0 key="common.header.Description"/>
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>100</var-value>
+        </var>
+       </field>
+      <field property="description" depends="maxlength">
+        <var>
+          <var-name>maxlength</var-name>
+          <var-value>100</var-value>
+        </var>
+        <msg name="maxlength" key="resource.group.inventory.error.DescriptionMaxLength"/>
+      </field>
+    </form>
+
+    <form name="QuickControlForm">
+      <field property="resourceAction" depends="required">
+        <arg0 name="required"
+             key="resource.server.QuickAction.Title"/>
+      </field>
+    </form>
+
+    <form name="ServerForm">
+      <field property="name" depends="required,maxlength">
+        <msg name="required"
+             key="resource.server.inventory.error.ServerNameIsRequired"/>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>100</var-value>
+        </var>
+        <msg name="maxlength" key="resource.common.inventory.error.NameMaxLength"/>
+      </field>
+      <field property="installPath" depends="required,maxlength">
+        <msg name="required"
+             key="resource.server.inventory.error.ServerInstallPathIsRequired"/>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>200</var-value>
+        </var>
+        <msg name="maxlength" key="resource.common.inventory.error.InstallPathMaxLength"/>
+      </field>
+      <!-- the value must be a positive integer -->
+      <field property="resourceType" depends="required,intRange">
+        <arg0 key="resource.group.inventory.New.props.ServerType"/>
+        <arg1 name="intRange" key="${var:min}" resource="false"/>
+        <arg2 name="intRange" key="${var:max}" resource="false"/>
+        <var>
+          <var-name>min</var-name>
+          <var-value>1</var-value>
+        </var>
+        <var>
+          <var-name>max</var-name>
+          <var-value>99999</var-value>
+        </var>
+        <msg name="required"
+             key="resource.server.inventory.error.ServerTypeIsRequired"/>
+        <msg name="intRange"
+             key="resource.server.inventory.error.ServerTypeIsRequired"/>
+      </field>
+      <field property="description" depends="maxlength">
+        <var>
+          <var-name>maxlength</var-name>
+          <var-value>100</var-value>
+        </var>
+        <msg name="maxlength" key="resource.group.inventory.error.DescriptionMaxLength"/>
+      </field>
+     </form>
+
+    <form name="ServerHostTypeForm">
+        <field property="installPath" depends="required,maxlength">
+        <msg name="required"
+             key="resource.server.inventory.error.ServerInstallPathIsRequired"/>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>200</var-value>
+        </var>
+        <msg name="maxlength" key="resource.common.inventory.error.InstallPathMaxLength"/>
+      </field>
+    </form>
+
+    <form name="ServiceForm">
+      <field property="name" depends="required,maxlength">
+        <msg name="required"
+             key="resource.service.inventory.error.ServiceNameIsRequired"/>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>100</var-value>
+        </var>
+        <msg name="maxlength" key="resource.common.inventory.error.NameMaxLength"/>
+      </field>
+      <!-- the value must be a positive integer -->
+      <field property="resourceType" depends="required,intRange">
+        <arg0 key="resource.group.inventory.New.props.ServiceType"/>
+        <arg1 name="intRange" key="${var:min}" resource="false"/>
+        <arg2 name="intRange" key="${var:max}" resource="false"/>
+        <var>
+          <var-name>min</var-name>
+          <var-value>1</var-value>
+        </var>
+        <var>
+          <var-name>max</var-name>
+          <var-value>99999</var-value>
+        </var>
+        <msg name="required"
+             key="resource.service.inventory.error.ServiceTypeIsRequired"/>
+        <msg name="intRange"
+             key="resource.service.inventory.error.ServiceTypeIsRequired"/>
+      </field>
+      <field property="description" depends="maxlength">
+        <var>
+          <var-name>maxlength</var-name>
+          <var-value>100</var-value>
+        </var>
+        <msg name="maxlength" key="resource.group.inventory.error.DescriptionMaxLength"/>
+      </field>
+    </form>
+
+    <form name="GroupForm">
+      <field property="name" depends="required,maxlength">
+        <msg name="required"
+             key="resource.group.inventory.error.GroupNameIsRequired"/>
+        <var>
+          <var-name>maxlength</var-name>
+          <var-value>100</var-value>
+        </var>
+        <msg name="maxlength" key="resource.common.inventory.error.NameMaxLength"/>
+      </field>
+      <field property="description" depends="maxlength">
+        <var>
+          <var-name>maxlength</var-name>
+          <var-value>100</var-value>
+        </var>
+        <msg name="maxlength" key="resource.group.inventory.error.DescriptionMaxLength"/>
+      </field>
+      <!-- the value must be a positive integer -->
+      <field property="category" depends="required">
+        <arg0 key="resource.group.inventory.New.GroupType.Title"/>
+        <msg name="required"
+             key="resource.group.inventory.error.GroupTypeIsRequired"/>
+      </field>
+    </form>
+
+    <!-- user admin forms -->
+    <form name="EditUserForm">
+      <field property="name" depends="required,mask">
+        <arg0 key="common.label.Name" />
+        <msg name="required" key="admin.user.error.notSpecified.name"/>
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${UserName}</var-value>
+        </var>
+      </field>
+      <field property="firstName" depends="required,mask,maxlength">
+        <arg0 key="admin.user.generalProperties.First" />
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <msg name="required" key="admin.user.error.notSpecified.firstName"/>
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${humanName}</var-value>
+        </var>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>50</var-value>
+        </var>
+      </field>
+      <field property="lastName" depends="required,mask,maxlength">
+        <arg0 key="admin.user.generalProperties.Last" />
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <msg name="required" key="admin.user.error.notSpecified.lastName"/>
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${humanName}</var-value>
+        </var>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>50</var-value>
+        </var>
+      </field>
+      <field property="emailAddress" depends="required,email,maxlength">
+        <arg0 key="admin.user.generalProperties.Email" />
+        <msg name="required" key="admin.user.error.notSpecified.emailAddress"/>
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>50</var-value>
+        </var>
+      </field>
+      <field property="phoneNumber" depends="maxlength">
+        <arg0 key="admin.user.generalProperties.Phone" />
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>50</var-value>
+        </var>
+      </field>
+      <field property="department" depends="maxlength">
+        <arg0 key="admin.user.generalProperties.Department" />
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>50</var-value>
+        </var>
+      </field>
+    </form>
+
+     <!-- this is totally bogus, because NewUserForm extends EditUserForm. The
+        validator framework, howver, looks up a set of rules only by the "name"
+        property, so the child doesn't inherit the parent's class's rules. -->
+     <form name="NewUserForm">
+      <field property="name" depends="required,mask">
+        <arg0 key="common.label.Name" />
+        <msg name="required" key="admin.user.error.notSpecified.name"/>
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${UserName}</var-value>
+        </var>
+      </field>
+      <field property="firstName" depends="required,mask,maxlength">
+        <arg0 key="admin.user.generalProperties.First" />
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <msg name="required" key="admin.user.error.notSpecified.firstName"/>
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${humanName}</var-value>
+        </var>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>50</var-value>
+        </var>
+      </field>
+      <field property="lastName" depends="required,mask,maxlength">
+        <arg0 key="admin.user.generalProperties.Last" />
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <msg name="required" key="admin.user.error.notSpecified.lastName"/>
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${humanName}</var-value>
+        </var>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>50</var-value>
+        </var>
+      </field>
+      <field property="emailAddress" depends="required,email,maxlength">
+        <arg0 key="admin.user.generalProperties.Email" />
+        <msg name="required" key="admin.user.error.notSpecified.emailAddress"/>
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>50</var-value>
+        </var>
+      </field>
+      <field property="phoneNumber" depends="maxlength">
+        <arg0 key="admin.user.generalProperties.Phone" />
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>50</var-value>
+        </var>
+      </field>
+      <field property="department" depends="maxlength">
+        <arg0 key="admin.user.generalProperties.Department" />
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>50</var-value>
+        </var>
+      </field>
+      <field property="newPassword" depends="required,identical,minlength,maxlength,mask">
+        <arg0 key="admin.user.generalProperties.NewPassword" />
+        <arg1 name="identical" key="admin.user.generalProperties.ConfirmPassword" />
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <arg1 name="minlength" key="${var:minlength}" resource="false" />
+        <var>
+         <var-name>secondProperty</var-name>
+         <var-value>confirmPassword</var-value>
+        </var>
+        <var>
+         <var-name>minlength</var-name>
+         <var-value>6</var-value>
+        </var>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>40</var-value>
+        </var>
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${noSpace}</var-value>
+        </var>
+      </field>
+      <field property="confirmPassword" depends="required">
+        <arg0 name="required" key="admin.user.generalProperties.ConfirmPassword" />
+      </field>
+    </form>
+
+     <!-- RegisterUserForm is exactly the same as NewUserForm, except
+          there's no username or password -->
+     <form name="RegisterUserForm">
+      <field property="firstName" depends="required,mask,maxlength">
+        <arg0 key="admin.user.generalProperties.First" />
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <msg name="required" key="admin.user.error.notSpecified.firstName"/>
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${humanName}</var-value>
+        </var>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>50</var-value>
+        </var>
+      </field>
+      <field property="lastName" depends="required,mask,maxlength">
+        <arg0 key="admin.user.generalProperties.Last" />
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <msg name="required" key="admin.user.error.notSpecified.lastName"/>
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${humanName}</var-value>
+        </var>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>50</var-value>
+        </var>
+      </field>
+      <field property="emailAddress" depends="required,email,maxlength">
+        <arg0 key="admin.user.generalProperties.Email" />
+        <msg name="required" key="admin.user.error.notSpecified.emailAddress"/>
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>50</var-value>
+        </var>
+      </field>
+      <field property="phoneNumber" depends="maxlength">
+        <arg0 key="admin.user.generalProperties.Phone" />
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>50</var-value>
+        </var>
+      </field>
+      <field property="department" depends="maxlength">
+        <arg0 key="admin.user.generalProperties.Department" />
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>50</var-value>
+        </var>
+      </field>
+    </form>
+
+    <form name="EditPasswordForm">
+      <field property="newPassword" depends="required,identical,minlength,maxlength,mask">
+        <arg0 key="admin.user.generalProperties.NewPassword" />
+        <arg1 name="identical" key="admin.user.generalProperties.ConfirmPassword" />
+        <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+        <arg1 name="minlength" key="${var:minlength}" resource="false" />
+        <var>
+         <var-name>secondProperty</var-name>
+         <var-value>confirmPassword</var-value>
+        </var>
+        <var>
+         <var-name>minlength</var-name>
+         <var-value>6</var-value>
+        </var>
+        <var>
+         <var-name>maxlength</var-name>
+         <var-value>40</var-value>
+        </var>
+        <var>
+         <var-name>mask</var-name>
+         <var-value>${noSpace}</var-value>
+        </var>
+      </field>
+      <field property="confirmPassword" depends="required">
+        <arg0 name="required" key="admin.user.generalProperties.ConfirmPassword" />
+      </field>
+      <field property="currentPassword" depends="required">
+        <arg0 name="required" key="admin.user.generalProperties.CurrentPassword" />
+      </field>
+     </form>
+
+     <!-- alert definition forms -->
+     <form name="NewAlertDefinitionForm">
+       <field property="name" depends="required,maxlength">
+         <arg0 name="required" key="common.label.Name"/>
+         <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+         <var>
+           <var-name>maxlength</var-name>
+           <var-value>100</var-value>
+         </var>
+       </field>
+       <field property="description" depends="maxlength">
+         <arg0 name="maxlength" key="common.label.Description"/>
+         <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+         <var>
+           <var-name>maxlength</var-name>
+           <var-value>250</var-value>
+         </var>
+       </field>
+       <field property="priority" depends="required">
+         <arg0 name="required" key="alert.config.props.PB.Priority"/>
+       </field>
+       <field property="active" depends="required">
+         <arg0 name="required" key="alert.config.props.PB.Active"/>
+       </field>
+       <field property="condition[0].trigger" depends="required">
+         <msg name="required" key="alert.config.props.CB.IfConditionRequired"/>
+       </field>
+       <field property="whenEnabled" depends="required">
+         <msg name="required" key="alert.config.props.CB.DampeningRuleRequired"/>
+       </field>
+     </form>
+
+     <form name="EditAlertDefinitionPropertiesForm">
+       <field property="name" depends="required,maxlength">
+         <arg0 name="required" key="common.label.Name"/>
+         <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+         <var>
+           <var-name>maxlength</var-name>
+           <var-value>100</var-value>
+         </var>
+       </field>
+       <field property="description" depends="maxlength">
+         <arg0 name="maxlength" key="common.label.Description"/>
+         <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
+         <var>
+           <var-name>maxlength</var-name>
+           <var-value>250</var-value>
+         </var>
+       </field>
+       <field property="priority" depends="required">
+         <arg0 name="required" key="alert.config.props.PB.Priority"/>
+       </field>
+       <field property="active" depends="required">
+         <arg0 name="required" key="alert.config.props.PB.Active"/>
+       </field>
+     </form>
+
+     <form name="EditAlertDefinitionConditionsForm">
+       <field property="condition[0].trigger" depends="required">
+         <msg name="required" key="alert.config.props.CB.IfConditionRequired"/>
+       </field>
+       <field property="whenEnabled" depends="required">
+         <msg name="required" key="alert.config.props.CB.DampeningRuleRequired"/>
+       </field>
+     </form>
+
+     <form name="EditAlertDefinitionControlActionForm">
+       <field property="controlAction" depends="required">
+         <arg0 name="required" key="alert.config.props.ControlType"/>
+       </field>
+     </form>
+
+     <!-- duplicate of the metric display range validation -->
+     <form name="ViewChartForm">
+      <!-- the value must be a positive integer -->
+      <field property="rn" depends="required,intRange">
+        <arg0 key="monitoring.baseline.BlockContent.Last"/>
+        <arg1 name="intRange" key="${var:min}" resource="false"/>
+        <arg2 name="intRange" key="${var:max}" resource="false"/>
+        <var>
+          <var-name>min</var-name>
+          <var-value>1</var-value>
+        </var>
+        <var>
+          <var-name>max</var-name>
+          <var-value>9999</var-value>
+        </var>
+        <msg name="required"
+             key="resource.common.monitor.error.LastNRequired"/>
+        <msg name="intRange"
+             key="resource.common.monitor.error.LastNInteger"/>
+      </field>
+     </form>
+
+     <form name="MonitoringConfigForm">
+      <!-- the value must be a positive integer between 1 and 9999 -->
+      <field property="collectionInterval" depends="required,integer,intRange">
+        <arg0 key="resource.common.monitor.visibility.config.CollectionIntervalField"/>
+        <arg1 name="intRange" key="${var:min}" resource="false"/>
+        <arg2 name="intRange" key="${var:max}" resource="false"/>
+        <var>
+          <var-name>min</var-name>
+          <var-value>1</var-value>
+        </var>
+        <var>
+          <var-name>max</var-name>
+          <var-value>9999</var-value>
+        </var>
+      </field>
+     </form>
+
+     <form name="GroupMonitoringConfigForm">
+      <!-- the value must be a positive integer between 0 and 99 -->
+      <field property="availabilityThreshold" depends="required,integer,intRange">
+        <arg0 key="resource.group.monitor.visibility.config.AvailabilityField"/>
+        <arg1 name="intRange" key="${var:min}" resource="false"/>
+        <arg2 name="intRange" key="${var:max}" resource="false"/>
+        <var>
+          <var-name>min</var-name>
+          <var-value>0</var-value>
+        </var>
+        <var>
+          <var-name>max</var-name>
+          <var-value>99</var-value>
+        </var>
+      </field>
+      <field property="unavailabilityThreshold" depends="required,integer,intRange">
+        <arg0 key="resource.group.monitor.visibility.config.UnavailabilityField"/>
+        <arg1 name="intRange" key="${var:min}" resource="false"/>
+        <arg2 name="intRange" key="${var:max}" resource="false"/>
+        <var>
+          <var-name>min</var-name>
+          <var-value>0</var-value>
+        </var>
+        <var>
+          <var-name>max</var-name>
+          <var-value>99</var-value>
+        </var>
+       </field>
+     </form>
+
+
+     <form name="FeedForm">
+
+      <field property="name" depends="required">
+        <arg key="admin.feeds.error.NameRequired"/>
+      </field>
+
+      <field property="url" depends="required,url">
+        <arg0 key="admin.feeds.error.Url"/>
+        <var>
+           <var-name>nofragments</var-name>
+           <var-value>true</var-value>
+        </var>
+        <var>
+           <var-name>schemes</var-name>
+           <var-value>http,https</var-value>
+        </var>
+    </field>
+
+
+    </form>
+
+  </formset>
+</form-validation>

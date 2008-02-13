@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!DOCTYPE tiles-definitions PUBLIC
+     "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN"
+     "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+
+
+<tiles-definitions>
+   
+  <!-- page titles -->
+  <definition name=".page.title.resource.platform"
+              extends=".page.title">
+    <put name="titleBgStyle" value="PageTitlePlatformBg"/>
+    <put name="titleImg" value="title_platform.gif"/>
+  </definition>
+  
+  <definition name=".page.title.resource.platform.full"
+              extends=".page.title.resource.platform">
+    <put name="linkUrl"
+         value="/resource/platform/inventory/PlatformLinks.jsp"/>
+  </definition>
+  
+  <definition name=".page.title.resource.platform.autodiscovery.full"
+              extends=".page.title.resource.platform">
+    <put name="linkUrl"
+         value="/resource/platform/autodiscovery/AutoDiscoveryLinks.jsp"/>
+  </definition>
+  
+  <definition name=".resource.platform.inventory.EditConfigProperties"
+              controllerUrl="/resource/platform/inventory/EditConfigFormPrepare.do"
+              path="/resource/common/inventory/EditConfigPropertiesForm.jsp"/>
+
+  <!-- tabs -->
+
+  <!-- platform tabs -->
+  <definition name=".tabs.resource.platform" extends=".tabs.resource.nocontrol">
+    <put name="resourceType" value="1" />
+    <putList name="tabList">
+      <item value="Monitor" mode="currentHealth"
+            link="/Resource.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Inventory" mode="view"
+            link="/resource/platform/Inventory.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Alert" mode="list"
+            link="/alerts/Config.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+    </putList> 
+  </definition>
+
+  <!-- inventory subtabs -->
+  <definition name=".tabs.resource.platform.inventory"
+              extends=".tabs.resource.platform">
+    <put name="selectedIndex"  value="1" />
+    <put name="subSectionName" value="Inventory"/>
+    <putList name="subTabList">
+      <item value="Current" mode="view"
+            link="/resource/platform/Inventory.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="AutoDisc" mode="view"
+            link="/resource/platform/AutoDiscovery.do" 
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+    </putList>
+  </definition>
+
+  <definition name=".tabs.resource.platform.inventory.current"
+              extends=".tabs.resource.platform.inventory">
+    <put name="subSelectedIndex" value="0"/>
+  </definition>
+
+  <definition name=".tabs.resource.platform.inventory.autoDiscovery"
+              extends=".tabs.resource.platform.inventory">
+    <put name="subSelectedIndex" value="1"/>
+  </definition>
+
+  <!-- monitor subtabs -->
+  <definition name=".tabs.resource.platform.monitor"
+              extends=".tabs.resource.platform">
+    <put name="selectedIndex"  value="0" />
+    <put name="subSectionName" value="Monitor"/>
+    <putList name="subTabList">
+      <item value="Visibility" mode="currentHealth" link="/Resource.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Configure" mode="configure"
+            link="/resource/platform/monitor/Config.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+    </putList>
+  </definition>
+
+  <definition name=".tabs.resource.platform.monitor.visibility"
+              extends=".tabs.resource.platform.monitor">
+    <put name="subSelectedIndex" value="0"/>
+  </definition>
+
+  <definition name=".tabs.resource.platform.monitor.configVisibility"
+              extends=".tabs.resource.platform.monitor">
+    <put name="subSelectedIndex" value="1"/>
+  </definition>
+
+  <definition name=".tabs.resource.platform.monitor.configVisibility.defaults"
+              path="/resource/common/ControlTab.jsp">
+     <put name="selectedIndex"  value="0" />
+     <putList name="tabList">
+       <item value="Monitor" link="XXX"
+             height="21" width="102"
+             classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+     </putList> 
+  </definition>
+
+  <!-- alert subtabs -->
+  <definition name=".tabs.resource.platform.alert"
+              extends=".tabs.resource.platform">
+    <put name="selectedIndex"  value="2" />
+    <put name="subSectionName" value="Monitor"/>
+    <putList name="subTabList">
+      <item value="Alerts" mode="list"
+            link="/alerts/Alerts.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Configure" mode="list"
+            link="/alerts/Config.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+    </putList>
+  </definition>
+
+  <definition name=".tabs.resource.platform.alert.alerts"
+              extends=".tabs.resource.platform.alert">
+    <put name="subSelectedIndex" value="0"/>
+  </definition>
+
+  <definition name=".tabs.resource.platform.alert.configAlerts"
+              extends=".tabs.resource.platform.alert">
+    <put name="subSelectedIndex" value="1"/>
+  </definition>
+
+  <!-- inventory portals -->
+  <definition name=".resource.platform.inventory.NewPlatform"
+              controllerUrl="/resource/platform/inventory/NewPlatformFormPrepare.do"
+              path="/resource/platform/inventory/NewPlatform.jsp"/>
+              
+  <definition name=".resource.platform.inventory.ViewPlatform"
+              controllerUrl="/resource/platform/inventory/ViewPlatform.do"
+              path="/resource/platform/inventory/ViewPlatform.jsp"/>
+              
+  <definition name=".resource.platform.inventory.EditPlatformGeneralProperties"
+              controllerUrl="/resource/common/inventory/EditResourceGeneralPropertiesFormPrepare.do"
+              path="/resource/platform/inventory/EditPlatformGeneralProperties.jsp"/>
+
+  <definition name=".resource.platform.inventory.EditPlatformTypeNetworkProperties"
+              controllerUrl="/resource/platform/inventory/EditPlatformTypeNetworkPropertiesFormPrepare.do"
+              path="/resource/platform/inventory/EditPlatformTypeNetworkProperties.jsp"/>
+
+  <definition name=".resource.platform.inventory.changePlatformOwner"
+              controllerUrl="/resource/common/inventory/ChangeResourceOwnerFormPrepare.do"
+              path="/resource/platform/inventory/ChangePlatformOwner.jsp"/>
+
+  <definition name=".resource.platform.inventory.addPlatformGroups"
+              controllerUrl="/resource/common/inventory/AddResourceGroupsFormPrepare.do"
+              path="/resource/platform/inventory/AddPlatformGroups.jsp"/>
+
+  <!-- inventory portlets -->
+  <definition name=".resource.platform.inventory.generalProperties"
+              extends=".resource.common.inventory.generalProperties">
+    <put name="showLocation" value="true"/>
+  </definition>
+
+  <definition name=".resource.platform.inventory.typeNetworkProperties.view"
+              path="/resource/platform/inventory/PlatformTypeNetworkPropertiesView.jsp" />
+
+  <definition name=".resource.platform.inventory.typeNetworkProperties.form"
+              path="/resource/platform/inventory/PlatformTypeNetworkPropertiesForm.jsp" />
+
+  <definition name=".resource.platform.inventory.serverCounts"
+              path="/resource/platform/inventory/PlatformServerCountsView.jsp" />
+
+  <definition name=".resource.platform.inventory.servers"
+              path="/resource/platform/inventory/PlatformServersView.jsp" />
+			  
+  <definition name=".resource.platform.inventory.services"
+              path="/resource/platform/inventory/ListServices.jsp"/>
+
+  <!-- autodiscovery portals -->
+  <definition name=".resource.platform.autodiscovery.NewAutoDiscovery"
+     controllerUrl="/resource/platform/autodiscovery/NewAutoDiscoveryPrep.do"
+              path="/resource/platform/autodiscovery/NewAutoDiscovery.jsp"/>
+              
+  <definition name=".resource.platform.autodiscovery.ViewAutoDiscovery"
+     controllerUrl="/resource/platform/autodiscovery/ViewAutoDiscovery.do"
+              path="/resource/platform/autodiscovery/ViewAutoDiscovery.jsp"/>
+              
+  <definition name=".resource.platform.autodiscovery.EditAutoDiscovery"
+     controllerUrl="/resource/platform/autodiscovery/EditAutoDiscoveryPrep.do"
+              path="/resource/platform/autodiscovery/EditAutoDiscovery.jsp"/>
+              
+  <definition name=".resource.platform.autodiscovery.ViewResults"
+     controllerUrl="/resource/platform/autodiscovery/ViewResultsPrep.do"
+              path="/resource/platform/autodiscovery/ViewResults.jsp"/>
+              
+  <definition name=".resource.platform.autodiscovery.ScanControlPrep"
+     controllerUrl="/resource/platform/autodiscovery/ScanControlPrep.do"
+              path="/resource/platform/autodiscovery/ViewCurrentStatus.jsp"/>
+              
+  <definition name=".toolbar.import"
+              path="/resource/platform/autodiscovery/ImportToolbar.jsp"/>  
+
+  <!-- monitor minitabs -->
+  <definition name=".resource.platform.monitor.visibility.minitabs"
+              extends=".resource.common.monitor.visibility.minitabs">
+    <put name="tabUrl" value="/Resource.do"/>
+  </definition>
+
+  <!-- monitor portals -->
+  <definition name=".resource.platform.monitor.visibility.CurrentHealth"
+              controllerUrl="/resource/platform/monitor/visibility/PlatformCurrentHealth.do"
+              path="/resource/platform/monitor/visibility/MainLayout.jsp"/>
+
+  <definition name=".resource.platform.monitor.visibility.PlatformMetrics"
+              controllerUrl="/resource/common/monitor/visibility/ResourceMetricsFormPrepare.do"
+              path="/resource/platform/monitor/visibility/MainLayout.jsp"/>
+
+  <definition name=".resource.platform.monitor.visibility.Performance"
+              controllerUrl="/resource/platform/monitor/visibility/PlatformPerformanceFormPrepare.do"
+              path="/resource/platform/monitor/visibility/PlatformPerformance.jsp"/>
+
+  <!-- monitor config portals -->
+  <definition name=".resource.platform.monitor.config.ConfigMetrics"
+              controllerUrl="/resource/platform/monitor/config/ConfigMetricsFormPrepare.do"
+              path="/resource/common/monitor/config/ConfigMetrics.jsp">
+     <put name="section" value="common"/>
+  </definition>
+              
+  <!-- monitor mini charts -->
+  <definition name=".resource.platform.monitor.visibility.minicharts"
+              extends=".resource.common.monitor.visibility.minicharts"/>
+
+  <definition name=".resource.platform.monitor.visibility.listchildresources"
+              extends=".resource.common.monitor.visibility.listchildresources"
+              controllerUrl="/resource/platform/monitor/visibility/ListChildrenResources.do"/>
+ 
+</tiles-definitions>

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+
+<persistence xmlns="http://java.sun.com/xml/ns/persistence">
+
+   <persistence-unit name="rhqpu">
+      <jta-data-source>java:/RHQDS</jta-data-source>
+
+      <properties>
+         <property name="jboss.entity.manager.jndi.name" value="java:/RHQEntityManager" />
+         <property name="jboss.entity.manager.factory.jndi.name" value="java:/RHQEntityManagerFactory" />
+
+         <!--
+         <property name="hibernate.show_sql" value="true" />
+         <property name="hibernate.format_sql" value="true" />
+         <property name="hibernate.use_sql_comments" value="true" /> 
+         -->
+         <!--<property name="hibernate.hbm2ddl.auto" value="create-drop" />-->
+         <property name="hibernate.jdbc.batch_size" value="30"/>
+
+         <!--<property name="com.intellij.javaee.persistence.datasource" value="rhq-oracle" />-->
+         <property name="com.intellij.javaee.persistence.datasource" value="rhq-postgres" />
+      </properties>
+   </persistence-unit>
+
+</persistence>

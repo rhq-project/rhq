@@ -1,0 +1,139 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE facelet-taglib PUBLIC
+      "-//Sun Microsystems, Inc.//DTD Facelet Taglib 1.0//EN"
+      "http://java.sun.com/dtd/facelet-taglib_1_0.dtd">
+
+<facelet-taglib>
+
+   <namespace>http://jboss.org/on/component</namespace>
+
+   <tag>
+      <tag-name>errorPopup</tag-name>
+      <component>
+         <component-type>org.jboss.on.ErrorPopup</component-type>
+         <renderer-type>org.jboss.on.ErrorPopup</renderer-type>
+      </component>
+   </tag>
+
+   <tag>
+      <tag-name>tabBar</tag-name>
+      <component>
+         <component-type>org.jboss.on.TabBar</component-type>
+         <renderer-type>org.jboss.on.TabBar</renderer-type>
+      </component>
+   </tag>
+
+   <tag>
+      <tag-name>tab</tag-name>
+      <component>
+         <component-type>org.jboss.on.Tab</component-type>
+         <renderer-type>org.jboss.on.Tab</renderer-type>
+      </component>
+   </tag>
+
+   <tag>
+      <tag-name>subtab</tag-name>
+      <component>
+         <component-type>org.jboss.on.Subtab</component-type>
+         <renderer-type>org.jboss.on.Subtab</renderer-type>
+      </component>
+   </tag>
+
+   <tag>
+      <tag-name>quickNav</tag-name>
+      <component>
+         <component-type>org.jboss.on.QuickNav</component-type>
+         <renderer-type>org.jboss.on.QuickNav</renderer-type>
+      </component>
+   </tag>
+
+   <tag>
+      <tag-name>icon</tag-name>
+      <component>
+         <component-type>org.jboss.on.Icon</component-type>
+         <renderer-type>org.jboss.on.Icon</renderer-type>
+      </component>
+   </tag>
+
+   <tag>
+      <tag-name>config</tag-name>
+      <component>
+         <component-type>org.jboss.on.Config</component-type>
+         <renderer-type>org.jboss.on.Config</renderer-type>
+      </component>
+   </tag>
+
+   <tag>
+      <tag-name>resourceLineage</tag-name>
+      <component>
+         <component-type>org.jboss.on.ResourceLineage</component-type>
+         <renderer-type>org.jboss.on.ResourceLineage</renderer-type>
+      </component>
+   </tag>
+
+   <tag>
+      <tag-name>sortableColumnHeader</tag-name>
+      <component>
+         <component-type>org.jboss.on.SortableColumnHeader</component-type>
+         <renderer-type>org.jboss.on.SortableColumnHeader</renderer-type>
+      </component>
+   </tag>
+
+   <tag>
+      <tag-name>paginationControl</tag-name>
+      <component>
+         <component-type>org.jboss.on.PaginationControl</component-type>
+         <renderer-type>org.jboss.on.PaginationControl</renderer-type>
+      </component>
+   </tag>
+
+   <tag>
+      <tag-name>select</tag-name>
+      <component>
+         <component-type>org.jboss.on.Select</component-type>
+         <renderer-type>org.jboss.on.Select</renderer-type>
+      </component>
+   </tag>
+
+   <tag>
+      <tag-name>allSelect</tag-name>
+      <component>
+         <component-type>org.jboss.on.AllSelect</component-type>
+         <renderer-type>org.jboss.on.AllSelect</renderer-type>
+      </component>
+   </tag>
+
+   <tag>
+      <tag-name>selectCommandButton</tag-name>
+      <component>
+         <component-type>org.jboss.on.SelectCommandButton</component-type>
+         <renderer-type>org.jboss.on.SelectCommandButton</renderer-type>
+      </component>
+   </tag>
+
+   <tag>
+      <tag-name>upload</tag-name>
+      <component>
+         <component-type>org.jboss.on.Upload</component-type>
+         <renderer-type>org.jboss.on.Upload</renderer-type>
+      </component>
+   </tag>
+
+   <tag>
+      <tag-name>simpleTrigger</tag-name>
+      <component>
+         <component-type>org.jboss.on.HtmlSimpleTrigger</component-type>
+         <renderer-type>org.jboss.on.HtmlSimpleTrigger</renderer-type>
+      </component>
+   </tag>   
+
+   <tag>
+      <tag-name>dynamicPanelGroup</tag-name>
+      <component>
+         <component-type>org.jboss.on.DynamicPanelGroup</component-type>
+         <renderer-type>org.jboss.on.DynamicPanelGroup</renderer-type>
+      </component>
+   </tag> 
+   
+</facelet-taglib>

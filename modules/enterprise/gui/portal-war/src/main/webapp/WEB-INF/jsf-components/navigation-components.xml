@@ -1,0 +1,216 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <component>
+      <component-type>org.jboss.on.TabBar</component-type>
+      <component-class>org.rhq.enterprise.gui.common.tabbar.TabBarComponent</component-class>
+
+      <component-extension>
+         <component-family>org.jboss.on.TabBar</component-family>
+         <renderer-type>org.jboss.on.TabBar</renderer-type>
+      </component-extension>
+   </component>
+
+   <component>
+      <component-type>org.jboss.on.Tab</component-type>
+      <component-class>org.rhq.enterprise.gui.common.tabbar.TabComponent</component-class>
+      <property>
+         <description>
+            the name of the tab (e.g. "Monitor")
+         </description>
+         <property-name>name</property-name>
+         <property-class>java.lang.String</property-class>
+      </property>
+      <property>
+         <description>
+            the URL the tab will link to
+         </description>
+         <property-name>url</property-name>
+         <property-class>java.lang.String</property-class>
+      </property>
+      <property>
+         <description>
+            alternate text for the tab
+         </description>
+         <property-name>alt</property-name>
+         <property-class>java.lang.String</property-class>
+      </property>
+
+      <component-extension>
+         <component-family>org.jboss.on.Tab</component-family>
+         <renderer-type>org.jboss.on.Tab</renderer-type>
+      </component-extension>
+   </component>
+
+   <component>
+      <component-type>org.jboss.on.Subtab</component-type>
+      <component-class>org.rhq.enterprise.gui.common.tabbar.SubtabComponent</component-class>
+      <property>
+         <description>
+            the name of the subtab (e.g. "Visibility")
+         </description>
+         <property-name>name</property-name>
+         <property-class>java.lang.String</property-class>
+      </property>
+      <property>
+         <description>
+            the URL the subtab will link to
+         </description>
+         <property-name>url</property-name>
+         <property-class>java.lang.String</property-class>
+      </property>
+      <property>
+         <description>
+            alternate text for the subtab
+         </description>
+         <property-name>alt</property-name>
+         <property-class>java.lang.String</property-class>
+      </property>
+
+      <component-extension>
+         <component-family>org.jboss.on.Subtab</component-family>
+         <renderer-type>org.jboss.on.Subtab</renderer-type>
+      </component-extension>
+   </component>
+
+   <component>
+      <component-type>org.jboss.on.QuickNav</component-type>
+      <component-class>org.rhq.enterprise.gui.common.quicknav.QuickNavComponent</component-class>
+
+      <component-extension>
+         <component-family>org.jboss.on.QuickNav</component-family>
+         <renderer-type>org.jboss.on.QuickNav</renderer-type>
+      </component-extension>
+   </component>
+
+   <component>
+      <component-type>org.jboss.on.Icon</component-type>
+      <component-class>org.rhq.enterprise.gui.common.quicknav.IconComponent</component-class>
+      <property>
+         <description>
+            the single-letter name of the icon (e.g. "M")
+         </description>
+         <property-name>name</property-name>
+         <property-class>java.lang.String</property-class>
+      </property>
+      <property>
+         <description>
+            the URL the icon will link to
+         </description>
+         <property-name>url</property-name>
+         <property-class>java.lang.String</property-class>
+      </property>
+      <property>
+         <description>
+            alternate text for the icon
+         </description>
+         <property-name>alt</property-name>
+         <property-class>java.lang.String</property-class>
+      </property>
+      <property>
+         <description>
+            whether the icon should be visible or not
+         </description>
+         <property-name>visible</property-name>
+         <property-class>java.lang.Boolean</property-class>
+      </property>
+
+      <component-extension>
+         <component-family>org.jboss.on.Icon</component-family>
+         <renderer-type>org.jboss.on.Icon</renderer-type>
+      </component-extension>
+   </component>
+
+   <render-kit>
+      
+      <renderer>
+         <description>
+            renderer for a TabBar component
+         </description>
+         <component-family>org.jboss.on.TabBar</component-family>
+         <renderer-type>org.jboss.on.TabBar</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.common.tabbar.TabBarRenderer</renderer-class>
+
+         <attribute>
+            <description>
+               CSS style class to use when rendering this component
+            </description>
+            <attribute-name>styleClass</attribute-name>
+            <attribute-class>java.lang.String</attribute-class>
+         </attribute>
+      </renderer>
+
+      <renderer>
+         <description>
+            renderer for a Tab component
+         </description>
+         <component-family>org.jboss.on.Tab</component-family>
+         <renderer-type>org.jboss.on.Tab</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.common.tabbar.TabRenderer</renderer-class>
+
+         <attribute>
+            <description>
+               CSS style class to use when rendering this component.
+            </description>
+            <attribute-name>styleClass</attribute-name>
+            <attribute-class>java.lang.String</attribute-class>
+         </attribute>
+      </renderer>
+
+      <renderer>
+         <description>
+            renderer for a Subtab component
+         </description>
+         <component-family>org.jboss.on.Subtab</component-family>
+         <renderer-type>org.jboss.on.Subtab</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.common.tabbar.SubtabRenderer</renderer-class>
+
+         <attribute>
+            <description>
+               CSS style class to use when rendering this component
+            </description>
+            <attribute-name>styleClass</attribute-name>
+            <attribute-class>java.lang.String</attribute-class>
+         </attribute>
+      </renderer>
+
+      <renderer>
+         <description>
+            renderer for a QuickNav component
+         </description>
+         <component-family>org.jboss.on.QuickNav</component-family>
+         <renderer-type>org.jboss.on.QuickNav</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.common.quicknav.QuickNavRenderer</renderer-class>
+
+         <attribute>
+            <description>
+               CSS style class to use when rendering this component
+            </description>
+            <attribute-name>styleClass</attribute-name>
+            <attribute-class>java.lang.String</attribute-class>
+         </attribute>
+      </renderer>
+
+      <renderer>
+         <description>
+            renderer for an Icon component
+         </description>
+         <component-family>org.jboss.on.Icon</component-family>
+         <renderer-type>org.jboss.on.Icon</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.common.quicknav.IconRenderer</renderer-class>
+
+         <attribute>
+            <description>
+               CSS style class to use when rendering this component
+            </description>
+            <attribute-name>styleClass</attribute-name>
+            <attribute-class>java.lang.String</attribute-class>
+         </attribute>
+      </renderer>
+
+   </render-kit>
+
+</faces-config>

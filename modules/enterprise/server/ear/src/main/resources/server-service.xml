@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<server>
+   
+   <mbean code="org.rhq.enterprise.server.core.CoreServer"
+          name="rhq:service=CoreServer"/>
+
+   <mbean code="org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor"
+          name="rhq:service=MeasurementMonitor"/>
+
+   <mbean code="org.rhq.enterprise.server.alert.engine.mbean.AlertConditionCacheMonitor"
+          name="rhq:service=AlertConditionCache"/>
+
+</server>

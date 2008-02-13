@@ -1,0 +1,24 @@
+Subject: [ALERT] priority of [@@@PRIORITY@@@] for alert [@@@ALERT_NAME@@@] on resource [@@@RESOURCE_NAME@@@]
+
+The resource @@@RESOURCE_NAME@@@ has generated the following alert:
+
+------------------------------------------
+
+- Resource Name: @@@RESOURCE_NAME@@@
+- Alert Name: @@@ALERT_NAME@@@
+- Alert Severity: @@@PRIORITY@@@
+- Alert Date/Time: @@@TIMESTAMP@@@
+- Conditions: @@@CONDITIONS@@@
+  
+------------------------------------------
+
+Resource Hierarchy was:
+
+@@@FULL_RESOURCE_HIERARCHY@@@
+
+
+------------------------------------------
+
+For additional details about this alert, go to @@@ALERT_URL@@@
+
+This message was delivered to you by RHQ.

@@ -1,0 +1,524 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="Postgres"
+        displayName="PostgreSQL Database"
+        package="org.rhq.plugins.postgres"
+        description="Management and monitoring of PostgreSQL versions 8.2 and higher"
+        version="2.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="Database" useClasses="true"/>   
+
+   <server name="Postgres Server" discovery="PostgresDiscoveryComponent" class="PostgresServerComponent"
+           description="PostgreSQL Server"
+           supportsManualAdd="true">
+
+      <version match="8.0"/>
+
+      <!-- Properties are connection/lookup configurations. They are values that the
+         plugin components need to connect and interact with the resource. -->
+      <plugin-configuration>
+         <!-- Defaults:
+               type: string
+               required: true
+               activationPolicy: immediate
+         -->
+         <c:simple-property name="host" default="127.0.0.1" displayName="listen host" description="the hostname or IP address that the database is listening on"/>
+         <c:simple-property name="port" default="5432" displayName="listen port" description="the TCP port that the database is listening on">
+            <c:constraint>
+               <c:integer-constraint minimum="1" maximum="65535"/>
+            </c:constraint>
+         </c:simple-property>
+         <c:simple-property name="db" default="postgres" displayName="database name" description="the name of the database to connect to"/>
+
+         <c:simple-property name="driverClass" default="org.postgresql.Driver" displayName="JDBC driver class"
+                          description="the fully-qualified classname of the JDBC driver class" required="false"/>
+         <c:simple-property name="principal" default="postgres" displayName="role name" description="the database role to connect as"/>
+         <c:simple-property name="credentials" default="postgres" type="password" displayName="role password"
+                          description="the password for the database role being used to connect"/>
+         <c:simple-property name="pgdataDir" type="directory" displayName="PGDATA directory"
+                          description="the absolute path to the directory containing the cluster configuration files postgresql.conf, pg_hba.conf, and pg_ident.conf"/>
+         <c:simple-property name="configFile" type="file" displayName="configuration file"
+                          description="the absolute path to the main cluster configuration file; default value is '{pgDataDir}/postgresql.conf', where [pgDataDir] is the value of the pgDataDir connection property" required="false"/>
+      </plugin-configuration>
+
+      <process-scan name="windows" query="process|basename|match=^(?i)(postgres|postmaster)\.exe$,process|basename|nomatch|parent=^(?i)(postgres|postmaster)\.exe$" />
+      <process-scan name="unix" query="process|basename|match=^(postgres|postmaster)$,process|basename|nomatch|parent=^(postgres|postmaster)$" />
+
+      <operation name="listProcessStatistics" description="List statistics about the currently executing postgres backends">
+         <results>
+            <c:list-property name="processList">
+               <c:map-property name="process">
+                  <c:simple-property name="pid" type="integer"/>
+                  <c:simple-property name="userName"/>
+                  <c:simple-property name="query"/>
+                  <c:simple-property name="address"/>
+                  <c:simple-property name="port"/>
+               </c:map-property>
+            </c:list-property>
+         </results>
+      </operation>
+      
+      <metric displayName="User Time" property="Process.inUserTime" measurementType="trendsup" units="milliseconds" displayType="summary"/>
+      <metric displayName="Kernel Time" property="Process.inKernelTime" measurementType="trendsup" units="milliseconds" displayType="summary"/>
+      <metric displayName="Physical Memory" property="Process.Memory.usedPhysical" measurementType="dynamic" units="bytes" displayType="summary"/>
+      <metric displayName="Virtual Memory" property="Process.Memory.usedSwap" measurementType="dynamic" units="bytes" displayType="summary"/>
+
+      <resource-configuration>
+
+         <!-- NOTE: We do *not* use type="integer" for properties that measure time or data size, because Postgres
+                    supports optionally including units in the values of such properties (e.g. 500ms, 30min, 256kB,
+                    5MB). -->
+
+         <c:group name="configFile" displayName="Configuration File">
+            <c:simple-property name="port" type="integer" description="Sets the TCP port the server listens on; default value is '5432'." activationPolicy="restart" required="false">
+               <c:constraint>
+                  <c:integer-constraint minimum="1" maximum="65535"/>
+               </c:constraint>
+            </c:simple-property>
+            <c:simple-property name="max_connections" type="integer" description="Sets the maximum number of concurrent connections; default value is '100'." activationPolicy="restart" required="false"/>
+            <c:simple-property name="shared_buffers" description="Sets the number of the shared memory buffers used by the server; default value is typically '1000'." activationPolicy="restart" required="false"/>
+            <c:simple-property name="max_fsm_pages" type="integer" description="Maximum FSM Pages, must be a minimum of max_fsm_relations*16, 6 bytes each)" activationPolicy="restart" required="false"/>
+            <c:simple-property name="log_destination" description="Available options depend on operating system; default value is 'stderr'" required="false">
+               <c:property-options>
+                  <c:option value="stderr"/>
+                  <c:option value="syslog"/>
+                  <c:option value="eventlog"/>
+               </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="redirect_stderr" type="boolean" description="Enable capturing of stderr into log files; enabled by default" required="false"/>
+            <c:simple-property name="stats_start_collector" type="boolean" description="needed for block or row stats; enabled by default" required="false"/>
+            <c:simple-property name="stats_block_level" type="boolean" description="Enables the collection of block-level statistics on database activity; if this option is enabled, the data that is produced can be accessed via the pg_stat and pg_statio family of system views; disabled by default" required="false"/>
+            <c:simple-property name="stats_row_level" type="boolean" description="Enables the collection of row-level statistics on database activity; if this option is enabled, the data that is produced can be accessed via the pg_stat and pg_statio family of system views; disabled by default" required="false"/>
+            <c:simple-property name="autovacuum" type="boolean" description="Enable autovacuum subprocess? (requires stats_start_collector and stats_row_level to also be on); enabled by default" required="false"/>
+         </c:group>
+         
+         <c:group name="runtime" displayName="Runtime Properties">
+            <c:map-property name="runtimeSettings" description="properties available from show all">
+               <c:simple-property name="add_missing_from" type="boolean" description="Automatically adds missing table references to FROM clauses; default value is 'off'." required="false"/>
+               <c:simple-property name="allow_system_table_mods" type="boolean" description="Allows modifications of the structure of system tables; default value is 'off'." required="false"/>
+               <c:simple-property name="archive_command" description="WAL archiving command; default value is ''." required="false"/>
+               <c:simple-property name="archive_timeout" type="integer" description="Forces a switch to the next xlog file if a new file has not been started within the specified amount of time; default unit is seconds; default value is '0'." required="false"/>
+               <c:simple-property name="array_nulls" type="boolean" default="on" description="Enable input of NULL elements in arrays." required="false"/>
+               <c:simple-property name="authentication_timeout" description="Sets the maximum allowed time to complete client authentication; default unit is seconds; default value is '60'." required="false"/>
+               <c:simple-property name="autovacuum" type="boolean" default="on" description="Starts the autovacuum subprocess." required="false"/>
+               <c:simple-property name="autovacuum_analyze_scale_factor" type="float" default="0.1" description="Number of tuple inserts, updates or deletes prior to analyze as a fraction of reltuples." required="false"/>
+               <c:simple-property name="autovacuum_analyze_threshold" type="integer" default="250" description="Minimum number of tuple inserts, updates or deletes prior to analyze." required="false"/>
+               <c:simple-property name="autovacuum_freeze_max_age" type="integer" default="200000000" description="Age (in transactions) at which to autovacuum a table to prevent transaction ID wraparound." required="false"/>
+               <c:simple-property name="autovacuum_naptime" description="Amount of time to sleep between autovacuum runs; default unit is seconds; default value is '60'." required="false"/>
+               <c:simple-property name="autovacuum_vacuum_cost_delay" description="Vacuum cost delay for autovacuum; default unit is milliseconds; default value is '-1'." required="false"/>
+               <c:simple-property name="autovacuum_vacuum_cost_limit" type="integer" default="-1" description="Vacuum cost amount available before napping, for autovacuum." required="false"/>
+               <c:simple-property name="autovacuum_vacuum_scale_factor" type="float" default="0.2" description="Number of tuple updates or deletes prior to vacuum as a fraction of reltuples." required="false"/>
+               <c:simple-property name="autovacuum_vacuum_threshold" type="integer" default="500" description="Minimum number of tuple updates or deletes prior to vacuum." required="false"/>
+               <c:simple-property name="backslash_quote" default="safe_encoding" description="Sets whether quotes are allowed in string literals" required="false"/>
+               <c:simple-property name="bgwriter_all_maxpages" type="integer" default="5" description="Background writer maximum number of all pages to flush per round" required="false"/>
+               <c:simple-property name="bgwriter_all_percent" type="float" default="0.333" description="Background writer percentage of all buffers to flush per round" required="false"/>
+               <c:simple-property name="bgwriter_delay" description="Background writer sleep time between rounds; default unit is milliseconds; default value is '200'." required="false"/>
+               <c:simple-property name="bgwriter_lru_maxpages" type="integer" default="5" description="Background writer maximum number of LRU pages to flush per round" required="false"/>
+               <c:simple-property name="bgwriter_lru_percent" type="integer" default="1" description="Background writer percentage of LRU buffers to flush per round" required="false"/>
+               <c:simple-property name="block_size" type="integer" description="Shows size of a disk block; determined by the value of BLCKSZ when building the server; default unit is bytes; default value is '8192'." required="false" readOnly="true"/>
+               <c:simple-property name="bonjour_name" description="Sets the Bonjour broadcast service name; default value is the computer name." required="false"/>
+               <c:simple-property name="check_function_bodies" type="boolean" default="on" description="Check function bodies during CREATE FUNCTION." required="false"/>
+               <c:simple-property name="checkpoint_segments" type="integer" default="3" description="Sets the maximum distance (in log segments) between automatic WAL checkpoints." required="false"/>
+               <c:simple-property name="checkpoint_timeout" description="Sets the maximum amount of time between automatic WAL checkpoints; default unit is seconds; default value is '300'." required="false"/>
+               <c:simple-property name="checkpoint_warning" description="Logs if filling of checkpoint segments happens more frequently than this amount of time; default unit is seconds; default value is '30'." required="false"/>
+               <c:simple-property name="client_encoding" default="SQL_ASCII" description="Sets the client's character set encoding." required="false"/>
+               <c:simple-property name="client_min_messages" default="notice" description="Sets the message levels that are sent to the client." required="false"/>
+               <c:simple-property name="commit_delay" description="Sets the delay in between transaction commit and flushing WAL to disk; default unit is microseconds; default value is '0'." required="false"/>
+               <c:simple-property name="commit_siblings" type="integer" default="5" description="Sets the minimum concurrent open transactions before performing commit_delay." required="false"/>
+               <c:simple-property name="config_file" description="Sets the server's main configuration file." required="false"/>
+               <c:simple-property name="constraint_exclusion" type="boolean" default="off" description="Enables the planner to use constraints to optimize queries." required="false"/>
+               <c:simple-property name="cpu_index_tuple_cost" type="float" description="Sets the planner's estimate of the cost of processing each index entry during an index scan; measured on the same scale as the seq_page_cost configuration parameter; default value is '0.001'." required="false"/>
+               <c:simple-property name="cpu_operator_cost" type="float" description="Sets the planner's estimate of the cost of processing each operator or function call; measured on the same scale as the seq_page_cost configuration parameter; default value is '0.0025'." required="false"/>
+               <c:simple-property name="cpu_tuple_cost" type="float" description="Sets the planner's estimate of the cost of processing each tuple (row); measured on the same scale as the seq_page_cost configuration parameter; default value is '0.01'." required="false"/>
+               <c:simple-property name="custom_variable_classes" description="Sets the list of known custom variable classes; default value is ''." required="false"/>
+               <c:simple-property name="data_directory" description="Sets the server's data directory." required="false"/>
+               <c:simple-property name="DateStyle" default="ISO, MDY" description="Sets the display format for date and time values." required="false"/>
+               <c:simple-property name="db_user_namespace" type="boolean" default="off" description="Enables per-database user names." required="false"/>
+               <c:simple-property name="deadlock_timeout" description="The amount of time to wait on lock before checking for a deadlock; default unit is milliseconds; default value is '1000'." required="false"/>
+               <c:simple-property name="debug_assertions" type="boolean" default="off" description="Turns on various assertion checks." required="false"/>
+               <c:simple-property name="debug_pretty_print" type="boolean" default="off" description="Indents parse and plan tree displays." required="false"/>
+               <c:simple-property name="debug_print_parse" type="boolean" default="off" description="Prints the parse tree to the server log." required="false"/>
+               <c:simple-property name="debug_print_plan" type="boolean" default="off" description="Prints the execution plan to server log." required="false"/>
+               <c:simple-property name="debug_print_rewritten" type="boolean" default="off" description="Prints the parse tree after rewriting to server log." required="false"/>
+               <c:simple-property name="default_statistics_target" type="integer" default="10" description="Sets the default statistics target; range 1-1000." required="false"/>
+               <c:simple-property name="default_tablespace" default="" description="Sets the default tablespace to create tables and indexes in." required="false"/>
+               <c:simple-property name="default_transaction_isolation" default="read committed" description="Sets the transaction isolation level of each new transaction." required="false"/>
+               <c:simple-property name="default_transaction_read_only" type="boolean" default="off" description="Sets the default read-only status of new transactions." required="false"/>
+               <c:simple-property name="default_with_oids" type="boolean" default="off" description="Create new tables with OIDs by default." required="false"/>
+               <c:simple-property name="dynamic_library_path" default="$libdir" description="Sets the path for dynamically loadable modules." required="false"/>
+               <c:simple-property name="effective_cache_size" default="128MB" description="Sets the planner's assumption about size of the disk cache; the unit is disk pages, which are normally 8KB each; default value is '1000'." required="false"/>
+               <c:simple-property name="enable_bitmapscan" type="boolean" default="on" description="Enables the planner's use of bitmap-scan plans." required="false"/>
+               <c:simple-property name="enable_hashagg" type="boolean" default="on" description="Enables the planner's use of hashed aggregation plans." required="false"/>
+               <c:simple-property name="enable_hashjoin" type="boolean" default="on" description="Enables the planner's use of hash join plans." required="false"/>
+               <c:simple-property name="enable_indexscan" type="boolean" default="on" description="Enables the planner's use of index-scan plans." required="false"/>
+               <c:simple-property name="enable_mergejoin" type="boolean" default="on" description="Enables the planner's use of merge join plans." required="false"/>
+               <c:simple-property name="enable_nestloop" type="boolean" default="on" description="Enables the planner's use of nested-loop join plans." required="false"/>
+               <c:simple-property name="enable_seqscan" type="boolean" default="on" description="Enables the planner's use of sequential-scan plans." required="false"/>
+               <c:simple-property name="enable_sort" type="boolean" default="on" description="Enables the planner's use of explicit sort steps." required="false"/>
+               <c:simple-property name="enable_tidscan" type="boolean" default="on" description="Enables the planner's use of TID scan plans." required="false"/>
+               <c:simple-property name="escape_string_warning" type="boolean" default="on" description="Warn about backslash escapes in ordinary string literals." required="false"/>
+               <c:simple-property name="explain_pretty_print" type="boolean" default="on" description="Uses the indented output format for EXPLAIN VERBOSE." required="false"/>
+               <c:simple-property name="external_pid_file" default="" description="Writes the postmaster PID to the specified file." required="false"/>
+               <c:simple-property name="extra_float_digits" type="integer" default="0" description="Sets the number of extra digits displayed for floating-point values." required="false"/>
+               <c:simple-property name="from_collapse_limit" type="integer" description="Sets the FROM-list size beyond which subqueries are not collapsed; default value is 8." required="false"/>
+               <c:simple-property name="fsync" type="boolean" default="on" description="Forces synchronization of updates to disk." required="false"/>
+               <c:simple-property name="full_page_writes" type="boolean" default="on" description="Writes full pages to WAL when first modified after a checkpoint." required="false"/>
+               <c:simple-property name="geqo" type="boolean" description="Enables genetic query optimization; default value is on." required="false"/>
+               <c:simple-property name="geqo_effort" type="integer" description="GEQO: effort is used to set the default for other GEQO parameters; range 1-10; default value is 5." required="false"/>
+               <c:simple-property name="geqo_generations" type="integer" description="GEQO: number of iterations of the algorithm; default selected based on effort." required="false"/>
+               <c:simple-property name="geqo_pool_size" type="integer" description="GEQO: number of individuals in the population; default selected based on effort." required="false"/>
+               <c:simple-property name="geqo_selection_bias" type="float" description="GEQO: selective pressure within the population." required="false"/>
+               <c:simple-property name="geqo_threshold" type="integer" default="12" description="Sets the threshold of FROM items beyond which GEQO is used." required="false"/>
+               <c:simple-property name="gin_fuzzy_search_limit" type="integer" default="0" description="Sets the maximum allowed result for exact search by GIN." required="false"/>
+               <c:simple-property name="hba_file" description="Sets the server's hba [configuration file]" required="false"/>
+               <c:simple-property name="ident_file" description="Sets the server's ident [configuration file]" required="false"/>
+               <c:simple-property name="ignore_system_indexes" type="boolean" default="off" description="Disables reading from system indexes." required="false"/>
+               <c:simple-property name="integer_datetimes" type="boolean" default="off" description="Datetimes are integer based." required="false" readOnly="true"/>
+               <c:simple-property name="join_collapse_limit" type="integer" description="Sets the FROM-list size beyond which JOIN constructs are not flattened; default value is '8'." required="false"/>
+               <c:simple-property name="krb_caseins_users" type="boolean" default="off" description="Sets whether Kerberos user names should be treated as case-insensitive." required="false"/>
+               <c:simple-property name="krb_server_hostname" default="" description="Sets the hostname of the Kerberos server." required="false"/>
+               <c:simple-property name="krb_server_keyfile" default="FILE:/usr/local/pgsql/etc/krb5.keytab" description="Sets the location of the Kerberos server key file." required="false"/>
+               <c:simple-property name="krb_srvname" default="postgres" description="Sets the name of the Kerberos service." required="false"/>
+               <c:simple-property name="lc_collate" default="C" description="Shows the collation order locale." required="false" readOnly="true"/>
+               <c:simple-property name="lc_ctype" default="C" description="Shows the character classification and case conversion locale." required="false" readOnly="true"/>
+               <c:simple-property name="lc_messages" default="C" description="Sets the language in which messages are displayed." required="false"/>
+               <c:simple-property name="lc_monetary" default="C" description="Sets the locale for formatting monetary amounts." required="false"/>
+               <c:simple-property name="lc_numeric" default="C" description="Sets the locale for formatting numbers." required="false"/>
+               <c:simple-property name="lc_time" default="C" description="Sets the locale for formatting date and time values." required="false"/>
+               <c:simple-property name="listen_addresses" default="localhost" description="Sets the host name or IP address(es) to listen to." required="false"/>
+               <c:simple-property name="local_preload_libraries" default="" description="Lists shared libraries to preload into each backend." required="false"/>
+               <c:simple-property name="log_connections" type="boolean" default="off" description="Logs each successful connection." required="false"/>
+               <c:simple-property name="log_destination" default="stderr" description="Sets the destination for server log output." required="false"/>
+               <c:simple-property name="log_directory" default="pg_log" description="Sets the destination directory for log files." required="false"/>
+               <c:simple-property name="log_disconnections" type="boolean" default="off" description="Logs end of a session, including duration." required="false"/>
+               <c:simple-property name="log_duration" type="boolean" default="off" description="Logs the duration of each completed SQL statement." required="false"/>
+               <c:simple-property name="log_error_verbosity" default="default" description="Sets the verbosity of logged messages." required="false"/>
+               <c:simple-property name="log_executor_stats" type="boolean" default="off" description="Writes executor performance statistics to the server log." required="false"/>
+               <c:simple-property name="log_filename" default="postgresql-%Y-%m-%d_%H%M%S.log" description="Sets the file name pattern for log files." required="false"/>
+               <c:simple-property name="log_hostname" type="boolean" default="off" description="Logs the host name in the connection logs." required="false"/>
+               <c:simple-property name="log_line_prefix" default="%t " description="Controls information prefixed to each log line" required="false"/>
+               <c:simple-property name="log_min_duration_statement" default="-1" description="Sets the minimum execution time (in milliseconds) above which statements will be logged." required="false"/>
+               <c:simple-property name="log_min_error_statement" default="error" description="Causes all statements generating error at or above this level to be logged." required="false"/>
+               <c:simple-property name="log_min_messages" default="notice" description="Sets the message levels that are logged." required="false"/>
+               <c:simple-property name="log_parser_stats" type="boolean" default="off" description="Writes parser performance statistics to the server log." required="false"/>
+               <c:simple-property name="log_planner_stats" type="boolean" default="off" description="Writes planner performance statistics to the server log." required="false"/>
+               <c:simple-property name="log_rotation_age" description="Automatic log file rotation will occur after this amount of time; default unit is minutes; default value is '1440' (1d)." required="false"/>
+               <c:simple-property name="log_rotation_size" default="10MB" description="Automatic log file rotation will occur when the file reaches this size; default unit is kilobytes; default value is '10240' (i.e. 10MB)." required="false"/>
+               <c:simple-property name="log_statement" default="none" description="Sets the type of statements logged." required="false"/>
+               <c:simple-property name="log_statement_stats" type="boolean" default="off" description="Writes cumulative performance statistics to the server log." required="false"/>
+               <c:simple-property name="log_truncate_on_rotation" type="boolean" default="off" description="Truncate existing log files of same name during log rotation." required="false"/>
+               <c:simple-property name="maintenance_work_mem" default="16MB" description="Sets the maximum memory to be used for maintenance operations." required="false"/>
+               <c:simple-property name="max_connections" type="integer" default="100" description="Sets the maximum number of concurrent connections." required="false"/>
+               <c:simple-property name="max_files_per_process" type="integer" default="1000" description="Sets the maximum number of simultaneously open files for each server process." required="false"/>
+               <c:simple-property name="max_fsm_pages" type="integer" default="204800" description="Sets the maximum number of disk pages for which free space is tracked." required="false"/>
+               <c:simple-property name="max_fsm_relations" default="1000" description="Sets the maximum number of tables and indexes for which free space is tracked." required="false"/>
+               <c:simple-property name="max_function_args" type="integer" default="100" description="Shows the maximum number of function arguments." required="false" readOnly="true"/>
+               <c:simple-property name="max_identifier_length" type="integer" default="63" description="Shows the maximum identifier length" required="false" readOnly="true"/>
+               <c:simple-property name="max_index_keys" type="integer" default="32" description="Shows the maximum number of index keys." required="false" readOnly="true"/>
+               <c:simple-property name="max_locks_per_transaction" default="64" description="Sets the maximum number of locks per transaction." required="false"/>
+               <c:simple-property name="max_prepared_transactions" type="integer" default="5" description="Sets the maximum number of simultaneously prepared transactions." required="false"/>
+               <c:simple-property name="max_stack_depth" description="Sets the maximum size of the server's execution stack; default unit is kilobytes; default value is '2048' (i.e. 2MB)." required="false"/>
+               <c:simple-property name="password_encryption" type="boolean" default="on" description="Encrypt passwords." required="false"/>
+               <c:simple-property name="port" type="integer" description="Sets the TCP port the server listens on; default value is '5432'." required="false">
+                  <c:constraint>
+                     <c:integer-constraint minimum="1" maximum="65535"/>
+                  </c:constraint>
+               </c:simple-property>
+               <c:simple-property name="post_auth_delay" description="Waits the specified amount of time on connection startup after authentication; default unit is seconds; default value is '0'." required="false"/>
+               <c:simple-property name="pre_auth_delay" description="Waits the specified amount of time on connection startup before authentication; default unit is seconds; default value is '0'." required="false"/>
+               <c:simple-property name="random_page_cost" type="float" description="Sets the planner's estimate of the cost of a nonsequentially fetched disk page; measured on the same scale as the seq_page_cost configuration parameter; default value is '4'." required="false"/>
+               <c:simple-property name="redirect_stderr" type="boolean" description="Start a subprocess to capture stderr output into log files; default value is 'on'." required="false"/>
+               <c:simple-property name="regex_flavor" default="advanced" description="Sets the regular expression flavor." required="false"/>
+               <c:simple-property name="search_path" default="$user&quot;,public&quot;" description="Sets the schema search order for names that are not schema-qualified." required="false"/>
+               <c:simple-property name="seq_page_cost" type="float" description="Sets the planner's estimate of the cost of a sequentially fetched disk page; measured on an arbitrary scale." required="false"/>
+               <c:simple-property name="server_encoding" default="SQL_ASCII" description="Sets the server (database) character set encoding." required="false" readOnly="true"/>
+               <c:simple-property name="server_version" description="Shows the PostgreSQL version." required="false" readOnly="true"/>
+               <c:simple-property name="server_version_num" type="integer" description="Shows the PostgreSQL version as an integer (e.g. 80204 translates to 8.2.4)." required="false" readOnly="true"/>
+               <c:simple-property name="shared_buffers" description="Sets the number of the shared memory buffers used by the server; default value is typically '1000'." required="false"/>
+               <c:simple-property name="shared_preload_libraries" default="" description="Lists shared libraries to preload into server." required="false"/>
+               <c:simple-property name="silent_mode" type="boolean" default="off" description="Runs the server silently." required="false"/>
+               <c:simple-property name="sql_inheritance" type="boolean" default="on" description="Causes subtables to be included by default in various commands." required="false"/>
+               <c:simple-property name="ssl" type="boolean" default="off" description="Enables SSL connections." required="false"/>
+               <c:simple-property name="standard_conforming_strings" type="boolean" default="off" description="'...' strings treat backslashes literally." required="false"/>
+               <c:simple-property name="statement_timeout" description="Sets the maximum allowed duration of any statement; default unit is milliseconds; default value is '0'." required="false"/>
+               <c:simple-property name="stats_block_level" type="boolean" default="on" description="Collects block-level statistics on database activity." required="false"/>
+               <c:simple-property name="stats_command_string" type="boolean" default="on" description="Collects information about executing commands." required="false"/>
+               <c:simple-property name="stats_reset_on_server_start" type="boolean" default="off" description="Zeroes collected statistics on server restart." required="false"/>
+               <c:simple-property name="stats_row_level" type="boolean" default="on" description="Collects row-level statistics on database activity." required="false"/>
+               <c:simple-property name="stats_start_collector" type="boolean" default="on" description="Starts the server statistics-collection subprocess." required="false"/>
+               <c:simple-property name="superuser_reserved_connections" description="Sets the number of connection slots reserved for superusers; default value is '3'." required="false"/>
+               <c:simple-property name="tcp_keepalives_count" type="integer" description="Maximum number of TCP keepalive retransmits; '0' selects the system default; default value is '0'." required="false"/>
+               <c:simple-property name="tcp_keepalives_idle" description="Amount of time between issuing TCP keepalives; '0' selects the system default; default unit is seconds; default value is '0'." required="false"/>
+               <c:simple-property name="tcp_keepalives_interval" description="Amount of time between TCP keepalive retransmits; '0' selects the system default; default unit is seconds; default value is '0'." required="false"/>
+               <c:simple-property name="temp_buffers" type="integer" default="1024" description="Sets the maximum number of temporary buffers used by each session." required="false"/>
+               <c:simple-property name="TimeZone" default="US/Eastern" description="Sets the time zone for displaying and interpreting time stamps." required="false"/>
+               <c:simple-property name="timezone_abbreviations" default="Default" description="Selects a file of time zone abbreviations" required="false"/>
+               <c:simple-property name="trace_notify" type="boolean" default="off" description="Generates debugging output for LISTEN and NOTIFY." required="false"/>
+               <c:simple-property name="trace_sort" type="boolean" default="off" description="Emit information about resource usage in sorting." required="false"/>
+               <c:simple-property name="transaction_isolation" default="read committed" description="Sets the current transaction's isolation level." required="false"/>
+               <c:simple-property name="transaction_read_only" type="boolean" default="off" description="Sets the current transaction's read-only status." required="false"/>
+               <c:simple-property name="transform_null_equals" type="boolean" default="off" description="Treats expr=NULL as expr IS NULL" required="false"/>
+               <c:simple-property name="unix_socket_directory" type="directory" description="Sets the directory where the Unix-domain socket will be created; default value is ''." required="false"/>
+               <c:simple-property name="unix_socket_group" description="Sets the owning group of the Unix-domain socket; default value is ''." required="false"/>
+               <c:simple-property name="unix_socket_permissions" description="Sets the access permissions of the Unix-domain socket; default value is '511'." required="false"/>
+               <c:simple-property name="update_process_title" type="boolean" default="on" description="Updates the process title to show the active SQL command." required="false"/>
+               <c:simple-property name="vacuum_cost_delay" description="Vacuum cost delay; default unit is milliseconds; range 0-1000; default value is '0'." required="false"/>
+               <c:simple-property name="vacuum_cost_limit" type="integer" default="200" description="Vacuum cost (in credits) amount available before napping." required="false"/>
+               <c:simple-property name="vacuum_cost_page_dirty" type="integer" description="Vacuum cost (in credits) for a page dirtied by vacuum; range 0-10000; default value is '20'." required="false"/>
+               <c:simple-property name="vacuum_cost_page_hit" type="integer" description="Vacuum cost (in credits) for a page found in the buffer cache; range 0-10000; default value is '1'." required="false"/>
+               <c:simple-property name="vacuum_cost_page_miss" type="integer" default="10" description="Vacuum cost (in credits) for a page not found in the buffer cache; range 0-10000; default value is '10'." required="false"/>
+               <c:simple-property name="vacuum_freeze_min_age" type="integer" default="100000000" description="Minimum age (in transactions) at which VACUUM should freeze a table row." required="false"/>
+               <c:simple-property name="wal_buffers" description="Sets the number of disk-page buffers in shared memory for WAL; default value is '8'." required="false"/>
+               <c:simple-property name="wal_sync_method" default="open_datasync" description="Selects the method used for forcing WAL updates out to disk." required="false"/>
+               <c:simple-property name="work_mem" description="Sets the maximum memory to be used for query workspaces; default unit is kilobytes; default value is '1000' (i.e. 1MB)." required="false"/>
+               <c:simple-property name="zero_damaged_pages" type="boolean" default="off" description="Continues processing past damaged page headers." required="false"/>
+            </c:map-property>
+         </c:group>
+
+      </resource-configuration>
+
+
+     <!-- TODO GH: Should i aggregate all these... they're also in the child db components (the autogroup should do this for us right?)
+      <metric displayName="Backend Count" property="numbackends" measurementType="dynamic" displayType="summary"/>
+      <metric displayName="Commits" property="xact_commit" measurementType="trendsup" displayType="summary"/>
+      <metric displayName="Rollbacks" property="xact_rollback" measurementType="trendsup" displayType="summary"/>
+      <metric displayName="Blocks Read" property="blks_read" measurementType="trendsup"/>
+      <metric displayName="Buffer Hits" property="blks_hit" measurementType="trendsup"/>
+
+      <metric displayName="Locks Held" property="LocksHeld" measurementType="dynamic"/>
+      <metric displayName="Data Space Used" property="DataSpaceUsed" units="bytes" measurementType="dynamic"/>
+      <metric displayName="Index Space Used" property="IndexSpaceUsed" units="bytes" measurementType="dynamic"/>-->
+
+
+      <service name="Database" class="PostgresDatabaseComponent" discovery="PostgresDatabaseDiscoveryComponent">
+         <plugin-configuration>
+            <c:simple-property name="databaseName" displayName="Database Name" readOnly="true" />
+         </plugin-configuration>
+
+         <operation name="resetStatistics" displayName="Reset Statistics" description="Resets the statistics in this database"/>
+
+         <metric displayName="Backends" property="numbackends" displayType="summary"/>
+         <metric displayName="Transactions Committed" property="xact_commit" measurementType="trendsup" displayType="summary"/>
+         <metric displayName="Transactions Rolled Back" property="xact_rollback" measurementType="trendsup" displayType="summary"/>
+         <metric displayName="Blocks Read" property="blks_read" measurementType="trendsup"/>
+         <metric displayName="Blocks Hit" property="blks_hit" measurementType="trendsup"/>
+         <metric displayName="Size" property="size" description="Size of the database" units="bytes" displayType="summary"/>
+
+
+
+         <service name="Table" class="PostgresTableComponent" discovery="PostgresTableDiscoveryComponent"
+                  description="Database table" createDeletePolicy="both" creationDataType="configuration">
+
+            <plugin-configuration>
+               <c:simple-property name="tableName" readOnly="true" />
+            </plugin-configuration>
+
+            <metric displayName="Sequential Scans" property="seq_scan" measurementType="trendsup"/>
+            <metric displayName="Sequential Rows Read" property="seq_tup_read" measurementType="trendsup"/>
+            <metric displayName="Index Scans" property="idx_scan" measurementType="trendsup"/>
+            <metric displayName="Index Scan Rows Read" property="idx_tup_fetch" measurementType="trendsup"/>
+
+            <metric displayName="Heap Block Read" property="heap_blks_read" measurementType="trendsup" displayType="summary"/>
+            <metric displayName="Heap Blocks Hit" property="heap_blks_hit" measurementType="trendsup"/>
+            <metric displayName="Index Blocks Read" property="idx_blks_read" measurementType="trendsup" displayType="summary"/>
+            <metric displayName="Index Blocks Hit" property="idx_blks_hit" measurementType="trendsup"/>
+            <metric displayName="Toast Block Read" property="toast_blks_read" measurementType="trendsup"/>
+            <metric displayName="Toast Blocks Hit" property="toast_blks_hit" measurementType="trendsup"/>
+            <metric displayName="Toast Index Blocks Read" property="tidx_blks_read" measurementType="trendsup"/>
+            <metric displayName="Toast Index Blocks Hit" property="tidx_blks_hit" measurementType="trendsup"/>
+
+
+            <metric displayName="Row Inserts" property="n_tup_ins" measurementType="trendsup"/>
+            <metric displayName="Row Updates" property="n_tup_upd" measurementType="trendsup"/>
+            <metric displayName="Row Deletes" property="n_tup_del" measurementType="trendsup"/>
+            <metric displayName="Table Size" property="table_size" measurementType="dynamic" displayType="summary" units="bytes"
+               description="The size in bytes of the data in the table"/>
+            <metric displayName="Total Size" property="total_size" measurementType="dynamic" displayType="summary" units="bytes"
+               description="The size in bytes of the data and all associated indexes and toast tables"/>
+            <metric displayName="Rows" property="rows" measurementType="dynamic"
+                    defaultOn="false" defaultInterval="600000"
+                    description="The count of rows in the table. Warning: This may be an expensive operation"/>
+            <metric displayName="Approximate rows" property="rows_approx" measurementType="dynamic"
+                    defaultOn="false" defaultInterval="300000"
+                    description="The approximate count of rows in the table. This is basically the number of rows of the last ANALYZE of the table. This metric is not epensive."/> 
+
+            <!-- TODO GH: add metrics for data and index space used -->
+
+            <resource-configuration>
+               <c:simple-property name="tableName"/>
+               <c:list-property name="columns">
+                  <c:map-property name="columnDefinition">
+                     <c:simple-property name="columnName" displayName="Column Name" summary="true" description="name of the column"/>
+                     <c:simple-property name="columnType" displayName="Type" summary="true" description="data type of the column, if it is a built-in type, or ARRAY if it is some array (in that case, see the view element_types), else USER-DEFINED (in that case, the type is identified in udt_name and associated columns).">
+                        <!-- See: http://www.postgresql.org/docs/8.2/interactive/datatype.html#DATATYPE-TABLE -->
+                        <c:property-options>
+                           <c:option value="abstime"/>
+                           <c:option value="aclitem"/>
+                           <c:option value="bigint"/>
+                           <c:option value="bigserial"/>
+                           <c:option value="bit"/>
+                           <c:option value="bit varying"/>
+                           <c:option value="bool"/>
+                           <c:option value="boolean"/>
+                           <c:option value="bytea"/>
+                           <c:option value="char"/>
+                           <c:option value="character"/>
+                           <c:option value="character varying"/>
+                           <c:option value="cid"/>
+                           <c:option value="cidr"/>
+                           <c:option value="circle"/>
+                           <c:option value="date"/>
+                           <c:option value="decimal"/>
+                           <c:option value="double precision"/>
+                           <c:option value="float4"/>
+                           <c:option value="float8"/>
+                           <c:option value="inet"/>
+                           <c:option value="int"/>
+                           <c:option value="int2"/>
+                           <c:option value="int4"/>
+                           <c:option value="int8"/>
+                           <c:option value="integer"/>
+                           <c:option value="interval"/>
+                           <c:option value="macaddr"/>
+                           <c:option value="money"/>
+                           <c:option value="numeric"/>
+                           <c:option value="oid"/>
+                           <c:option value="path"/>
+                           <c:option value="polygon"/>
+                           <c:option value="real"/>
+                           <c:option value="refcursor"/>
+                           <c:option value="regclass"/>
+                           <c:option value="regoper"/>
+                           <c:option value="regoperator"/>
+                           <c:option value="regproc"/>
+                           <c:option value="regprocedure"/>
+                           <c:option value="regtype"/>
+                           <c:option value="reltime"/>
+                           <c:option value="serial"/>
+                           <c:option value="serial4"/>
+                           <c:option value="serial8"/>
+                           <c:option value="smallint"/>
+                           <c:option value="smgr"/>
+                           <c:option value="text"/>
+                           <c:option value="tid"/>
+                           <c:option value="time"/>
+                           <c:option value="timetz"/>
+                           <c:option value="time with time zone"/>
+                           <c:option value="time without time zone"/>
+                           <c:option value="timestamp"/>
+                           <c:option value="timestamptz"/>
+                           <c:option value="timestamp with time zone"/>
+                           <c:option value="timestamp without time zone"/>
+                           <c:option value="tinterval"/>
+                           <c:option value="varbit"/>
+                           <c:option value="varchar"/>
+                           <c:option value="xid"/>
+                           <c:option value="abstime[]"/>
+                           <c:option value="aclitem[]"/>
+                           <c:option value="bigint[]"/>
+                           <c:option value="bigserial[]"/>
+                           <c:option value="bit[]"/>
+                           <c:option value="bit varying[]"/>
+                           <c:option value="bool[]"/>
+                           <c:option value="boolean[]"/>
+                           <c:option value="bytea[]"/>
+                           <c:option value="char[]"/>
+                           <c:option value="character[]"/>
+                           <c:option value="character varying[]"/>
+                           <c:option value="cid[]"/>
+                           <c:option value="cidr[]"/>
+                           <c:option value="circle[]"/>
+                           <c:option value="date[]"/>
+                           <c:option value="decimal[]"/>
+                           <c:option value="double precision[]"/>
+                           <c:option value="float4[]"/>
+                           <c:option value="float8[]"/>
+                           <c:option value="inet[]"/>
+                           <c:option value="int[]"/>
+                           <c:option value="int2[]"/>
+                           <c:option value="int4[]"/>
+                           <c:option value="int8[]"/>
+                           <c:option value="integer[]"/>
+                           <c:option value="interval[]"/>
+                           <c:option value="macaddr[]"/>
+                           <c:option value="money[]"/>
+                           <c:option value="numeric[]"/>
+                           <c:option value="oid[]"/>
+                           <c:option value="path[]"/>
+                           <c:option value="polygon[]"/>
+                           <c:option value="real[]"/>
+                           <c:option value="refcursor[]"/>
+                           <c:option value="regclass[]"/>
+                           <c:option value="regoper[]"/>
+                           <c:option value="regoperator[]"/>
+                           <c:option value="regproc[]"/>
+                           <c:option value="regprocedure[]"/>
+                           <c:option value="regtype[]"/>
+                           <c:option value="reltime[]"/>
+                           <c:option value="serial[]"/>
+                           <c:option value="serial4[]"/>
+                           <c:option value="serial8[]"/>
+                           <c:option value="smallint[]"/>
+                           <c:option value="smgr[]"/>
+                           <c:option value="text[]"/>
+                           <c:option value="tid[]"/>
+                           <c:option value="time[]"/>
+                           <c:option value="timetz[]"/>
+                           <c:option value="time with time zone[]"/>
+                           <c:option value="time without time zone[]"/>
+                           <c:option value="timestamp[]"/>
+                           <c:option value="timestamptz[]"/>
+                           <c:option value="timestamp with time zone[]"/>
+                           <c:option value="timestamp without time zone[]"/>
+                           <c:option value="tinterval[]"/>
+                           <c:option value="varbit[]"/>
+                           <c:option value="varchar[]"/>
+                           <c:option value="xid[]"/>
+                        </c:property-options>
+                     </c:simple-property>
+                     <c:simple-property name="columnLength" displayName="Length" type="integer" required="false" summary="true" description="if data_type identifies a character or bit string type, the declared maximum length; null for all other data types or if no maximum length was declared"/>
+                     <c:simple-property name="columnPrecision" displayName="Precision" type="integer" required="false" summary="true" description="if data_type identifies a numeric type, this column contains the (declared or implicit) precision of the type for this column; the precision indicates the number of significant digits. It can be expressed in decimal (base 10) or binary (base 2) terms, as specified in the column numeric_precision_radix; for all other data types, this column is null"/>
+                     <c:simple-property name="columnNullable" displayName="Nullable" type="boolean" required="false" summary="true" description="YES if the column is possibly nullable, NO if it is known not nullable; a not-null constraint is one way a column can be known not nullable, but there can be others"/>
+                     <c:simple-property name="columnDefault" displayName="Default" type="string" required="false" description="default expression of the column"/>
+
+                  </c:map-property>
+               </c:list-property>
+            </resource-configuration>
+
+         </service>
+
+      </service>
+
+      <service name="User" discovery="PostgresUserDiscoveryComponent" class="PostgresUserComponent"
+               createDeletePolicy="both" creationDataType="configuration"
+               description="A User in the Postgres System">
+         <plugin-configuration>
+            <c:simple-property name="userName" required="true"/>
+         </plugin-configuration>
+
+         <metric property="total" displayName="Total User Connections" displayType="summary"/>
+         <metric property="active" displayName="Active User Connections" displayType="summary"/>
+
+         <!-- NOTE: The below is commented, because PostgresUserComponent does not yet implement ConfigurationFacet. -->
+         <resource-configuration>
+            <c:simple-property name="user"/>
+            <c:simple-property name="canLogin" type="boolean" default="true"/>
+            <c:simple-property name="password" type="password"/>
+            
+            <c:group name="privileges" displayName="Privileges">
+               <c:simple-property name="inheritRights" displayName="Inherit Rights" type="boolean" description="Inherit rights from parent roles"/>
+               <c:simple-property name="superuser" displayName="Super User" type="boolean" description="Is a super user" default="false"/>
+               <c:simple-property name="canCreateDatabaseObjects" displayName="Can Create Database Types" type="boolean" default="false"/>
+               <c:simple-property name="canCreateRoles" displayName="Can Create Roles" type="boolean" default="false"/>
+               <c:simple-property name="canModifyCatalogDirectly" displayName="Can Modify Catalog Directly" type="boolean" default="false"/>
+               <c:simple-property name="connectionLimit" displayName="User connection limit" type="integer" default="-1"/>
+            </c:group>
+         </resource-configuration>
+         
+      </service>      
+   </server>
+
+</plugin>

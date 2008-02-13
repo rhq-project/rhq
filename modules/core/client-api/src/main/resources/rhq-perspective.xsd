@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:rhq="urn:xmlns:rhq-perspective"
+           targetNamespace="urn:xmlns:rhq-perspective"
+           elementFormDefault="qualified"
+           jaxb:version="2.0"
+           xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" blockDefault="">
+
+
+
+   <xs:annotation>
+      <xs:documentation>Schema for the definition Perspective service objects
+      </xs:documentation>
+       <xs:appinfo>
+            <jaxb:schemaBindings>
+               <jaxb:package name="org.rhq.core.clientapi.descriptor.perspective"/>
+            </jaxb:schemaBindings>
+       </xs:appinfo>
+   </xs:annotation>
+
+   
+   <xs:element name="perspective">
+      <xs:annotation>
+         <xs:documentation>
+Perspective is a collection of user interface screens and defined URL access points to 
+get to high level functionality within the Perspective.
+  
+  Fields:
+  
+  name: Name of the Perspective.  
+  
+  url: Root URL of the Perspective.   
+  
+  description: Description of Perspective
+  
+  tasks: The set of Tasks this Perspective 'owns' and shares as available for users to 
+  navigate to.
+  
+  navigation: The List of NavigationItem objects associated with this Perspective.  
+  NavigationItems are name/path pairs that represent high level navigation links this 
+  Perspective desires to show.  Examples would for an Administration Perspective:
+  
+  Name         , Path
+  Users        , /admin/users
+  Systems      , /admin/systems
+  Configuration, /admin/configuration         
+         
+         </xs:documentation>
+         <xs:appinfo>
+            <jaxb:class name="Perspective"/>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexType>
+          <xs:sequence>
+               <xs:element ref="rhq:task" minOccurs="0" maxOccurs="unbounded">
+                  <xs:annotation>
+                     <xs:documentation>
+                        Defines child server types that can be embedded in this server type.
+                     </xs:documentation>
+                     <xs:appinfo>
+                        <jaxb:property name="tasks" />
+                     </xs:appinfo>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element ref="rhq:navigationitem" minOccurs="0" maxOccurs="unbounded">
+                  <xs:annotation>
+                     <xs:documentation>
+                        Defines child server types that can be embedded in this server type.
+                     </xs:documentation>
+                     <xs:appinfo>
+                        <jaxb:property name="navigationItems" />
+                     </xs:appinfo>
+                  </xs:annotation>
+               </xs:element>
+            </xs:sequence>
+            <xs:attribute name="name" use="required" type="xs:string"/>
+            <xs:attribute name="path" type="xs:string"/>
+            <xs:attribute name="description" type="xs:string"/>
+            
+      </xs:complexType>
+   </xs:element>
+
+
+   <xs:element name="task">
+      <xs:annotation>
+         <xs:documentation>
+Tasks are high level UI concepts that a Perspectives are responsible for.  The Task will
+provide a URL that allows the user to access the starting point for that Task.  
+
+For example, common tasks in most web applications involve creation and management of 
+Users of the system.  A common task in managing users is the step of actually creating a 
+User.  In order to designate the starting point for creating a user you would create a
+Task object:
+
+Task.name = "user create"
+Task.url = "/users/create"
+Task.display = "Create a new User in the system"
+Task.urlmatches = "/users/*"
+
+Fields:
+
+The name field is a progmatically referenceable name that isn't intended to change. Code
+will reference Tasks by name. 
+
+The url field will allow UIs to build a link to the Task's starting point.
+
+The display can be used when linking to the Task to show a display value describing what
+the Task does
+
+The urlmatches is used to indicate a list of URLs that this Task should be visible to.  
+This can allow GUI developers a way to specify the relationship of this Task to specific 
+pages or a tree of URLs.  The above example indicates that urlmatches is "/users/*" which
+is an indication that the task is relative to all the pages in the /users tree of URLs.  
+This can be used by a page rendering to show a link to the 'user create' Task if the user 
+was looking at a page with a path starting with /users/  
+         </xs:documentation>
+         <xs:appinfo>
+            <jaxb:class name="Task"/>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="pathmatches" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+               <xs:annotation>
+                  <xs:documentation>
+                   The pathMatches is used to indicate a list of rooted paths that this Task should be visible to.  
+                   This can allow GUI developers a way to specify the relationship of this Task to specific 
+                   pages or a tree of URLs.  The above example indicates that urlmatches is "/users/*" which
+                   is an indication that the task is relative to all the pages in the /users tree of URLs.  
+                   This can be used by a page rendering to show a link to the 'user create' Task if the user 
+                   was looking at a page with a path starting with /users/                    
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:element>
+         </xs:sequence>
+            
+         <xs:attribute name="name" use="required" type="xs:string"/>
+         <xs:attribute name="path" use="required" type="xs:string"/>
+         <xs:attribute name="description" type="xs:string"/>
+         <xs:attribute name="context" type="xs:string"/>
+      </xs:complexType>
+   </xs:element>
+   
+   <xs:element name="navigationitem">
+      <xs:annotation>
+         <xs:documentation>
+NavigationItem is a class that represents named paths that a Perspective can show in a 
+GUI to get to high-level areas of a Perspective's pages.  An example would be: Typical web 
+applications include a Top Level navigation bar.  You could represent a Perspective's top
+nav with a set of NavigationItems   
+         </xs:documentation>
+         <xs:appinfo>
+            <jaxb:class name="NavigationItem"/>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:attribute name="name" use="required" type="xs:string"/>
+         <xs:attribute name="path" type="xs:string"/>
+      </xs:complexType>
+   </xs:element>
+   
+</xs:schema>

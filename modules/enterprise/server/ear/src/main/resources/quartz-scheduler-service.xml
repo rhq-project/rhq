@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+
+<server>
+  <mbean code="org.rhq.enterprise.server.scheduler.SchedulerService"
+         name="rhq:service=scheduler">
+    <depends>jboss.jca:service=LocalTxCM,name=RHQDS</depends>
+
+    <attribute name="QuartzProperties">
+# RHQ custom property that defines the default timeout for all operations.
+# This is specified in seconds.  If any operation takes longer than this, it is assumed to have failed.
+rhq.server.operation-timeout = ${rhq.server.operation-timeout:600}
+
+# scheduler factory config
+org.quartz.scheduler.instanceName = RHQScheduler
+org.quartz.scheduler.instanceId   = AUTO
+
+# thread pool config
+org.quartz.threadPool.class       = org.quartz.simpl.SimpleThreadPool
+org.quartz.threadPool.threadCount = 5
+
+# database config
+# note that the delegate class property should be set at build/installation time
+org.quartz.jobStore.class                      = org.quartz.impl.jdbcjobstore.JobStoreCMT
+org.quartz.jobStore.driverDelegateClass        = ${server.quartzDelegate}
+org.quartz.jobStore.isClustered                = true
+org.quartz.jobStore.clusterCheckinInterval     = 30000
+org.quartz.jobStore.tablePrefix                = RHQ_QRTZ_
+org.quartz.jobStore.useProperties              = true
+org.quartz.jobStore.dataSource                 = RHQDS
+org.quartz.dataSource.RHQDS.jndiURL            = java:/RHQDS
+org.quartz.dataSource.RHQDS.maxConnections     = 10
+org.quartz.jobStore.nonManagedTXDataSource     = NoTxRHQDS
+org.quartz.dataSource.NoTxRHQDS.jndiURL        = java:/NoTxRHQDS
+org.quartz.dataSource.NoTxRHQDS.maxConnections = 10
+    </attribute>
+  </mbean>
+</server>

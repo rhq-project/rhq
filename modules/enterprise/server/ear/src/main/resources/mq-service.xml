@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+
+<server>
+  <!-- 
+  Destination without a configured SecurityManager or without a SecurityConf
+  will default to role guest with read=true, write=true, create=false.
+  -->
+  
+  <!--
+  <mbean code="org.jboss.mq.server.jmx.Queue"
+	 name="jboss.mq.destination:service=Queue,name=agentScheduleQueue">
+    <depends>jboss.mq.destination:service=Topic,name=eventsTopic</depends>
+    <depends optional-attribute-name="DestinationManager">jboss.mq:service=DestinationManager</depends>
+  </mbean>
+
+  <mbean code="org.jboss.mq.server.jmx.Queue"
+	 name="jboss.mq.destination:service=Queue,name=monitorAlarmQueue">
+    <depends>jboss.mq.destination:service=Topic,name=eventsTopic</depends>
+    <depends optional-attribute-name="DestinationManager">jboss.mq:service=DestinationManager</depends>
+  </mbean>
+  
+  <mbean code="org.jboss.mq.server.jmx.Topic"
+     name="jboss.mq.destination:service=Topic,name=eventsTopic">
+    <depends optional-attribute-name="DestinationManager">jboss.mq:service=DestinationManager</depends>
+  </mbean>
+  
+  <mbean code="org.jboss.mq.server.jmx.Queue"
+    name="jboss.mq.destination:service=Queue,name=monitorRtQueue">
+    <depends>jboss.mq.destination:service=Topic,name=eventsTopic</depends>
+    <depends optional-attribute-name="DestinationManager">jboss.mq:service=DestinationManager</depends>
+  </mbean>
+  -->
+
+</server>

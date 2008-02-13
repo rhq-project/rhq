@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!-- TODO: THIS SCHEMA IS NOT COMPLETE! -->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+   xmlns="urn:xmlns:rhq-dbsetup-schema"
+   targetNamespace="urn:xmlns:rhq-dbsetup-schema">
+
+   <xs:element name="dbsetup">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element ref="table" maxOccurs="unbounded" />
+         </xs:sequence>
+         <xs:attribute name="name" type="xs:NMTOKEN" use="required" />
+      </xs:complexType>
+   </xs:element>
+
+
+   <xs:element name="table">
+      <xs:complexType mixed="true">
+         <xs:sequence>
+            <xs:element ref="column" maxOccurs="unbounded" />
+            <xs:element ref="constraint" minOccurs="0"
+               maxOccurs="unbounded" />
+            <xs:element ref="index" minOccurs="0" maxOccurs="unbounded" />
+         </xs:sequence>
+         <xs:attribute name="name" type="xs:ID" use="required">
+            <xs:simpleType>
+               <xs:restriction>
+                  <xs:maxLength value="24" />
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+      </xs:complexType>
+   </xs:element>
+
+
+   <xs:element name="column">
+      <xs:complexType>
+         <xs:attribute name="name" type="xs:NMTOKEN" use="required" />
+         <xs:attribute name="initial" use="optional" type="xs:integer" />
+
+         <xs:attribute name="default" use="optional">
+            <xs:simpleType>
+               <xs:restriction base="xs:NMTOKEN">
+                  <xs:enumeration value="autoincrement" />
+                  <xs:enumeration value="sequence-only" />
+                  <xs:enumeration value="true" />
+                  <xs:enumeration value="false" />
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+         <xs:attribute name="size" type="xs:integer" use="optional" />
+         <xs:attribute name="references" type="xs:string"
+            use="optional" />
+         <xs:attribute name="type" use="required">
+            <xs:simpleType>
+               <xs:restriction base="xs:NMTOKEN">
+                  <xs:enumeration value="BOOLEAN" />
+                  <xs:enumeration value="BYTES" />
+                  <xs:enumeration value="CHAR" />
+                  <xs:enumeration value="INTEGER" />
+                  <xs:enumeration value="SMALLINT" />
+                  <xs:enumeration value="LONG" />
+                  <xs:enumeration value="VARCHAR2" />
+                  <xs:enumeration value="DOUBLE" />
+                  <xs:enumeration value="TIMESTAMP" />
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+         <xs:attribute name="primarykey" use="optional">
+            <xs:simpleType>
+               <xs:restriction base="xs:NMTOKEN">
+                  <xs:enumeration value="true" />
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+         <xs:attribute name="required" use="optional">
+            <xs:simpleType>
+               <xs:restriction base="xs:NMTOKEN">
+                  <xs:enumeration value="false" />
+                  <xs:enumeration value="true" />
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+      </xs:complexType>
+   </xs:element>
+
+   <xs:element name="field">
+      <xs:complexType>
+         <xs:attribute name="ref" type="xs:NMTOKEN" use="required" />
+      </xs:complexType>
+   </xs:element>
+
+   <xs:element name="index">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element ref="field" maxOccurs="unbounded" />
+         </xs:sequence>
+         <xs:attribute name="name" type="xs:ID" use="required" />
+         <xs:attribute name="condition" type="xs:string" />
+         <xs:attribute name="unique" use="optional">
+            <xs:simpleType>
+               <xs:restriction base="xs:NMTOKEN">
+                  <xs:enumeration value="false" />
+                  <xs:enumeration value="true" />
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+      </xs:complexType>
+   </xs:element>
+
+
+   <xs:element name="constraint">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="primaryKey">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element ref="field" minOccurs="1"
+                        maxOccurs="unbounded" />
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+         <xs:attribute name="name" type="xs:ID" use="required" />
+      </xs:complexType>
+   </xs:element>
+
+</xs:schema>

@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+      
+<ui:composition template="/rhq/resource/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="View Operations History Details for Resource '#{ResourceUIBean.name}'"/>
+   <ui:param name="selectedTabName" value="Control.History"/>
+   
+   <!-- 
+     'item' will be used to:
+        1) conditionally render a refresh meta header 
+        2) display the contents of this history item 
+     -->
+   <ui:param name="item" value="#{ResourceOperationHistoryDetailsUIBean.history}" />
+   
+   <ui:define name="metaHeaders">
+      <f:verbatim rendered="#{item.status eq 'INPROGRESS'}">
+         <meta http-equiv="refresh" content="10" />
+      </f:verbatim>
+   </ui:define>
+   
+   <ui:define name="content">
+
+      <h:form id="operationHistoryDetailsForm">
+          <input type="hidden" name="id" value="${param.id}"/>
+          <input type="hidden" name="opId" value="${param.opId}"/>
+            
+          <h:outputLink value="/rhq/resource/operation/resourceOperationHistory.xhtml">
+             <f:param name="id" value="#{param.id}" />
+             <h:outputText value="&lt; Return to Operation History"/>
+          </h:outputLink>
+            
+ 	      <rich:panel>
+	         <f:facet name="header">Details</f:facet>
+	         <table>
+	            <tr>
+	               <td align="right" style="width: 100px;">Operation:</td>
+	               <td align="left">
+                     <h:outputText value="#{item.operationDefinition.displayName}" />
+	               </td>
+	            </tr>
+	            <tr>
+	               <td align="right">Date Submitted:</td>
+	               <td align="left">
+	                  <h:outputText value="#{item.createdTime}">
+	                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+	                  </h:outputText>
+	               </td>
+	            </tr>
+	            <tr>
+	               <td align="right">Date Completed:</td>
+	               <td align="left">
+	                  <h:outputText value="#{item.modifiedTime}" rendered="#{item.status ne 'INPROGRESS'}">
+	                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+	                  </h:outputText>
+	                  <h:outputText value="(in progress)"  rendered="#{item.status eq 'INPROGRESS'}"/>
+	               </td>
+	            </tr>
+	            <tr>
+	               <td align="right">Requester:</td>
+	               <td align="left">
+	                  <h:outputText value="#{item.subjectName}" rendered="#{!(empty item.subjectName)}" />
+	                  <h:outputText value="(unknown)" rendered="#{empty item.subjectName}" />
+	               </td>
+	            </tr>
+	            <tr>
+	               <td align="right">Status:</td>
+	               <td align="left">
+                      <h:outputLink rendered="#{item.status ne 'SUCCESS' and item.status ne 'INPROGRESS'}"
+                                    value="javascript:displayMessageModal('Error Message','#{item.errorMessage}')">
+                         <h:outputText value="#{item.status}"/>
+                      </h:outputLink>
+                      <h:outputText rendered="#{item.status eq 'SUCCESS'}" value="#{item.status}"/>
+	               </td>
+	            </tr>
+	         </table>
+	      </rich:panel>
+	      
+	      <rich:panel>
+	         <f:facet name="header">Parameters</f:facet>
+            <onc:config configurationDefinition="#{ResourceOperationHistoryDetailsUIBean.parameters.configurationDefinition}"
+                        configuration="#{ResourceOperationHistoryDetailsUIBean.parameters.configuration}"
+                        readOnly="true"
+                        nullConfigurationDefinitionMessage="#{ResourceOperationHistoryDetailsUIBean.parameters.nullConfigurationDefinitionMessage}"
+                        nullConfigurationMessage="#{ResourceOperationHistoryDetailsUIBean.parameters.nullConfigurationMessage}"
+                        nullConfigurationStyle="InfoBlock"/>
+	      </rich:panel>
+
+	      <rich:panel>
+	         <f:facet name="header">Results</f:facet>
+            <onc:config configurationDefinition="#{ResourceOperationHistoryDetailsUIBean.results.configurationDefinition}"
+                        configuration="#{ResourceOperationHistoryDetailsUIBean.results.configuration}"
+                        readOnly="true"
+                        nullConfigurationDefinitionMessage="#{ResourceOperationHistoryDetailsUIBean.results.nullConfigurationDefinitionMessage}"
+                        nullConfigurationMessage="#{ResourceOperationHistoryDetailsUIBean.results.nullConfigurationMessage}"
+                        nullConfigurationStyle="InfoBlock"/>
+	      </rich:panel>
+ 
+          <h:outputLink value="/rhq/resource/operation/resourceOperationHistory.xhtml">
+             <f:param name="id" value="#{param.id}" />
+             <h:outputText value="&lt; Return to Operation History"/>
+          </h:outputLink>
+ 
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

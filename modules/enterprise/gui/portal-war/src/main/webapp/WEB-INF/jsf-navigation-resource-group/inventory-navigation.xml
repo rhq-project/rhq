@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+   
+   <navigation-rule>
+
+      <from-view-id>/rhq/group/inventory/view.xhtml</from-view-id>
+      
+      <navigation-case>
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/group/inventory/view.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ViewGroupConnectionPropertyHistoryUIBean.deleteSelected}</from-action>
+         <to-view-id>/rhq/group/inventory/view.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ViewGroupConnectionPropertyHistoryUIBean.begin}</from-action>
+         <to-view-id>/rhq/group/inventory/list-plugin-configuration-update-history.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <!-- === EditGroupGeneralPropertiesUIBean ======================= -->
+
+      <navigation-case>
+         <from-action>#{EditGroupGeneralPropertiesUIBean.begin}</from-action>
+         <to-view-id>/rhq/group/inventory/edit-general.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <!-- === EditGroupConnectionPropertiesUIBean ======================= -->
+
+      <navigation-case>
+         <from-action>#{EditGroupConnectionPropertiesUIBean.begin}</from-action>
+         <to-view-id>/rhq/group/inventory/edit-connection.xhtml</to-view-id>
+      </navigation-case>
+
+      <!-- === DeleteResourcesFromGroupUIBean ======================= -->
+
+      <navigation-case>
+         <from-action>#{DeleteResourcesFromGroupUIBean.removeSelectedResources}</from-action>
+         <from-outcome>successOrFailure</from-outcome>
+         <to-view-id>/rhq/group/inventory/view.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <!--  === AddResourcesToGroup (struts) ========================= -->
+      
+      <navigation-case>
+         <from-action>#{ListResourceGroupMembersUIBean.addNewResources}</from-action>
+         <from-outcome>addResourcesToGroup</from-outcome>
+         <to-view-id>/resource/group/Inventory.do?mode=addResources&amp;groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/group/inventory/edit-general.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>failure</from-outcome>
+         <to-view-id>/rhq/group/inventory/edit-general.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/group/inventory/view.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/group/inventory/edit-connection.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/group/inventory/view.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/group/inventory/list-plugin-configuration-update-history.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/group/inventory/list-plugin-configuration-update-history.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+   
+   <navigation-rule>
+
+      <from-view-id>/rhq/group/inventory/view-plugin-configuration-update-details.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/group/inventory/view-plugin-configuration-update-details.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}&amp;apcuId=#{param.apcuId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+</faces-config>
+      

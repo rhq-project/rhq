@@ -1,0 +1,316 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/subscription.xhtml</from-view-id>
+      
+      <navigation-case>
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/resource/content/subscription.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ResourceChannelsUIBean.deleteSelectedResourceChannels}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/content/subscription.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{AvailableResourceChannelsUIBean.subscribeSelectedResourceChannels}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/content/subscription.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/view.xhtml</from-view-id>
+      
+      <navigation-case>
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/resource/content/view.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>viewArtifactRevision</from-outcome>
+         <to-view-id><![CDATA[/rhq/resource/artifact/content.xhtml?id=#{param.id}&amp;artifactId=#{param.artifactId}]]></to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case>
+         <from-outcome>createArtifact</from-outcome>
+         <to-view-id>/rhq/resource/content/create.xhtml</to-view-id>
+      </navigation-case>
+      
+      <navigation-case>
+         <from-outcome>updateArtifact</from-outcome>
+         <to-view-id>/rhq/resource/content/update.xhtml</to-view-id>
+      </navigation-case>
+      
+      <navigation-case>
+         <from-action>#{ListArtifactUIBean.deleteSelectedArtifacts}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/artifact/content.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/history.xhtml</from-view-id>
+     
+      <navigation-case>
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/resource/operation/resourceOperationHistory.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+   </navigation-rule> 
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/installed_package.package_history.xhtml</from-view-id>
+      
+      <navigation-case>
+         <from-outcome>viewOldRevision</from-outcome>
+         <to-view-id><![CDATA[/rhq/resource/artifact/content.xhtml?id=#{param.id}&amp;artifactId=#{param.artifactId}&amp;oldArtifactId=#{param.oldArtifactId}]]></to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case>
+         <from-action>#{RetrieveContentUIBean.retrieveContent}</from-action>
+         <from-outcome>successOrFailure</from-outcome>
+         <to-view-id>/rhq/resource/artifact/content.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/create.xhtml</from-view-id>
+      
+      <navigation-case>
+         <from-action>#{CreateNewArtifactUIBean.createArtifact}</from-action>
+         <from-outcome>successOrFailure</from-outcome>
+         <to-view-id>/rhq/resource/content/history.xhtml?id=${param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/update.xhtml</from-view-id>
+      
+      <navigation-case>
+         <from-action>#{UpdateArtifactUIBean.updateArtifact}</from-action>
+         <from-outcome>successOrFailure</from-outcome>
+         <to-view-id>/rhq/resource/content/history.xhtml?id=${param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+   </navigation-rule>
+
+   <!-- Content Source List -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/listContentSources.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/content/listContentSources.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>createNewContentSource</from-outcome>
+         <to-view-id>/rhq/content/createContentSource.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/content/listContentSources.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case> 
+      
+   </navigation-rule>
+
+   <!-- Channel List -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/listChannels.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/content/listChannels.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>createNewChannel</from-outcome>
+         <to-view-id>/rhq/content/createChannel.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/content/listChannels.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case> 
+      
+   </navigation-rule>
+
+   <!-- Content Source View -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/contentSource.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/content/contentSource.xhtml?mode=view&amp;id=${param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>edit</from-outcome>
+         <to-view-id>/rhq/content/contentSource.xhtml?mode=edit&amp;id=${param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/content/contentSource.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case> 
+      
+   </navigation-rule>
+
+   <!-- Channel View -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/channel.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/content/channel.xhtml?mode=view&amp;id=${param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>edit</from-outcome>
+         <to-view-id>/rhq/content/channel.xhtml?mode=edit&amp;id=${param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>associateWithContentSources</from-outcome>
+         <to-view-id>/rhq/content/channelAssociations.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>subscribeResources</from-outcome>
+         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/content/channel.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case> 
+      
+   </navigation-rule>
+
+   <!-- Content Source Creation -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/createContentSource.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>changedSelectedContentSourceTypeName</from-outcome>
+         <to-view-id>/rhq/content/createContentSource.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>save</from-outcome>
+         <to-view-id>/rhq/content/listContentSources.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>cancel</from-outcome>
+         <to-view-id>/rhq/content/listContentSources.xhtml</to-view-id>
+      </navigation-case>
+      
+   </navigation-rule>
+
+   <!-- Channel Creation -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/createChannel.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>save</from-outcome>
+         <to-view-id>/rhq/content/listChannels.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>cancel</from-outcome>
+         <to-view-id>/rhq/content/listChannels.xhtml</to-view-id>
+      </navigation-case>
+      
+   </navigation-rule>
+
+   <!-- Channel Associations With Content Sources -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/channelAssociations.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/content/channelAssociations.xhtml?id=${param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/content/channelAssociations.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case> 
+      
+   </navigation-rule>
+
+   <!-- Channel Subscriptions -->
+   <navigation-rule>
+      <from-view-id>/rhq/content/channelSubscriptions.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=${param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>search</from-outcome>
+         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=#{param.id}&amp;searchCategory=#{ChannelUnsubscriptionsUIBean.searchCategory}&amp;searchString=#{ChannelUnsubscriptionsUIBean.searchString}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case> 
+      
+   </navigation-rule>
+
+</faces-config>

@@ -1,0 +1,86 @@
+body { background-color: white; margin: 0px; padding: 0px; }
+
+
+/* LEFT MENU -------------------------------------------*/
+/*1  10/179/0, 20/166/3, +45 = 226 */
+/*2  8/167/0, 18/154/3, +44 = 219 */
+/* core */
+#LeftMenu { width:175px; margin-right: 44px; padding-bottom: 13px; }
+#LeftMenu li { list-style: none; font: 11px Verdana, Helvetica, Arial, sans-serif; }
+#LeftMenu a { display: block; text-decoration: none; color: #ffffff;}
+
+
+/* 1st level */
+#LeftMenu ul {
+  padding: 0px;
+  margin: 0px;
+}
+#LeftMenu ul li {
+  border-top: solid 1px white;
+  width: 175px;
+}
+
+
+
+#LeftMenu ul li a
+{
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 8px;
+    font-weight: bold;
+}
+
+#LeftMenu ul li a:hover {
+  background-color: #cccccc;
+  color: black;
+}
+#LeftMenu ul li {
+  background-color: #cccccc;
+}
+
+#LeftMenu ul li a {
+  color: white;
+  background-color: #777777;
+}
+
+#LeftMenu ul li a:hover {
+  background-color: #F0F0F0;
+}
+
+
+/* 2nd level */
+#LeftMenu ul li ul {
+  padding: 0px 0px 8px 0px;
+  margin: 0px;
+}
+#LeftMenu ul li ul li {
+  border-top: none;
+}
+
+#LeftMenu ul li ul li a {
+  width: 154px;
+  padding: 3px 3px 3px 18px;
+  /* 3 + 18 + 154 = 175px */
+  color: black;
+  font-weight: normal;
+}
+
+#LeftMenu ul li ul li a:hover {
+  background-color: #F0F0F0;
+}
+
+#LeftMenu ul li ul li a {
+  background-color: #cccccc;
+}
+
+#LeftMenu ul li ul li a:hover {
+  text-decoration: underline;
+}
+
+
+
+/* this color is now just at the bottom */
+div.brandBackground #LeftMenu { background: #B70000; }
+
+
+body { font: 11px Helvetica, Arial, sans-serif; }

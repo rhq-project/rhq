@@ -1,0 +1,195 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<head>
+   <title>${msg["product.shortName"]} - #{(!empty pageTitle) ? pageTitle : defaultPageTitle}</title>
+
+   <meta http-equiv="Expires" content="-1"/>
+   <meta http-equiv="Pragma" content="no-cache"/>
+   <meta http-equiv="Max-Age" content="0"/>
+   <meta http-equiv="Cache-Control" content="no-cache"/>
+   <ui:insert name="metaHeaders"></ui:insert>
+
+
+   <link rel="stylesheet" type="text/css" media="screen" href="/css/leftMenu.css"/>
+   <link rel="stylesheet" type="text/css" media="screen" href="/css/win.css"/>
+   <link rel="stylesheet" type="text/css" media="screen" href="/css/tabular.css"/>
+   <link rel="stylesheet" type="text/css" media="screen" href="/css/form-style.css"/>
+
+   <script type="text/javascript">
+      var help = "${pageHelpURL}";
+   </script>
+   <script type="text/javascript" src="/js/functions.js"></script>
+   <script type="text/javascript" src="/js/prototype.js"></script>
+   <script type="text/javascript" src="/js/window.js"></script>
+   <script type="text/javascript" src="/js/effects.js"></script>
+   <!--<script type="text/javascript" src="/js/debug.js"> </script>-->
+   <script type="text/javascript" src="/js/rhq.js"></script>
+
+   <link href="/css/theme/default.css" rel="stylesheet" type="text/css"/>
+   <link href="/css/theme/alphacube.css" rel="stylesheet" type="text/css"/>
+   <link href="/css/theme/debug.css" rel="stylesheet" type="text/css"/>
+
+   <!-- Trims up the headers of RF toggle panel headers -->
+   <style type="text/css">
+      .BlockTitle { padding-top: 3px; padding-bottom:3px; }
+   </style>
+</head>
+
+<body bgcolor="#FFF" onload="javascript:disableConditionalButtons();">
+
+<ui:remove>
+   <!-- [JBNADM-1352] Set the content type to "text/html" (overriding the default of "application/xhtml+xml") to force
+Firefox and other Gecko-based browsers to render the page in "Almost Standards" (i.e. transitional) mode. -->
+</ui:remove>
+<f:view contentType="text/html">
+
+<f:loadBundle basename="ApplicationResources" var="msg"/>
+
+<div style="position: absolute; top: 20; left: 15;">
+   <h:outputLink value="/Dashboard.do"><img src="/images/logo_header.gif" alt=""/></h:outputLink>
+</div>
+
+<!-- =================== TOP MENU =================== -->
+<div id="TopMenu">
+   <table cellpadding="0" cellspacing="0">
+      <tr>
+         <ui:remove><!--
+         <td class="menu_JBnetwork"><a href="http://network.jboss.com/">${msg["menu.top.a"]}</a></td>
+         <td class="menu_JBjems"><a href="http://www.jboss.com/">${msg["menu.top.b"]}</a></td>
+         <td class="menu_JBcom"><a href="http://www.jboss.org/">${msg["menu.top.c"]}</a></td>
+         <td class="menu_JBfed"><a href="http://www.redhat.com/">${msg["menu.top.d"]}</a></td>
+         --></ui:remove>
+         <td class="menu_JBfed"><a href="http://rhq-project.org/">rhq-project.org</a></td>
+      </tr>
+   </table>
+</div>
+
+<!-- =================== PAGE HEADER =================== -->
+<div id="PageHeader">
+
+   <h1 class="appTitle">${product.fullName}</h1>
+
+   <div id="AppMenu">
+      <h:outputLink value="/Start.do">${msg["header.start.link"]}</h:outputLink>
+      |
+      <h:outputLink value="/Dashboard.do">${msg["dash.home.PageTitle"]}</h:outputLink>
+      |
+      <h:outputLink value="/ResourceHub.do">${msg["resource.hub.ResourceHubPageTitle"]}</h:outputLink>
+      |
+      <h:outputLink value="/Admin.do">${msg["admin.admin.AdministrationTitle"]}</h:outputLink>
+      |
+      <h:outputLink
+            onclick="window.open('${helpBaseURL}Users+Guide','help','width=940,height=730,scrollbars=yes,toolbar=yes,left=40,top=40,resizable=yes'); return false;">${msg["header.help.link"]}</h:outputLink>
+      |
+      <h:outputLink value="/Logout.do">${msg["header.logout.link"]}</h:outputLink>
+   </div>
+   <hr style="margin-top: 10px; background-color: #090909; color: #090909" size="1" noshade="noshade"/>
+
+   <c:if test="${not empty pageHelpURL}">
+      <a href=""
+         onclick="window.open(help,'help','width=800,height=650,scrollbars=yes,toolbar=yes,left=80,top=80,resizable=yes'); return false;"><img
+            src="/images/title_pagehelp.gif" alt="Page Help" align="right"/></a>
+   </c:if>
+
+   <div id="Breadcrumb">
+      <ui:insert name="breadcrumbs">Default Breadcrumbs</ui:insert>
+   </div>
+
+</div>
+
+<!-- =================== BODY =================== -->
+<ui:insert name="body">Default Page Body</ui:insert>
+
+<!-- =================== FOOTER =================== -->
+<ui:insert name="footer">
+
+   <table width="100%" border="0" cellspacing="0" cellpadding="0">
+      <tr>
+         <td colspan="2">
+            <img id="footerSpacer" src="/images/spacer.gif" width="1" height="15" alt=""/>
+         </td>
+      </tr>
+      <tr>
+         <td rowspan="99" class="PageTitle" valign="top"><img src="/images/bg_footer.gif" alt="" border="0"/></td>
+         <td width="100%"><img src="/images/spacer.gif" width="1" height="1" alt=""/></td>
+      </tr>
+      <tr>
+         <td colspan="2">
+            <table width="80%" border="0" cellspacing="0" cellpadding="0">
+               <tr>
+                  <td class="FooterRegular" nowrap="nowrap">
+                     <a href="http://www.redhat.com/"><img src="/images/logo_rh_home.png" alt="Red Hat homepage"/></a>
+                  </td>
+               </tr>
+               <tr>
+                  <td class="FooterRegular" nowrap="nowrap">
+                     <f:verbatim>${msg["footer.copyright"]}</f:verbatim>
+                  </td>
+               </tr>
+               <tr>
+                  <td class="FooterRegular" nowrap="nowrap">
+                     <ui:remove>
+                     <!-- WARNING: Do *not* use <h:outputLink onclick="..."> for the About window link - the HTML it
+                                   renders does not work on Firefox or IE! (ips, 06/09/07) -->
+                     </ui:remove>
+                     <script language="JavaScript" type="text/javascript">var aboutWindowTitle = '${msg["about.Title"]}';</script>
+                     <a href="#" onclick="openAbout(aboutWindowTitle)">${msg["footer.aboutLink"]}</a>
+                  </td>
+               </tr>
+            </table>
+         </td>
+      </tr>
+      <!--<hq:licenseExpiration/>-->
+   </table>
+
+   <div id="about" class="dialog" style="display: none; position: absolute; top: 0; left: 0">
+      <div class="DisplayContent" style="margin:0">
+         <div style="margin:5px">
+            <p class="compact">
+               <span class="DisplaySubhead">${msg['footer.aboutLink']}</span><br/>
+               <span class="DisplayLabel">${msg['footer.version']} ${RHQVersion}</span>
+            </p>
+            <p class="compact">
+               <f:verbatim>${msg['footer.copyright']}</f:verbatim> ${msg['about.Copyright.Content']}
+            </p>
+            <p class="compact">
+               ${msg['about.MoreInfo.Label']}<br/>
+               <a href="mailto:sales@jboss.com">${msg['about.MoreInfo.LinkSales']}</a><br/>
+               <a href="mailto:support@jboss.com">${msg['about.MoreInfo.LinkSupport']}</a>
+            </p>
+         </div>
+      </div>
+   </div>
+
+   <script type="text/javascript">setFoot();</script>
+   <!--<rt:rt/>-->
+
+   <rich:modalPanel id="modalPanel" minHeight="200" minWidth="450" height="200" width="800" zindex="2000"
+                    resizeable="true">
+      <f:facet name="header">
+         <span id="modalTitle">Default Title</span>
+      </f:facet>
+      <f:facet name="controls">
+         <h:commandButton value="close" style="cursor: pointer; font-size: 9px; height: 18px;"
+                          onclick="Richfaces.hideModalPanel('modalPanel')"/>
+      </f:facet>
+
+      <span id="modalMessage">Default Message.</span>
+   </rich:modalPanel>
+
+</ui:insert>
+
+</f:view>
+
+</body>
+</html>

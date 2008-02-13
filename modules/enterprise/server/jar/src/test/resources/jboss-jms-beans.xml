@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<deployment xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="urn:jboss:bean-deployer bean-deployer_1_0.xsd"
+            xmlns="urn:jboss:bean-deployer">
+   <bean name="jboss.mq:service=JMSProviderLoader,name=JMSProvider" class="org.jboss.jms.jndi.JNDIProviderAdapter">
+      <property name="factoryRef">java:/XAConnectionFactory</property>
+      <property name="queueFactoryRef">java:/XAConnectionFactory</property>
+      <property name="topicFactoryRef">java:/XAConnectionFactory</property>
+      <property name="properties" class="java.util.Properties">
+               <map keyClass="java.lang.String" valueClass="java.lang.String">
+                  <entry>
+                     <key>java.naming.factory.initial</key>
+                     <value>org.jnp.interfaces.LocalOnlyContextFactory</value>
+                  </entry>
+                  <entry>
+                      <key>java.naming.factory.url.pkgs</key>
+                      <value>org.jboss.naming:org.jnp.interfaces</value>
+                  </entry>
+               </map>
+      </property>
+   </bean>
+
+   <bean name="b1" class="org.jboss.ejb3.embedded.JndiBinder">
+      <property name="jndiProperties"><inject bean="InitialContextProperties"/></property>
+      <property name="target"><inject bean="jboss.mq:service=JMSProviderLoader,name=JMSProvider"/></property>
+      <property name="bindTo">java:/DefaultJMSProvider</property>
+      <property name="serializable">true</property>
+   </bean>
+
+   <bean name="jboss.mq:service=ServerSessionPoolMBean,name=StdJMSPool" class="org.jboss.jms.asf.StdServerSessionPoolFactory">
+      <property name="name">StdJMSPool</property>
+      <property name="xidFactory"><inject bean="XidFactoryMBean"/></property>
+      <property name="transactionManager"><inject bean="TransactionManager"/></property>
+   </bean>
+
+   <bean name="b2" class="org.jboss.ejb3.embedded.JndiBinder">
+      <property name="jndiProperties"><inject bean="InitialContextProperties"/></property>
+      <property name="target"><inject bean="jboss.mq:service=ServerSessionPoolMBean,name=StdJMSPool"/></property>
+      <property name="bindTo">java:/StdJMSPool</property>
+      <property name="serializable">false</property>
+   </bean>
+
+
+   <bean name="jboss.mq:service=PersistenceManager" class="org.jboss.mq.kernel.JDBC2PersistenceManager">
+      <property name="transactionManager">
+         <inject bean="TransactionManager"/>
+      </property>
+      <property name="datasource">
+         <inject bean="DefaultDS"/>
+      </property>
+      <property name="sqlProperties">
+
+            BLOB_TYPE=OBJECT_BLOB
+            INSERT_TX = INSERT INTO JMS_TRANSACTIONS (TXID) values(?)
+            INSERT_MESSAGE = INSERT INTO JMS_MESSAGES (MESSAGEID, DESTINATION, MESSAGEBLOB, TXID, TXOP) VALUES(?,?,?,?,?)
+            SELECT_ALL_UNCOMMITED_TXS = SELECT TXID FROM JMS_TRANSACTIONS
+            SELECT_MAX_TX = SELECT MAX(TXID) FROM JMS_MESSAGES
+            SELECT_MESSAGES_IN_DEST = SELECT MESSAGEID, MESSAGEBLOB FROM JMS_MESSAGES WHERE DESTINATION=?
+            SELECT_MESSAGE = SELECT MESSAGEID, MESSAGEBLOB FROM JMS_MESSAGES WHERE MESSAGEID=? AND DESTINATION=?
+            MARK_MESSAGE = UPDATE JMS_MESSAGES SET TXID=?, TXOP=? WHERE MESSAGEID=? AND DESTINATION=?
+            UPDATE_MESSAGE = UPDATE JMS_MESSAGES SET MESSAGEBLOB=? WHERE MESSAGEID=? AND DESTINATION=?
+            UPDATE_MARKED_MESSAGES = UPDATE JMS_MESSAGES SET TXID=?, TXOP=? WHERE TXOP=?
+            UPDATE_MARKED_MESSAGES_WITH_TX = UPDATE JMS_MESSAGES SET TXID=?, TXOP=? WHERE TXOP=? AND TXID=?
+            DELETE_MARKED_MESSAGES_WITH_TX = DELETE FROM JMS_MESSAGES WHERE TXOP=? AND JMS_MESSAGES.TXID IN (SELECT TXID FROM JMS_TRANSACTIONS)
+            DELETE_TX = DELETE FROM JMS_TRANSACTIONS WHERE TXID = ?
+            DELETE_MARKED_MESSAGES = DELETE FROM JMS_MESSAGES WHERE TXID=? AND TXOP=?
+            DELETE_MESSAGE = DELETE FROM JMS_MESSAGES WHERE MESSAGEID=? AND DESTINATION=?
+            CREATE_MESSAGE_TABLE = CREATE CACHED TABLE JMS_MESSAGES ( MESSAGEID INTEGER NOT NULL, \
+               DESTINATION VARCHAR(255) NOT NULL, TXID INTEGER, TXOP CHAR(1), \
+               MESSAGEBLOB OBJECT, PRIMARY KEY (MESSAGEID, DESTINATION) )
+            CREATE_IDX_MESSAGE_TXOP_TXID = CREATE INDEX JMS_MESSAGES_TXOP_TXID ON JMS_MESSAGES (TXOP, TXID)
+            CREATE_IDX_MESSAGE_DESTINATION = CREATE INDEX JMS_MESSAGES_DESTINATION ON JMS_MESSAGES (DESTINATION)
+            CREATE_TX_TABLE = CREATE CACHED TABLE JMS_TRANSACTIONS ( TXID INTEGER, PRIMARY KEY (TXID) )
+            CREATE_TABLES_ON_STARTUP = TRUE
+            DELETE_TEMPORARY_MESSAGES = DELETE FROM JMS_MESSAGES WHERE TXOP='T'
+
+      </property>
+   </bean>
+
+   <bean name="jboss.mq:service=MessageCache" class="org.jboss.mq.kernel.MessageCache">
+      <property name="persistenceManager"><inject bean="jboss.mq:service=PersistenceManager"/></property>
+      <property name="highMemoryMark">50</property>
+      <property name="maxMemoryMark">60</property>
+   </bean>
+
+   <bean name="jms-rar-WorkManager" class="org.jboss.ejb3.embedded.resource.JBossWorkManager">
+   </bean>
+
+   <bean name="jms-rar-DeploymentInfo" class="org.jboss.ejb3.embedded.resource.Ejb3DeploymentInfo">
+      <constructor>
+         <parameter class="java.lang.String">jms-ra.rar</parameter>
+         <parameter class="java.lang.String">javax.jms.MessageListener</parameter>
+         <parameter class="java.lang.String">org.jboss.resource.adapter.jms.inflow.JmsActivationSpec</parameter>
+      </constructor>
+   </bean>
+
+   <bean name="jboss.jca:name='jms-ra.rar',service=RARDeployment" class="org.jboss.ejb3.embedded.resource.RARDeployment">
+   	<constructor>
+         <parameter class="org.jboss.deployment.DeploymentInfo">
+            <inject bean="jms-rar-DeploymentInfo"/>
+         </parameter>
+      </constructor>
+      <property name="workManager"><inject bean="jms-rar-WorkManager"/></property>
+   </bean>
+
+   <bean name="jboss.mq:service=StateManager" class="org.jboss.mq.kernel.JDBCStateManager">
+      <property name="transactionManager">
+         <inject bean="TransactionManager"/>
+      </property>
+      <property name="datasource">
+         <inject bean="DefaultDS"/>
+      </property>
+      <property name="sqlProperties">
+
+            CREATE_TABLES_ON_STARTUP = TRUE
+            CREATE_USER_TABLE = CREATE TABLE JMS_USERS (USERID VARCHAR(32) NOT NULL, PASSWD VARCHAR(32) NOT NULL, \
+                                                       CLIENTID VARCHAR(128), PRIMARY KEY(USERID))
+            CREATE_ROLE_TABLE = CREATE TABLE JMS_ROLES (ROLEID VARCHAR(32) NOT NULL, USERID VARCHAR(32) NOT NULL, \
+                                                       PRIMARY KEY(USERID, ROLEID))
+            CREATE_SUBSCRIPTION_TABLE = CREATE TABLE JMS_SUBSCRIPTIONS (CLIENTID VARCHAR(128) NOT NULL, \
+                                                       SUBNAME VARCHAR(128) NOT NULL, TOPIC VARCHAR(255) NOT NULL, \
+                                                       SELECTOR VARCHAR(255), PRIMARY KEY(CLIENTID, SUBNAME))
+            GET_SUBSCRIPTION = SELECT TOPIC, SELECTOR FROM JMS_SUBSCRIPTIONS WHERE CLIENTID=? AND SUBNAME=?
+            LOCK_SUBSCRIPTION = SELECT TOPIC, SELECTOR FROM JMS_SUBSCRIPTIONS WHERE CLIENTID=? AND SUBNAME=?
+            GET_SUBSCRIPTIONS_FOR_TOPIC = SELECT CLIENTID, SUBNAME, SELECTOR FROM JMS_SUBSCRIPTIONS WHERE TOPIC=?
+            INSERT_SUBSCRIPTION = INSERT INTO JMS_SUBSCRIPTIONS (CLIENTID, SUBNAME, TOPIC, SELECTOR) VALUES(?,?,?,?)
+            UPDATE_SUBSCRIPTION = UPDATE JMS_SUBSCRIPTIONS SET TOPIC=?, SELECTOR=? WHERE CLIENTID=? AND SUBNAME=?
+            REMOVE_SUBSCRIPTION = DELETE FROM JMS_SUBSCRIPTIONS WHERE CLIENTID=? AND SUBNAME=?
+            GET_USER_BY_CLIENTID = SELECT USERID, PASSWD, CLIENTID FROM JMS_USERS WHERE CLIENTID=?
+            GET_USER = SELECT PASSWD, CLIENTID FROM JMS_USERS WHERE USERID=?
+            POPULATE.TABLES.01 = INSERT INTO JMS_USERS (USERID, PASSWD) VALUES ('guest', 'guest')
+            POPULATE.TABLES.02 = INSERT INTO JMS_USERS (USERID, PASSWD) VALUES ('j2ee', 'j2ee')
+            POPULATE.TABLES.03 = INSERT INTO JMS_USERS (USERID, PASSWD, CLIENTID) VALUES ('john', 'needle', 'DurableSubscriberExample')
+            POPULATE.TABLES.04 = INSERT INTO JMS_USERS (USERID, PASSWD) VALUES ('nobody', 'nobody')
+            POPULATE.TABLES.05 = INSERT INTO JMS_USERS (USERID, PASSWD) VALUES ('dynsub', 'dynsub')
+            POPULATE.TABLES.06 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('guest','guest')
+            POPULATE.TABLES.07 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('j2ee','guest')
+            POPULATE.TABLES.08 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('john','guest')
+            POPULATE.TABLES.09 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('subscriber','john')
+            POPULATE.TABLES.10 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('publisher','john')
+            POPULATE.TABLES.11 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('publisher','dynsub')
+            POPULATE.TABLES.12 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('durpublisher','john')
+            POPULATE.TABLES.13 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('durpublisher','dynsub')
+            POPULATE.TABLES.14 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('noacc','nobody')
+
+      </property>
+   </bean>
+
+
+   <bean name="BasicQueueParameters" class="org.jboss.mq.server.BasicQueueParameters"/>
+
+   <bean name="jboss.mq:service=ThreadPool" class="org.jboss.util.threadpool.BasicThreadPool">
+      <property name="name">JMSThread</property>
+      <property name="threadGroupName">JBossMQ Server Threads</property>
+      <!-- The max number of threads in the pool -->
+      <property name="maximumPoolSize">10</property>
+      <!-- The max number of tasks before the queue is full -->
+      <property name="maximumQueueSize">1000</property>
+      <!-- The behavior of the pool when a task is added and the queue is full.
+      abort - a RuntimeException is thrown
+      run - the calling thread executes the task
+      wait - the calling thread blocks until the queue has room
+      discard - the task is silently discarded without being run
+      discardOldest - check to see if a task is about to complete and enque
+         the new task if possible, else run the task in the calling thread
+      -->
+      <property name="blockingModeString">run</property>
+   </bean>
+
+   <bean name="jboss.mq:service=DestinationManager" class="org.jboss.mq.server.JMSDestinationManager">
+      <constructor>
+         <parameter class="org.jboss.mq.server.BasicQueueParameters">
+            <inject bean="BasicQueueParameters"/>
+         </parameter>
+      </constructor>
+      <property name="persistenceManager"><inject bean="jboss.mq:service=PersistenceManager"/></property>
+      <property name="messageCache"><inject bean="jboss.mq:service=MessageCache"/></property>
+      <property name="stateManager"><inject bean="jboss.mq:service=StateManager"/></property>
+      <property name="threadPool"><inject bean="jboss.mq:service=ThreadPool"/></property>
+      <property name="threadGroup"><inject bean="jboss.mq:service=ThreadPool" property="threadGroup"/></property>
+      <start method="startServer"/>
+      <stop method="stopServer"/>
+   </bean>
+
+   <bean name="jboss.mq.destination:service=Queue,name=DLQ" class="org.jboss.mq.kernel.Queue">
+     <property name="destinationManagerPojo"><inject bean="jboss.mq:service=DestinationManager"/></property>
+     <property name="initialContextProperties"><inject bean="InitialContextProperties"/></property>
+      <property name="destinationName">DLQ</property>
+   </bean>
+
+   <bean name="jboss.mq:service=Invoker" class="org.jboss.mq.server.JMSServerInvoker">
+      <property name="next"><inject bean="jboss.mq:service=DestinationManager"/></property>
+   </bean>
+
+   <bean name="jboss.mq:service=invocationlayer,type=JVM" class="org.jboss.mq.kernel.JVMIL">
+      <property name="jmsInvoker"><inject bean="jboss.mq:service=Invoker"/></property>
+     <property name="connectionFactoryJNDIRef">java:/ConnectionFactory</property>
+     <property name="XAConnectionFactoryJNDIRef">java:/XAConnectionFactory</property>
+     <property name="pingPeriod">0</property>
+      <property name="initialContextProperties"><inject bean="InitialContextProperties"/></property>
+   </bean>
+
+</deployment>

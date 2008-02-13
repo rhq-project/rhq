@@ -1,0 +1,159 @@
+<!DOCTYPE form-validation PUBLIC
+          "-//Apache Software Foundation//DTD Commons Validator Rules Configuration 1.1.3//EN"
+          "http://jakarta.apache.org/commons/dtds/validator_1_1_3.dtd">
+     
+<form-validation>
+  
+   <formset>
+      <form name="SaveNoTxDataSource">
+         <field property="jndiName"  depends="required">
+         	   <arg position="0" key="jndiName.label"/>
+         </field>  
+         <field property="connectionUrl"  depends="required">
+         	   <arg position="0" key="connectionUrl.label"/>
+         </field>  
+		 <field property="driverClass"  depends="required">
+         	   <arg position="0" key="driverClass.label"/>
+         </field>      
+		 <field property="minPoolSize"  depends="optionalInt">
+         	   <arg position="0" key="minPoolSize.label"/>
+         </field>  
+         <field property="maxPoolSize"  depends="optionalInt">
+         	   <arg position="0" key="maxPoolSize.label"/>
+         </field>
+         <field property="blockingTimeout"  depends="optionalInt">
+         	   <arg position="0" key="blockingTimeout.label"/>
+         </field>
+         <field property="idleTimeout"  depends="optionalInt">
+         	   <arg position="0" key="idleTimeout.label"/>
+         </field>
+         <field property="preparedStatementCacheSize"  depends="optionalInt">
+         	   <arg position="0" key="preparedStatementCacheSize.label"/>
+         </field>               
+      </form>
+      <form name="SaveLocalTxDataSource">
+         <field property="jndiName"  depends="required">
+         	   <arg position="0" key="jndiName.label"/>
+         </field>  
+         <field property="connectionUrl"  depends="required">
+         	   <arg position="0" key="connectionUrl.label"/>
+         </field>  
+		 <field property="driverClass"  depends="required">
+         	   <arg position="0" key="driverClass.label"/>
+         </field>  
+		 <field property="minPoolSize"  depends="optionalInt">
+         	   <arg position="0" key="minPoolSize.label"/>
+         </field>  
+         <field property="maxPoolSize"  depends="optionalInt">
+         	   <arg position="0" key="maxPoolSize.label"/>
+         </field>
+         <field property="blockingTimeout"  depends="optionalInt">
+         	   <arg position="0" key="blockingTimeout.label"/>
+         </field>
+         <field property="idleTimeout"  depends="optionalInt">
+         	   <arg position="0" key="idleTimeout.label"/>
+         </field>
+         <field property="preparedStatementCacheSize"  depends="optionalInt">
+         	   <arg position="0" key="preparedStatementCacheSize.label"/>
+         </field>      
+      </form>
+      <form name="SaveXADataSource">
+         <field property="jndiName"  depends="required">
+         	   <arg position="0" key="jndiName.label"/>
+         </field>    
+         <field property="XADataSourceClass"  depends="required">
+         	   <arg position="0" key="XADataSourceClass.label"/>
+         </field>      
+		 <field property="minPoolSize"  depends="optionalInt">
+         	   <arg position="0" key="minPoolSize.label"/>
+         </field>  
+         <field property="maxPoolSize"  depends="optionalInt">
+         	   <arg position="0" key="maxPoolSize.label"/>
+         </field>
+         <field property="blockingTimeout"  depends="optionalInt">
+         	   <arg position="0" key="blockingTimeout.label"/>
+         </field>
+         <field property="idleTimeout"  depends="optionalInt">
+         	   <arg position="0" key="idleTimeout.label"/>
+         </field>
+         <field property="preparedStatementCacheSize"  depends="optionalInt">
+         	   <arg position="0" key="preparedStatementCacheSize.label"/>
+         </field>                       
+      </form>
+       <form name="SaveNoTxDataSourceThenScan">
+         <field property="jndiName"  depends="required">
+         	   <arg position="0" key="jndiName.label"/>
+         </field>  
+         <field property="connectionUrl"  depends="required">
+         	   <arg position="0" key="connectionUrl.label"/>
+         </field>  
+		 <field property="driverClass"  depends="required">
+         	   <arg position="0" key="driverClass.label"/>
+         </field>      
+		 <field property="minPoolSize"  depends="optionalInt">
+         	   <arg position="0" key="minPoolSize.label"/>
+         </field>  
+         <field property="maxPoolSize"  depends="optionalInt">
+         	   <arg position="0" key="maxPoolSize.label"/>
+         </field>
+         <field property="blockingTimeout"  depends="optionalInt">
+         	   <arg position="0" key="blockingTimeout.label"/>
+         </field>
+         <field property="idleTimeout"  depends="optionalInt">
+         	   <arg position="0" key="idleTimeout.label"/>
+         </field>
+         <field property="preparedStatementCacheSize"  depends="optionalInt">
+         	   <arg position="0" key="preparedStatementCacheSize.label"/>
+         </field>      
+      </form>
+      <form name="SaveLocalTxDataSourceThenScan">
+         <field property="jndiName"  depends="required">
+         	   <arg position="0" key="jndiName.label"/>
+         </field>  
+         <field property="connectionUrl"  depends="required">
+         	   <arg position="0" key="connectionUrl.label"/>
+         </field>  
+		 <field property="driverClass"  depends="required">
+         	   <arg position="0" key="driverClass.label"/>
+         </field>      
+		 <field property="minPoolSize"  depends="optionalInt">
+         	   <arg position="0" key="minPoolSize.label"/>
+         </field>  
+         <field property="maxPoolSize"  depends="optionalInt">
+         	   <arg position="0" key="maxPoolSize.label"/>
+         </field>
+         <field property="blockingTimeout"  depends="optionalInt">
+         	   <arg position="0" key="blockingTimeout.label"/>
+         </field>
+         <field property="idleTimeout"  depends="optionalInt">
+         	   <arg position="0" key="idleTimeout.label"/>
+         </field>
+         <field property="preparedStatementCacheSize"  depends="optionalInt">
+         	   <arg position="0" key="preparedStatementCacheSize.label"/>
+         </field>      
+      </form>
+      <form name="SaveXADataSourceThenScan">
+         <field property="jndiName"  depends="required">
+         	   <arg position="0" key="jndiName.label"/>
+         </field>    
+         <field property="XADataSourceClass"  depends="required">
+         	   <arg position="0" key="XADataSourceClass.label"/>
+         </field>              
+		 <field property="minPoolSize"  depends="optionalInt">
+         	   <arg position="0" key="minPoolSize.label"/>
+         </field>  
+         <field property="maxPoolSize"  depends="optionalInt">
+         	   <arg position="0" key="maxPoolSize.label"/>
+         </field>
+         <field property="blockingTimeout"  depends="optionalInt">
+         	   <arg position="0" key="blockingTimeout.label"/>
+         </field>
+         <field property="idleTimeout"  depends="optionalInt">
+         	   <arg position="0" key="idleTimeout.label"/>
+         </field>
+         <field property="preparedStatementCacheSize"  depends="optionalInt">
+         	   <arg position="0" key="preparedStatementCacheSize.label"/>
+         </field>      
+      </form>
+   </formset>   
+</form-validation>

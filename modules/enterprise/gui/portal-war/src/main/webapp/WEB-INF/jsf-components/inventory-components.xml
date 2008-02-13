@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <component>
+      <component-type>org.jboss.on.ResourceLineage</component-type>
+      <component-class>org.rhq.enterprise.gui.inventory.resource.ResourceLineageComponent</component-class>
+
+      <component-extension>
+         <component-family>org.jboss.on.ResourceLineage</component-family>
+         <renderer-type>org.jboss.on.ResourceLineage</renderer-type>
+      </component-extension>
+   </component>
+   
+   <render-kit>
+      <renderer>
+         <description>renderer for a ResourceLineage component</description>
+         <component-family>org.jboss.on.ResourceLineage</component-family>
+         <renderer-type>org.jboss.on.ResourceLineage</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.inventory.resource.ResourceLineageRenderer</renderer-class>
+      </renderer>
+   </render-kit>
+
+</faces-config>

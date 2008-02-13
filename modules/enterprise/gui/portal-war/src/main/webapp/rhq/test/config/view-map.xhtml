@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component">
+
+THIS TEXT WILL BE REMOVED.
+
+<ui:composition template="/rhq/layout/main.xhtml">
+
+   THIS TEXT WILL BE REMOVED AS WELL.
+
+   <ui:param name="pageTitle" value="View Test Configuration Map"/>
+
+   <ui:define name="body">
+
+      <h:messages showSummary="true"
+                  showDetail="true"
+                  errorClass="ErrorBlock"
+                  warnClass="ErrorBlock"
+                  infoClass="ConfirmationBlock"
+                  globalOnly="true"
+                  layout="table"
+                  width="100%"/>
+      
+      <h:form id="viewTestConfigurationForm">
+         <onc:config configurationDefinition="#{EditTestConfigurationUIBean.configurationDefinition}"
+                     configuration="#{EditTestConfigurationUIBean.configuration}"
+                     listName="#{param.listName}"
+                     listIndex="#{param.listIndex}"
+                     readOnly="true"/>
+      </h:form>
+
+      <div title="Return to Previous Page" onclick="history.back()" class="buttonmed">OK</div>
+
+   </ui:define>
+
+</ui:composition>
+
+THIS TEXT WILL BE REMOVED AS WELL.
+
+</html>

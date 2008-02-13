@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!-- -*- Mode: XML; indent-tabs-mode: nil; -*- -->
+<!DOCTYPE tiles-definitions PUBLIC
+     "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN"
+     "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+
+
+<tiles-definitions>
+
+  <definition name=".page.title.resource.autogroup"
+              extends=".page.title">
+    <put name="titleBgStyle" value="PageTitleGroupBg"/>
+    <put name="titleImg" value="title_autogroup.gif"/>
+  </definition>  
+
+  <definition name=".page.title.resource.autogroup.empty"
+              extends=".page.title.resource.autogroup">
+    <put name="titleKey" value="resource.autogroup.monitor.visibility.CurrentHealthEmptyPageTitle"/>
+    <put name="titleBgStyle" value="PageTitleGroupBg"/>
+    <put name="titleImg" value="title_autogroup.gif"/>
+  </definition>  
+
+  <definition name=".page.title.resource.autogroup.full"
+              extends=".page.title.resource.autogroup">
+    <put name="titleKey" value="resource.autogroup.monitor.visibility.AutoGroupMetricsPageTitle"/>
+  </definition>
+  
+  <!-- autogroup tabs -->
+  
+  <definition name=".tabs.resource.autogroup"
+              extends=".tabs.resource"> 
+   <putList name="tabList">
+       <item value="Monitor" mode="currentHealth"
+            link="/resource/common/monitor/Visibility.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+   </putList>     
+  </definition>
+
+  <!-- monitor minitabs -->
+  <definition name=".resource.autogroup.monitor.visibility.minitabs"
+              extends=".resource.common.monitor.visibility.minitabs">
+    <put name="tabUrl" value="/resource/common/monitor/Visibility.do"/>
+  </definition>
+
+  <!-- monitor portals -->
+  <definition name=".resource.autogroup.monitor.visibility.CurrentHealth"
+              controllerUrl="/resource/autogroup/monitor/visibility/AutoGroupCurrentHealth.do"
+              path="/resource/autogroup/monitor/visibility/MainLayout.jsp"/>
+
+  <definition name=".resource.autogroup.monitor.visibility.AutoGroupMetrics"
+              controllerUrl="/resource/autogroup/monitor/visibility/AutoGroupMetricsFormPrepare.do"
+              path="/resource/autogroup/monitor/visibility/MainLayout.jsp"/>
+
+  <definition name=".resource.autogroup.monitor.visibility.Performance"
+              controllerUrl="/resource/group/monitor/visibility/GroupPerformanceFormPrepare.do"
+              path="/resource/autogroup/monitor/visibility/MainLayout.jsp"/>
+  
+  <definition name=".resource.autogroup.monitor.visibility.Availability"
+              controllerUrl="/resource/autogroup/monitor/visibility/Availability.do"
+              path="/resource/common/monitor/visibility/Availability.jsp"/>
+  
+  <!-- monitor subtabs --> 
+  
+  <definition name=".tabs.resource.autogroup.monitor"
+              extends=".tabs.resource.autogroup">
+    <put name="selectedIndex"  value="0" />
+    <put name="subSectionName" value="Monitor"/>
+    <putList name="subTabList">
+      <item value="Visibility" mode="currentHealth"
+            link="/resource/common/monitor/Visibility.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Configure" mode="configure"
+            link="/resource/common/monitor/Config.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab" />
+    </putList>
+  </definition>
+
+  <definition name=".tabs.resource.autogroup.monitor.visibility"
+              extends=".tabs.resource.autogroup.monitor">
+    <put name="subSelectedIndex" value="0"/>
+  </definition>
+
+  <!-- monitor config portals -->
+  <definition name=".tabs.resource.autogroup.monitor.configVisibility"
+              extends=".tabs.resource.autogroup.monitor">
+    <put name="subSelectedIndex" value="1"/>  
+  </definition>
+
+  <definition name=".tabs.resource.autogroup.monitor.configVisibility.nocontrol"
+              extends=".tabs.resource.autogroup.monitor">
+    <put name="subSelectedIndex" value="1"/>
+  </definition>
+
+  <definition name=".resource.autogroup.monitor.config.ConfigMetrics"
+              controllerUrl="/resource/autogroup/monitor/config/ConfigMetricsFormPrepare.do"
+              path="/resource/autogroup/monitor/config/AutoGroupConfigMetrics.jsp">
+     <put name="section" value="autogroup"/>
+  </definition>
+              
+  <definition name=".resource.autogroup.monitor.config.EditAvailability"
+              controllerUrl="/resource/group/monitor/config/EditAvailabilityFormPrepare.do"
+              path="/resource/group/monitor/config/EditGroupAvailability.jsp"/>
+      
+  <definition name=".resource.autogroup.monitor.config.Availability"
+              path="/resource/group/monitor/config/GroupAvailability.jsp"/>
+ 
+  <definition name=".resource.autogroup.monitor.visibility.listchildresources"
+              extends=".resource.group.monitor.visibility.listchildresources"
+              controllerUrl="/resource/autogroup/monitor/visibility/ListChildrenResources.do"/>
+</tiles-definitions>

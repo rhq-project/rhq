@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <!-- /rhq/admin/largeenv.xhtml -->
+   <managed-bean>
+      <managed-bean-name>LargeEnvironmentPreparationUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.admin.LargeEnvironmentPreparationUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+
+   <!-- plugin management -->
+   <managed-bean>
+      <description>Visibility for the installed agent and server plugins</description>
+      <display-name>Installed Plugins</display-name>
+      <managed-bean-name>InstalledPluginsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.admin.plugin.InstalledPluginsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <description>Visibility for the installed agent and server plugins</description>
+      <display-name>Installed Plugin</display-name>
+      <managed-bean-name>InstalledPluginUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.admin.plugin.InstalledPluginUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+</faces-config>

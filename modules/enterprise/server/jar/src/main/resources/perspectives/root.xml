@@ -1,0 +1,5 @@
+<perspective name="root" path="/" 
+    description="start here"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="urn:xmlns:rhq-perspective">
+</perspective>

@@ -1,0 +1,110 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-parent</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+    <relativePath>../../../pom.xml</relativePath>
+  </parent>
+
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-core-native-system</artifactId>
+  <packaging>jar</packaging>
+
+  <name>RHQ Native System API</name>
+  <description>
+     Java API that wraps the native library used to access low-level system resources natively.
+  </description>
+
+  <scm>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/core/native-system/</connection>
+    <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/core/native-system/</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>modules/core/native-system/</scm.module.path>
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-util</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.hyperic</groupId>
+      <artifactId>sigar</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.hyperic</groupId>
+      <artifactId>sigar-dist</artifactId>
+      <version>${sigar.version}</version>
+      <type>zip</type>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <!-- need to copy/unzip the native libraries to the target directory and tell SystemInfoFactory where they are -->
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>process-test-resources</phase>
+            <configuration>
+              <tasks>
+                 <echo>SIGAR java library version used is ${sigar.version}</echo>
+                 <echo>Copying/unzipping SIGAR native libraries (version ${sigar.version}) to local build directory</echo>
+                 <mkdir dir="${project.build.directory}/jboss-sigar"/>
+                 <copy toDir="${project.build.directory}/jboss-sigar">
+                    <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
+                 </copy>
+                 <unzip dest="${project.build.directory}/jboss-sigar">
+                    <fileset dir="${project.build.directory}/jboss-sigar" includes="*.zip" />
+                    <patternset>
+                       <include name="**/lib/sigar.jar" />
+                       <include name="**/lib/bcel*.jar" />
+                       <include name="**/lib/*.so" />
+                       <include name="**/lib/*.sl" />
+                       <include name="**/lib/*.dll" />
+                       <include name="**/lib/*.dylib" />
+                    </patternset>
+                 </unzip>
+                 <move todir="${project.build.directory}/jboss-sigar" flatten="true">
+                    <fileset dir="${project.build.directory}/jboss-sigar">
+                       <include name="**/lib/*" />
+                    </fileset>
+                 </move>
+                 <delete dir="${project.build.directory}/jboss-sigar/hyperic-sigar-${sigar.version}" />
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+          <!-- need to point the library path to the location of the native libraries -->
+          <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar</argLine>
+          <!--
+          <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar -Dsigar.nativeLogging=true -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
+           -->
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+
+</project>

@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+
+<pluginMetadata>
+
+  <mojos>
+  
+    <mojo>
+      <goal>generateLicense</goal>
+        
+      <!-- this element refers to the Ant target M2 should invoke -->
+      <call>generateLicense</call>
+      <description>
+        Generate a RHQ license file
+      </description>
+        
+    </mojo>
+    
+  </mojos>
+
+</pluginMetadata>

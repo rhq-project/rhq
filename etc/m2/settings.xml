@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+
+<!--===== a sample Maven 2 user settings file for the RHQ build =====-->
+
+<!-- $Id: settings.xml 9391 2008-02-13 02:34:03Z jmazzitelli $ -->
+
+<!-- See: http://maven.apache.org/settings.html -->
+
+<settings xmlns="http://maven.apache.org/POM/4.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                              http://maven.apache.org/xsd/settings-1.0.0.xsd">
+   
+   <!-- The below line can be uncommented if you want your local repo to be in
+        a more convenient location under Windows. -->
+   <!--<localRepository>C:\.m2-repo</localRepository>-->
+
+   <!--**************************** PROFILES ****************************-->
+   
+   <!-- See: http://maven.apache.org/guides/introduction/introduction-to-profiles.html
+        and: http://docs.codehaus.org/display/MAVENUSER/Profiles -->
+   
+   <activeProfiles>
+      <!-- Always enable the 'overrides' profile, where we override various build properties. -->
+      <activeProfile>overrides</activeProfile>
+      
+      <!-- The 'dev' profile enables automatic copying of artifacts to a dev RHQ container. -->
+      <!--<activeProfile>dev</activeProfile>-->
+      
+      <!-- The 'prod' profile is for CI and production builds and enables things such as JSP precompilation. -->
+      <!--<activeProfile>prod</activeProfile>-->
+      
+      <!--<activeProfile>oracle</activeProfile>-->
+   </activeProfiles>
+   
+   <profiles>
+
+      <profile>
+         <id>overrides</id>
+         <properties>
+            <!-- NOTE: Add properties here that you always want set, to avoid    -->
+            <!--       having to explicitly pass them on the command line. Note, -->
+            <!--       you can still override them via the command line.         -->
+
+            <!-- Set the below property to your SVN username - used by the deploy plugin. -->
+            <maven.username>your_svn_user_name_here</maven.username>
+            <!-- Set the below property to your SVN username - used by the release plugin. -->
+            <username>your_svn_user_name_here</username>
+            <!-- tells the dbutils tests not to fail -->
+            <DatabaseTest.nofail>true</DatabaseTest.nofail>
+            <!-- Tests that should be skipped (e.g. because they're long running), comma-separated (with no whitespace!) - 
+                 some possible values: agent-comm,comm-client,native-system,postgres-plugin -->
+            <rhq.testng.excludedGroups>agent-comm,comm-client,postgres-plugin,native-system</rhq.testng.excludedGroups>
+            <!-- only needed if you want to try compiling RHQ with JDK6 (didn't quite work last time ips tried it) -->
+            <java5.home>C:/opt/jdk-1.5.0_14/jre</java5.home>
+            <!--<maven.test.skip>true</maven.test.skip>-->
+            <!--<maven.test.failure.ignore>true</maven.test.failure.ignore>-->
+            <!--<maven.test.error.ignore>true</maven.test.error.ignore>-->
+            <!--<surefire.usefile>false</surefire.usefile>-->
+            <!-- If you don't want to use the default location of {trunk}/dev-container/
+                 for your dev RHQ container, then set the below prop to the desired location. -->
+            <!--<rhq.containerDir>C:/opt/rhq-server</rhq.containerDir>-->
+         </properties>
+         
+         <!--
+         <repositories>
+          <repository>
+            <id>central</id>
+            <name>Artifactory Proxy Repository</name>
+            <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>      
+            <snapshots>
+               <enabled>false</enabled>
+            </snapshots>
+          </repository>
+         </repositories>
+
+         <pluginRepositories>
+          <pluginRepository>
+            <id>central</id>
+            <name>Artifactory Proxy Repository</name>
+            <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>      
+            <snapshots>
+               <enabled>false</enabled>
+            </snapshots>
+          </pluginRepository>
+         </pluginRepositories>
+         -->
+
+   </profile>
+      
+      <profile>
+         <id>postgres</id>
+         <properties>
+            <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhq</rhq.test.ds.connection-url>
+            <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
+            <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>         
+            <rhq.test.ds.type-mapping>PostgreSQL</rhq.test.ds.type-mapping>
+            <rhq.test.ds.driver-class>org.postgresql.Driver</rhq.test.ds.driver-class>
+         </properties>
+      </profile>
+      
+      <profile>
+         <id>oracle</id>
+         <properties>            
+            <rhq.test.ds.connection-url>jdbc:oracle:thin:@127.0.0.1:1521:xe</rhq.test.ds.connection-url>
+            <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
+            <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
+            <rhq.test.ds.type-mapping>Oracle10g</rhq.test.ds.type-mapping>
+            <rhq.test.ds.driver-class>oracle.jdbc.driver.OracleDriver</rhq.test.ds.driver-class>
+         </properties>
+         
+         
+      </profile>
+      
+   </profiles>
+
+   <!--**************************** PLUGIN GROUPS ****************************-->
+   
+   <!-- See: http://maven.apache.org/guides/introduction/introduction-to-plugin-prefix-mapping.html -->
+   <pluginGroups>
+      <!--  This will allow you to invoke "org.rhq" Maven goals using the "rhq" prefix -->
+      <pluginGroup>org.rhq</pluginGroup>
+   </pluginGroups>
+
+</settings>

@@ -1,0 +1,59 @@
+<plugin name="ResourceMetaDataManagerBeanTest"
+   displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xmlns="urn:xmlns:rhq-plugin"
+   xmlns:c="urn:xmlns:rhq-configuration">
+
+   <platform name="myPlatform3">
+
+      <operation name="restart"
+         description="Restarts the agent's comm layer and plugin container.">
+      </operation>
+
+      <operation name="shutdown"
+         description="Shuts down the agent's comm layer and plugin container.">
+      </operation>
+
+      <operation name="status"
+         description="Returns the current status of the system.">
+         <!--<parameters>
+            <notes>A note</notes>
+         </parameters>-->
+      </operation>   
+
+      <content name="rpm" displayName="RPM File" category="deployable"
+         discoveryInterval="600000"
+         description="Red Hat installable package">
+         <configuration>
+            <c:simple-property name="version" displayName="Version" />
+            <c:simple-property name="build-date" displayName="Build Date" />
+            <c:simple-property name="url" displayName="URL" />
+         </configuration>
+      </content>
+      
+      <content name="deb" displayName="DEB File" category="deployable"
+         discoveryInterval="600000"
+         description="Debian installable package">
+         <configuration>
+            <c:simple-property name="Version" />
+            <c:simple-property name="Filename" />
+            <c:simple-property name="Architecture" />
+         </configuration>
+      </content>
+
+      <content name="mpkg" displayName="Apple DMG File" category="deployable"
+         discoveryInterval="600000"
+         description="Apple installable packages">
+         <configuration>
+            <c:simple-property name="Version" />
+            <c:simple-property name="Filename" />
+            <c:simple-property name="Architecture" />
+         </configuration>
+      </content>
+
+
+
+
+   </platform>
+
+</plugin>

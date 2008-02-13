@@ -1,0 +1,21 @@
+<plugin name="Hibernate"
+        displayName="Hibernate"
+        package="org.rhq.plugins.test2"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin">
+        
+   <depends plugin="JMX" />
+   <depends plugin="Tomcat" />
+   <depends plugin="JBossAS" />
+
+   <service name="HibernateService"
+           discovery="HibernateDiscoveryComponent"
+           class="HibernateServiceComponent"
+           description="Hibernate Service Description">
+      <runs-inside>
+         <parent-resource-type name="TomcatServer" plugin="Tomcat"/>
+         <parent-resource-type name="JBossASServer" plugin="JBossAS"/>
+         <parent-resource-type name="EmbeddedTomcatServer" plugin="JBossAS"/>
+      </runs-inside>
+   </service>     
+</plugin>

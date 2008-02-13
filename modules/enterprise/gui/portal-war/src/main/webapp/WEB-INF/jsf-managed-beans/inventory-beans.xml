@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <!-- /rhq/resource/** -->
+
+   <managed-bean>
+      <managed-bean-name>ResourceUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ResourceUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/admin/listAlertTemplates.xhtml & others -->
+
+   <managed-bean>
+      <managed-bean-name>ResourceTypeUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ResourceTypeUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/resource/inventory/view.xhtml -->
+
+   <managed-bean>
+      <managed-bean-name>ViewConnectionPropertiesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ViewConnectionPropertiesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>ListChildResourcesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ListChildResourcesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DetermineChildResourceCreationTypeUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.DetermineChildResourceCreationTypeUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>CreateNewConfigurationChildResourceUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.CreateNewConfigurationChildResourceUIBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>CreateNewPackageChildResourceUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.CreateNewPackageChildResourceUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>CreateNewChildResourceAddNewOpenMapMemberPropertyUIBean</managed-bean-name>
+      <managed-bean-class>
+         org.rhq.enterprise.gui.inventory.resource.CreateNewChildResourceAddNewOpenMapMemberPropertyUIBean
+      </managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>ListCreateResourceHistoryUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ListCreateResourceHistoryUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>ListDeleteResourceHistoryUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ListDeleteResourceHistoryUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DeleteResourcesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.DeleteResourcesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>ListContainingGroupsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ListContainingGroupsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>PingAgentUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.PingAgentUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/resource/inventory/add.xhtml -->
+
+   <managed-bean>
+      <managed-bean-name>ManuallyAddChildResourceUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ManuallyAddChildResourceUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/resource/inventory/edit-general.xhtml -->
+
+   <managed-bean>
+      <managed-bean-name>EditGeneralPropertiesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.EditGeneralPropertiesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/resource/inventory/edit-connection.xhtml -->
+
+   <managed-bean>
+      <managed-bean-name>EditConnectionPropertiesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.EditConnectionPropertiesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+</faces-config>
+      

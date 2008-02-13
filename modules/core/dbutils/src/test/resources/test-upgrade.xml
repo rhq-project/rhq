@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+
+<project name="test-upgrade" default="upgrade" basedir=".">
+
+<target name="upgrade">
+
+<echo>
+   Test XML: ${test.upgrade.dbsetup.xmlfile}
+   JDBC URL: ${test.upgrade.jdbc.url}
+   JDBC User: ${test.upgrade.jdbc.user}
+   Update Version: ${test.upgrade.target.schema.version}
+</echo>
+
+<taskdef resource="db-ant-tasks.properties" />
+
+<echo>First setup the test schema</echo>
+<dbsetup xmlFile="${basedir}/${test.upgrade.dbsetup.xmlfile}"
+         jdbcUrl="${test.upgrade.jdbc.url}"
+         jdbcUser="${test.upgrade.jdbc.user}"
+         jdbcPassword="${test.upgrade.jdbc.password}"
+         uninstall="true"/>
+<dbsetup xmlFile="${basedir}/${test.upgrade.dbsetup.xmlfile}"
+         jdbcUrl="${test.upgrade.jdbc.url}"
+         jdbcUser="${test.upgrade.jdbc.user}"
+         jdbcPassword="${test.upgrade.jdbc.password}"/>
+
+<echo>Now run the test upgrade</echo>
+<dbupgrade
+   jdbcUrl="${test.upgrade.jdbc.url}"
+   jdbcUser="${test.upgrade.jdbc.user}"
+   jdbcPassword="${test.upgrade.jdbc.password}"
+   valueColumn="PROPVALUE"
+   table="TEST_UPGRADE"
+   keyColumn="PROPKEY"
+   keyMatch="test-schema-version"
+   targetSchemaVersion="${test.upgrade.target.schema.version}">
+
+    <schemaSpec version="1.0.1">
+      <schema-directSQL>
+        <statement>
+            INSERT INTO TEST_UPGRADE (PROPKEY, PROPVALUE) VALUES('v101key', 'foo')
+        </statement>
+      </schema-directSQL>
+    </schemaSpec>
+
+    <schemaSpec version="1.1">
+      <schema-addColumn table="TEST_UPGRADE"
+                        column="NEW_COLUMN"
+                        columnType="LONG"/>
+    </schemaSpec>
+
+    <schemaSpec version="2.0.0">
+      <schema-directSQL>
+        <statement>
+            INSERT INTO TEST_UPGRADE (PROPKEY, PROPVALUE, NEW_COLUMN) VALUES('v200key', 'foo', 12345)
+        </statement>
+      </schema-directSQL>
+    </schemaSpec>
+
+</dbupgrade>
+
+</target>
+
+</project>

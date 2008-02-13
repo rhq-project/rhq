@@ -1,0 +1,126 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-parent</artifactId>
+      <version>2.0.0-SNAPSHOT</version>
+   </parent>
+
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-core-plugin-container</artifactId>
+   <packaging>jar</packaging>
+
+   <name>RHQ Plugin Container</name>
+   <description>RHQ plugin container</description>
+
+   <scm>
+     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/core/plugin-container/</connection>
+     <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/core/plugin-container/</developerConnection>
+   </scm>
+
+   <properties>
+     <scm.module.path>modules/core/plugin-container/</scm.module.path>
+   </properties>
+
+   <dependencies>
+
+      <!-- Internal Deps -->
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-plugin-api</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-comm-api</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-client-api</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-native-system</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <!-- 3rd Party Deps -->
+
+      <dependency>
+         <groupId>javax.xml.bind</groupId>
+         <artifactId>jaxb-api</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      </dependency>
+
+      <dependency>
+         <groupId>com.sun.xml.bind</groupId>
+         <artifactId>jaxb-impl</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <!--<scope>test</scope>  not sure about this -->
+      </dependency>
+
+      <!-- TODO: This is a fix for the Javac bug requiring annotations to be
+           available when compiling dependent classes. It is fixed in JDK 6 -->
+      <dependency>
+         <groupId>javax.persistence</groupId>
+         <artifactId>persistence-api</artifactId>
+         <version>1.0</version>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>jboss.jboss-embeddable-ejb3</groupId>
+        <artifactId>hibernate-all</artifactId>
+        <version>1.0.0.Alpha9</version>
+        <scope>provided</scope> <!-- by ON Container -->
+        <!-- needed for referenced domain entities that use Hibernate annotations -->
+      </dependency>
+
+   </dependencies>
+
+   <build>
+      <plugins>
+
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <!--<argLine>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
+            </configuration>
+         </plugin>
+
+      </plugins>
+   </build>
+
+   <pluginRepositories>
+      <pluginRepository>
+         <id>java.net</id>
+         <name>java.net Maven Repository</name>
+         <url>https://maven-repository.dev.java.net/nonav/repository</url>
+         <layout>legacy</layout>
+      </pluginRepository>
+   </pluginRepositories>
+
+   <repositories>
+      <repository>
+         <id>java.net</id>
+         <name>java.net Maven Repository</name>
+         <url>https://maven-repository.dev.java.net/nonav/repository</url>
+         <layout>legacy</layout>
+      </repository>
+   </repositories>
+
+</project>

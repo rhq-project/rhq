@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE server>
+
+<server>
+
+    <mbean code="org.rhq.enterprise.server.core.CustomJaasDeploymentService"
+           name="rhq:service=CustomJaasDeployment">
+        <depends>jboss.jca:service=LocalTxCM,name=RHQDS</depends>
+    </mbean>
+
+</server>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="MyCustomContentSourcePlugin" 
+        xmlns="urn:xmlns:rhq-serverplugin.content"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <contentSourceType name="MyCustomContentSource"
+                      displayName="My Custom Content Source"
+                      description="This is my custom content source that retrieves packages from some custom repository."
+                      lazyLoad="true"
+                      syncSchedule="0 0 3 * * ?"
+                      apiClass="org.custom.serverplugin.MyCustomContentSource">
+
+      <configuration>
+         <c:simple-property name="myCustomProperty" type="string" required="true" description="A property my plugin needs to be properly configured" />
+      </configuration>
+
+   </contentSourceType>
+
+</plugin>

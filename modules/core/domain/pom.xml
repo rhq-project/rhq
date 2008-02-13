@@ -1,0 +1,303 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-parent</artifactId>
+      <version>2.0.0-SNAPSHOT</version>
+   </parent>
+
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-core-domain</artifactId>
+   <packaging>ejb</packaging>
+
+   <name>RHQ Domain Model</name>
+   <description>RHQ domain model classes (i.e. POJOs used by both server and agent)</description>
+
+   <scm>
+     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/core/domain/</connection>
+     <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/core/domain/</developerConnection>
+   </scm>
+
+   <properties>
+     <scm.module.path>modules/core/domain/</scm.module.path>
+
+     <!-- dependency versions -->
+     <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
+   </properties>
+
+   <dependencies>
+
+      <!-- the notorious util jar -->
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-util</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <!-- required by PersistenceUtil -->
+      <dependency>
+         <groupId>hibernate</groupId>
+         <artifactId>hibernate3</artifactId>
+         <version>3.2.r14201-1</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>hibernate-annotations</groupId>
+         <artifactId>hibernate-annotations</artifactId>
+         <version>3.2.1.GA</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <!-- required by PersistenceUtil and EJB3 Embedded -->
+      <dependency>
+         <groupId>hibernate-entitymanager</groupId>
+         <artifactId>hibernate-entitymanager</artifactId>
+         <version>3.2.1.GA</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>javax.persistence</groupId>
+         <artifactId>persistence-api</artifactId>
+         <version>1.0</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>javax.xml.bind</groupId>
+         <artifactId>jaxb-api</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      </dependency>
+
+      <!-- needed if you want to use the logging JDBC wrapper
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-dbutils</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      -->
+
+      <!--
+      <!- - so Seam annotations can be used in the entities - ->
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-seam</artifactId>
+         <version>${seam.version}</version>
+         <scope>provided</scope> <!- - by ${rhq.earName} - ->
+      </dependency>
+      -->
+
+      <!--================ Test Deps ================-->
+
+      <!-- Oracle JDBC driver - required only if you want to run the tests against Oracle. -->
+      <!--
+      <dependency>
+         <groupId>ojdbc14</groupId>
+         <artifactId>ojdbc14</artifactId>
+         <scope>test</scope>
+      </dependency>
+      -->
+
+      <dependency>
+         <groupId>postgresql</groupId>
+         <artifactId>postgresql</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss.jboss-embeddable-ejb3</groupId>
+         <artifactId>jboss-ejb3-all</artifactId>
+         <version>${jboss-embeddable-ejb3.version}</version>
+         <scope>test</scope>
+      </dependency>
+
+<!--
+      <dependency>
+         <groupId>jboss.jboss-embeddable-ejb3</groupId>
+         <artifactId>hibernate-all</artifactId>
+         <version>${jboss-embeddable-ejb3.version}</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss.jboss-embeddable-ejb3</groupId>
+         <artifactId>thirdparty-all</artifactId>
+         <version>${jboss-embeddable-ejb3.version}</version>
+         <scope>test</scope>
+      </dependency>
+-->
+
+      <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
+
+      <dependency>
+         <groupId>antlr</groupId>
+         <artifactId>antlr</artifactId>
+         <version>2.7.7</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>cglib</groupId>
+         <artifactId>cglib-nodep</artifactId>
+         <version>2.1_3</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-collections</groupId>
+         <artifactId>commons-collections</artifactId>
+         <version>2.1</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>dom4j</groupId>
+         <artifactId>dom4j</artifactId>
+         <version>1.6.1-jboss</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>javassist</artifactId>
+         <version>3.4.ga</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>oswego-concurrent</groupId>
+         <artifactId>concurrent</artifactId>
+         <version>1.3.4</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>trove</groupId>
+         <artifactId>trove</artifactId>
+         <version>1.0.2</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>xerces</groupId>
+         <artifactId>xercesImpl</artifactId>
+         <version>2.8.1</version>
+         <scope>test</scope>
+      </dependency>
+
+   </dependencies>
+
+   <build>
+
+      <finalName>rhq-core-domain-ejb3</finalName>
+
+      <testResources>
+         <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+         </testResource>
+      </testResources>
+
+      <plugins>
+
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <systemProperties>
+                <property>
+                  <name>ejbjarDirectory</name>
+                  <value>target/classes</value>
+                </property>
+              </systemProperties>
+              <!-- The below is required for tests to run against Oracle. -->
+              <additionalClasspathElements>
+                 <additionalClasspathElement>${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar</additionalClasspathElement>
+              </additionalClasspathElements>
+            </configuration>
+         </plugin>
+
+         <plugin>
+            <artifactId>maven-ejb-plugin</artifactId>
+            <version>2.1</version>
+            <configuration>
+              <ejbVersion>3.0</ejbVersion>
+              <archive>
+                <manifest>
+                  <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                  <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                  <addClasspath>true</addClasspath>
+                  <classpathPrefix>lib/</classpathPrefix>
+                </manifest>
+              </archive>
+            </configuration>
+         </plugin>
+
+      </plugins>
+   </build>
+
+   <profiles>
+
+       <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentName>${project.build.finalName}.jar</rhq.deploymentName>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                            <echo>*** Copying updated files from target${file.separator}classes${file.separator} to ${deployment.dir}${file.separator}...</echo>
+                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                               <fileset dir="target/classes"/>
+                            </copy>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                            <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                            <delete dir="${deployment.dir}"/>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                   </executions>
+               </plugin>
+
+           </plugins>
+         </build>
+      </profile>
+
+   </profiles>
+
+</project>

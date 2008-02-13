@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <component>
+      <component-type>org.jboss.on.Upload</component-type>
+      <component-class>javax.faces.component.UIInput</component-class>
+   </component>
+
+   <render-kit>
+
+      <renderer>
+         <description>Allows a file to be specified for upload.</description>
+         <component-family>javax.faces.Input</component-family>
+         <renderer-type>org.jboss.on.Upload</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.common.upload.UploadRenderer</renderer-class>
+      </renderer>
+
+   </render-kit>
+
+</faces-config>

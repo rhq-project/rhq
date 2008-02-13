@@ -1,0 +1,515 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>2.0.0-SNAPSHOT</version>
+      <relativePath>../../../../pom.xml</relativePath>
+   </parent>
+
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-enterprise-server</artifactId>
+   <packaging>ejb</packaging>
+
+   <name>RHQ Enterprise Server JAR</name>
+   <description>RHQ enterprise server main JAR</description>
+
+   <scm>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/jar/</connection>
+      <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/jar/</developerConnection>
+   </scm>
+
+   <properties>
+      <scm.module.path>modules/enterprise/server/jar/</scm.module.path>
+      <rhq.server.datasource>java:/RHQDS</rhq.server.datasource>
+      <rhq.server.ds-mapping>PostgreSQL</rhq.server.ds-mapping>
+
+      <!-- dependency versions -->
+      <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
+   </properties>
+
+   <dependencies>
+
+      <!-- Internal Deps -->
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-enterprise-comm</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope> <!-- by ear -->
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-client-api</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-dbutils</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <!-- 3rd Party Deps -->
+
+      <dependency>
+         <groupId>ant</groupId>
+         <artifactId>ant</artifactId>
+         <version>1.6.5</version>
+      </dependency>
+
+      <!-- Required by a couple APL and Lather classes - TODO: Remove this once APL and Lather have been excised. -->
+      <dependency>
+         <groupId>commons-beanutils</groupId>
+         <artifactId>commons-beanutils</artifactId>
+         <version>1.6.1</version>
+      </dependency>
+
+      <!-- Required by a couple APL classes - TODO: Remove this once APL has been removed. -->
+      <!-- also required by EJB3 Embedded (test scope) -->
+      <dependency>
+         <groupId>commons-collections</groupId>
+         <artifactId>commons-collections</artifactId>
+         <version>2.1</version>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-httpclient</groupId>
+         <artifactId>commons-httpclient</artifactId>
+         <version>2.0.2</version>
+      </dependency>
+
+      <!-- Required by a couple APL classes - TODO: Remove this once APL has been removed. -->
+      <dependency>
+         <groupId>commons-validator</groupId>
+         <artifactId>commons-validator</artifactId>
+         <version>1.1.4</version>
+      </dependency>
+
+      <!-- required by JON server classes, as well as EJB3 Embedded -->
+      <dependency>
+         <groupId>dom4j</groupId>
+         <artifactId>dom4j</artifactId>
+         <version>1.6.1-jboss</version>
+         <scope>runtime</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>gnu-getopt</groupId>
+         <artifactId>getopt</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      </dependency>
+
+      <dependency>
+         <groupId>hibernate</groupId>
+         <artifactId>hibernate3</artifactId>
+         <version>3.2.r14201-1</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>hibernate-annotations</groupId>
+         <artifactId>hibernate-annotations</artifactId>
+         <version>3.2.1.GA</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>javax.mail</groupId>
+         <artifactId>mail</artifactId>
+         <version>1.3.1</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>javax.persistence</groupId>
+         <artifactId>persistence-api</artifactId>
+         <version>1.0</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>javax.servlet</groupId>
+         <artifactId>servlet-api</artifactId>
+         <version>2.4</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>javax.servlet</groupId>
+         <artifactId>jsp-api</artifactId>
+         <version>2.0</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-annotations-ejb3</artifactId>
+         <version>4.2.1.GA</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-cache</artifactId>
+         <version>1.4.1.SP3</version>
+         <scope>compile</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-common</artifactId>
+         <version>1.2.0.GA</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-ejb-api</artifactId>
+         <version>4.2.1.GA</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-j2ee</artifactId>
+         <version>4.2.1.GA</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-jmx</artifactId>
+         <version>4.2.1.GA</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-system</artifactId>
+         <version>4.2.1.GA</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jbosssx</artifactId>
+         <version>4.2.1.GA</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jbpm</artifactId>
+         <version>3.1.1</version>
+      </dependency>
+
+      <!-- TODO: remove this - tests should all be moved under the test source tree -->
+      <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
+         <version>3.8.1</version>
+      </dependency>
+
+      <dependency>
+         <groupId>opensymphony</groupId>
+         <artifactId>quartz</artifactId>
+         <version>1.5.2</version>
+         <scope>provided</scope> <!-- by JBossAS itself, which ships with 1.5.2 -->
+      </dependency>
+
+      <dependency>
+         <groupId>opensymphony</groupId>
+         <artifactId>quartz-oracle</artifactId>
+         <version>1.5.2</version>
+         <scope>provided</scope> <!-- by JBossAS itself, which ships with 1.5.2 -->
+      </dependency>
+
+      <dependency>
+         <groupId>org.easymock</groupId>
+         <artifactId>easymockclassextension</artifactId>
+         <version>2.2</version>
+         <scope>test</scope>
+         <!-- somehow this is needed otherwise the hibernate stuff doesn't initialize in our tests -->
+      </dependency>
+
+      <dependency>
+         <groupId>org.snmp4j</groupId>
+         <artifactId>snmp4j</artifactId>
+         <version>1.8.2</version>
+      </dependency>
+
+      <!-- required by JON server classes, as well as EJB3 Embedded -->
+      <dependency>
+         <groupId>oswego-concurrent</groupId>
+         <artifactId>concurrent</artifactId>
+         <version>1.3.4</version>
+      </dependency>
+
+      <!-- TODO: Why is this needed? -->
+      <dependency>
+         <groupId>postgresql</groupId>
+         <artifactId>postgresql</artifactId>
+         <!--<scope>test</scope>-->
+      </dependency>
+
+      <dependency>
+         <groupId>rss4j</groupId>
+         <artifactId>rss4j</artifactId>
+         <version>0.92-on.2</version>
+      </dependency>
+
+      <dependency>
+         <groupId>tomcat</groupId>
+         <artifactId>catalina</artifactId>
+         <version>5.5.20</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>tomcat</groupId>
+         <artifactId>tomcat-jk</artifactId>
+         <version>4.1.31</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>jboss-jaxws</artifactId>
+         <version>2.0.1.SP2</version>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>jbossws-client</artifactId>
+         <version>2.0.1.SP2</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <!-- Needed by com.jboss.jbossnetwork.apl.actions.xml.XPathProcessor; TODO: Remove once APL has been excised. -->
+      <dependency>
+         <groupId>xalan</groupId>
+         <artifactId>xalan</artifactId>
+         <version>2.5.1</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <!--================ Test Deps ================-->
+
+      <dependency>
+         <groupId>jboss.jboss-embeddable-ejb3</groupId>
+         <artifactId>jboss-ejb3-all</artifactId>
+         <version>${jboss-embeddable-ejb3.version}</version>
+         <scope>test</scope>
+      </dependency>
+
+      <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
+
+      <dependency>
+         <groupId>antlr</groupId>
+         <artifactId>antlr</artifactId>
+         <version>2.7.7</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>hibernate-entitymanager</groupId>
+         <artifactId>hibernate-entitymanager</artifactId>
+         <version>3.2.1.GA</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>javassist</artifactId>
+         <version>3.4.ga</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>trove</groupId>
+         <artifactId>trove</artifactId>
+         <version>1.0.2</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>xerces</groupId>
+         <artifactId>xercesImpl</artifactId>
+         <version>2.8.1</version>
+         <scope>test</scope>
+      </dependency>
+
+   </dependencies>
+
+   <build>
+      <finalName>${project.artifactId}</finalName>
+
+      <testResources>
+         <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+         </testResource>
+      </testResources>
+
+      <plugins>
+
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+
+               <execution>
+                  <phase>process-classes</phase>
+                  <configuration>
+                     <tasks>
+                        <!-- generate the I18N resource bundles -->
+                        <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
+
+                        <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
+                           <classpath refid="maven.runtime.classpath" />
+                           <classfileset dir="${project.build.outputDirectory}">
+                              <include name="**/ServerI18NResourceKeys.class" />
+                              <include name="**/AlertI18NResourceKeys.class" />
+                           </classfileset>
+                        </i18n>
+                     </tasks>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
+
+            </executions>
+         </plugin>
+
+         <plugin>
+            <artifactId>maven-ejb-plugin</artifactId>
+            <configuration>
+               <archive>
+                  <manifest>
+                     <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                     <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                     <addClasspath>true</addClasspath>
+                     <classpathPrefix>lib/</classpathPrefix>
+                  </manifest>
+               </archive>
+            </configuration>
+         </plugin>
+
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <excludes>
+                  <exclude>com/**/*.java</exclude>
+               </excludes>
+               <systemProperties>
+                  <property>
+                     <name>embeddedDeployment</name>
+                     <value>true</value>
+                  </property>
+                  <property>
+                     <name>deploymentDirectory</name>
+                     <value>target/classes</value>
+                  </property>
+               </systemProperties>
+               <!-- The below is required for tests to run against Oracle. -->
+               <additionalClasspathElements>
+                  <additionalClasspathElement>${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar</additionalClasspathElement>
+               </additionalClasspathElements>
+            </configuration>
+         </plugin>
+
+      </plugins>
+   </build>
+
+   <profiles>
+
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentName>${project.build.finalName}-ejb3.jar</rhq.deploymentName>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                            <echo>*** Copying updated files from target/classes to ${deployment.dir}...</echo>
+                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                               <fileset dir="target/classes"/>
+                            </copy>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <!-- NOTE: The below execution is necessary to make sure the META-INF/MANIFEST.MF and
+                                META-INF/maven/** files, which get created by the ejb plugin during the
+                                package phase, get copied over to the deployment dir. -->
+                     <execution>
+                        <id>deploy-jar-meta-inf</id>
+                        <phase>package</phase>
+                        <configuration>
+                           <tasks>
+                              <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${rhq.deploymentDir}" overwrite="false">
+                                 <patternset>
+                                    <include name="META-INF/**" />
+                                 </patternset>
+                              </unjar>
+                           </tasks>
+                        </configuration>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                            <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                            <delete dir="${deployment.dir}"/>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                  </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+
+   </profiles>
+
+</project>

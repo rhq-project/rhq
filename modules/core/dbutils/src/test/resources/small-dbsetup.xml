@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dbsetup name="small-schema.xml">
+<table name="TEST_SMALL">
+
+    <column name="ID"
+            default="sequence-only"
+            initial="10001"
+            primarykey="true"
+            required="true"
+            type="INTEGER"/>
+    <column name="MYLONG" type="LONG" required="true"/>
+    <column name="MYBIGDEC" type="BIGDEC" required="false"/>
+    <column name="MYLONGVARCHAR" type="LONGVARCHAR" required="false"/>
+    <column name="MYDOUBLE" type="DOUBLE" required="false"/>
+    <column name="MYBOOLEAN" type="BOOLEAN" required="false"/>
+    <column name="MYBYTES" type="BYTES" required="false"/>
+    <column name="MYVARCHAR2" type="VARCHAR2" required="false" size="100" />
+    <column name="MYCLOB" type="CLOB" required="false" />
+    <column name="MYBLOB" type="BLOB" required="false" />
+
+    <index name="MYLONG_INDEX" unique="true">
+        <field ref="MYLONG"/>
+    </index>
+    
+    <data ID="10001"
+          MYLONG="123456789"
+          MYBIGDEC="1.23"
+          MYLONGVARCHAR="abc-longvarchar"
+          MYDOUBLE="9.87"
+          MYBOOLEAN="true"
+          MYVARCHAR2="OVERWRITE ME!"/>
+    
+    <data __MYLONG="123456789"
+          MYVARCHAR2="abc-myvarchar2" />
+
+</table>
+</dbsetup>

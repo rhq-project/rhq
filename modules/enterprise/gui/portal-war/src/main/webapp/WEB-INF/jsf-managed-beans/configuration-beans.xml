@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <!-- /rhq/resource/configuration/view.xhtml, /rhq/resource/configuration/view-map.xhtml,
+        /rhq/resource/configuration/history.xhtml, /rhq/resource/configuration/edit.xhtml, and
+        /rhq/resource/configuration/edit-map.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ExistingResourceConfigurationUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.configuration.resource.ExistingResourceConfigurationUIBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/resource/configuration/add-new-simple.xhtml -->
+   <managed-bean>
+      <managed-bean-name>AddNewOpenMapMemberPropertyToResourceConfigurationUIBean</managed-bean-name>
+      <managed-bean-class>
+         org.rhq.enterprise.gui.configuration.resource.ExistingResourceConfigurationAddNewOpenMapMemberPropertyUIBean
+      </managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/resource/configuration/history.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ListConfigurationUpdateUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.configuration.history.ListConfigurationUpdateUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>GetLatestConfigurationUpdateUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.configuration.history.GetLatestConfigurationUpdateUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ViewResourceConfigurationUpdateUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.configuration.history.ViewResourceConfigurationUpdateUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- helper bean that's used by the config component -->
+   <managed-bean>
+      <managed-bean-name>ConfigHelperUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.core.gui.configuration.ConfigHelperUIBean</managed-bean-class>
+      <managed-bean-scope>application</managed-bean-scope>
+   </managed-bean>
+
+</faces-config>
+      

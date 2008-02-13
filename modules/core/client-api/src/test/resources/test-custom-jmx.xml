@@ -1,0 +1,60 @@
+<plugin name="CustomJmx"
+        displayName="CustomJmx"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="JMX" />
+   <depends plugin="Tomcat" />
+   <depends plugin="JBossAS" />
+
+   <server name="Custom JMX Server"
+           discovery="org.rhq.plugins.jmx.JMXDiscoveryComponent"
+           class="org.rhq.plugins.jmx.JMXServerComponent"
+           description="A JMX Server that houses the custom MBeans that are to be managed">
+
+      <plugin-configuration>
+         <c:simple-property name="type" type="string" description="The EMS connection type for this JMX Server">
+            <c:property-options>
+               <c:option value="LocalVMTypeDescriptor" name="Local" default="true"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.JBossConnectionTypeDescriptor" name="JBoss"/>
+                    <c:option value="org.mc4j.ems.connection.support.metadata.Tomcat55ConnectionTypeDescriptor" name="Tomcat"/>
+            </c:property-options>
+         </c:simple-property>
+         <c:simple-property name="url" required="true" type="string" description="The connection url in the form of a JMXServiceURL"/>
+         <c:simple-property name="principal" description="The login principal/username"/>
+         <c:simple-property name="credentials" description="The login credentials/password"/>
+      </plugin-configuration>
+
+      <service name="Hardcoded Inner Child Service"
+               discovery="HardcodedDiscovery"
+               class="HardcodedClass">
+      </service>
+   </server>
+
+   <service name="CustomJmxService"
+            description="Describes your custom service"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            class="org.rhq.plugins.jmx.MBeanResourceComponent">
+
+      <runs-inside>
+         <parent-resource-type name="Custom JMX Server" plugin="CustomJmx"/>
+         <parent-resource-type name="TomcatServer" plugin="Tomcat"/>
+         <parent-resource-type name="JBossASServer" plugin="JBossAS"/>
+      </runs-inside>
+
+      <plugin-configuration>
+         <c:simple-property name="objectName" default="custom.domain:custom-name=custom-value"/>
+         <c:simple-property name="nameTemplate" default="name template here"/>
+         <c:simple-property name="descriptionTemplate" default="description template here"/>
+      </plugin-configuration>
+      
+      <metric displayName="Custom MBean Name"
+              defaultOn="true"
+              category="performance"
+              property="CustomMBeanAttributeName"
+              description="What the custom MBean attribute value means" />
+      
+   </service>
+            
+</plugin>

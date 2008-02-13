@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function">
+
+THIS TEXT WILL BE REMOVED.
+
+The template for all Resource pages (i.e. the Monitor/Inventory/etc. tabbed pages).
+
+TEMPLATE PARAMETERS:
+content - the page content
+
+CONTEXT PARAMETERS:
+pageTitle - the page title
+pageHelpURL - a context-sensitive help URL for the page (optional)
+selectedTabName - the name of the tab/subTab to select in the following format: tabName[.subtabName]
+(e.g. "Inventory" or "Monitor.Visibility")
+
+REQUEST PARAMETERS:
+id - the id of the Resource being accessed
+
+<ui:composition template="/rhq/entity/layout/main.xhtml">
+
+THIS TEXT WILL BE REMOVED AS WELL.
+
+<ui:param name="defaultPageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}'"/>
+
+<ui:define name="breadcrumbs">
+
+   <onc:resourceLineage resourceId="#{ResourceUIBean.id}"/>
+
+   <ui:remove>
+   <!--
+       Find the resourceId in the request, look up the corresponding resource, and stuff it into the request as well.
+       TODO: Get rid of this, once all pages are switched over to using ResourceUIBean rather than Resource.
+     -->
+   </ui:remove>
+   #{onf:loadResource()}
+
+</ui:define>
+
+<ui:define name="summary">
+
+   <ui:remove>
+      <!-- NOTE: Besides being included here, summary.xhtml is also leveraged by JSP-based pages. Specifically, it is
+                 included (via an AJAX request) in /common/components/PageTitle.jsp. -->
+   </ui:remove>
+   <ui:include src="summary.xhtml"/>
+
+</ui:define>
+
+<ui:define name="tabBar">
+
+   <onc:tabBar selectedTabName="#{selectedTabName}">
+
+      <f:param name="id" value="#{param.id}"/>
+
+      <onc:tab name="Monitor" rendered="#{monitorEnabled}">
+         <onc:subtab name="Visibility" url="/resource/common/monitor/Visibility.do">
+            <f:param name="mode" value="currentHealth"/>
+         </onc:subtab>
+         <onc:subtab name="Configure" url="/resource/common/monitor/Config.do">
+            <f:param name="mode" value="configure"/>
+         </onc:subtab>
+      </onc:tab>
+
+      <onc:tab name="Inventory" url="/rhq/resource/inventory/view.xhtml"/>
+
+      <onc:tab name="Configuration" rendered="#{ResourceUIBean.facets.configuration}">
+         <onc:subtab name="Current" url="/rhq/resource/configuration/view.xhtml"/>
+         <onc:subtab name="History" url="/rhq/resource/configuration/history.xhtml"/>
+      </onc:tab>
+
+      <onc:tab name="Control" rendered="#{ResourceUIBean.facets.operation}">
+         <onc:subtab name="New" url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml"/>
+         <onc:subtab name="Schedules" url="/rhq/resource/operation/resourceOperationSchedules.xhtml"/>
+         <onc:subtab name="History" url="/rhq/resource/operation/resourceOperationHistory.xhtml"/>
+      </onc:tab>
+
+      <onc:tab name="Alert" rendered="#{monitorEnabled}">
+         <onc:subtab name="Definitions" url="/rhq/resource/alert/listAlertDefinitions.xhtml">
+            <f:param name="mode" value="listDefinitions"/>
+         </onc:subtab>
+         <onc:subtab name="History" url="/rhq/resource/alert/listAlertHistory.xhtml">
+            <f:param name="mode" value="list"/>
+         </onc:subtab>
+      </onc:tab>
+
+      <onc:tab name="Content" rendered="#{ResourceUIBean.facets.content}">
+         <onc:subtab name="Subscriptions" url="/rhq/resource/content/subscription.xhtml"/>
+         <onc:subtab name="Deployed" url="/rhq/resource/content/view.xhtml"/>
+         <onc:subtab name="New" url="/rhq/resource/content/create.xhtml"/>
+         <onc:subtab name="History" url="/rhq/resource/content/history.xhtml"/>
+      </onc:tab>
+      
+   </onc:tabBar>
+
+</ui:define>
+
+<ui:define name="content">
+   <p/>
+
+   <h1>Default Resource Content</h1>
+
+   <p/>
+</ui:define>
+
+</ui:composition>
+
+THIS TEXT WILL BE REMOVED AS WELL.
+
+</html>

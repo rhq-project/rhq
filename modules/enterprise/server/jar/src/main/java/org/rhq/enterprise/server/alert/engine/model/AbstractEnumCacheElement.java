@@ -1,0 +1,105 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.enterprise.server.alert.engine.model;
+
+public abstract class AbstractEnumCacheElement<E extends Enum<E>> extends AbstractCacheElement<E> {
+    public AbstractEnumCacheElement(AlertConditionOperator operator, E value, int conditionTriggerId) {
+        super(operator, value, conditionTriggerId);
+    }
+
+    public AbstractEnumCacheElement(AlertConditionOperator operator, E operatorOption, E value, int conditionTriggerId) {
+        super(operator, operatorOption, value, conditionTriggerId);
+    }
+
+    @Override
+    public boolean matches(E providedValue) {
+        if (providedValue == null) {
+            return false;
+        }
+
+        if (alertConditionOperator == AlertConditionOperator.EQUALS) {
+            return providedValue.equals(alertConditionValue);
+        } else if (alertConditionOperator == AlertConditionOperator.CHANGES) {
+            Boolean results = null;
+
+            if ((results == null) && (alertConditionValue.equals(providedValue) == false)) {
+                results = Boolean.TRUE;
+            }
+
+            if (results == null) {
+                results = Boolean.FALSE;
+            }
+
+            alertConditionValue = providedValue;
+
+            return results;
+        } else if (alertConditionOperator == AlertConditionOperator.LESS_THAN) {
+            return (providedValue.ordinal() < alertConditionValue.ordinal());
+        } else if (alertConditionOperator == AlertConditionOperator.GREATER_THAN) {
+            return (providedValue.ordinal() > alertConditionValue.ordinal());
+        } else if (alertConditionOperator == AlertConditionOperator.CHANGES_TO) {
+            Boolean results = null;
+
+            // if the last value recorded doesn't equal the operator option, but the current value does
+            if ((results == null) && (alertConditionOperatorOption.equals(alertConditionValue) == false)
+                && (alertConditionOperatorOption.equals(providedValue) == true)) {
+                results = Boolean.TRUE;
+            }
+
+            if (results == null) {
+                results = Boolean.FALSE;
+            }
+
+            alertConditionValue = providedValue;
+
+            return results;
+        } else if (alertConditionOperator == AlertConditionOperator.CHANGES_FROM) {
+            Boolean results = null;
+
+            // if the last value recorded equals the operator option, but the current value does not
+            if ((alertConditionOperatorOption.equals(alertConditionValue) == true)
+                && (alertConditionOperatorOption.equals(providedValue) == false)) {
+                results = Boolean.TRUE;
+            }
+
+            if (results == null) {
+                results = Boolean.FALSE;
+            }
+
+            alertConditionValue = providedValue;
+
+            return results;
+        } else {
+            throw new UnsupportedAlertConditionOperatorException(getClass().getSimpleName()
+                + ".isActive(String) implementation " + "does not account for all supported operators "
+                + "as defined by " + getClass().getSimpleName() + ".supportsOperator(AlertConditionOperator)");
+        }
+    }
+
+    @Override
+    public AlertConditionOperator.Type getOperatorSupportsType(AlertConditionOperator operator) {
+        if ((operator == AlertConditionOperator.LESS_THAN) || (operator == AlertConditionOperator.EQUALS)
+            || (operator == AlertConditionOperator.GREATER_THAN) || (operator == AlertConditionOperator.CHANGES)
+            || (operator == AlertConditionOperator.CHANGES_TO) || (operator == AlertConditionOperator.CHANGES_FROM)) {
+            return operator.getDefaultType();
+        }
+
+        return AlertConditionOperator.Type.NONE;
+    }
+}

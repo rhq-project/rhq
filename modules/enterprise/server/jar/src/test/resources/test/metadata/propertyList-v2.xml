@@ -1,0 +1,60 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+  
+   <platform name="myPlatform6">
+         
+      <resource-configuration>
+         <!--  list1 went away -->
+         
+         <!--  list2 stays as is -->
+         <c:list-property name="myList2">
+            <c:list-property name="embeddedList">
+               <c:simple-property name="foo"/>
+            </c:list-property>
+         </c:list-property>
+         
+         <!-- list3 changes its content to a list property -->
+         <c:list-property name="myList3">
+            <c:list-property name="baz">
+               <c:description>myList3:baz</c:description>
+               <c:simple-property name="Hugo"/>
+            </c:list-property>
+         </c:list-property>
+         
+         <!-- myList4 is new -->
+         <c:list-property name="myList4">
+            <c:description>Just a simple list</c:description>
+            <c:simple-property name="foo"/>
+         </c:list-property>
+         
+         <!-- rec3 changes to rec3+ and the simple property gets new options, description and constraint -->
+         <c:list-property name="rec1">
+            <c:list-property name="rec2" min="12" max="200">
+               <c:list-property name="rec3+" min="13" max="300">
+                  <c:list-property name="rec4" min="14" max="400">
+                     <c:simple-property name="rec5">
+                        <c:description>Nested deeply</c:description>
+                        <c:property-options>
+                           <c:option value="b"/>
+                           <c:option value="c"/>
+                           <c:option value="d"/>
+                           <c:option value="x"/>
+                           <c:option value="z"/>
+                        </c:property-options>
+                        <c:constraint>
+                           <c:integer-constraint maximum="10" minimum="-2"/>
+                           <c:float-constraint minimum="10" maximum="5"/>
+                        </c:constraint>
+                     </c:simple-property>
+                  </c:list-property>
+               </c:list-property>
+            </c:list-property>
+         </c:list-property>
+    
+      </resource-configuration>
+         
+   </platform>
+</plugin>
+   

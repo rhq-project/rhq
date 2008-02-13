@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+         version="2.5">
+
+  <display-name>JBoss ON Installer</display-name>
+  <description>JBoss Operations Network Installer</description>
+  
+   <!-- JSF RI -->
+
+   <listener>
+      <listener-class>com.sun.faces.config.ConfigureListener</listener-class>
+   </listener>
+
+   <!-- flags for debugging during development -->
+   <context-param>
+      <param-name>com.sun.faces.validateXml</param-name>
+      <param-value>false</param-value>
+   </context-param>
+   <context-param>
+      <param-name>com.sun.faces.verifyObjects</param-name>
+      <param-value>false</param-value>
+   </context-param>
+
+   <!-- JSF non-impl-specific -->
+
+   <!-- the suffix for files containing JSF content (default is ".jsp") -->
+   <context-param>
+      <param-name>javax.faces.DEFAULT_SUFFIX</param-name>
+      <param-value>.jsp</param-value>
+   </context-param>
+
+   <!-- list of additional JSF config files (in addition to "/WEB-INF/faces-config.xml") -->
+   <context-param>
+      <param-name>javax.faces.application.CONFIG_FILES</param-name>
+      <param-value>/WEB-INF/navigation.xml</param-value>
+   </context-param>
+   
+   <servlet>
+      <servlet-name>Faces Servlet</servlet-name>
+      <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+   </servlet>
+
+   <servlet-mapping>
+      <servlet-name>Faces Servlet</servlet-name>
+      <url-pattern>*.jsf</url-pattern>
+   </servlet-mapping>
+
+   <welcome-file-list>
+      <welcome-file>/index.html</welcome-file>
+   </welcome-file-list>
+
+</web-app>

@@ -1,0 +1,43 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+  
+   <platform name="myPlatform7">
+         
+      <resource-configuration>
+      
+         <!-- one and two have been map-properties -->
+         
+         <c:list-property name="one">
+            <c:simple-property name="simple">
+               <c:description>The Simpsons</c:description>
+            </c:simple-property>
+         </c:list-property>
+         <c:simple-property name="two">
+               <c:description>The Simpsons</c:description>
+         </c:simple-property>
+         
+         <!-- three and four have been list-properties -->
+         
+         <c:map-property name="three">
+            <c:simple-property name="simple">
+               <c:description>The Simpsons</c:description>
+            </c:simple-property>
+         </c:map-property>
+         <c:simple-property name="four">
+               <c:description>The Simpsons</c:description>
+         </c:simple-property>
+         
+         <!-- five and six have been simple-properties -->
+         
+         <c:map-property name="five">
+            <c:description>The Simpsons</c:description>
+         </c:map-property>
+         <c:list-property name="six">
+            <c:description>The Simpsons</c:description>
+         </c:list-property>
+      </resource-configuration>
+   </platform>
+</plugin>
+   

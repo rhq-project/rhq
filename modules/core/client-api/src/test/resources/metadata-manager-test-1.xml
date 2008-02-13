@@ -1,0 +1,99 @@
+<plugin name="Test1" displayName="Test One" package="org.rhq.plugins.test1"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="Server A" discovery="ServerAComponent" class="ServerAServerComponent"
+           description="Server A Test Server">
+      <plugin-configuration>
+         <c:simple-property name="alpha" type="string" description="Simple String" required="true" readOnly="true">
+            <c:constraint>
+               <c:regex-constraint expression="^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$"/>
+            </c:constraint>
+         </c:simple-property>
+         <c:simple-property name="bravo" type="string" description="String with options">
+            <c:property-options>
+               <c:option value="FirstOptionValue" name="First Option Name" default="true"/>
+               <c:option value="SecondOptionValue" name="Second Option Name"/>
+               <c:option value="ThirdOptionValue" name="Third Option Name"/>
+               <c:option value="FourthOptionValue" name="Fourth Option Name"/>
+            </c:property-options>
+         </c:simple-property>
+         <c:simple-property name="charlie" type="boolean" description="Boolean property"/>
+         <c:simple-property name="delta" type="integer" description="Integer property"/>
+         <c:simple-property name="deltalong" type="long" description="Long property"/>
+         <c:simple-property name="echo" type="password" description="Password property"/>
+         <c:simple-property name="foxtrot" type="float" description="Float property"/>
+         <c:simple-property name="foxtrotdouble" type="double" description="Double property"/>
+         <c:simple-property name="golf" type="directory" description="Directory property"/>
+         <c:simple-property name="hotel" type="file" description="File property"/>
+         <c:simple-property name="india" type="longString" description="Long String property"/>
+         <c:list-property name="juliet" description="A list of strings" min="3" max="4">
+            <c:simple-property name="foo" type="string"/>
+         </c:list-property>
+         <c:map-property name="kilo" description="An arbitrary map of strings"/>
+         <c:map-property name="lima" description="An map of files">
+            <c:simple-property name="file" type="file"/>
+         </c:map-property>
+         <c:list-property name="mike" description="An unbounded List" max="unbounded"/>
+
+         <c:list-property name="list-of-objects" description="a list of objects">
+            <c:map-property name="anObject" displayName="An Object">
+               <c:simple-property name="anObjectPropA" displayName="First l.o.m. prop"/>
+               <c:simple-property name="anObjectPropB" displayName="Second l.o.m. prop"/>
+            </c:map-property>
+         </c:list-property>
+
+         <c:template name="First Template" description="First template description">
+            <c:simple-property name="alpha" default="template1:alpha value"/>
+            <c:simple-property name="charlie" default="true"/>
+            <c:simple-property name="delta" default="42"/>
+         </c:template>
+         <c:template name="Second Template" description="Second template description">
+            <c:simple-property name="alpha" default="template2:alpha value"/>
+            <c:simple-property name="bravo" default="template2:bravo value"/>
+         </c:template>
+
+      </plugin-configuration>
+
+      <operation name="start" displayName="Start Server" description="Start the server"/>
+      <operation name="stop" displayName="Shutdown Server" description="Stop the server"/>
+      <operation name="restart" displayName="Restart Server" description="Restart the server"/>
+      
+      <metric displayName="MetricA" property="A" category="performance" defaultOn="true" description="Metric A Description" units="bytes" measurementType="dynamic" dataType="measurement"/>
+      <metric displayName="MetricB" property="B" category="performance" defaultOn="true" description="Metric A Description" units="bytes" measurementType="dynamic" dataType="measurement"/>
+      
+      
+      <resource-configuration>
+         <c:simple-property name="resourceAlpha"/>
+         <c:group name="firstGroup" displayName="First Group">
+            <c:simple-property name="resourceBravo"/>
+            <c:simple-property name="resourceCharlie"/>
+         </c:group>
+         <c:group name="secondGroup" displayName="Second Group">
+            <c:simple-property name="resourceDelta"/>
+            <c:map-property name="resourceEcho"/>
+            <c:list-property name="resourceFoxtrot"/>
+         </c:group>
+      </resource-configuration>      
+      
+
+      <service name="Service B" description="Service B Description" class="ServiceBClass" discovery="ServiceBDiscoveryClass">
+         <metric property="foo" displayName="Foo"/>
+      </service>
+
+      <service name="Service C" description="Service C Description" class="ServiceCClass" discovery="ServiceCDiscoveryClass">
+         <metric property="bar" displayName="Bar"/>
+      </service>
+
+      <service name="Service D" description="Service D Description" class="ServiceDClass" discovery="ServiceDDiscoveryClass">
+         <metric property="baz" displayName="Baz"/>
+
+         <service name="Dependent Service E" description="Service E Description" class="ServiceEClass" discovery="ServiceEDiscoveryClass">
+            <metric property="splat" displayName="Splat"/>
+         </service>
+      </service>
+
+   </server>
+
+</plugin>

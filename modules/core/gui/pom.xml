@@ -1,0 +1,202 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-parent</artifactId>
+      <version>2.0.0-SNAPSHOT</version>
+   </parent>
+
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-core-gui</artifactId>
+   <packaging>jar</packaging>
+
+   <name>RHQ Shared GUI Classes</name>
+   <description>JSF utility classes, validators, converters, etc. that are used by both enterprise and embedded
+   </description>
+
+   <scm>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/core/domain/</connection>
+      <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/core/domain/</developerConnection>
+   </scm>
+
+   <properties>
+      <scm.module.path>modules/core/gui/</scm.module.path>
+
+      <!-- dependency versions -->
+      <el.version>1.0</el.version>
+   </properties>
+
+   <dependencies>
+
+      <!-- Internal Deps -->
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope> <!-- by ${rhq.earName} (as ejb-jar) -->
+      </dependency>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-util</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope> <!-- by ${rhq.earName} -->
+      </dependency>
+
+      <!-- 3rd Party Deps -->
+
+      <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
+      <dependency>
+         <groupId>hibernate-annotations</groupId>
+         <artifactId>hibernate-annotations</artifactId>
+         <version>3.2.1.GA</version>
+         <scope>provided</scope>
+         <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>javax.el</groupId>
+         <artifactId>el-api</artifactId>
+         <version>${el.version}</version>
+         <scope>provided</scope>
+         <!-- by JBossAS -->
+      </dependency>
+
+      <!-- needed for referenced domain entities that use JPA annotations (due to JDK5 bug) -->
+      <dependency>
+         <groupId>javax.persistence</groupId>
+         <artifactId>persistence-api</artifactId>
+         <version>1.0</version>
+         <scope>provided</scope>
+         <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>javax.servlet</groupId>
+         <artifactId>servlet-api</artifactId>
+         <version>2.4</version>
+         <scope>provided</scope>
+         <!-- by JBossAS -->
+         <!-- transitive dependency needed for JspC -->
+      </dependency>
+
+      <dependency>
+         <groupId>javax.servlet</groupId>
+         <artifactId>jsp-api</artifactId>
+         <version>2.0</version>
+         <scope>provided</scope>
+         <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>javax.faces</groupId>
+         <artifactId>jsf-api</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>org.richfaces.framework</groupId>
+         <artifactId>richfaces-api</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      </dependency>
+
+      <dependency>
+         <groupId>org.richfaces.framework</groupId>
+         <artifactId>richfaces-impl</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      </dependency>
+
+      <dependency>
+         <groupId>org.richfaces.ui</groupId>
+         <artifactId>richfaces-ui</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      </dependency>
+
+   </dependencies>
+
+   <repositories>
+
+      <repository>
+         <id>java.net-m1-releases</id>
+         <name>Java.net Maven1 Repository - for javax.faces, javax.el, com.sun.el, and com.sun.facelets releases</name>
+         <url>http://download.java.net/maven/1/</url>
+         <layout>legacy</layout>
+      </repository>
+
+      <!--
+      <repository>
+         <id>exadel-snapshots</id>
+         <name>Exadel Snapshot Maven 2 Repo - for ajax4jsf and richfaces snapshots</name>
+         <url>http://maven.exadel.com/</url>
+         <releases>
+            <enabled>false</enabled>
+         </releases>
+      </repository>
+      -->
+
+   </repositories>
+
+   <profiles>
+
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-portal.war/WEB-INF/lib</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <tasks>
+                            <mkdir dir="${rhq.deploymentDir}"/>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                            <echo>*** Updating ${deployment.file}...</echo>
+                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                            <echo>*** Deleting ${deployment.file}...</echo>
+                            <delete file="${deployment.file}"/>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                   </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+
+   </profiles>
+
+</project>

@@ -1,0 +1,174 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+      
+<ui:composition template="/rhq/group/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="View Connection Property Update Details for ResourceGroup '#{ResourceGroupUIBean.name}'"/>
+   <ui:param name="selectedTabName" value="Inventory"/>
+   
+   <ui:define name="content">
+
+      <h:form id="pluginConfigurationUpdateDetailsForm">
+         <input type="hidden" name="groupId" value="${param.groupId}"/>
+         <input type="hidden" name="category" value="${param.category}"/>
+         <input type="hidden" name="apcuId" value="${param.apcuId}"/>
+            
+         <h:outputLink value="/rhq/group/inventory/list-plugin-configuration-update-history.xhtml">
+            <f:param name="groupId" value="#{param.groupId}" />
+            <f:param name="category" value="#{param.category}" />
+            <h:outputText value="&lt; Return to History List"/>
+         </h:outputLink>
+          
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Group Configuration Update Details"/>
+            </f:facet>
+          
+            <onc:config configurationDefinition="#{ViewGroupConnectionPropertyDetailsHeaderUIBean.configurationDefinition}"
+                        configuration="#{ViewGroupConnectionPropertyDetailsHeaderUIBean.configuration}"
+                        accessMapActionExpression="#{ViewGroupConnectionPropertyDetailsHeaderUIBean.accessMap}"
+                        addNewMapActionExpression="#{ViewGroupConnectionPropertyDetailsHeaderUIBean.addNewMap}"
+                        nullConfigurationDefinitionMessage="#{ViewGroupConnectionPropertyDetailsHeaderUIBean.nullConfigurationDefinitionMessage}"
+                        nullConfigurationMessage="#{ViewGroupConnectionPropertyDetailsHeaderUIBean.nullConfigurationMessage}"
+                        prevalidate="true" 
+                        aggregate="true"
+                        readOnly="true" />
+         </rich:panel>
+          
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Resource Configuration Updates Results"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%" style="min-width: 800px;">
+
+            <ui:param name="groupConnectionPropertyDetailsDataModel" value="#{ViewGroupConnectionPropertyDetailsUIBean.dataModel}"/>
+            <rich:dataTable binding="#{ViewGroupConnectionPropertyDetailsUIBean.dataTable}"
+                            id="groupConnectionPropertyDetailsDataTable"
+                            rows="#{PageControl.GroupConnectionPropertyUpdateDetails.pageSize}"
+                            value="#{groupConnectionPropertyDetailsDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 20%, 20%, 20%, 30%, 9%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="GroupConnectionPropertyUpdateDetails" />
+               </f:facet>
+      
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cu.id">
+                        <h:outputText styleClass="headerText" value="ID" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputText value="#{item.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cu.resource.name">
+                        <h:outputText styleClass="headerText" value="Resource" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                 
+                  <h:outputText value="#{item.resource.name}"/>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cu.status">
+                        <h:outputText styleClass="headerText" value="Status" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                 
+                  <h:outputText value="#{item.status}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                      <h:outputText styleClass="headerText" value="Details" />
+                  </f:facet>
+                 
+                  <h:outputText value="#{item.errorMessage}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cu.createdTime">
+                        <h:outputText styleClass="headerText" value="Date Created" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputLink value="/rhq/resource/inventory/view.xhtml">
+                     <f:param name="id" value="#{item.resource.id}" />
+                     <h:outputText value="#{item.createdTime}">
+                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                     </h:outputText>
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cu.modifiedTime">
+                        <h:outputText styleClass="headerText" value="Last Updated" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.modifiedTime}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cu.subjectName">
+                        <h:outputText styleClass="headerText" value="Subject" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{item.subjectName}" />
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="7">
+                        <ui:param name="paginationDataTableName" value="groupConnectionPropertyDetailsDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{groupConnectionPropertyDetailsDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.GroupConnectionPropertyUpdateDetails}"/>
+                        <ui:include src="/rhq/resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+ 
+            </h:panelGrid>
+
+         </rich:panel>
+ 
+         <h:outputLink value="/rhq/group/inventory/list-plugin-configuration-update-history.xhtml">
+            <f:param name="groupId" value="#{param.groupId}" />
+            <f:param name="category" value="#{param.category}" />
+            <h:outputText value="&lt; Return to History List"/>
+         </h:outputLink>
+ 
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

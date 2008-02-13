@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dbsetup name="events-schema.xml">
+
+   <table name="RHQ_ALERT_DEFINITION">
+        <column name="ID" default="sequence-only" initial="1"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" required="true" size="100" type="VARCHAR2"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="MTIME" type="LONG" required="true"/>
+        <column name="PARENT_ID" type="INTEGER" required="false"/>
+        <column name="DESCRIPTION" required="false" size="250" type="VARCHAR2"/>
+        <column name="PRIORITY" type="VARCHAR2" size="15" required="true"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" required="false"/>
+        <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE" required="false"/>
+        <column name="ENABLED" required="true" default="TRUE" type="BOOLEAN"/>
+        
+        <column name="REQUIRED" required="true" type="SMALLINT"/>
+
+        <column name="RECOVERY_ID" type="INTEGER" required="false"/>
+        <column name="WILL_RECOVER" required="true" default="false" type="BOOLEAN"/>
+        <column name="NOTIFY_FILTERED" required="true" default="false" type="BOOLEAN"/>
+        <column name="CONTROL_FILTERED" required="true" default="FALSE" type="BOOLEAN"/>
+        
+        <column name="DELETED" required="true" default="FALSE" type="BOOLEAN"/>
+        
+        <column name="DAMPENING_CATEGORY"     type="SMALLINT" required="true" />
+        <column name="DAMPENING_VALUE"        type="INTEGER"/>
+        <column name="DAMPENING_VALUE_UNITS"  type="SMALLINT"/>
+        <column name="DAMPENING_PERIOD"       type="INTEGER"/>
+        <column name="DAMPENING_PERIOD_UNITS" type="SMALLINT"/>
+        
+        <column name="OPERATION_DEF_ID" type="INTEGER" references="RHQ_OPERATION_DEF(ID)" />
+    </table>
+    
+   <table name="RHQ_ALERT_DAMPEN_EVENT">
+      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
+      <column name="EVENT_TYPE"      required="true" type="SMALLINT" />
+      <column name="EVENT_TIMESTAMP" required="true" type="TIMESTAMP" />
+      <column name="USED"            required="true" type="BOOLEAN" default="FALSE"/>
+
+      <index name="RHQ_DAMPENING_EVENT_TYPE_IDX">
+          <field ref="EVENT_TYPE" />
+      </index>
+      <index name="RHQ_DAMPENING_EVENT_TS_IDX">
+          <field ref="EVENT_TIMESTAMP" />
+      </index>
+
+    </table>
+
+    <table name="RHQ_ALERT_CONDITION">
+        <column name="ID" default="sequence-only" initial="1"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="TYPE" required="true" type="VARCHAR2" size="15"/>
+    <!--
+        <column name="REQUIRED" required="true"  type="BOOLEAN"/>
+     -->
+        <column name="MEASUREMENT_DEFINITION_ID" required="false" type="INTEGER"/>
+        <column name="NAME" required="false" size="100" type="VARCHAR2"/>
+        <column name="COMPARATOR" required="false" size="2" type="VARCHAR2"/>
+        <column name="THRESHOLD" required="false" type="DOUBLE"/>
+        <column name="OPTION_STATUS" required="false" size="25" type="VARCHAR2"/>
+        <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
+        <column name="TRIGGER_ID" required="false" type="INTEGER"/>
+    </table>
+    
+    <table name="RHQ_ALERT_NOTIF_LOG" tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@"
+        storage-options="freelists 5" cache="true" logging="false">
+        <column name="ID" default="sequence-only" initial="1"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="ROLES" required="false" size="200" type="VARCHAR2"/>
+        <column name="SUBJECTS" required="false" size="200" type="VARCHAR2"/>
+        <column name="EMAILS" required="false" size="200" type="VARCHAR2"/>
+    </table>
+
+    <table name="RHQ_ALERT" tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@"
+        storage-options="freelists 5" cache="true" logging="false">
+        <column name="ID" default="sequence-only" initial="1"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
+        <column name="ALERT_NOTIF_LOG_ID" required="true" type="INTEGER" references="RHQ_ALERT_NOTIF_LOG(ID)"/>
+        <column name="CTIME" required="true" type="LONG"/>
+        <column name="TRIGGERED_OPERATION" required="false" type="VARCHAR2" size="255"/>
+        <index name="RHQ_ALERT_IDX_TIME" unique="false">
+            <field ref="CTIME" />
+        </index>
+        <index name="RHQ_ALERT_IDX_ALERTDEF" unique="false">
+            <field ref="ALERT_DEFINITION_ID" />
+        </index>
+        <index name="RHQ_ALERT_IDX_ALERTNOTIFLOG" unique="false">
+            <field ref="ALERT_NOTIF_LOG_ID" />
+        </index>
+    </table>
+
+    <table name="RHQ_ALERT_CONDITION_LOG" tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@"
+        storage-options="freelists 5" cache="true" logging="false">
+        <column name="ID" default="sequence-only" initial="1"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="CTIME" required="true" type="LONG"/>
+        <column name="ALERT_ID" required="false" type="INTEGER" references="RHQ_ALERT(ID)"/>
+        <column name="CONDITION_ID" required="true" type="INTEGER" references="RHQ_ALERT_CONDITION(ID)" />
+        <column name="VALUE" required="false" size="250" type="VARCHAR2"/>
+        <index name="RHQ_ALERT_COND_LOG_IDX">
+            <field ref="ALERT_ID" />
+        </index>
+    </table>
+    
+    <table name="RHQ_ALERT_NOTIFICATION" tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@"
+        storage-options="freelists 5" cache="true" logging="false">
+        <column name="ID" default="sequence-only" initial="1"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="NOTIFICATION_TYPE" required="true" size="20" type="VARCHAR2"/>
+        <column name="ALERT_DEFINITION_ID" required="true" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
+        <column name="ROLE_ID" type="INTEGER" references="RHQ_ROLE(ID)"/>
+        <column name="SUBJECT_ID" type="INTEGER" references="RHQ_SUBJECT(ID)"/>
+        <column name="EMAIL_ADDRESS" size="100" type="VARCHAR2"/>
+        <column name="SNMP_HOST" size="100" type="VARCHAR2"/>
+        <column name="SNMP_PORT" type="INTEGER"/>
+        <column name="SNMP_OID" size="250" type="VARCHAR2"/>
+    </table>
+
+
+
+    <table name="RHQ_RESOURCE_EVENT">
+        <column name="ID" default="sequence-only" initial="1"
+                primarykey="true" required="true" type="INTEGER"/>
+       <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE" required="true"/>
+
+        <column name="DETAIL" required="true" size="500" type="VARCHAR2"/>
+        <column name="TYPE" required="true" size="100" type="VARCHAR2"/>
+        <column name="TIMESTAMP" required="true" type="LONG"/>
+        <column name="SUBJECT" required="false" size="100" type="VARCHAR2"/>
+        <column name="STATUS" required="false" size="100" type="VARCHAR2"/>
+        <index name="RHQ_RESOURCE_EVENT_IDX" unique="false">
+            <field ref="RESOURCE_ID" />
+            <field ref="TIMESTAMP" />
+        </index>
+    </table>
+
+
+</dbsetup>

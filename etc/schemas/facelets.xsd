@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<xsd:schema xmlns = "http://java.sun.com/jsf/facelets"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://java.sun.com/jsf/facelets"
+	    elementFormDefault="qualified"
+	    attributeFormDefault="unqualified">
+
+  <xsd:element name = "composition">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:any/>
+      </xsd:sequence>
+      <xsd:attribute name = "template" type = "xsd:string" use="optional"/>
+    </xsd:complexType>
+  </xsd:element>
+
+  <xsd:element name = "decorate">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:any/>
+      </xsd:sequence>
+      <xsd:attribute name = "template" type = "xsd:string" use="required"/>
+    </xsd:complexType>
+  </xsd:element>
+
+  <xsd:element name = "debug">
+    <xsd:complexType>
+      <xsd:attribute name = "hotkey" type = "xsd:string"/>
+    </xsd:complexType>
+  </xsd:element>
+
+  <xsd:element name = "define">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:any/>
+      </xsd:sequence>
+      <xsd:attribute name = "name" type = "xsd:string" use="required"/>
+    </xsd:complexType>
+  </xsd:element>
+
+  <xsd:element name = "fragment">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:any/>
+      </xsd:sequence>
+      <xsd:attribute name = "id" type = "xsd:string"/>
+      <xsd:attribute name = "binding" type = "xsd:string"/>
+    </xsd:complexType>
+  </xsd:element>
+
+  <xsd:element name = "include">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="param" />
+      </xsd:sequence>
+      <xsd:attribute name = "src" type = "xsd:string" use="required"/>
+    </xsd:complexType>
+  </xsd:element>
+
+  <xsd:element name = "insert">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:any/>
+      </xsd:sequence>
+      <xsd:attribute name = "name" type = "xsd:string"/>
+
+    </xsd:complexType>
+  </xsd:element>
+
+  <xsd:element name = "param">
+    <xsd:complexType>
+      <xsd:attribute name = "name" type = "xsd:string" use="required"/>
+      <xsd:attribute name = "value" type = "xsd:string" use="required"/>
+    </xsd:complexType>
+  </xsd:element>
+
+  <xsd:element name = "remove">
+      <xsd:complexType>
+        <xsd:sequence>
+          <xsd:any namespace="##other"/>
+        </xsd:sequence>
+      </xsd:complexType>
+  </xsd:element>
+
+  <xsd:element name = "repeat">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:any/>
+      </xsd:sequence>
+      <xsd:attribute name = "var" type = "xsd:string" use="required"/>
+      <xsd:attribute name = "value" type = "xsd:string" use="required"/>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>

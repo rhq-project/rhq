@@ -1,0 +1,834 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:config="urn:xmlns:rhq-configuration"
+           xmlns:rhq="urn:xmlns:rhq-plugin"
+           targetNamespace="urn:xmlns:rhq-plugin"
+           elementFormDefault="qualified"
+           jaxb:version="2.0"
+           xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" blockDefault="">
+
+   <xs:import namespace="urn:xmlns:rhq-configuration" schemaLocation="rhq-configuration.xsd"/>
+
+   <xs:annotation>
+      <xs:documentation>Schema for the definition of an AMPS plugin. AMPS plugins provide the metadata for new
+         supported systems to manage and the implementation of the necessary interfaces to utilize these features.
+      </xs:documentation>
+      <xs:appinfo>
+         <jaxb:schemaBindings>
+            <jaxb:package name="org.rhq.core.clientapi.descriptor.plugin"/>
+         </jaxb:schemaBindings>
+      </xs:appinfo>
+   </xs:annotation>
+
+   <xs:element name="plugin">
+      <xs:annotation>
+         <xs:documentation>Root of a plugin representing an ON plugin definition and the resource model of supported
+            managed systems and their components
+         </xs:documentation>
+         <xs:appinfo>
+            <jaxb:class name="PluginDescriptor"/>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="depends" minOccurs="0" maxOccurs="unbounded">
+               <xs:annotation>
+                  <xs:documentation>
+                     Identifies the plugins this plugin depends on. A plugin depends
+                     on another if it requires some of that other plugin's
+                     classes or extends that other plugin's resource types.
+                  </xs:documentation>
+                  <xs:appinfo>
+                     <jaxb:property name="depends" />
+                  </xs:appinfo>
+               </xs:annotation>
+               <xs:complexType>
+                  <xs:attribute name="plugin" type="xs:string" use="required"/>
+                  <xs:attribute name="useClasses" type="xs:boolean" default="false">
+                     <xs:annotation>
+                        <xs:documentation>
+                           If true, the classloader from this dependency plugin will be the
+                           parent of this plugin's classloader making its classes accessible. Can only be
+                           true for one depends reference (often the last).
+                        </xs:documentation>
+                     </xs:annotation>
+                  </xs:attribute>
+               </xs:complexType>
+            </xs:element>
+
+            <!--<xs:element ref="rhq:help" minOccurs="0" maxOccurs="unbounded" />-->
+
+            <xs:element ref="rhq:platform" minOccurs="0" maxOccurs="unbounded">
+               <xs:annotation>
+                  <xs:documentation>
+                     Defines a supported platform type (i.e. operating
+                     system). Platforms are already defined in the
+                     standard platform plugin deployed with the plugin
+                     container itself; custom plugins typically do not
+                     have to define new platforms.
+                  </xs:documentation>
+                  <xs:appinfo>
+                     <jaxb:property name="platforms" />
+                  </xs:appinfo>
+               </xs:annotation>
+            </xs:element>
+
+            <xs:element ref="rhq:server" minOccurs="0" maxOccurs="unbounded">
+               <xs:annotation>
+                  <xs:documentation>
+                     Defines a supported server. A server is typically a
+                     standalone product that can be managed and
+                     monitored. Servers may be auto-discovered via
+                     process scans.
+                  </xs:documentation>
+                  <xs:appinfo>
+                     <jaxb:property name="servers" />
+                  </xs:appinfo>
+               </xs:annotation>
+            </xs:element>
+
+            <xs:element ref="rhq:service" minOccurs="0" maxOccurs="unbounded">
+               <xs:annotation>
+                  <xs:documentation>
+                     Defines a supported service. A service is typically
+                     a child of server and provides distinct
+                     functionality within the parent server. Services
+                     are usually discovered by their parent servers.
+                  </xs:documentation>
+                  <xs:appinfo>
+                     <jaxb:property name="services" />
+                  </xs:appinfo>
+               </xs:annotation>
+            </xs:element>
+
+            <xs:element ref="rhq:help" minOccurs="0" maxOccurs="unbounded" />
+         </xs:sequence>
+         <xs:attribute name="name" use="required" type="xs:string"/>
+         <xs:attribute name="displayName" type="xs:string"/>
+         <xs:attribute name="description" type="xs:string"/>
+         <xs:attribute name="package" type="rhq:classNameType"/>
+         <xs:attribute name="version" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>
+                  The version of this plugin in and OSGI compatible format. (e.g. 2.0.4 or 3.1.beta2)
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute name="ampsVersion" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>
+                  The AMPS version this plugin requires in OSGI compatible format. (e.g. 2.0)
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+      </xs:complexType>
+   </xs:element>
+
+   <!-- == Measurement ================================================== -->
+
+   <xs:element name="metric">
+      <xs:annotation>
+         <xs:documentation>A declared value that can be monitored for for changes over time. Metrics are divided into
+            several main types including numeric, string traits, timings and complex.
+         </xs:documentation>
+         <xs:appinfo>
+            <jaxb:class name="MetricDescriptor"/>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element ref="rhq:version" minOccurs="0"/>
+         </xs:sequence>
+         <xs:attribute name="displayName" type="xs:string" use="optional">
+            <xs:annotation>
+               <xs:documentation>
+                  The name that is used to identify this metric in the UI.
+                  If this attribute is not specified, the 'property' attribute
+                  will be used as the display name.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute name="property" type="xs:string" use="required">
+            <xs:annotation>
+               <xs:documentation>
+                  The plugin-specific name of the property that identifies the metric. In particular,
+                  it helps identify what and possibly how the plugin retrieves the measurement from the
+                  monitored resource. This is usually a product specific name of the metric emitted
+                  by the managed resource. For example, it could be an attribute name from a JMX MBean,
+                  or it could be a table name within a database.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute name="description" type="xs:string"/>
+         <xs:attribute name="defaultInterval" type="xs:int">
+            <xs:annotation>
+               <xs:documentation>
+                  The default collection interval, in milliseconds. The metric is not necessarily
+                  enabled - see the defaultOn attribute for that.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute name="defaultOn" type="xs:boolean" default="false">
+            <xs:annotation>
+               <xs:documentation>
+                  If true, this metric will get collected as soon as possible.
+                  If false, a user must explicitly tell the plugin to collect this metric.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute name="category" default="performance">
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:enumeration value="availability"/>
+                  <xs:enumeration value="performance"/>
+                  <xs:enumeration value="throughput"/>
+                  <xs:enumeration value="utilization"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+         <xs:attribute name="units" type="config:measurementUnitsDescriptor" default="none">
+            <xs:annotation>
+               <xs:documentation>
+                  The units for this measurement.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute name="displayType" default="detail">
+            <xs:annotation>
+               <xs:documentation>
+                  Data displayed in the summary view will appear in the main measurement display page.
+                  Data displayed in the detail view will only appear in the UI when examining
+                  the entire set of metric data. The location in the UI where the measurement data
+                  is shown is typically in a different area from where the trait data is shown.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:enumeration value="summary"/>
+                  <xs:enumeration value="detail"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+         <xs:attribute name="measurementType" default="dynamic">
+            <xs:annotation>
+               <xs:documentation>
+                  If dataType is "measurement", this further describes the measurement data.
+                  This defines whether the measurement values that get collected
+                  consistently increase over time or are dynamic and can "randomly"
+                  be higher or lower than previous values.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:enumeration value="dynamic"/>
+                  <xs:enumeration value="trendsup"/>
+                  <xs:enumeration value="trendsdown"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+         <xs:attribute name="dataType" default="measurement">
+            <xs:annotation>
+               <xs:documentation>
+                  Describes the type of data that is to be collected. The typical type is
+                  "measurement" (i.e. numeric) data that normally changes over time - this is the default.
+                  A "trait" is typically a value that changes rarely (e.g. number of CPUs on a platform,
+                  or an install path). A "calltime" metric is the min/max/avg call durations for each
+                  destination (e.g. URL or session EJB method) in a set of destinations.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:enumeration value="measurement"/>
+                  <xs:enumeration value="trait"/>
+                  <xs:enumeration value="calltime"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+         <xs:attribute name="destinationType">
+            <xs:annotation>
+               <xs:documentation>
+                  The destination type (e.g. "URL" or "Method Name") - only defined for call-time measurements.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"/>
+                  <xs:minLength value="1"/>
+                  <xs:maxLength value="100"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+      </xs:complexType>
+   </xs:element>
+
+   <!-- == Content ================================================== -->
+
+   <xs:element name="content">
+      <xs:annotation>
+         <xs:documentation>Represents content related to a managed resource such as libraries, log files and non-file
+            content. This content can be inventoried and remotely accessed and updated. Content can have a custom
+            definition for attached metadata.
+         </xs:documentation>
+         <xs:appinfo>
+            <jaxb:class name="ContentDescriptor"/>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="configuration" type="config:configuration" minOccurs="0">
+               <xs:annotation>
+                  <xs:documentation>
+                     Describes properties relating to the content
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:element>
+            <xs:element ref="rhq:version" minOccurs="0">
+               <xs:annotation>
+                  <xs:documentation>
+                     Resource version to which this content applies. If this is omitted, the content applies to
+                     all versions.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:element>
+         </xs:sequence>
+         <xs:attribute name="name" type="xs:string" use="required">
+            <xs:annotation>
+               <xs:documentation>
+                  The plugin-specific name that identifies the content.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute name="displayName" type="xs:string" use="optional">
+            <xs:annotation>
+               <xs:documentation>
+                  The user friendly name of the content that will be displayed in the UI.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute name="description" type="xs:string" use="optional">
+            <xs:annotation>
+               <xs:documentation>
+                  Description of the content that will be displayed in the UI.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute name="category" type="rhq:contentDescriptorCategory" use="required">
+            <xs:annotation>
+               <xs:documentation>
+                  Describes the contents of the content and how they act with respect to the resource.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute name="discoveryInterval" type="xs:int" use="optional" default="43200000">
+            <xs:annotation>
+               <xs:documentation>
+                  Time interval, in milliseconds, between Discovery Scans being performed for content of this type.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute> 
+         <xs:attribute name="isCreationType" type="xs:boolean" use="optional" default="false">
+            <xs:annotation>
+               <xs:documentation>
+                  Indicates a piece of content of this type must be uploaded when creating the resource to which this content
+                  type belongs. This attribute is only honored when the resource's creationType attribute is set
+                  to "content".
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+      </xs:complexType>
+   </xs:element>
+   <xs:simpleType name="contentDescriptorCategory">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="executableScript"/>
+         <xs:enumeration value="executableBinary"/>
+         <xs:enumeration value="deployable"/>
+         <xs:enumeration value="configuration"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+
+   <!-- == Operation ================================================== -->
+
+   <xs:element name="operation">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class name="OperationDescriptor"/>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="parameters" type="config:configuration" minOccurs="0" maxOccurs="1">
+               <xs:annotation>
+                  <xs:documentation>
+                     If this operation accepts incoming arguments from the caller, this defines
+                     the paramter definitions for those argument values.  They are defined using
+                     the Configuration API.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:element>
+            <xs:element name="results" type="config:configuration" minOccurs="0" maxOccurs="1">
+               <xs:annotation>
+                  <xs:documentation>
+                     If this operation returns data back to the caller, this defines
+                     what the returned results will look like using the Configuration API.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:element>
+            <!-- resource versions this operation applies to; if omitted, it applies to all versions -->
+            <xs:element ref="rhq:version" minOccurs="0" />
+         </xs:sequence>
+
+         <xs:attribute name="name" use="required" type="xs:string" />
+         <xs:attribute name="displayName" type="xs:string" />
+         <xs:attribute name="description" type="xs:string" />
+         <!-- TODO: return value type -->
+         <xs:attribute name="timeout" type="xs:int" use="optional">
+            <xs:annotation>
+               <xs:documentation>
+                  The default timeout, in seconds. If this amount of time passes before the
+                  invocation completes, an error will be returned.  If defined, this
+                  overrides the plugin container's default operation invocation timeout.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+      </xs:complexType>
+   </xs:element>
+
+   <!-- BASE RESOURCE -->
+   
+   <xs:element name="resource" type="rhq:resource">
+      <xs:annotation>
+         <xs:documentation>Represents an item in the management inventory</xs:documentation>
+      </xs:annotation>
+      <xs:keyref name="subcategoryNameRef" refer="rhq:subcategoryName">
+         <xs:selector xpath="./subcategories/subcategory"/>
+         <xs:field xpath="@subcategory"/>
+      </xs:keyref>
+   </xs:element>
+
+
+   <xs:complexType name="resource" abstract="true">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class name="ResourceDescriptor"/>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element ref="rhq:version" minOccurs="0" maxOccurs="1"/>
+         <xs:element name="runs-inside" type="rhq:runsInsideType" maxOccurs="1" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>
+                  Declares that the resource type will be injected as a child type
+                  to the resource types defined in this tag.  In effect, this says
+                  resources of this type can "run inside" resources of those parent types.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+
+         <xs:element name="subcategories" minOccurs="0">
+            <xs:complexType>
+               <xs:sequence>
+                 <xs:element ref="rhq:subcategory" minOccurs="0" maxOccurs="unbounded"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+
+         <xs:element name="plugin-configuration" type="config:configuration" minOccurs="0"/>
+         <xs:element name="process-scan" type="rhq:processScan" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>
+                  Defines what to look for during a process scan in order to identify server
+                  resources that should be auto-discovered. Process scan elements are only
+                  useful when specified for server resources; they will be ignored when
+                  specified for child services.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element ref="rhq:operation" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element ref="rhq:metric" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element ref="rhq:content" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element name="resource-configuration" type="config:configuration" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute name="name" use="required" type="xs:string"/>
+      <xs:attribute name="singleton" use="optional" type="xs:boolean" default="false">
+        <xs:annotation>
+           <xs:documentation>Resources that are marked as singletons may only ever have
+           one instance discovered per parent resource.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="supportsManualAdd" use="optional" type="xs:boolean" default="false">
+        <xs:annotation>
+           <xs:documentation>Defines whether resources of this type can be manually added to inventory
+           by the user (i.e. rather than being autodiscovered and then imported).</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="subCategory" use="optional">
+         <xs:annotation>
+            <xs:documentation>
+               Resource types can be grouped into subcategories. A subcategory
+               defines "like" resource types so they can, for example, be shown together
+               in a UI group tab. You can, therefore, define multiple resource types
+               and group them together by making their subCategory attributes the same.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+
+      <xs:attribute name="description" use="optional" type="xs:string"/>
+      <xs:attribute name="discovery" use="optional" type="rhq:classNameType">
+         <xs:annotation>
+            <xs:documentation>
+               The discovery component class used to discover this resource. Optional when the
+               resource may be discovered by a parent resource.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="class" type="rhq:classNameType">
+         <xs:annotation>
+            <xs:documentation>
+               The resource component class that is used to represent instances of this resource.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:anyAttribute/>
+   </xs:complexType>
+   
+   <xs:simpleType name="resourceCreateDeletePolicy">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="neither"/>
+         <xs:enumeration value="create-only"/>
+         <xs:enumeration value="delete-only"/>
+         <xs:enumeration value="both"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType name="resourceCreationData">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="configuration"/>
+         <xs:enumeration value="content"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+
+   <!-- PLATFORM -->
+
+   <xs:element name="platform" type="rhq:platform">
+      <xs:unique name="platform-operation">
+         <xs:selector xpath="rhq:operation"/>
+         <xs:field xpath="@name"/>
+      </xs:unique>
+      <xs:unique name="platform-metric">
+         <xs:selector xpath="rhq:metric"/>
+         <xs:field xpath="@name"/>
+      </xs:unique>
+   </xs:element>
+
+   <xs:complexType name="platform">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class name="PlatformDescriptor"/>
+            <jaxb:property name="platforms"/>
+         </xs:appinfo>
+      </xs:annotation>
+
+      <xs:complexContent>
+         <xs:extension base="rhq:resource">
+            <xs:sequence>
+               <xs:element ref="rhq:server" minOccurs="0" maxOccurs="unbounded">
+                  <xs:annotation>
+                     <xs:documentation>
+                        Defines child server types that can be embedded in this server type.
+                     </xs:documentation>
+                     <xs:appinfo>
+                        <jaxb:property name="servers" />
+                     </xs:appinfo>
+                  </xs:annotation>
+               </xs:element>
+
+               <xs:element ref="rhq:service" minOccurs="0" maxOccurs="unbounded">
+                  <xs:annotation>
+                     <xs:documentation>
+                        Defines child services that are hosted in this resource type.
+                     </xs:documentation>
+                     <xs:appinfo>
+                        <jaxb:property name="services" />
+                     </xs:appinfo>
+                  </xs:annotation>
+               </xs:element>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <!-- SERVER -->
+
+   <xs:element name="server" type="rhq:server">
+      <xs:unique name="server-operation">
+         <xs:selector xpath="rhq:operation"/>
+         <xs:field xpath="@name"/>
+      </xs:unique>
+      <xs:unique name="server-metric">
+         <xs:selector xpath="rhq:metric"/>
+         <xs:field xpath="@name"/>
+      </xs:unique>
+   </xs:element>
+
+   <xs:complexType name="server">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class name="ServerDescriptor" />
+            <jaxb:property name="servers" />
+         </xs:appinfo>
+      </xs:annotation>
+
+      <xs:complexContent>
+         <xs:extension base="rhq:resource">
+            <xs:sequence>
+               <xs:element ref="rhq:server" minOccurs="0" maxOccurs="unbounded">
+                  <xs:annotation>
+                     <xs:documentation>
+                        Defines child server types that can be embedded in this server type.
+                     </xs:documentation>
+                     <xs:appinfo>
+                        <jaxb:property name="servers" />
+                     </xs:appinfo>
+                  </xs:annotation>
+               </xs:element>
+
+               <xs:element ref="rhq:service" minOccurs="0" maxOccurs="unbounded">
+                  <xs:annotation>
+                     <xs:documentation>
+                        Defines child services that are hosted in this resource type.
+                     </xs:documentation>
+                     <xs:appinfo>
+                        <jaxb:property name="services" />
+                     </xs:appinfo>
+                  </xs:annotation>
+               </xs:element>
+
+            </xs:sequence>
+            <xs:attributeGroup ref="rhq:embeddedSourceResourceType">
+               <xs:annotation>
+                  <xs:documentation>
+                     If specified, this indicates that this server
+                     definition is actually a copy of a server type as
+                     defined in the named plugin. If you define this,
+                     you must also define the sourceServer attribute,
+                     too.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attributeGroup>
+            <xs:attributeGroup ref="rhq:creationAttributes"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <!-- SERVICE -->
+
+   <xs:element name="service" type="rhq:service">
+      <xs:unique name="service-operation">
+         <xs:selector xpath="rhq:operation"/>
+         <xs:field xpath="@name"/>
+      </xs:unique>
+      <xs:unique name="service-metric">
+         <xs:selector xpath="rhq:metric"/>
+         <xs:field xpath="@name"/>
+      </xs:unique>
+   </xs:element>
+
+   <!-- TODO GH: Add crud markings for the configuration crud aspect -->
+   <xs:complexType name="service">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class name="ServiceDescriptor"/>
+            <jaxb:property name="services"/>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension base="rhq:resource">
+            <xs:sequence>
+               <xs:element ref="rhq:service" minOccurs="0" maxOccurs="unbounded">
+                  <xs:annotation>
+                     <xs:documentation>
+                        Defines child services that are hosted in this resource type.
+                     </xs:documentation>
+                     <xs:appinfo>
+                        <jaxb:property name="services" />
+                     </xs:appinfo>
+                  </xs:annotation>
+               </xs:element>
+            </xs:sequence>
+            <xs:attribute name="type" type="xs:string"/>
+            <xs:attributeGroup ref="rhq:embeddedSourceResourceType">
+               <xs:annotation>
+                  <xs:documentation>
+                     If specified, this indicates that this server
+                     definition is actually a copy of a server type as
+                     defined in the named plugin. If you define this,
+                     you must also define the sourceServer attribute,
+                     too.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attributeGroup>
+            <xs:attributeGroup ref="rhq:creationAttributes"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:element name="subcategory" type="rhq:subcategory">
+      <xs:key name="subcategoryName">
+         <xs:selector xpath="rhq:subcategory"/>
+         <xs:field xpath="@name"/>
+      </xs:key>
+   </xs:element>
+
+   <xs:complexType name="subcategory">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class name="SubCategoryDescriptor"/>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element ref="rhq:subcategory" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>
+                  Defines sub categories which are used to group together like resource types
+               </xs:documentation>
+               <xs:appinfo>
+                  <jaxb:property name="subcategory"/>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+      <xs:attribute name="name" type="xs:string"/>
+      <xs:attribute name="displayName" type="xs:string"/>
+      <xs:attribute name="description" type="xs:string"/>
+   </xs:complexType>
+
+
+   <xs:element name="help">
+     <xs:complexType mixed="true">
+       <xs:sequence>
+         <xs:any namespace="http://www.w3.org/1999/xhtml" minOccurs="0" maxOccurs="unbounded" processContents="strict"/>
+       </xs:sequence>
+     </xs:complexType>
+   </xs:element>
+
+
+   <xs:element name="version">
+      <xs:annotation>
+         <xs:documentation>Tags an model element as applicable to a specific set of version ranges.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:attribute name="target" default="this">
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:enumeration value="parent"/>
+                  <xs:enumeration value="this"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:attribute>
+         <!-- an OSGI version range -->
+         <xs:attribute name="match" type="xs:string" use="required"/>
+      </xs:complexType>
+   </xs:element>
+
+
+   <xs:complexType name="processScan">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class name="ProcessScanDescriptor"/>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:attribute name="query" type="xs:string" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               The PIQL query that will be used to identify running processes
+               as server resources that should be auto-discovered.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="name" type="xs:string" use="optional">
+         <xs:annotation>
+            <xs:documentation>
+               An optional name you can give to this particular scan query.
+               This may be useful to plugin writers to identify which query
+               matched which process.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+
+   <xs:simpleType name="classNameType">
+      <xs:restriction base="xs:string">
+         <xs:whiteSpace value="collapse"/>
+         <xs:minLength value="1"/>
+         <xs:pattern value="[a-zA-Z_][a-zA-Z_0-9]*(.[a-zA-Z_][a-zA-Z_0-9]*)*"/>
+         <xs:pattern value="(\[)+[BCDFIJSZ]"/>
+         <xs:pattern value="(\[)+L[a-zA-Z_][a-zA-Z_0-9]*(.[a-zA-Z_][a-zA-Z_0-9]*)*;"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+
+
+   <xs:complexType name="runsInsideType">
+      <xs:sequence>
+         <xs:element name="parent-resource-type" type="rhq:parentResourceType" minOccurs="1" maxOccurs="unbounded">
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+
+
+   <xs:complexType name="parentResourceType">
+      <xs:attribute name="name" type="xs:string" use="required"/>
+      <xs:attribute name="plugin" type="xs:string" use="required"/>
+   </xs:complexType>
+
+   <xs:attributeGroup name="embeddedSourceResourceType">
+      <xs:attribute name="sourcePlugin" use="optional" type="xs:string">
+         <xs:annotation>
+            <xs:documentation>
+               If specified, this indicates that this resource type
+               definition is actually a copy of a type as
+               defined in the named plugin. If you define this,
+               you must also define the sourceType attribute.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="sourceType" use="optional" type="xs:string">
+         <xs:annotation>
+            <xs:documentation>
+               If specified, this indicates that this resource type
+               definition is actually a copy of the named
+               type found in the source plugin. If you define this
+               attribute, you must also define the sourcePlugin
+               attribute.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:attributeGroup>
+
+   <xs:attributeGroup name="creationAttributes">
+      <xs:attribute name="createDeletePolicy" type="rhq:resourceCreateDeletePolicy" use="optional" default="neither">
+         <xs:annotation>
+            <xs:documentation>
+               Describes whether or not resources of this type can be created and/or deleted.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="creationDataType" type="rhq:resourceCreationData" use="optional" default="configuration">
+         <xs:annotation>
+            <xs:documentation>
+               Indicates what data must be provided when creating a new instance of this resource. If this attribute
+               is omitted, the user will be required to specify values for the resource configuration defined by
+               this resource type. Alternatively, if this attribute is set to "content", the user will be required
+               to upload one or more files when creating a new resource of this type. Content such as this is indicated
+               by the isCreationType attribute on the package type. At least one package must be marked in this way 
+               if this attribute is set to "content".
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:attributeGroup>
+   
+</xs:schema>

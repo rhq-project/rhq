@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <navigation-rule> 
+      <from-view-id>/rhq/test/ListResourcesFaces.xhtml</from-view-id>  
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/test/ListResourcesFaces.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/test/config/view-config.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{ViewTestConfigurationUIBean.editConfiguration}</from-action>
+         <to-view-id>/rhq/test/config/edit-config.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ViewTestConfigurationUIBean.accessMap}</from-action>
+         <to-view-id>/rhq/test/config/view-map.xhtml</to-view-id>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/test/config/edit-config.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+         <to-view-id>/rhq/test/config/edit-map.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.addNewMap}</from-action>
+         <to-view-id>/rhq/test/config/add-map.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.addNewOpenMapMemberProperty}</from-action>
+         <to-view-id>/rhq/test/config/add-simple.xhtml</to-view-id>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/test/config/view-map.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{ViewTestConfigurationUIBean.finish}</from-action>
+         <to-view-id>/rhq/test/config/view-config.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/test/config/edit-map.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{EditTestConfigurationUIBean.updateConfiguration}</from-action>
+         <to-view-id>/rhq/test/config/edit-config.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/test/config/add-map.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{EditTestConfigurationUIBean.finish}</from-action>
+         <to-view-id>/rhq/test/config/edit-config.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/test/config/add-simple.xhtml</from-view-id>
+
+      <navigation-case>         
+         <to-view-id>/rhq/test/config/edit-config.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+</faces-config>

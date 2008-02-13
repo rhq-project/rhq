@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="DiskContentSourcePlugin" 
+        xmlns="urn:xmlns:rhq-serverplugin.content"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <contentSourceType name="DiskSource"
+                      displayName="Local Disk Storage Content Source"
+                      description="This content source retrieves packages from a local file system."
+                      lazyLoad="true"
+                      downloadMode="never"
+                      apiClass="org.rhq.enterprise.server.plugins.disk.DiskSource">
+
+      <configuration>
+         <c:simple-property name="rootDirectory" type="directory" required="true" />
+      </configuration>
+
+   </contentSourceType>
+
+</plugin>

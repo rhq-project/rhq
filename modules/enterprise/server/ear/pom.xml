@@ -1,0 +1,383 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-parent</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+    <relativePath>../../../../pom.xml</relativePath>
+  </parent>
+
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-enterprise-server-ear</artifactId>
+  <packaging>ear</packaging>
+
+  <name>RHQ Enterprise Server EAR</name>
+  <description>RHQ enterprise server EAR</description>
+
+  <scm>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/ear/</connection>
+    <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/ear/</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>modules/enterprise/server/ear/</scm.module.path>
+    <earDirectory>${project.build.directory}/${project.build.finalName}</earDirectory>
+
+    <!-- dependency versions -->
+    <seam.version>1.2.1.GA</seam.version>
+  </properties>
+
+  <dependencies>
+
+    <!-- Internal Deps -->
+
+    <!-- ** EJB-JARs -->
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-enterprise-server</artifactId>
+      <version>${project.version}</version>
+      <type>ejb</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-domain</artifactId>
+      <version>${project.version}</version>
+      <type>ejb</type>
+    </dependency>
+
+    <!-- ** WARs -->
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-portal</artifactId>
+      <version>${project.version}</version>
+      <type>war</type>
+    </dependency>
+
+    <!-- ** SARs -->
+<!--
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-enterprise-server-agent-sar</artifactId>
+      <version>${project.version}</version>
+      <type>sar</type>
+    </dependency>
+-->
+
+    <!-- 3rd Party Deps -->
+
+    <!-- ** WARs -->
+
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-remoting-servlet-invoker</artifactId>
+      <version>2x.r3040.jon</version>
+      <type>war</type>
+    </dependency>
+
+    <!-- ** JARs -->
+
+    <!--
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-seam</artifactId>
+      <version>${seam.version}</version>
+    </dependency>
+    -->
+
+  </dependencies>
+
+  <build>
+
+    <finalName>rhq</finalName>
+
+    <resources>
+
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+
+    </resources>
+
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.1</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <configuration>
+              <tasks>
+                <mkdir dir="${earDirectory}/license" />
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-ear-plugin</artifactId>
+        <version>2.3.1</version>
+        <configuration>
+          <archive>
+            <manifest>
+               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+            </manifest>
+          </archive>
+          <displayName>RHQ</displayName>
+          <version>1.4</version>  <!-- J2EE version -->
+          <workDirectory>${earDirectory}</workDirectory>
+          <resourcesDir>${basedir}/target/classes</resourcesDir>
+          <defaultJavaBundleDir>lib</defaultJavaBundleDir>
+          <unpackTypes>war,ejb,sar</unpackTypes>
+          <modules>
+
+             <!-- ** WARs -->
+
+             <webModule>
+               <groupId>${project.groupId}</groupId>
+               <artifactId>rhq-portal</artifactId>
+               <bundleFileName>rhq-portal.war</bundleFileName>
+               <contextRoot>/</contextRoot>
+             </webModule>
+
+             <!-- ** EJB-JARs -->
+
+             <ejbModule>
+               <groupId>${project.groupId}</groupId>
+               <artifactId>rhq-enterprise-server</artifactId>
+               <bundleFileName>rhq-enterprise-server-ejb3.jar</bundleFileName>
+             </ejbModule>
+
+             <ejbModule>
+               <groupId>${project.groupId}</groupId>
+               <artifactId>rhq-core-domain</artifactId>
+               <bundleFileName>rhq-core-domain-ejb3.jar</bundleFileName>
+             </ejbModule>
+
+             <!-- ** SARs -->
+<!--
+             <sarModule>
+               <groupId>${project.groupId}</groupId>
+               <artifactId>rhq-enterprise-server-agent-sar</artifactId>
+               <bundleFileName>rhq-agent.sar</bundleFileName>
+             </sarModule>
+-->
+
+             <!-- ** JARs -->
+
+             <!--
+             <jarModule>
+               <groupId>jboss</groupId>
+               <artifactId>jboss-seam</artifactId>
+               <bundleDir>lib</bundleDir>
+               <includeInApplicationXml>true</includeInApplicationXml>
+             </jarModule>
+             -->
+
+          </modules>
+        </configuration>
+      </plugin>
+
+     <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.0</version>
+        <executions>
+
+          <execution>
+            <id>copy-rhq-plugins</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-platform-plugin</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-agent-plugin</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-jmx-plugin</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-jbossas-plugin</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-tomcat-plugin</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-hibernate-plugin</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-apache-plugin</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-postgres-plugin</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-database-plugin</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-server-plugin</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+
+               </artifactItems>
+               <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>copy-rhq-serverplugins</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-serverplugin-disk</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-serverplugin-yum</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+
+               </artifactItems>
+               <outputDirectory>${earDirectory}/rhq-serverplugins</outputDirectory>
+            </configuration>
+          </execution>
+
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+   <profiles>
+
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentName>${project.build.finalName}.ear</rhq.deploymentName>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.deploymentName}</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>package</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                            <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
+                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                               <fileset dir="${basedir}/target/${project.build.finalName}"/>
+                            </copy>
+                            <property name="deployment.descriptor.file" location="${deployment.dir}/META-INF/application.xml"/>
+                            <echo>*** Touching ${deployment.descriptor.file} to force redeployment of ${rhq.deploymentName}...</echo>
+                            <touch file="${deployment.descriptor.file}"/>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>deploy-ear-meta-inf</id>
+                        <phase>package</phase>
+                        <configuration>
+                          <tasks>
+                             <unjar src="${project.build.directory}/${project.build.finalName}.ear" dest="${rhq.deploymentDir}">
+                               <patternset>
+                                 <include name="META-INF/**" />
+                               </patternset>
+                             </unjar>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                            <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                            <delete dir="${deployment.dir}"/>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                  </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+
+   </profiles>
+
+</project>

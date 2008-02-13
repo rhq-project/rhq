@@ -1,0 +1,229 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-parent</artifactId>
+      <version>2.0.0-SNAPSHOT</version>
+   </parent>
+
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-core-dbutils</artifactId>
+  <packaging>jar</packaging>
+
+  <name>RHQ Database Utilities</name>
+  <description>Database schema setup, upgrade and other utilities</description>
+
+  <scm>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/core/dbutils/</connection>
+    <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/core/dbutils/</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>modules/core/dbutils/</scm.module.path>
+    <db.schema.version>2.0</db.schema.version>
+  </properties>
+
+  <dependencies>
+
+    <!-- Internal Deps -->
+
+
+    <!-- 3rd Party Deps -->
+
+    <dependency>
+      <groupId>ant</groupId>
+      <artifactId>ant</artifactId>
+      <version>1.6.5</version>
+    </dependency>
+
+    <dependency>
+      <groupId>ant</groupId>
+      <artifactId>ant-launcher</artifactId>
+      <version>1.6.5</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle. -->
+    <!--
+    <dependency>
+      <groupId>ojdbc14</groupId>
+      <artifactId>ojdbc14</artifactId>
+      <scope>test</scope>
+    </dependency>
+    -->
+
+    <dependency>
+      <groupId>postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>process-classes</phase>
+            <configuration>
+              <tasks>
+                <!-- generate the I18N resource bundles -->
+                <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
+
+                <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
+                   <classpath refid="maven.runtime.classpath" />
+                   <classfileset dir="${project.build.outputDirectory}">
+                      <include name="**/*I18NResourceKeys.class" />
+                   </classfileset>
+                </i18n>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+
+          <execution>
+            <id>dbsetup-worker</id>
+            <phase>test</phase>
+            <configuration>
+              <tasks>
+                <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
+                <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml">
+                  <property name="settings.localRepository" value="${settings.localRepository}" />
+                  <property name="ojdbc14.version" value="${ojdbc14.version}" />
+                  <property name="task.classpath.property" refid="maven.test.classpath" />
+                  <property name="rhq.ds.type-mapping" value="${rhq.test.ds.type-mapping}" />
+                  <property name="rhq.ds.connection-url" value="${rhq.test.ds.connection-url}" />
+                  <property name="rhq.ds.user-name" value="${rhq.test.ds.user-name}" />
+                  <property name="rhq.ds.password" value="${rhq.test.ds.password}" />
+                  <property name="project.version" value="${project.version}" />
+                  <property name="db.schema.version" value="${db.schema.version}" />
+                  <property name="dbsetup" value="${dbsetup}" />
+                  <property name="dbsetup-uninstall" value="${dbsetup-uninstall}" />
+                  <property name="dbsetup-upgrade" value="${dbsetup-upgrade}" />
+                  <property name="dbsetup-export" value="${dbsetup-export}" />
+                </ant>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+
+          <execution>
+            <id>generate-dbsetup-dbupgrade-xml-files</id>
+            <phase>process-classes</phase>
+            <configuration>
+              <tasks>
+                <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
+                <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-combine">
+                  <property name="settings.localRepository" value="${settings.localRepository}" />
+                  <property name="ojdbc14.version" value="${ojdbc14.version}" />
+                  <property name="task.classpath.property" refid="maven.test.classpath" />
+                  <property name="rhq.ds.type-mapping" value="${rhq.test.ds.type-mapping}" />
+                  <property name="rhq.ds.connection-url" value="${rhq.test.ds.connection-url}" />
+                  <property name="rhq.ds.user-name" value="${rhq.test.ds.user-name}" />
+                  <property name="rhq.ds.password" value="${rhq.test.ds.password}" />
+                  <property name="project.version" value="${project.version}" />
+                  <property name="db.schema.version" value="${db.schema.version}" />
+                </ant>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemProperties>
+            <property>
+              <name>DatabaseTest.nofail</name>
+              <value>${DatabaseTest.nofail}</value>
+            </property>
+            <property>
+              <name>AntDatabaseTest.test-resources</name>
+              <value>${basedir}/src/test/resources</value>
+            </property>
+          </systemProperties>
+          <!-- The below is required for tests to run against Oracle. -->
+          <additionalClasspathElements>
+            <additionalClasspathElement>${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar</additionalClasspathElement>
+          </additionalClasspathElements>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+
+   <profiles>
+
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/lib</rhq.deploymentDir>
+         </properties>
+
+         <build>
+           <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <tasks>
+                            <mkdir dir="${rhq.deploymentDir}"/>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                            <echo>*** Updating ${deployment.file}...</echo>
+                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                            <echo>*** Deleting ${deployment.file}...</echo>
+                            <delete file="${deployment.file}"/>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                   </executions>
+               </plugin>
+
+           </plugins>
+         </build>
+      </profile>
+
+   </profiles>
+
+</project>

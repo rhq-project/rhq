@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="Apache"
+        displayName="Apache HTTP Server"
+        package="org.rhq.plugins.apache"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="Apache HTTP Server" discovery="ApacheServerDiscoveryComponent" class="ApacheServerComponent"
+           supportsManualAdd="true"
+           description="an Apache HTTP Server instance">
+
+      <!-- Plugin config props are values that the plugin components need to connect and interact with the managed
+           resource. -->
+      <plugin-configuration>
+         <!-- Defaults:
+               type: string
+               required: true
+               readOnly: true
+               activationPolicy: immediate
+         -->
+         <c:simple-property name="serverRoot"
+                            description="the absolute path of the Apache server root directory"/>
+         <c:simple-property name="executablePath" required="false"
+                            description="the path to the Apache executable - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default value is 'bin/httpd' on UNIX or 'bin\Apache.exe' on Windows"/>
+         <c:simple-property name="serverBuilt" required="false" readOnly="true"
+                            description="the path to the Apache executable - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default value is 'bin/httpd' on UNIX or 'bin\Apache.exe' on Windows"/>
+         <c:simple-property name="controlScriptPath" required="false"
+                            description="the path to the Apache control script - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'bin/apachectl' on UNIX or the Apache executable on Windows"/>         
+         <c:simple-property name="url" displayName="URL" required="false"
+                            description="the http or https URL that will be used to check availablity for this Apache server; if not set, availablity will be determined based on whether plugin can connect to the Apache server's SNMP agent"/>
+         <c:simple-property name="snmpAgentHost" displayName="SNMP Agent Host" default="127.0.0.1"
+                            description="the host name or IP address of the Apache SNMP agent (typically '127.0.0.1')"/>
+         <c:simple-property name="snmpAgentPort" displayName="SNMP Agent Port" type="integer" default="1610"
+                            description="the TCP port of the Apache SNMP agent (typically '1610')"/>
+         <c:simple-property name="snmpAgentCommunity" displayName="SNMP Agent Community" default="public"
+                            description="the SNMP community of the Apache SNMP agent (typically 'public')"/>
+      </plugin-configuration>
+
+      <!-- all httpd processes that are not child processes of another httpd process -->
+      <process-scan name="HttpdOnUnix"     query="process|basename|match=httpd,process|basename|nomatch|parent=httpd"/>
+      <!-- all apache2 processes that are not child processes of another apache2 process -->
+      <process-scan name="Apache2OnUnix"   query="process|basename|match=apache2,process|basename|nomatch|parent=apache2"/>
+      <!-- all Apache.exe processes that are child processes of another Apache.exe process -->
+      <process-scan name="ApacheOnWindows" query="process|basename|match=(?i)Apache.exe,process|basename|match|parent=(?i)Apache.exe"/>
+      <!-- all httpd.exe processes that are child processes of another httpd.exe process -->
+      <process-scan name="HttpdOnWindows"  query="process|basename|match=(?i)httpd.exe,process|basename|match|parent=(?i)httpd.exe"/>
+
+      <operation name="start"
+                 description="Starts this Apache server, or returns an error if it is already running.
+                              The control script used is specified in the Connection Properties.">
+         <results>
+            <c:simple-property name="exitCode" type="integer" description="the control script's exit code (0 indicates success, any other value indicates failure)"/>
+            <c:simple-property name="output" type="longString" description="the control script's output (stdout and stderr interleaved)"/>
+         </results>
+      </operation>
+
+      <operation name="stop"
+                 description="Stops this Apache server, or returns an error if it is not running.
+                              The control script used is specified in the Connection Properties.">
+         <results>
+            <c:simple-property name="exitCode" type="integer" description="the control script's exit code (0 indicates success, any other value indicates failure)"/>
+            <c:simple-property name="output" type="longString" description="the control script's output (stdout and stderr interleaved)"/>
+         </results>
+      </operation>
+
+      <operation name="restart"
+                 description="Restarts the Apache server by sending its process a SIGHUP. If the server is not running,
+                              it is started. This command automatically checks the server's configuration files via
+                              configtest before initiating the restart to make sure Apache doesn't die. The control script
+                              used is specified in the Connection Properties. Only supported on UNIX platforms.">
+         <results>
+            <c:simple-property name="exitCode" type="integer" description="the control script's exit code (0 indicates success, any other value indicates failure)"/>
+            <c:simple-property name="output" type="longString" description="the control script's output (stdout and stderr interleaved)"/>
+         </results>
+      </operation>
+
+      <operation name="start_ssl" displayName="Start with SSL Support"
+                 description="Starts this Apache server with support for SSL.
+                              The control script used is specified in the Connection Properties. Only supported on Apache 1.3.">
+         <results>
+            <c:simple-property name="exitCode" type="integer" description="the control script's exit code (0 indicates success, any other value indicates failure)"/>
+            <c:simple-property name="output" type="longString" description="the control script's output (stdout and stderr interleaved)"/>
+         </results>
+      </operation>
+
+      <operation name="graceful_restart" displayName="Restart Gracefully"
+                 description="Gracefully restarts the Apache server by sending it a SIGUSR1. If the daemon is not running, it
+                              is started.  This differs from a normal  restart in  that  currently  open  connections  are  not
+                              aborted.  A side effect is that  old  log  files will not be closed immediately.  This means that
+                              if used in a log rotation script, a  substantial delay  may  be  necessary to ensure that the old
+                              log files are  closed  before  processing  them. This command automatically checks the
+                              configuration files via configtest before initiating  the restart to make sure Apache doesn't die.
+                              The control script used is specified in the Connection Properties.">
+         <results>
+            <c:simple-property name="exitCode" type="integer" description="the control script's exit code (0 indicates success, any other value indicates failure)"/>
+            <c:simple-property name="output" type="longString" description="the control script's output (stdout and stderr interleaved)"/>
+         </results>
+      </operation>
+
+      <operation name="config_test" displayName="Check Configuration File Syntax"
+                 description="Run a configuration file syntax test. It  parses the  configuration files and either reports
+                              Syntax Ok or detailed information about the particular syntax error. The control script
+                              used is specified in the Connection Properties. Only supported on UNIX platforms.">
+         <results>
+            <c:simple-property name="exitCode" type="integer" description="the control script's exit code (0 indicates success, any other value indicates failure)"/>
+            <c:simple-property name="output" type="longString" description="the control script's output (stdout and stderr interleaved)"/>
+         </results>
+      </operation>
+
+      <!-- traits determined via "httpd -V" -->
+
+      <metric displayName="Server Built" property="serverBuilt"
+              description="the date and time this Apache server's binary was compiled"
+              dataType="trait" defaultOn="true" displayType="summary"/>
+
+      <!-- traits determined va SNMP (format for property attribute is "MIB_column_name") -->
+
+      <metric displayName="Start Time" property="wwwServiceStartTime"
+              description="the date and time this Apache server was last started"
+              dataType="trait" defaultOn="true" displayType="summary"/>
+
+      <service name="Apache Virtual Host" discovery="ApacheVirtualHostServiceDiscoveryComponent" class="ApacheVirtualHostServiceComponent">
+
+         <plugin-configuration>
+            <c:simple-property name="url" displayName="URL"
+                               description="the http or https URL that will be used to check availablity for this virtual host"/>            
+            <c:simple-property name="snmpWwwServiceIndex" displayName="SNMP WWW Service Index" type="integer" readOnly="true"
+                               description="the row index for this virtual host in the MIB table of WWW services (i.e. virtual hosts)"/>
+            <c:group name="ResponseTime">
+               <c:simple-property name="responseTimeLogFile" required="false"
+                                  description="the full path to the log file containing response-time stats for this virtual host"/>
+               <c:simple-property name="responseTimeUrlExcludes" required="false"
+                                  description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
+               <c:simple-property name="responseTimeUrlTransforms" required="false"
+                                  description="a space-delimited list of Perl-style substitution expressions that should be applied to all URLs for which response-time stats are collected (e.g. |^/dept/finance/.*|/dept/finance/*|)"/>
+            </c:group>
+         </plugin-configuration>
+
+         <!-- server info traits - determined via SNMP
+              (format for property attribute is "MIB_column_name") -->
+
+         <metric displayName="Host" property="wwwServiceName"
+                 description="the host name or IP address of this virtual host"
+                 dataType="trait" defaultOn="true" displayType="summary"/>
+
+         <metric displayName="Port" property="wwwServiceProtocol"
+                 description="the TCP port of this virtual host"
+                 dataType="trait" defaultOn="true" displayType="summary"/>
+
+         <metric displayName="Administrator" property="wwwServiceContact"
+                 description="the administrator of this virtual host"
+                 dataType="trait" defaultOn="true" displayType="summary"/>
+
+         <!-- summary metrics for requests - determined via SNMP
+              (format for property attribute is "MIB_column_name") -->
+
+         <metric displayName="Total Number of Requests" property="wwwSummaryInRequests"
+                 defaultOn="true" defaultInterval="300000" displayType="summary"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Total Number of Bytes Received" property="wwwSummaryInLowBytes"
+                 defaultOn="true" defaultInterval="300000" displayType="summary"
+                 units="bytes" measurementType="trendsup"/>
+
+         <!-- summary metrics for responses  - determined via SNMP
+              (format for property attribute is "MIB_column_name") -->
+
+         <metric displayName="Total Number of Responses" property="wwwSummaryOutResponses"
+                 defaultOn="true" defaultInterval="300000" displayType="summary"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Total Number of Bytes Sent" property="wwwSummaryOutLowBytes"
+                 defaultOn="true" defaultInterval="300000" displayType="summary"
+                 units="bytes" measurementType="trendsup"/>
+
+         <!-- per-request-method metrics - determined via SNMP
+              (format for property attribute is "MIB_column_name.HTTP_request_method") -->
+
+         <metric displayName="Number of GET Requests" property="wwwRequestInRequests.GET"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of HEAD Requests" property="wwwRequestInRequests.HEAD"
+                 defaultOn="false" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of POST Requests" property="wwwRequestInRequests.POST"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of PUT Requests" property="wwwRequestInRequests.PUT"
+                 defaultOn="false" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Received for GET Requests" property="wwwRequestInBytes.GET"
+                 defaultOn="true" defaultInterval="300000"
+                 units="bytes" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Received for HEAD Requests" property="wwwRequestInBytes.HEAD"
+                 defaultOn="false" defaultInterval="300000"
+                 units="bytes" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Received for POST Requests" property="wwwRequestInBytes.POST"
+                 defaultOn="true" defaultInterval="300000"
+                 units="bytes" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Received for PUT Requests" property="wwwRequestInBytes.PUT"
+                 defaultOn="false" defaultInterval="300000"
+                 units="bytes" measurementType="trendsup"/>
+
+         <!-- per-response-status-code metrics - determined via SNMP
+             (format for property attribute is "MIB_column_name.HTTP_response_status_code") -->
+
+         <metric displayName="Number of 200 Responses" property="wwwResponseOutResponses.200"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of 301 Responses" property="wwwResponseOutResponses.301"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of 302 Responses" property="wwwResponseOutResponses.302"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of 401 Responses" property="wwwResponseOutResponses.401"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of 403 Responses" property="wwwResponseOutResponses.403"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of 404 Responses" property="wwwResponseOutResponses.404"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of 500 Responses" property="wwwResponseOutResponses.500"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Sent for 200 Responses" property="wwwResponseOutBytes.200"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Sent for 301 Responses" property="wwwResponseOutBytes.301"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Sent for 302 Responses" property="wwwResponseOutBytes.302"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Sent for 401 Responses" property="wwwResponseOutBytes.401"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Sent for 403 Responses" property="wwwResponseOutBytes.403"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Sent for 404 Responses" property="wwwResponseOutBytes.404"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Sent for 500 Responses" property="wwwResponseOutBytes.500"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <!-- response-time metric - determined by parsing the RT logfile that's specified in the plugin config -->
+
+         <metric property="ResponseTime" displayName="HTTP Response Time"
+                 dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
+                 description="the minimum, maximum, and average response times for HTTP requests serviced by this virtual host"/>
+         
+      </service>
+
+   </server>
+
+</plugin>

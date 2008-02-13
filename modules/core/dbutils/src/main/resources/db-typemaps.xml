@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 
+This file defines the database type mappings. Each typemap defines
+all the database specific types that map to a generic type.
+
+The "java" type corresponds to JDBC SQL types (see java.sql.Types).
+
+You can define types across all versions of a vendor-specific
+database by using the vendor name in the db= attribute. If you
+want to define a type specific to a particular version of
+a vendor database, use the database type name in the db=
+attribute (see DatabaseType.getName/getVendor javadocs).
+-->
+
+<typemaps>
+   <typemap type="INTEGER">
+      <map db="java"        type="INTEGER" />
+      <map db="postgresql"  type="INTEGER" />
+      <map db="oracle"      type="INTEGER" />
+   </typemap>
+   <typemap type="LONG">
+      <map db="java"        type="BIGINT" />
+      <map db="postgresql"  type="BIGINT" />
+      <map db="oracle"      type="NUMBER(19,0)" />
+   </typemap>
+   <typemap type="BIGDEC">
+      <map db="java"        type="DOUBLE" />
+      <map db="postgresql"  type="NUMERIC(24,5)" />
+      <map db="oracle"      type="NUMBER(24,5)" />
+   </typemap>
+   <typemap type="VARCHAR2">
+      <map db="java"        type="VARCHAR" />
+      <map db="postgresql"  type="CHARACTER VARYING" />
+      <map db="oracle"      type="VARCHAR2" />
+   </typemap>
+   <typemap type="LONGVARCHAR">
+      <map db="java"        type="LONGVARCHAR" />
+      <map db="postgresql"  type="TEXT" />
+      <map db="oracle"      type="CLOB" />
+   </typemap>
+   <typemap type="CHAR">
+      <map db="java"        type="CHAR" />
+      <map db="postgresql"  type="CHARACTER" />
+      <map db="oracle"      type="CHAR" />
+   </typemap>
+   <typemap type="DOUBLE">
+      <map db="java"        type="FLOAT" />
+      <map db="postgresql"  type="FLOAT8" />
+      <map db="oracle"      type="FLOAT(15)" />
+   </typemap>
+   <typemap type="BOOLEAN">
+      <map db="java"        type="BOOLEAN" />
+      <map db="postgresql"  type="BOOLEAN" />
+      <map db="oracle"      type="NUMBER(1)" />
+   </typemap>
+   <typemap type="BYTES">
+      <map db="java"        type="BLOB" />
+      <map db="postgresql"  type="BYTEA" />
+      <map db="oracle"      type="BLOB" />
+   </typemap>
+   <typemap type="BLOB">
+      <map db="java"        type="BLOB" />
+      <map db="postgresql"  type="BYTEA" />
+      <map db="oracle"      type="BLOB" />
+   </typemap>
+   <typemap type="CLOB">
+      <map db="java"        type="CLOB" />
+      <map db="postgresql"  type="VARCHAR" />
+      <map db="oracle"      type="CLOB" />
+   </typemap>
+   <typemap type="SMALLINT">
+      <map db="java"        type="SMALLINT" />
+      <map db="postgresql"  type="SMALLINT" />
+      <map db="oracle"      type="NUMBER(3)" />
+   </typemap>
+   <typemap type="TIMESTAMP">
+      <map db="java"        type="DATE" />
+      <map db="postgresql"  type="TIMESTAMP WITHOUT TIME ZONE" />
+      <map db="oracle"      type="TIMESTAMP" />
+   </typemap>
+</typemaps>

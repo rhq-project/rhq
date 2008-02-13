@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+   
+   <navigation-rule>
+
+      <from-view-id>/rhq/definition/group/view.xhtml</from-view-id>
+      
+      <navigation-case>
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/definition/group/view.xhtml?groupDefinitionId=#{param.groupDefinitionId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <!-- === EditGroupGeneralPropertiesUIBean ======================= -->
+
+      <navigation-case>
+         <from-action>#{EditGroupDefinitionGeneralPropertiesUIBean.begin}</from-action>
+         <to-view-id>/rhq/definition/group/edit-general.xhtml?groupDefinitionId=#{param.groupDefinitionId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>failure</from-outcome>
+         <to-view-id>/rhq/definition/group/view.xhtml?groupDefinitionId=#{param.groupDefinitionId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/definition/group/view.xhtml?groupDefinitionId=#{param.groupDefinitionId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/definition/group/list.xhtml</from-view-id>
+      
+      <navigation-case>
+         <from-outcome>createNew</from-outcome>
+         <to-view-id>/rhq/definition/group/new.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/definition/group/list.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>failure</from-outcome>
+         <to-view-id>/rhq/definition/group/list.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/definition/group/edit-general.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>failure</from-outcome>
+         <to-view-id>/rhq/definition/group/edit-general.xhtml?groupDefinitionId=#{param.groupDefinitionId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/definition/group/view.xhtml?groupDefinitionId=#{param.groupDefinitionId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/definition/group/new.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>cancel</from-outcome>
+         <to-view-id>/rhq/definition/group/list.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/definition/group/view.xhtml?groupDefinitionId=#{NewGroupDefinitionGeneralPropertiesUIBean.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case>
+         <from-outcome>failure</from-outcome>
+         <to-view-id>/rhq/definition/group/new.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+</faces-config>
+      

@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!-- -*- Mode: XML; indent-tabs-mode: nil; -*- -->
+<!DOCTYPE tiles-definitions PUBLIC
+     "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN"
+     "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+
+
+<tiles-definitions>
+
+  <definition name=".page.title.resource.group"
+              extends=".page.title">
+    <put name="titleBgStyle" value="PageTitleGroupBg"/>
+    <put name="titleImg" value="title_group.gif"/>
+  </definition><!--  
+    
+  <definition name=".page.title.resource.group.full"
+              extends=".page.title.resource.group">
+    <put name="linkUrl"
+         value="/resource/group/control/GroupLinks.jsp"/>
+  </definition>
+  
+  --><definition name=".page.title.resource.group.new"
+              extends=".page.title">
+    <put name="titleKey" value="resource.group.inventory.NewGroupPageTitle"/>
+    <put name="titleBgStyle" value="PageTitleGroupBg"/>
+    <put name="titleImg" value="title_group.gif"/>    			  
+  </definition>
+
+  <definition name=".page.title.resource.group.full"
+              extends=".page.title.resource.group">
+    <put name="linkUrl"
+         value="/resource/group/inventory/GroupLinks.jsp"/>
+  </definition>
+
+  <!-- group tabs -->
+  <!-- Tabs on the Monitor Indicators page -->
+  <definition name=".tabs.resource.group"
+              extends=".tabs.resource"> 
+   <putList name="tabList">
+       <item value="Monitor" mode="currentHealth"
+            link="/resource/group/monitor/Visibility.do"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Inventory" link="/rhq/group/inventory/view.xhtml"
+            height="21" width="102"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Control" link="/rhq/group/operation/groupOperationScheduleNew.xhtml"
+				height="21" width="102"
+				classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+   </putList>
+  </definition>
+
+    <definition name=".tabs.resource.group.nocontrol"
+        extends=".tabs.resource.nocontrol">
+	   <putList name="tabList">
+		   <item value="Monitor" mode="currentHealth" link="/resource/group/monitor/Visibility.do"
+				height="21" width="102"
+				classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+		   <item value="Inventory" link="/rhq/group/inventory/view.xhtml"
+				height="21" width="102"
+				classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      </putList>
+    </definition>
+
+    <!-- mixed groups have only inventory -->
+  <definition name=".tabs.resource.group.inventoryonly"
+        extends=".tabs.resource.inventoryonly">
+	   <putList name="tabList">
+		  <item value="Inventory" link="/rhq/group/inventory/view.xhtml"
+				height="21" width="102"
+				classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+	   </putList>     
+    </definition>
+	
+  <definition name=".tabs.resource.group.inventory"
+              extends=".tabs.resource.group">                            
+	   <put name="selectedIndex"  value="1" />
+	   <putList name="subTabList"/>
+  </definition>
+
+  <definition name=".tabs.resource.group.inventory.nocontrol"
+              extends=".tabs.resource.group.nocontrol">                            
+	   <put name="selectedIndex"  value="1" />
+	   <putList name="subTabList"/>
+  </definition>
+
+  <definition name=".tabs.resource.group.inventory.inventoryonly"
+              extends=".tabs.resource.group.inventoryonly">                            
+	   <put name="selectedIndex"  value="0" />
+	   <putList name="subTabList"/>
+  </definition>
+  
+  <!-- monitor minitabs -->
+  <definition name=".resource.group.monitor.visibility.minitabs"
+              extends=".resource.common.monitor.visibility.minitabs">
+    <put name="tabUrl" value="/Resource.do"/>
+  </definition>
+
+  <!-- monitor portals -->
+  <definition name=".resource.group.monitor.visibility.CurrentHealth"
+              controllerUrl="/resource/group/monitor/visibility/GroupCurrentHealth.do"
+              path="/resource/group/monitor/visibility/MainLayout.jsp"/>
+
+  <definition name=".resource.group.monitor.visibility.GroupMetrics"
+              controllerUrl="/resource/group/monitor/visibility/GroupMetricsFormPrepare.do"
+              path="/resource/group/monitor/visibility/MainLayout.jsp"/>
+  
+  <definition name=".resource.group.monitor.visibility.Performance"
+              controllerUrl="/resource/group/monitor/visibility/GroupPerformanceFormPrepare.do"
+              path="/resource/group/monitor/visibility/MainLayout.jsp"/>
+
+  <!-- resource group portlets -->
+
+   <definition name=".resource.group.inventory.generalProperties"
+               path="/resource/group/inventory/GeneralPropertiesForm.jsp">
+      <put name="showLocation" value="true"/>
+   </definition>
+
+   <definition name=".resource.group.inventory.generalProperties.view"
+               path="/resource/group/inventory/ViewGeneralProperties.jsp"/>
+   
+  <definition name=".resource.group.inventory.NewGroup"
+              controllerUrl="/resource/group/inventory/NewGroupFormPrepare.do"
+              path="/resource/group/inventory/NewGroup.jsp">
+  </definition>
+
+  <definition name=".resource.group.inventory.ViewGroup"
+              controllerUrl="/resource/group/inventory/ViewGroup.do"
+              path="/resource/group/inventory/ViewGroup.jsp">
+  </definition>
+  
+  <definition name=".resource.group.inventory.EditGeneralProperties"
+              controllerUrl="/resource/group/inventory/EditGeneralFormPrepare.do"
+              path="/resource/group/inventory/EditGeneralProperties.jsp"/>
+  
+  <definition name=".resource.group.inventory.AddResources"
+              controllerUrl="/resource/group/inventory/AddGroupResourcesFormPrepare.do"
+              path="/resource/group/inventory/AddResources.jsp"/>
+			  
+  <definition name=".resource.group.inventory.changeOwner"
+              controllerUrl="/resource/common/inventory/ChangeResourceOwnerFormPrepare.do"
+              path="/resource/group/inventory/ChangeOwner.jsp"/>
+
+   
+  <!-- resource group control portlets -->
+  
+  <definition name=".resource.group.control.list.detail"
+              extends=".resource.common.control.list.detail">
+              <put name="section" value="group"/>
+  </definition>
+
+  <!-- tile for group control current status detail page -->
+  <definition name=".resource.group.control.list.current.detail"
+              path="/resource/group/control/ListDetail.jsp"
+              controllerUrl="/resource/group/control/ListDetail.do">
+             <put name="returnUrl" value="/resource/group/Control.do?mode=view"/>
+             <put name="returnKey" value="resource.group.ControlDetail.Link.ReturnStatus"/>
+             <put name="noButtons" value="true"/>
+  </definition>
+              
+  <definition name=".resource.group.control.list.history"
+              extends=".resource.common.control.list.history">
+              <put name="section" value="group"/>
+  </definition>
+
+  <definition name=".resource.group.control.list.history.detail"
+              path="/resource/group/control/ListDetail.jsp" 
+              controllerUrl="/resource/group/control/ListDetail.do">
+             <put name="returnUrl" value="/resource/group/Control.do?mode=history"/>
+             <put name="returnKey" value="resource.group.ControlDetail.Link.ReturnHistory"/>
+  </definition>
+  
+  <definition name=".resource.group.control.list.scheduled"
+              extends=".resource.common.control.list.scheduled">
+              <put name="section" value="group"/>
+  </definition>
+    
+  <definition name=".resource.group.control.edit" 
+              path="/resource/common/control/Edit.jsp" 
+              controllerUrl="/resource/group/control/EditFormPrepare.do">
+              <put name="section" value="group"/>
+  </definition>
+
+  <definition name=".resource.group.control.new"
+              controllerUrl="/resource/group/control/NewFormPrepare.do"
+              path="/resource/common/control/New.jsp">
+              <put name="section" value="group"/>
+  </definition>
+                  
+  <definition name=".resource.group.control.quickControl" 
+              extends=".resource.common.control.quickControl" >    
+              <put name="action" value="/resource/group/control/QuickControl.do"/>
+  </definition>
+  
+  <definition name=".resource.group.control.editControlActionBehavior"
+              path="/resource/group/control/EditControlActionBehavior.jsp"/>
+  
+  <definition name=".tabs.resource.group.control.current"
+              extends=".tabs.resource.group">                            
+   <put name="selectedIndex"  value="2" />
+   <put name="subSectionName" value="Control"/>
+   <put name="subSelectedIndex" value="0"/>
+   <putList name="subTabList">
+      <item value="Current" link="/resource/group/Control.do"            
+            height="25" width="104" mode="view"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="History" link="/resource/group/Control.do"
+            height="25" width="104" mode="history"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+   </putList>
+  </definition>
+  
+  <!-- history and current use different sized subtab buttons -->
+  <definition name=".tabs.resource.group.control.list.history"
+              extends=".tabs.resource.group.control.current">
+   <put name="subSelectedIndex" value="1"/>
+    <putList name="subTabList">
+      <item value="Current" link="/resource/group/Control.do"            
+            height="25" width="104" mode="view"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="History" link="/resource/group/Control.do"
+            height="25" width="104" mode="history"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+   </putList>
+  </definition>
+  
+  <!-- monitor subtabs --> 
+  
+  <definition name=".tabs.resource.group.monitor"
+              extends=".tabs.resource.group">
+    <put name="selectedIndex"  value="0" />
+    <put name="subSectionName" value="Monitor"/>
+    <putList name="subTabList">
+      <item value="Visibility" mode="currentHealth"
+            link="/resource/group/monitor/Visibility.do?category=COMPATIBLE"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Configure" mode="configure"
+            link="/resource/group/monitor/Config.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab" />
+    </putList>
+  </definition>
+
+  <definition name=".tabs.resource.group.monitor.nocontrol"
+              extends=".tabs.resource.group.nocontrol">
+    <put name="selectedIndex"  value="0" />
+    <put name="subSectionName" value="Monitor"/>
+    <putList name="subTabList">
+      <item value="Visibility" mode="currentHealth"
+            link="/resource/group/monitor/Visibility.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Configure" mode="configure"
+            link="/resource/group/monitor/Config.do"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+    </putList>
+  </definition>
+
+  <definition name=".tabs.resource.group.monitor.visibility"
+              extends=".tabs.resource.group.monitor">
+    <put name="subSelectedIndex" value="0"/>              
+  </definition>
+
+  <definition name=".tabs.resource.group.monitor.configVisibility"
+              extends=".tabs.resource.group.monitor">
+    <put name="subSelectedIndex" value="1"/>  
+  </definition>
+
+  <definition name=".tabs.resource.group.monitor.alerts"
+              extends=".tabs.resource.group.monitor">
+    <put name="subSelectedIndex" value="2"/>
+  </definition>
+
+  <definition name=".tabs.resource.group.monitor.configAlerts"
+              extends=".tabs.resource.group.monitor">
+    <put name="subSelectedIndex" value="3"/>
+  </definition>
+
+  <!-- no control -->
+  <definition name=".tabs.resource.group.monitor.visibility.nocontrol"
+              extends=".tabs.resource.group.monitor.nocontrol">
+    <put name="subSelectedIndex" value="0"/>
+  </definition>
+
+  <definition name=".tabs.resource.group.monitor.configVisibility.nocontrol"
+              extends=".tabs.resource.group.monitor.nocontrol">
+    <put name="subSelectedIndex" value="1"/>
+  </definition>
+
+  <definition name=".tabs.resource.group.monitor.alerts.nocontrol"
+              extends=".tabs.resource.group.monitor.nocontrol">
+    <put name="subSelectedIndex" value="2"/>
+  </definition>
+
+  <definition name=".tabs.resource.group.monitor.configAlerts.nocontrol"
+              extends=".tabs.resource.group.monitor.nocontrol">
+    <put name="subSelectedIndex" value="3"/>
+  </definition>
+
+  <!-- monitor config portals -->
+  <definition name=".resource.group.monitor.config.ConfigMetrics"
+              controllerUrl="/resource/group/monitor/config/ConfigMetricsFormPrepare.do"
+              path="/resource/common/monitor/config/ConfigMetrics.jsp">
+     <put name="section" value="group"/>
+  </definition>
+              
+  <definition name=".resource.group.monitor.config.EditAvailability"
+              controllerUrl="/resource/group/monitor/config/EditAvailabilityFormPrepare.do"
+              path="/resource/group/monitor/config/EditGroupAvailability.jsp"/>
+      
+  <definition name=".resource.group.monitor.config.Availability"
+              path="/resource/group/monitor/config/GroupAvailability.jsp"/>
+              
+  <definition name=".resource.group.monitor.visibility.listchildresources"
+              path="/resource/group/monitor/visibility/ListChildResources.jsp"
+              controllerUrl="/resource/group/monitor/visibility/ListChildrenResources.do"/>
+</tiles-definitions>

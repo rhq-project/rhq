@@ -1,0 +1,97 @@
+h1. #displayResourceTypeName( ${resourceType} )
+
+
+{toc:minlevel=2|maxlevel=2}
+
+h2. Overview
+
+| *Description:* | $!{resourceType.description} |
+| *Singleton:* | #if ( ${resourceType.singleton} ) yes #else no #end |
+| *Plugin:* | ${resourceType.plugin} |
+
+h2. Parent Resource Types
+
+#if ( !${resourceType.parentResourceTypes.isEmpty()} )
+#foreach ( ${parentResourceType} in ${resourceType.parentResourceTypes} )
+* [#displayResourceTypeName( ${parentResourceType} )]
+#end
+#elseif ( ${resourceType.category.name} != "PLATFORM" )
+[Managed Platforms]
+#else
+_none_
+#end
+
+
+h2. Child Resource Types
+
+#if ( !${resourceType.childResourceTypes.isEmpty()} )
+#foreach( ${childResourceType} in ${resourceType.childResourceTypes} )
+* [#displayResourceTypeName( ${childResourceType} )]
+#end
+#elseif ( ${resourceType.category.name} == "PLATFORM" )
+[Managed Servers]
+[Managed Platform Services]
+#else
+_none_
+#end
+
+
+#if ( ${resourceType.category.name} == "SERVER" )
+h2. Autodiscovery Process Scans
+
+#if ( ${resourceType.processScans.isEmpty()} )
+_none_
+#else
+|| Name || Query ||
+#foreach( ${processScan} in ${resourceType.processScans} )
+| ${processScan.name} | {noformat:nopanel=true}${processScan.query}{noformat} |
+#end
+#end
+
+#end
+
+
+h2. Connection Properties
+
+#displayConfig( ${resourceType.pluginConfigurationDefinition} )
+
+
+h2. Metrics
+
+#if ( ${resourceType.metricDefinitions.isEmpty()} )
+_none_
+#else
+|| Name || Description ||
+#foreach( ${metricDefinition} in ${resourceType.metricDefinitions} )
+| ${metricDefinition.displayName} | {noformat:nopanel=true}$!{metricDefinition.description}{noformat} |
+#end
+#end
+
+
+h2. Configuration Properties
+
+#displayConfig( ${resourceType.resourceConfigurationDefinition} )
+
+
+h2. Operations
+
+#if ( ${resourceType.operationDefinitions.isEmpty()} )
+_none_
+#else
+|| Name || Description ||
+#foreach( ${operationDefinition} in ${resourceType.operationDefinitions} )
+| ${operationDefinition.displayName} | {noformat:nopanel=true}$!{operationDefinition.description}{noformat} |
+#end
+#end
+
+
+h2. Package Types
+
+#if ( ${resourceType.packageTypes.isEmpty()} )
+_none_
+#else
+|| Name || Category || Description ||
+#foreach( ${packageType} in ${resourceType.packageTypes} )
+| ${packageType.displayName} | ${packageType.category} | {noformat:nopanel=true}$!{artifactType.description}{noformat} |
+#end
+#end

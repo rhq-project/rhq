@@ -1,0 +1,134 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.core.clientapi.agent.metadata;
+
+import java.util.List;
+import java.util.Set;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
+import org.rhq.core.domain.resource.ResourceSubCategory;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.StringUtils;
+
+/**
+ * Parser responsible for translating the subcategories section of the rhq-plugin.xml descriptor into domain objects.
+ * Also has methods which deal with translating the subcategory="blah" attribute on Platform/Server/Service ojbects into
+ * an actual ResourceSubCategory object
+ *
+ * @author Charles Crouch
+ */
+public class SubCategoriesMetadataParser {
+    /**
+     * Parses the contents of the SubCategoryDescriptor and populates an instance of the domain model representation,
+     * ResourceSubCategory
+     *
+     * @param  descriptor non-null SubCategoryDescriptor.
+     *
+     * @return domain model object populated with the descriptor's values.
+     */
+    public static ResourceSubCategory getSubCategory(SubCategoryDescriptor descriptor, ResourceType resourceType) {
+        ResourceSubCategory subCat = new ResourceSubCategory();
+
+        subCat.setName(descriptor.getName());
+        if (descriptor.getDisplayName() != null) {
+            subCat.setDisplayName(descriptor.getDisplayName());
+        } else {
+            subCat.setDisplayName(StringUtils.deCamelCase(descriptor.getName()));
+        }
+
+        subCat.setDescription(descriptor.getDescription());
+        //resourceType.addSubCategory(subCat);
+
+        List<SubCategoryDescriptor> childDescriptors = descriptor.getSubcategory();
+        if (childDescriptors != null) {
+            for (SubCategoryDescriptor childDescriptor : childDescriptors) {
+                subCat.addChildSubCategory(getSubCategory(childDescriptor, resourceType));
+            }
+        }
+
+        return subCat;
+    }
+
+    /**
+     * Given a resourceType this method looks on the parent resourcetypes/grandparent resourcetypes... of the specified
+     * resourceType to see if a ResourceSubCategory with the specified subCategoryName has been defined on one of them.
+     * If the ResourceSubCategory cannot be found, null will be returned
+     *
+     * @param  resourceType
+     * @param  subCategoryName
+     *
+     * @return
+     */
+    @Nullable
+    public static ResourceSubCategory findSubCategoryOnResourceTypeAncestor(@NotNull
+    ResourceType resourceType, @Nullable
+    String subCategoryName) {
+        ResourceSubCategory selectedSubCategory = null;
+
+        if (subCategoryName != null) {
+            Set<ResourceType> parents = resourceType.getParentResourceTypes();
+            for (ResourceType parent : parents) {
+                List<ResourceSubCategory> ownedSubCategories = parent.getSubCategories();
+                if (ownedSubCategories != null) {
+                    for (ResourceSubCategory ownedSubCategory : ownedSubCategories) {
+                        // need to check whether this subCat or any of its children match
+                        selectedSubCategory = findSubCategoryOnSubCategoryDescendant(ownedSubCategory, subCategoryName);
+                        if (selectedSubCategory != null) {
+                            // found the category in the parent or one of its children
+                            return selectedSubCategory;
+                        }
+                    }
+                }
+
+                selectedSubCategory = findSubCategoryOnResourceTypeAncestor(parent, subCategoryName);
+                if (selectedSubCategory != null) {
+                    break; // found the category in one of the ancestors of the parent
+                }
+            }
+        }
+
+        return selectedSubCategory;
+    }
+
+    /**
+     * Checks whether a ResourceSubCategory with name subCategoryName can be found in the tree of ResourceSubCategories
+     * who's top level parent is specified by parentSubCategory.
+     */
+    @Nullable
+    private static ResourceSubCategory findSubCategoryOnSubCategoryDescendant(@NotNull
+    ResourceSubCategory parentSubCategory, @NotNull
+    String subCategoryName) {
+        ResourceSubCategory selectedSubCategory = null;
+        if (parentSubCategory.getName().equals(subCategoryName)) {
+            selectedSubCategory = parentSubCategory;
+            return selectedSubCategory;
+        } else // parent doesn't match, check children
+        {
+            for (ResourceSubCategory childSubCategory : parentSubCategory.getChildSubCategories()) {
+                selectedSubCategory = findSubCategoryOnSubCategoryDescendant(childSubCategory, subCategoryName);
+                if (selectedSubCategory != null) {
+                    break; // found the category in one of the children of the parent
+                }
+            }
+        }
+
+        return selectedSubCategory;
+    }
+}

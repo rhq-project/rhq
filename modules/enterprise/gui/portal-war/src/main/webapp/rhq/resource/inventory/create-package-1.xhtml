@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main.xhtml">
+
+<ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Create New Child of Type #{CreateNewChildResourceUIBean.resourceType.name}"/>
+<ui:param name="selectedTabName" value="Inventory"/>
+<ui:define name="content">
+
+   <h:form id="uploadForm" enctype="multipart/form-data">
+
+      <input type="hidden" name="id" value="${ResourceUIBean.id}"/>
+      <input type="hidden" name="type" value="#{ResourceUIBean.resourceType.id}"/>
+      <h:inputHidden value="#{CreateNewPackageChildResourceUIBean.packageType}" converter="PackageTypeConverter"/>
+      
+      <h:outputText value="In order to create a new #{ResourceUIBean.resourceType.name}, a new
+      package must be deployed as the basis for the resource. The following information is required to
+      create the package."/>
+      
+      <table>
+         <tr>
+            <td>Resource Name:</td>
+            <td><h:inputText value="#{CreateNewPackageChildResourceUIBean.resourceName}"/></td>
+         </tr>
+         <tr>
+            <td>Package Name:</td>
+            <td><h:inputText value="#{CreateNewPackageChildResourceUIBean.packageName}"/></td>
+         </tr>
+         <tr>
+            <td>Package Version:</td>
+            <td><h:inputText value="#{CreateNewPackageChildResourceUIBean.packageVersion}"/></td>
+         </tr>
+         <tr>
+            <td>Package Architecture:</td>
+            <td><h:inputText value="#{CreateNewPackageChildResourceUIBean.architecture}"/></td>
+         </tr>
+         <tr>
+            <td>File:</td>
+            <td><onc:upload id="uploadFile"/></td>
+         </tr>
+      </table>
+
+      <onc:config configurationDefinition="#{CreateNewPackageChildResourceUIBean.configurationDefinition}"
+                  configuration="#{CreateNewPackageChildResourceUIBean.configuration}"
+                  nullConfigurationDefinitionMessage="#{CreateNewPackageChildResourceUIBean.nullConfigurationDefinitionMessage}"
+                  nullConfigurationMessage="#{CreateNewPackageChildResourceUIBean.nullConfigurationMessage}"/>
+      
+      <h:commandButton value="Submit" action="#{CreateNewPackageChildResourceUIBean.createResource}"/>
+
+   </h:form>
+
+</ui:define>
+
+</ui:composition>
+
+</html>

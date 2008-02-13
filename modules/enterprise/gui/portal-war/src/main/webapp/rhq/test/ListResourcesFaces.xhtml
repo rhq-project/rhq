@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component">
+
+	<head>
+	</head>
+   
+	<body>
+
+	<f:view>
+
+		<h:form> <!-- datascroll tag wants a form to be present -->
+		
+			<rich:panel>
+			
+				<f:facet name="header">
+					Server Resources (in single element pages)
+				</f:facet>
+			
+				<rich:dataTable binding="#{ListResourcesPageBean.dataTable}" id="resourcesByCategory" 
+								rows="5" value="#{ListResourcesPageBean.dataModel}" var="resource">
+		
+					<f:facet name="header">
+						<rich:columnGroup>
+							<h:column>
+								<onc:sortableColumnHeader sort="res.id">
+									<h:outputText styleClass="headerText" value="ID" />
+								</onc:sortableColumnHeader>
+							</h:column>
+							<h:column>
+								<onc:sortableColumnHeader sort="res.name">
+									<h:outputText styleClass="headerText" value="Name" />
+								</onc:sortableColumnHeader>
+							</h:column>
+							<h:column>
+								<onc:sortableColumnHeader sort="res.description">
+									<h:outputText styleClass="headerText" value="Description" />
+								</onc:sortableColumnHeader>
+							</h:column>
+						</rich:columnGroup>
+					</f:facet>
+		
+		            <rich:column>
+		               <h:outputText value="#{resource.id}"/>
+		            </rich:column>
+		            <rich:column>
+		               <h:outputText value="#{resource.name}"/>
+		            </rich:column>
+		            <rich:column>
+		               <h:outputText value="#{resource.description}"/>
+		            </rich:column>
+		               
+				</rich:dataTable>
+				
+				<rich:datascroller for="resourcesByCategory" maxPages="5"
+									binding="#{ListResourcesPageBean.datascroller}" />
+		
+			</rich:panel>
+		
+		</h:form>
+
+	</f:view>
+
+	</body>
+
+</html>

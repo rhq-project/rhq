@@ -1,0 +1,50 @@
+body { 
+    font-family: Verdana, Helvetica, Arial, sans-serif; 
+    color: white; background: #781F1C; 
+}
+h1 { 
+    font-family: Verdana, Helvetica, Arial, sans-serif; 
+    color: white;
+}
+p {
+    font-family: Verdana, Helvetica, Arial, sans-serif;
+    color: white;
+}
+a:link {
+	 font-family: Verdana, Helvetica, Arial, sans-serif; 
+	 color: #FFCCCC;
+	 text-decoration: underline;
+}
+a:visited {
+	 font-family: Verdana, Helvetica, Arial, sans-serif; 
+	 color: #FFCCCC; 
+	 text-decoration: underline;
+}
+a:hover {
+    font-family: Verdana, Helvetica, Arial, sans-serif; 
+    color: white;
+    text-decoration: underline;
+}
+a:active {
+	 font-family: Verdana, Helvetica, Arial, sans-serif; 
+	 color: white; 
+	 text-decoration: underline;
+}
+.oddRow { 
+    font-family: Verdana, Helvetica, Arial, sans-serif; 
+    color: white; background: #781F1C; 
+}
+.evenRow { 
+    font-family: Verdana, Helvetica, Arial, sans-serif; 
+    color: white; background: #591616; 
+}
+.javascriptWarning { 
+    font-size: 120%;
+    font-family: Verdana, Helvetica, Arial, sans-serif; 
+    color: red; background: yellow;
+}
+.small {
+    font-size: 60%;
+    font-family: Verdana, Helvetica, Arial, sans-serif;
+    color: white;
+}

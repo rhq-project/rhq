@@ -1,0 +1,305 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="Auto Discovery Queue"/>
+
+   <ui:define name="breadcrumbs">
+      <h:outputLink value="/Dashboard.do">
+         ${msg["dash.home.PageTitle"]}
+      </h:outputLink>
+      &gt;
+      <h:outputLink value="/rhq/discovery/queue.xhtml">
+         ${msg["autodiscovery.breadcrumb"]}
+      </h:outputLink>
+   </ui:define>
+
+   <ui:define name="body">
+
+      <script language="JavaScript" type="text/javascript">
+      //<![CDATA[
+         // checks all the boxes
+         function checkAll( checkbox )
+         {
+            var all_elements = document.getElementsByTagName('input');
+            for (var i=0; i < all_elements.length; i++)
+            {
+               // click all the platforms which will in turn click all the servers
+               if (all_elements[i].name.indexOf('checkbox_platform') > -1)
+                  if ( all_elements[i].checked != checkbox.checked )
+                     all_elements[i].click();
+            }  
+         }
+
+         // if the platform checkbox is (un)checked, all of its servers are automatically (un)checked
+         function checkPlatform( checkbox, platformId )
+         {
+            var found_platform = false;
+            var all_elements = document.getElementsByTagName('input');
+            for (var i=0; i < all_elements.length; i++)
+            {
+               if (found_platform)
+               {
+                  if (all_elements[i].name.indexOf('checkbox_server') > -1)
+                  {
+                     if (all_elements[i].checked != checkbox.checked )
+                        all_elements[i].click();
+                  }
+                  else if (all_elements[i].name.indexOf('checkbox_platform') > -1)
+                     break; // we have moved on to the next platform, we can stop now
+               }
+               else
+               {
+                  if (all_elements[i] == checkbox)
+                     found_platform = true; // we found the platform - servers after this one belong to it
+               }
+            }
+         }
+
+         function checkServer( checkbox, platformId, serverId )
+         {
+            var platform_servers_ele = document.getElementById('platform_servers_' + platformId);
+            var platform_servers_arr = platform_servers_ele.value.split(",");
+
+            // remove the original "-1" value if it exists and any duplicate serverId item
+            var new_array = new Array();
+            for (var x=0; x < platform_servers_arr.length; x++)
+            {
+               if (platform_servers_arr[x] != serverId && platform_servers_arr[x] != "-1")
+                  new_array.push(platform_servers_arr[x]);
+            }
+
+            // if user selected a server, the platform will be selected automatically
+            if (checkbox.checked)
+            {
+               var platform;
+               var all_elements = document.getElementsByTagName('input');
+               for (var i=0; i < all_elements.length; i++)
+               {
+                  if (all_elements[i].name.indexOf('checkbox_platform') > -1)
+                     platform = all_elements[i];
+                  else if (all_elements[i] == checkbox)
+                  {
+                     if ( !platform.checked )
+                        platform.checked = true;
+                     break;
+                  }
+               }
+               
+               // add it to the set of selected servers
+               new_array.push(serverId);
+            }
+
+            // make the hidden element the comma-separated list of current servers selected
+            platform_servers_ele.value = new_array.join(",");
+         }
+      //]]>
+      </script>
+
+      <br/>
+      <h:messages showSummary="true"
+                  showDetail="true"
+                  infoClass="InfoBlock"
+                  warnClass="WarnBlock"
+                  errorClass="ErrorBlock"
+                  fatalClass="FatalBlock"
+                  globalOnly="true"
+                  layout="table"
+                  width="100%"/>
+
+      <h:form id="queueForm">
+
+         <rich:panel>
+            <f:facet name="header">Auto Discovery Queue</f:facet>
+
+            <h:panelGrid columns="2" width="1%" cellspacing="3">
+               <h:outputText value="Show:" />
+               <h:selectOneListbox id="newOrIgnored"
+                                   size="1"
+                                   onchange="document.getElementById('queueForm:hiddenQueueButton').click();"
+                                   value="#{AutoDiscoverySessionUIBean.showNewIgnore}"> 
+                  <f:selectItem itemValue="NEW" itemLabel="New Only" />
+                  <f:selectItem itemValue="IGNORED" itemLabel="Ignored Only" />
+                  <f:selectItem itemValue="BOTH" itemLabel="Both New and Ignored" />
+               </h:selectOneListbox>
+            </h:panelGrid>
+
+            <h:panelGrid columns="1" width="90%" style="min-width: 800px;">
+
+               <ui:param name="autoDiscoveryQueueDataModel" value="#{AutoDiscoveryQueueUIBean.dataModel}"/>
+               <rich:dataTable binding="#{AutoDiscoveryQueueUIBean.dataTable}"
+                               id="autoDiscoveryQueueDataTable" 
+                               rows="#{PageControl.AutoDiscoveryPlatformList.pageSize}"
+                               value="#{autoDiscoveryQueueDataModel}"
+                               var="platformQueueItem"
+                               width="100%"
+                               columnsWidth="5%, 20%, 20%, 20%, 20%, 15%"
+                               headerClass="tableRowHeader"
+                               footerClass="on-pager-footer">
+
+                  <f:facet name="PageControlView">
+                     <onc:paginationControl id="AutoDiscoveryPlatformList" />
+                  </f:facet>
+
+                  <rich:column>
+                     <f:facet name="header">
+                        <h:selectBooleanCheckbox onchange="checkAll(this)" />
+                     </f:facet>
+
+                     <h:commandLink action="#{AutoDiscoverySessionUIBean.collapse}"
+                                    rendered="#{AutoDiscoverySessionUIBean.expandedMap[platformQueueItem.id]}">
+                        <f:param name="platformId" value="#{platformQueueItem.id}"/>
+                        <h:graphicImage value="/images/minus.gif" />
+                     </h:commandLink>
+                     <h:commandLink action="#{AutoDiscoverySessionUIBean.expand}"
+                                    rendered="#{!AutoDiscoverySessionUIBean.expandedMap[platformQueueItem.id]}">
+                        <f:param name="platformId" value="#{platformQueueItem.id}"/>
+                        <h:graphicImage value="/images/plus.gif" />
+                     </h:commandLink>
+                     <h:selectBooleanCheckbox id="checkbox_platform"
+                                              value="#{AutoDiscoverySessionUIBean.selectedResources[platformQueueItem.id]}"
+                                              onchange="checkPlatform(this, #{platformQueueItem.id})" />
+                     <input type="hidden"
+                            name="platform_servers_#{platformQueueItem.id}"
+                            id="platform_servers_#{platformQueueItem.id}"
+                            value="-1" />
+                  </rich:column>
+
+                  <rich:column rendered="#{param.debug}">
+                     <f:facet name="header">
+                        <onc:sortableColumnHeader sort="res.id">
+                           <h:outputText styleClass="headerText" value="ID" />
+                        </onc:sortableColumnHeader>
+                     </f:facet>
+                     <h:outputText value="#{platformQueueItem.id}"/>
+                  </rich:column>
+
+                  <rich:column>
+                     <f:facet name="header">
+                        <onc:sortableColumnHeader sort="res.name">
+                           <h:outputText styleClass="headerText" value="Resource Name" />
+                        </onc:sortableColumnHeader>                     
+                     </f:facet>            
+                     <h:outputText value="#{platformQueueItem.name}" />
+                  </rich:column>
+
+                  <rich:column>
+                     <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Key" />
+                     </f:facet>
+                     <h:outputText value="#{platformQueueItem.resourceKey}" />
+                  </rich:column>
+
+                  <rich:column>
+                     <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Description" />
+                     </f:facet>
+                     <h:outputText value="#{platformQueueItem.description}"/>
+                  </rich:column>
+
+                  <rich:column>
+                     <f:facet name="header">
+                        <onc:sortableColumnHeader sort="res.ctime">
+                           <h:outputText styleClass="headerText" value="Date Detected" />
+                        </onc:sortableColumnHeader>                     
+                     </f:facet>
+                     <h:outputText value="#{platformQueueItem.ctime}">
+                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                     </h:outputText>
+                  </rich:column>
+
+                  <rich:column>
+                     <f:facet name="header">
+                        <onc:sortableColumnHeader sort="res.inventoryStatus">
+                           <h:outputText styleClass="headerText" value="Status" />
+                        </onc:sortableColumnHeader>
+                     </f:facet>
+                     <h:outputText value="#{platformQueueItem.inventoryStatus}"/>
+                  </rich:column>
+
+                  <rich:subTable value="#{AutoDiscoveryQueueUIBean.platformsAndServers[platformQueueItem]}"
+                                 var="serverQueueItem"
+                                 rowClasses="ListRow"
+                                 width="100%"
+                                 columnsWidth="1%"
+                                 rendered="#{AutoDiscoverySessionUIBean.expandedMap[platformQueueItem.id]}">
+                     <rich:column>
+                        <h:selectBooleanCheckbox id="checkbox_server"
+                                                 onchange="checkServer(this, #{platformQueueItem.id}, #{serverQueueItem.id})"
+                                                 value=""
+                                                 style="float:right;" />
+                     </rich:column>
+
+                     <rich:column rendered="#{param.debug}">
+                        <h:outputText value="#{serverQueueItem.id}"/>
+                     </rich:column>
+
+                     <rich:column>
+                        <h:outputText value="#{serverQueueItem.name}" />
+                     </rich:column>
+
+                     <rich:column>
+                        <h:outputText value="#{serverQueueItem.resourceKey}" />
+                     </rich:column>
+
+                     <rich:column>
+                        <h:outputText value="#{serverQueueItem.description}" />
+                     </rich:column>
+
+                     <rich:column>
+                        <h:outputText value="#{serverQueueItem.ctime}">
+                           <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                        </h:outputText>
+                     </rich:column>
+
+                     <rich:column>
+                        <h:outputText value="#{serverQueueItem.inventoryStatus}" />
+                     </rich:column>
+                  </rich:subTable>
+
+                  <f:facet name="footer">
+                     <rich:columnGroup>
+                        <rich:column colspan="6">
+                           <h:commandButton action="#{AutoDiscoveryQueueUIBean.importResources}"
+                                            value="IMPORT" styleClass="on-pager-button buttonsmall"/>
+                           <h:commandButton action="#{AutoDiscoveryQueueUIBean.unignoreResources}"
+                                            value="UN-IGNORE" styleClass="on-pager-button buttonsmall"/>
+                           <h:commandButton action="#{AutoDiscoveryQueueUIBean.ignoreResources}"
+                                            value="IGNORE" styleClass="on-pager-button buttonsmall"/>
+
+                           <ui:param name="paginationDataTableName" value="autoDiscoveryQueueDataTable"/>
+                           <ui:param name="paginationDataModel" value="#{autoDiscoveryQueueDataModel}"/>
+                           <ui:param name="paginationPageControl" value="#{PageControl.AutoDiscoveryPlatformList}"/>
+                           <ui:include src="../resource/include/pagination.xhtml"/>
+                        </rich:column>
+                     </rich:columnGroup>
+                  </f:facet>
+
+               </rich:dataTable>
+
+            </h:panelGrid>
+
+            <!-- use a hidden button trick (which sends the same action a column click would) so request params aren't lost -->
+            <h:commandButton id="hiddenQueueButton" style="visibility: hidden;" action="#{AutoDiscoveryQueueUIBean.rebuildTable}" />
+
+         </rich:panel>
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

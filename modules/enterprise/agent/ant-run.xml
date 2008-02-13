@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+=======================================================================
+ANT Script that provides ways to package the agent.
+=======================================================================
+-->
+
+<project name="rhqagent" default="package-dist" basedir=".">
+
+   <!-- in case these weren't passed in (i.e. not invoked via maven), assume some defaults -->
+   <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
+   <property name="project.version" value="2.0.0-SNAPSHOT"/>
+   <property name="sigar.version" value="1.5.0.1"/>
+   <property name="getopt.version" value="1.0.13"/>
+   <property name="jaxb-api.version" value="2.1"/>
+   <property name="jaxb-impl.version" value="2.1"/>
+
+   <!--
+   =======================================================================
+   Contains some path elements needed to run
+   =======================================================================
+   -->
+   <path id="run.classpath">
+
+      <!-- include our own thirdparty libraries -->
+      <fileset dir="${settings.localRepository}" id="run.classpath.fileset">
+         <include name="i18nlog/i18nlog/1.0.9/i18nlog-1.0.9.jar" />
+         <include name="log4j/log4j/1.2.14/log4j-1.2.14.jar" />
+         <include name="commons-logging/commons-logging/1.1.0.jboss/commons-logging-1.1.0.jboss.jar" />
+         <include name="gnu-getopt/getopt/${getopt.version}/getopt-${getopt.version}.jar" />
+         <include name="commons-httpclient/commons-httpclient/2.0.2/commons-httpclient-2.0.2.jar" />
+         <include name="dom4j/dom4j/1.6/dom4j-1.6.jar" />
+         <include name="oswego-concurrent/concurrent/${concurrent.version}/concurrent-${concurrent.version}.jar" />
+         <include name="jboss/jboss-common/${jboss-common.version}/jboss-common-${jboss-common.version}.jar" />
+         <include name="jboss/jboss-jmx/${jboss.version}/jboss-jmx-${jboss.version}.jar" />
+         <include name="jboss/jboss-remoting/${jboss-remoting.version}/jboss-remoting-${jboss-remoting.version}.jar" />
+         <include name="jboss/jboss-serialization/${jboss-serialization.version}/jboss-serialization-${jboss-serialization.version}.jar" />
+         <include name="org/rhq/rhq-enterprise-comm/${project.version}/rhq-enterprise-comm-${project.version}.jar" />
+         <include name="org/rhq/rhq-enterprise-agent/${project.version}/rhq-enterprise-agent-${project.version}.jar" />
+         <include name="org/rhq/rhq-core-util/${project.version}/rhq-core-util-${project.version}.jar" />
+         <include name="org/rhq/rhq-core-comm-api/${project.version}/rhq-core-comm-api-${project.version}.jar" />
+         <include name="org/rhq/rhq-core-native-system/${project.version}/rhq-core-native-system-${project.version}.jar" />
+         <include name="org/rhq/rhq-core-domain/${project.version}/rhq-core-domain-${project.version}.jar" />
+         <include name="org/rhq/rhq-core-plugin-api/${project.version}/rhq-core-plugin-api-${project.version}.jar" />
+         <include name="org/rhq/rhq-core-plugin-container/${project.version}/rhq-core-plugin-container-${project.version}.jar" />
+         <include name="org/rhq/rhq-core-client-api/${project.version}/rhq-core-client-api-${project.version}.jar" />
+
+         <include name="javax/xml/bind/jaxb-api/${jaxb-api.version}/jaxb-api-${jaxb-api.version}.jar"/>
+         <include name="javax/activation/activation/1.1/activation-1.1.jar"/>
+         <include name="javax/xml/bind/jsr173_api/1.0/jsr173_api-1.0.jar"/>
+         <include name="com/sun/xml/bind/jaxb-impl/${jaxb-impl.version}/jaxb-impl-${jaxb-impl.version}.jar"/>
+      </fileset>
+
+   </path>
+
+   <fileset dir="${settings.localRepository}" id="native.fileset">
+      <include name="org/hyperic/sigar-dist/${sigar.version}/sigar-dist-${sigar.version}.zip" />
+   </fileset>
+
+   <fileset dir="${settings.localRepository}" id="plugins.fileset">
+      <!-- let's not include any plugins in the distro - let the agent download them from the server -->
+      <exclude name="**/*"/>
+
+      <!--
+      <include name="org/rhq/rhq-agent-plugin/${project.version}/rhq-agent-plugin-${project.version}.jar"/>
+      <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar"/>
+      <include name="org/rhq/rhq-jmx-plugin/${project.version}/rhq-jmx-plugin-${project.version}.jar"/>
+      <include name="org/rhq/rhq-apache-plugin/${project.version}/rhq-apache-plugin-${project.version}.jar"/>
+      <include name="org/rhq/rhq-jbossas-plugin/${project.version}/rhq-jbossas-plugin-${project.version}.jar"/>
+      <include name="org/rhq/rhq-tomcat-plugin/${project.version}/rhq-tomcat-plugin-${project.version}.jar"/>
+      <include name="org/rhq/rhq-hibernate-plugin/${project.version}/rhq-hibernate-plugin-${project.version}.jar"/>
+      -->
+   </fileset>
+
+   <!--
+   =======================================================================
+   -->
+   <target name="package-dist">
+      <echo>Running ant package-dist</echo>
+      <property name="agent.distro.dir" location="${basedir}/target/dist"/>
+      <!-- Don't want to delete everytime <delete dir="${agent.distro.dir}" />-->
+
+      <copy todir="${agent.distro.dir}/lib"
+            flatten="true">
+         <fileset refid="run.classpath.fileset" />
+      </copy>
+
+      <unzip dest="${agent.distro.dir}/lib" overwrite="false">
+         <fileset refid="native.fileset" />
+         <patternset>
+            <include name="**/lib/sigar.jar"/>
+            <include name="**/lib/bcel*.jar"/>
+            <include name="**/lib/*.so"/>
+            <include name="**/lib/*.sl"/>
+            <include name="**/lib/*.dll"/>
+            <include name="**/lib/*.dylib"/>
+         </patternset>
+      </unzip>
+      <move todir="${agent.distro.dir}/lib" flatten="true" overwrite="false">
+         <fileset dir="${agent.distro.dir}/lib">
+            <include name="**/lib/*" />
+         </fileset>
+      </move>
+      <move file="${agent.distro.dir}/lib/sigar.jar" tofile="${agent.distro.dir}/lib/sigar-${sigar.version}.jar"
+            overwrite="false"/>
+      <delete dir="${agent.distro.dir}/lib/hyperic-sigar-${sigar.version}" />
+      <chmod dir="${agent.distro.dir}/lib" perm="ug+rx" includes="*.so,*.sl,*.dylib"/>
+
+      <copy todir="${agent.distro.dir}/bin">
+         <fileset dir="${basedir}/src/etc"
+                  includes="*.bat,*.sh"/>
+      </copy>
+      <chmod dir="${agent.distro.dir}/bin" perm="ug+rx" includes="*.sh"/>
+
+      <copy todir="${agent.distro.dir}/bin/wrapper">
+         <fileset dir="${basedir}/src/etc/java-service-wrapper"
+                  includes="rhq-agent-wrapper.conf"/>
+      </copy>
+
+      <copy todir="${agent.distro.dir}/bin/wrapper/windows-x86_32">
+         <fileset dir="${basedir}/src/etc/java-service-wrapper/windows-x86_32" />
+      </copy>
+
+      <copy todir="${agent.distro.dir}/plugins" flatten="true" overwrite="true">
+         <fileset refid="plugins.fileset"/>
+      </copy>
+
+      <!--
+      Put the configuration files here to override those in the jar.
+      The agent jar has these configs in it, too, just in case the
+      agent is run in an environment that does not have a conf
+      directory or these files in its conf dir (as is the case for
+      some tests).  The agent will have this conf directory as the
+      first thing in its classpath so the conf files can override
+      those in the agent jar.
+      -->
+      <copy todir="${agent.distro.dir}/conf">
+         <fileset dir="${basedir}/src/main/resources">
+            <include name="agent-configuration.xml"/>
+            <include name="log4j.xml"/>
+         </fileset>
+      </copy>
+
+      <property name="trunk.dir" location="${basedir}/../../.."/>
+      <property name="product_connectors.dir" location="${trunk.dir}/etc/product_connectors"/>
+
+      <!-- these cause the build to take a long time, uncomment to build the connectors into the agent dist -->
+      <!--
+      <copy todir="${agent.distro.dir}/product_connectors">
+         <fileset dir="${basedir}/src/etc/product_connectors"/>
+         <fileset dir="${product_connectors.dir}"/>
+         <fileset dir="${settings.localRepository}/org/rhq/rhq-rtfilter/${project.version}">
+            <include name="rhq-rtfilter-${project.version}.jar"/>
+         </fileset>
+      </copy>
+      -->
+
+      <delete file="${basedir}/target/rhq-agent-${project.version}.zip" />
+      <zip destfile="${basedir}/target/rhq-agent-${project.version}.zip" >
+         <fileset dir="${agent.distro.dir}">
+            <exclude name="product_connectors"/>
+            <exclude name="product_connectors/**/*"/>
+         </fileset>
+      </zip>
+
+      <!-- these cause the build to take a long time, uncomment to build the connectors into the agent dist -->
+      <!--
+      <delete file="${basedir}/target/rhq-agent-${project.version}-with-connectors.zip" />
+      <zip destfile="${basedir}/target/rhq-agent-${project.version}-with-connectors.zip" >
+         <fileset dir="${agent.distro.dir}" />
+      </zip>
+      -->
+   </target>
+
+   <!--
+   =======================================================================
+   -->
+   <target name="package-standalone">
+
+      <delete dir="${java.io.tmpdir}/rhqagent" />
+
+      <unjar dest="${java.io.tmpdir}/rhqagent">
+         <fileset refid="run.classpath.fileset" />
+         <patternset>
+             <exclude name="META-INF/**" />
+         </patternset>
+      </unjar>
+
+      <mkdir dir="target/standalone" />
+      <delete file="target/standalone/rhq-agent.jar" />
+      <jar jarfile="target/standalone/rhq-agent.jar">
+         <fileset dir="${java.io.tmpdir}/rhqagent" />
+         <manifest>
+            <attribute name="Main-Class" value="org.rhq.enterprise.agent.AgentMain"/>
+         </manifest>
+      </jar>
+
+   </target>
+
+</project>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!-- -*- Mode: XML; indent-tabs-mode: nil; -*- -->
+<!DOCTYPE tiles-definitions PUBLIC
+        "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN"
+        "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+
+
+<tiles-definitions>
+
+    <definition name=".page.title.resource.software"
+                extends=".page.title">
+        <put name="titleBgStyle" value="PageTitleGroupBg"/>
+    </definition>
+
+
+    <!-- software tabs -->
+
+    <definition name=".tabs.resource.software"
+                extends=".tabs.resource">
+        <putList name="tabList">
+            <item value="Software" mode="list"
+                  link="/Software.do"
+                  height="21" width="102"
+                  classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+        </putList>
+
+    </definition>
+
+    <!-- Software minitabs -->
+    <definition name=".resource.software.inventory.minitabs"
+                extends=".resource.common.monitor.visibility.minitabs">
+        <put name="tabUrl" value="/Software.do"/>
+    </definition>
+
+
+    <!-- monitor portals -->
+    <definition name=".resource.software.inventory.List"
+                controllerUrl="/resource/software/inventory/list/List.do"
+                path="/resource/software/list/MainLayout.jsp"/>
+
+
+
+    <definition name=".resource.software.inventory.Search"
+                controllerUrl="/resource/software/inventory/list/SearchPrepare.do"
+                path="/resource/software/list/Search.jsp"/>
+
+
+
+
+
+    <!-- monitor subtabs -->
+
+    <definition name=".tabs.resource.software.inventory"
+                extends=".tabs.resource.software">
+        <put name="selectedIndex" value="0"/>
+        <put name="subSelectedIndex" value="0"/>
+        <put name="subSectionName" value="Software"/>
+        <putList name="subTabList">
+            <item value="Software" mode="viewSoftware"
+                  link="/resource/software/inventory/List.do?mode=viewSoftware"
+                  height="25" width="104"
+                  classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+            <item value="Feeds" mode="viewFeeds"
+                  link="/resource/software/inventory/List.do?mode=viewFeeds"
+                  height="25" width="104"
+                  classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+        </putList>
+    </definition>
+
+    <definition name=".tabs.resource.software.config"
+                extends=".tabs.resource.software.inventory">
+        <put name="subSelectedIndex" value="1"/>
+    </definition>
+
+
+
+    <!-- Details page -->
+    <definition name=".resource.software.inventory.details"
+            controllerUrl="/resource/software/inventory/list/Details.do"
+            path="/resource/software/list/Details.jsp"/>
+
+
+
+    <!-- monitor config portals -->
+
+    <definition name=".resource.software.config.Feeds"
+        controllerUrl="/resource/software/config/Feeds.do"
+        path="/resource/software/config/FeedList.jsp"/>
+
+
+
+    <definition name=".resource.software.config.FeedEdit"
+        controllerUrl="/resource/software/config/EditFeedPrepare.do"
+        path="/resource/software/config/FeedEdit.jsp"/>
+
+
+
+    <!--  <definition name=".tabs.resource.autogroup.monitor.configVisibility"
+    extends=".tabs.resource.autogroup.monitor">
+<put name="subSelectedIndex" value="1"/>
+</definition>
+
+<definition name=".tabs.resource.autogroup.monitor.configVisibility.nocontrol"
+    extends=".tabs.resource.autogroup.monitor">
+<put name="subSelectedIndex" value="1"/>
+</definition>
+
+<definition name=".resource.autogroup.monitor.config.ConfigMetrics"
+    controllerUrl="/resource/autogroup/monitor/config/ConfigMetricsFormPrepare.do"
+    path="/resource/autogroup/monitor/config/AutoGroupConfigMetrics.jsp">
+<put name="section" value="autogroup"/>
+</definition>
+
+<definition name=".resource.autogroup.monitor.config.EditAvailability"
+    controllerUrl="/resource/group/monitor/config/EditAvailabilityFormPrepare.do"
+    path="/resource/group/monitor/config/EditGroupAvailability.jsp"/>
+
+<definition name=".resource.autogroup.monitor.config.Availability"
+    path="/resource/group/monitor/config/GroupAvailability.jsp"/>
+
+<definition name=".resource.autogroup.monitor.visibility.listchildresources"
+    extends=".resource.group.monitor.visibility.listchildresources"
+    controllerUrl="/resource/autogroup/monitor/visibility/ListChildrenResources.do"/>-->
+</tiles-definitions>

@@ -1,0 +1,3216 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE struts-config PUBLIC
+      "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN"
+      "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+      
+<struts-config>
+   <data-sources/>
+   <form-beans>
+      <form-bean name="LoginForm"
+                 type="org.rhq.enterprise.gui.authentication.LogonForm"/>
+
+      <!--simple toolbar form-->
+      <form-bean name="ToolbarForm"
+                 type="org.rhq.enterprise.gui.legacy.action.BaseValidatorForm"/>
+
+      <!-- license admin form -->
+      <form-bean name="LicenseAdminForm"
+                 type="org.rhq.enterprise.gui.action.license.LicenseForm"/>
+
+
+      <!-- ADMIN ROLE FORMS -->
+      <form-bean name="RemoveRolesForm"
+                 type="org.rhq.enterprise.gui.admin.role.RemoveForm"/>
+      <form-bean name="RoleForm"
+                 type="org.rhq.enterprise.gui.admin.role.RoleForm"/>
+      <form-bean name="AddRoleUsersForm"
+                 type="org.rhq.enterprise.gui.admin.role.AddUsersForm"/>
+      <form-bean name="RemoveRoleUsersForm"
+                 type="org.rhq.enterprise.gui.admin.role.RemoveUsersForm"/>
+      <form-bean name="AddRoleResourceGroupsForm"
+                 type="org.rhq.enterprise.gui.admin.role.AddResourceGroupsForm"/>
+      <form-bean name="RemoveRoleResourceGroupsForm"
+                 type="org.rhq.enterprise.gui.admin.role.RemoveResourceGroupsForm"/>
+      <!-- / -->
+
+      <!-- ADMIN USER FORMS-->
+      <form-bean name="EditUserForm"
+                 type="org.rhq.enterprise.gui.admin.user.EditForm"/>
+
+      <form-bean name="NewUserForm"
+                 type="org.rhq.enterprise.gui.admin.user.NewForm"/>
+
+      <form-bean name="RegisterUserForm"
+                 type="org.rhq.enterprise.gui.admin.user.NewForm"/>
+
+      <form-bean name="EditPasswordForm"
+                 type="org.rhq.enterprise.gui.admin.user.EditPasswordForm"/>
+
+      <form-bean name="RemoveUserForm"
+                 type="org.rhq.enterprise.gui.admin.user.RemoveForm"/>
+      <form-bean name="AddUserRolesForm"
+                 type="org.rhq.enterprise.gui.admin.user.AddUserRolesForm"/>
+
+      <form-bean name="SystemConfigForm"
+                 type="org.rhq.enterprise.gui.admin.config.SystemConfigForm"/>
+      <!-- / -->
+
+      <form-bean name="RemoveUserRolesForm"
+                 type="org.rhq.enterprise.gui.admin.user.RemoveRolesForm"/>
+
+      <!-- DASHBOARD FORMS -->
+      <form-bean name="LayoutForm"
+                 type="org.rhq.enterprise.gui.legacy.portlet.admin.PortalPropertiesForm"/>
+      <form-bean name="AddPortletForm"
+                 type="org.rhq.enterprise.gui.legacy.portlet.addcontent.PropertiesForm"/>
+      <!-- this is used when rendering the AI portlet and processing the queue -->
+      <form-bean name="AIQueueForm"
+                 type="org.rhq.enterprise.gui.legacy.portlet.autodiscovery.AIQueueForm"/>
+      <!-- form bean used to render the recently approved list -->
+      <form-bean name="RAListForm"
+                 type="org.rhq.enterprise.gui.legacy.portlet.recentlyApproved.RAListForm"/>
+      <!-- this is for configuring the AI portlet -->
+      <form-bean name="AutoDiscoveryForm"
+                 type="org.rhq.enterprise.gui.legacy.portlet.autodiscovery.PropertiesForm"/>
+      <form-bean name="ControlActionsForm"
+                 type="org.rhq.enterprise.gui.legacy.portlet.controlactions.PropertiesForm"/>
+      <form-bean name="SummaryCountsForm"
+                 type="org.rhq.enterprise.gui.legacy.portlet.summaryCounts.PropertiesForm"/>
+      <form-bean name="SavedQueriesForm"
+                 type="org.rhq.enterprise.gui.legacy.portlet.savedqueries.PropertiesForm"/>
+      <form-bean name="ResourceHealthForm"
+                 type="org.rhq.enterprise.gui.legacy.portlet.resourcehealth.PropertiesForm"/>
+      <form-bean name="RecentlyApprovedForm"
+                 type="org.rhq.enterprise.gui.legacy.portlet.recentlyApproved.PropertiesForm"/>
+      <form-bean name="CriticalAlertsForm"
+                 type="org.rhq.enterprise.gui.legacy.portlet.criticalalerts.PropertiesForm"/>
+      <form-bean name="DashboardAddResourceHealthForm"
+                 type="org.rhq.enterprise.gui.legacy.portlet.addresource.AddResourcesForm"/>
+      <form-bean name="ProblemResourcesForm"
+                 type="org.rhq.enterprise.gui.legacy.portlet.problemresources.PropertiesForm"/>
+      <form-bean name="SoftwareSummaryForm"
+                 type="org.rhq.enterprise.gui.legacy.portlet.software.PropertiesForm"/>
+
+
+      <!-- RESOURCE COMMON FORMS -->
+      <form-bean name="ResourceForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.ResourceForm"/>
+
+      <form-bean name="RemoveResourceForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.RemoveResourceForm"/>
+      <form-bean name="RemoveResourceGroupsForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.RemoveResourceGroupsForm"/>
+
+      <form-bean name="AddResourceGroupsForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.AddResourceGroupsForm"/>
+      <form-bean name="AddApplicationServicesForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.application.inventory.AddApplicationServicesForm"/>
+
+      <form-bean name="CommonConfigForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.ResourceConfigForm"/>
+
+      <form-bean name="IndicatorViewsForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.IndicatorViewsForm"/>
+
+      <form-bean name="ProblemMetricsDisplayForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ProblemMetricsDisplayForm"/>
+
+      <form-bean name="MetricsFilterForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsFilterForm"/>
+
+      <!-- RESOURCE HUB FORMS -->
+      <form-bean name="ResourceHubForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.hub.ResourceHubForm"/>
+      <form-bean name="GroupHubForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.hub.GroupHubForm"/>
+
+
+      <!-- / -->
+
+      <!-- RESOURCE GROUP FORMS -->
+      <form-bean name="GroupForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.group.inventory.GroupForm"/>
+      <form-bean name="AddGroupResourcesForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.group.inventory.AddGroupResourcesForm"/>
+      <form-bean name="RemoveGroupResourcesForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.group.inventory.RemoveGroupResourcesForm"/>
+
+      <!-- / -->
+
+      <!-- RESOURCE SERVER CONTROL FORMS -->
+      <form-bean name="ServerControlForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.control.ControlForm"/>
+      <form-bean name="RemoveControlForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.control.RemoveHistoryForm"/>
+      <!-- / -->
+
+      <!-- / -->
+
+      <!-- RESOURCE CONTROL FORMS -->
+      <form-bean name="QuickControlForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.control.QuickControlForm"/>
+
+      <form-bean name="RemoveControlJobsForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.control.RemoveControlJobsForm"/>
+
+      <!-- RESOURCE GROUP CONTROL FORMS -->
+      <form-bean name="GroupControlForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.group.control.GroupControlForm"/>
+
+      <!-- / -->
+      <!-- EVENT FORMS -->
+      <form-bean name="RemoveConfigForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.RemoveDefinitionForm"/>
+
+      <form-bean name="RemoveAlertsForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.RemoveForm"/>
+
+      <form-bean name="RemoveNotificationsForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.RemoveNotificationsForm"/>
+
+      <form-bean name="SnmpTrapForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.SnmpTrapForm"/>
+
+      <form-bean name="NewAlertDefinitionForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.DefinitionForm"/>
+
+      <form-bean name="EditAlertDefinitionPropertiesForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.DefinitionForm"/>
+
+      <form-bean name="EditAlertDefinitionConditionsForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.DefinitionForm"/>
+
+      <form-bean name="EditAlertDefinitionControlActionForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ControlActionForm"/>
+
+      <form-bean name="EditAlertDefinitionSyslogActionForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.SyslogActionForm"/>
+
+      <form-bean name="AddAlertUsersForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddUsersForm"/>
+
+      <form-bean name="AddAlertRolesForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddRolesForm"/>
+
+      <form-bean name="AddAlertOthersForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddOthersForm"/>
+
+      <form-bean name="EditMetricBaselineForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.EditMetricBaselineForm"/>
+
+      <!-- / -->
+
+      <!-- resource monitor forms -->
+
+      <form-bean name="MonitoringConfigForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config.MonitoringConfigForm"/>
+
+      <form-bean name="GroupMonitoringConfigForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.group.monitor.config.GroupMonitoringConfigForm"/>
+
+      <form-bean name="MetricsDisplayForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsDisplayForm"/>
+
+      <form-bean name="MetricDisplayRangeForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricDisplayRangeForm"/>
+
+      <form-bean name="MetricsControlForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsControlForm"/>
+
+      <form-bean name="ViewChartForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ViewChartForm"/>
+
+      <form-bean name="PerformanceForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.PerformanceForm"/>
+      <form-bean name="CompareMetricsForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.CompareMetricsForm"/>
+
+      <form-bean name="MetricMetadataForm"
+                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricMetadataForm"/>
+
+      <form-bean name="MapForm"
+                 type="org.rhq.enterprise.gui.action.resource.common.ActionArgumentForm"/>
+
+   </form-beans>
+
+   <!-- ================================= Global Exception Definitions -->
+   <global-exceptions>
+      <exception
+            key="exception.javax.ejb.CreateException"
+            type="javax.ejb.CreateException"
+            path="/common/GenericError.jsp"/>
+
+      <exception
+            key="exception.PermissionException"
+            type="org.rhq.enterprise.server.authz.PermissionException"
+            path="/common/NoRights.jsp"/>
+
+      <exception
+            key="exception.SessionNotFoundException"
+            type="org.rhq.enterprise.server.auth.SessionTimeoutException"
+            path="/Login.do"/>
+
+      <exception
+            key="exception.SessionNotFoundException"
+            type="org.rhq.enterprise.server.auth.SessionTimeoutException"
+            path="/Login.do"/>
+
+      <exception
+            key="exception.ParameterNotFoundException"
+            type="org.rhq.enterprise.gui.legacy.exception.ParameterNotFoundException"
+            path="/common/GenericError.jsp"/>
+
+      <exception
+            key="exception.ObjectNotFoundException"
+            type="org.rhq.enterprise.server.legacy.common.ObjectNotFoundException"
+            path="/common/GenericError.jsp"/>
+
+      <exception
+            key="exception.DuplicateObjectException"
+            type="org.rhq.enterprise.server.legacy.common.DuplicateObjectException"
+            path="/common/GenericError.jsp"/>
+
+      <exception
+            key="exception.CreateFailedException"
+            type="org.rhq.enterprise.server.legacy.common.CreateFailedException"
+            path="/common/GenericError.jsp"/>
+
+      <exception
+            key="exception.PermissionException"
+            type="org.rhq.enterprise.server.legacy.authz.shared.PermissionException"
+            path="/common/NoRights.jsp"/>
+
+      <exception
+            key="exception.SessionInvalidatedException"
+            type="org.rhq.enterprise.gui.legacy.exception.SessionInvalidatedException"
+            path="/Login.do"/>
+
+      <exception
+            key="exception.SystemException"
+            type="org.rhq.enterprise.server.legacy.common.SystemException"
+            path="/common/GenericError.jsp"/>
+
+      <exception
+            key="resource.common.error.ResourceNotFound"
+            type="org.rhq.enterprise.server.resource.ResourceNotFoundException"
+            path="/common/GenericError.jsp"/>
+
+      <exception
+            key="resource.common.error.ResourceGroupNotFound"
+            type="org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException"
+            path="/common/GenericError.jsp"/>
+
+      <exception
+            key="exception.InvalidOptionException"
+            type="net.hyperic.util.config.InvalidOptionException"
+            path="/common/GenericError.jsp"/>
+
+      <exception
+            key="net.hyperic.util.config.InvalidOptionValueException"
+            type="net.hyperic.util.config.InvalidOptionException"
+            path="/common/GenericError.jsp"/>
+      <exception
+            key="resource.application.inventory.error.RemoveServices"
+            type="org.rhq.enterprise.server.legacy.appdef.shared.ApplicationNotFoundException"
+            path="/common/GenericError.jsp"/>
+
+      <exception
+            key="resource.application.inventory.error.RemoveServices"
+            type="net.hyperic.hq.product.ConfigFetchException"
+            path="/common/GenericError.jsp"/>
+
+      <exception
+            key="resource.common.error.ConfigError"
+            type="net.hyperic.hq.product.ProductPluginException"
+            path="/common/GenericError.jsp"/>
+
+      <exception
+            key="resource.common.error.ConfigError"
+            type="net.hyperic.util.config.EncodingException"
+            path="/common/GenericError.jsp"/>
+
+      <exception
+            key="exception.Exception"
+            type="java.lang.Exception"
+            path="/common/GenericError.jsp"/>
+   </global-exceptions>
+
+   <!-- =================================== Global Forward Definitions -->
+
+   <global-forwards>
+      <forward name="invalid.session" path="/Logout.do" redirect="true"/>
+      <forward name="rss.feed" path="/common/RSSFormat.jsp"/>
+      <forward name="ajax" path="/common/AJAXResponse.jsp"/>
+   </global-forwards>
+
+   <!-- =================================== Action Mapping Definitions -->
+
+   <action-mappings type="org.rhq.enterprise.gui.legacy.action.BaseActionMapping">
+      <action path="/NoRights"
+              forward="/common/NoRights.jsp">
+         <set-property property="title" value="Users+and+Roles"/>
+      </action>
+
+      <!--authentication -->
+      <action path="/j_security_check"
+              type="org.rhq.enterprise.gui.authentication.AuthenticateUserAction"
+              name="LoginForm"
+              scope="request"
+              validate="true"
+              input="/Login.do">
+         <!-- do not redirect here or login error messages will not show up -->
+         <forward name="bad" path="/Login.do"/>
+      </action>
+
+      <action path="/Logout"
+              type="org.rhq.enterprise.gui.authentication.LogoutAction">
+         <forward name="success" path="/Start.do" redirect="true"/>
+      </action>
+
+      <action path="/Login"
+              forward="/common/Login.jsp">
+         <set-property property="title" value="Dashboard"/>
+      </action>
+      
+      <!--======================================================= -->
+      <!-- Admin -->
+      <!-- ======================================================= -->
+      <!-- The standard administrative actions available with Tiles -->
+      <!-- These would be either omitted or protected by security -->
+      <!-- in a real application deployment -->
+      <action path="/admin/tiles/reload"
+              type="org.apache.struts.tiles.actions.ReloadDefinitionsAction"/>
+
+      <action path="/admin/tiles/view"
+              type="org.apache.struts.tiles.actions.ViewDefinitionsAction"/>
+
+      <!-- role admin actions -->
+
+      <!-- top-level role admin URL -->
+      <action path="/admin/role/RoleAdmin"
+              forward=".admin.role.layout">
+      </action>
+
+      <action path="/NothingAction"
+              name="ToolbarForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.BaseAction">
+      </action>
+
+      <!-- admin portal controller -->
+      <action path="/Admin"
+              forward=".admin.layout">
+      </action>
+
+      <action path="/admin/home/AdminHomePortal"
+              input="/Admin.do"
+              type="org.rhq.enterprise.gui.admin.home.AdminHomePortalAction">
+         <set-property property="title" value="Administration+UI"/>
+      </action>
+
+      <action path="/admin/role/RoleAdminPortal"
+              parameter="mode"
+              input="/admin/role/RoleAdmin.do"
+              type="org.rhq.enterprise.gui.admin.role.RoleAdminPortalAction">
+      </action>
+
+      <action path="/admin/role/List"
+              name="RemoveRolesForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.admin.role.ListAction">
+         <set-property property="title" value="List+Roles"/>
+      </action>
+
+      <action path="/admin/role/Remove"
+              type="org.rhq.enterprise.gui.admin.role.RemoveAction"
+              name="RemoveRolesForm"
+              scope="request"
+              input="/admin/role/RoleAdmin.do?mode=list">
+         <forward name="edit" path="/admin/role/RoleAdmin.do?mode=edit" redirect="true"/>
+         <forward name="failure" path="/admin/role/RoleAdmin.do?mode=list"/>
+         <forward name="success" path="/admin/role/RoleAdmin.do?mode=list"/>
+      </action>
+
+      <action path="/admin/user/RemoveRole"
+              type="org.rhq.enterprise.gui.admin.user.RemoveRolesAction"
+              name="RemoveUserRolesForm"
+              scope="request"
+              input="/admin/user/UserAdmin.do?mode=view">
+         <forward name="failure" path="/admin/user/UserAdmin.do?mode=view"/>
+         <forward name="success" path="/admin/user/UserAdmin.do?mode=view"/>
+      </action>
+
+      <action path="/admin/role/NewFormPrepare"
+              name="RoleForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.admin.role.NewFormPrepareAction">
+         <set-property property="workflow" value="role/New"/>
+         <set-property property="title" value="New+Role"/>
+      </action>
+
+      <action path="/admin/role/New"
+              type="org.rhq.enterprise.gui.admin.role.NewAction"
+              name="RoleForm"
+              scope="request"
+              validate="true"
+              input="/admin/role/RoleAdmin.do?mode=new">
+         <set-property property="workflow" value="role/New"/>
+         <forward name="cancel" path="/admin/role/RoleAdmin.do?mode=list"
+                  redirect="true"/>
+         <forward name="reset" path="/admin/role/RoleAdmin.do?mode=new"
+                  redirect="true"/>
+         <forward name="failure" path="/admin/role/RoleAdmin.do?mode=new"/>
+         <forward name="success" path="/admin/role/RoleAdmin.do?mode=view"/>
+      </action>
+
+      <action path="/admin/role/View"
+              type="org.rhq.enterprise.gui.admin.role.ViewAction">
+         <set-property property="workflow" value="role/ViewUser"/>
+         <set-property property="title" value="View+Role"/>
+      </action>
+
+      <action path="/admin/role/EditFormPrepare"
+              type="org.rhq.enterprise.gui.admin.role.EditFormPrepareAction"
+              name="RoleForm"
+              scope="request">
+         <set-property property="title" value="Edit+Role"/>
+      </action>
+
+      <action path="/admin/role/Edit"
+              type="org.rhq.enterprise.gui.admin.role.EditAction"
+              name="RoleForm"
+              scope="request"
+              validate="true"
+              input="/admin/role/RoleAdmin.do?mode=edit">
+         <set-property property="workflow" value="role/ViewUser"/>
+         <forward name="cancel" path="/admin/role/RoleAdmin.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/admin/role/RoleAdmin.do?mode=edit"
+                  redirect="true"/>
+         <forward name="failure" path="/admin/role/RoleAdmin.do?mode=edit"/>
+         <forward name="success" path="/admin/role/RoleAdmin.do?mode=view"/>
+      </action>
+
+      <action path="/admin/role/AddUsersFormPrepare"
+              name="AddRoleUsersForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.admin.role.AddUsersFormPrepareAction">
+         <set-property property="title" value="Role+Add+Users"/>
+      </action>
+
+      <action path="/admin/role/AddUsers"
+              type="org.rhq.enterprise.gui.admin.role.AddUsersAction"
+              name="AddRoleUsersForm"
+              scope="request"
+              input="/admin/role/RoleAdmin.do?mode=addUsers">
+         <set-property property="workflow" value="role/ViewUser"/>
+         <forward name="cancel" path="/admin/role/RoleAdmin.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/admin/role/RoleAdmin.do?mode=addUsers"
+                  redirect="true"/>
+         <forward name="new" path="/admin/user/UserAdmin.do?mode=new" redirect="true"/>
+         <forward name="add" path="/admin/role/RoleAdmin.do?mode=addUsers"/>
+         <forward name="remove" path="/admin/role/RoleAdmin.do?mode=addUsers"/>
+         <forward name="failure" path="/admin/role/RoleAdmin.do?mode=addUsers"/>
+         <forward name="success" path="/admin/role/RoleAdmin.do?mode=view"/>
+      </action>
+
+      <action path="/admin/role/RemoveUsers"
+              type="org.rhq.enterprise.gui.admin.role.RemoveUsersAction"
+              name="RemoveRoleUsersForm"
+              scope="request"
+              input="/admin/role/RoleAdmin.do?mode=view">
+         <forward name="failure" path="/admin/role/RoleAdmin.do?mode=view"/>
+         <forward name="success" path="/admin/role/RoleAdmin.do?mode=view"/>
+      </action>
+
+      <action path="/admin/role/AddResourceGroupsFormPrepare"
+              name="AddRoleResourceGroupsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.admin.role.AddResourceGroupsFormPrepareAction">
+         <set-property property="title" value="Add+Resource+Group"/>
+      </action>
+
+      <action path="/admin/role/AddResourceGroups"
+              type="org.rhq.enterprise.gui.admin.role.AddResourceGroupsAction"
+              name="AddRoleResourceGroupsForm"
+              scope="request"
+              input="/admin/role/RoleAdmin.do?mode=addGroups">
+         <set-property property="workflow" value="role/ViewUser"/>
+         <forward name="cancel" path="/admin/role/RoleAdmin.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/admin/role/RoleAdmin.do?mode=addGroups"
+                  redirect="true"/>
+         <forward name="new" path="/resource/group/Inventory.do?mode=new" redirect="true"/>
+         <forward name="add" path="/admin/role/RoleAdmin.do?mode=addGroups"/>
+         <forward name="remove" path="/admin/role/RoleAdmin.do?mode=addGroups"/>
+         <forward name="failure" path="/admin/role/RoleAdmin.do?mode=addGroups"/>
+         <forward name="success" path="/admin/role/RoleAdmin.do?mode=view"/>
+      </action>
+
+      <action path="/admin/role/RemoveResourceGroups"
+              type="org.rhq.enterprise.gui.admin.role.RemoveResourceGroupsAction"
+              name="RemoveRoleResourceGroupsForm"
+              scope="request"
+              input="/admin/role/RoleAdmin.do?mode=view">
+         <forward name="failure" path="/admin/role/RoleAdmin.do?mode=view"/>
+         <forward name="success" path="/admin/role/RoleAdmin.do?mode=view"/>
+      </action>
+      <!-- / -->
+
+      <action path="/admin/role/ChangeOwnerFormPrepare"
+              name="ChangeRoleOwnerForm"
+              scope="request"
+              input="/admin/role/RoleAdmin.do?mode=edit"
+              type="org.rhq.enterprise.gui.admin.role.ChangeOwnerFormPrepareAction">
+         <set-property property="workflow" value="role/ChangeOwner"/>
+         <set-property property="title" value="Change+Owner"/>
+      </action>
+
+      <action path="/admin/role/ChangeOwner"
+              type="org.rhq.enterprise.gui.admin.role.ChangeOwnerAction"
+              name="ChangeRoleOwnerForm"
+              scope="request"
+              input="/admin/role/RoleAdmin.do?mode=changeOwner">
+         <set-property property="workflow" value="role/ChangeOwner"/>
+         <forward name="cancel" path="/admin/role/RoleAdmin.do?mode=view"
+                  redirect="true"/>
+         <forward name="failure" path="/admin/role/RoleAdmin.do?mode=changeOwner"/>
+         <forward name="success" path="/admin/role/RoleAdmin.do?mode=view"/>
+         <forward name="lostRights" path="/ResourceHub.do"/>
+      </action>
+
+      <!--USER ADMINISTRATION -->
+      <action path="/admin/user/UserAdmin"
+              forward=".admin.user.layout">
+      </action>
+
+      <action path="/admin/user/UserAdminPortal"
+              parameter="mode"
+              input="/admin/user/UserAdmin.do"
+              type="org.rhq.enterprise.gui.admin.user.UserAdminPortalAction">
+      </action>
+
+      <action path="/admin/user/List"
+              name="RemoveUserForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.admin.user.ListAction">
+         <set-property property="title" value="List+Users"/>
+      </action>
+
+      <action path="/admin/user/View"
+              type="org.rhq.enterprise.gui.admin.user.ViewAction">
+         <set-property property="title" value="View+User"/>
+      </action>
+
+      <action path="/admin/user/EditUserFormPrepare"
+              name="EditUserForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.admin.user.EditUserFormPrepareAction">
+         <set-property property="workflow" value="user/View"/>
+         <set-property property="title" value="Edit+User"/>
+      </action>
+
+      <action path="/admin/user/EditPasswordFormPrepare"
+              type="org.rhq.enterprise.gui.admin.user.EditPasswordPrepareAction">
+         <set-property property="title" value="Edit+Password"/>
+      </action>
+
+
+      <action path="/admin/user/Edit"
+              type="org.rhq.enterprise.gui.admin.user.EditAction"
+              name="EditUserForm"
+              scope="request"
+              input="/admin/user/UserAdmin.do?mode=edit">
+         <set-property property="workflow" value="user/View"/>
+         <forward name="failure" path="/admin/user/UserAdmin.do?mode=edit"/>
+         <forward name="success" path="/admin/user/UserAdmin.do?mode=view"/>
+         <forward name="cancel" path="/admin/user/UserAdmin.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/admin/user/UserAdmin.do?mode=edit"
+                  redirect="true"/>
+      </action>
+
+
+      <action path="/admin/user/NewFormPrepare"
+              name="NewUserForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.admin.user.NewFormPrepareAction">
+         <set-property property="workflow" value="user/New"/>
+         <set-property property="title" value="New+User"/>
+      </action>
+
+      <action path="/admin/user/New"
+              type="org.rhq.enterprise.gui.admin.user.NewAction"
+              name="NewUserForm"
+              scope="request"
+              input="/admin/user/UserAdmin.do?mode=new">
+         <set-property property="workflow" value="user/New"/>
+         <exception key="exception.user.alreadyExists"
+                    type="javax.ejb.CreateException"
+                    path="/admin/user/UserAdmin.do?mode=new"/>
+         <forward name="failure" path="/admin/user/UserAdmin.do?mode=new"/>
+         <forward name="okassign" path="/admin/user/UserAdmin.do?mode=addRoles"/>
+         <forward name="cancel" path="/admin/user/UserAdmin.do?mode=list"
+                  redirect="true"/>
+         <forward name="reset" path="/admin/user/UserAdmin.do?mode=new"
+                  redirect="true"/>
+      </action>
+
+      <action path="/admin/user/Remove"
+              type="org.rhq.enterprise.gui.admin.user.RemoveAction"
+              name="RemoveUserForm"
+              scope="request"
+              input="/admin/user/ListUsers.jsp">
+         <exception key="exception.cant.remove"
+                    type="javax.ejb.RemoveException"
+                    path="/common/GenericError.jsp"/>
+         <forward name="success" path="/admin/user/UserAdmin.do?mode=list" redirect="true"/>
+      </action>
+
+      <action path="/admin/user/ViewRoles"
+              type="org.rhq.enterprise.gui.admin.user.ViewRolesAction"
+              name="RemoveUserRolesForm"
+              scope="request">
+         <set-property property="workflow" value="user/View"/>
+      </action>
+
+      <action path="/admin/user/EditPassword"
+              type="org.rhq.enterprise.gui.admin.user.EditPasswordAction"
+              name="EditPasswordForm"
+              scope="request"
+              input="/admin/user/UserAdmin.do?mode=editPass">
+         <set-property property="workflow" value="user/View"/>
+         <forward name="success" path="/admin/user/UserAdmin.do?mode=view" redirect="true"/>
+         <forward name="failure" path="/admin/user/UserAdmin.do?mode=editPass"/>
+         <forward name="cancel" path="/admin/user/UserAdmin.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/admin/user/UserAdmin.do?mode=editPass"
+                  redirect="true"/>
+      </action>
+
+      <action path="/admin/user/AddUserRolesFormPrepare"
+              name="AddUserRolesForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.admin.user.AddUserRolesFormPrepareAction">
+         <set-property property="workflow" value="user/View"/>
+         <set-property property="title" value="Add+User+Roles"/>
+      </action>
+
+      <action path="/admin/user/AddUserRoles"
+              type="org.rhq.enterprise.gui.admin.user.AddUserRolesAction"
+              name="AddUserRolesForm"
+              scope="request"
+              input="/admin/user/UserAdmin.do?mode=addRoles">
+         <set-property property="workflow" value="user/View"/>
+         <forward name="cancel" path="/admin/user/UserAdmin.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/admin/user/UserAdmin.do?mode=addRoles"
+                  redirect="true"/>
+         <forward name="new" path="/admin/role/RoleAdmin.do?mode=new" redirect="true"/>
+         <forward name="add" path="/admin/user/UserAdmin.do?mode=addRoles"/>
+         <forward name="remove" path="/admin/user/UserAdmin.do?mode=addRoles"/>
+         <forward name="failure" path="/admin/user/UserAdmin.do?mode=addRoles"/>
+         <forward name="success" path="/admin/user/UserAdmin.do?mode=view"/>
+      </action>
+
+      <action path="/admin/user/RegisterFormPrepare"
+              name="RegisterUserForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.admin.user.RegisterFormPrepareAction">
+         <set-property property="workflow" value="user/Register"/>
+         <set-property property="title" value="Register"/>
+      </action>
+
+      <action path="/admin/user/Register"
+              type="org.rhq.enterprise.gui.admin.user.RegisterAction"
+              name="RegisterUserForm"
+              scope="request"
+              input="/admin/user/UserAdmin.do?mode=register">
+         <set-property property="workflow" value="user/Register"/>
+         <exception key="exception.user.alreadyExists"
+                    type="javax.ejb.CreateException"
+                    path="/admin/user/UserAdmin.do?mode=register"/>
+         <forward name="success" path="/Dashboard.do"/>
+         <forward name="failure" path="/admin/user/UserAdmin.do?mode=register"/>
+         <forward name="reset" path="/admin/user/UserAdmin.do?mode=register" redirect="true"/>
+         <forward name="logout" path="/Logout.do"/>
+      </action>
+      <!-- end user admin actions / -->
+
+      <!--CONFIG -->
+      <action path="/admin/config/Config"
+              forward=".admin.config.layout">
+      </action>
+
+      <action path="/admin/config/ConfigPortal"
+              parameter="mode"
+              type="org.rhq.enterprise.gui.admin.config.ConfigAction">
+      </action>
+
+      <action path="/admin/config/EditConfigPrep"
+              name="SystemConfigForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.admin.config.EditConfigPrepAction">
+         <set-property property="title" value="Server+Configuration"/>
+      </action>
+
+      <action path="/admin/config/EditConfig"
+              name="SystemConfigForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.admin.config.EditConfigAction"
+              input="/admin/config/Config.do?mode=edit">
+         <forward name="success" path="/Admin.do"/>
+         <forward name="cancel" path="/Admin.do" redirect="true"/>
+         <forward name="reset" path="/admin/config/Config.do?mode=edit" redirect="true"/>
+         <forward name="failure" path="/admin/config/Config.do?mode=edit"/>
+      </action>
+
+      <action path="/admin/config/EditDefaults"
+              forward=".admin.config.monitor.defaults.layout">
+         <set-property property="title" value="Monitoring+Defaults+Configuration"/>
+      </action>
+
+      <action path="/admin/config/EditResourceTypeDefaults"
+              type="org.rhq.enterprise.gui.admin.config.EditDefaultsAction"
+              scope="request"
+              parameter="mode">
+         <set-property property="title" value="Monitoring+Defaults+Configuration"/>
+      </action>
+
+      <!--end admin CONFIG -->
+
+      <!-- resource hub -->
+      <action path="/ResourceHub"
+              name="ResourceHubForm"
+              forward=".resource.hub.layout">
+      </action>
+      <action path="/GroupHub"
+              name="GroupHubForm"
+              forward=".group.hub.layout">
+      </action>
+
+      <action path="/NavigationHub"
+              forward=".navigation.hub.layout">
+      </action>
+
+      <action path="/Resource"
+              type="org.rhq.enterprise.gui.legacy.action.resource.DetermineLocationAction">
+         <forward name="platform" path="/resource/platform/monitor/Visibility.do?mode=currentHealth"/>
+         <forward name="platform-inventory" path="/resource/platform/Inventory.do?mode=view"/>
+         <forward name="server" path="/resource/server/monitor/Visibility.do?mode=currentHealth"/>
+         <forward name="server-inventory" path="/resource/server/Inventory.do?mode=view"/>
+         <forward name="service" path="/resource/service/monitor/Visibility.do?mode=currentHealth"/>
+         <forward name="service-inventory" path="/resource/service/Inventory.do?mode=view"/>
+         <forward name="compatGroup" path="/resource/group/monitor/Visibility.do?mode=currentHealth"/>
+         <forward name="compatGroup-inventory" path="/resource/group/Inventory.do?mode=view"/>
+         <forward name="adhocGroup" path="/resource/group/Inventory.do?mode=view"/>
+         <forward name="adhocGroup-inventory" path="/resource/group/Inventory.do?mode=view"/>
+         <forward name="autogroup" path="/resource/autogroup/monitor/Visibility.do?mode=currentHealth"/>
+
+         <forward name="resource-inventory" path="/resource/Inventory.do?mode=view"/>
+      </action>
+      <action path="/ResourceControlHistory"
+              type="org.rhq.enterprise.gui.legacy.action.resource.DetermineLocationAction">
+         <forward name="platform" path="/resource/platform/Control.do?mode=history"/>
+         <forward name="server" path="/resource/server/Control.do?mode=history"/>
+         <forward name="service" path="/resource/service/Control.do?mode=history"/>
+         <forward name="compatGroup" path="/resource/group/Control.do?mode=history"/>
+         <forward name="adhocGroup" path="/resource/group/Inventory.do?mode=view"/>
+      </action>
+
+      <action path="/resource/hub/MiniChart"
+              type="org.rhq.enterprise.gui.legacy.action.resource.hub.ResourceDesignatedMetricsAction"/>
+
+      <action path="/resource/hub/ResourceHubPortal"
+              name="ResourceHubForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.hub.ResourceHubPortalAction"
+              input="/ResourceHub.do">
+         <set-property property="title" value="Browse+Resources"/>
+      </action>
+
+      <action path="/resource/hub/GroupHubPortal"
+              name="GroupHubForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.hub.GroupHubPortalAction"
+              input="/GroupHub.do">
+         <set-property property="title" value="Browse+Resource+Groups"/>
+      </action>
+
+      <action path="/navigation/hub/NavigationHubPortal"
+              name="ResourceHubForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.action.navigation.hub.NavigationHubPortalAction"
+              input="/NavigationHub.do">
+         <set-property property="title" value="Browse+Resources"/>
+      </action>
+
+      <action path="/resource/hub/ResourceHub"
+              type="org.rhq.enterprise.gui.legacy.action.resource.hub.ResourceHubPortalAction"
+              name="ResourceHubForm"
+              scope="request"
+              input="/ResourceHub.do">
+         <set-property property="title" value="Resource+Hub"/>
+         <forward name="failure" path="/ResourceHub.do"/>
+         <forward name="success" path="/ResourceHub.do"/>
+         <forward name="newgroup" path="/resource/group/Inventory.do?mode=new" redirect="true"/>
+      </action>
+
+      <!-- resource hub -->
+      <action path="/resource/hub/RemoveResource"
+              type="org.rhq.enterprise.gui.legacy.action.resource.hub.RemoveResourceAction"
+              name="ResourceHubForm"
+              scope="request"
+              input="/ResourceHub.do">
+         <set-property property="title" value="Resource+Hub"/>
+         <forward name="failure" path="/ResourceHub.do"/>
+         <forward name="success" path="/ResourceHub.do"/>
+      </action>
+
+      <!-- group hub -->
+      <action path="/resource/hub/RemoveGroup"
+              type="org.rhq.enterprise.gui.legacy.action.resource.hub.RemoveGroupAction"
+              name="GroupHubForm"
+              scope="request"
+              input="/GroupHub.do">
+         <set-property property="title" value="Group+Hub"/>
+         <forward name="failure" path="/GroupHub.do"/>
+         <forward name="success" path="/GroupHub.do"/>
+      </action>
+
+      <!-- resource common inventory actions -->
+      <action path="/resource/common/inventory/EditResourceGeneralPropertiesFormPrepare"
+              name="ResourceForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.EditResourceGeneralPropertiesFormPrepareAction">
+         <set-property property="workflow" value="resource/GeneralProperties"/>
+         <set-property property="title" value="Edit+Resource"/>
+      </action>
+
+      <action path="/resource/common/inventory/AddResourceGroupsFormPrepare"
+              name="AddResourceGroupsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.AddResourceGroupsFormPrepareAction">
+         <set-property property="title" value="Add+To+Groups"/>
+      </action>
+
+      <!-- resource platform actions -->
+      <action path="/resource/platform/Inventory"
+              forward=".resource.platform.inventory.layout">
+      </action>
+
+      <action path="/resource/platform/InventoryPortal"
+              parameter="mode"
+              input="/resource/platform/Inventory.do"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.inventory.PlatformInventoryPortalAction">
+      </action>
+
+      <action path="/resource/platform/inventory/NewPlatformFormPrepare"
+              name="NewPlatformForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.inventory.NewPlatformFormPrepareAction">
+         <set-property property="title" value="New+Platform"/>
+      </action>
+
+      <action path="/resource/platform/inventory/NewPlatform"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.inventory.NewPlatformAction"
+              name="NewPlatformForm"
+              scope="request"
+              validate="true"
+              input="/resource/platform/Inventory.do?mode=new">
+         <set-property property="title" value="New+Platform"/>
+
+         <forward name="cancel" path="/ResourceHub.do" redirect="true"/>
+         <forward name="reset" path="/resource/platform/Inventory.do?mode=new"
+                  redirect="true"/>
+         <forward name="add" path="/resource/platform/Inventory.do?mode=new"/>
+         <forward name="remove" path="/resource/platform/Inventory.do?mode=new"/>
+         <forward name="failure" path="/resource/platform/Inventory.do?mode=new"/>
+         <forward name="success" path="/resource/platform/Inventory.do?mode=view"/>
+      </action>
+
+      <action path="/resource/platform/inventory/ViewPlatform"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.inventory.ViewPlatformAction">
+         <set-property property="title" value="New+Platform"/>
+      </action>
+
+      <action path="/resource/platform/inventory/EditPlatformGeneralProperties"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.inventory.EditPlatformGeneralPropertiesAction"
+              name="ResourceForm"
+              scope="request"
+              input="/resource/platform/Inventory.do?mode=edit">
+         <set-property property="workflow" value="resource/GeneralProperties"/>
+         <forward name="cancel" path="/resource/platform/Inventory.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/resource/platform/Inventory.do?mode=edit" redirect="true"/>
+         <forward name="failure" path="/resource/platform/Inventory.do?mode=edit"/>
+         <forward name="success" path="/resource/platform/Inventory.do?mode=view"/>
+      </action>
+
+      <action path="/resource/platform/inventory/EditPlatformTypeNetworkPropertiesFormPrepare"
+              name="EditPlatformTypeNetworkPropertiesForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.inventory.EditPlatformTypeNetworkPropertiesFormPrepareAction">
+         <set-property property="title" value="Edit+Platform+Properties"/>
+      </action>
+
+      <action path="/resource/platform/inventory/EditPlatformTypeNetworkProperties"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.inventory.EditPlatformTypeNetworkPropertiesAction"
+              name="EditPlatformTypeNetworkPropertiesForm"
+              scope="request"
+              input="/resource/platform/Inventory.do?mode=editType">
+         <forward name="cancel" path="/resource/platform/Inventory.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/resource/platform/Inventory.do?mode=editType"
+                  redirect="true"/>
+         <forward name="add" path="/resource/platform/Inventory.do?mode=editType"/>
+         <forward name="remove" path="/resource/platform/Inventory.do?mode=editType"/>
+         <forward name="failure" path="/resource/platform/Inventory.do?mode=editType"/>
+         <forward name="success" path="/resource/platform/Inventory.do?mode=view"/>
+      </action>
+
+      <action path="/resource/platform/inventory/RemoveServers"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.inventory.RemoveServersAction"
+              name="RemoveServersForm"
+              scope="request"
+              input="/resource/platform/inventory.do?mode=view">
+         <set-property property="title" value="View+Inventory"/>
+         <forward name="failure" path="/resource/platform/Inventory.do?mode=view"/>
+         <forward name="success" path="/resource/platform/Inventory.do?mode=view"/>
+      </action>
+
+      <action path="/resource/platform/inventory/RemoveGroups"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.RemoveResourceGroupsAction"
+              name="RemoveResourceGroupsForm"
+              scope="request"
+              input="/resource/platform/inventory.do?mode=view">
+         <set-property property="title" value="View+Inventory"/>
+         <forward name="failure" path="/resource/platform/Inventory.do?mode=view"/>
+         <forward name="success" path="/resource/platform/Inventory.do?mode=view"/>
+      </action>
+
+      <action path="/resource/platform/inventory/AddPlatformGroups"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.AddResourceGroupsAction"
+              name="AddResourceGroupsForm"
+              scope="request"
+              input="/resource/platform/Inventory.do?mode=addGroups">
+         <forward name="cancel" path="/resource/platform/Inventory.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/resource/platform/Inventory.do?mode=addGroups"
+                  redirect="true"/>
+         <forward name="new" path="/resource/group/Inventory.do?mode=new"
+                  redirect="true"/>
+         <forward name="add" path="/resource/platform/Inventory.do?mode=addGroups"/>
+         <forward name="remove" path="/resource/platform/Inventory.do?mode=addGroups"/>
+         <forward name="failure" path="/resource/platform/Inventory.do?mode=addGroups"/>
+         <forward name="success" path="/resource/platform/Inventory.do?mode=view"/>
+      </action>
+
+      <action path="/resource/platform/inventory/EditConfigProperties"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.EditConfigPropertiesAction"
+              name="CommonConfigForm"
+              scope="request"
+              input="/resource/platform/Inventory.do?mode=editConfig">
+         <forward name="success" path="/resource/platform/Inventory.do?mode=view"/>
+         <forward name="cancel" path="/resource/platform/Inventory.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/resource/platform/Inventory.do?mode=editConfig"
+                  redirect="true"/>
+         <forward name="failure" path="/resource/platform/Inventory.do?mode=editConfig"/>
+         <forward name="dash" path="/Dashboard.do" redirect="true"/>
+      </action>
+
+      <action path="/resource/platform/inventory/EditConfigFormPrepare"
+              name="CommonConfigForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.ResourceConfigFormPrepareAction">
+         <set-property property="title" value="Edit+Configuration"/>
+      </action>
+
+      <!-- / -->
+
+      <!-- resource platform autodiscovery actions -->
+      <action path="/resource/platform/AutoDiscovery"
+              forward=".resource.platform.autodiscovery.layout">
+      </action>
+
+      <action path="/resource/platform/AutoDiscoveryPortal"
+              parameter="mode"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.autodiscovery.PlatformAutoDiscoveryAction"
+              input="/resource/platform/AutoDiscovery.do?mode=view">
+         <forward name="dash" path="/Dashboard.do" redirect="true"/>
+      </action>
+
+      <action path="/resource/platform/autodiscovery/NewAutoDiscoveryPrep"
+              name="PlatformAutoDiscoveryForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.autodiscovery.NewAutoDiscoveryPrepAction">
+         <set-property property="workflow" value="autodiscovery/AutoDiscoverySched"/>
+         <set-property property="title" value="Platform+Auto+Discovery"/>
+      </action>
+
+      <action path="/resource/platform/autodiscovery/NewAutoDiscovery"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.autodiscovery.NewAutoDiscoveryAction"
+              name="PlatformAutoDiscoveryForm"
+              scope="request"
+              input="/resource/platform/AutoDiscovery.do?mode=new">
+         <set-property property="workflow" value="autodiscovery/AutoDiscoverySched"/>
+         <forward name="cancel" path="/resource/platform/Inventory.do?mode=view" redirect="true"/>
+         <forward name="scanMethodChange" path="/resource/platform/AutoDiscovery.do?mode=new"/>
+         <forward name="reset" path="/resource/platform/AutoDiscovery.do?mode=new"
+                  redirect="true"/>
+         <forward name="failure" path="/resource/platform/AutoDiscovery.do?mode=new"/>
+         <forward name="success" path="/resource/platform/AutoDiscovery.do?mode=view"/>
+         <forward name="dash" path="/Dashboard.do" redirect="true"/>
+      </action>
+
+      <action path="/resource/platform/autodiscovery/EditAutoDiscoveryPrep"
+              name="PlatformAutoDiscoveryForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.autodiscovery.EditAutoDiscoveryPrepAction">
+         <set-property property="workflow" value="autodiscovery/AutoDiscoverySched"/>
+         <set-property property="title" value="Platform+Auto+Discovery"/>
+      </action>
+
+      <action path="/resource/platform/autodiscovery/EditAutoDiscovery"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.autodiscovery.EditAutoDiscoveryAction"
+              name="PlatformAutoDiscoveryForm"
+              scope="request"
+              input="/resource/platform/AutoDiscovery.do?mode=edit">
+         <forward name="cancel" path="/resource/platform/AutoDiscovery.do?mode=view" redirect="true"/>
+         <forward name="reset" path="/resource/platform/AutoDiscovery.do?mode=edit"
+                  redirect="true"/>
+         <forward name="failure" path="/resource/platform/AutoDiscovery.do?mode=edit"/>
+         <forward name="success" path="/resource/platform/AutoDiscovery.do?mode=view"/>
+      </action>
+
+      <action path="/resource/platform/autodiscovery/ViewAutoDiscovery"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.autodiscovery.ViewAutoDiscoveryAction">
+         <set-property property="title" value="View+Auto+Discovery"/>
+      </action>
+
+      <action path="/resource/platform/autodiscovery/ViewResultsPrep"
+              name="AutoDiscoveryResultsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.autodiscovery.ViewResultsPrepAction">
+         <set-property property="workflow" value="autodiscovery/ViewResults"/>
+         <set-property property="title" value="Auto+Discovery+Results"/>
+      </action>
+
+      <action path="/resource/platform/autodiscovery/ScanControlPrep"
+              scope="request"
+              name="ResourceForm"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.autodiscovery.ScanControlPrepAction">
+      </action>
+
+      <action path="/resource/platform/autodiscovery/ScanControlAction"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.autodiscovery.ScanControlAction"
+              name="ResourceForm"
+              scope="request"
+              input="/resource/platform/AutoDiscovery.do?mode=view">
+         <forward name="failure" path="/resource/platform/AutoDiscovery.do?mode=view"/>
+         <forward name="success" path="/resource/platform/AutoDiscovery.do?mode=view"/>
+      </action>
+
+      <action path="/resource/platform/autodiscovery/ImportAIResources"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.autodiscovery.ImportAIResourcesAction"
+              name="AutoDiscoveryResultsForm"
+              scope="request"
+              input="/resource/platform/AutoDiscovery.do?mode=results">
+         <set-property property="workflow" value="autodiscovery/ViewResults"/>
+         <forward name="cancel" path="/Dashboard.do" redirect="true"/>
+         <forward name="failure" path="/resource/platform/AutoDiscovery.do?mode=results"/>
+         <forward name="success" path="/resource/platform/AutoDiscovery.do?mode=view"/>
+      </action>
+
+      <action path="/resource/platform/autodiscovery/RemoveSchedule"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.autodiscovery.RemoveScheduleAction"
+              name="RemoveResourceForm"
+              scope="request">
+         <forward name="failure" path="/resource/platform/AutoDiscovery.do?mode=view"/>
+         <forward name="success" path="/resource/platform/AutoDiscovery.do?mode=view"/>
+      </action>
+
+      <!-- platform monitoring actions -->
+      <action path="/resource/platform/monitor/Visibility"
+              forward=".resource.platform.monitor.visibility.layout">
+      </action>
+
+      <action path="/resource/platform/monitor/VisibilityPortal"
+              parameter="mode"
+              input="/resource/platform/monitor/Visibility.do"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.monitor.PlatformVisibilityPortalAction">
+      </action>
+
+      <action path="/resource/platform/monitor/visibility/PlatformCurrentHealth"
+              name="IndicatorViewsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.CurrentHealthAction"
+              input="/resource/platform/monitor/Visibility.do?mode=currentHealth">
+         <set-property property="title" value="View+Current+Health"/>
+      </action>
+
+      <action path="/resource/platform/monitor/visibility/PlatformMetrics"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsDisplayAction"
+              name="MetricsDisplayForm"
+              scope="request"
+              input="/resource/platform/monitor/Visibility.do?mode=resourceMetrics">
+         <forward name="success" path="/resource/platform/monitor/Visibility.do?mode=resourceMetrics"/>
+         <forward name="compare" path="/resource/platform/monitor/Visibility.do?mode=resourceMetrics"/>
+         <forward name="chart" path="/resource/common/monitor/Visibility.do?mode=chartMultiMetricSingleResource"
+                  redirect="true"/>
+         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange"/>
+      </action>
+
+      <action path="/resource/platform/monitor/visibility/FilterPlatformMetrics"
+              name="MetricsFilterForm"
+              scope="request"
+              forward="/resource/platform/monitor/Visibility.do?mode=resourceMetrics"/>
+
+      <action path="/resource/platform/monitor/visibility/PlatformServersMetrics"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsDisplayAction"
+              name="MetricsDisplayForm"
+              scope="request"
+              input="/resource/platform/monitor/Visibility.do?mode=deployedServers">
+         <forward name="success" path="/resource/platform/monitor/Visibility.do?mode=deployedServers"/>
+         <forward name="compare" path="/resource/common/monitor/Visibility.do?mode=compareMetrics"/>
+         <forward name="chart" path="/resource/common/monitor/Visibility.do?mode=chartMultiMetricSingleResource"
+                  redirect="true"/>
+         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange"/>
+      </action>
+
+      <action path="/resource/platform/monitor/visibility/PlatformPerformanceFormPrepare"
+              name="PerformanceForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.PerformanceFormPrepareAction">
+         <set-property property="title" value="View+Performance"/>
+      </action>
+
+      <action path="/resource/platform/monitor/visibility/PlatformPerformance"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.PerformanceAction"
+              name="PerformanceForm"
+              scope="request"
+              input="/resource/platform/monitor/Visibility.do?mode=performance">
+         <forward name="success" path="/resource/platform/monitor/Visibility.do?mode=performance"/>
+         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" redirect="true"/>
+      </action>
+
+      <action path="/resource/platform/monitor/visibility/ListChildrenResources"
+              type="org.rhq.enterprise.gui.legacy.action.resource.platform.monitor.visibility.ListChildrenAction">
+      </action>
+
+      <!-- platform monitoring config -->
+      <action path="/resource/platform/monitor/Config"
+              forward=".resource.platform.monitor.config.layout">
+      </action>
+
+      <action path="/admin/platform/monitor/Config"
+              forward=".admin.platform.monitor.config.layout">
+      </action>
+
+      <action path="/resource/platform/monitor/ConfigPortal"
+              parameter="mode"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config.ConfigPortalAction"
+              input="/resource/platform/monitor/Config.do?mode=configure">
+      </action>
+
+      <action path="/resource/platform/monitor/config/ConfigMetricsFormPrepare"
+              name="MonitoringConfigForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config.ConfigMetricsFormPrepareAction">
+         <set-property property="title" value="Configure+Visibility"/>
+      </action>
+
+      <action path="/resource/platform/monitor/config/ConfigMetrics"
+              name="MonitoringConfigForm"
+              scope="request"
+              input="/resource/platform/monitor/Config.do?mode=configure"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config.ConfigMetricsAction">
+         <forward name="remove" path="/resource/platform/monitor/Config.do?mode=configure"/>
+         <forward name="failure" path="/resource/platform/monitor/Config.do?mode=configure"/>
+         <forward name="success" path="/resource/platform/monitor/Config.do?mode=configure"/>
+      </action>
+
+      <!-- / -->
+
+      <!-- server monitoring actions -->
+
+      <!-- / -->
+
+      <!-- resource server actions -->
+      <action path="/resource/server/Inventory"
+              forward=".resource.server.inventory.layout">
+      </action>
+
+      <action path="/resource/server/InventoryPortal"
+              parameter="mode"
+              input="/resource/server/Inventory.do"
+              type="org.rhq.enterprise.gui.legacy.action.resource.server.inventory.ServerInventoryPortalAction">
+      </action>
+
+      <action path="/resource/server/inventory/NewServerFormPrepare"
+              name="ServerForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.server.inventory.NewServerFormPrepareAction">
+         <set-property property="workflow" value="server/New"/>
+         <set-property property="title" value="New+Server"/>
+      </action>
+
+      <action path="/resource/server/inventory/NewServer"
+              type="org.rhq.enterprise.gui.legacy.action.resource.server.inventory.NewServerAction"
+              name="ServerForm"
+              scope="request"
+              input="/resource/server/Inventory.do?mode=new">
+         <set-property property="workflow" value="server/New"/>
+         <forward name="success" path="/resource/server/Inventory.do?mode=view"/>
+         <forward name="cancel" path="/resource/platform/Inventory.do?mode=view" redirect="true"/>
+         <forward name="reset" path="/resource/server/Inventory.do?mode=new"
+                  redirect="true"/>
+         <forward name="failure" path="/resource/server/Inventory.do?mode=new"/>
+      </action>
+
+      <action path="/resource/server/inventory/ViewServer"
+              type="org.rhq.enterprise.gui.legacy.action.resource.server.inventory.ViewServerAction">
+         <set-property property="title" value="View+Server+Inventory"/>
+      </action>
+
+      <action path="/resource/server/inventory/RemoveServices"
+              name="RemoveResourceForm"
+              type="org.rhq.enterprise.gui.legacy.action.resource.server.inventory.RemoveServiceAction"
+              scope="request" input="/resource/server/inventory/ViewServer.jsp">
+         <forward name="success" path="/resource/server/Inventory.do?mode=view" redirect="true"/>
+      </action>
+
+      <action path="/resource/platform/inventory/RemoveServices"
+              name="RemoveResourceForm"
+              type="org.rhq.enterprise.gui.legacy.action.resource.server.inventory.RemoveServiceAction"
+              scope="request" input="/resource/server/inventory/ViewServer.jsp">
+         <forward name="success" path="/resource/platform/Inventory.do?mode=view" redirect="true"/>
+      </action>
+
+      <action path="/resource/server/inventory/RemoveGroups"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.RemoveResourceGroupsAction"
+              name="RemoveResourceGroupsForm"
+              scope="request"
+              input="/resource/server/inventory.do?mode=view">
+         <forward name="failure" path="/resource/server/Inventory.do?mode=view"/>
+         <forward name="success" path="/resource/server/Inventory.do?mode=view"/>
+      </action>
+
+      <action path="/resource/server/inventory/EditGeneralFormPrepare"
+              name="GeneralServerForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.server.inventory.ServerGeneralFormPrepareAction">
+         <set-property property="workflow" value="server/EditGeneralProperties"/>
+         <set-property property="title" value="Edit+General+Properties"/>
+      </action>
+
+      <action path="/resource/server/inventory/EditGeneralProperties"
+              type="org.rhq.enterprise.gui.legacy.action.resource.server.inventory.EditGeneralAction"
+              name="GeneralServerForm"
+              scope="request"
+              input="/resource/server/Inventory.do?mode=edit">
+         <set-property property="workflow" value="server/EditGeneralProperties"/>
+         <forward name="success" path="/resource/server/Inventory.do?mode=view"/>
+         <forward name="cancel" path="/resource/server/Inventory.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/resource/server/Inventory.do?mode=edit"
+                  redirect="true"/>
+         <forward name="failure" path="/resource/server/Inventory.do?mode=edit"/>
+      </action>
+ 
+      <action path="/resource/server/inventory/EditTypeHostFormPrepare"
+              name="ServerHostTypeForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.server.inventory.EditTypeHostPrepareAction">
+         <set-property property="title" value="Edit+Server+Properties"/>
+      </action>
+
+      <action path="/resource/server/inventory/EditTypeHostProperties"
+              type="org.rhq.enterprise.gui.legacy.action.resource.server.inventory.EditTypeHostAction"
+              name="ServerHostTypeForm"
+              scope="request"
+              input="/resource/server/Inventory.do?mode=editType">
+         <forward name="success" path="/resource/server/Inventory.do?mode=view"/>
+         <forward name="cancel" path="/resource/server/Inventory.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/resource/server/Inventory.do?mode=editType"
+                  redirect="true"/>
+         <forward name="failure" path="/resource/server/Inventory.do?mode=editType"/>
+      </action>
+
+      <action path="/resource/server/inventory/EditConfigProperties"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.EditConfigPropertiesAction"
+              name="CommonConfigForm"
+              scope="request"
+              input="/resource/server/Inventory.do?mode=editConfig">
+         <forward name="success" path="/resource/server/Inventory.do?mode=view"/>
+         <forward name="cancel" path="/resource/server/Inventory.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/resource/server/Inventory.do?mode=editConfig"
+                  redirect="true"/>
+         <forward name="failure" path="/resource/server/Inventory.do?mode=editConfig"/>
+         <forward name="dash" path="/Dashboard.do" redirect="true"/>
+      </action>
+
+      <action path="/resource/server/inventory/EditConfigFormPrepare"
+              name="CommonConfigForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.ResourceConfigFormPrepareAction">
+         <set-property property="title" value="Edit+Configuration"/>
+      </action>
+
+      <action path="/resource/server/inventory/RemoveService"
+              name="RemoveResourceForm"
+              type="org.rhq.enterprise.gui.legacy.action.resource.server.inventory.RemoveServiceAction"
+              scope="request" input="/resource/server/inventory/ViewServer.jsp">
+         <forward name="success" path="/resource/server/Inventory.do?mode=view" redirect="true"/>
+      </action>
+
+      <action path="/resource/server/inventory/AddServerGroups"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.AddResourceGroupsAction"
+              name="AddResourceGroupsForm"
+              scope="request"
+              input="/resource/server/Inventory.do?mode=addGroups">
+         <forward name="cancel" path="/resource/server/Inventory.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/resource/server/Inventory.do?mode=addGroups"
+                  redirect="true"/>
+         <forward name="new" path="/resource/group/Inventory.do?mode=new"
+                  redirect="true"/>
+         <forward name="add" path="/resource/server/Inventory.do?mode=addGroups"/>
+         <forward name="remove" path="/resource/server/Inventory.do?mode=addGroups"/>
+         <forward name="failure" path="/resource/server/Inventory.do?mode=addGroups"/>
+         <forward name="success" path="/resource/server/Inventory.do?mode=view"/>
+      </action>
+
+      <!-- / -->
+
+      <!-- resource service actions -->
+      <action path="/resource/service/Inventory"
+              forward=".resource.service.inventory.layout">
+      </action>
+
+      <action path="/resource/service/InventoryPortal"
+              parameter="mode"
+              type="org.rhq.enterprise.gui.legacy.action.resource.service.inventory.ServiceInventoryPortalAction"
+              input="/resource/service/Inventory.do">
+      </action>
+
+      <action path="/resource/service/inventory/ViewService"
+              type="org.rhq.enterprise.gui.legacy.action.resource.service.inventory.ViewServiceAction">
+         <set-property property="title" value="View+Service+Inventory"/>
+      </action>
+
+      <action path="/resource/service/inventory/NewServiceFormPrepare"
+              name="ServiceForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.service.inventory.NewServiceFormPrepareAction">
+         <set-property property="workflow" value="inventory/NewService"/>
+         <set-property property="title" value="New+Service"/>
+      </action>
+
+      <action path="/resource/service/inventory/NewService"
+              type="org.rhq.enterprise.gui.legacy.action.resource.service.inventory.NewServiceAction"
+              name="ServiceForm"
+              scope="request"
+              input="/resource/service/Inventory.do?mode=new">
+         <set-property property="workflow" value="inventory/NewService"/>
+         <forward name="success" path="/resource/service/Inventory.do?mode=view"/>
+         <forward name="cancel" path="/resource/server/Inventory.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/resource/service/Inventory.do?mode=new"
+                  redirect="true"/>
+         <forward name="failure" path="/resource/service/Inventory.do?mode=new"/>
+      </action>
+
+      <action path="/resource/service/inventory/EditGeneralFormPrepare"
+              name="ServiceForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.service.inventory.ServiceGeneralFormPrepareAction">
+         <set-property property="workflow" value="service/EditGeneralProperties"/>
+         <set-property property="title" value="Edit+General+Properties"/>
+      </action>
+
+      <action path="/resource/service/inventory/EditGeneralProperties"
+              type="org.rhq.enterprise.gui.legacy.action.resource.service.inventory.EditGeneralAction"
+              name="ServiceForm"
+              scope="request"
+              input="/resource/service/Inventory.do?mode=edit">
+         <set-property property="workflow" value="service/EditGeneralProperties"/>
+         <forward name="success" path="/resource/service/Inventory.do?mode=view"/>
+         <forward name="cancel" path="/resource/service/Inventory.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/resource/service/Inventory.do?mode=edit"
+                  redirect="true"/>
+         <forward name="failure" path="/resource/service/Inventory.do?mode=edit"/>
+      </action>
+ 
+      <action path="/resource/service/inventory/RemoveGroups"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.RemoveResourceGroupsAction"
+              name="RemoveResourceGroupsForm"
+              scope="request"
+              input="/resource/platform/inventory.do?mode=view">
+         <forward name="failure" path="/resource/service/Inventory.do?mode=view"/>
+         <forward name="success" path="/resource/service/Inventory.do?mode=view"/>
+      </action>
+
+      <action path="/resource/service/inventory/RemoveApp"
+              name="RemoveResourceForm"
+              type="org.rhq.enterprise.gui.legacy.action.resource.service.inventory.RemoveAppAction"
+              scope="request"
+              input="/resource/service/inventory/ViewService.jsp">
+         <forward name="success" path="/resource/service/Inventory.do?mode=view" redirect="true"/>
+      </action>
+
+      <action path="/resource/service/inventory/AddServiceGroups"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.AddResourceGroupsAction"
+              name="AddResourceGroupsForm"
+              scope="request"
+              input="/resource/service/Inventory.do?mode=addGroups">
+         <forward name="cancel" path="/resource/service/Inventory.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/resource/service/Inventory.do?mode=addGroups"
+                  redirect="true"/>
+         <forward name="new" path="/resource/group/Inventory.do?mode=new"
+                  redirect="true"/>
+         <forward name="add" path="/resource/service/Inventory.do?mode=addGroups"/>
+         <forward name="remove" path="/resource/service/Inventory.do?mode=addGroups"/>
+         <forward name="failure" path="/resource/service/Inventory.do?mode=addGroups"/>
+         <forward name="success" path="/resource/service/Inventory.do?mode=view"/>
+      </action>
+
+      <action path="/resource/service/inventory/EditConfigProperties"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.EditConfigPropertiesAction"
+              name="CommonConfigForm"
+              scope="request"
+              input="/resource/service/Inventory.do?mode=editConfig">
+         <forward name="success" path="/resource/service/Inventory.do?mode=view"/>
+         <forward name="cancel" path="/resource/service/Inventory.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/resource/service/Inventory.do?mode=editConfig"
+                  redirect="true"/>
+         <forward name="failure" path="/resource/service/Inventory.do?mode=editConfig"/>
+         <forward name="dash" path="/Dashboard.do" redirect="true"/>
+      </action>
+
+      <action path="/resource/service/inventory/EditConfigFormPrepare"
+              name="CommonConfigForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.ResourceConfigFormPrepareAction">
+         <set-property property="title" value="Edit+Configuration"/>
+      </action>
+
+      <!-- service monitoring -->
+      <action path="/resource/service/monitor/Visibility"
+              forward=".resource.service.monitor.visibility.layout">
+      </action>
+
+      <action path="/resource/service/monitor/VisibilityPortal"
+              parameter="mode"
+              input="/resource/service/monitor/Visibility.do"
+              type="org.rhq.enterprise.gui.legacy.action.resource.service.monitor.ServiceVisibilityPortalAction">
+      </action>
+
+      <action path="/resource/service/monitor/visibility/ServiceCurrentHealth"
+              name="IndicatorViewsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.CurrentHealthAction"
+              input="/resource/service/monitor/Visibility.do?mode=currentHealth">
+         <set-property property="title" value="View+Current+Health"/>
+      </action>
+
+      <action path="/resource/service/monitor/visibility/ServiceMetrics"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsDisplayAction"
+              name="MetricsDisplayForm"
+              scope="request"
+              input="/resource/service/monitor/Visibility.do?mode=resourceMetrics">
+         <forward name="success" path="/resource/service/monitor/Visibility.do?mode=resourceMetrics"/>
+         <forward name="compare" path="/resource/service/monitor/Visibility.do?mode=resourceMetrics"/>
+         <forward name="chart" path="/resource/common/monitor/Visibility.do?mode=chartMultiMetricSingleResource"
+                  redirect="true"/>
+         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" redirect="true"/>
+      </action>
+
+      <action path="/resource/service/monitor/visibility/FilterServiceMetrics"
+              name="MetricsFilterForm"
+              scope="request"
+              forward="/resource/service/monitor/Visibility.do?mode=resourceMetrics"/>
+
+
+      <action path="/resource/service/monitor/visibility/ServicePerformance"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.PerformanceAction"
+              name="PerformanceForm"
+              scope="request"
+              input="/resource/service/monitor/Visibility.do?mode=performance">
+         <forward name="success" path="/resource/service/monitor/Visibility.do?mode=performance"/>
+         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" redirect="true"/>
+         <forward name="chart" path="/resource/common/monitor/Visibility.do?mode=chartMultiMetricSingleResource"
+                  redirect="true"/>
+      </action>
+
+      <!-- application service config -->
+      <action path="/resource/service/monitor/Config"
+              forward=".resource.service.monitor.config.layout">
+      </action>
+
+      <action path="/resource/service/monitor/ConfigPortal"
+              parameter="mode"
+              type="org.rhq.enterprise.gui.legacy.action.resource.service.monitor.ServiceConfigPortalAction"
+              input="/resource/service/monitor/Config.do?mode=configure">
+      </action>
+
+      <action path="/resource/service/monitor/config/ConfigMetricsFormPrepare"
+              name="MonitoringConfigForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config.ConfigMetricsFormPrepareAction">
+         <set-property property="title" value="Configure+Visibility"/>
+      </action>
+
+      <action path="/resource/service/monitor/config/ConfigMetrics"
+              name="MonitoringConfigForm"
+              scope="request"
+              input="/resource/service/monitor/Config.do?mode=configure"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config.ConfigMetricsAction">
+         <forward name="remove" path="/resource/service/monitor/Config.do?mode=configure"/>
+         <forward name="failure" path="/resource/service/monitor/Config.do?mode=configure"/>
+         <forward name="success" path="/resource/service/monitor/Config.do?mode=configure"/>
+      </action>
+
+      <!-- / -->
+
+      <!-- resource group actions -->
+      <action path="/resource/group/Inventory"
+              forward=".resource.group.inventory.layout">
+      </action>
+
+      <action path="/resource/group/InventoryPortal"
+              parameter="mode"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.inventory.GroupInventoryPortalAction"
+              input="/resource/group/Inventory.do">
+      </action>
+
+      <action path="/resource/group/inventory/NewGroupFormPrepare"
+              name="GroupForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.inventory.NewGroupFormPrepareAction">
+         <set-property property="workflow" value="group/NewGroup"/>
+         <set-property property="title" value="New+Group"/>
+      </action>
+
+      <action path="/resource/group/inventory/EditGeneralFormPrepare"
+              name="GroupForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.inventory.ResourceGeneralFormPrepareAction">
+         <set-property property="workflow" value="group/EditGeneralProperties"/>
+         <set-property property="title" value="Edit+General+Properties"/>
+      </action>
+
+      <action path="/resource/group/inventory/NewGroup"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.inventory.NewGroupAction"
+              name="GroupForm"
+              scope="request"
+              input="/resource/group/Inventory.do?mode=new">
+         <set-property property="workflow" value="group/NewGroup"/>
+         <forward name="success" path="/rhq/group/inventory/view.xhtml" redirect="true"/>
+         <forward name="cancel" path="/ResourceHub.do" redirect="true"/>
+         <forward name="reset" path="/resource/group/Inventory.do?mode=new" redirect="true"/>
+         <forward name="failure" path="/resource/group/Inventory.do?mode=new"/>
+      </action>
+
+      <action path="/resource/group/inventory/ViewGroup"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.inventory.ViewGroupAction">
+         <set-property property="title" value="View+Group+Inventory"/>
+      </action>
+
+      <action path="/resource/group/inventory/AddGroupResourcesFormPrepare"
+              name="AddGroupResourcesForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.inventory.AddGroupResourcesFormPrepareAction">
+         <set-property property="title" value="Add+Group+Resources"/>
+      </action>
+
+      <action path="/resource/group/inventory/AddGroupResources"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.inventory.AddGroupResourcesAction"
+              name="AddGroupResourcesForm"
+              scope="request"
+              input="/resource/group/Inventory.do?mode=addResources">
+         <forward name="cancel" path="/rhq/group/inventory/view.xhtml" redirect="true"/>
+         <forward name="reset" path="/resource/group/Inventory.do?mode=addResources" redirect="true"/>
+         <forward name="new" path="/resource/group/Inventory.do?mode=new" redirect="true"/>
+         <forward name="add" path="/resource/group/Inventory.do?mode=addResources"/>
+         <forward name="remove" path="/resource/group/Inventory.do?mode=addResources"/>
+         <forward name="failure" path="/resource/group/Inventory.do?mode=addResources"/>
+         <forward name="success" path="/rhq/group/inventory/view.xhtml" redirect="true"/>
+      </action>
+
+      <action path="/resource/group/inventory/RemoveApp"
+              name="RemoveGroupResourcesForm"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.inventory.RemoveAction"
+              scope="request"
+              input="/resource/service/Inventory.do?mode=view">
+         <forward name="success" path="/resource/group/Inventory.do?mode=view" redirect="true"/>
+      </action>
+
+      <!-- / -->
+
+      <!-- group monitoring actions -->
+      <action path="/resource/group/monitor/Visibility"
+              forward=".resource.group.monitor.visibility.layout">
+      </action>
+
+      <action path="/resource/group/monitor/VisibilityPortal"
+              parameter="mode"
+              input="/resource/group/monitor/Visibility.do"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.monitor.GroupVisibilityPortalAction">
+         <forward name="inventory-jsf" path="/rhq/group/inventory/view.xhtml" redirect="false"/>
+      </action>
+
+      <action path="/resource/group/monitor/visibility/GroupCurrentHealth"
+              name="IndicatorViewsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.CurrentHealthAction"
+              input="/resource/group/monitor/Visibility.do?mode=currentHealth">
+         <set-property property="title" value="View+Current+Health"/>
+         <forward name="success" path="/resource/group/monitor/Visibility.do?mode=currentHealth"/>
+         <forward name="compare" path="/resource/common/monitor/Visibility.do?mode=compareMetrics"/>
+         <forward name="chart" path="/resource/common/monitor/Visibility.do?mode=chartMultiMetricMultiResource"
+                  redirect="true"/>
+      </action>
+
+      <action path="/resource/group/monitor/visibility/ListChildrenResources"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.monitor.ListChildrenAction"/>
+
+      <action path="/resource/group/monitor/visibility/GroupPerformanceFormPrepare"
+              name="PerformanceForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.PerformanceFormPrepareAction">
+         <set-property property="title" value="View+Performance"/>
+      </action>
+
+      <action path="/resource/group/monitor/visibility/GroupPerformance"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.PerformanceAction"
+              name="PerformanceForm"
+              scope="request"
+              input="/resource/group/monitor/Visibility.do?mode=performance">
+         <forward name="success" path="/resource/group/monitor/Visibility.do?mode=performance"/>
+         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" redirect="true"/>
+      </action>
+
+      <action path="/resource/group/monitor/visibility/GroupMetrics"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsDisplayAction"
+              name="MetricsDisplayForm"
+              scope="request"
+              input="/resource/group/monitor/Visibility.do?mode=resourceMetrics">
+         <forward name="success" path="/resource/group/monitor/Visibility.do?mode=resourceMetrics"/>
+         <forward name="compare" path="/resource/common/monitor/Visibility.do?mode=compareMetrics"/>
+         <forward name="chart" path="/resource/common/monitor/Visibility.do?mode=chartMultiMetricSingleResource"
+                  redirect="true"/>
+         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" redirect="true"/>
+      </action>
+
+      <action path="/resource/group/monitor/visibility/FilterGroupMetrics"
+              name="MetricsFilterForm"
+              scope="request"
+              forward="/resource/group/monitor/Visibility.do?mode=resourceMetrics"/>
+
+      <action path="/resource/group/monitor/visibility/GroupMetricsFormPrepare"
+              name="MetricsDisplayForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ResourceMetricsFormPrepareAction">
+         <set-property property="title" value="View+Metrics"/>
+      </action>
+
+      <!-- group monitoring config -->
+      <action path="/resource/group/monitor/Config"
+              forward=".resource.group.monitor.config.layout">
+      </action>
+
+      <action path="/resource/group/monitor/ConfigPortal"
+              parameter="mode"
+              input="/resource/group/monitor/Config.do?mode=configureauto"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.monitor.GroupConfigPortalAction">
+      </action>
+
+      <action path="/resource/group/monitor/config/ConfigMetricsFormPrepare"
+              name="MonitoringConfigForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.monitor.config.GroupConfigMetricsFormPrepareAction">
+         <set-property property="title" value="Configure+Visibility"/>
+      </action>
+
+      <action path="/resource/group/monitor/config/ConfigMetrics"
+              name="MonitoringConfigForm"
+              scope="request"
+              input="/resource/group/monitor/Config.do?mode=configure"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config.ConfigMetricsAction">
+         <forward name="remove" path="/resource/group/monitor/Config.do?mode=configure"/>
+         <forward name="failure" path="/resource/group/monitor/Config.do?mode=configure"/>
+         <forward name="success" path="/resource/group/monitor/Config.do?mode=configure"/>
+      </action>
+
+      <action path="/resource/group/monitor/config/EditAvailabilityFormPrepare"
+              name="GroupMonitoringConfigForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.monitor.config.EditAvailabilityFormPrepareAction">
+         <forward name="failure" path="/resource/group/monitor/Config.do?mode=configure"/>
+         <forward name="success" path="/resource/group/monitor/Config.do?mode=configure"/>
+      </action>
+
+      <action path="/resource/group/monitor/config/EditAvailability"
+              name="GroupMonitoringConfigForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.monitor.config.EditAvailabilityAction">
+         <forward name="cancel" path="/resource/group/monitor/Config.do?mode=configure" redirect="true"/>
+         <forward name="reset" path="/resource/group/monitor/Config.do?mode=edit" redirect="true"/>
+         <forward name="failure" path="/resource/group/monitor/Config.do?mode=edit"/>
+         <forward name="success" path="/resource/group/monitor/Config.do?mode=configure"/>
+      </action>
+      <!-- / end group monitoring config -->
+
+      <action path="/resource/common/monitor/QuickEnableDefaultMetrics"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.QuickEnableDefaultMetricsAction">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+      </action>
+
+      <action path="/dashboard/MovePortletUp"
+              type="org.rhq.enterprise.gui.legacy.portlet.MoveUpAction">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+      </action>
+      <action path="/dashboard/MovePortletDown"
+              type="org.rhq.enterprise.gui.legacy.portlet.MoveDownAction">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+      </action>
+
+      <!-- Software actions -->
+      <action path="/resource/software/inventory/List"
+              name="SoftwareSearchForm"
+              scope="session"
+              forward=".resource.software.inventory.layout">
+      </action>
+
+      <action path="/resource/software/inventory/ViewPortal"
+              parameter="mode"
+              input="/resource/software/inventory/List.do"
+              type="org.rhq.enterprise.gui.legacy.action.resource.software.inventory.ViewSoftwareInventoryAction">
+      </action>
+
+      <action path="/resource/software/inventory/list/List"
+              name="SoftwareSearchForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.software.inventory.ListAction">
+         <set-property property="title" value="View+Software+List"/>
+      </action>
+
+      <action path="/resource/software/inventory/list/SearchPrepare"
+              name="SoftwareSearchForm"
+              type="org.rhq.enterprise.gui.legacy.action.resource.software.inventory.SearchPrepare"/>
+
+      <action path="/resource/software/inventory/list/Search"
+              name="SoftwareSearchForm"
+              type="org.rhq.enterprise.gui.legacy.action.resource.software.inventory.SearchAction"/>
+
+      <action path="/resource/software/inventory/list/Details"
+              type="org.rhq.enterprise.gui.legacy.action.resource.software.inventory.DetailsAction">
+         <set-property property="title" value="View+Software+Details"/>
+      </action>
+
+
+
+
+      <!-- DASHBOARD ACTIONS -->
+      <action path="/DashboardController"
+              type="org.rhq.enterprise.gui.legacy.portlet.DisplayDashboardAction">
+         <set-property property="title" value="Dashboard"/>
+      </action>
+
+      <action path="/Dashboard"
+              forward=".portal.dash.layout">
+      </action>
+
+      <action path="/Start"
+              forward=".portal.start.layout">
+      </action>
+
+      <action path="/StartPageController"
+              type="org.rhq.enterprise.gui.action.start.DisplayStartPageAction">
+         <set-property property="title" value="Start"/>
+      </action>
+
+      <action path="/admin/license/LicenseAdmin"
+              forward=".admin.license.layout">
+      </action>
+
+      <action path="/admin/license/View"
+              type="org.rhq.enterprise.gui.action.license.LicenseController">
+         <set-property property="title" value="License"/>
+      </action>
+
+      <action path="/admin/license/LicensePortal"
+              parameter="mode"
+              input="/admin/license/LicenseAdmin.do"
+              type="org.rhq.enterprise.gui.action.license.LicensePortalAction">
+         <set-property property="title" value="License"/>
+      </action>
+
+      <action path="/admin/license/UpdateLicense"
+              name="LicenseAdminForm"
+              scope="request"
+              parameter="mode"
+              type="org.rhq.enterprise.gui.action.license.LicenseUpdateAction"
+              input="/admin/license/LicenseAdmin.do?mode=edit">
+         <set-property property="title" value="License"/>
+         <forward name="cancel" path="/admin/license/LicenseAdmin.do?mode=view" redirect="true"/>
+         <forward name="reset" path="/admin/license/LicenseAdmin.do?mode=edit" redirect="true"/>
+         <forward name="failure" path="/admin/license/LicenseAdmin.do?mode=edit&amp;error=true" redirect="true"/>
+         <forward name="success" path="/admin/license/LicenseAdmin.do?mode=view&amp;update=true" redirect="true"/>
+      </action>
+
+      <action path="/dashboard/Admin"
+              forward=".dashboard.admin.layout">
+      </action>
+
+      <action path="/DashboardAdminController"
+              type="org.rhq.enterprise.gui.legacy.portlet.DashboardAdminController"
+              parameter="mode">
+      </action>
+
+      <action path="/dashboard/AddContent"
+              type="org.rhq.enterprise.gui.legacy.portlet.addcontent.ViewAction">
+      </action>
+
+      <action path="/dashboard/RemovePortlet"
+              type="org.rhq.enterprise.gui.legacy.portlet.admin.RemovePortletAction">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+      </action>
+      <action path="/dashboard/AddPortlet"
+              type="org.rhq.enterprise.gui.legacy.portlet.addcontent.AddPortletAction"
+              name="AddPortletForm"
+              scope="request"
+              input="/Dashboard.do">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+      </action>
+
+      <action path="/dashboard/SearchHubPrepare"
+              type="org.rhq.enterprise.gui.legacy.portlet.search.ViewAction"
+              name="ResourceHubForm"
+              scope="request"
+              input="/dashboard/SearchHubPrepare.do">
+         <forward name="success" path="/ResourceHub.do"/>
+      </action>
+
+
+      <action path="/dashboard/ViewSavedQueries"
+              type="org.rhq.enterprise.gui.legacy.portlet.savedqueries.ViewAction">
+      </action>
+      <action path="/dashboard/EditSavedQueries"
+              type="org.rhq.enterprise.gui.legacy.portlet.savedqueries.PrepareAction"
+              name="SavedQueriesForm"
+              scope="request">
+         <set-property property="title" value="Dashboard+Saved+Queries"/>
+      </action>
+      <action path="/dashboard/ModifySavedQueries"
+              type="org.rhq.enterprise.gui.legacy.portlet.savedqueries.ModifyAction"
+              name="SavedQueriesForm"
+              scope="request"
+              input="/dashboard/Admin.do?mode=savedQueries">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+         <forward name="cancel" path="/Dashboard.do" redirect="true"/>
+         <forward name="reset" path="/dashboard/Admin.do?mode=savedQueries"/>
+         <forward name="remove" path="/dashboard/Admin.do?mode=savedQueries"/>
+      </action>
+
+      <action path="/dashboard/ViewProblemResources"
+              type="org.rhq.enterprise.gui.legacy.portlet.problemresources.ViewAction"/>
+
+      <action path="/dashboard/EditProblemResources"
+              name="ProblemResourcesForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.portlet.problemresources.PrepareAction">
+         <set-property property="title" value="Dashboard+Problem+Resources"/>
+      </action>
+
+      <action path="/dashboard/ModifyProblemResources"
+              type="org.rhq.enterprise.gui.legacy.portlet.problemresources.ModifyAction"
+              name="ProblemResourcesForm"
+              scope="request"
+              input="/dashboard/EditProblemResources">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+         <forward name="cancel" path="/Dashboard.do" redirect="true"/>
+         <forward name="reset" path="/dashboard/Admin.do?mode=problemResources"/>
+         <forward name="remove" path="/dashboard/Admin.do?mode=problemResources"/>
+         <forward name="review" path="/dashboard/Admin.do?mode=problemResources"/>
+      </action>
+
+      <action path="/rss/ViewProblemResources"
+              type="org.rhq.enterprise.gui.legacy.portlet.problemresources.RSSAction"/>
+
+      <action path="/dashboard/ViewAutoDiscovery"
+              name="AIQueueForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.portlet.autodiscovery.ViewAction">
+      </action>
+      <action path="/dashboard/ProcessAutoDiscovery"
+              name="AIQueueForm"
+              scope="request"
+              input="/dashboard/ViewAutoDiscovery"
+              type="org.rhq.enterprise.gui.legacy.portlet.autodiscovery.ProcessQueueAction">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+      </action>
+      <action path="/dashboard/EditAutoDiscovery"
+              type="org.rhq.enterprise.gui.legacy.portlet.autodiscovery.PrepareAction"
+              name="AutoDiscoveryForm"
+              scope="request">
+         <set-property property="title" value="Dashboard+Auto-Discovery+Queue"/>
+      </action>
+      <action path="/dashboard/ModifyAutoDiscovery"
+              type="org.rhq.enterprise.gui.legacy.portlet.autodiscovery.ModifyAction"
+              name="AutoDiscoveryForm"
+              scope="request"
+              input="/dashboard/Admin.do?mode=autoDiscovery">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+         <forward name="cancel" path="/Dashboard.do" redirect="true"/>
+         <forward name="reset" path="/dashboard/Admin.do?mode=autoDiscovery"/>
+      </action>
+
+      <action path="/dashboard/ViewResourceHealth"
+              type="org.rhq.enterprise.gui.legacy.portlet.resourcehealth.ViewAction"/>
+
+      <action path="/rss/ViewResourceHealth"
+              type="org.rhq.enterprise.gui.legacy.portlet.resourcehealth.RSSAction"/>
+
+      <action path="/dashboard/EditResourceHealth"
+              name="ResourceHealthForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.portlet.resourcehealth.PrepareAction">
+         <set-property property="title" value="Dashboard+Favorite+Resource"/>
+      </action>
+      <action path="/dashboard/ModifyResourceHealth"
+              type="org.rhq.enterprise.gui.legacy.portlet.resourcehealth.ModifyAction"
+              name="ResourceHealthForm"
+              scope="request"
+              input="/dashboard/EditResourceHealth">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+         <forward name="cancel" path="/Dashboard.do" redirect="true"/>
+         <forward name="reset" path="/dashboard/Admin.do?mode=resourceHealth"/>
+         <forward name="remove" path="/dashboard/Admin.do?mode=resourceHealth"/>
+         <forward name="review" path="/dashboard/Admin.do?mode=resourceHealth"/>
+      </action>
+
+      <action path="/dashboard/ViewRecentlyApproved"
+              name="RAListForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.portlet.recentlyApproved.ViewAction">
+      </action>
+      <action path="/dashboard/ProcessRAList"
+              name="RAListForm"
+              scope="request"
+              input="/dashboard/ViewRecentlyApproved"
+              type="org.rhq.enterprise.gui.legacy.portlet.recentlyApproved.ProcessRAList">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+      </action>
+      <action path="/dashboard/EditRecentlyApproved"
+              name="RecentlyApprovedForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.portlet.recentlyApproved.PrepareAction">
+         <set-property property="title" value="Dashboard+Summary+Counts"/>
+      </action>
+      <action path="/dashboard/ModifyRecentlyApproved"
+              type="org.rhq.enterprise.gui.legacy.portlet.recentlyApproved.ModifyAction"
+              name="RecentlyApprovedForm"
+              scope="request"
+              input="/dashboard/EditRecentlyApproved">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+         <forward name="cancel" path="/Dashboard.do" redirect="true"/>
+         <forward name="reset" path="/dashboard/Admin.do?mode=recentlyApproved"/>
+         <forward name="remove" path="/dashboard/Admin.do?mode=recentlyApproved"/>
+         <forward name="review" path="/dashboard/Admin.do?mode=recentlyApproved"/>
+      </action>
+
+      <action path="/dashboard/ViewCriticalAlerts"
+              type="org.rhq.enterprise.gui.legacy.portlet.criticalalerts.ViewAction"/>
+
+      <action path="/rss/ViewCriticalAlerts"
+              type="org.rhq.enterprise.gui.legacy.portlet.criticalalerts.RSSAction"/>
+
+      <action path="/dashboard/EditCriticalAlerts"
+              name="CriticalAlertsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.portlet.criticalalerts.PrepareAction">
+         <set-property property="title" value="Dashboard+Alerts+UI"/>
+      </action>
+      <action path="/dashboard/ModifyCriticalAlerts"
+              type="org.rhq.enterprise.gui.legacy.portlet.criticalalerts.ModifyAction"
+              name="CriticalAlertsForm"
+              scope="request"
+              input="/dashboard/EditCriticalAlerts">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+         <forward name="cancel" path="/Dashboard.do" redirect="true"/>
+         <forward name="reset" path="/dashboard/Admin.do?mode=criticalAlerts"/>
+         <forward name="remove" path="/dashboard/Admin.do?mode=criticalAlerts"/>
+         <forward name="review" path="/dashboard/Admin.do?mode=criticalAlerts"/>
+      </action>
+
+      <action path="/dashboard/ViewSummaryCounts"
+              type="org.rhq.enterprise.gui.legacy.portlet.summaryCounts.ViewAction">
+      </action>
+      <action path="/dashboard/EditSummaryCounts"
+              type="org.rhq.enterprise.gui.legacy.portlet.summaryCounts.PrepareAction"
+              name="SummaryCountsForm"
+              scope="request">
+         <set-property property="title" value="Dashboard+Summary+Counts"/>
+      </action>
+      <action path="/portlet/admin/ModifySummaryCounts"
+              type="org.rhq.enterprise.gui.legacy.portlet.summaryCounts.ModifyAction"
+              name="SummaryCountsForm"
+              scope="request"
+              input="/dashboard/Admin.do?mode=summaryCounts">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+         <forward name="cancel" path="/Dashboard.do" redirect="true"/>
+         <forward name="reset" path="/dashboard/Admin.do?mode=summaryCounts"/>
+      </action>
+
+      <action path="/dashboard/ViewControlActions"
+              type="org.rhq.enterprise.gui.legacy.portlet.controlactions.ViewAction">
+      </action>
+      <action path="/dashboard/EditControlActions"
+              type="org.rhq.enterprise.gui.legacy.portlet.controlactions.PrepareAction"
+              name="ControlActionsForm"
+              scope="request">
+         <set-property property="title" value="Dashboard+Control+Actions"/>
+      </action>
+      <action path="/dashboard/ModifyControlActions"
+              type="org.rhq.enterprise.gui.legacy.portlet.controlactions.ModifyAction"
+              name="ControlActionsForm"
+              scope="request"
+              input="/dashboard/Admin.do?mode=controlActions">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+         <forward name="cancel" path="/Dashboard.do" redirect="true"/>
+         <forward name="reset" path="/dashboard/Admin.do?mode=controlActions"/>
+         <forward name="remove" path="/dashboard/Admin.do?mode=controlActions"/>
+      </action>
+
+      <action path="/dashboard/EditAlerts"
+              type="net.hyperic.hq.ui.action.portlet.alerts.PrepareAction"
+              name="DashboardAlertsForm"
+              scope="request">
+      </action>
+
+      <action path="/dashboard/ModifyAlerts"
+              type="net.hyperic.hq.ui.action.portlet.alerts.ModifyAction"
+              name="DashboardAlertsForm"
+              scope="request"
+              input="/dashboard/EditAlerts.do">
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
+         <forward name="cancel" path="/Dashboard.do" redirect="true"/>
+         <forward name="reset" path="/dashboard/Admin.do?mode=modifyAlerts"/>
+         <forward name="review" path="/dashboard/Admin.do?mode=modifyAlerts"/>
+      </action>
+
+      <action path="/dashboard/AddResourcesPrepareAction"
+              type="org.rhq.enterprise.gui.legacy.portlet.addresource.AddResourcesPrepareAction"
+              name="DashboardAddResourceHealthForm"
+              scope="request">
+         <set-property property="title" value="Dashboard+Add+Remove+Resources"/>
+      </action>
+
+      <action path="/resource/common/QuickFavoritesPrepare"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.QuickFavoritesPrepareAction">
+         <set-property property="workflow" value="resource/QuickFavorites"/>
+      </action>
+      <action path="/resource/common/QuickFavorites"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.QuickFavoritesAction">
+         <set-property property="workflow" value="resource/QuickFavorites"/>
+         <forward name="success" path="/Dashboard.do"/>
+         <forward name="failure" path="/common/GenericError.jsp"/>
+      </action>
+
+      <action path="/dashboard/resourcehealth/AddResourcesAction"
+              type="org.rhq.enterprise.gui.legacy.portlet.addresource.AddResourcesAction"
+              name="DashboardAddResourceHealthForm"
+              scope="request"
+              input="/dashboard/Admin.do?mode=rsrcHealthAddResources">
+         <forward name="cancel" path="/dashboard/Admin.do?mode=resourceHealth"/>
+         <forward name="reset" path="/dashboard/Admin.do?mode=rsrcHealthAddResources"/>
+         <forward name="add" path="/dashboard/Admin.do?mode=rsrcHealthAddResources"/>
+         <forward name="remove" path="/dashboard/Admin.do?mode=rsrcHealthAddResources"/>
+         <forward name="failure" path="/dashboard/Admin.do?mode=rsrcHealthAddResources"/>
+         <forward name="success" path="/dashboard/Admin.do?mode=resourceHealth"/>
+      </action>
+
+      <action path="/dashboard/criticalalerts/AddResourcesAction"
+              type="org.rhq.enterprise.gui.legacy.portlet.addresource.AddResourcesAction"
+              name="DashboardAddResourceHealthForm"
+              scope="request"
+              input="/dashboard/Admin.do?mode=crtAlertsAddResources">
+         <forward name="cancel" path="/dashboard/Admin.do?mode=criticalAlerts"/>
+         <forward name="reset" path="/dashboard/Admin.do?mode=crtAlertsAddResources"/>
+         <forward name="add" path="/dashboard/Admin.do?mode=crtAlertsAddResources"/>
+         <forward name="remove" path="/dashboard/Admin.do?mode=crtAlertsAddResources"/>
+         <forward name="failure" path="/dashboard/Admin.do?mode=crtAlertsAddResources"/>
+         <forward name="success" path="/dashboard/Admin.do?mode=criticalAlerts"/>
+      </action>
+      <!-- / -->
+
+      <!-- resource group control -->
+      <action path="/resource/group/Control"
+              forward=".resource.group.control.layout">
+      </action>
+
+      <action path="/resource/group/GroupController"
+              parameter="mode"
+              input="/resource/group/Control.do"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.control.GroupControllerAction">
+      </action>
+
+      <action path="/resource/common/control/CurrentStatus"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.CurrentStatusAction">
+      </action>
+
+      <action path="/resource/common/control/ListScheduled"
+              name="RemoveControlJobsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.ListScheduledAction">
+      </action>
+
+      <action path="/resource/common/control/ListHistory"
+              name="RemoveControlJobsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.ListHistoryAction">
+         <set-property property="title" value="Control+Action+History"/>
+      </action>
+
+      <action path="/resource/common/control/ListDetail"
+              name="RemoveControlJobsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.ListDetailAction">
+         <set-property property="title" value="Control+Action+Schedule"/>
+      </action>
+
+      <action path="/resource/group/control/ListDetail"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.control.ListDetailAction">
+         <set-property property="title" value="Control+List+Detail"/>
+      </action>
+
+      <action path="/resource/common/control/QuickControlPrepareAction"
+              name="QuickControlForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.QuickControlPrepareAction">
+      </action>
+
+      <action path="/resource/group/control/QuickControl"
+              name="QuickControlForm"
+              scope="request"
+              input="/resource/group/Control.do"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.QuickControlAction">
+         <forward name="new" path="/resource/group/Control.do?mode=new"/>
+         <forward name="failure" path="/resource/group/Control.do?mode=view" redirect="true"/>
+         <forward name="success" path="/resource/group/Control.do?mode=view" redirect="true"/>
+      </action>
+
+      <action path="/resource/group/control/RemoveControlJobs"
+              name="RemoveControlJobsForm"
+              scope="request"
+              input="/resource/group/Control.do?mode=view"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.RemoveControlJobsAction">
+         <forward name="failure" path="/resource/group/Control.do?mode=view" redirect="true"/>
+         <forward name="success" path="/resource/group/Control.do?mode=view" redirect="true"/>
+      </action>
+
+      <action path="/resource/group/control/RemoveHistory"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.RemoveHistoryAction"
+              name="RemoveControlForm"
+              scope="request"
+              input="/resource/group/Control.do?mode=history">
+         <forward name="failure" path="/resource/group/Control.do?mode=history" redirect="true"/>
+         <forward name="success" path="/resource/group/Control.do?mode=history" redirect="true"/>
+      </action>
+
+      <action path="/resource/group/control/RemoveCurrentStatus"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.RemoveHistoryAction"
+              name="RemoveControlForm"
+              scope="request"
+              input="/resource/group/Control.do?mode=view">
+         <forward name="failure" path="/resource/group/Control.do?mode=view" redirect="true"/>
+         <forward name="success" path="/resource/group/Control.do?mode=view" redirect="true"/>
+      </action>
+
+      <action path="/resource/group/control/EditFormPrepare"
+              name="GroupControlForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.control.EditFormPrepareAction">
+         <set-property property="title" value="Control+Group+Edit"/>
+      </action>
+
+      <action path="/resource/group/control/Edit"
+              name="GroupControlForm"
+              scope="request"
+              input="/resource/group/Control.do?mode=edit"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.control.EditAction">
+         <forward name="add" path="/resource/group/Control.do?mode=edit"/>
+         <forward name="remove" path="/resource/group/Control.do?mode=edit"/>
+         <forward name="failure" path="/resource/group/Control.do?mode=edit"/>
+         <forward name="success" path="/resource/group/Control.do?mode=view" redirect="true"/>
+         <forward name="cancel" path="/resource/group/Control.do?mode=view" redirect="true"/>
+         <forward name="reset" path="/resource/group/Control.do?mode=edit"/>
+      </action>
+
+      <action path="/resource/group/control/NewFormPrepare"
+              name="GroupControlForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.control.NewFormPrepareAction">
+         <set-property property="title" value="New+Schedule+Control+Action"/>
+      </action>
+
+      <action path="/resource/group/control/New"
+              name="GroupControlForm"
+              scope="request"
+              input="/resource/group/Control.do?mode=new"
+              type="org.rhq.enterprise.gui.legacy.action.resource.group.control.NewAction">
+         <forward name="add" path="/resource/group/Control.do?mode=new"/>
+         <forward name="remove" path="/resource/group/Control.do?mode=new"/>
+         <forward name="failure" path="/resource/group/Control.do?mode=new"/>
+         <forward name="success" path="/resource/group/Control.do?mode=view" redirect="true"/>
+         <forward name="cancel" path="/resource/group/Control.do?mode=view" redirect="true"/>
+         <forward name="reset" path="/resource/group/Control.do?mode=new" redirect="true"/>
+      </action>
+      <!-- / -->
+
+      <!-- resource server control -->
+      <action path="/resource/server/Control"
+              forward=".resource.server.control.layout">
+      </action>
+
+      <action path="/resource/server/ServerController"
+              parameter="mode"
+              input="/resource/server/Control.do"
+              type="org.rhq.enterprise.gui.legacy.action.resource.server.control.ServerControllerAction">
+      </action>
+
+      <action path="/resource/server/control/NewFormPrepare"
+              name="ServerControlForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.NewFormPrepareAction">
+         <set-property property="title" value="New+Schedule+Control+Action"/>
+      </action>
+
+      <action path="/resource/server/control/New"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.NewAction"
+              name="ServerControlForm"
+              scope="request"
+              input="/resource/server/Control.do?mode=new">
+         <forward name="add" path="/resource/server/Control.do?mode=new"/>
+         <forward name="remove" path="/resource/server/Control.do?mode=new"/>
+         <forward name="cancel" path="/resource/server/Control.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/resource/server/Control.do?mode=new"
+                  redirect="true"/>
+         <forward name="failure" path="/resource/server/Control.do?mode=new"/>
+         <forward name="success" path="/resource/server/Control.do?mode=view" redirect="true"/>
+         <forward name="executeAction" path="/resource/server/manage/ScheduleAction.do" redirect="true"/>
+         <forward name="getArguments" path=".resource.server.manage.layout.no.controller"/>
+      </action>
+
+      <action path="/resource/server/control/EditFormPrepare"
+              name="ServerControlForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.EditFormPrepareAction">
+         <set-property property="title" value="Control+Group+Edit"/>
+      </action>
+
+      <action path="/resource/server/control/EditAddToGroups"
+              scope="request"
+              type="org.apache.struts.tiles.actions.TilesAction"/>
+
+      <action path="/resource/server/control/Edit"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.EditAction"
+              name="ServerControlForm"
+              scope="request"
+              input="/resource/server/Control.do?mode=edit">
+         <forward name="add" path="/resource/server/Control.do?mode=edit"/>
+         <forward name="remove" path="/resource/server/Control.do?mode=edit"/>
+         <forward name="cancel" path="/resource/server/Control.do?mode=view" redirect="true"/>
+         <forward name="reset" path="/resource/server/Control.do?mode=edit"/>
+         <forward name="failure" path="/resource/server/Control.do?mode=edit"/>
+         <forward name="success" path="/resource/server/Control.do?mode=view" redirect="true"/>
+         <forward name="executeAction" path="/resource/server/manage/ScheduleAction.do" redirect="true"/>
+         <forward name="getArguments" path=".resource.server.manage.layout.no.controller"/>
+      </action>
+
+      <action path="/resource/server/control/QuickControl"
+              name="QuickControlForm"
+              scope="request"
+              input="/resource/server/Control.do?mode=view"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.QuickControlAction">
+         <forward name="new" path="/resource/server/Control.do?mode=new"/>
+         <forward name="failure" path="/resource/server/Control.do?mode=view" redirect="true"/>
+         <forward name="success" path="/resource/server/Control.do?mode=view" redirect="true"/>
+         <forward name="getArguments" path=".resource.server.manage.layout.no.controller"/>
+         <forward name="executeAction" path="/resource/server/manage/InvokeAction.do" redirect="true"/>
+      </action>
+
+      <action path="/resource/server/manage/InvokeAction"
+              type="org.rhq.enterprise.gui.action.resource.common.manage.InvokeAction"
+              scope="request"
+              validate="false"
+              input="/resource/server/Control.do?mode=view">
+
+         <forward name="cancel" path="/resource/server/Control.do?mode=view" redirect="true"/>
+         <forward name="failure" path="/resource/server/Control.do?mode=view"/>
+         <forward name="success" path="/resource/server/Control.do?mode=view" redirect="true"/>
+         <forward name="getArguments" path=".resource.server.manage.layout.no.controller"/>
+         <forward name="showAttributes" path=".resource.server.manage.layout.no.controller"/>
+         <forward name="executeAction" path="/resource/server/manage/InvokeAction.do" redirect="true"/>
+         <forward name="afterDelete" path="/ResourceHub.do"/>
+      </action>
+
+      <action path="/resource/server/manage/ScheduleAction"
+              type="org.rhq.enterprise.gui.action.resource.common.manage.ScheduleAction"
+              scope="request"
+              validate="false"
+              input="/resource/server/Control.do?mode=view">
+
+         <forward name="cancel" path="/resource/server/Control.do?mode=view" redirect="true"/>
+         <forward name="failure" path="/resource/server/Control.do?mode=view"/>
+         <forward name="success" path="/resource/server/Control.do?mode=view" redirect="true"/>
+         <forward name="getArguments" path=".resource.server.manage.layout.no.controller"/>
+         <forward name="showAttributes" path=".resource.server.manage.layout.no.controller"/>
+         <forward name="executeAction" path="/resource/server/manage/ScheduleAction.do" redirect="true"/>
+         <forward name="afterDelete" path="/ResourceHub.do"/>
+      </action>
+
+
+      <action path="/resource/server/control/RemoveHistory"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.RemoveHistoryAction"
+              name="RemoveControlForm"
+              scope="request"
+              input="/resource/server/Control.do?mode=history">
+         <forward name="failure" path="/resource/server/Control.do?mode=history" redirect="true"/>
+         <forward name="success" path="/resource/server/Control.do?mode=history" redirect="true"/>
+      </action>
+
+      <action path="/resource/server/control/RemoveCurrentStatus"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.RemoveHistoryAction"
+              name="RemoveControlForm"
+              scope="request"
+              input="/resource/server/Control.do?mode=view">
+         <forward name="failure" path="/resource/server/Control.do?mode=view" redirect="true"/>
+         <forward name="success" path="/resource/server/Control.do?mode=view" redirect="true"/>
+      </action>
+
+      <action path="/resource/server/control/RemoveControlJobs"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.RemoveControlJobsAction"
+              name="RemoveControlJobsForm"
+              scope="request"
+              input="/resource/server/Control.do?mode=view">
+         <forward name="failure" path="/resource/server/Control.do?mode=view" redirect="true"/>
+         <forward name="success" path="/resource/server/Control.do?mode=view" redirect="true"/>
+      </action>
+      <!-- / end resource server control -->
+
+
+      <!-- resource service control. this reuses the forms, aciton classes, and jsp's
+      for server control, it just makes them available at different urls.
+      -->
+      <action path="/resource/service/Control"
+              forward=".resource.service.control.layout">
+      </action>
+
+      <action path="/resource/service/ServerController"
+              parameter="mode"
+              input="/resource/service/Control.do"
+              type="org.rhq.enterprise.gui.legacy.action.resource.service.control.ServiceControllerAction">
+      </action>
+
+      <action path="/resource/service/control/NewFormPrepare"
+              name="ServerControlForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.NewFormPrepareAction">
+         <set-property property="title" value="New+Schedule+Control+Action"/>
+      </action>
+
+      <action path="/resource/service/control/New"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.NewAction"
+              name="ServerControlForm"
+              scope="request"
+              input="/resource/service/Control.do?mode=new">
+         <forward name="add" path="/resource/service/Control.do?mode=new"/>
+         <forward name="remove" path="/resource/service/Control.do?mode=new"/>
+         <forward name="cancel" path="/resource/service/Control.do?mode=view"
+                  redirect="true"/>
+         <forward name="reset" path="/resource/service/Control.do?mode=new"
+                  redirect="true"/>
+         <forward name="failure" path="/resource/service/Control.do?mode=new"/>
+         <forward name="success" path="/resource/service/Control.do?mode=view" redirect="true"/>
+         <forward name="getArguments" path=".resource.service.manage.layout.no.controller"/>
+         <forward name="executeAction" path="/resource/service/manage/ScheduleAction.do" redirect="true"/>
+      </action>
+
+      <action path="/resource/service/control/EditFormPrepare"
+              name="ServerControlForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.EditFormPrepareAction">
+         <set-property property="title" value="Edit+Control"/>
+      </action>
+
+      <action path="/resource/service/control/EditAddToGroups"
+              scope="request"
+              type="org.apache.struts.tiles.actions.TilesAction"/>
+
+      <action path="/resource/service/control/Edit"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.EditAction"
+              name="ServerControlForm"
+              scope="request"
+              input="/resource/service/Control.do?mode=edit">
+         <forward name="add" path="/resource/service/Control.do?mode=edit"/>
+         <forward name="remove" path="/resource/service/Control.do?mode=edit"/>
+         <forward name="cancel" path="/resource/service/Control.do?mode=view" redirect="true"/>
+         <forward name="reset" path="/resource/service/Control.do?mode=edit"/>
+         <forward name="failure" path="/resource/service/Control.do?mode=edit"/>
+         <forward name="success" path="/resource/service/Control.do?mode=view" redirect="true"/>
+         <forward name="getArguments" path=".resource.service.manage.layout.no.controller"/>
+         <forward name="executeAction" path="/resource/service/manage/ScheduleAction.do" redirect="true"/>
+      </action>
+
+      <action path="/resource/service/control/QuickControl"
+              name="QuickControlForm"
+              scope="request"
+              input="/resource/service/Control.do?mode=view"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.QuickControlAction">
+         <forward name="new" path="/resource/service/Control.do?mode=new"/>
+         <forward name="failure" path="/resource/service/Control.do?mode=view" redirect="true"/>
+         <forward name="success" path="/resource/service/Control.do?mode=view" redirect="true"/>
+         <forward name="getArguments" path=".resource.service.manage.layout.no.controller"/>
+         <forward name="executeAction" path="/resource/service/manage/InvokeAction.do" redirect="true"/>
+      </action>
+
+      <!-- TODO may need to change the form being used here -->
+      <action path="/resource/service/manage/InvokeAction"
+              scope="request"
+              input="/resource/service/Control.do?mode=view"
+              type="org.rhq.enterprise.gui.action.resource.common.manage.InvokeAction">
+
+         <forward name="cancel" path="/resource/service/Control.do?mode=view" redirect="true"/>
+         <forward name="failure" path="/resource/service/Control.do?mode=view"/>
+         <forward name="success" path="/resource/service/Control.do?mode=view" redirect="true"/>
+         <forward name="getArguments" path=".resource.service.manage.layout.no.controller"/>
+         <forward name="showAttributes" path=".resource.service.manage.layout.no.controller"/>
+         <forward name="executeAction" path="/resource/service/manage/InvokeAction.do" redirect="true"/>
+         <forward name="afterDelete" path="/ResourceHub.do"/>
+      </action>
+
+      <action path="/resource/service/manage/ScheduleAction"
+              scope="request"
+              input="/resource/service/Control.do?mode=view"
+              type="org.rhq.enterprise.gui.action.resource.common.manage.ScheduleAction">
+
+         <forward name="cancel" path="/resource/service/Control.do?mode=view" redirect="true"/>
+         <forward name="failure" path="/resource/service/Control.do?mode=view"/>
+         <forward name="success" path="/resource/service/Control.do?mode=view" redirect="true"/>
+         <forward name="getArguments" path=".resource.service.manage.layout.no.controller"/>
+         <forward name="showAttributes" path=".resource.service.manage.layout.no.controller"/>
+         <forward name="executeAction" path="/resource/service/manage/ScheduleAction.do" redirect="true"/>
+         <forward name="afterDelete" path="/ResourceHub.do"/>
+      </action>
+
+
+      <action path="/resource/service/control/RemoveHistory"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.RemoveHistoryAction"
+              name="RemoveControlForm"
+              scope="request"
+              input="/resource/service/Control.do?mode=history">
+         <forward name="failure" path="/resource/service/Control.do?mode=history" redirect="true"/>
+         <forward name="success" path="/resource/service/Control.do?mode=history" redirect="true"/>
+      </action>
+
+      <action path="/resource/service/control/RemoveCurrentStatus"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.RemoveHistoryAction"
+              name="RemoveControlForm"
+              scope="request"
+              input="/resource/service/Control.do?mode=view">
+         <forward name="failure" path="/resource/service/Control.do?mode=view" redirect="true"/>
+         <forward name="success" path="/resource/service/Control.do?mode=view" redirect="true"/>
+      </action>
+
+      <action path="/resource/service/control/RemoveControlJobs"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.control.RemoveControlJobsAction"
+              name="RemoveControlJobsForm"
+              scope="request"
+              input="/resource/service/Control.do?mode=view">
+         <forward name="failure" path="/resource/service/Control.do?mode=view" redirect="true"/>
+         <forward name="success" path="/resource/service/Control.do?mode=view" redirect="true"/>
+      </action>
+      <!-- / end resource service control -->
+
+      <!-- BEGIN: events actions -->
+      <action path="/alerts/ListDefinitions"
+              name="RemoveConfigForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ListDefinitionsAction">
+         <set-property property="title" value="List+Alert+Definitions"/>
+      </action>
+
+      <action path="/alerts/RemoveConfig"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.RemoveDefinitionAction"
+              name="RemoveConfigForm"
+              scope="request"
+              input="/alerts/Config.do?mode=list">
+         <forward name="success" path="/alerts/Config.do?mode=list" redirect="true"/>
+         <forward name="failure" path="/alerts/Config.do?mode=list" redirect="true"/>
+      </action>
+
+      <action path="/alerts/ViewAlert"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.ViewAlertAction">
+         <set-property property="title" value="View+Alert"/>
+         <exception key="exception.AlertNotFoundException"
+                    type="org.rhq.enterprise.server.legacy.events.AlertNotFoundException"
+                    path="/common/GenericError.jsp"/>
+      </action>
+
+      <action path="/alerts/ViewDefinition"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ViewDefinitionAction">
+         <set-property property="title" value="2.2.3.2"/>
+      </action>
+
+      <action path="/alerts/ViewControlAction"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ViewDefinitionControlActionAction"/>
+
+      <action path="/alerts/ViewSyslogAction"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ViewDefinitionSyslogActionAction"/>
+
+      <action path="/alerts/ViewNotificationsOthers"
+              name="RemoveNotificationsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ViewDefinitionNotificationsEmailsAction">
+         <set-property property="title" value="View+Alert+Detail"/>
+      </action>
+
+      <action path="/alerts/ViewNotificationsSnmp"
+              name="SnmpTrapForm"
+              scope="request"
+              validate="true"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.SnmpTrapFormPrepareAction">
+         <set-property property="title" value="2.2.3.2"/>
+      </action>
+
+      <action path="/alerts/ViewNotificationsRoles"
+              name="RemoveNotificationsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ViewDefinitionNotificationsRolesAction">
+         <set-property property="title" value="View+Alert+Detail"/>
+      </action>
+
+      <action path="/alerts/ViewNotificationsUsers"
+              name="RemoveNotificationsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ViewDefinitionNotificationsUsersAction">
+         <set-property property="title" value="View+Alert+Detail"/>
+      </action>
+
+      <action path="/alerts/RemoveOthers"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.RemoveOthersAction"
+              name="RemoveNotificationsForm"
+              scope="request"
+              input="/alerts/Config.do?mode=viewOthers">
+         <forward name="success" path="/alerts/Config.do?mode=viewOthers" redirect="true"/>
+         <forward name="failure" path="/alerts/Config.do?mode=list" redirect="true"/>
+      </action>
+
+      <action path="/alerts/RemoveRoles"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.RemoveRolesAction"
+              name="RemoveNotificationsForm"
+              scope="request"
+              input="/alerts/Config.do?mode=viewRoles">
+         <forward name="success" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
+         <forward name="failure" path="/alerts/Config.do?mode=list" redirect="true"/>
+      </action>
+
+      <action path="/alerts/RemoveUsers"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.RemoveUsersAction"
+              name="RemoveNotificationsForm"
+              scope="request"
+              input="/alerts/Config.do?mode=viewUsers">
+         <forward name="success" path="/alerts/Config.do?mode=viewUsers" redirect="true"/>
+         <forward name="failure" path="/alerts/Config.do?mode=list" redirect="true"/>
+      </action>
+
+      <action path="/alerts/SetSnmpProps"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.SnmpTrapFormAction"
+              name="SnmpTrapForm"
+              scope="request"
+              input="/alerts/Config.do?mode=viewSnmp">
+         <forward name="success" path="/alerts/Config.do?mode=viewSnmp" redirect="true"/>
+         <forward name="failure" path="/alerts/Config.do?mode=list" redirect="true"/>
+      </action>
+
+      <!-- JBNADM-536 update for name and title property-->
+      <action path="/software/ListSoftware"
+              name="RemoveAlertsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.software.ListSoftwareAction">
+         <set-property property="title" value="List+Applicable+Software"/>
+      </action>
+
+      <!-- JBNADM-573 the install preview page -->
+      <action path="/software/ListInstallPreview"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.software.InstallPreviewAction">
+         <set-property property="title" value="Install+and+Uninstall+Preview"/>
+      </action>
+
+      <!--JBNADM-587 the AuditTrail page-->
+      <action path="/software/ListAuditTrail"
+              name="AuditTrailForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.software.AuditTrailAction">
+         <set-property property="title" value="Installation+Audit+Trail"/>
+      </action>
+
+      <!--JBNADM-588 the software status page-->
+      <action path="/software/ListSoftwareStatus"
+              name="PatchInstallForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.software.SoftwareStatusAction">
+         <set-property property="title" value="List+Software+Installation+History"/>
+      </action>
+
+      <action path="/alerts/ListAlerts"
+              name="RemoveAlertsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.ListAlertAction">
+         <set-property property="title" value="List+Alerts"/>
+      </action>
+
+      <action path="/alerts/RemoveAlerts"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.RemoveAction"
+              name="RemoveAlertsForm"
+              scope="request"
+              input="/alerts/Alerts.do?mode=list">
+         <forward name="cancel" path="/rhq/resource/alert/listAlertHistory.xhtml?mode=list" redirect="true"/>
+         <!-- for viewing an alert for a deleted resource -->
+         <forward name="noresource" path="/Dashboard.do" redirect="true"/>
+         <forward name="success" path="/rhq/resource/alert/listAlertHistory.xhtml?mode=list"/>
+         <!-- we need this here in case we're coming from the alerts list page -->
+         <forward name="remove" path="/rhq/resource/alert/listAlertHistory.xhtml?mode=list"/>
+         <forward name="failure" path="/rhq/resource/alert/listAlertHistory.xhtml?mode=list"/>
+      </action>
+
+      <action path="/alerts/NewFormPrepare"
+              name="NewAlertDefinitionForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.NewDefinitionFormPrepareAction">
+         <set-property property="title" value="New+Alert+Definition"/>
+      </action>
+
+      <action path="/alerts/New"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.NewDefinitionAction"
+              name="NewAlertDefinitionForm"
+              scope="request"
+              input="/alerts/Config.do?mode=new">
+         <forward name="cancel" path="/rhq/resource/alert/listAlertDefinitions.xhtml?mode=listDefinitions"
+                  redirect="true"/>
+         <forward name="reset" path="/alerts/Config.do?mode=new"
+                  redirect="true"/>
+         <forward name="failure" path="/alerts/Config.do?mode=new"/>
+         <forward name="success" path="/alerts/Config.do?mode=viewRoles"/>
+         <forward name="add" path="/alerts/Config.do?mode=new"/>
+         <forward name="remove" path="/alerts/Config.do?mode=new"/>
+      </action>
+
+      <action path="/alerts/EditPropertiesFormPrepare"
+              name="EditAlertDefinitionPropertiesForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.EditDefinitionPropertiesFormPrepareAction">
+         <set-property property="title" value="Edit+Alert+Properties"/>
+      </action>
+
+      <action path="/alerts/EditProperties"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.EditDefinitionPropertiesAction"
+              name="EditAlertDefinitionPropertiesForm"
+              scope="request"
+              input="/alerts/Config.do?mode=editProperties">
+         <forward name="cancel" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
+         <forward name="reset" path="/alerts/Config.do?mode=editProperties" redirect="true"/>
+         <forward name="failure" path="/alerts/Config.do?mode=editProperties"/>
+         <forward name="success" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
+      </action>
+
+      <action path="/alerts/EditConditionsFormPrepare"
+              name="EditAlertDefinitionConditionsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.EditDefinitionConditionsFormPrepareAction">
+         <set-property property="title" value="Edit+Alert+Condition+Set"/>
+      </action>
+
+      <action path="/alerts/EditConditions"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.EditDefinitionConditionsAction"
+              name="EditAlertDefinitionConditionsForm"
+              scope="request"
+              input="/alerts/Config.do?mode=editConditions">
+         <forward name="cancel" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
+         <forward name="reset" path="/alerts/Config.do?mode=editConditions" redirect="true"/>
+         <forward name="success" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
+         <forward name="failure" path="/alerts/Config.do?mode=editConditions"/>
+         <forward name="add" path="/alerts/Config.do?mode=editConditions"/>
+         <forward name="remove" path="/alerts/Config.do?mode=editConditions"/>
+      </action>
+
+      <action path="/alerts/EditControlActionFormPrepare"
+              name="EditAlertDefinitionControlActionForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.EditDefinitionControlActionFormPrepareAction">
+         <set-property property="title" value="Edit+Alert+Definition"/>
+      </action>
+
+      <action path="/alerts/EditControlAction"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.EditDefinitionControlActionAction"
+              name="EditAlertDefinitionControlActionForm"
+              scope="request"
+              input="/alerts/Config.do?mode=editControlAction">
+         <forward name="cancel" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
+         <forward name="reset" path="/alerts/Config.do?mode=editControlAction" redirect="true"/>
+         <forward name="failure" path="/alerts/Config.do?mode=editControlAction"/>
+         <forward name="success" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
+      </action>
+
+      <action path="/alerts/EditSyslogActionFormPrepare"
+              name="EditAlertDefinitionSyslogActionForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.EditDefinitionSyslogActionFormPrepareAction">
+      </action>
+
+      <action path="/alerts/EditSyslogAction"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.EditDefinitionSyslogActionAction"
+              name="EditAlertDefinitionSyslogActionForm"
+              scope="request"
+              input="/alerts/Config.do?mode=editSyslogAction">
+         <forward name="cancel" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
+         <forward name="reset" path="/alerts/Config.do?mode=editSyslogAction" redirect="true"/>
+         <forward name="failure" path="/alerts/Config.do?mode=editSyslogAction"/>
+         <forward name="success" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
+      </action>
+
+
+
+
+      <action path="/alerts/Alerts"
+              forward=".events.alerts.layout">
+      </action>
+
+      <action path="/alerts/config/AddUsers"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddUsersAction"
+              name="AddAlertUsersForm"
+              scope="request"
+              input="/alerts/Config.do?mode=addUsers">
+         <forward name="cancel" path="/alerts/Config.do?mode=viewUsers"
+                  redirect="true"/>
+         <forward name="reset" path="/alerts/Config.do?mode=addUsers"
+                  redirect="true"/>
+         <forward name="add" path="/alerts/Config.do?mode=addUsers"/>
+         <forward name="remove" path="/alerts/Config.do?mode=addUsers"/>
+         <forward name="failure" path="/alerts/Config.do?mode=addUsers"/>
+         <forward name="success" path="/alerts/Config.do?mode=viewUsers"/>
+      </action>
+
+      <action path="/events/config/AddUsersFormPrepare"
+              name="AddAlertUsersForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddUsersFormPrepareAction">
+         <set-property property="title" value="Edit+Alert+Add+Notification"/>
+      </action>
+
+      <action path="/alerts/config/AddRoles"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddRolesAction"
+              name="AddAlertRolesForm"
+              scope="request"
+              input="/alerts/Config.do?mode=addRoles">
+         <forward name="cancel" path="/alerts/Config.do?mode=viewRoles"
+                  redirect="true"/>
+         <forward name="reset" path="/alerts/Config.do?mode=addRoles"
+                  redirect="true"/>
+         <forward name="new" path="/admin/role/RoleAdmin.do?mode=new" redirect="true"/>
+         <forward name="add" path="/alerts/Config.do?mode=addRoles"/>
+         <forward name="remove" path="/alerts/Config.do?mode=addRoles"/>
+         <forward name="failure" path="/alerts/Config.do?mode=addRoles"/>
+         <forward name="success" path="/alerts/Config.do?mode=viewRoles"/>
+      </action>
+
+      <action path="/events/config/AddRolesFormPrepare"
+              name="AddAlertRolesForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddRolesFormPrepareAction">
+         <set-property property="title" value="Edit+Alert+Add+Notification"/>
+      </action>
+
+      <action path="/alerts/config/AddOthers"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddOthersAction"
+              name="AddAlertOthersForm"
+              scope="request"
+              input="/alerts/Config.do?mode=addOthers">
+         <forward name="cancel" path="/alerts/Config.do?mode=viewOthers"
+                  redirect="true"/>
+         <forward name="reset" path="/alerts/Config.do?mode=addOthers"
+                  redirect="true"/>
+         <forward name="failure" path="/alerts/Config.do?mode=addOthers"/>
+         <forward name="success" path="/alerts/Config.do?mode=viewOthers"/>
+      </action>
+
+      <action path="/events/config/AddOthersFormPrepare"
+              name="AddAlertOthersForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddOthersFormPrepareAction">
+         <set-property property="title" value="Edit+Alert+Add+Notification"/>
+      </action>
+
+      <action path="/alerts/AlertsPortal"
+              parameter="mode"
+              input="/alerts/Alerts.do"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.PortalAction"/>
+
+      <action path="/alerts/Config"
+              forward=".events.config.layout">
+      </action>
+
+      <action path="/admin/alerts/Config"
+              forward=".admin.alerts.layout">
+      </action>
+
+
+      <action path="/alerts/ConfigPortal"
+              parameter="mode"
+              input="/alerts/Config.do"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.PortalAction"/>
+
+
+      <!-- END: events actions -->
+
+
+      <!-- ============= STUFF DEFINITELY BEING USED FOR RHQ ============== -->
+
+      <!-- === Resource Inventory Tab === -->
+      <action path="/resource/Inventory"
+              forward=".resource.inventory.layout">
+      </action>
+
+      <action path="/resource/InventoryPortal"
+              parameter="mode"
+              input="/resource/Inventory.do"
+              type="org.rhq.enterprise.gui.legacy.action.resource.inventory.ResourceInventoryPortalAction">
+      </action>
+
+      <action path="/resource/inventory/ViewResource"
+              type="org.rhq.enterprise.gui.legacy.action.resource.inventory.ViewResourceAction">
+         <set-property property="title" value="View+Resource"/>
+      </action>
+
+      <!-- === Resource Monitor>Visibility Tab === -->
+
+      <action path="/resource/common/monitor/Visibility"
+              forward=".resource.common.monitor.visibility.layout">
+      </action>
+
+      <!--TODO - this is the common "visibility" page -->
+      <action path="/resource/common/monitor/VisibilityPortal"
+              parameter="mode"
+              input="/resource/common/monitor/Visibility.do"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.VisibilityPortalAction">
+         <forward name="inventory-jsf" path="/rhq/resource/inventory/view.xhtml" redirect="false"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/ResourceMetricsFormPrepare"
+              name="MetricsDisplayForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ResourceMetricsFormPrepareAction">
+        <set-property property="title" value="View+Metrics"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/MetricDisplayRangeFormPrepare"
+              name="MetricDisplayRangeForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricDisplayRangeFormPrepareAction">
+        <set-property property="workflow" value="visibility/MetricDisplayRange"/>
+        <set-property property="title" value="Edit+Display+Range"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/MetricDisplayRange"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricDisplayRangeAction"
+              name="MetricDisplayRangeForm"
+              scope="request"
+              input="/resource/common/monitor/Visibility.do?mode=editRange">
+        <set-property property="workflow" value="visibility/MetricDisplayRange"/>
+        <forward name="reset" path="/resource/common/monitor/Visibility.do?mode=editRange"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/MetricsControlFormPrepareAction"
+              name="MetricsControlForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsControlFormPrepareAction"/>
+
+      <action path="/resource/common/monitor/visibility/CompareMetricsFormPrepare"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.CompareMetricsFormPrepareAction"
+              name="CompareMetricsForm"
+              scope="request">
+        <set-property property="workflow" value="visibility/MetricDisplayRange"/>
+        <set-property property="title" value="Compare+Group+Metrics"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/ViewMetricMetadata"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ViewMetricMetadataAction"
+              name="MetricMetadataForm"
+              scope="request">
+        <set-property property="title" value="Edit+Metric+Metadata"/>
+        <forward name="success" path="/resource/common/monitor/Visibility.do?mode=metricMetadata"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/CompareMetrics"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.CompareMetricsAction"
+              name="CompareMetricsForm"
+              scope="request"
+              input="/resource/common/monitor/Visibility.do?mode=compareMetrics">
+        <set-property property="workflow" value="visibility/MetricDisplayRange"/>
+        <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange"/>
+        <forward name="success" path="/resource/common/monitor/CompareMetrics.jsp"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/TraitHistoryFormPrepare"
+              name="TraitHistoryForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.TraitHistoryFormPrepareAction">
+        <set-property property="title" value="Trait History"/>
+      </action>
+
+
+      <action path="/resource/common/monitor/visibility/ViewChartFormPrepare"
+              name="ViewChartForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ViewChartFormPrepareAction">
+        <set-property property="workflow" value="visibility/ViewChart"/>
+        <set-property property="title" value="Chart"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/ViewChart"
+              name="ViewChartForm"
+              scope="request"
+              input="/resource/common/monitor/Visibility.do"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ViewChartAction">
+        <set-property property="workflow" value="visibility/ViewChart"/>
+        <!-- path is ignored ... uses returnPath -->
+        <forward name="success" path="/" redirect="true"/>
+        <forward name="redraw" path="/resource/common/monitor/Visibility.do"/>
+        <forward name="failure" path="/resource/common/monitor/Visibility.do"/>
+        <forward name="reset" path="/resource/common/monitor/Visibility.do"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/ViewDesignatedChart"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ViewDesignatedChartAction">
+        <forward name="redraw" path="/resource/common/monitor/Visibility.do"
+                 redirect="true"/>
+      </action>
+      
+      <action path="/resource/common/monitor/visibility/CurrentHealth"
+              name="IndicatorViewsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.CurrentHealthAction"
+              input="/resource/common/monitor/Visibility.do?mode=currentHealth">
+         <set-property property="title" value="View+Current+Health"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/ListChildrenResources"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ListChildrenAction">
+      </action>
+
+      <action path="/resource/common/monitor/visibility/Metrics"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsDisplayAction"
+              name="MetricsDisplayForm"
+              scope="request"
+              input="/resource/common/monitor/Visibility.do?mode=resourceMetrics">
+         <forward name="success" path="/resource/common/monitor/Visibility.do?mode=resourceMetrics"/>
+         <forward name="compare" path="/resource/common/monitor/Visibility.do?mode=resourceMetrics"/>
+         <forward name="chart" path="/resource/common/monitor/Visibility.do?mode=chartMultiMetricSingleResource"
+                  redirect="true"/>
+         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" redirect="true"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/FilterMetrics"
+              name="MetricsFilterForm"
+              scope="request"
+              forward="/resource/common/monitor/Visibility.do?mode=resourceMetrics"/>
+
+      <action path="/resource/common/monitor/visibility/DeployedServicesMetrics"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsDisplayAction"
+              name="MetricsDisplayForm"
+              scope="request"
+              input="/resource/common/monitor/Visibility.do?mode=deployedServices">
+         <forward name="success" path="/resource/common/monitor/Visibility.do?mode=deployedServices"/>
+         <forward name="compare" path="/resource/common/monitor/Visibility.do?mode=compareMetrics"/>
+         <forward name="chart" path="/resource/common/monitor/Visibility.do?mode=chartMultiMetricSingleResource"
+                  redirect="true"/>
+         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" redirect="true"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/ServerInternalServicesMetrics"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsDisplayAction"
+              name="MetricsDisplayForm"
+              scope="request"
+              input="/resource/common/monitor/Visibility.do?mode=internalServices">
+         <forward name="success" path="/resource/common/monitor/Visibility.do?mode=internalServices"/>
+         <forward name="compare" path="/resource/common/monitor/Visibility.do?mode=compareMetrics"/>
+         <forward name="chart" path="/resource/common/monitor/Visibility.do?mode=chartMultiMetricSingleResource"
+                  redirect="true"/>
+         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" redirect="true"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/PerformanceFormPrepare"
+              name="PerformanceForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.PerformanceFormPrepareAction">
+         <set-property property="title" value="View+Performance"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/Performance"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.PerformanceAction"
+              name="PerformanceForm"
+              scope="request"
+              input="/resource/common/monitor/Visibility.do?mode=performance">
+         <forward name="success" path="/resource/common/monitor/Visibility.do?mode=performance"/>
+         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" redirect="true"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/SelectResources"
+              name="ProblemMetricsDisplayForm"
+              scope="request"
+              forward="/Resource.do"/>
+
+      <action path="/resource/common/monitor/visibility/ProblemMetricsDisplay"
+              name="ProblemMetricsDisplayForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ProblemMetricsDisplayAction">
+      </action>
+
+      <action path="/resource/common/monitor/visibility/IndicatorCharts"
+              name="IndicatorViewsForm"
+              scope="request"
+              parameter="action"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.IndicatorChartsAction">
+         <forward name="success" path="/resource/common/monitor/visibility/DashCharts.jsp"/>
+         <forward name="failure" path="/Dashboard.do" redirect="true"/>
+         <forward name="currentHealth" path="/resource/common/monitor/Visibility.do?mode=currentHealth"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/AllIndicators"
+              name="IndicatorViewsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.AllIndicatorsAction">
+         <forward name="success" path="/resource/common/monitor/visibility/AllIndicators.jsp"/>
+         <forward name="failure" path="/Dashboard.do" redirect="true"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/Availability"
+              name="IndicatorViewsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.AvailabilityAction">
+      </action>
+
+      <action path="/resource/common/monitor/visibility/Timeline"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.TimelineAction">
+      </action>
+
+      <action path="/resource/common/monitor/visibility/EventDetails"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.EventDetailsAction">
+         <forward name="success" path="/common/AJAXResponse.jsp"/>
+      </action>
+
+      <action path="/resource/common/monitor/visibility/MetricsControl"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsControlAction"
+              name="MetricsControlForm"
+              scope="request">
+         <set-property property="workflow" value="monitor/range"/>
+         <forward name="success" path="/Resource.do?mode=currentHealth"/>
+         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange"/>
+      </action>
+
+      <!-- === Resource Monitor>Configure Tab === -->
+      <action path="/resource/common/monitor/Config"
+              forward=".resource.common.monitor.config.layout">
+      </action>
+
+      <action path="/admin/common/monitor/Config"
+              forward=".admin.common.monitor.config.layout">
+      </action>
+
+      <action path="/resource/common/monitor/ConfigPortal"
+              parameter="mode"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.ConfigPortalAction"
+              input="/resource/common/monitor/Config.do?mode=configure">
+      </action>
+
+      <action path="/resource/common/monitor/config/ConfigMetricsFormPrepare"
+              name="MonitoringConfigForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config.ConfigMetricsFormPrepareAction">
+         <set-property property="title" value="Configure+Visibility"/>
+      </action>
+
+      <action path="/resource/common/monitor/config/ConfigMetrics"
+              name="MonitoringConfigForm"
+              scope="request"
+              input="/resource/common/monitor/Config.do?mode=configure"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config.ConfigMetricsAction">
+         <forward name="remove" path="/resource/common/monitor/Config.do?mode=configure"/>
+         <forward name="failure" path="/resource/common/monitor/Config.do?mode=configure"/>
+         <forward name="success" path="/resource/common/monitor/Config.do?mode=configure"/>
+      </action>
+
+   </action-mappings>
+
+   <!-- ===================================== Controller Configuration -->
+   <controller
+         memFileSize="100K"
+         maxFileSize="500M"
+         processorClass="org.rhq.enterprise.gui.legacy.action.BaseRequestProcessor"
+         inputForward="false"/>
+
+   <!-- ================================ Message Resources Definitions -->
+   <message-resources parameter="MockupResources" key="mockup"/>
+   <message-resources parameter="help" key="help"/>
+   <message-resources parameter="ApplicationResources" null="false"/>
+
+   <!-- ========== Tiles plugin ===================  -->
+
+   <plug-in className="org.apache.struts.tiles.TilesPlugin">
+      <set-property property="definitions-config"
+                    value="/WEB-INF/tiles/component-def.xml,
+                         /WEB-INF/tiles/portal-def.xml,
+                         /WEB-INF/tiles/admin-def.xml,
+                         /WEB-INF/tiles/dashboard-def.xml,
+                         /WEB-INF/tiles/resource-common-def.xml,
+                         /WEB-INF/tiles/resource-group-def.xml,
+                         /WEB-INF/tiles/resource-hub-def.xml,
+                         /WEB-INF/tiles/resource-platform-def.xml,
+                         /WEB-INF/tiles/resource-server-def.xml,
+                         /WEB-INF/tiles/resource-service-def.xml,
+                         /WEB-INF/tiles/resource-application-def.xml,
+                         /WEB-INF/tiles/resource-autogroup-def.xml,
+                         /WEB-INF/tiles/events-def.xml,
+                         /WEB-INF/tiles/resource-software-def.xml,
+                         /WEB-INF/tiles/resource-def.xml"/>
+
+      <set-property property="definitions-debug" value="0"/>
+      <set-property property="definitions-parser-details" value="0"/>
+      <set-property property="definitions-parser-validate" value="false"/>
+   </plug-in>
+
+   <plug-in className="net.sf.navigator.menu.MenuPlugIn"/>
+
+   <plug-in className="org.apache.struts.validator.ValidatorPlugIn">
+      <set-property
+            property="pathnames"
+            value="/WEB-INF/validation/validator-rules.xml,/WEB-INF/validation/validation.xml"/>
+   </plug-in>
+
+</struts-config>

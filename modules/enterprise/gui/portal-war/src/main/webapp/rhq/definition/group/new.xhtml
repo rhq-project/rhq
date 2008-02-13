@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/definition/layout/main.xhtml">
+
+   <ui:param name="pageTitle"
+             value="Create New Group Definition"/>
+   <ui:param name="selectedTabName" value="Inventory"/>
+   <ui:define name="content">
+
+      <h:form>
+
+         <rich:panel styleClass="BlockContent">
+
+            <f:facet name="header" styleClass="BlockTitle">
+               General Properties
+            </f:facet>
+
+            <h:panelGrid columns="3" styleClass="general-props-table" columnClasses="general-prop-cell">
+            
+                  <h:panelGroup styleClass="BlockLabel">Name
+                     <h:panelGroup styleClass="required-marker-text"> *</h:panelGroup>:
+                  </h:panelGroup>
+                  <h:inputText id="name" value="#{NewGroupDefinitionGeneralPropertiesUIBean.name}" required="true" size="60" maxlength="100">
+                     <f:validateLength maximum="100"/>
+                  </h:inputText>
+                  <h:message for="name" showDetail="true" errorClass="WarnBlock"/>
+               
+                  <h:panelGroup styleClass="BlockLabel">Description:</h:panelGroup>
+                  <h:inputText id="description" value="#{NewGroupDefinitionGeneralPropertiesUIBean.description}" size="60" maxlength="1000">
+                     <f:validateLength maximum="1000"/>
+                  </h:inputText>
+                  <h:message for="description" showDetail="true" errorClass="WarnBlock"/>
+ 
+                  <h:panelGroup styleClass="BlockLabel">Recursive:</h:panelGroup>
+                  <h:selectBooleanCheckbox id="recursive" value="#{NewGroupDefinitionGeneralPropertiesUIBean.recursive}" />
+
+            </h:panelGrid>
+
+         </rich:panel>
+	   
+	   <h:panelGroup layout="block" styleClass="BlockContent">
+          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
+             <h:commandButton type="submit" action="#{NewGroupDefinitionGeneralPropertiesUIBean.create}" value="Create"/>
+             <h:commandButton type="submit" action="#{NewGroupDefinitionGeneralPropertiesUIBean.cancel}" immediate="true" value="Cancel"/>
+          </h:panelGrid>
+       </h:panelGroup>
+	
+	</h:form>
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

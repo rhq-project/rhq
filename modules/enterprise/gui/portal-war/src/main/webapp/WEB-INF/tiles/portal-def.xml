@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!DOCTYPE tiles-definitions PUBLIC
+     "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN"
+     "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+
+<tiles-definitions>
+    
+    <definition name=".main.layout" 
+                path="/portal/MainLayout.jsp">
+                
+        <put name="title"   value="EAM" />
+        <put name="head"    value="/common/Head.jsp" />
+        <put name="header"  value="/common/Header.jsp" />     
+        <put name="headerSmall"  value="/common/HeaderSmall.jsp" />   
+        <put name="footer"  value="/common/Footer.jsp" />
+        <put name="body"    value="/portal/ColumnsLayout.jsp" />
+        <put name="breadcrumb" value="/common/components/Breadcrumb.jsp"/>
+    </definition>   
+    
+    <definition name=".portal.dash.layout" 
+                extends=".main.layout"
+                controllerUrl="/DashboardController.do" >        
+        <put name="breadcrumb" value="/portal/DashboardHeader.jsp" />
+        <put name="body"     value="/portal/DashboardLayout.jsp" />
+    </definition>
+
+    <definition name=".portal.start.layout"
+                extends=".main.layout"
+                controllerUrl="/StartPageController.do" >        
+        <put name="breadcrumb" value="/portal/StartPageHeader.jsp" />
+        <put name="body"     value="/portal/StartPageLayout.jsp" />
+    </definition>
+
+    <definition name=".admin.home.layout"
+                extends=".main.layout"
+                controllerUrl="/AdminController.do" > 
+        <put name="breadcrumb" value="/admin/AdminHeader.jsp" />
+    </definition>
+
+    <!-- JBMAN License Manager -->
+    <definition name=".admin.license.layout"
+                extends=".admin.home.layout"
+                controllerUrl="/admin/license/LicensePortal.do">
+        <put name="location" value="header.license" />
+    </definition>
+
+
+    <definition name=".admin.role.layout"
+                extends=".admin.home.layout"
+                controllerUrl="/admin/role/RoleAdminPortal.do"> 
+        <put name="location" value="header.roles" />
+    </definition>
+    
+    <definition name=".admin.user.layout" 
+                extends=".admin.home.layout"
+                controllerUrl="/admin/user/UserAdminPortal.do">
+        <put name="location" value="header.users" />
+    </definition>
+
+    <definition name=".admin.config.layout" 
+                extends=".admin.home.layout"
+                controllerUrl="/admin/config/ConfigPortal.do">
+        <put name="location" value="admin.home.ServerConfig" />
+    </definition>
+
+    <definition name=".admin.config.monitor.defaults.layout"
+                extends=".admin.home.layout"
+                controllerUrl="/admin/config/EditResourceTypeDefaults.do">
+        <put name="location" value="admin.home.ResourceTemplates" />
+        <put name="section" value="common"/>
+    </definition>
+
+    <definition name=".admin.layout" 
+                extends=".admin.home.layout"
+                controllerUrl="/admin/home/AdminHomePortal.do" />
+    
+    <definition name=".admin.alerts.layout" 
+                extends=".admin.home.layout"
+                controllerUrl="/alerts/ConfigPortal.do">
+        <put name="location" value="admin.home.ResourceAlerts" />
+    </definition>
+
+    <definition name=".resource.group.control.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/group/GroupController.do" >        
+        <put name="body" value="/portal/ResourceLayout.jsp" />
+    </definition>
+
+    <definition name=".resource.hub.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/hub/ResourceHubPortal.do">
+        <put name="breadcrumb" value="/resource/hub/BrowseResourcesHeader.jsp"/>
+    </definition>
+
+    <definition name=".group.hub.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/hub/GroupHubPortal.do">
+        <put name="breadcrumb" value="/resource/hub/BrowseGroupsHeader.jsp"/>
+    </definition>
+
+    <definition name=".navigation.hub.layout" 
+                    extends=".main.layout"
+                    controllerUrl="/navigation/hub/NavigationHubPortal.do">
+            <put name="breadcrumb" value="/resource/hub/BrowseResourcesHeader.jsp"/>
+    </definition>
+
+    <definition name=".resource.common.monitor.visibility.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/common/monitor/VisibilityPortal.do">
+    </definition>
+    
+    <definition name=".resource.platform.inventory.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/platform/InventoryPortal.do" />
+    
+    <definition name=".resource.platform.autodiscovery.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/platform/AutoDiscoveryPortal.do" />
+
+    <definition name=".resource.platform.monitor.visibility.layout"
+                extends=".main.layout"
+                controllerUrl="/resource/platform/monitor/VisibilityPortal.do"/>
+
+    
+    <!-- layout for platform monitoring config -->
+    <definition name=".resource.platform.monitor.config.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/platform/monitor/ConfigPortal.do" />
+
+    <definition name=".admin.platform.monitor.config.layout" 
+                extends=".admin.home.layout"
+                controllerUrl="/resource/platform/monitor/ConfigPortal.do" >
+        <put name="location" value="admin.home.ResourceTemplates" />
+    </definition>
+                    
+    <definition name=".resource.server.inventory.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/server/InventoryPortal.do" />
+				
+    <definition name=".resource.monitor.visibility.layout"
+                extends=".main.layout"
+                controllerUrl="/resource/common/monitor/VisibilityPortal.do" />
+
+    <definition name=".resource.common.monitor.config.layout"
+                extends=".main.layout"
+                controllerUrl="/resource/common/monitor/ConfigPortal.do" />
+
+    <definition name=".admin.common.monitor.config.layout"
+                extends=".admin.home.layout"
+                controllerUrl="/resource/common/monitor/ConfigPortal.do">
+        <put name="location" value="admin.home.ResourceTemplates" />
+    </definition>
+
+    <definition name=".resource.service.inventory.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/service/InventoryPortal.do" />
+				
+    <definition name=".resource.application.inventory.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/application/InventoryPortal.do" />
+				
+    <definition name=".resource.application.monitor.visibility.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/application/monitor/VisibilityPortal.do" />
+
+    <definition name=".resource.application.monitor.config.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/application/monitor/ConfigPortal.do" />
+                                
+    <definition name=".resource.group.inventory.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/group/InventoryPortal.do" />
+
+    <definition name=".resource.group.monitor.visibility.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/group/monitor/VisibilityPortal.do" />
+    
+    <!-- layout for group monitoring config -->
+    <definition name=".resource.group.monitor.config.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/group/monitor/ConfigPortal.do" />
+
+    <definition name=".resource.autogroup.monitor.visibility.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/autogroup/monitor/VisibilityPortal.do" />
+    <definition name=".resource.autogroup.monitor.config.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/autogroup/monitor/ConfigPortal.do" />
+
+    <!-- GH: layout for software -->
+    <definition name=".resource.software.inventory.layout"
+                extends=".main.layout"
+                controllerUrl="/resource/software/inventory/ViewPortal.do">
+        <put name="breadcrumb" value="/resource/software/list/SoftwareHeader.jsp"/>
+    </definition>
+
+    <definition name=".resource.software.config.layout"
+                extends=".main.layout"
+                controllerUrl="/resource/software/ConfigPortal.do" />
+
+    
+    <definition name=".resource.software.detail.layout"
+                extends=".main.layout"
+                controllerUrl="/resource/software/detail/ViewPortal.do">
+    </definition>
+
+    <!-- JBNADM-536 -->
+    <definition name=".resource.server.software.layout"
+                extends=".main.layout"
+                controllerUrl="/software/SoftwarePortal.do" />
+
+    <!-- JBNADM-573 -->
+    <definition name=".resource.server.installPreview.layout"
+                extends=".main.layout"
+                controllerUrl="/software/InstallPreviewPortal.do" />
+
+    <!--JBNADM-573-->
+    <definition name=".resource.server.installPatch.layout"
+                extends=".main.layout"
+                controllerUrl="/software/InstallPatchPortal.do" />
+
+    <!--JBNADM-587-->
+     <definition name=".resource.server.auditTrail.layout"
+                extends=".main.layout"
+                controllerUrl="/software/AuditTrailPortal.do" />
+
+   <!--JBNADM-588-->
+   <definition name=".resource.server.softwareStatus.layout"
+                extends=".main.layout"
+                controllerUrl="/software/SoftwareStatusPortal.do" />
+    
+    <!-- main layout definition for server control -->
+    <definition name=".resource.server.control.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/server/ServerController.do" />
+
+    <definition name=".resource.service.control.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/service/ServerController.do" />
+
+	<definition name=".resource.service.manage.layout.no.controller" 
+                extends=".main.layout" />	
+
+   <definition name=".resource.server.manage.layout.no.controller" 
+                extends=".main.layout" />								
+
+    <!-- layout for service monitoring config -->
+    <definition name=".resource.service.monitor.config.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/service/monitor/ConfigPortal.do" />
+
+    <definition name=".admin.service.monitor.config.layout" 
+                extends=".admin.home.layout"
+                controllerUrl="/resource/service/monitor/ConfigPortal.do" >
+        <put name="location" value="admin.home.ResourceTemplates" />
+    </definition>
+                                
+    <definition name=".events.alerts.layout" 
+                extends=".main.layout"
+                controllerUrl="/alerts/AlertsPortal.do" />
+    
+    <definition name=".events.config.layout" 
+                extends=".main.layout"
+                controllerUrl="/alerts/ConfigPortal.do" />
+
+    <definition name=".resource.service.monitor.visibility.layout" 
+                extends=".main.layout"
+                controllerUrl="/resource/service/monitor/VisibilityPortal.do" />
+    
+    <!--dashboard admin layouts-->           
+    <definition name=".dashboard.admin.layout" 
+                extends=".main.layout"
+                controllerUrl="/DashboardAdminController.do">
+      <put name="breadcrumb"    value="/portlet/PortletHeader.jsp" />
+    </definition>
+    <!---->
+
+    <!-- ===== new stuff for RHQ ===== -->
+
+    <definition name=".resource.inventory.layout"
+                extends=".main.layout"
+                controllerUrl="/resource/InventoryPortal.do" />
+   
+</tiles-definitions>

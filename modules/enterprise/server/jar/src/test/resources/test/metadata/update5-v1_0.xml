@@ -1,0 +1,83 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+  
+   <platform name="myPlatform5">
+      <server name="testServer1">
+         <plugin-configuration>
+            <c:group name="connection" displayName="Connection Info">
+               <c:simple-property name="namingURL"
+                  displayName="Naming Provider URL"
+                  description="the JNP URL with which to connect to the JBoss Application Server instance" />
+               <c:simple-property name="principal" required="false" />
+               <c:simple-property name="credentials" required="false" />
+               <c:simple-property name="configurationPath"
+                  displayName="Configuration Path" type="directory"
+                  description="The path to the configuration directory under which this instance operates." />
+            </c:group>
+            <c:group name="control" displayName="Controls system">
+               <c:simple-property name="programScript"
+                  displayName="Program Script" type="file"
+                  description="the full path to the script or executable used to start this instance" />
+               <c:simple-property name="configurationSet"
+                  displayName="Configuration Set"
+                  description="the name of the server configuration, e.g. minimal, default, all"
+                  required="false" />
+               <c:simple-property name="bindingAddress"
+                  displayName="Binding Address"
+                  description="the host or IP address used by all JBoss services as the binding address"
+                  required="false" />
+            </c:group>
+            <c:group name="tuning" displayName="Controls system">
+               <c:simple-property name="rampUpTime" type="file"
+                  description="the full path to the script or executable used to start this instance" />
+               <c:simple-property name="steadyTime"
+                  displayName="Configuration Set"
+                  description="the name of the server configuration, e.g. minimal, default, all"
+                  required="false" />
+               <c:simple-property name="rampDownTime"
+                  displayName="Binding Address"
+                  description="the host or IP address used by all JBoss services as the binding address"
+                  readOnly="true"
+                  summary="false"
+                  required="false" />
+            </c:group>
+         </plugin-configuration>
+         
+         <!--
+           -  Now Process scans  
+           -->
+         <process-scan name="JBoss4" query="foo" />
+         <process-scan name="JBoss5" query="bar" />
+         <process-scan name="JBoss6" query="baz" />
+         
+         
+      
+      
+         
+      <resource-configuration>
+         <c:simple-property name="threadPoolSize" type="integer" displayName="Thread Pool Size" />
+         <c:simple-property name="jnpPort" type="integer" displayName="Port to access JMX" >
+            <c:property-options>
+               <c:option name="option1" value="1"/>
+               <c:option name="option2" value="2"/>
+               <c:option name="option3" value="3"/>
+            </c:property-options>
+         </c:simple-property>
+         <c:simple-property name="secureJnpPort" type="integer" displayName="Port to access JMX over ssl" >
+            <c:constraint>
+               <c:integer-constraint minimum="0"/>
+            </c:constraint>
+             <c:constraint>
+               <c:integer-constraint maximum="5"/>
+               <c:float-constraint minimum="3.0"/>
+               <c:regex-constraint expression="foo"/>
+            </c:constraint>
+         </c:simple-property>
+      </resource-configuration>
+         
+      </server>
+   </platform>
+</plugin>
+   

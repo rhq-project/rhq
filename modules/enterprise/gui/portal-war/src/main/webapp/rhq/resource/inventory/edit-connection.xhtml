@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main.xhtml">
+
+   <ui:param name="pageTitle"
+             value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Edit Connection Properties"/>
+   <ui:param name="selectedTabName" value="Inventory"/>
+   <ui:define name="content">
+
+      <rich:panel styleClass="BlockContent">
+
+         <f:facet name="header" styleClass="BlockTitle">
+            Connection Properties
+         </f:facet>
+
+         <h:form id="editConnectionPropertiesForm" onsubmit="prepareInputsForSubmission(this)">
+
+            <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+
+            <onc:config configurationDefinition="#{EditConnectionPropertiesUIBean.configurationDefinition}"
+                        configuration="#{EditConnectionPropertiesUIBean.configuration}"
+                        accessMapActionExpression="#{EditConnectionPropertiesUIBean.accessMap}"
+                        addNewMapActionExpression="#{EditConnectionPropertiesUIBean.addNewMap}"
+                        nullConfigurationDefinitionMessage="#{EditConnectionPropertiesUIBean.nullConfigurationDefinitionMessage}"
+                        nullConfigurationMessage="#{EditConnectionPropertiesUIBean.nullConfigurationMessage}"
+                        prevalidate="true"/>
+
+            <h:panelGroup layout="block" styleClass="BlockContent">
+               <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
+                  <h:commandButton type="submit" action="#{EditConnectionPropertiesUIBean.update}" value="OK"/>
+                  <h:commandButton type="submit" action="#{EditConnectionPropertiesUIBean.cancel}" immediate="true" value="Cancel"/>
+               </h:panelGrid>
+            </h:panelGroup>
+            
+         </h:form>
+
+      </rich:panel>
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

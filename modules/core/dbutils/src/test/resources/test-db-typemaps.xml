@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<typemaps>
+   <typemap type="FOO">
+      <map db="java"        type="JAVAFOO" />
+      <map db="postgresql7" type="POSTGRES7FOO" />
+      <map db="postgresql8" type="POSTGRES8FOO" />
+      <map db="oracle"      type="ORACLEFOO" />
+   </typemap>
+</typemaps>

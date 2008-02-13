@@ -1,0 +1,105 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function">
+
+THIS TEXT WILL BE REMOVED.
+
+The template for the summary section of all Resource Group pages (i.e. the Monitor/Inventory/etc. tabbed pages).
+NOTE: This template is leveraged by both Facelets pages and JSP/Tiles pages.
+
+REQUEST PARAMETERS:
+groupId - the group id of the Group being accessed
+
+<ui:composition>
+<h:panelGrid columns="2" width="100%" style="padding: 3px;">
+
+   <h:panelGroup layout="block" styleClass="summary-content">
+
+      <!-- general properties (type, version, etc.) -->
+      <h:panelGrid columns="2" styleClass="summary-props-table" style="" columnClasses="summary-prop-cell">
+         <h:panelGroup layout="block">
+            <h:outputText value="Type: " styleClass="BoldText"/>
+            <h:outputText value="#{ResourceGroupUIBean.resourceType.name}
+               (#{ResourceGroupUIBean.resourceType.category.displayName})" rendered="#{!empty ResourceGroupUIBean.resourceType}"/>
+            <h:outputText value="Mixed Types" style="font-style: italic" rendered="#{empty ResourceGroupUIBean.resourceType}"/>
+         </h:panelGroup>
+
+         <h:panelGroup layout="block">
+            <h:outputText value="Description: " styleClass="BoldText"/>
+            <h:outputText value="#{ResourceGroupUIBean.description}" rendered="#{!empty ResourceGroupUIBean.description}"/>
+            <h:outputText value="none" style="font-style: italic" rendered="#{empty ResourceGroupUIBean.description}"/>
+         </h:panelGroup>
+
+         <h:panelGroup layout="block">
+            <h:outputText value="Resource count: " styleClass="BoldText"/>
+            <h:outputText value="#{ResourceGroupUIBean.groupCount}"/>
+         </h:panelGroup>
+
+      </h:panelGrid>
+
+      <!-- spacer -->
+      <h:panelGroup layout="block" style="height: 13px"/>
+
+   </h:panelGroup>
+
+
+   <ui:remove><!-- the blue box at the top right --></ui:remove>
+   <h:panelGroup layout="block" styleClass="LinkBox">
+
+      <h:panelGrid columns="1" columnClasses="LinkBoxCell">
+         <h:panelGroup layout="block">
+            <h:outputText value="Availability: " styleClass="BoldText"/>
+            <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up"
+                            rendered="#{ResourceGroupUIBean.availability == 1}"/>
+            <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down"
+                            rendered="#{ResourceGroupUIBean.availability == 0}"/>
+            <h:graphicImage value="/images/icon_available_yellow.png" alt="Mixed" title="Mixed"
+                            rendered="#{ResourceGroupUIBean.availability gt 0 and ResourceGroupUIBean.availability lt 1}"/>
+            <h:graphicImage value="/images/icon_available_grey.png" alt="Unknown" title="Unknown"
+                            rendered="#{ResourceGroupUIBean.availability == null}"/>
+         </h:panelGroup>
+
+         <h:outputLink rendered="#{ResourceGroupUIBean.favorite}" value="/resource/common/QuickFavorites.do"
+                       styleClass="PageTitleSmallText">
+            <f:param name="groupId" value="#{ResourceGroupUIBean.groupId}"/>
+            <f:param name="mode" value="remove"/>
+            <h:outputText value="&nbsp;Remove from Favorites"/>
+            <h:graphicImage value="/images/title_arrow.gif" width="11" height="9"/>
+         </h:outputLink>
+
+         <ui:remove><!-- TODO change rendered to be "!" when favorite groups is implemented --></ui:remove>
+         <h:outputLink rendered="#{ResourceGroupUIBean.favorite}" value="/resource/common/QuickFavorites.do"
+                       styleClass="PageTitleSmallText">
+            <f:param name="groupId" value="#{ResourceGroupUIBean.groupId}"/>
+            <f:param name="mode" value="add"/>
+            <h:outputText value="&nbsp;Add to Favorites"/>
+            <h:graphicImage value="/images/title_arrow.gif" width="11" height="9"/>
+         </h:outputLink>
+
+         <h:outputLink value="/resource/group/Inventory.do?mode=new"
+                       styleClass="PageTitleSmallText">
+            <h:outputText value="New Group"/>
+            <h:graphicImage value="/images/title_arrow.gif" width="11" height="9"/>
+         </h:outputLink>
+      </h:panelGrid>
+      
+   </h:panelGroup>
+
+</h:panelGrid>
+
+</ui:composition>
+
+THIS TEXT WILL BE REMOVED AS WELL.
+
+</html>

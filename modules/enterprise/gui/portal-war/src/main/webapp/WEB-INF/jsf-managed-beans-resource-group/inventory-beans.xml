@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <!-- /rhq/group/** -->
+
+   <managed-bean>
+      <managed-bean-name>ResourceGroupUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ResourceGroupUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/group/inventory/view.xhtml -->
+   
+   <managed-bean>
+      <managed-bean-name>ListResourceGroupMembersUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ListResourceGroupMembersUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>ViewGroupConnectionPropertiesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertiesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>ViewGroupConnectionPropertyDetailsHeaderUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyDetailsHeaderUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>ViewGroupConnectionPropertyHistoryUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyHistoryUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>ViewGroupConnectionPropertyDetailsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyDetailsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+ 
+   <managed-bean>
+      <managed-bean-name>DeleteResourcesFromGroupUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.group.DeleteResourcesFromGroupUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/group/inventory/edit-general.xhtml --> 
+   <managed-bean>
+      <managed-bean-name>EditGroupGeneralPropertiesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.group.EditGroupGeneralPropertiesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+ 
+   <!-- /rhq/group/inventory/edit-connection.xhtml -->
+
+   <managed-bean>
+      <managed-bean-name>EditGroupConnectionPropertiesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.group.EditGroupConnectionPropertiesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+</faces-config>
+      

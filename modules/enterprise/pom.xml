@@ -1,0 +1,90 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-parent</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-enterprise-parent</artifactId>
+  <packaging>pom</packaging>
+
+  <name>RHQ Enterprise Modules</name>
+  <description>parent POM for modules comprising the JON enterprise edition</description>
+
+  <scm>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/</connection>
+    <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>modules/enterprise/</scm.module.path>
+  </properties>
+
+  <profiles>
+
+    <profile>
+      <id>default</id>
+      <!-- everything except server/container -->
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <modules>
+        <module>comm</module>
+        <module>agent</module>
+        <module>server/jar</module>
+        <module>server/safe-invoker</module>
+        <module>server/sars</module>
+        <module>gui</module>
+        <module>server/plugins</module>
+        <module>server/ear</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>enterprise</id>
+      <activation>
+        <property>
+          <name>enterprise</name>
+        </property>
+      </activation>
+      <modules>
+        <module>comm</module>
+        <module>agent</module>
+        <module>server/jar</module>
+        <module>server/safe-invoker</module>
+        <module>server/sars</module>
+        <module>gui</module>
+        <module>server/plugins</module>
+        <module>server/ear</module>
+        <module>server/container</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>all</id>
+      <activation>
+        <property>
+          <name>all</name>
+        </property>
+      </activation>
+      <modules>
+        <module>comm</module>
+        <module>agent</module>
+        <module>server/jar</module>
+        <module>server/safe-invoker</module>
+        <module>server/sars</module>
+        <module>gui</module>
+        <module>server/plugins</module>
+        <module>server/ear</module>
+        <module>server/container</module>
+      </modules>
+    </profile>
+
+  </profiles>
+
+</project>

@@ -1,0 +1,166 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+      
+<ui:composition template="/rhq/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="Package Version '#{PackageVersionDetailsUIBean.packageVersion.displayName}'"/>
+   <ui:param name="item" value="#{PackageVersionDetailsUIBean.packageVersion}" />
+   <ui:param name="id" value="${param.id}" />
+   
+   <ui:define name="breadcrumbs">
+      <h:outputLink value="packageVersion.xhtml">
+         #{item.displayName}
+         <f:param name="id" value="#{item.id}" />
+      </h:outputLink>
+   </ui:define>
+   
+   <ui:define name="body">
+   
+   <br/>
+   <h:messages showSummary="true"
+               showDetail="true"
+               infoClass="InfoBlock"
+               warnClass="WarnBlock"
+               errorClass="ErrorBlock"
+               fatalClass="FatalBlock"
+               globalOnly="true"
+               layout="table"
+               width="100%"/>
+
+      <h:form id="channelDetailsForm">
+         <input type="hidden" name="id" value="${param.id}"/>
+            
+         <rich:panel>
+            <f:facet name="header">Details</f:facet>
+            <table>
+               <tr>
+                  <td align="right"><b>Package Type Name:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.packageTypeName}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Package Category:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.packageCategory}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Package Name:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.packageName}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Package Classification:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.packageClassification}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Name:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.displayName}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Version:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.displayVersion}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Architecture:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.architectureName}" />
+                  </td>
+               </tr>               
+               <tr>
+                  <td align="right"><b>Short Description:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.shortDescription}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Long Description:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.longDescription}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>File Name:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.fileName}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>File Size:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.fileSize}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>MD5:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.md5}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>SHA256:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.sha256}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>File Created Date:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.fileCreatedDate}">
+                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                     </h:outputText>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>License Name:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.licenseName}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>License Version:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.licenseVersion}" />
+                  </td>
+               </tr>               
+               <tr>
+                  <td align="right"><b>Is Package Content Downloaded?:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.packageBitsAvailable}" />
+                  </td>
+               </tr>               
+               <tr>
+                  <td align="right"><b>Is Package Content Stored in Database?:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{item.packageBitsInDatabase}" />
+                  </td>
+               </tr>               
+            </table>
+         </rich:panel>
+
+      </h:form>
+
+   </ui:define>
+</ui:composition>
+
+</html>

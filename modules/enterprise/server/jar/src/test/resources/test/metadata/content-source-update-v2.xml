@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="TestPlugin" 
+        xmlns="urn:xmlns:rhq-serverplugin.content"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <!-- #1 -->
+   <contentSourceType name="testContentSourceType1"
+                      displayName="displayName1"
+                      description="description1"
+                      lazyLoad="false"
+                      apiClass="org.abc.ApiClass1">
+
+      <configuration>
+         <c:simple-property name="prop1" type="directory" required="true" />
+      </configuration>
+
+   </contentSourceType>
+
+   <!-- missing #2 -->
+
+   <!-- #3 -->
+   <contentSourceType name="testContentSourceType3"
+                      displayName="displayName3"
+                      description="description3"
+                      lazyLoad="false"
+                      apiClass="org.abc.ApiClass3">
+
+      <configuration>
+         <c:simple-property name="prop3" type="string" required="true" />
+      </configuration>
+
+   </contentSourceType>
+
+   <!-- #4.2 -->
+   <contentSourceType name="testContentSourceType4"
+                      displayName="displayName4changed"
+                      description="description4changed"
+                      lazyLoad="false"
+                      apiClass="org.abc.ApiClass4changed">
+
+      <configuration>
+         <c:simple-property name="prop4_1" type="integer" required="false" />
+         <c:simple-property name="prop4_2" type="boolean" required="false" />
+      </configuration>
+
+   </contentSourceType>
+
+</plugin>

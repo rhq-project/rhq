@@ -1,0 +1,48 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+  
+   <platform name="myPlatform7">
+         
+      <resource-configuration>
+         <!--  map1 goes away -->
+         
+         <!-- map2 stays as is  -->
+         <c:map-property name="map2" required="false">
+         </c:map-property>
+         
+         <!--  map3 changes required status -->
+         <c:map-property name="map3" required="false">
+         </c:map-property>
+         
+         <!-- map4  changes some things-->
+         <c:map-property name="map4">
+            <c:map-property name="map4:2+">
+               <c:map-property name="map4:2:3">
+                  <c:list-property name="list">
+                     <c:description>The Simpsons</c:description>
+                  </c:list-property>
+                  <c:simple-property name="simple2">
+                     <c:description>The movie</c:description>
+                  </c:simple-property>
+               </c:map-property>
+            </c:map-property>
+         </c:map-property>
+         
+         <!-- trick one: map1 used to be a map-property in v1 -->
+         <c:simple-property name="map1">
+         </c:simple-property>
+         
+         <!--  description of included simple prop changed -->
+         <c:map-property name="map5">
+            <c:simple-property name="hugo">
+               <c:description>bar</c:description>
+            </c:simple-property>
+         </c:map-property>
+         
+      </resource-configuration>
+         
+   </platform>
+</plugin>
+   

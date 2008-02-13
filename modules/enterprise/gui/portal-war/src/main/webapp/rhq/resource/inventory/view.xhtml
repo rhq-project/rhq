@@ -1,0 +1,827 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main.xhtml">
+
+<ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Inventory Data"/>
+<ui:param name="selectedTabName" value="Inventory"/>
+
+<ui:define name="content">
+
+<!-- =================== GENERAL PROPERTIES =================== -->
+<rich:panel styleClass="BlockContent">
+
+   <f:facet name="header" styleClass="BlockTitle">
+      General Properties
+   </f:facet>
+
+   <h:panelGrid columns="2" styleClass="general-props-table" columnClasses="general-prop-cell">
+      <h:panelGroup layout="block">
+         <b>Name: </b> #{ResourceUIBean.name}
+      </h:panelGroup>
+
+      <rich:spacer/>
+
+      <h:panelGroup layout="block">
+         <b>Type: </b> #{ResourceUIBean.resourceType.name} (#{ResourceUIBean.resourceType.plugin})
+      </h:panelGroup>
+
+      <h:panelGroup layout="block">
+         <b>Date Created: </b>
+         <h:outputText value="#{ResourceUIBean.ctime}">
+            <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+         </h:outputText>
+      </h:panelGroup>
+
+      <h:panelGroup layout="block">
+         <h:outputText value="Version: " styleClass="BoldText"/>
+         <h:outputText value="#{ResourceUIBean.version}" rendered="#{!empty ResourceUIBean.version}"/>
+         <h:outputText value="none" style="font-style: italic" rendered="#{empty ResourceUIBean.version}"/>
+      </h:panelGroup>
+
+      <h:panelGroup layout="block">
+         <b>Date Last Modified: </b>
+         <h:outputText value="#{ResourceUIBean.mtime}">
+            <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+         </h:outputText>
+      </h:panelGroup>
+      
+      <h:panelGroup layout="block">
+         <h:outputText value="Description: " styleClass="BoldText"/>
+         <h:outputText value="#{ResourceUIBean.description}" rendered="#{!empty ResourceUIBean.description}"/>
+         <h:outputText value="none" style="font-style: italic" rendered="#{empty ResourceUIBean.description}"/>
+      </h:panelGroup>
+
+      <rich:spacer/>
+
+      <h:panelGroup layout="block" rendered="#{ResourceUIBean.resourceType.category == 'PLATFORM'}">
+         <h:outputText value="Location: " styleClass="BoldText"/>
+         <h:outputText value="#{ResourceUIBean.location}" rendered="#{!empty ResourceUIBean.location}"/>
+         <h:outputText value="unknown" style="font-style: italic" rendered="#{empty ResourceUIBean.location}"/>
+      </h:panelGroup>
+   </h:panelGrid>
+
+   <h:form id="viewGeneralPropertiesForm">
+
+      <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+
+      <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell"
+                   rendered="#{ResourceUIBean.permissions.inventory}">
+         <h:commandButton value="EDIT..." action="#{EditGeneralPropertiesUIBean.begin}"
+                          title="Edit General Properties" styleClass="buttonmed"/>
+      </h:panelGrid>
+
+   </h:form>
+
+</rich:panel>
+
+<!-- =================== CHILD RESOURCES =================== -->
+<rich:panel styleClass="BlockContent">
+
+<f:facet name="header" styleClass="BlockTitle">
+   <a name="ChildResources"/>
+   Child Resources
+</f:facet>
+
+<h:form id="childResourcesForm">
+<input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+
+<!-- CHILD RESOURCE TYPE FILTER -->
+<h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.utilizedChildTypesCount > 1}" style="margin-bottom: 6px;">
+
+   <b>Filter By: </b>
+   <h:selectOneMenu id="childTypeFilter" value="#{ListChildResourcesUIBean.childTypeFilter}">
+      <a4j:support event="onchange" reRender="childResourcesDataTable, childResourcesDataTableScroller"/>
+
+      <f:selectItem itemLabel="All Resources" itemValue="ALL"/>
+      <f:selectItems value="#{ListChildResourcesUIBean.utilizedChildServerTypes}"/>
+      <f:selectItems value="#{ListChildResourcesUIBean.utilizedChildServiceTypes}"/>
+   </h:selectOneMenu>
+
+
+    <a4j:status>
+     <f:facet name="start">
+        &nbsp; &nbsp; <h:graphicImage value="/images/status_bar.gif"/>
+     </f:facet>
+  </a4j:status>
+
+</h:panelGroup>
+
+<h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.dataModel.rowCount == 0}">
+   <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.childTypesCount == 0}">
+     Resources of this type do not have child resources.
+   </h:panelGroup>
+   <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.childTypesCount > 0}">
+     This resource does not currently have any child resources.
+   </h:panelGroup>
+</h:panelGroup>
+
+<ui:param name="childResourcesDataModel" value="#{ListChildResourcesUIBean.dataModel}"/>
+<rich:dataTable id="childResourcesDataTable"
+                binding="#{ListChildResourcesUIBean.dataTable}"
+                rows="#{PageControl.ChildResourcesList.pageSize}"
+                value="#{childResourcesDataModel}"
+                rendered="#{ListChildResourcesUIBean.dataModel.rowCount > 0}"
+                var="resourceComposite"
+                styleClass="resources-table"
+                columnClasses="resource-checkbox, resource-quicknav-cell, resource-name-cell, resource-category-cell, resource-type-cell, resource-description-cell, resource-availability-cell"
+                columnsWidth="1%,1%"
+                headerClass="tableRowHeader"
+                footerClass="on-pager-footer">
+
+   <f:facet name="PageControlView">
+      <onc:paginationControl id="ChildResourcesList"/>
+   </f:facet>
+
+   <rich:column>
+      <f:facet name="header">
+         <onc:allSelect target="selectedResources" rendered="#{ListChildResourcesUIBean.deletableChildTypesCount > 0}"/>
+      </f:facet>
+      
+      <onc:select name="selectedResources" value="#{resourceComposite.resource.id}" rendered="#{resourceComposite.resource.resourceType.deletable}"/>
+   </rich:column>
+
+   <rich:column>
+      <f:facet name="header">
+         <h:outputText styleClass="headerText" value="Quick Links"/>
+      </f:facet>
+
+      <onc:quickNav>
+         <f:param name="id" value="#{resourceComposite.resource.id}"/>
+
+         <onc:icon name="m" 
+                   url="/resource/common/monitor/Visibility.do" 
+                   alt="M" 
+                   visible="#{monitorEnabled}">
+            <f:param name="mode" value="currentHealth"/>
+         </onc:icon>
+
+         <onc:icon name="i" 
+                   url="/rhq/resource/inventory/view.xhtml" 
+                   alt="I"/>
+
+         <onc:icon name="c" 
+                   url="/rhq/resource/configuration/view.xhtml" 
+                   alt="C" 
+                   visible="#{resourceComposite.resourceFacets.configuration}"/>
+
+         <onc:icon name="o" 
+                   url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml" 
+                   alt="O" 
+                   visible="#{resourceComposite.resourceFacets.operation}"/>
+
+         <onc:icon name="a" 
+                   url="/rhq/resource/alert/listAlertDefinitions.xhtml" 
+                   alt="A" 
+                   visible="#{monitorEnabled}"/>
+
+         <onc:icon name="t" 
+                   url="/rhq/resource/artifact/view.xhtml" 
+                   alt="T" 
+                   visible="#{resourceComposite.resourceFacets.content}"/>
+
+      </onc:quickNav>
+   </rich:column>
+
+   <rich:column>
+      <f:facet name="header">
+         <onc:sortableColumnHeader sort="res.name">
+            <h:outputText styleClass="headerText" value="Name"/>
+         </onc:sortableColumnHeader>
+      </f:facet>
+
+      <h:outputLink value="/resource/common/monitor/Visibility.do">
+         <f:param name="id" value="#{resourceComposite.resource.id}"/>
+         <f:param name="mode" value="currentHealth"/>
+         <h:outputText value="#{resourceComposite.resource.name}"/>
+      </h:outputLink>
+   </rich:column>
+
+   <rich:column>
+      <f:facet name="header">
+         <onc:sortableColumnHeader sort="res.resourceType.category">
+            <h:outputText styleClass="headerText" value="Category"/>
+         </onc:sortableColumnHeader>
+      </f:facet>
+
+      <h:outputText value="#{resourceComposite.resource.resourceType.category}"/>
+   </rich:column>
+
+   <rich:column>
+      <f:facet name="header">
+         <onc:sortableColumnHeader sort="res.resourceType.name">
+            <h:outputText styleClass="headerText" value="Type"/>
+         </onc:sortableColumnHeader>
+      </f:facet>
+
+      <h:outputText value="#{resourceComposite.resource.resourceType.name}"/>
+   </rich:column>
+
+   <rich:column>
+      <f:facet name="header">
+         <h:outputText styleClass="headerText" value="Description"/>
+      </f:facet>
+
+      <h:outputText value="#{resourceComposite.resource.description}"/>
+   </rich:column>
+
+   <rich:column>
+      <f:facet name="header">
+         <onc:sortableColumnHeader sort="a.availabilityType">
+            <h:outputText styleClass="headerText" value="Availability"/>
+         </onc:sortableColumnHeader>
+      </f:facet>
+
+      <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up"
+                      rendered="#{resourceComposite.availability == 'UP'}"/>
+      <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down"
+                      rendered="#{resourceComposite.availability == 'DOWN'}"/>
+      <h:graphicImage value="/images/icon_available_grey.png" alt="Unknown" title="Unknown"
+                      rendered="#{resourceComposite.availability == null}"/>
+   </rich:column>
+
+   <f:facet name="footer">
+      <rich:columnGroup>
+         <rich:column colspan="7">
+            <ui:param name="confirmDeleteMessage" value="#{msg['resource.inventory.view.deleteResourceConfirm']}"/>
+            <ui:remove>
+            <!-- NOTE: The onclick JavaScript block below should not return true under any circumstance. It is does so,
+                       the JSF-RI-generated JavaScript will never get executed, and the browser will proceed to
+                       redirect to "#", which will do nothing but refresh the current page. -->
+            </ui:remove>
+            <onc:selectCommandButton action="#{DeleteResourcesUIBean.deleteSelectedResources}"
+                                     value="DELETE SELECTED" target="selectedResources"
+                                     onclick="if (!confirm('#{confirmDeleteMessage}')) return false"
+                                     styleClass="on-pager-button buttonsmall"/>
+            
+            <ui:include src="../include/pagination.xhtml">
+               <ui:param name="paginationDataTableName" value="childResourcesDataTable"/>
+               <ui:param name="paginationDataModel" value="#{childResourcesDataModel}"/>
+               <ui:param name="paginationPageControl" value="#{PageControl.ChildResourcesList}"/>
+            </ui:include>
+
+         </rich:column>
+      </rich:columnGroup>
+   </f:facet>
+
+</rich:dataTable>
+
+</h:form>
+
+<script type="text/javascript">
+   function addManuallyAddResourceTypeRequestParam(form)
+   {
+      var typeInput = form.elements['type'];
+      typeInput.setAttribute("value", form.elements['manuallyAddResourceForm:manuallyAddResourceTypeInput'].value);
+   }
+
+   function addCreateNewResourceTypeRequestParam(form)
+   {
+      var typeInput = form.elements['type'];
+      typeInput.setAttribute("value", form.elements['createNewResourceForm:createNewResourceTypeInput'].value);
+   }
+</script>
+
+<h:panelGrid columns="3" styleClass="data-table" columnClasses="resources-control-cell" style="margin-top: 7px;">
+
+   <ui:remove><!-- column 1 --></ui:remove>
+   <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.manuallyAddableChildTypesCount > 0}">
+      <h:form id="manuallyAddResourceForm" onsubmit="addManuallyAddResourceTypeRequestParam(this)">
+         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+         <input type="hidden" name="type"/>
+         <b>Manually Add: </b>
+         <h:selectOneMenu id="manuallyAddResourceTypeInput" value="#{ListChildResourcesUIBean.manuallyAddResourceTypeId}">
+            <f:selectItem itemLabel="Select Type" itemValue="" itemDisabled="true"/>
+            <f:selectItems value="#{ListChildResourcesUIBean.manuallyAddableChildServerTypes}"/>
+            <f:selectItems value="#{ListChildResourcesUIBean.manuallyAddableChildServiceTypes}"/>
+         </h:selectOneMenu>
+         <h:commandButton action="#{ManuallyAddChildResourceUIBean.startWorkflow}" value="OK"
+                          styleClass="buttonmed" style="margin-left: 3px"/>
+      </h:form>
+   </h:panelGroup>
+
+   <ui:remove><!-- column 2 --></ui:remove>
+   <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.creatableChildTypesCount > 0}">
+      <h:form id="createNewResourceForm" onsubmit="addCreateNewResourceTypeRequestParam(this)">
+         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+         <input type="hidden" name="type"/>
+         <b>Create New: </b>
+         <input type="hidden" name="mode" value="edit"/>
+         <h:selectOneMenu id="createNewResourceTypeInput" value="#{ListChildResourcesUIBean.createNewResourceTypeId}">
+            <f:selectItem itemLabel="Select Type" itemValue="" itemDisabled="true"/>
+            <f:selectItems value="#{ListChildResourcesUIBean.creatableChildServerTypes}"/>
+            <f:selectItems value="#{ListChildResourcesUIBean.creatableChildServiceTypes}"/>
+         </h:selectOneMenu>
+         <h:commandButton action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" value="OK"
+                          styleClass="buttonmed" style="margin-left: 3px"/>
+      </h:form>
+   </h:panelGroup>
+
+</h:panelGrid>
+
+<!-- =================== CREATE CHILD RESOURCES HISTORY =================== -->
+<h:form id="createResourceHistoryForm">
+<input type="hidden" name="id" value="#{Resource.id}"/>
+
+<rich:panel rendered="#{ListCreateResourceHistoryUIBean.createHistoryCount > 0}" styleClass="BlockContent">
+<f:facet name="header" styleClass="BlockTitle"><h:outputText value="History of create child resource requests"/></f:facet>
+
+<ui:param name="createHistoryDataModel" value="#{ListCreateResourceHistoryUIBean.dataModel}"/>
+<rich:dataTable binding="#{ListCreateResourceHistoryUIBean.dataTable}"
+                id="createHistoryDataTable"
+                rows="#{PageControl.CreateResourceHistory.pageSize}"
+                value="#{createHistoryDataModel}"
+                var="item"
+                width="100%"
+                columnsWidth="12%,12%,16%,12%,13%,13%,12%,10%"
+                headerClass="tableRowHeader"
+                footerClass="on-pager-footer">
+
+
+<f:facet name="PageControlView">
+   <onc:paginationControl id="CreateResourceHistory"/>
+</f:facet>
+
+<ui:remove><!-- Resource Name --></ui:remove>
+<rich:column>
+   <f:facet name="header">
+      <onc:sortableColumnHeader sort="crh.createdResourceName">
+         <h:outputText styleClass="headerText" value="Created Resource Name"/>
+      </onc:sortableColumnHeader>
+   </f:facet>
+
+   <h:outputText value="#{item.createdResourceName}"/>
+</rich:column>
+
+<ui:remove><!-- Resource Type Name --></ui:remove>
+<rich:column>
+   <f:facet name="header">
+      <onc:sortableColumnHeader sort="crh.resourceType.name">
+         <h:outputText styleClass="headerText" value="Created Resource Type"/>
+      </onc:sortableColumnHeader>
+   </f:facet>
+
+   <h:outputText value="#{item.resourceType.name}"/>
+</rich:column>
+
+<ui:remove><!-- Resource Key --></ui:remove>
+<rich:column>
+   <f:facet name="header">
+      <onc:sortableColumnHeader sort="crh.newResourceKey">
+         <h:outputText styleClass="headerText" value="Created Resource Key"/>
+      </onc:sortableColumnHeader>
+   </f:facet>
+
+   <h:outputText value="#{item.newResourceKey}" rendered="#{item.newResourceKey ne null}"/>
+   <i><h:outputText value="Plugin has not specified a key yet" rendered="#{item.newResourceKey eq null}"/></i>
+</rich:column>
+
+<ui:remove><!-- Request Status --></ui:remove>
+<rich:column>
+   <f:facet name="header">
+      <onc:sortableColumnHeader sort="crh.status">
+         <h:outputText styleClass="headerText" value="Request Status"/>
+      </onc:sortableColumnHeader>
+   </f:facet>
+
+   <h:outputText value="#{item.status}" rendered="#{item.status ne 'FAILURE'}"/>
+   <onc:errorPopup popupId="create-#{item.id}" errorMessage="#{item.errorMessage}" rendered="#{item.status eq 'FAILURE'}">Failure</onc:errorPopup>
+</rich:column>
+
+<ui:remove><!-- Request Start Time --></ui:remove>
+<rich:column>
+   <f:facet name="header">
+      <onc:sortableColumnHeader sort="crh.createdTime">
+         <h:outputText styleClass="headerText" value="Request Started"/>
+      </onc:sortableColumnHeader>
+   </f:facet>
+
+   <h:outputText value="#{item.createdDate}"/>
+</rich:column>
+
+<ui:remove><!-- Last Modified Time --></ui:remove>
+<rich:column>
+   <f:facet name="header">
+      <onc:sortableColumnHeader sort="crh.lastModifiedTime">
+         <h:outputText styleClass="headerText" value="Last Request Update"/>
+      </onc:sortableColumnHeader>
+   </f:facet>
+
+   <h:outputText value="#{item.lastModifiedDate}"/>
+</rich:column>
+
+<ui:remove><!-- User --></ui:remove>
+<rich:column>
+   <f:facet name="header">
+      <onc:sortableColumnHeader sort="crh.subjectName">
+         <h:outputText styleClass="headerText" value="User"/>
+      </onc:sortableColumnHeader>
+   </f:facet>
+
+   <h:outputText value="${item.subjectName}"/>
+</rich:column>
+
+<ui:remove><!-- Retry failed create link --></ui:remove>
+<rich:column>
+   <f:facet name="header">
+      <h:outputText styleClass="headerText" value="Resubmit"/>
+   </f:facet>
+   <h:commandLink action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" rendered="#{item.status eq 'FAILURE'}">
+      <h:outputText value="Resubmit"/>
+   </h:commandLink>
+</rich:column>
+
+<f:facet name="footer">
+   <rich:columnGroup>
+      <rich:column colspan="8">
+         <ui:param name="paginationDataTableName" value="createHistoryDataTable"/>
+         <ui:param name="paginationDataModel" value="#{createHistoryDataModel}"/>
+         <ui:param name="paginationPageControl" value="#{PageControl.CreateResourceHistory}"/>
+         <ui:include src="../include/pagination.xhtml"/>
+      </rich:column>
+   </rich:columnGroup>
+</f:facet>
+
+</rich:dataTable>
+
+<h:panelGroup layout="block" rendered="#{!empty DetermineChildResourceCreationTypeUIBean.failedCreateHistory}">
+   <h:outputText value="Retry failed create"/>
+   <h:selectOneMenu value="#{DetermineChildResourceCreationTypeUIBean.retryCreateItem}" converter="CreateResourceHistoryConverter">
+      <f:selectItems value="#{DetermineChildResourceCreationTypeUIBean.failedCreateHistory}"/>
+   </h:selectOneMenu>
+   <h:commandButton action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" value="Retry Create" styleClass="buttonmed"/>
+</h:panelGroup>
+
+</rich:panel>
+</h:form>
+
+<!-- =================== DELETE CHILD RESOURCES HISTORY =================== -->
+<h:form id="deleteResourceHistoryForm">
+<input type="hidden" name="id" value="#{Resource.id}"/>
+
+<rich:panel rendered="#{ListDeleteResourceHistoryUIBean.deleteHistoryCount > 0}" styleClass="BlockContent">
+<f:facet name="header" styleClass="BlockTitle"><h:outputText value="History of delete child resource requests"/></f:facet>
+
+<ui:param name="deleteHistoryDataModel" value="#{ListDeleteResourceHistoryUIBean.dataModel}"/>
+<rich:dataTable binding="#{ListDeleteResourceHistoryUIBean.dataTable}"
+                id="deleteHistoryDataTable"
+                rows="#{PageControl.DeleteResourceHistory.pageSize}"
+                value="#{deleteHistoryDataModel}"
+                var="item"
+                width="100%"
+                columnsWidth="16%,16%,17%,17%,17%,17%"
+                headerClass="tableRowHeader"
+                footerClass="on-pager-footer">
+
+<f:facet name="PageControlView">
+   <onc:paginationControl id="DeleteResourceHistory"/>
+</f:facet>
+
+<ui:remove><!-- Resource Name --></ui:remove>
+<rich:column>
+   <f:facet name="header">
+      <onc:sortableColumnHeader sort="drh.resource.name">
+         <h:outputText styleClass="headerText" value="Deleted Resource Name"/>
+      </onc:sortableColumnHeader>
+   </f:facet>
+
+   <h:outputText value="#{item.resource.name}"/>
+</rich:column>
+
+<ui:remove><!-- Resource Type --></ui:remove>
+<rich:column>
+   <f:facet name="header">
+      <onc:sortableColumnHeader sort="drh.resource.resourceType.name">
+         <h:outputText styleClass="headerText" value="Deleted Resource Type"/>
+      </onc:sortableColumnHeader>
+   </f:facet>
+
+   <h:outputText value="#{item.resource.resourceType.name}"/>
+</rich:column>
+
+<ui:remove><!-- Request Status --></ui:remove>
+<rich:column>
+   <f:facet name="header">
+      <onc:sortableColumnHeader sort="drh.status">
+         <h:outputText styleClass="headerText" value="Request Status"/>
+      </onc:sortableColumnHeader>
+   </f:facet>
+
+   <h:outputText value="#{item.status}" rendered="#{item.status ne 'FAILURE'}"/>
+   <onc:errorPopup popupId="delete-#{item.id}" errorMessage="#{item.errorMessage}" rendered="#{item.status eq 'FAILURE'}">Failure</onc:errorPopup>
+      
+</rich:column>
+
+<ui:remove><!-- Request Started Time --></ui:remove>
+<rich:column>
+   <f:facet name="header">
+      <onc:sortableColumnHeader sort="drh.createdTime">
+         <h:outputText styleClass="headerText" value="Request Started"/>
+      </onc:sortableColumnHeader>
+   </f:facet>
+
+   <h:outputText value="#{item.createdDate}"/>
+</rich:column>
+
+<ui:remove><!-- Request Updated Time --></ui:remove>
+<rich:column>
+   <f:facet name="header">
+      <onc:sortableColumnHeader sort="drh.lastModifiedTime">
+         <h:outputText styleClass="headerText" value="Last Request Update"/>
+      </onc:sortableColumnHeader>
+   </f:facet>
+
+   <h:outputText value="#{item.lastModifiedDate}"/>
+</rich:column>
+
+<ui:remove><!-- User --></ui:remove>
+<rich:column>
+   <f:facet name="header">
+      <onc:sortableColumnHeader sort="drh.subjectName">
+         <h:outputText styleClass="headerText" value="User"/>
+      </onc:sortableColumnHeader>
+   </f:facet>
+
+   <h:outputText value="${item.subjectName}"/>
+</rich:column>
+
+<f:facet name="footer">
+   <rich:columnGroup>
+      <rich:column colspan="6">
+         <ui:param name="paginationDataTableName" value="deleteHistoryDataTable"/>
+         <ui:param name="paginationDataModel" value="#{deleteHistoryDataModel}"/>
+         <ui:param name="paginationPageControl" value="#{PageControl.DeleteResourceHistory}"/>
+         <ui:include src="../include/pagination.xhtml"/>
+      </rich:column>
+   </rich:columnGroup>
+</f:facet>
+
+
+</rich:dataTable>
+
+</rich:panel>
+
+</h:form>
+
+</rich:panel>
+
+<!-- =================== CONNECTION PROPERTIES =================== -->
+<rich:panel
+      rendered="#{!empty ViewConnectionPropertiesUIBean.configurationDefinition.propertyDefinitions and !empty ViewConnectionPropertiesUIBean.configuration.map}"
+      styleClass="BlockContent">
+
+   <f:facet name="header" styleClass="BlockTitle">
+      Connection Properties
+   </f:facet>
+
+   <h:form id="viewConnectionPropertiesForm">
+
+      <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+
+      <onc:config configurationDefinition="#{ViewConnectionPropertiesUIBean.configurationDefinition}"
+                  configuration="#{ViewConnectionPropertiesUIBean.configuration}"
+                  readOnly="true"
+                  nullConfigurationDefinitionMessage="#{ViewConnectionPropertiesUIBean.nullConfigurationDefinitionMessage}"
+                  nullConfigurationMessage="#{ViewConnectionPropertiesUIBean.nullConfigurationMessage}"
+                  prevalidate="true"/>
+
+      <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell"
+                   rendered="#{ResourceUIBean.permissions.inventory}">
+         <h:commandButton value="EDIT..." action="#{EditConnectionPropertiesUIBean.begin}"
+                          title="Edit Connection Properties" styleClass="buttonmed"/>
+      </h:panelGrid>
+
+   </h:form>
+
+</rich:panel>
+
+<!-- =================== GROUPS CONTAINING THIS RESOURCE =================== -->
+<rich:panel styleClass="BlockContent">
+   <f:facet name="header" styleClass="BlockTitle">
+      Groups Containing this Resource
+   </f:facet>
+
+   <h:form id="containingGroupsForm">
+
+      <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+
+      <h:panelGroup layout="block" rendered="#{ListContainingGroupsUIBean.dataModel.rowCount == 0}">
+         This resource is not currently a member of any groups.
+      </h:panelGroup>
+
+      <ui:param name="containingGroupsDataModel" value="#{ListContainingGroupsUIBean.dataModel}"/>
+      <rich:dataTable id="containingGroupsDataTable"
+                      binding="#{ListContainingGroupsUIBean.dataTable}"
+                      rows="#{PageControl.ContainingGroupsList.pageSize}"
+                      value="#{containingGroupsDataModel}"
+                      rendered="#{ListContainingGroupsUIBean.dataModel.rowCount > 0}"
+                      var="resourceGroupComposite"
+                      styleClass="resources-table"
+                      columnClasses="resource-checkbox, resource-quicknav-cell, group-category-cell, resource-name-cell, resource-description-cell, count-cell, resource-availability-cell"
+                      headerClass="tableRowHeader"
+                      footerClass="on-pager-footer">
+
+         <f:facet name="PageControlView">
+            <onc:paginationControl id="ContainingGroupsList"/>
+         </f:facet>
+
+         <rich:column>
+            <f:facet name="header">
+               <onc:allSelect target="selectedGroups" rendered="false"/>
+            </f:facet>
+      
+            <onc:select name="selectedGroups" value="#{resourceGroupComposite.resourceGroup.id}" rendered="false"/>
+         </rich:column>
+
+         <rich:column>
+            <f:facet name="header">
+               <h:outputText styleClass="headerText" value="Quick Links"/>
+            </f:facet>
+
+            <onc:quickNav>
+               <f:param name="groupId" value="#{resourceGroupComposite.resourceGroup.id}"/>
+
+               <onc:icon name="m" url="/resource/group/monitor/Visibility.do" alt="Monitor"
+                         visible="#{resourceGroupComposite.category.name eq 'COMPATIBLE'}">
+                  <f:param name="category" value="#{resourceGroupComposite.category.name}"/>
+                  <f:param name="mode" value="currentHealth"/>
+               </onc:icon>
+
+               <onc:icon name="i" url="/rhq/group/inventory/view.xhtml" alt="Inventory">
+                  <f:param name="groupId" value="#{resourceGroupComposite.resourceGroup.id}"/>
+                  <f:param name="category" value="#{resourceGroupComposite.category.name}"/>
+               </onc:icon>
+
+               <onc:icon name="c" url="/rhq/group/configuration/view.xhtml" alt="Configure"
+                         visible="#{false and resourceGroupComposite.resourceFacets.configuration}"/>
+
+               <onc:icon name="o" url="/rhq/group/operation/groupOperationScheduleNew.xhtml" alt="Operations"
+                         visible="#{resourceGroupComposite.category.name eq 'COMPATIBLE'}">
+                  <f:param name="groupId" value="#{resourceGroupComposite.resourceGroup.id}"/>
+                  <f:param name="category" value="#{resourceGroupComposite.category.name}"/>
+               </onc:icon>
+
+               <onc:icon name="a" url="/rhq/group/alert/listAlertDefinitions.xhtml" alt="Alert"
+                         visible="#{false and resourceGroupComposite.resourceFacets.measurement}"/>
+
+               <onc:icon name="t" url="/rhq/group/artifact/view.xhtml" alt="Content"
+                         visible="#{false and resourceGroupComposite.resourceFacets.content}"/>
+
+            </onc:quickNav>
+         </rich:column>
+
+         <rich:column>
+            <f:facet name="header">
+               <h:outputText styleClass="headerText" value="Type"/>
+            </f:facet>
+
+            <h:outputText value="#{resourceGroupComposite.category}"/>
+         </rich:column>
+
+         <rich:column>
+            <f:facet name="header">
+               <onc:sortableColumnHeader sort="rg.name">
+                  <h:outputText styleClass="headerText" value="Name"/>
+               </onc:sortableColumnHeader>
+            </f:facet>
+
+            <h:outputLink value="/resource/group/monitor/Visibility.do"
+                  rendered="#{resourceGroupComposite.category.name eq 'COMPATIBLE'}">
+               <f:param name="groupId" value="#{resourceGroupComposite.resourceGroup.id}"/>
+               <f:param name="category" value="#{resourceGroupComposite.category.name}"/>
+               <f:param name="mode" value="currentHealth"/>
+               <h:outputText value="#{resourceGroupComposite.resourceGroup.name}"/>
+            </h:outputLink>
+            <h:outputLink value="/rhq/group/inventory/view.xhtml"
+                  rendered="#{resourceGroupComposite.category.name eq 'MIXED'}">
+               <f:param name="groupId" value="#{resourceGroupComposite.resourceGroup.id}"/>
+               <f:param name="category" value="#{resourceGroupComposite.category.name}"/>
+               <f:param name="mode" value="view"/>
+               <h:outputText value="#{resourceGroupComposite.resourceGroup.name}"/>
+            </h:outputLink>
+         </rich:column>
+
+         <rich:column>
+            <f:facet name="header">
+               <h:outputText styleClass="headerText" value="Description"/>
+            </f:facet>
+
+            <h:outputText value="#{resourceGroupComposite.resourceGroup.description}"/>
+         </rich:column>
+
+         <rich:column>
+            <f:facet name="header">
+               <onc:sortableColumnHeader sort="COUNT(memberRes)">
+                  <h:outputText styleClass="headerText" value="Members"/>
+               </onc:sortableColumnHeader>
+            </f:facet>
+
+            <h:outputText value="#{resourceGroupComposite.memberCount}"/>
+         </rich:column>
+
+         <rich:column>
+            <f:facet name="header">
+               <onc:sortableColumnHeader sort="AVG(a.availabilityType)">
+                  <h:outputText styleClass="headerText" value="Availability"/>
+               </onc:sortableColumnHeader>
+            </f:facet>
+
+            <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up"
+                            rendered="#{resourceGroupComposite.availability == 1}"/>
+            <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down"
+                            rendered="#{resourceGroupComposite.availability == 0}"/>
+            <h:graphicImage value="/images/icon_available_grey.png" alt="Mixed" title="Mixed"
+                            rendered="#{resourceGroupComposite.availability gt 0 and resourceGroupComposite.availability lt 1}"/>
+            <h:graphicImage value="/images/icon_available_grey.png" alt="Unknown" title="Unknown"
+                            rendered="#{resourceGroupComposite.availability == null}"/>
+         </rich:column>
+
+         <f:facet name="footer">
+            <rich:columnGroup>
+               <rich:column colspan="7">
+                  <ui:param name="paginationDataTableName" value="containingGroupsDataTable"/>
+                  <ui:param name="paginationDataModel" value="#{containingGroupsDataModel}"/>
+                  <ui:param name="paginationPageControl" value="#{PageControl.ContainingGroupsList}"/>
+                  <ui:include src="../include/pagination.xhtml"/>
+               </rich:column>
+            </rich:columnGroup>
+         </f:facet>
+
+      </rich:dataTable>
+
+   </h:form>
+
+</rich:panel>
+
+<!-- =================== AGENT MANAGING THIS RESOURCE =================== -->
+<rich:panel styleClass="BlockContent">
+   <f:facet name="header" styleClass="BlockTitle">
+      Agent Managing this Resource
+   </f:facet>
+
+   <h:form id="managingAgentForm">
+
+      <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+
+      <h:panelGrid columns="2" styleClass="general-props-table" columnClasses="general-prop-cell">
+
+         <h:panelGroup layout="block">
+            <b>Name: </b> #{PingAgentUIBean.agent.name}
+         </h:panelGroup>
+
+         <h:panelGroup layout="block">
+            <b>Agent Communications Status: </b>
+            <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up"
+                            rendered="#{PingAgentUIBean.pingResults}"/>
+            <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down"
+                            rendered="#{!PingAgentUIBean.pingResults}"/>
+         </h:panelGroup>
+
+         <h:panelGroup layout="block">
+            <b>Address: </b> #{PingAgentUIBean.agent.address}
+         </h:panelGroup>
+
+         <h:panelGroup layout="block">
+            <b>Last Received Availability Report: </b>
+            <h:outputText value="#{PingAgentUIBean.agent.lastAvailabilityReport}">
+               <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+            </h:outputText>
+         </h:panelGroup>
+
+         <h:panelGroup layout="block">
+            <b>Port: </b> #{PingAgentUIBean.agent.port}
+         </h:panelGroup>
+
+      </h:panelGrid>
+
+      <h:panelGrid columns="1" styleClass="general-props-table" columnClasses="general-prop-cell">
+         <h:panelGroup layout="block">
+            <table><tr>
+            <td><b>Full Endpoint: </b></td>
+            <td style="WORD-BREAK:BREAK-ALL">#{PingAgentUIBean.remoteEndpointWrapped}</td>
+            </tr></table>
+         </h:panelGroup>
+      </h:panelGrid>
+
+   </h:form>
+
+</rich:panel>
+
+</ui:define>
+
+</ui:composition>
+
+</html>

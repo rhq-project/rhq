@@ -1,0 +1,139 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.enterprise.server.content;
+
+import java.util.List;
+import javax.ejb.Local;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.ContentRequestStatus;
+import org.rhq.core.domain.content.ContentServiceRequest;
+import org.rhq.core.domain.content.InstalledPackage;
+import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
+import org.rhq.core.domain.content.composite.PackageListItemComposite;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+
+/**
+ * EJB interface for operations that support the UI for the content subsystem.
+ *
+ * @author Jason Dobies
+ */
+@Local
+public interface ContentUIManagerLocal {
+    /**
+     * This will return a composite object that tells you if the actual content (the "bits") for a particular package
+     * version is loaded into inventory or not, and, if the content is loaded, whether or not that content is stored in
+     * the database.
+     *
+     * @param  packageVersionId the {@link org.rhq.core.domain.content.PackageVersion} identifier
+     *
+     * @return indicates if the package version content is loaded and available
+     *
+     * @see    org.rhq.core.domain.content.composite.LoadedPackageBitsComposite
+     */
+    LoadedPackageBitsComposite getLoadedPackageBitsComposite(int packageVersionId);
+
+    /**
+     * Loads the installed package identified by the ID from the database.
+     *
+     * @param  id identifies the installed package
+     *
+     * @return installed package if one exists; <code>null</code> otherwise
+     */
+    InstalledPackage getInstalledPackage(int id);
+
+    /**
+     * Loads the package type identified by the ID from the database.
+     *
+     * @param  id package type to load
+     *
+     * @return package type if one exists for the ID; <code>null</code> otherwise
+     */
+    PackageType getPackageType(int id);
+
+    /**
+     * Returns all package types that are available to the specified resource type.
+     *
+     * @param  resourceTypeId identifies the resource type
+     *
+     * @return set of package types
+     */
+    List<PackageType> getPackageTypes(int resourceTypeId);
+
+    /**
+     * Returns the package type that backs resources of the specified type.
+     *
+     * @param  resourceTypeId identifies the resource type.
+     *
+     * @return backing package type if one exists; <code>null</code> otherwise
+     */
+    PackageType getResourceCreationPackageType(int resourceTypeId);
+
+    /**
+     * Returns all package types that are available to the specified resource type in a page control.
+     *
+     * @param  resourceTypeId identifies the resource type
+     * @param  pageControl    paging control
+     *
+     * @return pagable list of package types
+     */
+    PageList<PackageType> getPackageTypes(int resourceTypeId, PageControl pageControl);
+
+    /**
+     * Returns a list of all content requests made against the specified resource that match the specified status.
+     *
+     * @param  user        the user who is requesting the retrieval
+     * @param  resourceId  identifies the resource whose requests to retrieve
+     * @param  status      request status being matched
+     * @param  pageControl pagination controller
+     *
+     * @return list of artifact requests for the specified resource
+     */
+    PageList<ContentServiceRequest> getContentRequestsWithStatus(Subject user, int resourceId,
+        ContentRequestStatus status, PageControl pageControl);
+
+    /**
+     * Returns a list of all content requests made against the specified resource that do not match the specified
+     * status.
+     *
+     * @param  user        the user who is requesting the retrieval
+     * @param  resourceId  identifies the resource whose requests to retrieve
+     * @param  status      request status to not match
+     * @param  pageControl pagination controller
+     *
+     * @return list of Content requests for the specified resource
+     */
+    PageList<ContentServiceRequest> getContentRequestsWithNotStatus(Subject user, int resourceId,
+        ContentRequestStatus status, PageControl pageControl);
+
+    /**
+     * Returns a list of all installed packages on the specified resource.
+     *
+     * @param  user        the user who is requesting the retrieval
+     * @param  resourceId  identifies the resource whose requests to retrieve
+     * @param  pageControl pagination controller
+     *
+     * @return pagable list of packages installed on the resource
+     */
+    PageList<PackageListItemComposite> getInstalledPackages(Subject user, int resourceId, PageControl pageControl);
+
+    PageList<InstalledPackage> getInstalledPackageHistory(Subject subject, int resourceId, int generalPackageId,
+        PageControl pc);
+}

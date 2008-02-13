@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <managed-bean>
+      <!-- used so SortableColumnHeader action can have a method binding -->
+      <managed-bean-name>TableSorter</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.common.framework.TableSorter</managed-bean-class>
+      <managed-bean-scope>application</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <!-- used to render the drop-down list for paging -->
+      <managed-bean-name>PageControlSettingsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.common.paging.PageControlSettingsUIBean</managed-bean-class>
+      <managed-bean-scope>application</managed-bean-scope>
+   </managed-bean>
+   
+   <managed-bean>
+      <!-- can be used by components that need chunks of request-unique ids for custom component rendering -->
+      <managed-bean-name>IdChunkGeneratorUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.core.gui.util.IdChunkGeneratorUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <!-- exposes various general server information - RHQ version, timezone, etc. -->
+      <managed-bean-name>ServerInfoUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.common.framework.ServerInfoUIBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+</faces-config>

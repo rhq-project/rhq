@@ -1,0 +1,11 @@
+.failurePanel {   
+   border-top-width: 0;
+   border-bottom-width: 0;
+   padding: 0;
+   margin: 0;
+   position: "center";
+   width: 100%;
+}
+
+.commonColumn {
+}

@@ -1,0 +1,1495 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.enterprise.server.operation;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.Nullable;
+import org.quartz.JobDataMap;
+import org.quartz.JobDetail;
+import org.quartz.SchedulerException;
+import org.quartz.Trigger;
+import org.rhq.core.clientapi.agent.operation.CancelResults;
+import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.composite.IntegerOptionItem;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.operation.GroupOperationHistory;
+import org.rhq.core.domain.operation.GroupOperationScheduleEntity;
+import org.rhq.core.domain.operation.HistoryJobId;
+import org.rhq.core.domain.operation.JobId;
+import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.operation.OperationHistory;
+import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.operation.OperationScheduleEntity;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.ResourceOperationScheduleEntity;
+import org.rhq.core.domain.operation.ScheduleJobId;
+import org.rhq.core.domain.operation.composite.GroupOperationLastCompletedComposite;
+import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
+import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
+import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
+import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+
+@Stateless
+public class OperationManagerBean implements OperationManagerLocal {
+    private static final Log LOG = LogFactory.getLog(OperationManagerBean.class);
+
+    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+    private EntityManager entityManager;
+
+    @EJB
+    private AgentManagerLocal agentManager;
+    @EJB
+    private AlertConditionCacheManagerLocal alertConditionCacheManager;
+    @EJB
+    private AuthorizationManagerLocal authorizationManager;
+    @EJB
+    private ConfigurationManagerLocal configurationManager;
+    @EJB
+    private ResourceGroupManagerLocal resourceGroupManager;
+    @EJB
+    private ResourceManagerLocal resourceManager;
+    @EJB
+    private SchedulerLocal scheduler;
+    @EJB
+    private SubjectManagerLocal subjectManager;
+
+    @SuppressWarnings("unchecked")
+    public List<IntegerOptionItem> getResourceNameOptionItems(int groupId) {
+        String queryName = ResourceGroup.QUERY_FIND_RESOURCE_NAMES_BY_GROUP_ID;
+
+        PageControl pc = PageControl.getUnlimitedInstance();
+        pc.addDefaultOrderingField("res.name");
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
+        query.setParameter("groupId", groupId);
+
+        List<IntegerOptionItem> results = query.getResultList();
+
+        return results;
+    }
+
+    public ResourceOperationSchedule scheduleResourceOperation(Subject whoami, int resourceId, String operationName,
+        Configuration parameters, Trigger trigger, String notes) throws SchedulerException {
+        Resource resource = getResourceIfAuthorized(whoami, resourceId);
+
+        ensureControlPermission(whoami, resource);
+
+        if (notes == null) {
+            notes = "[" + resource.getName() + "] operation [" + operationName + "] scheduled by [" + whoami.getName()
+                + "]";
+        }
+
+        String uniqueJobId = createUniqueJobName(resource, operationName);
+
+        JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put(ResourceOperationJob.DATAMAP_STRING_OPERATION_NAME, operationName);
+        putDisplayName(jobDataMap, resource.getResourceType().getId(), operationName);
+
+        if (parameters != null) {
+            if (parameters.getId() == 0) {
+                entityManager.persist(parameters);
+            }
+
+            jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_PARAMETERS_ID, parameters.getId());
+        }
+
+        jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_SUBJECT_ID, whoami.getId());
+        jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_RESOURCE_ID, resource.getId());
+
+        JobDetail jobDetail = new JobDetail();
+        jobDetail.setName(uniqueJobId);
+        jobDetail.setGroup(createJobGroupName(resource));
+        jobDetail.setDescription(notes);
+        jobDetail.setVolatility(false); // we want it persisted
+        jobDetail.setDurability(false);
+        jobDetail.setRequestsRecovery(false);
+        jobDetail.setJobClass(ResourceOperationJob.class);
+        jobDetail.setJobDataMap(jobDataMap);
+
+        trigger.setName(jobDetail.getName());
+        trigger.setGroup(jobDetail.getGroup());
+        trigger.setJobName(jobDetail.getName());
+        trigger.setJobGroup(jobDetail.getGroup());
+
+        // we need to create our own schedule tracking entity
+        ResourceOperationScheduleEntity schedule;
+        schedule = new ResourceOperationScheduleEntity(jobDetail.getName(), jobDetail.getGroup(), trigger
+            .getStartTime(), resource);
+        entityManager.persist(schedule);
+
+        // now actually schedule it
+        Date next = scheduler.scheduleJob(jobDetail, trigger);
+        ResourceOperationSchedule newSchedule = getResourceOperationSchedule(whoami, jobDetail);
+
+        LOG.debug("Scheduled resource operation [" + newSchedule + "] - next fire time is [" + next + "]");
+
+        return newSchedule;
+    }
+
+    private void putDisplayName(JobDataMap jobDataMap, int resourceTypeId, String operationName) {
+        try {
+            OperationDefinition operationDefintion = getOperationDefinitionByResourceTypeAndName(resourceTypeId,
+                operationName);
+            jobDataMap.put(OperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME, operationDefintion.getDisplayName());
+        } catch (OperationDefinitionNotFoundException odnfe) {
+            jobDataMap.put(OperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME, operationName);
+        }
+    }
+
+    public GroupOperationSchedule scheduleGroupOperation(Subject whoami, int compatibleGroupId,
+        int[] executionOrderResourceIds, boolean haltOnFailure, String operationName, Configuration parameters,
+        Trigger trigger, String notes) throws SchedulerException {
+        ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, compatibleGroupId);
+
+        ensureControlPermission(whoami, group);
+
+        if (notes == null) {
+            notes = "[" + group.getName() + "] operation [" + operationName + "] scheduled by [" + whoami.getName()
+                + "]";
+        }
+
+        JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put(GroupOperationJob.DATAMAP_STRING_OPERATION_NAME, operationName);
+        putDisplayName(jobDataMap, group.getResourceType().getId(), operationName);
+
+        if (parameters != null) {
+            if (parameters.getId() == 0) {
+                entityManager.persist(parameters);
+            }
+
+            jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_PARAMETERS_ID, parameters.getId());
+        }
+
+        jobDataMap.putAsString(GroupOperationJob.DATAMAP_INT_SUBJECT_ID, whoami.getId());
+        jobDataMap.putAsString(GroupOperationJob.DATAMAP_INT_GROUP_ID, group.getId());
+        jobDataMap.putAsString(GroupOperationJob.DATAMAP_BOOL_HALT_ON_FAILURE, haltOnFailure);
+
+        if ((executionOrderResourceIds != null) && (executionOrderResourceIds.length > 0)) {
+            StringBuilder orderString = new StringBuilder();
+            orderString.append(executionOrderResourceIds[0]);
+            for (int i = 1; i < executionOrderResourceIds.length; i++) {
+                orderString.append(',');
+                orderString.append(executionOrderResourceIds[i]);
+            }
+
+            jobDataMap.put(GroupOperationJob.DATAMAP_INT_ARRAY_EXECUTION_ORDER, orderString.toString());
+        }
+
+        JobDetail jobDetail = new JobDetail();
+        jobDetail.setName(createUniqueJobName(group, operationName));
+        jobDetail.setGroup(createJobGroupName(group));
+        jobDetail.setDescription(notes);
+        jobDetail.setVolatility(false); // we want it persisted
+        jobDetail.setDurability(false);
+        jobDetail.setRequestsRecovery(false);
+        jobDetail.setJobClass(GroupOperationJob.class);
+        jobDetail.setJobDataMap(jobDataMap);
+
+        trigger.setName(jobDetail.getName());
+        trigger.setGroup(jobDetail.getGroup());
+        trigger.setJobName(jobDetail.getName());
+        trigger.setJobGroup(jobDetail.getGroup());
+
+        // we need to create our own schedule tracking entity
+        GroupOperationScheduleEntity schedule;
+        schedule = new GroupOperationScheduleEntity(jobDetail.getName(), jobDetail.getGroup(), trigger.getStartTime(),
+            group);
+        entityManager.persist(schedule);
+
+        // now actually schedule it
+        Date next = scheduler.scheduleJob(jobDetail, trigger);
+        GroupOperationSchedule newSchedule = getGroupOperationSchedule(whoami, jobDetail);
+
+        LOG.debug("Scheduled group operation [" + newSchedule + "] - next fire time is [" + next + "]");
+
+        return newSchedule;
+    }
+
+    public void unscheduleResourceOperation(Subject whoami, String jobId, int resourceId) throws SchedulerException {
+        // checks for view permissions
+        Resource resource = getResourceIfAuthorized(whoami, resourceId);
+
+        ensureControlPermission(whoami, resource);
+
+        ResourceOperationSchedule schedule = getResourceOperationSchedule(whoami, jobId);
+        if (schedule.getParameters() != null) {
+            Integer configId = schedule.getParameters().getId();
+            Configuration parameters = configurationManager.getConfigurationById(configId);
+            entityManager.remove(parameters);
+        }
+
+        ScheduleJobId jobIdObject = new ScheduleJobId(jobId);
+        String jobName = jobIdObject.getJobName();
+        String jobGroup = jobIdObject.getJobGroup();
+
+        boolean deleted = scheduler.deleteJob(jobName, jobGroup);
+
+        if (deleted) {
+            deleteOperationScheduleEntity(jobIdObject);
+        }
+
+        return;
+    }
+
+    public void unscheduleGroupOperation(Subject whoami, String jobId, int resourceGroupId) throws SchedulerException {
+        ResourceGroup group = resourceGroupManager.getResourceGroupById(whoami, resourceGroupId,
+            GroupCategory.COMPATIBLE);
+
+        ensureControlPermission(whoami, group);
+
+        getCompatibleGroupIfAuthorized(whoami, resourceGroupId); // just want to do this to check for permissions
+
+        GroupOperationSchedule schedule = getGroupOperationSchedule(whoami, jobId);
+        if (schedule.getParameters() != null) {
+            Integer configId = schedule.getParameters().getId();
+            Configuration parameters = configurationManager.getConfigurationById(configId);
+            entityManager.remove(parameters);
+        }
+
+        ScheduleJobId jobIdObject = new ScheduleJobId(jobId);
+        String jobName = jobIdObject.getJobName();
+        String jobGroup = jobIdObject.getJobGroup();
+
+        boolean deleted = scheduler.deleteJob(jobName, jobGroup);
+
+        if (deleted) {
+            deleteOperationScheduleEntity(jobIdObject);
+        }
+
+        return;
+    }
+
+    public void deleteOperationScheduleEntity(ScheduleJobId jobId) {
+        OperationScheduleEntity doomed = findOperationScheduleEntity(jobId);
+        if (doomed != null) {
+            LOG.debug("Deleting schedule entity: " + jobId);
+            entityManager.remove(doomed);
+        } else {
+            LOG.info("Asked to delete unknown schedule - ignoring: " + jobId);
+        }
+
+        return;
+    }
+
+    public void updateOperationScheduleEntity(ScheduleJobId jobId, long nextFireTime) {
+        // sched will be managed - just setting the property is enough for it to be committed
+        OperationScheduleEntity sched = findOperationScheduleEntity(jobId);
+        sched.setNextFireTime(nextFireTime);
+        LOG.debug("Scheduled job has a new next-fire-time: " + sched);
+        return;
+    }
+
+    public List<ResourceOperationSchedule> getScheduledResourceOperations(Subject whoami, int resourceId)
+        throws SchedulerException {
+        Resource resource = getResourceIfAuthorized(whoami, resourceId);
+
+        List<ResourceOperationSchedule> operationSchedules = new ArrayList<ResourceOperationSchedule>();
+
+        String groupName = createJobGroupName(resource);
+        String[] jobNames = scheduler.getJobNames(groupName);
+
+        for (String jobName : jobNames) {
+            JobDetail jobDetail = scheduler.getJobDetail(jobName, groupName);
+            ResourceOperationSchedule sched = getResourceOperationSchedule(whoami, jobDetail);
+
+            if (resourceId != sched.getResource().getId()) {
+                throw new IllegalStateException("Somehow a different resource [" + sched.getResource()
+                    + "] was scheduled in the same job group as resource [" + resource + "]");
+            }
+
+            operationSchedules.add(sched);
+        }
+
+        return operationSchedules;
+    }
+
+    public List<GroupOperationSchedule> getScheduledGroupOperations(Subject whoami, int groupId)
+        throws SchedulerException {
+        ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, groupId);
+
+        List<GroupOperationSchedule> operationSchedules = new ArrayList<GroupOperationSchedule>();
+
+        String groupName = createJobGroupName(group);
+        String[] jobNames = scheduler.getJobNames(groupName);
+
+        for (String jobName : jobNames) {
+            JobDetail jobDetail = scheduler.getJobDetail(jobName, groupName);
+            GroupOperationSchedule sched = getGroupOperationSchedule(whoami, jobDetail);
+
+            if (groupId != sched.getGroup().getId()) {
+                throw new IllegalStateException("Somehow a different group [" + sched.getGroup()
+                    + "] was scheduled in the same job group as group [" + group + "]");
+            }
+
+            operationSchedules.add(sched);
+        }
+
+        return operationSchedules;
+    }
+
+    public ResourceOperationSchedule getResourceOperationSchedule(Subject subject, JobDetail jobDetail) {
+        JobDataMap jobDataMap = jobDetail.getJobDataMap();
+
+        String description = jobDetail.getDescription();
+        String operationName = jobDataMap.getString(ResourceOperationJob.DATAMAP_STRING_OPERATION_NAME);
+        String displayName = jobDataMap.getString(ResourceOperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME);
+        int subjectId = jobDataMap.getIntFromString(ResourceOperationJob.DATAMAP_INT_SUBJECT_ID);
+        Configuration parameters = null;
+
+        if (jobDataMap.containsKey(ResourceOperationJob.DATAMAP_INT_PARAMETERS_ID)) {
+            int configId = jobDataMap.getIntFromString(ResourceOperationJob.DATAMAP_INT_PARAMETERS_ID);
+            parameters = entityManager.find(Configuration.class, configId);
+        }
+
+        int resourceId = jobDataMap.getIntFromString(ResourceOperationJob.DATAMAP_INT_RESOURCE_ID);
+        Resource resource = getResourceIfAuthorized(subject, resourceId);
+
+        // note that we throw an exception if the subject does not exist!
+        // this is by design to avoid a malicious user creating a dummy subject in the database,
+        // scheduling a very bad operation, and deleting that subject thus removing all traces
+        // of the user.  If the user has been removed from the system, all of that users schedules
+        // will need to be deleted and rescheduled.
+
+        ResourceOperationSchedule sched = new ResourceOperationSchedule();
+        sched.setJobName(jobDetail.getName());
+        sched.setJobGroup(jobDetail.getGroup());
+        sched.setResource(resource);
+        sched.setOperationName(operationName);
+        sched.setOperationDisplayName(displayName);
+        sched.setSubject(subjectManager.findSubjectById(subjectId));
+        sched.setParameters(parameters);
+        sched.setDescription(description);
+
+        return sched;
+    }
+
+    public ResourceOperationSchedule getResourceOperationSchedule(Subject subject, String jobId)
+        throws SchedulerException {
+        JobId jobIdObject = new JobId(jobId);
+        JobDetail jobDetail = scheduler.getJobDetail(jobIdObject.getJobName(), jobIdObject.getJobGroup());
+        return getResourceOperationSchedule(subject, jobDetail);
+    }
+
+    public GroupOperationSchedule getGroupOperationSchedule(Subject subject, JobDetail jobDetail) {
+        JobDataMap jobDataMap = jobDetail.getJobDataMap();
+
+        String description = jobDetail.getDescription();
+        String operationName = jobDataMap.getString(GroupOperationJob.DATAMAP_STRING_OPERATION_NAME);
+        String displayName = jobDataMap.getString(GroupOperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME);
+        int subjectId = jobDataMap.getIntFromString(GroupOperationJob.DATAMAP_INT_SUBJECT_ID);
+        Configuration parameters = null;
+
+        if (jobDataMap.containsKey(GroupOperationJob.DATAMAP_INT_PARAMETERS_ID)) {
+            int configId = jobDataMap.getIntFromString(ResourceOperationJob.DATAMAP_INT_PARAMETERS_ID);
+            parameters = entityManager.find(Configuration.class, configId);
+        }
+
+        int groupId = jobDataMap.getIntFromString(GroupOperationJob.DATAMAP_INT_GROUP_ID);
+        ResourceGroup group = getCompatibleGroupIfAuthorized(subject, groupId);
+
+        List<Resource> executionOrder = null;
+
+        if (jobDataMap.containsKey(GroupOperationJob.DATAMAP_INT_ARRAY_EXECUTION_ORDER)) {
+            // if this property exists in the data map, we are assured that it has at least one ID in it
+            String orderCommaSeparated = jobDataMap.getString(GroupOperationJob.DATAMAP_INT_ARRAY_EXECUTION_ORDER);
+            String[] orderArray = orderCommaSeparated.split(",");
+            for (String resourceIdString : orderArray) {
+                int resourceId = Integer.parseInt(resourceIdString);
+                Resource memberResource = entityManager.find(Resource.class, resourceId);
+
+                if (memberResource != null) {
+                    if (executionOrder == null) {
+                        executionOrder = new ArrayList<Resource>();
+                    }
+
+                    if (!executionOrder.contains(memberResource)) {
+                        executionOrder.add(memberResource);
+                    }
+                } else {
+                    LOG.debug("Resource [" + resourceId
+                        + "] looks like it was deleted and is no longer a member of group [" + group
+                        + "] - ignoring it");
+                }
+            }
+        }
+
+        GroupOperationSchedule sched = new GroupOperationSchedule();
+        sched.setJobName(jobDetail.getName());
+        sched.setJobGroup(jobDetail.getGroup());
+        sched.setGroup(group);
+        sched.setOperationName(operationName);
+        sched.setOperationDisplayName(displayName);
+        sched.setSubject(subjectManager.findSubjectById(subjectId));
+        sched.setParameters(parameters);
+        sched.setExecutionOrder(executionOrder);
+        sched.setDescription(description);
+        sched.setHaltOnFailure(jobDataMap
+            .getBooleanValueFromString(GroupOperationJob.DATAMAP_INT_ARRAY_EXECUTION_ORDER));
+
+        return sched;
+    }
+
+    public GroupOperationSchedule getGroupOperationSchedule(Subject subject, String jobId) throws SchedulerException {
+        JobId jobIdObject = new JobId(jobId);
+        JobDetail jobDetail = scheduler.getJobDetail(jobIdObject.getJobName(), jobIdObject.getJobGroup());
+        return getGroupOperationSchedule(subject, jobDetail);
+    }
+
+    public OperationHistory getOperationHistoryByHistoryId(Subject whoami, int historyId) {
+        OperationHistory history = entityManager.find(OperationHistory.class, historyId);
+
+        if (history == null) {
+            throw new RuntimeException("Cannot get history - it does not exist: " + historyId);
+        }
+
+        ensureViewPermission(whoami, history);
+
+        return history;
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<ResourceOperationHistory> getResourceOperationHistoriesByGroupId(Subject whoami, int historyId,
+        PageControl pc) {
+        OperationHistory rawHistory = getOperationHistoryByHistoryId(whoami, historyId);
+        GroupOperationHistory groupHistory = (GroupOperationHistory) rawHistory;
+
+        List<ResourceOperationHistory> resourceHistories = groupHistory.getResourceOperationHistories();
+        PageList<ResourceOperationHistory> pagedResourceHistories = PersistenceUtility.createPaginationFilter(
+            entityManager, resourceHistories, pc);
+        return pagedResourceHistories;
+    }
+
+    public OperationHistory getOperationHistoryByJobId(Subject whoami, String historyJobId) {
+        HistoryJobId jobIdObject = new HistoryJobId(historyJobId);
+
+        Query query = entityManager.createNamedQuery(OperationHistory.QUERY_FIND_BY_JOB_ID);
+        query.setParameter("jobName", jobIdObject.getJobName());
+        query.setParameter("jobGroup", jobIdObject.getJobGroup());
+        query.setParameter("createdTime", jobIdObject.getCreatedTime());
+
+        OperationHistory history;
+
+        try {
+            history = (OperationHistory) query.getSingleResult();
+        } catch (Exception e) {
+            history = null;
+        }
+
+        if (history == null) {
+            throw new RuntimeException("Cannot get history - it does not exist: " + historyJobId);
+        }
+
+        ensureViewPermission(whoami, history);
+
+        return history;
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<ResourceOperationHistory> getCompletedResourceOperationHistories(Subject whoami, int resourceId,
+        PageControl pc) {
+        pc.initDefaultOrderingField("h.createdTime", PageOrdering.DESC);
+
+        String queryName = ResourceOperationHistory.QUERY_FIND_BY_RESOURCE_ID_AND_NOT_STATUS;
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
+
+        queryCount.setParameter("resourceId", resourceId);
+        query.setParameter("resourceId", resourceId);
+
+        queryCount.setParameter("status", OperationRequestStatus.INPROGRESS);
+        query.setParameter("status", OperationRequestStatus.INPROGRESS);
+
+        long totalCount = (Long) queryCount.getSingleResult();
+
+        List<ResourceOperationHistory> list = query.getResultList();
+
+        // don't bother checking permission if there is nothing to see (we wouldn't have the group even if we wanted to)
+        // if there is at least one history - get its group and make sure the user has permissions to see
+        if ((list != null) && (list.size() > 0)) {
+            ResourceOperationHistory resourceHistory = list.get(0);
+            ensureViewPermission(whoami, resourceHistory);
+        }
+
+        PageList<ResourceOperationHistory> pageList;
+        pageList = new PageList<ResourceOperationHistory>(list, (int) totalCount, pc);
+        return pageList;
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<ResourceOperationHistory> getPendingResourceOperationHistories(Subject whoami, int resourceId,
+        PageControl pc) {
+        pc.initDefaultOrderingField("h.createdTime", PageOrdering.DESC);
+
+        String queryName = ResourceOperationHistory.QUERY_FIND_BY_RESOURCE_ID_AND_STATUS;
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
+
+        queryCount.setParameter("resourceId", resourceId);
+        query.setParameter("resourceId", resourceId);
+
+        queryCount.setParameter("status", OperationRequestStatus.INPROGRESS);
+        query.setParameter("status", OperationRequestStatus.INPROGRESS);
+
+        long totalCount = (Long) queryCount.getSingleResult();
+
+        List<ResourceOperationHistory> list = query.getResultList();
+
+        // don't bother checking permission if there is nothing to see (we wouldn't have the group even if we wanted to)
+        // if there is at least one history - get its group and make sure the user has permissions to see
+        if ((list != null) && (list.size() > 0)) {
+            ResourceOperationHistory resourceHistory = list.get(0);
+            ensureViewPermission(whoami, resourceHistory);
+        }
+
+        PageList<ResourceOperationHistory> pageList;
+        pageList = new PageList<ResourceOperationHistory>(list, (int) totalCount, pc);
+        return pageList;
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<GroupOperationHistory> getCompletedGroupOperationHistories(Subject whoami, int groupId,
+        PageControl pc) {
+        pc.initDefaultOrderingField("h.createdTime", PageOrdering.DESC);
+
+        String queryName = GroupOperationHistory.QUERY_FIND_BY_GROUP_ID_AND_NOT_STATUS;
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
+
+        queryCount.setParameter("groupId", groupId);
+        query.setParameter("groupId", groupId);
+
+        queryCount.setParameter("status", OperationRequestStatus.INPROGRESS);
+        query.setParameter("status", OperationRequestStatus.INPROGRESS);
+
+        long totalCount = (Long) queryCount.getSingleResult();
+
+        List<GroupOperationHistory> list = query.getResultList();
+
+        // don't bother checking permission if there is nothing to see (we wouldn't have the group even if we wanted to)
+        // if there is at least one history - get its group and make sure the user has permissions to see
+        if ((list != null) && (list.size() > 0)) {
+            GroupOperationHistory groupHistory = list.get(0);
+            ensureViewPermission(whoami, groupHistory);
+        }
+
+        PageList<GroupOperationHistory> pageList;
+        pageList = new PageList<GroupOperationHistory>(list, (int) totalCount, pc);
+        return pageList;
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<GroupOperationHistory> getPendingGroupOperationHistories(Subject whoami, int groupId, PageControl pc) {
+        pc.initDefaultOrderingField("h.createdTime", PageOrdering.DESC);
+
+        String queryName = GroupOperationHistory.QUERY_FIND_BY_GROUP_ID_AND_STATUS;
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
+
+        queryCount.setParameter("groupId", groupId);
+        query.setParameter("groupId", groupId);
+
+        queryCount.setParameter("status", OperationRequestStatus.INPROGRESS);
+        query.setParameter("status", OperationRequestStatus.INPROGRESS);
+
+        long totalCount = (Long) queryCount.getSingleResult();
+
+        List<GroupOperationHistory> list = query.getResultList();
+
+        // don't bother checking permission if there is nothing to see (we wouldn't have the group even if we wanted to)
+        // if there is at least one history - get its group and make sure the user has permissions to see
+        if ((list != null) && (list.size() > 0)) {
+            GroupOperationHistory groupHistory = list.get(0);
+            ensureViewPermission(whoami, groupHistory);
+        }
+
+        PageList<GroupOperationHistory> pageList;
+        pageList = new PageList<GroupOperationHistory>(list, (int) totalCount, pc);
+        return pageList;
+    }
+
+    public OperationHistory updateOperationHistory(Subject whoami, OperationHistory history) {
+        /*
+         * either the user wants to execute an operation on some resource or some group, or the OperationServerService
+         * just got the results of the operation from the agent is needs to update this method.  thus, we only need to
+         * ensure control permissions if the user isn't the overlord.
+         */
+        if (!authorizationManager.isOverlord(whoami)) {
+            ensureControlPermission(whoami, history);
+        }
+
+        // we do not cascade add the param config (we probably can add that but), so let's persist it now
+        Configuration parameters = history.getParameters();
+        if ((parameters != null) && (parameters.getId() == 0)) {
+            entityManager.persist(parameters);
+        }
+
+        history = entityManager.merge(history); // merge will persist if it doesn't exist yet
+        notifyAlertConditionCacheManager("updateOperationHistory", history);
+        checkForCompletedGroupOperation(history);
+        return history;
+    }
+
+    public void cancelOperationHistory(Subject whoami, int historyId, boolean ignoreAgentErrors) {
+        OperationHistory doomedHistory = getOperationHistoryByHistoryId(whoami, historyId); // this also checks authorization so we don't have to do it again
+
+        ensureControlPermission(whoami, doomedHistory);
+
+        // Do different things depending whether this is a group or resource history being canceled.
+        // If group history - cancel all individual resource invocations that are part of that group.
+        // If resource history - tell the agent to cancel it
+        if (doomedHistory instanceof GroupOperationHistory) {
+            cancelGroupOperation(whoami, (GroupOperationHistory) doomedHistory, ignoreAgentErrors);
+        } else {
+            cancelResourceOperation(whoami, (ResourceOperationHistory) doomedHistory, ignoreAgentErrors);
+        }
+
+        return;
+    }
+
+    /**
+     * Cancels the group operation and puts it in the {@link OperationRequestStatus#CANCELED} state.
+     *
+     * <p>This will attempt to notify the agent(s) that the operations should be canceled. Any agent cannot be contacted
+     * or an exception occurs while trying communicating with the agent, the given history will only be flagged as
+     * canceled if <code>ignoreAgentErrors</code> is <code>true</code>. If <code>ignoreAgentErrors</code> is <code>
+     * false</code> and an error occurs when communicating with any agent, the given group history will not be flagged
+     * as canceled.</p>
+     *
+     * <p>Note that, if there are no agent errors, this method will always mark the group history as CANCELED,
+     * regardless of the number of child resource operations that were actually canceled. If one or more operations had
+     * already finished on the agent but not yet notified the server (that is, some resource operations are still
+     * INPROGRESS on server-side), the group operation will still be shown as canceled. This is to indicate that at
+     * least some, but not necessarily all, resource operations within the group were canceled. Showing CANCELED status
+     * will be an audit flag to show you that this group was asked to not complete fully.</p>
+     *
+     * <p>It is assumed the caller of this private method has already verified that the user is authorized to perform
+     * the cancelation.</p>
+     *
+     * @param  whoami            the user who is canceling the operation
+     * @param  doomedHistory     identifies the group operation (and all its resource operations) to cancel
+     * @param  ignoreAgentErrors indicates how agent errors are handled
+     *
+     * @throws IllegalStateException if the operation history status is not in the
+     *                               {@link OperationRequestStatus#INPROGRESS} state
+     */
+    private void cancelGroupOperation(Subject whoami, GroupOperationHistory doomedHistory, boolean ignoreAgentErrors) {
+        if (doomedHistory.getStatus() != OperationRequestStatus.INPROGRESS) {
+            throw new IllegalStateException("The group job is no longer in-progress - cannot cancel it: "
+                + doomedHistory);
+        }
+
+        boolean hadAgentError = false;
+
+        List<ResourceOperationHistory> doomedResourceHistories = doomedHistory.getResourceOperationHistories();
+        for (ResourceOperationHistory doomedResourceHistory : doomedResourceHistories) {
+            try {
+                CancelResults results = cancelResourceOperation(whoami, doomedResourceHistory, ignoreAgentErrors);
+                if (results == null) {
+                    hadAgentError = true;
+                }
+            } catch (IllegalStateException ignore) {
+                // it wasn't in progress - which is fine, nothing to cancel then and its already stopped
+            }
+        }
+
+        if (!hadAgentError || ignoreAgentErrors) {
+            // TODO: we might need to do some optimistic locking - what if the agent updates the history now?
+            doomedHistory.setStatus(OperationRequestStatus.CANCELED); // we expect doomedHistory to be jpa attached
+            notifyAlertConditionCacheManager("cancelGroupOperation", doomedHistory);
+        }
+
+        return;
+    }
+
+    /**
+     * Cancels the operation history and puts it in the {@link OperationRequestStatus#CANCELED} state.
+     *
+     * <p>This will attempt to notify the agent that the operation should be canceled. If the agent cannot be contacted
+     * or an exception occurs while trying communicating with the agent, the given history will only be flagged as
+     * canceled if <code>ignoreAgentErrors</code> is <code>true</code>. If <code>ignoreAgentErrors</code> is <code>
+     * false</code> and an error occurs when communicating with the agent, the given history will not be flagged as
+     * canceled.</p>
+     *
+     * <p>It is assumed the caller of this private method has already verified that the user is authorized to perform
+     * the cancelation.</p>
+     *
+     * @param  whoami            the user who is canceling the operation
+     * @param  doomedHistory     identifies the resource operation to cancel
+     * @param  ignoreAgentErrors indicates how agent errors are handled
+     *
+     * @return the results from the agent which will be <code>null</code> if failed to successfully communicate with the
+     *         agent
+     *
+     * @throws IllegalStateException if the operation history status is not in the
+     *                               {@link OperationRequestStatus#INPROGRESS} state
+     */
+    private CancelResults cancelResourceOperation(Subject whoami, ResourceOperationHistory doomedHistory,
+        boolean ignoreAgentErrors) throws IllegalStateException {
+        if (doomedHistory.getStatus() != OperationRequestStatus.INPROGRESS) {
+            throw new IllegalStateException("The job is no longer in-progress - cannot cancel it: " + doomedHistory);
+        }
+
+        String jobIdString = doomedHistory.getJobId().toString();
+        int resourceId = doomedHistory.getResource().getId();
+        CancelResults results = null;
+        AgentClient agent = null;
+        boolean canceled = false;
+
+        try {
+            agent = agentManager.getAgentClient(resourceId);
+
+            // since this method is usually called by the UI, we want to quickly determine if we can even talk to the agent
+            if (agent.ping(5000L)) {
+                results = agent.getOperationAgentService().cancelOperation(jobIdString);
+
+                InterruptedState interruptedState = results.getInterruptedState();
+
+                switch (interruptedState) {
+                case FINISHED: {
+                    // If the agent says the interrupted state was FINISHED, we should not set the history state
+                    // to canceled because it can't be canceled after its completed.  Besides, the agent will very
+                    // shortly send us the "success" message which will set the state to SUCCESS.  Under odd circumstances
+                    // (like the agent crashing after it finished the op but before it had a chance to send the "success"
+                    // message), it will eventually be flagged as timed-out, but this is extremely rare since the
+                    // "success" message is sent with guaranteed delivery - so the crash had to occur in just the right
+                    // split second of time for that to occur.
+
+                    LOG.debug("Agent already finished the operation so it cannot be canceled. " + "agent=[" + agent
+                        + "], op=[" + doomedHistory + "]");
+                    break;
+                }
+
+                case QUEUED: {
+                    // If the agent says the interrupted state was QUEUED, this is good.  The agent never even
+                    // got a chance to tell its plugin to execute the operation; it just dequeued and threw the op away.
+                    // Therefore, we can really say it was canceled.
+                    canceled = true;
+                    LOG.debug("Cancel successful. Agent dequeued the operation and will not invoke it. " + "agent=["
+                        + agent + "], op=[" + doomedHistory + "]");
+                    break;
+                }
+
+                case RUNNING: {
+                    // If the agent says the interrupted state was RUNNING, it means it was told to cancel the
+                    // operation while it was already being invoked by the plugin.  This means the cancel may or may not have
+                    // really worked.  The agent will have tried to interrupt the plugin, but if the plugin ignored
+                    // the cancel request (e.g. to avoid putting the resource in an inconsistent state) we'll never know.
+                    // We still flag the operation as canceled to indicate that the agent did attempt to cancel it;
+                    // hopefully, the plugin did the right thing.
+                    canceled = true;
+                    LOG
+                        .debug("Agent attempted to cancel the operation - it interrupted the operation while it was running. "
+                            + "agent=[" + agent + "], op=[" + doomedHistory + "]");
+                    break;
+                }
+
+                case UNKNOWN: {
+                    // If the agent didn't know anything about the operation invocation, its probably because
+                    // it crashed after the operation was initially submitted.  I guess it
+                    // could also mean that the agent has just finished the operation and erased its memory of its
+                    // existence (but it was so recent that the INPROGRESS state has not yet had time to be committed
+                    // to one of its terminal states like SUCCESS or FAILURE).
+                    // This is going to be a rare interrupted state.  It means the agent doesn't know anything about
+                    // the operation.  In this case, we'll allow its state to be canceled since the most probably reason
+                    // for this is the agent was recycled and has no idea what this operation is or was.
+                    canceled = true;
+                    LOG.debug("Agent does not know about the operation. Nothing to cancel. " + "agent=[" + agent
+                        + "], op=[" + doomedHistory + "]");
+                    break;
+                }
+
+                default: {
+                    // someone added a constant to the interrupted state enum but didn't update this code
+                    throw new RuntimeException("Please report this bug - bad state: " + interruptedState);
+                }
+                }
+            } else {
+                LOG.warn("Agent down? Cannot cancel operation. agent=[" + agent + "], op=[" + doomedHistory + "]");
+            }
+        } catch (Throwable t) {
+            LOG.warn("Cannot tell the agent to cancel operation. agent=[" + agent + "], op=[" + doomedHistory + "]", t);
+        }
+
+        // if the agent canceled it or we failed to talk to the agent but we are allowed to ignore that failure
+        if (canceled || ((results == null) && ignoreAgentErrors)) {
+            // TODO: we might need to do some optimistic locking - what if the agent updates the history now?
+            doomedHistory.setStatus(OperationRequestStatus.CANCELED); // we expect doomedHistory to be jpa attached
+            notifyAlertConditionCacheManager("cancelResourceOperation", doomedHistory);
+        }
+
+        return results;
+    }
+
+    public void deleteOperationHistory(Subject whoami, int historyId, boolean purgeInProgress) {
+        OperationHistory doomedHistory = getOperationHistoryByHistoryId(whoami, historyId); // this also checks authorization so we don't have to do it again
+
+        ensureControlPermission(whoami, doomedHistory);
+
+        if ((doomedHistory.getStatus() == OperationRequestStatus.INPROGRESS) && !purgeInProgress) {
+            throw new IllegalStateException(
+                "The job is still in the in-progress state. Please wait for it to complete: " + doomedHistory);
+        }
+
+        entityManager.remove(doomedHistory);
+
+        return;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<OperationDefinition> getSupportedResourceOperations(Subject whoami, int resourceId) {
+        Resource resource = getResourceIfAuthorized(whoami, resourceId);
+
+        int resourceTypeId = resource.getResourceType().getId();
+
+        return getSupportedResourceTypeOperations(whoami, resourceTypeId);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<OperationDefinition> getSupportedResourceTypeOperations(Subject whoami, int resourceTypeId) {
+        try {
+            Query query = entityManager.createNamedQuery(OperationDefinition.QUERY_FIND_BY_RESOURCE_TYPE_ID);
+            query.setParameter("resourceTypeId", resourceTypeId);
+
+            List<OperationDefinition> results;
+            results = query.getResultList();
+            return results;
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot get support operations for resourceType [" + resourceTypeId + "]: " + e,
+                e);
+        }
+    }
+
+    @SuppressWarnings( { "unchecked" })
+    public List<OperationDefinition> getSupportedGroupOperations(Subject whoami, int compatibleGroupId) {
+        ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, compatibleGroupId);
+
+        int resourceTypeId = group.getResourceType().getId();
+
+        try {
+            Query query = entityManager.createNamedQuery(OperationDefinition.QUERY_FIND_BY_RESOURCE_TYPE_ID);
+            query.setParameter("resourceTypeId", resourceTypeId);
+
+            List<OperationDefinition> results;
+            results = query.getResultList();
+            return results;
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot get support operations for resourceType [" + resourceTypeId + "]: " + e,
+                e);
+        }
+    }
+
+    public OperationDefinition getSupportedResourceOperation(Subject whoami, int resourceId, String operationName) {
+        Resource resource = getResourceIfAuthorized(whoami, resourceId);
+
+        int resourceTypeId = resource.getResourceType().getId();
+
+        try {
+            Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_ID_WITH_ALL_OPERATIONS);
+            query.setParameter("id", resourceTypeId);
+            ResourceType resourceType = (ResourceType) query.getSingleResult();
+
+            for (OperationDefinition def : resourceType.getOperationDefinitions()) {
+                if (def.getName().equals(operationName)) {
+                    return def;
+                }
+            }
+
+            throw new IllegalArgumentException("Unknown operation");
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot get operation [" + operationName + "] for resourceType ["
+                + resourceTypeId + "]: " + e, e);
+        }
+    }
+
+    public OperationDefinition getSupportedGroupOperation(Subject whoami, int compatibleGroupId, String operationName) {
+        ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, compatibleGroupId);
+
+        int resourceTypeId = group.getResourceType().getId();
+
+        try {
+            Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_ID_WITH_ALL_OPERATIONS);
+            query.setParameter("id", resourceTypeId);
+            ResourceType resourceType = (ResourceType) query.getSingleResult();
+            for (OperationDefinition def : resourceType.getOperationDefinitions()) {
+                if (def.getName().equals(operationName)) {
+                    return def;
+                }
+            }
+
+            throw new IllegalArgumentException("Unknown operation");
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot get operation [" + operationName + "] for resourceType ["
+                + resourceTypeId + "]: " + e, e);
+        }
+    }
+
+    public boolean isResourceOperationSupported(Subject whoami, int resourceId) {
+        Resource resource;
+
+        try {
+            resource = getResourceIfAuthorized(whoami, resourceId);
+        } catch (PermissionException e) {
+            // notice we caught this exception before propogating it up to the EJB layer, so
+            // our transaction is not rolled back
+            LOG.debug("isOperationSupported: User cannot control resource: " + resourceId);
+            return false;
+        } catch (Exception e) {
+            LOG.debug("isOperationSupported: Resource does not exist: " + resourceId);
+            return false;
+        }
+
+        Set<OperationDefinition> defs = resource.getResourceType().getOperationDefinitions();
+
+        return (defs != null) && (defs.size() > 0);
+    }
+
+    public boolean isGroupOperationSupported(Subject whoami, int resourceGroupId) {
+        ResourceGroup group;
+
+        try {
+            group = resourceGroupManager.getResourceGroupById(whoami, resourceGroupId, null);
+            if (group.getGroupCategory() == GroupCategory.MIXED) {
+                return false;
+            }
+        } catch (ResourceGroupNotFoundException e) {
+            LOG.debug("isGroupOperationSupported: group does not exist: " + resourceGroupId);
+            return false;
+        } catch (PermissionException pe) {
+            // notice we caught this exception before propogating it up to the EJB layer, so
+            // our transaction is not rolled back
+            LOG.debug("isGroupOperationSupported: User cannot view (and thus) control group: " + resourceGroupId);
+            return false;
+        }
+
+        if (!authorizationManager.hasGroupPermission(whoami, Permission.CONTROL, group.getId())) {
+            LOG.debug("isGroupOperationSupported: User cannot control group: " + group);
+            return false;
+        }
+
+        Set<OperationDefinition> defs = group.getResourceType().getOperationDefinitions();
+
+        return (defs != null) && (defs.size() > 0);
+    }
+
+    @SuppressWarnings("unchecked")
+    public void checkForTimedOutOperations(Subject subject) {
+        LOG.debug("Scanning operation histories to see if any in-progress executions have timed out");
+
+        if (!authorizationManager.isOverlord(subject)) {
+            LOG.debug("Unauthorized user " + subject + " tried to execute checkForTimedOutOperations: "
+                + "only the overlord may execute this system operation");
+            return;
+        }
+
+        // the purpose of this method is really to clean up in progress histories when we detect
+        // they probably will never move out of the in progress status.  This will occur if the
+        // agent dies before it has a chance to report success/failure.  In that case, we'll never
+        // get an agent completion message and the history will remain in progress status forever.
+        // This method just tried to detect this scenario - if it finds a history that has been
+        // in progress for a very long time, we assume we'll never hear from the agent and time out
+        // that history item (that is, set its status to FAILURE and set an error string).
+        try {
+            Query query = entityManager.createNamedQuery(OperationHistory.QUERY_FIND_ALL_IN_STATUS);
+            query.setParameter("status", OperationRequestStatus.INPROGRESS);
+            List<OperationHistory> histories = query.getResultList();
+            for (OperationHistory history : histories) {
+                if (history instanceof ResourceOperationHistory) {
+                    long timeout = getOperationTimeout(history.getOperationDefinition(), history.getParameters());
+
+                    if (history.getDuration() > timeout) {
+                        history.setErrorMessage("Timed out : did not complete after " + history.getDuration() + "ms"
+                            + " (the timeout period was [" + timeout + "] ms)");
+                        history.setStatus(OperationRequestStatus.FAILURE);
+                        notifyAlertConditionCacheManager("checkForTimedOutOperations", history);
+
+                        LOG.debug("Operation seems to have been orphaned - timing it out: " + history);
+
+                        checkForCompletedGroupOperation(history);
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            LOG.warn("Failed to check for timed out operations. Cause: " + t);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<ResourceOperationLastCompletedComposite> getRecentlyCompletedResourceOperations(Subject subject,
+        PageControl pageControl) {
+        pageControl.initDefaultOrderingField("ro.createdTime", PageOrdering.DESC);
+
+        Query query;
+        Query count;
+
+        if (authorizationManager.isInventoryManager(subject)) {
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                OperationHistory.QUERY_GET_RECENTLY_COMPLETED_RESOURCE_ADMIN, pageControl);
+            count = PersistenceUtility.createCountQuery(entityManager,
+                OperationHistory.QUERY_GET_RECENTLY_COMPLETED_RESOURCE_ADMIN);
+        } else {
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                OperationHistory.QUERY_GET_RECENTLY_COMPLETED_RESOURCE, pageControl);
+            count = PersistenceUtility.createCountQuery(entityManager,
+                OperationHistory.QUERY_GET_RECENTLY_COMPLETED_RESOURCE);
+            query.setParameter("subject", subject);
+            count.setParameter("subject", subject);
+        }
+
+        int totalCount = ((Number) count.getSingleResult()).intValue();
+        List<ResourceOperationLastCompletedComposite> results = query.getResultList();
+
+        return new PageList<ResourceOperationLastCompletedComposite>(results, totalCount, pageControl);
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<GroupOperationLastCompletedComposite> getRecentlyCompletedGroupOperations(Subject subject,
+        PageControl pageControl) {
+        pageControl.initDefaultOrderingField("go.createdTime", PageOrdering.DESC);
+
+        Query query;
+        Query count;
+
+        if (authorizationManager.isInventoryManager(subject)) {
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                OperationHistory.QUERY_GET_RECENTLY_COMPLETED_GROUP_ADMIN, pageControl);
+            count = PersistenceUtility.createCountQuery(entityManager,
+                OperationHistory.QUERY_GET_RECENTLY_COMPLETED_GROUP_ADMIN);
+        } else {
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                OperationHistory.QUERY_GET_RECENTLY_COMPLETED_GROUP, pageControl);
+            count = PersistenceUtility.createCountQuery(entityManager,
+                OperationHistory.QUERY_GET_RECENTLY_COMPLETED_GROUP);
+            query.setParameter("subject", subject);
+            count.setParameter("subject", subject);
+        }
+
+        int totalCount = ((Number) count.getSingleResult()).intValue();
+        List<GroupOperationLastCompletedComposite> results = query.getResultList();
+
+        return new PageList<GroupOperationLastCompletedComposite>(results, totalCount, pageControl);
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<ResourceOperationScheduleComposite> getCurrentlyScheduledResourceOperations(Subject subject,
+        PageControl pageControl) {
+        pageControl.initDefaultOrderingField("ro.nextFireTime", PageOrdering.DESC);
+        Query query;
+        Query count;
+
+        if (authorizationManager.isInventoryManager(subject)) {
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                OperationScheduleEntity.QUERY_GET_SCHEDULE_RESOURCE_ADMIN, pageControl);
+            count = PersistenceUtility.createCountQuery(entityManager,
+                OperationScheduleEntity.QUERY_GET_SCHEDULE_RESOURCE_ADMIN);
+        } else {
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                OperationScheduleEntity.QUERY_GET_SCHEDULE_RESOURCE, pageControl);
+            count = PersistenceUtility.createCountQuery(entityManager,
+                OperationScheduleEntity.QUERY_GET_SCHEDULE_RESOURCE);
+            query.setParameter("subject", subject);
+            count.setParameter("subject", subject);
+        }
+
+        int totalCount = ((Number) count.getSingleResult()).intValue();
+        List<ResourceOperationScheduleComposite> results = query.getResultList();
+
+        // TODO: the schedule entity cannot map to operation display name, so the composite needs to
+        // get the operation name set separately.  We need to change the data model to
+        // link the operation definition ID to the schedule entity.  But what happens if the plugin
+        // metadata changes - is it enough just to link with the op def ID or does plugin munging
+        // when changing operation names not preserve op def IDs? We may want to do away with
+        // the job detail datamap properties and just use the schedule entity to store all the data
+        // associated with a scheduled operation. But this extra work we do here in practice will
+        // not take long becaues the callers of this method normally limit the number of operations
+        // returned to something very small (i.e. less than 10).
+        Subject overlord = subjectManager.getOverlord();
+        for (ResourceOperationScheduleComposite composite : results) {
+            try {
+                ResourceOperationSchedule sched = getResourceOperationSchedule(subject, composite.getOperationJobId()
+                    .toString());
+                OperationDefinition def = getSupportedResourceOperation(overlord, composite.getResourceId(), sched
+                    .getOperationName());
+                composite.setOperationName((def.getDisplayName() != null) ? def.getDisplayName() : sched
+                    .getOperationName());
+            } catch (SchedulerException se) {
+                LOG.error("A schedule entity is out of sync with the scheduler - there is no job scheduled: "
+                    + composite, se);
+            } catch (Exception e) {
+                LOG.error("A scheduled operation has an invalid name - did a plugin change its operation metadata? : "
+                    + composite, e);
+            }
+        }
+
+        return new PageList<ResourceOperationScheduleComposite>(results, totalCount, pageControl);
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<GroupOperationScheduleComposite> getCurrentlyScheduledGroupOperations(Subject subject,
+        PageControl pageControl) {
+        pageControl.initDefaultOrderingField("go.nextFireTime", PageOrdering.DESC);
+        Query query;
+        Query count;
+
+        if (authorizationManager.isInventoryManager(subject)) {
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                OperationScheduleEntity.QUERY_GET_SCHEDULE_GROUP_ADMIN, pageControl);
+            count = PersistenceUtility.createCountQuery(entityManager,
+                OperationScheduleEntity.QUERY_GET_SCHEDULE_GROUP_ADMIN);
+        } else {
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                OperationScheduleEntity.QUERY_GET_SCHEDULE_GROUP, pageControl);
+            count = PersistenceUtility
+                .createCountQuery(entityManager, OperationScheduleEntity.QUERY_GET_SCHEDULE_GROUP);
+            query.setParameter("subject", subject);
+            count.setParameter("subject", subject);
+        }
+
+        int totalCount = ((Number) count.getSingleResult()).intValue();
+        List<GroupOperationScheduleComposite> results = query.getResultList();
+
+        // TODO: the schedule entity cannot map to operation display name, so the composite needs to
+        // get the operation name set separately.  We need to change the data model to
+        // link the operation definition ID to the schedule entity.  But what happens if the plugin
+        // metadata changes - is it enough just to link with the op def ID or does plugin munging
+        // when changing operation names not preserve op def IDs? We may want to do away with
+        // the job detail datamap properties and just use the schedule entity to store all the data
+        // associated with a scheduled operation. But this extra work we do here in practice will
+        // not take long becaues the callers of this method normally limit the number of operations
+        // returned to something very small (i.e. less than 10).
+        Subject overlord = subjectManager.getOverlord();
+        for (GroupOperationScheduleComposite composite : results) {
+            try {
+                GroupOperationSchedule sched = getGroupOperationSchedule(subject, composite.getOperationJobId()
+                    .toString());
+                OperationDefinition def = getSupportedGroupOperation(overlord, composite.getGroupId(), sched
+                    .getOperationName());
+                composite.setOperationName((def.getDisplayName() != null) ? def.getDisplayName() : sched
+                    .getOperationName());
+            } catch (SchedulerException se) {
+                LOG.error("A schedule entity is out of sync with the scheduler - there is no job scheduled: "
+                    + composite, se);
+            } catch (Exception e) {
+                LOG.error("A scheduled operation has an invalid name - did a plugin change its operation metadata? : "
+                    + composite, e);
+            }
+        }
+
+        return new PageList<GroupOperationScheduleComposite>(results, totalCount, pageControl);
+    }
+
+    /**
+     * Given an attached history object, this will see if its has completed and if it is a resource history that is part
+     * of an overall group operation and if so will see if all of its peer resource histories are also complete. If the
+     * group members are all done, the group history object will have its status updated to reflect that the group
+     * itself is done.
+     *
+     * @param history an EJB3 managed (aka attached) history object
+     */
+    private void checkForCompletedGroupOperation(OperationHistory history) {
+        if (!(history instanceof ResourceOperationHistory)) {
+            // if the history isn't even a resource history, then we have nothing to do
+            return;
+        }
+
+        if (history.getStatus() == OperationRequestStatus.INPROGRESS) {
+            // if this history isn't done, then by definition the overall group isn't done either
+            return;
+        }
+
+        GroupOperationHistory groupHistory = ((ResourceOperationHistory) history).getGroupOperationHistory();
+
+        // if this was a resource invocation that was part of a group operation
+        // see if the rest of the group members are done too, if so, close out the group history
+        if (groupHistory != null) {
+            List<ResourceOperationHistory> allResourceHistories = groupHistory.getResourceOperationHistories();
+            boolean stillInProgress = false; // assume all are finished
+            OperationRequestStatus groupStatus = OperationRequestStatus.SUCCESS; // will be FAILURE if at least one resource operation failed
+            StringBuilder groupErrorMessage = null; // will be the group error message if at least one resource operation failed
+
+            for (ResourceOperationHistory resourceHistory : allResourceHistories) {
+                if (resourceHistory.getStatus() == OperationRequestStatus.INPROGRESS) {
+                    stillInProgress = true;
+                    break;
+                } else if ((resourceHistory.getStatus() == OperationRequestStatus.FAILURE)
+                    || (resourceHistory.getStatus() == OperationRequestStatus.CANCELED)) {
+                    groupStatus = OperationRequestStatus.FAILURE;
+                    if (groupErrorMessage == null) {
+                        groupErrorMessage = new StringBuilder(
+                            "The following resources failed to invoke the operation: ");
+                    } else {
+                        groupErrorMessage.append(',');
+                    }
+
+                    groupErrorMessage.append(resourceHistory.getResource().getName());
+                }
+            }
+
+            if (!stillInProgress) {
+                groupHistory.setErrorMessage((groupErrorMessage == null) ? null : groupErrorMessage.toString());
+                groupHistory.setStatus(groupStatus);
+                notifyAlertConditionCacheManager("checkForCompletedGroupOperation", groupHistory);
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * Returns the timeout of an operation, in <b>milliseconds</b>. If the <code>parameters</code> is
+     * non-<code>null</code>, this first sees if a {@link OperationDefinition#TIMEOUT_PARAM_NAME} simple property is in
+     * it and if so, uses it as the timeout. Otherwise, the timeout defined in the operation definition is used. If the
+     * definition doesn't define a timeout either, the default timeout as configured in the scheduler will be used.
+     *
+     * @param  operationDefinition
+     * @param  parameters
+     *
+     * @return the timeout in milliseconds
+     */
+    private long getOperationTimeout(OperationDefinition operationDefinition, Configuration parameters) {
+        Integer timeout = null;
+
+        // see if the caller put the timeout in an invocation parameter
+        if (parameters != null) {
+            PropertySimple timeoutProperty = parameters.getSimple(OperationDefinition.TIMEOUT_PARAM_NAME);
+            if (timeoutProperty != null) {
+                timeout = timeoutProperty.getIntegerValue().intValue();
+            }
+        }
+
+        // if nothing in the parameters, then go to the operation definition
+        if (timeout == null) {
+            timeout = operationDefinition.getTimeout();
+
+            // if the operation definition doesn't tell us what timeout to use, ask the scheduler for a default timeout
+            if (timeout == null) {
+                timeout = scheduler.getDefaultOperationTimeout();
+            }
+        }
+
+        // user had N ways to define the timeout and didn't choose to do any... just provide a hardcoded value
+        if (timeout == null) {
+            timeout = new Integer(3600); // 1 hour
+        }
+
+        return timeout.intValue() * 1000L;
+    }
+
+    private Resource getResourceIfAuthorized(Subject whoami, int resourceId) {
+        Resource resource;
+
+        try {
+            // resourceManager will test for necessary permissions too
+            resource = resourceManager.getResourceById(whoami, resourceId);
+        } catch (ResourceNotFoundException e) {
+            throw new RuntimeException("Cannot get support operations for unknown resource [" + resourceId + "]: " + e,
+                e);
+        }
+
+        return resource;
+    }
+
+    private ResourceGroup getCompatibleGroupIfAuthorized(Subject whoami, int compatibleGroupId) {
+        ResourceGroup group;
+
+        try {
+            // resourceGroupManager will test for necessary permissions too
+            group = resourceGroupManager.getResourceGroupById(whoami, compatibleGroupId, GroupCategory.COMPATIBLE);
+        } catch (ResourceGroupNotFoundException e) {
+            throw new RuntimeException("Cannot get support operations for unknown group [" + compatibleGroupId + "]: "
+                + e, e);
+        }
+
+        return group;
+    }
+
+    private void ensureControlPermission(Subject whoami, OperationHistory history) throws PermissionException {
+        if (history instanceof GroupOperationHistory) {
+            ResourceGroup group = ((GroupOperationHistory) history).getGroup();
+            ensureControlPermission(whoami, group);
+        } else {
+            Resource resource = ((ResourceOperationHistory) history).getResource();
+            ensureControlPermission(whoami, resource);
+        }
+    }
+
+    private void ensureControlPermission(Subject whoami, ResourceGroup group) throws PermissionException {
+        if (!authorizationManager.hasGroupPermission(whoami, Permission.CONTROL, group.getId())) {
+            throw new PermissionException("User [" + whoami.getName() + "] does not have permission to control group ["
+                + group + "]");
+        }
+    }
+
+    private void ensureControlPermission(Subject whoami, Resource resource) throws PermissionException {
+        if (!authorizationManager.hasResourcePermission(whoami, Permission.CONTROL, resource.getId())) {
+            throw new PermissionException("User [" + whoami.getName()
+                + "] does not have permission to control resource [" + resource + "]");
+        }
+    }
+
+    private void ensureViewPermission(Subject whoami, OperationHistory history) throws PermissionException {
+        if (history instanceof GroupOperationHistory) {
+            ResourceGroup group = ((GroupOperationHistory) history).getGroup();
+            if (!authorizationManager.canViewGroup(whoami, group.getId())) {
+                throw new PermissionException("User [" + whoami.getName()
+                    + "] does not have permission to view group [" + group + "]");
+            }
+        } else {
+            Resource resource = ((ResourceOperationHistory) history).getResource();
+            if (!authorizationManager.canViewResource(whoami, resource.getId())) {
+                throw new PermissionException("User [" + whoami.getName()
+                    + "] does not have permission to view resource [" + resource + "]");
+            }
+        }
+    }
+
+    private String createUniqueJobName(Resource resource, String operationName) {
+        return ResourceOperationJob.createUniqueJobName(resource, operationName);
+    }
+
+    private String createUniqueJobName(ResourceGroup group, String operationName) {
+        return GroupOperationJob.createUniqueJobName(group, operationName);
+    }
+
+    private String createJobGroupName(Resource resource) {
+        return ResourceOperationJob.createJobGroupName(resource);
+    }
+
+    private String createJobGroupName(ResourceGroup group) {
+        return GroupOperationJob.createJobGroupName(group);
+    }
+
+    @Nullable
+    public ResourceOperationHistory getLatestCompletedResourceOperation(Subject whoami, int resourceId) {
+        LOG.debug("Getting latest completed operation for resource [" + resourceId + "]");
+
+        ResourceOperationHistory result;
+
+        // get the latest operation known to the server (i.e. persisted in the DB)
+        try {
+            Query query = entityManager
+                .createNamedQuery(ResourceOperationHistory.QUERY_FIND_LATEST_COMPLETED_OPERATION);
+            query.setParameter("resourceId", resourceId);
+            result = (ResourceOperationHistory) query.getSingleResult();
+        } catch (NoResultException nre) {
+            result = null; // there is no operation history for this resource yet
+        }
+
+        return result;
+    }
+
+    @Nullable
+    public ResourceOperationHistory getOldestInProgressResourceOperation(Subject whoami, int resourceId) {
+        LOG.debug("Getting oldest in-progress operation for resource [" + resourceId + "]");
+
+        ResourceOperationHistory result;
+
+        // get the latest operation known to the server (i.e. persisted in the DB)
+        try {
+            Query query = entityManager
+                .createNamedQuery(ResourceOperationHistory.QUERY_FIND_OLDEST_INPROGRESS_OPERATION);
+            query.setParameter("resourceId", resourceId);
+            result = (ResourceOperationHistory) query.getSingleResult();
+        } catch (NoResultException nre) {
+            result = null; // there is no operation history for this resource yet
+        }
+
+        return result;
+    }
+
+    public OperationDefinition getOperationDefinition(Subject subject, int operationId) {
+        OperationDefinition operationDefinition = entityManager.find(OperationDefinition.class, operationId);
+
+        if (operationDefinition == null) {
+            throw new RuntimeException("Cannot get operation definition - it does not exist: " + operationId);
+        }
+
+        return operationDefinition;
+    }
+
+    public OperationDefinition getOperationDefinitionByResourceTypeAndName(int resourceTypeId, String operationName)
+        throws OperationDefinitionNotFoundException {
+        ResourceType resourceType = entityManager.find(ResourceType.class, resourceTypeId);
+
+        OperationDefinition operationDefinition = null;
+        for (OperationDefinition definition : resourceType.getOperationDefinitions()) {
+            if (definition.getName().equals(operationName)) {
+                operationDefinition = definition;
+            }
+        }
+
+        if (operationDefinition == null) {
+            throw new OperationDefinitionNotFoundException();
+        }
+
+        return operationDefinition;
+    }
+
+    private void notifyAlertConditionCacheManager(String callingMethod, OperationHistory operationHistory) {
+        AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(operationHistory);
+
+        LOG.debug(callingMethod + ": " + stats.toString());
+    }
+
+    /**
+     * Returns a managed entity of the scheduled job.
+     *
+     * @param  jobId
+     *
+     * @return a managed entity, attached to this bean's entity manager
+     */
+    private OperationScheduleEntity findOperationScheduleEntity(ScheduleJobId jobId) {
+        OperationScheduleEntity entity = entityManager.find(OperationScheduleEntity.class, jobId);
+        return entity;
+    }
+}

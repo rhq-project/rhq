@@ -1,0 +1,246 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+   
+   <navigation-rule>
+
+      <from-view-id>/rhq/resource/inventory/view.xhtml</from-view-id>
+      
+      <navigation-case>
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/resource/inventory/view.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <!-- === EditGeneralPropertiesUIBean ======================= -->
+
+      <navigation-case>
+         <from-action>#{EditGeneralPropertiesUIBean.begin}</from-action>
+         <to-view-id>/rhq/resource/inventory/edit-general.xhtml</to-view-id>
+      </navigation-case>
+
+      <!-- === EditConnectionPropertiesUIBean ======================= -->
+
+      <navigation-case>
+         <from-action>#{EditConnectionPropertiesUIBean.begin}</from-action>
+         <to-view-id>/rhq/resource/inventory/edit-connection.xhtml</to-view-id>         
+      </navigation-case>
+
+      <!-- === DetermineChildResourceCreationTypeUIBean ======================= -->
+
+      <navigation-case>
+         <from-action>#{DetermineChildResourceCreationTypeUIBean.determineCreationType}</from-action>
+         <from-outcome>noTypeSelected</from-outcome>
+         <to-view-id>/rhq/resource/inventory/view.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{DetermineChildResourceCreationTypeUIBean.determineCreationType}</from-action>
+         <from-outcome>artifact</from-outcome>
+         <to-view-id>/rhq/resource/inventory/create-package-1.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{DetermineChildResourceCreationTypeUIBean.determineCreationType}</from-action>
+         <from-outcome>configuration-multipleTemplates</from-outcome>
+         <to-view-id>/rhq/resource/inventory/create-config-1.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{DetermineChildResourceCreationTypeUIBean.determineCreationType}</from-action>
+         <from-outcome>configuration-singleTemplate</from-outcome>
+         <to-view-id>/rhq/resource/inventory/create-config-2.xhtml</to-view-id>
+      </navigation-case>
+
+      <!-- === ManuallyAddChildResourceUIBean ======================= -->
+
+      <navigation-case>
+         <from-action>#{ManuallyAddChildResourceUIBean.startWorkflow}</from-action>
+         <from-outcome>multipleTemplates</from-outcome>
+         <to-view-id>/rhq/resource/inventory/add-1.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ManuallyAddChildResourceUIBean.startWorkflow}</from-action>
+         <from-outcome>singleTemplate</from-outcome>
+         <to-view-id>/rhq/resource/inventory/add-2.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ManuallyAddChildResourceUIBean.startWorkflow}</from-action>
+         <from-outcome>badType</from-outcome>
+         <to-view-id>/rhq/resource/inventory/view.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <!-- === DeleteResourcesUIBean ======================= -->
+
+      <navigation-case>
+         <from-action>#{DeleteResourcesUIBean.deleteSelectedResources}</from-action>
+         <from-outcome>successOrFailure</from-outcome>
+         <to-view-id>/rhq/resource/inventory/view.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/resource/inventory/edit-general.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/inventory/view.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/resource/inventory/edit-connection.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/inventory/view.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/resource/inventory/add-1.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{ManuallyAddChildResourceUIBean.selectTemplate}</from-action>
+         <to-view-id>/rhq/resource/inventory/add-2.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ManuallyAddChildResourceUIBean.cancel}</from-action>
+         <to-view-id>/rhq/resource/inventory/view.xhtml</to-view-id>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/resource/inventory/add-2.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{ManuallyAddChildResourceUIBean.addResource}</from-action>
+         <to-view-id>/rhq/resource/inventory/view.xhtml?id=#{ResourceUIBean.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ManuallyAddChildResourceUIBean.cancel}</from-action>
+         <to-view-id>/rhq/resource/inventory/view.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      
+      <from-view-id>/rhq/resource/inventory/create-package-1.xhtml</from-view-id>
+      
+      <navigation-case>
+         <from-action>#{CreateNewArtifactChildResourceUIBean.createResource}</from-action>
+         <from-outcome>successOrFailure</from-outcome>
+         <to-view-id>/rhq/resource/inventory/view.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/resource/inventory/create-config-1.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{CreateNewConfigurationChildResourceUIBean.selectTemplate}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/inventory/create-config-2.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{CreateNewConfigurationChildResourceUIBean.cancel}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/inventory/view.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      
+      <from-view-id>/rhq/resource/inventory/create-config-2.xhtml</from-view-id>
+      
+      <navigation-case>
+         <from-action>#{CreateNewConfigurationChildResourceUIBean.createResource}</from-action>
+         <from-outcome>successOrFailure</from-outcome>
+         <to-view-id>/rhq/resource/inventory/view.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{CreateNewConfigurationChildResourceUIBean.cancel}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/inventory/view.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+         <to-view-id>/rhq/resource/inventory/edit-resource-config-map.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.addNewMap}</from-action>
+         <to-view-id>/rhq/resource/inventory/add-resource-config-map.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.addNewOpenMapMemberProperty}</from-action>
+         <to-view-id>/rhq/resource/inventory/add-resource-config-simple.xhtml</to-view-id>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/resource/inventory/edit-resource-config-map.xhtml</from-view-id>
+
+      <navigation-case>
+         <to-view-id>/rhq/resource/inventory/create-config-2.xhtml</to-view-id>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/resource/inventory/add-resource-config-map.xhtml</from-view-id>
+
+      <navigation-case>
+         <to-view-id>/rhq/resource/inventory/create-config-2.xhtml</to-view-id>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+
+      <from-view-id>/rhq/resource/inventory/add-resource-config-simple.xhtml</from-view-id>
+
+      <navigation-case>         
+         <to-view-id>/rhq/resource/inventory/create-config-2.xhtml</to-view-id>
+      </navigation-case>
+
+   </navigation-rule>
+
+</faces-config>
+      

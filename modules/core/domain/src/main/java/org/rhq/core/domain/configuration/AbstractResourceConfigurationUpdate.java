@@ -1,0 +1,85 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.core.domain.configuration;
+
+import java.io.Serializable;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
+/**
+ * Provides a {@link Configuration configuration} that constitutes a configuration update request. This allows you to
+ * maintain a history of a configuration update request - when it was made, who made it and if it was successful or not.
+ * The status field indicates if the request is currently in progress (i.e. the plugin is currently processing the
+ * request) or if it succeeded or failed. If the request failed, you can examine the error messages in the Configuration
+ * properties to find out why the request failed.
+ *
+ * @author John Mazzitelli
+ * @author Ian Springer
+ */
+@DiscriminatorColumn(name = "DTYPE")
+@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_UPDATE_ID_SEQ")
+@Table(name = "RHQ_CONFIG_UPDATE")
+public abstract class AbstractResourceConfigurationUpdate extends AbstractConfigurationUpdate implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    @GeneratedValue(generator = "SEQ", strategy = GenerationType.SEQUENCE)
+    @Id
+    private int id;
+
+    protected AbstractResourceConfigurationUpdate() {
+    }
+
+    /**
+     * Creates an initial {@link AbstractResourceConfigurationUpdate} with its status initially set to
+     * {@link ConfigurationUpdateStatus#INPROGRESS} and a <code>null</code> {@link #getErrorMessage()}.
+     *
+     * @param config      contains the values for the new configuration
+     * @param subjectName the user that is requesting the update
+     */
+    public AbstractResourceConfigurationUpdate(Configuration config, String subjectName) {
+        this.configuration = config.deepCopy(false);
+        this.subjectName = subjectName;
+
+        setStatus(ConfigurationUpdateStatus.INPROGRESS);
+        setErrorMessage(null);
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    @Override
+    protected void appendToStringInternals(StringBuilder str) {
+        super.appendToStringInternals(str);
+        str.append(", id=").append(this.id);
+    }
+}

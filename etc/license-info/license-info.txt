@@ -1,0 +1,60 @@
+RHQ includes a number of third-party open source components.
+The list below identifies the community or organization and
+links to their appropriate license terms.
+
+As users and contributors to many open source projects, the 
+RHQ engineering team would like to thank all the communities 
+of the projects listed below for their contributions. 
+---------------------------------------------------------------------
+
+- JBoss, Inc. - 
+Information: http://jboss.org/
+License: http://www.gnu.org/licenses/lgpl.html
+
+- PostgreSQL Development Group -
+Information: http://www.postgresql.org/
+License: http://www.postgresql.org/about/licence
+
+- Apache Jakarta Project -
+Information: http://jakarta.apache.org/
+License: http://www.apache.org/licenses/LICENSE-2.0
+
+- Quartz Enterprise Job Scheduler - 
+Information: http://www.opensymphony.com/quartz/
+License: http://www.apache.org/licenses/LICENSE-2.0
+
+- SNMP4J -
+Information: http://www.snmp4j.org/
+License: http://www.snmp4j.org/LICENSE-2_0.txt
+
+- Java Service Wrapper - 
+Information: http://wrapper.tanukisoftware.org/
+License: http://wrapper.tanukisoftware.org/doc/english/license.html
+
+- Rss4J -
+Information: http://churchillobjects.com/c/13005.html
+License: included in Rss4jLicense.txt
+
+- MC4J / EMS -
+Information: http://mc4j.org
+License: http://www.apache.org/licenses/LICENSE-2.0
+
+- JSF -
+Information: https://javaserverfaces.dev.java.net/
+License: http://www.sun.com/cddl/cddl.html
+
+- Facelets -
+Information: https://facelets.dev.java.net/
+License: http://www.sun.com/cddl/cddl.html
+
+- DOM4J -
+Information: http://www.dom4j.org
+License: http://www.dom4j.org/license.html
+
+- JDOM -
+Information: http://www.jdom.org/
+License: included in JDOMLicense.txt
+
+- GNU Getopt -
+Information: http://www.gnu.org
+License: http://www.gnu.org/licenses/lgpl.html

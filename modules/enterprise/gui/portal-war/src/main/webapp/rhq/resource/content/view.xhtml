@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="View Packages for Resource '#{ResourceUIBean.name}'"/>
+   <ui:param name="selectedTabName" value="Content.Deployed"/>
+
+   <ui:define name="content">
+      
+      <!-- Content Table -->
+      
+      <h:form id="contentForm">
+         <input type="hidden" name="id" value="${param.id}"/>
+         <rich:panel>
+            <f:facet name="header"><h:outputText value="Deployed Content"/></f:facet>
+
+            <ui:param name="packagesDataModel" value="#{ListPackagesUIBean.dataModel}"/>
+            <rich:dataTable binding="#{ListPackagesUIBean.dataTable}"
+                            id="packagesDataTable" 
+                            rows="#{PageControl.InstalledPackagesList.pageSize}"
+                            value="#{packagesDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 33%, 33%, 33%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="InstalledPackagesList" />
+               </f:facet>
+      
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedPackages" />
+                  </f:facet>
+
+                  <onc:select name="selectedPackages" value="#{item.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="gp.name">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="package_history.xhtml">
+                        <f:param name="id" value="${param.id}"/>
+                      <f:param name="currentPackageId" value="#{item.id}"/>
+                    <h:outputText value="#{item.packageName}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.version">
+                        <h:outputText styleClass="headerText" value="Version" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.version}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pt.displayName">
+                        <h:outputText styleClass="headerText" value="Type" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageTypeName}"/>
+               </rich:column>
+               
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="4">
+                        <onc:selectCommandButton action="#{ListPackagesUIBean.deleteSelectedInstalledPackages}"
+                                                 value="DELETE SELECTED" target="selectedPackages" styleClass="on-pager-button buttonsmall"/>
+
+                        <ui:include src="../include/pagination.xhtml">
+                           <ui:param name="paginationDataTableName" value="packagesDataTable"/>
+                           <ui:param name="paginationDataModel" value="#{packagesDataModel}"/>
+                           <ui:param name="paginationPageControl" value="#{PageControl.InstalledPackagesList}"/>
+                        </ui:include>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            <br/><br/>
+
+            <h:dataTable value="#{ListPackagesUIBean.installedPackageStatusList}" var="item"
+                         headerClass="revision-data-table-header"
+                         cellpadding="1"
+                         cellspacing="0">
+               <h:column>
+                  <f:facet name="header">
+                     <h:outputText value="Installed Package Status Descriptions"/>
+                  </f:facet>
+
+                  <b><h:outputText value="#{item.value}"/></b>
+               </h:column>
+               <h:column>
+                  <h:outputText value="#{item.label}"/>
+               </h:column>
+
+            </h:dataTable>            
+
+      </rich:panel>
+      </h:form>
+
+   </ui:define>
+</ui:composition>
+
+</html>

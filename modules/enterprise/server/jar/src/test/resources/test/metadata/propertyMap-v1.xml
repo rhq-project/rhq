@@ -1,0 +1,34 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+  
+   <platform name="myPlatform7">
+         
+      <resource-configuration>
+         <c:map-property name="map1">
+         </c:map-property>
+         <c:map-property name="map2" required="false">
+         </c:map-property>
+         <c:map-property name="map3" required="true">
+         </c:map-property>
+         <c:map-property name="map4">
+            <c:map-property name="map4:2">
+               <c:map-property name="map4:2:3">
+                  <c:simple-property name="simple">
+                     <c:description>The Simpsons</c:description>
+                  </c:simple-property>
+               </c:map-property>
+            </c:map-property>
+         </c:map-property>
+         <c:map-property name="map5">
+            <c:simple-property name="hugo">
+               <c:description>foo</c:description>
+            </c:simple-property>
+         </c:map-property>
+         
+      </resource-configuration>
+         
+   </platform>
+</plugin>
+   

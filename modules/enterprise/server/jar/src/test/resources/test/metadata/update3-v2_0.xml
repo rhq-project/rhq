@@ -1,0 +1,66 @@
+<plugin name="ResourceMetaDataManagerBeanTest"
+   displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xmlns="urn:xmlns:rhq-plugin"
+   xmlns:c="urn:xmlns:rhq-configuration">
+
+   <platform name="myPlatform3">
+
+
+      <!-- Restart operation is gone -->
+
+      <!-- Shutdown stays as is -->
+      <operation name="shutdown"
+         description="Shuts down the agent's comm layer and plugin container.">
+      </operation>
+
+      <!-- status gets a new description and config definition -->
+      <operation name="status" description="Yadda!">
+         <!--<parameters>
+            <notes>Another note</notes>
+         </parameters>-->
+      </operation>
+
+      <!--  start is new -->
+      <operation name="start"
+         description="Start the show"/>
+
+
+      <!-- RPM content is gone -->
+      
+      <!--  DEB stays as is  --> 
+      <content name="deb" displayName="DEB File" category="deployable"
+         discoveryInterval="600000"
+         description="Debian installable package">
+         <configuration>
+            <c:simple-property name="Version" />
+            <c:simple-property name="Filename" />
+            <c:simple-property name="Architecture" />
+         </configuration>
+      </content>
+
+      <!-- mpkg gets a different interval and configuration -->
+      <content name="mpkg" displayName="Apple DMG File" category="deployable"
+         discoveryInterval="300000"
+         description="Apple installable packages">
+         <configuration>
+            <c:simple-property name="Version" />
+            <c:simple-property name="Filename" />
+         </configuration>
+      </content>
+
+      <!-- UBU is new -->
+      <content name="ubu" displayName="Fantasy file format" category="deployable"
+         discoveryInterval="12345"
+         description="Fantasy ubuntu installer">
+         <configuration>
+            <c:simple-property name="Filesize" />
+            <c:simple-property name="Filename" />
+         </configuration>
+      </content>
+
+
+
+   </platform>
+
+</plugin>

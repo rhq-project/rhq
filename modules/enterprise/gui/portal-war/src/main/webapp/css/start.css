@@ -1,0 +1,65 @@
+/* didn't use list-style-image here because couldn't centre contents of <li>
+   against the image. Used background image instead below. */
+ul.icon {
+	list-style-type: none;	
+	list-style-position: outside;
+	}
+	
+ul.icon li.category {
+	background-repeat: no-repeat;
+
+	padding-left:90px; 
+	line-height:80px;       
+       }
+	
+/* weirdly these background images have to have a border of whitespace around the bottom right hand
+   corner otherwise IE crops them and removes part of the actual image */
+#admin {     
+        background-image: url(../images/start_admin.gif);     
+       }
+       
+#user {
+        background-image: url(../images/start_users.gif);
+      }
+
+#solution {
+        background-image: url(../images/start_solutions.gif);
+      }
+       
+
+ul.icon li {
+        font-size: 30px;
+        vertical-align: text-top;       
+        }
+
+ul.icon li.items {
+	margin-bottom: 20px;
+       }
+        
+ul.pipe {
+	margin-left: 0;
+	padding-left: 0;
+	display: inline;
+	} 
+
+ul.pipe li {
+	margin-left: 0px;
+        font-size: 15px;
+        border-top: 0px;
+        
+	padding: 3px 15px;
+	border-left: 2px solid gray;
+	list-style: none;
+	display: inline;
+	}
+	
+
+/* set padding-left to zero so first entry is fully left justified */
+ul.pipe li.first {
+	margin-left: 0px;
+	padding-left: 0px;
+	border-left: none;
+	list-style: none;
+	display: inline;
+	}
+	

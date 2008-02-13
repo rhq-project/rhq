@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!-- -*- Mode: XML; indent-tabs-mode: nil; -*- -->
+<!DOCTYPE tiles-definitions PUBLIC
+     "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN"
+     "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+
+<tiles-definitions>
+
+  <!--
+  ===============================================================================
+  alerts
+  ===============================================================================
+  -->
+
+  <!-- page titles -->
+  <definition name=".page.title.events"
+              extends=".page.title"
+              path="/resource/common/monitor/alerts/PageTitle.jsp"/>
+
+  <definition name=".page.title.events.noresource"
+      extends=".page.title">
+  </definition>
+
+  <definition name=".page.title.events.platform"
+      extends=".page.title">
+    <put name="titleBgStyle" value="PageTitlePlatformBg"/>
+    <put name="titleImg" value="title_platform.gif"/>
+  </definition>
+
+  <definition name=".page.title.events.server"
+      extends=".page.title">
+    <put name="titleBgStyle" value="PageTitleServerBg"/>
+    <put name="titleImg" value="title_server.gif"/>
+  </definition>
+
+  <definition name=".page.title.events.service"
+      extends=".page.title">
+      <put name="titleBgStyle" value="PageTitleServiceBg"/>
+    <put name="titleImg" value="title_service.gif"/>
+  </definition>
+
+  <definition name=".page.title.events.application"
+      extends=".page.title">
+      <put name="titleBgStyle" value="PageTitleApplicationBg"/>
+    <put name="titleImg" value="title_application.gif"/>
+  </definition>
+
+  <definition name=".page.title.events.group"
+      extends=".page.title">
+      <put name="titleBgStyle" value="PageTitleGroupBg"/>
+    <put name="titleImg" value="title_group.gif"/>
+  </definition>
+
+  <!-- list is different because of the resource owner stuff -->
+  <definition name=".page.title.events.list.platform"
+      extends=".page.title">
+      <put name="linkUrl" 
+          value="/resource/platform/inventory/PlatformLinks.jsp"/>
+    <put name="titleBgStyle" value="PageTitlePlatformBg"/>
+    <put name="titleImg" value="title_platform.gif"/>
+  </definition>
+  
+  <definition name=".page.title.events.list.server"
+      extends=".page.title">
+      <put name="linkUrl" 
+          value="/resource/server/inventory/ServerLinks.jsp"/>
+    <put name="titleBgStyle" value="PageTitleServerBg"/>
+    <put name="titleImg" value="title_server.gif"/>
+  </definition>
+  
+  <definition name=".page.title.events.list.service"
+      extends=".page.title">
+      <put name="linkUrl" 
+          value="/resource/service/inventory/ServiceLinks.jsp"/>
+      <put name="titleBgStyle" value="PageTitleServiceBg"/>
+      <put name="titleImg" value="title_service.gif"/>
+  </definition>
+  
+  <definition name=".page.title.events.list.application"
+      extends=".page.title">
+      <put name="linkUrl" 
+          value="/resource/application/inventory/ApplicationLinks.jsp"/>
+      <put name="titleBgStyle" value="PageTitleApplicationBg"/>
+    <put name="titleImg" value="title_application.gif"/>
+  </definition>
+  
+  <definition name=".page.title.events.list.group"
+      extends=".page.title">
+      <put name="linkUrl" 
+          value="/resource/group/inventory/GroupLinks.jsp"/>
+      <put name="titleBgStyle" value="PageTitleGroupBg"/>
+      <put name="titleImg" value="title_group.gif"/>
+  </definition>
+  
+  <!-- view -->
+  <definition name=".events.alert.view.nav"
+        path="/resource/common/monitor/alerts/ViewAlertNavigation.jsp"/>
+
+  <definition name=".events.alert.view.properties"
+        path="/resource/common/monitor/alerts/ViewAlertProperties.jsp"/>
+
+  <definition name=".events.alert.view.notifications"
+        path="/resource/common/monitor/alerts/ViewAlertNotifications.jsp"/>
+
+  <definition name=".events.alert.view.notifications.list"
+        path="/resource/common/monitor/alerts/ViewAlertNotificationsList.jsp"/>
+
+  <definition name=".events.alert.view.notifications.others"
+        path="/resource/common/monitor/alerts/ViewAlertNotificationsOthers.jsp"
+        controllerUrl="/alerts/ViewNotificationsOthers.do"/>
+
+  <definition name=".events.alert.view.notifications.roles"
+        path="/resource/common/monitor/alerts/ViewAlertNotificationsRoles.jsp"
+        controllerUrl="/alerts/ViewNotificationsRoles.do"/>
+
+  <definition name=".events.alert.view.notifications.users"
+        path="/resource/common/monitor/alerts/ViewAlertNotificationsUsers.jsp"
+        controllerUrl="/alerts/ViewNotificationsUsers.do"/>
+
+  <definition name=".events.alert.view.notifications.snmp"
+        path="/resource/common/monitor/alerts/ViewAlertNotificationsOthers.jsp"
+        controllerUrl="/alerts/ViewNotificationsSnmp.do"/>
+
+  <definition name=".events.alert.view.controlaction"
+              path="/resource/common/monitor/alerts/config/ViewDefinitionControlAction.jsp"
+              controllerUrl="/alerts/ViewControlAction.do"/>
+
+  <definition name=".events.alert.view.syslogaction"
+              path="/resource/common/monitor/alerts/config/ViewDefinitionSyslogAction.jsp"
+              controllerUrl="/alerts/ViewSyslogAction.do"/>
+
+  <definition name=".events.alert.view"
+        path="/resource/common/monitor/alerts/ViewAlert.jsp"
+        controllerUrl="/alerts/ViewAlert.do"/>
+
+  <!-- list -->
+  <definition name=".events.alert.list"
+        path="/resource/common/monitor/alerts/ListAlerts.jsp"
+        controllerUrl="/alerts/ListAlerts.do"/>
+
+
+  <!--
+  ===============================================================================
+  definitions
+  ===============================================================================
+  -->
+
+  <!-- new / edit -->
+  <definition name=".events.config.new"
+        path="/resource/common/monitor/alerts/config/NewDefinition.jsp"
+        controllerUrl="/alerts/NewFormPrepare.do"/>
+
+  <definition name=".events.config.edit.properties"
+      path="/resource/common/monitor/alerts/config/EditDefinitionProperties.jsp"
+        controllerUrl="/alerts/EditPropertiesFormPrepare.do"/>
+
+  <definition name=".events.config.edit.conditions"
+      path="/resource/common/monitor/alerts/config/EditDefinitionConditions.jsp"
+        controllerUrl="/alerts/EditConditionsFormPrepare.do"/>
+
+  <definition name=".events.config.edit.controlaction"
+              path="/resource/common/monitor/alerts/config/EditDefinitionControlAction.jsp"
+              controllerUrl="/alerts/EditControlActionFormPrepare.do"/>
+
+  <definition name=".events.config.edit.syslogaction"
+              path="/resource/common/monitor/alerts/config/EditDefinitionSyslogAction.jsp"
+              controllerUrl="/alerts/EditSyslogActionFormPrepare.do"/>
+
+  <definition name=".events.config.new.properties"
+      path="/resource/common/monitor/alerts/config/NewDefinitionProperties.jsp"/>
+
+  <definition name=".events.config.properties"
+      path="/resource/common/monitor/alerts/config/DefinitionProperties.jsp"/>
+
+  <definition name=".events.config.conditions"
+      path="/resource/common/monitor/alerts/config/DefinitionConditions.jsp"/>
+
+  <definition name=".events.config.conditions.condition"
+      path="/resource/common/monitor/alerts/config/DefinitionCondition.jsp"/>
+
+  <definition name=".events.config.conditions.condition.expression"
+      path="/resource/common/monitor/alerts/config/DefinitionConditionExpression.jsp"/>
+
+  <definition name=".events.config.conditions.condition.deletelink"
+      path="/resource/common/monitor/alerts/config/DefinitionConditionDeleteLink.jsp"/>
+
+  <definition name=".events.config.conditions.addlink"
+      path="/resource/common/monitor/alerts/config/DefinitionConditionAddLink.jsp"/>
+
+  <definition name=".events.config.conditions.enablement"
+      path="/resource/common/monitor/alerts/config/DefinitionEnablement.jsp"/>
+
+  <definition name=".events.config.conditions.enablement.timeunits"
+      path="/resource/common/monitor/alerts/config/DefinitionTimeUnits.jsp"/>
+
+  <definition name=".events.config.template.cascade"
+      path="/resource/common/monitor/alerts/config/DefinitionTemplateCascade.jsp"/>
+
+  <definition name=".events.config.form.buttons"
+      path="/resource/common/monitor/alerts/config/DefinitionFormButtons.jsp"/>
+
+  <!-- view -->
+  <definition name=".events.config.view.nav"
+    path="/resource/common/monitor/alerts/config/ViewDefinitionNavigation.jsp"/>
+
+  <definition name=".events.config.view.properties"
+      path="/resource/common/monitor/alerts/config/ViewDefinitionProperties.jsp"/>
+
+  <definition name=".events.config.view.conditionsbox"
+    path="/resource/common/monitor/alerts/config/ViewDefinitionConditionsBox.jsp"/>
+
+  <definition name=".events.config.view.conditions"
+        path="/resource/common/monitor/alerts/config/ViewDefinitionConditions.jsp"/>
+
+  <definition name=".events.config.view.notifications"
+    path="/resource/common/monitor/alerts/config/ViewDefinitionNotifications.jsp"/>
+
+  <definition name=".events.config.view.notifications.tabs"
+    path="/resource/common/monitor/alerts/config/ViewDefinitionNotificationsTabs.jsp"/>
+
+  <definition name=".events.config.view.notifications.others"
+        path="/resource/common/monitor/alerts/config/ListOthers.jsp"
+        controllerUrl="/alerts/ViewNotificationsOthers.do"/>
+
+  <definition name=".events.config.view.notifications.roles"
+        path="/resource/common/monitor/alerts/config/ListRoles.jsp"
+        controllerUrl="/alerts/ViewNotificationsRoles.do"/>
+
+  <definition name=".events.config.view.notifications.users"
+        path="/resource/common/monitor/alerts/config/ListUsers.jsp"
+        controllerUrl="/alerts/ViewNotificationsUsers.do"/>
+
+  <definition name=".events.config.view.notifications.snmp"
+        path="/resource/common/monitor/alerts/config/SnmpActionProps.jsp"
+        controllerUrl="/alerts/ViewNotificationsSnmp.do"/>
+
+  <definition name=".events.config.view.controlactionbox"
+              path="/resource/common/monitor/alerts/config/ViewDefinitionControlActionBox.jsp"
+              controllerUrl="/alerts/ViewControlAction.do"/>
+
+  <definition name=".events.config.view.controlaction"
+              path="/resource/common/monitor/alerts/config/ViewDefinitionControlAction.jsp"/>
+
+  <definition name=".events.config.view.syslogactionbox"
+              path="/resource/common/monitor/alerts/config/ViewDefinitionSyslogActionBox.jsp"
+              controllerUrl="/alerts/ViewSyslogAction.do"/>
+
+  <definition name=".events.config.view.syslogaction"
+              path="/resource/common/monitor/alerts/config/ViewDefinitionSyslogAction.jsp"/>
+
+  <definition name=".events.config.view.others"
+      path="/resource/common/monitor/alerts/config/ViewDefinition.jsp"
+      controllerUrl="/alerts/ViewDefinition.do"/>
+
+  <definition name=".events.config.view.roles"
+      path="/resource/common/monitor/alerts/config/ViewDefinition.jsp"
+      controllerUrl="/alerts/ViewDefinition.do"/>
+              
+  <definition name=".events.config.view.users"
+      path="/resource/common/monitor/alerts/config/ViewDefinition.jsp"
+      controllerUrl="/alerts/ViewDefinition.do"/>
+
+  <definition name=".events.config.view.snmp"
+      path="/resource/common/monitor/alerts/config/ViewDefinition.jsp"
+      controllerUrl="/alerts/ViewDefinition.do"/>
+
+  <!-- list -->
+  <definition name=".events.config.list"
+        path="/resource/common/monitor/alerts/config/ListDefinitions.jsp"
+        controllerUrl="/alerts/ListDefinitions.do"/>
+                                                     
+  <definition name =".events.config.addusers"
+        controllerUrl="/events/config/AddUsersFormPrepare.do"
+        path="/resource/common/monitor/alerts/config/AddEventUsers.jsp"/>
+    
+  <definition name =".events.config.addroles"
+      controllerUrl="/events/config/AddRolesFormPrepare.do"
+      path="/resource/common/monitor/alerts/config/AddEventRoles.jsp"/>
+    
+  <definition name =".events.config.addothers"
+      controllerUrl="/events/config/AddOthersFormPrepare.do"
+      path="/resource/common/monitor/alerts/config/AddEventOthers.jsp"/>
+    
+    <definition name=".tabs.resource.events"
+            extends=".tabs.resource">
+        <putList name="tabList">
+            <item value="Monitor" link="/resource/server/Monitor.do"
+                height="21" width="102"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+            <item value="Inventory" link="/resource/server/Inventory.do"
+                height="21" width="102"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+            <item value="Control" link="/resource/server/Control.do"
+                height="21" width="102"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+        </putList>
+    </definition>
+
+    <definition name=".tabs.resource.events.config"
+        extends=".tabs.resource.events">
+        <put name="selectedIndex" value="0"/>
+        <putList name="subTabList">
+            <item value="Visibility" link="#"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+            <item value="Configure" link="#"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+            <item value="Alerts" link="/alerts/Alerts.do?mode=list"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+            <item value="Configure" link="/alerts/Config.do?mode=list"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+        </putList>
+        <put name="subSectionName" value="Monitor"/>
+        <put name="subSelectedIndex" value="3"/>
+    </definition>
+    
+    <definition name=".tabs.resource.events.alerts"
+        extends=".tabs.resource.events">
+        <put name="selectedIndex" value="0"/>
+        <putList name="subTabList">
+            <item value="Visibility" link="#"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+            <item value="Configure" link="#"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+            <item value="Alerts" link="/alerts/Alerts.do?mode=list"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+            <item value="Configure" link="/alerts/Config.do?mode=list"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+        </putList>
+        <put name="subSectionName" value="Monitor"/>
+        <put name="subSelectedIndex" value="2"/>
+    </definition>
+    
+    <definition name=".tabs.resource.events.config.nocontrol"
+        extends=".tabs.resource.nocontrol">
+        <put name="selectedIndex" value="0"/>
+        <putList name="subTabList">
+            <item value="Visibility" link="#"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+            <item value="Configure" link="#"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+            <item value="Alerts" link="/alerts/Alerts.do?mode=list"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+            <item value="Configure" link="/alerts/Config.do?mode=list"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+        </putList>
+        <put name="subSectionName" value="Monitor"/>
+        <put name="subSelectedIndex" value="3"/>
+    </definition>
+    
+    <definition name=".tabs.resource.events.alerts.nocontrol"
+        extends=".tabs.resource.nocontrol">
+        <put name="selectedIndex" value="0"/>
+        <putList name="subTabList">
+            <item value="Visibility" link="#"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+            <item value="Configure" link="#"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+            <item value="Alerts" link="/alerts/Alerts.do?mode=list"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+            <item value="Configure" link="/alerts/Config.do?mode=list"
+                height="25" width="104"
+                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+        </putList>
+        <put name="subSectionName" value="Monitor"/>
+        <put name="subSelectedIndex" value="2"/>
+    </definition>
+
+</tiles-definitions>

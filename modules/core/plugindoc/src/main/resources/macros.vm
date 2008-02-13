@@ -1,0 +1,15 @@
+#macro( displayResourceTypeName $resourceType )
+${resourceType.name}#if ( !${resourceType.name.endsWith("${resourceType.category}")} ) ${resourceType.category}#end
+#end
+
+
+#macro( displayConfig $config )
+#if ( !${config} )
+_none_
+#else
+|| Name || Description || Required ||
+#foreach( ${propertyDefinition} in ${config.propertyDefinitions} )
+| ${propertyDefinition.displayName} | $!{propertyDefinition.description} | #if ( ${propertyDefinition.required} ) yes #else no #end |
+#end
+#end
+#end

@@ -1,0 +1,502 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE tiles-definitions PUBLIC
+      "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN"
+      "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+
+<tiles-definitions>
+
+   <!-- page titles -->
+   <definition name=".page.title.resource.generic"
+               extends=".page.title">
+      <put name="titleBgStyle" value="PageTitleUserBg"/>
+      <put name="titleImg" value="spacer.gif"/>
+   </definition>
+
+   <definition name=".page.title.resource.common"
+               extends=".page.title">
+      <put name="titleBgStyle" value="PageTitlePlatformBg"/>
+      <put name="titleImg" value="title_platform.gif"/>
+   </definition>
+
+   <definition name=".page.title.resource.common.full"
+               extends=".page.title.resource.common">
+      <!--<put name="linkUrl" value="/resource/platform/inventory/PlatformLinks.jsp"/>-->
+   </definition>
+
+   <definition name=".page.title.resource.common.autodiscovery.full"
+               extends=".page.title.resource.common">
+      <put name="linkUrl"
+           value="/resource/platform/autodiscovery/AutoDiscoveryLinks.jsp"/>
+   </definition>
+
+   <!-- control -->
+   <definition name=".resource.common.control.list.scheduled"
+               path="/resource/common/control/ListScheduled.jsp"
+               controllerUrl="/resource/common/control/ListScheduled.do">
+      <put name="section" value="common"/>
+   </definition>
+
+   <definition name=".resource.common.control.list.history"
+               path="/resource/common/control/ListHistory.jsp"
+               controllerUrl="/resource/common/control/ListHistory.do">
+      <put name="section" value="common"/>
+   </definition>
+
+   <!-- inventory portlets -->
+   <definition name=".resource.common.inventory.generalProperties.view"
+               path="/resource/common/inventory/ViewGeneralProperties.jsp"/>
+
+   <definition name=".resource.common.inventory.generalProperties"
+               path="/resource/common/inventory/GeneralPropertiesForm.jsp"/>
+
+
+   <definition name=".resource.common.inventory.changeResourceOwner"
+               path="/resource/common/inventory/ChangeResourceOwnerForm.jsp"/>
+
+   <definition name=".resource.common.inventory.addResourceGroups"
+               path="/resource/common/inventory/AddResourceGroupsForm.jsp"/>
+
+   <definition name=".resource.common.inventory.groups"
+               path="/resource/common/inventory/ViewGroupMembership.jsp"/>
+
+   <!-- navigation map -->
+   <definition name=".resource.common.navmap"
+               path="/resource/common/NavMap.jsp"/>
+
+   <!-- quick "add to favorites" or "remove from favorites" link -->
+   <definition name=".resource.common.quickFavorites"
+               controllerUrl="/resource/common/QuickFavoritesPrepare.do"
+               path="/resource/common/QuickFavorites.jsp"/>
+
+   <!-- tabs -->
+   <definition name=".tabs.resource"
+               path="/resource/common/ControlTab.jsp">
+      <put name="selectedIndex" value="0"/>
+      <putList name="tabList">
+         <item value="Monitor" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item value="Inventory" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item value="Control" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      </putList>
+   </definition>
+
+   <definition name=".tabs.resource.common" extends=".tabs.resource">
+      <put name="selectedIndex" value="0"/>
+      <put name="resourceType" value="2"/>
+      <putList name="tabList">
+         <item value="Monitor"
+               link="/resource/common/monitor/Visibility.do" mode="currentHealth"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item value="Inventory"
+               link="/rhq/resource/inventory/view.xhtml"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item value="Configuration"
+               link="/rhq/resource/configuration/view.xhtml"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item value="Control"
+               link="/rhq/resource/operation/resourceOperationScheduleNew.xhtml"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item value="Alert" mode="list"
+               link="/rhq/resource/alert/listAlertDefinitions.xhtml"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item value="Content"
+               link="/rhq/resource/content/view.xhtml"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      </putList>
+   </definition>
+
+   <definition name=".tabs.resource.nocontrol"
+               path="/resource/common/ControlTab.jsp">
+      <put name="selectedIndex" value="0"/>
+      <putList name="tabList">
+         <item value="Monitor" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item value="Inventory" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      </putList>
+   </definition>
+
+   <definition name=".tabs.resource.inventoryonly"
+               path="/resource/common/ControlTab.jsp">
+      <put name="selectedIndex" value="0"/>
+      <putList name="tabList">
+         <item value="Inventory" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      </putList>
+   </definition>
+
+   <!-- Monitor tabs -->
+
+   <definition name=".tabs.resource.common.monitor"
+               extends=".tabs.resource.common">
+      <put name="selectedIndex" value="0"/>
+      <put name="subSectionName" value="Monitor"/>
+      <putList name="subTabList">
+         <item value="Visibility"
+               link="/resource/common/monitor/Visibility.do" mode="currentHealth"
+               height="25" width="104"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item value="Configure"
+               link="/resource/common/monitor/Config.do" mode="configure"
+               height="25" width="104"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      </putList>
+   </definition>
+
+   <definition name=".tabs.resource.common.monitor.visibility"
+               extends=".tabs.resource.common.monitor">
+      <put name="subSelectedIndex" value="0"/>
+   </definition>
+
+   <definition name=".tabs.resource.common.monitor.configVisibility"
+               extends=".tabs.resource.common.monitor">
+     <put name="subSelectedIndex" value="1"/>
+   </definition>
+
+   <definition name=".tabs.resource.common.monitor.configVisibility.defaults"
+               path="/resource/common/ControlTab.jsp">
+      <put name="selectedIndex"  value="0" />
+      <putList name="tabList">
+        <item value="Monitor" link="XXX"
+              height="21" width="102"
+              classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      </putList>
+   </definition>
+
+   <!-- Inventory tabs -->
+
+   <definition name=".tabs.resource.inventory"
+               extends=".tabs.resource.common">
+      <put name="selectedIndex" value="1"/>
+      <put name="subSectionName" value="Inventory"/>
+      <putList name="subTabList">
+<!--
+         <item value="Current" mode="view"
+               link="/resource/Inventory.do"
+               height="25" width="104"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item value="AutoDisc" mode="view"
+               link="/resource/AutoDiscovery.do"
+               height="25" width="104"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+-->
+      </putList>
+   </definition>
+
+   <definition name=".tabs.resource.inventory.current"
+               extends=".tabs.resource.inventory">
+      <put name="subSelectedIndex" value="0"/>
+   </definition>
+
+   <definition name=".tabs.resource.inventory.autoDiscovery"
+               extends=".tabs.resource.inventory">
+      <put name="subSelectedIndex" value="1"/>
+   </definition>
+
+   <!-- control tabs -->
+   <definition name=".tabs.resource.control"
+               extends=".tabs.resource">
+      <put name="selectedIndex" value="2"/>
+   </definition>
+
+   <!-- monitor minitabs -->
+   <definition name=".resource.common.monitor.visibility.minitabs"
+               path="/resource/common/monitor/visibility/MiniTabs.jsp"/>
+
+   <!-- filter menu -->
+   <definition name=".toolbar.filter.resource"
+               extends=".toolbar.filter">
+      <put name="optionsProperty" value="resourceTypes"/>
+      <put name="labelProperty" value="name"/>
+      <put name="valueProperty" value="id"/>
+   </definition>
+
+   <!-- monitor portals -->
+   <definition name=".resource.common.monitor.visibility.MetricDisplayRange"
+               controllerUrl="/resource/common/monitor/visibility/MetricDisplayRangeFormPrepare.do"
+               path="/resource/common/monitor/visibility/MetricDisplayRange.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.CompareMetrics"
+               controllerUrl="/resource/common/monitor/visibility/CompareMetricsFormPrepare.do"
+               path="/resource/common/monitor/visibility/CompareMetrics.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.MetricMetadata"
+               controllerUrl="/resource/common/monitor/visibility/ViewMetricMetadata.do"
+               path="/resource/common/monitor/visibility/MetricMetadata.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.Availability"
+               controllerUrl="/resource/common/monitor/visibility/Availability.do"
+               path="/resource/common/monitor/visibility/Availability.jsp"/>
+
+
+   <!-- monitor portals -->
+   <definition name=".resource.common.monitor.visibility.CurrentHealth"
+               controllerUrl="/resource/common/monitor/visibility/CurrentHealth.do"
+               path="/resource/common/monitor/visibility/MainLayout.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.Metrics"
+               controllerUrl="/resource/common/monitor/visibility/ResourceMetricsFormPrepare.do"
+               path="/resource/common/monitor/visibility/MainLayout.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.Performance"
+               controllerUrl="/resource/common/monitor/visibility/PerformanceFormPrepare.do"
+               path="/resource/common/monitor/visibility/MainLayout.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.listchildresources"
+               controllerUrl="/resource/common/monitor/visibility/ListChildrenResources.do"
+               path="/resource/common/monitor/visibility/ListChildResources.jsp"/>
+
+
+   <!-- control portlets -->
+   <definition name=".resource.common.control.quickControl"
+               path="/resource/common/control/QuickControl.jsp"
+               controllerUrl="/resource/common/control/QuickControlPrepareAction.do"/>
+
+   <definition name=".resource.common.control.editControlActionProperties"
+               path="/resource/common/control/EditControlActionProperties.jsp"/>
+
+   <definition name=".resource.common.control.currentStatus"
+               path="/resource/common/control/CurrentStatus.jsp"
+               controllerUrl="/resource/common/control/CurrentStatus.do">
+      <put name="section" value="common"/>
+   </definition>
+
+   <!-- RHQ section start -->
+   <definition name=".resource.common.manage.collect.arguments"
+               path="/resource/common/manage/DisplaySingleAttributeSet.jsp">
+      <put name="section" value="common"/>
+   </definition>
+   <!-- RHQ section ends -->
+
+   <definition name=".resource.common.control.list.detail"
+               path="/resource/common/control/ListDetail.jsp"
+               controllerUrl="/resource/common/control/ListDetail.do">
+      <put name="section" value="common"/>
+   </definition>
+
+   <definition name=".resource.common.control.list.scheduled"
+               path="/resource/common/control/ListScheduled.jsp"
+               controllerUrl="/resource/common/control/ListScheduled.do">
+      <put name="section" value="common"/>
+   </definition>
+
+   <!-- inventory portlets -->
+   <definition name=".resource.common.inventory.viewConfigProperties"
+               path="/resource/common/inventory/ViewConfigProperties.jsp"/>
+
+
+   <definition name=".resource.common.inventory.editConfigProperties"
+               path="/resource/common/inventory/EditConfigPropertiesForm.jsp"/>
+
+   <!-- monitor portlets -->
+   <definition name=".resource.common.monitor.visibility.noMetrics"
+               path="/resource/common/monitor/visibility/NoMetrics.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.noHealths"
+               path="/resource/common/monitor/visibility/NoHealths.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.HostHealthError"
+               path="/resource/common/monitor/visibility/HostHealthError.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.noPerfs"
+               path="/resource/common/monitor/visibility/NoPerfs.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.metricDisplayRangeForm"
+               path="/resource/common/monitor/visibility/MetricDisplayRangeForm.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.embeddedMetricDisplayRange"
+               path="/resource/common/monitor/visibility/MetricDisplayRangeForm.jsp">
+      <put name="showRedraw" value="true"/>
+   </definition>
+
+   <definition name=".resource.common.monitor.visibility.metricsToolbar"
+               path="/resource/common/monitor/visibility/MetricsToolbar.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.metricsSeeMore"
+               path="/resource/common/monitor/visibility/MetricsSeeMore.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.charts"
+               path="/resource/common/monitor/visibility/CurrentHealthCharts.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.charts.availability"
+               path="/resource/common/monitor/visibility/CurrentHealthAvailability.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.charts.usage"
+               path="/resource/common/monitor/visibility/CurrentHealthUsage.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.charts.utilization"
+               path="/resource/common/monitor/visibility/CurrentHealthUtilization.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.charts.performance"
+               path="/resource/common/monitor/visibility/CurrentHealthPerformance.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.charts.metric.smsr"
+               controllerUrl="/resource/common/monitor/visibility/ViewChartFormPrepare.do"
+               path="/resource/common/monitor/visibility/ChartLayout.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.charts.metric.smmr"
+               controllerUrl="/resource/common/monitor/visibility/ViewChartFormPrepare.do"
+               path="/resource/common/monitor/visibility/ChartLayout.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.charts.metric.mmsr"
+               controllerUrl="/resource/common/monitor/visibility/ViewChartFormPrepare.do"
+               path="/resource/common/monitor/visibility/ChartLayout.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.trait.history"
+               controllerUrl="/resource/common/monitor/visibility/TraitHistoryFormPrepare.do"
+               path="/resource/common/monitor/visibility/TraitHistoryLayout.jsp"/>
+
+
+   <definition name=".resource.common.monitor.visibility.charts.metric.chart"
+               path="/resource/common/monitor/visibility/MetricChart.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.charts.metric.navigation"
+               path="/resource/common/monitor/visibility/ChartLinksNavigation.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.charts.metric.savecharttoolbar"
+               path="/resource/common/monitor/visibility/SaveChartToolbar.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.charts.metric.partrsrcs"
+               path="/resource/common/monitor/visibility/ParticipatingResources.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.charts.metric.baselinerangeparams"
+               path="/resource/common/monitor/visibility/BaselineExpectedRangeParams.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.charts.metric.chartparams"
+               path="/resource/common/monitor/visibility/ChartParams.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.charts.metric.chartlegend"
+               path="/resource/common/monitor/visibility/ChartLegend.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.childResourcesCurrentHealthSummary"
+               path="/resource/common/monitor/visibility/ChildResourcesCurrentHealthSummary.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.childResourcesCurrentHealthByType"
+               path="/resource/common/monitor/visibility/ChildResourcesCurrentHealthByType.jsp"/>      
+
+   <definition name=".resource.common.monitor.visibility.hostResourcesCurrentHealth"
+               path="/resource/common/monitor/visibility/HostResourcesCurrentHealth.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.metricsDisplayControlForm"
+               path="/resource/common/monitor/visibility/MetricsDisplayControlForm.jsp"
+               controllerUrl="/resource/common/monitor/visibility/MetricsControlFormPrepareAction.do"/>
+
+   <definition name=".resource.common.monitor.visibility.metricsDisplay"
+               path="/resource/common/monitor/visibility/MetricsDisplay.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.metricsDisplay.row"
+               path="/resource/common/monitor/visibility/MetricsDisplayRows.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.performance.controlForm"
+               path="/resource/common/monitor/visibility/PerformanceControlForm.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.childResources.performance.table"
+               path="/resource/common/monitor/visibility/ChildResourcesPerformanceTable.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.childResources.performance.byType"
+               path="/resource/common/monitor/visibility/ChildResourcesPerformanceByType.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.childResources.performance.byUrl"
+               path="/resource/common/monitor/visibility/ChildResourcesPerformanceByUrl.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.performance.urlDetail"
+               path="/resource/common/monitor/visibility/UrlPerformanceDetail.jsp"/>
+
+   <!-- monitoring visibility config -->
+   <definition name=".resource.common.monitor.config.editConfigMetricsVisibility"
+               path="/resource/common/monitor/config/EditConfigMetricsVisibility.jsp">
+      <put name="section" value="common"/>
+   </definition>
+
+   <definition name=".resource.common.monitor.config.toolbar.addToList"
+               extends=".toolbar.addToList">
+      <put name="showIntervalControls" value="true"/>
+   </definition>
+
+   <!-- monitor config portal -->
+   <definition name=".resource.common.monitor.config.ConfigMetrics"
+               controllerUrl="/resource/common/monitor/config/ConfigMetricsFormPrepare.do"
+               path="/resource/common/monitor/config/ConfigMetrics.jsp">
+      <put name="section" value="common"/>
+   </definition>
+               
+   <definition name=".resource.common.monitor.config.ShowOneResourceType"
+   			   path="/resource/common/monitor/config/ShowOneResourceType.jsp"/>
+
+   <!-- monitor mini charts -->
+   <definition name=".resource.common.monitor.visibility.minicharts"
+               path="/resource/common/monitor/visibility/MiniCharts.jsp"/>
+
+   <!-- monitor problem metrics -->
+   <definition name=".resource.common.monitor.visibility.problemmetrics"
+               path="/resource/common/monitor/visibility/ProblemMetrics.jsp"
+               controllerUrl="/resource/common/monitor/visibility/ProblemMetricsDisplay.do"/>
+
+   <!-- monitor dash minitabs -->
+   <definition name=".resource.common.monitor.visibility.dashminitabs"
+               path="/resource/common/monitor/visibility/DashMiniTabs.jsp">
+      <put name="tabUrl" value="/Resource.do"/>
+      <putList name="standard">
+         <item icon="Indicators"
+               mode="currentHealth"
+               value="0" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item icon="MetricData"
+               mode="resourceMetrics"
+               value="1" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      </putList>
+      <putList name="nometrics">
+         <item icon="Indicators"
+               mode="currentHealth"
+               value="0" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item icon="Perf"
+               mode="performance"
+               value="1" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      </putList>
+      <putList name="perf">
+         <item icon="Indicators"
+               mode="currentHealth"
+               value="0" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item icon="MetricData"
+               mode="resourceMetrics"
+               value="1" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item icon="Perf"
+               mode="performance"
+               value="2" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      </putList>
+   </definition>
+
+   <!-- monitor timeline -->
+   <definition name=".resource.common.monitor.visibility.timeline"
+               path="/resource/common/monitor/visibility/Timeline.jsp"
+               controllerUrl="/resource/common/monitor/visibility/Timeline.do"/>
+
+</tiles-definitions>

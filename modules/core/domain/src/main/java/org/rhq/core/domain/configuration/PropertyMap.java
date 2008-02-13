@@ -1,0 +1,265 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.core.domain.configuration;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.MapKey;
+import javax.persistence.OneToMany;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Holds a map of child {@link Property properties}. This can hold any number of properties, including additional lists
+ * and maps of properties (which means you can have N-levels of hierarchical data).
+ *
+ * <p>This map will store the properties keyed on {@link Property#getName() property name}.</p>
+ *
+ * <p>Caution must be used when accessing this object. This class is not thread safe and, for entity persistence, the
+ * child properties must have their {@link Property#getParentMap()} field set. This is done for you when using the
+ * {@link #put(Property)} method.</p>
+ *
+ * @author Jason Dobies
+ * @author Greg Hinkle
+ */
+@DiscriminatorValue("map")
+@Entity
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlRootElement
+public class PropertyMap extends Property implements AbstractPropertyMap {
+    private static final long serialVersionUID = 1L;
+
+    @Cascade( { CascadeType.ALL, CascadeType.DELETE_ORPHAN })
+    @MapKey(name = "name")
+    @OneToMany(mappedBy = "parentMap", fetch = FetchType.EAGER)
+    private Map<String, Property> map;
+
+    /**
+     * Creates a new unnamed and empty {@link PropertyMap} object.
+     */
+    public PropertyMap() {
+    }
+
+    /**
+     * Creates a new, empty {@link PropertyMap} object that is associated with the given name.
+     *
+     * @param name the name of the map itself
+     */
+    public PropertyMap(@NotNull
+    String name) {
+        setName(name);
+    }
+
+    /**
+     * Creates a new {@link PropertyMap} object that is associated with the given name and has the given properties as
+     * its initial set of child properties. All properties found in <code>startingProperties</code> will have their
+     * {@link Property#setParentMap(PropertyMap) parent map} set to this newly constructed map.
+     *
+     * @param name               the name of the map itself
+     * @param startingProperties a set of properties to be immediately added to this map
+     */
+    public PropertyMap(@NotNull
+    String name, Property... startingProperties) {
+        this(name);
+        for (Property property : startingProperties) {
+            put(property);
+        }
+    }
+
+    /**
+     * Returns the contents of this PropertyMap as a map. The keys to the map are the member properties' names and the
+     * values are the properties themselves.
+     *
+     * <p><b>Warning:</b> Caution should be used when accessing the returned map. Please see
+     * {@link PropertyMap the javadoc for this class} for more information.</p>
+     *
+     * @return the map of key's to property objects
+     */
+    @NotNull
+    public Map<String, Property> getMap() {
+        if (this.map == null) {
+            this.map = new LinkedHashMap<String, Property>();
+        }
+
+        return this.map;
+    }
+
+    /**
+     * Sets the map of child properties directly to the given <code>map</code> reference. This means the actual <code>
+     * map</code> object is stored internally in this object. Changes made to <code>map</code> will be reflected back
+     * into this object.
+     *
+     * <p><b>Warning:</b> Caution should be used when setting this object's internal map. Please see
+     * {@link PropertyMap the javadoc for this class} for more information.</p>
+     *
+     * @param map the new map used internally by this object
+     */
+    public void setMap(Map<String, Property> map) {
+        this.map = map;
+    }
+
+    /**
+     * Put a child property into this map keyed on the given property's name. This method also sets the
+     * {@link Property#setParentMap(PropertyMap) parent map} for the child property to make persistence work.
+     *
+     * @param property the property to add to this map.
+     */
+    public void put(@NotNull
+    Property property) {
+        getMap().put(property.getName(), property);
+        property.setParentMap(this);
+    }
+
+    /**
+     * Looks for a property with the given name in the map and returns it. <code>null</code> is returned if it is not
+     * found.
+     *
+     * @param  name the name of the property to return
+     *
+     * @return the named property or <code>null</code> if it does not exist as a child to this map
+     */
+    public Property get(String name) {
+        return getMap().get(name);
+    }
+
+    /**
+     * Looks for a child simple property with the given name in the map and returns it. <code>null</code> is returned if
+     * it is not found.
+     *
+     * @param  name the name of the child simple property to return
+     *
+     * @return the named simple property or <code>null</code> if it does not exist as a child to this map
+     *
+     * @throws ClassCastException if the named property is not of type {@link PropertySimple}
+     */
+    public PropertySimple getSimple(String name) {
+        return (PropertySimple) get(name);
+    }
+
+    /**
+     * Looks for a child list property with the given name in the map and returns it. <code>null</code> is returned if
+     * it is not found.
+     *
+     * @param  name the name of the child list property to return
+     *
+     * @return the named list property or <code>null</code> if it does not exist as a child to this map
+     *
+     * @throws ClassCastException if the named property is not of type {@link PropertyList}
+     */
+    public PropertyList getList(String name) {
+        return (PropertyList) get(name);
+    }
+
+    /**
+     * Looks for a child map property with the given name in the map and returns it. <code>null</code> is returned if it
+     * is not found.
+     *
+     * @param  name the name of the child map property to return
+     *
+     * @return the named map property or <code>null</code> if it does not exist as a child to this map
+     *
+     * @throws ClassCastException if the named property is not of type {@link PropertyMap}
+     */
+    public PropertyMap getMap(String name) {
+        return (PropertyMap) get(name);
+    }
+
+    /**
+     * @see org.rhq.core.domain.configuration.Property#readExternal(java.io.ObjectInput)
+     */
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        map = (Map<String, Property>) in.readObject();
+    }
+
+    /**
+     * @see org.rhq.core.domain.configuration.Property#writeExternal(java.io.ObjectOutput)
+     */
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        if (map == null) {
+            out.writeObject(null);
+        } else if (map.getClass().getName().contains("hibernate")) {
+            out.writeObject(new LinkedHashMap<String, Property>(map));
+        } else {
+            out.writeObject(map);
+        }
+    }
+
+    /**
+     * NOTE: An PropertyMap containing a null map is considered equal to a PropertyMap containing an empty map.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if ((obj == null) || !(obj instanceof PropertyMap)) {
+            return false;
+        }
+
+        if (!super.equals(obj)) {
+            return false; // superclass checks equality of the name fields
+        }
+
+        PropertyMap that = (PropertyMap) obj;
+        if ((this.map == null) || this.map.isEmpty()) {
+            return (that.map == null) || that.map.isEmpty();
+        }
+
+        return this.map.equals(that.map);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode(); // superclass hashCode is derived from the name field
+        result = (31 * result) + (((this.map != null) && !this.map.isEmpty()) ? this.map.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    protected void appendToStringInternals(StringBuilder str) {
+        super.appendToStringInternals(str);
+        str.append(", map=").append(getMap());
+    }
+
+    /**
+     * This listener runs after jaxb unmarshalling and reconnects children properties to their parent maps (as we don't
+     * send them avoiding cyclic references).
+     */
+    public void afterUnmarshal(Unmarshaller u, Object parent) {
+        for (Property p : this.map.values()) {
+            p.setParentMap(this);
+        }
+    }
+}

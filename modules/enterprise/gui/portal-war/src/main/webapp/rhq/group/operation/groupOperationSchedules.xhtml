@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+      
+<ui:composition template="/rhq/group/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="Schedule Operation for ResourceGroup '#{ResourceGroupUIBean.name}'"/>
+   <ui:param name="selectedTabName" value="Control.Schedules"/>
+   <ui:define name="content">
+
+      <!-- ResourceGroup Operation Schedules -->
+      <h:form id="scheduleForm">
+         <input type="hidden" name="groupId" value="${param.groupId}"/>
+         
+         <!-- Operation Schedule Table -->
+         <rich:panel>
+            <f:facet name="header">Resource Group Operation Schedules</f:facet>
+            
+            <h:panelGrid columns="1" width="90%" style="min-width: 800px;">
+
+            <ui:param name="resourceGroupOperationScheduleDataModel" value="#{ResourceGroupOperationScheduleUIBean.dataModel}"/>
+            <rich:dataTable binding="#{ResourceGroupOperationScheduleUIBean.dataTable}"
+                            id="resourceGroupOperationScheduleDataTable"
+                            rows="0"
+                            value="#{resourceGroupOperationScheduleDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 30%, 39%, 30%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer">
+                            
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="NONE" />
+               </f:facet>
+      
+               <rich:column style="width: 1px;">
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedItems" />
+                  </f:facet>
+                  <onc:select name="selectedItems" value="#{item.jobId}" />
+               </rich:column>
+               
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Job ID" />
+                  </f:facet>
+                  <h:commandLink action="#{ResourceGroupOperationScheduleUIBean.selectScheduleToView}">
+                     <h:outputText value="#{item.jobId}" />
+                  </h:commandLink>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Name" />
+                  </f:facet>
+
+                  <h:outputLink value="/rhq/group/operation/groupOperationScheduleDetails.xhtml" >
+                     <f:param name="groupId" value="#{param.groupId}" />
+                     <f:param name="jobId" value="#{item.jobId}" />
+                     <h:outputText value="#{item.operationDisplayName}"/>
+                  </h:outputLink>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Notes" />
+                  </f:facet>
+                  <h:outputText value="#{item.description}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="User" />
+                  </f:facet>
+                  <h:outputText value="#{item.subject.name}"/>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="4">
+                        <onc:selectCommandButton action="#{ResourceGroupOperationScheduleUIBean.unschedule}"
+                                                 value="UNSCHEDULE" target="selectedItems" styleClass="on-pager-button buttonsmall"/>   
+                        <onc:selectCommandButton action="#{ResourceGroupOperationScheduleUIBean.executeNow}" 
+                                                 value="EXECUTE NOW" target="selectedItems" styleClass="on-pager-button buttonsmall"
+                                                 low="1" high="1"/>
+                                                 
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+
+            <h:panelGrid columns="1" width="90%" style="min-width: 800px;">
+               <h:panelGrid columns="2" cellspacing="3">
+               </h:panelGrid>
+            </h:panelGrid>
+
+         </rich:panel>
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

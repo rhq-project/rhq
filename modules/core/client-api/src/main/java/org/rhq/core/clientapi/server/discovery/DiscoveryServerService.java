@@ -1,0 +1,112 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.core.clientapi.server.discovery;
+
+import java.util.Map;
+import org.rhq.core.communications.command.annotation.Asynchronous;
+import org.rhq.core.communications.command.annotation.LimitedConcurrency;
+import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.domain.discovery.InventoryReport;
+import org.rhq.core.domain.discovery.InventoryReportResponse;
+import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceError;
+
+/**
+ * The interface to a JON server's resource discovery subsystem.
+ */
+public interface DiscoveryServerService {
+    String CONCURRENCY_LIMIT_INVENTORY_REPORT = "rhq.server.concurrency-limit.inventory-report";
+    String CONCURRENCY_LIMIT_AVAILABILITY_REPORT = "rhq.server.concurrency-limit.availability-report";
+    String CONCURRENCY_LIMIT_INVENTORY_SYNC = "rhq.server.concurrency-limit.inventory-sync";
+
+    /**
+     * Merge the platform/servers/services contained in the specified inventory report into the server's inventory. Note
+     * that the plugin container will use this method to send the results of both platform/server scans and service
+     * scans. In the case of the former, the server will queue the inventory updates and require the JON administrator
+     * to approve them before merging them into inventory.
+     *
+     * @param  inventoryReport a report containing updated inventory data
+     *
+     * @return response that contains information the plugin container will need in order to sync itself up with new
+     *         data that the server had to create in order to merge the report into its inventory
+     *
+     * @throws InvalidInventoryReportException if the inventory report contains invalid data
+     */
+    @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_REPORT)
+    InventoryReportResponse mergeInventoryReport(InventoryReport inventoryReport)
+        throws InvalidInventoryReportException;
+
+    /**
+     * Merges a new availability report from the agent into the server. This updates the availability statuses of known
+     * resources.
+     *
+     * @param  availabilityReport report containing updated availability statuses for a set of resources
+     *
+     * @return If <code>true</code>, this indicates everything seems OK - the server merged everything successfully and
+     *         the server and agent seem to be in sync with each. If <code>false</code>, the server thinks something
+     *         isn't right and it may be out of sync with the agent. When <code>false</code> is returned, the caller
+     *         should send a <i>full</i> availability report the next time in order to ensure the server and agent are
+     *         in sync. <code>true</code> should always be returned if the given availability report is already a full
+     *         report.
+     */
+    // GH: Disabled temporarily (JBNADM-2385) @Asynchronous( guaranteedDelivery = true )
+    @LimitedConcurrency(CONCURRENCY_LIMIT_AVAILABILITY_REPORT)
+    boolean mergeAvailabilityReport(AvailabilityReport availabilityReport);
+
+    /**
+     * Returns a resource tree rooted at the give resource id.
+     *
+     * @param  rootResourceId the id of the resource at the root of the retrieved tree
+     *
+     * @return a tree of resources with the latest data
+     */
+    Resource getResourceTree(int rootResourceId);
+
+    /**
+     * Indicates that an error occurred on a resource.
+     *
+     * @param resourceError all information about the error that occurred
+     */
+    @Asynchronous(guaranteedDelivery = true)
+    void setResourceError(ResourceError resourceError);
+
+    /**
+     * Retrieve a set of inventory statuses for a resource and potentially its descendants.
+     *
+     * @param  rootResourceId a {@link Resource} id
+     * @param  descendants    true if the resource's descendants should be included, or false if not
+     *
+     * @return a map of the resourceId to the inventory status
+     */
+    @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_SYNC)
+    Map<Integer, InventoryStatus> getInventoryStatus(int rootResourceId, boolean descendants);
+
+    /**
+     * Merges the specified resource into inventory.
+     *
+     * @param  resource         the resource to be merged
+     * @param  creatorSubjectId the {@link org.rhq.core.domain.auth.Subject} id of the JON user that requested the
+     *                          addition of the resource
+     *
+     * @return a response containing the merged resource, as well as whether the resource already existed in inventory
+     */
+    MergeResourceResponse mergeResource(Resource resource, int creatorSubjectId);
+}

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<dbsetup name="config-schema.xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="urn:xmlns:rhq-dbsetup-schema">
+
+   <!-- Definition or Metadata tables -->
+
+   <table name="RHQ_CONFIG_DEF">
+      <column name="ID"          type="INTEGER"  required="true"  default="sequence-only" initial="1" primarykey="true" />
+      <column name="NAME"        type="VARCHAR2" required="true"  size="100"/>
+      <column name="DESCRIPTION" type="VARCHAR2" required="false" size="250"/>
+      <column name="VERSION"     type="VARCHAR2" required="false" size="50"/>
+   </table>
+
+   <table name="RHQ_CONFIG_PROP_GRP_DEF">
+      <column name="ID"             type="INTEGER"  required="true" default="sequence-only" initial="1" primarykey="true" />
+      <column name="NAME"           type="VARCHAR2" required="true"  size="100"/>
+      <column name="DISPLAY_NAME"   type="VARCHAR2" required="false" size="100"/>
+      <column name="DESCRIPTION"    type="VARCHAR2" required="false" size="250"/>
+      <column name="DEFAULT_HIDDEN" type="BOOLEAN"  required="false" />
+      <column name="ORDER_INDEX"    type="INTEGER"  required="false" />
+   </table>
+
+   <table name="RHQ_CONFIG_PROP_DEF">
+      <column name="ID"                        type="INTEGER"  required="true"  default="sequence-only" initial="1" primarykey="true" />
+      <column name="NAME"                      type="VARCHAR2" required="false" size="100"/>
+      <column name="DISPLAY_NAME"              type="VARCHAR2" required="false" size="100"/>
+      <column name="DESCRIPTION"               type="VARCHAR2" required="false" size="1000"/>
+      <column name="DEFAULT_VALUE"             type="VARCHAR2" required="false" size="2000"/>
+      <column name="REQUIRED"                  type="BOOLEAN"  required="false" />
+      <column name="READONLY"                  type="BOOLEAN"  required="false" />
+      <column name="SUMMARY"                   type="BOOLEAN"  required="false" />
+      <column name="ACTIVATION_POLICY"         type="VARCHAR2" required="false" size="20"/>
+      <column name="GROUP_ID"                  type="INTEGER"  required="false" references="RHQ_CONFIG_PROP_GRP_DEF"/>
+      <column name="ORDER_INDEX"               type="INTEGER"  required="false" />
+      <column name="VERSION"                   type="VARCHAR2" required="false" size="50"/>
+      <column name="PARENT_MAP_DEFINITION_ID"  type="INTEGER"  required="false" references="RHQ_CONFIG_PROP_DEF"/>
+      <column name="PARENT_LIST_DEFINITION_ID" type="INTEGER"  required="false" references="RHQ_CONFIG_PROP_DEF"/>
+      <column name="SIMPLE_TYPE"               type="VARCHAR2" required="false" size="20"/>
+      <column name="ALLOW_CUSTOM_ENUM_VALUE"   type="BOOLEAN"  required="false" />
+      <column name="DTYPE"                     type="VARCHAR2" required="true"  size="10"/>
+      <column name="CONFIG_DEF_ID"             type="INTEGER"  required="false" references="RHQ_CONFIG_DEF"/>
+      
+      <!-- only simple properties (not lists and maps) have this -->
+      <column name="UNITS"                     type="SMALLINT" required="false" /> 
+   </table>
+
+   <table name="RHQ_CONF_PROP_DEF_ENUM">
+      <column name="ID"              type="INTEGER"  required="true"  default="sequence-only" initial="1" primarykey="true" />
+      <column name="STRING_VALUE"    type="VARCHAR2" required="false" size="500"/>
+      <column name="ORDER_INDEX"     type="INTEGER"  required="false" />
+      <column name="IS_DEFAULT"      type="BOOLEAN"  required="false" />
+      <column name="NAME"            type="VARCHAR2" required="false" size="100"/>
+      <column name="PROPERTY_DEF_ID" type="INTEGER"  required="false" references="RHQ_CONFIG_PROP_DEF"/>
+   </table>
+
+   <table name="RHQ_CONFIG_PROP_CONSTR">
+      <column name="ID"                 type="INTEGER"  required="true"  default="sequence-only" initial="1" primarykey="true" />
+      <column name="DTYPE"              type="VARCHAR2" required="true"  size="15"/>
+      <column name="DETAILS"            type="VARCHAR2" required="false" size="250"/>
+      <column name="CONFIG_PROP_DEF_ID" type="INTEGER"  required="false" references="RHQ_CONFIG_PROP_DEF"/>
+      <column name="ORDER_INDEX"        type="INTEGER"  required="false" />
+   </table>
+
+
+   <!-- Content or value tables -->
+
+   <table name="RHQ_CONFIG">
+      <column name="ID"                type="INTEGER"  required="true"  default="sequence-only" initial="1" primarykey="true" />
+      <column name="NOTES"             type="VARCHAR2" required="false" size="250"/>
+      <column name="VERSION"           type="VARCHAR2" required="false" size="50"/>
+      <column name="CTIME"             type="LONG"     required="true" />
+      <column name="MTIME"             type="LONG"     required="true" />
+   </table>
+
+   <table name="RHQ_CONFIG_PROPERTY">
+      <column name="ID"               type="INTEGER"     required="true"  default="sequence-only" initial="1" primarykey="true" />
+      <column name="CONFIGURATION_ID" type="INTEGER"     required="false" references="RHQ_CONFIG"/>
+      <column name="STRING_VALUE"     type="VARCHAR2"    required="false" size="2000"/>
+      <column name="OVERRIDE"         type="BOOLEAN"     required="false" />
+      <column name="NAME"             type="VARCHAR2"    required="true"  size="100"/>
+      <column name="DTYPE"            type="VARCHAR2"    required="true"  size="10"/>
+      <column name="PARENT_LIST_ID"   type="INTEGER"     required="false" references="RHQ_CONFIG_PROPERTY"/>
+      <column name="PARENT_MAP_ID"    type="INTEGER"     required="false" references="RHQ_CONFIG_PROPERTY"/>
+      <column name="LIST_INDEX"       type="INTEGER"/>
+      <column name="ERROR_MESSAGE"    type="LONGVARCHAR" required="false" />
+      <index name="RHQ_CONFIG_PROP_idx_prop_key" unique="false">
+         <field ref="CONFIGURATION_ID"/>
+         <field ref="NAME"/>
+      </index>
+      <index name="RHQ_CONFIG_PROP_idx_map_key" unique="false">
+         <field ref="PARENT_MAP_ID"/>
+         <field ref="NAME"/>
+      </index>
+      <!-- List entries all have the same name -->
+   </table>
+
+   <table name="RHQ_CONFIG_TEMPLATE">
+      <column name="ID"            type="INTEGER"  required="true"  default="sequence-only" initial="1" primarykey="true" />
+      <column name="NAME"          type="VARCHAR2" required="false" size="100"/>
+      <column name="DESCRIPTION"   type="VARCHAR2" required="false" size="500"/>
+      <column name="CONFIG_ID"     type="INTEGER"  required="false" references="RHQ_CONFIG"/>
+      <column name="CONFIG_DEF_ID" type="INTEGER"  required="false" references="RHQ_CONFIG_DEF"/>
+      <column name="IS_DEFAULT"    type="BOOLEAN"  required="false" />
+   </table>
+
+</dbsetup>

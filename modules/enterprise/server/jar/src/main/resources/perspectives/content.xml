@@ -1,0 +1,29 @@
+<perspective name="content" path="/pulp"
+	description="advanced software content management"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="urn:xmlns:rhq-perspective">
+	<task name="channel create" path="/pulp/channels/create"
+		description="Create Channel">
+		<pathmatches>/pulp/channels</pathmatches>
+		<pathmatches>/pulp/channels/create</pathmatches>
+		<pathmatches>/pulp/channels/create_confirm</pathmatches>
+		<pathmatches>/pulp/channels/create*</pathmatches>
+	</task>
+	<task name="channel add package"
+		path="/pulp/channels/add_package?cid={0}"
+		description="Add Content to this Channel" context="channel">
+		<pathmatches>/pulp/channels/details/*</pathmatches>
+	</task>
+	<task name="channel clone" path="/pulp/channels/clone"
+		description="Clone A Channel">
+		<pathmatches>/pulp/channels/*</pathmatches>
+	</task>
+       <task name="channel clone existing" path="/pulp/channels/clone?cid={0}"
+           description="Clone this Channel"  context="channel">
+           <pathmatches>/pulp/channels/*</pathmatches>
+       </task>
+	<task name="channel delete" path="/pulp/channels/delete"
+		description="Delete A channel">
+		<pathmatches>/pulp/channels/*</pathmatches>
+	</task>
+</perspective>

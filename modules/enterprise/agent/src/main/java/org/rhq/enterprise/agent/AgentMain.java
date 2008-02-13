@@ -1,0 +1,2363 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.enterprise.agent;
+
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StreamTokenizer;
+import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.InvalidPreferencesFormatException;
+import java.util.prefs.Preferences;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import mazz.i18n.Logger;
+import mazz.i18n.Msg;
+import org.jboss.remoting.security.SSLSocketBuilder;
+import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
+import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
+import org.rhq.core.clientapi.server.content.ContentServerService;
+import org.rhq.core.clientapi.server.core.AgentRegistrationException;
+import org.rhq.core.clientapi.server.core.AgentRegistrationRequest;
+import org.rhq.core.clientapi.server.core.AgentRegistrationResults;
+import org.rhq.core.clientapi.server.core.CoreServerService;
+import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
+import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
+import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
+import org.rhq.core.clientapi.server.operation.OperationServerService;
+import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.ServerServices;
+import org.rhq.core.pc.plugin.FileSystemPluginFinder;
+import org.rhq.core.system.SystemInfo;
+import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.ObjectNameFactory;
+import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
+import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
+import org.rhq.enterprise.agent.promptcmd.AgentPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.AvailabilityPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.ConfigPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.DiscoveryPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.DownloadPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.DumpSpoolPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.ExecutePromptCommand;
+import org.rhq.enterprise.agent.promptcmd.ExitPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.GetConfigPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.HelpPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.IdentifyPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.InventoryPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.LogPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.MetricsPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.NativePromptCommand;
+import org.rhq.enterprise.agent.promptcmd.PingPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.PiqlPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.PluginContainerPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.PluginsPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.RegisterPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.SenderPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.SetConfigPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.SetupPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.ShutdownPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.StartPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.VersionPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.aliases.QuitPromptCommand;
+import org.rhq.enterprise.communications.Ping;
+import org.rhq.enterprise.communications.ServiceContainer;
+import org.rhq.enterprise.communications.ServiceContainerConfiguration;
+import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
+import org.rhq.enterprise.communications.ServiceContainerSenderCreationListener;
+import org.rhq.enterprise.communications.command.Command;
+import org.rhq.enterprise.communications.command.CommandResponse;
+import org.rhq.enterprise.communications.command.client.ClientCommandSender;
+import org.rhq.enterprise.communications.command.client.ClientCommandSenderConfiguration;
+import org.rhq.enterprise.communications.command.client.ClientCommandSenderStateListener;
+import org.rhq.enterprise.communications.command.client.ClientRemotePojoFactory;
+import org.rhq.enterprise.communications.command.client.CommandPreprocessor;
+import org.rhq.enterprise.communications.command.client.JBossRemotingRemoteCommunicator;
+import org.rhq.enterprise.communications.command.client.RemoteCommunicator;
+import org.rhq.enterprise.communications.command.impl.remotepojo.RemotePojoInvocationCommand;
+import org.rhq.enterprise.communications.command.server.CommandListener;
+import org.rhq.enterprise.communications.util.SecurityUtil;
+import org.rhq.enterprise.communications.util.prefs.PromptInput;
+
+/**
+ * The main class of the agent runtime container.
+ *
+ * @author John Mazzitelli
+ */
+public class AgentMain {
+    /**
+     * The logger.
+     */
+    private static final Logger LOG = AgentI18NFactory.getLogger(AgentMain.class);
+
+    /**
+     * The I18N message builder that creates localized messages for the user.
+     */
+    private static final Msg MSG = AgentI18NFactory.getMsg();
+
+    // set up our user input prompts that will be used to also show the agent status
+    private static final String PROMPT_SHUTDOWN = MSG.getMsg(AgentI18NResourceKeys.PROMPT_STRING_SHUTDOWN) + "> ";
+    private static final String PROMPT_STARTED = MSG.getMsg(AgentI18NResourceKeys.PROMPT_STRING_STARTED) + "> ";
+    private static final String PROMPT_SENDING = MSG.getMsg(AgentI18NResourceKeys.PROMPT_STRING_SENDING) + "> ";
+
+    /**
+     * The command line arguments specified by the user.
+     */
+    private String[] m_commandLineArgs;
+
+    /**
+     * Indicates if the agent should run in daemon mode. This simply means it will not infinitely attempt to read
+     * commands from stdin. If an input file is provided, commands will be read from it, but not from stdin.
+     */
+    private boolean m_daemonMode;
+
+    /**
+     * The stream where the commands are input.
+     */
+    private BufferedReader m_input;
+
+    /**
+     * Will be <code>true</code> if the input is coming directly from stdin; <code>false</code> if an input script file
+     * is used (see -f command line option).
+     */
+    private boolean m_stdinInput;
+
+    /**
+     * The output stream where results are printed.
+     */
+    private PrintWriter m_output;
+
+    /**
+     * Configuration settings for the agent, including the communications services configuration.
+     */
+    private AgentConfiguration m_configuration;
+
+    /**
+     * This is the name of the node where the agent preferences (i.e. its configuration) is stored under the top level
+     * agent node name (which is {@link AgentConfigurationConstants#PREFERENCE_NODE_PARENT}). This allows a user to have
+     * multiple configurations of an agent.
+     */
+    private String m_agentPreferencesNodeName;
+
+    /**
+     * The container that manages our server-side communications services.
+     */
+    private ServiceContainer m_commServices;
+
+    /**
+     * The object that can be used to send commands to remote servers.
+     */
+    private ClientCommandSender m_clientSender;
+
+    /**
+     * One-element array containing the flag to indicate if agent is started. An array so we can use its monitor lock -
+     * its lock is held when the m_clientSender needs to be created and destroyed.
+     */
+    private boolean[] m_started;
+
+    /**
+     * The time (as reported by <code>System.currentTimeMillis()</code>) when the agent was {@link #start() started}.
+     * This value resets to 0 once the agent is {@link #shutdown()}.
+     */
+    private long m_startTime = 0L;
+
+    /**
+     * Map of all the valid prompt commands - the map is keyed on the prompt command name and the value is the <code>
+     * Class</code> of the {@link AgentPromptCommand} implementation.
+     */
+    private Map<String, Class<? extends AgentPromptCommand>> m_promptCommands;
+
+    /**
+     * If not <code>null</code>, this is the shutdown hook that the agent has installed.
+     */
+    private Thread m_shutdownHook;
+
+    /**
+     * This is the thread that is running the input loop; it accepts prompt commands from the user.
+     */
+    private Thread m_inputLoopThread;
+
+    /**
+     * The listener that will be used to auto-detect the server coming online and going offline. If this is <code>
+     * null</code>, it means the agent is not listening for auto-detection messages.
+     */
+    private AgentAutoDiscoveryListener m_autoDiscoveryListener;
+
+    /**
+     * A list of commands that were previously queued up but not yet when we shutdown the sender. These hold volatile
+     * commands that we should try to resend once we restart.
+     */
+    private LinkedList<Runnable> m_previouslyQueueCommands;
+
+    /**
+     * If the agent needs to be setup when it is first initialized, by default the basic setup will run which asks the
+     * user for some basic, minimal information necessary to get the agent started. However, if this flag is <code>
+     * true</code>, the advanced setup will run as opposed to the basic setup.
+     */
+    private boolean m_advancedSetup = false;
+
+    /**
+     * If the agent was told to setup (via a command line option), this will be trueneeds to be setup when it is first
+     * initialized, by default the basic setup will run which asks the user for some basic, minimal information
+     * necessary to get the agent started. However, if this flag is <code>true</code>, the advanced setup will run as
+     * opposed to the basic setup.
+     */
+    private boolean m_forcedSetup = false;
+
+    /**
+     * Determines if the agent should {@link #start()} at boot time. If <code>false</code>, the agent will not be
+     * started when the VM starts - it will explicitly wait for the start prompt command to be issued. The default is
+     * <code>true</code> meaning as soon as the agent VM starts up, the agent's {@link #start()} method is called.
+     */
+    private boolean m_startAtBoot = true;
+
+    /**
+     * First and only element will be a non-<code>null</code> thread when this agent is actively attempting to register
+     * itself with the server. This is an array because the array itself will be used for its lock to synchronize access
+     * to the thread.
+     */
+    private Thread[] m_registrationThread = new Thread[1];
+
+    /**
+     * Will be non-<code>null</code> if this agent has successfully registered with the server.
+     */
+    private AgentRegistrationResults m_registration;
+
+    /**
+     * This is the management MBean responsible for managing and monitoring this agent. This is the object the agent
+     * plugin interacts with.
+     */
+    private AgentManagement m_managementMBean;
+
+    /**
+     * The main method that starts the whole thing.
+     *
+     * @param args
+     */
+    public static void main(String[] args) {
+        AgentMain agent = null;
+
+        try {
+            agent = new AgentMain(args);
+
+            agent.getOut().println(Version.getProductNameAndVersion() + " (" + Version.getBuildDate() + ")");
+
+            // ask the user to setup the agent if the agent hasn't been setup yet or we are being forced to
+            if (agent.m_forcedSetup || (!agent.m_daemonMode && !agent.m_configuration.isAgentConfigurationSetup())) {
+                SetupPromptCommand setup_cmd = new SetupPromptCommand();
+
+                if (agent.m_advancedSetup) {
+                    setup_cmd.performAdvancedSetup(agent.m_configuration.getPreferences(), agent.getNativeIn(), agent
+                        .getOut());
+                } else {
+                    setup_cmd.performBasicSetup(agent.m_configuration.getPreferences(), agent.getNativeIn(), agent
+                        .getOut());
+                }
+            }
+
+            // start the agent automatically only if we are configured to do so; otherwise, just start the user input loop
+            if (agent.m_startAtBoot) {
+                agent.start();
+            } else {
+                agent.inputLoop();
+            }
+        } catch (HelpException he) {
+            // do nothing
+        } catch (Exception e) {
+            LOG.fatal(e, AgentI18NResourceKeys.AGENT_START_FAILURE);
+
+            if (agent != null) {
+                agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
+                e.printStackTrace(agent.getOut());
+            } else {
+                System.err.println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
+                e.printStackTrace(System.err);
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * Constructor for {@link AgentMain} that loads the agent configuration and prepare some additional internal data.
+     *
+     * @throws Exception if failed to load the configuration properly
+     */
+    public AgentMain() throws Exception {
+        this(null);
+    }
+
+    /**
+     * Constructor for {@link AgentMain} that accepts command line arguments, loads the agent configuration and prepare
+     * some additional internal data.
+     *
+     * @param  args the command line arguments (may be <code>null</code>)
+     *
+     * @throws Exception if failed to load the configuration properly
+     */
+    public AgentMain(String[] args) throws Exception {
+        LOG.debug(AgentI18NResourceKeys.CREATING_AGENT);
+
+        m_daemonMode = false;
+        m_input = new BufferedReader(new InputStreamReader(System.in));
+        m_output = new PrintWriter(System.out, true);
+        m_stdinInput = true;
+        m_configuration = null;
+        m_started = new boolean[] { false };
+        m_agentPreferencesNodeName = AgentConfigurationConstants.DEFAULT_PREFERENCE_NODE;
+        m_previouslyQueueCommands = null;
+        m_registration = null;
+
+        if (args == null) {
+            args = new String[0];
+        }
+
+        m_commandLineArgs = args;
+        processArguments(m_commandLineArgs);
+
+        m_promptCommands = new HashMap<String, Class<? extends AgentPromptCommand>>();
+        setupPromptCommandsMap(m_promptCommands);
+
+        prepareNativeSystem();
+
+        return;
+    }
+
+    /**
+     * Returns <code>true</code> if the agent has started; <code>false</code> if the agent has either never been started
+     * or has been stopped.
+     *
+     * @return <code>true</code> if the agent is started; <code>false</code> if it is stopped.
+     */
+    public boolean isStarted() {
+        return m_started[0];
+    }
+
+    /**
+     * Returns <code>true</code> if the embedded plugin container has been {@link #startPluginContainer(long) started}
+     * or <code>false</code> if its currently {@link #shutdownPluginContainer() stopped}.
+     *
+     * @return status of the plugin container
+     */
+    public boolean isPluginContainerStarted() {
+        return PluginContainer.getInstance().isStarted();
+    }
+
+    /**
+     * Returns the time (as reported by <code>System.currentTimeMillis()</code>) when the agent was
+     * {@link #start() started}. This returns 0 if the agent has been {@link #shutdown()}.
+     *
+     * @return time when the agent was started
+     */
+    public long getStartTime() {
+        return m_startTime;
+    }
+
+    /**
+     * This method will initialize all services and get the agent up and running.
+     *
+     * @throws Exception if failed to start
+     */
+    public void start() throws Exception {
+        synchronized (m_started) {
+            if (!isStarted()) {
+                try {
+                    if ((m_configuration.getAgentName() == null) || (m_configuration.getAgentName().length() == 0)) {
+                        throw new IllegalStateException(MSG.getMsg(AgentI18NResourceKeys.AGENT_NAME_NOT_DEFINED));
+                    }
+
+                    prepareNativeSystem();
+
+                    BootstrapLatchCommandListener latch = new BootstrapLatchCommandListener();
+                    startCommServices(latch); // note that we start the comm services before we start the plugin container
+                    startManagementServices(); // we start our metric collectors before plugin container so the agent plugin can work
+                    prepareStartupWorkRequiringServer();
+                    waitForServer(m_configuration.getWaitForServerAtStartupMsecs());
+
+                    if (!m_configuration.doNotStartPluginContainerAtStartup()) {
+                        // block indefinitely - we cannot continue until we are registered, we have plugins and the PC starts
+                        startPluginContainer(0L);
+                    } else {
+                        LOG.info(AgentI18NResourceKeys.NOT_STARTING_PLUGIN_CONTAINER_AT_STARTUP);
+                    }
+
+                    // now that our plugin container has been initialized, it can begin to receive incoming commands
+                    latch.allowAllCommands(m_commServices);
+
+                    // prepare our shutdown hook
+                    m_shutdownHook = new AgentShutdownHook(this);
+                    Runtime.getRuntime().addShutdownHook(m_shutdownHook);
+
+                    // indicate that we have started
+                    setStarted(true);
+
+                    // start our input loop thread if it hasn't been started yet
+                    if ((m_inputLoopThread == null) || !m_inputLoopThread.isAlive()) {
+                        inputLoop();
+                    }
+                } catch (Exception e) {
+                    LOG.fatal(e, AgentI18NResourceKeys.STARTUP_ERROR);
+                    setStarted(true); // make sure this is flipped to true so our shutdown actually does something
+                    shutdown();
+                    throw e;
+                }
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * Shuts down the agent gracefully.
+     */
+    public void shutdown() {
+        synchronized (m_started) {
+            if (isStarted()) {
+                LOG.info(AgentI18NResourceKeys.SHUTTING_DOWN);
+
+                // remove our shutdown hook
+                if (m_shutdownHook != null) {
+                    try {
+                        Runtime.getRuntime().removeShutdownHook(m_shutdownHook);
+                    } catch (Exception ignore) {
+                        // looks like we are already in the process of shutting down, ignore this exception
+                    }
+
+                    m_shutdownHook = null;
+                }
+
+                // shutdown the PC, tell the server that we are shutting down, and shutdown all comm services, in that order
+                shutdownPluginContainer();
+
+                if (!m_configuration.doNotNotifyServerOfShutdown()) {
+                    notifyServerOfShutdown();
+                } else {
+                    LOG.info(AgentI18NResourceKeys.TOLD_TO_NOT_NOTIFY_SERVER_OF_SHUTDOWN);
+                }
+
+                stopManagementServices();
+                shutdownCommServices();
+
+                // notify our input loop that we've stopped
+                setStarted(false);
+
+                m_started.notify();
+
+                if ((m_inputLoopThread != null) && m_inputLoopThread.isAlive()) {
+                    m_inputLoopThread.interrupt();
+                }
+
+                LOG.info(AgentI18NResourceKeys.AGENT_SHUTDOWN);
+            }
+
+            // let's make sure we shutdown everything inside the native system
+            // do this even if the agent was already shutdown
+            SystemInfoFactory.shutdown();
+        }
+
+        return;
+    }
+
+    /**
+     * Returns the output stream that displays messages to the user.
+     *
+     * @return writer to which you can print messages to the user
+     */
+    public PrintWriter getOut() {
+        return m_output;
+    }
+
+    /**
+     * Returns the current input reader where the agent is getting its input. If <code>null</code>, this agent is in
+     * daemon mode and not currently accepting input.
+     *
+     * @return the input stream or <code>null</code> if the agent is not currently accepting input
+     */
+    public BufferedReader getIn() {
+        return m_input;
+    }
+
+    /**
+     * In some cases, we want to read console input in a native way (that is, using the native system to read the
+     * keyboard input). This is mainly useful when you want to read in prompt answers which include passwords and you do
+     * not want to echo what the user typed.
+     *
+     * @return object that can be used to read input with the typed data being echoed or not
+     */
+    public PromptInput getNativeIn() {
+        SystemInfo sysinfo = null;
+
+        // if we are not in daemon mode, we are running in a console and thus we can try to use
+        // the native library to get its input.
+        // If we are in daemon mode, we aren't running in a console so we need to pass null
+        // in for sysinfo thus causing the prompt info implementation to use our fallback buffered
+        // reader (which is either empty or is contents of an input file that was piped in via --input.
+        if (!m_daemonMode) {
+            // just in case the native stuff has a bug in the console stuff (JBNATIVE-42 as an example),
+            // be able to configure the agent to ignore the native console
+            if (Boolean.getBoolean("rhq.agent.do-not-use-native-console") == false) {
+                sysinfo = SystemInfoFactory.createSystemInfo();
+            }
+        }
+
+        return new AgentNativePromptInfo(sysinfo, this);
+    }
+
+    /**
+     * Returns the object that can be used to obtain I18N messages from the agent's resource bundle in the user's
+     * locale.
+     *
+     * @return object that can be used to obtain resource bundle messages
+     */
+    public Msg getI18NMsg() {
+        return MSG;
+    }
+
+    /**
+     * Returns the set of configuration preferences that the agent will use to configure things.
+     *
+     * @return configuration settings
+     */
+    public AgentConfiguration getConfiguration() {
+        return m_configuration;
+    }
+
+    /**
+     * Returns the client sender which can be used to send commands to the server. This may return <code>null</code>,
+     * which means the agent has been shutdown and it cannot send commands.
+     *
+     * <p/>
+     * <p>This is the agent's "remoting client".</p>
+     *
+     * @return clientSender
+     */
+    public ClientCommandSender getClientCommandSender() {
+        return m_clientSender;
+    }
+
+    /**
+     * Returns the container that is managing our server-side communications services that accept and process incoming
+     * messages. This may return <code>null</code>, which means the agent has been shutdown and it cannot receive
+     * commands.
+     *
+     * <p>This is the agent's "remoting server".</p>
+     *
+     * @return the service container that manages our communications services
+     */
+    public ServiceContainer getServiceContainer() {
+        return m_commServices;
+    }
+
+    /**
+     * Returns the management MBean for this agent. This is the MBean that provides management and monitoring
+     * functionality for this particular agent instance.
+     *
+     * <p>This will return <code>null</code> if the agent is not {@link #start() started} or the management MBean was
+     * {@link AgentConfiguration#doNotEnableManagementServices() disabled}.</p>
+     *
+     * @return the agent management MBean instance
+     */
+    public AgentManagement getAgentManagementMBean() {
+        return m_managementMBean;
+    }
+
+    /**
+     * Reads a line from the input stream and returns it. The given prompt will be displayed prior to reading stdin.
+     *
+     * <p/>
+     * <p>If prompt is <code>null</code>, the standard prompt is output.</p>
+     *
+     * <p/>
+     * <p>If the input stream has been closed, <code>null</code> is returned.</p>
+     *
+     * @param  prompt the string that will be displayed to stdout before stdin is read
+     *
+     * @return line entered by the user
+     *
+     * @throws RuntimeException if failed to read input for some reason
+     */
+    public String getUserInput(String prompt) {
+        String input_string = "";
+        boolean use_default_prompt = (prompt == null);
+
+        while ((input_string != null) && (input_string.trim().length() == 0)) {
+            if (use_default_prompt) {
+                prompt = getDefaultPrompt();
+            }
+
+            m_output.print(prompt);
+
+            // just make the prompt look nicer by ensuring there is a space after the prompt string
+            if (!prompt.endsWith(" ")) {
+                m_output.print(' ');
+            }
+
+            try {
+                m_output.flush();
+                input_string = m_input.readLine();
+            } catch (Exception e) {
+                input_string = null;
+            }
+        }
+
+        if (input_string != null) {
+            // if we are processing a script, show the input that was just read in
+            if (!m_stdinInput) {
+                m_output.println(input_string);
+            }
+        } else if (!m_stdinInput) {
+            // if we are processing a script, we hit the EOF, so close the input stream
+            try {
+                m_input.close();
+            } catch (IOException e1) {
+            }
+
+            // if we are not in daemon mode, let's now start processing prompt commands coming in via stdin
+            if (!m_daemonMode) {
+                m_input = new BufferedReader(new InputStreamReader(System.in));
+                m_stdinInput = true;
+                input_string = "";
+            } else {
+                m_input = null;
+            }
+        }
+
+        return input_string;
+    }
+
+    /**
+     * Returns the map containing all the valid prompt command definitions. Map is keyed on the command string and the
+     * value is the <code>Class</code> of the {@link AgentPromptCommand} implementation.
+     *
+     * @return map of valid prompt commands
+     */
+    public Map<String, Class<? extends AgentPromptCommand>> getPromptCommands() {
+        return m_promptCommands;
+    }
+
+    /**
+     * Same as {@link #loadConfigurationFile(String)} except this allows you to indicate which preferences node the
+     * configuration is to be stored in. See the <i>Java Preferences API</i> for the definition of what a preferences
+     * node is.
+     *
+     * @param  pref_node_name the node name that much match the node name in the configuration file that is to be loaded
+     * @param  file_name      the config file to load (should exist either on the file system or in the current thread's
+     *                        classloader)
+     *
+     * @return the properties that have been loaded from the given file wrapped in an {@link AgentConfiguration} object
+     *
+     * @throws IllegalArgumentException          if the node name was invalid which occurs if the name has a forward
+     *                                           slash (/) in it
+     * @throws IOException                       if failed to load the configuration file
+     * @throws InvalidPreferencesFormatException if the configuration file had an invalid format
+     * @throws BackingStoreException             if failed to access the preferences persistence store
+     * @throws Exception                         on other failures
+     */
+    public AgentConfiguration loadConfigurationFile(String pref_node_name, String file_name) throws Exception {
+        setConfigurationPreferencesNode(pref_node_name);
+        return loadConfigurationFile(file_name);
+    }
+
+    /**
+     * Loads the given configuration file into the agent. The file name will first be checked for existence on the file
+     * system. If it cannot be found, it will be assumed <code>fileName</code> specifies the file as found in the
+     * current class loader and the file will be searched there. An exception is thrown if the file cannot be found
+     * anywhere.
+     *
+     * <p>It is assumed that the agent's preference node name as defined by the <b>-p</b> command line argument is the
+     * one that matches the node name in the given configuration file.</p>
+     *
+     * <p>The agent's configuration will be those settings found in the file - specifically, they are not overridden by
+     * system properties. If you want system properties to override any preferences found in the file, then you should
+     * call {@link #overlaySystemPropertiesOnAgentConfiguration()} after this method returns</p>
+     *
+     * @param  file_name the config file to load (should exist either on the file system or in the current thread's
+     *                   classloader)
+     *
+     * @return the properties that have been loaded from the given file wrapped in an {@link AgentConfiguration} object
+     *
+     * @throws IOException                       if failed to load the configuration file
+     * @throws InvalidPreferencesFormatException if the configuration file had an invalid format
+     * @throws BackingStoreException             if failed to access the preferences persistence store
+     * @throws Exception                         on other failures
+     */
+    public AgentConfiguration loadConfigurationFile(String file_name) throws Exception {
+        InputStream config_file_input_stream;
+        File config_file = new File(file_name);
+
+        if (config_file.exists()) {
+            config_file_input_stream = new FileInputStream(config_file);
+        } else {
+            config_file_input_stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file_name);
+        }
+
+        if (config_file_input_stream == null) {
+            throw new IOException(MSG.getMsg(AgentI18NResourceKeys.CANNOT_FIND_CONFIG_FILE, file_name));
+        }
+
+        LOG.debug(AgentI18NResourceKeys.LOADING_CONFIG_FILE, file_name);
+
+        // We need to clear out any previous configuration in case the current config file doesn't specify a preference
+        // that already exists in the preferences node.  In this case, the configuration file wants to fall back on the
+        // default value and if we don't clear the preferences, we aren't guaranteed the value stored in the backing
+        // store is the default value.
+        // But first we need to backup these original preferences in case the config file fails to load -
+        // we'll restore the original values in that case.
+
+        Preferences preferencesNode = getPreferencesNode();
+        ByteArrayOutputStream backup = new ByteArrayOutputStream();
+        preferencesNode.exportSubtree(backup);
+        preferencesNode.clear();
+
+        // now load in the preferences
+        try {
+            Preferences.importPreferences(config_file_input_stream);
+
+            if (new AgentConfiguration(preferencesNode).getAgentConfigurationVersion() == 0) {
+                throw new IllegalArgumentException(MSG.getMsg(AgentI18NResourceKeys.BAD_NODE_NAME_IN_CONFIG_FILE,
+                    file_name, m_agentPreferencesNodeName));
+            }
+        } catch (Exception e) {
+            // a problem occurred importing the config file; let's restore our original values
+            try {
+                Preferences.importPreferences(new ByteArrayInputStream(backup.toByteArray()));
+            } catch (Exception e1) {
+                // its conceivable the same problem occurred here as with the original exception (backing store problem?)
+                // let's throw the original exception, not this one
+            }
+
+            throw e;
+        }
+
+        AgentConfiguration agent_configuration = new AgentConfiguration(preferencesNode);
+
+        LOG.debug(AgentI18NResourceKeys.LOADED_CONFIG_FILE, file_name);
+
+        m_configuration = agent_configuration;
+
+        return m_configuration;
+    }
+
+    /**
+     * This is an API that allows the caller to explicitly ensure that system properties are overlaid on top of the
+     * current agent configuration. You can use this after a call to {@link #loadConfigurationFile(String)} when you
+     * want to allow system properties to override configuration preferences loaded from a file. Note that a runtime
+     * exception will be thrown if the agent has not yet loaded an initial configuration.
+     *
+     * <p>This method ignores {@link AgentConfiguration#doNotOverridePreferencesWithSystemProperties()} - in other
+     * words, this method will always overlay the system properties, even though the agent may have been configured not
+     * to. Use this method with caution since you are disobeying an agent configuration preference.</p>
+     */
+    public void overlaySystemPropertiesOnAgentConfiguration() {
+        overlaySystemProperties(m_configuration.getPreferences());
+    }
+
+    /**
+     * This will send a registration request to the server. This should be called when the agent has been started and
+     * sender has been created. It is public to allow anyone to ask the agent to re-register itself (such as via the
+     * {@link RegisterPromptCommand register prompt command}).
+     *
+     * <p>This registration process is asynchronous - this method returns immediately after spawning the thread unless
+     * the <code>wait</code> parameter is greater than 0. The registration will not be completed until the agent is able
+     * to successfully send a command to the server and get a response back. If the wait period is 0, the caller is not
+     * guaranteed this has happened when this method returns - the method return will only guarantee that the thread has
+     * been started. If the wait period is greater than 0, then when this method returns, the agent will have been
+     * registered or that amount of time has expired prior to successfully registering.</p>
+     *
+     * @param wait             the amount of time in milliseconds this method will wait for the registration process to
+     *                         complete before returning. If 0 or less, this method will not wait and will return as
+     *                         soon as the registration thread has started.
+     * @param regenerate_token if <code>true</code>, the agent will ask for a new token even if it was already assigned
+     *                         one. if <code>false</code>, the agent's existing token will not change.
+     */
+    public void registerWithServer(long wait, final boolean regenerate_token) {
+        Runnable task = new Runnable() {
+            public void run() {
+                boolean retry = true;
+                long retry_interval = 1000L;
+
+                while (retry) {
+                    try {
+                        ClientCommandSender sender = getClientCommandSender();
+
+                        if ((sender == null) || Thread.currentThread().isInterrupted()) {
+                            LOG.debug(AgentI18NResourceKeys.AGENT_REGISTRATION_ABORTED);
+                            retry = false;
+                        } else {
+                            String token = getAgentSecurityToken();
+                            ClientRemotePojoFactory pojo_factory = sender.getClientRemotePojoFactory();
+                            CoreServerService remote_pojo = pojo_factory.getRemotePojo(CoreServerService.class);
+                            AgentConfiguration agent_config = getConfiguration();
+                            ServiceContainerConfiguration server_config = agent_config.getServiceContainerPreferences();
+                            String agent_name = agent_config.getAgentName();
+                            String address = server_config.getConnectorBindAddress();
+                            int port = server_config.getConnectorBindPort();
+                            String remote_endpoint = server_config.getConnectorRemoteEndpoint();
+                            AgentRegistrationRequest request = new AgentRegistrationRequest(agent_name, address, port,
+                                remote_endpoint, regenerate_token, token);
+
+                            Thread.sleep(retry_interval);
+
+                            if (sender.isSending()) {
+                                LOG.debug(AgentI18NResourceKeys.AGENT_REGISTRATION_ATTEMPT, request);
+
+                                // delete any old token so request is unauthenticated to get server to accept it
+                                agent_config.setAgentSecurityToken(null);
+
+                                try {
+                                    AgentRegistrationResults results = remote_pojo.registerAgent(request);
+                                    m_registration = results;
+                                    retry = false;
+                                    token = results.getAgentToken();
+
+                                    LOG.info(AgentI18NResourceKeys.AGENT_REGISTRATION_RESULTS, results);
+                                } finally {
+                                    // stores the new one if successful; restores the old one if we failed for some reason to register
+                                    // Note that we don't retry even if storing the token fails since this kind
+                                    // of failure is probably not recoverable even if we try again.
+                                    agent_config.setAgentSecurityToken(token);
+                                    LOG.debug(AgentI18NResourceKeys.NEW_SECURITY_TOKEN, token);
+                                }
+                            }
+                        }
+                    } catch (AgentRegistrationException are) {
+                        m_registration = null;
+                        retry = false;
+
+                        String cause = ThrowableUtil.getAllMessages(are);
+                        LOG.error(AgentI18NResourceKeys.AGENT_REGISTRATION_REJECTED, cause);
+
+                        // this error is bad - if the agent is starting up, this failure will cause it to hang forever
+                        // so let's print a message to the console in addition to the logs to make sure the user sees it
+                        getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_REGISTRATION_REJECTED, cause));
+                    } catch (InterruptedException ie) {
+                        LOG.debug(AgentI18NResourceKeys.AGENT_REGISTRATION_ABORTED);
+                        retry = false;
+                    } catch (Exception e) {
+                        retry_interval = (retry_interval < 60000L) ? (retry_interval * 2) : 60000L;
+                        LOG.warn(e, AgentI18NResourceKeys.AGENT_REGISTRATION_FAILURE, retry, retry_interval,
+                            ThrowableUtil.getAllMessages(e));
+                    }
+                }
+
+                // kill the thread since either:
+                // a) the thread has been interrupted,
+                // b) the registration command was successfully sent
+                // c) the agent has shutdown
+                return;
+            }
+        };
+
+        // another paraniod synchronization - just in case multiple threads attempt to concurrently register
+        // this agent, this assures that only one registration thread is running - any old thread that
+        // may still be running will be interrupted (which will eventually cause it to die).  Its
+        // OK if more than one registration command is sent via the task, that is concurrent-safe.
+        // This just ensures that only one registration thread continues to run.
+
+        Thread thread;
+
+        synchronized (m_registrationThread) {
+            thread = m_registrationThread[0];
+            if (thread != null) {
+                thread.interrupt(); // make sure the old thread eventually dies
+            }
+
+            thread = new Thread(task, "RHQ Agent Registration Thread");
+            thread.setDaemon(true);
+            m_registrationThread[0] = thread;
+            thread.start();
+        }
+
+        if (wait > 0L) {
+            try {
+                thread.join(wait);
+            } catch (InterruptedException e) {
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * Returns non-<code>null</code> registration information if this agent successfully registered itself during this
+     * agent VM's lifetime.
+     *
+     * @return agent registration information
+     *
+     * @see    #registerWithServer(long, boolean)
+     */
+    public AgentRegistrationResults getAgentRegistration() {
+        return m_registration;
+    }
+
+    /**
+     * This sleeps (blocking the calling thread) for at most the given number of milliseconds waiting for the RHQ Server
+     * to be discovered. This will return <code>true</code> if the server has come up and detected by the agent; <code>
+     * false</code> otherwise.
+     *
+     * <p/>
+     * <p>If <code>wait_ms</code> is 0 or less, this method will not wait at all; it will simply return the state of the
+     * server at is is known at the time the call is made.</p>
+     *
+     * <p/>
+     * <p>Note that if the agent is shutdown, this method will not wait no matter what <code>wait_ms</code> is. If the
+     * agent is shutdown, <code>false</code> is returned immediately.</p>
+     *
+     * @param  wait_ms maximum number of milliseconds to wait
+     *
+     * @return <code>true</code> if the server is up, <code>false</code> if it is not yet up or the agent has shutdown
+     */
+    public boolean waitForServer(long wait_ms) {
+        // its contents will be non-empty string if the server has come up
+        final StringBuffer flag_and_lock = new StringBuffer();
+
+        // when the sender has started, it means the RHQ Server has come up - here's our listener for that
+        ClientCommandSenderStateListener listener = new ClientCommandSenderStateListener() {
+            public boolean startedSending(ClientCommandSender sender) {
+                synchronized (flag_and_lock) {
+                    flag_and_lock.append("1"); // length is now non-zero
+                    flag_and_lock.notify();
+                    return false; // no need to keep listening
+                }
+            }
+
+            public boolean stoppedSending(ClientCommandSender sender) {
+                return true; // no-op but keep listening
+            }
+        };
+
+        ClientCommandSender sender_to_server = getClientCommandSender();
+
+        synchronized (flag_and_lock) {
+            if (sender_to_server != null) {
+                LOG.debug(AgentI18NResourceKeys.WAITING_FOR_SERVER, wait_ms);
+
+                sender_to_server.addStateListener(listener, true);
+
+                // do _not_ wait if the listener was already called (meaning the server is already up)
+                if (flag_and_lock.length() == 0) {
+                    // this craziness about timing is because "spurious wakeups" are occurring (look it up in wikipedia)
+                    long start_time = System.currentTimeMillis();
+
+                    while ((wait_ms > 0) && (flag_and_lock.length() == 0)) {
+                        try {
+                            flag_and_lock.wait(wait_ms);
+                        } catch (InterruptedException e) {
+                            // probably a spurious wakeup - tests are showing that we are getting them here
+                        }
+
+                        wait_ms -= System.currentTimeMillis() - start_time;
+                    }
+
+                    sender_to_server.removeStateListener(listener);
+                }
+            } else {
+                LOG.debug(AgentI18NResourceKeys.CANNOT_WAIT_FOR_SERVER);
+            }
+
+            return flag_and_lock.length() > 0;
+        }
+    }
+
+    /**
+     * Returns <code>true</code> if this agent is known to have previously been registered with the server. A <code>
+     * false</code> means this agent needs to register with the server before it can successfully communicate with the
+     * server.
+     *
+     * @return <code>true</code> if the agent is registered with the server
+     */
+    public boolean isRegistered() {
+        return getAgentSecurityToken() != null;
+    }
+
+    /**
+     * This schedules some startup work to be done that needs the server to be up. This method simply "schedules" this
+     * work - the work will actually be performed once the RHQ Server has been detected (technically, it happens when
+     * the {@link #getClientCommandSender() sender} has started sending commands to the server but that happens when the
+     * RHQ Server has been detected). This method returns immediately, whether or not the work actually was performed or
+     * not.
+     *
+     * <p/>
+     * <p>The work this method schedules is:</p>
+     *
+     * <p/>
+     * <ul>
+     *   <li>Registering with the server (if the agent needs to do so at startup)</li>
+     *   <li>Updating the plugins with the latest versions that are found on the server</li>
+     * </ul>
+     *
+     * @return <code>true</code> if the agent is not registered or the agent was asked to re-register with the server;
+     *         <code>false</code> if this agent is already registered with the server (i.e. it has a security token
+     *         which indicates this agent had previously registered with the server)
+     */
+    private boolean prepareStartupWorkRequiringServer() {
+        // First determine if the agent is configured to register with the server automatically at startup.
+        // If it is not, we need to make sure that, if it needs to be, it has been registered alread. We do so by
+        // first determining if there is a security preprocessor configured and if so, make sure it has a token available.
+        // If there is no token available and the agent needs one, it has to register, whether or not we were told to.
+        // This happens when someone clears the security token.
+
+        boolean register = m_configuration.isRegisterWithServerAtStartupEnabled();
+        if (!register) {
+            if (!isRegistered()) {
+                register = true;
+                LOG.info(AgentI18NResourceKeys.FORCING_AGENT_REGISTRATION);
+            }
+        }
+
+        // the very first state listener we add MUST be the register state listener
+        // because we must first register before we can send any other commands to the server
+        if (register) {
+            m_clientSender.addStateListener(new RegisterStateListener(), true);
+        }
+
+        // now we want to prepare to update the plugins if told to do so
+        if (m_configuration.isUpdatePluginsAtStartupEnabled()) {
+            updatePlugins();
+        }
+
+        return register;
+    }
+
+    /**
+     * This asks that the agent update its plugins. If the RHQ Server is already up and the agent has detected it, this
+     * method will immediately pull down the new/updated plugins. Otherwise, this will schedule the agent to update the
+     * plugins from the server once it comes up and the agent detects it.
+     */
+    public void updatePlugins() {
+        m_clientSender.addStateListener(new UpdatePluginsStateListener(), true);
+    }
+
+    /**
+     * This starts up the plugin container. The caller must ensure that the agent is either started or is being started.
+     * The plugin container must ensure that the agent is registered before it can be initialized, therefore, this
+     * method will ensure the agent is registered before starting the plugin container. If the agent is not registered,
+     * this method will wait for the agent to become registered for at most <code>wait_for_registration</code>
+     * millisecond. This method will wait indefinitely if that parameter's value is 0 or less. This method will also
+     * wait indefinitely until one or more plugins are available.
+     *
+     * @param  wait_for_registration the amount of milliseconds this method will wait for the agent to become registered
+     *                               with the server; if 0 or less, this method blocks <b>indefinitely</b>
+     *
+     * @return <code>true</code> if the plugin container is started, <code>false</code> if it did not start
+     */
+    public boolean startPluginContainer(long wait_for_registration) {
+        PluginContainer plugin_container = PluginContainer.getInstance();
+
+        if (plugin_container.isStarted()) {
+            return true;
+        }
+
+        // if wait param is <=0 this BLOCKS INDEFINITELY! If the server is down, this will never return until it comes back up
+        waitToBeRegistered(wait_for_registration);
+
+        // Now we need to build our plugin container configuration.
+        // All static configuration settings are retrieved directly from the agent configuration object,
+        // but we also have to build our dynamic runtime objects that are also part of the PC config (which
+        // includes things like the plugin finder object and the remoted services).
+        PluginContainerConfiguration pc_config = m_configuration.getPluginContainerConfiguration();
+        pc_config.setPluginFinder(new FileSystemPluginFinder(pc_config.getPluginDirectory()));
+
+        try {
+            LOG.debug(AgentI18NResourceKeys.CREATING_PLUGIN_CONTAINER_SERVER_SERVICES);
+
+            // Get remote pojo's for server access and make them accessible in the configuration object
+            ClientRemotePojoFactory factory = m_clientSender.getClientRemotePojoFactory();
+            CoreServerService coreServerService = factory.getRemotePojo(CoreServerService.class);
+            DiscoveryServerService discoveryServerService = factory.getRemotePojo(DiscoveryServerService.class);
+            MeasurementServerService measurementServerService = factory.getRemotePojo(MeasurementServerService.class);
+            OperationServerService operationServerService = factory.getRemotePojo(OperationServerService.class);
+            ConfigurationServerService configurationServerService = factory
+                .getRemotePojo(ConfigurationServerService.class);
+            ResourceFactoryServerService resourceFactoryServerSerfice = factory
+                .getRemotePojo(ResourceFactoryServerService.class);
+            ContentServerService contentServerSerfice = factory.getRemotePojo(ContentServerService.class);
+
+            ServerServices serverServices = new ServerServices();
+            serverServices.setCoreServerService(coreServerService);
+            serverServices.setDiscoveryServerService(discoveryServerService);
+            serverServices.setMeasurementServerService(measurementServerService);
+            serverServices.setOperationServerService(operationServerService);
+            serverServices.setConfigurationServerService(configurationServerService);
+            serverServices.setResourceFactoryServerService(resourceFactoryServerSerfice);
+            serverServices.setContentServerService(contentServerSerfice);
+
+            pc_config.setServerServices(serverServices);
+        } catch (Exception e) {
+            LOG.error(e, AgentI18NResourceKeys.FAILED_TO_CREATE_PLUGIN_CONTAINER_SERVER_SERVICES, e);
+        }
+
+        try {
+            File plugin_dir = pc_config.getPluginDirectory();
+            boolean keep_waiting = (plugin_dir.list().length == 0)
+                || PluginUpdate.waitForUpdateToComplete(pc_config, 1000L);
+
+            // we block until we get our plugins - there is no sense continuing until we have plugins
+            // there may be instances, though, where we don't want to block (in unit tests for example)
+            // so allow this to be configurable via the "update plugins at startup" flag.
+            if (m_configuration.isUpdatePluginsAtStartupEnabled()) {
+                boolean notified_user = false;
+
+                while (keep_waiting) {
+                    if (!notified_user) {
+                        LOG.info(AgentI18NResourceKeys.WAITING_FOR_PLUGINS_WITH_DIR, plugin_dir);
+                        getOut().println(MSG.getMsg(AgentI18NResourceKeys.WAITING_FOR_PLUGINS));
+                        notified_user = true;
+                    } else {
+                        // let's keep logging this at debug level so we don't look hung
+                        LOG.debug(AgentI18NResourceKeys.WAITING_FOR_PLUGINS_WITH_DIR, plugin_dir);
+                    }
+
+                    boolean updating = PluginUpdate.waitForUpdateToComplete(pc_config, 30000L);
+                    int after = plugin_dir.list().length;
+
+                    if ((after == 0) && !updating) {
+                        // still nothing and it doesn't look like we are downloading - try to update them again right now
+                        // (doing this because I saw a case where the startup update somehow happened just prior to the
+                        // registration finishing, so the original update was rejected by the server as "unauthorized")
+                        updatePluginsNow(m_clientSender);
+                        after = plugin_dir.list().length;
+                    }
+
+                    keep_waiting = ((after == 0) || (updating));
+
+                    if (!keep_waiting) {
+                        LOG.info(AgentI18NResourceKeys.DONE_WAITING_FOR_PLUGINS, after);
+                        getOut().println(MSG.getMsg(AgentI18NResourceKeys.DONE_WAITING_FOR_PLUGINS, after));
+                    }
+                }
+            } else if (plugin_dir.list().length == 0) {
+                LOG.warn(AgentI18NResourceKeys.NO_PLUGINS);
+                getOut().println(MSG.getMsg(AgentI18NResourceKeys.NO_PLUGINS));
+                return false;
+            }
+        } catch (InterruptedException e) {
+            LOG.warn(AgentI18NResourceKeys.PLUGIN_CONTAINER_INITIALIZATION_INTERRUPTED);
+            getOut().println(MSG.getMsg(AgentI18NResourceKeys.PLUGIN_CONTAINER_INITIALIZATION_INTERRUPTED));
+            return false;
+        }
+
+        // tell the plugin container how it should be configured
+        plugin_container.setConfiguration(pc_config);
+
+        // add the agent as a listener to the plugin container services lifecycle events and so it can remote streams
+        AgentServiceRemoter agentServiceRemoter = new AgentServiceRemoter(this);
+        plugin_container.addAgentServiceLifecycleListener(agentServiceRemoter);
+        plugin_container.setAgentServiceStreamRemoter(agentServiceRemoter);
+        plugin_container.setAgentRegistrar(new AgentRegistrarImpl(this));
+
+        // the plugin container is now fully configured and can be initialized
+        plugin_container.initialize();
+        LOG.debug(AgentI18NResourceKeys.PLUGIN_CONTAINER_INITIALIZED, pc_config);
+
+        return plugin_container.isStarted();
+    }
+
+    /**
+     * This will purge all files in the agent's data directory.
+     */
+    private void cleanDataDirectory() {
+        try {
+            File data_dir = m_configuration.getDataDirectory();
+            if (data_dir.exists()) {
+                LOG.info(AgentI18NResourceKeys.CLEANING_DATA_DIRECTORY, data_dir);
+                cleanDataFile(data_dir);
+            }
+
+            // it is concievable the comm services data directory was configured in a different
+            // place than where the agent's data directory is - make sure we clean out that other data dir
+            File comm_data_dir = m_configuration.getServiceContainerPreferences().getDataDirectory();
+            if (!comm_data_dir.getAbsolutePath().equals(data_dir.getAbsolutePath())) {
+                if (comm_data_dir.exists()) {
+                    LOG.info(AgentI18NResourceKeys.CLEANING_DATA_DIRECTORY, comm_data_dir);
+                    cleanDataFile(comm_data_dir);
+                }
+            }
+        } catch (Exception e) {
+            LOG.warn(AgentI18NResourceKeys.CLEAN_DATA_DIR_FAILURE, e);
+        }
+
+        return;
+    }
+
+    /**
+     * This will delete the given file and if its a directory, will recursively delete its contents and its
+     * subdirectories.
+     *
+     * @param file the file/directory to delete
+     */
+    private void cleanDataFile(File file) {
+        boolean deleted;
+
+        File[] doomed_files = file.listFiles();
+        if (doomed_files != null) {
+            for (File doomed_file : doomed_files) {
+                cleanDataFile(doomed_file); // call this method recursively
+            }
+        }
+
+        deleted = file.delete();
+        LOG.debug(AgentI18NResourceKeys.CLEANING_DATA_FILE, file, deleted);
+
+        return;
+    }
+
+    /**
+     * This will disable the native system if the agent was actually configured to do so. This method will not actually
+     * load in or initialize the native system. That will happen lazily, when the native system is actually needed. Note
+     * that if the agent was told to disable the native system from a command line option, the native system will be
+     * disabled no matter what this method decides to do.
+     */
+    private void prepareNativeSystem() {
+        if (m_configuration.isNativeSystemDisabled() && !SystemInfoFactory.isNativeSystemInfoDisabled()) {
+            SystemInfoFactory.disableNativeSystemInfo();
+            LOG.info(AgentI18NResourceKeys.NATIVE_SYSTEM_DISABLED);
+        }
+
+        return;
+    }
+
+    /**
+     * This creates and starts both the server-side comm services and the client-side sender. The given listener will be
+     * added to the service container thus allowing the comm services to start up but not begin processing incoming
+     * messages. The caller should make sure it opens the latch of the given listener at some point in the future.
+     *
+     * @param  listener a listener that will be added to the service container
+     *
+     * @throws Exception if any error causes the startup to fail
+     */
+    private void startCommServices(BootstrapLatchCommandListener listener) throws Exception {
+        // create our client sender so we can send commands to our server
+        // do this before we create our auto-discovery listener and start the server-side services
+        // since it will be needed by the listener very quickly if the server is already online
+        m_clientSender = createClientCommandSender();
+
+        // this is our server-side container that will manage our connector, network register and other services
+        m_commServices = new ServiceContainer();
+
+        // this listener will enable the agent to complete the setup of the security token preprocessor
+        m_commServices.addServiceContainerSenderCreationListener(new SenderCreationListener());
+
+        // add the command listener that was passed to us
+        m_commServices.addCommandListener(listener);
+
+        // this listener will enable our sender as soon as we receive a message from the server
+        CommandListenerStateListener commandListenerStateListener = new CommandListenerStateListener();
+        m_clientSender.addStateListener(commandListenerStateListener, true);
+
+        // if we are configured to perform auto-detection of the server, create our listener now
+        if (m_configuration.isServerAutoDetectionEnabled()) {
+            ServiceContainerConfiguration comm_config = new ServiceContainerConfiguration(m_configuration
+                .getPreferences());
+            if (comm_config.isMulticastDetectorEnabled()) {
+                m_autoDiscoveryListener = new AgentAutoDiscoveryListener(this, createServerRemoteCommunicator());
+                m_commServices.addDiscoveryListener(m_autoDiscoveryListener);
+                LOG.debug(AgentI18NResourceKeys.SERVER_AUTO_DETECT_ENABLED, m_configuration.getServerLocatorUri());
+            } else {
+                LOG.warn(AgentI18NResourceKeys.WEIRD_AUTO_DETECT_CONFIG);
+            }
+        }
+
+        // initialize and start the server-side services so we can process incoming commands
+        m_commServices.start(m_configuration.getPreferences(), m_configuration.getClientCommandSenderConfiguration());
+
+        // prime the sender so it can be prepared to start sending messages.
+        // if auto-discovery is enabled, then the auto-discovery listener will tell the sender when its OK to start sending.
+        // if polling is enabled, then we start polling now - the poller will tell the sender when its OK to start sending.
+        // if both auto-discovery and polling is enabled, at least one of them will tell the sender when its OK to start sending.
+        // if neither is enabled, we have to blindly tell the sender that its OK to start sending now.
+        if (m_configuration.getClientSenderServerPollingInterval() <= 0) {
+            if (m_autoDiscoveryListener == null) {
+                LOG.info(AgentI18NResourceKeys.NO_AUTO_DETECT);
+                m_clientSender.startSending();
+            }
+        } else {
+            m_clientSender.startServerPolling();
+        }
+
+        return;
+    }
+
+    /**
+     * Creates the agent's internal management MBeans so the agent, itself, can be managed and monitored.
+     *
+     * @throws Exception if failed to create and register the management MBeans
+     */
+    private void startManagementServices() throws Exception {
+        if ((m_managementMBean == null) && !m_configuration.doNotEnableManagementServices()) {
+            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+            m_managementMBean = new AgentManagement(this);
+
+            ObjectName objectName = ObjectNameFactory.create(AgentManagementMBean.BASE_OBJECT_NAME + ","
+                + AgentManagementMBean.KEY_NAME + "=" + m_configuration.getAgentName());
+
+            mbs.registerMBean(m_managementMBean, objectName);
+        }
+
+        return;
+    }
+
+    /**
+     * Destroys the Agent's internal management MBeans - after this returns, the agent can no longer be managed.
+     */
+    private void stopManagementServices() {
+        if (m_managementMBean != null) {
+            MBeanServer mbs = m_managementMBean.getMBeanServer();
+
+            if (mbs != null) {
+                try {
+                    mbs.unregisterMBean(m_managementMBean.getObjectName());
+                } catch (Exception ignore) {
+                }
+
+                m_managementMBean = null;
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * Shuts down the plugin container and all its child services and plugins. If the plugin container has already been
+     * shutdown, this method does nothing and returns.
+     */
+    public void shutdownPluginContainer() {
+        PluginContainer.getInstance().shutdown();
+        LOG.debug(AgentI18NResourceKeys.PLUGIN_CONTAINER_SHUTDOWN);
+    }
+
+    /**
+     * Shuts down both the server-side comm services and the client-side sender.
+     */
+    private void shutdownCommServices() {
+        // no need to still attempt to auto-detect the server, let's remove our listener if we were listening
+        if (m_autoDiscoveryListener != null) {
+            if (m_commServices != null) {
+                m_commServices.removeDiscoveryListener(m_autoDiscoveryListener);
+            }
+
+            m_autoDiscoveryListener = null;
+        }
+
+        // stop our client from sending messages
+        if (m_clientSender != null) {
+            m_clientSender.stopServerPolling();
+            m_clientSender.stopSending(false);
+            m_clientSender.disableQueueThrottling();
+            m_clientSender.disableSendThrottling();
+            m_previouslyQueueCommands = m_clientSender.drainQueuedCommands();
+            m_clientSender = null;
+        }
+
+        // shutdown the service container and all its services
+        if (m_commServices != null) {
+            m_commServices.shutdown();
+        }
+
+        return;
+    }
+
+    /**
+     * This notifies the server that this agent is going down. This is called when the agent is shutting down.
+     */
+    private void notifyServerOfShutdown() {
+        try {
+            ClientCommandSender sender = getClientCommandSender();
+
+            if (sender.isSending()) {
+                LOG.debug(AgentI18NResourceKeys.NOTIFYING_SERVER_OF_SHUTDOWN);
+
+                String agent_name = getConfiguration().getAgentName();
+                ClientRemotePojoFactory pojo_factory = sender.getClientRemotePojoFactory();
+                CoreServerService remote_pojo = pojo_factory.getRemotePojo(CoreServerService.class);
+
+                remote_pojo.agentIsShuttingDown(agent_name);
+            } else {
+                LOG.debug(AgentI18NResourceKeys.NOT_NOTIFYING_SERVER_OF_SHUTDOWN);
+            }
+        } catch (Exception e) {
+            LOG.warn(AgentI18NResourceKeys.FAILED_TO_NOTIFY_SERVER_OF_SHUTDOWN, ThrowableUtil.getAllMessages(e));
+        }
+
+        return;
+    }
+
+    /**
+     * Returns the security token if this agent is known to have previously been registered with the server. Returns
+     * <code>null</code> if the agent is not registered or doesn't know its registration's token.
+     *
+     * @return the agent's registration security token, or <code>null</code> if it is not known
+     */
+    private String getAgentSecurityToken() {
+        return m_configuration.getAgentSecurityToken();
+    }
+
+    /**
+     * This method blocks waiting for the agent to be registered with the server. Once the agent becomes registered,
+     * this method returns. If <code>wait</code> is 0 or less, this method will block <b>indefinitely</b>. Otherwise, if
+     * the agent hasn't registered in <code>wait</code> milliseconds, an exception is thrown.
+     *
+     * @param  wait the amount of milliseconds this method should block waiting for the agent to be registered
+     *
+     * @throws RuntimeException if <code>wait</code> milliseconds has elapsed and the agent is still not registered
+     */
+    private void waitToBeRegistered(long wait) throws RuntimeException {
+        boolean notified_user = false;
+        long started = System.currentTimeMillis();
+        long sleep_time = 500L;
+
+        while (!isRegistered()) {
+            // We want to print a message to the console to explicitly notify the user.
+            // This is because the user may be waiting a long time. If the server is down,
+            // this method will never return until it comes back online and we can register with it.
+            if (!notified_user) {
+                LOG.info(AgentI18NResourceKeys.WAITING_TO_BE_REGISTERED_BEGIN);
+                getOut().println(MSG.getMsg(AgentI18NResourceKeys.WAITING_TO_BE_REGISTERED_BEGIN));
+                notified_user = true;
+            }
+
+            if (wait > 0) {
+                long now = System.currentTimeMillis();
+                if ((started + wait) < now) {
+                    throw new RuntimeException(MSG
+                        .getMsg(AgentI18NResourceKeys.CANNOT_WAIT_TO_BE_REGISTERED_ANY_LONGER));
+                }
+            }
+
+            try {
+                Thread.sleep(sleep_time);
+            } catch (InterruptedException ignored) {
+            }
+
+            // keep doubling the sleep time so we gradually wait longer and longer - up to 60 seconds max
+            sleep_time *= 2L;
+            if (sleep_time > 60000L) {
+                sleep_time = 60000L;
+            }
+        }
+
+        // if we notified user that we started to wait, then we need to notify the user that we are done
+        // this keeps the console quiet at startup except for the very first time (when it is not registered)
+        if (notified_user) {
+            LOG.info(AgentI18NResourceKeys.WAITING_TO_BE_REGISTERED_END);
+            getOut().println(MSG.getMsg(AgentI18NResourceKeys.WAITING_TO_BE_REGISTERED_END));
+        }
+
+        return;
+    }
+
+    /**
+     * Creates our {@link ClientCommandSender} object so we can be able to send commands to the server.
+     *
+     * @return the client sender that was created
+     *
+     * @throws Exception if the configured server locator URI in malformed
+     */
+    private ClientCommandSender createClientCommandSender() throws Exception {
+        RemoteCommunicator remote_comm = createServerRemoteCommunicator();
+        ClientCommandSenderConfiguration config = m_configuration.getClientCommandSenderConfiguration();
+
+        ClientCommandSender client_sender = new ClientCommandSender(remote_comm, config, m_previouslyQueueCommands);
+
+        for (CommandPreprocessor preproc : client_sender.getCommandPreprocessors()) {
+            if (preproc instanceof SecurityTokenCommandPreprocessor) {
+                ((SecurityTokenCommandPreprocessor) preproc).setAgentConfiguration(m_configuration);
+            }
+        }
+
+        return client_sender;
+    }
+
+    /**
+     * Returns the remote communicator that can be used to send messages to the server as configured in
+     * {@link AgentConfiguration#getServerLocatorUri()}.
+     *
+     * @return the remote communicator to use to communicate with the server
+     *
+     * @throws Exception if the configured server locator URI is malformed
+     */
+    private RemoteCommunicator createServerRemoteCommunicator() throws Exception {
+        String server_uri = m_configuration.getServerLocatorUri();
+        Map<String, String> config = new HashMap<String, String>();
+
+        if (SecurityUtil.isTransportSecure(server_uri)) {
+            config.put(SSLSocketBuilder.REMOTING_KEY_STORE_FILE_PATH, m_configuration
+                .getClientSenderSecurityKeystoreFile());
+            config.put(SSLSocketBuilder.REMOTING_KEY_STORE_ALGORITHM, m_configuration
+                .getClientSenderSecurityKeystoreAlgorithm());
+            config.put(SSLSocketBuilder.REMOTING_KEY_STORE_TYPE, m_configuration.getClientSenderSecurityKeystoreType());
+            config.put(SSLSocketBuilder.REMOTING_KEY_STORE_PASSWORD, m_configuration
+                .getClientSenderSecurityKeystorePassword());
+            config.put(SSLSocketBuilder.REMOTING_KEY_PASSWORD, m_configuration
+                .getClientSenderSecurityKeystoreKeyPassword());
+            config.put(SSLSocketBuilder.REMOTING_TRUST_STORE_FILE_PATH, m_configuration
+                .getClientSenderSecurityTruststoreFile());
+            config.put(SSLSocketBuilder.REMOTING_TRUST_STORE_ALGORITHM, m_configuration
+                .getClientSenderSecurityTruststoreAlgorithm());
+            config.put(SSLSocketBuilder.REMOTING_TRUST_STORE_TYPE, m_configuration
+                .getClientSenderSecurityTruststoreType());
+            config.put(SSLSocketBuilder.REMOTING_TRUST_STORE_PASSWORD, m_configuration
+                .getClientSenderSecurityTruststorePassword());
+            config.put(SSLSocketBuilder.REMOTING_SSL_PROTOCOL, m_configuration.getClientSenderSecuritySocketProtocol());
+            config.put(SSLSocketBuilder.REMOTING_KEY_ALIAS, m_configuration.getClientSenderSecurityKeystoreAlias());
+            config.put(SSLSocketBuilder.REMOTING_SERVER_AUTH_MODE, Boolean.toString(m_configuration
+                .isClientSenderSecurityServerAuthMode()));
+            config.put(SSLSocketBuilder.REMOTING_SOCKET_USE_CLIENT_MODE, "true");
+
+            // since we do not know the server's client-auth mode, assume we need a keystore and let's make sure we have one
+            SSLSocketBuilder dummy_sslbuilder = new SSLSocketBuilder(); // just so we can test finding our keystore
+            try {
+                // this allows the configured keystore file to be a URL, file path or a resource relative to our classloader
+                dummy_sslbuilder.setKeyStoreURL(m_configuration.getClientSenderSecurityKeystoreFile());
+            } catch (Exception e) {
+                // this probably is due to the fact that the keystore doesn't exist yet - let's prepare one now
+                SecurityUtil.createKeyStore(m_configuration.getClientSenderSecurityKeystoreFile(), m_configuration
+                    .getClientSenderSecurityKeystoreAlias(), "CN=RHQ, OU=RedHat, O=redhat.com, C=US", m_configuration
+                    .getClientSenderSecurityKeystorePassword(), m_configuration
+                    .getClientSenderSecurityKeystoreKeyPassword(), "DSA", 36500);
+
+                // now try to set it again, if an exception is still thrown, it's an unrecoverable error
+                dummy_sslbuilder.setKeyStoreURL(m_configuration.getClientSenderSecurityKeystoreFile());
+            }
+
+            // in case the transport floats over https - we want to make sure a hostname verifier is installed and allows all hosts
+            config.put(HTTPSClientInvoker.IGNORE_HTTPS_HOST, "true");
+        }
+
+        RemoteCommunicator remote_comm = new JBossRemotingRemoteCommunicator(server_uri, config);
+
+        return remote_comm;
+    }
+
+    /**
+     * This enters in an infinite loop. Because this never returns, the current thread never dies and hence the agent
+     * stays up and running. The user can enter agent commands at the prompt - the commands are sent to the agent as if
+     * the user is a remote client.
+     */
+    private void inputLoop() {
+        // we need to start a new thread and run our loop in it; otherwise, our shutdown hook doesn't work
+        Runnable loop_runnable = new Runnable() {
+            public void run() {
+                while (true) {
+                    // get a command from the user
+                    // if in daemon mode, only get input if reading from an input file; ignore stdin
+                    String cmd;
+                    if ((m_daemonMode == false) || (m_stdinInput == false)) {
+                        cmd = getUserInput(null);
+                    } else {
+                        cmd = null;
+                    }
+
+                    if (cmd == null) {
+                        // the input stream has been closed or in daemon mode, no more input can be expected so let's just go to sleep forever
+                        synchronized (m_started) {
+                            while (m_started[0]) {
+                                try {
+                                    m_started.wait(60000L);
+                                } catch (InterruptedException e) {
+                                }
+                            }
+                        }
+
+                        break; // break the input loop thread now that the agent has been stopped
+                    }
+
+                    try {
+                        // parse the command into separate arguments and execute it
+                        String[] cmd_args = parseCommandLine(cmd);
+                        boolean can_continue = executePromptCommand(cmd_args);
+
+                        // break the input loop if the prompt command told us to exit
+                        // if we are not in daemon mode, this really will end up killing the agent
+                        if (!can_continue) {
+                            break;
+                        }
+                    } catch (Throwable t) {
+                        m_output.println(MSG.getMsg(AgentI18NResourceKeys.COMMAND_FAILURE, cmd, ThrowableUtil
+                            .getAllMessages(t)));
+                        LOG.debug(t, AgentI18NResourceKeys.COMMAND_FAILURE_STACK_TRACE);
+                    }
+                }
+
+                return;
+            }
+        };
+
+        // start the thread
+        m_inputLoopThread = new Thread(loop_runnable);
+        m_inputLoopThread.setName("RHQ Agent Prompt Input Thread");
+        m_inputLoopThread.setDaemon(false);
+        m_inputLoopThread.start();
+
+        return;
+    }
+
+    /**
+     * Returns the default user prompt, which is dynamically determined based on the state of the agent and its client
+     * command sender.
+     *
+     * @return default prompt string
+     */
+    private String getDefaultPrompt() {
+        String prompt;
+        ClientCommandSender sender = m_clientSender;
+
+        if ((sender != null) && isStarted()) {
+            prompt = (sender.isSending()) ? PROMPT_SENDING : PROMPT_STARTED;
+        } else {
+            prompt = PROMPT_SHUTDOWN;
+        }
+
+        return prompt;
+    }
+
+    /**
+     * A public method that allows any container object that has embedded this agent to execute prompt commands on this
+     * agent. This is useful if the container has another means by which it takes input from a user. Note, however, that
+     * if a prompt command requires additional input, it will use {@link #getIn()} to read the input; so the caller must
+     * either ensure the input stream is valid or it is must expect errors if it tries to execute those commands that
+     * require additional input.
+     *
+     * @param  command the full command to execute, including the command name and arguments
+     *
+     * @return <code>true</code> if the prompt command hasn't shut the agent down, <code>false</code> if the agent was
+     *         told by the prompt command to not accept any more input
+     *
+     * @throws Exception
+     */
+    public boolean executePromptCommand(String command) throws Exception {
+        String[] cmd_args = parseCommandLine(command);
+        return executePromptCommand(cmd_args);
+    }
+
+    /**
+     * Executes a command with the given command/arguments list.
+     *
+     * <p>This is package-scoped to allow our special {@link TimerPromptCommand} to use it.</p>
+     *
+     * @param  cmd_args the full command including its name and arguments
+     *
+     * @return <code>true</code> if the prompt command hasn't shut the agent down, <code>false</code> if the agent was
+     *         told by the prompt command to not accept any more input
+     *
+     * @throws Exception
+     */
+    boolean executePromptCommand(String[] cmd_args) throws Exception {
+        boolean can_continue = true;
+
+        if (cmd_args.length > 0) {
+            List<String> cmd_args_as_list = Arrays.asList(cmd_args);
+            LOG.info(AgentI18NResourceKeys.PROMPT_COMMAND_INVOKED, cmd_args_as_list);
+
+            Class<? extends AgentPromptCommand> promptCommandClass = m_promptCommands.get(cmd_args[0]);
+            if (promptCommandClass != null) {
+                AgentPromptCommand prompt_cmd = promptCommandClass.newInstance();
+                can_continue = prompt_cmd.execute(AgentMain.this, cmd_args);
+
+                // if the prompt command tells us we should die, then we need to break out of the input loop
+                if (!can_continue) {
+                    m_output.println(MSG.getMsg(AgentI18NResourceKeys.INPUT_DONE));
+                }
+            } else {
+                m_output.println(MSG.getMsg(AgentI18NResourceKeys.UNKNOWN_COMMAND, cmd_args_as_list));
+            }
+        } else {
+            m_output.println();
+        }
+
+        return can_continue;
+    }
+
+    /**
+     * Displays the help text.
+     */
+    private void displayUsage() {
+        m_output.println(MSG.getMsg(AgentI18NResourceKeys.USAGE, this.getClass().getName()));
+    }
+
+    /**
+     * Processes the array of command line arguments passed to our Java application.
+     *
+     * @param  args the command line arguments to process
+     *
+     * @throws Exception                if the agent should not start
+     * @throws IllegalArgumentException if an argument was invalid
+     * @throws HelpException            if help was requested and the agent should not be created
+     */
+    private void processArguments(String[] args) throws Exception {
+        String sopts = "-:hdlasntuD:i:o:c:p:";
+        LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
+            new LongOpt("input", LongOpt.REQUIRED_ARGUMENT, null, 'i'),
+            new LongOpt("output", LongOpt.REQUIRED_ARGUMENT, null, 'o'),
+            new LongOpt("config", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
+            new LongOpt("pref", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
+            new LongOpt("daemon", LongOpt.NO_ARGUMENT, null, 'd'),
+            new LongOpt("cleanconfig", LongOpt.NO_ARGUMENT, null, 'l'),
+            new LongOpt("advanced", LongOpt.NO_ARGUMENT, null, 'a'),
+            new LongOpt("setup", LongOpt.NO_ARGUMENT, null, 's'),
+            new LongOpt("nostart", LongOpt.NO_ARGUMENT, null, 'n'),
+            new LongOpt("nonative", LongOpt.NO_ARGUMENT, null, 't'),
+            new LongOpt("purgedata", LongOpt.NO_ARGUMENT, null, 'u') };
+
+        String config_file_name = null;
+        boolean clean_config = false;
+        boolean purge_data = false;
+
+        Getopt getopt = new Getopt("agent", args, sopts, lopts);
+        int code;
+
+        while ((code = getopt.getopt()) != -1) {
+            switch (code) {
+            case ':':
+            case '?': {
+                // for now both of these should exit
+                displayUsage();
+                throw new IllegalArgumentException(MSG.getMsg(AgentI18NResourceKeys.BAD_ARGS));
+            }
+
+            case 1: {
+                // this will catch non-option arguments (which we don't currently care about)
+                System.err.println(MSG.getMsg(AgentI18NResourceKeys.UNUSED_OPTION, getopt.getOptarg()));
+                break;
+            }
+
+            case 'h': {
+                displayUsage();
+                throw new HelpException(MSG.getMsg(AgentI18NResourceKeys.HELP_SHOWN));
+            }
+
+            case 'D': {
+                // set a system property
+                String sysprop = getopt.getOptarg();
+                int i = sysprop.indexOf("=");
+                String name;
+                String value;
+
+                if (i == -1) {
+                    name = sysprop;
+                    value = "true";
+                } else {
+                    name = sysprop.substring(0, i);
+                    value = sysprop.substring(i + 1, sysprop.length());
+                }
+
+                System.setProperty(name, value);
+                LOG.debug(AgentI18NResourceKeys.SYSPROP_SET, name, value);
+
+                break;
+            }
+
+            case 'c': {
+                config_file_name = getopt.getOptarg();
+                break;
+            }
+
+            case 'l': {
+                clean_config = true;
+                purge_data = true;
+                break;
+            }
+
+            case 'u': {
+                purge_data = true;
+                break;
+            }
+
+            case 'a': {
+                m_advancedSetup = true;
+                break;
+            }
+
+            case 's': {
+                m_forcedSetup = true;
+                break;
+            }
+
+            case 'n': {
+                m_startAtBoot = false;
+                break;
+            }
+
+            case 'p': {
+                setConfigurationPreferencesNode(getopt.getOptarg());
+                break;
+            }
+
+            case 'd': {
+                m_daemonMode = true;
+                break;
+            }
+
+            case 'i': {
+                File script = new File(getopt.getOptarg());
+
+                try {
+                    m_input = new BufferedReader(new FileReader(script));
+                    m_stdinInput = false;
+                } catch (Exception e) {
+                    throw new IllegalArgumentException(MSG.getMsg(AgentI18NResourceKeys.BAD_INPUT_FILE, script, e));
+                }
+
+                break;
+            }
+
+            case 'o': {
+                File output = new File(getopt.getOptarg());
+
+                try {
+                    File parentDir = output.getParentFile();
+                    if ((parentDir != null) && (!parentDir.exists())) {
+                        parentDir.mkdirs();
+                    }
+
+                    m_output = new PrintWriter(new FileWriter(output), true);
+                } catch (Exception e) {
+                    throw new IllegalArgumentException(MSG.getMsg(AgentI18NResourceKeys.BAD_OUTPUT_FILE, output, e));
+                }
+
+                break;
+            }
+
+            case 't': {
+                SystemInfoFactory.disableNativeSystemInfo();
+                LOG.info(AgentI18NResourceKeys.NATIVE_SYSTEM_DISABLED);
+            }
+            }
+        }
+
+        // now that all the arguments were processed, let's load in our config (this allows the -p to come after -c)
+        if (clean_config) {
+            getPreferencesNode().removeNode();
+        }
+
+        if (config_file_name != null) {
+            try {
+                loadConfigurationFile(config_file_name);
+            } catch (Exception e) {
+                throw new IllegalArgumentException(MSG.getMsg(AgentI18NResourceKeys.LOAD_CONFIG_FILE_FAILURE,
+                    config_file_name, e));
+            }
+        }
+
+        checkInitialConfiguration();
+
+        // We must do this after we load the config file so we know where the user configured the data dir.
+        if (purge_data) {
+            cleanDataDirectory();
+        }
+
+        LOG.debug(AgentI18NResourceKeys.ARGS_PROCESSED, Arrays.asList(m_commandLineArgs));
+
+        return;
+    }
+
+    /**
+     * This sets the name of the preferences node. This identifies the node where the agent's configuration should be.
+     * This node name must match the node as defined in the agent's configuration file. See the <i>Java Preferences
+     * API</i> for the definition of a preferences node.
+     *
+     * <p/>
+     * <p>Note that if <code>node_name</code> is <code>null</code> or a blank/empty string, the
+     * {@link AgentConfigurationConstants#DEFAULT_PREFERENCE_NODE default node name} will be assumed.</p>
+     *
+     * @param  node_name the name of the preference node where the agent's configuration should be located
+     *
+     * @throws IllegalArgumentException if the node name was invalid which occurs if the name has a forward slash (/) in
+     *                                  it
+     *
+     * @see    #loadConfigurationFile(String)
+     */
+    private void setConfigurationPreferencesNode(String node_name) throws IllegalArgumentException {
+        if ((node_name == null) || (node_name.trim().length() == 0)) {
+            node_name = AgentConfigurationConstants.DEFAULT_PREFERENCE_NODE;
+        }
+
+        if (node_name.indexOf('/') != -1) {
+            throw new IllegalArgumentException(MSG.getMsg(AgentI18NResourceKeys.NO_SLASHES_ALLOWED, node_name));
+        }
+
+        m_agentPreferencesNodeName = node_name;
+
+        return;
+    }
+
+    /**
+     * Creates the prompt command map - this defines the prompt commands that are accepted on the agent prompt.
+     *
+     * @param  prompt_commands the commands map
+     *
+     * @throws RuntimeException if two or more prompt command names collide
+     */
+    private void setupPromptCommandsMap(Map<String, Class<? extends AgentPromptCommand>> prompt_commands) {
+        prompt_commands.clear();
+
+        AgentPromptCommand[] all_cmds = new AgentPromptCommand[] { new HelpPromptCommand(), new ExitPromptCommand(),
+            new QuitPromptCommand(), new VersionPromptCommand(), new SetupPromptCommand(), new StartPromptCommand(),
+            new ShutdownPromptCommand(), new GetConfigPromptCommand(), new SetConfigPromptCommand(),
+            new ConfigPromptCommand(), new RegisterPromptCommand(), new PluginsPromptCommand(),
+            new PluginContainerPromptCommand(), new MetricsPromptCommand(), new NativePromptCommand(),
+            new ExecutePromptCommand(), new DiscoveryPromptCommand(), new InventoryPromptCommand(),
+            new AvailabilityPromptCommand(), new PiqlPromptCommand(), new IdentifyPromptCommand(),
+            new LogPromptCommand(), new TimerPromptCommand(), new PingPromptCommand(), new DownloadPromptCommand(),
+            new DumpSpoolPromptCommand(), new SenderPromptCommand() };
+
+        // hold the conflicts
+        StringBuilder conflicts = new StringBuilder();
+
+        // compare each command to everyone else, collect up all of the conflicts
+        for (int i = 0; i < all_cmds.length; i++) {
+            for (int j = i + 1; j < all_cmds.length; j++) {
+                String nextConflict = ensureUniqueNamesAndAliases(all_cmds[i], all_cmds[j]);
+                if (nextConflict != null) {
+                    conflicts.append(System.getProperty("line.separator"));
+                    conflicts.append(nextConflict);
+                }
+            }
+        }
+
+        // if there were any conflicts, abort the startup process and inform the developer of all conflicts
+        if (conflicts.length() > 0) {
+            throw new RuntimeException(conflicts.toString());
+        }
+
+        for (int i = 0; i < all_cmds.length; i++) {
+            // aliases via extension, so this will register them too
+            prompt_commands.put(all_cmds[i].getPromptCommandString(), all_cmds[i].getClass());
+        }
+
+        return;
+    }
+
+    /**
+     * Given a pair of {@link AgentPromptCommand} objects, this method compares them to make sure that their
+     * {@link AgentPromptCommand#getPromptCommandString()}s are unique via case insensitive comparison
+     *
+     * @param  lefty  the first AgentPromptCommand
+     * @param  righty the second AgentPromptCommand
+     *
+     * @return a string detailing the conflicts
+     */
+    private String ensureUniqueNamesAndAliases(AgentPromptCommand lefty, AgentPromptCommand righty) {
+        String result = null;
+        if (lefty.getPromptCommandString().equalsIgnoreCase(righty.getPromptCommandString())) {
+            result = "Commands '" + lefty.getClass().getSimpleName() + "' and '" + righty.getClass().getSimpleName()
+                + "' have overlapping prompt command names: '" + lefty.getPromptCommandString() + "'";
+        }
+
+        return result;
+    }
+
+    /**
+     * Given a command line, this will parse each argument and return the argument array.
+     *
+     * @param  cmdLine the command line
+     *
+     * @return the array of command line arguments
+     */
+    private String[] parseCommandLine(String cmdLine) {
+        ByteArrayInputStream in = new ByteArrayInputStream(cmdLine.getBytes());
+        StreamTokenizer strtok = new StreamTokenizer(new InputStreamReader(in));
+        List<String> args = new ArrayList<String>();
+        boolean keep_going = true;
+
+        // we don't want to parse numbers and we want ' to be a normal word character
+        strtok.ordinaryChars('0', '9');
+        strtok.ordinaryChar('.');
+        strtok.ordinaryChar('-');
+        strtok.ordinaryChar('\'');
+        strtok.wordChars(33, 127);
+        strtok.quoteChar('\"');
+
+        // parse the command line
+        while (keep_going) {
+            int nextToken;
+
+            try {
+                nextToken = strtok.nextToken();
+            } catch (IOException e) {
+                nextToken = StreamTokenizer.TT_EOF;
+            }
+
+            if (nextToken == java.io.StreamTokenizer.TT_WORD) {
+                args.add(strtok.sval);
+            } else if (nextToken == '\"') {
+                args.add(strtok.sval);
+            } else if ((nextToken == java.io.StreamTokenizer.TT_EOF) || (nextToken == java.io.StreamTokenizer.TT_EOL)) {
+                keep_going = false;
+            }
+        }
+
+        return args.toArray(new String[args.size()]);
+    }
+
+    /**
+     * Returns the preferences for this agent. The node returned is where all preferences are to be stored.
+     *
+     * @return the agent preferences
+     */
+    private Preferences getPreferencesNode() {
+        Preferences topNode = Preferences.userRoot().node(AgentConfigurationConstants.PREFERENCE_NODE_PARENT);
+        Preferences preferencesNode = topNode.node(m_agentPreferencesNodeName);
+
+        return preferencesNode;
+    }
+
+    /**
+     * This performs some steps necessary to complete the configuration. This will overlay system properties on top of
+     * the current configuration (i.e. system properties override settings in the configuration file) and will log the
+     * configuration after the overlay.
+     *
+     * @param  agent_configuration the configuration to overlay system properties on top of
+     *
+     * @throws Exception if failed to get the current preferences
+     */
+    private void finishConfigurationSetup(AgentConfiguration agent_configuration) throws Exception {
+        Preferences prefs = agent_configuration.getPreferences();
+
+        LOG.debug(AgentI18NResourceKeys.PREFERENCES_SCHEMA, agent_configuration.getAgentConfigurationVersion());
+        LOG.debug(AgentI18NResourceKeys.PREFERENCES_NODE_PATH, prefs.absolutePath());
+
+        if (!agent_configuration.doNotOverridePreferencesWithSystemProperties()) {
+            overlaySystemProperties(prefs);
+        }
+
+        // JBoss/Remoting wants to write a jboss.identity file to the filesystem.
+        // Let's tell our communication services where to put that file if this property isn't set yet.
+        Preferences preferencesNode = agent_configuration.getPreferences();
+        ServiceContainerConfiguration service_container_configuration = new ServiceContainerConfiguration(
+            preferencesNode);
+        if (service_container_configuration.getDataDirectoryIfDefined() == null) {
+            String data_dir = agent_configuration.getDataDirectory().toString();
+            preferencesNode.put(ServiceContainerConfigurationConstants.DATA_DIRECTORY, data_dir);
+        }
+
+        LOG.debug(AgentI18NResourceKeys.CONFIGURATION, agent_configuration);
+
+        return;
+    }
+
+    /**
+     * This method is called when the agent is initially instantiated. It checks to make sure at least a default
+     * configuration is loaded and the configuration is fully upgraded to the latest configuration schema version.
+     *
+     * @throws Exception
+     */
+    private void checkInitialConfiguration() throws Exception {
+        // Make sure we are configured properly - do this now in case a -c command line argument wasn't specified
+        if (m_configuration == null) {
+            // let's see if we are already pre-configured; if we are not, load in the default configuration file
+            AgentConfiguration current_config = new AgentConfiguration(getPreferencesNode());
+
+            if (current_config.getAgentConfigurationVersion() == 0) {
+                loadConfigurationFile(AgentConfigurationConstants.DEFAULT_AGENT_CONFIGURATION_FILE);
+            } else {
+                m_configuration = current_config;
+
+                LOG.debug(AgentI18NResourceKeys.PREFERENCES_ALREADY_EXIST);
+            }
+        }
+
+        // finish processing the configuration - this will overlay system properties on top of the config
+        finishConfigurationSetup(m_configuration);
+
+        // make sure the configuration is up to date with the latest known, supported schema version
+        AgentConfigurationUpgrade.upgradeToLatest(m_configuration.getPreferences());
+
+        return;
+    }
+
+    /**
+     * Given a set of preferences, this will overlay any system properties on top of them; effectively allowing system
+     * properties to override values defined in the given preferences. Only those system properties that are related to
+     * the {@link AgentConfigurationConstants#PROPERTY_NAME_PREFIX agent} and
+     * {@link ServiceContainerConfigurationConstants#PROPERTY_NAME_PREFIX communications layer} are overlaid.
+     *
+     * <p>This method ignores {@link AgentConfiguration#doNotOverridePreferencesWithSystemProperties()} - in other
+     * words, this method will always overlay the system properties, even though the agent may have been configured not
+     * to. Use this method with caution since you are disobeying an agent configuration preference.</p>
+     *
+     * @param prefs the preferences to be overlaid with system property override values
+     */
+    private void overlaySystemProperties(Preferences prefs) {
+        // we want system properties to override anything in the configuration; but only the agent/service container properties
+        for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+            String name = entry.getKey().toString();
+            String value = entry.getValue().toString();
+
+            if (name.startsWith(ServiceContainerConfigurationConstants.PROPERTY_NAME_PREFIX)
+                || (name.startsWith(AgentConfigurationConstants.PROPERTY_NAME_PREFIX))) {
+                LOG.debug(AgentI18NResourceKeys.OVERLAY_SYSPROP, name, value);
+                prefs.put(name, value);
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * Sets the flag to indicate if the agent has started or is stopped.
+     *
+     * @param started <code>true</code> if the agent has started; <code>false</code> if the agent has stopped
+     */
+    private void setStarted(boolean started) {
+        m_started[0] = started;
+        m_startTime = (started) ? System.currentTimeMillis() : 0L;
+    }
+
+    /**
+     * Immediately sends a request to the server to update the plugins.
+     *
+     * @param  sender the sender used to comminucate with server
+     *
+     * @return <code>true</code> if the plugins were succesfully updated, <code>false</code> if an error occurred
+     *
+     * @see    PluginUpdate
+     */
+    private boolean updatePluginsNow(ClientCommandSender sender) {
+        try {
+            ClientRemotePojoFactory factory = sender.getClientRemotePojoFactory();
+            CoreServerService server = factory.getRemotePojo(CoreServerService.class);
+            PluginContainerConfiguration pc_config = m_configuration.getPluginContainerConfiguration();
+            PluginUpdate plugin_update = new PluginUpdate(server, pc_config);
+            plugin_update.updatePlugins();
+            return true;
+        } catch (Exception e) {
+            LOG.warn(e, AgentI18NResourceKeys.UPDATING_PLUGINS_FAILURE);
+            return false;
+        }
+    }
+
+    /**
+     * Provides a way to gracefully shutdown the agent.
+     */
+    private class AgentShutdownHook extends Thread {
+        /**
+         * The agent that will be shutdown when the shutdown hook is triggered.
+         */
+        private final AgentMain m_agent;
+
+        /**
+         * Constructor for {@link AgentShutdownHook} that retains the reference to the agent that will be shutdown when
+         * the shutdown hook is triggered.
+         *
+         * @param agent the agent to be shutdown when shutdown hook is triggered.
+         */
+        public AgentShutdownHook(AgentMain agent) {
+            m_agent = agent;
+        }
+
+        /**
+         * This is executed when the VM is shutting down.
+         */
+        @Override
+        public void run() {
+            m_agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.EXIT_SHUTTING_DOWN));
+
+            try {
+                m_agent.shutdown();
+            } catch (Throwable t) {
+                String errors = ThrowableUtil.getAllMessages(t);
+                LOG.error(t, AgentI18NResourceKeys.EXIT_SHUTDOWN_ERROR, errors);
+                m_agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.EXIT_SHUTDOWN_ERROR, errors));
+            }
+
+            m_agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.EXIT_SHUTDOWN_COMPLETE));
+        }
+    }
+
+    /**
+     * Listener that will register the agent as soon as the sender has started (which means we should be able to connect
+     * to the RHQ Server and send the register command).
+     */
+    private class RegisterStateListener implements ClientCommandSenderStateListener {
+        public boolean startedSending(ClientCommandSender sender) {
+            // spawn the register thread - wait for it to complete because once we return, the other state listeners will
+            // be called and if they want to talk to the server, we must first be registered in order to be able to do that
+            registerWithServer(60000L, false);
+
+            // once we are registered once, we really don't need to be registered again
+            // the user can always execute the "register" command prompt or clear the agent config
+            // or just set this config preference back to true if they want to register
+            m_configuration.getPreferences().putBoolean(AgentConfigurationConstants.REGISTER_WITH_SERVER_AT_STARTUP,
+                false);
+            return false; // no need to keep listening
+        }
+
+        public boolean stoppedSending(ClientCommandSender sender) {
+            return true; // no-op but keep listening
+        }
+    }
+
+    /**
+     * Listener that will update the plugins once the sender is able to start sending.
+     */
+    private class UpdatePluginsStateListener implements ClientCommandSenderStateListener {
+        public boolean startedSending(ClientCommandSender sender) {
+            updatePluginsNow(sender);
+
+            return false; // no need to keep listening
+        }
+
+        public boolean stoppedSending(ClientCommandSender sender) {
+            return true; // no-op but keep listening
+        }
+    }
+
+    /**
+     * Sender listener that will remove the command listener once the sender starts. It will also add the command
+     * listener once the sender stops. The command listener will allow us to immediately turn on the sender when the
+     * server sends us a message. We don't need this command listener once we know the sender has started (because that
+     * must mean that we discovered the server). This object poses as both the command listener and the sender listener.
+     */
+    private class CommandListenerStateListener implements ClientCommandSenderStateListener, CommandListener {
+        private ClientCommandSender senderListeningTo = null;
+
+        public boolean startedSending(ClientCommandSender sender) {
+            // the sender has started, which means we might have discovered the server and it is up
+            // no need to listen for more commands
+            synchronized (this) {
+                this.senderListeningTo = null;
+
+                ServiceContainer commServices = getServiceContainer(); // so we don't worry about synchronizing
+                if (commServices != null) {
+                    commServices.removeCommandListener(this);
+                }
+            }
+
+            return true; // keep listening in case we stop and start again
+        }
+
+        public boolean stoppedSending(ClientCommandSender sender) {
+            // the sender has stopped, which means we might have seen the server go down
+            // add ourselves as a command listener - if we here from the server, we'll start the sender again
+            synchronized (this) {
+                if (this.senderListeningTo == null) {
+                    this.senderListeningTo = sender;
+
+                    ServiceContainer commServices = getServiceContainer(); // so we don't worry about synchronizing
+                    if (commServices != null) {
+                        commServices.addCommandListener(this);
+                    }
+                }
+            }
+
+            return true; // keep listening in case we start and stop again
+        }
+
+        public void processedCommand(Command command, CommandResponse response) {
+            return; // no-op
+        }
+
+        public void receivedCommand(Command command) {
+            // We are receiving a command from the server! It must be up!
+            // If senderListeningTo is not null, the sender is most likely in stopped mode.
+            // We can restart it now since we are fairly confident the server is up.
+            synchronized (this.senderListeningTo) {
+                if (this.senderListeningTo != null) {
+                    boolean changed_mode = this.senderListeningTo.startSending();
+                    if (changed_mode) {
+                        LOG.debug(AgentI18NResourceKeys.RECEIVED_COMMAND_STARTED_SENDER);
+                    }
+                }
+            }
+
+            return;
+        }
+    }
+
+    /**
+     * When the agent starts up, it needs to create the communications servers before starting the plugin container;
+     * however, the agent must not process any incoming commands until after the plugin container fully starts. This
+     * command listener will actually block indefinitely all commands from being processed until its told to open the
+     * floodgates and allow all messages. Note that because the agent will be pinged by the server upon registration,
+     * this listener will always allow ping requests to go through.
+     */
+    private class BootstrapLatchCommandListener implements CommandListener {
+        /**
+         * Only when this latch is open, will this processor be allowed to start processing incoming messages. When the
+         * latch is closed, all threads attempting to ask this processor to execute a command will be blocked.
+         */
+        private final CountDownLatch m_latch = new CountDownLatch(1);
+        private final String PING_INTERFACE_NAME = Ping.class.getName();
+
+        public void allowAllCommands(ServiceContainer container) {
+            container.removeCommandListener(this); // don't need this listener anymore, we can remove it
+            m_latch.countDown();
+        }
+
+        public void receivedCommand(Command command) {
+            try {
+                if (!(command instanceof RemotePojoInvocationCommand)
+                    || !((RemotePojoInvocationCommand) command).getTargetInterfaceName().equals(PING_INTERFACE_NAME)) {
+                    m_latch.await();
+                }
+            } catch (Exception e) {
+            }
+        }
+
+        public void processedCommand(Command command, CommandResponse response) {
+            // no-op
+        }
+    }
+
+    private class SenderCreationListener implements ServiceContainerSenderCreationListener {
+        public void preCreate(ServiceContainer service_container, RemoteCommunicator remote_communicator,
+            ClientCommandSenderConfiguration sender_configuration) {
+            return; // no-op
+        }
+
+        public void postCreate(ServiceContainer service_container, ClientCommandSender sender) {
+            for (CommandPreprocessor preproc : sender.getCommandPreprocessors()) {
+                if (preproc instanceof SecurityTokenCommandPreprocessor) {
+                    ((SecurityTokenCommandPreprocessor) preproc).setAgentConfiguration(m_configuration);
+                }
+            }
+
+            return;
+        }
+    }
+
+    private class HelpException extends Exception {
+        private static final long serialVersionUID = 1L;
+
+        public HelpException(String msg) {
+            super(msg);
+        }
+    }
+}

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+=======================================================================
+ANT Script that builds a test jar to run SIGAR bug replication code.
+=======================================================================
+-->
+
+<project name="native-system" default="package" basedir=".">
+
+   <!-- in case it wasn't passed in, assume the default location -->
+   <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
+   <property name="project.version" value="2.0.0-SNAPSHOT"/>
+   <property name="sigar.version" value="1.4.0.0"/>
+
+   <fileset dir="${settings.localRepository}" id="jar.fileset">
+      <include name="i18nlog/i18nlog/1.0.9/i18nlog-1.0.9.jar" />
+      <include name="log4j/log4j/1.2.14/log4j-1.2.14.jar" />
+      <include name="org/testng/testng/5.1/testng-5.1-jdk15.jar" />
+      <include name="commons-logging/commons-logging/1.1/commons-logging-1.1.jar" />
+      <include name="org/rhq/rhq-core-util/${project.version}/rhq-core-util-${project.version}.jar" />
+      <include name="org/rhq/rhq-core-native-system/${project.version}/rhq-core-native-system-${project.version}.jar" />
+   </fileset>
+      
+   <fileset dir="${settings.localRepository}" id="native.fileset">
+      <include name="org/hyperic/sigar-dist/${sigar.version}/sigar-dist-${sigar.version}.zip" />
+   </fileset>
+   
+   <!--
+   =======================================================================
+   -->
+   <target name="package">
+      
+      <property name="target.dir" location="${basedir}/target/sigar-test" />
+      
+      <delete dir="${java.io.tmpdir}/sigar-test" />
+   
+      <unjar dest="${java.io.tmpdir}/sigar-test">
+         <fileset refid="jar.fileset" />
+         <patternset>
+             <exclude name="META-INF/**" />
+         </patternset>
+      </unjar>
+      
+      <echo file="${java.io.tmpdir}/sigar-test/log4j.xml">&lt;?xml version="1.0" encoding="UTF-8"?>
+&lt;!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+&lt;log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+   &lt;appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
+      &lt;param name="Threshold" value="DEBUG"/>
+      &lt;param name="Target" value="System.out"/>
+      &lt;layout class="org.apache.log4j.PatternLayout">
+         &lt;param name="ConversionPattern" value="[%-5p] %m%n"/>
+      &lt;/layout>
+   &lt;/appender>
+   &lt;root>
+      &lt;priority value="ERROR"/>
+      &lt;appender-ref ref="CONSOLE"/>
+   &lt;/root>
+&lt;/log4j:configuration>
+      </echo>
+   
+      <delete dir="${target.dir}" />
+      <mkdir dir="${target.dir}" />
+      
+      <unzip dest="${target.dir}">
+         <fileset refid="native.fileset" />
+         <patternset>
+            <include name="**/lib/sigar.jar"/>
+            <include name="**/lib/bcel*.jar"/>
+            <include name="**/lib/*.so"/>
+            <include name="**/lib/*.sl"/>
+            <include name="**/lib/*.dll"/>
+            <include name="**/lib/*.dylib"/>
+         </patternset>
+      </unzip>
+      <move todir="${target.dir}" flatten="true">
+         <fileset dir="${target.dir}">
+            <include name="**/lib/*" />
+         </fileset>
+      </move>
+      <delete dir="${target.dir}/hyperic-sigar-${sigar.version}" />
+
+      <unjar dest="${java.io.tmpdir}/sigar-test">
+         <fileset dir="${target.dir}" includes="sigar*.jar" />
+         <patternset>
+             <exclude name="META-INF/**" />
+         </patternset>
+      </unjar>
+
+      <jar jarfile="${target.dir}/sigar-test.jar">
+         <fileset dir="${java.io.tmpdir}/sigar-test" />
+         <fileset dir="target/test-classes" includes="**/*.class" />
+         <fileset dir="${basedir}" includes="src/**" />
+         <fileset dir="${basedir}/../util" includes="src/**" />
+         <manifest>
+            <attribute name="Main-Class" value="org.jboss.on.system.SigarTest"/>
+         </manifest>
+      </jar>
+
+      <echo file="${target.dir}/run.bat">@echo off
+echo SIGAR TEST: pass -debug argument to enable remote VM debugging on port 8787
+setlocal
+cd %~dp0
+if "%1"=="-debug" (
+   set _JPDA_OPTS=-Xdebug -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y
+   shift /1
+)
+java %_JPDA_OPTS% -enableassertions -Djava.library.path=. -jar sigar-test.jar %1 %2 %3 %4 %5 %6 %7 %8 %9
+      </echo>
+
+      <echo file="${target.dir}/run.sh">#/bin.sh
+echo SIGAR TEST: pass -debug argument to enable remote VM debugging on port 8787
+if [ "$1" = "-debug" ];
+then
+   export _JPDA_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y"
+fi
+
+java ${_JPDA_OPTS} -enableassertions -Djava.library.path=. -jar sigar-test.jar
+      </echo>
+      <chmod file="${target.dir}/run.sh" perm="ugo+rx" />
+      
+      <!-- this is the one .zip file that we give to the SIGAR team --> 
+      <!-- they unzip it and run the run.bat file --> 
+      <zip zipfile="${target.dir}/sigar-test.zip">
+         <fileset dir="${target.dir}" />
+      </zip>
+      
+   </target>
+
+</project>

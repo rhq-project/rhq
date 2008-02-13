@@ -1,0 +1,325 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-parent</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+    <relativePath>../../../../pom.xml</relativePath>
+  </parent>
+
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-installer</artifactId>
+  <packaging>war</packaging>
+
+  <name>RHQ Enterprise Installer War</name>
+  <description>The ON Enterprise Installer webapp</description>
+
+  <scm>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/gui/installer-war/</connection>
+    <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/gui/installer-war/</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>modules/enterprise/gui/installer-war/</scm.module.path>
+    <war.dir>${basedir}/target/${final.name}</war.dir>
+
+    <!-- dependency versions -->
+    <el.version>1.0</el.version>
+    <jsf-facelets.version>1.1.12</jsf-facelets.version>
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-util</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-dbutils</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>ant</groupId>
+      <artifactId>ant</artifactId>
+      <version>1.6.5</version>
+    </dependency>
+
+    <dependency>
+      <groupId>ant</groupId>
+      <artifactId>ant-launcher</artifactId>
+      <version>1.6.5</version>
+    </dependency>
+
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-jmx</artifactId>
+      <version>${jboss.version}</version>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
+
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-system</artifactId>
+      <version>${jboss.version}</version>
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
+
+    <!--
+    <dependency>
+      <groupId>com.sun.facelets</groupId>
+      <artifactId>jsf-facelets</artifactId>
+      <version>${jsf-facelets.version}</version>
+    </dependency>
+    -->
+
+    <!--
+    <dependency>
+      <groupId>commons-el</groupId>
+      <artifactId>commons-el</artifactId>
+      <version>1.0</version>
+    </dependency>
+    -->
+
+    <!--
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.0.4</version>
+    </dependency>
+    -->
+
+    <!--
+    <dependency>
+      <groupId>javax.el</groupId>
+      <artifactId>el-api</artifactId>
+      <version>${el.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    -->
+
+    <!--
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>2.5</version>
+      <scope>provided</scope>
+    </dependency>
+    -->
+
+    <!--
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>jsp-api</artifactId>
+      <version>2.0</version>
+      <scope>provided</scope>
+    </dependency>
+    -->
+
+    <dependency>
+      <groupId>javax.faces</groupId>
+      <artifactId>jsf-api</artifactId>
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
+
+    <!-- NOTE: The below dep is needed so that the Jetty JSP compiler can find the JSF tld files. -->
+    <dependency>
+      <groupId>javax.faces</groupId>
+      <artifactId>jsf-impl</artifactId>
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
+
+    <!--
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>jstl</artifactId>
+      <version>1.1.2</version>
+    </dependency>
+    -->
+
+    <!-- for richfaces -->
+    <!--
+    <dependency>
+       <groupId>org.richfaces</groupId>
+       <artifactId>richfaces</artifactId>
+       <version>3.0.1-SNAPSHOT</version>
+    </dependency>
+    -->
+
+  </dependencies>
+
+  <build>
+    <finalName>rhq-installer</finalName>
+
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-war-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+            </manifest>
+          </archive>
+          <webResources>
+            <resource>
+              <filtering>true</filtering>
+              <directory>${basedir}/src/main/webapp</directory>
+              <includes>
+                <include>**/*.properties</include>
+              </includes>
+            </resource>
+          </webResources>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>Generate I18N Resource Bundles</id>
+            <phase>process-classes</phase>
+            <configuration>
+              <tasks>
+                <!-- generate the I18N resource bundles -->
+                <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
+                  <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
+                    <classpath refid="maven.runtime.classpath" />
+                    <classfileset dir="${project.build.outputDirectory}">
+                       <include name="**/*I18NResourceKeys.class" />
+                    </classfileset>
+                </i18n>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+
+  </build>
+
+  <profiles>
+
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.deploymentName}</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy-classes</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="classes.dir" location="${rhq.deploymentDir}/WEB-INF/classes"/>
+                            <echo>*** Copying updated files from target/classes to ${classes.dir}...</echo>
+                            <copy todir="${classes.dir}" verbose="${rhq.verbose}">
+                               <fileset dir="target/classes"/>
+                            </copy>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>package</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                            <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
+                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                               <fileset dir="${basedir}/target/${project.build.finalName}"/>
+                            </copy>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                            <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                            <delete dir="${deployment.dir}"/>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                  </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+
+      <profile>
+         <id>prod</id>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                  <!--  See http://jetty.mortbay.org/jspc-maven-plugin/ -->
+                  <groupId>org.mortbay.jetty</groupId>
+                  <artifactId>maven-jetty-jspc-plugin</artifactId>
+                  <version>6.1.7</version>
+                  <configuration>
+                     <keepSources>false</keepSources>
+                     <validateXml>false</validateXml>  <!--  TODO: set to true -->
+                     <generatedClasses>${project.build.outputDirectory}</generatedClasses>
+                  </configuration>
+                  <executions>
+                     <execution><goals><goal>jspc</goal></goals></execution>
+                  </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+
+  </profiles>
+
+  <repositories>
+    <repository>
+      <id>java.net-m1-releases</id>
+      <name>Java.net Maven1 Repository - for javax.faces, javax.el, com.sun.el, and com.sun.facelets releases</name>
+      <url>https://maven-repository.dev.java.net/repository/</url>
+      <layout>legacy</layout>
+    </repository>
+  </repositories>
+
+</project>

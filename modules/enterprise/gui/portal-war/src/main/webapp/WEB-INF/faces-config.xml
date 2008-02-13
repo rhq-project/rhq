@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <application>
+      <!-- don't need this with Richfaces, we instead use org.ajax4jsf.VIEW_HANDLERS in web.xml -->
+      <!-- <view-handler>com.sun.facelets.FaceletViewHandler</view-handler> -->
+      <view-handler>org.rhq.enterprise.gui.common.framework.FaceletRedirectionViewHandler</view-handler>
+
+      <!-- Customize JSF validation messages -->
+      <message-bundle>messages</message-bundle>
+
+      <locale-config>
+         <default-locale>en</default-locale>
+         <supported-locale>de</supported-locale>
+      </locale-config>
+
+      <el-resolver>org.rhq.enterprise.gui.common.paging.PageControlELResolver</el-resolver>
+   </application>
+
+   <lifecycle>
+      <!--
+      <!- - This phase listener is required for Seam applications. - ->
+      <phase-listener>org.jboss.seam.jsf.SeamPhaseListener</phase-listener>
+      -->
+      <phase-listener>org.rhq.enterprise.gui.common.framework.FacesMessagePropogationPhaseListener</phase-listener>
+      <phase-listener>org.rhq.core.gui.util.IdChunkGeneratorPhaseListener</phase-listener>
+   </lifecycle>
+   
+</faces-config>

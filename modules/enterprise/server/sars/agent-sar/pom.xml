@@ -1,0 +1,200 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-enterprise-server-sars-parent</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-enterprise-server-agent-sar</artifactId>
+  <packaging>jboss-sar</packaging>
+
+  <name>RHQ Enterprise Server Embedded Agent SAR</name>
+  <description>The SAR that allows the server to embed the agent</description>
+
+  <scm>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/sars/agent-sar/</connection>
+    <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/sars/agent-sar/</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>modules/enterprise/server/sars/agent-sar/</scm.module.path>
+    <sarDirectory>${project.build.directory}/${project.build.finalName}</sarDirectory>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-enterprise-agent</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-domain</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- we want to explicitly include these (do not use scope=provided) -->
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.14</version>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-httpclient</groupId>
+      <artifactId>commons-httpclient</artifactId>
+      <version>2.0.2</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <finalName>rhq-agent</finalName>
+    <plugins>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>jboss-packaging-maven-plugin</artifactId>
+        <version>1.9.99</version>
+        <extensions>true</extensions>  <!-- allows Maven to grok the jboss-sar packaging type -->
+        <configuration>
+          <libDirectory>${sarDirectory}/META-INF/embedded-agent/lib</libDirectory>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <!-- we are packaging the agent in isolation - but the sar needs the agent jar itself, put a copy in the lib directory -->
+          <execution>
+            <phase>package</phase>
+            <configuration>
+              <tasks>
+                 <echo>sarDirectory="${sarDirectory}"</echo>
+                 <echo>Putting the agent jar in the sar's classpath</echo>
+                 <mkdir dir="${sarDirectory}/lib" />
+                 <copy file="${sarDirectory}/META-INF/embedded-agent/lib/rhq-enterprise-agent-${project.version}.jar" todir="${sarDirectory}/lib" />
+
+                 <echo>Populating the sar with the native libraries found at ${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}/sigar-dist-${sigar.version}.zip</echo>
+                 <unzip dest="${sarDirectory}/META-INF/embedded-agent/lib">
+                    <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
+                    <patternset>
+                       <!-- <include name="**/lib/sigar.jar" /> already part of our dependencies -->
+                       <include name="**/lib/bcel*.jar" />
+                       <include name="**/lib/*.so" />
+                       <include name="**/lib/*.sl" />
+                       <include name="**/lib/*.dll" />
+                       <include name="**/lib/*.dylib" />
+                    </patternset>
+                 </unzip>
+                 <move todir="${sarDirectory}/META-INF/embedded-agent/lib" flatten="true">
+                    <fileset dir="${sarDirectory}/META-INF/embedded-agent/lib">
+                       <include name="**/lib/*" />
+                    </fileset>
+                 </move>
+                 <delete dir="${sarDirectory}/META-INF/embedded-agent/lib/hyperic-sigar-${sigar.version}" />
+
+                 <!-- I can't figure out how to avoid this - should be able to bind to prepare-package but it isn't working -->
+                 <!-- so I have to re-package the sar after I added the lib -->
+                 <echo>Repackaging the sar...</echo>
+                 <delete file="${project.build.directory}/${project.build.finalName}.sar" />
+                 <jar destfile="${project.build.directory}/${project.build.finalName}.sar" basedir="${sarDirectory}" />
+<!--
+                 <echo>Creating the sar with the name rhq-agent.sar that should be deployed in the JBossAS server</echo>
+                 <move file="${project.build.directory}/${project.build.finalName}" tofile="${project.build.directory}/rhq-agent.sar" />
+-->
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+  </build>
+
+   <profiles>
+
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentName>${project.build.finalName}.sar</rhq.deploymentName>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.deploymentName}</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>package</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                            <echo>*** Copying updated files from target${file.separator}classes${file.separator} to ${deployment.dir}${file.separator}...</echo>
+                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                               <fileset dir="target/rhq-agent"/>
+                            </copy>
+                            <property name="deployment.descriptor.file" location="${deployment.dir}/META-INF/jboss-service.xml"/>
+                            <echo>*** Touching ${deployment.descriptor.file} to force redeployment of ${rhq.deploymentName}...</echo>
+                            <touch file="${deployment.descriptor.file}"/>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                            <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                            <delete dir="${deployment.dir}"/>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                   </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+
+   </profiles>
+
+</project>

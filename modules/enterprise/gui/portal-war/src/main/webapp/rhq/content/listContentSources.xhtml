@@ -1,0 +1,189 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="Content Sources"/>
+
+   <ui:define name="breadcrumbs">
+      <h:outputLink value="listContentSources.xhtml">
+         ${msg["contentsource.list.breadcrumb"]}
+      </h:outputLink>
+   </ui:define>
+
+   <ui:define name="body">
+   
+   <br/>
+   <h:messages showSummary="true"
+               showDetail="true"
+               infoClass="InfoBlock"
+               warnClass="WarnBlock"
+               errorClass="ErrorBlock"
+               fatalClass="FatalBlock"
+               globalOnly="true"
+               layout="table"
+               width="100%"/>
+
+
+      <h:form id="contentSourcesListForm">
+         
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Content Sources"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+            <ui:param name="contentSourcesDataModel" value="#{ListContentSourcesUIBean.dataModel}"/>
+            <rich:dataTable binding="#{ListContentSourcesUIBean.dataTable}"
+                            id="contentSourcesDataTable"
+                            rows="#{PageControl.ContentSourcesList.pageSize}"
+                            value="#{contentSourcesDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 20%, 15%, 15%, 9%, 9%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer">
+
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ContentSourcesList" />
+               </f:facet>
+      
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedContentSources" />
+                  </f:facet>
+                  
+                  <onc:select name="selectedContentSources" value="#{item.id}" />
+               </rich:column>
+      
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cs.id">
+                        <h:outputText styleClass="headerText" value="ID" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputText value="#{item.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cs.name">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputLink value="contentSource.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="id" value="#{item.id}"/>
+                     <h:outputText value="#{item.name}" />
+                  </h:outputLink>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cs.creationDate">
+                        <h:outputText styleClass="headerText" value="Date Created" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{item.creationDate}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                  </h:outputText>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cs.lastModifiedDate">
+                        <h:outputText styleClass="headerText" value="Date Modified" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{item.lastModifiedDate}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                  </h:outputText>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cs.lazyLoad">
+                        <h:outputText styleClass="headerText" value="Lazy Load?" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{item.lazyLoad}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cs.downloadMode">
+                        <h:outputText styleClass="headerText" value="Download Mode" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{item.downloadMode}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cs.description">
+                        <h:outputText styleClass="headerText" value="Description" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{item.description}"/>
+               </rich:column>
+               
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <!-- colspan 8:7 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 8 : 7}">
+                        <h:commandButton action="#{ListContentSourcesUIBean.createNewContentSource}"
+                                         value="CREATE NEW" styleClass="on-pager-button buttonsmall">
+                           <f:param name="mode" value="new"/>
+                        </h:commandButton>
+
+                        <onc:selectCommandButton action="#{ListContentSourcesUIBean.deleteSelectedContentSources}"
+                                                 value="DELETE SELECTED" target="selectedContentSources" styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{ListContentSourcesUIBean.syncSelectedContentSources}"
+                                                 value="SYNC SELECTED" target="selectedContentSources" styleClass="on-pager-button buttonsmall"/>
+
+                        <ui:param name="paginationDataTableName" value="contentSourcesDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{contentSourcesDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ContentSourcesList}"/>
+                        <ui:include src="../resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+            
+         </rich:panel>
+      </h:form>
+
+      <p align="center">
+         <h:outputLink value="listChannels.xhtml">
+            <h:outputText value="Go To All Channels View" />
+         </h:outputLink>
+      </p>
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dbsetup name="common-data.xml">
+
+    <!--
+    This file contains the seed data for the configuration table.
+    All keys mentioned here should be referenced via the
+    HQConstants class
+    -->
+    <table name="RHQ_SYSTEM_CONFIG">
+        <data ID="1" PROPERTY_KEY="SERVER_VERSION" PROPERTY_VALUE="@@@SERVER_VERSION@@@"
+              DEFAULT_PROPERTY_VALUE="@@@SERVER_VERSION@@@" FREAD_ONLY="TRUE"/>
+        <data ID="2" PROPERTY_KEY="DB_SCHEMA_VERSION" PROPERTY_VALUE="@@@DB_SCHEMA_VERSION@@@"
+              DEFAULT_PROPERTY_VALUE="@@@DB_SCHEMA_VERSION@@@" FREAD_ONLY="TRUE"/>
+        <data ID="3" PROPERTY_KEY="CAM_JAAS_PROVIDER" PROPERTY_VALUE="@@@JAASPROVIDER@@@"
+              DEFAULT_PROPERTY_VALUE="JDBC" FREAD_ONLY="FALSE"/>
+        <data ID="4" PROPERTY_KEY="CAM_BASE_URL" PROPERTY_VALUE="@@@BASEURL@@@"
+              DEFAULT_PROPERTY_VALUE="@@@BASEURL@@@" FREAD_ONLY="FALSE"/>
+        <data ID="9" PROPERTY_KEY="CAM_HELP_USER" PROPERTY_VALUE="web"
+              DEFAULT_PROPERTY_VALUE="web" FREAD_ONLY="FALSE"/>
+        <data ID="10" PROPERTY_KEY="CAM_HELP_PASSWORD" PROPERTY_VALUE="user"
+              DEFAULT_PROPERTY_VALUE="user" FREAD_ONLY="FALSE"/>
+
+        <!-- default LDAP configuration options -->
+        <data ID="11" PROPERTY_KEY="CAM_LDAP_NAMING_FACTORY_INITIAL"
+              PROPERTY_VALUE="com.sun.jndi.ldap.LdapCtxFactory"
+              DEFAULT_PROPERTY_VALUE="com.sun.jndi.ldap.LdapCtxFactory"
+              FREAD_ONLY="FALSE"/>
+        <data ID="12" PROPERTY_KEY="CAM_LDAP_NAMING_PROVIDER_URL"
+              PROPERTY_VALUE="@@@LDAPURL@@@"
+              DEFAULT_PROPERTY_VALUE="ldap://localhost/"
+              FREAD_ONLY="FALSE"/>
+        <data ID="13" PROPERTY_KEY="CAM_LDAP_LOGIN_PROPERTY"
+              PROPERTY_VALUE="@@@LDAPLOGINPROP@@@"
+              DEFAULT_PROPERTY_VALUE="cn" FREAD_ONLY="FALSE"/>
+        <data ID="14" PROPERTY_KEY="CAM_LDAP_BASE_DN"
+              PROPERTY_VALUE="@@@LDAPBASEDN@@@"
+              DEFAULT_PROPERTY_VALUE="o=JBoss,c=US"
+              FREAD_ONLY="FALSE"/>
+        <data ID="15" PROPERTY_KEY="CAM_LDAP_BIND_DN"
+              PROPERTY_VALUE="@@@LDAPBINDDN@@@"
+              DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="16" PROPERTY_KEY="CAM_LDAP_BIND_PW"
+              PROPERTY_VALUE="@@@LDAPBINDPW@@@"
+              DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="17" PROPERTY_KEY="CAM_LDAP_PROTOCOL"
+              PROPERTY_VALUE="@@@LDAPPROTOCOL@@@" DEFAULT_PROPERTY_VALUE=""
+              FREAD_ONLY="FALSE"/>
+        <data ID="18" PROPERTY_KEY="CAM_LDAP_FILTER"
+              PROPERTY_VALUE="@@@LDAPSEARCHFILTER@@@" DEFAULT_PROPERTY_VALUE=""
+              FREAD_ONLY="FALSE"/>
+
+        <!-- Multicast address for HighAvail CAM -->
+        <!-- TODO CHANGE ME... INTEGRATE INTO INSTALLER -->
+        <data ID="19" PROPERTY_KEY="CAM_MULTICAST_ADDRESS"
+              PROPERTY_VALUE="@@@MULTICAST_ADDR@@@" DEFAULT_PROPERTY_VALUE=""
+              FREAD_ONLY="FALSE"/>
+        <data ID="20" PROPERTY_KEY="CAM_MULTICAST_PORT"
+              PROPERTY_VALUE="@@@MULTICAST_PORT@@@" DEFAULT_PROPERTY_VALUE=""
+              FREAD_ONLY="FALSE"/>
+
+        <!-- Does this build support Syslog actions? -->
+        <data ID="21" PROPERTY_KEY="CAM_SYSLOG_ACTIONS_ENABLED"
+              PROPERTY_VALUE="false" DEFAULT_PROPERTY_VALUE="false"
+              FREAD_ONLY="FALSE"/>
+        <data ID="23" PROPERTY_KEY="CAM_GUIDE_ENABLED"
+              PROPERTY_VALUE="true"
+              DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
+        <data ID="24" PROPERTY_KEY="CAM_RT_COLLECT_IP_ADDRS"
+              PROPERTY_VALUE="true"
+              DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
+
+        <!-- Default data storage options -->
+        <!-- Default 2 days -->
+        <data ID="25" PROPERTY_KEY="CAM_DATA_PURGE_RAW"
+              PROPERTY_VALUE="172800000" DEFAULT_PROPERTY_VALUE="172800000"
+              FREAD_ONLY="FALSE"/>
+        <!-- Default 14 days -->
+        <data ID="26" PROPERTY_KEY="CAM_DATA_PURGE_1H"
+              PROPERTY_VALUE="1209600000" DEFAULT_PROPERTY_VALUE="1209600000"
+              FREAD_ONLY="FALSE"/>
+        <!-- Default 31 days -->
+        <data ID="27" PROPERTY_KEY="CAM_DATA_PURGE_6H"
+              PROPERTY_VALUE="2678400000" DEFAULT_PROPERTY_VALUE="2678400000"
+              FREAD_ONLY="FALSE"/>
+        <!-- Default 1 year -->
+        <data ID="28" PROPERTY_KEY="CAM_DATA_PURGE_1D"
+              PROPERTY_VALUE="31536000000" DEFAULT_PROPERTY_VALUE="31536000000"
+              FREAD_ONLY="FALSE"/>
+
+        <!-- Baseline options -->
+        <!-- How often to calculate, default 3 days; if 0, never calculate them automatically -->
+        <data ID="29" PROPERTY_KEY="CAM_BASELINE_FREQUENCY"
+              PROPERTY_VALUE="259200000" DEFAULT_PROPERTY_VALUE="259200000"
+              FREAD_ONLY="FALSE"/>
+        <!-- How much data to include in the calulation, default 7 days -->
+        <data ID="30" PROPERTY_KEY="CAM_BASELINE_DATASET"
+              PROPERTY_VALUE="604800000" DEFAULT_PROPERTY_VALUE="604800000"
+              FREAD_ONLY="FALSE"/>
+        <!-- the next time the baselines are due to be calculated -->
+        <data ID="31" PROPERTY_KEY="CAM_BASELINE_LASTTIME"
+              PROPERTY_VALUE="0" DEFAULT_PROPERTY_VALUE="0"
+              FREAD_ONLY="FALSE"/>
+
+        <!-- How often to run database maintainence routines -->
+        <data ID="32" PROPERTY_KEY="CAM_DATA_MAINTENANCE"
+              PROPERTY_VALUE="3600000" DEFAULT_PROPERTY_VALUE="3600000" FREAD_ONLY="FALSE"/>
+
+        <!-- Whether or not to track metric values that have not changed -->
+        <data ID="33" PROPERTY_KEY="DATA_STORE_ALL"
+              PROPERTY_VALUE="true" DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
+
+        <!-- How long to keep RT data around -->
+        <data ID="34" PROPERTY_KEY="RT_DATA_PURGE" PROPERTY_VALUE="2678400000"
+              DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="FALSE"/>
+
+        <!-- Whether to reindex the data tables nightly -->
+        <data ID="35" PROPERTY_KEY="DATA_REINDEX_NIGHTLY" PROPERTY_VALUE="true"
+              DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
+
+        <!-- How long to keep alerts around -->
+        <data ID="36" PROPERTY_KEY="ALERT_PURGE" PROPERTY_VALUE="2678400000"
+              DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="FALSE"/>
+
+        <!-- Determines if SNMP actions will be used -->
+        <data ID="37" PROPERTY_KEY="SNMP_VERSION" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="38" PROPERTY_KEY="SNMP_AUTH_PROTOCOL" PROPERTY_VALUE="MD5" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="39" PROPERTY_KEY="SNMP_AUTH_PASSPHRASE" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="40" PROPERTY_KEY="SNMP_PRIV_PASSPHRASE" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="41" PROPERTY_KEY="SNMP_COMMUNITY" PROPERTY_VALUE="public" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="42" PROPERTY_KEY="SNMP_ENGINE_ID" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="43" PROPERTY_KEY="SNMP_CONTEXT_NAME" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="44" PROPERTY_KEY="SNMP_SECURITY_NAME" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="45" PROPERTY_KEY="SNMP_TRAP_OID" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="46" PROPERTY_KEY="SNMP_ENTERPRISE_OID" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="47" PROPERTY_KEY="SNMP_GENERIC_ID" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="48" PROPERTY_KEY="SNMP_SPECIFIC_ID" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="49" PROPERTY_KEY="SNMP_AGENT_ADDRESS" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+        <data ID="50" PROPERTY_KEY="SNMP_PRIVACY_PROTOCOL" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE="" FREAD_ONLY="FALSE"/>
+
+    </table>
+
+</dbsetup>

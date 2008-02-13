@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dbsetup name="content-schema.xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="urn:xmlns:rhq-dbsetup-schema">
+
+   <table name="RHQ_ARCHITECTURE">
+      <column name="ID" default="sequence-only" initial="100" primarykey="true" required="true" type="INTEGER"/>
+      <column name="NAME" size="50" type="VARCHAR2" required="true"/>
+      <index name="RHQ_ARCHITECTURE_NAME_IDX" unique="true">
+         <field ref="NAME"/>
+      </index>
+   </table>
+
+   <table name="RHQ_CONTENT_SOURCE_TYPE">
+      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="NAME" size="30" type="VARCHAR2" required="true"/> <!-- size limit is important - see ContentSourceSyncJob.createJobName -->
+      <column name="DISPLAY_NAME" size="200" type="VARCHAR2" required="false"/>
+      <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+      <column name="PLUGIN_NAME" size="100" type="VARCHAR2" required="false"/> <!-- we might want this as part of natural key -->
+      <column name="DEFAULT_LAZY_LOAD" type="BOOLEAN" required="true"/>
+      <column name="DEFAULT_DOWNLOAD_MODE" size="16" type="VARCHAR2" required="true"/>
+      <column name="DEFAULT_SYNC_SCHEDULE" size="64" type="VARCHAR2" required="true"/>
+      <column name="API_CLASS" size="100" type="VARCHAR2" required="true"/>
+      
+      <column name="SOURCE_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF" required="false"/>
+
+      <index name="RHQ_CONTENT_SOURCE_TYPE_IDX" unique="true">
+         <field ref="NAME"/>
+         <!-- <field ref="PLUGIN_NAME"/> -->
+      </index>
+   </table>
+
+   <table name="RHQ_CONTENT_SOURCE">
+      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="NAME" size="30" type="VARCHAR2" required="true"/> <!-- size limit is important - see ContentSourceSyncJob.createJobName -->
+      <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+      <column name="LAZY_LOAD" type="BOOLEAN" required="true"/>
+      <column name="DOWNLOAD_MODE" size="16" type="VARCHAR2" required="true"/>
+      <column name="SYNC_SCHEDULE" size="64" type="VARCHAR2" required="true"/>
+      <column name="LOAD_ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
+      <column name="CREATION_TIME" type="TIMESTAMP" required="true"/>
+      <column name="LAST_MODIFIED_TIME" type="TIMESTAMP" required="true"/>
+
+      <column name="CONTENT_SOURCE_TYPE_ID" type="INTEGER" references="RHQ_CONTENT_SOURCE_TYPE" required="true"/>
+      <column name="CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG" required="false"/>
+
+      <index name="RHQ_CONTENT_SOURCE_IDX" unique="true">
+         <field ref="NAME"/>
+         <field ref="CONTENT_SOURCE_TYPE_ID"/>
+      </index>
+   </table>
+
+   <table name="RHQ_CHANNEL">
+      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+      <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+      <column name="CREATION_TIME" type="TIMESTAMP" required="true"/>
+      <column name="LAST_MODIFIED_TIME" type="TIMESTAMP" required="true"/>
+
+      <index name="RHQ_CHANNEL_IDX" unique="true">
+         <field ref="NAME"/>
+      </index>
+   </table>
+
+   <table name="RHQ_PACKAGE_TYPE">
+      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+      <column name="DISPLAY_NAME" size="200" type="VARCHAR2" required="false"/>
+      <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+      <column name="CATEGORY" size="50" type="VARCHAR2" required="false"/>
+      <column name="DISCOVERY_INTERVAL" type="INTEGER" required="false"/>
+      <column name="IS_CREATION_DATA" type="BOOLEAN" required="true" />
+
+      <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" required="true"/>
+      <column name="DEPLOYMENT_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF" required="false"/>
+      <column name="PACKAGE_EXTRA_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG_DEF" required="false"/>
+
+      <index name="RHQ_PACKAGE_TYPE_IDX" unique="true">
+         <field ref="NAME"/>
+         <field ref="RESOURCE_TYPE_ID"/>
+      </index>
+
+   </table>
+
+   <table name="RHQ_PACKAGE">
+      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+      <column name="CLASSIFICATION" size="200" type="VARCHAR2" required="false"/>
+
+      <column name="PACKAGE_TYPE_ID" type="INTEGER" references="RHQ_PACKAGE_TYPE" required="true"/>
+      
+      <index name="RHQ_PACKAGE_IDX" unique="true">
+         <field ref="NAME"/>
+         <field ref="PACKAGE_TYPE_ID"/>
+      </index>
+   </table>
+
+   <table name="RHQ_PACKAGE_BITS">
+      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="BITS" type="BLOB" required="false"/>
+   </table>
+
+   <table name="RHQ_PACKAGE_VERSION">
+      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="DISPLAY_NAME" size="200" type="VARCHAR2" required="false"/>
+      <column name="SHORT_DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+      <column name="LONG_DESCRIPTION" size="4000" type="VARCHAR2" required="false"/>
+      <column name="VERSION" size="500" type="VARCHAR2" required="true"/>
+      <column name="DISPLAY_VERSION" size="500" type="VARCHAR2" required="false"/>
+      <column name="FILE_NAME" size="255" type="VARCHAR2" required="false"/>
+      <column name="FILE_SIZE" type="LONG" required="false"/>
+      <column name="FILE_MD5" size="32" type="VARCHAR2" required="false"/>
+      <column name="FILE_SHA256" size="64" type="VARCHAR2" required="false"/>
+      <column name="FILE_CREATION_TIME" type="TIMESTAMP" required="false"/>
+      <column name="LICENSE_NAME" size="255" type="VARCHAR2" required="false"/>
+      <column name="LICENSE_VERSION" size="20" type="VARCHAR2" required="false"/>
+      <column name="METADATA" type="BLOB" required="false"/>
+
+      <column name="PACKAGE_ID" type="INTEGER" references="RHQ_PACKAGE" required="true"/>
+      <column name="ARCHITECTURE_ID" type="INTEGER" references="RHQ_ARCHITECTURE" required="true"/>
+      <column name="CONFIG_ID" type="INTEGER" references="RHQ_CONFIG" required="false"/>
+      <column name="PACKAGE_BITS_ID" type="INTEGER" references="RHQ_PACKAGE_BITS" required="false"/>
+
+      <index name="RHQ_PACKAGE_VERSION_IDX" unique="true">
+         <field ref="PACKAGE_ID"/>
+         <field ref="VERSION"/>
+         <field ref="ARCHITECTURE_ID"/>
+      </index>
+      
+   </table>
+
+   <table name="RHQ_CONTENT_REQ">
+      <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="1" primarykey="true"/>
+      <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+      <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
+      <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
+      <column name="SUBJECT_NAME" type="VARCHAR2" required="true" size="100"/>
+      <column name="CTIME" type="LONG" required="true"/>
+      <column name="MTIME" type="LONG" required="true"/>
+      <column name="REQUEST_TYPE" type="VARCHAR2" required="true" size="20"/>
+   </table>
+
+   <table name="RHQ_INSTALLED_PACKAGE">
+      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="INSTALLATION_TIME" type="TIMESTAMP" required="false"/>
+
+      <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE" required="true"/>
+      <column name="PACKAGE_VERSION_ID" type="INTEGER" references="RHQ_PACKAGE_VERSION" required="true"/>
+      <column name="DEPLOYMENT_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG" required="false"/>
+      <column name="SUBJECT_ID" type="INTEGER" references="RHQ_SUBJECT" required="false"/>
+   </table>
+
+   <table name="RHQ_INSTALLED_PKG_HIST">
+      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="STATUS" type="VARCHAR2" size="24" required="true"/>
+      <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
+      <column name="HISTORY_TIMESTAMP" type="TIMESTAMP" required="false"/>
+
+      <column name="PACKAGE_VERSION_ID" type="INTEGER" references="RHQ_PACKAGE_VERSION" required="true"/>
+      <column name="DEPLOYMENT_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG" required="false"/>
+      <column name="CONTENT_SERVICE_REQUEST_ID" type="INTEGER" references="RHQ_CONTENT_REQ" required="false"/>
+   </table>
+
+   <table name="RHQ_CONTENT_SRC_SYNC">
+      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="STATUS" type="VARCHAR2" size="16" required="true"/>
+      <column name="START_TIME" type="LONG" required="true"/>
+      <column name="END_TIME" type="LONG" required="false"/>
+      <column name="RESULTS" type="LONGVARCHAR" required="false"/>
+
+      <column name="CONTENT_SRC_ID" type="INTEGER" required="true" references="RHQ_CONTENT_SOURCE"/>
+   </table>
+   
+   <table name="RHQ_PACKAGE_INST_STEP">
+      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="STEP_ORDER" type="INTEGER"/>
+      <column name="DESCRIPTION" type="VARCHAR2" size="4000" required="true"/>
+
+      <column name="INSTALLED_PACKAGE_ID" type="INTEGER" references="RHQ_INSTALLED_PACKAGE"/>
+   </table>
+
+   <table name="RHQ_CHANNEL_RESOURCE_MAP">
+      <column name="CHANNEL_ID" type="INTEGER" required="true" references="RHQ_CHANNEL"/>
+      <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+      <column name="CTIME" type="LONG" required="true" />
+
+      <constraint name="RHQ_CHANNEL_RESOURCE_MAP_KEY">
+        <primaryKey>
+          <field ref="CHANNEL_ID"/>
+          <field ref="RESOURCE_ID"/>
+        </primaryKey>
+      </constraint>
+   </table>
+
+   <table name="RHQ_CHANNEL_CONTENT_SRC_MAP">
+      <column name="CHANNEL_ID" type="INTEGER" required="true" references="RHQ_CHANNEL"/>
+      <column name="CONTENT_SRC_ID" type="INTEGER" required="true" references="RHQ_CONTENT_SOURCE"/>
+      <column name="CTIME" type="LONG" required="true" />
+
+      <constraint name="RHQ_CHAN_CONTENT_SRC_MAP_KEY">
+        <primaryKey>
+          <field ref="CHANNEL_ID"/>
+          <field ref="CONTENT_SRC_ID"/>
+        </primaryKey>
+      </constraint>
+   </table>
+
+   <table name="RHQ_CHANNEL_PKG_VERSION_MAP">
+      <column name="CHANNEL_ID" type="INTEGER" required="true" references="RHQ_CHANNEL"/>
+      <column name="PACKAGE_VERSION_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_VERSION"/>
+      <column name="CTIME" type="LONG" required="true" />
+
+      <constraint name="RHQ_CHANNEL_PKG_VER_MAP_KEY">
+        <primaryKey>
+          <field ref="CHANNEL_ID"/>
+          <field ref="PACKAGE_VERSION_ID"/>
+        </primaryKey>
+      </constraint>
+   </table>
+
+   <table name="RHQ_PKG_VER_CONTENT_SRC_MAP">
+      <column name="PACKAGE_VERSION_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_VERSION"/>
+      <column name="CONTENT_SRC_ID" type="INTEGER" required="true" references="RHQ_CONTENT_SOURCE"/>
+      <column name="LOCATION" type="VARCHAR2" size="4000" required="true"/>
+
+      <constraint name="RHQ_PKG_VER_CONTENT_SRC_KEY">
+        <primaryKey>
+          <field ref="PACKAGE_VERSION_ID"/>
+          <field ref="CONTENT_SRC_ID"/>
+        </primaryKey>
+      </constraint>
+   </table>
+
+   <table name="RHQ_PKG_PRD_MAP">
+      <column name="PKG_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_VERSION"/>
+      <column name="PRD_ID" type="INTEGER" required="true" references="RHQ_PRD_VER"/>
+
+      <constraint name="RHQ_PKG_PRD_KEY">
+        <primaryKey>
+          <field ref="PKG_ID"/>
+          <field ref="PRD_ID"/>
+        </primaryKey>
+      </constraint>
+
+   </table>
+
+</dbsetup>

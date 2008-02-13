@@ -1,0 +1,18 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin">
+  
+   <server name="testServer1">
+      <subcategories>
+         <subcategory name="parent" displayName="Parent" description="The parent.">
+              <subcategory name="applications2" displayName="Apps2" description="The apps2."/>
+         </subcategory>
+      </subcategories>
+
+      <service name="testService2" subCategory="applications2"/>
+      <service name="testApp1" subCategory="applications2"/>
+
+   </server>
+
+</plugin>
+   

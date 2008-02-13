@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE server>
+
+<server>
+  <mbean code="org.rhq.enterprise.server.core.plugin.ProductPluginDeployer"
+	      name="rhq:service=AgentPluginDeployer">
+
+    <attribute name="PluginDir">rhq-plugins</attribute>
+    
+  </mbean>
+
+  <mbean code="org.jboss.deployment.scanner.URLDeploymentScanner"
+	      name="rhq:service=AgentPluginURLDeploymentScanner,type=DeploymentScanner,flavor=URL">
+
+    <depends optional-attribute-name="Deployer">jboss.system:service=MainDeployer</depends>
+    <depends>rhq:service=AgentPluginDeployer</depends>
+
+    <attribute name="URLComparator">org.jboss.deployment.scanner.PrefixDeploymentSorter</attribute>
+    <attribute name="Filter">org.jboss.deployment.scanner.DeploymentFilter</attribute>
+    <attribute name="ScanPeriod">30000</attribute>
+    <attribute name="URLs">
+       ./deploy/${rhq.earName}/rhq-downloads/rhq-plugins/,
+       ./deploy/${rhq.earName}/license/
+    </attribute>
+  </mbean>
+</server>

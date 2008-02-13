@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<dbsetup name="authz-data.xml">
+
+    <!-- the overlord user -->
+    <table name="RHQ_SUBJECT">
+        <data ID="1"
+              NAME="admin"
+              FIRST_NAME="Super"
+              LAST_NAME="User"
+              FSYSTEM="TRUE" />
+    </table>
+
+    <!-- the initial rhqadmin user -->
+    <table name="RHQ_SUBJECT">
+        <data ID="2"
+              NAME="@@@ADMINUSERNAME@@@"
+              FIRST_NAME="RHQ"
+              LAST_NAME="Administrator"
+              EMAIL_ADDRESS="@@@ADMINEMAIL@@@"
+              FSYSTEM="FALSE" />
+    </table>
+
+    <!-- Define the system root role which includes our overlord and rhqadmin users -->
+    <table name="RHQ_ROLE">
+        <data ID="1"
+              NAME="Super User Role"
+              FSYSTEM="TRUE"
+              DESCRIPTION="System superuser role that provides full access to everything. This role cannot be modified."/>
+        <data ID="2"
+              NAME="All Resources Role"
+              FSYSTEM="FALSE"
+              DESCRIPTION="Provides full access to all resources in inventory. Cannot modify users, roles or server settings."/>
+   </table>
+   
+   <!-- associate the root users with all security permissions -->
+   <table name="RHQ_SUBJECT_ROLE_MAP">
+        <data SUBJECT_ID="1" ROLE_ID="1"/> <!-- overlord user -->
+        <data SUBJECT_ID="2" ROLE_ID="1"/> <!-- rhqadmin user -->       
+   </table>
+
+   <table name="RHQ_PERMISSION">
+       <!-- give super-user-role all permissions (resource perms is mainly just to show on view-role page) -->
+       <data ROLE_ID="1" OPERATION="0"/>  <!-- Permission.MANAGE_SECURITY -->
+       <data ROLE_ID="1" OPERATION="1"/>  <!-- Permission.MANAGE_INVENTORY -->
+       <data ROLE_ID="1" OPERATION="2"/>  <!-- Permission.MANAGE_SETTINGS -->
+       <!-- resource permissions start here-->
+       <data ROLE_ID="1" OPERATION="3"/>  <!-- Permission.VIEW_RESOURCE -->
+       <data ROLE_ID="1" OPERATION="4"/>  <!-- Permission.MODIFY_RESOURCE -->
+       <data ROLE_ID="1" OPERATION="5"/>  <!-- Permission.DELETE_RESOURCE -->
+       <data ROLE_ID="1" OPERATION="6"/>  <!-- Permission.CREATE_CHILD_RESOURCES -->
+       <data ROLE_ID="1" OPERATION="7"/>  <!-- Permission.MANAGE_ALERTS -->
+       <data ROLE_ID="1" OPERATION="8"/>  <!-- Permission.MANAGE_MEASUREMENTS -->
+       <data ROLE_ID="1" OPERATION="9"/>  <!-- Permission.MANAGE_CONTENT -->
+       <data ROLE_ID="1" OPERATION="10"/> <!-- Permission.CONTROL -->
+       <data ROLE_ID="1" OPERATION="11"/> <!-- Permission.CONFIGURE -->
+
+       <!-- give all-resources-role all permissions (resource perms is mainly just to show on view-role page) -->
+       <data ROLE_ID="2" OPERATION="1"/>  <!-- Permission.MANAGE_INVENTORY -->
+       <!-- resource permissions start here-->
+       <data ROLE_ID="2" OPERATION="3"/>  <!-- Permission.VIEW_RESOURCE -->
+       <data ROLE_ID="2" OPERATION="4"/>  <!-- Permission.MODIFY_RESOURCE -->
+       <data ROLE_ID="2" OPERATION="5"/>  <!-- Permission.DELETE_RESOURCE -->
+       <data ROLE_ID="2" OPERATION="6"/>  <!-- Permission.CREATE_CHILD_RESOURCES -->
+       <data ROLE_ID="2" OPERATION="7"/>  <!-- Permission.MANAGE_ALERTS -->
+       <data ROLE_ID="2" OPERATION="8"/>  <!-- Permission.MANAGE_MEASUREMENTS -->
+       <data ROLE_ID="2" OPERATION="9"/>  <!-- Permission.MANAGE_CONTENT -->
+       <data ROLE_ID="2" OPERATION="10"/> <!-- Permission.CONTROL -->
+       <data ROLE_ID="2" OPERATION="11"/> <!-- Permission.CONFIGURE -->
+    </table>
+
+</dbsetup>

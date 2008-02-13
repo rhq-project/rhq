@@ -1,0 +1,836 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE preferences SYSTEM 'http://java.sun.com/dtd/preferences.dtd'>
+
+<!--
+==============================================================================
+Embedded RHQ Agent Configuration
+==============================================================================
+-->
+
+<preferences EXTERNAL_XML_VERSION="1.0">
+   <root type="user">
+      <map />
+      <node name="rhq-agent">
+         <map />
+         <node name="embedded">
+            <map>
+               <!--
+               _______________________________________________________________
+               rhq.agent.configuration-schema-version
+
+               Defines what version of the agent configuration schema this
+               file conforms to.  This is the schema for the rhq.agent
+               preferences.
+               -->
+               <entry key="rhq.agent.configuration-schema-version" value="1" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.configuration-setup-flag
+
+               If true, the agent will assume it is fully configured and
+               will not ask setup questions when it starts up.  If false,
+               the agent assumes the configuration is not complete and
+               will ask a series of setup questions to the user in order
+               to be fully configured.
+
+               If you write your own custom agent configuration file, you
+               will probably want to set this flag to true since you
+               probably will set all of your configuration right in the
+               configuration file itself.  However, you may wish to
+               distribute agent configuration files with only a subset
+               of configuration preferences set and rely on each agent's
+               startup setup mechanism to finish its configuration - in this
+               case, you'll want to leave this as false.
+
+               EMBEDDED: this is true - we ensure the agent is fully
+               configured; we have to since the agent has no console
+               interface and must start in daemon mode
+               -->
+               <entry key="rhq.agent.configuration-setup-flag" value="true" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.name
+
+               Explicitly defines what the agent's name is.  This will
+               default to the agent's fully qualified domain name (that is,
+               the FQDN of the platform where the agent is running).  However,
+               you can set this to any value you want, so long as it is
+               unique among all other agents. You will need to explicitly set
+               this if the agent platform's FQDN cannot be reliably determined
+               at runtime.
+
+               EMBEDDED: this will usually be overridden so the deployer can
+               provide a unique embedded agent name
+               -->
+               <entry key="rhq.agent.name" value="127.0.0.1"/>
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.server.transport
+               rhq.agent.server.bind-address
+               rhq.agent.server.bind-port
+               rhq.agent.server.transport-params
+
+               The RHQ Server endpoint configuration.
+
+               Note that because this is an XML file, you must specify
+               "&amp;" in the transport-params value when needing an ampersand
+               to separate the transport parameters.
+
+               EMBEDDED: these will usually be overridden in the
+               jboss-service.xml of the embedded agent service
+               -->
+               <entry key="rhq.agent.server.transport"        value="servlet" />
+               <entry key="rhq.agent.server.bind-port"        value="7080" />
+               <entry key="rhq.agent.server.bind-address"     value="127.0.0.1" />
+               <entry key="rhq.agent.server.transport-params" value="/jboss-remoting-servlet-invoker/ServerInvokerServlet" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.server-auto-detection
+
+               If true, the agent will attempt to auto-detect the RHQ Server
+               coming online and going offline.  This is more efficient
+               than server polling but it requires multicast traffic to be
+               enabled on your network and also requires the multicast
+               detector be enabled.
+
+               EMBEDDED: we disable this since we know if the agent is started
+               the server must be started (since the agent lives inside the
+               server!)
+               -->
+               <entry key="rhq.agent.server-auto-detection" value="false" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.register-with-server-at-startup
+
+               If true, the agent will attempt to register itself with the
+               RHQ Server when the agent starts up. If false, the agent will
+               not automatically register itself at startup; the agent must
+               be manually registered via some other mechanism (e.g. the
+               'register' prompt command).  The agent must be registered
+               at least once in order to notify the RHQ Server about its
+               existence and to assign the agent a valid security token.
+               Note that even if this is true, the registration may not happen
+               immediately if the RHQ Server itself is not up - once the RHQ
+               Server comes up, the registration attempt will occur.
+               -->
+               <entry key="rhq.agent.register-with-server-at-startup" value="true" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.wait-for-server-at-startup-msecs
+
+               This defines how many milliseconds the agent should wait at
+               startup for the RHQ Server to be detected. If the RHQ Server
+               has not started up in the given amount of time, the agent will
+               continue initializing and expect the server to come up later.
+               If this is 0, the agent will not wait at all.
+
+               EMBEDDED: we still give an initial pause to let the server
+               finish starting up before its embedded agent starts talking
+               to it.
+               -->
+               <entry key="rhq.agent.wait-for-server-at-startup-msecs" value="10000" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.update-plugins-at-startup
+
+               If true, the agent will attempt to update its current set
+               of plugins to their latest versions at startup. If false, the
+               agent will not automatically update the plugins; the agent
+               will use its current plugins.  To update the plugins, you must
+               manually do so via some other mechanism (e.g. the
+               'plugins' prompt command).
+               Note that even if this is true, the update may not happen
+               immediately if the RHQ Server itself is not up - once the RHQ
+               Server comes up, the update attempt will occur.
+
+               EMBEDDED: we do not need to update the plugins because the
+               embedded agent will just share the plugins that the server
+               serves to other agents.
+               -->
+               <entry key="rhq.agent.update-plugins-at-startup" value="false" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.data-directory
+
+               Location of a directory where the agent can write its internal
+               cache of data.
+
+               EMBEDDED: will be overridden to the server's data directory
+               -->
+               <!--
+               <entry key="rhq.agent.data-directory" value="data" />
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.client.queue-size
+
+               The maximum size of the client command queue - this is the
+               maximum number of commands that can be queued for sending to
+               the server.  If this is 0, then the queue is unbounded.
+               WARNING! Setting this to 0 could lead to resources being used
+               up if for some reason commands keep getting queued but are
+               not getting sent.
+               -->
+               <entry key="rhq.agent.client.queue-size" value="50000" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.client.max-concurrent
+
+               The maximum number of concurrent commands that can be in the
+               process of being sent to the server at any one time.
+               -->
+               <entry key="rhq.agent.client.max-concurrent" value="5" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.client.command-timeout-msecs
+
+               The time in milliseconds that the client sender will wait
+               before aborting a command. This is the amount of time in
+               milliseconds that the server has in order to process commands.
+               This value is only the default if a command has not specified
+               its own timeout.  A command can override this by setting its
+               own timeout in the command's configuration, so this value may
+               not be used for all commands that are sent. If this value is
+               less than or equal to 0, there will be no default timeout
+               and commands will therefore be allowed to take as long as they
+               need (again, this is the default, individual commands may
+               override this and set their own timeout).  While this infinite
+               timeout default could conceivably cause a thread to hang
+               waiting for a rogue command that never finishes, it also reduces
+               the amount of short-lived threads created by the system
+               and will increase throughput, dramatically in some cases.
+               -->
+               <entry key="rhq.agent.client.command-timeout-msecs" value="600000" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.client.retry-interval-msecs
+
+               This is the minimum amount of time, in milliseconds, the client
+               sender will wait before trying to resend a guaranteed command
+               that previously failed.  This is not a guarantee of when
+               a command is retried - all that can be inferred is that a
+               command that fails to be sent will not be retried until at
+               least this amount of time passes.
+               Note: if the sender is currently waiting in this retry pause
+               period, the agent will not be able to be shutdown until that
+               retry period is over. In other words, if the agent is asked
+               to shutdown, it will wait for those commands waiting in this
+               retry interval to wake up. This is to help ensure those
+               commands are not lost.  Keep this time period short enough
+               to make agent shutdowns fairly responsive but long enough
+               to avoid spinning the process with continuous resending of
+               commands during periods of RHQ Server downtime. It is
+               recommended to use auto-detection or server polling in order
+               to automatically stop the client sender from continuously
+               trying to retry commands during long periods of RHQ
+               Server downtime.
+               -->
+               <entry key="rhq.agent.client.retry-interval-msecs" value="15000" />
+
+               <!-- 
+               _______________________________________________________________
+               rhq.agent.client.max-retries
+
+               If a guaranteed delivery message is sent, but the agent fails
+               to connect to the server and deliver the message, it will
+               always be retried. However, if the error was something other
+               than a "cannot connect" error, the command will only be retried
+               this amount of times before the command is dropped. When this
+               happens, the guaranteed command will never be delivered. This
+               will normally happen under very odd and rare circumstances.
+               Also, this setting only effects asynchronous messages that
+               are sent with guaranteed delivery.  This setting has no effect
+               on other messages.
+               -->
+               <entry key="rhq.agent.client.max-retries" value="10" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.client.server-polling-interval-msecs
+
+               If this value is larger than 0, it indicates the client sender
+               should periodically poll the RHQ Server to make sure it's still
+               up or (if it was down) see when it comes back up. The value is
+               the number of milliseconds to wait in between polls.  If the
+               value is 0 or less, server polling is disabled.  Server polling
+               is less efficient that the agent's auto-detection mechanism,
+               but server polling does not use multicasting, and thus might
+               be the only way for the agent to detect the server.
+
+               EMBEDDED: we do not need to poll since we know the server is
+               always up
+               -->
+               <entry key="rhq.agent.client.server-polling-interval-msecs" value="-1" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.client.command-spool-file.name
+
+               This defines the name of the command spool file.  This
+               file must be located in the data directory (if one does not
+               exist, it will be created).  Note that if you do not define
+               this setting, the default is to not spool commands to disk
+               and thus implicitly disable guaranteed delivery.
+               -->
+               <entry key="rhq.agent.client.command-spool-file.name" value="embedded-agent-command-spool.dat" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.client.command-spool-file.params
+
+               This defines the parameters for the command spool file.
+               The spool file is where the agent persists commands that
+               are flagged for guaranteed delivery and need to be sent.
+               The format is defined as "max-file-size:purge-percentage".
+               The first number is the size, in bytes, of the maximum file
+               size threshold.  If the spool file grows larger than this, a
+               "purge" will be triggered in order to shrink the file.
+               The second number is the purge percentage which indicates how
+               large the file is allowed to be after a purge.  This is
+               specified as a percentage of the first parameter - the max
+               file size threshold.  For example, if the max file size is
+               100000 (i.e. 100KB) and the purge percentage is 90, then when
+               the spool file grows larger than 100KB, a purge will be
+               triggered and the file will be shrunk to no more than
+               90% of 100KB - which is 90KB.  In effect, 10KB will be freed
+               to allow room for new commands to be spooled.  When this
+               occurs, unused space is freed first and if that does not
+               free up enough space, the oldest commands in the spool file
+               will be sacrificed in order to make room for the newer
+               commands.
+               -->
+               <entry key="rhq.agent.client.command-spool-file.params" value="10000000:75" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.client.command-spool-file.compressed
+
+               If this flag is true, the commands stored in the spool file
+               will be compressed. This can potentially save about 30%-40% in
+               disk space (give or take), however, it slows down the
+               persistence mechanism considerably. Recommended setting for
+               this should be true unless something on the agent deployment
+               box warrants persistence performance over disk-saving . The
+               performance hit will only appear when unusual conditions occur,
+               such as shutting down while some guaranteed commands have not
+               been sent yet or if the RHQ Server is down. It will not affect
+               the agent under normal conditions (while running with the RHQ
+               Server up and successfully communicating with the agent).
+               In those unusual/rare conditions, having performance degradation
+               may not be as important.
+               -->
+               <entry key="rhq.agent.client.command-spool-file.compressed" value="true" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.client.send-throttling
+
+               If this setting is defined, it will enable send throttling to
+               occur while sending commands to the server.  The format is
+               defined as "max-commands:quiet-period-milliseconds"
+               where the maximum commands defines the maximum number
+               of commands that will be sent before the start of a quiet
+               period.  The quiet period defines the number of milliseconds
+               in which no commands should be sent.  After this duration
+               expires, commands can again be sent, up to the maximum defined.
+               Note that send throttling only affects those commands that
+               are "throttle-able".  Some commands are sent as soon as
+               possible, regardless of the throttling settings.
+
+               This affects sending commands synchronously and asynchronously.
+               -->
+               <entry key="rhq.agent.client.send-throttling" value="100:1000" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.client.queue-throttling
+
+               If this setting is defined, it will enable queue throttling to
+               occur while sending commands to the server.  The format is
+               defined as "max-commands-per-burst:burst-period-milliseconds"
+               where the maximum commands per burst defines the maximum number
+               of commands that can be dequeued within a burst period.  The
+               burst period defines the number of milliseconds in which the
+               defined maximum number of commands can be dequeued.  If more
+               than the maximum number of commands are queued within this
+               time period, they will wait until the next burst period starts
+               before being able to be dequeued.
+
+               This does not affect sending commands synchronously.  It only
+               effects commands queued to be sent asynchronously.
+               -->
+               <entry key="rhq.agent.client.queue-throttling" value="200:2000" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.client.command-preprocessors
+
+               Defines what class or classes will handle preprocessing of all
+               commands that are sent by the agent.  To define multiple
+               classes, separate them with colon characters (:).
+               You should never have to change this unless you know what
+               you are doing.
+               -->
+               <entry key="rhq.agent.client.command-preprocessors" value="org.rhq.enterprise.agent.SecurityTokenCommandPreprocessor" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.disable-native-system
+
+               The agent has a native system (JNI native libraries) on certain
+               supported platforms to help the plugin container perform
+               discovery of native components on those platforms.  If the
+               native libraries are causing errors within the agent or if you
+               simply do not want to load native components in the agent,
+               you can disable this native system by setting this preference
+               setting to true.
+               -->
+               <entry key="rhq.agent.disable-native-system" value="false"/>
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.directory
+
+               Defines where the plugins can be located.
+
+               EMBEDDED: this will be overridden to point to the
+               server's location where it stores the plugins that it uses
+               to send to other agents
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.directory" value="plugins"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.operation-invocation-timeout-secs
+
+               When an operation is invoked, it will be aborted if it takes
+               longer than the given amount of seconds.  This is just the
+               default operation invocation timeout - a plugin can override
+               this default by defining its own timeout in the operation
+               metadata within its plugin descriptor.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.operation-invocation-timeout-secs" value="600"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.operation-invoker.threadpool-size
+
+               When an operation is to be invoked, the execution of the
+               operation will be performed by threads from a thread pool.
+               This defines the number of threads within that thread pool,
+               effectively defining the number of operations that can be
+               invoked concurrently.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.operation-invoker.threadpool-size" value="5"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.server-discovery.initial-delay-secs
+
+               Defines the delay before the first server discovery scan is
+               run. The value is specified in seconds.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.server-discovery.initial-delay-secs" value="10"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.server-discovery.period-secs
+
+               Defines how often a server discovery scan is run.  This type
+               of scan is used to determine changes in the platform
+               as well as to find new servers that have been added or
+               old server that have been removed.  The value is specified
+               in seconds.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.server-discovery.period-secs" value="900"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.service-discovery.initial-delay-secs
+
+               Defines the delay before the first service discovery scan is
+               run. The value is specified in seconds.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.service-discovery.initial-delay-secs" value="20"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.service-discovery.period-secs
+
+               Defines how often a service discovery scan is run.  This type
+               of scan is used to find new services that have been added or
+               removed from existing platforms and servers.
+               The value is specified in seconds.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.service-discovery.period-secs" value="86400"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.availability-scan.initial-delay-secs
+
+               Defines the delay before the first availability scan is
+               run. The value is specified in seconds.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.availability-scan.initial-delay-secs" value="5"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.availability-scan.period-secs
+
+               Defines how often an availability scan is run.  This type
+               of scan is used to determine what resources are up and running
+               and what resources have gone down. The value is specified in
+               seconds.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.availability-scan.period-secs" value="60"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.measurement-collection.threadpool-size
+
+               When measurement's are scheduled for collection, the collection
+               will be performed by threads from a thread pool. This defines
+               the number of threads within that thread pool, effectively
+               defining the number of measurements that can be collected
+               concurrently.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.measurement-collection.threadpool-size" value="5"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.measurement-collection.initial-delay-secs
+
+               Defines the delay before the first measurement collection is
+               run. The value is specified in seconds.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.measurement-collection.initial-delay-secs" value="30"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.measurement-collection.period-secs
+
+               Defines how often measurements are collected. The value is
+               specified in seconds.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.measurement-collection.period-secs" value="30"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.content-discovery.threadpool-size
+
+               When plugins are scheduled to discover content, the discovery
+               will be performed by threads from a thread pool. This defines
+               the number of threads within that thread pool.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.content-discovery.threadpool-size" value="10"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.content-discovery.initial-delay-secs
+
+               Defines the delay before the first content discovery is
+               run. The value is specified in seconds.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.content-discovery.initial-delay-secs" value="60"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.content-discovery.period-secs
+
+               Defines how often content discoveries are run. The value is
+               specified in seconds. If this value is 0 or less, content
+               discovery will be disabled.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.content-discovery.period-secs" value="30"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.communications.configuration-schema-version
+
+               Defines what version of the agent configuration schema this
+               file conforms to.  This is the schema for the
+               rhq.communications preferences.
+               -->
+               <entry key="rhq.communications.configuration-schema-version" value="1" />
+
+               <!--
+               _______________________________________________________________
+               rhq.communications.service-container.mbean-server-name
+
+               Name of the MBean Server that houses the communications MBean
+               services.  This is actually the default domain name of the
+               MBean Server and if an MBean Server has already been registered
+               with this name, it will be used to house the communications
+               services.  If an MBean Server has not yet been registered with
+               this name as its default domain, one will be created. Typically
+               this can be left undefined which means the fallback MBeanServer
+               to be used is the built-in JVM platform MBeanServer.
+               -->
+               <entry key="rhq.communications.service-container.mbean-server-name" value="embedded-agent" />
+
+               <!--
+               _______________________________________________________________
+               rhq.communications.data-directory
+
+               The location where the communication services write internal
+               data files. If not defined, the data directory will be the
+               same as the agent's.
+               -->
+               <!--
+               <entry key="rhq.communications.data-directory" value="data" />
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.communications.global-concurrency-limit
+               
+               The maximum number of incoming commands that are allowed to be
+               received concurrently. Zero or less indicates there is to
+               be no limit and the agent can accept as many incoming
+               commands as possible.  By default, there is no limit
+               and you typically did not have to change this from its
+               default.
+               -->
+               <entry key="rhq.communications.global-concurrency-limit" value="-1" />
+
+               <!--
+               _______________________________________________________________
+               rhq.communications.multicast-detector.enabled
+               rhq.communications.multicast-detector.multicast-address
+               rhq.communications.multicast-detector.bind-address
+               rhq.communications.multicast-detector.port
+               rhq.communications.multicast-detector.default-time-delay
+               rhq.communications.multicast-detector.heartbeat-time-delay
+
+               The multicast detector configuration. This is the service that
+               listens for new remote servers coming on and going offline and
+               is required if you want server auto-detection. If you do not
+               have server auto-detection enabled or your network will not
+               support multicast traffic, you should disable the multicast
+               detector.
+
+               The multicast-address is used to broadcast detection messages.
+               To be more specific, it is the IP address of the
+               multicast group the detector will join.  The bind-address
+               is the IP that is bound by the network interface.
+
+               The detector will send heartbeat messages every X milliseconds
+               (this is the heartbeat-time-delay).  If external servers'
+               detectors do not send their heartbeat messages within the
+               default-time-delay, our detector will assume that external
+               server has gone down.  These settings affect the timeliness
+               of our auto-detection mechanism.
+
+               EMBEDDED: since the agent is running inside the server, no need
+               to try to auto-discover it since, if the agent is up, it knows
+               the server is, too.
+               -->
+               <entry key="rhq.communications.multicast-detector.enabled"              value="false" />
+               <entry key="rhq.communications.multicast-detector.multicast-address"    value="224.16.16.16" />
+               <entry key="rhq.communications.multicast-detector.bind-address"         value="0.0.0.0" />
+               <entry key="rhq.communications.multicast-detector.port"                 value="16162" />
+               <entry key="rhq.communications.multicast-detector.default-time-delay"   value="5000" />
+               <entry key="rhq.communications.multicast-detector.heartbeat-time-delay" value="1000" />
+
+               <!--
+               _______________________________________________________________
+               rhq.communications.connector.rhqtype
+               rhq.communications.connector.transport
+               rhq.communications.connector.bind-port
+               rhq.communications.connector.bind-address
+               rhq.communications.connector.transport-params
+               rhq.communications.connector.lease-period
+
+               The agent's connector configuration.  This is the service that
+               listens for incoming client requests and passes them to the
+               appropriate server-side components for processing.  See the
+               JBoss/Remoting documentation for a full list of options
+               that can be specified.  Note that because this is an XML file,
+               you must specify "&amp;" in the transport-params value
+               when needing an ampersand to separate the parameters.
+               -->
+               <entry key="rhq.communications.connector.rhqtype"          value="agent" />
+               <entry key="rhq.communications.connector.transport"        value="socket" />
+               <entry key="rhq.communications.connector.bind-address"     value="127.0.0.1" />
+               <entry key="rhq.communications.connector.bind-port"        value="26163" />
+               <!--
+               <entry key="rhq.communications.connector.transport-params" value="clientConnectAddress=127.0.0.1&amp;clientConnectPort=16163&amp;numAcceptThreads=3&amp;maxPoolSize=303&amp;clientMaxPoolSize=304&amp;socketTimeout=60000&amp;enableTcpNoDelay=true&amp;backlog=200" />
+               <entry key="rhq.communications.connector.lease-period"     value="5000" />
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.communications.connector.security.secure-socket-protocol
+               rhq.communications.connector.security.keystore.file
+               rhq.communications.connector.security.keystore.algorithm
+               rhq.communications.connector.security.keystore.type
+               rhq.communications.connector.security.keystore.password
+               rhq.communications.connector.security.keystore.key-password
+               rhq.communications.connector.security.keystore.alias
+               rhq.communications.connector.security.truststore.file
+               rhq.communications.connector.security.truststore.algorithm
+               rhq.communications.connector.security.truststore.type
+               rhq.communications.connector.security.truststore.password
+               rhq.communications.connector.security.client-auth-mode
+
+               rhq.agent.client.security.secure-socket-protocol
+               rhq.agent.client.security.keystore.file
+               rhq.agent.client.security.keystore.algorithm
+               rhq.agent.client.security.keystore.type
+               rhq.agent.client.security.keystore.password
+               rhq.agent.client.security.keystore.key-password
+               rhq.agent.client.security.keystore.alias
+               rhq.agent.client.security.truststore.file
+               rhq.agent.client.security.truststore.algorithm
+               rhq.agent.client.security.truststore.type
+               rhq.agent.client.security.truststore.password
+               rhq.agent.client.security.server-auth-mode-enabled
+
+               These are the settings that are used if SSL is to be used for
+               either the server or client communications. These can be left
+               unset since the defaults will normally suffice.  These
+               properties are here just in case some use case occurs that
+               require one or more of these settings to be customized.
+
+               Note that if client-auth-mode is specified, it must be one of:
+               "none", "want", "need".
+
+               EMBEDDED: the agent is in the same VM as the server so there
+               is no need for transport security since traffic is never
+               actually routed outside of the VM.
+               -->
+               <!--
+               <entry key="rhq.communications.connector.security.secure-socket-protocol" value="TLS" />
+               <entry key="rhq.communications.connector.security.keystore.file"          value="data/keystore.dat" />
+               <entry key="rhq.communications.connector.security.keystore.algorithm"     value="SunX509" />
+               <entry key="rhq.communications.connector.security.keystore.type"          value="JKS" />
+               <entry key="rhq.communications.connector.security.keystore.password"      value="rhqpw" />
+               <entry key="rhq.communications.connector.security.keystore.key-password"  value="rhqpw" />
+               <entry key="rhq.communications.connector.security.keystore.alias"         value="rhq" />
+               <entry key="rhq.communications.connector.security.truststore.file"        value="data/truststore.dat" />
+               <entry key="rhq.communications.connector.security.truststore.algorithm"   value="SunX509" />
+               <entry key="rhq.communications.connector.security.truststore.type"        value="JKS" />
+               <entry key="rhq.communications.connector.security.truststore.password"    value="rhqpw" />
+               <entry key="rhq.communications.connector.security.client-auth-mode"       value="none" />
+
+               <entry key="rhq.agent.client.security.secure-socket-protocol"   value="TLS" />
+               <entry key="rhq.agent.client.security.keystore.file"            value="data/keystore.dat" />
+               <entry key="rhq.agent.client.security.keystore.algorithm"       value="SunX509" />
+               <entry key="rhq.agent.client.security.keystore.type"            value="JKS" />
+               <entry key="rhq.agent.client.security.keystore.password"        value="rhqpw" />
+               <entry key="rhq.agent.client.security.keystore.key-password"    value="" />
+               <entry key="rhq.agent.client.security.keystore.alias"           value="rhq" />
+               <entry key="rhq.agent.client.security.truststore.file"          value="data/truststore.dat" />
+               <entry key="rhq.agent.client.security.truststore.algorithm"     value="SunX509" />
+               <entry key="rhq.agent.client.security.truststore.type"          value="JKS" />
+               <entry key="rhq.agent.client.security.truststore.password"      value="rhqpw" />
+               <entry key="rhq.agent.client.security.server-auth-mode-enabled" value="true" />
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.communications.remote-stream-max-idle-time-msecs
+
+               The maximum amount of milliseconds a remoted stream
+               is allowed to be idle before it is automatically closed and
+               removed from the server. This means that a client must
+               attempt to access the remoted stream every X milliseconds
+               (where X is the value of this setting) or that stream will no
+               longer be available. Note that this does not mean a client
+               must read or write the entire stream in this amount of time,
+               it only means a client must make a request on the stream every
+               X milliseconds (be it to read or write one byte, see how many
+               bytes are available to be read, etc).
+               -->
+               <entry key="rhq.communications.remote-stream-max-idle-time-msecs" value="300000" />
+
+               <!--
+               _______________________________________________________________
+               rhq.communications.command-service-directory.allow-dynamic-discovery
+
+               Flag to allow new command services to be added to the command
+               services directory during runtime.  If this is false, only
+               those services defined in the
+               rhq.communications.command-services preference will be available
+               during the lifetime of the command service directory.
+               -->
+               <entry key="rhq.communications.command-service-directory.allow-dynamic-discovery" value="true" />
+
+               <!--
+               _______________________________________________________________
+               rhq.communications.command-services
+
+               Command Services that are to be added immediately at startup.
+               -->
+               <entry key="rhq.communications.command-services" value="org.rhq.enterprise.communications.command.impl.echo.server.EchoCommandService, org.rhq.enterprise.communications.command.impl.identify.server.IdentifyCommandService" />
+
+               <!--
+               _______________________________________________________________
+               rhq.communications.remote-pojos
+
+               Objects that are to be created and their remote interfaces
+               deployed immediately at startup.  The format of the value is
+               a comma separated list of implementation/interface names:
+               class.to.instantiate.via.noarg.constructor:interface.to.expose
+               -->
+               <entry key="rhq.communications.remote-pojos" value="org.rhq.enterprise.communications.PingImpl:org.rhq.enterprise.communications.Ping" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.do-not-override-prefs-with-sysprops
+
+               EMBEDDED: To avoid having the embedded agent pick up
+               configuration settings that belong to the server in which it is
+               embedded, we want to disable the system property overlay
+               feature of the agent configuration.
+               -->
+               <entry key="rhq.agent.do-not-override-prefs-with-sysprops" value="true" />
+
+            </map>
+         </node>
+      </node>
+   </root>
+</preferences>

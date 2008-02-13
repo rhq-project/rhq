@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!-- -*- Mode: XML; indent-tabs-mode: nil; -*- -->
+<!DOCTYPE tiles-definitions PUBLIC
+     "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN"
+     "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+
+<tiles-definitions>
+  <!-- common components -->
+  
+  <!-- table rendering components -->
+  <definition name=".table"
+              path="/common/components/Table.jsp">
+      <put name="orderValue"         value="or" />
+      <put name="principalBean"      value="principal" />
+      <put name="rowBean"            value="row" />
+  </definition>
+
+  <definition name=".table.rows"
+         path="/common/components/TableRows.jsp" />
+  
+  <definition name=".page.title"
+              path="/common/components/PageTitle.jsp"/>  
+                 			  
+  <definition name=".page.return"
+              path="/common/components/PageReturn.jsp"/>
+  
+  <definition name=".page.footer"
+              path="/common/components/PageFooter.jsp"/>
+  
+  <definition name=".header.tab"
+              path="/common/components/TabHeader.jsp"/>
+  
+  <definition name=".form.buttons"
+              path="/common/components/FormButtons.jsp"/>
+                     
+  <definition name=".form.buttons.okAssign"
+              path="/common/components/FormButtons_OkAssign.jsp"/>
+       
+  <definition name=".form.buttons.deleteCancel"
+              path="/common/components/FormButtons_DeleteCancel.jsp"/>
+
+    <!-- JBNADM-573 -->
+   <definition name=".form.buttons.installCancel"
+              path="/common/components/FormButtons_InstallCancel.jsp"/>
+
+   <definition name=".form.buttons.confirmManualUninstallCancel"
+              path="/common/components/FormButtons_confirmManualUninstallCancel.jsp"/>
+       
+  <definition name=".form.buttons.logout"
+              path="/common/components/FormButtons_Logout.jsp"/>
+       
+  <definition name=".controls.paging"
+              path="/common/components/PagingControls.jsp"/>
+              
+  <definition name=".toolbar.filter"
+              path="/common/components/FilterToolbar.jsp"/>
+  
+  <definition name=".toolbar.list"
+              path="/common/components/ListToolbar.jsp"/>
+       
+  <definition name=".toolbar.empty"
+              path="/common/components/EmptyToolbar.jsp"/>
+       
+  <definition name=".toolbar.new"
+              path="/common/components/NewToolbar.jsp"/>
+       
+  <definition name=".toolbar.edit"
+              path="/common/components/EditToolbar.jsp"/>
+       
+  <definition name=".toolbar.addToList"
+              path="/common/components/AddToListToolbar.jsp"/>
+
+  <definition name=".portlet.error"
+              path="/common/components/PortletError.jsp"/>
+
+  <definition name=".portlet.confirm"
+              path="/common/components/PortletConfirm.jsp"/>
+
+  <definition name=".diagnostics"
+              path="/common/components/diagnostics.jsp"/>
+
+  <definition name=".schedule"
+              path="/common/components/Schedule.jsp"/>                            
+
+  <definition name=".portlet.notenabled"
+              path="/common/components/NotEnabled.jsp"/>
+              
+  <definition name=".complexMessage"
+              path="/common/components/ComplexMessage.jsp"/>                            
+
+</tiles-definitions>

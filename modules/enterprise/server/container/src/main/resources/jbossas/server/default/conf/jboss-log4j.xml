@@ -1,0 +1,236 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE log4j:configuration PUBLIC 
+          "-//log4j/log4j configuration//EN"
+          "http://logging.apache.org/log4j/docs/api/org/apache/log4j/xml/log4j.dtd">
+
+<!-- ===================================================================== -->
+<!--  RHQ Server Log4j Configuration                                  -->
+<!-- ===================================================================== -->
+
+<!--
+   | For details on configuring Log4J, see: http://logging.apache.org/log4j/docs/
+ -->
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+
+   <!-- ========= -->
+   <!-- Appenders -->
+   <!-- ========= -->
+
+   <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
+      <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>
+      <param name="Target" value="System.out"/>
+      <!-- Appender will not log any messages with priority lower than INFO even if the category's priority is set lower. 
+           So essentially, DEBUG and TRACE messages will never be output to this appender. -->
+      <param name="Threshold" value="INFO"/>
+
+      <layout class="org.apache.log4j.PatternLayout">
+         <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c{1}] %m%n"/>
+      </layout>
+   </appender>
+
+   <!-- a size-based rolling file appender -->
+   <appender name="FILE" class="org.jboss.logging.appender.RollingFileAppender">
+      <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>
+      <param name="File" value="${jboss.server.log.dir}/rhq-server-log4j.log"/>
+      <param name="Append" value="false"/>
+      <param name="MaxFileSize" value="5MB"/>
+      <param name="MaxBackupIndex" value="5"/>
+
+      <layout class="org.apache.log4j.PatternLayout">
+         <param name="ConversionPattern" value="%d %-5p [%c] %m%n"/>
+      </layout>
+   </appender>
+
+   <!-- ========================================= -->
+   <!-- Categories for the various RHQ subsystems -->
+   <!-- ========================================= -->
+
+   <!--
+   <category name="org.rhq">
+      <priority value="DEBUG"/>
+   </category>
+   -->
+   <!--
+   <category name="net.hyperic">
+      <priority value="DEBUG"/>
+   </category>
+   -->
+
+   <category name="org.rhq.core.db.ant">
+      <priority value="DEBUG"/>
+   </category>
+
+   <category name="org.rhq.core.db.setup">
+      <priority value="DEBUG"/>
+   </category>
+
+   <!-- details for hourly data compression job -->
+   <!--
+   <category name="org.rhq.enterprise.server.measurement.MeasurementCompressionManagerBean">
+      <priority value="DEBUG"/>
+   </category>
+   -->
+   
+   <!-- trace commands coming in from agents -->
+   <!--
+   <category name="org.rhq.enterprise.communications.command.server.CommandProcessor">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+
+   <!-- ============================================= -->
+   <!-- Categories for the various JBossAS subsystems -->
+   <!-- ============================================= -->
+
+   <category name="org.jboss.ejb.EJBDeployer.verifier">
+      <priority value="OFF"/>
+   </category>
+
+   <category name="org.hibernate.ejb.Ejb3Configuration">
+      <priority value="WARN"/>
+   </category>
+
+   <category name="org.jboss.ejb3.JmxKernelAbstraction">
+      <priority value="WARN"/>
+   </category>
+
+   <category name="org.jboss.ejb3.EJBContainer">
+      <priority value="WARN"/>
+   </category>
+
+   <category name="org.jboss.resource.deployment.RARDeployment">
+      <priority value="WARN"/>
+   </category>
+
+   <category name="org.jgroups">
+      <priority value="WARN"/>
+   </category>
+
+   <category name="jacorb">
+      <priority value="WARN"/>
+   </category>
+   
+   <category name="org.hibernate.cfg">
+      <priority value="WARN"/>
+   </category>
+   
+   <!-- JBNADM-2090: suppress warnings -->
+   <category name="org.hibernate.engine.loading.LoadContexts">
+      <priority value="OFF"/>
+   </category>
+
+   <!-- log SQL statements -->
+   <!--
+   <category name="org.hibernate.SQL">
+      <priority value="DEBUG"/>
+   </category>
+   -->
+
+   <!-- log JDBC bind parameters -->
+   <!--
+   <category name="org.hibernate.type">
+      <priority value="INFO"/>
+   </category>
+   -->
+
+   <!-- Show the evolution of the DataSource pool in the logs [inUse/Available/Max]
+   <category name="org.jboss.resource.connectionmanager.JBossManagedConnectionPool">
+     <priority value="TRACE" class="org.jboss.logging.XLevel"/>
+   </category>
+   -->
+
+   <!-- Increase the priority threshold for the RHQ Datasource category
+        Useful for debugging connection leaks
+   -->
+   <!--
+   <category name="RHQDS">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   <!--
+   <category name="NoTxRHQDS">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+
+   <!--
+      | An example of enabling the custom TRACE level priority that is used
+      | by the JBoss internals to diagnose low level details. This example
+      | turns on TRACE level msgs for the org.jboss.ejb.plugins package and its
+      | subpackages. This will produce A LOT of logging output.
+   <category name="org.jboss.system">
+     <priority value="TRACE" class="org.jboss.logging.XLevel"/>
+   </category>
+   <category name="org.jboss.ejb.plugins">
+     <priority value="TRACE" class="org.jboss.logging.XLevel"/>
+   </category>
+   -->
+
+   <!-- Clustering logging -->
+   <!-- Uncomment the following to redirect the org.jgroups and
+      org.jboss.ha categories to a cluster.log file.
+
+   <appender name="CLUSTER" class="org.jboss.logging.appender.RollingFileAppender">
+     <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>
+     <param name="File" value="${jboss.server.log.dir}/cluster.log"/>
+     <param name="Append" value="false"/>
+     <param name="MaxFileSize" value="500KB"/>
+     <param name="MaxBackupIndex" value="1"/>
+
+     <layout class="org.apache.log4j.PatternLayout">
+       <param name="ConversionPattern" value="%d %-5p [%c] %m%n"/>
+     </layout>
+   </appender>
+   <category name="org.jgroups">
+     <priority value="DEBUG" />
+     <appender-ref ref="CLUSTER"/>
+   </category>
+   <category name="org.jboss.ha">
+     <priority value="DEBUG" />
+     <appender-ref ref="CLUSTER"/>
+   </category>
+   -->
+
+   <!-- ===================================================== -->
+   <!-- Categories for the various 3rd-party libs used by RHQ -->
+   <!-- ===================================================== -->
+
+   <category name="org.quartz.impl.jdbcjobstore.JobStoreCMT">
+      <priority value="WARN"/>
+   </category>
+
+   <category name="org.quartz.impl.jdbcjobstore.StdRowLockSemaphore">
+      <priority value="ERROR"/>
+   </category>
+
+   <category name="org.apache.commons.validator.ValidatorResources">
+      <priority value="OFF"/>
+   </category>
+
+   <category name="org.apache.struts">
+      <priority value="ERROR"/>
+   </category>
+
+   <category name="org.apache.commons.httpclient">
+      <priority value="ERROR"/>
+   </category>
+
+   <category name="org.ajax4jsf">
+      <priority value="WARN"/>
+   </category>
+
+   <!-- ================= -->
+   <!-- The root category -->
+   <!-- ================= -->
+
+   <root>
+      <!-- default log priority -->
+      <priority value="INFO"/>
+
+      <appender-ref ref="CONSOLE"/>
+      <appender-ref ref="FILE"/>
+   </root>
+
+</log4j:configuration>

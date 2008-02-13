@@ -1,0 +1,15 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin">
+  
+   <platform name="myPlatform">
+   		<metric displayName="One" property="connectionCount1" displayType="detail" />
+		<service name="service1">   
+   			<metric displayName="Two" property="connectionCount2" displayType="detail" />
+   			<service name="nestedOne">
+   				<metric displayName="Three" property="failedConnections" displayType="summary"/>
+   			</service>
+   		</service>
+   </platform>
+</plugin>
+   

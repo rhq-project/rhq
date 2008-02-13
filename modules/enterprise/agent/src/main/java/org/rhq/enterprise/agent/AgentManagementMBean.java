@@ -1,0 +1,310 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.enterprise.agent;
+
+import java.util.List;
+import java.util.Properties;
+import javax.management.ObjectName;
+import org.jboss.mx.util.ObjectNameFactory;
+import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.enterprise.communications.ServiceContainerMetricsMBean;
+import org.rhq.enterprise.communications.command.client.ClientCommandSenderMetrics;
+
+/**
+ * The agent's management interface. This is the interface used by the agent plugin to manage and monitor the agent
+ * itself. This
+ *
+ * @author John Mazzitelli
+ */
+public interface AgentManagementMBean {
+    /**
+     * The domain name where this MBean will be placed. This is also the default domain name of the MBeanServer where
+     * this MBean is registered.
+     */
+    String JMX_DOMAIN = "rhq.agent";
+
+    /**
+     * All agent management MBeans will have this as a key property whose property value will be the agent name.
+     */
+    String KEY_NAME = "name";
+
+    /**
+     * This is the object name that the agent will register as. Its just a base name - an additional key property
+     * {@link #KEY_NAME} will be added to make it unique in the case when you embedded agents in the same VM.
+     */
+    ObjectName BASE_OBJECT_NAME = ObjectNameFactory.create(JMX_DOMAIN + ":type=agent");
+
+    /**
+     * Identifies the name of a plugin.
+     */
+    String PLUGIN_INFO_NAME = "name";
+
+    /**
+     * Identifies the full path to a plugin.
+     */
+    String PLUGIN_INFO_PATH = "path";
+
+    /**
+     * Identifies the last modified date of a plugin.
+     */
+    String PLUGIN_INFO_TIMESTAMP = "timestamp";
+
+    /**
+     * Identifies the filesize of a plugin.
+     */
+    String PLUGIN_INFO_SIZE = "size";
+
+    /**
+     * Identifies the MD5 of a plugin.
+     */
+    String PLUGIN_INFO_MD5 = "md5";
+
+    /**
+     * This will perform an agent <i>hot-restart</i>. The agent will be {@link #shutdown()} and then immediately started
+     * again. This is usually called after a client has
+     * {@link #mergeIntoAgentConfiguration(Properties) changed some configuration settings}.
+     *
+     * <p>The actual restart is performed asynchronously. The caller has just a few seconds after this method returns
+     * before it takes effect.</p>
+     */
+    void restart();
+
+    /**
+     * This will shutdown the agent's communications layer and the plugin container. If the agent is in daemon mode, the
+     * agent's VM will die. Once this method is called, this management interface will no longer be available via JMX
+     * and the agent will no longer be able to process incoming commands or send outgoing commands.
+     *
+     * <p>The actual shutdown is performed asynchronously. The caller has just a few seconds after this method returns
+     * before it takes effect.</p>
+     */
+    void shutdown();
+
+    /**
+     * This will tell the agent to update its plugins. If the JON Server is up and the agent has detected it, this will
+     * immediately pull down the updated plugins. If the JON Server is down, this will schedule the agent to pull down
+     * the plugins as soon as the JON Server comes back up.
+     *
+     * <p>After the plugins are updated, the plugin container will immediately be
+     * {@link #restartPluginContainer() restarted}.</p>
+     *
+     * <p>The actual PC restart is performed asynchronously. The caller has just a few seconds after this method returns
+     * before it takes effect.</p>
+     */
+    void updatePlugins();
+
+    /**
+     * Returns information on all currently deployed plugins. The configuration will contain one {@link PropertyMap} for
+     * each plugin. The name of the map will be the plugin name. Each map will have the key/value pairs where the keys
+     * are PLUGIN_INFO_xxx.
+     *
+     * @return information on all deployed plugins
+     */
+    OperationResult retrieveAllPluginInfo();
+
+    /**
+     * Returns information on the given plugin. The configuration will contain {@link PropertySimple simple properties}
+     * where the names are defined by PLUGIN_INFO_xxx.
+     *
+     * @param  pluginName the plugin whose information is to be returned
+     *
+     * @return the plugin information
+     */
+    OperationResult retrievePluginInfo(String pluginName);
+
+    /**
+     * This will shutdown then immediately restart the agent's internal plugin container. The plugin container manages
+     * all plugins and their lifecycles. This is usually called after a client has
+     * {@link #updatePlugins() updated the plugins}. Restarting the plugin container forces it to load in newly updated
+     * plugins.
+     *
+     * <p>The actual restart is performed asynchronously. The caller has just a few seconds after this method returns
+     * before it takes effect.</p>
+     *
+     * @see #updatePlugins()
+     */
+    void restartPluginContainer();
+
+    /**
+     * Asks the agent's plugin container to execute an availability scan and returns the results. See
+     * {@link DiscoveryAgentService#executeAvailabilityScanImmediately(boolean)} for the semantics of this call.
+     *
+     * @param  changesOnly if <code>true</code>, only report those availabilities that have changed
+     *
+     * @return the report in an {@link OperationResult} object
+     */
+    public OperationResult executeAvailabilityScan(Boolean changesOnly);
+
+    /**
+     * Returns the agent's version string. This does not necessarily help identify the versions of the plugins, since
+     * each plugin may have been updated from the JON Server since the initial installation of the agent.
+     *
+     * @return identifies the version of the agent.
+     */
+    String getVersion();
+
+    /**
+     * Returns the current time, as it is known to the agent. This can be used to determine if the agent's clock is
+     * skewed from some other clock (e.g. the JON Server). The returned value is the number of milliseconds since
+     * midnight, January 1, 1970 UTC (as per <code>System.currentTimeMillis</code>.
+     *
+     * @return current time, as it is known to the agent
+     */
+    long getCurrentTime();
+
+    /**
+     * Returns the number of seconds the agent has been started - this resets everytime the agent is shutdown. This time
+     * does not necessarily mean the total time the agent's VM has been running (since the agent may have been shutdown
+     * and restarted without the VM ever coming down).
+     *
+     * @return number of seconds since the agent has been started
+     */
+    long getUptime();
+
+    /**
+     * @see ServiceContainerMetricsMBean#getNumberSuccessfulCommandsReceived()
+     */
+    long getNumberSuccessfulCommandsReceived();
+
+    /**
+     * @see ServiceContainerMetricsMBean#getNumberFailedCommandsReceived()
+     */
+    long getNumberFailedCommandsReceived();
+
+    /**
+     * @see ServiceContainerMetricsMBean#getNumberTotalCommandsReceived()
+     */
+    long getNumberTotalCommandsReceived();
+
+    /**
+     * @see ServiceContainerMetricsMBean#getAverageExecutionTime()
+     */
+    long getAverageExecutionTimeReceived();
+
+    /**
+     * @see ClientCommandSenderMetrics#getAverageExecutionTimeSent()
+     */
+    long getAverageExecutionTimeSent();
+
+    /**
+     * @see ClientCommandSenderMetrics#getNumberSuccessfulCommandsSent()
+     */
+    long getNumberSuccessfulCommandsSent();
+
+    /**
+     * @see ClientCommandSenderMetrics#getNumberFailedCommandsSent()
+     */
+    long getNumberFailedCommandsSent();
+
+    /**
+     * Combines the number of successful and failed commands sent.
+     *
+     * @see ClientCommandSenderMetrics#getNumberSuccessfulCommandsSent()
+     * @see ClientCommandSenderMetrics#getNumberFailedCommandsSent()
+     */
+    long getNumberTotalCommandsSent();
+
+    /**
+     * @see ClientCommandSenderMetrics#getNumberCommandsInQueue()
+     */
+    long getNumberCommandsInQueue();
+
+    /**
+     * @see ClientCommandSenderMetrics#getNumberCommandsSpooled()
+     */
+    long getNumberCommandsSpooled();
+
+    /**
+     * @see ClientCommandSenderMetrics#isSending()
+     */
+    boolean isSending();
+
+    /**
+     * @see ClientCommandSenderMetrics#getQueueThrottleMaxCommands()
+     */
+    long getQueueThrottleMaxCommands();
+
+    /**
+     * @see ClientCommandSenderMetrics#getQueueThrottleBurstPeriodMillis()
+     */
+    long getQueueThrottleBurstPeriodMillis();
+
+    /**
+     * @see ClientCommandSenderMetrics#getSendThrottleMaxCommands()
+     */
+    long getSendThrottleMaxCommands();
+
+    /**
+     * @see ClientCommandSenderMetrics#getSendThrottleQuietPeriodDurationMillis()
+     */
+    long getSendThrottleQuietPeriodDurationMillis();
+
+    /**
+     * Returns the agent JVM's free memory as reported by <code>Runtime.getRuntime().freeMemory()</code>.
+     *
+     * @return free memory in bytes
+     */
+    long getJVMFreeMemory();
+
+    /**
+     * Returns the agent JVM's total memory as reported by <code>Runtime.getRuntime().totalMemory()</code>.
+     *
+     * @return total memory in bytes
+     */
+    long getJVMTotalMemory();
+
+    /**
+     * Returns the number of currently active threads in the agent's JVM.
+     *
+     * @return number of all active threads
+     */
+    int getJVMActiveThreads();
+
+    /**
+     * Returns the entire set of agent configuration preferences.
+     *
+     * @return agent configuration preferences
+     */
+    Properties getAgentConfiguration();
+
+    /**
+     * The given set of agent configuration preferences (in the form of name/value pairs in a Properties object) is
+     * added to the current set of agent configuration preferences. Those preferences found in <code>config</code> that
+     * already exist in the current agent configuration will override the old values in the current agent configuration.
+     * Those preferences found in <code>config</code> but <i>do not</i> exist yet in the current agent configuration are
+     * added to the agent configuration. If a preference exists in the current configuration but is not found in <code>
+     * config</code>, then that preference is left as-is.
+     *
+     * <p>Changing the agent configuration usually requires the agent to be restarted in order for the new settings to
+     * be picked up.</p>
+     *
+     * @param config new agent configuration preferences
+     */
+    void mergeIntoAgentConfiguration(Properties config);
+
+    /**
+     * Given the names of preferences, this will remove those preference settings from the agent configuration. This
+     * will effectively force that preferences to fallback to their built-in defaults.
+     *
+     * @param preferenceNames the preferences to remove from the agent configuration
+     */
+    void removeFromAgentConfiguration(List<String> preferenceNames);
+}

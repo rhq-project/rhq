@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+
+<project name="db-upgrade" default="upgrade" basedir=".">
+
+<!--
+This target upgrades a database schema.  The parameters that it accepts are:
+  jdbc.url              = the jdbc url of the database to upgrade
+  jdbc.user             = the user to connect to the database as
+  jdbc.password         = the database user's password
+  target.schema.version = the schema version to upgrade to. If this is omitted
+                          then the schema is upgraded to the latest version.
+
+This target assumes that the taskdefs for the dbupgrade ant task have already been defined.
+-->
+
+<target name="upgrade">
+
+<echo>
+DB Upgrade:
+   JDBC URL: ${jdbc.url}
+   JDBC User: ${jdbc.user}
+   Update Version: ${target.schema.version}
+</echo>
+
+<dbupgrade
+   jdbcUrl="${jdbc.url}"
+   jdbcUser="${jdbc.user}"
+   jdbcPassword="${jdbc.password}"
+   valueColumn="PROPERTY_VALUE"
+   table="RHQ_SYSTEM_CONFIG"
+   keyColumn="PROPERTY_KEY"
+   keyMatch="DB_SCHEMA_VERSION"
+   targetSchemaVersion="${target.schema.version}">
+
+   
+   <schemaSpec version="2.0">
+      <!-- Empty initial schema to avoid install failure on default latest schema version -->
+   </schemaSpec>
+
+</dbupgrade>
+
+</target>
+
+</project>

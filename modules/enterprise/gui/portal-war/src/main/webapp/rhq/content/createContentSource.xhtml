@@ -1,0 +1,130 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+      
+<ui:composition template="/rhq/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="Create New Content Source"/>
+   
+   <ui:define name="breadcrumbs">
+      <h:outputLink value="listContentSources.xhtml">
+         ${msg["contentsource.list.breadcrumb"]}
+      </h:outputLink>
+      &gt;
+      <h:outputLink value="createContentSource.xhtml">
+         ${msg["contentsource.new.breadcrumb"]}
+      </h:outputLink>
+   </ui:define>
+   
+   <ui:define name="body">
+   
+   <br/>
+   <h:messages showSummary="true"
+               showDetail="true"
+               infoClass="InfoBlock"
+               warnClass="WarnBlock"
+               errorClass="ErrorBlock"
+               fatalClass="FatalBlock"
+               globalOnly="true"
+               layout="table"
+               width="100%"/>
+   
+      <h:form id="setContentSourceType">
+         <rich:panel>
+            <f:facet name="header">Content Source Type</f:facet>
+            <table>
+               <tr>
+                  <td align="right">Select the type you want to create:</td>
+                  <td align="left">
+                     <h:selectOneMenu value="#{CreateContentSourceUIBean.selectedContentSourceTypeName}">
+                        <f:selectItems value="#{CreateContentSourceUIBean.contentSourceTypeNames}" />
+                     </h:selectOneMenu> 
+                     <h:commandButton value="Select"
+                                      action="#{CreateContentSourceUIBean.changedSelectedContentSourceTypeName}"/>
+                  </td>
+               </tr>
+            </table>
+         </rich:panel>
+      </h:form>
+
+      <h:form id="createContentSourceDetailsForm">
+            
+ 	      <rich:panel rendered="#{CreateContentSourceUIBean.selectedContentSourceTypeName ne null}">
+	         <f:facet name="header">Basic Details</f:facet>
+	         <table>
+	            <tr>
+	               <td align="right"><b>Name:</b></td>
+	               <td align="left">
+                     <h:inputText id="name" value="#{CreateContentSourceUIBean.contentSource.name}" />
+	               </td>
+	            </tr>
+	            <tr>
+	               <td align="right"><b>Description:</b></td>
+	               <td align="left">
+                     <h:inputTextarea id="description" rows="3" cols="20" value="#{CreateContentSourceUIBean.contentSource.description}"/>
+	               </td>
+	            </tr>
+	            <tr>
+                  <td align="right"><b>Sync Schedule:</b></td>
+                  <td align="left">
+                     <h:inputText id="syncSchedule" value="#{CreateContentSourceUIBean.contentSource.syncSchedule}" />
+                  </td>
+	            </tr>
+	            <tr>
+                  <td align="right"><b>Lazy Load:</b></td>
+                  <td align="left">
+                     <h:selectBooleanCheckbox id="lazyLoad" value="#{CreateContentSourceUIBean.contentSource.lazyLoad}" />
+                  </td>
+	            </tr>
+               <tr>
+                  <td align="right"><b>Download Mode:</b></td>
+                  <td align="left">
+                     <h:selectOneMenu id="downloadMode"
+                                      value="#{CreateContentSourceUIBean.selectedDownloadMode}">
+                        <f:selectItems value="#{CreateContentSourceUIBean.downloadModes}" />
+                     </h:selectOneMenu> 
+                  </td>
+               </tr>
+	         </table>
+	      </rich:panel>
+	      
+	      <rich:panel rendered="#{CreateContentSourceUIBean.selectedContentSourceTypeName ne null}">
+	         <f:facet name="header">Configuration</f:facet>
+            <table>
+               <tr>
+                  <td>
+                     <onc:config configurationDefinition="#{CreateContentSourceUIBean.contentSourceTypeConfigurationDefinition}"
+                                 configuration="#{CreateContentSourceUIBean.contentSource.configuration}"
+                                 readOnly="false"
+                                 nullConfigurationDefinitionMessage="#{CreateContentSourceUIBean.nullConfigurationDefinitionMessage}"
+                                 nullConfigurationMessage="#{CreateContentSourceUIBean.nullConfigurationMessage}"
+                                 nullConfigurationStyle="InfoBlock"/>
+                  </td>
+               </tr>
+            </table>
+	      </rich:panel>
+         
+         <h:panelGrid rendered="#{CreateContentSourceUIBean.selectedContentSourceTypeName ne null}"
+                      id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
+            <h:commandButton value="Save" action="#{CreateContentSourceUIBean.save}"
+                             alt="Save" styleClass="buttonmed" id="saveButton"/>
+            <h:commandButton value="Cancel" action="#{CreateContentSourceUIBean.cancel}" immediate="true"
+                             alt="Cancel" styleClass="buttonmed" id="cancelButton"/>
+         </h:panelGrid>
+
+      </h:form>
+   </ui:define>
+</ui:composition>
+</html>

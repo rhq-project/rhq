@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<MenuConfig>
+
+  <Displayers>
+    <Displayer   name="DropDown"
+                 type="net.sf.navigator.displayer.DropDownMenuDisplayer"/>
+    <Displayer   name="Simple"
+                 type="net.sf.navigator.displayer.SimpleMenuDisplayer"/>
+    <Displayer   name="CoolMenu"
+                 type="net.sf.navigator.displayer.CoolMenuDisplayer"/>
+    <Displayer   name="CoolMenu4"
+                 type="net.sf.navigator.displayer.CoolMenuDisplayer4"/>
+    <Displayer   name="MenuForm"
+                 type="net.sf.navigator.example.PermissionsFormMenuDisplayer"/>
+    <Displayer   name="ListMenu"
+                 type="net.sf.navigator.displayer.ListMenuDisplayer"/>
+    <Displayer   name="TabbedMenu"
+                 type="net.sf.navigator.displayer.TabbedMenuDisplayer"/>
+    <Displayer   name="Velocity"
+                 type="net.sf.navigator.displayer.VelocityMenuDisplayer"/>            
+    <Displayer   name="RHQ-Menu"
+                 type="org.rhq.enterprise.gui.navigation.ListMenuDisplayer"/>
+  </Displayers>
+
+  <Menus>
+
+    <Menu name="TreeNavigation" title="resource.navigation.Resources"> 
+		<Item name="JBoss" title="resource.navigation.jboss.Servers" 
+		    action="/NavigationHub.do?ff=2&amp;categoryName=resource.navigation.jboss.Servers">
+		    
+			<Item name="DataSources" title="resource.navigation.jboss.DataSources" 
+            	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.jboss.DataSources"/>
+           	<Item name="ConnPools" title="resource.navigation.jboss.ConnPools" 
+            	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.jboss.ConnPools"/>
+           	<Item name="HibernateFactories" title="resource.navigation.jboss.HibernateFactories" 
+            	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.jboss.HibernateFactories"/>		    
+
+			<Item name="StatelessEJBs" title="resource.navigation.jboss.StatelessEJBs" 
+            	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.jboss.StatelessEJBs"/>
+            <Item name="StatefulEJBs" title="resource.navigation.jboss.StatefulEJBs" 
+            	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.jboss.StatefulEJBs"/>
+            <Item name="MessageEJBs" title="resource.navigation.jboss.MessageEJBs" 
+            	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.jboss.MessageEJBs"/>
+
+        	<Item name="Entitys" title="resource.navigation.jboss.EntityEJBs" 
+            	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.jboss.EntityEJBs"/>
+            	
+          	<Item name="EJB3" title="resource.navigation.jboss.EJB3" 
+            	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.jboss.EJB3"/>
+       		<Item name="JMSTopics" title="resource.navigation.jboss.JMSTopics" 
+            	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.jboss.JMSTopics"/>
+            <Item name="JMSQueues" title="resource.navigation.jboss.JMSQueues" 
+            	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.jboss.JMSQueues"/>
+       		<Item name="JGroupsChannels" title="resource.navigation.jboss.JGroupsChannels" 
+            	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.jboss.JGroupsChannels"/>	
+            	
+        </Item>		           
+       
+		
+		<Item name="Tomcat" title="resource.navigation.tomcat.Servers" 
+            action="/NavigationHub.do?ff=2&amp;categoryName=resource.navigation.tomcat.Servers">
+        	<Item name="WebApps" title="resource.navigation.tomcat.WebApps" 
+            	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.tomcat.WebApps"/>
+        	<Item name="Connectors" title="resource.navigation.tomcat.Connectors" 
+            	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.tomcat.Connectors"/>
+        </Item>	
+            
+		<Item name="Apache" title="resource.navigation.apache.Servers" 
+            action="/NavigationHub.do?ff=2&amp;categoryName=resource.navigation.apache.Servers">
+        	<Item name="VHosts" title="resource.navigation.apache.VirtualHosts" 
+            	action="/NavigationHub.do?ff=3&amp;categoryName=resource.navigation.apache.VirtualHosts"/>            
+        </Item>
+    </Menu>
+  </Menus>
+
+</MenuConfig>

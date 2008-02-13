@@ -1,0 +1,22 @@
+<plugin name="Test3" displayName="Test Two" package="org.rhq.plugins.test2"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin">
+
+   <depends plugin="Test1" />
+   <depends plugin="Test2" />
+   <server name="Injection C To Server A" discovery="ServerCComponent" class="ServerCServerComponent"
+           description="injects child C to server A and server B">
+      <runs-inside>
+         <parent-resource-type name="Server A" plugin="Test1"/>
+         <parent-resource-type name="Extension Server B" plugin="Test2"/>
+      </runs-inside>
+   </server>
+
+   <service name="Injection D To Server A" discovery="ServiceDComponent" class="ServiceDServiceComponent"
+            description="injects child D to server A">
+      <runs-inside>
+         <parent-resource-type name="Server A" plugin="Test1"/>
+      </runs-inside>
+   </service>
+
+</plugin>

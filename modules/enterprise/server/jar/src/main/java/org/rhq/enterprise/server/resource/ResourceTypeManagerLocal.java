@@ -1,0 +1,118 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.enterprise.server.resource;
+
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
+import javax.ejb.Local;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+
+/**
+ * A manager that provides methods for creating, updating, deleting, and querying
+ * {@link org.rhq.core.domain.resource.ResourceType}s.
+ *
+ * @author Greg Hinkle
+ * @author Ian Springer
+ */
+@Local
+public interface ResourceTypeManagerLocal {
+    // TODO: Add a getResourceTypeByResourceId method.
+
+    ResourceType getResourceTypeById(Subject subject, int id) throws ResourceTypeNotFoundException;
+
+    ResourceType getResourceTypeByParentAndName(Subject subject, ResourceType parent, String name)
+        throws ResourceTypeNotFoundException;
+
+    ResourceType getResourceTypeByNameAndPlugin(String name, String plugin);
+
+    /**
+     * Gets the list of resource types that are children of the specified resource type and that are viewable by the
+     * specified user.
+     *
+     * @param  subject an authz subject
+     * @param  parent  a resource type
+     *
+     * @return the list of resource types that are children of the specified resource type and that are viewable by the
+     *         specified user
+     */
+    // TODO: Use PageList/PageControl.
+    List<ResourceType> getChildResourceTypes(Subject subject, ResourceType parent);
+
+    /**
+     * Gets the list of resource types that are children of the specified resource type, that are in the specified
+     * resource category, and that are viewable by the specified user.
+     *
+     * @param  subject          an authz subject
+     * @param  parentResource   the parent resource
+     * @param  resourceCategory a resource category
+     *
+     * @return the list of resource types that are children of the specified resource type, that are in the specified
+     *         resource category, and that are viewable by the specified user
+     */
+    // TODO: Use PageList/PageControl?
+    List<ResourceType> getChildResourceTypesByCategory(Subject subject, Resource parentResource,
+        ResourceCategory resourceCategory);
+
+    List<ResourceType> getUtilizedChildResourceTypesByCategory(Subject subject, Resource parentResource,
+        ResourceCategory resourceCategory);
+
+    List<ResourceType> getUtilizedResourceTypesByCategory(Subject subject, ResourceCategory category, String nameFilter);
+
+    List<ResourceType> getResourceTypesForCompatibleGroups(Subject subject);
+
+    Map<String, Integer> getResourceTypeCountsByGroup(Subject subject, ResourceGroup group);
+
+    boolean ensureResourceType(Subject subject, Integer resourceTypeId, Integer[] resourceIds)
+        throws ResourceTypeNotFoundException;
+
+    /**
+     * Return which facets are available for the passed return type. This is e.g. used to determine which tabs (Monitor,
+     * Inventory, ...) can be displayed for a resource of a certain type
+     */
+    ResourceFacets getResourceFacets(Subject subject, int resourceTypeId) throws ResourceTypeNotFoundException;
+
+    /**
+     * Obtain ResourceTypes that match a given category or all if category is null. Note that the caller needs to have
+     * Permission.MANAGE_SETTING in order to successfully call this method.
+     *
+     * @param  subject  subject of the caller
+     * @param  category the category to check for. If this is null, entries from all cateories will be returned.
+     *
+     * @return a List of ResourceTypes
+     *
+     * @see    Permission
+     * @see    ResourceCategory
+     */
+    public List<ResourceType> getAllResourceTypesByCategory(Subject subject, ResourceCategory category);
+
+    /**
+     * Return all ResourceTypes that are children of the passed ones
+     *
+     * @param  types List of ResourceTypes
+     *
+     * @return SortedSet of ResourceTypes. If nothing is found, then this set is empty
+     */
+    public Map<Integer, SortedSet<ResourceType>> getChildResourceTypesForResourceTypes(List<ResourceType> types);
+}

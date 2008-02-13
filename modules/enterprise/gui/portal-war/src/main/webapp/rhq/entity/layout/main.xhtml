@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets">
+
+THIS TEXT WILL BE REMOVED.
+
+The template for all Resource/Group pages (i.e. the Monitor/Inventory/etc. tabbed pages).
+
+TEMPLATE PARAMETERS:
+   breadcrumbs - the page breadcrumbs (optional)
+   summary - the summary of the resource or group
+   tabBar - the tab bar
+   content - the page content
+
+CONTEXT PARAMETERS:
+   pageTitle - the page title
+   pageHelpURL - a context-sensitive help URL for the page (optional)
+   selectedTabName - the name of the tab/subTab to select in the following format: tabName[.subtabName]
+                     (e.g. "Inventory" or "Monitor.Visibility")
+
+REQUEST PARAMETERS:
+   id - the id of the Resource being accessed
+
+<ui:composition template="/rhq/layout/main.xhtml">
+
+   THIS TEXT WILL BE REMOVED AS WELL.
+
+   <ui:define name="body">
+
+      <ui:insert name="summary"><p>Default Entity Summary</p></ui:insert>
+
+      <ui:insert name="tabBar"><p>Default Entity TabBar</p></ui:insert>
+
+      <!-- Shows the results of the last action executed. -->
+      <h:messages showSummary="true"
+                  showDetail="true"
+                  infoClass="InfoBlock"
+                  warnClass="WarnBlock"
+                  errorClass="ErrorBlock"
+                  fatalClass="FatalBlock"
+                  globalOnly="true"
+                  layout="table"
+                  width="100%"/>
+      
+      <ui:insert name="content"><p>Default Entity Content</p></ui:insert>
+
+   </ui:define>
+
+</ui:composition>
+
+THIS TEXT WILL BE REMOVED AS WELL.
+
+</html>

@@ -1,0 +1,220 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/definition/layout/main.xhtml">
+
+<ui:param name="pageTitle" value="JON Group Definition - '#{GroupDefinitionUIBean.name}'"/>
+<ui:param name="selectedTabName" value="Inventory"/>
+
+<ui:define name="content">
+
+<!-- =================== GENERAL PROPERTIES =================== -->
+
+<h:outputLink value="/rhq/definition/group/list.xhtml">
+   <h:outputText value="Back to Group Definitions"/>
+</h:outputLink>
+
+<rich:panel styleClass="BlockContent">
+
+   <f:facet name="header" styleClass="BlockTitle">
+      General Properties
+   </f:facet>
+
+   <h:panelGrid columns="2" styleClass="general-props-table" columnClasses="general-prop-cell">
+   
+      <h:panelGroup layout="block">
+         <b>Name: </b> #{GroupDefinitionUIBean.name}
+      </h:panelGroup>
+      
+      <h:panelGroup layout="block">
+         <b>Date Created: </b>
+         <h:outputText value="#{GroupDefinitionUIBean.createdTime}">
+            <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+         </h:outputText>
+      </h:panelGroup>
+      
+      <h:panelGroup layout="block">
+         <h:outputText value="Description: " styleClass="BoldText"/>
+         <h:outputText value="#{GroupDefinitionUIBean.description}" rendered="#{!empty GroupDefinitionUIBean.description}"/>
+         <h:outputText value="none" style="font-style: italic" rendered="#{empty GroupDefinitionUIBean.description}"/>
+      </h:panelGroup>
+      
+      <h:panelGroup layout="block">
+         <b>Date Last Modified: </b>
+         <h:outputText value="#{GroupDefinitionUIBean.modifiedTime}">
+            <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+         </h:outputText>
+      </h:panelGroup>
+
+      <h:panelGroup layout="block">
+         <b>Recursive: </b> #{GroupDefinitionUIBean.recursive}
+      </h:panelGroup>
+
+      <h:panelGroup layout="block">
+         <b>Last Calculation Date: </b>
+         <h:outputText value="#{GroupDefinitionUIBean.lastCalculationTime}" rendered="#{!empty GroupDefinitionUIBean.lastCalculationTime}" >
+            <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+         </h:outputText>
+         <h:outputText value="never" rendered="#{empty GroupDefinitionUIBean.lastCalculationTime}" />
+      </h:panelGroup>
+
+   </h:panelGrid>
+
+</rich:panel>
+
+
+<!-- =================== GROUP DEFINITION CONDITIONS =================== -->
+<rich:panel styleClass="BlockContent">
+
+   <f:facet name="header" styleClass="BlockTitle">
+      Group Definition Conditions
+   </f:facet>
+   
+   <h:panelGrid columns="2" styleClass="general-props-table" columnClasses="general-prop-cell">
+
+         <h:inputTextarea id="textArea"
+                          rows="5" cols="75"
+                          value="#{GroupDefinitionUIBean.expression}" 
+                          readonly="true" />
+                          
+    </h:panelGrid>
+	
+</rich:panel>
+
+   <h:form id="viewGeneralPropertiesForm">
+
+      <input type="hidden" name="groupDefinitionId" value="#{GroupDefinitionUIBean.groupDefinitionId}"/>
+
+	   <h:panelGroup layout="block" styleClass="BlockContent">
+          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
+             <h:commandButton value="EDIT..." action="#{EditGroupDefinitionGeneralPropertiesUIBean.begin}"
+                              title="Edit Properties and Conditions" styleClass="buttonmed" />
+             <h:commandButton value="CALCULATE GROUPS" action="#{EditGroupDefinitionGeneralPropertiesUIBean.createGroups}"
+                              title="Create Managed Resource Groups" styleClass="buttonmed" />
+          </h:panelGrid>
+       </h:panelGroup>
+
+   </h:form>
+
+<!-- =================== RESOURCE GROUP MEMBERS =================== -->
+<rich:panel styleClass="BlockContent">
+      <h:form id="groupDefinitionMembersForm">
+      
+         <input type="hidden" name="groupDefinitionId" value="#{GroupDefinitionUIBean.groupDefinitionId}"/>
+      
+         <rich:panel>
+            <f:facet name="header"><h:outputText value="Group Definition's Managed Resource Group"/></f:facet>
+
+            <ui:param name="groupDefinitionMembersDataModel" value="#{GroupDefinitionUIBean.dataModel}"/>
+            <rich:dataTable binding="#{GroupDefinitionUIBean.dataTable}"
+                            id="groupDefinitionMembersDataTable" 
+                            rows="#{PageControl.GroupDefinitionMembers.pageSize}"
+                            value="#{groupDefinitionMembersDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="50%, 20%, 20%, 5%, 5%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer">
+                            
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="GroupDefinitionMembers" />
+               </f:facet>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="rg.name">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="/rhq/group/inventory/view.xhtml">
+                     <f:param name="groupId" value="#{item.resourceGroup.id}"/>
+                     <f:param name="category" value="#{item.category.name}"/>
+                     <h:outputText value="#{item.resourceGroup.name}" />
+                  </h:outputLink>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="rg.groupCategory">
+                        <h:outputText styleClass="headerText" value="Category" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.resourceGroup.groupCategory}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="rg.groupByClause">
+                        <h:outputText styleClass="headerText" value="Grouped By" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.resourceGroup.groupByClause}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="COUNT(res)">
+                        <h:outputText styleClass="headerText" value="Members" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.memberCount}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="AVG(a.availabilityType)">
+                        <h:outputText styleClass="headerText" value="Availability" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up"
+                                  rendered="#{item.availability eq 1.0}"/>
+                  <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down"
+                                  rendered="#{item.availability eq 0.0}"/>
+                  <h:graphicImage value="/images/icon_available_yellow.png" alt="Mixed" title="Mixed"
+                                  rendered="#{item.availability gt 0.0 and item.availability lt 1.0}"/>
+               </rich:column>
+               
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="5">
+                        <ui:include src="/rhq/resource/include/pagination.xhtml">
+                           <ui:param name="paginationDataTableName" value="groupDefinitionMembersDataTable"/>
+                           <ui:param name="paginationDataModel" value="#{groupDefinitionMembersDataModel}"/>
+                           <ui:param name="paginationPageControl" value="#{PageControl.GroupDefinitionMembers}"/>
+                        </ui:include>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+         </rich:panel>
+      </h:form>
+</rich:panel>
+
+<h:outputLink value="/rhq/definition/group/list.xhtml">
+   <h:outputText value="Back to Group Definitions"/>
+</h:outputLink>
+
+</ui:define>
+
+</ui:composition>
+
+</html>

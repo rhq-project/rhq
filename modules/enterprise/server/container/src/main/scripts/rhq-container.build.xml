@@ -1,0 +1,522 @@
+<?xml version="1.0"?>
+
+<!-- $Id: rhq-container.build.xml 9321 2008-02-11 05:03:45Z jmazzitelli $ -->
+
+<project name="rhq-container" basedir=".">
+
+  <target name="initialize">
+    <property name="jboss.home" location="${project.build.outputDirectory}/jbossas" />
+
+    <property name="hypersonic.lock.file" location="${jboss.home}/server/default/data/hypersonic/localDB.lck" />
+    <fail message="The RHQ container appears to be currently running (${hypersonic.lock.file} exists). Please stop the container before rebuilding it in place.">
+       <condition>
+          <available file="${hypersonic.lock.file}" />
+       </condition>
+    </fail>
+
+    <property name="jboss.deploy.dir" location="${jboss.home}/server/default/deploy" />
+
+    <property name="jms.oracle.dir" value="jms-oracle.rej"/>
+    <property name="jms.postgres.dir" value="jms-postgres.rej"/>
+
+    <condition property="use-postgres" value="true">
+       <equals arg1="${rhq.ds.type-mapping}" arg2="PostgreSQL" casesensitive="false" />
+    </condition>
+
+    <condition property="copy.dev.resources" value="true">
+       <equals arg1="${dev.profile.active}" arg2="true" />
+    </condition>
+
+    <condition property="predeploy" value="true">
+       <or>
+          <equals arg1="${dev.profile.active}" arg2="true" />
+          <equals arg1="${developer}" arg2="true" />
+       </or>
+    </condition>
+
+    <condition property="predeploy-postgres" value="true">
+       <and>
+          <equals arg1="${predeploy}" arg2="true" />
+          <equals arg1="${use-postgres}" arg2="true" />
+       </and>
+    </condition>
+
+    <condition property="predeploy-oracle" value="true">
+       <and>
+          <equals arg1="${predeploy}" arg2="true" />
+          <not><equals arg1="${use-postgres}" arg2="true" /></not>
+       </and>
+    </condition>
+  </target>
+
+  <target name="prepare-container"
+          depends="prepare-jbossas-dir, prepare-bin-dir" />
+
+  <target name="prepare-jbossas-dir"
+          depends="initialize"
+          description="prepare JBossAS for hosting the RHQ Server">
+
+    <echo>*** Preparing jbossas dir... ***</echo>
+    <!-- Unzip vanilla JBoss dist zipfile... -->
+    <property name="jboss.zip" location="${settings.localRepository}/jboss/jboss/${jboss.version}/jboss-${jboss.version}.zip" />
+    <condition property="jboss.uptodate">
+      <and>
+        <uptodate srcfile="${jboss.zip}" targetfile="${jboss.home}" />
+        <available file="${jboss.home}/lib/jboss-system.jar" type="file" />
+      </and>
+    </condition>
+    <antcall target="unzip-jboss" />
+
+    <!-- Doublecheck that it's a valid JBoss dist... -->
+    <available file="${jboss.home}/lib/jboss-system.jar" type="file" property="jboss.home.is.valid" />
+    <fail unless="jboss.home.is.valid" message="${jboss.home} does not contain a valid JBoss 4.x installation - aborting..." />
+
+    <!-- Install the EJB3 package into the JBoss dist -->
+    <!-- JBoss 4.2 already includes EJB3
+    <property name="ejb3.zip" location="${settings.localRepository}/jboss/jboss-ejb/${jboss.ejb3.version}/jboss-ejb-${jboss.ejb3.version}.zip" />
+    <uptodate property="unzip-ejb3.not.required" srcfile="${ejb3.zip}" targetfile="${jboss.home}/server/default/deploy/ejb3.deployer" />
+    <antcall target="unzip-ejb3" />
+    -->
+
+    <!-- The only thing we need in the jboss/client dir is the main client jar, for the jboss plugin. -->
+    <!-- do not delete client jars! they're going to be needed
+    <delete>
+      <fileset dir="${jboss.home}/client">
+        <exclude name="jbossall-client.jar"/>
+      </fileset>
+    </delete>-->
+
+    <echo>Installing safe ejb3 web invoker ...</echo>
+     <delete>
+      <fileset dir="${jboss.home}/server/default/deploy/jbossws.sar">
+        <include name="safe-invoker*" />
+      </fileset>
+    </delete>
+    <copy file="${settings.localRepository}/org/rhq/safe-invoker/1.0.2/safe-invoker-1.0.2.jar"
+           toDir="${jboss.home}/server/default/deploy/jbossws.sar" verbose="true" />
+
+    <echo>Installing patched hibernate jar ...</echo>
+    <copy file="${settings.localRepository}/hibernate/hibernate3/3.2.r14201-1/hibernate3-3.2.r14201-1.jar"
+          tofile="${jboss.home}/server/default/lib/hibernate3.jar" verbose="true"/>
+
+    <property name="jboss.lib.dir" location="${jboss.home}/server/default/lib" />
+    <echo>Copying additional libs to ${jboss.lib.dir} ...</echo>
+    <copy file="${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar"
+          toDir="${jboss.lib.dir}" failonerror="false" verbose="true" />
+    <copy file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
+          toDir="${jboss.lib.dir}" verbose="true" />
+
+
+<!--     <copy file="${jboss.home}/server/all/lib/jbossha.jar" toDir="${jboss.lib.dir}" verbose="true" failonerror="false" />
+     <copy file="${jboss.home}/server/all/lib/jgroups.jar" toDir="${jboss.lib.dir}" verbose="true" failonerror="false" />-->
+
+    <!-- make sure we actually need the following libs -->
+    <!-- for EJB3 clustering
+    <copy file="${jboss.home}/server/all/lib/jboss-cache.jar"
+          toDir="${jboss.lib.dir}" verbose="true" failonerror="false" />
+    -->
+    <!-- WHAT IS THIS FOR???
+    <copy file="${settings.localRepository}/commons-modeler/commons-modeler/1.1/commons-modeler-1.1.jar"
+          toDir="${jboss.lib.dir}" verbose="true" />
+    -->
+    <!-- JBoss 4.2 already includes Remoting 2.0.0.GA
+    <copy file="${settings.localRepository}/jboss/jboss-remoting/2.0.0.GA/jboss-remoting-2.0.0.GA.jar"
+          toDir="${jboss.lib.dir}" verbose="true" />
+    -->
+    <!-- The old 1.x stuff needed this I think - we're gonna use the JGroups that comes with JBoss 4.2
+    <copy file="${settings.localRepository}/jgroups/jgroups-all/2.2.9.1/jgroups-all-2.2.9.1.jar"
+          toDir="${jboss.lib.dir}" verbose="true" />
+    -->
+
+    <!-- Generate SSL key for RHQ server - 128-bit key that expires in 20 years... -->
+    <property name="jboss.conf.dir" location="${jboss.home}/server/default/conf" />
+    <available file="${jboss.conf.dir}/rhq.keystore" type="file" property="rhq.keystore.exists" />
+    <antcall target="generate-rhq-ssl-key" />
+
+    <!-- Delete the various working directories if they happen to exist... -->
+    <delete dir="${jboss.home}/server/default/data" />
+    <delete dir="${jboss.home}/server/default/log" />
+    <delete dir="${jboss.home}/server/default/tmp" />
+    <delete dir="${jboss.home}/server/default/work" />
+
+    <!-- Delete unused stuff from deploy dir... -->
+    <echo>Removing unwanted files from ${jboss.deploy.dir} ...</echo>
+
+    <delete dir="${jboss.deploy.dir}/http-invoker.sar" />
+    <delete dir="${jboss.deploy.dir}/jms/jbossmq-httpil.sar" />
+    <delete quiet="true">
+      <fileset dir="${jboss.deploy.dir}/jms">
+        <include name="jbossmq-destinations-service.xml" />
+        <include name="uil2-service.xml" />
+        <include name="hsqldb-jdbc2-service.xml" /> <!-- no longer use Hypersonic for JMS backend -->
+      </fileset>
+    </delete>
+
+    <delete file="${jboss.deploy.dir}/cache-invalidatirhq-service.xml" />
+    <delete dir="${jboss.deploy.dir}/uuid-key-generator.sar" />
+    <delete file="${jboss.deploy.dir}/jboss-xa-jdbc.rar" />  <!-- We manage our own transactions. -->
+
+    <!-- Remove old web console, leave the JMX console (we will delete it later for releases) -->
+    <delete dir="${jboss.deploy.dir}/management" />
+
+    <!-- NOTE: We do not delete jbossws.sar, because if it's not there, the EJB container logs annoying warnings during startup. -->
+    <!-- TODO: I do not know if this is still true with JBoss 4.2 -->
+    <!--
+    <delete dir="${jboss.deploy.dir}/jbossws.sar"/>
+    -->
+
+    <echo>Upgrading JSF jars ...</echo>
+    <property name="jsf-libs.dir" location="${jboss.deploy.dir}/jboss-web.deployer/jsf-libs" />
+    <mkdir dir="${jsf-libs.dir}" />
+    <delete>
+      <fileset dir="${jsf-libs.dir}">
+        <include name="jsf-impl*.jar" />
+        <include name="jsf-api*.jar" />
+      </fileset>
+    </delete>
+    <copy file="${settings.localRepository}/javax/faces/jsf-api/${jsf-api.version}/jsf-api-${jsf-api.version}.jar"
+          tofile="${jsf-libs.dir}/jsf-api.jar" verbose="true" />
+    <copy file="${settings.localRepository}/javax/faces/jsf-impl/${jsf-impl.version}/jsf-impl-${jsf-impl.version}.jar"
+          tofile="${jsf-libs.dir}/jsf-impl.jar" verbose="true" />
+
+    <echo>Preparing JMS backend ...</echo>
+    <mkdir dir="${jboss.deploy.dir}/jms"/>
+    <copy todir="${jboss.deploy.dir}/${jms.oracle.dir}">
+       <fileset dir="${jboss.deploy.dir}/jms" />
+    </copy>
+    <copy todir="${jboss.deploy.dir}/${jms.postgres.dir}">
+       <fileset dir="${jboss.deploy.dir}/jms" />
+    </copy>
+    <antcall target="setup-jms-backend" />
+
+    <echo>Deploying ${rhq.earName} ...</echo>
+    <mkdir dir="${jboss.deploy.dir}/${rhq.earName}" />
+    <unjar src="${settings.localRepository}/org/rhq/rhq-enterprise-server-ear/${rhq.version}/rhq-enterprise-server-ear-${rhq.version}.ear"
+           dest="${jboss.deploy.dir}/${rhq.earName}" />
+
+    <echo>Removing Tomcat ROOT.war to prepare for JBoss ON replacement ...</echo>
+    <delete dir="${jboss.deploy.dir}/jboss-web.deployer/ROOT.war" />
+
+    <echo>Deploying installer webapp ...</echo>
+    <mkdir dir="${jboss.deploy.dir}/rhq-installer.war" />
+    <unwar src="${settings.localRepository}/org/rhq/rhq-installer/${rhq.version}/rhq-installer-${rhq.version}.war"
+           dest="${jboss.deploy.dir}/rhq-installer.war" />
+
+    <echo>Deploying embedded agent sar ...</echo>
+    <unjar src="${settings.localRepository}/org/rhq/rhq-enterprise-server-agent-sar/${rhq.version}/rhq-enterprise-server-agent-sar-${rhq.version}.sar"
+           dest="${jboss.deploy.dir}/rhq-agent.sar" />
+
+    <echo>Deploying RT filter jar ...</echo>
+    <copy file="${settings.localRepository}/org/rhq/rhq-rtfilter/${rhq.version}/rhq-rtfilter-${rhq.version}.jar"
+          todir="${jboss.home}/server/default/lib" verbose="true" />
+
+    <!-- TODO... -->
+    <!-- NOTE: We have to use ant instead of antcall, because antcall doesn't work from within Maven 2. -->
+    <!-- <ant antfile="src/main/scripts/rhq-assembly.build.xml" target="instrument-jboss" /> -->
+
+    <!-- Delete 'minimal' and 'all' config dirs... -->
+    <delete dir="${jboss.home}/server/minimal" />
+    <delete dir="${jboss.home}/server/all" />
+
+    <!-- Delete docs dir and README files... -->
+    <delete dir="${jboss.home}/docs" />
+    <delete>
+      <fileset dir="${jboss.home}" includes="*.*" />
+    </delete>
+
+    <!-- Let's deploy some developer-only stuff - we'll remove these later if this is a release build -->
+    <echo>Deploying the performance testing plugin and the license file ...</echo>
+    <copy file="${settings.localRepository}/org/rhq/rhq-perftest-plugin/${rhq.version}/rhq-perftest-plugin-${rhq.version}.jar"
+          todir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins"
+          verbose="true"
+          failonerror="false"/>
+    <copy file="${basedir}/src/main/license/license.xml"
+          todir="${jboss.deploy.dir}/${rhq.earName}/license"
+          verbose="true"
+          failonerror="false"/>
+
+  </target>
+
+  <target name="prepare-bin-dir">
+    <echo>*** Preparing bin dir... ***</echo>
+    <echo>connection URL is ${rhq.ds.connection-url}</echo>
+    <property name="rhq.bin.dir" location="${project.build.outputDirectory}/bin" />
+
+    <mkdir dir="${rhq.bin.dir}" />
+    <echo file="${rhq.bin.dir}/rhq-server.properties">### RHQ Server Configuration Properties
+
+# Database
+rhq.server.database.connection-url=${rhq.ds.connection-url}
+rhq.server.database.driver-class=${rhq.ds.driver-class}
+rhq.server.database.user-name=${rhq.ds.user-name}
+rhq.server.database.password=${rhq.ds.password}
+rhq.server.database.type-mapping=${rhq.ds.type-mapping}
+
+# Container configuration
+jboss.bind.address=0.0.0.0
+rhq.server.startup.web.http.port=${rhq.server.http.port}
+rhq.server.startup.web.https.port=${rhq.server.https.port}
+rhq.server.startup.webservice.port=9093
+rhq.server.startup.namingservice.port=2099
+rhq.server.startup.namingservice.rmiport=2098
+rhq.server.startup.jrmpinvoker.rmiport=7444
+rhq.server.startup.pooledinvoker.rmiport=7445
+rhq.server.startup.ajp.port=9009
+rhq.server.startup.unifiedinvoker.port=5446
+
+# Cluster configuration
+jboss.partition.name=RHQPartition
+jgroups.bind_addr=127.0.0.1
+jgroups.udp.mcast_addr=228.1.2.4
+jboss.hapartition.mcast_port=55566
+jboss.ejb3entitypartition.mcast_port=53333
+jboss.alertcachepartition.mcast_port=58899
+rhq.server.startup.partition.udpLoopback=false
+rhq.server.startup.hajndi.port=2100
+rhq.server.startup.hajndi.rmiport=2101
+rhq.server.startup.hajndi.autodiscoverygroupport=2102
+rhq.server.startup.hajrmpinvoker.rmiport=5447
+rhq.server.startup.hapooledinvoker.port=5448
+jgroups.udp.ip_ttl=2
+
+# Keystore for HTTPS thru Tomcat connector
+rhq.server.startup.keystore.filename=rhq.keystore
+rhq.server.startup.keystore.password=RHQManagement
+rhq.server.startup.keystore.sslprotocol=TLS
+
+# RHQ Server's remote endpoint for agents to talk to
+rhq.communications.connector.transport=servlet
+rhq.communications.connector.bind-address=${jboss.bind.address}
+rhq.communications.connector.bind-port=7080
+rhq.communications.connector.transport-params=/jboss-remoting-servlet-invoker/ServerInvokerServlet
+
+# Multicast detector configuration for auto-discovery
+rhq.communications.multicast-detector.enabled=true
+rhq.communications.multicast-detector.bind-address=${jboss.bind.address}
+rhq.communications.multicast-detector.multicast-address=224.16.16.16
+rhq.communications.multicast-detector.port=16162
+
+# Server-side SSL Security Configuration (for incoming messages from agents)
+rhq.communications.connector.security.secure-socket-protocol=TLS
+rhq.communications.connector.security.keystore.file=${jboss.server.data.dir}/keystore.dat
+rhq.communications.connector.security.keystore.algorithm=SunX509
+rhq.communications.connector.security.keystore.type=JKS
+rhq.communications.connector.security.keystore.password=rhqpw
+rhq.communications.connector.security.keystore.key-password=rhqpw
+rhq.communications.connector.security.keystore.alias=rhq
+rhq.communications.connector.security.truststore.file=${jboss.server.data.dir}/truststore.dat
+rhq.communications.connector.security.truststore.algorithm=SunX509
+rhq.communications.connector.security.truststore.type=JKS
+rhq.communications.connector.security.truststore.password=rhqpw
+rhq.communications.connector.security.client-auth-mode=need
+
+# Client-side SSL Security Configuration (for outgoing messages to agents)
+rhq.server.client.security.secure-socket-protocol=TLS
+rhq.server.client.security.keystore.file=${jboss.server.home.dir}/conf/rhq.keystore
+rhq.server.client.security.keystore.algorithm=SunX509
+rhq.server.client.security.keystore.type=JKS
+rhq.server.client.security.keystore.password=RHQManagement
+rhq.server.client.security.keystore.key-password=RHQManagement
+rhq.server.client.security.keystore.alias=RHQ
+rhq.server.client.security.truststore.file=${jboss.server.data.dir}/truststore.dat
+rhq.server.client.security.truststore.algorithm=SunX509
+rhq.server.client.security.truststore.type=JKS
+rhq.server.client.security.truststore.password=rhqpw
+rhq.server.client.security.server-auth-mode-enabled=true
+
+# Embedded RHQ Agent
+rhq.server.embedded-agent.enabled=false
+rhq.server.embedded-agent.name=embedded-agent
+rhq.server.embedded-agent.reset-configuration=true
+rhq.server.embedded-agent.disable-native-system=false
+
+# Email
+rhq.server.email.smtp-host=localhost
+rhq.server.email.smtp-port=25
+rhq.server.email.from-address=rhqadmin@localhost
+
+# Operations/controls timeout
+# Defines the default timeout for all operations (specified in seconds)
+rhq.server.operatirhq-timeout=600
+
+# Concurrency limits for incoming UI and agent messages
+rhq.server.startup.web.max-connections=305
+rhq.communications.global-concurrency-limit=300
+rhq.server.concurrency-limit.inventory-report=5
+rhq.server.concurrency-limit.availability-report=200
+rhq.server.concurrency-limit.inventory-sync=50
+rhq.server.concurrency-limit.content-report=5
+rhq.server.concurrency-limit.content-download=5
+rhq.server.concurrency-limit.measurement-report=50
+rhq.server.concurrency-limit.measurement-schedule-request=50
+
+# Content Local Filesystem Repository
+rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
+</echo>
+
+  </target>
+
+  <target name="unzip-jboss" unless="jboss.uptodate">
+    <unzip src="${settings.localRepository}/jboss/jboss/${jboss.version}/jboss-${jboss.version}.zip"
+           dest="${basedir}/target" />
+    <delete dir="${jboss.home}" />
+    <move file="${basedir}/target/jboss-${jboss.version}" tofile="${jboss.home}" />
+  </target>
+
+  <target name="unzip-ejb3" unless="unzip-ejb3.not.required">
+    <property name="tmp-ejb.dir" location="${basedir}/target/tmp-ejb" />
+    <mkdir dir="${tmp-ejb.dir}" />
+    <unzip src="${settings.localRepository}/jboss/jboss-ejb/${jboss.ejb3.version}/jboss-ejb-${jboss.ejb3.version}.zip"
+           dest="${tmp-ejb.dir}" />
+    <ant antfile="${tmp-ejb.dir}/${jboss.ejb3.root-dir}/install.xml"
+         dir="${tmp-ejb.dir}/${jboss.ejb3.root-dir}" inheritAll="false" inheritRefs="false">
+       <property name="jboss.home" value="${jboss.home}" />
+       <property name="jboss.server.config" value="default" />
+    </ant>
+    <delete dir="${tmp-ejb.dir}" />
+  </target>
+
+  <target name="generate-rhq-ssl-key" unless="rhq.keystore.exists">
+    <echo>Generating self-signed certificate in ${jboss.conf.dir} ...</echo>
+    <genkey alias="RHQ"
+            keystore="${jboss.conf.dir}/rhq.keystore"
+            keyalg="rsa"
+            storepass="RHQManagement"
+            validity="7300"
+            dname="CN=RHQ, OU=RHQ, O=rhq-project.org, C=US" />
+  </target>
+
+  <target name="setup-jms-backend"
+          depends="setup-jms-backend-postgres,
+                   setup-jms-backend-oracle,
+                   make-default-jms-backend-postgres,
+                   make-default-jms-backend-oracle">
+  </target>
+
+  <target name="setup-jms-backend-postgres">
+    <echo>Preparing the Postgres JMS configuration...</echo>
+    <move file="${jboss.deploy.dir}/${jms.postgres.dir}/hsqldb-jdbc-state-service.xml"
+          tofile="${jboss.deploy.dir}/${jms.postgres.dir}/rhq-jdbc-state-service.xml" verbose="true" failonerror="false"/>
+    <replace file="${jboss.deploy.dir}/${jms.postgres.dir}/rhq-jdbc-state-service.xml" token="DefaultDS" value="RHQDS"/>
+    <copy file="${jboss.home}/docs/examples/jms/postgres-jdbc2-service.xml"
+          tofile="${jboss.deploy.dir}/${jms.postgres.dir}/rhq-jdbc2-service.xml" verbose="true" failonerror="false" />
+    <replace file="${jboss.deploy.dir}/${jms.postgres.dir}/rhq-jdbc2-service.xml" token="PostgresDS" value="RHQDS"/>
+  </target>
+
+  <target name="make-default-jms-backend-postgres" if="use-postgres">
+    <echo>Postgres will be your JMS backend!</echo>
+    <delete dir="${jboss.deploy.dir}/jms"/>
+    <copy todir="${jboss.deploy.dir}/jms">
+       <fileset dir="${jboss.deploy.dir}/${jms.postgres.dir}"/>
+    </copy>
+  </target>
+
+  <target name="setup-jms-backend-oracle">
+    <echo>Preparing the Oracle JMS configuration...</echo>
+    <move file="${jboss.deploy.dir}/${jms.oracle.dir}/hsqldb-jdbc-state-service.xml"
+          tofile="${jboss.deploy.dir}/${jms.oracle.dir}/rhq-jdbc-state-service.xml" verbose="true" failonerror="false"/>
+    <replace file="${jboss.deploy.dir}/${jms.oracle.dir}/rhq-jdbc-state-service.xml" token="DefaultDS" value="RHQDS"/>
+    <copy file="${jboss.home}/docs/examples/jms/oracle-jdbc2-service.xml"
+          tofile="${jboss.deploy.dir}/${jms.oracle.dir}/rhq-jdbc2-service.xml" verbose="true" failonerror="false" />
+    <replace file="${jboss.deploy.dir}/${jms.oracle.dir}/rhq-jdbc2-service.xml" token="OracleDS" value="RHQDS"/>
+  </target>
+
+  <target name="make-default-jms-backend-oracle" unless="use-postgres">
+    <echo>Oracle will be your JMS backend!</echo>
+    <delete dir="${jboss.deploy.dir}/jms"/>
+    <copy todir="${jboss.deploy.dir}/jms">
+       <fileset dir="${jboss.deploy.dir}/${jms.oracle.dir}"/>
+    </copy>
+  </target>
+
+  <target name="copy-dev-resources" if="copy.dev.resources">
+    <echo>Copying dev-only resources ...</echo>
+    <copy todir="${project.build.outputDirectory}" verbose="true">
+       <fileset dir="src/main/dev-resources"/>
+    </copy>
+  </target>
+
+  <!-- The prepare-release target must be run AFTER the resources:resources goal has executed. -->
+  <!-- (i.e. after rhq-ds.xml, rhq-server.sh, etc. have been copied over by the resources plugin) -->
+
+  <target name="prepare-release"
+          depends="initialize,
+                   fix-perms,
+                   developer-release-message,
+                   copy-dev-resources,
+                   deploy-postgres-ds,
+                   deploy-oracle-ds,
+                   undeploy-jmx-console,
+                   undeploy-mail-service,
+                   undeploy-alert-cache-service,
+                   undeploy-embedded-agent,
+                   undeploy-jms,
+                   undeploy-ear,
+                   undeploy-ds"
+          description="If this is a release build, make sure it is properly prepared." />
+
+  <target name="fix-perms">
+    <!-- Make sure shell scripts are readable and executable. -->
+    <chmod dir="${project.build.outputDirectory}/bin" includes="*.sh" perm="ug+x" verbose="true" />
+    <chmod dir="${jboss.home}/bin" includes="*.sh" perm="ug+x" verbose="true" />
+  </target>
+
+  <target name="developer-release-message" if="predeploy">
+     <echo>!!THIS IS A DEVELOPER CONTAINER BUILD - PRE-DEPLOYING RHQ SERVER!!</echo>
+  </target>
+
+  <target name="undeploy-jms" unless="predeploy">
+     <echo>Preparing for release - undeploying JMS...</echo>
+     <delete dir="${jboss.deploy.dir}/jms"/>
+  </target>
+
+  <target name="undeploy-jmx-console" unless="predeploy">
+     <echo>Preparing for release - undeploying JMX Console...</echo>
+     <!-- TODO: do we want to completely delete it? right now I just disable it so we can re-enable out in the field
+     <delete dir="${jboss.deploy.dir}/jmx-console.war" />
+     -->
+     <move file="${jboss.deploy.dir}/jmx-console.war" tofile="${jboss.deploy.dir}/jmx-console.war.rej"/>
+  </target>
+
+  <target name="undeploy-mail-service" unless="predeploy">
+     <echo>Preparing for release - undeploying Mail Service...</echo>
+     <move file="${jboss.deploy.dir}/mail-service.xml" tofile="${jboss.deploy.dir}/mail-service.xml.rej"/>
+  </target>
+
+  <target name="undeploy-alert-cache-service" unless="predeploy">
+     <echo>Preparing for release - undeploying Alert Cache Service...</echo>
+     <move file="${jboss.deploy.dir}/alert-cache-service.xml" tofile="${jboss.deploy.dir}/alert-cache-service.xml.rej"/>
+  </target>
+
+  <target name="undeploy-embedded-agent" unless="predeploy">
+     <echo>Preparing for release - undeploying Embedded Agent...</echo>
+     <move file="${jboss.deploy.dir}/rhq-agent.sar" tofile="${jboss.deploy.dir}/rhq-agent.sar.rej"/>
+  </target>
+
+  <target name="undeploy-ear" unless="predeploy">
+     <echo>Preparing for release - cleaning and undeploying EAR...</echo>
+     <delete>
+        <fileset dir="${jboss.deploy.dir}/${rhq.earName}/license" includes="*" />
+     </delete>
+     <delete>
+        <fileset dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins" includes="rhq-perftest-plugin*" />
+     </delete>
+     <move file="${jboss.deploy.dir}/${rhq.earName}" tofile="${jboss.deploy.dir}/${rhq.earName}.rej"/>
+  </target>
+
+  <target name="undeploy-ds" unless="predeploy">
+     <echo>Preparing for release - undeploying Data Source...</echo>
+     <move file="${jboss.deploy.dir}/rhq-ds.xml" tofile="${jboss.deploy.dir}/rhq-ds.xml.rej"/>
+  </target>
+
+  <target name="deploy-postgres-ds" if="predeploy-postgres">
+     <echo>Postgres will be your datasource backend!</echo>
+     <replace file="${jboss.deploy.dir}/rhq-ds.xml" token="@@@rhq-server-connection-checker-sql@@@" value=";"/>
+  </target>
+
+  <target name="deploy-oracle-ds" if="predeploy-oracle">
+     <echo>Oracle will be your datasource backend!</echo>
+     <replace file="${jboss.deploy.dir}/rhq-ds.xml" token="@@@rhq-server-connection-checker-sql@@@" value="select 1 from dual"/>
+  </target>
+
+</project>

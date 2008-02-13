@@ -1,0 +1,419 @@
+<?xml version="1.0"?>
+
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+         version="2.5">
+    
+   <display-name>RHQ</display-name>
+
+   <!--=== JSF RI ===-->
+   <listener>
+      <listener-class>com.sun.faces.config.ConfigureListener</listener-class>
+   </listener>
+ 
+   <!-- flags for debugging during development -->
+   <context-param>
+      <param-name>com.sun.faces.validateXml</param-name>
+      <param-value>false</param-value>
+   </context-param>
+   <context-param>
+      <param-name>com.sun.faces.verifyObjects</param-name>
+      <param-value>false</param-value>
+   </context-param>
+
+   <!--=== JSF non-impl-specific ===-->
+
+   <servlet>
+      <servlet-name>Faces Servlet</servlet-name>
+      <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+   </servlet>
+
+   <!-- serve Facelets pages (*.xhtml) via the JSF servlet -->   
+   <servlet-mapping>
+      <servlet-name>Faces Servlet</servlet-name>
+      <url-pattern>*.xhtml</url-pattern>
+   </servlet-mapping>
+
+   <!-- the suffix for files containing JSF content (default is ".jsp") -->
+   <context-param>
+      <param-name>javax.faces.DEFAULT_SUFFIX</param-name>
+      <param-value>.xhtml</param-value>
+   </context-param>
+   
+   <!-- only need this if we want jsp's and facelets together, but we don't right now
+   <context-param>
+      <param-name>facelets.VIEW_MAPPINGS</param-name>
+      <param-value>*.xhtml</param-value>
+   </context-param>
+    --> 
+
+   <!-- see http://www.jroller.com/page/mert?entry=state_saving_method_client_side for an explanation of the below param -->
+   <context-param>
+      <param-name>javax.faces.STATE_SAVING_METHOD</param-name>
+      <param-value>server</param-value>
+   </context-param>
+
+   <!-- list of additional JSF config files (in addition to /WEB-INF/faces-config.xml) -->
+   <context-param>
+      <param-name>javax.faces.CONFIG_FILES</param-name>
+      <param-value>
+         /WEB-INF/jsf-components/configuration-components.xml,
+         /WEB-INF/jsf-components/error-components.xml,
+         /WEB-INF/jsf-components/inventory-components.xml,
+         /WEB-INF/jsf-components/layout-components.xml,
+         /WEB-INF/jsf-components/navigation-components.xml,
+         /WEB-INF/jsf-components/pagination-components.xml,
+         /WEB-INF/jsf-components/sorting-components.xml,
+         /WEB-INF/jsf-components/table-components.xml,
+         /WEB-INF/jsf-components/trigger-components.xml,
+         /WEB-INF/jsf-components/upload-components.xml,
+
+         /WEB-INF/jsf-managed-beans/alert-beans.xml,
+         /WEB-INF/jsf-managed-beans/content-beans.xml,
+         /WEB-INF/jsf-managed-beans/autodiscovery-beans.xml,
+         /WEB-INF/jsf-managed-beans/configuration-beans.xml,
+         /WEB-INF/jsf-managed-beans/global-beans.xml,
+         /WEB-INF/jsf-managed-beans/inventory-beans.xml,
+         /WEB-INF/jsf-managed-beans/admin-beans.xml,
+         /WEB-INF/jsf-managed-beans/measurement-beans.xml,
+         /WEB-INF/jsf-managed-beans/operation-beans.xml,
+         /WEB-INF/jsf-managed-beans/test-beans.xml,
+         
+         /WEB-INF/jsf-managed-beans-definition/group-definition-beans.xml,
+
+         /WEB-INF/jsf-managed-beans-resource-group/inventory-beans.xml,
+         /WEB-INF/jsf-managed-beans-resource-group/operation-beans.xml,
+
+         /WEB-INF/jsf-navigation/alert-navigation.xml,
+         /WEB-INF/jsf-navigation/content-navigation.xml,
+         /WEB-INF/jsf-navigation/autodiscovery-navigation.xml,
+         /WEB-INF/jsf-navigation/configuration-navigation.xml,
+         /WEB-INF/jsf-navigation/inventory-navigation.xml,
+         /WEB-INF/jsf-navigation/admin-navigation.xml,
+         /WEB-INF/jsf-navigation/operation-navigation.xml,
+         /WEB-INF/jsf-navigation/test-navigation.xml,
+
+         /WEB-INF/jsf-navigation-definition/group-definition-navigation.xml,
+         
+         /WEB-INF/jsf-navigation-resource-group/inventory-navigation.xml,
+         /WEB-INF/jsf-navigation-resource-group/operation-navigation.xml,
+
+         /WEB-INF/jsf-converters/common-converters.xml,
+         /WEB-INF/jsf-converters/content-converters.xml,
+         /WEB-INF/jsf-converters/inventory-converters.xml
+         
+      </param-value>
+   </context-param>
+
+   <!--
+   <servlet-mapping>
+      <servlet-name>Faces Servlet</servlet-name>
+      <url-pattern>*.seam</url-pattern>
+   </servlet-mapping>
+   -->
+
+   <!--=== Facelets ===-->
+
+   <!-- load our taglibs (value must be semicolon-delimited) -->
+   <context-param>
+      <param-name>facelets.LIBRARIES</param-name>
+      <param-value>/WEB-INF/tags/on.component.taglib.xml;/WEB-INF/tags/on.function.taglib.xml</param-value>
+   </context-param>
+
+   <!-- enable special debug output for development -->
+   <context-param>
+      <param-name>facelets.DEVELOPMENT</param-name>
+      <param-value>true</param-value>
+   </context-param>
+
+   <!--=== RichFaces/Ajax4JSF ===-->
+   <!-- 
+   <context-param>
+      <param-name>org.ajax4jsf.VIEW_HANDLERS</param-name>
+      <param-value>com.sun.facelets.FaceletViewHandler</param-value>
+   </context-param>
+    -->
+
+   <!-- name of the CSS skin used by RichFaces (default value is "DEFAULT") -->
+   <context-param>
+      <param-name>org.richfaces.SKIN</param-name>
+      <param-value>DEFAULT</param-value>
+   </context-param>
+
+   <!--
+   <!- -=== Seam ===- ->
+   <listener>
+      <listener-class>org.jboss.seam.servlet.SeamListener</listener-class>
+   </listener>
+   -->
+
+   <!-- everything else -->
+
+   <context-param>
+      <param-name>javax.servlet.jsp.jstl.fmt.localizationContext</param-name>
+      <param-value>ApplicationResources</param-value>
+   </context-param>
+
+   <context-param>
+      <param-name>context-constants</param-name>
+      <param-value>org.rhq.enterprise.gui.legacy.Constants</param-value>
+   </context-param>
+
+   <context-param>
+      <param-name>RtEnabled</param-name>
+      <param-value>false</param-value>
+   </context-param>
+
+   <!-- Allows upload of files through JSF (i.e. software uploads) -->
+   <filter>
+      <filter-name>MultipartFilter</filter-name>
+      <filter-class>org.rhq.enterprise.gui.common.upload.MultipartFilter</filter-class>
+   </filter>
+   <filter-mapping>
+      <filter-name>MultipartFilter</filter-name>
+      <url-pattern>/rhq/resource/*</url-pattern>
+   </filter-mapping>
+
+   
+   <!-- The stuff needed for ajax4jsf / richfaces -->
+   <filter> 
+      <display-name>Ajax4jsf Filter</display-name> 
+      <filter-name>ajax4jsf</filter-name> 
+      <filter-class>org.ajax4jsf.Filter</filter-class> 
+      <init-param>
+         <param-name>forceparser</param-name>
+         <param-value>false</param-value>
+      </init-param> 
+   </filter> 
+
+   <filter-mapping> 
+      <filter-name>ajax4jsf</filter-name> 
+      <servlet-name>Faces Servlet</servlet-name>
+      <dispatcher>REQUEST</dispatcher>
+      <dispatcher>FORWARD</dispatcher>
+      <dispatcher>INCLUDE</dispatcher>
+   </filter-mapping>
+   
+   <!-- The Authentication Filter to support our custom login stuff -->
+   <filter>
+      <filter-name>Authentication-Filter</filter-name>
+      <filter-class>
+         org.rhq.enterprise.gui.legacy.AuthenticationFilter
+      </filter-class>
+   </filter>
+   <filter-mapping>
+      <filter-name>Authentication-Filter</filter-name>
+      <url-pattern>*.xhtml</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Authentication-Filter</filter-name>
+      <url-pattern>*.do</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Authentication-Filter</filter-name>
+      <url-pattern>/admin/sql.jsp</url-pattern>
+   </filter-mapping>
+
+   <!-- This is the object that reads the /WEB-INF/rhq-server-internals.properties for internal configuration settings. -->
+   <listener>
+      <listener-class>org.rhq.enterprise.gui.startup.Configurator</listener-class>
+   </listener>
+
+   <!-- This is the object that finishes the RHQ Server startup initialization. -->
+   <servlet>
+      <servlet-name>initializer</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.startup.StartupServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+   </servlet>
+
+   <!-- standalone servlets used by the JSPs -->
+   <servlet>
+      <servlet-name>navMapImage</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.common.servlet.NavMapImageServlet</servlet-class>
+      <load-on-startup>3</load-on-startup>
+   </servlet>
+   <servlet>
+      <servlet-name>availHealthChart</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.common.servlet.AvailHealthChartServlet</servlet-class>
+      <load-on-startup>3</load-on-startup>
+   </servlet>
+   <servlet>
+      <servlet-name>usageHealthChart</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.common.servlet.UsageHealthChartServlet</servlet-class>
+      <load-on-startup>3</load-on-startup>
+   </servlet>
+   <servlet>
+      <servlet-name>utilizationHealthChart</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.common.servlet.UtilizationHealthChartServlet</servlet-class>
+      <load-on-startup>3</load-on-startup>
+   </servlet>
+   <servlet>
+      <servlet-name>highLowChart</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.common.servlet.HighLowChartServlet</servlet-class>
+      <load-on-startup>3</load-on-startup>
+   </servlet>
+   <servlet>
+      <servlet-name>metricChart</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.common.servlet.MetricChartServlet</servlet-class>
+      <load-on-startup>3</load-on-startup>
+   </servlet>
+   <servlet>
+      <servlet-name>performanceChart</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.common.servlet.PerformanceChartServlet</servlet-class>
+      <load-on-startup>3</load-on-startup>
+   </servlet>
+   <servlet>
+      <servlet-name>availStoplight</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.common.servlet.AvailabilityStoplightChartServlet</servlet-class>
+      <load-on-startup>3</load-on-startup>
+   </servlet>
+
+   <!-- Struts ActionServlet configuration (with debugging) -->
+   <servlet>
+      <servlet-name>action</servlet-name>
+      <servlet-class>org.apache.struts.action.ActionServlet</servlet-class>
+      <init-param>
+         <param-name>config</param-name>
+         <param-value>/WEB-INF/struts-config.xml</param-value>
+      </init-param>
+      <init-param>
+         <param-name>debug</param-name>
+         <param-value>0</param-value>
+      </init-param>
+      <init-param>
+         <param-name>detail</param-name>
+         <param-value>0</param-value>
+      </init-param>
+      <init-param>
+         <param-name>validate</param-name>
+         <param-value>true</param-value>
+      </init-param>
+      <init-param>
+         <param-name>mapping</param-name>
+         <param-value>org.rhq.enterprise.gui.legacy.action.BaseActionMapping</param-value>
+      </init-param>
+      <load-on-startup>2</load-on-startup>
+   </servlet>
+
+   <!-- standalone servlets used by the JSPs -->
+   <servlet-mapping>
+      <servlet-name>navMapImage</servlet-name>
+      <url-pattern>/resource/NavMapImage</url-pattern>
+   </servlet-mapping>
+   <servlet-mapping>
+      <servlet-name>availHealthChart</servlet-name>
+      <url-pattern>/resource/AvailHealthChart</url-pattern>
+   </servlet-mapping>
+   <servlet-mapping>
+      <servlet-name>usageHealthChart</servlet-name>
+      <url-pattern>/resource/UsageHealthChart</url-pattern>
+   </servlet-mapping>
+   <servlet-mapping>
+      <servlet-name>utilizationHealthChart</servlet-name>
+      <url-pattern>/resource/UtilizationHealthChart</url-pattern>
+   </servlet-mapping>
+   <servlet-mapping>
+      <servlet-name>highLowChart</servlet-name>
+      <url-pattern>/resource/HighLowChart</url-pattern>
+   </servlet-mapping>
+   <servlet-mapping>
+      <servlet-name>metricChart</servlet-name>
+      <url-pattern>/resource/MetricChart</url-pattern>
+   </servlet-mapping>
+   <servlet-mapping>
+      <servlet-name>performanceChart</servlet-name>
+      <url-pattern>/resource/PerformanceChart</url-pattern>
+   </servlet-mapping>
+   <servlet-mapping>
+      <servlet-name>availStoplight</servlet-name>
+      <url-pattern>/resource/AvailStoplight</url-pattern>
+   </servlet-mapping>
+
+   <!-- mappings for Struts ActionServlet -->
+   <servlet-mapping>
+      <servlet-name>action</servlet-name>
+      <url-pattern>*.rss</url-pattern>
+   </servlet-mapping>
+   <servlet-mapping>
+      <servlet-name>action</servlet-name>
+      <url-pattern>*.do</url-pattern>
+   </servlet-mapping>
+   <session-config>
+      <session-timeout>30</session-timeout>
+   </session-config>
+
+   <welcome-file-list>
+      <welcome-file>index.xhtml</welcome-file>
+      <welcome-file>Start.do</welcome-file>
+      <welcome-file>index.jsp</welcome-file>
+      <welcome-file>index.html</welcome-file>
+   </welcome-file-list>
+
+   <error-page>
+      <error-code>404</error-code>
+      <location>/common/GenericError.jsp</location>
+   </error-page>
+
+   <!----><!-- Struts Tag Library Descriptors --><!--
+  <taglib>
+    <taglib-uri>struts-bean</taglib-uri>
+    <taglib-location>/WEB-INF/tld/struts-bean.tld</taglib-location>
+  </taglib>
+  <taglib>
+    <taglib-uri>struts-html</taglib-uri>
+    <taglib-location>/WEB-INF/tld/struts-html.tld</taglib-location>
+  </taglib>
+  <taglib>
+    <taglib-uri>struts-logic</taglib-uri>
+    <taglib-location>/WEB-INF/tld/struts-logic.tld</taglib-location>
+  </taglib>
+  <taglib>
+    <taglib-uri>struts-nested</taglib-uri>
+    <taglib-location>/WEB-INF/tld/struts-nested.tld</taglib-location>
+  </taglib>
+  <taglib>
+    <taglib-uri>struts-tiles</taglib-uri>
+    <taglib-location>/WEB-INF/tld/struts-tiles.tld</taglib-location>
+  </taglib>
+--><!--
+  <taglib>
+    <taglib-uri>struts-validator</taglib-uri>
+    <taglib-location>/WEB-INF/tld/struts-validator.tld</taglib-location>
+  </taglib>
+--><!--
+  <taglib>
+    <taglib-uri>struts-html-el</taglib-uri>
+    <taglib-location>/WEB-INF/tld/struts-html-el.tld</taglib-location>
+  </taglib>
+  <taglib>
+    <taglib-uri>struts-logic-el</taglib-uri>
+    <taglib-location>/WEB-INF/tld/struts-logic-el.tld</taglib-location>
+  </taglib>
+  <taglib>
+    <taglib-uri>jstl-c</taglib-uri>
+    <taglib-location>/WEB-INF/tld/c.tld</taglib-location>
+  </taglib>
+  <taglib>
+    <taglib-uri>jstl-c-rt</taglib-uri>
+    <taglib-location>/WEB-INF/tld/c-rt.tld</taglib-location>
+  </taglib>
+  <taglib>
+    <taglib-uri>jstl-fmt</taglib-uri>
+    <taglib-location>/WEB-INF/tld/fmt.tld</taglib-location>
+  </taglib>
+  <taglib>
+    <taglib-uri>hq</taglib-uri>
+    <taglib-location>/WEB-INF/tld/hq.tld</taglib-location>
+  </taglib>
+  <taglib>
+    <taglib-uri>display</taglib-uri>
+    <taglib-location>/WEB-INF/tld/display.tld</taglib-location>
+  </taglib>
+  <taglib>
+    <taglib-uri>rt</taglib-uri>
+    <taglib-location>/WEB-INF/tld/rt.tld</taglib-location>
+  </taglib>-->
+
+</web-app>

@@ -27,8 +27,6 @@
 	<classpathentry kind="src" path="modules/enterprise/server/jar/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/disk/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/yum/src/main/java"/>
-	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/main/java"/>
-	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/sars/agent-sar/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/safe-invoker/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/portal-war/src/main/java"/>
@@ -38,24 +36,13 @@
 	<classpathentry kind="src" path="modules/plugins/platform/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/rhq-agent/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/rhq-agent/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/jboss-as/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/jboss-as/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/hibernate/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/tomcat/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/database/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/oracle/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/oracle/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/postgres/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/postgres/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/jmx/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jmx/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/virt/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/perftest/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/perftest/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/perftest/target/generated-sources/xjc"/>
 	<classpathentry kind="src" path="etc/custom-plugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/custom-serverplugin/src/main/java"/>
-	<classpathentry kind="src" path="etc/perftest2/src/main/java"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/comm/src/test/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/main/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/test/resources"/>

@@ -223,24 +223,6 @@
 
                  <artifactItem>
                    <groupId>org.rhq</groupId>
-                   <artifactId>rhq-jbossas-plugin</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
-
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
-                   <artifactId>rhq-tomcat-plugin</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
-
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
-                   <artifactId>rhq-hibernate-plugin</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
-
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
                    <artifactId>rhq-apache-plugin</artifactId>
                    <version>${project.version}</version>
                  </artifactItem>
@@ -254,12 +236,6 @@
                  <artifactItem>
                    <groupId>org.rhq</groupId>
                    <artifactId>rhq-database-plugin</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
-
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
-                   <artifactId>rhq-server-plugin</artifactId>
                    <version>${project.version}</version>
                  </artifactItem>
 

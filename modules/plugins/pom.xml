@@ -77,42 +77,16 @@
 
   <modules>
 
-    <!-- plugins that are used by both enterprise and embedded -->
     <module>platform</module>
     <module>jmx</module>    
-    <module>jboss-as-5</module>
-    
-    <!-- plugins that are used only by enterprise -->
     <module>rhq-agent</module>
-    <module>rhq-server</module>
-    <module>tomcat</module>
-    <module>jboss-as</module>    
-    <module>hibernate</module>
     <module>apache</module>
-    <module>perftest</module>
-    <module>custom-jmx</module>
-
     <module>database</module>
     <module>postgres</module>
 
   </modules>
 
   <profiles>
-
-    <profile>
-      <id>embedded</id>
-      <activation>
-        <property>
-          <name>embedded</name>
-        </property>
-      </activation>
-      <!-- plugins that are used only by embedded -->
-      <modules>
-        <module>mock-jboss</module>
-        <module>jboss-as-5</module>
-        <module>jboss-as-5/testsuite</module>
-      </modules>
-    </profile>
 
     <profile>
       <id>prod</id>
@@ -123,7 +97,6 @@
       </activation>
       <!-- plugins that should only be built for production builds -->
       <modules>
-        <module>oracle</module>
       </modules>
     </profile>
 

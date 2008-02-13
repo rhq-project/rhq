@@ -69,7 +69,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/snmp4j/snmp4j/1.7.1/snmp4j-1.7.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/log4j/log4j/1.2.14/log4j-1.2.14.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/tomcat/tomcat-jk/4.1.31/tomcat-jk-4.1.31.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/ojdbc14/ojdbc14/10.2.0.3.0/ojdbc14-10.2.0.3.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jdom/jdom/1.0/jdom-1.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-collections/commons-collections/3.1/commons-collections-3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/persistence/persistence-api/1.0/persistence-api-1.0.jar"/>
@@ -103,14 +102,13 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/framework/richfaces-api/3.1.3.GA/richfaces-api-3.1.3.GA.jar" sourcepath="/M2_REPO/org/richfaces/framework/richfaces-api/3.1.3.GA/richfaces-api-3.1.3.GA-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/framework/richfaces-impl/3.1.3.GA/richfaces-impl-3.1.3.GA.jar" sourcepath="/M2_REPO/org/richfaces/framework/richfaces-impl/3.1.3.GA/richfaces-impl-3.1.3.GA-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/ui/richfaces-ui/3.1.3.GA/richfaces-ui-3.1.3.GA.jar" sourcepath="/M2_REPO/org/richfaces/ui/richfaces-ui/3.1.3.GA/richfaces-ui-3.1.3.GA-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/postgresql/postgresql/8.2-507.jdbc3/postgresql-8.2-507.jdbc3.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/postgresql/postgresql/8.3-603.jdbc3/postgresql-8.3-603.jdbc3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jboss-cache/1.4.1.SP3/jboss-cache-1.4.1.SP3.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/hyperic/sigar/1.4.0.0/sigar-1.4.0.0.jar" sourcepath="/M2_REPO/sigar/sigar/1.4.0.0/sigar-1.4.0.0-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/hyperic/sigar/1.5.0.1/sigar-1.5.0.1.jar" sourcepath="/M2_REPO/sigar/sigar/1.5.0.1/sigar-1.5.0.1-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jboss-jaxws/2.0.1.SP2/jboss-jaxws-2.0.1.SP2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jbossws-spi/1.0.0.GA/jbossws-spi-1.0.0.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jbossws-client/2.0.1.SP2/jbossws-client-2.0.1.SP2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-project/2.0.8/maven-project-2.0.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-plugin-api/2.0.8/maven-plugin-api-2.0.8.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/com/sun/jna/jna/3.0.1/jna-3.0.1.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

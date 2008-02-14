@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="CustomJmx"
+        displayName="Custom JMX Plugin"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="JMX"/>
+
+   <!--
+      This service represents your custom MBean.
+      You can have any number of these defined.
+      ***Do not change the "discovery" and "class" attribute values.***
+   -->
+   <service name="My Custom Service"
+            description="A custom service representing a single custom MBean"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            class="org.rhq.plugins.jmx.MBeanResourceComponent">
+
+   
+      <!--
+         Denotes that the custom MBean can be found in any custom JMX server
+         detected via EMS or it can be in any Tomcat or JBossAS resource.
+         You typically do not have to change these, unless you want to add
+         new types where your service can run inside.
+      -->
+      <runs-inside>
+         <parent-resource-type name="JMX Server" plugin="JMX"/>
+         <parent-resource-type name="Tomcat Server" plugin="Tomcat"/>
+         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+      </runs-inside>
+      
+      <!-- Define the object name of your custom MBean -->
+      <plugin-configuration>
+         <c:simple-property name="objectName"
+                            default="myDomain:type=myMBean"
+                            readOnly="true"/>
+      </plugin-configuration>
+
+      <!--
+         Define any operations your custom MBean exposes and that you want to invoke via RHQ.
+      -->
+      <operation name="mbeanOperationName"
+                 displayName="Friendly Operation Name"
+                 description="This describes what the MBean's operation does"/>
+                 
+      <!--
+         Define any attributes your custom MBean exposes and that you want monitored via RHQ.
+      -->
+      <metric property="mbeanAttributeName"
+              displayName="Friendly Attribute Name"
+              defaultOn="true"
+              category="performance"
+              description="This describes what the MBean's attribute means"/>
+
+   </service>
+
+</plugin>

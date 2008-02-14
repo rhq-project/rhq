@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.legacy.taglib.display;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.legacy.ParamConstants;

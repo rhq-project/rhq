@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.inventory.resource;
 
+import javax.faces.application.FacesMessage;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;

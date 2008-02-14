@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.inventory.resource;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;

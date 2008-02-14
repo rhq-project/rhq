@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.inventory.resource;
 
+import javax.faces.application.FacesMessage;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;

@@ -18,6 +18,12 @@
  */
 package org.rhq.enterprise.gui.common.framework;
 
+import javax.el.ValueExpression;
+import javax.faces.application.ViewHandler;
+import javax.faces.context.FacesContext;
+
+import com.sun.facelets.FaceletViewHandler;
+
 import org.rhq.core.gui.util.FacesExpressionUtility;
 
 /**

@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.inventory.resource;
 
+import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;

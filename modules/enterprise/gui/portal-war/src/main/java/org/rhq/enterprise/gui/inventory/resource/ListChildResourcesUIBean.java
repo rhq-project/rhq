@@ -21,6 +21,9 @@ package org.rhq.enterprise.gui.inventory.resource;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.faces.model.DataModel;
+import javax.faces.model.SelectItem;
+
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;

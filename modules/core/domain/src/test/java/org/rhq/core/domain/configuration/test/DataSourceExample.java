@@ -18,6 +18,8 @@
  */
 package org.rhq.core.domain.configuration.test;
 
+import org.testng.annotations.Test;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;

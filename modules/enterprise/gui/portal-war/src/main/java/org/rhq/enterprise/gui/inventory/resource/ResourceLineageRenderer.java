@@ -21,6 +21,11 @@ package org.rhq.enterprise.gui.inventory.resource;
 import java.io.IOException;
 import java.util.List;
 
+import javax.faces.component.UIComponent;
+import javax.faces.context.FacesContext;
+import javax.faces.context.ResponseWriter;
+import javax.faces.render.Renderer;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -42,6 +47,7 @@ public class ResourceLineageRenderer extends Renderer {
      * @param facesContext the JSF context for the current request
      * @param component    the {@link ResourceLineageComponent} to be encoded
      */
+    @Override
     public void encodeBegin(FacesContext facesContext, UIComponent component) throws IOException {
         ResourceLineageComponent resourceLineage = (ResourceLineageComponent) component;
         ResponseWriter writer = facesContext.getResponseWriter();

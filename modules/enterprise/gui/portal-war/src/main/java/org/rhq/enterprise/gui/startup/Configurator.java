@@ -24,13 +24,18 @@ import java.util.Enumeration;
 import java.util.Properties;
 import java.util.logging.LogManager;
 
+import javax.servlet.ServletContext;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import sun.rmi.runtime.Log;
 
 /**
  * This is a servlet context listener defined in web.xml that loads several files and puts data in the servlet context:

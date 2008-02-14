@@ -1,4 +1,4 @@
-RHQ includes a number of third-party open source components.
+RHQ includes many third-party open source components.
 The list below identifies the community or organization and
 links to their appropriate license terms.
 

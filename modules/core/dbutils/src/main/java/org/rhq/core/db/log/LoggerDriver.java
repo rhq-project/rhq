@@ -43,7 +43,7 @@ public class LoggerDriver implements Driver {
     /**
      * The JDBC URL prefix that indicates this JDBC driver. The rest of the URL is the "real" JDBC URL.
      */
-    public static final String JDBC_URL_PREFIX = "jdbc:jon-log:";
+    public static final String JDBC_URL_PREFIX = "jdbc:rhq-log:";
 
     static {
         try {

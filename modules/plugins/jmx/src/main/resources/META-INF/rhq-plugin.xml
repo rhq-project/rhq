@@ -12,7 +12,8 @@
 
 
    <server name="JMX Server" discovery="JMXDiscoveryComponent" class="JMXServerComponent"
-           description="Generic JMX Server">
+           description="Generic JMX Server"
+           supportsManualAdd="true" createDeletePolicy="neither">
 
       <!-- Properties are connection/lookup configurations. They are values that the
          plugin components need to connect and interact with the resource. -->

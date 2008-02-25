@@ -24,10 +24,13 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+
 import org.jetbrains.annotations.NotNull;
+
 import org.jboss.cache.aop.PojoCacheMBean;
 import org.jboss.mx.util.MBeanProxyExt;
 import org.jboss.mx.util.MBeanServerLocator;
+
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertConditionManagerBean;
@@ -76,6 +79,8 @@ import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerBean;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
+import org.rhq.enterprise.server.event.EventManagerBean;
+import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementCompressionManagerBean;
@@ -230,6 +235,10 @@ public final class LookupUtil {
 
     public static EmailManagerLocal getEmailManagerBean() {
         return lookupLocal(EmailManagerBean.class);
+    }
+
+    public static EventManagerLocal getEventManager() {
+        return lookupLocal(EventManagerBean.class);
     }
 
     public static GroupDefinitionManagerLocal getGroupDefinitionManager() {
@@ -422,4 +431,5 @@ public final class LookupUtil {
         pcMBean = (PojoCacheMBean) MBeanProxyExt.create(PojoCacheMBean.class, cacheName, jBossMBeanServer);
         return pcMBean;
     }
+
 }

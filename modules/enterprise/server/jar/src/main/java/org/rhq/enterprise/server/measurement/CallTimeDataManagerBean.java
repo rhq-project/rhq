@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -32,11 +33,12 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.sql.DataSource;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.clientapi.util.TimeUtil;
-import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
@@ -76,10 +78,6 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
     private static final String CALLTIME_VALUE_PURGE_STATEMENT = "DELETE FROM " + DATA_VALUE_TABLE_NAME
         + " WHERE end_time < ?";
 
-    private static final String POSTGRES_NEXTVAL_SQL = "(SELECT nextval('%s_id_seq'::text))";
-
-    private static final String ORACLE_NEXTVAL_SQL = "%s_id_seq.nextval";
-
     private final Log log = LogFactory.getLog(CallTimeDataManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -100,16 +98,15 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
         Connection conn = null;
         try {
             conn = ds.getConnection();
-            String nextvalSql = getNextValSql(conn);
 
             // First make sure a single row exists in the key table for each reported call destination.
-            insertCallTimeDataKeys(callTimeDataSet, conn, nextvalSql);
+            insertCallTimeDataKeys(callTimeDataSet, conn);
 
             // Delete any existing rows that have the same key and begin time as the data about to be inserted.
             deleteRedundantCallTimeDataValues(callTimeDataSet, conn);
 
             // Finally, add the stats themselves to the value table.
-            insertCallTimeDataValues(callTimeDataSet, conn, nextvalSql);
+            insertCallTimeDataValues(callTimeDataSet, conn);
         } catch (SQLException e) {
             logSQLException(e);
         } catch (Throwable t) {
@@ -197,9 +194,8 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
             + deleteUpToTime + " from table " + DATA_VALUE_TABLE_NAME + " (" + elapsedMillis + " ms)");
     }
 
-    private void insertCallTimeDataKeys(Set<CallTimeData> callTimeDataSet, Connection conn, String nextvalSql)
-        throws SQLException {
-        String keyNextvalSql = String.format(nextvalSql, "RHQ_calltime_data_key");
+    private void insertCallTimeDataKeys(Set<CallTimeData> callTimeDataSet, Connection conn) throws SQLException {
+        String keyNextvalSql = JDBCUtil.getNextValSql(conn, "RHQ_calltime_data_key");
         String insertKeySql = String.format(CALLTIME_KEY_INSERT_STATEMENT, keyNextvalSql);
         PreparedStatement ps = null;
         int[] results;
@@ -275,9 +271,9 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
                 + " redundant call-time data value rows that were superceded by data in the measurement report currently being processed.");
     }
 
-    private void insertCallTimeDataValues(Set<CallTimeData> callTimeDataSet, Connection conn, String nextvalSql)
-        throws SQLException {
-        String valueNextvalSql = String.format(nextvalSql, "RHQ_calltime_data_value");
+    private void insertCallTimeDataValues(Set<CallTimeData> callTimeDataSet, Connection conn) throws SQLException {
+
+        String valueNextvalSql = JDBCUtil.getNextValSql(conn, "RHQ_calltime_data_value");
         String insertValueSql = String.format(CALLTIME_VALUE_INSERT_STATEMENT, valueNextvalSql);
         PreparedStatement ps = null;
         int[] results;
@@ -327,25 +323,5 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
         }
 
         log.error("Failed to persist call-time data - causes: " + causes, mainException);
-    }
-
-    private String getNextValSql(Connection conn) {
-        String nextvalSql;
-        try {
-            if (DatabaseTypeFactory.isPostgres(conn)) {
-                nextvalSql = POSTGRES_NEXTVAL_SQL;
-            } else if (DatabaseTypeFactory.isOracle(conn)) {
-                nextvalSql = ORACLE_NEXTVAL_SQL;
-            } else {
-                JDBCUtil.safeClose(conn);
-                throw new IllegalStateException("Unsupported database type: "
-                    + DatabaseTypeFactory.getDatabaseType(conn));
-            }
-        } catch (Exception e) {
-            JDBCUtil.safeClose(conn);
-            throw new IllegalStateException("Failed to determine database type.");
-        }
-
-        return nextvalSql;
     }
 }

@@ -76,7 +76,7 @@ final class LicenseTag implements XmlTagHandler, XmlAttrHandler {
     }
 
     protected String generateKey() {
-        String our_salt = LRES.get(LRES.our_salt);
+        String our_salt = LRES.get(LRES.getOurSalt());
         try {
             return hash(String.valueOf(our_salt + "@" + System.currentTimeMillis()));
         } catch (Exception e) {

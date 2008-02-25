@@ -14,7 +14,7 @@
   <packaging>pom</packaging>
 
   <name>RHQ Plugins</name>
-  <description>parent POM for all JON plugins</description>
+  <description>parent POM for all RHQ plugins</description>
 
   <scm>
     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/</connection>
@@ -61,7 +61,7 @@
       <groupId>javax.persistence</groupId>
       <artifactId>persistence-api</artifactId>
       <version>1.0</version>
-      <scope>provided</scope> <!-- by ON container -->
+      <scope>provided</scope> <!-- by RHQ container -->
     </dependency>
 
     <!-- TODO: This is a fix for the Javac bug requiring annotations to be
@@ -70,7 +70,7 @@
       <groupId>jboss.jboss-embeddable-ejb3</groupId>
       <artifactId>hibernate-all</artifactId>
       <version>1.0.0.Alpha9</version>
-      <scope>provided</scope> <!-- by ON container -->
+      <scope>provided</scope> <!-- by RHQ container -->
     </dependency>
 
   </dependencies>

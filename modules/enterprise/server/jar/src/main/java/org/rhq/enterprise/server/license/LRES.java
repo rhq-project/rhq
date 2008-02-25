@@ -191,7 +191,7 @@ final class LRES {
     static final String ERR_TRIAL_VALIDATION = "WX];-\\$(Xf30T.wxbaYIG5>f+:f.E4}9};]5miU}>o&^i7P|\"5^i/ZTEtHit8D.5jgVe?$5.BAY;G5H8t)`&(owo`>,)^}x.T4E48V>D$(5iUr;.7R!";
 
     // salt used to calculate md5 keys for license terms - gibberish munged or not
-    static final String our_salt = "RHQqBr,f{,{XO#P)2di^<}=KaLmhrUB3\"6Q_}E%Z7%d3FP$,E:DN/CEBdW}F\\D)1+5";
+    private static final String our_salt = "RHQqBr,f{,{XO#P)2di^<}=KaLmhrUB3\"6Q_}E%Z7%d3FP$,E:DN/CEBdW}F\\D)1+5";
 
     // "Cannot register new platform due to licensing restrictions.  Contact support to license additional platforms.  Current license permits a maximum platform count of "
     static final String ERR_MSG_TOOMANYPLATFORMS = "tR5o~z4. jP|zW.X5SHIdDR8z~m>)()S-zk)GUV<U~osj/{=~wzUV.$k7y+/-'k7jiV.I~biAc{z4wK]qTnW7y2/:)XojUc}Dh)idA._k.N*#-I[bz,S}z4D}BS}cW)i2_Y$,mXi/YD?oN)3-GhEj.c{`4`K)o.Ik8X";
@@ -237,5 +237,9 @@ final class LRES {
 
     protected static String get(String res) {
         return License.unmunge(res);
+    }
+
+    static String getOurSalt() {
+        return our_salt;
     }
 }

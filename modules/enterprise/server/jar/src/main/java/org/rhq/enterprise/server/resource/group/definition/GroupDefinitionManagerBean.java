@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -31,8 +32,10 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -308,7 +311,13 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         throws GroupDefinitionDeleteException {
         ResourceGroup doomedGroup = entityManager.getReference(ResourceGroup.class, doomedGroupId);
         groupDefinition.removeResourceGroup(doomedGroup);
-
+        
+        /*
+         * using the group manager's delete method ensures that auditing data,
+         * such as completed operations, is correctly removed
+         */
+        //resourceGroupManager.deleteResourceGroup( subjectManager.getOverlord(), doomedGroupId );
+        
         try {
             entityManager.remove(doomedGroup);
         } catch (Exception e) {

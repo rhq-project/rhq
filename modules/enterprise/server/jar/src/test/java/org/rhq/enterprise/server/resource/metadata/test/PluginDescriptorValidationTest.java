@@ -20,20 +20,24 @@ package org.rhq.enterprise.server.resource.metadata.test;
 
 import java.io.File;
 import java.net.URL;
+
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
+
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 
 /**
  * Try to validate the rhq-plugin.xml plugin descriptors
  *
- * @author Heiko W. Rupp TODO get the plugins dynamically - see comment in {@link #testPluginDescriptors()}
+ * @author Heiko W. Rupp 
+ * TODO get the plugins dynamically - see comment in {@link #testPluginDescriptors()}
  */
 public class PluginDescriptorValidationTest extends TestBase {
     // we stand in modules/enterprise/jar
@@ -43,10 +47,7 @@ public class PluginDescriptorValidationTest extends TestBase {
     /**
      * Plugins we want to test. Note that they need to appear here in the correct dependency order.
      */
-    String[] plugins = { "database", "postgres", "oracle", "platform", "perftest", "jmx", "custom-jmx", "tomcat",
-
-    //"mock-jboss",
-        "rhq-agent", "rhq-server", "jboss-as", "jboss-as-5", "hibernate", "apache" };
+    String[] plugins = { "database", "postgres", "platform", "jmx", "rhq-agent", "apache" };
 
     @BeforeSuite
     @Override

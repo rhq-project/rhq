@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.measurement.uibean;
 
 import java.io.Serializable;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -72,7 +73,7 @@ public class MetricDisplayValue implements Serializable {
     @Override
     public String toString() {
         if (valueFmt != null) {
-            return valueFmt.toString();
+            return valueFmt;
         }
 
         log.trace("toString() returning unformatted value");

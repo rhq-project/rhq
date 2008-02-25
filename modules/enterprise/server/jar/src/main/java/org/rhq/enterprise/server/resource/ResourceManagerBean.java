@@ -26,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -35,16 +36,20 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.quartz.SchedulerException;
+
 import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.ResourceChannel;
-import org.rhq.core.domain.event.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -467,40 +472,37 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceWithAvailability> getResourcesByParentAndType(Subject user, Resource parent,
-        ResourceType type, PageControl pageControl) {
-        pageControl.initDefaultOrderingField("res.name");
+    public List<ResourceWithAvailability> getResourcesByParentAndType(Subject user, Resource parent, ResourceType type) {
 
-        Query queryCount;
         Query query;
         if (authorizationManager.isInventoryManager(user)) {
-            queryCount = PersistenceUtility.createCountQuery(entityManager,
-                Resource.QUERY_FIND_BY_PARENT_AND_TYPE_ADMIN);
-            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                Resource.QUERY_FIND_BY_PARENT_AND_TYPE_ADMIN, pageControl);
+            query = entityManager.createNamedQuery(Resource.QUERY_FIND_BY_PARENT_AND_TYPE_ADMIN);
         } else {
-            queryCount = PersistenceUtility.createCountQuery(entityManager, Resource.QUERY_FIND_BY_PARENT_AND_TYPE);
-            queryCount.setParameter("subject", user);
-            query = PersistenceUtility.createQueryWithOrderBy(entityManager, Resource.QUERY_FIND_BY_PARENT_AND_TYPE,
-                pageControl);
+            query = entityManager.createNamedQuery(Resource.QUERY_FIND_BY_PARENT_AND_TYPE);
             query.setParameter("subject", user);
         }
-
-        queryCount.setParameter("parent", parent);
-        queryCount.setParameter("type", type);
-        queryCount.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
-        long count = (Long) queryCount.getSingleResult();
 
         query.setParameter("parent", parent);
         query.setParameter("type", type);
         query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
-        List<ResourceWithAvailability> results = query.getResultList();
 
-        return new PageList<ResourceWithAvailability>(results, (int) count, pageControl);
+        // We are not doing a query with constructor here, as this would fire a select per
+        // resource and row. So we need to construct the ResourceWithAvailability objects ourselves.
+        List<Object[]> objs = query.getResultList();
+        List<ResourceWithAvailability> results = new ArrayList<ResourceWithAvailability>(objs.size());
+        for (Object[] ob : objs) {
+            Resource r = (Resource) ob[0];
+            AvailabilityType at = (AvailabilityType) ob[1];
+            ResourceWithAvailability rwa = new ResourceWithAvailability(r, at);
+            results.add(rwa);
+        }
+
+        return results;
     }
 
     @Nullable
     public Resource getParentResource(int resourceId) {
+
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource == null) {
             throw new ResourceNotFoundException(resourceId);
@@ -931,12 +933,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         query.setParameter("ids", resourceIds);
 
-        // TODO this query only loads the proxies, so that the loop
-        // below loads each rwa separately in an own select.
-        List<ResourceWithAvailability> rwas = query.getResultList();
-        for (ResourceWithAvailability rwa : rwas) {
+        // We are not doing a query with constructor here, as this would fire a select per
+        // resource and row. So we need to construct the ResourceWithAvailability objects ourselves. 
+        List<Object[]> objs = query.getResultList();
+        for (Object[] ob : objs) {
+            Resource r = (Resource) ob[0];
+            AvailabilityType at = (AvailabilityType) ob[1];
+            ResourceWithAvailability rwa = new ResourceWithAvailability(r, at);
+
             AutoGroupComposite comp = new AutoGroupComposite(oneComp);
-            List res = new ArrayList(1);
+            List res = new ArrayList(1); // hack to get around type safety
             res.add(rwa);
             comp.setResources(res);
             results.add(comp);
@@ -976,7 +982,15 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             query.setParameter("type", composite.getResourceType());
             query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
 
-            composite.setResources(query.getResultList());
+            List<Object[]> objs = query.getResultList();
+            List results = new ArrayList<ResourceWithAvailability>(objs.size());
+            for (Object[] ob : objs) {
+                Resource r = (Resource) ob[0];
+                AvailabilityType at = (AvailabilityType) ob[1];
+                ResourceWithAvailability rwa = new ResourceWithAvailability(r, at);
+                results.add(rwa);
+            }
+            composite.setResources(results);
         }
 
         List<AutoGroupComposite> fullComposites = new ArrayList<AutoGroupComposite>();

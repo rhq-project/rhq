@@ -34,7 +34,7 @@ abstract class LicenseTermTag implements XmlTagHandler, XmlAttrHandler, XmlTagEx
 
     protected LicenseTermTag(LicenseTag lt) {
         _license = lt.getLicense();
-        our_salt = LRES.get(LRES.our_salt);
+        our_salt = LRES.get(LRES.getOurSalt());
     }
 
     protected License getLicense() {

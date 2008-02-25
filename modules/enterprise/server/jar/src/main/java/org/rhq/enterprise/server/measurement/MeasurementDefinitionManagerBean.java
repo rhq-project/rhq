@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.measurement;
 
 import java.util.Arrays;
 import java.util.List;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -27,8 +28,10 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -84,6 +87,11 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
 
         // remove the measurement data
         measurementDataManager.removeGatheredMetricsForSchedules(schedules);
+
+        // remove the schedules 
+        for (MeasurementSchedule sched : schedules) {
+            entityManager.remove(sched);
+        }
 
         // finally remove the definition itself
         try {

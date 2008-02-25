@@ -23,10 +23,12 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.util.List;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.Swap;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -43,7 +45,6 @@ import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.ProcessInfo;
@@ -179,9 +180,6 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
         }
 
         return trait;
-    }
-
-    public void startOperationFacet(OperationContext context) {
     }
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {

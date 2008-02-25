@@ -24,8 +24,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageType;
@@ -43,7 +45,6 @@ import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.platform.content.RpmPackageDiscoveryDelegate;
 import org.rhq.plugins.platform.content.yum.PluginContext;
@@ -79,6 +80,8 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
          *    DebPackageDiscoveryDelegate.setSystemInfo(this.resourceContext.getSystemInformation());
          * DebPackageDiscoveryDelegate.checkExecutables();
          */
+
+        startWithContentContext(context.getContentContext());
     }
 
     @Override
@@ -87,7 +90,7 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
         super.stop();
     }
 
-    public void startContentFacet(ContentContext context) {
+    private void startWithContentContext(ContentContext context) {
         contentContext = context;
         try {
             YumContext yumContext = new PluginContext(yumPort(), resourceContext, context);
@@ -181,9 +184,6 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
                 report.addData(getDistroTrait(metricRequest));
             }
         }
-    }
-
-    public void startOperationFacet(OperationContext context) {
     }
 
     @Override

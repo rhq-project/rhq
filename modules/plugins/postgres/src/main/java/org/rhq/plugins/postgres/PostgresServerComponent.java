@@ -31,8 +31,10 @@ import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.PluginPermissionException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -54,7 +56,6 @@ import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.AggregateProcessInfo;
@@ -287,9 +288,6 @@ public class PostgresServerComponent implements DatabaseComponent, Configuration
      * { List<ProcessScanResult> matches = this.resourceContext.getNativeProcessesForType(); for (ProcessScanResult
      * process : matches) {   if (pgdata.equals(process.getProcessInfo().getEnvironmentProperty("PGDATA")))      return
      * process.getProcessInfo(); } return null;}*/
-
-    public void startOperationFacet(OperationContext context) {
-    }
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {

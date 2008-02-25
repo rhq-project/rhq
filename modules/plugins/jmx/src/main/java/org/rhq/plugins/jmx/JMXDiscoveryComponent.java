@@ -21,6 +21,8 @@ package org.rhq.plugins.jmx;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.local.LocalVMFinder;
@@ -93,6 +95,22 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
              * configuration.put(new PropertySimple(CONNECTION_TYPE, InternalVMTypeDescriptor.class.getName()));
              *
              *found.add(localVM);*/
+        }
+
+
+        if (context.getPluginConfigurations() != null) {
+            for (Configuration c : (List<Configuration>) context.getPluginConfigurations())
+            {
+                String resourceKey = c.getSimpleValue(CONNECTOR_ADDRESS_CONFIG_PROPERTY,null);
+                String connectionType = c.getSimpleValue(CONNECTION_TYPE, null);
+
+                DiscoveredResourceDetails s = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
+                    "Java VM", "?", connectionType + " [" + resourceKey + "]", null, null);
+
+                s.setPluginConfiguration(c);
+
+                found.add(s);
+            }
         }
 
         return found;

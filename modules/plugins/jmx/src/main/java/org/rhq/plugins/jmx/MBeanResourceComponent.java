@@ -29,7 +29,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.management.openmbean.CompositeData;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
@@ -37,6 +39,7 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 import org.mc4j.ems.connection.bean.parameter.EmsParameter;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -53,7 +56,6 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 
@@ -376,9 +378,6 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
 
     public EmsConnection getEmsConnection() {
         return this.resourceContext.getParentResourceComponent().getEmsConnection();
-    }
-
-    public void startOperationFacet(OperationContext context) {
     }
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {

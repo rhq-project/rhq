@@ -870,10 +870,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             }
 
             Query selectQuery = entityManager
-                .createQuery("SELECT new org.rhq.core.domain.measurement.MeasurementScheduleRequest( "
-                    + "ms.id, ms.definition.name, ms.interval, ms.enabled, ms.definition.dataType, ms.definition.numericType, ms.definition.perMinute) "
+                .createQuery("SELECT new org.rhq.core.domain.measurement.MeasurementScheduleRequest( ms ) "
                     + "FROM MeasurementSchedule ms " + "WHERE ms.resource.id = :resourceId");
-
+            
             selectQuery.setFlushMode(FlushModeType.COMMIT);
             selectQuery.setParameter("resourceId", resourceId);
             List<MeasurementScheduleRequest> schedules = selectQuery.getResultList();

@@ -133,10 +133,12 @@ public class RpmPackageDiscoveryDelegate {
                 }
 
                 Long fileSize = null;
-                try {
-                    fileSize = Long.parseLong(sizeString);
-                } catch (NumberFormatException e) {
-                    log.error("Could not parse file size: " + sizeString);
+                if (sizeString != null) {
+                    try {
+                        fileSize = Long.parseLong(sizeString);
+                    } catch (NumberFormatException e) {
+                        log.warn("Could not parse file size: " + sizeString);
+                    }
                 }
 
                 // There may be multiple file names. For now, just ignore the package (I'll find a better way

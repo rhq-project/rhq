@@ -18,18 +18,22 @@
  */
 package org.rhq.enterprise.server.content.test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.domain.auth.Subject;
@@ -45,6 +49,7 @@ import org.rhq.core.domain.content.InstalledPackageHistoryStatus;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
@@ -127,6 +132,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
      */
     private Architecture architecture2;
 
+    private List<DeployPackageStep> stepResults;
+
     private ResourceType resourceType1;
     private Resource resource1;
 
@@ -139,6 +146,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
         TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.contentService = contentAgentService;
+
+        populateResponseSteps();
     }
 
     @AfterClass
@@ -158,6 +167,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
     // Test Cases  --------------------------------------------
 
+    @SuppressWarnings("unchecked")
     @Test(enabled = true)
     public void testInventoryMerge() throws Exception {
         // Setup  --------------------------------------------
@@ -253,12 +263,15 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 assert packageX.getName().equals("PackageX") : "Package name not specified on created package";
                 assert packageX.getPackageType().equals(packageType4) : "Package type incorrect on created package. Expected: "
                     + packageType4 + ", Found: " + packageX.getPackageType();
-                assert packageX.getVersions().size() == 1 : "Incorrect number of versions for package. Expected: 1, Found: "
-                    + packageX.getVersions().size();
 
-                PackageVersion packageVersionX = packageX.getVersions().get(0);
+                Query packageVersionQuery = em.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_ID);
+                packageVersionQuery.setParameter("packageId", packageX.getId());
+                List<PackageVersion> packageVersions = packageVersionQuery.getResultList();
 
-                assert packageVersionX.getGeneralPackage().equals(packageX) : "Package not correctly set on package version";
+                assert packageVersions.size() == 1 : "Incorrect number of versions for package. Expected: 1, Found: "
+                    + packageVersions.size();
+
+                PackageVersion packageVersionX = packageVersions.get(0);
 
                 assert packageVersionX.getArchitecture().equals(architecture1) : "Incorrect architecture on package version. Expected: "
                     + architecture1 + ", Found: " + packageVersionX.getArchitecture();
@@ -302,11 +315,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 InstalledPackage packageXInstalledPackage = (InstalledPackage) packageXInstalledPackageQuery
                     .getSingleResult();
 
-                Configuration packageVersionXDeploymentConfiguration = packageXInstalledPackage
-                    .getDeploymentConfigurationValues();
-                assert packageVersionXDeploymentConfiguration != null : "Deployment properties for installed package not saved";
-                assert packageVersionXDeploymentConfiguration.getSimple("property1") != null : "Deployment property not found";
-                assert packageVersionXDeploymentConfiguration.getSimple("property1").getStringValue().equals("value1") : "Incorrect value of property1";
+                assert packageXInstalledPackage != null;
             } finally {
                 getTransactionManager().rollback();
                 em.close();
@@ -314,6 +323,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Test(enabled = ENABLE_TESTS)
     public void testDeployMultiplePackages() throws Exception {
         Subject overlord = subjectManager.getOverlord();
@@ -327,11 +337,10 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         this.contentAgentService.setThrowError(false);
 
         synchronized (responseLock) {
-            Set<Integer> packageVersionIds = new HashSet();
+            Set<Integer> packageVersionIds = new HashSet<Integer>();
             packageVersionIds.add(packageVersion1.getId());
-            // packageVersionIds.add(packageVersion2.getId());
 
-            Set<Integer> resourceIds = new HashSet();
+            Set<Integer> resourceIds = new HashSet<Integer>();
             resourceIds.add(resource1.getId());
             contentManager.deployPackages(overlord, resourceIds, packageVersionIds);
 
@@ -339,18 +348,17 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         }
 
         // Give the agent service a second to make sure it finishes out its call
-        Thread.sleep(5000);
+        Thread.sleep(1000);
 
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
         try {
-            //
             // Package 1, Version 2
             Query query = em.createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_VER_ID);
             query.setParameter("resourceId", resource1.getId());
             query.setParameter("packageVersionId", packageVersion1.getId());
 
-            List results = query.getResultList();
+            List<InstalledPackage> results = query.getResultList();
             assert results.size() == 1 : "Incorrect number of installed packages for package 1, version 2. Expected: 1, Found: "
                 + results.size();
         } finally {
@@ -407,7 +415,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
                 query.setParameter("resourceId", resource1.getId());
 
-                List results = query.getResultList();
+                List<?> results = query.getResultList();
                 assert results.size() == 1 : "Incorrect number of content service requests. Expected: 1, Found: "
                     + results.size();
 
@@ -441,6 +449,20 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 assert results.size() == 0 : "Incorrect number of installed packages for package 1, version 2. Expected: 0, Found: "
                     + results.size();
 
+                // Check status of audit trail
+                query = em.createNamedQuery(InstalledPackageHistory.QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID);
+                query.setParameter("contentServiceRequestId", request.getId());
+                query.setParameter("packageVersionId", packageVersion1.getId());
+
+                results = query.getResultList();
+
+                assert results.size() == 1 : "Incorrect number of audit trail entries. Expected: 1, Found: "
+                    + results.size();
+
+                InstalledPackageHistory historyEntity = (InstalledPackageHistory) results.get(0);
+                assert historyEntity.getStatus() == InstalledPackageHistoryStatus.BEING_INSTALLED : "Incorrect status on first entity. Expected: BEING_INSTALLED, Found: "
+                    + historyEntity.getStatus();
+
                 // Package 2, Version 1
                 query = em.createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_VER_ID);
                 query.setParameter("resourceId", resource1.getId());
@@ -449,6 +471,20 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 results = query.getResultList();
                 assert results.size() == 0 : "Incorrect number of installed packages for package 2, version 1. Expected: 0, Found: "
                     + results.size();
+
+                // Check status of audit trail
+                query = em.createNamedQuery(InstalledPackageHistory.QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID);
+                query.setParameter("contentServiceRequestId", request.getId());
+                query.setParameter("packageVersionId", packageVersion2.getId());
+
+                results = query.getResultList();
+
+                assert results.size() == 1 : "Incorrect number of audit trail entries. Expected: 1, Found: "
+                    + results.size();
+
+                historyEntity = (InstalledPackageHistory) results.get(0);
+                assert historyEntity.getStatus() == InstalledPackageHistoryStatus.BEING_INSTALLED : "Incorrect status on second entity. Expected: BEING_INSTALLED, Found: "
+                    + historyEntity.getStatus();
 
                 responseLock.notifyAll();
             } finally {
@@ -469,7 +505,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
             query.setParameter("resourceId", resource1.getId());
 
-            List results = query.getResultList();
+            List<?> results = query.getResultList();
             assert results.size() == 1 : "Incorrect number of content service requests. Expected: 1, Found: "
                 + results.size();
 
@@ -523,6 +559,170 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = ENABLE_TESTS)
+    public void testDeployWithSteps() throws Exception {
+        // Setup  --------------------------------------------
+        Subject overlord = subjectManager.getOverlord();
+
+        Set<ResourcePackageDetails> installUs = new HashSet<ResourcePackageDetails>(2);
+
+        // Package 1, Version 2 with configuration values
+        PackageVersion packageVersion1 = package1.getVersions().get(0);
+        Configuration deploymentConfiguration1 = new Configuration();
+        deploymentConfiguration1.put(new PropertySimple("property1", "value1"));
+
+        PackageDetailsKey key1 = new PackageDetailsKey(package1.getName(), packageVersion1.getVersion(), package1
+            .getPackageType().getName(), packageVersion1.getArchitecture().getName());
+        ResourcePackageDetails packageDetails1 = new ResourcePackageDetails(key1);
+        packageDetails1.setDeploymentTimeConfiguration(deploymentConfiguration1);
+
+        installUs.add(packageDetails1);
+
+        // Make sure the mock is configured to return a success
+        this.contentAgentService.setResponseReturnStatus(ContentResponseResult.SUCCESS);
+        this.contentAgentService.setThrowError(false);
+        this.contentAgentService.setDeployPackageSteps(stepResults);
+
+        // Test  --------------------------------------------
+
+        // Perform the deploy while locking the agent service. This allows us to check the state after the request
+        // is sent to the agent but before the agent has replied.
+        synchronized (responseLock) {
+            contentManager.deployPackages(overlord, resource1.getId(), installUs);
+
+            // Check to see if the request and installed package were created and have the right status
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+
+            try {
+                // Content request
+                Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
+                query.setParameter("resourceId", resource1.getId());
+
+                List<?> results = query.getResultList();
+                assert results.size() == 1 : "Incorrect number of content service requests. Expected: 1, Found: "
+                    + results.size();
+
+                ContentServiceRequest request = (ContentServiceRequest) results.get(0);
+                assert request.getContentRequestType() == ContentRequestType.DEPLOY : "Request type incorrect. Expected: DEPLOY, Found: "
+                    + request.getContentRequestType();
+                assert request.getStatus() == ContentRequestStatus.IN_PROGRESS : "Request status incorrect. Expected: IN_PROGRESS, Found: "
+                    + request.getStatus();
+                assert request.getInstalledPackageHistory().size() == 2 : "Incorrect number of installed packages attached to request. Expected: 2, Found: "
+                    + request.getInstalledPackageHistory().size();
+
+                // Verify a history entry has been added for each package in the request
+                Set<InstalledPackageHistory> history = request.getInstalledPackageHistory();
+
+                assert history.size() == 2 : "Incorrect number of history entries on request. Expected: 2, Found: "
+                    + history.size();
+
+                for (InstalledPackageHistory historyEntry : history) {
+                    assert historyEntry.getStatus() == InstalledPackageHistoryStatus.BEING_INSTALLED : "Incorrect state on history entity. Expected: BEING_INSTALLED, Found: "
+                        + historyEntry.getStatus();
+                }
+
+                // Ensure the installed package has not been added to the resoure yet
+
+                // Package 1, Version 2
+                query = em.createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_VER_ID);
+                query.setParameter("resourceId", resource1.getId());
+                query.setParameter("packageVersionId", packageVersion1.getId());
+
+                results = query.getResultList();
+                assert results.size() == 0 : "Incorrect number of installed packages for package 1, version 2. Expected: 0, Found: "
+                    + results.size();
+
+                responseLock.notifyAll();
+            } finally {
+                getTransactionManager().rollback();
+                em.close();
+            }
+        }
+
+        // Verify  --------------------------------------------
+
+        // Give the agent service a second to make sure it finishes out its call
+        Thread.sleep(1000);
+
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+        try {
+            // Content request
+            Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
+            query.setParameter("resourceId", resource1.getId());
+
+            List<?> results = query.getResultList();
+            assert results.size() == 1 : "Incorrect number of content service requests. Expected: 1, Found: "
+                + results.size();
+
+            ContentServiceRequest request = (ContentServiceRequest) results.get(0);
+            assert request.getStatus() == ContentRequestStatus.SUCCESS : "Request status incorrect. Expected: SUCCESS, Found: "
+                + request.getStatus();
+
+            // Verify a history entry has been added for the completion of the request per package
+            Set<InstalledPackageHistory> history = request.getInstalledPackageHistory();
+
+            assert history.size() == 4 : "Incorrect number of history entries on request. Expected: 4, Found: "
+                + history.size();
+
+            // Check for Package 1
+            query = em.createNamedQuery(InstalledPackageHistory.QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID);
+            query.setParameter("contentServiceRequestId", request.getId());
+            query.setParameter("packageVersionId", packageVersion1.getId());
+
+            results = query.getResultList();
+
+            assert results.size() == 2 : "Incorrect number of history entries. Expected: 2, Found: " + results.size();
+
+            InstalledPackageHistory historyEntity = (InstalledPackageHistory) results.get(0);
+            assert historyEntity.getStatus() == InstalledPackageHistoryStatus.INSTALLED : "Incorrect status on first entity. Expected: INSTALLED, Found: "
+                + historyEntity.getStatus();
+
+            // The installed entry should contain the steps that were done in the installation
+            List<PackageInstallationStep> installationSteps = historyEntity.getInstallationSteps();
+
+            assert installationSteps != null : "Installation steps were null";
+            assert installationSteps.size() == 3 : "Incorrect number of installation steps. Expected: 3, Found: "
+                + installationSteps.size();
+
+            PackageInstallationStep step = installationSteps.get(0);
+
+            assert step.getOrder() == 0 : "Incorrect order applied for step";
+            assert step.getDescription() != null : "Description not saved";
+            assert step.getResult() == ContentResponseResult.SUCCESS : "Incorrect status on step. Expected: SUCCESS, Found: "
+                + step.getResult();
+            assert step.getErrorMessage() == null : "Error message found on successful step";
+            assert step.getInstalledPackageHistory() != null : "Relationship to packge history isn't established";
+
+            step = installationSteps.get(1);
+
+            assert step.getOrder() == 1 : "Incorrect order applied for step";
+            assert step.getDescription() != null : "Description not saved";
+            assert step.getResult() == ContentResponseResult.NOT_PERFORMED : "Incorrect status on step. Expected: NOT_PERFORMED, Found: "
+                + step.getResult();
+            assert step.getErrorMessage() == null : "Error message found on skipped step";
+            assert step.getInstalledPackageHistory() != null : "Relationship to packge history isn't established";
+
+            step = installationSteps.get(2);
+
+            assert step.getOrder() == 2 : "Incorrect order applied for step";
+            assert step.getDescription() != null : "Description not saved";
+            assert step.getResult() == ContentResponseResult.FAILURE : "Incorrect status on step. Expected: FAILURE, Found: "
+                + step.getResult();
+            assert step.getErrorMessage() != null : "Null error message found on error step";
+            assert step.getInstalledPackageHistory() != null : "Relationship to packge history isn't established";
+
+            historyEntity = (InstalledPackageHistory) results.get(1);
+            assert historyEntity.getStatus() == InstalledPackageHistoryStatus.BEING_INSTALLED : "Incorrect status on first entity. Expected: BEING_INSTALLED, Found: "
+                + historyEntity.getStatus();
+
+        } finally {
+            getTransactionManager().rollback();
+            em.close();
+        }
+    }
+
+    @Test(enabled = ENABLE_TESTS)
     public void testFailedDeployPackages() throws Exception {
         // Setup  --------------------------------------------
         Subject overlord = subjectManager.getOverlord();
@@ -562,7 +762,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
             query.setParameter("resourceId", resource1.getId());
 
-            List results = query.getResultList();
+            List<?> results = query.getResultList();
             assert results.size() == 1 : "Incorrect number of content service requests. Expected: 1, Found: "
                 + results.size();
 
@@ -633,7 +833,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
             query.setParameter("resourceId", resource1.getId());
 
-            List results = query.getResultList();
+            List<?> results = query.getResultList();
             assert results.size() == 1 : "Incorrect number of content service requests. Expected: 1, Found: "
                 + results.size();
 
@@ -730,7 +930,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID_WITH_INSTALLED_PKG_HIST);
             query.setParameter("id", request.getId());
 
-            List resultList = query.getResultList();
+            List<?> resultList = query.getResultList();
             request = (ContentServiceRequest) resultList.get(0);
 
             assert request.getInstalledPackageHistory().size() == 3 : "Incorrect number of being installed packages on request. Expected: 3, Found: "
@@ -779,7 +979,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
                 query.setParameter("resourceId", resource1.getId());
 
-                List results = query.getResultList();
+                List<?> results = query.getResultList();
                 assert results.size() == 1 : "Incorrect number of content service requests. Expected: 1, Found: "
                     + results.size();
 
@@ -815,7 +1015,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
             query.setParameter("resourceId", resource1.getId());
 
-            List results = query.getResultList();
+            List<?> results = query.getResultList();
             assert results.size() == 1 : "Incorrect number of content service requests. Expected: 1, Found: "
                 + results.size();
 
@@ -986,6 +1186,10 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                     em.remove(request);
                 }
 
+                for (InstalledPackageHistory history : resource1.getInstalledPackageHistory()) {
+                    em.remove(history);
+                }
+
                 package1 = em.find(Package.class, package1.getId());
                 em.remove(package1);
 
@@ -1029,6 +1233,24 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
+    private void populateResponseSteps() {
+        stepResults = new ArrayList<DeployPackageStep>(3);
+
+        DeployPackageStep step1 = new DeployPackageStep("Step1", "First step");
+        step1.setStepResult(ContentResponseResult.SUCCESS);
+
+        DeployPackageStep step2 = new DeployPackageStep("Step2", "Second step");
+        step2.setStepResult(ContentResponseResult.NOT_PERFORMED);
+
+        DeployPackageStep step3 = new DeployPackageStep("Step3", "Third step");
+        step3.setStepResult(ContentResponseResult.FAILURE);
+        step3.setStepErrorMessage("Error executing the third step");
+
+        stepResults.add(step1);
+        stepResults.add(step2);
+        stepResults.add(step3);
+    }
+
     // Inner Classes  --------------------------------------------
 
     private class MockContentAgentService implements ContentAgentService {
@@ -1038,11 +1260,9 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
         private boolean throwError;
 
-        // Public  --------------------------------------------
+        private List<DeployPackageStep> deployPackageSteps;
 
-        public ContentResponseResult getResponseReturnStatus() {
-            return responseReturnStatus;
-        }
+        // Public  --------------------------------------------
 
         /**
          * The value set in this method will be the status of the response object sent back to the EJB.
@@ -1060,6 +1280,15 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
          */
         public void setThrowError(boolean throwError) {
             this.throwError = throwError;
+        }
+
+        /**
+         * Calls to deploy will include this list for all packages in the deployment request.
+         *
+         * @param deployPackageSteps indicates if deployed package responses should have steps attached to them
+         */
+        public void setDeployPackageSteps(List<DeployPackageStep> deployPackageSteps) {
+            this.deployPackageSteps = deployPackageSteps;
         }
 
         // ContentAgentService Implementation  --------------------------------------------
@@ -1094,6 +1323,9 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                         for (ResourcePackageDetails packageDetails : request.getPackages()) {
                             DeployIndividualPackageResponse individualResponse = new DeployIndividualPackageResponse(
                                 packageDetails.getKey(), responseReturnStatus);
+
+                            individualResponse.setDeploymentSteps(deployPackageSteps);
+
                             response.addPackageResponse(individualResponse);
                         }
 

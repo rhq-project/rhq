@@ -18,11 +18,9 @@
  */
 package org.rhq.enterprise.server.resource;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.util.Date;
 import java.util.List;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -30,8 +28,10 @@ import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.inventory.CreateResourceRequest;
 import org.rhq.core.clientapi.agent.inventory.CreateResourceResponse;
 import org.rhq.core.clientapi.agent.inventory.DeleteResourceRequest;
@@ -41,9 +41,9 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.InstalledPackage;
-import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.CreateResourceStatus;
@@ -62,6 +62,7 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.content.ContentManagerHelper;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -174,35 +175,18 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
 
         // Create package and package version
         PackageVersion packageVersion = contentManagerLocal.createPackageVersion(packageName, newPackageType.getId(),
-            packageVersionNumber, architectureId);
-
-        // Write the content into the newly created package version. This may eventually move, but for now we'll just
-        // use the byte array in the package version to store the bits.
-        byte[] packageBits;
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            packageBits = new byte[1024];
-
-            while (packageBitStream.read(packageBits) != -1) {
-                baos.write(packageBits);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Error reading in the package file", e);
-        }
-
-        PackageBits bits = new PackageBits();
-        bits.setBits(packageBits);
-
-        packageVersion.setPackageBits(bits);
+            packageVersionNumber, architectureId, packageBitStream);
 
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
         CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(user, parentResourceId,
             newResourceTypeId, newResourceName, packageVersion, deploymentTimeConfiguration);
 
         // Package into transfer object
+        ResourcePackageDetails packageDetails = ContentManagerHelper.packageVersionToDetails(packageVersion);
+        packageDetails.setDeploymentTimeConfiguration(deploymentTimeConfiguration);
         CreateResourceRequest request = new CreateResourceRequest(persistedHistory.getId(), parentResourceId,
-            newResourceName, newResourceType.getName(), newResourceType.getPlugin(), pluginConfiguration, packageName,
-            newPackageType.getName(), deploymentTimeConfiguration);
+            newResourceName, newResourceType.getName(), newResourceType.getPlugin(), pluginConfiguration,
+            packageDetails);
 
         try {
             AgentClient agentClient = agentManager.getAgentClient(agent);
@@ -423,16 +407,18 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
         // Create installed package to attach to the history entry
         // This should probably be moved to the ContentManagerBean, but we'll do that when we add in generic user
         // package creation
-        InstalledPackage installedPackage = new InstalledPackage();
-        installedPackage.setDeploymentConfigurationValues(deploymentTimeConfiguration);
+
+        // TODO: jdobies, Feb 13, 2008: This needs to change, it should probably be a history entry
+
+        /*InstalledPackage installedPackage = new InstalledPackage();
         installedPackage.setInstallationDate(new Date());
         installedPackage.setPackageVersion(packageVersion);
         installedPackage.setResource(parentResource);
-        installedPackage.setUser(user);
+        installedPackage.setUser(user);*/
 
         // Persist and establish relationships
         CreateResourceHistory history = new CreateResourceHistory(parentResource, resourceType, user.getName(),
-            installedPackage);
+            (InstalledPackage) null);
         history.setCreatedResourceName(createResourceName);
         history.setStatus(CreateResourceStatus.IN_PROGRESS);
 

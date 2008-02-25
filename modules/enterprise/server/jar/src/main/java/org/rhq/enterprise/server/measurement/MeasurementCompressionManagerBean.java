@@ -25,18 +25,23 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
 import java.util.Properties;
+
 import javax.ejb.EJB;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.sql.DataSource;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.annotation.ejb.TransactionTimeout;
+
 import org.rhq.core.clientapi.util.TimeUtil;
 import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
@@ -71,12 +76,15 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
     private MeasurementCompressionManagerLocal compressionManager;
     @EJB
     private CallTimeDataManagerLocal callTimeDataManager;
+    @EJB
+    private EventManagerLocal eventManager;
 
     private boolean purgeDefaultsLoaded = false;
     private long purge1h;
     private long purge6h;
     private long purge1d;
     private long purgeCallTime;
+    private long purgeEvent;
     private long purgeAlert;
 
     /**
@@ -93,6 +101,8 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
             this.purge1d = Long.parseLong(conf.getProperty(HQConstants.DataPurge1Day));
             this.purgeCallTime = Long.parseLong(conf.getProperty(HQConstants.RtDataPurge));
             this.purgeAlert = Long.parseLong(conf.getProperty(HQConstants.AlertPurge));
+            this.purgeEvent = Long.parseLong(conf.getProperty(HQConstants.EventPurge));
+
             this.purgeDefaultsLoaded = true;
         } catch (NumberFormatException e) {
             // Shouldn't happen unless manual edit of config table
@@ -152,6 +162,12 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         // Purge call-time data.
         Date deleteUpToTime = new Date(now - this.purgeCallTime);
         callTimeDataManager.purgeCallTimeData(deleteUpToTime);
+
+        // Purge Event data
+        log.info("Purging events older than " + TimeUtil.toString(now - this.purgeEvent));
+        deleteUpToTime = new Date(now - this.purgeEvent);
+        int deleted = eventManager.purgeEventData(deleteUpToTime);
+        log.info("Deleted [" + deleted + "] events");
 
         // Purge alerts
         try {

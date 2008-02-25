@@ -22,12 +22,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +37,7 @@ import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
+
 import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
 import org.rhq.core.domain.auth.Subject;
@@ -125,11 +128,6 @@ public class OperationManagerBean implements OperationManagerLocal {
 
         ensureControlPermission(whoami, resource);
 
-        if (notes == null) {
-            notes = "[" + resource.getName() + "] operation [" + operationName + "] scheduled by [" + whoami.getName()
-                + "]";
-        }
-
         String uniqueJobId = createUniqueJobName(resource, operationName);
 
         JobDataMap jobDataMap = new JobDataMap();
@@ -193,11 +191,6 @@ public class OperationManagerBean implements OperationManagerLocal {
         ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, compatibleGroupId);
 
         ensureControlPermission(whoami, group);
-
-        if (notes == null) {
-            notes = "[" + group.getName() + "] operation [" + operationName + "] scheduled by [" + whoami.getName()
-                + "]";
-        }
 
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put(GroupOperationJob.DATAMAP_STRING_OPERATION_NAME, operationName);

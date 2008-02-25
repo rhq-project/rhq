@@ -78,6 +78,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
@@ -90,7 +91,6 @@ import org.rhq.enterprise.server.measurement.uibean.MetricDisplayValue;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
-import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
  * A manager for {@link MeasurementData}s.
@@ -137,8 +137,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
     @IgnoreDependency
     private AgentManagerLocal agentClientManager;
     @EJB
-    private MeasurementCompressionManagerLocal compressionManager;
-    @EJB
     private MeasurementProblemManagerLocal measurementProblemManager;
     @EJB
     @IgnoreDependency
@@ -147,11 +145,11 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
     @IgnoreDependency
     private MeasurementScheduleManagerLocal scheduleManager;
     @EJB
-    private SystemManagerLocal systemManager;
-    @EJB
     private ResourceGroupManagerLocal resourceGroupManager;
     @EJB
     private CallTimeDataManagerLocal callTimeDataManager;
+    @EJB
+    private EventManagerLocal eventManager;
     @EJB
     private MeasurementDataManagerLocal measurementDataManager;
     @EJB

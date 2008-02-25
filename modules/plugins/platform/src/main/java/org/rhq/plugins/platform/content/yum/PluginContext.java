@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
@@ -78,7 +79,7 @@ public class PluginContext implements YumContext {
      * java.io.OutputStream)
      */
     public long writePackageBits(PackageDetailsKey key, OutputStream ostr) {
-        return getContentServices().downloadPackageBits(contentContext, key, ostr);
+        return getContentServices().downloadPackageBits(contentContext, key, ostr, true);
     }
 
     /* (non-Javadoc)
@@ -87,7 +88,7 @@ public class PluginContext implements YumContext {
      * long[], java.io.OutputStream)
      */
     public long writePackageBits(PackageDetailsKey key, long[] range, OutputStream ostr) {
-        return getContentServices().downloadPackageBitsRange(contentContext, key, ostr, range[0], range[1]);
+        return getContentServices().downloadPackageBitsRange(contentContext, key, ostr, range[0], range[1], true);
     }
 
     /* (non-Javadoc)

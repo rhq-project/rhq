@@ -20,9 +20,12 @@ package org.rhq.enterprise.server.resource;
 
 import java.util.List;
 import java.util.Map;
+
 import javax.ejb.Local;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -148,8 +151,7 @@ public interface ResourceManagerLocal {
     PageList<Resource> getResourceByParentAndInventoryStatus(Subject user, Resource parent, InventoryStatus status,
         PageControl pageControl);
 
-    PageList<ResourceWithAvailability> getResourcesByParentAndType(Subject user, Resource parent, ResourceType type,
-        PageControl pageControl);
+    List<ResourceWithAvailability> getResourcesByParentAndType(Subject user, Resource parent, ResourceType type);
 
     PageList<Resource> getChildResources(Subject user, Resource parent, PageControl pageControl);
 
@@ -160,22 +162,15 @@ public interface ResourceManagerLocal {
     PageList<Resource> getChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent,
         ResourceCategory category, InventoryStatus status, PageControl pageControl);
 
+    /**
+     * 
+     * @see ResourceManagerRemote#getResourcesByCategory(Subject, ResourceCategory, InventoryStatus, PageControl)
+     */
     PageList<Resource> getResourcesByCategory(Subject user, ResourceCategory category, InventoryStatus inventoryStatus,
         PageControl pageControl);
 
     /**
-     * This finder query can be used to find resources with various combinations of attributes in their composite form.
-     * Except for the user parameter, the other parameters can be left null so that the query will not filter by that
-     * attribute.
-     *
-     * @param  user
-     * @param  category       Limit the search to a given {@link ResourceCategory}
-     * @param  type           Limit the search to to a given {@link ResourceType}
-     * @param  parentResource Limit the search to children of a given parent resource
-     * @param  searchString
-     * @param  pageControl
-     *
-     * @return
+     * @see ResourceManagerRemote#findResourceComposites(Subject, ResourceCategory, String, int, String, PageControl)
      */
     PageList<ResourceComposite> findResourceComposites(Subject user, ResourceCategory category, ResourceType type,
         Resource parentResource, String searchString, PageControl pageControl);
@@ -242,16 +237,7 @@ public interface ResourceManagerLocal {
     PageList<Resource> getResourceByIds(Subject subject, Integer[] resourceIds, PageControl pageControl);
 
     /**
-     * Loads an entire resource sub-tree from the database. The resources themselves are loaded with the default eager
-     * loading except that the child resources will be loaded, as well as the parent of the resource with the given ID.
-     * So take note that only the root resource will have its parent resource loaded, the child parents can all be
-     * determined by the caller by walking the tree.
-     *
-     * <p><b>Warning!</b>This may be very expensive and return a very large set of results.</p>
-     *
-     * @param  rootResourceId the root resourceId to be fetched
-     *
-     * @return a preloaded resource tree
+     * @see ResourceManagerRemote#getResourceTree(int)
      */
     Resource getResourceTree(int rootResourceId);
 

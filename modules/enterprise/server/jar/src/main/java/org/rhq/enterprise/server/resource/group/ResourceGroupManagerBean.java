@@ -95,6 +95,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     private ResourceManagerLocal resourceManager;
 
     @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public int createResourceGroup(Subject user, ResourceGroup group) throws ResourceGroupNotFoundException,
         ResourceGroupAlreadyExistsException {
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME);
@@ -181,13 +182,13 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         Collection<Resource> explicitResourcesToKeep = new ArrayList<Resource>(group.getExplicitResources());
         Collection<Resource> implicitResourcesToKeep = new ArrayList<Resource>(group.getImplicitResources());
         boolean isRecursive = group.isRecursive();
-        
+
         // now clean the group itself
         Collection<Integer> groupResourceIds = resourceManager.getExplicitResourceIdsByResourceGroup(group.getId());
         for (Integer resourceId : groupResourceIds) {
             removeResourcesFromGroupHelper(explicitResourcesToKeep, implicitResourcesToKeep, isRecursive, resourceId);
         }
-        
+
         group.getImplicitResources().retainAll(implicitResourcesToKeep);
         group.getExplicitResources().retainAll(explicitResourcesToKeep);
 
@@ -360,7 +361,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         Collection<Resource> explicitResourcesToKeep = new ArrayList<Resource>(attachedGroup.getExplicitResources());
         Collection<Resource> implicitResourcesToKeep = new ArrayList<Resource>(attachedGroup.getImplicitResources());
         boolean isRecursive = attachedGroup.isRecursive();
-        
+
         for (Integer resourceId : validCommittedResourceIds) {
             // no work needs to be done if the resource isn't in the explicit list
             if (!explicitResourceIds.contains(resourceId)) {
@@ -372,7 +373,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             // updates explicit and implicit stuff
             removeResourcesFromGroupHelper(explicitResourcesToKeep, implicitResourcesToKeep, isRecursive, resourceId);
         }
-        
+
         attachedGroup.getImplicitResources().retainAll(implicitResourcesToKeep);
         attachedGroup.getExplicitResources().retainAll(explicitResourcesToKeep);
 
@@ -741,7 +742,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
      * <code>group.isRecursive()</code> is true, all of <code>resource</code>'s descendants will be removed from the
      * implicit list. Otherwise, only <code>resource</code> will be removed from the implicit list.
      */
-    private void removeResourcesFromGroupHelper(Collection<Resource> explicitResources, Collection<Resource> implicitResources, boolean isRecursive, Integer resourceId) {
+    private void removeResourcesFromGroupHelper(Collection<Resource> explicitResources,
+        Collection<Resource> implicitResources, boolean isRecursive, Integer resourceId) {
         // groups always get the resources remove from the explicit list
         Resource lightWeightRemoverReference = new ResourceRemover(resourceId);
         explicitResources.remove(lightWeightRemoverReference);
@@ -790,31 +792,31 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             toBeSearched.addAll(resourceManager.getChildrenResourceIds(nextResourceId));
         }
     }
-    
+
     private class ResourceRemover extends Resource {
         public ResourceRemover(int id) {
             super(id);
         }
-        
+
         @Override
         public boolean equals(Object o) {
             if (this == o) {
                 return true;
             }
-            
+
             if ((o == null) || !(o instanceof Resource)) {
                 return false;
             }
-            
+
             final Resource other = (Resource) o;
-            
+
             if (getId() != other.getId()) {
                 return false;
             }
-            
+
             return true;
         }
-        
+
         @Override
         public int hashCode() {
             return getId();

@@ -47,7 +47,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.InventoryReportResponse;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
-import org.rhq.core.domain.event.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ProductVersion;

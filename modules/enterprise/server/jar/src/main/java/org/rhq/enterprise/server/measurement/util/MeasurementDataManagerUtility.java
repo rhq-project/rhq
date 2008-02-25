@@ -31,9 +31,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+
 import javax.sql.DataSource;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataPK;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -189,9 +192,9 @@ public class MeasurementDataManagerUtility {
         Connection myConnection = null;
         List<List<MeasurementDataNumericHighLowComposite>> data = new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
 
-        for (int measurementDefinitionId : measurementDefinitionIds) {
-            try {
-                myConnection = getConnection();
+        try {
+            myConnection = getConnection();
+            for (int measurementDefinitionId : measurementDefinitionIds) {
                 ps = getFullQuery(myConnection, beginTime, endTime, 60, otherTable, conditions, resourceId,
                     measurementDefinitionId);
                 rs = ps.executeQuery();
@@ -220,15 +223,14 @@ public class MeasurementDataManagerUtility {
                 }
 
                 data.add(compositeList);
-            } catch (SQLException e) {
-                throw new MeasurementNotFoundException(e);
-            } finally {
                 JDBCUtil.safeClose(ps, rs);
             }
+        } catch (SQLException e) {
+            throw new MeasurementNotFoundException(e);
+        } finally {
+            JDBCUtil.safeClose(myConnection, ps, rs);
+            connection = null; // the close above invalidates the member
         }
-
-        JDBCUtil.safeClose(myConnection);
-        connection = null; // the close above invalidates the member
         return data;
     }
 
@@ -290,7 +292,7 @@ public class MeasurementDataManagerUtility {
         String otherTable = ", RHQ_MEASUREMENT_SCHED s ";
 
         String conditions = "  AND d.schedule_id = s.id" + "  AND s.resource_id IN ( "
-            + generateInBinds(resourceIds.length) + ") \n" + "  AND s.definition = ? \n";
+            + JDBCUtil.generateInBinds(resourceIds.length) + ") \n" + "  AND s.definition = ? \n";
 
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -333,19 +335,6 @@ public class MeasurementDataManagerUtility {
             JDBCUtil.safeClose(myConnection, ps, rs);
             connection = null; // the close above invalidates the member
         }
-    }
-
-    private static String generateInBinds(int count) {
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; i < count; i++) {
-            if (i > 0) {
-                b.append(",");
-            }
-
-            b.append("?");
-        }
-
-        return b.toString();
     }
 
     public MeasurementAggregate getAggregateByScheduleId(long beginTime, long endTime, long scheduleId)
@@ -411,7 +400,8 @@ public class MeasurementDataManagerUtility {
         PreparedStatement ps = null;
 
         try {
-            String condition = "         AND d.schedule_id IN ( " + generateInBinds(scheduleIds.length) + ")\n";
+            String condition = "         AND d.schedule_id IN ( " + JDBCUtil.generateInBinds(scheduleIds.length)
+                + ")\n";
 
             myConnection = getConnection();
             ps = getFullQuery(myConnection, beginTime, endTime, 1, "", condition, scheduleIds);

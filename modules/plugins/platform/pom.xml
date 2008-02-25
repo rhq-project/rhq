@@ -15,9 +15,7 @@
 
    <name>RHQ Platform Plugin</name>
    <description>
-      A plugin for monitoring the different supported platforms. The actual Java components
-      are built into the plugin container; this artifact contains a jar with simply the
-      plugin descriptor so it can be shared on both the server and agent side.
+      A plugin for monitoring the different supported platforms.
    </description>
 
    <scm>

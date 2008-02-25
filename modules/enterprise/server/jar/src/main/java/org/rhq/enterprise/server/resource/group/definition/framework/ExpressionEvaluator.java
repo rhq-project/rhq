@@ -27,8 +27,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -287,7 +289,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                         (value == null) ? null : ResourceCategory.valueOf(value.toUpperCase()));
                 } else {
                     throw new InvalidExpressionException("Invalid resourceType subexpression: "
-                        + ExpressionEvaluatorUtil.getDelimitedString(tokens, parseIndex, "."));
+                        + PrintUtils.getDelimitedString(tokens, parseIndex, "."));
                 }
             } else if (context == ParseContext.Configuration) {
                 String prefix = null;
@@ -381,7 +383,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             parseIndex--; // undo auto-inc, since this context requires element re-parse
         } else {
             throw new InvalidExpressionException("Invalid resource subexpression: "
-                + ExpressionEvaluatorUtil.getDelimitedString(tokens, parseIndex, "."));
+                + PrintUtils.getDelimitedString(tokens, parseIndex, "."));
         }
     }
 
@@ -424,12 +426,6 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         context = ParseContext.StringMatch;
     }
 
-    /**
-     * @return a list of result lists as determined by the transforming the passing conditions into JPQL statements: --
-     *         if no groupBy expressions are present, this will return a list with a single List<Resource> child -- if
-     *         at least one groupBy expression was used, it will return many List<Resource> results, each mapping to a
-     *         unique combination of value N-tuples returned from the set of N-pivoted expressions
-     */
     @SuppressWarnings("unchecked")
     public void execute() {
         if (isInvalid) {
@@ -547,8 +543,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
             List<Integer> results = getSingleResultList(computedJPQLGroupStatement);
 
-            return new ExpressionEvaluator.Result(results, ExpressionEvaluatorUtil.getDelimitedString(
-                groupByExpression, 0, ","));
+            return new ExpressionEvaluator.Result(results, PrintUtils.getDelimitedString(groupByExpression, 0, ","));
         }
 
         public void remove() /* no-op */
@@ -666,5 +661,21 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         }
 
         return result;
+    }
+
+    private static class PrintUtils {
+        public static String getDelimitedString(Object[] tokens, int fromIndex, String delimiter) {
+            StringBuilder builder = new StringBuilder();
+
+            for (int j = fromIndex; j < tokens.length; j++) {
+                if (j != fromIndex) {
+                    builder.append(delimiter);
+                }
+
+                builder.append(tokens[j].toString());
+            }
+
+            return builder.toString();
+        }
     }
 }

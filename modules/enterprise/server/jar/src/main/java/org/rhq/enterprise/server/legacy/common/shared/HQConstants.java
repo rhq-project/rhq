@@ -89,6 +89,9 @@ public class HQConstants {
     // How long do we keep alerts
     public static final String AlertPurge = "ALERT_PURGE";
 
+    // How long do we keep event data
+    public static final String EventPurge = "EVENT_PURGE";
+
     // Baseline config options
     // The frequency to run auto-baselines, if 0, never auto-calculate baselines
     public static final String BaselineFrequency = "CAM_BASELINE_FREQUENCY";
@@ -125,4 +128,5 @@ public class HQConstants {
     public static final String SNMPAgentAddress = "SNMP_AGENT_ADDRESS";
     public static final String SNMPVersion = "SNMP_VERSION";
     public static final String SNMPPrivacyProtocol = "SNMP_PRIVACY_PROTOCOL";
+
 }

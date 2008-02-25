@@ -18,10 +18,12 @@
  */
 package org.rhq.core.pc.content;
 
+import java.util.HashSet;
 import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.server.content.ContentServerService;
+import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeletePackagesRequest;
 import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
@@ -54,7 +56,9 @@ public class DeleteContentRunner implements Runnable {
     // Runnable Implementation  --------------------------------------------
 
     public void run() {
+
         RemovePackagesResponse response;
+        
         try {
             response = contentManager.performPackageDelete(request.getResourceId(), request.getPackages());
         } catch (Throwable throwable) {
@@ -69,16 +73,34 @@ public class DeleteContentRunner implements Runnable {
         // This should not influence the result code of the delete request
         Set<RemoveIndividualPackageResponse> packageResponses = response.getPackageResponses();
         if (packageResponses != null) {
-            try {
-                for (RemoveIndividualPackageResponse individualResponse : packageResponses) {
-                    contentManager.executeResourcePackageDiscoveryImmediately(request.getRequestId(),
-                        individualResponse.getKey().getName());
+
+            // Keep a quick cache of which package types have had discoveries executed so we don't
+            // unnecessarily hammer the plugin with redundant discoveries
+            Set<String> packageTypeNames = new HashSet<String>();
+
+            for (RemoveIndividualPackageResponse individualResponse : packageResponses) {
+                PackageDetailsKey key = individualResponse.getKey();
+
+                if (key == null)
+                    continue;
+
+                String packageTypeName = key.getPackageTypeName();
+
+                // Make sure we haven't already run a discovery for this package type
+                if (!packageTypeNames.contains(packageTypeName)) {
+                    packageTypeNames.add(packageTypeName);
+                    
+                    try {
+                        contentManager.executeResourcePackageDiscoveryImmediately(request.getRequestId(),
+                            individualResponse.getKey().getName());
+                    } catch (Throwable throwable) {
+                        log.error("Error executing content discovery", throwable);
+                    }
                 }
-            } catch (Throwable throwable) {
-                log.error("Error executing content discovery", throwable);
             }
         }
 
+        // Contact the server service if one exists
         ContentServerService serverService = contentManager.getContentServerService();
         if (serverService != null) {
             serverService.completeDeletePackageRequest(response);

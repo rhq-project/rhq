@@ -24,10 +24,11 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.Collection;
 import java.util.Iterator;
+
+import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.enterprise.gui.image.data.IDisplayDataPoint;
-import org.rhq.enterprise.gui.image.data.IEventPoint;
 
 public class VerticalChart extends Chart {
     protected static final Color[] DEFAULT_COLORS = { new Color(0x00, 0x00, 0xFF), new Color(0xFF, 0x00, 0x00),
@@ -330,8 +331,8 @@ public class VerticalChart extends Chart {
                             continue;
                         }
 
-                        IEventPoint evt = (IEventPoint) collEvts.get(i);
-                        g.drawEvent(evt.getEventID(), lines[evtDataPts[i]], y2 + ChartGraphics.HALF_EVENT_HEIGHT
+                        Event evt = collEvts.get(i);
+                        g.drawEvent(evt.getId(), lines[evtDataPts[i]], y2 + ChartGraphics.HALF_EVENT_HEIGHT
                             + this.lineWidth);
                     }
                 }
@@ -414,14 +415,14 @@ public class VerticalChart extends Chart {
     protected int[] getDataPointEventIndexes(int dataSetNumber) {
         DataPointCollection datapts = this.getDataPoints(dataSetNumber);
         EventPointCollection collEvts = this.getEventPoints(dataSetNumber);
-        Iterator iterEvts = collEvts.iterator();
+        Iterator<Event> iterEvts = collEvts.iterator();
         int[] tmp = new int[collEvts.size()];
         int cActual = 0;
 
         for (int i = 0; iterEvts.hasNext() == true; i++) {
-            IEventPoint evt = (IEventPoint) iterEvts.next();
+            Event evt = iterEvts.next();
 
-            int index = this.findDataPointIndex(evt.getTimestamp(), datapts);
+            int index = this.findDataPointIndex(evt.getTimestamp().getTime(), datapts);
 
             //            if(index == -1)
             //                continue;

@@ -89,21 +89,72 @@
         <scope>provided</scope> <!-- by ON Container -->
         <!-- needed for referenced domain entities that use Hibernate annotations -->
       </dependency>
-
+      
+      <dependency>
+         <groupId>org.hyperic</groupId>
+         <artifactId>sigar</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      </dependency>
+      
    </dependencies>
 
-   <build>
-      <plugins>
+  <build>
+    <plugins>
 
-         <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
+      <!-- need to copy/unzip the SIGAR native libraries to the target directory and tell SIGAR where they are -->
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>process-test-resources</phase>
             <configuration>
-              <!--<argLine>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
+              <tasks>
+                 <echo>SIGAR java library version used is ${sigar.version}</echo>
+                 <echo>Copying/unzipping SIGAR native libraries (version ${sigar.version}) to local build directory</echo>
+                 <mkdir dir="${project.build.directory}/jboss-sigar"/>
+                 <copy toDir="${project.build.directory}/jboss-sigar">
+                    <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
+                 </copy>
+                 <unzip dest="${project.build.directory}/jboss-sigar">
+                    <fileset dir="${project.build.directory}/jboss-sigar" includes="*.zip" />
+                    <patternset>
+                       <include name="**/lib/sigar.jar" />
+                       <include name="**/lib/bcel*.jar" />
+                       <include name="**/lib/*.so" />
+                       <include name="**/lib/*.sl" />
+                       <include name="**/lib/*.dll" />
+                       <include name="**/lib/*.dylib" />
+                    </patternset>
+                 </unzip>
+                 <move todir="${project.build.directory}/jboss-sigar" flatten="true">
+                    <fileset dir="${project.build.directory}/jboss-sigar">
+                       <include name="**/lib/*" />
+                    </fileset>
+                 </move>
+                 <delete dir="${project.build.directory}/jboss-sigar/hyperic-sigar-${sigar.version}" />
+              </tasks>
             </configuration>
-         </plugin>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
-      </plugins>
-   </build>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+          <!-- need to point the library path to the location of the native libraries -->
+          <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar</argLine>
+          <!--
+          <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar -Dsigar.nativeLogging=true</argLine>
+           -->
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>   
 
    <pluginRepositories>
       <pluginRepository>

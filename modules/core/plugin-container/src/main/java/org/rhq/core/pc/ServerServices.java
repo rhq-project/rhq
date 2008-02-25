@@ -25,6 +25,7 @@ import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
 import org.rhq.core.clientapi.server.operation.OperationServerService;
+import org.rhq.core.clientapi.server.event.EventServerService;
 
 /**
  * Provides access to remote pojo's representing the JON Server's client interfaces. These server service interfaces are
@@ -43,6 +44,7 @@ public class ServerServices {
     private OperationServerService operationServerService;
     private ResourceFactoryServerService resourceFactoryServerService;
     private ContentServerService contentServerService;
+    private EventServerService eventServerService;
 
     public CoreServerService getCoreServerService() {
         return coreServerService;
@@ -98,5 +100,13 @@ public class ServerServices {
 
     public void setContentServerService(ContentServerService contentServerService) {
         this.contentServerService = contentServerService;
+    }
+
+    public EventServerService getEventServerService() {
+        return eventServerService;
+    }
+
+    public void setEventServerService(EventServerService eventServerService) {
+        this.eventServerService = eventServerService;
     }
 }

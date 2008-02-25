@@ -119,7 +119,6 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
 
         int threadPoolSize = configuration.getMeasurementCollectionThreadPoolSize();
         long collectionInitialDelaySecs = configuration.getMeasurementCollectionInitialDelay();
-        long collectionPeriodSecs = configuration.getMeasurementCollectionPeriod();
 
         if (configuration.isInsideAgent()) {
             this.collectorThreadPool = new ScheduledThreadPoolExecutor(threadPoolSize, new LoggingThreadFactory(
@@ -131,20 +130,19 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             this.measurementSenderRunner = new MeasurementSenderRunner(this);
             this.measurementCollectorRunner = new MeasurementCollectorRunner(this);
 
-            // schedule the measurement runner to collect measurements periodically
-            this.senderThreadPool.scheduleAtFixedRate(measurementSenderRunner, collectionInitialDelaySecs,
-                collectionPeriodSecs, TimeUnit.SECONDS);
-            this.senderThreadPool.schedule(new MeasurementCollectionRequestor(), 30, TimeUnit.SECONDS);
+            // Schedule the measurement sender to send measurement reports periodically.
+            this.senderThreadPool.scheduleAtFixedRate(measurementSenderRunner, collectionInitialDelaySecs, 30, TimeUnit.SECONDS);
+            // Schedule the measurement collector to collect metrics periodically, whenever there are one or more
+            // metrics due to be collected.
+            this.collectorThreadPool.schedule(new MeasurementCollectionRequestor(), collectionInitialDelaySecs, TimeUnit.SECONDS);
 
-            // Load persistent measurement schedules from the InventoryManager and reconsititute them
+            // Load persistent measurement schedules from the InventoryManager and reconstitute them.
             Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
             reschedule(platform);
         }
     }
 
     public class MeasurementCollectionRequestor implements Runnable {
-        public boolean started = false;
-
         public void run() {
             try {
                 while (true) {

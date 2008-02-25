@@ -70,8 +70,6 @@ public class PluginContainerConfiguration {
     private static final String MEASUREMENT_COLLECTION_INITIAL_DELAY_PROP = PROP_PREFIX
         + "measurement-collection-initial-delay";
     public static final long MEASUREMENT_COLLECTION_INITIAL_DELAY_DEFAULT = 30L; // in seconds
-    private static final String MEASUREMENT_COLLECTION_PERIOD_PROP = PROP_PREFIX + "measurement-collection-period";
-    public static final long MEASUREMENT_COLLECTION_PERIOD_DEFAULT = 30L; // in seconds
     private static final String MEASUREMENT_COLLECTION_THREADCOUNT_PROP = PROP_PREFIX
         + "measurement-collection-threadpoolsize";
     public static final int MEASUREMENT_COLLECTION_THREADCOUNT_DEFAULT = 5;
@@ -215,25 +213,6 @@ public class PluginContainerConfiguration {
      */
     public void setMeasurementCollectionInitialDelay(long period) {
         configuration.put(MEASUREMENT_COLLECTION_INITIAL_DELAY_PROP, Long.valueOf(period));
-    }
-
-    /**
-     * Returns the length of time, in seconds, between each measurement collection run.
-     *
-     * @return number of seconds
-     */
-    public long getMeasurementCollectionPeriod() {
-        Long period = (Long) configuration.get(MEASUREMENT_COLLECTION_PERIOD_PROP);
-        return (period == null) ? MEASUREMENT_COLLECTION_PERIOD_DEFAULT : period.longValue();
-    }
-
-    /**
-     * Sets the length of time, in seconds, between each measurement collection run.
-     *
-     * @param period
-     */
-    public void setMeasurementCollectionPeriod(long period) {
-        configuration.put(MEASUREMENT_COLLECTION_PERIOD_PROP, Long.valueOf(period));
     }
 
     /**

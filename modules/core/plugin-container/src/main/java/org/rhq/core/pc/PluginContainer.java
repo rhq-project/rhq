@@ -40,6 +40,7 @@ import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.pc.operation.OperationManager;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.plugin.PluginManager;
+import org.rhq.core.pc.event.EventManager;
 import org.rhq.core.pluginapi.util.FileUtils;
 
 /**
@@ -71,6 +72,7 @@ public class PluginContainer implements ContainerService {
     private OperationManager operationManager;
     private ResourceFactoryManager resourceFactoryManager;
     private ContentManager contentManager;
+    private EventManager eventManager;
 
     private Collection<AgentServiceLifecycleListener> agentServiceListeners = new LinkedHashSet<AgentServiceLifecycleListener>();
     private AgentServiceStreamRemoter agentServiceStreamRemoter = null;
@@ -201,6 +203,7 @@ public class PluginContainer implements ContainerService {
                 operationManager = new OperationManager();
                 resourceFactoryManager = new ResourceFactoryManager();
                 contentManager = new ContentManager();
+                eventManager = new EventManager();
 
                 startContainerService(pluginManager);
                 startContainerService(pluginComponentFactory);
@@ -210,6 +213,7 @@ public class PluginContainer implements ContainerService {
                 startContainerService(operationManager);
                 startContainerService(resourceFactoryManager);
                 startContainerService(contentManager);
+                startContainerService(eventManager);
 
                 started = true;
             }
@@ -225,6 +229,7 @@ public class PluginContainer implements ContainerService {
     public void shutdown() {
         synchronized (INSTANCE) {
             if (started) {
+                eventManager.shutdown();
                 contentManager.shutdown();
                 resourceFactoryManager.shutdown();
                 operationManager.shutdown();
@@ -307,6 +312,10 @@ public class PluginContainer implements ContainerService {
 
     public ContentManager getContentManager() {
         return contentManager;
+    }
+
+    public EventManager getEventManager() {
+        return eventManager;
     }
 
     // The methods below return the manager implementations wrapped in their remote client interfaces.

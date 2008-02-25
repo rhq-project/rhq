@@ -69,14 +69,4 @@ public class DescriptorTest {
 
         marshaller.marshal(p, System.out);
     }
-
-    @Test(groups = { "fast" })
-    public void aFastTest() {
-        System.out.println("Fast test");
-    }
-
-    @Test(groups = { "slow" })
-    public void aSlowTest() {
-        System.out.println("Slow test");
-    }
 }

@@ -37,7 +37,6 @@ import org.rhq.core.clientapi.agent.inventory.DeleteResourceResponse;
 import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
-import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
@@ -122,18 +121,6 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
             throw new PluginContainerException("Could not retrieve resource type for request: " + request);
         }
 
-        // Find the actual package type from that resource type if it is specified
-        InstalledPackage installedPackage = null;
-        if (request.getPackageTypeName() != null) {
-            PackageType packageType = getPackageType(resourceType, request.getPackageTypeName());
-            if (packageType == null) {
-                throw new PluginContainerException("Could not retrieve package type: " + request.getPackageTypeName()
-                    + " for request: " + request);
-            }
-
-            installedPackage = new InstalledPackage(); // TODO (jdob): Initialize this installed package.
-        }
-
         String creationType = (request.getResourceConfiguration() != null) ? "configuration" : "package";
         {
             log.debug("Creating " + creationType + "-based resource of type '" + request.getResourceTypeName()
@@ -142,8 +129,7 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
 
         // Create the report to send the plugin
         CreateResourceReport report = new CreateResourceReport(request.getResourceName(), resourceType, request
-            .getPluginConfiguration(), request.getResourceConfiguration(), installedPackage, request
-            .getDeploymentTimeConfiguration());
+            .getPluginConfiguration(), request.getResourceConfiguration(), request.getPackageDetails());
 
         // Execute the create against the plugin
         CreateChildResourceFacet facet = getCreateChildResourceFacet(request.getParentResourceId());
@@ -168,18 +154,6 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
             throw new PluginContainerException("Could not retrieve resource type for request: " + request);
         }
 
-        // Find the actual package type from that resource type if it is specified
-        InstalledPackage installedPackage = null;
-        if (request.getPackageTypeName() != null) {
-            PackageType packageType = getPackageType(resourceType, request.getPackageTypeName());
-            if (packageType == null) {
-                throw new PluginContainerException("Could not retrieve package type: " + request.getPackageTypeName()
-                    + " for request: " + request);
-            }
-
-            installedPackage = new InstalledPackage(); // TODO (jdob): Initialize this installed package.
-        }
-
         String creationType = (request.getResourceConfiguration() != null) ? "configuration" : "package";
         {
             log.debug("Creating " + creationType + "-based resource of type '" + request.getResourceTypeName()
@@ -188,8 +162,7 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
 
         // Create the report to send the plugin
         CreateResourceReport report = new CreateResourceReport(request.getResourceName(), resourceType, request
-            .getPluginConfiguration(), request.getResourceConfiguration(), installedPackage, request
-            .getDeploymentTimeConfiguration());
+            .getPluginConfiguration(), request.getResourceConfiguration(), request.getPackageDetails());
 
         // Execute the create against the plugin
         CreateChildResourceFacet facet = getCreateChildResourceFacet(request.getParentResourceId());

@@ -19,11 +19,15 @@
 package org.rhq.enterprise.gui.admin.config;
 
 import java.util.Properties;
+
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessage;
-import org.rhq.enterprise.gui.legacy.Constants;
+
+import org.rhq.enterprise.gui.legacy.NumberConstants;
+import org.rhq.enterprise.gui.legacy.StringConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 
@@ -39,6 +43,8 @@ public class SystemConfigForm extends BaseValidatorForm {
     private String rtPurge = "";
     private String alertPurgeVal = "0";
     private String alertPurge = "";
+    private String eventPurgeVal = "0";
+    private String eventPurge = "";
     private String baselineFrequencyVal = "0";
     private String baselineFrequency = "";
     private String baselineDataSetVal = "0";
@@ -119,6 +125,8 @@ public class SystemConfigForm extends BaseValidatorForm {
         rtPurgeVal = null;
         alertPurge = "";
         alertPurgeVal = null;
+        eventPurge = "";
+        eventPurgeVal = null;
         baselineFrequency = "";
         baselineFrequencyVal = null;
         baselineDataSet = "";
@@ -177,6 +185,11 @@ public class SystemConfigForm extends BaseValidatorForm {
         alertPurge = findTimeUnit(alertPurgeLong.longValue());
         alertPurgeVal = calcTimeUnit(alertPurgeLong.longValue());
 
+        String eventPurgeValStr = prop.getProperty(HQConstants.EventPurge);
+        Long eventPurgeLong = new Long(eventPurgeValStr);
+        eventPurge = findTimeUnit(eventPurgeLong.longValue());
+        eventPurgeVal = calcTimeUnit(eventPurgeLong.longValue());
+
         String baselineFrequencyValStr = prop.getProperty(HQConstants.BaselineFrequency);
         Long baselineFrequencyLong = new Long(baselineFrequencyValStr);
         baselineFrequency = findTimeUnit(baselineFrequencyLong.longValue());
@@ -222,12 +235,12 @@ public class SystemConfigForm extends BaseValidatorForm {
      * @return time unit label
      */
     private String findTimeUnit(long timeUnitInt) {
-        if ((timeUnitInt % Constants.DAYS) == 0) {
-            return Constants.DAYS_LABEL;
-        } else if ((timeUnitInt % Constants.HOURS) == 0) {
-            return Constants.HOURS_LABEL;
+        if ((timeUnitInt % NumberConstants.DAYS) == 0) {
+            return StringConstants.DAYS_LABEL;
+        } else if ((timeUnitInt % NumberConstants.HOURS) == 0) {
+            return StringConstants.HOURS_LABEL;
         } else {
-            return Constants.MINUTES_LABEL;
+            return StringConstants.MINUTES_LABEL;
         }
     }
 
@@ -237,12 +250,12 @@ public class SystemConfigForm extends BaseValidatorForm {
      * @return time unit label
      */
     private String calcTimeUnit(long timeUnitInt) {
-        if ((timeUnitInt % Constants.DAYS) == 0) {
-            return String.valueOf(timeUnitInt / Constants.DAYS);
-        } else if ((timeUnitInt % Constants.HOURS) == 0) {
-            return String.valueOf(timeUnitInt / Constants.HOURS);
+        if ((timeUnitInt % NumberConstants.DAYS) == 0) {
+            return String.valueOf(timeUnitInt / NumberConstants.DAYS);
+        } else if ((timeUnitInt % NumberConstants.HOURS) == 0) {
+            return String.valueOf(timeUnitInt / NumberConstants.HOURS);
         } else {
-            return String.valueOf(timeUnitInt / Constants.MINUTES);
+            return String.valueOf(timeUnitInt / NumberConstants.MINUTES);
         }
     }
 
@@ -252,12 +265,12 @@ public class SystemConfigForm extends BaseValidatorForm {
      * @return time unit label
      */
     private long convertToMillisecond(long val, String timeLabel) {
-        if (timeLabel.equalsIgnoreCase(Constants.DAYS_LABEL)) {
-            return val * Constants.DAYS;
-        } else if (timeLabel.equalsIgnoreCase(Constants.HOURS_LABEL)) {
-            return val * Constants.HOURS;
+        if (timeLabel.equalsIgnoreCase(StringConstants.DAYS_LABEL)) {
+            return val * NumberConstants.DAYS;
+        } else if (timeLabel.equalsIgnoreCase(StringConstants.HOURS_LABEL)) {
+            return val * NumberConstants.HOURS;
         } else {
-            return val * Constants.MINUTES;
+            return val * NumberConstants.MINUTES;
         }
     }
 
@@ -274,12 +287,13 @@ public class SystemConfigForm extends BaseValidatorForm {
         prop.setProperty(HQConstants.DataMaintenance, String.valueOf(maintIntervalLong));
 
         long rtPurgeLong = convertToMillisecond(Long.parseLong(rtPurgeVal), rtPurge);
-
         prop.setProperty(HQConstants.RtDataPurge, String.valueOf(rtPurgeLong));
 
         long alertPurgeLong = convertToMillisecond(Long.parseLong(alertPurgeVal), alertPurge);
-
         prop.setProperty(HQConstants.AlertPurge, String.valueOf(alertPurgeLong));
+
+        long eventPurgeLong = convertToMillisecond(Long.parseLong(eventPurgeVal), eventPurge);
+        prop.setProperty(HQConstants.EventPurge, String.valueOf(eventPurgeLong));
 
         long baselineFrequencyLong = convertToMillisecond(Integer.parseInt(baselineFrequencyVal), baselineFrequency);
         prop.setProperty(HQConstants.BaselineFrequency, String.valueOf(baselineFrequencyLong));
@@ -407,6 +421,22 @@ public class SystemConfigForm extends BaseValidatorForm {
 
     public void setAlertPurge(String s) {
         alertPurge = s;
+    }
+
+    public String getEventPurgeVal() {
+        return eventPurgeVal;
+    }
+
+    public void setEventPurgeVal(String eventPurgeVal) {
+        this.eventPurgeVal = eventPurgeVal;
+    }
+
+    public String getEventPurge() {
+        return eventPurge;
+    }
+
+    public void setEventPurge(String eventPurge) {
+        this.eventPurge = eventPurge;
     }
 
     public String getBaselineFrequencyVal() {

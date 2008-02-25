@@ -19,13 +19,14 @@
 package org.rhq.enterprise.gui.image.chart;
 
 import java.util.ArrayList;
-import org.rhq.enterprise.gui.image.data.IEventPoint;
+
+import org.rhq.core.domain.event.Event;
 
 /**
  * DataPointCollection holds a collection of objects that implement the org.rhq.enterprise.gui.image.data.IDataPoint
  * interface. The collection of objects form are charted when give to a subclass of net.hyperic.chart.Chart.
  */
-public class EventPointCollection extends ArrayList {
+public class EventPointCollection extends ArrayList<Event> {
     public EventPointCollection() {
     }
 
@@ -38,7 +39,8 @@ public class EventPointCollection extends ArrayList {
      *
      * @throws ClassCastException If the element does not implement the IEventPoint interface.
      */
-    public boolean add(IEventPoint element) {
+    @Override
+    public boolean add(Event element) {
         return super.add(element);
     }
 
@@ -64,7 +66,7 @@ public class EventPointCollection extends ArrayList {
      *
      * @throws ClassCastException If the element does not implement the net.hyperic.chart.IEventPoint interface.
      */
-    public boolean contains(IEventPoint element) {
+    public boolean contains(Event element) {
         return super.contains(element);
     }
 
@@ -90,7 +92,7 @@ public class EventPointCollection extends ArrayList {
      *
      * @throws ClassCastException If the element does not implement the IEventPoint interface.
      */
-    public boolean remove(IEventPoint element) {
+    public boolean remove(Event element) {
         return super.remove(element);
     }
 

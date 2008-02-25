@@ -22,16 +22,20 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
+
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.content.InstalledPackageHistoryStatus;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -50,6 +54,15 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
     private Resource resource;
     private Integer selectedPackage;
 
+    private SelectItem[] packageTypes;
+    private String packageTypeFilter;
+
+    private SelectItem[] packageVersions;
+    private String packageVersionFilter;
+
+    private ContentManagerLocal contentManager = LookupUtil.getContentManager();
+    private ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
+
     // Constructors  --------------------------------------------
 
     public ListPackagesUIBean() {
@@ -60,8 +73,6 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
     public String deleteSelectedInstalledPackages() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selectedPackages = FacesContextUtility.getRequest().getParameterValues("selectedPackages");
-
-        ContentManagerLocal contentManager = LookupUtil.getContentManager();
 
         // Load installed packages for call to EJB
         Set<Integer> installedPackageIds = new HashSet<Integer>(selectedPackages.length);
@@ -131,7 +142,9 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
         public PageList<PackageListItemComposite> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             Resource requestResource = EnterpriseFacesContextUtility.getResourceIfExists();
-            ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
+
+            String packageTypeFilter = ListPackagesUIBean.this.getPackageTypeFilter();
+            String packageVersionFilter = ListPackagesUIBean.this.getPackageVersionFilter();
 
             if (requestResource == null) {
                 requestResource = resource; // request not associated with a resource - use the resource we used before
@@ -140,9 +153,57 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
             }
 
             PageList<PackageListItemComposite> pageList = contentUIManager.getInstalledPackages(subject,
-                requestResource.getId(), pc);
+                requestResource.getId(), packageTypeFilter, packageVersionFilter, pc);
 
             return pageList;
         }
+    }
+
+    public SelectItem[] getPackageTypes() {
+        if (this.packageTypes == null) {
+            List<IntegerOptionItem> items = contentUIManager.getInstalledPackageTypes(EnterpriseFacesContextUtility
+                .getSubject(), EnterpriseFacesContextUtility.getResource().getId());
+            this.packageTypes = SelectItemUtils.convertFromListOptionItem(items, true);
+        }
+        return this.packageTypes;
+    }
+
+    public void setPackageTypes(SelectItem[] packageTypes) {
+        this.packageTypes = packageTypes;
+    }
+
+    public String getPackageTypeFilter() {
+        if (packageTypeFilter == null) {
+            packageTypeFilter = SelectItemUtils.getSelectItemFilter("contentForm:packageTypeFilter");
+        }
+        return packageTypeFilter;
+    }
+
+    public void setPackageTypeFilter(String packageTypeFilter) {
+        this.packageTypeFilter = packageTypeFilter;
+    }
+
+    public SelectItem[] getPackageVersions() {
+        if (this.packageVersions == null) {
+            List<String> items = contentUIManager.getInstalledPackageVersions(EnterpriseFacesContextUtility
+                .getSubject(), EnterpriseFacesContextUtility.getResource().getId());
+            this.packageVersions = SelectItemUtils.convertFromListString(items, true);
+        }
+        return packageVersions;
+    }
+
+    public void setPackageVersions(SelectItem[] packageVersions) {
+        this.packageVersions = packageVersions;
+    }
+
+    public String getPackageVersionFilter() {
+        if (packageVersionFilter == null) {
+            packageVersionFilter = SelectItemUtils.getSelectItemFilter("contentForm:packageVersionFilter");
+        }
+        return packageVersionFilter;
+    }
+
+    public void setPackageVersionFilter(String packageVersionFilter) {
+        this.packageVersionFilter = packageVersionFilter;
     }
 }

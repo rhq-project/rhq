@@ -23,7 +23,6 @@
    <entry key="rhq.agent.plugins.service-discovery.initial-delay-secs"       value="12"/>
    <entry key="rhq.agent.plugins.availability-scan.period-secs"              value="3333"/>
    <entry key="rhq.agent.plugins.availability-scan.initial-delay-secs"       value="13"/>
-   <entry key="rhq.agent.plugins.measurement-collection.period-secs"         value="2222"/>
    <entry key="rhq.agent.plugins.measurement-collection.initial-delay-secs"  value="14"/>
    <entry key="rhq.agent.plugins.measurement-collection.threadpool-size"     value="3"/>
    <entry key="rhq.agent.plugins.operation-invoker.threadpool-size"          value="2"/>

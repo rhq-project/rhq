@@ -23,15 +23,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionRedirect;
+
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.KeyConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
@@ -63,7 +66,11 @@ public class VisibilityPortalAction extends ResourceVisibilityPortalAction {
 
     private static final String TITLE_PERFORMANCE = "resource.common.monitor.visibility.PerformanceTitle";
 
+    private static final String TITLE_EVENTS = "resource.common.monitor.visibility.EventsTitle";
+
     private static final String PORTLET_PERFORMANCE = ".resource.common.monitor.visibility.Performance";
+
+    private static final String PORTLET_EVENTS = ".resource.common.monitor.visibility.Events";
 
     private static final String ERR_PLATFORM_PERMISSION = "resource.common.monitor.visibility.error.PlatformPermission";
 
@@ -137,6 +144,8 @@ public class VisibilityPortalAction extends ResourceVisibilityPortalAction {
         map.setProperty(ParamConstants.MODE_MON_COMPARE_METRICS, "compareMetrics");
         map.setProperty(ParamConstants.MODE_MON_METRIC_METADATA, "metricMetadata");
         map.setProperty("showTraitHistory", "showTraitHistory"); // TODO constant
+        map.setProperty("events", "events"); // TODO constant
+
         return map;
     }
 
@@ -174,6 +183,17 @@ public class VisibilityPortalAction extends ResourceVisibilityPortalAction {
         setResource(request);
 
         Portal portal = Portal.createPortal(TITLE_PERFORMANCE, PORTLET_PERFORMANCE);
+        request.setAttribute(AttrConstants.PORTAL_KEY, portal);
+        return null;
+    }
+
+    @Override
+    public ActionForward events(ActionMapping mapping, ActionForm form, HttpServletRequest request,
+        HttpServletResponse response) throws Exception {
+
+        super.events(mapping, form, request, response);
+        setResource(request);
+        Portal portal = Portal.createPortal(TITLE_EVENTS, PORTLET_EVENTS);
         request.setAttribute(AttrConstants.PORTAL_KEY, portal);
         return null;
     }

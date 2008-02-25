@@ -19,11 +19,14 @@
 package org.rhq.enterprise.gui.common.servlet;
 
 import java.io.IOException;
+
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.image.chart.Chart;
 
@@ -217,8 +220,12 @@ public abstract class ChartServlet extends ImageServlet {
         super.parseParameters(request);
 
         // units
-        if (request.getParameter(MEASUREMENT_UNITS_PARAM) != null) {
-            units = MeasurementUnits.valueOf(request.getParameter(MEASUREMENT_UNITS_PARAM));
+        String parameter = request.getParameter(MEASUREMENT_UNITS_PARAM);
+        if (parameter != null && !"".equals(parameter)) {
+            units = MeasurementUnits.valueOf(parameter);
+        } else {
+            units = MeasurementUnits.NONE;
+            log.warn("Request did not specify measurement units. Using NONE.");
         }
 
         // chart flags

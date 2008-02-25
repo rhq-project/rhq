@@ -31,9 +31,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Greg Hinkle
  */
 public class InstalledPluginUIBean {
-    private final Log log = LogFactory.getLog(InstalledPluginsUIBean.class);
+    private final Log log = LogFactory.getLog(InstalledPluginUIBean.class);
 
-    public static final String MANAGED_BEAN_NAME = "InstalledPluginsUIBean";
+    public static final String MANAGED_BEAN_NAME = "InstalledPluginUIBean";
 
     private Plugin plugin;
 

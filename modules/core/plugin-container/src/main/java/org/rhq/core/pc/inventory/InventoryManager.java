@@ -34,10 +34,12 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
@@ -64,6 +66,7 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.content.ContentContextImpl;
+import org.rhq.core.pc.event.EventContextImpl;
 import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
 import org.rhq.core.pc.operation.OperationContextImpl;
 import org.rhq.core.pc.operation.OperationManager;
@@ -73,8 +76,8 @@ import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.content.ContentContext;
-import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
+import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
@@ -83,7 +86,6 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.operation.OperationContext;
-import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationServices;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
@@ -897,7 +899,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             ResourceContext context = new ResourceContext(resource, parentComponent, discoveryComponent,
                 SystemInfoFactory.createSystemInfo(), this.configuration.getTemporaryDirectory(), new File(
-                    this.configuration.getDataDirectory(), resource.getResourceType().getPlugin()));
+                    this.configuration.getDataDirectory(), resource.getResourceType().getPlugin()),
+                getEventContext(resource), getOperationContext(resource), getContentContext(resource));
 
             ClassLoader startingClassLoader = Thread.currentThread().getContextClassLoader();
             try {
@@ -905,40 +908,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 component.start(context);
                 container.setResourceComponentState(ResourceComponentState.STARTED);
                 resource.setConnected(true); // This tells the server-side that the resource has connected successfully.
-
-                if (component instanceof ContentFacet) {
-                    try {
-                        // will resource.getId() always be > 0?  what happens if we haven't sync'ed yet?
-                        if (resource.getId() == 0) {
-                            log.warn("RESOURCE ID IS 0! Content facet features may not work - please report this");
-                        }
-
-                        ContentServices cm = PluginContainer.getInstance().getContentManager();
-                        ContentContext contentContext = new ContentContextImpl(resource.getId(), cm);
-                        ((ContentFacet) component).startContentFacet(contentContext);
-                    } catch (Throwable t) {
-                        log
-                            .warn("Content features will not work due to failure to start content facet: " + resource,
-                                t);
-                    }
-                }
-
-                if (component instanceof OperationFacet) {
-                    try {
-                        if (resource.getId() == 0) {
-                            log.warn("RESOURCE ID IS 0! Operation facet features may not work - please report this");
-                        }
-
-                        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
-                        OperationServices operationServices = new OperationServicesAdapter(operationManager);
-                        OperationContext operationContext = new OperationContextImpl(resource.getId(),
-                            operationServices);
-                        ((OperationFacet) component).startOperationFacet(operationContext);
-                    } catch (Throwable t) {
-                        log.warn("Operation features will not work due to failure to start content facet: " + resource,
-                            t);
-                    }
-                }
             } catch (Throwable t) {
                 if (newPluginConfig || (t instanceof InvalidPluginConfigurationException)) {
                     throw new InvalidPluginConfigurationException("Failed to start component for resource " + resource
@@ -1480,5 +1449,38 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     public void disableServiceScans(int serverResourceId) {
         throw new UnsupportedOperationException("not implemented yet"); // TODO: Implement this method.
+    }
+
+    @Nullable
+    private EventContext getEventContext(Resource resource) {
+        EventContext eventContext;
+        if (resource.getResourceType().getEventDefinitions() != null
+            && !resource.getResourceType().getEventDefinitions().isEmpty()) {
+            eventContext = new EventContextImpl(resource);
+        } else {
+            eventContext = null;
+        }
+        return eventContext;
+    }
+
+    private OperationContext getOperationContext(Resource resource) {
+        if (resource.getId() == 0) {
+            log.warn("RESOURCE ID IS 0! Operation features may not work - resource needs to be synced with server");
+        }
+
+        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
+        OperationServices operationServices = new OperationServicesAdapter(operationManager);
+        OperationContext operationContext = new OperationContextImpl(resource.getId(), operationServices);
+        return operationContext;
+    }
+
+    private ContentContext getContentContext(Resource resource) {
+        if (resource.getId() == 0) {
+            log.warn("RESOURCE ID IS 0! Content features may not work - resource needs to be synced with server");
+        }
+
+        ContentServices cm = PluginContainer.getInstance().getContentManager();
+        ContentContext contentContext = new ContentContextImpl(resource.getId(), cm);
+        return contentContext;
     }
 }

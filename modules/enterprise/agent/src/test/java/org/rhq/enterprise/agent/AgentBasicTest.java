@@ -100,7 +100,6 @@ public class AgentBasicTest {
         assert plugin_config.getServiceDiscoveryInitialDelay() == 12;
         assert plugin_config.getAvailabilityScanPeriod() == 3333;
         assert plugin_config.getAvailabilityScanInitialDelay() == 13;
-        assert plugin_config.getMeasurementCollectionPeriod() == 2222;
         assert plugin_config.getMeasurementCollectionInitialDelay() == 14;
         assert plugin_config.getMeasurementCollectionThreadPoolSize() == 3;
         assert plugin_config.getOperationInvokerThreadPoolSize() == 2;

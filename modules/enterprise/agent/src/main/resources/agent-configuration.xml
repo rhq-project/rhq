@@ -547,17 +547,6 @@ commands named "config", "setconfig" and "setup" and the command line options
 
                <!--
                _______________________________________________________________
-               rhq.agent.plugins.measurement-collection.period-secs
-
-               Defines how often measurements are collected. The value is
-               specified in seconds.
-               -->
-               <!--
-               <entry key="rhq.agent.plugins.measurement-collection.period-secs" value="30"/>
-               -->
-
-               <!--
-               _______________________________________________________________
                rhq.agent.plugins.content-discovery.threadpool-size
 
                When plugins are scheduled to discover content, the discovery

@@ -18,10 +18,12 @@
  */
 package org.rhq.core.pc.content;
 
+import java.util.HashSet;
 import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.server.content.ContentServerService;
+import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackagesRequest;
@@ -54,7 +56,9 @@ public class CreateContentRunner implements Runnable {
     // Runnable Implementation  --------------------------------------------
 
     public void run() {
+
         DeployPackagesResponse response;
+
         try {
             response = contentManager.performPackageDeployment(request.getResourceId(), request.getPackages());
         } catch (Throwable throwable) {
@@ -65,18 +69,33 @@ public class CreateContentRunner implements Runnable {
         // We don't rely on the plugin to map up the response to the request ID, so we do it here
         response.setRequestId(request.getRequestId());
 
-        // Request a new discovery so this content is put in the PC inventory for the resource
-        // When the new content is picked up from that discovery, its first revision will be
-        // discovered as well
+        // Request a new discovery so this package is put in the inventory for the resource.
         Set<DeployIndividualPackageResponse> packageResponses = response.getPackageResponses();
         if (packageResponses != null) {
-            try {
-                for (DeployIndividualPackageResponse individualResponse : packageResponses) {
-                    contentManager.executeResourcePackageDiscoveryImmediately(request.getResourceId(),
-                        individualResponse.getKey().getName());
+
+            // Keep a quick cache of which package types have had discoveries executed so we don't
+            // unnecessarily hammer the plugin with redundant discoveries
+            Set<String> packageTypeNames = new HashSet<String>();
+
+            for (DeployIndividualPackageResponse individualResponse : packageResponses) {
+                PackageDetailsKey key = individualResponse.getKey();
+
+                if (key == null)
+                    continue;
+
+                String packageTypeName = key.getPackageTypeName();
+
+                // Make sure we haven't already run a discovery for this package type
+                if (!packageTypeNames.contains(packageTypeName)) {
+                    packageTypeNames.add(packageTypeName);
+
+                    try {
+                        contentManager.executeResourcePackageDiscoveryImmediately(request.getResourceId(),
+                            individualResponse.getKey().getPackageTypeName());
+                    } catch (Throwable throwable) {
+                        log.error("Error occurred on content discovery request" + throwable);
+                    }
                 }
-            } catch (Throwable throwable) {
-                log.error("Error occurred on content discovery request" + throwable);
             }
         }
 

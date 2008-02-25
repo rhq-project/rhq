@@ -24,7 +24,8 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.util.Iterator;
-import org.rhq.enterprise.gui.image.data.IEventPoint;
+
+import org.rhq.core.domain.event.Event;
 
 /**
  * LineChart draws a horizontal chart with a line that represents data point along the line. For a description of how to
@@ -57,6 +58,7 @@ public class LineChart extends VerticalChart {
         super(width, height, charts);
     }
 
+    @Override
     protected Rectangle draw(ChartGraphics g) {
         m_showLineEvents = this.showEvents;
         super.showEvents = false;
@@ -66,6 +68,7 @@ public class LineChart extends VerticalChart {
         return result;
     }
 
+    @Override
     protected void paint(ChartGraphics g, Rectangle rect) {
         int yLabelEvtDot = rect.y + rect.height + ChartGraphics.HALF_EVENT_HEIGHT + this.lineWidth;
 
@@ -118,10 +121,10 @@ public class LineChart extends VerticalChart {
                             continue;
                         }
 
-                        IEventPoint evt = (IEventPoint) collEvts.get(i);
+                        Event evt = collEvts.get(i);
                         int index = evtDataPts[i];
 
-                        g.drawEvent(evt.getEventID(), x[index], yDataPt[index]);
+                        g.drawEvent(evt.getId(), x[index], yDataPt[index]);
                     }
                 }
             }

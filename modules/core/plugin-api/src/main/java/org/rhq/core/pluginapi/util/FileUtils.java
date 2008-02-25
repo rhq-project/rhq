@@ -4,10 +4,10 @@
  */
 package org.rhq.core.pluginapi.util;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 
 /**
  * A set of utilities for working with files and file paths.

@@ -168,7 +168,9 @@ public class PluginEnvironment {
         InputStream is = null;
         try {
             // A classloader with just the primary plugin in it... no dependencies or libraries
-            ClassLoader pluginOnlyClassloader = new URLClassLoader(new URL[] { pluginJarUrl });
+            // Note that we use a parent classloader of null in case more than one plugin happens
+            // to be in our thread context classloader - we don't want any other plugins getting picked up
+            ClassLoader pluginOnlyClassloader = new URLClassLoader(new URL[] { pluginJarUrl }, null);
 
             is = pluginOnlyClassloader.getResourceAsStream(descriptorPath);
             if (is == null) {

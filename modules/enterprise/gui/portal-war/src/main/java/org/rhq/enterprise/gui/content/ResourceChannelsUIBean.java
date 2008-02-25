@@ -22,7 +22,7 @@ import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.composite.ChannelComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -71,19 +71,19 @@ public class ResourceChannelsUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
-    private class ResourceChannelsDataModel extends PagedListDataModel<Channel> {
+    private class ResourceChannelsDataModel extends PagedListDataModel<ChannelComposite> {
         public ResourceChannelsDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public PageList<Channel> fetchPage(PageControl pc) {
+        public PageList<ChannelComposite> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             int id = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));
             ChannelManagerLocal manager = LookupUtil.getChannelManagerLocal();
 
-            PageList<Channel> results = manager.getResourceSubscriptions(subject, id, pc);
+            PageList<ChannelComposite> results = manager.getResourceSubscriptions(subject, id, pc);
             return results;
         }
     }

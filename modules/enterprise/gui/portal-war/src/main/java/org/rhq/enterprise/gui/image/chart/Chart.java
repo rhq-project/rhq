@@ -29,8 +29,10 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.image.WebImage;
 import org.rhq.enterprise.gui.image.data.IDisplayDataPoint;
@@ -124,8 +126,8 @@ public abstract class Chart extends WebImage {
 
     private String m_strTitle = EMPTY_STRING;
 
-    private ArrayList m_collDataPointColl = new ArrayList(1);
-    private ArrayList m_collEvtPointColl = new ArrayList(1);
+    private ArrayList<DataPointCollection> m_collDataPointColl = new ArrayList<DataPointCollection>(1);
+    private ArrayList<EventPointCollection> m_collEvtPointColl = new ArrayList<EventPointCollection>(1);
 
     private String m_strNoData = NO_DATA;
 
@@ -371,7 +373,7 @@ public abstract class Chart extends WebImage {
      * @param charts The number of charts to display.
      */
     protected Chart(int charts) {
-        this(Chart.DEFAULT_WIDTH, Chart.DEFAULT_HEIGHT, charts);
+        this(WebImage.DEFAULT_WIDTH, WebImage.DEFAULT_HEIGHT, charts);
     }
 
     /**
@@ -548,10 +550,10 @@ public abstract class Chart extends WebImage {
 
         // ///////////////////////////////////////////////////////////////
         // Iterator through the DataSets to calculate the avg, low & peak
-        Iterator iterDataSet = this.m_collDataPointColl.iterator();
+        Iterator<DataPointCollection> iterDataSet = this.m_collDataPointColl.iterator();
         while (iterDataSet.hasNext() == true) {
             // Each DataSet has a collection of data points.
-            Iterator iterDataPt = ((DataPointCollection) iterDataSet.next()).iterator();
+            Iterator iterDataPt = (iterDataSet.next()).iterator();
 
             while (iterDataPt.hasNext() == true) {
                 IDisplayDataPoint datapt = (IDisplayDataPoint) iterDataPt.next();
@@ -773,9 +775,9 @@ public abstract class Chart extends WebImage {
     @Override
     protected void preInit() {
         // Create the ChartGraphics
-        Collection coll = this.initData(this.m_collDataPointColl);
+        Collection<DataPointCollection> coll = this.initData(this.m_collDataPointColl);
         if (coll instanceof ArrayList) {
-            this.m_collDataPointColl = (ArrayList) coll;
+            this.m_collDataPointColl = (ArrayList<DataPointCollection>) coll;
         } else {
             throw new ClassCastException("initData() must return a collection of type ArrayList.");
         }
@@ -885,7 +887,7 @@ public abstract class Chart extends WebImage {
         return result;
     }
 
-    protected Class getDataCollectionClass() {
+    protected Class<DataPointCollection> getDataCollectionClass() {
         return DataPointCollection.class;
     }
 
@@ -934,22 +936,22 @@ public abstract class Chart extends WebImage {
     }
 
     public DataPointCollection getDataPoints(int index) {
-        return (DataPointCollection) this.m_collDataPointColl.get(index);
+        return this.m_collDataPointColl.get(index);
     }
 
     public EventPointCollection getEventPoints(int index) {
-        return (EventPointCollection) this.m_collEvtPointColl.get(index);
+        return this.m_collEvtPointColl.get(index);
     }
 
     public int getDataSetCount() {
         return this.m_collDataPointColl.size();
     }
 
-    public Iterator getDataSetIterator() {
+    public Iterator<DataPointCollection> getDataSetIterator() {
         return this.m_collDataPointColl.iterator();
     }
 
-    public Iterator getEventSetIterator() {
+    public Iterator<EventPointCollection> getEventSetIterator() {
         return this.m_collEvtPointColl.iterator();
     }
 
@@ -975,7 +977,7 @@ public abstract class Chart extends WebImage {
         // Make sure we allways have at least one empty collection
         if (this.getDataSetCount() == 0) {
             try {
-                m_collDataPointColl.add(this.getDataCollectionClass().newInstance());
+                m_collDataPointColl.add(getDataCollectionClass().newInstance());
             } catch (Exception e) {
                 System.out.println(e);
             }

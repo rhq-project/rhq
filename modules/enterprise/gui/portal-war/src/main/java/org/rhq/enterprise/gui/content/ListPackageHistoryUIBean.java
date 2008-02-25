@@ -23,9 +23,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.faces.model.DataModel;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -34,10 +37,10 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.Package;
+import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
@@ -56,10 +59,7 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private InstalledPackage installedPackage;
-
     private InstalledPackage currentPackage;
-    private InstalledPackage oldPackage;
 
     // Public  --------------------------------------------
 
@@ -71,13 +71,12 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
         return currentPackage;
     }
 
-    public InstalledPackage getOldPackage() {
-        return oldPackage;
-    }
-
     /**
      * Wraps the package values side by side with an older package if one was selected so they can be displayed in the
      * same table.
+     *
+     * We no longer support comparing old and new packages since {@link InstalledPackage} no longer keeps any form
+     * of historical data. This still remains in case we decide to port it later to support comparing versions.
      *
      * @return
      */
@@ -92,16 +91,7 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
         // See if an old package was requested
         String oldPackageIdString = FacesContextUtility.getRequest().getParameter("oldPackageId");
 
-        oldPackage = null;
-        if (oldPackageIdString != null) {
-            // An old package was actually requested, so look it up
-            int oldPackageId = Integer.parseInt(oldPackageIdString);
-
-            ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
-            oldPackage = contentUIManager.getInstalledPackage(oldPackageId);
-        }
-
-        return toCombinedValues(currentPackage, oldPackage);
+        return toCombinedValues(currentPackage, null);
     }
 
     /**
@@ -115,12 +105,15 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
     private List<PackageTableDataValue> toCombinedValues(InstalledPackage current, InstalledPackage old) {
         List<PackageTableDataValue> results = new ArrayList<PackageTableDataValue>();
 
-        results.add(new PackageTableDataValue("Installation Date", dateToString(current.getInstallationDate()),
-            ((old != null) ? dateToString(old.getInstallationDate()) : null)));
+        results.add(new PackageTableDataValue("Name", current.getPackageVersion().getGeneralPackage().getName(), null));
         results.add(new PackageTableDataValue("Version", current.getPackageVersion().getDisplayVersion(),
             ((old != null) ? old.getPackageVersion().getDisplayVersion() : null)));
         results.add(new PackageTableDataValue("Architecture", current.getPackageVersion().getArchitecture().getName(),
             ((old != null) ? old.getPackageVersion().getArchitecture().getName() : null)));
+        results.add(new PackageTableDataValue("File Name",
+            (current.getPackageVersion().getFileSize() != null) ? current.getPackageVersion().getFileName()
+                : null, (old != null) ? ((old.getPackageVersion().getFileSize() != null) ? old.getPackageVersion()
+                .getFileName() : null) : null));
         results.add(new PackageTableDataValue("File Size",
             (current.getPackageVersion().getFileSize() != null) ? current.getPackageVersion().getFileSize().toString()
                 : null, (old != null) ? ((old.getPackageVersion().getFileSize() != null) ? old.getPackageVersion()
@@ -129,13 +122,17 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
             .getPackageVersion().getMD5() : null)));
         results.add(new PackageTableDataValue("SHA256", current.getPackageVersion().getSHA256(), ((old != null) ? old
             .getPackageVersion().getSHA256() : null)));
+        results.add(new PackageTableDataValue("Installation Date", dateToString(current.getInstallationDate()),
+            ((old != null) ? dateToString(old.getInstallationDate()) : null)));
         results.add(new PackageTableDataValue("Owner", (current.getUser() != null) ? current.getUser().toString()
             : null, (old != null) ? ((old.getUser() != null) ? old.getUser().toString() : null) : null));
 
         // TODO: figure out how to know if the content is available
+/*
         results.add(new PackageTableDataValue("Content loaded to server?", Boolean.toString(current.getPackageVersion()
             .getPackageBits() != null), ((old != null) ? Boolean
             .toString(old.getPackageVersion().getPackageBits() != null) : null)));
+*/
 
         // If there are no extra properties defined for this package type, we can stop here
         ConfigurationDefinition definition = current.getPackageVersion().getGeneralPackage().getPackageType()
@@ -144,8 +141,12 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
             return results;
         }
 
-        Map<String, PropertyDefinition> propertyDefinitions = definition.getPropertyDefinitions();
+/*
+        Deployment configuration is no longer stored on the InstalledPackage. If we want this, we can have a query
+        that looks for the configuration in the audit trail.
 
+        Map<String, PropertyDefinition> propertyDefinitions = definition.getPropertyDefinitions();
+        
         Configuration currentConfiguration = current.getDeploymentConfigurationValues();
         Configuration oldConfiguration = ((old != null) ? old.getDeploymentConfigurationValues() : null);
 
@@ -171,6 +172,7 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
                 oldPropertyValue);
             results.add(packageTableDataValue);
         }
+*/
 
         results = new PageList<PackageTableDataValue>(results, results.size(), pageControl);
         return results;
@@ -197,8 +199,6 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
         }
 
         int currentPackageId = Integer.parseInt(FacesContextUtility.getRequest().getParameter("currentPackageId"));
-
-        log.info("Loading package [ " + currentPackageId + "]");
 
         ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
         currentPackage = contentUIManager.getInstalledPackage(currentPackageId);
@@ -262,13 +262,13 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
         }
     }
 
-    private class ListAllPackageVersionsDataModel extends PagedListDataModel<InstalledPackage> {
+    private class ListAllPackageVersionsDataModel extends PagedListDataModel<InstalledPackageHistory> {
         public ListAllPackageVersionsDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
         @Override
-        public PageList<InstalledPackage> fetchPage(PageControl pc) {
+        public PageList<InstalledPackageHistory> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             Resource resource = EnterpriseFacesContextUtility.getResourceIfExists();
             int currentInstalledPackageId = Integer.parseInt(FacesContextUtility.getRequest().getParameter(
@@ -280,10 +280,8 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
             InstalledPackage currentInstalledPackage = contentUIManager.getInstalledPackage(currentInstalledPackageId);
             Package generalPackage = currentInstalledPackage.getPackageVersion().getGeneralPackage();
 
-            pc.initDefaultOrderingField("ip.id", PageOrdering.DESC);
-
-            PageList<InstalledPackage> result = contentUIManager.getInstalledPackageHistory(subject, resource.getId(),
-                generalPackage.getId(), pc);
+            PageList<InstalledPackageHistory> result =
+                contentUIManager.getInstalledPackageHistory(subject, resource.getId(), generalPackage.getId(), pc);
             return result;
         }
     }

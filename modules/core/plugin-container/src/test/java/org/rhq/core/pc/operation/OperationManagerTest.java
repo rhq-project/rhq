@@ -27,9 +27,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
+
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import org.rhq.core.clientapi.server.operation.OperationServerService;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -38,7 +40,6 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
-import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.util.exception.ExceptionPackage;
@@ -537,9 +538,6 @@ public class OperationManagerTest {
     }
 
     private class MockOperationFacet implements OperationFacet {
-        public void startOperationFacet(OperationContext context) {
-        }
-
         public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
             if (name.equals("opFailure")) {
                 throw new IllegalStateException("Simulates an operation failure");

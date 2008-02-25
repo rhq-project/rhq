@@ -33,8 +33,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.server.content.ContentServerService;
@@ -237,21 +239,31 @@ public class ContentManager extends AgentService implements ContainerService, Co
     // ContentServices Implementation  --------------------------------------------
 
     public long downloadPackageBits(ContentContext context, PackageDetailsKey packageDetailsKey,
-        OutputStream outputStream) {
+        OutputStream outputStream, boolean resourceExists) {
         ContentContextImpl contextImpl = (ContentContextImpl) context; // this has to be of this type, we gave it to the plugin
         ContentServerService serverService = getContentServerService();
         outputStream = remoteOutputStream(outputStream);
-        long count = serverService.downloadPackageBits(contextImpl.getResourceId(), packageDetailsKey, outputStream);
+        long count = 0;
+        if (resourceExists) {
+            serverService.downloadPackageBits(contextImpl.getResourceId(), packageDetailsKey, outputStream);
+        } else {
+            serverService.downloadPackageBits(packageDetailsKey, outputStream);
+        }
         return count;
     }
 
     public long downloadPackageBitsRange(ContentContext context, PackageDetailsKey packageDetailsKey,
-        OutputStream outputStream, long startByte, long endByte) {
+        OutputStream outputStream, long startByte, long endByte, boolean resourceExists) {
         ContentContextImpl contextImpl = (ContentContextImpl) context; // this has to be of this type, we gave it to the plugin
         ContentServerService serverService = getContentServerService();
         outputStream = remoteOutputStream(outputStream);
-        long count = serverService.downloadPackageBitsRange(contextImpl.getResourceId(), packageDetailsKey,
-            outputStream, startByte, endByte);
+        long count = 0;
+        if (resourceExists) {
+            serverService.downloadPackageBitsRange(contextImpl.getResourceId(), packageDetailsKey, outputStream,
+                startByte, endByte);
+        } else {
+            serverService.downloadPackageBitsRange(packageDetailsKey, outputStream, startByte, endByte);
+        }
         return count;
     }
 
@@ -304,8 +316,8 @@ public class ContentManager extends AgentService implements ContainerService, Co
     synchronized void rescheduleDiscovery(ScheduledContentDiscoveryInfo discoveryInfo) {
         // Sanity check
         if (!scheduledDiscoveriesEnabled) {
-            log
-                .warn("Attempting to reschedule a discovery for a resource while not running in scheduled discovery mode");
+            log.warn("Attempting to reschedule a discovery for a resource "
+                + "while not running in scheduled discovery mode");
             return;
         }
 
@@ -520,7 +532,6 @@ public class ContentManager extends AgentService implements ContainerService, Co
 
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
         ResourceContainer container = inventoryManager.getResourceContainer(resourceId);
-        Resource resource = container.getResource();
 
         Set<ResourcePackageDetails> updatedPackageSet = new HashSet<ResourcePackageDetails>(details.size());
         for (ResourcePackageDetails detail : details) {

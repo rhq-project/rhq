@@ -22,23 +22,23 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class PackageVersionDetailsUIBean {
-    private PackageVersionComposite packageVersion;
+    private PackageVersionComposite packageVersionComposite;
 
-    public PackageVersionComposite getPackageVersion() {
-        loadPackageVersion();
-        return this.packageVersion;
+    public PackageVersionComposite getPackageVersionComposite() {
+        loadPackageVersionComposite();
+        return this.packageVersionComposite;
     }
 
-    private void loadPackageVersion() {
-        if (this.packageVersion == null) {
+    private void loadPackageVersionComposite() {
+        if (this.packageVersionComposite == null) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
-            ContentManagerLocal manager = LookupUtil.getContentManager();
-            this.packageVersion = manager.loadPackageVersionComposite(subject, id);
+            ContentUIManagerLocal manager = LookupUtil.getContentUIManager();
+            this.packageVersionComposite = manager.loadPackageVersionComposite(subject, id);
         }
     }
 }

@@ -917,10 +917,7 @@ public class AgentConfiguration {
             AgentConfigurationConstants.PLUGINS_AVAILABILITY_SCAN_INITIAL_DELAY,
             AgentConfigurationConstants.DEFAULT_PLUGINS_AVAILABILITY_SCAN_INITIAL_DELAY);
 
-        // get the time interval in which measurement collections run
-        long meas_scan_period = m_preferences.getLong(
-            AgentConfigurationConstants.PLUGINS_MEASUREMENT_COLLECTION_PERIOD,
-            AgentConfigurationConstants.DEFAULT_PLUGINS_MEASUREMENT_COLLECTION_PERIOD);
+        // get the initial delay before measurement collections begin
         long meas_scan_initial_delay = m_preferences.getLong(
             AgentConfigurationConstants.PLUGINS_MEASUREMENT_COLLECTION_INITIAL_DELAY,
             AgentConfigurationConstants.DEFAULT_PLUGINS_MEASUREMENT_COLLECTION_INITIAL_DELAY);
@@ -974,7 +971,6 @@ public class AgentConfiguration {
         config.setAvailabilityScanPeriod(avail_scan_period);
         config.setMeasurementCollectionThreadPoolSize(meas_threadpool_size);
         config.setMeasurementCollectionInitialDelay(meas_scan_initial_delay);
-        config.setMeasurementCollectionPeriod(meas_scan_period);
         config.setOperationInvokerThreadPoolSize(op_threadpool_size);
         config.setOperationInvocationTimeout(op_timeout);
         config.setContentDiscoveryThreadPoolSize(con_threadpool_size);

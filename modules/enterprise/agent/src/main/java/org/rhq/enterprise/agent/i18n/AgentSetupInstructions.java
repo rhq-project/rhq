@@ -691,15 +691,6 @@ public interface AgentSetupInstructions {
     @I18NMessages( { @I18NMessage("The time in seconds before the initial availability scan is performed.") })
     String SETUP_INSTRUCTION_PLUGINSAVAILSCANINITIALDELAY_HELP = "PromptCommand.setup.instruction.plugins.avail-scan-initialdelay.help";
 
-    // PLUGINS MEASUREMENT COLLECTION PERIOD
-    String SETUP_INSTRUCTION_PLUGINSMEASUREMENTCOLLPERIOD_PREF = AgentConfigurationConstants.PLUGINS_MEASUREMENT_COLLECTION_PERIOD;
-    String SETUP_INSTRUCTION_PLUGINSMEASUREMENTCOLLPERIOD_DEFAULT = Long
-        .toString(AgentConfigurationConstants.DEFAULT_PLUGINS_MEASUREMENT_COLLECTION_PERIOD);
-    @I18NMessages( { @I18NMessage("Measurement Collection Period") })
-    String SETUP_INSTRUCTION_PLUGINSMEASUREMENTCOLLPERIOD_PROMPT = "PromptCommand.setup.instruction.plugins.meas-coll-period.prompt";
-    @I18NMessages( { @I18NMessage("The time in seconds that defines how often measurements are collected.") })
-    String SETUP_INSTRUCTION_PLUGINSMEASUREMENTCOLLPERIOD_HELP = "PromptCommand.setup.instruction.plugins.meas-coll-period.help";
-
     // PLUGINS MEASUREMENT COLLECTION INITIAL DELAY
     String SETUP_INSTRUCTION_PLUGINSMEASUREMENTCOLLINITIALDELAY_PREF = AgentConfigurationConstants.PLUGINS_MEASUREMENT_COLLECTION_INITIAL_DELAY;
     String SETUP_INSTRUCTION_PLUGINSMEASUREMENTCOLLINITIALDELAY_DEFAULT = Long

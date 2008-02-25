@@ -43,6 +43,7 @@ import org.rhq.enterprise.gui.content.ListPackageHistoryUIBean;
 import org.rhq.enterprise.gui.content.ListPackageTypesUIBean;
 import org.rhq.enterprise.gui.content.ListPackagesUIBean;
 import org.rhq.enterprise.gui.content.ResourceChannelsUIBean;
+import org.rhq.enterprise.gui.content.ResourcePackageVersionsUIBean;
 import org.rhq.enterprise.gui.definition.group.GroupDefinitionUIBean;
 import org.rhq.enterprise.gui.definition.group.ListGroupDefinitionsUIBean;
 import org.rhq.enterprise.gui.discovery.AutoDiscoveryQueueUIBean;
@@ -108,9 +109,11 @@ public enum PageControlView {
     ResourceChannelsList(ResourceChannelsUIBean.class),
     /** */
     AvailableResourceChannelsList(AvailableResourceChannelsUIBean.class),
-
+    /** */
+    ResourcePackageVersionsList(ResourcePackageVersionsUIBean.class),
+    /** */
+    //AvailableResourcePackageVersionList(AvailableResourceChannelsUIBean.class),
     // Alerts
-
     /** */
     AlertDefinitionsList(ListAlertDefinitionsUIBean.class),
     /** */

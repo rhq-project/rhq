@@ -59,6 +59,7 @@ import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
 import org.rhq.core.clientapi.server.operation.OperationServerService;
+import org.rhq.core.clientapi.server.event.EventServerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
@@ -1107,7 +1108,8 @@ public class AgentMain {
                 .getRemotePojo(ConfigurationServerService.class);
             ResourceFactoryServerService resourceFactoryServerSerfice = factory
                 .getRemotePojo(ResourceFactoryServerService.class);
-            ContentServerService contentServerSerfice = factory.getRemotePojo(ContentServerService.class);
+            ContentServerService contentServerService = factory.getRemotePojo(ContentServerService.class);
+            EventServerService eventServerService = factory.getRemotePojo(EventServerService.class);
 
             ServerServices serverServices = new ServerServices();
             serverServices.setCoreServerService(coreServerService);
@@ -1116,7 +1118,8 @@ public class AgentMain {
             serverServices.setOperationServerService(operationServerService);
             serverServices.setConfigurationServerService(configurationServerService);
             serverServices.setResourceFactoryServerService(resourceFactoryServerSerfice);
-            serverServices.setContentServerService(contentServerSerfice);
+            serverServices.setContentServerService(contentServerService);
+            serverServices.setEventServerService(eventServerService);
 
             pc_config.setServerServices(serverServices);
         } catch (Exception e) {

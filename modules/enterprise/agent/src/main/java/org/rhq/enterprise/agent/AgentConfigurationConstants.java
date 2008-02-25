@@ -540,16 +540,6 @@ public interface AgentConfigurationConstants {
     long DEFAULT_PLUGINS_MEASUREMENT_COLLECTION_INITIAL_DELAY = PluginContainerConfiguration.MEASUREMENT_COLLECTION_INITIAL_DELAY_DEFAULT;
 
     /**
-     * Defines, in seconds, how often a measurement collection is run.
-     */
-    String PLUGINS_MEASUREMENT_COLLECTION_PERIOD = PROPERTY_NAME_PREFIX + "plugins.measurement-collection.period-secs";
-
-    /**
-     * The default time period between each measurement collection, in seconds.
-     */
-    long DEFAULT_PLUGINS_MEASUREMENT_COLLECTION_PERIOD = PluginContainerConfiguration.MEASUREMENT_COLLECTION_PERIOD_DEFAULT;
-
-    /**
      * If defined, this is to be the size of the content discovery thread pool. If not defined, the plugin container
      * should default to something it considers appropriate.
      */

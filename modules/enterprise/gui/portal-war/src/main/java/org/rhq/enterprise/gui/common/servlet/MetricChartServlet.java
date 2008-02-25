@@ -18,12 +18,16 @@
  */
 package org.rhq.enterprise.gui.common.servlet;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.enterprise.gui.image.chart.Chart;
 import org.rhq.enterprise.gui.image.chart.ColumnChart;
 import org.rhq.enterprise.gui.image.chart.DataPointCollection;
@@ -95,7 +99,11 @@ public class MetricChartServlet extends VerticalChartServlet {
         // charting just one set of data / event points, we'll plot a
         // ColumnChart.  Otherwise we'll plot a LineChart.
         ChartDataBean dataBean = (ChartDataBean) request.getSession().getAttribute(chartDataKey);
-        List dataPointsList = dataBean.getDataPoints();
+        List dataPointsList;
+        if (dataBean != null)
+            dataPointsList = dataBean.getDataPoints();
+        else
+            dataPointsList = new ArrayList();
         plotLineChart = (dataPointsList.size() > 1);
 
         // chart flags
@@ -147,8 +155,15 @@ public class MetricChartServlet extends VerticalChartServlet {
         VerticalChart veritcalChart = (VerticalChart) chart;
 
         ChartDataBean dataBean = (ChartDataBean) request.getSession().getAttribute(chartDataKey);
-        List dataPointsList = dataBean.getDataPoints();
-        List eventsPointsList = dataBean.getEventPoints();
+        List dataPointsList;
+        List eventsPointsList;
+        if (dataBean != null) {
+            dataPointsList = dataBean.getDataPoints();
+            eventsPointsList = dataBean.getEventPoints();
+        } else {
+            dataPointsList = new ArrayList();
+            eventsPointsList = new ArrayList();
+        }
 
         // make sure they're the same size
         if (dataPointsList.size() == eventsPointsList.size()) {

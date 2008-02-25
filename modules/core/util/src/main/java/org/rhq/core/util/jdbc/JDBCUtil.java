@@ -23,10 +23,12 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -36,8 +38,16 @@ import org.apache.commons.logging.LogFactory;
  * @author Heiko W. Rupp
  */
 public class JDBCUtil {
+
     private static final Log log = LogFactory.getLog(JDBCUtil.class);
     private static final String SQL_ERROR = "Error closing a resource: ";
+
+    /*
+     * The next constants specify how to generate the next value in a sequence for
+     * table %s
+     */
+    private static final String POSTGRES_NEXTVAL_SQL = "(SELECT nextval('%s_id_seq'::text))";
+    private static final String ORACLE_NEXTVAL_SQL = "%s_id_seq.nextval";
 
     public static void safeClose(Statement stm, ResultSet rs) {
         safeClose(rs);
@@ -113,7 +123,7 @@ public class JDBCUtil {
     /**
      * Generate count '? separated by comma
      */
-    private static String generateInBinds(int count) {
+    public static String generateInBinds(int count) {
         StringBuilder b = new StringBuilder();
         for (int i = 0; i < count; i++) {
             if (i > 0) {
@@ -124,6 +134,35 @@ public class JDBCUtil {
         }
 
         return b.toString();
+    }
+
+    /**
+     * Generate the correct SQL statement to obtain the next value from a sequence/table
+     * generator for the passed table. The passed connection gets closed in case of an error.
+     * @param conn  A valid database connection
+     * @param tableName The name of the table to use
+     * @return A statement that obtains the next value for the passed table 
+     */
+    public static String getNextValSql(Connection conn, String tableName) {
+        String nextvalSql;
+        try {
+            DatabaseMetaData meta = conn.getMetaData();
+            String name = meta.getDatabaseProductName().toLowerCase();
+            if (name.contains("postgres")) {
+                nextvalSql = POSTGRES_NEXTVAL_SQL;
+            } else if (name.contains("oracle")) {
+                nextvalSql = ORACLE_NEXTVAL_SQL;
+            } else {
+                JDBCUtil.safeClose(conn);
+                throw new IllegalStateException("Unsupported database type: " + name);
+            }
+        } catch (Exception e) {
+            JDBCUtil.safeClose(conn);
+            throw new IllegalStateException("Failed to determine database type.");
+        }
+
+        nextvalSql = String.format(nextvalSql, tableName);
+        return nextvalSql;
     }
 
     /**

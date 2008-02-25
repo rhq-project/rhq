@@ -34,25 +34,28 @@ public class MeasurementDataTypeDecorator extends BaseDecorator {
      */
     @Override
     public String decorate(Object columnValue) {
-        if (columnValue instanceof MeasurementDefinition) {
-            MeasurementDefinition def = (MeasurementDefinition) columnValue;
-            DataType dt = def.getDataType();
-            if (dt == DataType.TRAIT) {
-                return "Trait";
-            }
-
-            if (dt == DataType.COMPLEX) {
-                return "Complex";
-            }
-
-            MeasurementCategory category = def.getCategory();
-            String cat = category.toString();
-
-            // display category with first char as uppercase
-            cat = cat.substring(0, 1).toUpperCase().concat(cat.substring(1));
-            return cat;
-        } else {
+        if (!(columnValue instanceof MeasurementDefinition)) {
             throw new IllegalArgumentException("Input needs to be of type 'MeasurementDefinition'");
         }
+
+        MeasurementDefinition def = (MeasurementDefinition) columnValue;
+        DataType dataType = def.getDataType();
+
+        if (null != dataType) {
+            switch (dataType) {
+            case TRAIT:
+                return "Trait";
+            case COMPLEX:
+                return "Complex";
+            }
+        }
+
+        MeasurementCategory category = def.getCategory();
+        String cat = category.toString();
+
+        // display category with first char as uppercase
+        cat = cat.substring(0, 1).toUpperCase().concat(cat.substring(1));
+
+        return cat;
     }
 }

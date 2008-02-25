@@ -24,6 +24,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Channel;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.composite.ChannelComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -31,56 +32,30 @@ import org.rhq.core.domain.util.PageList;
 @Local
 public interface ChannelManagerLocal {
     /**
-     * Deletes the identified channel. If this deletion orphans package versions (that is, its originating resource or
-     * content source has been deleted), this will also purge those orphaned package versions.
-     *
-     * @param subject
-     * @param channelId
+     * @see ChannelManagerRemote#deleteChannel(Subject, int)
      */
     void deleteChannel(Subject subject, int channelId);
 
     /**
-     * Returns all {@link Channel} objects that are configured in the system.
-     *
-     * @param  subject user asking to perform this
-     * @param  pc      pagination controls
-     *
-     * @return all channels sources
+     * @see ChannelManagerRemote#getAllChannels(Subject, PageControl)
      */
     PageList<Channel> getAllChannels(Subject subject, PageControl pc);
 
     /**
-     * Returns the {@link Channel} from its ID.
-     *
-     * @param  subject   user asking to perform this
-     * @param  channelId identifies the channel to return
-     *
-     * @return the channel object, <code>null</code> if the ID is invalid
+     * @see ChannelManagerRemote#getChannel(Subject, int)
      */
     Channel getChannel(Subject subject, int channelId);
 
     /**
-     * Gets all content sources that are associated with the given channel.
-     *
-     * @param  subject
-     * @param  channelId
-     * @param  pc
-     *
-     * @return the list of content sources
+     * @see ChannelManagerRemote#getAssociatedContentSources(Subject, int, PageControl)
      */
     PageList<ContentSource> getAssociatedContentSources(Subject subject, int channelId, PageControl pc);
 
     /**
-     * Gets all resources that are subscribed to the given channel.
-     *
-     * @param  subject
-     * @param  channelId
-     * @param  pc
-     *
-     * @return the list of subscribers
+     * @see ChannelManagerRemote#getSubscribedResources(Subject, int, PageControl)
      */
     PageList<Resource> getSubscribedResources(Subject subject, int channelId, PageControl pc);
-   
+
     /**
      * Gets all channels that are subscribed to by the given resource.
      *
@@ -90,8 +65,8 @@ public interface ChannelManagerLocal {
      *
      * @return the list of subscriptions
      */
-    PageList<Channel> getResourceSubscriptions(Subject subject, int resourceId, PageControl pc);
-    
+    PageList<ChannelComposite> getResourceSubscriptions(Subject subject, int resourceId, PageControl pc);
+
     /**
      * Gets all channels that aren't subscribed to for the given resource.
      *
@@ -101,7 +76,7 @@ public interface ChannelManagerLocal {
      *
      * @return the list of available channels for the given resource
      */
-    PageList<Channel> getAvailableResourceSubscriptions(Subject subject, int resourceId, PageControl pc);
+    PageList<ChannelComposite> getAvailableResourceSubscriptions(Subject subject, int resourceId, PageControl pc);
 
     /**
      * Returns the set of package versions that can currently be accessed via the given channel.
@@ -114,84 +89,43 @@ public interface ChannelManagerLocal {
      */
     PageList<PackageVersion> getPackageVersionsInChannel(Subject subject, int channelId, PageControl pc);
 
+    /**
+     * @see ChannelManagerRemote#getPackageVersionsInChannel(Subject, int, String, PageControl)
+     */
     PageList<PackageVersion> getPackageVersionsInChannel(Subject subject, int channelId, String filter, PageControl pc);
 
     /**
-     * Update an existing {@link Channel} object's basic fields, like name, description, etc. Note that the given <code>
-     * channel</code>'s relationships will be ignored and not merged with the existing channel (e.g. is subscribed
-     * resources will not be changed, regardless of what the given channel's subscribed resources set it). See methods
-     * like {@link #addContentSourcesToChannel(Subject, int, int[])} to alter its relationships.
-     *
-     * @param  subject wanting to update the ContentSource
-     * @param  channel to be updated
-     *
-     * @return Channel that was updated
+     * @see ChannelManagerRemote#updateChannel(Subject, Channel)
      */
     Channel updateChannel(Subject subject, Channel channel);
 
     /**
-     * Creates a new {@link Channel}. Note that the created channel will not have any content sources assigned and no
-     * resources will be subscribed. It is a virgin channel.
-     *
-     * @param  subject the user asking to do the creation
-     * @param  channel
-     *
-     * @return the newly created channel
+     * @see ChannelManagerRemote#createChannel(Subject, Channel)
      */
     Channel createChannel(Subject subject, Channel channel);
 
     /**
-     * Adds the content sources (identified by their IDs) to the given channel (also identified by its ID). This will
-     * associate all package versions that come from the content source to the channel.
-     *
-     * @param  subject          the user asking to perform this
-     * @param  channelId        the ID of the channel to get the new content sources
-     * @param  contentSourceIds the list of content source IDs to add to the channel
-     *
-     * @throws Exception if the channel or one of the content sources doesn't exist or if the addition failed
+     * @see ChannelManagerRemote#addContentSourcesToChannel(Subject, int, int[])
      */
     void addContentSourcesToChannel(Subject subject, int channelId, int[] contentSourceIds) throws Exception;
 
     /**
-     * Removes the content sources (identified by their IDs) from the given channel (also identified by its ID). If one
-     * of the content sources is already not a member of the channel, it is simply ignored (i.e. an exception will not
-     * be thrown).
-     *
-     * @param  subject          the user asking to perform this
-     * @param  channelId        the ID of the channel to remove the content sources
-     * @param  contentSourceIds the list of content source IDs to remove from the channel
-     *
-     * @throws Exception if the channel or one of the content sources doesn't exist or if the removal failed
+     * @see ChannelManagerRemote#removeContentSourcesFromChannel(Subject, int, int[])
      */
     void removeContentSourcesFromChannel(Subject subject, int channelId, int[] contentSourceIds) throws Exception;
 
     /**
-     * Subscribes the identified resource to the set of identified channels. Once complete, the resource will be able to
-     * access all package content from all content sources that are assigned to the given channels.
-     *
-     * @param subject
-     * @param resourceId
-     * @param channelIds
+     * @see ChannelManagerRemote#subscribeResourceToChannels(Subject, int, int[])
      */
     void subscribeResourceToChannels(Subject subject, int resourceId, int[] channelIds);
 
     /**
-     * Unsubscribes the identified resource from all of the identified channels. Once complete, the resource will no
-     * longer be able to access any package content from the content sources that are assigned to the given channels.
-     *
-     * @param subject
-     * @param resourceId
-     * @param channelIds
+     * @see ChannelManagerRemote#unsubscribeResourceFromChannels(Subject, int, int[])
      */
     void unsubscribeResourceFromChannels(Subject subject, int resourceId, int[] channelIds);
 
     /**
-     * Returns count of {@link PackageVersion}s associated with the given channel.
-     *
-     * @param  subject   caller requesting count
-     * @param  channelId of channel
-     *
-     * @return count if any
+     * @see ChannelManagerRemote#getPackageVersionCountFromChannel(Subject, String, int)
      */
     long getPackageVersionCountFromChannel(Subject subject, int channelId);
 }

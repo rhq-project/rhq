@@ -11,6 +11,7 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
@@ -24,8 +25,25 @@
       
       <h:form id="contentForm">
          <input type="hidden" name="id" value="${param.id}"/>
-         <rich:panel>
+         <rich:panel styleClass="BlockContent"> 
+         
             <f:facet name="header"><h:outputText value="Deployed Content"/></f:facet>
+
+            <h:outputText value="Package Type Filter: " />
+            <h:selectOneMenu id="packageTypeFilter" 
+                             value="#{ListPackagesUIBean.packageTypeFilter}">
+               <a4j:support event="onchange" reRender="packagesDataTable, packagesDataTableScroller"/>
+               <f:selectItems value="#{ListPackagesUIBean.packageTypes}" />
+            </h:selectOneMenu>
+            <br/>
+
+            <h:outputText value="Package Version Filter: " />
+            <h:selectOneMenu id="packageVersionFilter"
+                             value="#{ListPackagesUIBean.packageVersionFilter}">
+               <a4j:support event="onchange" reRender="packagesDataTable, packagesDataTableScroller"/>
+               <f:selectItems value="#{ListPackagesUIBean.packageVersions}" />
+            </h:selectOneMenu>
+            <br/>
 
             <ui:param name="packagesDataModel" value="#{ListPackagesUIBean.dataModel}"/>
             <rich:dataTable binding="#{ListPackagesUIBean.dataTable}"
@@ -57,7 +75,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="package_history.xhtml">
+                  <h:outputLink value="installed_package_details.xhtml">
                         <f:param name="id" value="${param.id}"/>
                       <f:param name="currentPackageId" value="#{item.id}"/>
                     <h:outputText value="#{item.packageName}" />
@@ -100,25 +118,6 @@
                </f:facet>
 
             </rich:dataTable>
-
-            <br/><br/>
-
-            <h:dataTable value="#{ListPackagesUIBean.installedPackageStatusList}" var="item"
-                         headerClass="revision-data-table-header"
-                         cellpadding="1"
-                         cellspacing="0">
-               <h:column>
-                  <f:facet name="header">
-                     <h:outputText value="Installed Package Status Descriptions"/>
-                  </f:facet>
-
-                  <b><h:outputText value="#{item.value}"/></b>
-               </h:column>
-               <h:column>
-                  <h:outputText value="#{item.label}"/>
-               </h:column>
-
-            </h:dataTable>            
 
       </rich:panel>
       </h:form>

@@ -22,13 +22,10 @@ THIS TEXT WILL BE REMOVED.
 
       <ui:param name="current" value="#{ListPackageHistoryUIBean.currentPackage}"/>
 
-
       <!-- Current Package Display -->
 
       <rich:panel rendered="#{!empty current}">
          <f:facet name="header"><h:outputText value="Current Package Information"/></f:facet>
-
-          <h3>Package Name: <h:outputText value="#{current.packageVersion.fileName}"/></h3>
 
          <h:form id="packageDataForm">
             <input type="hidden" name="id" value="#{param.id}"/>
@@ -40,41 +37,28 @@ THIS TEXT WILL BE REMOVED.
                          rowClasses="revision-data-table-even-row,revision-data-table-odd-row"
                          cellpadding="3"
                          cellspacing="0">
-                
+
                <h:column>
-                  <f:facet name="header">
-                     <h:outputText value="" rendered="#{ListPackageHistoryUIBean.oldPackage ne null}"/>
-                  </f:facet>
+                   <b><h:outputText value="#{item.name}"/><f:verbatim>:</f:verbatim> </b>
+                </h:column>
+                 <h:column>
+                    <h:outputText value="#{item.currentValue}"/>
+                </h:column>
 
-                  <b><h:outputText value="#{item.name}"/><f:verbatim>:</f:verbatim> </b>
-               </h:column>
-                <h:column>
-                   <f:facet name="header">
-                      <h:outputText value="Current Package" rendered="#{ListPackageHistoryUIBean.oldPackage ne null}"/>
-                   </f:facet>
-
-                   <h:outputText value="#{item.currentValue}"/>
-               </h:column>
-                <h:column>
-                   <f:facet name="header">
-                      <h:outputText value="Previous Package" rendered="#{ListPackageHistoryUIBean.oldPackage ne null}"/>
-                   </f:facet>
-
-                   <h:outputText value="#{item.oldValue}"/>
-               </h:column>
             </h:dataTable>
-
-
 
          </h:form>
       </rich:panel>
 
-      
       <!-- Packages List Table -->
+
+      <!-- TODO: jdobies, Feb 22, 2008: Revisit this and reuse it on history subtab.
+           For now, just making this change to use the history entries since InstalledPackage no longer carries
+           historical data. -->
 
       <rich:panel>
 
-         <f:facet name="header"><h:outputText value="Previous Versions of this Package"/></f:facet>
+         <f:facet name="header"><h:outputText value="Package History"/></f:facet>
 
          <h:form id="previousForm">
             <input type="hidden" name="id" value="#{param.id}"/>
@@ -87,53 +71,42 @@ THIS TEXT WILL BE REMOVED.
                             value="#{packagesDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="17%, 12%, 11%, 9%, 11%, 11%, 7%, 11%, 11%"
+                            columnsWidth="20%, 20%, 20%, 20%, 20%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
-
 
                <f:facet name="PageControlView">
                   <onc:paginationControl id="AllPackageVersionsList" />
                </f:facet>
 
-               <rich:column rendered="#{param.debug}">
+               <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="ip.id">
-                        <h:outputText styleClass="headerText" value="ID" />
+                     <onc:sortableColumnHeader sort="iph.timestamp">
+                        <h:outputText styleClass="headerText" value="Timestamp" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.id}"/>
+                  <h:outputText value="#{item.timestamp}" />
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="ip.installationDate">
-                        <h:outputText styleClass="headerText" value="Package Installation Date" />
+                     <onc:sortableColumnHeader sort="iph.status">
+                        <h:outputText styleClass="headerText" value="Status" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.installationDate}" />
+                  <h:outputText value="#{item.status}" />
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="ip.packageVersion.displayVersion">
-                        <h:outputText styleClass="headerText" value="Display Version" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{item.packageVersion.displayVersion}"/>
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="ip.packageVersion.version">
+                     <onc:sortableColumnHeader sort="iph.packageVersion.displayVersion">
                         <h:outputText styleClass="headerText" value="Version" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.packageVersion.version}"/>
+                  <h:outputText value="#{item.packageVersion.displayVersion}"/>
                </rich:column>
 
                <rich:column>
@@ -148,46 +121,15 @@ THIS TEXT WILL BE REMOVED.
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="ip.user">
-                        <h:outputText styleClass="headerText" value="Owner" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Original Request"/>
                   </f:facet>
 
-                  <h:outputText value="#{item.user}"/>
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Content on Server" />
-                  </f:facet>
-
-                  <h:outputText value="#{item}"/>
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Compare to Current Package" />
-                  </f:facet>
-
-                  <i><h:outputText value="Current Package" rendered="#{item.id eq ListPackageHistoryUIBean.currentPackage.id}"/></i>
-
-                  <h:outputLink value="/rhq/resource/content/package_history.xhtml" rendered="#{item.id eq ListPackageHistoryUIBean.oldPackage.id}">
-                     <f:param name="id" value="#{param.id}"/>
-                     <f:param name="currentPackageId" value="#{current.id}"/>
-                     <h:outputText value="Stop Comparing" />
-                  </h:outputLink>
-
-                  <h:outputLink value="/rhq/resource/content/package_history.xhtml" rendered="#{item.id ne ListPackageHistoryUIBean.currentPackage.id and item.id ne ListPackageHistoryUIBean.oldPackage.id}">
-                     <f:param name="id" value="#{param.id}"/>
-                     <f:param name="currentPackageId" value="#{current.id}"/>
-                     <f:param name="oldPackageId" value="#{item.id}"/>
-                     <h:outputText value="Compare" />
-                  </h:outputLink>
+                  <h:outputText value="View Request" rendered="#{item.contentServiceRequest ne null}"/>
                </rich:column>
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="9">
+                     <rich:column colspan="5">
                         <ui:param name="paginationDataTableName" value="packagesDataTable"/>
                         <ui:param name="paginationDataModel" value="#{packagesDataModel}"/>
                         <ui:param name="paginationPageControl" value="#{PageControl.AllPackageVersionsList}"/>
@@ -200,7 +142,6 @@ THIS TEXT WILL BE REMOVED.
 
          </h:form>
       </rich:panel>
-
 
       <!-- Return Link -->
 

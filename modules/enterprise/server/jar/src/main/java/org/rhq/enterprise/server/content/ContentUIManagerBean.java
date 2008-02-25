@@ -26,13 +26,17 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.content.ContentRequestStatus;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
+import org.rhq.core.domain.content.composite.PackageVersionComposite;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -95,7 +99,7 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
 
     @SuppressWarnings("unchecked")
     public PageList<PackageType> getPackageTypes(int resourceTypeId, PageControl pageControl) {
-        pageControl.setPrimarySort("at.name", PageOrdering.ASC);
+        pageControl.setPrimarySort("pt.name", PageOrdering.ASC);
 
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,
             PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID);
@@ -113,7 +117,7 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
 
     @SuppressWarnings("unchecked")
     public PageList<ContentServiceRequest> getContentRequestsWithStatus(Subject user, int resourceId,
-        ContentRequestStatus status, PageControl pageControl) {
+                                                                        ContentRequestStatus status, PageControl pageControl) {
         pageControl.initDefaultOrderingField("csr.ctime", PageOrdering.DESC);
 
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,
@@ -135,7 +139,7 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
 
     @SuppressWarnings("unchecked")
     public PageList<ContentServiceRequest> getContentRequestsWithNotStatus(Subject user, int resourceId,
-        ContentRequestStatus status, PageControl pageControl) {
+                                                                           ContentRequestStatus status, PageControl pageControl) {
         pageControl.initDefaultOrderingField("csr.id", PageOrdering.DESC);
 
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,
@@ -156,7 +160,8 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<PackageListItemComposite> getInstalledPackages(Subject user, int resourceId, PageControl pageControl) {
+    public PageList<PackageListItemComposite> getInstalledPackages(Subject user, int resourceId,
+                                                                   String packageTypeFilter, String packageVersionFilter, PageControl pageControl) {
         pageControl.initDefaultOrderingField("gp.name", PageOrdering.ASC);
 
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,
@@ -167,29 +172,83 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         queryCount.setParameter("resourceId", resourceId);
         query.setParameter("resourceId", resourceId);
 
+        Integer packageTypeFilterId = packageTypeFilter == null ? null : Integer.parseInt(packageTypeFilter);
+        queryCount.setParameter("packageTypeFilterId", packageTypeFilterId);
+        query.setParameter("packageTypeFilterId", packageTypeFilterId);
+
+        queryCount.setParameter("packageVersionFilter", packageVersionFilter);
+        query.setParameter("packageVersionFilter", packageVersionFilter);
+
         long totalCount = (Long) queryCount.getSingleResult();
         List<PackageListItemComposite> packages = query.getResultList();
 
         return new PageList<PackageListItemComposite>(packages, (int) totalCount, pageControl);
     }
 
-    public PageList<InstalledPackage> getInstalledPackageHistory(Subject subject, int resourceId, int generalPackageId,
-        PageControl pageControl) {
-        pageControl.initDefaultOrderingField("gp.name", PageOrdering.ASC);
+    @SuppressWarnings("unchecked")
+    public List<IntegerOptionItem> getInstalledPackageTypes(Subject user, int resourceId) {
+        Query query = entityManager.createNamedQuery(InstalledPackage.QUERY_FIND_PACKAGE_LIST_TYPES);
+        query.setParameter("resourceId", resourceId);
+
+        List<IntegerOptionItem> packages = query.getResultList();
+        return packages;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> getInstalledPackageVersions(Subject user, int resourceId) {
+        Query query = entityManager.createNamedQuery(InstalledPackage.QUERY_FIND_PACKAGE_LIST_VERSIONS);
+        query.setParameter("resourceId", resourceId);
+
+        List<String> packages = query.getResultList();
+        return packages;
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<InstalledPackageHistory> getInstalledPackageHistory(Subject subject, int resourceId,
+                                                                        int generalPackageId, PageControl pageControl) {
+        pageControl.initDefaultOrderingField("iph.timestamp", PageOrdering.DESC);
 
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,
-            InstalledPackage.QUERY_FIND_INSTALLED_PACKAGE_HISTORY);
+            InstalledPackageHistory.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_ID);
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            InstalledPackage.QUERY_FIND_INSTALLED_PACKAGE_HISTORY, pageControl);
+            InstalledPackageHistory.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_ID, pageControl);
 
         query.setParameter("resourceId", resourceId);
         queryCount.setParameter("resourceId", resourceId);
-        query.setParameter("generalPackageId", generalPackageId);
-        queryCount.setParameter("generalPackageId", generalPackageId);
+        query.setParameter("packageId", generalPackageId);
+        queryCount.setParameter("packageId", generalPackageId);
 
         long totalCount = (Long) queryCount.getSingleResult();
-        List<InstalledPackage> packages = query.getResultList();
+        List<InstalledPackageHistory> packages = query.getResultList();
 
-        return new PageList<InstalledPackage>(packages, (int) totalCount, pageControl);
+        return new PageList<InstalledPackageHistory>(packages, (int) totalCount, pageControl);
     }
+
+    @SuppressWarnings("unchecked")
+    public PageList<PackageVersionComposite> getPackageVersionCompositesByFilter(Subject user, int resourceId,
+                                                                                 String filter, PageControl pc) {
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS, pc);
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager,
+            PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS);
+
+        query.setParameter("resourceId", resourceId);
+        queryCount.setParameter("resourceId", resourceId);
+
+        query.setParameter("filter", filter);
+        queryCount.setParameter("filter", filter);
+
+        long count = (Long) queryCount.getSingleResult();
+        List<PackageVersionComposite> results = query.getResultList();
+
+        return new PageList<PackageVersionComposite>(results, (int) count, pc);
+    }
+
+    public PackageVersionComposite loadPackageVersionComposite(Subject user, int packageVersionId) {
+        Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_COMPOSITE_BY_ID);
+        q.setParameter("id", packageVersionId);
+        PackageVersionComposite pv = (PackageVersionComposite) q.getSingleResult();
+        return pv;
+    }
+    
 }

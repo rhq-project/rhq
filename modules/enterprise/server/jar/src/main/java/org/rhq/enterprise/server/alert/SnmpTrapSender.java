@@ -68,8 +68,8 @@ import org.snmp4j.transport.AbstractTransportMapping;
 import org.snmp4j.transport.DefaultTcpTransportMapping;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.snmp4j.util.PDUFactory;
-import org.rhq.core.domain.event.alert.Alert;
-import org.rhq.core.domain.event.alert.notification.SnmpNotification;
+import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 

@@ -20,7 +20,7 @@ package org.rhq.enterprise.server.alert;
 
 import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.event.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 

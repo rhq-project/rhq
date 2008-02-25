@@ -20,10 +20,15 @@
 <ui:param name="selectedTabName" value="Inventory"/>
 <ui:define name="content">
 
+   <h:outputLink value="/rhq/resource/inventory/view.xhtml">
+      <f:param name="id" value="${ResourceUIBean.id}"/>
+      <h:outputText value="&lt; Back to Inventory Tab"/>
+   </h:outputLink>
+
    <h:form id="uploadForm" enctype="multipart/form-data">
 
       <input type="hidden" name="id" value="${ResourceUIBean.id}"/>
-      <input type="hidden" name="type" value="#{ResourceUIBean.resourceType.id}"/>
+      <input type="hidden" name="type" value="#{CreateNewPackageChildResourceUIBean.resourceType.id}"/>
       <h:inputHidden value="#{CreateNewPackageChildResourceUIBean.packageType}" converter="PackageTypeConverter"/>
       
       <h:outputText value="In order to create a new #{ResourceUIBean.resourceType.name}, a new
@@ -61,6 +66,11 @@
       <h:commandButton value="Submit" action="#{CreateNewPackageChildResourceUIBean.createResource}"/>
 
    </h:form>
+   
+   <h:outputLink value="/rhq/resource/inventory/view.xhtml">
+      <f:param name="id" value="${ResourceUIBean.id}"/>
+      <h:outputText value="&lt; Back to Inventory Tab"/>
+   </h:outputLink>
 
 </ui:define>
 

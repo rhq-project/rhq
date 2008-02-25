@@ -18,27 +18,29 @@
  */
 package org.rhq.enterprise.gui.legacy.beans;
 
+import org.rhq.core.domain.event.EventSeverity;
+
 /**
  * Contains the time and event tracking information
  */
 public class TimelineBean {
     private long time;
-    private int events;
+    private EventSeverity severity;
 
     /**
      * Constructor taking in time and events
      */
-    public TimelineBean(long time, int events) {
+    public TimelineBean(long time, EventSeverity severity) {
         this.time = time;
-        this.events = events;
+        this.severity = severity;
     }
 
-    public int getEvents() {
-        return events;
+    public EventSeverity getSeverity() {
+        return severity;
     }
 
-    public void setEvents(int events) {
-        this.events = events;
+    public void setSeverity(EventSeverity severity) {
+        this.severity = severity;
     }
 
     public long getTime() {

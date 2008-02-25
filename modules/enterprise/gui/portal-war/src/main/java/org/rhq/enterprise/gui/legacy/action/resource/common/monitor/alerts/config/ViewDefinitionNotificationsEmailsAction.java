@@ -21,8 +21,8 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.event.alert.AlertDefinition;
-import org.rhq.core.domain.event.alert.notification.EmailNotification;
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;

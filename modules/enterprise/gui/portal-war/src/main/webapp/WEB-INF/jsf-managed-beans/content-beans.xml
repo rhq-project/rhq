@@ -113,9 +113,16 @@
       <managed-bean-class>org.rhq.enterprise.gui.content.ChannelResourcesUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
+   
+   <!-- /rhq/resource/content/subscription*.xhtml -->
    <managed-bean>
       <managed-bean-name>ResourceChannelsUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.content.ResourceChannelsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ResourcePackageVersionsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ResourcePackageVersionsUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
    <managed-bean>

@@ -20,9 +20,35 @@ if (beans != null) {
     <td></td>
     <c:forEach var="timeTick" items="${timeIntervals}" varStatus="status">
       <c:set var="count" value="${status.count}"/>
-    <td background="<html:rewrite page="/images/no_event.gif"/>" align="center" valign="middle">
-      <c:if test="${timeTick.events > 0}">
-      <div class="eventBlock" onmouseover="this.style.backgroundColor='#0000ff'" onmouseout="this.style.backgroundColor='#003399'" onmousedown="overlay.delayTimePopup(<c:out value="${count - 1}"/>,'<hq:dateFormatter value="${timeTick.time}"/>');showEventsDetails(<c:out value="${timeTick.time}"/>);overlay.moveOverlay(this)"></div>
+        <c:set var="icon" value="/images/no_event.gif"/>
+        <c:if test="${not empty timeTick.severity}">
+        <c:set var="sev" value="${timeTick.severity.ordinal}"/>
+        <c:choose>
+          <c:when test="${sev == 0 }">
+            <c:set var="icon" value="/images/event_debug.gif"/>
+          </c:when>
+          <c:when test="${sev == 1 }">
+            <c:set var="icon" value="/images/event_info.gif"/>
+          </c:when>
+          <c:when test="${sev == 2 }">
+            <c:set var="icon" value="/images/event_warn.gif"/>
+          </c:when>
+          <c:when test="${sev == 3 }">
+            <c:set var="icon" value="/images/event_error.gif"/>
+           </c:when>
+           <c:when test="${sev == 4 }">
+            <c:set var="icon" value="/images/event_fatal.gif"/>
+           </c:when>
+           <c:otherwise>
+            <c:set var="icon" value="/images/no_event.gif"/>
+           </c:otherwise>
+        </c:choose>
+       </c:if>
+      <td background="<c:out value="${icon}"/>" align="center" valign="middle">
+      
+      <c:if test="${not empty timeTick.severity}">
+        <div class="eventBlock" 
+         onmousedown="overlay.delayTimePopup(<c:out value="${count - 1}"/>,'<hq:dateFormatter value="${timeTick.time}"/>');showEventsDetails(<c:out value="${timeTick.time}"/>);overlay.moveOverlay(this)"></div>
       </c:if>
     </td>
     </c:forEach>

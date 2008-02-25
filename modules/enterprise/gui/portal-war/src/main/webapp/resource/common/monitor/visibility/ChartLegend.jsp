@@ -15,9 +15,9 @@
       <html:img page="/images/icon_resource_${imgidx}.gif" width="11" height="11" border="0"/>
       <c:out value="${resource.name}"/><br>
       <c:forEach var="event" varStatus="evStatus" items="${chartLegend[resStatus.index]}">
-      <b>(<c:out value="${event.eventID}"/>)</b>
+      <b>(<c:out value="${event.id}"/>)</b>
       <c:out value="${event.detail}"/> -
-      <hq:dateFormatter value="${event.timestamp}"/><c:if test="${! evStatus.last}">,</c:if>
+      <hq:dateFormatter value="${event.timestamp.time}"/><c:if test="${! evStatus.last}">,</c:if><br/>
       </c:forEach></p>
       </c:forEach>
     </td>

@@ -21,12 +21,15 @@ package org.rhq.enterprise.server.content;
 import java.util.List;
 import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.content.ContentRequestStatus;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
+import org.rhq.core.domain.content.composite.PackageVersionComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -42,28 +45,28 @@ public interface ContentUIManagerLocal {
      * version is loaded into inventory or not, and, if the content is loaded, whether or not that content is stored in
      * the database.
      *
-     * @param  packageVersionId the {@link org.rhq.core.domain.content.PackageVersion} identifier
-     *
+     * @param packageVersionId the {@link org.rhq.core.domain.content.PackageVersion} identifier
      * @return indicates if the package version content is loaded and available
-     *
-     * @see    org.rhq.core.domain.content.composite.LoadedPackageBitsComposite
+     * @see org.rhq.core.domain.content.composite.LoadedPackageBitsComposite
      */
     LoadedPackageBitsComposite getLoadedPackageBitsComposite(int packageVersionId);
 
     /**
      * Loads the installed package identified by the ID from the database.
      *
-     * @param  id identifies the installed package
-     *
+     * @param id identifies the installed package
      * @return installed package if one exists; <code>null</code> otherwise
      */
     InstalledPackage getInstalledPackage(int id);
 
+    List<IntegerOptionItem> getInstalledPackageTypes(Subject user, int resourceId);
+
+    List<String> getInstalledPackageVersions(Subject user, int resourceId);
+
     /**
      * Loads the package type identified by the ID from the database.
      *
-     * @param  id package type to load
-     *
+     * @param id package type to load
      * @return package type if one exists for the ID; <code>null</code> otherwise
      */
     PackageType getPackageType(int id);
@@ -71,8 +74,7 @@ public interface ContentUIManagerLocal {
     /**
      * Returns all package types that are available to the specified resource type.
      *
-     * @param  resourceTypeId identifies the resource type
-     *
+     * @param resourceTypeId identifies the resource type
      * @return set of package types
      */
     List<PackageType> getPackageTypes(int resourceTypeId);
@@ -80,8 +82,7 @@ public interface ContentUIManagerLocal {
     /**
      * Returns the package type that backs resources of the specified type.
      *
-     * @param  resourceTypeId identifies the resource type.
-     *
+     * @param resourceTypeId identifies the resource type.
      * @return backing package type if one exists; <code>null</code> otherwise
      */
     PackageType getResourceCreationPackageType(int resourceTypeId);
@@ -89,9 +90,8 @@ public interface ContentUIManagerLocal {
     /**
      * Returns all package types that are available to the specified resource type in a page control.
      *
-     * @param  resourceTypeId identifies the resource type
-     * @param  pageControl    paging control
-     *
+     * @param resourceTypeId identifies the resource type
+     * @param pageControl    paging control
      * @return pagable list of package types
      */
     PageList<PackageType> getPackageTypes(int resourceTypeId, PageControl pageControl);
@@ -99,41 +99,52 @@ public interface ContentUIManagerLocal {
     /**
      * Returns a list of all content requests made against the specified resource that match the specified status.
      *
-     * @param  user        the user who is requesting the retrieval
-     * @param  resourceId  identifies the resource whose requests to retrieve
-     * @param  status      request status being matched
-     * @param  pageControl pagination controller
-     *
+     * @param user        the user who is requesting the retrieval
+     * @param resourceId  identifies the resource whose requests to retrieve
+     * @param status      request status being matched
+     * @param pageControl pagination controller
      * @return list of artifact requests for the specified resource
      */
     PageList<ContentServiceRequest> getContentRequestsWithStatus(Subject user, int resourceId,
-        ContentRequestStatus status, PageControl pageControl);
+                                                                 ContentRequestStatus status, PageControl pageControl);
 
     /**
      * Returns a list of all content requests made against the specified resource that do not match the specified
      * status.
      *
-     * @param  user        the user who is requesting the retrieval
-     * @param  resourceId  identifies the resource whose requests to retrieve
-     * @param  status      request status to not match
-     * @param  pageControl pagination controller
-     *
+     * @param user        the user who is requesting the retrieval
+     * @param resourceId  identifies the resource whose requests to retrieve
+     * @param status      request status to not match
+     * @param pageControl pagination controller
      * @return list of Content requests for the specified resource
      */
     PageList<ContentServiceRequest> getContentRequestsWithNotStatus(Subject user, int resourceId,
-        ContentRequestStatus status, PageControl pageControl);
+                                                                    ContentRequestStatus status, PageControl pageControl);
 
     /**
      * Returns a list of all installed packages on the specified resource.
      *
-     * @param  user        the user who is requesting the retrieval
-     * @param  resourceId  identifies the resource whose requests to retrieve
-     * @param  pageControl pagination controller
-     *
+     * @param user        the user who is requesting the retrieval
+     * @param resourceId  identifies the resource whose requests to retrieve
+     * @param pageControl pagination controller
      * @return pagable list of packages installed on the resource
      */
-    PageList<PackageListItemComposite> getInstalledPackages(Subject user, int resourceId, PageControl pageControl);
+    PageList<PackageListItemComposite> getInstalledPackages(Subject user, int resourceId, String packageTypeFilter,
+                                                            String packageVersionFilter, PageControl pageControl);
 
-    PageList<InstalledPackage> getInstalledPackageHistory(Subject subject, int resourceId, int generalPackageId,
-        PageControl pc);
+    PageList<InstalledPackageHistory> getInstalledPackageHistory(Subject subject, int resourceId, int generalPackageId,
+                                                                 PageControl pc);
+
+    PageList<PackageVersionComposite> getPackageVersionCompositesByFilter(Subject user, int resourceId, String filter,
+                                                                          PageControl pc);
+
+    /**
+     * Used to retrieve information about a package version to display to a user.
+     *
+     * @param  user             user who wants to see the information
+     * @param  packageVersionId identifies what package version to return info on
+     *
+     * @return the information on the package version
+     */
+    PackageVersionComposite loadPackageVersionComposite(Subject user, int packageVersionId);    
 }

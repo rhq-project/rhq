@@ -31,7 +31,7 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.event.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.legacy.beans.OptionItem;

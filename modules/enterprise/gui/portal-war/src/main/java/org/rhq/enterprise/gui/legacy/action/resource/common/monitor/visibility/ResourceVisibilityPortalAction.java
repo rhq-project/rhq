@@ -24,9 +24,11 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.resource.ResourceController;
 
@@ -52,4 +54,12 @@ public abstract class ResourceVisibilityPortalAction extends ResourceController 
 
         return null;
     }
+
+    public ActionForward events(ActionMapping mapping, ActionForm form, HttpServletRequest request,
+        HttpServletResponse response) throws Exception {
+        super.setNavMapLocation(request, mapping, Constants.MONITOR_VISIBILITY_LOC);
+
+        return null;
+    }
+
 }

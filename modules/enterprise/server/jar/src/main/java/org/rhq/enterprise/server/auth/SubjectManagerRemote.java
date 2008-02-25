@@ -18,10 +18,12 @@
  */
 package org.rhq.enterprise.server.auth;
 
+import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 import javax.security.auth.login.LoginException;
 import javax.xml.bind.annotation.XmlSeeAlso;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -33,11 +35,47 @@ import org.rhq.core.domain.util.PageList;
 @WebService
 @XmlSeeAlso( { PropertySimple.class, PropertyList.class, PropertyMap.class })
 public interface SubjectManagerRemote {
-    Subject login(String username, String password) throws LoginException;
+    /**
+     * Logs a user into the system. This will authenticate the given user with the given password. If the user was
+     * already logged in, the current session will be used but the password will still need to be authenticated.
 
-    void logout(int sessionId);
+     * @param     username The name of the user.
+     * @param     password The password.
+     *
+     * @return    The subject of the authenticated user.
+     *
+     * @exception LoginException if the login failed for some reason
+     */
+    Subject login(@WebParam(name = "username")
+    String username, @WebParam(name = "password")
+    String password) throws LoginException;
 
-    Subject loadUserConfiguration(Integer subjectId);
+    /**
+     * Logs out a user.
+     *
+     * @param sessionId The session id for the current user
+     */
 
-    PageList<Subject> getAllSubjects(PageControl pc);
+    void logout(@WebParam(name = "sessionId")
+    int sessionId);
+
+    /**
+     * Loads in the given subject's {@link Subject#getUserConfiguration() configuration}.
+     *
+     * @param  subjectId identifies the subject whose user configuration is to be loaded
+     *
+     * @return the subject, with its user configuration loaded
+     */
+    Subject loadUserConfiguration(@WebParam(name = "subjectId")
+    Integer subjectId);
+
+    /**
+     * Returns a list all subjects in the system, excluding internal system users.
+     *
+     * @param  pageControl A page control object.
+     *
+     * @return the list of subjects paged with the given page control
+     */
+    PageList<Subject> getAllSubjects(@WebParam(name = "pageControl")
+    PageControl pc);
 }

@@ -20,7 +20,7 @@ package org.rhq.enterprise.server.alert.engine;
 
 import java.util.List;
 import javax.ejb.Local;
-import org.rhq.core.domain.event.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.composite.MeasurementBaselineComposite;

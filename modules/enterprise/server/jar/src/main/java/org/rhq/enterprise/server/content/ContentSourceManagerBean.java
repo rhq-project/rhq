@@ -1153,6 +1153,37 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         return outputPackageVersionBitsRange(resourceId, packageDetailsKey, outputStream, 0, -1);
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(1000 * 60 * 30)
+    public long outputPackageVersionBits(PackageDetailsKey packageDetailsKey, OutputStream outputStream) {
+        return outputPackageVersionBitsRange(packageDetailsKey, outputStream, 0, -1);
+    }
+
+    @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(1000 * 60 * 30)
+    public long outputPackageVersionBitsRange(PackageDetailsKey packageDetailsKey, OutputStream outputStream,
+        long startByte, long endByte) {
+        if (startByte < 0) {
+            throw new IllegalArgumentException("startByte[" + startByte + "] < 0");
+        }
+
+        if ((endByte > -1) && (endByte < startByte)) {
+            throw new IllegalArgumentException("endByte[" + endByte + "] < startByte[" + startByte + "]");
+        }
+
+        // what package version?
+        Query query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
+        query.setParameter("packageName", packageDetailsKey.getName());
+        query.setParameter("packageTypeName", packageDetailsKey.getPackageTypeName());
+        query.setParameter("architectureName", packageDetailsKey.getArchitectureName());
+        query.setParameter("version", packageDetailsKey.getVersion());
+        int packageVersionId = ((PackageVersion) query.getSingleResult()).getId();
+
+        return outputPackageVersionBitsRangeHelper(-1, packageDetailsKey, outputStream, startByte, endByte,
+            packageVersionId);
+    }
+
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(1000 * 60 * 30)
@@ -1175,11 +1206,18 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         query.setParameter("resourceId", resourceId);
         int packageVersionId = ((Integer) query.getSingleResult()).intValue();
 
+        return outputPackageVersionBitsRangeHelper(resourceId, packageDetailsKey, outputStream, startByte, endByte,
+            packageVersionId);
+    }
+
+    private long outputPackageVersionBitsRangeHelper(int resourceId, PackageDetailsKey packageDetailsKey,
+        OutputStream outputStream, long startByte, long endByte, int packageVersionId) {
+
         // TODO: Should we make sure the resource is subscribed/allowed to receive the the package version?
         //       Or should we not bother to perform this check?  if the caller knows the PV ID, it
         //       probably already got it through its channels
 
-        query = entityManager.createNamedQuery(PackageBits.QUERY_PACKAGE_BITS_LOADED_STATUS_PACKAGE_VERSION_ID);
+        Query query = entityManager.createNamedQuery(PackageBits.QUERY_PACKAGE_BITS_LOADED_STATUS_PACKAGE_VERSION_ID);
         query.setParameter("id", packageVersionId);
         LoadedPackageBitsComposite composite = (LoadedPackageBitsComposite) query.getSingleResult();
 
@@ -1206,6 +1244,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         PackageVersionContentSource pvcs = null; // will be non-null only if package bits were not originally available
 
         if (!packageBitsAreAvailable) {
+            if (resourceId == -1) {
+                throw new IllegalStateException("Package bits must be inserted prior to the agent asking for them "
+                    + "during a cotent-based resource creation");
+            }
             // if we got here, the package bits have not been downloaded yet.  This eliminates the
             // possibility that the package version were directly uploaded by a user
             // or auto-discovered by a resource and attached to a channel. So, that leaves

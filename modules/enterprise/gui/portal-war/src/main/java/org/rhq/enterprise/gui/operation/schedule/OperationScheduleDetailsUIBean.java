@@ -18,20 +18,14 @@
  */
 package org.rhq.enterprise.gui.operation.schedule;
 
-import java.util.ArrayList;
-import java.util.List;
-import javax.faces.model.SelectItem;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
+
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.composite.IntegerOptionItem;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.scheduling.HtmlSimpleTrigger;
-import org.rhq.enterprise.gui.operation.definition.group.ResourceGroupOperationDefinitionUtils;
 import org.rhq.enterprise.gui.operation.model.OperationParameters;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.OperationSchedule;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
@@ -39,19 +33,15 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public abstract class OperationScheduleDetailsUIBean {
     protected OperationManagerLocal manager;
-    private OperationSchedule schedule;
+    protected OperationSchedule schedule;
     private OperationParameters parameters;
     private HtmlSimpleTrigger trigger;
-
-    private List<SelectItem> resourceExecutionOptions;
-    private String resourceExecutionOption;
-    private List<IntegerOptionItem> resourceNameItems;
 
     public OperationScheduleDetailsUIBean() {
         manager = LookupUtil.getOperationManager();
     }
 
-    private void init() {
+    protected void init() {
         if (this.schedule == null) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             String jobId = FacesContextUtility.getRequiredRequestParameter("jobId");
@@ -66,10 +56,6 @@ public abstract class OperationScheduleDetailsUIBean {
 
             this.parameters = new OperationParameters(this.schedule);
 
-            this.resourceExecutionOptions = ResourceGroupOperationDefinitionUtils.getResourceExecutionOptions();
-            this.resourceExecutionOption = getResourceExecutionOption((GroupOperationSchedule) this.schedule);
-            this.resourceNameItems = getResourceNameItems((GroupOperationSchedule) this.schedule);
-
             String jobName = schedule.getJobName();
             String jobGroup = schedule.getJobGroup();
             SimpleTrigger quartzTrigger = null;
@@ -83,28 +69,6 @@ public abstract class OperationScheduleDetailsUIBean {
 
             trigger = new HtmlSimpleTrigger(quartzTrigger);
         }
-    }
-
-    private List<IntegerOptionItem> getResourceNameItems(GroupOperationSchedule schedule) {
-        List<Resource> resourceOrder = schedule.getExecutionOrder();
-        if (resourceOrder == null) {
-            return new ArrayList<IntegerOptionItem>();
-        }
-
-        List<IntegerOptionItem> results = new ArrayList<IntegerOptionItem>();
-        for (Resource next : resourceOrder) {
-            results.add(new IntegerOptionItem(next.getId(), next.getName()));
-        }
-
-        return results;
-    }
-
-    private String getResourceExecutionOption(GroupOperationSchedule schedule) {
-        List<Resource> order = schedule.getExecutionOrder();
-
-        boolean isOrdered = (order != null) && (order.size() > 0);
-
-        return ResourceGroupOperationDefinitionUtils.getExecutionOption(isOrdered == false);
     }
 
     public abstract OperationSchedule getOperationSchedule(Subject subject, String jobId) throws Exception;
@@ -127,24 +91,6 @@ public abstract class OperationScheduleDetailsUIBean {
         return trigger;
     }
 
-    public List<SelectItem> getResourceExecutionOptions() {
-        init();
-
-        return resourceExecutionOptions;
-    }
-
-    public String getResourceExecutionOption() {
-        init();
-
-        return resourceExecutionOption;
-    }
-
-    public List<IntegerOptionItem> getResourceNameItems() {
-        init();
-
-        return resourceNameItems;
-    }
-
     public OperationManagerLocal getManager() {
         return manager;
     }
@@ -163,17 +109,5 @@ public abstract class OperationScheduleDetailsUIBean {
 
     public void setTrigger(HtmlSimpleTrigger trigger) {
         this.trigger = trigger;
-    }
-
-    public void setResourceExecutionOptions(List<SelectItem> resourceExecutionOptions) {
-        this.resourceExecutionOptions = resourceExecutionOptions;
-    }
-
-    public void setResourceExecutionOption(String resourceExecutionOption) {
-        this.resourceExecutionOption = resourceExecutionOption;
-    }
-
-    public void setResourceNameItems(List<IntegerOptionItem> resourceNameItems) {
-        this.resourceNameItems = resourceNameItems;
     }
 }

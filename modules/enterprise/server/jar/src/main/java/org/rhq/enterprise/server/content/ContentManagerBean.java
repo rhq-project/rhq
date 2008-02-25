@@ -18,10 +18,13 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -58,6 +61,7 @@ import org.rhq.core.domain.content.InstalledPackageHistoryStatus;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
@@ -65,6 +69,7 @@ import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeletePackagesRequest;
 import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
+import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesRequest;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
@@ -137,6 +142,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             log.error("Invalid resource ID specified for merge. Resource ID: " + resourceId);
             return;
         }
+
+        // Timestamp to use for all audit trail entries from this report
+        Date timestamp = new Date();
 
         // Before we process the report, get a list of all installed packages on the resource.
         // InstalledPackage objects in this list that are not referenced in the report are to be removed.
@@ -256,15 +264,25 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             }
 
             // At this point, we have the package and package version in the system (now added if they weren't already)
-            // We've also punched out early if we already knew about the installed package
+            // We've also punched out early if we already knew about the installed package, so we won't add another
+            // reference from the resource to the package nor another audit trail entry saying it was discovered.
 
             // Create a new installed package entry in the audit
             InstalledPackage newlyInstalledPackage = new InstalledPackage();
-            newlyInstalledPackage.setDeploymentConfigurationValues(resourcePackage.getDeploymentTimeConfiguration());
             newlyInstalledPackage.setPackageVersion(packageVersion);
             newlyInstalledPackage.setResource(resource);
 
             entityManager.persist(newlyInstalledPackage);
+
+            // Create an audit trail entry to show how this package was added to the system
+            InstalledPackageHistory history = new InstalledPackageHistory();
+            history.setDeploymentConfigurationValues(resourcePackage.getDeploymentTimeConfiguration());
+            history.setPackageVersion(packageVersion);
+            history.setResource(resource);
+            history.setStatus(InstalledPackageHistoryStatus.DISCOVERED);
+            history.setTimestamp(timestamp);
+
+            entityManager.persist(history);
 
             entityManager.flush();
         } // end resource package loop
@@ -273,6 +291,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // list), delete them.
         for (InstalledPackage doomedPackage : doomedPackages) {
             doomedPackage = entityManager.find(InstalledPackage.class, doomedPackage.getId());
+
+            // Add an audit trail entry to indicate the package was not rediscovered
+            InstalledPackageHistory history = new InstalledPackageHistory();
+            history.setPackageVersion(doomedPackage.getPackageVersion());
+            history.setResource(resource);
+            history.setStatus(InstalledPackageHistoryStatus.MISSING);
+            history.setTimestamp(timestamp);
+
             entityManager.remove(doomedPackage);
         }
 
@@ -325,6 +351,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         Agent agent = resource.getAgent();
 
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
+        // This call will also create the audit trail entry.
         ContentServiceRequest persistedRequest = contentManager.createDeployRequest(resourceId, user.getName(),
             packages);
 
@@ -377,6 +404,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             history.setContentServiceRequest(persistedRequest);
             history.setDeploymentConfigurationValues(packageDetails.getDeploymentTimeConfiguration());
             history.setPackageVersion(packageVersion);
+            history.setResource(resource);
             history.setStatus(InstalledPackageHistoryStatus.BEING_INSTALLED);
             history.setTimestamp(timestamp);
 
@@ -396,6 +424,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         Query query = entityManager.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID_WITH_INSTALLED_PKG_HIST);
         query.setParameter("id", response.getRequestId());
         ContentServiceRequest persistedRequest = (ContentServiceRequest) query.getSingleResult();
+        Resource resource = persistedRequest.getResource();
 
         int resourceTypeId = persistedRequest.getResource().getResourceType().getId();
         Subject user = subjectManager.findSubjectByName(persistedRequest.getSubjectName());
@@ -424,6 +453,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             InstalledPackageHistory history = new InstalledPackageHistory();
             history.setContentServiceRequest(persistedRequest);
             history.setPackageVersion(packageVersion);
+            history.setResource(resource);
             history.setTimestamp(timestamp);
 
             // Link the deployment configuration values that were saved for the initial history entity for this
@@ -446,14 +476,15 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             if (singleResponse.getResult() == ContentResponseResult.SUCCESS) {
                 history.setStatus(InstalledPackageHistoryStatus.INSTALLED);
 
-                // If the package was successfully installed, create an installed package entity for it
-                // TODO: jdobies, Dec 17, 2007: Add installation step support
-                InstalledPackage installedPackage = new InstalledPackage();
-                installedPackage.setResource(persistedRequest.getResource());
-                installedPackage.setInstallationDate(timestamp);
-                installedPackage.setPackageVersion(packageVersion);
-                installedPackage.setUser(user);
-                installedPackage.setDeploymentConfigurationValues(deploymentConfiguration);
+                List<DeployPackageStep> transferObjectSteps = singleResponse.getDeploymentSteps();
+                if (transferObjectSteps != null) {
+                    List<PackageInstallationStep> installationSteps = translateInstallationSteps(transferObjectSteps,
+                        history);
+                    history.setInstallationSteps(installationSteps);
+                }
+
+                // We used to create the InstalledPackage entry here, but now we'll rely on the plugin container
+                // to trigger a discovery after the deploy request finishes
             } else {
                 history.setStatus(InstalledPackageHistoryStatus.FAILED);
                 history.setErrorMessage(singleResponse.getErrorMessage());
@@ -492,6 +523,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         Agent agent = resource.getAgent();
 
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
+        // This will also create the audit trail entry
         ContentServiceRequest persistedRequest = contentManager.createRemoveRequest(resourceId, user.getName(),
             installedPackageIds);
 
@@ -503,7 +535,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         Set<ResourcePackageDetails> transferPackages = new HashSet<ResourcePackageDetails>(installedPackageList.size());
 
         for (InstalledPackage installedPackage : installedPackageList) {
-            ResourcePackageDetails transferPackage = installedPackageToDetails(installedPackage);
+            ResourcePackageDetails transferPackage = ContentManagerHelper.installedPackageToDetails(installedPackage);
             transferPackages.add(transferPackage);
         }
 
@@ -545,6 +577,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             InstalledPackageHistory history = new InstalledPackageHistory();
             history.setContentServiceRequest(persistedRequest);
             history.setPackageVersion(packageVersion);
+            history.setResource(resource);
             history.setStatus(InstalledPackageHistoryStatus.BEING_DELETED);
             history.setTimestamp(timestamp);
 
@@ -592,25 +625,87 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             InstalledPackageHistory history = new InstalledPackageHistory();
             history.setContentServiceRequest(persistedRequest);
             history.setPackageVersion(packageVersion);
+            history.setResource(resource);
             history.setTimestamp(timestamp);
 
             if (singleResponse.getResult() == ContentResponseResult.SUCCESS) {
                 history.setStatus(InstalledPackageHistoryStatus.DELETED);
 
-                // If the package was successfully deleted, remove the installed package entity
-                Query installedPackageQuery = entityManager
-                    .createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_VER_ID);
-                installedPackageQuery.setParameter("resourceId", resource.getId());
-                installedPackageQuery.setParameter("packageVersionId", packageVersion.getId());
-
-                List installedPackageList = installedPackageQuery.getResultList();
-
-                if (installedPackageList.size() > 0) {
-                    InstalledPackage doomedPackage = (InstalledPackage) installedPackageList.get(0);
-                    entityManager.remove(doomedPackage);
-                }
+                // We used to remove the InstalledPackage entity here, but now we'll rely on the plugin container
+                // to trigger a discovery after the delete request finishes.
+            } else {
+                history.setStatus(InstalledPackageHistoryStatus.FAILED);
+                history.setErrorMessage(singleResponse.getErrorMessage());
             }
         }
+    }
+
+    public void retrieveBitsFromResource(Subject user, int resourceId, int installedPackageId) {
+        log.info("Retrieving bits for package [" + installedPackageId + "] on resource ID [" + resourceId + "]");
+
+        // Check permissions first
+        if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_CONTENT, resourceId)) {
+            throw new PermissionException("User [" + user.getName() + "] does not have permission to delete package "
+                + installedPackageId + " for resource ID [" + resourceId + "]");
+        }
+
+        // Load entities for references later in the method
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        Agent agent = resource.getAgent();
+        InstalledPackage installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
+
+        // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
+        ContentServiceRequest persistedRequest = contentManager.createRetrieveBitsRequest(resourceId, user.getName(),
+            installedPackageId);
+
+        // Package into transfer object
+        ResourcePackageDetails transferPackage = ContentManagerHelper.installedPackageToDetails(installedPackage);
+        RetrievePackageBitsRequest transferRequest = new RetrievePackageBitsRequest(persistedRequest.getId(),
+            resourceId, transferPackage);
+
+        // Make call to agent
+        try {
+            AgentClient agentClient = agentManager.getAgentClient(agent);
+            ContentAgentService agentService = agentClient.getContentAgentService();
+            agentService.retrievePackageBits(transferRequest);
+        } catch (RuntimeException e) {
+            log.error("Error while sending deploy request to agent", e);
+
+            // Update the request with the failure
+            contentManager.failRequest(persistedRequest.getId(), e);
+
+            // Throw so caller knows an error happened
+            throw e;
+        }
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public ContentServiceRequest createRetrieveBitsRequest(int resourceId, String username, int installedPackageId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+
+        ContentServiceRequest persistedRequest = new ContentServiceRequest(resource, username,
+            ContentRequestType.DEPLOY);
+        persistedRequest.setStatus(ContentRequestStatus.IN_PROGRESS);
+
+        Date timestamp = new Date();
+
+        // Load the InstalledPackage to get its package version for the relationship
+        InstalledPackage ip = entityManager.find(InstalledPackage.class, installedPackageId);
+        PackageVersion packageVersion = ip.getPackageVersion();
+
+        // Create the history entity
+        InstalledPackageHistory history = new InstalledPackageHistory();
+        history.setContentServiceRequest(persistedRequest);
+        history.setPackageVersion(packageVersion);
+        history.setResource(resource);
+        history.setStatus(InstalledPackageHistoryStatus.BEING_RETRIEVED);
+        history.setTimestamp(timestamp);
+
+        persistedRequest.addInstalledPackageHistory(history);
+
+        entityManager.persist(persistedRequest);
+
+        return persistedRequest;
     }
 
     @TransactionTimeout(1000 * 60 * 30)
@@ -620,6 +715,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // Load persisted request
         ContentServiceRequest persistedRequest = entityManager.find(ContentServiceRequest.class, response
             .getRequestId());
+        Resource resource = persistedRequest.getResource();
 
         // There is some inconsistency if we're completing a request that was not in the database
         if (persistedRequest == null) {
@@ -629,12 +725,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             return;
         }
 
+        InstalledPackageHistory initialRequestHistory = persistedRequest.getInstalledPackageHistory().iterator().next();
+        PackageVersion packageVersion = initialRequestHistory.getPackageVersion();
+
         // Read the stream from the agent and store in the package version
         try {
             log.debug("Saving content for response: " + response);
 
-            InstalledPackageHistory installedPackage = persistedRequest.getInstalledPackageHistory().iterator().next();
-            PackageVersion packageVersion = installedPackage.getPackageVersion();
             PackageBits packageBits = new PackageBits();
             entityManager.persist(packageBits);
 
@@ -678,6 +775,21 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // Update the persisted request
         persistedRequest.setErrorMessage(response.getErrorMessage());
         persistedRequest.setStatus(response.getStatus());
+
+        // Add a new audit trail entry
+        InstalledPackageHistory completedHistory = new InstalledPackageHistory();
+        completedHistory.setContentServiceRequest(persistedRequest);
+        completedHistory.setResource(resource);
+        completedHistory.setTimestamp(new Date());
+        completedHistory.setPackageVersion(packageVersion);
+
+        if (response.getStatus() == ContentRequestStatus.SUCCESS) {
+            completedHistory.setStatus(InstalledPackageHistoryStatus.RETRIEVED);
+        } else {
+            completedHistory.setStatus(InstalledPackageHistoryStatus.FAILED);
+            completedHistory.setErrorMessage(response.getErrorMessage());
+        }
+
     }
 
     @SuppressWarnings("unchecked")
@@ -720,15 +832,16 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
             // Convert to transfer object to be sent to the agent
             PackageVersion packageVersion = (PackageVersion) persistedPackageList.get(0);
-            ResourcePackageDetails details = packageVersionToDetails(packageVersion);
+            ResourcePackageDetails details = ContentManagerHelper.packageVersionToDetails(packageVersion);
             dependencies.add(details);
 
             // Create an installed package history and attach to the request
             InstalledPackageHistory dependencyPackage = new InstalledPackageHistory();
             dependencyPackage.setContentServiceRequest(persistedRequest);
-            dependencyPackage.setTimestamp(installationDate);
             dependencyPackage.setPackageVersion(packageVersion);
+            dependencyPackage.setResource(resource);
             dependencyPackage.setStatus(InstalledPackageHistoryStatus.BEING_INSTALLED);
+            dependencyPackage.setTimestamp(installationDate);
 
             persistedRequest.addInstalledPackageHistory(dependencyPackage);
 
@@ -738,86 +851,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return dependencies;
     }
 
-    public void retrieveBitsFromResource(Subject user, int resourceId, int installedPackageId) {
-        log.info("Retrieving bits for package [" + installedPackageId + "] on resource ID [" + resourceId + "]");
-
-        // Check permissions first
-        if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_CONTENT, resourceId)) {
-            throw new PermissionException("User [" + user.getName() + "] does not have permission to delete package "
-                + installedPackageId + " for resource ID [" + resourceId + "]");
-        }
-
-        // Load entities for references later in the method
-        Resource resource = entityManager.find(Resource.class, resourceId);
-        Agent agent = resource.getAgent();
-        InstalledPackage installedPackage = entityManager.find(InstalledPackage.class, installedPackageId);
-
-        // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
-        ContentServiceRequest persistedRequest = contentManager.createRetrieveBitsRequest(resourceId, user.getName(),
-            installedPackageId);
-
-        // Package into transfer object
-        ResourcePackageDetails transferPackage = installedPackageToDetails(installedPackage);
-        RetrievePackageBitsRequest transferRequest = new RetrievePackageBitsRequest(persistedRequest.getId(),
-            resourceId, transferPackage);
-
-        // Make call to agent
-        try {
-            AgentClient agentClient = agentManager.getAgentClient(agent);
-            ContentAgentService agentService = agentClient.getContentAgentService();
-            agentService.retrievePackageBits(transferRequest);
-        } catch (RuntimeException e) {
-            log.error("Error while sending deploy request to agent", e);
-
-            // Update the request with the failure
-            contentManager.failRequest(persistedRequest.getId(), e);
-
-            // Throw so caller knows an error happened
-            throw e;
-        }
-    }
-
-    public PackageVersionComposite loadPackageVersionComposite(Subject user, int packageVersionId) {
-        Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_COMPOSITE_BY_ID);
-        q.setParameter("id", packageVersionId);
-        PackageVersionComposite pv = (PackageVersionComposite) q.getSingleResult();
-        return pv;
-    }
-
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentServiceRequest createRetrieveBitsRequest(int resourceId, String username, int installedPackageId) {
-        Resource resource = entityManager.find(Resource.class, resourceId);
-
-        ContentServiceRequest persistedRequest = new ContentServiceRequest(resource, username,
-            ContentRequestType.DEPLOY);
-        persistedRequest.setStatus(ContentRequestStatus.IN_PROGRESS);
-
-        Date timestamp = new Date();
-
-        // Load the InstalledPackage to get its package version for the relationship
-        InstalledPackage ip = entityManager.find(InstalledPackage.class, installedPackageId);
-        PackageVersion packageVersion = ip.getPackageVersion();
-
-        // Create the history entity
-        InstalledPackageHistory history = new InstalledPackageHistory();
-        history.setContentServiceRequest(persistedRequest);
-        history.setPackageVersion(packageVersion);
-        history.setStatus(InstalledPackageHistoryStatus.BEING_DELETED);
-        history.setTimestamp(timestamp);
-
-        persistedRequest.addInstalledPackageHistory(history);
-
-        entityManager.persist(persistedRequest);
-
-        return persistedRequest;
-    }
-
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void failRequest(int requestId, Throwable error) {
         Query query = entityManager.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID_WITH_INSTALLED_PKG_HIST);
         query.setParameter("id", requestId);
 
         ContentServiceRequest persistedRequest = (ContentServiceRequest) query.getSingleResult();
+        Resource resource = persistedRequest.getResource();
 
         persistedRequest.setErrorMessageFromThrowable(error);
         persistedRequest.setStatus(ContentRequestStatus.FAILURE);
@@ -831,6 +871,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             failedEntry.setDeploymentConfigurationValues(history.getDeploymentConfigurationValues());
             failedEntry.setErrorMessageFromThrowable(error);
             failedEntry.setPackageVersion(history.getPackageVersion());
+            failedEntry.setResource(resource);
             failedEntry.setStatus(InstalledPackageHistoryStatus.FAILED);
             failedEntry.setTimestamp(timestamp);
 
@@ -855,6 +896,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 return;
             }
 
+            Date timestamp = new Date();
             for (ContentServiceRequest request : inProgressRequests) {
                 long duration = request.getDuration();
 
@@ -865,6 +907,38 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                     request.setErrorMessage("Request with duration " + duration + " exceeded the timeout threshold of "
                         + REQUEST_TIMEOUT);
                     request.setStatus(ContentRequestStatus.TIMED_OUT);
+
+                    Resource resource = request.getResource();
+
+                    // Need to add audit trail entries for each package as well, so the audit trail doesn't read
+                    // as the operation is still being performed
+                    Set<InstalledPackageHistory> requestPackages = request.getInstalledPackageHistory();
+                    for (InstalledPackageHistory history : requestPackages) {
+                        InstalledPackageHistoryStatus packageStatus = history.getStatus();
+
+                        // Just to be safe, we're only going to "close out" any in progress entries. All entries in this
+                        // list will likely be in this state, and we'd need to handle resubmissions differently anyway.
+                        switch (packageStatus) {
+                        case BEING_DELETED:
+                        case BEING_INSTALLED:
+                        case BEING_RETRIEVED:
+                            InstalledPackageHistory closedHistory = new InstalledPackageHistory();
+                            closedHistory.setContentServiceRequest(request);
+                            closedHistory.setPackageVersion(history.getPackageVersion());
+                            closedHistory.setResource(resource);
+                            closedHistory.setStatus(InstalledPackageHistoryStatus.TIMED_OUT);
+                            closedHistory.setTimestamp(timestamp);
+
+                            entityManager.persist(closedHistory);
+                            break;
+
+                        default:
+                            log.warn("Found a history entry on the request with an unexpected status. Id: "
+                                + history.getId() + ", Status: " + packageStatus);
+                            break;
+
+                        }
+                    }
                 }
             }
         } catch (Throwable e) {
@@ -874,7 +948,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
-    public PackageVersion createPackageVersion(String packageName, int packageTypeId, String version, int architectureId) {
+    public PackageVersion createPackageVersion(String packageName, int packageTypeId, String version,
+        int architectureId, InputStream packageBitStream) {
         // See if the package version already exists and return that if it does
         Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH);
         packageVersionQuery.setParameter("name", packageName);
@@ -908,10 +983,26 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // Create a package version and add it to the package
         Architecture architecture = entityManager.find(Architecture.class, architectureId);
 
-        PackageVersion newPackageVersion = new PackageVersion();
-        newPackageVersion.setVersion(version);
-        newPackageVersion.setArchitecture(architecture);
-        newPackageVersion.setGeneralPackage(existingPackage);
+        PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
+
+        // Write the content into the newly created package version. This may eventually move, but for now we'll just
+        // use the byte array in the package version to store the bits.
+        byte[] packageBits;
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            packageBits = new byte[1024];
+
+            while (packageBitStream.read(packageBits) != -1) {
+                baos.write(packageBits);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading in the package file", e);
+        }
+
+        PackageBits bits = new PackageBits();
+        bits.setBits(packageBits);
+
+        newPackageVersion.setPackageBits(bits);
 
         entityManager.persist(newPackageVersion);
 
@@ -921,37 +1012,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     // Private  --------------------------------------------
-
-    private ResourcePackageDetails installedPackageToDetails(InstalledPackage installedPackage) {
-        PackageVersion packageVersion = installedPackage.getPackageVersion();
-        ResourcePackageDetails details = packageVersionToDetails(packageVersion);
-
-        return details;
-    }
-
-    private ResourcePackageDetails packageVersionToDetails(PackageVersion packageVersion) {
-        Package generalPackage = packageVersion.getGeneralPackage();
-
-        PackageDetailsKey key = new PackageDetailsKey(generalPackage.getName(), packageVersion.getVersion(),
-            packageVersion.getGeneralPackage().getPackageType().getName(), packageVersion.getArchitecture().getName());
-        ResourcePackageDetails details = new ResourcePackageDetails(key);
-
-        details.setClassification(generalPackage.getClassification());
-        details.setDisplayName(packageVersion.getDisplayName());
-        details.setExtraProperties(packageVersion.getExtraProperties());
-        details.setFileCreatedDate(packageVersion.getFileCreatedDate());
-        details.setFileName(packageVersion.getFileName());
-        details.setFileSize(packageVersion.getFileSize());
-        details.setLicenseName(packageVersion.getLicenseName());
-        details.setLicenseVersion(packageVersion.getLicenseVersion());
-        details.setLongDescription(packageVersion.getLongDescription());
-        details.setMD5(packageVersion.getMD5());
-        details.setMetadata(packageVersion.getMetadata());
-        details.setSHA265(packageVersion.getSHA256());
-        details.setShortDescription(packageVersion.getShortDescription());
-
-        return details;
-    }
 
     private ContentRequestStatus translateRequestResultStatus(ContentResponseResult result) {
         switch (result) {
@@ -965,16 +1025,31 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
-    @SuppressWarnings("unused")
-    private InstalledPackageHistoryStatus translatePackageResultStatus(ContentResponseResult result) {
-        switch (result) {
-        case SUCCESS: {
-            return InstalledPackageHistoryStatus.INSTALLED;
+    /**
+     * Translates the transfer object representation of package deployment steps into domain entities.
+     *
+     * @param transferSteps cannot be <code>null</code>
+     * @param history       history item the steps are a part of, this will be used when creating the domain entities
+     *                      to establish the relationship
+     * @return list of domain entities
+     */
+    private List<PackageInstallationStep> translateInstallationSteps(List<DeployPackageStep> transferSteps,
+        InstalledPackageHistory history) {
+        List<PackageInstallationStep> steps = new ArrayList<PackageInstallationStep>(transferSteps.size());
+        int stepOrder = 0;
+
+        for (DeployPackageStep transferStep : transferSteps) {
+            PackageInstallationStep step = new PackageInstallationStep();
+            step.setDescription(transferStep.getDescription());
+            step.setKey(transferStep.getStepKey());
+            step.setResult(transferStep.getStepResult());
+            step.setErrorMessage(transferStep.getStepErrorMessage());
+            step.setOrder(stepOrder++);
+            step.setInstalledPackageHistory(history);
+
+            steps.add(step);
         }
 
-        default: {
-            return InstalledPackageHistoryStatus.FAILED;
-        }
-        }
+        return steps;
     }
 }

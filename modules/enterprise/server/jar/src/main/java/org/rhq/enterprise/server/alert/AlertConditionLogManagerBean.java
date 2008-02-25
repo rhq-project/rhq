@@ -30,12 +30,12 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.event.alert.AlertCondition;
-import org.rhq.core.domain.event.alert.AlertConditionLog;
-import org.rhq.core.domain.event.alert.AlertDampening;
-import org.rhq.core.domain.event.alert.AlertDampeningEvent;
-import org.rhq.core.domain.event.alert.AlertDefinition;
-import org.rhq.core.domain.event.alert.BooleanExpression;
+import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.AlertDampening;
+import org.rhq.core.domain.alert.AlertDampeningEvent;
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.enterprise.server.RHQConstants;
 
 @Stateless

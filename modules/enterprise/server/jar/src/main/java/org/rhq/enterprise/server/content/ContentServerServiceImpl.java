@@ -21,8 +21,10 @@ package org.rhq.enterprise.server.content;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
 import org.rhq.core.domain.content.PackageDetailsKey;
@@ -80,10 +82,21 @@ public class ContentServerServiceImpl implements ContentServerService {
         return manager.outputPackageVersionBits(resourceId, packageDetailsKey, outputStream);
     }
 
+    public long downloadPackageBits(PackageDetailsKey packageDetailsKey, OutputStream outputStream) {
+        ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
+        return manager.outputPackageVersionBits(packageDetailsKey, outputStream);
+    }
+
     public long downloadPackageBitsRange(int resourceId, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream, long startByte, long endByte) {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
         return manager.outputPackageVersionBitsRange(resourceId, packageDetailsKey, outputStream, startByte, endByte);
+    }
+
+    public long downloadPackageBitsRange(PackageDetailsKey packageDetailsKey, OutputStream outputStream,
+        long startByte, long endByte) {
+        ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
+        return manager.outputPackageVersionBitsRange(packageDetailsKey, outputStream, startByte, endByte);
     }
 
     public PageList<PackageVersionMetadataComposite> getPackageVersionMetadata(int resourceId, PageControl pc) {

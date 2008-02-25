@@ -44,6 +44,7 @@ import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.ResourceChannel;
+import org.rhq.core.domain.content.composite.ChannelComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -167,42 +168,41 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<Channel> getResourceSubscriptions(Subject subject, int resourceId, PageControl pc) {
-        pc.initDefaultOrderingField("rc.channel.id");
+    public PageList<ChannelComposite> getResourceSubscriptions(Subject subject, int resourceId, PageControl pc) {
+        pc.initDefaultOrderingField("c.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
             Channel.QUERY_FIND_CHANNELS_BY_RESOURCE_ID, pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-            Channel.QUERY_FIND_CHANNELS_BY_RESOURCE_ID);
+        Query countQuery = entityManager.createNamedQuery(Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT);
 
         query.setParameter("resourceId", resourceId);
         countQuery.setParameter("resourceId", resourceId);
 
-        List<Channel> results = query.getResultList();
+        List<ChannelComposite> results = query.getResultList();
         long count = (Long) countQuery.getSingleResult();
 
-        return new PageList<Channel>(results, (int) count, pc);
+        return new PageList<ChannelComposite>(results, (int) count, pc);
     }
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<Channel> getAvailableResourceSubscriptions(Subject subject, int resourceId, PageControl pc) {
+    public PageList<ChannelComposite> getAvailableResourceSubscriptions(Subject subject, int resourceId, PageControl pc) {
         pc.initDefaultOrderingField("c.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            Channel.QUERY_FIND_AVAILABLE_CHANNELS_BY_RESOURCE_ID, pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-            Channel.QUERY_FIND_AVAILABLE_CHANNELS_BY_RESOURCE_ID);
+            Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, pc);
+        Query countQuery = entityManager
+            .createNamedQuery(Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT);
 
         query.setParameter("resourceId", resourceId);
         countQuery.setParameter("resourceId", resourceId);
 
-        List<Channel> results = query.getResultList();
+        List<ChannelComposite> results = query.getResultList();
         long count = (Long) countQuery.getSingleResult();
 
-        return new PageList<Channel>(results, (int) count, pc);
+        return new PageList<ChannelComposite>(results, (int) count, pc);
     }
-    
+
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<PackageVersion> getPackageVersionsInChannel(Subject subject, int channelId, PageControl pc) {

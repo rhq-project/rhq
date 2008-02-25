@@ -125,15 +125,16 @@
                <h:outputText value="Other Options"/>
             </f:facet>
          
+            <!--  Notes are for user use only, displayed back in the History view -->
+            <!--  The value must fit into the Quartz job_details.description field. Quartz does not protect against SQL errors -->
             <h:panelGrid columns="3">
                <h:outputLabel for="timeout" value="Timeout:" />
                <h:inputText id="timeout" value="#{ResourceOperationDefinitionUIBean.timeout}" />
                <h:outputText value="The maximum time this operation is given to finish, in milliseconds" />
 
-               <!-- notes isn't really used yet, other than placed in quartz' job details desc -->
-               <h:outputLabel rendered="false" for="notes" value="Notes:" styleClass="vertical-align: top;" />
-               <h:inputTextarea rendered="false" id="notes" rows="3" cols="18" />
-               <h:outputText rendered="false" value="An optional description for this schedule" styleClass="vertical-align: top;" />            
+               <h:outputLabel for="notes" value="Notes:" />
+               <h:inputText id="notes" maxlength="120" size="40" />
+               <h:outputText value="Optional notes about the scheduled operation" />            
             </h:panelGrid>
          </rich:panel>
          

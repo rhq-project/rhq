@@ -19,9 +19,11 @@
 package org.rhq.enterprise.server.auth;
 
 import java.util.Collection;
+
 import javax.ejb.CreateException;
 import javax.ejb.Local;
 import javax.security.auth.login.LoginException;
+
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
@@ -97,11 +99,7 @@ public interface SubjectManagerLocal {
     Subject createSubject(Subject whoami, Subject subject) throws CreateException;
 
     /**
-     * Returns a list all subjects in the system, excluding internal system users.
-     *
-     * @param  pageControl
-     *
-     * @return the list of subjects paged with the given page control
+     * @see SubjectManagerRemote#getAllSubjects(PageControl)
      */
     PageList<Subject> getAllSubjects(PageControl pageControl);
 
@@ -141,22 +139,12 @@ public interface SubjectManagerLocal {
     boolean authenticateTemporarySessionPassword(String password) throws Exception;
 
     /**
-     * Logs a user into the system. This will authenticate the given user with the given password. If the user was
-     * already logged in, the current session will be used but the password will still need to be authenticated.
-     *
-     * @param     username The name of the user.
-     * @param     password The password.
-     *
-     * @return    The subject of the authenticated user.
-     *
-     * @exception LoginException if the login failed for some reason
+     * @see SubjectManagerRemote#login(String, String)
      */
     Subject login(String username, String password) throws LoginException;
 
     /**
-     * Logs out a user.
-     *
-     * @param sessionId The session id for the current user
+     * @see SubjectManagerRemote#logout(int)
      */
     void logout(int sessionId);
 

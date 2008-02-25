@@ -325,7 +325,7 @@
             <f:selectItems value="#{ListChildResourcesUIBean.creatableChildServerTypes}"/>
             <f:selectItems value="#{ListChildResourcesUIBean.creatableChildServiceTypes}"/>
          </h:selectOneMenu>
-         <h:commandButton action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" value="OK"
+         <h:commandButton id="createNewOKBtn" action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" value="OK"
                           styleClass="buttonmed" style="margin-left: 3px"/>
       </h:form>
    </h:panelGroup>

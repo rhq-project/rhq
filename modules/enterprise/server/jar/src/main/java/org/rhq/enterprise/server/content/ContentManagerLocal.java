@@ -20,7 +20,9 @@ package org.rhq.enterprise.server.content;
 
 import java.io.InputStream;
 import java.util.Set;
+
 import javax.ejb.Local;
+
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentServiceRequest;
@@ -101,7 +103,7 @@ public interface ContentManagerLocal {
      * Deletes the specified package from the resource.
      *
      * @param user                the user who is requesting the delete
-     * @param resourceId          identifies the resource from which the packages should be deleted
+     * @param resourceIds         identifies the resources from which the packages should be deleted
      * @param installedPackageIds identifies all of the packages to be deleted
      */
     void deletePackages(Subject user, Set<Integer> resourceIds, Set<Integer> installedPackageIds);
@@ -125,16 +127,6 @@ public interface ContentManagerLocal {
      * @param installedPackageId id of the installed package to retrieve bits
      */
     void retrieveBitsFromResource(Subject user, int resourceId, int installedPackageId);
-
-    /**
-     * Used to retrieve information about a package version to display to a user.
-     *
-     * @param  user             user who wants to see the information
-     * @param  packageVersionId identifies what package version to return info on
-     *
-     * @return the information on the package version
-     */
-    PackageVersionComposite loadPackageVersionComposite(Subject user, int packageVersionId);
 
     // Internal Utilities  --------------------------------------------
 
@@ -206,5 +198,6 @@ public interface ContentManagerLocal {
      * @return newly created package version if one did not exist; existing package version that matches these data if
      *         one was found
      */
-    PackageVersion createPackageVersion(String packageName, int packageTypeId, String version, int architectureId);
+    PackageVersion createPackageVersion(String packageName, int packageTypeId, String version, int architectureId,
+        InputStream packageBitStream);
 }

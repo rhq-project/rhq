@@ -20,7 +20,7 @@ package org.rhq.enterprise.server.alert;
 
 import java.util.List;
 import javax.ejb.Local;
-import org.rhq.core.domain.event.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.AlertConditionLog;
 
 @Local
 public interface AlertConditionLogManagerLocal {

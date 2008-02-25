@@ -18,13 +18,91 @@
  */
 package org.rhq.enterprise.gui.operation.schedule.group;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.faces.model.SelectItem;
+
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.IntegerOptionItem;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.gui.operation.definition.group.ResourceGroupOperationDefinitionUtils;
 import org.rhq.enterprise.gui.operation.schedule.OperationScheduleDetailsUIBean;
+import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationSchedule;
 
 public class ResourceGroupOperationScheduleDetailsUIBean extends OperationScheduleDetailsUIBean {
+
+    private List<SelectItem> resourceExecutionOptions;
+    private String resourceExecutionOption;
+    private List<IntegerOptionItem> resourceNameItems;
+
     @Override
     public OperationSchedule getOperationSchedule(Subject subject, String jobId) throws Exception {
         return manager.getGroupOperationSchedule(subject, jobId);
     }
+
+    @Override
+    protected void init() {
+        if (null == this.schedule) {
+            super.init();
+
+            this.resourceExecutionOptions = ResourceGroupOperationDefinitionUtils.getResourceExecutionOptions();
+            this.resourceExecutionOption = getResourceExecutionOption((GroupOperationSchedule) this.schedule);
+            this.resourceNameItems = getResourceNameItems((GroupOperationSchedule) this.schedule);
+        }
+    }
+
+    private String getResourceExecutionOption(GroupOperationSchedule schedule) {
+        List<Resource> order = schedule.getExecutionOrder();
+
+        boolean isOrdered = (order != null) && (order.size() > 0);
+
+        return ResourceGroupOperationDefinitionUtils.getExecutionOption(isOrdered == false);
+    }
+
+    private List<IntegerOptionItem> getResourceNameItems(GroupOperationSchedule schedule) {
+        List<Resource> resourceOrder = schedule.getExecutionOrder();
+        if (resourceOrder == null) {
+            return new ArrayList<IntegerOptionItem>();
+        }
+
+        List<IntegerOptionItem> results = new ArrayList<IntegerOptionItem>();
+        for (Resource next : resourceOrder) {
+            results.add(new IntegerOptionItem(next.getId(), next.getName()));
+        }
+
+        return results;
+    }
+
+    public List<SelectItem> getResourceExecutionOptions() {
+        init();
+
+        return resourceExecutionOptions;
+    }
+
+    public String getResourceExecutionOption() {
+        init();
+
+        return resourceExecutionOption;
+    }
+
+    public List<IntegerOptionItem> getResourceNameItems() {
+        init();
+
+        return resourceNameItems;
+    }
+
+    public void setResourceExecutionOptions(List<SelectItem> resourceExecutionOptions) {
+        this.resourceExecutionOptions = resourceExecutionOptions;
+    }
+
+    public void setResourceExecutionOption(String resourceExecutionOption) {
+        this.resourceExecutionOption = resourceExecutionOption;
+    }
+
+    public void setResourceNameItems(List<IntegerOptionItem> resourceNameItems) {
+        this.resourceNameItems = resourceNameItems;
+    }
+
 }

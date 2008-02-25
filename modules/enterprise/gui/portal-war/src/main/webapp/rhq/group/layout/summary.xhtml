@@ -87,7 +87,7 @@ groupId - the group id of the Group being accessed
             <h:graphicImage value="/images/title_arrow.gif" width="11" height="9"/>
          </h:outputLink>
 
-         <h:outputLink value="/resource/group/Inventory.do?mode=new"
+         <h:outputLink rendered="#{useroperations['MANAGE_INVENTORY']}" value="/resource/group/Inventory.do?mode=new"
                        styleClass="PageTitleSmallText">
             <h:outputText value="New Group"/>
             <h:graphicImage value="/images/title_arrow.gif" width="11" height="9"/>

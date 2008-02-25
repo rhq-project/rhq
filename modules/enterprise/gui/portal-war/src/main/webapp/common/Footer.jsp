@@ -9,7 +9,6 @@
   	<td colspan="2"><html:img page="/images/spacer.gif" width="1" height="15" alt="" border="0" styleId="footerSpacer"/></td>
   </tr>
   <tr> 
-    <td rowspan="99" class="PageTitle" valign="top"><html:img page="/images/bg_footer.gif" alt="" border="0"/></td>
     <td width="100%"><html:img page="/images/spacer.gif" width="1" height="1" alt="" border="0"/></td>
   </tr>
   <tr> 

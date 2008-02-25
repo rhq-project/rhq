@@ -217,7 +217,7 @@ public class GroupForm extends BaseValidatorForm {
                 errors = new ActionErrors();
             }
 
-            if (category == GroupCategory.COMPATIBLE.name()) {
+            if (category.equals(GroupCategory.COMPATIBLE.name())) {
                 if (resourceTypeId == null) {
                     errors.add("resourceTypeId",
                         new ActionMessage("resource.group.inventory.error." + "ResourceTypeId"));

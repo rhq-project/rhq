@@ -19,7 +19,7 @@
 package org.rhq.enterprise.server.alert;
 
 import javax.ejb.Local;
-import org.rhq.core.domain.event.alert.AlertDampeningEvent;
+import org.rhq.core.domain.alert.AlertDampeningEvent;
 
 @Local
 public interface AlertDampeningManagerLocal {

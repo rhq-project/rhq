@@ -31,7 +31,7 @@ import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
 import org.apache.struts.util.LabelValueBean;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.event.alert.AlertDampening;
+import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;

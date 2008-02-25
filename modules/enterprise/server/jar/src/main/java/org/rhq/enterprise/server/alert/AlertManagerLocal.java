@@ -26,9 +26,9 @@ import java.util.Map;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.event.alert.Alert;
-import org.rhq.core.domain.event.alert.AlertDefinition;
-import org.rhq.core.domain.event.alert.AlertPriority;
+import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;

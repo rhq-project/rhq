@@ -30,10 +30,10 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jboss.annotation.IgnoreDependency;
-import org.rhq.core.domain.event.alert.AlertDampening;
-import org.rhq.core.domain.event.alert.AlertDampeningEvent;
-import org.rhq.core.domain.event.alert.AlertDampeningEvent.Type;
-import org.rhq.core.domain.event.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertDampening;
+import org.rhq.core.domain.alert.AlertDampeningEvent;
+import org.rhq.core.domain.alert.AlertDampeningEvent.Type;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.enterprise.server.RHQConstants;
 
 @Stateless

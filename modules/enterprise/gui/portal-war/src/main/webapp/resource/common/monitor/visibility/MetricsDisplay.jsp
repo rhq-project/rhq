@@ -110,7 +110,8 @@ sometimes we don't want any left side buttons or checkboxes at all
       <c:if test="${not empty id}">
         <display:column title="<input type=\"checkbox\" onclick=\"ToggleAllSelectionTwoButtons(this, mdsWidgetProps, 'availableListMember', '${buttonMode}');\" name=\"listToggleAll\">"
                         isLocalizedTitle="false" width="5%">
-          <display:checkboxdecorator name="m" onclick="ToggleSelectionTwoButtons(this, mdsWidgetProps, 'availableListMember', '${buttonMode}')" styleClass="availableListMember"/>
+          <display:checkboxdecorator name="m" value="${measurementSummary.definitionId}"
+            onclick="ToggleSelectionTwoButtons(this, mdsWidgetProps, 'availableListMember', '${buttonMode}')" styleClass="availableListMember"/>
         </display:column>
       </c:if>
 

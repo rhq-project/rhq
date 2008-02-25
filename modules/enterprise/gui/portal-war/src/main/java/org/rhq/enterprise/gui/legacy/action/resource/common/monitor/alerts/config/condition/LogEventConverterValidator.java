@@ -20,8 +20,8 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 
 import org.apache.struts.action.ActionErrors;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.event.alert.AlertCondition;
-import org.rhq.core.domain.event.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ConditionBean;
 
 public class LogEventConverterValidator implements ConditionBeanConverterValidator {

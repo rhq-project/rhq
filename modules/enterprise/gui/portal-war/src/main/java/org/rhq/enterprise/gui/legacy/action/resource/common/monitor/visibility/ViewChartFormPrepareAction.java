@@ -23,19 +23,22 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
+
 import org.rhq.core.clientapi.util.ArrayUtil;
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.event.EventLog;
+import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
@@ -66,6 +69,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityPoint;
 import org.rhq.enterprise.server.measurement.BaselineCreationException;
+import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementNotFoundException;
@@ -90,6 +94,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
     private final Log log = LogFactory.getLog(ViewChartFormPrepareAction.class);
 
     MeasurementDataManagerLocal dataManager;
+    EventManagerLocal eventManager;
     ResourceManagerLocal resMgr;
     ResourceGroupManagerLocal resGrpMgr;
     ResourceTypeManagerLocal resTypeMgr;
@@ -134,6 +139,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         resMgr = LookupUtil.getResourceManager();
         resGrpMgr = LookupUtil.getResourceGroupManager();
         resTypeMgr = LookupUtil.getResourceTypeManager();
+        eventManager = LookupUtil.getEventManager();
 
         if (resource != null) {
             chartForm.setId(resource.getId());
@@ -370,9 +376,8 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         resources.add(allResources);
         List<Resource> checkedResources = new ArrayList<Resource>();
         resources.add(checkedResources);
-        if ((chartForm.getCtype() != null) && !chartForm.getCtype().equals(ViewChartForm.NO_CHILD_TYPE)) {
+        if ((chartForm.getCtype() != null) && chartForm.getCtype() != -1) {
             // It's an autogroup - get the child resources...
-            int childResourceTypeId = chartForm.getCtype();
             List<Resource> childResources = new ArrayList<Resource>();
 
             //ab.findChildResources( sessionId, adeId,;
@@ -388,7 +393,8 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
                 for (Resource childResource : childResources) {
                     boolean found = false;
                     for (Integer resourceId : resourceIds) {
-                        if (found = childResource.getId() == resourceId) {
+                        if (childResource.getId() == resourceId) {
+                            found = true;
                             break;
                         }
                     }
@@ -457,30 +463,30 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         // can be used in both the multi-resource and the multi-metric
         // case.
         Integer[] metricDefIds = chartForm.getM();
-        log.trace("number of metrics: " + metricDefIds.length);
-        log.trace("number of resources: " + resources.size());
+        if (log.isTraceEnabled()) {
+            log.trace("number of metrics: " + metricDefIds.length);
+            log.trace("number of resources: " + resources.size());
+        }
         String[] chartKeys = new String[metricDefIds.length];
         List<List<List<NumericMetricDataPoint>>> chartDataPointsListList = new ArrayList<List<List<NumericMetricDataPoint>>>(
             metricDefIds.length);
-        List<List<EventLog>> eventPointsList = new ArrayList<List<EventLog>>();
+        List<List<Event>> eventPointsList = new ArrayList<List<Event>>();
         boolean displayAvailability = false;
         List<List<NumericMetricDataPoint>> availabilityChartDataPointsList = new ArrayList<List<NumericMetricDataPoint>>();
         List<Integer> metricDefIdList = new ArrayList<Integer>();
+
         for (int i = 0; i < metricDefIds.length; i++) {
             int metricDefId = metricDefIds[i];
             List<List<NumericMetricDataPoint>> chartDataPointsList = new ArrayList<List<NumericMetricDataPoint>>(
                 resources.size());
 
+            // TODO get eventPointsList
+
             // Use current time concatenated with metric definition id for key.
             chartKeys[i] = String.valueOf(System.currentTimeMillis()) + metricDefId;
             request.getSession().setAttribute(chartKeys[i], new ChartDataBean(chartDataPointsList, eventPointsList));
-            if (metricDefId == 0) {
-                displayAvailability = true;
-                availabilityChartDataPointsList = chartDataPointsList;
-            } else {
-                metricDefIdList.add(metricDefId);
-                chartDataPointsListList.add(chartDataPointsList);
-            }
+            metricDefIdList.add(metricDefId);
+            chartDataPointsListList.add(chartDataPointsList);
         }
 
         int[] metricDefinitionIds = new int[metricDefIdList.size()];
@@ -488,10 +494,12 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
             metricDefinitionIds[i] = metricDefIdList.get(i);
         }
 
+        long startDate = chartForm.getStartDate().getTime();
+        long endDate = chartForm.getEndDate().getTime();
         for (Resource resource : resources) {
             List<List<MeasurementDataNumericHighLowComposite>> metricDataPointsList = dataManager
-                .getMeasurementDataForResource(subject, resource.getId(), metricDefinitionIds, chartForm.getStartDate()
-                    .getTime(), chartForm.getEndDate().getTime(), NUMBER_OF_DATA_POINTS);
+                .getMeasurementDataForResource(subject, resource.getId(), metricDefinitionIds, startDate, endDate,
+                    NUMBER_OF_DATA_POINTS);
             if (log.isDebugEnabled()) {
                 log.debug("Found " + metricDataPointsList.size() + " data points.");
                 if (log.isTraceEnabled()) {
@@ -501,8 +509,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
 
             if (displayAvailability) {
                 List<AvailabilityPoint> availabilityPoints = availabilityManager.getAvailabilitiesForResource(subject,
-                    resource.getId(), chartForm.getStartDate().getTime(), chartForm.getEndDate().getTime(),
-                    NUMBER_OF_DATA_POINTS);
+                    resource.getId(), startDate, endDate, NUMBER_OF_DATA_POINTS);
                 List<NumericMetricDataPoint> chartDataPoints = new ArrayList<NumericMetricDataPoint>(availabilityPoints
                     .size());
                 for (AvailabilityPoint availabilityPoint : availabilityPoints) {
@@ -517,8 +524,8 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
                 List<MeasurementDataNumericHighLowComposite> metricDataPoints = metricDataPointsList.get(i); // data points for a single metric on a single resource
                 int metricId = metricDefinitionIds[i];
                 if (log.isDebugEnabled()) {
-                    log.debug("mtid=" + metricId + ", rid=" + resource.getId() + ", startDate="
-                        + chartForm.getStartDate() + ", endDate=" + chartForm.getEndDate());
+                    log.debug("mtid=" + metricId + ", rid=" + resource.getId() + ", startDate=" + startDate
+                        + ", endDate=" + endDate);
                 }
 
                 // TODO: ispringer: don't transform from Composite to DataPoint, just get the UI to display the composite directly
@@ -533,21 +540,19 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
                 chartDataPointsList.add(chartDataPoints);
             }
 
-            List<EventLog> controlEventPoints = new ArrayList<EventLog>();
-            /*
-             *                          eb.getEvents ( subject,
-             * net.hyperic.hq.control.ControlEvent.class.getName(),
-             * resources[j].getEntityId(),                           chartForm.getStartDate().getTime(),
-             *           chartForm.getEndDate().getTime() );      // We need to make sure that the event IDs get set for
-             * the legend.      int k = 0;      for (int l = 0; l < controlEvents.size(); l++)      {         EventLog
-             * controlEvent = controlEvents.get(l);         if (controlEvent.getId() == 0)         {
-             * controlEvent.setId(++k);         }      }
-             */
-            eventPointsList.add(controlEventPoints);
         }
+
+        /*
+         * We need one List<Event> per graph that we are drawing -- they need to be paired with the
+         * MetricDataPoints
+         */
+        List<Event> controlEventPoints = eventManager.getEventsForResources(subject, resources, startDate, endDate);
+        eventPointsList.add(controlEventPoints);
 
         request.getSession().setAttribute(AttrConstants.CHART_DATA_KEYS, chartKeys);
         request.getSession().setAttribute(AttrConstants.CHART_DATA_KEYS_SIZE, chartKeys.length);
+
+        // This is for legend on the big charts
         request.getSession().setAttribute("chartLegend", eventPointsList);
     }
 

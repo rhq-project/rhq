@@ -27,6 +27,7 @@ package org.rhq.enterprise.gui.legacy.taglib.display;
 
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.BodyTagSupport;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -107,6 +108,7 @@ public class ColumnTag extends BodyTagSupport implements Cloneable {
     private String valign;
     private String clazz;
     private String headerClazz;
+    private String onClick;
 
     private Object value;
 
@@ -118,6 +120,14 @@ public class ColumnTag extends BodyTagSupport implements Cloneable {
 
     public void setProperty(String v) {
         this.property = v;
+    }
+
+    public String getOnClick() {
+        return onClick;
+    }
+
+    public void setOnClick(String onClick) {
+        this.onClick = onClick;
     }
 
     public void setShowHideProperty(String v) {
@@ -356,6 +366,7 @@ public class ColumnTag extends BodyTagSupport implements Cloneable {
      * @throws JspException if this tag is being used outside of a <display:list...> tag.
      */
 
+    @Override
     public int doEndTag() throws JspException {
         Class clazz = TableTag.class;
         Object parent = findAncestorWithClass(this, clazz);
@@ -389,6 +400,7 @@ public class ColumnTag extends BodyTagSupport implements Cloneable {
         return super.doEndTag();
     }
 
+    @Override
     public int doStartTag() throws JspException {
         return (EVAL_BODY_INCLUDE);
     }
@@ -396,6 +408,7 @@ public class ColumnTag extends BodyTagSupport implements Cloneable {
     /**
      * called by the jsp framework to release state.
      */
+    @Override
     public void release() {
         decorator = null;
         super.release();
@@ -406,8 +419,9 @@ public class ColumnTag extends BodyTagSupport implements Cloneable {
      * td tag declaration.
      *
      * @return the td tag attributes
+     * @throws JspException 
      */
-    protected String getCellAttributes() {
+    protected String getCellAttributes() throws JspException {
         StringBuffer results = new StringBuffer();
 
         if (this.clazz != null) {
@@ -461,6 +475,26 @@ public class ColumnTag extends BodyTagSupport implements Cloneable {
         } else {
             results.append(" valign=\"top\"");
         }
+        if (this.onClick != null) {
+            String oc;
+            results.append(" onclick=\"");
+
+            TableTag tt = (TableTag) getParent();
+            int i = onClick.indexOf("_property:");
+            if (i >= 0) {
+                int pos = onClick.indexOf(":", i);
+                int pos2 = onClick.indexOf(":", pos + 1);
+                // TODO add some error checking
+                String prop = onClick.substring(pos + 1, pos2);
+                Object o = tt.lookup(pageContext, "smartRow", prop, null, true);
+                String rep = o.toString();
+                oc = onClick.replace("_property:" + prop + ":", rep);
+                results.append(oc);
+            } else {
+                results.append(onClick);
+            }
+            results.append("\"");
+        }
 
         return results.toString();
     }
@@ -469,6 +503,7 @@ public class ColumnTag extends BodyTagSupport implements Cloneable {
      * Returns a String representation of this Tag that is suitable for printing while debugging. Where the placeholders
      * in brackets are replaced with their appropriate instance variables
      */
+    @Override
     public String toString() {
         StringBuffer sb = new StringBuffer("ColumnTag(");
         sb.append("title=").append(title);

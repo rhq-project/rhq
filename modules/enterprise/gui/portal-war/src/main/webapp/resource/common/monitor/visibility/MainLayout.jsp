@@ -30,6 +30,9 @@ var pageData = new Array();
   <c:when test="${mode == 'performance'}">
     <c:set var="isPerformance" value="true"/>
   </c:when>
+  <c:when test="${mode == 'events'}">
+    <c:set var="isEvents" value="true"/>
+  </c:when>
 </c:choose>
 
 <hq:constant classname="org.rhq.enterprise.gui.legacy.Constants"
@@ -73,6 +76,9 @@ var pageData = new Array();
 <c:choose>
   <c:when test="${isPerformance}">
       <tiles:insert page="/resource/common/monitor/visibility/ResourcePerformance.jsp"/>
+  </c:when>
+  <c:when test="${isEvents}">
+      <tiles:insert page="/resource/common/monitor/events/EventsList.jsp"/>
   </c:when>
   <c:otherwise>
       <c:choose>

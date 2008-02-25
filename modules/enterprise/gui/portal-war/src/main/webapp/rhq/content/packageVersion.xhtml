@@ -15,8 +15,8 @@
       
 <ui:composition template="/rhq/layout/main.xhtml">
 
-   <ui:param name="pageTitle" value="Package Version '#{PackageVersionDetailsUIBean.packageVersion.displayName}'"/>
-   <ui:param name="item" value="#{PackageVersionDetailsUIBean.packageVersion}" />
+   <ui:param name="pageTitle" value="Package Version '#{PackageVersionDetailsUIBean.packageVersionComposite.packageVersion.displayName}'"/>
+   <ui:param name="item" value="#{PackageVersionDetailsUIBean.packageVersionComposite}" />
    <ui:param name="id" value="${param.id}" />
    
    <ui:define name="breadcrumbs">
@@ -72,61 +72,61 @@
                <tr>
                   <td align="right"><b>Name:</b></td>
                   <td align="left">
-                     <h:outputText value="#{item.displayName}" />
+                     <h:outputText value="#{item.packageVersion.displayName}" />
                   </td>
                </tr>
                <tr>
                   <td align="right"><b>Version:</b></td>
                   <td align="left">
-                     <h:outputText value="#{item.displayVersion}" />
+                     <h:outputText value="#{item.packageVersion.displayVersion}" />
                   </td>
                </tr>
                <tr>
                   <td align="right"><b>Architecture:</b></td>
                   <td align="left">
-                     <h:outputText value="#{item.architectureName}" />
+                     <h:outputText value="#{item.packageVersion.architecture.name}" />
                   </td>
                </tr>               
                <tr>
                   <td align="right"><b>Short Description:</b></td>
                   <td align="left">
-                     <h:outputText value="#{item.shortDescription}"/>
+                     <h:outputText value="#{item.packageVersion.shortDescription}"/>
                   </td>
                </tr>
                <tr>
                   <td align="right"><b>Long Description:</b></td>
                   <td align="left">
-                     <h:outputText value="#{item.longDescription}"/>
+                     <h:outputText value="#{item.packageVersion.longDescription}"/>
                   </td>
                </tr>
                <tr>
                   <td align="right"><b>File Name:</b></td>
                   <td align="left">
-                     <h:outputText value="#{item.fileName}" />
+                     <h:outputText value="#{item.packageVersion.fileName}" />
                   </td>
                </tr>
                <tr>
                   <td align="right"><b>File Size:</b></td>
                   <td align="left">
-                     <h:outputText value="#{item.fileSize}" />
+                     <h:outputText value="#{item.packageVersion.fileSize}" />
                   </td>
                </tr>
                <tr>
                   <td align="right"><b>MD5:</b></td>
                   <td align="left">
-                     <h:outputText value="#{item.md5}" />
+                     <h:outputText value="#{item.packageVersion.md5}" />
                   </td>
                </tr>
                <tr>
                   <td align="right"><b>SHA256:</b></td>
                   <td align="left">
-                     <h:outputText value="#{item.sha256}" />
+                     <h:outputText value="#{item.packageVersion.sha256}" />
                   </td>
                </tr>
                <tr>
                   <td align="right"><b>File Created Date:</b></td>
                   <td align="left">
-                     <h:outputText value="#{item.fileCreatedDate}">
+                     <h:outputText value="#{item.packageVersion.fileCreatedDate}">
                         <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                      </h:outputText>
                   </td>
@@ -134,13 +134,13 @@
                <tr>
                   <td align="right"><b>License Name:</b></td>
                   <td align="left">
-                     <h:outputText value="#{item.licenseName}" />
+                     <h:outputText value="#{item.packageVersion.licenseName}" />
                   </td>
                </tr>
                <tr>
                   <td align="right"><b>License Version:</b></td>
                   <td align="left">
-                     <h:outputText value="#{item.licenseVersion}" />
+                     <h:outputText value="#{item.packageVersion.licenseVersion}" />
                   </td>
                </tr>               
                <tr>

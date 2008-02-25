@@ -21,7 +21,7 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 import javax.servlet.http.HttpServletRequest;
 import org.apache.struts.action.ActionErrors;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.event.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.condition.ConverterValidatorManager;
 
 /**

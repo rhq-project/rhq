@@ -71,9 +71,9 @@
 
         <li><b>Alerts</b></li>
           <ul>
-             <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.event.alert.AlertDefinition"/><a href="${url}">AlertDefinitions</a></li>
-        <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.event.alert.AlertDampeningEvent"/><a href="${url}">AlertDampeningEvents</a></li>
-        <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.event.alert.Alert"/><a href="${url}">Alerts</a></li>
+             <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.alert.AlertDefinition"/><a href="${url}">AlertDefinitions</a></li>
+        <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.alert.AlertDampeningEvent"/><a href="${url}">AlertDampeningEvents</a></li>
+        <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.alert.Alert"/><a href="${url}">Alerts</a></li>
         </ul>
 
         <li><b>AAA</b></li>

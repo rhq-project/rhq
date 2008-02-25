@@ -9,14 +9,6 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.rhq.enterprise.gui.legacy.KeyConstants;
-import org.rhq.enterprise.gui.legacy.ParamConstants;
-import org.rhq.enterprise.gui.legacy.RetCodeConstants;
-import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.util.ActionUtils;
-import org.rhq.enterprise.gui.legacy.util.RequestUtils;
-import org.rhq.enterprise.gui.legacy.util.SessionUtils;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -28,6 +20,13 @@ import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.util.MeasurementConversionException;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
+import org.rhq.enterprise.gui.legacy.KeyConstants;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
+import org.rhq.enterprise.gui.legacy.RetCodeConstants;
+import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.util.ActionUtils;
+import org.rhq.enterprise.gui.legacy.util.RequestUtils;
+import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -58,7 +57,7 @@ public class ViewChartAction extends MetricDisplayRangeAction {
         // The autogroup metrics pages pass the ctype to us, and we
         // need to pass it back. If this happens, we don't need the
         // extra "mode" parameter. See bug #7501. (2003/06/24 -- JW)
-        if (null != chartForm.getCtype() && !chartForm.getCtype().equals(ViewChartForm.NO_CHILD_TYPE)) {
+        if (null != chartForm.getCtype() && chartForm.getCtype() != -1) {
             forwardParams.put(ParamConstants.CHILD_RESOURCE_TYPE_ID_PARAM, chartForm.getCtype());
         } else {
             forwardParams.put(ParamConstants.MODE_PARAM, chartForm.getMode());

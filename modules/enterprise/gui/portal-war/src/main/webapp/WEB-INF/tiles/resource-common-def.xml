@@ -257,6 +257,11 @@
                controllerUrl="/resource/common/monitor/visibility/PerformanceFormPrepare.do"
                path="/resource/common/monitor/visibility/MainLayout.jsp"/>
 
+   <definition name=".resource.common.monitor.visibility.Events"
+               controllerUrl="/resource/common/monitor/visibility/EventsFormPrepare.do"
+               path="/resource/common/monitor/visibility/MainLayout.jsp"/>
+
+
    <definition name=".resource.common.monitor.visibility.listchildresources"
                controllerUrl="/resource/common/monitor/visibility/ListChildrenResources.do"
                path="/resource/common/monitor/visibility/ListChildResources.jsp"/>
@@ -344,6 +349,9 @@
 
    <definition name=".resource.common.monitor.visibility.charts.performance"
                path="/resource/common/monitor/visibility/CurrentHealthPerformance.jsp"/>
+
+   <definition name=".resource.common.monitor.visibility.charts.events"
+               path="/resource/common/monitor/visibility/EventsList.jsp"/>
 
    <definition name=".resource.common.monitor.visibility.charts.metric.smsr"
                controllerUrl="/resource/common/monitor/visibility/ViewChartFormPrepare.do"
@@ -462,6 +470,11 @@
                value="1" link="XXX"
                height="21" width="102"
                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item icon="Events"
+               mode="events"
+               value="2" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>               
       </putList>
       <putList name="nometrics">
          <item icon="Indicators"
@@ -472,6 +485,11 @@
          <item icon="Perf"
                mode="performance"
                value="1" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item icon="Events"
+               mode="events"
+               value="2" link="XXX"
                height="21" width="102"
                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
       </putList>
@@ -489,6 +507,11 @@
          <item icon="Perf"
                mode="performance"
                value="2" link="XXX"
+               height="21" width="102"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item icon="Events"
+               mode="events"
+               value="3" link="XXX"
                height="21" width="102"
                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
       </putList>

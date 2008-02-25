@@ -22,7 +22,9 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+
 import javax.ejb.Local;
+
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
@@ -56,160 +58,84 @@ public interface ContentSourceManagerLocal {
     void purgeOrphanedPackageVersions(Subject subject);
 
     /**
-     * Deletes the identified content source. Any package versions that originated from this content source but are
-     * still related to one or more channels will remain.
-     *
-     * @param subject
-     * @param contentSourceId
+     * @see ContentSourceManagerRemote#deleteContentSource(Subject, int)
      */
     void deleteContentSource(Subject subject, int contentSourceId);
 
     /**
-     * Returns all {@link ContentSourceType} objects that are configured in the system.
-     *
-     * @return all content source types
+     * @see ContentSourceManagerRemote#getAllContentSourceTypes()
      */
     Set<ContentSourceType> getAllContentSourceTypes();
 
     /**
-     * Returns all {@link ContentSource} objects that are configured in the system.
-     *
-     * @param  subject user asking to perform this
-     * @param  pc      pagination controls
-     *
-     * @return all content sources
+     * @see ContentSourceManagerRemote#getAllContentSources(Subject, PageControl)
      */
     PageList<ContentSource> getAllContentSources(Subject subject, PageControl pc);
 
     /**
-     * Get a {@link ContentSourceType} by name. <code>null</code> will be returned if there is no content source type by
-     * that name.
-     *
-     * @param  name the name of the {@link ContentSourceType} to be returned
-     *
-     * @return {@link ContentSourceType} found. <code>null</code> if none found
+     * @see ContentSourceManagerRemote#getContentSourceType(String)
      */
     ContentSourceType getContentSourceType(String name);
 
     /**
-     * Returns the {@link ContentSource} from its ID.
-     *
-     * @param  subject         user asking to perform this
-     * @param  contentSourceId identifies the content source to return
-     *
-     * @return the content source object, <code>null</code> if the ID is invalid
+     * @see ContentSourceManagerRemote#getContentSource(Subject, int)
      */
     ContentSource getContentSource(Subject subject, int contentSourceId);
 
     /**
-     * Get a {@link ContentSource} by name and {@link ContentSourceType} name. <code>null</code> will be returned if
-     * there is no content source with the given criteria.
-     *
-     * @param  subject  user asking to perform this
-     * @param  name     the name of the {@link ContentSource} to be returned
-     * @param  typeName the name of the {@link ContentSourceType}
-     *
-     * @return {@link ContentSource} found. <code>null</code> if none found
+     * @see ContentSourceManagerRemote#getContentSourceByNameAndType(Subject, String, String)
      */
     ContentSource getContentSourceByNameAndType(Subject subject, String name, String typeName);
 
     /**
-     * Gets the list of channels that are associated with a given content source.
-     *
-     * @param  subject
-     * @param  contentSourceId
-     * @param  pc
-     *
-     * @return list of associated channels
+     * @see ContentSourceManagerRemote#getAssociatedChannels(Subject, int, PageControl)
      */
     PageList<Channel> getAssociatedChannels(Subject subject, int contentSourceId, PageControl pc);
 
     /**
-     * Allows the caller to page through a list of historical sync results for a content source.
-     *
-     * @param  subject
-     * @param  contentSourceId
-     * @param  pc
-     *
-     * @return the list of results
+     * @see ContentSourceManagerRemote#getContentSourceSyncResults(Subject, int, PageControl)
      */
     PageList<ContentSourceSyncResults> getContentSourceSyncResults(Subject subject, int contentSourceId, PageControl pc);
 
     /**
-     * Allow a user to purge content source sync results.
-     *
-     * @param subject
-     * @param ids     the IDs of the {@link ContentSourceSyncResults} to delete
+     * @see ContentSourceManagerRemote#deleteContentSourceSyncResults(Subject, int[])
      */
     void deleteContentSourceSyncResults(Subject subject, int[] ids);
 
     /**
-     * Creates a new {@link ContentSource}.
-     *
-     * @param  subject       the user asking to do the creation
-     * @param  contentSource the content source to create - should include the configuration as well
-     *
-     * @return the newly created content source
+     * Create the specified content source.
+     * 
+     * @param subject The user making the request.
+     * 
+     * @param contentSource A content source to be created.
+     * 
+     * @return The created content source.
      */
     ContentSource createContentSource(Subject subject, ContentSource contentSource);
 
     /**
-     * Update an existing {@link ContentSource} object and restarts its underlying adapter. This also forces the adapter
-     * to immediately sync with the remote repository. Note that this will only update the content source's basic fields
-     * like name, description, etc. as well as its configuration. Specifically, it will not update the other
-     * relationships like its channels. Use {@link #addContentSourcesToChannel(Subject, int, int[])} for things like
-     * that.
-     *
-     * @param  subject       wanting to update the ContentSource
-     * @param  contentSource to be updated
-     *
-     * @return the ContentSource that was updated
+     * @see ContentSourceManagerRemote#updateContentSource(Subject, ContentSource)
      */
     ContentSource updateContentSource(Subject subject, ContentSource contentSource);
 
     /**
-     * Given a content source ID, this will test that the adapter responsible for pulling data from the content source's
-     * remote repository can actually connect to that repository.
-     *
-     * @param  contentSourceId
-     *
-     * @return <code>true</code> if the remote content souce can be reached
+     * @see ContentSourceManagerRemote#testContentSourceConnection(int)
      */
     boolean testContentSourceConnection(int contentSourceId);
 
     /**
-     * Requests that the identified content source be synchronized and if not lazy-loading to also download its
-     * packages' bits. This ensures that the server maintains an accurate list of what is available on the content
-     * source by seeing what was added, removed or updated since the last time the content source was synchronized. This
-     * method is performed asynchronously - the calling thread will not block and will return immediately.
-     *
-     * @param  subject         the user asking to perform this
-     * @param  contentSourceId identifies the content source to synchronize
-     *
-     * @throws Exception if failed to kick off the synchronize job
+     * @see ContentSourceManagerRemote#synchronizeAndLoadContentSource(Subject, int)
      */
     void synchronizeAndLoadContentSource(Subject subject, int contentSourceId);
 
     /**
-     * Returns all the package versions that are served by the content source identified by the given ID.
-     *
-     * @param  subject         the user asking to perform this
-     * @param  contentSourceId
-     * @param  pc
-     *
-     * @return all package versions that the content source will be providing content for. The object returned also
-     *         contains the location where those package versions are located in the content source
+     * @see ContentSourceManagerRemote#getPackageVersionsFromContentSource(Subject, int, PageControl)
      */
     PageList<PackageVersionContentSource> getPackageVersionsFromContentSource(Subject subject, int contentSourceId,
         PageControl pc);
 
     /**
-     * Returns count of PackageVersions associated with the given content source.
-     *
-     * @param  subject         caller requesting count
-     * @param  contentSourceId to lookup
-     *
-     * @return count if any
+     * @see ContentSourceManagerRemote#getPackageVersionCountFromContentSource(Subject, int)
      */
     long getPackageVersionCountFromContentSource(Subject subject, int contentSourceId);
 
@@ -413,6 +339,8 @@ public interface ContentSourceManagerLocal {
      */
     long outputPackageVersionBits(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream);
 
+    long outputPackageVersionBits(PackageDetailsKey packageDetailsKey, OutputStream outputStream);
+
     /**
      * Requests that the actual content data (the "bits") of the identified package version be streamed down to the
      * caller over the given output stream that the caller provides. This method will <b>not</b> be responsible for
@@ -435,4 +363,7 @@ public interface ContentSourceManagerLocal {
      */
     long outputPackageVersionBitsRange(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream,
         long startByte, long endByte);
+
+    long outputPackageVersionBitsRange(PackageDetailsKey packageDetailsKey, OutputStream outputStream, long startByte,
+        long endByte);
 }

@@ -19,7 +19,7 @@
 package org.rhq.enterprise.server.alert;
 
 import javax.ejb.Local;
-import org.rhq.core.domain.event.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertCondition;
 
 @Local
 public interface AlertConditionManagerLocal {

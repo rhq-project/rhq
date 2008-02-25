@@ -21,8 +21,10 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -30,13 +32,13 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.MessageConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -184,7 +186,10 @@ public class ListChildrenAction extends TilesAction {
         List<AutoGroupComposite> children = resourceManager.getChildrenAutoGroups(subject, resource.getId());
 
         AutoGroupComposite resourceGroupComposite = resourceManager.getResourceAutoGroup(subject, resource.getId());
-        resourceGroupComposite.setMainResource(true);
+        if (resourceGroupComposite != null)
+            resourceGroupComposite.setMainResource(true);
+        else
+            return new ArrayList<AutoGroupComposite>();
 
         // now increase everyone's depth by one to account for the resource
         for (AutoGroupComposite child : children) {
@@ -229,7 +234,7 @@ public class ListChildrenAction extends TilesAction {
         if ((resourceType != null) && (parentResource != null)) {
             // first get the resources in the autogroup
             List<ResourceWithAvailability> resourcesForAutoGroup = resourceManager.getResourcesByParentAndType(subject,
-                parentResource, resourceType, PageControl.getUnlimitedInstance());
+                parentResource, resourceType);
 
             List<Integer> resourceIds = new ArrayList<Integer>();
             for (ResourceWithAvailability resourceInAutoGroup : resourcesForAutoGroup) {
@@ -239,12 +244,6 @@ public class ListChildrenAction extends TilesAction {
 
             // And then the composite to return
             List<AutoGroupComposite> composite = resourceManager.getResourcesAutoGroups(subject, resourceIds);
-            //         for (ResourceWithAvailability resourceInAutoGroup: resourcesForAutoGroup)
-            //         {
-            //            AutoGroupComposite resourceAutogroupComposite = resourceManager.getResourceAutoGroup(subject,
-            //                resourceInAutoGroup.getResource().getId());
-            //            children.add(resourceAutogroupComposite);
-            //         }
 
             return composite;
         }

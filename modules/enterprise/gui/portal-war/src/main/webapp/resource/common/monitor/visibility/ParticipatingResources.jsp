@@ -109,7 +109,7 @@
          <c:if test="${multiMetric}">
             <td class="ListCellCheckbox" valign="top">
                <html:multibox
-                     property="m" value="${metricSummary.templateId}"
+                     property="m" value="${metricSummary.definitionId}"
                      onclick="ToggleSelection(this, widgetProperties);"
                      styleClass="metricList"/>
             </td>

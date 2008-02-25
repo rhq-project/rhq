@@ -119,23 +119,4 @@
         <column name="SNMP_OID" size="250" type="VARCHAR2"/>
     </table>
 
-
-
-    <table name="RHQ_RESOURCE_EVENT">
-        <column name="ID" default="sequence-only" initial="1"
-                primarykey="true" required="true" type="INTEGER"/>
-       <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE" required="true"/>
-
-        <column name="DETAIL" required="true" size="500" type="VARCHAR2"/>
-        <column name="TYPE" required="true" size="100" type="VARCHAR2"/>
-        <column name="TIMESTAMP" required="true" type="LONG"/>
-        <column name="SUBJECT" required="false" size="100" type="VARCHAR2"/>
-        <column name="STATUS" required="false" size="100" type="VARCHAR2"/>
-        <index name="RHQ_RESOURCE_EVENT_IDX" unique="false">
-            <field ref="RESOURCE_ID" />
-            <field ref="TIMESTAMP" />
-        </index>
-    </table>
-
-
 </dbsetup>

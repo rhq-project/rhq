@@ -67,7 +67,7 @@
 
    <table name="RHQ_CONFIG">
       <column name="ID"                type="INTEGER"  required="true"  default="sequence-only" initial="1" primarykey="true" />
-      <column name="NOTES"             type="VARCHAR2" required="false" size="250"/>
+      <column name="NOTES"             type="VARCHAR2" required="false" size="512"/>
       <column name="VERSION"           type="VARCHAR2" required="false" size="50"/>
       <column name="CTIME"             type="LONG"     required="true" />
       <column name="MTIME"             type="LONG"     required="true" />

@@ -30,9 +30,6 @@ import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
  * Server/agent communications object to convey the result of a request for a content subsystem operation.
  *
  * @author Jason Dobies
- * @see    org.rhq.core.domain.content.transfer.DeployPackagesRequest
- * @see    org.rhq.core.domain.content.transfer.DeletePackagesRequest
- * @see    RetrievePackageBitsRequest
  */
 public class ContentServiceResponse implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -53,11 +50,6 @@ public class ContentServiceResponse implements Serializable {
      * More detail in the case of a failure.
      */
     private String errorMessage;
-
-    /**
-     * Packages that were manipulated in this request.
-     */
-    private Set<InstalledPackage> installedPackages;
 
     // Constructors  --------------------------------------------
 
@@ -140,11 +132,4 @@ public class ContentServiceResponse implements Serializable {
         }
     }
 
-    public Set<InstalledPackage> getInstalledPackages() {
-        return installedPackages;
-    }
-
-    public void setInstalledPackages(Set<InstalledPackage> installedPackages) {
-        this.installedPackages = installedPackages;
-    }
 }

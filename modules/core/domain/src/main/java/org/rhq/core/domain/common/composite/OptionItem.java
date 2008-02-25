@@ -20,7 +20,7 @@ package org.rhq.core.domain.common.composite;
 
 import java.io.Serializable;
 
-public class OptionItem<T extends Number> implements Serializable {
+public class OptionItem<T> implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final T id;

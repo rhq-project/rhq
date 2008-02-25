@@ -24,6 +24,7 @@
       <column name="DISPLAY_ORDER" type="INTEGER" default="1000"/>
       <column name="DESCRIPTION" type="VARCHAR2" size="500"/>
       <column name="DESTINATION_TYPE" type="VARCHAR2" size="100"/>
+
       <column name="VERSION" type="INTEGER" /> <!-- for optimistic locking -->
 
       <!-- === business key (RESOURCE_TYPE_ID + NAME + PER_MIN) === -->
@@ -358,6 +359,5 @@
          </primaryKey>
       </constraint>
    </table>
-
 
 </dbsetup>

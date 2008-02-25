@@ -19,7 +19,9 @@
 package org.rhq.core.clientapi.agent.inventory;
 
 import java.io.Serializable;
+
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 
 /**
  * Transfer object for requesting a new resource be created.
@@ -42,11 +44,9 @@ public class CreateResourceRequest implements Serializable {
     private Configuration resourceConfiguration;
     private Configuration pluginConfiguration;
 
-    // Artifact ----------
+    // Package ----------
 
-    private String packageName;
-    private String packageTypeName;
-    private Configuration deploymentTimeConfiguration;
+    private ResourcePackageDetails packageDetails;
 
     // Constructors  --------------------------------------------
 
@@ -65,17 +65,14 @@ public class CreateResourceRequest implements Serializable {
     }
 
     public CreateResourceRequest(int requestId, int parentResourceId, String resourceName, String resourceTypeName,
-        String pluginName, Configuration pluginConfiguration, String packageName, String packageTypeName,
-        Configuration deploymentTimeConfiguration) {
+        String pluginName, Configuration pluginConfiguration, ResourcePackageDetails packageDeatils) {
         this.resourceName = resourceName;
         this.requestId = requestId;
         this.parentResourceId = parentResourceId;
         this.resourceTypeName = resourceTypeName;
         this.pluginName = pluginName;
         this.pluginConfiguration = pluginConfiguration;
-        this.packageName = packageName;
-        this.packageTypeName = packageTypeName;
-        this.deploymentTimeConfiguration = deploymentTimeConfiguration;
+        this.packageDetails = packageDeatils;
     }
 
     // Public  --------------------------------------------
@@ -136,28 +133,12 @@ public class CreateResourceRequest implements Serializable {
         this.resourceConfiguration = resourceConfiguration;
     }
 
-    public String getPackageName() {
-        return packageName;
+    public ResourcePackageDetails getPackageDetails() {
+        return packageDetails;
     }
 
-    public void setPackageName(String packageName) {
-        this.packageName = packageName;
-    }
-
-    public String getPackageTypeName() {
-        return packageTypeName;
-    }
-
-    public void setPackageTypeName(String packageTypeName) {
-        this.packageTypeName = packageTypeName;
-    }
-
-    public Configuration getDeploymentTimeConfiguration() {
-        return deploymentTimeConfiguration;
-    }
-
-    public void setDeploymentTimeConfiguration(Configuration deploymentTimeConfiguration) {
-        this.deploymentTimeConfiguration = deploymentTimeConfiguration;
+    public void setPackageDetails(ResourcePackageDetails packageDetails) {
+        this.packageDetails = packageDetails;
     }
 
     // Object Overridden Methods  --------------------------------------------

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<dbsetup name="measurement-schema.xml"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:xmlns:rhq-dbsetup-schema">
+
+   <!-- metadata -->
+
+   <table name="RHQ_EVENT_DEF">
+      <column name="ID" default="sequence-only" initial="1"
+              primarykey="true" required="true" type="INTEGER"/>
+      <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE(ID)"/>
+
+      <column name="NAME" type="VARCHAR2" size="100" required="true"/>
+      <column name="DISPLAY_NAME" type="VARCHAR2" size="100"/>
+      <column name="DESCRIPTION" type="VARCHAR2" size="1000"/>
+
+      <index name="RHQ_EVENT_DEF_IDX" unique="true">
+         <field ref="RESOURCE_TYPE_ID"/>
+         <field ref="NAME"/>
+      </index>
+   </table>
+
+   <!-- instance data -->
+
+    <table name="RHQ_EVENT_SOURCE">
+       <column name="ID" default="sequence-only" initial="1"
+               primarykey="true" required="true" type="INTEGER"/>
+       <column name="EVENT_DEF_ID" type="INTEGER" required="true" references="RHQ_EVENT_DEF(ID)"/>
+       <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE(ID)"/>
+
+       <column name="LOCATION" required="true" size="2000" type="VARCHAR2"/>
+
+       <index name="RHQ_EVENT_SOURCE_IDX" unique="true">
+          <field ref="EVENT_DEF_ID"/>
+          <field ref="RESOURCE_ID"/>
+          <field ref="LOCATION"/>
+       </index>
+    </table>
+
+   <table name="RHQ_EVENT">
+      <column name="ID" default="sequence-only" initial="1"
+              primarykey="true" required="true" type="INTEGER"/>
+      <column name="EVENT_SOURCE_ID" type="INTEGER" required="true" references="RHQ_EVENT_SOURCE(ID)"/>
+
+      <column name="TIMESTAMP" required="true" type="TIMESTAMP"/>
+      <column name="SEVERITY" required="true" size="20" type="VARCHAR2"/>
+      <column name="DETAIL" required="true" size="4000" type="VARCHAR2"/>
+
+      <index name="RHQ_EVENT_IDX" unique="false">
+         <field ref="EVENT_SOURCE_ID"/>         
+         <field ref="TIMESTAMP"/>
+      </index>
+   </table>
+
+</dbsetup>

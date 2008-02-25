@@ -27,26 +27,14 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.MetricDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.OperationDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.ParentResourceType;
-import org.rhq.core.clientapi.descriptor.plugin.PlatformDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.ProcessScanDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.ResourceCreateDeletePolicy;
-import org.rhq.core.clientapi.descriptor.plugin.ResourceCreationData;
-import org.rhq.core.clientapi.descriptor.plugin.ResourceDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.RunsInsideType;
-import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.*;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.event.EventDefinition;
 
 /**
  * This is a stateful class intended to hold the related metadata for a single plugin descriptor. It is designed to be
@@ -417,6 +405,11 @@ public class PluginMetadataParser {
                     def.setDisplayOrder(displayPosition++);
                     resourceType.addMetricDefinition(def);
                 }
+            }
+
+            for (EventDescriptor eventDescriptor : resourceDescriptor.getEvent()) {
+                EventDefinition eventDefinition = EventsMetadataParser.parseEventsMetadata(eventDescriptor, resourceType);
+                resourceType.addEventDefinition(eventDefinition);
             }
 
             for (OperationDescriptor operationDescriptor : resourceDescriptor.getOperation()) {

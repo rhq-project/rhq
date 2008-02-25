@@ -18,7 +18,7 @@
       <column name="PLUGIN_NAME" size="100" type="VARCHAR2" required="false"/> <!-- we might want this as part of natural key -->
       <column name="DEFAULT_LAZY_LOAD" type="BOOLEAN" required="true"/>
       <column name="DEFAULT_DOWNLOAD_MODE" size="16" type="VARCHAR2" required="true"/>
-      <column name="DEFAULT_SYNC_SCHEDULE" size="64" type="VARCHAR2" required="true"/>
+      <column name="DEFAULT_SYNC_SCHEDULE" size="64" type="VARCHAR2" required="false"/>
       <column name="API_CLASS" size="100" type="VARCHAR2" required="true"/>
       
       <column name="SOURCE_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF" required="false"/>
@@ -35,7 +35,7 @@
       <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
       <column name="LAZY_LOAD" type="BOOLEAN" required="true"/>
       <column name="DOWNLOAD_MODE" size="16" type="VARCHAR2" required="true"/>
-      <column name="SYNC_SCHEDULE" size="64" type="VARCHAR2" required="true"/>
+      <column name="SYNC_SCHEDULE" size="64" type="VARCHAR2" required="false"/>
       <column name="LOAD_ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
       <column name="CREATION_TIME" type="TIMESTAMP" required="true"/>
       <column name="LAST_MODIFIED_TIME" type="TIMESTAMP" required="true"/>
@@ -145,7 +145,6 @@
 
       <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE" required="true"/>
       <column name="PACKAGE_VERSION_ID" type="INTEGER" references="RHQ_PACKAGE_VERSION" required="true"/>
-      <column name="DEPLOYMENT_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG" required="false"/>
       <column name="SUBJECT_ID" type="INTEGER" references="RHQ_SUBJECT" required="false"/>
    </table>
 
@@ -156,6 +155,7 @@
       <column name="HISTORY_TIMESTAMP" type="TIMESTAMP" required="false"/>
 
       <column name="PACKAGE_VERSION_ID" type="INTEGER" references="RHQ_PACKAGE_VERSION" required="true"/>
+      <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE" required="true"/>
       <column name="DEPLOYMENT_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG" required="false"/>
       <column name="CONTENT_SERVICE_REQUEST_ID" type="INTEGER" references="RHQ_CONTENT_REQ" required="false"/>
    </table>
@@ -172,10 +172,13 @@
    
    <table name="RHQ_PACKAGE_INST_STEP">
       <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
-      <column name="STEP_ORDER" type="INTEGER"/>
+      <column name="STEP_KEY" type="VARCHAR2" size="500" required="true"/>
+      <column name="STEP_ORDER" type="INTEGER" required="true"/>
       <column name="DESCRIPTION" type="VARCHAR2" size="4000" required="true"/>
+      <column name="ERROR_MSG" type="LONGVARCHAR" required="false"/>
+      <column name="RESULT" type="VARCHAR2" size="25" required="true"/>
 
-      <column name="INSTALLED_PACKAGE_ID" type="INTEGER" references="RHQ_INSTALLED_PACKAGE"/>
+      <column name="INSTALLED_PKG_HIST_ID" type="INTEGER" references="RHQ_INSTALLED_PKG_HIST"/>
    </table>
 
    <table name="RHQ_CHANNEL_RESOURCE_MAP">

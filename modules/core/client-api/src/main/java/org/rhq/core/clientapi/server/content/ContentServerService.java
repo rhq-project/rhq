@@ -21,6 +21,7 @@ package org.rhq.core.clientapi.server.content;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
+
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.domain.content.Channel;
@@ -119,6 +120,9 @@ public interface ContentServerService {
     @LimitedConcurrency(CONCURRENCY_LIMIT_CONTENT_DOWNLOAD)
     long downloadPackageBits(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream);
 
+    @LimitedConcurrency(CONCURRENCY_LIMIT_CONTENT_DOWNLOAD)
+    long downloadPackageBits(PackageDetailsKey packageDetailsKey, OutputStream outputStream);
+
     /**
      * Requests that the server download and stream the bits for the specified package. If the package cannot be found,
      * an exception will be thrown.
@@ -138,6 +142,10 @@ public interface ContentServerService {
     @LimitedConcurrency(CONCURRENCY_LIMIT_CONTENT_DOWNLOAD)
     long downloadPackageBitsRange(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream,
         long startByte, long endByte);
+
+    @LimitedConcurrency(CONCURRENCY_LIMIT_CONTENT_DOWNLOAD)
+    long downloadPackageBitsRange(PackageDetailsKey packageDetailsKey, OutputStream outputStream, long startByte,
+        long endByte);
 
     /**
      * Requests all {@link PackageVersion#getMetadata() metadata} for all package versions that the given resource

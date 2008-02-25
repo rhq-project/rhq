@@ -49,7 +49,7 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.event.alert.notification.SubjectNotification;
+import org.rhq.core.domain.alert.notification.SubjectNotification;
 
 /**
  * @author Greg Hinkle

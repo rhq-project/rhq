@@ -41,7 +41,7 @@ import org.hibernate.annotations.CascadeType;
 import org.hibernate.annotations.CollectionOfElements;
 import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.event.alert.notification.RoleNotification;
+import org.rhq.core.domain.alert.notification.RoleNotification;
 
 /**
  * A role has zero or more {@link org.rhq.core.domain.resource.group.ResourceGroup}s assigned to it. You can assign a

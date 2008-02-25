@@ -129,7 +129,7 @@
 
    <xs:element name="metric">
       <xs:annotation>
-         <xs:documentation>A declared value that can be monitored for for changes over time. Metrics are divided into
+         <xs:documentation>A declared value that can be monitored for changes over time. Metrics are divided into
             several main types including numeric, string traits, timings and complex.
          </xs:documentation>
          <xs:appinfo>
@@ -261,6 +261,40 @@
          </xs:attribute>
       </xs:complexType>
    </xs:element>
+
+    <!-- == Event ================================================== -->
+
+    <xs:element name="event">
+       <xs:annotation>
+          <xs:documentation>A type of event that can be checked periodically for occurrences.
+          </xs:documentation>
+          <xs:appinfo>
+             <jaxb:class name="EventDescriptor"/>
+          </xs:appinfo>
+       </xs:annotation>
+       <xs:complexType>
+          <xs:sequence>
+             <xs:element ref="rhq:version" minOccurs="0"/>
+          </xs:sequence>
+           <xs:attribute name="name" type="xs:string" use="required">
+              <xs:annotation>
+                 <xs:documentation>
+                   A name that uniquely identifies the event type.
+                 </xs:documentation>
+              </xs:annotation>
+           </xs:attribute>
+          <xs:attribute name="displayName" type="xs:string">
+             <xs:annotation>
+                <xs:documentation>
+                   The name that is used to identify this event in the UI.
+                   If this attribute is not specified, the 'property' attribute
+                   will be used as the display name.
+                </xs:documentation>
+             </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="description" type="xs:string"/>
+       </xs:complexType>
+    </xs:element>
 
    <!-- == Content ================================================== -->
 
@@ -447,6 +481,7 @@
          </xs:element>
          <xs:element ref="rhq:operation" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element ref="rhq:metric" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element ref="rhq:event" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element ref="rhq:content" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element name="resource-configuration" type="config:configuration" minOccurs="0"/>
       </xs:sequence>

@@ -21,8 +21,10 @@ package org.custom.plugin;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.content.PackageType;
@@ -36,7 +38,6 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
@@ -45,7 +46,6 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 
@@ -134,15 +134,6 @@ public class CustomPluginServerComponent implements ResourceComponent, Measureme
     }
 
     /**
-     * Initializes this plugin for use with the plugin container's operation subsystem. The given context can be used by
-     * the plugin if it wants the plugin container to initiate operations on its behalf.
-     *
-     * @see OperationFacet#startOperationFacet(OperationContext)
-     */
-    public void startOperationFacet(OperationContext context) {
-    }
-
-    /**
      * The plugin container will call this method when it wants to invoke an operation on your managed resource. Your
      * plugin will connect to the managed resource and invoke the analogous operation in your own custom way.
      *
@@ -185,13 +176,6 @@ public class CustomPluginServerComponent implements ResourceComponent, Measureme
         resourceConfiguration = report.getConfiguration().deepCopy();
 
         report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-    }
-
-    /**
-     * This method allows the component to initialize its content facet. Typically, the component just needs to store
-     * the given context for future use when needing to call back into the plugin container.
-     */
-    public void startContentFacet(ContentContext context) {
     }
 
     /**

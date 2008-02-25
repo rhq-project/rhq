@@ -21,6 +21,7 @@ package org.rhq.core.domain.util;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -52,6 +53,10 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
     public PageList(Collection<? extends E> collection, int totalSize, PageControl pageControl) {
         super(collection);
         this.totalSize = totalSize;
+        if (collection.size() == 0 && totalSize > 0) {
+            throw new IllegalArgumentException(
+                "Can not create a PageList from an empty collection whose totalSize is non-zero");
+        }
         this.isUnbounded = false;
         this.pageControl = pageControl;
     }

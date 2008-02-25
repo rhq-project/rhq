@@ -28,6 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -54,8 +55,10 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
@@ -64,7 +67,8 @@ import org.rhq.core.domain.content.Channel;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.ResourceChannel;
-import org.rhq.core.domain.event.alert.AlertDefinition;
+import org.rhq.core.domain.content.InstalledPackageHistory;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -125,16 +129,14 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "     AND s = :subject "),
 
     /* the following three are for auto-group details */
-    @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_TYPE, query = "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType) "
-        + "  FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s LEFT JOIN res.availability a WITH a.endTime is null "
-        + " WHERE res.parentResource = :parent "
-        + "   AND res.resourceType = :type "
-        + "   AND res.inventoryStatus = :inventoryStatus " + "   AND s = :subject "),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_TYPE_ADMIN, query = "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType) "
-        + "  FROM Resource res LEFT JOIN res.availability a WITH a.endTime is null "
-        + " WHERE res.parentResource = :parent "
-        + "   AND res.resourceType = :type "
-        + "   AND res.inventoryStatus = :inventoryStatus "),
+    @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_TYPE, query = "SELECT res, a.availabilityType "
+        + "  FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s LEFT OUTER JOIN res.availability a WITH a.endTime is null "
+        + " WHERE res.parentResource = :parent " + "   AND res.resourceType = :type "
+        + "   AND res.inventoryStatus = :inventoryStatus " + "   AND s = :subject ORDER BY res.name"),
+    @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_TYPE_ADMIN, query = "SELECT res, a.availabilityType "
+        + "  FROM Resource res LEFT OUTER JOIN res.availability a WITH a.endTime is null "
+        + " WHERE res.parentResource = :parent " + "   AND res.resourceType = :type "
+        + "   AND res.inventoryStatus = :inventoryStatus ORDER BY res.name"),
     @NamedQuery(name = Resource.QUERY_FIND_FOR_AUTOGROUP, query = "SELECT res " + "  FROM Resource res "
         + " WHERE res.parentResource.id = :parent " + "   AND res.resourceType.id = :type "
         + "   AND res.inventoryStatus = :inventoryStatus "),
@@ -187,12 +189,12 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "  FROM Resource res JOIN res.availability a "
         + " WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
         + "   AND res.id = :id "),
-    @NamedQuery(name = Resource.QUERY_FIND_AVAILABILITY_BY_RESOURCE_IDS, query = "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType) "
-        + "  FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN res.availability a "
+    @NamedQuery(name = Resource.QUERY_FIND_AVAILABILITY_BY_RESOURCE_IDS, query = "SELECT res, a.availabilityType "
+        + "  FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s LEFT OUTER JOIN res.availability a "
         + " WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
         + "   AND res.id IN (:ids) " + "   AND s = :subject " + "ORDER BY res.name "),
-    @NamedQuery(name = Resource.QUERY_FIND_AVAILABILITY_BY_RESOURCE_IDS_ADMIN, query = "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType) "
-        + "  FROM Resource res JOIN res.availability a "
+    @NamedQuery(name = Resource.QUERY_FIND_AVAILABILITY_BY_RESOURCE_IDS_ADMIN, query = "SELECT res, a.availabilityType "
+        + "  FROM Resource res LEFT OUTER JOIN res.availability a "
         + " WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
         + "   AND res.id IN (:ids) " + "ORDER BY res.name "),
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUP_COMPOSITE, query = "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
@@ -379,7 +381,9 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "   WHERE res.id IN (:resourceIds) "
         + "     AND avail.endTime IS NULL "
         + "GROUP BY res.id, res.name, res.resourceType.name, avail.availabilityType "),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGES, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackages ip WHERE r.id = :id") })
+    @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGES, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackages ip WHERE r.id = :id"),
+    @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGE_HIST, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackageHistory ip WHERE r.id = :id")
+        })
 @SequenceGenerator(name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
 @Table(name = "RHQ_RESOURCE")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -473,6 +477,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_GET_RESOURCE_HEALTH_BY_IDS = "Resource.getResourceHealthByIds";
 
     public static final String QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGES = "Resource.findByIdWithInstalledPackages";
+    public static final String QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGE_HIST = "Resource.findByIdWithInstalledPackageHist";
 
     private static final long serialVersionUID = 1L;
 
@@ -599,6 +604,9 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<InstalledPackage> installedPackages = new HashSet<InstalledPackage>();
 
+    @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<InstalledPackageHistory> installedPackageHistory = new ArrayList<InstalledPackageHistory>();
+    
     @JoinColumn(name = "PRODUCT_VERSION_ID", referencedColumnName = "ID")
     @ManyToOne(fetch = FetchType.LAZY)
     private ProductVersion productVersion;
@@ -838,7 +846,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return schedules;
     }
 
-    public void setSchedules(Set<MeasurementSchedule> schedules) {
+    public void setSchendules(Set<MeasurementSchedule> schedules) {
         this.schedules = schedules;
     }
 
@@ -1094,6 +1102,24 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setInstalledPackages(Set<InstalledPackage> installedPackages) {
         this.installedPackages = installedPackages;
+    }
+
+    public List<InstalledPackageHistory> getInstalledPackageHistory() {
+        return installedPackageHistory;
+    }
+
+    public void addInstalledPackageHistory(InstalledPackageHistory history)
+    {
+        if (this.installedPackageHistory == null) {
+            installedPackageHistory = new ArrayList<InstalledPackageHistory>(1);
+        }
+
+        installedPackageHistory.add(history);
+        history.setResource(this);
+    }
+
+    public void setInstalledPackageHistory(List<InstalledPackageHistory> installedPackageHistory) {
+        this.installedPackageHistory = installedPackageHistory;
     }
 
     public ProductVersion getProductVersion() {

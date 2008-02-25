@@ -25,14 +25,6 @@ import org.rhq.core.domain.configuration.Configuration;
  */
 public interface OperationFacet {
     /**
-     * Initializes the operation facet, providing the context that should be used for invocations back into the plugin
-     * container (see {@link OperationServices}).
-     *
-     * @param context resource specific context
-     */
-    void startOperationFacet(OperationContext context);
-
-    /**
      * Invoke the operation with the specified name and returns a result set consisting of configuration propeties.
      *
      * <p>Plugin developers must write implementations of this method with the awareness that operations are <i>

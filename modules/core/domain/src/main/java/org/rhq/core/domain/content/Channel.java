@@ -56,8 +56,23 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = Channel.QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS, query = "SELECT c FROM Channel c LEFT JOIN FETCH c.channelContentSources ccs WHERE ccs.contentSource.id = :id"),
     @NamedQuery(name = Channel.QUERY_FIND_BY_CONTENT_SOURCE_ID, query = "SELECT c FROM Channel c LEFT JOIN c.channelContentSources ccs WHERE ccs.contentSource.id = :id"),
     @NamedQuery(name = Channel.QUERY_FIND_SUBSCRIBER_RESOURCES, query = "SELECT rc.resource FROM ResourceChannel rc WHERE rc.channel.id = :id"),
-    @NamedQuery(name = Channel.QUERY_FIND_CHANNELS_BY_RESOURCE_ID, query = "SELECT rc.channel FROM ResourceChannel rc WHERE rc.resource.id = :resourceId"),
-    @NamedQuery(name = Channel.QUERY_FIND_AVAILABLE_CHANNELS_BY_RESOURCE_ID, query = "SELECT DISTINCT c FROM Channel as c WHERE c.id NOT IN ( SELECT rc.channel.id FROM ResourceChannel rc WHERE rc.resource.id = :resourceId )") }) 
+    @NamedQuery(name = Channel.QUERY_FIND_CHANNELS_BY_RESOURCE_ID, query = "SELECT c "
+        + "FROM ResourceChannel rc JOIN rc.channel c " + "WHERE rc.resource.id = :resourceId "),
+
+    @NamedQuery(name = Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite(c, COUNT(pv)) "
+        + "FROM ResourceChannel rc JOIN rc.channel c LEFT JOIN c.channelPackageVersions pv "
+        + "WHERE rc.resource.id = :resourceId "
+        + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
+    @NamedQuery(name = Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT(c) "
+        + "FROM ResourceChannel rc JOIN rc.channel c " + "WHERE rc.resource.id = :resourceId "),
+
+    @NamedQuery(name = Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite(c, COUNT(pv)) "
+        + "FROM Channel as c LEFT JOIN c.channelPackageVersions pv "
+        + "WHERE c.id NOT IN ( SELECT rc.channel.id FROM ResourceChannel rc WHERE rc.resource.id = :resourceId ) "
+        + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
+    @NamedQuery(name = Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT(c) "
+        + "FROM Channel as c "
+        + "WHERE c.id NOT IN ( SELECT rc.channel.id FROM ResourceChannel rc WHERE rc.resource.id = :resourceId ) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CHANNEL_ID_SEQ")
 @Table(name = "RHQ_CHANNEL")
 public class Channel implements Serializable {
@@ -69,7 +84,10 @@ public class Channel implements Serializable {
     public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID = "Channel.findByContentSourceId";
     public static final String QUERY_FIND_SUBSCRIBER_RESOURCES = "Channel.findSubscriberResources";
     public static final String QUERY_FIND_CHANNELS_BY_RESOURCE_ID = "Channel.findChannelsByResourceId";
-    public static final String QUERY_FIND_AVAILABLE_CHANNELS_BY_RESOURCE_ID = "Channel.findAvailableChannelsByResourceId";
+    public static final String QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID = "Channel.findChannelCompositesByResourceId";
+    public static final String QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT = "Channel.findChannelCompositesByResourceId_count";
+    public static final String QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID = "Channel.findAvailableChannelCompositesByResourceId";
+    public static final String QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT = "Channel.findAvailableChannelCompositesByResourceId_count";
 
     private static final long serialVersionUID = 1L;
 

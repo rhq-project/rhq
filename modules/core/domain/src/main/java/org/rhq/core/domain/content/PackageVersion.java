@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -37,8 +38,10 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+
 import org.hibernate.annotations.NamedQueries;
 import org.hibernate.annotations.NamedQuery;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ProductVersion;
 
@@ -81,6 +84,8 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "                             OR UPPER(pv1.shortDescription) LIKE :filter "
         + "                             OR UPPER(pv1.longDescription) LIKE :filter"
         + "                             OR :filter IS NULL)) "),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_ID, query = "SELECT pv " + "  FROM PackageVersion pv "
+        + " WHERE pv.generalPackage.id = :packageId "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_CHANNEL_ID_WITH_PACKAGE, query = "SELECT pv "
         + "  FROM PackageVersion pv " + "       LEFT JOIN FETCH pv.generalPackage "
         + " WHERE pv.id IN (SELECT DISTINCT pv1.id " + "                   FROM PackageVersion pv1 "
@@ -159,27 +164,32 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "   AND pv.installedPackages IS EMPTY "
         + "   AND pb.bits IS NULL "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_COMPOSITE_BY_ID, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionComposite( "
-        + "          pv.id, "
+        + "          pv, "
         + "          pv.generalPackage.packageType.name, "
         + "          pv.generalPackage.packageType.category, "
         + "          pv.generalPackage.name, "
-        + "          pv.generalPackage.classification, "
-        + "          pv.displayName, "
-        + "          pv.displayVersion, "
         + "          pv.architecture.name, "
-        + "          pv.shortDescription, "
-        + "          pv.longDescription, "
-        + "          pv.fileName, "
-        + "          pv.fileSize, "
-        + "          pv.md5, "
-        + "          pv.sha256, "
-        + "          pv.fileCreatedDate, "
-        + "          pv.licenseName, "
-        + "          pv.licenseVersion, "
+        + "          pv.generalPackage.classification, "
         + "          pv.packageBits.id, "
         + "          (SELECT count(pb.id) FROM pv.packageBits pb WHERE pb.bits IS NOT NULL) "
         + "       ) "
-        + "  FROM PackageVersion pv " + " WHERE pv.id = :id ") })
+        + "  FROM PackageVersion pv " + " WHERE pv.id = :id "),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionComposite( "
+        + "          pv, "
+        + "          pv.generalPackage.packageType.displayName, "
+        + "          pv.generalPackage.packageType.category, "
+        + "          pv.generalPackage.name, "
+        + "          pv.architecture.name, "
+        + "          pv.generalPackage.classification "
+        + "       ) "
+        + "  FROM PackageVersion pv "
+        + "  LEFT JOIN pv.channelPackageVersions cpv "
+        + "  LEFT JOIN cpv.channel.resourceChannels rc "
+        + " WHERE rc.resource.id = :resourceId "
+        + "   AND (UPPER(pv.displayName) LIKE :filter "
+        + "    OR UPPER(pv.shortDescription) LIKE :filter "
+        + "    OR UPPER(pv.longDescription) LIKE :filter"
+        + "    OR :filter IS NULL) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_VERSION_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_VERSION")
 public class PackageVersion implements Serializable {
@@ -192,6 +202,7 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID = "PackageVersion.findIdByPackageDetailsKeyAndResId";
     public static final String QUERY_FIND_BY_CHANNEL_ID = "PackageVersion.findByChannelId";
     public static final String QUERY_FIND_BY_CHANNEL_ID_FILTERED = "PackageVersion.findByChannelIdFiltered";
+    public static final String QUERY_FIND_BY_PACKAGE_ID = "PackageVersion.findByPackageId";
     public static final String QUERY_FIND_BY_CHANNEL_ID_WITH_PACKAGE = "PackageVersion.findByChannelIdWithPackage";
     public static final String QUERY_FIND_BY_CHANNEL_ID_WITH_PACKAGE_FILTERED = "PackageVersion.findByChannelIdWithPackageFiltered";
     public static final String QUERY_FIND_METADATA_BY_RESOURCE_ID = "PackageVersion.findMetadataByResourceId";
@@ -202,6 +213,8 @@ public class PackageVersion implements Serializable {
     public static final String FIND_EXTRA_PROPS_IF_NO_CONTENT_SOURCES_OR_CHANNELS = "PackageVersion.findOrphanedExtraProps";
     public static final String FIND_FILES_IF_NO_CONTENT_SOURCES_OR_CHANNELS = "PackageVersion.findOrphanedFiles";
     public static final String QUERY_FIND_COMPOSITE_BY_ID = "PackageVersion.findCompositeById";
+    public static final String QUERY_FIND_COMPOSITE_BY_FILTERS = "PackageVersion.findCompositeByFilters";
+    public static final String QUERY_FIND_COMPOSITE_BY_FILTERS_AND_ELIGIBILITY = "PackageVersion.findCompositeByFiltersAndEligibility";
 
     // Attributes  --------------------------------------------
 

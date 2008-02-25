@@ -37,7 +37,7 @@ public class DeployPackageStep implements Serializable {
      * Unique identifier for this step within the context of the overall package installation steps for a particular
      * package.
      */
-    private int stepId;
+    private String stepKey;
 
     /**
      * Textual description to be displayed to the user of what will occur when installing the package.
@@ -56,20 +56,20 @@ public class DeployPackageStep implements Serializable {
 
     // Public  --------------------------------------------
 
-    public DeployPackageStep(int stepId, String description) {
-        this.stepId = stepId;
+    public DeployPackageStep(String stepKey, String description) {
+        this.stepKey = stepKey;
         this.description = description;
     }
 
     // Public  --------------------------------------------
 
     public String toString() {
-        return "DeployPackageStep[stepId=" + stepId + ", stepResult=" + stepResult + ", description=" + description
+        return "DeployPackageStep[stepId=" + stepKey + ", stepResult=" + stepResult + ", description=" + description
             + "]";
     }
 
-    public int getStepId() {
-        return stepId;
+    public String getStepKey() {
+        return stepKey;
     }
 
     public String getDescription() {

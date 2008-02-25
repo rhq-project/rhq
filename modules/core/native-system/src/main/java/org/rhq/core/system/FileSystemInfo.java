@@ -79,7 +79,7 @@ public class FileSystemInfo {
      * @return static file system information
      */
     public FileSystem getFileSystem() {
-        return fs;
+        return this.fs;
     }
 
     /**
@@ -89,6 +89,6 @@ public class FileSystemInfo {
      * @return file system usage data
      */
     public FileSystemUsage getFileSystemUsage() {
-        return fsUsage;
+        return this.fsUsage;
     }
 }

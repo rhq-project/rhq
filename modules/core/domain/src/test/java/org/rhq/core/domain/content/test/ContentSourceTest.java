@@ -69,6 +69,106 @@ public class ContentSourceTest extends AbstractEJB3Test {
             assert cs != null;
             assert cs.getConfiguration() != null;
             assert cs.getConfiguration().getSimple("one").getStringValue().equals("oneValue");
+            assert cs.getSyncSchedule() != null;
+            assert cs.getContentSourceType().getDefaultSyncSchedule() != null;
+
+            em.remove(cs);
+
+            cs = em.find(ContentSource.class, cs.getId());
+            assert cs == null;
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    public void testNullSyncSchedule() throws Exception {
+        getTransactionManager().begin();
+        try {
+            EntityManager em = getEntityManager();
+
+            ResourceType rt = new ResourceType("testCSResourceType", "testPlugin", ResourceCategory.PLATFORM, null);
+            Resource resource = new Resource("testCSResource", "testCSResource", rt);
+            Architecture arch = new Architecture("testCSInsertArch");
+            PackageType pt = new PackageType("testCSInsertPT", resource.getResourceType());
+            Package pkg = new Package("testCSInsertPackage", pt);
+            PackageVersion pv = new PackageVersion(pkg, "version", arch);
+            ContentSourceType cst = new ContentSourceType("testCSContentSourceType");
+            cst.setDefaultSyncSchedule(null);
+            ContentSource cs = new ContentSource("testCSContentSource", cst);
+            cs.setSyncSchedule(null);
+
+            Configuration config = new Configuration();
+            config.put(new PropertySimple("one", "oneValue"));
+            cs.setConfiguration(config);
+
+            em.persist(rt);
+            em.persist(resource);
+            em.persist(arch);
+            em.persist(pt);
+            em.persist(pkg);
+            em.persist(pv);
+            em.persist(cst);
+            em.persist(cs);
+            em.flush();
+            em.close();
+            em = getEntityManager();
+
+            cs = em.find(ContentSource.class, cs.getId());
+            assert cs != null;
+            assert cs.getConfiguration() != null;
+            assert cs.getConfiguration().getSimple("one").getStringValue().equals("oneValue");
+            assert cs.getSyncSchedule() == null;
+            assert cs.getContentSourceType().getDefaultSyncSchedule() == null;
+
+            em.remove(cs);
+
+            cs = em.find(ContentSource.class, cs.getId());
+            assert cs == null;
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    public void testEmptySyncSchedule() throws Exception {
+        // using empty strings to see that Oracle still behaves itself
+        getTransactionManager().begin();
+        try {
+            EntityManager em = getEntityManager();
+
+            ResourceType rt = new ResourceType("testCSResourceType", "testPlugin", ResourceCategory.PLATFORM, null);
+            Resource resource = new Resource("testCSResource", "testCSResource", rt);
+            Architecture arch = new Architecture("testCSInsertArch");
+            PackageType pt = new PackageType("testCSInsertPT", resource.getResourceType());
+            Package pkg = new Package("testCSInsertPackage", pt);
+            PackageVersion pv = new PackageVersion(pkg, "version", arch);
+            ContentSourceType cst = new ContentSourceType("testCSContentSourceType");
+            cst.setDefaultSyncSchedule("");
+            ContentSource cs = new ContentSource("testCSContentSource", cst);
+            cs.setSyncSchedule("");
+
+            Configuration config = new Configuration();
+            config.put(new PropertySimple("one", "oneValue"));
+            cs.setConfiguration(config);
+
+            em.persist(rt);
+            em.persist(resource);
+            em.persist(arch);
+            em.persist(pt);
+            em.persist(pkg);
+            em.persist(pv);
+            em.persist(cst);
+            em.persist(cs);
+            em.flush();
+            em.close();
+            em = getEntityManager();
+
+            cs = em.find(ContentSource.class, cs.getId());
+            assert cs != null;
+            assert cs.getConfiguration() != null;
+            assert cs.getConfiguration().getSimple("one").getStringValue().equals("oneValue");
+            assert cs.getSyncSchedule() == null;
+            assert cs.getContentSourceType().getDefaultSyncSchedule() == null;
+
             em.remove(cs);
 
             cs = em.find(ContentSource.class, cs.getId());

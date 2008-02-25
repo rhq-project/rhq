@@ -20,11 +20,8 @@ package org.rhq.core.domain.content;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -32,14 +29,11 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -57,8 +51,16 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_RESOURCE_AND_PACKAGE, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.resource.id = :resourceId AND ip.packageVersion.generalPackage.id = :packageId  "),
     @NamedQuery(name = InstalledPackage.QUERY_FIND_BY_RESOURCE_AND_PACKAGE_VER, query = "SELECT ip FROM InstalledPackage AS ip WHERE ip.resource.id = :resourceId AND ip.packageVersion.id = :packageVersionId  "),
     @NamedQuery(name = InstalledPackage.QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE, query = "SELECT new org.rhq.core.domain.content.composite.PackageListItemComposite(ip.id, gp.name, pt.displayName, ip.packageVersion.version) "
-        + "FROM InstalledPackage ip JOIN ip.resource res LEFT JOIN ip.packageVersion pv LEFT JOIN pv.generalPackage gp LEFT JOIN gp.packageType pt "
-        + "WHERE res.id = :resourceId"),
+        + " FROM InstalledPackage ip JOIN ip.resource res LEFT JOIN ip.packageVersion pv LEFT JOIN pv.generalPackage gp LEFT JOIN gp.packageType pt "
+        + "WHERE res.id = :resourceId "
+        + "  AND (:packageTypeFilterId = pt.id OR :packageTypeFilterId is null) "
+        + "  AND (:packageVersionFilter = ip.packageVersion.version OR :packageVersionFilter is null) "),
+    @NamedQuery(name = InstalledPackage.QUERY_FIND_PACKAGE_LIST_TYPES, query = "SELECT DISTINCT new org.rhq.core.domain.common.composite.IntegerOptionItem(pt.id, pt.displayName) "
+        + "    FROM InstalledPackage ip JOIN ip.resource res LEFT JOIN ip.packageVersion pv LEFT JOIN pv.generalPackage gp LEFT JOIN gp.packageType pt "
+        + "   WHERE res.id = :resourceId " + "ORDER BY pt.displayName"),
+    @NamedQuery(name = InstalledPackage.QUERY_FIND_PACKAGE_LIST_VERSIONS, query = "SELECT DISTINCT pv.version "
+        + "    FROM InstalledPackage ip JOIN ip.resource res LEFT JOIN ip.packageVersion pv "
+        + "   WHERE res.id = :resourceId " + "ORDER BY pv.version"),
     @NamedQuery(name = InstalledPackage.QUERY_FIND_INSTALLED_PACKAGE_HISTORY, query = "SELECT ip "
         + "FROM InstalledPackage ip JOIN ip.resource res LEFT JOIN ip.packageVersion pv LEFT JOIN pv.generalPackage gp LEFT JOIN gp.packageType pt "
         + "WHERE res.id = :resourceId " + "  AND gp.id = :generalPackageId") })
@@ -76,6 +78,8 @@ public class InstalledPackage implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE_AND_PACKAGE = "InstalledPackage.findByResourceAndPackage";
     public static final String QUERY_FIND_BY_RESOURCE_AND_PACKAGE_VER = "InstalledPackage.findByResourceAndPackageVer";
     public static final String QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE = "InstalledPackage.findPackageListItemComposite";
+    public static final String QUERY_FIND_PACKAGE_LIST_TYPES = "InstalledPackage.findPackageListTypes";
+    public static final String QUERY_FIND_PACKAGE_LIST_VERSIONS = "InstalledPackage.findPackageListVersions";
     public static final String QUERY_FIND_INSTALLED_PACKAGE_HISTORY = "InstalledPackage.findInstalledPackageHistory";
 
     // Attributes  --------------------------------------------
@@ -93,10 +97,6 @@ public class InstalledPackage implements Serializable {
     @ManyToOne
     private PackageVersion packageVersion;
 
-    @JoinColumn(name = "DEPLOYMENT_CONFIG_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Configuration deploymentConfigurationValues;
-
     @Column(name = "INSTALLATION_TIME", nullable = true)
     @Temporal(TemporalType.TIMESTAMP)
     private Date installationDate;
@@ -104,9 +104,6 @@ public class InstalledPackage implements Serializable {
     @JoinColumn(name = "SUBJECT_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
     private Subject user;
-
-    @OneToMany(mappedBy = "installedPackage", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
-    private List<PackageInstallationStep> installationSteps;
 
     // Constructor ----------------------------------------
 
@@ -147,22 +144,6 @@ public class InstalledPackage implements Serializable {
     }
 
     /**
-     * Values that correspond to the deployment time properties that are defined by the {@link PackageType}. This may
-     * not be known or only partially populated if the package was installed on the server through some external means
-     * (it depends on the plugin's ability to detect these values on discovery). This will be <code>null</code> in the
-     * case that the package type does not define any deploy time properties.
-     *
-     * @see PackageType#getDeploymentConfigurationDefinition()
-     */
-    public Configuration getDeploymentConfigurationValues() {
-        return deploymentConfigurationValues;
-    }
-
-    public void setDeploymentConfigurationValues(Configuration deploymentConfigurationValues) {
-        this.deploymentConfigurationValues = deploymentConfigurationValues;
-    }
-
-    /**
      * Timestamp the installation was performed, if it is known.
      */
     public Date getInstallationDate() {
@@ -184,26 +165,12 @@ public class InstalledPackage implements Serializable {
         this.user = user;
     }
 
-    /**
-     * User readable steps the plugin will perform to install the package. If specified, the UI will display these steps
-     * to the user prior to executing the installation. The plugin will report on the success of each step in the
-     * process as it attempts to install the package. These are optional, leaving it up to the discretion of the plugin
-     * to determine how to install the package. In such a case, the plugin will simply report the success or failure of
-     * the package installation.
-     */
-    public List<PackageInstallationStep> getInstallationSteps() {
-        return installationSteps;
-    }
-
-    public void setInstallationSteps(List<PackageInstallationStep> installationSteps) {
-        this.installationSteps = installationSteps;
-    }
-
     // Object Overridden Methods  --------------------------------------------
 
     @Override
     public String toString() {
-        return "InstalledPackage[resource=" + resource + ",packageVersion=" + packageVersion + "]";
+        return "InstalledPackage[resource=" + resource.getName() + ",packageVersion=" + packageVersion.getDisplayName()
+            + "]";
     }
 
     @Override

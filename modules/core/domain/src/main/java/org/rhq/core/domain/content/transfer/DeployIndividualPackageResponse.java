@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.List;
+import java.util.ArrayList;
 import org.rhq.core.domain.content.PackageDetailsKey;
 
 /**
@@ -85,6 +86,13 @@ public class DeployIndividualPackageResponse implements Serializable {
 
     public void setDeploymentSteps(List<DeployPackageStep> deploymentSteps) {
         this.deploymentSteps = deploymentSteps;
+    }
+
+    public void addDeploymentStep(DeployPackageStep step) {
+        if (this.deploymentSteps == null)
+            this.deploymentSteps = new ArrayList<DeployPackageStep>(1);
+
+        this.deploymentSteps.add(step);
     }
 
     /**

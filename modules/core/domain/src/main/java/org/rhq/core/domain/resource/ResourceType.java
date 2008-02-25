@@ -50,6 +50,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.event.EventDefinition;
 
 /**
  * Defines a type of {@link Resource} (e.g. a Linux platform, a JBossAS server, or a Datasource service).
@@ -272,6 +273,11 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     private Set<MeasurementDefinition> metricDefinitions;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
+    @OrderBy // primary key
+    @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
+    private Set<EventDefinition> eventDefinitions;
+
+    @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     @OrderBy
     // primary key
     private Set<OperationDefinition> operationDefinitions;
@@ -309,7 +315,8 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         this.childResourceTypes = new LinkedHashSet<ResourceType>();
         this.parentResourceTypes = new LinkedHashSet<ResourceType>();
         this.metricDefinitions = new LinkedHashSet<MeasurementDefinition>();
-        this.operationDefinitions = new LinkedHashSet<OperationDefinition>();
+        this.eventDefinitions = new LinkedHashSet<EventDefinition>();
+        this.operationDefinitions = new LinkedHashSet<OperationDefinition>();        
         this.packageTypes = new HashSet<PackageType>();
         this.subCategories = new ArrayList<ResourceSubCategory>();
 
@@ -545,6 +552,19 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return this.metricDefinitions.add(metricDef);
     }
 
+    @XmlTransient
+    public Set<EventDefinition> getEventDefinitions() {
+        return eventDefinitions;
+    }
+
+    public void setEventDefinitions(Set<EventDefinition> eventDefinitions) {
+        this.eventDefinitions = eventDefinitions;
+    }
+
+    public void addEventDefinition(EventDefinition eventDefinition) {
+        this.eventDefinitions.add(eventDefinition);
+    }
+    
     public Set<OperationDefinition> getOperationDefinitions() {
         return operationDefinitions;
     }

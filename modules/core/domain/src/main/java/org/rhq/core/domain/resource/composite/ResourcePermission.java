@@ -19,6 +19,7 @@
 package org.rhq.core.domain.resource.composite;
 
 import java.util.Set;
+
 import org.rhq.core.domain.authz.Permission;
 
 /**
@@ -35,7 +36,7 @@ public class ResourcePermission {
 
     private boolean configure;
 
-    private boolean software;
+    private boolean content;
 
     /**
      * All permissions
@@ -45,13 +46,13 @@ public class ResourcePermission {
     }
 
     public ResourcePermission(boolean measure, boolean inventory, boolean control, boolean alert, boolean configure,
-        boolean software) {
+        boolean content) {
         this.measure = measure;
         this.inventory = inventory;
         this.control = control;
         this.alert = alert;
         this.configure = configure;
-        this.software = software;
+        this.content = content;
     }
 
     public ResourcePermission(Set<Permission> permissions) {
@@ -80,13 +81,13 @@ public class ResourcePermission {
         return configure;
     }
 
-    public boolean isSoftware() {
-        return software;
+    public boolean isContent() {
+        return content;
     }
 
     @Override
     public String toString() {
         return "ResourcePermission=[" + "measure: " + measure + ", inventory: " + inventory + ", control: " + control
-            + ", alert: " + alert + ", configure: " + configure + ", software: " + software + "]";
+            + ", alert: " + alert + ", configure: " + configure + ", content: " + content + "]";
     }
 }

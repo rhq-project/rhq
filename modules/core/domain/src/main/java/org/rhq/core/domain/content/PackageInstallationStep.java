@@ -28,6 +28,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Enumerated;
+import javax.persistence.EnumType;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
 
 /**
  * Domain representation of the steps used to install a package.
@@ -52,10 +55,13 @@ public class PackageInstallationStep implements Serializable {
     @Id
     private int id;
 
+    @Column(name = "STEP_KEY", nullable = false)
+    private String key;
+
     /**
      * Relative order of the step in the overall list of steps.
      */
-    @Column(name = "STEP_ORDER")
+    @Column(name = "STEP_ORDER", nullable = false)
     private int order;
 
     /**
@@ -65,11 +71,25 @@ public class PackageInstallationStep implements Serializable {
     private String description;
 
     /**
+     * If this step failed during execution, this will be populated with the plugin provided error message describing
+     * the failure.
+     */
+    @Column(name = "ERROR_MSG")
+    private String errorMessage;
+
+    /**
+     * Plugin provided indicator of whether or not the step was executed successfully.
+     */
+    @Column(name = "RESULT", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ContentResponseResult result;
+
+    /**
      * Package version against which this step applies.
      */
-    @JoinColumn(name = "INSTALLED_PACKAGE_ID", referencedColumnName = "ID")
+    @JoinColumn(name = "INSTALLED_PKG_HIST_ID", referencedColumnName = "ID")
     @ManyToOne
-    private InstalledPackage installedPackage;
+    private InstalledPackageHistory installedPackageHistory;
 
     // Constructor ----------------------------------------
 
@@ -85,6 +105,14 @@ public class PackageInstallationStep implements Serializable {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 
     public int getOrder() {
@@ -103,11 +131,27 @@ public class PackageInstallationStep implements Serializable {
         this.description = description;
     }
 
-    public InstalledPackage getInstalledPackage() {
-        return installedPackage;
+    public String getErrorMessage() {
+        return errorMessage;
     }
 
-    public void setPackageVersion(InstalledPackage installedPackage) {
-        this.installedPackage = installedPackage;
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public ContentResponseResult getResult() {
+        return result;
+    }
+
+    public void setResult(ContentResponseResult result) {
+        this.result = result;
+    }
+
+    public InstalledPackageHistory getInstalledPackageHistory() {
+        return installedPackageHistory;
+    }
+
+    public void setInstalledPackageHistory(InstalledPackageHistory installedPackageHistory) {
+        this.installedPackageHistory = installedPackageHistory;
     }
 }

@@ -19,11 +19,11 @@
 package org.rhq.core.domain.resource.group.composite;
 
 import java.util.Set;
+
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
-import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
@@ -35,22 +35,15 @@ public class ResourceGroupComposite {
     private Double availability;
     private ResourceGroup resourceGroup;
 
-    // TODO: Get rid of the permission field, since it's not used by the UI (ips, 08/29/07).
     private GroupCategory category;
-    private ResourcePermission permission;
     private ResourceFacets resourceFacets;
     private long memberCount;
 
     public ResourceGroupComposite(Double availability, ResourceGroup resourceGroup, long memberCount) {
-        this(availability, resourceGroup, memberCount, 1);
-    }
-
-    public ResourceGroupComposite(Double availability, ResourceGroup resourceGroup, long memberCount, Number control) {
         this.availability = availability;
         this.resourceGroup = resourceGroup;
         this.memberCount = memberCount;
-        this.permission = new ResourcePermission(resourceGroup.getGroupCategory() == GroupCategory.COMPATIBLE, true,
-            control.intValue() > 0, false, false, false);
+
         if (this.resourceGroup.getGroupCategory() == GroupCategory.COMPATIBLE) {
             this.category = GroupCategory.COMPATIBLE;
             ResourceType resourceType = this.resourceGroup.getResourceType();
@@ -84,10 +77,6 @@ public class ResourceGroupComposite {
         return this.memberCount;
     }
 
-    public ResourcePermission getResourcePermission() {
-        return this.permission;
-    }
-
     public ResourceFacets getResourceFacets() {
         return this.resourceFacets;
     }
@@ -95,7 +84,7 @@ public class ResourceGroupComposite {
     @Override
     public String toString() {
         return "ResourceGroupComposite[" + "name=" + this.resourceGroup.getName() + ", members=" + this.memberCount
-            + ", availability=" + this.availability + ", permission=" + this.permission + "]";
+            + ", availability=" + this.availability + ", permission=" + "]";
     }
 
     private static boolean exposesCallTimeMetrics(ResourceType resourceType) {

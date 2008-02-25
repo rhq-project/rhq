@@ -71,23 +71,8 @@
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <!--<scope>test</scope>  not sure about this -->
       </dependency>
-
+            
    </dependencies>
-
-   <build>
-      <plugins>
-
-         <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <!--
-              <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
-              -->
-            </configuration>
-         </plugin>
-
-      </plugins>
-   </build>
 
    <pluginRepositories>
       <pluginRepository>

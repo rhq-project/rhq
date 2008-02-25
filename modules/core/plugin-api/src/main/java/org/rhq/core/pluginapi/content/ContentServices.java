@@ -19,6 +19,7 @@
 package org.rhq.core.pluginapi.content;
 
 import java.io.OutputStream;
+
 import org.rhq.core.domain.content.Channel;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageVersion;
@@ -48,7 +49,8 @@ public interface ContentServices {
      * @return the number of bytes written to the output stream - this is the size of the package version that was
      *         downloaded
      */
-    long downloadPackageBits(ContentContext context, PackageDetailsKey packageDetailsKey, OutputStream outputStream);
+    long downloadPackageBits(ContentContext context, PackageDetailsKey packageDetailsKey, OutputStream outputStream,
+        boolean resourceExists);
 
     /**
      * Requests that the plugin container download and stream the bits for the specified package. If the package cannot
@@ -68,7 +70,7 @@ public interface ContentServices {
      * @return the number of bytes written to the output stream - this is the size of the chunk downloaded
      */
     long downloadPackageBitsRange(ContentContext context, PackageDetailsKey packageDetailsKey,
-        OutputStream outputStream, long startByte, long endByte);
+        OutputStream outputStream, long startByte, long endByte, boolean resourceExists);
 
     /**
      * Requests the size, in bytes, of the identified package version.

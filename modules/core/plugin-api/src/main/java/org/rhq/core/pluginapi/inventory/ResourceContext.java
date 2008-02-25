@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
@@ -33,6 +34,9 @@ import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.system.pquery.ProcessInfoQuery;
+import org.rhq.core.pluginapi.content.ContentContext;
+import org.rhq.core.pluginapi.event.EventContext;
+import org.rhq.core.pluginapi.operation.OperationContext;
 
 /**
  * The context object that {@link ResourceComponent} objects will have access - it will have all the information that
@@ -56,6 +60,9 @@ public class ResourceContext<T extends ResourceComponent> {
     private final ResourceDiscoveryComponent resourceDiscoveryComponent;
     private final File temporaryDirectory;
     private final File dataDirectory;
+    private final EventContext eventContext;
+    private final OperationContext operationContext;
+    private final ContentContext contentContext;
 
     private ProcessInfo processInfo;
 
@@ -63,20 +70,23 @@ public class ResourceContext<T extends ResourceComponent> {
      * Creates a new {@link ResourceContext} object. The plugin container is responsible for instantiating these
      * objects; plugin writers should never have to actually create context objects.
      *
-     * @param resource                   the resource whose {@link ResourceComponent} will be given this context object
+     * @param resource                   the resource whose {@link org.rhq.core.pluginapi.inventory.ResourceComponent}
+     *                                   will be given this context object
      *                                   of the plugin
      * @param parentResourceComponent    the parent component of the context's associated resource component
      * @param resourceDiscoveryComponent the discovery component that can be used to detect other resources of the same
      *                                   type as this resource
      * @param systemInfo                 information about the system on which the plugin and its plugin container are
      *                                   running
-     * @param temporaryDirectory         A temporary directory for plugin use that is destroyed at agent shutdown
-     * @param dataDirectory              Directory where plugins can store persisted data that survives agent restarts.
-     *                                   Each plugin will have their own data directory.
+     * @param temporaryDirectory         a temporary directory for plugin use that is destroyed at agent shutdown
+     * @param dataDirectory              a directory where plugins can store persisted data that survives agent restarts
+     * @param eventContext               an <code>EventContext</code>, if the resource supports one or more types of
+     *                                   {@link org.rhq.core.domain.event.Event}s, or <code>null</code> otherwise
      */
     public ResourceContext(Resource resource, T parentResourceComponent,
         ResourceDiscoveryComponent resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
-        File dataDirectory) {
+        File dataDirectory, @Nullable
+        EventContext eventContext, OperationContext operationContext, ContentContext contentContext) {
         this.resourceKey = resource.getResourceKey();
         this.resourceType = resource.getResourceType();
         this.parentResourceComponent = parentResourceComponent;
@@ -89,6 +99,9 @@ public class ResourceContext<T extends ResourceComponent> {
         } else {
             this.temporaryDirectory = temporaryDirectory;
         }
+        this.eventContext = eventContext;
+        this.operationContext = operationContext;
+        this.contentContext = contentContext;
     }
 
     /**
@@ -233,5 +246,37 @@ public class ResourceContext<T extends ResourceComponent> {
      */
     public File getDataDirectory() {
         return dataDirectory;
+    }
+
+    /**
+     * Returns an {@link EventContext}, if the resource supports one or more types of
+     * {@link org.rhq.core.domain.event.Event}s, or <code>null</code> otherwise.
+     *
+     * @return an <code>EventContext</code>, if the resource supports one or more types of
+     *         {@link org.rhq.core.domain.event.Event}s, or <code>null</code> otherwise
+     */
+    @Nullable
+    public EventContext getEventContext() {
+        return eventContext;
+    }
+
+    /**
+     * Returns an {@link OperationContext} that allows the plugin to access the operation
+     * functionality provided by the plugin container.
+     * 
+     * @return operation context object
+     */
+    public OperationContext getOperationContext() {
+        return operationContext;
+    }
+
+    /**
+     * Returns a {@link ContentContext} that allows the plugin to access the content
+     * functionality provided by the plugin container.
+     * 
+     * @return content context object
+     */
+    public ContentContext getContentContext() {
+        return contentContext;
     }
 }

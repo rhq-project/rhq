@@ -36,14 +36,6 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
  */
 public interface ContentFacet {
     /**
-     * Initializes the content facet, providing the context that should be used for invocations back into the plugin
-     * container (see {@link ContentServices}).
-     *
-     * @param context resource specific context
-     */
-    void startContentFacet(ContentContext context);
-
-    /**
      * Returns a list of installation steps that will take place when installing the specified package. When the request
      * to install the package is actually placed, the response from that call should contain a reference to the steps
      * specified here, along with the result (success/failure) of each step. If they cannot be determined, this method

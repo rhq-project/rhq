@@ -19,7 +19,7 @@
 package org.rhq.core.pluginapi.inventory;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.content.InstalledPackage;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.ResourceType;
 
@@ -27,7 +27,7 @@ import org.rhq.core.domain.resource.ResourceType;
  * Value object used between the plugin container and a plugin to carry all data necessary for a create resource
  * operation as well as the resulting status code.
  *
- * @author Jason Dobies
+ * @author Jason Dobies 
  */
 public class CreateResourceReport {
     // Attributes  --------------------------------------------
@@ -38,8 +38,7 @@ public class CreateResourceReport {
     private ResourceType resourceType;
     private Configuration pluginConfiguration;
     private Configuration resourceConfiguration;
-    private InstalledPackage installedPackage;
-    private Configuration contentConfiguration;
+    private ResourcePackageDetails packageDetails;
 
     // Data set by the plugin after resource creation ----------
 
@@ -57,17 +56,15 @@ public class CreateResourceReport {
      * @param resourceType
      * @param pluginConfiguration
      * @param resourceConfiguration
-     * @param installedPackage
-     * @param contentConfiguration
+     * @param resourcePackageDetails
      */
     public CreateResourceReport(String resourceName, ResourceType resourceType, Configuration pluginConfiguration,
-        Configuration resourceConfiguration, InstalledPackage installedPackage, Configuration contentConfiguration) {
+        Configuration resourceConfiguration, ResourcePackageDetails packageDetails) {
         this.resourceName = resourceName;
         this.resourceType = resourceType;
         this.pluginConfiguration = pluginConfiguration;
         this.resourceConfiguration = resourceConfiguration;
-        this.installedPackage = installedPackage;
-        this.contentConfiguration = contentConfiguration;
+        this.packageDetails = packageDetails;
     }
 
     // Public  --------------------------------------------
@@ -108,12 +105,8 @@ public class CreateResourceReport {
         return resourceConfiguration;
     }
 
-    public InstalledPackage getArtifactType() {
-        return installedPackage;
-    }
-
-    public Configuration getContentConfiguration() {
-        return contentConfiguration;
+    public ResourcePackageDetails getPackageDetails() {
+        return packageDetails;
     }
 
     public String getResourceKey() {

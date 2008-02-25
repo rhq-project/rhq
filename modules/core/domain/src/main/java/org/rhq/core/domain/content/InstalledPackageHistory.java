@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -38,9 +39,11 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.OneToMany;
 import org.hibernate.annotations.NamedQueries;
 import org.hibernate.annotations.NamedQuery;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.resource.Resource;
 
 /**
  * Audit trail entity for tracking the results of an individual package request made on a resource. Once created, these
@@ -56,7 +59,10 @@ import org.rhq.core.domain.configuration.Configuration;
         + "ORDER BY iph.timestamp DESC"),
     @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID, query = "SELECT iph FROM InstalledPackageHistory iph "
         + "WHERE iph.contentServiceRequest.id = :contentServiceRequestId "
-        + "AND iph.packageVersion.id = :packageVersionId " + "ORDER BY timestamp DESC") })
+        + "AND iph.packageVersion.id = :packageVersionId " + "ORDER BY timestamp DESC"),
+    @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_ID, query = "SELECT iph FROM InstalledPackageHistory iph "
+        + "WHERE iph.packageVersion.generalPackage.id = :packageId AND iph.resource.id = :resourceId")
+    })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_INSTALLED_PKG_HIST_ID_SEQ")
 @Table(name = "RHQ_INSTALLED_PKG_HIST")
 public class InstalledPackageHistory implements Serializable {
@@ -66,6 +72,7 @@ public class InstalledPackageHistory implements Serializable {
 
     public static final String QUERY_FIND_CONFIG_BY_PACKAGE_VERSION_AND_REQ = "InstalledPackageHistory.findConfigByPackageVersionAndReq";
     public static final String QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID = "InstalledPackageHistory.findByCsrIdAndPkgVerId";
+    public static final String QUERY_FIND_BY_RESOURCE_ID_AND_PKG_ID = "InstalledPackageHistory.findByResourceIdAndPkgId";
 
     // Attributes  --------------------------------------------
 
@@ -101,6 +108,23 @@ public class InstalledPackageHistory implements Serializable {
     @JoinColumn(name = "DEPLOYMENT_CONFIG_ID", referencedColumnName = "ID", nullable = true)
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Configuration deploymentConfigurationValues;
+
+    /**
+     * User readable steps the plugin will perform to install the package. If specified, the UI will display these steps
+     * to the user prior to executing the installation. The plugin will report on the success of each step in the
+     * process as it attempts to install the package. These are optional, leaving it up to the discretion of the plugin
+     * to determine how to install the package. In such a case, the plugin will simply report the success or failure of
+     * the package installation.
+     */
+    @OneToMany(mappedBy = "installedPackageHistory", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
+    private List<PackageInstallationStep> installationSteps;
+
+    /**
+     * This history item described a package that was on this resource.
+     */
+    @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne
+    private Resource resource;
 
     @JoinColumn(name = "CONTENT_SERVICE_REQUEST_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
@@ -171,6 +195,22 @@ public class InstalledPackageHistory implements Serializable {
 
     public void setDeploymentConfigurationValues(Configuration deploymentConfigurationValues) {
         this.deploymentConfigurationValues = deploymentConfigurationValues;
+    }
+
+    public List<PackageInstallationStep> getInstallationSteps() {
+        return installationSteps;
+    }
+
+    public void setInstallationSteps(List<PackageInstallationStep> installationSteps) {
+        this.installationSteps = installationSteps;
+    }
+
+    public Resource getResource() {
+        return resource;
+    }
+
+    public void setResource(Resource resource) {
+        this.resource = resource;
     }
 
     public ContentServiceRequest getContentServiceRequest() {

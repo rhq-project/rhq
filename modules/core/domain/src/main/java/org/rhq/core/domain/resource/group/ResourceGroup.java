@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -40,7 +41,9 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.Resource;
@@ -54,14 +57,13 @@ import org.rhq.core.domain.resource.ResourceType;
 
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(res), COUNT(p)) "
-        + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s JOIN r.resourceGroups rg JOIN r.permissions p "
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(res)) "
+        + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s JOIN r.resourceGroups rg "
         + "LEFT JOIN rg.implicitResources res LEFT JOIN res.availability a "
         + "LEFT JOIN g.resourceType type "
         + "WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
         + "AND s = :subject "
         + "AND g.groupCategory = :groupCategory "
-        + "AND p = 11 "
         + "AND "
         + "(UPPER(g.name) LIKE :search "
         + "OR UPPER(g.description) LIKE :search "

@@ -104,7 +104,7 @@ public class ContentSource implements Serializable {
     @Enumerated(EnumType.STRING)
     private DownloadMode downloadMode = DownloadMode.DATABASE;
 
-    @Column(name = "SYNC_SCHEDULE", nullable = false)
+    @Column(name = "SYNC_SCHEDULE", nullable = true)
     private String syncSchedule = "0 0 3 * * ?";
 
     @Column(name = "LOAD_ERROR_MESSAGE", nullable = true)
@@ -216,15 +216,19 @@ public class ContentSource implements Serializable {
      * Periodically, the content source plugin adapter will be asked to synchronize with the remote content source
      * repository. This gives the adapter a chance to see if any content has been added, updated or removed from the
      * remote repository. This attribute defines the schedule, as a cron string. The default will be set for everyday at
-     * 3:00am local time. If this content source should never automatically sync, this should be an empty string.
+     * 3:00am local time. If this content source should never automatically sync, this should be null, but
+     * an empty string would also indicate this, too.
      *
-     * @return sync schedule as a cron string or empty if the sync should not automatically occur
+     * @return sync schedule as a cron string or null if the sync should not automatically occur
      */
     public String getSyncSchedule() {
         return syncSchedule;
     }
 
     public void setSyncSchedule(String syncSchedule) {
+        if (syncSchedule != null && syncSchedule.trim().length() == 0) {
+            syncSchedule = null;
+        }
         this.syncSchedule = syncSchedule;
     }
 

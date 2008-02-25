@@ -24,10 +24,27 @@ package org.rhq.core.domain.content;
  * @author Jason Dobies
  */
 public enum InstalledPackageHistoryStatus {
+
     /**
-     * The package installation represented by the installed package object encountered an error.
+     * Indicates a package was discovered by the agent-side discovery.
      */
-    FAILED("Installation Failed", "An attempt to install the package failed."),
+    DISCOVERED("Discovered", "The package was discovered on a resource."),
+
+    /**
+     * Indicates the package has been deleted on the resource directly and did not go through the server to do so.
+     */
+    MISSING("Missing", "The package was previously discovered but has not been on a subsequent discovery."),
+
+    /**
+     * The package request encountered an error.
+     */
+    FAILED("Failed", "A content request failed, an error message should have been provided."),
+
+    /**
+     * Used to provide an ending when content requests time out. This way, we don't see as the last entry in the
+     * audit that a package is in the process of doing something and never finished.
+     */
+    TIMED_OUT("Timed Out", "A content request has timed out."),
 
     /**
      * Indicates the installed package instance is the currently installed version.

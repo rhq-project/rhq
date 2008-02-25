@@ -112,7 +112,7 @@ public class ContentServiceRequest implements Serializable {
     @Enumerated(EnumType.STRING)
     private ContentRequestType contentRequestType;
 
-    @OneToMany(mappedBy = "contentServiceRequest", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "contentServiceRequest", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private Set<InstalledPackageHistory> installedPackageHistory;
 
     // Constructors  --------------------------------------------

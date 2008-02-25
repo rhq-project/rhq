@@ -38,6 +38,7 @@
     <dependency>
       <groupId>org.hyperic</groupId>
       <artifactId>sigar</artifactId>
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
     </dependency>
 
     <dependency>

@@ -19,7 +19,9 @@
 package org.rhq.core.domain.resource.composite;
 
 import java.util.Set;
+
 import javax.xml.bind.annotation.XmlElement;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -56,9 +58,9 @@ public class ResourceComposite {
      * Provides specified permissions - used for non-admin queries.
      */
     public ResourceComposite(Resource resource, AvailabilityType availability, Number measure, Number inventory,
-        Number control, Number alert, Number configure, Number software) {
+        Number control, Number alert, Number configure, Number content) {
         this(resource, availability, new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0, control
-            .intValue() > 0, alert.intValue() > 0, configure.intValue() > 0, software.intValue() > 0));
+            .intValue() > 0, alert.intValue() > 0, configure.intValue() > 0, content.intValue() > 0));
     }
 
     /**

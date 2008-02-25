@@ -42,7 +42,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.rhq.core.domain.event.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.resource.ResourceType;
 
 @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
@@ -270,7 +270,8 @@ public class MeasurementDefinition implements Serializable {
         this.defaultOn = def.defaultOn;
         this.defaultInterval = def.defaultInterval;
         this.displayType = def.displayType;
-        this.numericType = def.getNumericType();
+        this.numericType = def.numericType;
+        this.destinationType = def.destinationType;
     }
 
     public MeasurementDefinition(ResourceType resourceType, @NotNull

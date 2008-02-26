@@ -1173,7 +1173,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         }
 
         // what package version?
-        Query query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
+        Query query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_ONLY);
         query.setParameter("packageName", packageDetailsKey.getName());
         query.setParameter("packageTypeName", packageDetailsKey.getPackageTypeName());
         query.setParameter("architectureName", packageDetailsKey.getArchitectureName());

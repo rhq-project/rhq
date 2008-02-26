@@ -62,6 +62,10 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "   AND pv.generalPackage.packageType.name = :packageTypeName "
         + "   AND pv.generalPackage.packageType.resourceType.id = :resourceTypeId "
         + "   AND pv.architecture.name = :architectureName " + "   AND pv.version = :version "),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_ONLY, query = "SELECT pv FROM PackageVersion AS pv "
+        + " WHERE pv.generalPackage.name = :packageName "
+        + "   AND pv.generalPackage.packageType.name = :packageTypeName "
+        + "   AND pv.architecture.name = :architectureName " + "   AND pv.version = :version "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID, query = "SELECT pv.id "
         + "  FROM PackageVersion AS pv " + "       JOIN pv.generalPackage.packageType.resourceType.resources r "
         + " WHERE pv.generalPackage.name = :packageName "
@@ -188,8 +192,7 @@ import org.rhq.core.domain.resource.ProductVersion;
         + " WHERE rc.resource.id = :resourceId "
         + "   AND (UPPER(pv.displayName) LIKE :filter "
         + "    OR UPPER(pv.shortDescription) LIKE :filter "
-        + "    OR UPPER(pv.longDescription) LIKE :filter"
-        + "    OR :filter IS NULL) ") })
+        + "    OR UPPER(pv.longDescription) LIKE :filter" + "    OR :filter IS NULL) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_VERSION_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_VERSION")
 public class PackageVersion implements Serializable {
@@ -199,6 +202,7 @@ public class PackageVersion implements Serializable {
 
     public static final String QUERY_FIND_BY_PACKAGE_VER_ARCH = "PackageVersion.findByPackageVerArch";
     public static final String QUERY_FIND_BY_PACKAGE_DETAILS_KEY = "PackageVersion.findByPackageDetailsKey";
+    public static final String QUERY_FIND_BY_PACKAGE_DETAILS_KEY_ONLY = "PackageVersion.findByPackageDetailsKeyOnly";
     public static final String QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID = "PackageVersion.findIdByPackageDetailsKeyAndResId";
     public static final String QUERY_FIND_BY_CHANNEL_ID = "PackageVersion.findByChannelId";
     public static final String QUERY_FIND_BY_CHANNEL_ID_FILTERED = "PackageVersion.findByChannelIdFiltered";

@@ -1,0 +1,120 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="Deploy New Package"/>
+   <ui:param name="selectedTabName" value="Content.New"/>
+   <ui:define name="content">
+
+      <h:form id="currentPackageVersionsForm">
+         <input type="hidden" name="id" value="${param.id}"/>
+
+         <rich:panel styleClass="BlockContent">
+            <f:facet name="header"><h:outputText value="Packages Eligible for Deployment"/></f:facet>
+
+            <ui:param name="resourcePackageVersionsDataModel" value="#{ResourcePackageVersionsUIBean.dataModel}"/>
+            <rich:dataTable binding="#{ResourcePackageVersionsUIBean.dataTable}"
+                            id="resourcePackageVersionsDataTable"
+                            rows="#{PageControl.ResourcePackageVersionsList.pageSize}"
+                            value="#{resourcePackageVersionsDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 20%, 14%, 15%, 10%, 40%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ResourcePackageVersionsList" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedPackages" />
+                  </f:facet>
+
+                  <onc:select name="selectedPackages" value="#{item.packageVersion.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.generalPackage.name">
+                        <h:outputText styleClass="headerText" value="Package Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageName}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.displayVersion">
+                        <h:outputText styleClass="headerText" value="Version" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageVersion.displayVersion}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.generalPackage.packageType.displayName">
+                        <h:outputText styleClass="headerText" value="Type" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageTypeName}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.architecture">
+                        <h:outputText styleClass="headerText" value="Architecture" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.architectureName}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Description" />
+                  </f:facet>
+
+                  <h:outputText value="#{item.packageVersion.shortDescription}"/>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="6">
+
+                        <ui:include src="/rhq/resource/include/pagination.xhtml">
+                           <ui:param name="paginationDataTableName" value="resourcePackageVersionsDataTable"/>
+                           <ui:param name="paginationDataModel" value="#{resourcePackageVersionsDataModel}"/>
+                           <ui:param name="paginationPageControl" value="#{PageControl.ResourcePackageVersionsList}"/>
+                        </ui:include>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+      </rich:panel>
+      </h:form>
+
+
+   </ui:define>
+</ui:composition>
+
+</html>

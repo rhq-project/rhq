@@ -154,7 +154,7 @@ public class EventManagerBean implements EventManagerLocal {
             ps.executeBatch();
 
         } catch (SQLException e) {
-            ; // TODO what do we want to do here ?
+            // TODO what do we want to do here ?
             log.warn("addEventData: Insert of events failed : " + e.getMessage());
         } finally {
             JDBCUtil.safeClose(conn, ps, null);
@@ -185,7 +185,7 @@ public class EventManagerBean implements EventManagerLocal {
     }
 
     public List<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin, long endDate,
-        Object object) {
+        EventSeverity severity) {
 
         List<Resource> resources = resGrpMgr.getResourcesForAutoGroup(subject, parent, type);
         int[] resourceIds = new int[resources.size()];
@@ -193,13 +193,28 @@ public class EventManagerBean implements EventManagerLocal {
         for (Resource res : resources)
             resourceIds[i++] = res.getId();
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, null, 0, null, null,
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, -1, null, null,
             new PageControl());
-        return comp.subList(0, comp.getTotalSize());
+        return comp;
+    }
+
+    public List<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin, long endDate,
+        EventSeverity severity, int eventId, String source, String searchString, PageControl pc) {
+
+        List<Resource> resources = resGrpMgr.getResourcesForAutoGroup(subject, parent, type);
+        int[] resourceIds = new int[resources.size()];
+        int i = 0;
+        for (Resource res : resources)
+            resourceIds[i++] = res.getId();
+
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, -1, source,
+            searchString, pc);
+
+        return comp;
     }
 
     public List<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        Object object) {
+        EventSeverity severity) {
 
         List<Resource> resources = resGrpMgr.getResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
         int[] resourceIds = new int[resources.size()];
@@ -207,9 +222,24 @@ public class EventManagerBean implements EventManagerLocal {
         for (Resource res : resources)
             resourceIds[i++] = res.getId();
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, null, 0, null, null,
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, -1, null, null,
             new PageControl());
-        return comp.subList(0, comp.getTotalSize());
+        return comp;
+    }
+
+    public List<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
+        EventSeverity severity, int eventId, String source, String searchString, PageControl pc) {
+
+        List<Resource> resources = resGrpMgr.getResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
+        int[] resourceIds = new int[resources.size()];
+        int i = 0;
+        for (Resource res : resources)
+            resourceIds[i++] = res.getId();
+
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, -1, source,
+            searchString, pc);
+
+        return comp;
     }
 
     public int[] getEventCounts(Subject subject, int resourceId, long begin, long end, int numBuckets) {
@@ -299,7 +329,7 @@ public class EventManagerBean implements EventManagerLocal {
 
         PageList<EventComposite> comp = getEvents(subject, new int[] { resourceId }, startDate, endDate, severity, -1,
             null, null, new PageControl());
-        return comp.subList(0, comp.getTotalSize());
+        return comp;
     }
 
     public PageList<EventComposite> getEvents(Subject subject, int[] resourceIds, long begin, long end,

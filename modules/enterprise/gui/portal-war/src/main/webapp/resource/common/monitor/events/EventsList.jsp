@@ -10,13 +10,12 @@
 
 <script type="text/javascript" language="JavaScript">
 <!--
-   function loadDetail(eventId,resourceId) {
+   function loadDetail(eventId) {
 
        var indicatorDiv = document.getElementById("eventDetailDiv");
        var xmlhttp = getXMLHttpRequest();
        var url = "/resource/common/monitor/events/OneEventDetail.do"; 
            url += "?action=getDetail&eventId=" + eventId;
-           url += "&id=" + resourceId;
        xmlhttp.open('GET',url,true);
        xmlhttp.onreadystatechange=function()
          {
@@ -78,50 +77,8 @@
       </c:if>
    </c:url>
    
-   
-   <c:set var="emptyMsg"><fmt:message key="resource.common.monitor.events.EmptyList"/></c:set>
-   <display:table items="${EventsForm.events}" var="event" width="100%" 
-         emptyMsg="${emptyMsg}" cellspacing="0" cellpadding="0" action="${sAction}">
-      <display:column width="4%" property="eventId" title="resource.common.monitor.events.IdTitle"
-         sortAttr="eventId" />
-      <display:column width="1%" property="severity" title="resource.common.monitor.events.SeverityTitle"
-         sortAttr="severity"/>
-      <display:column width="20%" property="sourceLocation" title="resource.common.monitor.events.SourceTitle"
-         sortAttr="sourceLocation"/>
-      <display:column width="54%" property="eventDetail" title="resource.common.monitor.events.DetailTitle"
-          onClick="loadDetail(_property:eventId:,${param.id})" />
-      <display:column width="20%" property="timestamp" title="resource.common.monitor.events.TimeTitle"
-         sortAttr="timestamp" defaultSort="true"/>
-   </display:table>
-   <c:url var="pageAction" value="/resource/common/monitor/visibility/Events.do">
-
-   <c:if test="${not empty param.so}">
-      <c:param name="so" value="${param.so}"/>
-   </c:if>
-   <c:if test="${not empty param.sc}">
-      <c:param name="sc" value="${param.sc}"/>
-   </c:if>
-         
-   <c:if test="${not empty param.pn}">
-      <c:param name="pn" value="${param.pn}"/>
-   </c:if>
-   <c:if test="${not empty param.ps}">
-      <c:param name="ps" value="${param.ps}"/>
-   </c:if>
-</c:url>
-
-
-</td>
-</tr>
-</table>      
-      
-   
-
-
-   
-   
-<html:form action="/resource/common/monitor/visibility/Events" >
-<table width="98%" align="center" cellspacing="0" cellpadding="0" border="0">
+   <html:form action="/resource/common/monitor/visibility/Events" >
+<table width="100%" align="center" cellspacing="0" cellpadding="0" border="0">
 <tr colspan="3">
   <td class="FilterLine" colspan="3"><b>
    <fmt:message key="resource.common.monitor.events.FilterBy" />
@@ -165,9 +122,53 @@
    </tiles:insert>
  </tr>
 </table>
+<html:hidden property="id"/>
+<html:hidden property="groupId"/>
+</html:form>
 <p/>
-<table width="98%" align="center" cellspacing="0" cellpadding="0" border="0">
+<table width="98%" align="center" cellspacing="0" cellpadding="0" border="0" >
 <tr>
+   <td>
+   <c:set var="emptyMsg"><fmt:message key="resource.common.monitor.events.EmptyList"/></c:set>
+   <display:table items="${EventsForm.events}" var="event" width="100%" 
+         emptyMsg="${emptyMsg}" cellspacing="0" cellpadding="0" action="${sAction}">
+      <display:column width="4%" property="eventId" title="resource.common.monitor.events.IdTitle"
+         sortAttr="eventId" />
+      <display:column width="1%" property="severity" title="resource.common.monitor.events.SeverityTitle"
+         sortAttr="severity"/>
+      <display:column width="20%" property="sourceLocation" title="resource.common.monitor.events.SourceTitle"
+         sortAttr="sourceLocation"/>
+      <display:column width="54%" property="eventDetail" title="resource.common.monitor.events.DetailTitle"
+          onClick="loadDetail(_property:eventId:)" />
+      <display:column width="20%" property="timestamp" title="resource.common.monitor.events.TimeTitle"
+         sortAttr="timestamp" defaultSort="true"/>
+   </display:table>
+   <c:url var="pageAction" value="/resource/common/monitor/visibility/Events.do">
+
+   <c:if test="${not empty param.so}">
+      <c:param name="so" value="${param.so}"/>
+   </c:if>
+   <c:if test="${not empty param.sc}">
+      <c:param name="sc" value="${param.sc}"/>
+   </c:if>
+         
+   <c:if test="${not empty param.pn}">
+      <c:param name="pn" value="${param.pn}"/>
+   </c:if>
+   <c:if test="${not empty param.ps}">
+      <c:param name="ps" value="${param.ps}"/>
+   </c:if>
+</c:url>
+
+
+</td>
+</tr>
+</table>      
+<p/>
+   
+
+<table  width="98%" align="center" cellspacing="0" cellpadding="0" border="0" >
+<tr class="MonitorToolbar">
    <td>
      <b><fmt:message key="resource.common.monitor.events.DetailsHeader"/></b>
    </td>
@@ -175,13 +176,10 @@
 
 <tr>
   <td>
-<div style="width:98%;margin-left:1%;border:1px solid black;height:200px" id="eventDetailDiv" >
+<div style="border:1px solid black;height:200px" id="eventDetailDiv" >
 <fmt:message key="resource.common.monitor.events.ShowDetail"/>
 </div>
   </td>
 </tr>
 </table> 
 
-<html:hidden property="id"/>
-<html:hidden property="groupId"/>
-</html:form>

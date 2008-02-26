@@ -38,8 +38,6 @@ public class ListEventsAction extends BaseAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
 
-        System.out.println("List Events action - Hello world");
-
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);
     }
 }

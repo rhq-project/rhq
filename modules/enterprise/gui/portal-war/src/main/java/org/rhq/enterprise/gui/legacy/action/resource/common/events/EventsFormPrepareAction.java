@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.gui.legacy.action.resource.common.events;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -64,6 +65,9 @@ public class EventsFormPrepareAction extends MetricsControlAction {
 
         int eventId = WebUtility.getOptionalIntRequestParameter(request, "eventId", -1);
         int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
+        int groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
+        int parent = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
+        int type = WebUtility.getOptionalIntRequestParameter(request, "type", -1);
         // TODO enhance for groups
         WebUser user = SessionUtils.getWebUser(request.getSession());
         Subject subject = user.getSubject();
@@ -79,14 +83,27 @@ public class EventsFormPrepareAction extends MetricsControlAction {
         String sourceFilter = eForm.getSourceFilter();
         String searchString = eForm.getSearchString();
 
-        PageList<EventComposite> events = eventManager.getEvents(subject, new int[] { resourceId }, begin, end,
-            severityFilter, eventId, sourceFilter, searchString, pc);
+        List<EventComposite> events;
+        if (resourceId > 0) {
+            events = eventManager.getEvents(subject, new int[] { resourceId }, begin, end, severityFilter, eventId,
+                sourceFilter, searchString, pc);
+        } else if (groupId > 0) {
+            events = eventManager.getEventsForCompGroup(subject, groupId, begin, end, severityFilter, eventId,
+                sourceFilter, searchString, pc);
+
+        } else if (parent > 0 && type > 0) {
+            events = eventManager.getEventsForAutoGroup(subject, parent, type, begin, end, severityFilter, eventId,
+                sourceFilter, searchString, pc);
+        } else {
+            log.warn("Invalid input combination - can not list events ");
+            return null;
+        }
         for (EventComposite event : events) {
             event.setEventDetail(htmlFormat(event.getEventDetail(), eForm.getSearchString()));
             event.setSourceLocation(htmlFormat(event.getSourceLocation(), null));
         }
 
-        eForm.setEvents(events);
+        eForm.setEvents((PageList<EventComposite>) events);
 
         super.execute(mapping, form, request, response);
         return null;

@@ -27,6 +27,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 
+import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 
@@ -39,7 +41,10 @@ public class Log4JLogEntryProcessor implements LogEntryProcessor {
     private static final String ISO8601_DATE_PATTERN = "yyyy-MM-dd kk:mm:ss,SSS";
     private static final DateFormat ISO8601_DATE_FORMAT = new SimpleDateFormat(ISO8601_DATE_PATTERN);
     private static final String ABSOLUTE_DATE_PATTERN = "HH:mm:ss,SSS";
-    private static final DateFormat ABSOLUTE_DATE_FORMAT = new SimpleDateFormat(ABSOLUTE_DATE_PATTERN);    
+    private static final DateFormat ABSOLUTE_DATE_FORMAT = new SimpleDateFormat(ABSOLUTE_DATE_PATTERN);
+    private static final String DATE_DATE_PATTERN = "dd MMM yyyy HH:mm:ss,SSS";
+    private static final DateFormat DATE_DATE_FORMAT = new SimpleDateFormat(DATE_DATE_PATTERN);
+
     private static final Map<Priority, EventSeverity> PRIORITY_TO_SEVERITY_MAP = new HashMap();
     static
     {
@@ -58,6 +63,7 @@ public class Log4JLogEntryProcessor implements LogEntryProcessor {
         this.eventType = eventType;
     }
 
+    @Nullable
     public Event processLine(String line) {
         Event event = null;
         // For now, we only support the default pattern: Date Priority [Category] Message
@@ -75,7 +81,7 @@ public class Log4JLogEntryProcessor implements LogEntryProcessor {
         } else {
             // If the line didn't our regex, assume it's an additional line (e.g. part of a stack trace).
             if (this.currentEntry != null) {
-                this.currentEntry.appendToDetail(line);
+                this.currentEntry.appendLineToDetail(line);                
             }
         }
         return event;
@@ -87,14 +93,19 @@ public class Log4JLogEntryProcessor implements LogEntryProcessor {
         String detail = matcher.group(3);
 
         Date timestamp;
+        // TODO: Make date format configurable via event source config.
         try {
             timestamp = ISO8601_DATE_FORMAT.parse(dateString);
         } catch (ParseException e) {
             try {
                 timestamp = ABSOLUTE_DATE_FORMAT.parse(dateString);
             } catch (ParseException e1) {
-                throw new RuntimeException(
-                        "Unable to parse date '" + dateString + "' using either ISO8601 or ABSOLUTE format.");
+                try {
+                    timestamp = DATE_DATE_FORMAT.parse(dateString);
+                } catch (ParseException e2) {
+                    throw new RuntimeException(
+                        "Unable to parse date '" + dateString + "' using either ISO8601, ABSOLUTE, or DATE formats.");
+                }
             }
         }
         Priority priority = Priority.valueOf(priorityString);
@@ -137,9 +148,9 @@ public class Log4JLogEntryProcessor implements LogEntryProcessor {
             return detail.toString();
         }
 
-        void appendToDetail(String string) {
+        void appendLineToDetail(String string) {
             this.detail.append(string);
+            this.detail.append("\n");
         }
-
     }
 }

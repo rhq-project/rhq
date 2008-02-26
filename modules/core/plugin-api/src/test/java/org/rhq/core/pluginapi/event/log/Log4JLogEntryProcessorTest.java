@@ -36,15 +36,17 @@ public class Log4JLogEntryProcessorTest {
         LogEntryProcessor processor = new Log4JLogEntryProcessor(eventType);
         Event event = processor.processLine(
                 "2007-12-09 15:32:49,909 DEBUG [com.example.FooBar] run: IdleRemover notifying pools, interval: 450000");
-        assert event != null;
+        assert event == null;
+        Event event2 = processor.processLine(
+                "2007-12-09 15:32:49,909 DEBUG [com.example.FooBar] yada yada yada");
         //noinspection ConstantConditions
-        assert event.getType().equals(eventType);
+        assert event2.getType().equals(eventType);
         Calendar calendar = Calendar.getInstance();
         calendar.set(2007, 11, 9, 15, 32, 49);
         calendar.set(Calendar.MILLISECOND, 909);
         Date expectedDate = calendar.getTime();
-        assert event.getTimestamp().equals(expectedDate);
-        assert event.getSeverity().equals(EventSeverity.DEBUG);
-        assert event.getDetail().equals("[com.example.FooBar] run: IdleRemover notifying pools, interval: 450000");
+        assert event2.getTimestamp().equals(expectedDate);
+        assert event2.getSeverity().equals(EventSeverity.DEBUG);
+        assert event2.getDetail().equals("[com.example.FooBar] run: IdleRemover notifying pools, interval: 450000");
     }
 }

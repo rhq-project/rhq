@@ -18,18 +18,20 @@
  */
 package org.rhq.core.pluginapi.event.log;
 
+import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.event.Event;
 
 /**
  * @author Ian Springer
  */
 public interface LogEntryProcessor {
-
     /**
-     * TODO
-     * @param line
-     * @return
+     * Processes the specified line from a log file, and returns an Event if appropriate, or otherwise, null.
+     *
+     * @param line the line to be processed
+     * @return an Event if appropriate, or otherwise, null
      */
+    @Nullable
     Event processLine(String line);
-
 }

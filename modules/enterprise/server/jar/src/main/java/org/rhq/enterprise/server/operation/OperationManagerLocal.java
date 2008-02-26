@@ -171,7 +171,8 @@ public interface OperationManagerLocal {
     /**
      * Given a resource job's details, this returns the schedule for that resource job.
      *
-     * @param  jobDetail
+     * @param subject 
+     * @param jobDetail
      *
      * @return the object that encapsulates the resource schedule
      */
@@ -180,7 +181,8 @@ public interface OperationManagerLocal {
     /**
      * Given a resource job's id, this returns the schedule for that resource job.
      *
-     * @param  jobId
+     * @param subject 
+     * @param jobId
      *
      * @return the object that encapsulates the resource schedule
      *
@@ -191,7 +193,8 @@ public interface OperationManagerLocal {
     /**
      * Given a group job's details, this returns the schedule for that group job.
      *
-     * @param  jobDetail
+     * @param subject 
+     * @param jobDetail
      *
      * @return the object that encapsulates the group schedule
      */
@@ -200,7 +203,8 @@ public interface OperationManagerLocal {
     /**
      * Given a group job's id, this returns the schedule for that group job.
      *
-     * @param  jobId
+     * @param subject 
+     * @param jobId
      *
      * @return the object that encapsulates the group schedule
      *

@@ -28,7 +28,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.composite.PackageVersionComposite;
 import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
@@ -41,41 +40,6 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
  */
 @Local
 public interface ContentManagerLocal {
-    // Calls from the agent  --------------------------------------------
-
-    /**
-     * For documentation, see
-     * {@link org.rhq.core.clientapi.server.content.ContentServerService#mergeDiscoveredPackages(org.rhq.core.domain.content.transfer.ContentDiscoveryReport)}
-     * .
-     */
-    void mergeDiscoveredPackages(ContentDiscoveryReport report);
-
-    /**
-     * For documentation, see
-     * {@link org.rhq.core.clientapi.server.content.ContentServerService#completeDeployPackageRequest(org.rhq.core.domain.content.transfer.DeployPackagesResponse)}
-     * .
-     */
-    void completeDeployPackageRequest(DeployPackagesResponse response);
-
-    /**
-     * For documentation, see
-     * {@link org.rhq.core.clientapi.server.content.ContentServerService#completeDeletePackageRequest(org.rhq.core.domain.content.transfer.RemovePackagesResponse)}
-     * .
-     */
-    void completeDeletePackageRequest(RemovePackagesResponse response);
-
-    /**
-     * For documentation, see
-     * {@link org.rhq.core.clientapi.server.content.ContentServerService#completeRetrievePackageBitsRequest(org.rhq.core.clientapi.server.content.ContentServiceResponse, java.io.InputStream)}
-     * )}.
-     */
-    void completeRetrievePackageBitsRequest(ContentServiceResponse response, InputStream bitStream);
-
-    /**
-     * For documentation, see
-     * {@link org.rhq.core.clientapi.server.content.ContentServerService#loadDependencies(int, java.util.Set)}
-     */
-    Set<ResourcePackageDetails> loadDependencies(int requestId, Set<PackageDetailsKey> keys);
 
     // Use case logic  --------------------------------------------
 
@@ -127,6 +91,45 @@ public interface ContentManagerLocal {
      * @param installedPackageId id of the installed package to retrieve bits
      */
     void retrieveBitsFromResource(Subject user, int resourceId, int installedPackageId);
+
+    /////////////////////////////////////////////////////////////////////
+    // The methods below should not be exposed to remote clients
+
+    // Calls from the agent  --------------------------------------------
+
+    /**
+     * For documentation, see
+     * {@link org.rhq.core.clientapi.server.content.ContentServerService#mergeDiscoveredPackages(org.rhq.core.domain.content.transfer.ContentDiscoveryReport)}
+     * .
+     */
+    void mergeDiscoveredPackages(ContentDiscoveryReport report);
+
+    /**
+     * For documentation, see
+     * {@link org.rhq.core.clientapi.server.content.ContentServerService#completeDeployPackageRequest(org.rhq.core.domain.content.transfer.DeployPackagesResponse)}
+     * .
+     */
+    void completeDeployPackageRequest(DeployPackagesResponse response);
+
+    /**
+     * For documentation, see
+     * {@link org.rhq.core.clientapi.server.content.ContentServerService#completeDeletePackageRequest(org.rhq.core.domain.content.transfer.RemovePackagesResponse)}
+     * .
+     */
+    void completeDeletePackageRequest(RemovePackagesResponse response);
+
+    /**
+     * For documentation, see
+     * {@link org.rhq.core.clientapi.server.content.ContentServerService#completeRetrievePackageBitsRequest(org.rhq.core.clientapi.server.content.ContentServiceResponse, java.io.InputStream)}
+     * )}.
+     */
+    void completeRetrievePackageBitsRequest(ContentServiceResponse response, InputStream bitStream);
+
+    /**
+     * For documentation, see
+     * {@link org.rhq.core.clientapi.server.content.ContentServerService#loadDependencies(int, java.util.Set)}
+     */
+    Set<ResourcePackageDetails> loadDependencies(int requestId, Set<PackageDetailsKey> keys);
 
     // Internal Utilities  --------------------------------------------
 

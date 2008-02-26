@@ -22,6 +22,7 @@ import java.net.InetAddress;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
@@ -34,6 +35,15 @@ import org.rhq.core.system.SystemInfo;
  * @author John Mazzitelli
  */
 public abstract class PlatformDiscoveryComponent implements ResourceDiscoveryComponent {
+
+    /**
+     * This will build the platform's resource details, where its name and key are by default
+     * the plugin container's name.  Subclasses of this platform discovery component
+     * are free to override this behavior if they wish to make the platform name different,
+     * but under normal circumstances, subclasses will not want to alter the key value.
+     * 
+     * @see ResourceDiscoveryComponent#discoverResources(ResourceDiscoveryContext)
+     */
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
         if (!isPlatformSupported(context)) {
             return Collections.EMPTY_SET;
@@ -46,15 +56,50 @@ public abstract class PlatformDiscoveryComponent implements ResourceDiscoveryCom
         String version;
         String description = context.getResourceType().getDescription();
 
-        // platform resources are a special case - the plugin container will
-        // assign its platform resource's key so it can do so uniquely
-        // without using something like "hostname" which might change in the future
-        // and if the platform key changes in the future, bad things will happen
-        key = "*plugin container will assign this*";
+        // platform resources will use the plugin container name as its key.
+        // we are guaranteed this string is unique across all agents/plugin containers.
+        // (it is usually the hostname, but is not guaranteed to be)
+        key = determineResourceKey(context);
+
+        // make the name the same as the key/plugin container name
+        // this is usually the hostname so its probably what you want
+        name = key;
+
+        try {
+            version = systemInfo.getOperatingSystemName() + " " + systemInfo.getOperatingSystemVersion();
+        } catch (Exception e) {
+            version = "?";
+        }
+
+        DiscoveredResourceDetails discoveredResource = new DiscoveredResourceDetails(context.getResourceType(), key,
+            name, version, description, null, null);
+
+        HashSet<DiscoveredResourceDetails> results = new HashSet<DiscoveredResourceDetails>();
+        results.add(discoveredResource);
+        return results;
+    }
+
+    /**
+     * This will determine what the new platform's resource key should be. This default
+     * implementation first tries to use the plugin container's name which is guaranteed
+     * to be unique across all agents/plugin containers.  If, for some odd reason, it is
+     * <code>null</code>, the platform's hostname is used.  This is less than optimal
+     * but the plugin container's name will never be <code>null</code> under virtually
+     * all use-cases (except perhaps in test scenarios).
+     * 
+     * @param context the discovery context used to get the plugin container name or host name if its needed
+     * 
+     * @return the new platform's resource key
+     */
+    protected String determineResourceKey(ResourceDiscoveryContext context) {
+        String name = context.getPluginContainerName();
+        if (name != null) {
+            return name; // we've got it, no need to continue any further
+        }
 
         // ask the system info class to get us the hostname - possibly via the native library
         try {
-            name = systemInfo.getHostname();
+            name = context.getSystemInformation().getHostname();
         } catch (Exception e) {
             name = null;
         }
@@ -73,18 +118,7 @@ public abstract class PlatformDiscoveryComponent implements ResourceDiscoveryCom
             }
         }
 
-        try {
-            version = systemInfo.getOperatingSystemName() + " " + systemInfo.getOperatingSystemVersion();
-        } catch (Exception e) {
-            version = "?";
-        }
-
-        DiscoveredResourceDetails discoveredResource = new DiscoveredResourceDetails(context.getResourceType(), key,
-            name, version, description, null, null);
-
-        HashSet<DiscoveredResourceDetails> results = new HashSet<DiscoveredResourceDetails>();
-        results.add(discoveredResource);
-        return results;
+        return name;
     }
 
     /**

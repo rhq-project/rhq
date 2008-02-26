@@ -23,20 +23,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.content.ContentContext;
+import org.rhq.core.pluginapi.event.EventContext;
+import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.system.pquery.ProcessInfoQuery;
-import org.rhq.core.pluginapi.content.ContentContext;
-import org.rhq.core.pluginapi.event.EventContext;
-import org.rhq.core.pluginapi.operation.OperationContext;
 
 /**
  * The context object that {@link ResourceComponent} objects will have access - it will have all the information that
@@ -60,6 +60,7 @@ public class ResourceContext<T extends ResourceComponent> {
     private final ResourceDiscoveryComponent resourceDiscoveryComponent;
     private final File temporaryDirectory;
     private final File dataDirectory;
+    private final String pluginContainerName;
     private final EventContext eventContext;
     private final OperationContext operationContext;
     private final ContentContext contentContext;
@@ -71,8 +72,7 @@ public class ResourceContext<T extends ResourceComponent> {
      * objects; plugin writers should never have to actually create context objects.
      *
      * @param resource                   the resource whose {@link org.rhq.core.pluginapi.inventory.ResourceComponent}
-     *                                   will be given this context object
-     *                                   of the plugin
+     *                                   will be given this context object of the plugin
      * @param parentResourceComponent    the parent component of the context's associated resource component
      * @param resourceDiscoveryComponent the discovery component that can be used to detect other resources of the same
      *                                   type as this resource
@@ -80,13 +80,20 @@ public class ResourceContext<T extends ResourceComponent> {
      *                                   running
      * @param temporaryDirectory         a temporary directory for plugin use that is destroyed at agent shutdown
      * @param dataDirectory              a directory where plugins can store persisted data that survives agent restarts
-     * @param eventContext               an <code>EventContext</code>, if the resource supports one or more types of
+     * @param pluginContainerName        the name of the plugin container in which the discovery component is running.
+     *                                   Components can be assured this name is unique across <b>all</b> plugin
+     *                                   containers/agents running in the RHQ environment.
+     * @param eventContext               an {@link EventContext}, if the resource supports one or more types of
      *                                   {@link org.rhq.core.domain.event.Event}s, or <code>null</code> otherwise
+     * @param operationContext           an {@link OperationContext} the plugin can use to interoperate with the
+     *                                   operation manager
+     * @param contentContext             a {@link ContentContext} the plugin can use to interoperate with the content
+     *                                   manager
      */
     public ResourceContext(Resource resource, T parentResourceComponent,
         ResourceDiscoveryComponent resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
-        File dataDirectory, @Nullable
-        EventContext eventContext, OperationContext operationContext, ContentContext contentContext) {
+        File dataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
+        ContentContext contentContext) {
         this.resourceKey = resource.getResourceKey();
         this.resourceType = resource.getResourceType();
         this.parentResourceComponent = parentResourceComponent;
@@ -94,11 +101,13 @@ public class ResourceContext<T extends ResourceComponent> {
         this.systemInformation = systemInfo;
         this.pluginConfiguration = resource.getPluginConfiguration();
         this.dataDirectory = dataDirectory;
+        this.pluginContainerName = pluginContainerName;
         if (temporaryDirectory == null) {
             this.temporaryDirectory = new File(System.getProperty("java.io.tmpdir"), "AGENT_TMP");
         } else {
             this.temporaryDirectory = temporaryDirectory;
         }
+
         this.eventContext = eventContext;
         this.operationContext = operationContext;
         this.contentContext = contentContext;
@@ -163,7 +172,6 @@ public class ResourceContext<T extends ResourceComponent> {
      *
      * @return information on the resource's process
      */
-    @Nullable
     public ProcessInfo getNativeProcess() {
         if ((this.processInfo == null) || !this.processInfo.isRunning()) {
             // TODO: should we null out processInfo?  if it isn't running, the old processInfo is no longer valid
@@ -172,7 +180,8 @@ public class ResourceContext<T extends ResourceComponent> {
                 ResourceDiscoveryContext context;
 
                 context = new ResourceDiscoveryContext(this.resourceType, this.parentResourceComponent,
-                    this.systemInformation, getNativeProcessesForType(), Collections.EMPTY_LIST);
+                    this.systemInformation, getNativeProcessesForType(), Collections.EMPTY_LIST,
+                    getPluginContainerName());
 
                 details = this.resourceDiscoveryComponent.discoverResources(context);
 
@@ -249,21 +258,31 @@ public class ResourceContext<T extends ResourceComponent> {
     }
 
     /**
+     * The name of the plugin container in which the resource component is running. Components
+     * can be assured this name is unique across <b>all</b> plugin containers/agents running
+     * in the RHQ environment.
+     * 
+     * @return the name of the plugin container
+     */
+    public String getPluginContainerName() {
+        return pluginContainerName;
+    }
+
+    /**
      * Returns an {@link EventContext}, if the resource supports one or more types of
      * {@link org.rhq.core.domain.event.Event}s, or <code>null</code> otherwise.
      *
      * @return an <code>EventContext</code>, if the resource supports one or more types of
      *         {@link org.rhq.core.domain.event.Event}s, or <code>null</code> otherwise
      */
-    @Nullable
     public EventContext getEventContext() {
         return eventContext;
     }
 
     /**
-     * Returns an {@link OperationContext} that allows the plugin to access the operation
-     * functionality provided by the plugin container.
-     * 
+     * Returns an {@link OperationContext} that allows the plugin to access the operation functionality provided by the
+     * plugin container.
+     *
      * @return operation context object
      */
     public OperationContext getOperationContext() {
@@ -271,9 +290,9 @@ public class ResourceContext<T extends ResourceComponent> {
     }
 
     /**
-     * Returns a {@link ContentContext} that allows the plugin to access the content
-     * functionality provided by the plugin container.
-     * 
+     * Returns a {@link ContentContext} that allows the plugin to access the content functionality provided by the
+     * plugin container.
+     *
      * @return content context object
      */
     public ContentContext getContentContext() {

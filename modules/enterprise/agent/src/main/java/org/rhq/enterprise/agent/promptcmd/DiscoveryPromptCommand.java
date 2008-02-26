@@ -74,7 +74,8 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
             String[] realArgs = new String[args.length - 1];
             System.arraycopy(args, 1, realArgs, 0, args.length - 1);
 
-            processCommand(realArgs, out);
+            // use getAgentName because it is the name of the plugin container
+            processCommand(agent.getConfiguration().getAgentName(), realArgs, out);
         } else {
             out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_PC_NOT_STARTED));
         }
@@ -103,7 +104,7 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         return MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_DETAILED_HELP);
     }
 
-    private void processCommand(String[] args, PrintWriter out) {
+    private void processCommand(String pcName, String[] args, PrintWriter out) {
         String pluginName = null;
         String resourceTypeName = null;
 
@@ -150,7 +151,7 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         }
 
         try {
-            discovery(out, pluginName, resourceTypeName);
+            discovery(pcName, out, pluginName, resourceTypeName);
         } catch (Exception e) {
             out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_ERROR, ThrowableUtil.getAllMessages(e)));
             return;
@@ -159,7 +160,7 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         return;
     }
 
-    private void discovery(PrintWriter out, String pluginName, String resourceTypeName) throws Exception {
+    private void discovery(String pcName, PrintWriter out, String pluginName, String resourceTypeName) throws Exception {
         PluginContainer pc = PluginContainer.getInstance();
         PluginMetadataManager metadataManager = pc.getPluginManager().getMetadataManager();
         Set<ResourceType> typesToDiscover = new HashSet<ResourceType>();
@@ -212,7 +213,7 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
                 && (typeToDiscover.getParentResourceTypes().size() == 0)) {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_DISCOVERING_RESOURCE_TYPE, typeToDiscover
                     .getPlugin(), typeToDiscover.getName()));
-                discoveryForSingleResourceType(out, typeToDiscover);
+                discoveryForSingleResourceType(pcName, out, typeToDiscover);
                 out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_DISCOVERING_RESOURCE_TYPE_DONE, typeToDiscover
                     .getPlugin(), typeToDiscover.getName()));
                 out.println();
@@ -225,7 +226,8 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         return;
     }
 
-    private void discoveryForSingleResourceType(PrintWriter out, ResourceType resourceType) throws Exception {
+    private void discoveryForSingleResourceType(String pcName, PrintWriter out, ResourceType resourceType)
+        throws Exception {
         // perform auto-discovery PIQL queries now to see if we can auto-detect resources that are running now
         List<ProcessScanResult> scanResults = new ArrayList<ProcessScanResult>();
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
@@ -257,7 +259,7 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         ResourceComponent platformComponent = im.getResourceComponent(im.getPlatform());
 
         ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, platformComponent, systemInfo,
-            scanResults, Collections.EMPTY_LIST);
+            scanResults, Collections.EMPTY_LIST, pcName);
 
         Set<DiscoveredResourceDetails> discoveredResources = discoveryComponent.discoverResources(context);
 

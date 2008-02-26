@@ -358,7 +358,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceComponent parentResourceComponent = getResourceContainer(parentResourceId).getResourceComponent();
             ResourceDiscoveryContext<ResourceComponent> resourceDiscoveryContext = new ResourceDiscoveryContext<ResourceComponent>(
                 resourceType, parentResourceComponent, SystemInfoFactory.createSystemInfo(),
-                new ArrayList<ProcessScanResult>(0), pluginConfigurations);
+                new ArrayList<ProcessScanResult>(0), pluginConfigurations, configuration.getContainerName());
 
             // Ask the plugin's discovery component to find the new resource, throwing exceptions if it cannot be found at all.
             Set<DiscoveredResourceDetails> discoveredResources = discoveryComponent
@@ -897,10 +897,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceDiscoveryComponent discoveryComponent;
             discoveryComponent = factory.getDiscoveryComponent(resource.getResourceType());
 
-            ResourceContext context = new ResourceContext(resource, parentComponent, discoveryComponent,
-                SystemInfoFactory.createSystemInfo(), this.configuration.getTemporaryDirectory(), new File(
-                    this.configuration.getDataDirectory(), resource.getResourceType().getPlugin()),
-                getEventContext(resource), getOperationContext(resource), getContentContext(resource));
+            ResourceContext context = new ResourceContext(resource, // the resource itself
+                parentComponent, // its parent component
+                discoveryComponent, // the discovery component
+                SystemInfoFactory.createSystemInfo(), // for native access
+                this.configuration.getTemporaryDirectory(), // location for plugin to write tmp files
+                new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin()), // plugin's own data dir
+                this.configuration.getContainerName(), // the name of the agent/PC
+                getEventContext(resource), // for event access
+                getOperationContext(resource), // for operation manager access
+                getContentContext(resource)); // for content manager access
 
             ClassLoader startingClassLoader = Thread.currentThread().getContextClassLoader();
             try {
@@ -1111,7 +1117,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 try {
                     ResourceDiscoveryComponent component = componentFactory.getDiscoveryComponent(platformType);
                     ResourceDiscoveryContext context = new ResourceDiscoveryContext(platformType, null, systemInfo,
-                        Collections.EMPTY_LIST, Collections.EMPTY_LIST);
+                        Collections.EMPTY_LIST, Collections.EMPTY_LIST, configuration.getContainerName());
                     Set<DiscoveredResourceDetails> discoveredResources = null;
 
                     try {
@@ -1129,8 +1135,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
         } else {
             // this is very strange - there are no platform types - we should never be missing the built-in platform plugins
-            log
-                .error("Missing platform plugins - falling back to Java-only implementation; this should only occur in tests");
+            log.error("Missing platform plugins - falling back to Java-only impl; this should only occur in tests");
             addTestPlatform();
             return;
         }
@@ -1169,16 +1174,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         // build our actual platform resource now that we've discovered it
         platform = new Resource();
 
-        // our platform resource is special - the discovery component's key will be overridden
-        // with a key that this plugin container can more effectively guarantee uniqueness
-        // in enterprise world, this is the agent's name (side effect of this is that we can
-        // run multiple agents on the same box - mainly to support testing).
-        String key = configuration.getContainerName();
-        if (key == null) {
-            key = systemInfo.getHostname(); // we really don't want to do this - if hostname changes, this platform resource is hosed
-        }
-
-        platform.setResourceKey(key);
+        platform.setResourceKey(platformToUse.getResourceKey());
         platform.setName(platformToUse.getResourceName());
         platform.setVersion(platformToUse.getResourceVersion());
         platform.setDescription(platformToUse.getResourceDescription());
@@ -1199,7 +1195,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     private void addTestPlatform() {
         ResourceType type = PluginContainer.getInstance().getPluginManager().getMetadataManager().addTestPlatformType();
-        platform = new Resource("*plugin container will assign this*", "testplatform", type);
+        platform = new Resource("testkey" + configuration.getContainerName(), "testplatform", type);
         platform.setAgent(this.agent);
         ResourceComponent testPlatformComponent = new ResourceComponent() {
             public AvailabilityType getAvailability() {

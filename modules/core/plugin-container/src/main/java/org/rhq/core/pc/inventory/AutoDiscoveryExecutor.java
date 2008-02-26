@@ -181,7 +181,7 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                 }
 
                 ResourceDiscoveryContext context = new ResourceDiscoveryContext(serverType, platformComponent,
-                    systemInfo, scanResults, Collections.EMPTY_LIST);
+                    systemInfo, scanResults, Collections.EMPTY_LIST, configuration.getContainerName());
 
                 Set<DiscoveredResourceDetails> discoveredResources = null;
 

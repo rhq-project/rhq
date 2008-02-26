@@ -21,6 +21,7 @@ package org.rhq.core.pluginapi.inventory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
@@ -52,6 +53,7 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
     private final SystemInfo systemInformation;
     private final List<ProcessScanResult> processScanResults;
     private final List<Configuration> pluginConfigurations;
+    private final String pluginContainerName;
 
     /**
      * Creates a new {@link ResourceDiscoveryContext} object. The plugin container is responsible for instantiating
@@ -71,15 +73,19 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
      *                             user told us exists), this contains plugin configurations that provide connection
      *                             information to those existing managed resources. (may be <code>null</code> or empty
      *                             if there are no other known resources)
+     * @param pluginContainerName  the name of the plugin container in which the discovery component is running. Components
+     *                             can be assured this name is unique across <b>all</b> plugin containers/agents running
+     *                             in the RHQ environment.
      */
     @SuppressWarnings("unchecked")
     public ResourceDiscoveryContext(ResourceType resourceType, T parentComponent, SystemInfo systemInfo,
-        List<ProcessScanResult> processScanResults, List<Configuration> pluginConfigurations) {
+        List<ProcessScanResult> processScanResults, List<Configuration> pluginConfigurations, String pluginContainerName) {
         this.resourceType = resourceType;
         this.parentComponent = parentComponent;
         this.systemInformation = systemInfo;
         this.processScanResults = (processScanResults != null) ? processScanResults : Collections.EMPTY_LIST;
         this.pluginConfigurations = (pluginConfigurations != null) ? pluginConfigurations : Collections.EMPTY_LIST;
+        this.pluginContainerName = pluginContainerName;
     }
 
     /**
@@ -159,5 +165,16 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
         }
 
         return new Configuration(); // there is no default plugin config available, return an empty one
+    }
+
+    /**
+     * The name of the plugin container in which the discovery component is running. Components
+     * can be assured this name is unique across <b>all</b> plugin containers/agents running
+     * in the RHQ environment.
+     * 
+     * @return the name of the plugin container
+     */
+    public String getPluginContainerName() {
+        return pluginContainerName;
     }
 }

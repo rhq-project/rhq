@@ -227,7 +227,8 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             if (AvailabilityType.UP.equals(parentComponent.getAvailability())) // TODO GH: This is doing a live availability check, is that right?
             {
                 ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, parentComponent,
-                    SystemInfoFactory.createSystemInfo(), Collections.EMPTY_LIST, Collections.EMPTY_LIST);
+                    SystemInfoFactory.createSystemInfo(), Collections.EMPTY_LIST, Collections.EMPTY_LIST,
+                    pluginContainerConfiguration.getContainerName());
                 Set<DiscoveredResourceDetails> discoveredResources = component.discoverResources(context);
                 Set<Resource> newResources = new HashSet<Resource>();
                 if ((discoveredResources != null) && (discoveredResources.size() > 0)) {

@@ -263,6 +263,7 @@ rhq.server.startup.jrmpinvoker.rmiport=7444
 rhq.server.startup.pooledinvoker.rmiport=7445
 rhq.server.startup.ajp.port=9009
 rhq.server.startup.unifiedinvoker.port=5446
+rhq.server.startup.aspectdeployer.bind-port=4873
 
 # Cluster configuration
 jboss.partition.name=RHQPartition

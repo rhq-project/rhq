@@ -46,10 +46,12 @@
    
    <table align="center"><tr><td>
    <ul>
-      <li><h:outputLink target="_blank" value="#{bundle.helpDocRoot}#{bundle.helpDocJonServerInstallGuide}"><h:outputText value="#{bundle.helpDocJonServerInstallGuideLabel}"/></h:outputLink></li>
-      <li><h:outputLink target="_blank" value="#{bundle.helpDocRoot}#{bundle.helpDocJonGuiConsoleUsersGuide}"><h:outputText value="#{bundle.helpDocJonGuiConsoleUsersGuideLabel}"/></h:outputLink></li>
-      <li><h:outputLink target="_blank" value="#{bundle.helpDocRoot}#{bundle.helpDocJonServerUsersGuide}"><h:outputText value="#{bundle.helpDocJonServerUsersGuideLabel}"/></h:outputLink></li>
-      <li><h:outputLink target="_blank" value="#{bundle.helpDocRoot}#{bundle.helpDocJonAgentUsersGuide}"><h:outputText value="#{bundle.helpDocJonAgentUsersGuideLabel}"/></h:outputLink></li>
+      <li><h:outputLink target="_blank" value="#{bundle.helpDocRoot}#{bundle.helpDocRHQServerInstallGuide}"><h:outputText value="#{bundle.helpDocRHQServerInstallGuideLabel}"/></h:outputLink></li>
+      <%--
+      <li><h:outputLink target="_blank" value="#{bundle.helpDocRoot}#{bundle.helpDocRHQGuiConsoleUsersGuide}"><h:outputText value="#{bundle.helpDocRHQGuiConsoleUsersGuideLabel}"/></h:outputLink></li>
+      --%>
+      <li><h:outputLink target="_blank" value="#{bundle.helpDocRoot}#{bundle.helpDocRHQServerUsersGuide}"><h:outputText value="#{bundle.helpDocRHQServerUsersGuideLabel}"/></h:outputLink></li>
+      <li><h:outputLink target="_blank" value="#{bundle.helpDocRoot}#{bundle.helpDocRHQAgentUsersGuide}"><h:outputText value="#{bundle.helpDocRHQAgentUsersGuideLabel}"/></h:outputLink></li>
       <li><h:outputLink target="_blank" value="#{bundle.helpDocRoot}#{bundle.helpDocFaq}"><h:outputText value="#{bundle.helpDocFaqLabel}"/></h:outputLink></li>
    </ul>
    </td></tr></table>

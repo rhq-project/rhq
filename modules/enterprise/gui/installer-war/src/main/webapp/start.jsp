@@ -34,7 +34,7 @@
                <h:outputText value="#{bundle.propertyName}" />
             </f:facet>
             
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocJonServerInstallGuide}#{prop.itemDefinition.help}', 'propertyHelp')">
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{prop.itemDefinition.help}', 'propertyHelp')">
                <h:outputText value="#{prop.itemDefinition.propertyLabel}" />
             </h:outputLink>
          </h:column>

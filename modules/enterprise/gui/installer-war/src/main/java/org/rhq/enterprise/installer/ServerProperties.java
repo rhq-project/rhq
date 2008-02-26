@@ -42,6 +42,7 @@ public class ServerProperties {
     public static final String PROP_POOLED_INVOKER_RMI_PORT = "rhq.server.startup.pooledinvoker.rmiport";
     public static final String PROP_AJP_PORT = "rhq.server.startup.ajp.port";
     public static final String PROP_UNIFIED_INVOKER_PORT = "rhq.server.startup.unifiedinvoker.port";
+    public static final String PROP_ASPECT_DEPLOYER_PORT = "rhq.server.startup.aspectdeployer.bind-port";
 
     public static final String PROP_TOMCAT_KEYSTORE_FILENAME = "rhq.server.startup.keystore.filename";
     public static final String PROP_TOMCAT_KEYSTORE_PASSWORD = "rhq.server.startup.keystore.password";
@@ -154,6 +155,8 @@ public class ServerProperties {
             InstallerI18NResourceKeys.PROP_AJP_PORT_HELP, true, false, true),
         new PropertyItem(PROP_UNIFIED_INVOKER_PORT, Integer.class, InstallerI18NResourceKeys.PROP_UNIFIED_INVOKER_PORT,
             InstallerI18NResourceKeys.PROP_UNIFIED_INVOKER_PORT_HELP, true, false, true),
+        new PropertyItem(PROP_ASPECT_DEPLOYER_PORT, Integer.class, InstallerI18NResourceKeys.PROP_ASPECT_DEPLOYER_PORT,
+            InstallerI18NResourceKeys.PROP_ASPECT_DEPLOYER_PORT_HELP, true, false, true),
         new PropertyItem(PROP_TOMCAT_KEYSTORE_FILENAME, String.class,
             InstallerI18NResourceKeys.PROP_TOMCAT_KEYSTORE_FILENAME,
             InstallerI18NResourceKeys.PROP_TOMCAT_KEYSTORE_FILENAME_HELP, true, false, true),
@@ -257,17 +260,17 @@ public class ServerProperties {
             InstallerI18NResourceKeys.PROP_SECURITY_CLIENT_SERVER_AUTH_MODE_ENABLED,
             InstallerI18NResourceKeys.PROP_SECURITY_CLIENT_SERVER_AUTH_MODE_ENABLED_HELP, false, false, true),
         new PropertyItem(PROP_EMBEDDED_AGENT_ENABLED, Boolean.class,
-            InstallerI18NResourceKeys.PROP_EMBEDDED_JON_AGENT_ENABLED,
-            InstallerI18NResourceKeys.PROP_EMBEDDED_JON_AGENT_ENABLED_HELP, false, false, false),
+            InstallerI18NResourceKeys.PROP_EMBEDDED_RHQ_AGENT_ENABLED,
+            InstallerI18NResourceKeys.PROP_EMBEDDED_RHQ_AGENT_ENABLED_HELP, false, false, false),
         new PropertyItem(PROP_EMBEDDED_AGENT_NAME, String.class,
-            InstallerI18NResourceKeys.PROP_EMBEDDED_JON_AGENT_NAME,
-            InstallerI18NResourceKeys.PROP_EMBEDDED_JON_AGENT_NAME_HELP, false, false, true),
+            InstallerI18NResourceKeys.PROP_EMBEDDED_RHQ_AGENT_NAME,
+            InstallerI18NResourceKeys.PROP_EMBEDDED_RHQ_AGENT_NAME_HELP, false, false, true),
         new PropertyItem(PROP_EMBEDDED_AGENT_DISABLE_NATIVE_SYSTEM, Boolean.class,
-            InstallerI18NResourceKeys.PROP_EMBEDDED_JON_AGENT_DISABLE_NATIVE_SYSTEM,
-            InstallerI18NResourceKeys.PROP_EMBEDDED_JON_AGENT_DISABLE_NATIVE_SYSTEM_HELP, true, false, true),
+            InstallerI18NResourceKeys.PROP_EMBEDDED_RHQ_AGENT_DISABLE_NATIVE_SYSTEM,
+            InstallerI18NResourceKeys.PROP_EMBEDDED_RHQ_AGENT_DISABLE_NATIVE_SYSTEM_HELP, true, false, true),
         new PropertyItem(PROP_EMBEDDED_AGENT_RESET_CONFIGURATION, Boolean.class,
-            InstallerI18NResourceKeys.PROP_EMBEDDED_JON_AGENT_RESET_CONFIGURATION,
-            InstallerI18NResourceKeys.PROP_EMBEDDED_JON_AGENT_RESET_CONFIGURATION_HELP, false, false, true),
+            InstallerI18NResourceKeys.PROP_EMBEDDED_RHQ_AGENT_RESET_CONFIGURATION,
+            InstallerI18NResourceKeys.PROP_EMBEDDED_RHQ_AGENT_RESET_CONFIGURATION_HELP, false, false, true),
         new PropertyItem(PROP_EMAIL_SMTP_HOST, String.class, InstallerI18NResourceKeys.PROP_EMAIL_SMTP_HOST,
             InstallerI18NResourceKeys.PROP_EMAIL_SMTP_HOST_HELP, false, false, true),
         new PropertyItem(PROP_EMAIL_SMTP_PORT, Integer.class, InstallerI18NResourceKeys.PROP_EMAIL_SMTP_PORT,

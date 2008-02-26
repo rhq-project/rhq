@@ -85,6 +85,11 @@ public interface KeyConstants {
     public static final String MODE_MON_PERF = "performance";
 
     /*
+     * The top level tab controls for the monitoring screen link to the "Events" view
+     */
+    public static final String MODE_MON_EVENT = "events";
+
+    /*
      * The top level tab controls for the monitoring screen link to the "URL Detail" view
      */
     public static final String MODE_MON_URL = "url";

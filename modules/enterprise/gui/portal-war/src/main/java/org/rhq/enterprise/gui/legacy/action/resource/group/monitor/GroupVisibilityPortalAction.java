@@ -19,23 +19,28 @@
 package org.rhq.enterprise.gui.legacy.action.resource.group.monitor;
 
 import java.util.Properties;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionRedirect;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.KeyConstants;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.Portal;
 import org.rhq.enterprise.gui.legacy.action.resource.GroupController;
-import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -58,6 +63,10 @@ public class GroupVisibilityPortalAction extends GroupController {
     private static final String TITLE_PERFORMANCE = "resource.group.monitor.visibility.PerformanceTitle";
 
     private static final String PORTLET_PERFORMANCE = ".resource.group.monitor.visibility.Performance";
+
+    private static final String TITLE_EVENTS = "resource.common.monitor.visibility.EventsTitle";
+
+    private static final String PORTLET_EVENTS = ".resource.common.monitor.visibility.Events";
 
     protected static final Log log = LogFactory.getLog(GroupVisibilityPortalAction.class.getName());
 
@@ -94,9 +103,10 @@ public class GroupVisibilityPortalAction extends GroupController {
     @Override
     protected Properties getKeyMethodMap() {
         Properties map = new Properties();
-        map.setProperty(Constants.MODE_MON_CUR, "currentHealth");
-        map.setProperty(Constants.MODE_MON_RES_METS, "resourceMetrics");
-        map.setProperty(Constants.MODE_MON_PERF, "performance");
+        map.setProperty(KeyConstants.MODE_MON_CUR, "currentHealth");
+        map.setProperty(KeyConstants.MODE_MON_RES_METS, "resourceMetrics");
+        map.setProperty(KeyConstants.MODE_MON_PERF, "performance");
+        map.setProperty(KeyConstants.MODE_MON_EVENT, "events");
         return map;
     }
 
@@ -106,9 +116,9 @@ public class GroupVisibilityPortalAction extends GroupController {
 
         super.setNavMapLocation(request, mapping, Constants.MONITOR_VISIBILITY_LOC);
 
-        request.setAttribute(Constants.DEPL_CHILD_MODE_ATTR, "resourceMetrics");
+        request.setAttribute(KeyConstants.DEPL_CHILD_MODE_ATTR, "resourceMetrics");
         Portal portal = Portal.createPortal(TITLE_CURRENT_HEALTH, PORTLET_CURRENT_HEALTH);
-        request.setAttribute(Constants.PORTAL_KEY, portal);
+        request.setAttribute(AttrConstants.PORTAL_KEY, portal);
         return null;
     }
 
@@ -119,7 +129,7 @@ public class GroupVisibilityPortalAction extends GroupController {
         super.setNavMapLocation(request, mapping, Constants.MONITOR_VISIBILITY_LOC);
 
         Portal portal = Portal.createPortal(TITLE_GROUP_METRICS, PORTLET_GROUP_METRICS);
-        request.setAttribute(Constants.PORTAL_KEY, portal);
+        request.setAttribute(AttrConstants.PORTAL_KEY, portal);
         return null;
     }
 
@@ -130,13 +140,24 @@ public class GroupVisibilityPortalAction extends GroupController {
         super.setNavMapLocation(request, mapping, Constants.MONITOR_VISIBILITY_LOC);
 
         Portal portal = Portal.createPortal(TITLE_PERFORMANCE, PORTLET_PERFORMANCE);
-        request.setAttribute(Constants.PORTAL_KEY, portal);
+        request.setAttribute(AttrConstants.PORTAL_KEY, portal);
+        return null;
+    }
+
+    public ActionForward events(ActionMapping mapping, ActionForm form, HttpServletRequest request,
+        HttpServletResponse response) throws Exception {
+        setResourceGroup(request);
+
+        super.setNavMapLocation(request, mapping, Constants.MONITOR_VISIBILITY_LOC);
+
+        Portal portal = Portal.createPortal(TITLE_EVENTS, PORTLET_EVENTS);
+        request.setAttribute(AttrConstants.PORTAL_KEY, portal);
         return null;
     }
 
     private void findResourceHealths(HttpServletRequest request) throws Exception {
         Subject subject = WebUtility.getSubject(request);
-        Integer groupId = RequestUtils.getGroupId(request);
+        Integer groupId = WebUtility.getRequiredIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM);
         ResourceGroup group = LookupUtil.getResourceGroupManager().getResourceGroupById(subject, groupId, null);
 
         PageControl pageControl = WebUtility.getPageControl(request);
@@ -149,6 +170,6 @@ public class GroupVisibilityPortalAction extends GroupController {
             log.trace("got " + healths.size() + " ResourceTypeDisplays getting group member's health");
         }
 
-        request.setAttribute(Constants.GROUP_MEMBER_HEALTH_SUMMARIES_ATTR, healths);
+        request.setAttribute(AttrConstants.GROUP_MEMBER_HEALTH_SUMMARIES_ATTR, healths);
     }
 }

@@ -127,7 +127,13 @@ public class EventDetailsAction extends BaseAction {
                 html.append('>');
                 html.append("<a href=\"/resource/common/monitor/Visibility.do?mode=events&amp;eventId=");
                 html.append(event.getEventId());
-                html.append("&amp;id=").append(event.getResourceId());
+                if (resourceId > -1) {
+                    html.append("&amp;id=").append(event.getResourceId());
+                } else if (groupId > -1) {
+                    html.append("&amp;groupId=").append(groupId);
+                } else {
+                    html.append("&amp;parent=").append(parent).append("&amp;type=").append(type);
+                }
                 html.append("\">");
                 html.append(event.getEventId());
                 html.append("</a>");

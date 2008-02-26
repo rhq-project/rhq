@@ -28,6 +28,7 @@ import mazz.i18n.Logger;
 import org.jboss.remoting.invocation.NameBasedInvocation;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.util.exception.WrappedRemotingException;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandExecutor;
 import org.rhq.enterprise.communications.command.CommandResponse;
@@ -45,7 +46,6 @@ import org.rhq.enterprise.communications.util.ClassUtil;
 import org.rhq.enterprise.communications.util.ConcurrencyManager;
 import org.rhq.enterprise.communications.util.ConcurrencyManager.Permit;
 import org.rhq.enterprise.communications.util.NotPermittedException;
-import org.rhq.enterprise.communications.util.StreamUtil;
 
 /**
  * Processes a client request to invoke a remoted POJO.

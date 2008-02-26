@@ -29,10 +29,11 @@ import java.io.Serializable;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import mazz.i18n.Logger;
+
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.i18n.CommI18NFactory;
 import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
 import org.rhq.enterprise.communications.util.DumpBytes;
-import org.rhq.enterprise.communications.util.StreamUtil;
 
 /**
  * Persists byte arrays in a FIFO queue file. The file will grow to a limited, maximum size. If more entries are put on

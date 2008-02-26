@@ -34,7 +34,8 @@ import static org.testng.AssertJUnit.fail;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.rhq.enterprise.communications.util.StreamUtil;
+
+import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * Tests the Parameters collection.

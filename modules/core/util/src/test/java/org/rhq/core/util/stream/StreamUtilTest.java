@@ -16,13 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.communications.util;
+package org.rhq.core.util.stream;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.Random;
 import org.testng.annotations.Test;
+
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.CommandType;
 import org.rhq.enterprise.communications.command.client.CommandAndCallback;

@@ -22,9 +22,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.command.client.RemoteInputStream;
 import org.rhq.enterprise.communications.command.client.RemoteOutputStream;
-import org.rhq.enterprise.communications.util.StreamUtil;
 
 /**
  * POJO to test remote streaming.

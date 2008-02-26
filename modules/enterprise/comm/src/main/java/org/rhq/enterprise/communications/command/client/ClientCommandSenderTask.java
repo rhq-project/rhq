@@ -29,13 +29,13 @@ import java.util.concurrent.TimeoutException;
 import mazz.i18n.Logger;
 import org.jboss.remoting.CannotConnectException;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.impl.generic.GenericCommandResponse;
 import org.rhq.enterprise.communications.i18n.CommI18NFactory;
 import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
 import org.rhq.enterprise.communications.util.NotPermittedException;
-import org.rhq.enterprise.communications.util.StreamUtil;
 
 /**
  * This is runnable task that will be queued in the executor pool within the {@link ClientCommandSender}. It is a

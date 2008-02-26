@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.communications.util;
+package org.rhq.core.util.stream;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;

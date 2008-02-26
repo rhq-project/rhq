@@ -29,12 +29,13 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import mazz.i18n.Logger;
+
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.impl.generic.GenericCommandClient;
 import org.rhq.enterprise.communications.i18n.CommI18NFactory;
 import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
-import org.rhq.enterprise.communications.util.StreamUtil;
 
 /**
  * A client that sends commands to a server. This is different than {@link CommandClient} implementations because it

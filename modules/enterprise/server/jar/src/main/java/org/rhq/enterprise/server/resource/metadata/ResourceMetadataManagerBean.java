@@ -19,13 +19,13 @@
 package org.rhq.enterprise.server.resource.metadata;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -33,8 +33,10 @@ import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -120,10 +122,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL);
 
         return q.getResultList();
-    }
-
-    public Collection<ResourceType> getServerTypes() {
-        return null; //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @SuppressWarnings("unchecked")

@@ -27,9 +27,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
-import mazz.i18n.Logger;
-import org.rhq.enterprise.communications.i18n.CommI18NFactory;
-import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Provides some utilities to work on streams and some (de)serialization methods..
@@ -40,7 +40,7 @@ public class StreamUtil {
     /**
      * Logger
      */
-    private static final Logger LOG = CommI18NFactory.getLogger(StreamUtil.class);
+    private static final Log LOG = LogFactory.getLog(StreamUtil.class);
 
     /**
      * Private to prevent instantiation.
@@ -111,19 +111,19 @@ public class StreamUtil {
 
             output.flush();
         } catch (IOException ioe) {
-            throw new RuntimeException(LOG.getMsgString(CommI18NResourceKeys.STREAM_COPY_FAILED), ioe);
+            throw new RuntimeException("Stream data cannot be copied", ioe);
         } finally {
             if (closeStreams) {
                 try {
                     output.close();
                 } catch (IOException ioe2) {
-                    LOG.warn(ioe2, CommI18NResourceKeys.STREAMS_NOT_CLOSED);
+                    LOG.warn("Streams could not be closed", ioe2);
                 }
 
                 try {
                     input.close();
                 } catch (IOException ioe2) {
-                    LOG.warn(ioe2, CommI18NResourceKeys.STREAMS_NOT_CLOSED);
+                    LOG.warn("Streams could not be closed", ioe2);
                 }
             }
         }
@@ -187,7 +187,7 @@ public class StreamUtil {
 
             output.flush();
         } catch (IOException ioe) {
-            throw new RuntimeException(LOG.getMsgString(CommI18NResourceKeys.STREAM_COPY_FAILED), ioe);
+            throw new RuntimeException("Stream data cannot be copied", ioe);
         }
 
         return numBytesCopied;
@@ -211,7 +211,7 @@ public class StreamUtil {
             oos.writeObject(object);
             oos.close();
         } catch (IOException ioe) {
-            throw new RuntimeException(LOG.getMsgString(CommI18NResourceKeys.SERIALIZE_FAILED), ioe);
+            throw new RuntimeException("Failed to serialize object", ioe);
         }
 
         return byteStream.toByteArray();
@@ -236,7 +236,7 @@ public class StreamUtil {
             retObject = ois.readObject();
             ois.close();
         } catch (Exception e) {
-            throw new RuntimeException(LOG.getMsgString(CommI18NResourceKeys.DESERIALIZE_FAILED), e);
+            throw new RuntimeException("Failed to deserialize object", e);
         }
 
         return retObject;

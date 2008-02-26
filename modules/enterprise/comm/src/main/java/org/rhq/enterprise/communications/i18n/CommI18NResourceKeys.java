@@ -64,22 +64,6 @@ public interface CommI18NResourceKeys {
         @I18NMessage(value = "Keystore wurde unter [{0}] angelegt", locale = "de") })
     String KEYSTORE_CREATED = "SecurityUtil.keystore-created";
 
-    @I18NMessages( { @I18NMessage("Stream data cannot be copied"),
-        @I18NMessage(value = "Stream-Daten können nicht kopiert werden", locale = "de") })
-    String STREAM_COPY_FAILED = "StreamUtil.stream-copy-failed";
-
-    @I18NMessages( { @I18NMessage("Streams could not be closed"),
-        @I18NMessage(value = "Streams konnten nicht geschlossen werden", locale = "de") })
-    String STREAMS_NOT_CLOSED = "StreamUtil.streams-not-closeable";
-
-    @I18NMessages( { @I18NMessage("Failed to serialize object"),
-        @I18NMessage(value = "Konnte das Objekt nicht serialisieren", locale = "de") })
-    String SERIALIZE_FAILED = "StreamUtil.serialize-failed";
-
-    @I18NMessages( { @I18NMessage("Failed to deserialize object"),
-        @I18NMessage(value = "Konnte das Objekt nicht deserialisieren", locale = "de") })
-    String DESERIALIZE_FAILED = "StreamUtil.deserialize-failed";
-
     @I18NMessages( { @I18NMessage("PING ACKNOWLEDGE"), @I18NMessage(value = "PING BESTÄTIGUNG", locale = "de") })
     String PING_ACK = "PingImpl.ping-ack";
 

@@ -21,6 +21,8 @@ package org.rhq.enterprise.agent;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandExecutor;
 import org.rhq.enterprise.communications.command.CommandResponse;
@@ -29,7 +31,6 @@ import org.rhq.enterprise.communications.command.client.RemoteInputStream;
 import org.rhq.enterprise.communications.command.impl.generic.GenericCommandResponse;
 import org.rhq.enterprise.communications.command.server.CommandService;
 import org.rhq.enterprise.communications.command.server.CommandServiceMBean;
-import org.rhq.enterprise.communications.util.StreamUtil;
 
 /**
  * A test command service that processes data from an input stream and sends that data back in the response to confirm

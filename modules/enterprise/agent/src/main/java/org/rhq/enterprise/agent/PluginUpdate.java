@@ -31,9 +31,9 @@ import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.util.MD5Generator;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
-import org.rhq.enterprise.communications.util.StreamUtil;
 
 /**
  * This object's job is to update any and all plugin jars that need to be updated. If this object determines that a

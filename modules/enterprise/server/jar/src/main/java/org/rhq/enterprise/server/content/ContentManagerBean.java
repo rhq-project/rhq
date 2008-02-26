@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.content;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -64,7 +62,6 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.composite.PackageVersionComposite;
 import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeletePackagesRequest;
@@ -79,6 +76,7 @@ import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -989,14 +987,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // use the byte array in the package version to store the bits.
         byte[] packageBits;
         try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            packageBits = new byte[1024];
-
-            while (packageBitStream.read(packageBits) != -1) {
-                baos.write(packageBits);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Error reading in the package file", e);
+            packageBits = StreamUtil.slurp(packageBitStream);
+        } catch (RuntimeException re) {
+            throw new RuntimeException("Error reading in the package file", re);
         }
 
         PackageBits bits = new PackageBits();

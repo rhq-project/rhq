@@ -31,9 +31,10 @@ import java.util.Properties;
 import java.util.prefs.BackingStoreException;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
+
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.ServiceContainerMetricsMBean;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderMetrics;
-import org.rhq.enterprise.communications.util.StreamUtil;
 
 /**
  * The class that tests can use to configure and create agents. This class also provides the output of the agent as well

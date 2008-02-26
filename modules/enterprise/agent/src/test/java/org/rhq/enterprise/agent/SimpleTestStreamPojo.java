@@ -21,7 +21,8 @@ package org.rhq.enterprise.agent;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import org.rhq.enterprise.communications.util.StreamUtil;
+
+import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * A test POJO that processes data from an input stream and sends that data back in its return value to confirm the

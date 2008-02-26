@@ -28,12 +28,12 @@ import java.net.URL;
 import mazz.i18n.Msg;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 import org.rhq.enterprise.communications.command.client.ClientCommandSender;
 import org.rhq.enterprise.communications.command.client.ClientRemotePojoFactory;
-import org.rhq.enterprise.communications.util.StreamUtil;
 
 /**
  * Downloads a file from a remote server (either the RHQ Server or a remote URL).

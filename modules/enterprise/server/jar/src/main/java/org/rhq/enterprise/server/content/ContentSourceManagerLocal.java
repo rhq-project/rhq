@@ -151,7 +151,7 @@ public interface ContentSourceManagerLocal {
     long getPackageBitsLength(int resourceId, PackageDetailsKey packageDetailsKey);
 
     /////////////////////////////////////////////////////////////////////
-    // The methods below probably should not be exposed to remote clients
+    // The methods below should not be exposed to remote clients
 
     /**
      * Returns all the package versions that are served by all the content sources identified by the given IDs.

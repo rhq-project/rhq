@@ -411,7 +411,7 @@
                             </copy>
                             <property name="deployment.dir" location="${rhq.deploymentDir}"/>
                             <echo>*** Copying updated files from src${file.separator}main${file.separator}webapp${file.separator} to ${deployment.dir}${file.separator}...</echo>
-                            <copy todir="${deployment.dir}" verbose="true">
+                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                <fileset dir="${basedir}/src/main/webapp"/>
                             </copy>
                             <!-- TODO: Also copy the files from src/main/webapp-filtered/, and then filter them ourselves. -->

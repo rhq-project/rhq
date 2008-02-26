@@ -46,6 +46,7 @@ if (beans != null) {
        </c:if>
       <td background="<c:out value="${icon}"/>" align="center" valign="middle">
       
+      <%-- showEventDetails() is defined in Indicators.jsp --%>
       <c:if test="${not empty timeTick.severity}">
         <div class="eventBlock" 
          onmousedown="overlay.delayTimePopup(<c:out value="${count - 1}"/>,'<hq:dateFormatter value="${timeTick.time}"/>');showEventsDetails(<c:out value="${timeTick.time}"/>);overlay.moveOverlay(this)"></div>

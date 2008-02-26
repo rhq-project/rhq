@@ -25,6 +25,8 @@ import java.util.StringTokenizer;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -32,10 +34,12 @@ import org.apache.struts.util.MessageResources;
 
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.clientapi.util.TimeUtil;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.DefaultConstants;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.StringConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -46,9 +50,15 @@ import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * Set an array for the timeline display
+ * Set an array for the timeline display in EventLogs.jsp, showEventDetails().
+ * The JavaScript function showEventDetails() is actually defined in Indicators.jsp
+ * 
+ * @author Heiko W. Rupp
  */
 public class EventDetailsAction extends BaseAction {
+
+    Log log = LogFactory.getLog(EventDetailsAction.class);
+
     /* (non-Javadoc)
      * @see org.apache.struts.action.Action#execute(org.apache.struts.action.ActionMapping,
      * org.apache.struts.action.ActionForm, javax.servlet.http.HttpServletRequest,
@@ -66,11 +76,25 @@ public class EventDetailsAction extends BaseAction {
 
         begin = Long.parseLong(WebUtility.getOptionalRequestParameter(request, "begin", "0"));
 
-        int resourceId = WebUtility.getResourceId(request);
+        int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
+        int groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
+        int parent = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
+        int type = WebUtility.getOptionalIntRequestParameter(request, "type", -1);
 
         EventManagerLocal eventManager = LookupUtil.getEventManager();
-        List<EventComposite> events = eventManager.getEventsForResource(user.getSubject(), resourceId, begin, begin
-            + interval, null);
+        List<EventComposite> events;
+
+        Subject subject = user.getSubject();
+        if (resourceId > -1) {
+            events = eventManager.getEventsForResource(subject, resourceId, begin, begin + interval, null);
+        } else if (groupId > -1) {
+            events = eventManager.getEventsForCompGroup(subject, groupId, begin, begin + interval, null);
+        } else if (parent > -1 && type > -1) {
+            events = eventManager.getEventsForAutoGroup(subject, parent, type, begin, begin + interval, null);
+        } else {
+            log.error("Unknown input combination, can't compute events for input");
+            return null;
+        }
 
         MessageResources res = getResources(request);
         //        String formatString = res.getMessage(

@@ -173,6 +173,8 @@ public class EventManagerBean implements EventManagerLocal {
     @SuppressWarnings("unchecked")
     public List<Event> getEventsForResources(Subject subject, List<Resource> resources, long startDate, long endDate) {
 
+        // TODO rewrite using getEvents
+
         Query q = entityManager.createNamedQuery(Event.FIND_EVENTS_FOR_RESOURCES_AND_TIME);
         q.setParameter("resources", resources);
         q.setParameter("start", new Date(startDate));
@@ -180,6 +182,34 @@ public class EventManagerBean implements EventManagerLocal {
         List<Event> ret = q.getResultList();
 
         return ret;
+    }
+
+    public List<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin, long endDate,
+        Object object) {
+
+        List<Resource> resources = resGrpMgr.getResourcesForAutoGroup(subject, parent, type);
+        int[] resourceIds = new int[resources.size()];
+        int i = 0;
+        for (Resource res : resources)
+            resourceIds[i++] = res.getId();
+
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, null, 0, null, null,
+            new PageControl());
+        return comp.subList(0, comp.getTotalSize());
+    }
+
+    public List<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
+        Object object) {
+
+        List<Resource> resources = resGrpMgr.getResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
+        int[] resourceIds = new int[resources.size()];
+        int i = 0;
+        for (Resource res : resources)
+            resourceIds[i++] = res.getId();
+
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, null, 0, null, null,
+            new PageControl());
+        return comp.subList(0, comp.getTotalSize());
     }
 
     public int[] getEventCounts(Subject subject, int resourceId, long begin, long end, int numBuckets) {
@@ -267,12 +297,12 @@ public class EventManagerBean implements EventManagerLocal {
     public List<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
         EventSeverity severity) {
 
-        PageList<EventComposite> comp = getEvents(subject, resourceId, startDate, endDate, severity, -1, null, null,
-            new PageControl());
+        PageList<EventComposite> comp = getEvents(subject, new int[] { resourceId }, startDate, endDate, severity, -1,
+            null, null, new PageControl());
         return comp.subList(0, comp.getTotalSize());
     }
 
-    public PageList<EventComposite> getEvents(Subject subject, int resourceId, long begin, long end,
+    public PageList<EventComposite> getEvents(Subject subject, int[] resourceIds, long begin, long end,
         EventSeverity severity, int eventId, String source, String searchString, PageControl pc) {
 
         PageList<EventComposite> pl = new PageList<EventComposite>(pc);
@@ -301,8 +331,12 @@ public class EventManagerBean implements EventManagerLocal {
             throw new RuntimeException("Unknown database type : " + dbType);
         query += ", ev.severity, ev.timestamp, res.id "
             + "FROM RHQ_Event ev  INNER  JOIN RHQ_Event_Source evs ON evs.id = ev.event_source_id "
-            + "INNER  JOIN RHQ_resource res ON res.id = evs.resource_id " + "WHERE res.id = ? "
-            + "  AND ev.timestamp BETWEEN ? AND ? ";
+            + "INNER  JOIN RHQ_resource res ON res.id = evs.resource_id WHERE res.id IN ( ";
+
+        query += JDBCUtil.generateInBinds(resourceIds.length);
+        query += " ) ";
+
+        query += "  AND ev.timestamp BETWEEN ? AND ? ";
         if (severity != null)
             query += " AND ev.severity = ? ";
         if (isFilled(searchString))
@@ -321,10 +355,11 @@ public class EventManagerBean implements EventManagerLocal {
         try {
             conn = rhqDs.getConnection();
             stm = conn.prepareStatement(query.toString());
-            stm.setInt(1, resourceId);
-            stm.setTimestamp(2, new Timestamp(begin));
-            stm.setTimestamp(3, new Timestamp(end));
-            int i = 4;
+            int i = 1;
+            JDBCUtil.bindNTimes(stm, resourceIds, 1);
+            i += resourceIds.length;
+            stm.setTimestamp(i++, new Timestamp(begin));
+            stm.setTimestamp(i++, new Timestamp(end));
             if (severity != null)
                 stm.setString(i++, severity.toString());
             if (pc.getPageSize() > 0) {

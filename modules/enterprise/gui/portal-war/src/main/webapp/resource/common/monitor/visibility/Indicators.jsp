@@ -148,6 +148,7 @@ function reviewAction(option) {
     }
   }
 
+  // Used in EventLogs.jsp
   function showEventsDetails(time, status) {
       initEventDetails();
     eventsTime = time;
@@ -157,11 +158,17 @@ function reviewAction(option) {
     if (status != null)
       ajaxEngine.sendRequest( 'getEventDetails',
                               'id=<c:out value="${id}"/>',
+                              'groupId=<c:out value="${groupId}"/>',
+                              'parent=<c:out value="${parent}"/>',
+                              'type=<c:out value="${type}"/>',
                               'begin=' + time,
                               'status=' + status);
     else
       ajaxEngine.sendRequest( 'getEventDetails',
                               'id=<c:out value="${id}"/>',
+                              'groupId=<c:out value="${groupId}"/>',
+                              'parent=<c:out value="${parent}"/>',
+                              'type=<c:out value="${type}"/>',
                               'begin=' + time);
     showEventsCallback();
   }

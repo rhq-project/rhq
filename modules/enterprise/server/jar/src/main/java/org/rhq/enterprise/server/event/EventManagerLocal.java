@@ -80,6 +80,12 @@ public interface EventManagerLocal {
     public List<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
         EventSeverity severity);
 
+    public List<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long eendDate,
+        Object object);
+
+    public List<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin, long endDate,
+        Object object);
+
     /**
      * Retreive the count of events for the given resource in the time between begin and end, nicely separated
      * in numBuckets.
@@ -131,7 +137,7 @@ public interface EventManagerLocal {
     /**
      * Return a {@link PageList} of {@link Event} objects, that match the input 
      * @param subject
-     * @param resourceId We want events for this resource
+     * @param resourceIds We want events for those resources
      * @param begin      Begin time for the events display
      * @param end        End time for the events display
      * @param severity   Severity we are interested in. Null for all
@@ -141,8 +147,8 @@ public interface EventManagerLocal {
      * @param pc         {@link PageControl} to specify the list size
      * @return           List of Events
      */
-    public PageList<EventComposite> getEvents(Subject subject, int resourceId, long begin, long end, EventSeverity severity,
-        int eventId, String source, String searchString, PageControl pc);
+    public PageList<EventComposite> getEvents(Subject subject, int[] resourceIds, long begin, long end,
+        EventSeverity severity, int eventId, String source, String searchString, PageControl pc);
 
     /**
      * Obtain detail information about the passed event
@@ -151,4 +157,5 @@ public interface EventManagerLocal {
      * @return
      */
     public EventComposite getEventDetailForEventId(Subject subject, int eventId);
+
 }

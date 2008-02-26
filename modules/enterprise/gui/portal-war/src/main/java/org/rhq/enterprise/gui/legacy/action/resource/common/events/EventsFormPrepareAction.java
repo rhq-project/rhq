@@ -79,8 +79,8 @@ public class EventsFormPrepareAction extends MetricsControlAction {
         String sourceFilter = eForm.getSourceFilter();
         String searchString = eForm.getSearchString();
 
-        PageList<EventComposite> events = eventManager.getEvents(subject, resourceId, begin, end, severityFilter,
-            eventId, sourceFilter, searchString, pc);
+        PageList<EventComposite> events = eventManager.getEvents(subject, new int[] { resourceId }, begin, end,
+            severityFilter, eventId, sourceFilter, searchString, pc);
         for (EventComposite event : events) {
             event.setEventDetail(htmlFormat(event.getEventDetail(), eForm.getSearchString()));
             event.setSourceLocation(htmlFormat(event.getSourceLocation(), null));
@@ -107,14 +107,6 @@ public class EventsFormPrepareAction extends MetricsControlAction {
             pc.sortBy(sc);
 
         return pc;
-    }
-
-    public ActionForward getDetail(ActionMapping mapping, ActionForm form, HttpServletRequest request,
-        HttpServletResponse response) throws Exception {
-
-        System.out.println("AJAX!");
-
-        return null;
     }
 
     /**

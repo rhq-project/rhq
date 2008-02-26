@@ -135,6 +135,32 @@ public class ResourceContainer implements Serializable {
         this.measurementSchedule = measurementSchedule;
     }
 
+    /**
+    * updates the measurementSchedule with the modifications made in the measurementScheduleUpdate
+    * @param measurementScheduleUpdate the updates to the current measurementSchedule
+    * @return true if the schedule was updated successfully, false otherwise
+    */
+    public boolean updateMeasurementSchedule( Set<MeasurementScheduleRequest> measurementScheduleUpdate)
+    {
+
+        Set<Integer> updateScheduleIds = new HashSet<Integer>();
+        for(MeasurementScheduleRequest update: measurementScheduleUpdate ) {
+            updateScheduleIds.add( update.getScheduleId() );
+        }
+
+        Set<MeasurementScheduleRequest> toBeRemoved  = new HashSet<MeasurementScheduleRequest>();
+        for( MeasurementScheduleRequest current : this.measurementSchedule ) {
+            if( updateScheduleIds.contains( current.getScheduleId() ) ) {
+                toBeRemoved.add( current );
+            }
+        }
+        // first remove all the old versoins of the measurement schedules
+        this.measurementSchedule.removeAll(toBeRemoved);
+
+        // then add the new versions
+        return  measurementSchedule.addAll(measurementScheduleUpdate);
+    }
+
     public ResourceComponentState getResourceComponentState() {
         return this.resourceComponentState;
     }

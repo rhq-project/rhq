@@ -35,6 +35,15 @@ public interface MeasurementAgentService {
     void scheduleCollection(Set<ResourceMeasurementScheduleRequest> resourceSchedules);
 
     /**
+     * Updates the schedule for a group of measurements on the agent. Like scheduleCollection(), this method should not
+     * fail if it cannot schedule an individual measurement. The only errors which should occur are protocol or
+     * connection errors.
+     *
+      * @param resourceSchedules list of schedules that are to be updated on the agent
+     */
+    void updateCollection(Set<ResourceMeasurementScheduleRequest> resourceSchedules);
+
+    /**
      * Unschedule previously scheduled measurements for the resources with the specified id's . An attempt will be made
      * to unschedule all measurements; however, if one measurement is unable to be unscheduled, an exception will not be
      * thrown until the end of the operation. Therefore, it is safe to assume that measurements will be unscheduled (or

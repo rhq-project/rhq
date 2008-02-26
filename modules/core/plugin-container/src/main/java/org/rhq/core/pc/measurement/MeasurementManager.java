@@ -257,6 +257,32 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         this.configuration = configuration;
     }
 
+
+    public synchronized void updateCollection(Set<ResourceMeasurementScheduleRequest> scheduleRequests) {
+        InventoryManager im = PluginContainer.getInstance().getInventoryManager();
+
+        for (ResourceMeasurementScheduleRequest resourceRequest : scheduleRequests) {
+            ResourceContainer resourceContainer = im.getResourceContainer(resourceRequest.getResourceId());
+            if (resourceContainer != null) {
+                resourceContainer.updateMeasurementSchedule(resourceRequest.getMeasurementSchedules());   // this is where we want to update rather than overwrite, right?
+
+//                resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
+                scheduleCollection(resourceRequest.getResourceId(), resourceRequest.getMeasurementSchedules());
+            } else {
+                // This will happen when the server sends down schedules to an agent with a cleaned inventory
+                // Its ok to skip these because the agent will request a reschedule once its been able to synchronize
+                // and add these to inventory
+                LOG.debug("Resource container was null, could not schedule collection for resource "
+                    + resourceRequest.getResourceId());
+            }
+        }
+
+        // TODO GH: Should I kick the pool or should I just go with the 30 second granularity on collections?
+        // If I get much more granular then the server could end up with too many small reports from many agents
+        // This may be another reason to have a separate sending mechanism from the collection mechanism.
+        clearDuplicateSchedules();
+
+    }
     /**
      * This remoted method allows the server to schedule a bunch of resources with one call
      *
@@ -268,6 +294,8 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         for (ResourceMeasurementScheduleRequest resourceRequest : scheduleRequests) {
             ResourceContainer resourceContainer = im.getResourceContainer(resourceRequest.getResourceId());
             if (resourceContainer != null) {
+//                resourceContainer.updateMeasurementSchedule(resourceRequest.getMeasurementSchedules());   // this is where we want to update rather than overwrite, right?
+
                 resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
                 scheduleCollection(resourceRequest.getResourceId(), resourceRequest.getMeasurementSchedules());
             } else {

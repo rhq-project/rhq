@@ -52,7 +52,7 @@ public class EventManager implements ContainerService {
     private static final int SENDER_PERIOD_SECS = 30;
 
     private static final String POLLER_THREAD_POOL_NAME = "EventManager.poller";
-    private static final int POLLER_THREAD_POOL_CORE_SIZE = 5;
+    private static final int POLLER_THREAD_POOL_CORE_SIZE = 5; // TODO: Make this configurable.
     private static final int POLLER_INITIAL_DELAY_SECS = 0;
 
     private PluginContainerConfiguration pcConfig;

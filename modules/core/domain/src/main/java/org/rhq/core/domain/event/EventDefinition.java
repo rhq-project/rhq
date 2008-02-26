@@ -58,6 +58,10 @@ public class EventDefinition implements Externalizable {
     @ManyToOne(fetch = FetchType.LAZY)
     private ResourceType resourceType;
 
+    @SuppressWarnings({"UnusedDeclaration"})
+    @Column(name = "RESOURCE_TYPE_ID", insertable = false, updatable = false)
+    private int resourceTypeId;
+
     @Column(name="NAME", length = 100, nullable = false)
     private String name;
 
@@ -77,6 +81,7 @@ public class EventDefinition implements Externalizable {
         if (name == null)
             throw new IllegalArgumentException("name parameter must not be null.");
         this.resourceType = resourceType;
+        this.resourceTypeId = this.resourceType.getId();
         this.name = name;
     }
 
@@ -87,6 +92,10 @@ public class EventDefinition implements Externalizable {
     @NotNull
     public ResourceType getResourceType() {
         return resourceType;
+    }
+
+    public int getResourceTypeId() {
+        return resourceTypeId;
     }
 
     @NotNull
@@ -118,7 +127,7 @@ public class EventDefinition implements Externalizable {
         EventDefinition that = (EventDefinition) obj;
 
         if (!name.equals(that.name)) return false;
-        if (!resourceType.equals(that.resourceType)) return false;
+        if (resourceTypeId != that.resourceTypeId) return false;
 
         return true;
     }
@@ -126,15 +135,16 @@ public class EventDefinition implements Externalizable {
     @Override
     public int hashCode() {
         int result;
-        result = resourceType.hashCode();
+        result = resourceTypeId;
         result = 31 * result + name.hashCode();
         return result;
     }
 
     @Override
     public String toString() {
-        return "EventDefinition[" + "id=" + this.id + ", " + "resourceType="
-            + this.resourceType.getName() + ", " + "name=" + this.name + ", "
+        return "EventDefinition[" + "id=" + this.id + ", "
+            + "resourceType.name=" + ((this.resourceType != null) ? this.resourceType.getName() : "null") + ", "
+            + "name=" + this.name
             + "]";
 
     }

@@ -62,7 +62,6 @@ public class EventSource implements Externalizable {
     private int id;
 
     @JoinColumn(name = "EVENT_DEF_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
     private EventDefinition eventDefinition;
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
@@ -92,6 +91,7 @@ public class EventSource implements Externalizable {
         this.location = location;
         this.eventDefinition = eventDefinition;
         this.resource = resource;
+        this.resourceId = this.resource.getId();
     }
 
     public int getId() {
@@ -124,9 +124,9 @@ public class EventSource implements Externalizable {
 
         EventSource that = (EventSource) obj;
 
-        if (eventDefinition != null ? !eventDefinition.equals(that.eventDefinition) : that.eventDefinition != null)
+        if (!eventDefinition.equals(that.eventDefinition))
             return false;
-        if (resource != null ? !resource.equals(that.resource) : that.resource != null)
+        if (resourceId != that.resourceId)
             return false;
         if (!location.equals(that.location))
             return false;
@@ -137,8 +137,8 @@ public class EventSource implements Externalizable {
     @Override
     public int hashCode() {
         int result;
-        result = (eventDefinition != null) ? eventDefinition.hashCode() : 0;
-        result = 31 * result + ((resource != null) ? resource.hashCode() : 0);
+        result = eventDefinition.hashCode();
+        result = 31 * result + resourceId;
         result = 31 * result + location.hashCode();
         return result;
     }

@@ -19,11 +19,14 @@
 package org.rhq.enterprise.server.operation;
 
 import java.util.List;
+
 import javax.ejb.Local;
+
 import org.jetbrains.annotations.Nullable;
 import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.configuration.Configuration;
@@ -487,8 +490,6 @@ public interface OperationManagerLocal {
     OperationDefinition getOperationDefinition(Subject whoami, int operationId);
 
     /**
-     * A (hopefully) temporary solution.
-     *
      * @param  resourceTypeId
      * @param  operationName
      *

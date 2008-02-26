@@ -14,7 +14,7 @@
   <packaging>pom</packaging>
 
   <name>RHQ Modules</name>
-  <description>parent POM for all JON modules</description>
+  <description>parent POM for all RHQ modules</description>
 
   <scm>
     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/</connection>

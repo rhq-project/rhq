@@ -28,12 +28,14 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
@@ -118,81 +120,92 @@ public class AlertConditionCache {
      */
 
     /*
-     * structure: map< measurementScheduleId, list < NumericDoubleCacheElement > >   (MeasurementDataNumeric cache)
+     * structure: 
+     *      map< measurementScheduleId, list < NumericDoubleCacheElement > >   (MeasurementDataNumeric cache)
      *      map< measurementScheduleId, list < StringCacheElement > >          (MeasurementDataTrait   cache)
      *
-     * algorithm: Use the measurementScheduleId to find a list of cached conditions for measurement numerics.
+     * algorithm: 
+     *      Use the measurementScheduleId to find a list of cached conditions for measurement numerics.
      */
     private Map<Integer, List<NumericDoubleCacheElement>> measurementDataCache;
     private Map<Integer, List<StringCacheElement>> measurementTraitCache;
 
     /*
-     * structure: map< baselineId, list< baselineCacheElement > >           map< baselineId, tuple< lowCacheElement,
-     * highCacheElement > >
+     * structure: 
+     *      map< baselineId, list< baselineCacheElement > >           
+     *      map< baselineId, tuple< lowCacheElement, highCacheElement > >
      *
-     * algorithm: This map exists solely to assist with the cache maintenance process.  When a measurement
-     * baseline value changes, the maint process will come along and look up all measurementDataCache           entries
-     * that are affected by this change.  The process will continue by walking each of the           elements and
-     * updating the value.
+     * algorithm: 
+     *      This map exists solely to assist with the cache maintenance process.  When a measurement
+     *      baseline value changes, the maint process will come along and look up all measurementDataCache           
+     *      entries that are affected by this change.  The process will continue by walking each of the           
+     *      elements and updating the value.
      *
-     *         Thus, by design, the processing thread that comes along and checks the measurementDataCache to see if
-     *       any alert conditions have become true won't (and shouldn't) be able to tell the difference anymore
-     *  between elements that refer to absolute value predicates and those that refer to calculated baselines.
+     *      Thus, by design, the processing thread that comes along and checks the measurementDataCache to see if
+     *      any alert conditions have become true won't (and shouldn't) be able to tell the difference anymore
+     *      between elements that refer to absolute value predicates and those that refer to calculated baselines.
      *
-     *         while the measurementBaselineMap calculates the dataCache element off of the alertCondition threshold
-     * value,           the outOfBoundsBaselineMap will have two entries for every baseline - one for "< 95%" and one
-     * for "> 105%".
+     *      While the measurementBaselineMap calculates the dataCache element off of the alertCondition threshold
+     *      value, the outOfBoundsBaselineMap will have two entries for every baseline - one for "< 95%" and one
+     *      for "> 105%".
      */
     private Map<Integer, List<MeasurementBaselineCacheElement>> measurementBaselineMap;
     private Map<Integer, Tuple<OutOfBoundsCacheElement, OutOfBoundsCacheElement>> outOfBoundsBaselineMap;
 
     /*
-     * structure: map< resourceId, map< operationDefinitionId, list< ResourceOperationCacheElement > > >
+     * structure: 
+     *      map< resourceId, map< operationDefinitionId, list< ResourceOperationCacheElement > > >
      *
-     * algorithm: Finding matching conditions are simple because a ResourceOperationHistory element already contains
-     *     references back to its OperationDefinition element as well as the Resource it was executed against.
+     * algorithm: 
+     *      Finding matching conditions are simple because a ResourceOperationHistory element already contains
+     *      references back to its OperationDefinition element as well as the Resource it was executed against.
      *
-     *         Using these two pieces of information, it's possible to lookup the list of states that should cause a
-     * firing.
+     *      Using these two pieces of information, it's possible to lookup the list of states that should cause a
+     *      firing.
      */
     private Map<Integer, Map<Integer, List<ResourceOperationCacheElement>>> resourceOperationCache;
 
     /*
-     * structure: map< resourceId, list< AvailabilityCacheElement > > >
+     * structure: 
+     *      map< resourceId, list< AvailabilityCacheElement > > >
      *
-     * algorithm: This is perhaps the simplest structure in this cache.  When an Availability object comes across the
-     * line,           use the Resource object associated with it (attached to it) to get the list of cache elements
-     * representing           conditions created against this resource's availability.
+     * algorithm: 
+     *      This is perhaps the simplest structure in this cache.  When an Availability object comes across the
+     *      line, use the Resource object associated with it (attached to it) to get the list of cache elements
+     *      representing conditions created against this resource's availability.
      */
     private Map<Integer, List<AvailabilityCacheElement>> availabilityCache;
 
     /*
-     * structure: map< alertConditionId, list< tuple< AbstractCacheElement, list< AbstractCacheElement > > > >
+     * structure: 
+     *      map< alertConditionId, list< tuple< AbstractCacheElement, list< AbstractCacheElement > > > >
      *
-     * algorithm: Updating an AlertDefinition is an expensive operation.  If the definition is deleted or disabled, all of
-     *           the corresponding cache elements that were constructed against any of the definition's nested
-     * conditions           now need to be removed.  This would normally require iterating over the entirety of the
-     * cache.  This may           not seem so bad for an individual update, but let's pretend that the user wants to
-     * disable all alerts on           a particular resource (perhaps for a maintenance window) or, worse, disable all
-     * alerts across several           resources.  Now we have to iterate over the ENTIRE cache multiple times, once for
-     * each AlertDefinition           updated.  This is unacceptable.
+     * algorithm: 
+     *      Updating an AlertDefinition is an expensive operation.  If the definition is deleted or disabled, all of
+     *      the corresponding cache elements that were constructed against any of the definition's nested conditions
+     *      now need to be removed.  This would normally require iterating over the entirety of the cache.  This may
+     *      not seem so bad for an individual update, but let's pretend that the user wants to disable all alerts on
+     *      a particular resource (perhaps for a maintenance window) or, worse, disable all alerts across several
+     *      resources.  Now we have to iterate over the ENTIRE cache multiple times, once for each AlertDefinition
+     *      updated.  This is unacceptable.
      *
-     *         To remedy this, we keep an inverse map to mark the locations where particular AlertCondition ids have
-     * been           used to create cache elements.  This way, when an AlertCondition is updated, we can go to this map
-     * to           learn which cache elements were created from this condition as well as their precise location(s)
-     * across           all internal cache structures.
+     *      To remedy this, we keep an inverse map to mark the locations where particular AlertCondition ids have been
+     *      used to create cache elements.  This way, when an AlertCondition is updated, we can go to this map to learn
+     *      which cache elements were created from this condition as well as their precise location(s) across all
+     *      internal cache structures.
      *
-     * note     : A list of tuples was used as the type for the map's value objects because a nested Map was insufficient.
-     *           The cache for measurement data uses multiple lists, and that particular implementation actually
-     * references           the same NumericDoubleCacheElement in these multiple lists.  Thus, a map would have been
-     * insufficient           because it would not have been able to represent both lists that the cache element was a
-     * member of.           A list of tuples can do this.
+     * note: 
+     *      A list of tuples was used as the type for the map's value objects because a nested Map was insufficient.
+     *      The cache for measurement data uses multiple lists, and that particular implementation actually references
+     *      the same NumericDoubleCacheElement in these multiple lists.  Thus, a map would have been insufficient
+     *      because it would not have been able to represent both lists that the cache element was a member of.
+     *      A list of tuples can do this.
      *
-     *         Furthermore, a map, even if it could have represented the data properly, wouldn't have been the most
+     *      Furthermore, a map, even if it could have represented the data properly, wouldn't have been the most
      *      appropriate structure since the value objects in this structure need to be iterated over in full.  In
-     *    other words, when this map is used to access bookkeeping information about a particular alert condition id,
-     *        the entire list of corresponding bookkeeping entries needs to be visited; so there would be no benefit to
-     *          using the nested map anyway.
+     *      other words, when this map is used to access bookkeeping information about a particular alert condition id,
+     *      the entire list of corresponding bookkeeping entries needs to be visited; so there would be no benefit to
+     *      using the nested map anyway.
      */
     private Map<Integer, List<Tuple<AbstractCacheElement<?>, List<AbstractCacheElement<?>>>>> inverseAlertConditionMap;
 

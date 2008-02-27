@@ -22,16 +22,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.Random;
+
 import org.testng.annotations.Test;
 
-import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.command.CommandResponse;
-import org.rhq.enterprise.communications.command.CommandType;
-import org.rhq.enterprise.communications.command.client.CommandAndCallback;
 import org.rhq.enterprise.communications.command.client.CommandResponseCallback;
-import org.rhq.enterprise.communications.command.impl.generic.GenericCommand;
-import org.rhq.enterprise.communications.command.param.ParameterDefinition;
-import org.rhq.enterprise.communications.command.param.ParameterRenderingInformation;
 
 /**
  * Tests StreamUtil.
@@ -195,73 +190,6 @@ public class StreamUtilTest {
      */
     public void testSerialize() {
         assert serializeDeserialize(new String("hello there")).equals("hello there");
-    }
-
-    /**
-     * Tests serializing commands.
-     *
-     * @throws Exception
-     */
-    public void testSerializeCommands() throws Exception {
-        GenericCommand gc = new GenericCommand();
-        ParameterDefinition def = new ParameterDefinition("hello", String.class.getName(),
-            new ParameterRenderingInformation("a", "b"));
-
-        gc.setCommandType(new CommandType("foo", 3));
-        gc.setParameterDefinitions(new ParameterDefinition[] { def });
-        gc.setParameterValue("hello", "world");
-        gc.getConfiguration().put("config1", "config1value");
-        gc.getConfiguration().put("config2", "config2value");
-        gc = (GenericCommand) serializeDeserialize(gc);
-
-        assert gc.getCommandType().equals(new CommandType("foo", 3));
-        assert gc.getParameterDefinition("hello").getType().equals(String.class.getName());
-        assert gc.getParameterDefinition("hello").getRenderingInfo().getLabelKey().equals("a");
-        assert gc.getParameterDefinition("hello").getRenderingInfo().getDescriptionKey().equals("b");
-        assert gc.getParameterValue("hello").equals("world");
-        assert gc.getConfiguration().getProperty("config1").equals("config1value");
-        assert gc.getConfiguration().getProperty("config2").equals("config2value");
-
-        return;
-    }
-
-    /**
-     * Tests serializing commands.
-     *
-     * @throws Exception
-     */
-    public void testSerializeCommandsWithNoConfig() throws Exception {
-        GenericCommand gc = new GenericCommand();
-        ParameterDefinition def = new ParameterDefinition("hello", String.class.getName(),
-            new ParameterRenderingInformation("a", "b"));
-
-        gc.setCommandType(new CommandType("foo", 3));
-        gc.setParameterDefinitions(new ParameterDefinition[] { def });
-        gc.setParameterValue("hello", "world");
-        gc = (GenericCommand) serializeDeserialize(gc);
-
-        assert gc.getCommandType().equals(new CommandType("foo", 3));
-        assert gc.getParameterDefinition("hello").getType().equals(String.class.getName());
-        assert gc.getParameterDefinition("hello").getRenderingInfo().getLabelKey().equals("a");
-        assert gc.getParameterDefinition("hello").getRenderingInfo().getDescriptionKey().equals("b");
-        assert gc.getParameterValue("hello").equals("world");
-
-        return;
-    }
-
-    /**
-     * Tests serializing commands and callbacks.
-     */
-    public void testSerializeCommandAndCallback() {
-        GenericCommand gc = new GenericCommand();
-        CommandAndCallback cnc = new CommandAndCallback(gc, new DummyCommandResponseCallback());
-
-        cnc = (CommandAndCallback) serializeDeserialize(cnc);
-        assert cnc.getCommand() != null;
-        assert cnc.getCallback() != null;
-        assert ((DummyCommandResponseCallback) cnc.getCallback()).foo.equals("bar");
-
-        return;
     }
 
     /**

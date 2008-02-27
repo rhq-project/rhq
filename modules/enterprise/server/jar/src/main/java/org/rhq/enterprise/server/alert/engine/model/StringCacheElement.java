@@ -18,12 +18,31 @@
  */
 package org.rhq.enterprise.server.alert.engine.model;
 
+import java.util.regex.Pattern;
+
 /*
  * If even one element in the Measurement cache were a Double, then they all need to be compared
  */
 public class StringCacheElement extends AbstractCacheElement<String> {
+    final Pattern pattern;
+
     public StringCacheElement(AlertConditionOperator operator, String value, int conditionTriggerId) {
         super(operator, value, conditionTriggerId);
+        if (operator.equals(AlertConditionOperator.REGEX)) {
+            /* 
+             * assume that the user meant to match characters before and after whatever pattern they used; this
+             * makes the UI simpler to understand for those that only ever care about simple substring matching
+             */
+            if (!value.startsWith("^")) {
+                value = ".*" + value;
+            }
+            if (!value.endsWith("$")) {
+                value = value + ".*";
+            }
+            pattern = Pattern.compile(value, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
+        } else {
+            pattern = null;
+        }
     }
 
     @Override
@@ -57,17 +76,19 @@ public class StringCacheElement extends AbstractCacheElement<String> {
             return result < 0;
         } else if (alertConditionOperator == AlertConditionOperator.EQUALS) {
             return result == 0;
+        } else if (alertConditionOperator == AlertConditionOperator.REGEX) {
+            return pattern.matcher(providedValue).matches();
         } else {
-            throw new UnsupportedAlertConditionOperatorException(getClass().getSimpleName()
-                + ".isActive(String) implementation " + "does not account for all supported operators "
-                + "as defined by " + getClass().getSimpleName() + ".supportsOperator(AlertConditionOperator)");
+            throw new UnsupportedAlertConditionOperatorException(getClass().getSimpleName() + " does not yet support "
+                + alertConditionOperator);
         }
     }
 
     @Override
     public AlertConditionOperator.Type getOperatorSupportsType(AlertConditionOperator operator) {
         if ((operator == AlertConditionOperator.GREATER_THAN) || (operator == AlertConditionOperator.EQUALS)
-            || (operator == AlertConditionOperator.LESS_THAN) || (operator == AlertConditionOperator.CHANGES)) {
+            || (operator == AlertConditionOperator.LESS_THAN) || (operator == AlertConditionOperator.CHANGES)
+            || (operator == AlertConditionOperator.REGEX)) {
             return operator.getDefaultType();
         }
 

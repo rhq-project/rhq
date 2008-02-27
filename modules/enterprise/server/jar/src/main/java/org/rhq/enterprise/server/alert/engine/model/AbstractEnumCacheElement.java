@@ -86,9 +86,8 @@ public abstract class AbstractEnumCacheElement<E extends Enum<E>> extends Abstra
 
             return results;
         } else {
-            throw new UnsupportedAlertConditionOperatorException(getClass().getSimpleName()
-                + ".isActive(String) implementation " + "does not account for all supported operators "
-                + "as defined by " + getClass().getSimpleName() + ".supportsOperator(AlertConditionOperator)");
+            throw new UnsupportedAlertConditionOperatorException(getClass().getSimpleName() + " does not yet support "
+                + alertConditionOperator);
         }
     }
 

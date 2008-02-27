@@ -115,7 +115,7 @@ public class ListChildrenAction extends TilesAction {
                 RequestUtils.setError(request, MessageConstants.ERR_RESOURCE_NOT_FOUND);
                 return null;
             }
-        } else {
+        } else { // resource != null
             // get children of that single resource, which can be individual resources or autogroups
             children = getResourceChildren(resource, subject);
 
@@ -125,10 +125,11 @@ public class ListChildrenAction extends TilesAction {
 
                 // set "info about autogroup" so that we can use that info in the JSP later
                 // definitionId is already set in the backend
-                for (MetricDisplaySummary tmp : metrics) {
-                    tmp.setParentId(parentId);
-                    tmp.setChildTypeId(resourceTypeId);
-                }
+                if (metrics != null)
+                    for (MetricDisplaySummary tmp : metrics) {
+                        tmp.setParentId(parentId);
+                        tmp.setChildTypeId(resourceTypeId);
+                    }
 
                 displaySummary.add(new AutoGroupCompositeDisplaySummary(child, metrics));
             }

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.license;
 
 import java.io.IOException;
+
 import org.rhq.core.util.xmlparser.XmlAttr;
 import org.rhq.core.util.xmlparser.XmlAttrException;
 import org.rhq.core.util.xmlparser.XmlAttrHandler;
@@ -33,7 +34,7 @@ final class LicenseTag implements XmlTagHandler, XmlAttrHandler {
     }
 
     private static final XmlAttr[] ATTRS = { new XmlAttr(LRES.get(LRES.ATTR_KEY), XmlAttr.REQUIRED),
-        new XmlAttr(LRES.get(LRES.ATTR_VERSION), XmlAttr.REQUIRED) };
+        new XmlAttr(LRES.get(LRES.ATTR_VERSION), XmlAttr.OPTIONAL) };
 
     public String getName() {
         return LRES.get(LRES.TAGNAME_LICENSE);

@@ -34,6 +34,7 @@ import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.InstalledPackageHistory;
+import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
@@ -249,6 +250,13 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         q.setParameter("id", packageVersionId);
         PackageVersionComposite pv = (PackageVersionComposite) q.getSingleResult();
         return pv;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Architecture> getArchitectures() {
+        Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_ALL);
+        List<Architecture> architectures = q.getResultList();
+        return architectures;
     }
     
 }

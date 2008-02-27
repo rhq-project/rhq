@@ -27,6 +27,7 @@ import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.InstalledPackageHistory;
+import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
@@ -146,5 +147,13 @@ public interface ContentUIManagerLocal {
      *
      * @return the information on the package version
      */
-    PackageVersionComposite loadPackageVersionComposite(Subject user, int packageVersionId);    
+    PackageVersionComposite loadPackageVersionComposite(Subject user, int packageVersionId);
+
+    /**
+     * Returns all architectures known to the system.
+     *
+     * @return list of all architectures in the database
+     */
+    List<Architecture> getArchitectures();
+
 }

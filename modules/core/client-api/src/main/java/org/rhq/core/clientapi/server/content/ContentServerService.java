@@ -121,7 +121,7 @@ public interface ContentServerService {
     long downloadPackageBitsGivenResource(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream);
 
     @LimitedConcurrency(CONCURRENCY_LIMIT_CONTENT_DOWNLOAD)
-    long downloadPackageBits(int resourceTypeId, PackageDetailsKey packageDetailsKey, OutputStream outputStream);
+    long downloadPackageBits(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream);
 
     /**
      * Requests that the server download and stream the bits for the specified package. If the package cannot be found,
@@ -144,7 +144,7 @@ public interface ContentServerService {
         OutputStream outputStream, long startByte, long endByte);
 
     @LimitedConcurrency(CONCURRENCY_LIMIT_CONTENT_DOWNLOAD)
-    long downloadPackageBitsRange(int resourceTypeId, PackageDetailsKey packageDetailsKey, OutputStream outputStream,
+    long downloadPackageBitsRange(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream,
         long startByte, long endByte);
 
     /**

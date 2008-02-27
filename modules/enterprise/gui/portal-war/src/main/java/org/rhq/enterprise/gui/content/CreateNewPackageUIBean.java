@@ -23,7 +23,10 @@ import java.io.InputStream;
 import java.util.List;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.Architecture;
@@ -35,6 +38,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.content.ChannelManagerLocal;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -44,11 +48,25 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class CreateNewPackageUIBean {
 
-    private PackageType packageType;
+    /**
+     * Option value for deploying the package to a channel the resource is already subscribed to.
+     */
+    private static final String CHANNEL_OPTION_SUBSCRIBED = "subscribed";
+
+    /**
+     * Option value for deploying the package to a channel the resource is not subscribed to, as well as automatically
+     * subscribing the resource to that channel.
+     */
+    private static final String CHANNEL_OPTION_UNSUBSCRIBED = "unsubscribed";
+
+    /**
+     * Option value for creating a new channel, subscribing the resource to it, and deploying the package to that
+     * channel.
+     */
+    private static final String CHANNEL_OPTION_NEW = "new";
 
     private String packageName;
     private String version;
-
     private int selectedArchitectureId;
     private int selectedPackageTypeId;
 
@@ -64,24 +82,44 @@ public class CreateNewPackageUIBean {
      */
     private int unsubscribedChannelId;
 
-    private Integer selectedType;
+    /**
+     * If the user selects to add the package to a new channel, this will be populated with the new channel's name.
+     */
+    private String newChannelName;
+
+    private final Log log = LogFactory.getLog(this.getClass());
 
     public String createPackage() {
+
         // Collect the necessary information
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Resource resource = EnterpriseFacesContextUtility.getResource();
 
-        String selectedTypeParameter = FacesContextUtility.getRequest().getParameter("selectedType");
-        FileItem fileItem = (FileItem) FacesContextUtility.getRequest().getAttribute("uploadForm:uploadFile");
+        HttpServletRequest request = FacesContextUtility.getRequest();
+
+        String channelOption = request.getParameter("channelOption");
+        FileItem fileItem = (FileItem)request.getAttribute("uploadForm:uploadFile");
 
         // Validate
-        if ((selectedTypeParameter == null) || selectedTypeParameter.equals("")) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "An artifact type must be selected");
+        if (packageName == null || packageName.trim().equals("")) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Package name must be specified");
             return null;
         }
 
-        if ((packageName == null) || packageName.equals("")) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "An artifact name must be entered");
+        if (version == null || version.trim().equals("")) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Package version must be specified");
+            return null;
+        }
+
+        if (channelOption == null) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A channel deployment option must be specified");
+            return null;
+        }
+
+        if (channelOption.equals(CHANNEL_OPTION_NEW) &&
+            (newChannelName == null || newChannelName.trim().equals(""))) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "When creating a new channel, the name of the channel to be created must be specified");
             return null;
         }
 
@@ -90,46 +128,41 @@ public class CreateNewPackageUIBean {
             return null;
         }
 
-        // Read in the file
-        selectedType = Integer.parseInt(selectedTypeParameter);
+        // Determine which channel the package will go into
+        int channelId = determineChannel(channelOption, subject, resource.getId());
 
-        InputStream artifactInputStream;
+        // Grab a stream for the file being uploaded
+        InputStream packageStream;
 
         try {
-            artifactInputStream = fileItem.getInputStream();
+            packageStream = fileItem.getInputStream();
         } catch (IOException e) {
             String errorMessages = ThrowableUtil.getAllMessages(e);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to retrieve the input stream. Cause: "
                 + errorMessages);
-            return "successOrFailure";
+            return "failure";
         }
 
-        // Send the request to the bean
-        ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
+        // Ask the bean to create the package
 
+        /* Currently, this is just used in the workflow for deploying a new package. This will probably get
+           refactored in the future for a general way of adding packages to the channel as its own operation. For
+           now, don't worry about that. The rest of this will be written assuming it's part of the deploy
+           workflow and we'll deal with the refactoring later.
+           jdobies, Feb 27, 2008
+         */
         try {
-            packageType = contentUIManager.getPackageType(selectedType);
-
-            // TODO: jdob, Nov 21, 2007: There are now two concepts, creating a package (i.e. uploading it to the server) and deploying
-            // Need to determine where the differences lie and finish this
+            ContentManagerLocal contentManager = LookupUtil.getContentManager();
+            contentManager.createPackageVersion(packageName, selectedPackageTypeId,
+                                                version, selectedArchitectureId, packageStream);
         } catch (Exception e) {
             String errorMessages = ThrowableUtil.getAllMessages(e);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                "Failed to send create request to the agent. Cause: " + errorMessages);
-            return "successOrFailure";
+                "Failed to create package [" + packageName + "] in channel. Cause: " + errorMessages);
+            return "failure";
         }
 
-        // Sleep just enough to let "fast" operations complete before being redirected
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            // Let this thread be interrupted without user warning
-        }
-
-        // If we got this far, we didn't hit an error, so add a message for the request submission request
-        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
-            "Create request successfully submitted to the agent.");
-        return "successOrFailure";
+        return "success";
     }
 
     public SelectItem[] getArchitectures() {
@@ -196,22 +229,6 @@ public class CreateNewPackageUIBean {
         return items;
     }
 
-    public Integer getSelectedType() {
-        return selectedType;
-    }
-
-    public void setSelectedType(Integer selectedType) {
-        this.selectedType = selectedType;
-    }
-
-    public PackageType getPackageType() {
-        return packageType;
-    }
-
-    public void setPackageType(PackageType packageType) {
-        this.packageType = packageType;
-    }
-
     public String getPackageName() {
         return packageName;
     }
@@ -258,5 +275,39 @@ public class CreateNewPackageUIBean {
 
     public void setUnsubscribedChannelId(int unsubscribedChannelId) {
         this.unsubscribedChannelId = unsubscribedChannelId;
+    }
+
+    public String getNewChannelName() {
+        return newChannelName;
+    }
+
+    public void setNewChannelName(String newChannelName) {
+        this.newChannelName = newChannelName;
+    }
+
+    private int determineChannel(String channelOption, Subject subject, int resourceId) {
+        int channelId = -1;
+        
+        if (channelOption.equals(CHANNEL_OPTION_SUBSCRIBED)) {
+            channelId = subscribedChannelId;
+        }
+        else if (channelOption.equals(CHANNEL_OPTION_UNSUBSCRIBED)) {
+            channelId = unsubscribedChannelId;
+
+            ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
+            channelManager.subscribeResourceToChannels(subject, resourceId, new int[]{channelId});
+        }
+        else if (channelOption.equals(CHANNEL_OPTION_NEW)) {
+            ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
+
+            Channel newChannel = new Channel(newChannelName);
+            newChannel = channelManager.createChannel(subject, newChannel);
+
+            channelId = newChannel.getId();
+
+            channelManager.subscribeResourceToChannels(subject, resourceId, new int[]{channelId});
+        }
+
+        return channelId;
     }
 }

@@ -64,18 +64,18 @@
 
             <p>Select one of the following options describing in which channel the new package should be created.</p>
 
-            <input type="radio" name="channelGroup" value="0">Currently Subscribed Channel</input>
+            <input type="radio" name="channelOption" value="subscribed">Currently Subscribed Channel</input>
                <h:selectOneMenu value="#{CreateNewPackageUIBean.subscribedChannelId}">
                   <f:selectItems value="#{CreateNewPackageUIBean.subscribedChannels}" />
                </h:selectOneMenu>
             <br/>
-            <input type="radio" name="channelGroup" value="1">Subscribe to Existing Channel</input>
+            <input type="radio" name="channelOption" value="unsubscribed">Subscribe to Existing Channel</input>
                <h:selectOneMenu value="#{CreateNewPackageUIBean.unsubscribedChannelId}">
                   <f:selectItems value="#{CreateNewPackageUIBean.unsubscribedChannels}" />
                </h:selectOneMenu>
             <br/>
-            <input type="radio" name="channelGroup" value="2">Create New Channel</input>
-               <input name="newChannelName" type="text"/>
+            <input type="radio" name="channelOption" value="new">Create New Channel</input>
+               <h:inputText value="#{CreateNewPackageUIBean.newChannelName}"/>
 
          </rich:panel>
 

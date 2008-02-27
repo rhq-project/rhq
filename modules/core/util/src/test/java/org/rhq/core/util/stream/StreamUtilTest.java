@@ -25,9 +25,6 @@ import java.util.Random;
 
 import org.testng.annotations.Test;
 
-import org.rhq.enterprise.communications.command.CommandResponse;
-import org.rhq.enterprise.communications.command.client.CommandResponseCallback;
-
 /**
  * Tests StreamUtil.
  *
@@ -209,23 +206,5 @@ public class StreamUtilTest {
         assert o != o2;
 
         return o2;
-    }
-}
-
-/**
- * Just a dummy callback that we will use to ensure callbacks are serializable.
- */
-class DummyCommandResponseCallback implements CommandResponseCallback {
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * We will use this to check its value after serialization to make sure its reconstituted successfully
-     */
-    public String foo = "bar";
-
-    /**
-     * @see CommandResponseCallback#commandSent(CommandResponse)
-     */
-    public void commandSent(CommandResponse response) {
     }
 }

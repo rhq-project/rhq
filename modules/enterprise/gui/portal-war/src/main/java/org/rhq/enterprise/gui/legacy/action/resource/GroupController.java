@@ -20,16 +20,21 @@ package org.rhq.enterprise.gui.legacy.action.resource;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.HubConstants;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseDispatchAction;
 import org.rhq.enterprise.gui.legacy.exception.ParameterNotFoundException;
 import org.rhq.enterprise.gui.legacy.util.ActionUtils;
@@ -106,11 +111,11 @@ public abstract class GroupController extends BaseDispatchAction {
             boolean isControllable = LookupUtil.getOperationManager().isGroupOperationSupported(subject, group.getId());
 
             RequestUtils.setResourceGroup(request, group);
-            request.setAttribute(Constants.RESOURCE_MODIFIER_ATTR, modifier);
-            request.setAttribute(Constants.TITLE_PARAM_ATTR, group.getName());
+            request.setAttribute(AttrConstants.RESOURCE_MODIFIER_ATTR, modifier);
+            request.setAttribute(AttrConstants.TITLE_PARAM_ATTR, group.getName());
             request.setAttribute("category", category.name());
             request.setAttribute("groupId", groupId);
-            request.setAttribute(Constants.CONTROL_ENABLED_ATTR, new Boolean(isControllable));
+            request.setAttribute(AttrConstants.CONTROL_ENABLED_ATTR, new Boolean(isControllable));
 
             // }
         } catch (ResourceGroupNotFoundException e) {
@@ -120,17 +125,25 @@ public abstract class GroupController extends BaseDispatchAction {
 
     protected void fetchReturnPathParams(HttpServletRequest request, Map params) {
         Integer groupId = RequestUtils.getGroupId(request);
-        String category = RequestUtils.getGroupCategory(request).name();
+        GroupCategory gc = RequestUtils.getGroupCategory(request);
+        String category;
+        if (gc != null)
+            category = gc.name();
+        else {
+            category = GroupCategory.COMPATIBLE.name(); // Set a default
+            log.warn("fetchReturnPathParam: No category was given, assuming compatible");
+        }
         params.put(HubConstants.PARAM_GROUP_ID, groupId);
         params.put(HubConstants.PARAM_GROUP_CATEGORY, category);
 
         try {
-            params.put(Constants.CHILD_RESOURCE_TYPE_ID_PARAM, WebUtility.getChildResourceTypeId(request));
+            // TODO use "type" uniformly
+            params.put(ParamConstants.CHILD_RESOURCE_TYPE_ID_PARAM, WebUtility.getChildResourceTypeId(request));
         } catch (ParameterNotFoundException pnfe) {
             // that's ok!
         }
 
-        try {
+        try { // Deprecated
             Integer autogrouptype = RequestUtils.getAutogroupResourceTypeId(request);
             params.put(Constants.AUTOGROUP_TYPE_ID_PARAM, autogrouptype);
         } catch (ParameterNotFoundException pnfe) {
@@ -180,8 +193,8 @@ public abstract class GroupController extends BaseDispatchAction {
 
         String newUrl = ActionUtils.changeUrl(currLoc, parms);
 
-        request.setAttribute(Constants.CURR_RES_LOCATION_MODE, new String(mode));
-        request.setAttribute(Constants.CURR_RES_LOCATION_TYPE, new String(currLoc));
-        request.setAttribute(Constants.CURR_RES_LOCATION_TAG, newUrl);
+        request.setAttribute(AttrConstants.CURR_RES_LOCATION_MODE, new String(mode));
+        request.setAttribute(AttrConstants.CURR_RES_LOCATION_TYPE, new String(currLoc));
+        request.setAttribute(AttrConstants.CURR_RES_LOCATION_TAG, newUrl);
     }
 }

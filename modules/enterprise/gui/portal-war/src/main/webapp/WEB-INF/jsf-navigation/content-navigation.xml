@@ -66,7 +66,7 @@
       <from-view-id>/rhq/resource/content/deploy.xhtml</from-view-id>
 
       <navigation-case>
-         <from-outcome>begin</from-outcome>
+         <from-outcome>uploadNew</from-outcome>
          <to-view-id>/rhq/resource/content/create.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
@@ -108,6 +108,12 @@
          <from-action>#{CreateNewArtifactUIBean.createArtifact}</from-action>
          <from-outcome>successOrFailure</from-outcome>
          <to-view-id>/rhq/resource/content/history.xhtml?id=${param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>cancel</from-outcome>
+         <to-view-id>/rhq/resource/content/deploy.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
       

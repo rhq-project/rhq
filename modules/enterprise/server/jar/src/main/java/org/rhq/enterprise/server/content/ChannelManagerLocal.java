@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
@@ -77,6 +78,24 @@ public interface ChannelManagerLocal {
      * @return the list of available channels for the given resource
      */
     PageList<ChannelComposite> getAvailableResourceSubscriptions(Subject subject, int resourceId, PageControl pc);
+
+    /**
+     * Gets all channels that are subscribed to by the given resource.
+     *
+     * @param  resourceId
+     *
+     * @return the list of subscriptions
+     */
+    List<ChannelComposite> getResourceSubscriptions(int resourceId);
+
+    /**
+     * Gets all channels that aren't subscribed to for the given resource.
+     *
+     * @param  resourceId
+     *
+     * @return the list of available channels for the given resource
+     */
+    List<ChannelComposite> getAvailableResourceSubscriptions(int resourceId);
 
     /**
      * Returns the set of package versions that can currently be accessed via the given channel.

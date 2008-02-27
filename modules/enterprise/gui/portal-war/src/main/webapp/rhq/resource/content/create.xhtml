@@ -14,96 +14,80 @@
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
-   <ui:param name="pageTitle"
-             value="Create New Package of Type '#{CreateNewPackageUIBean.packageType.displayName}'"/>
+   <ui:param name="pageTitle" value="Upload New Package"/>
    <ui:param name="selectedTabName" value="Content.New"/>
    <ui:define name="content">
 
       <h:form id="uploadForm" enctype="multipart/form-data">
-
-         <!-- Possible Package Types -->
+         <input type="hidden" name="id" value="${param.id}"/>
 
          <rich:panel>
-            <f:facet name="header">Supported Package Types</f:facet>
 
-            <h:panelGrid columns="1" width="90%" style="min-width: 800px;">
-
-               <rich:dataTable binding="#{ListPackageTypesUIBean.dataTable}"
-                               id="packageTypesDataTable"
-                               rows="0"
-                               value="#{ListPackageTypesUIBean.dataModel}"
-                               var="item"
-                               width="100%"
-                               columnsWidth="1%, 30%, 69%"
-                               headerClass="tableRowHeader"
-                               footerClass="on-pager-footer">
-
-                  <f:facet name="PageControlView">
-                     <onc:paginationControl id="NONE"/>
-                  </f:facet>
-
-                  <rich:column>
-                     <f:facet name="header">
-                        <rich:spacer/>
-                     </f:facet>
-
-                     <onc:select name="selectedType" value="#{item.id}" type="radio" />
-                  </rich:column>
-
-                  <rich:column rendered="#{param.debug}">
-                     <f:facet name="header">
-                        <onc:sortableColumnHeader sort="pt.id">
-                           <h:outputText styleClass="headerText" value="ID" />
-                        </onc:sortableColumnHeader>
-                     </f:facet>
-
-                     <h:outputText value="#{item.id}"/>
-                  </rich:column>
-
-                  <rich:column>
-                     <f:facet name="header">
-                        <onc:sortableColumnHeader sort="pt.displayName">
-                           <h:outputText styleClass="headerText" value="Name"/>
-                        </onc:sortableColumnHeader>
-                     </f:facet>
-
-                     <h:outputText value="#{item.displayName}"/>
-                  </rich:column>
-
-                  <rich:column>
-                     <f:facet name="header">
-                        <onc:sortableColumnHeader sort="pt.description">
-                           <h:outputText styleClass="headerText" value="Description"/>
-                        </onc:sortableColumnHeader>
-                     </f:facet>
-
-                     <h:outputText value="#{item.description}"/>
-                  </rich:column>
-
-
-               </rich:dataTable>
-
-            </h:panelGrid>
-
-            <!-- Upload Form -->
-
-            <input type="hidden" name="id" value="${param.id}"/>
-            <h:inputHidden value="#{CreateNewPackageUIBean.packageType}" converter="PackageTypeConverter"/>
+            <f:facet name="header">Upload New Package</f:facet>
 
             <table>
                <tr>
-                  <td><b>Package To Deploy:</b></td>
-                  <td><h:inputText value="#{CreateNewPackageUIBean.packageName}"/></td>
+                  <td align="right"><b>Name:*</b></td>
+                  <td align="left"><h:inputText value="#{CreateNewPackageUIBean.packageName}"/></td>
                </tr>
                <tr>
-                  <td><b>File:</b></td>
-                  <td><onc:upload id="uploadFile"/></td>
+                  <td align="right"><b>Version:*</b></td>
+                  <td align="left"><h:inputText value="#{CreateNewPackageUIBean.version}"/></td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Architecture:*</b></td>
+                  <td align="left">
+                     <h:selectOneMenu value="#{CreateNewPackageUIBean.selectedArchitectureId}">
+                        <f:selectItems value="#{CreateNewPackageUIBean.architectures}" />
+                     </h:selectOneMenu>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Type:*</b></td>
+                  <td align="left">
+                     <h:selectOneMenu value="#{CreateNewPackageUIBean.selectedPackageTypeId}">
+                        <f:selectItems value="#{CreateNewPackageUIBean.packageTypes}" />
+                     </h:selectOneMenu>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>File:</b></td>
+                  <td align="left"><onc:upload id="uploadFile"/></td>
                </tr>
             </table>
 
-            <h:commandButton style="margin-top: 10px;" value="DEPLOY PACKAGE"
-                             action="#{CreateNewPackageUIBean.createPackage}" styleClass="buttonmed"/>
          </rich:panel>
+
+         <rich:panel>
+
+            <f:facet name="header">Channel</f:facet>
+
+            <p>Select one of the following options describing in which channel the new package should be created.</p>
+
+            <input type="radio" name="channelGroup" value="0">Currently Subscribed Channel</input>
+               <h:selectOneMenu value="#{CreateNewPackageUIBean.subscribedChannelId}">
+                  <f:selectItems value="#{CreateNewPackageUIBean.subscribedChannels}" />
+               </h:selectOneMenu>
+            <br/>
+            <input type="radio" name="channelGroup" value="1">Subscribe to Existing Channel</input>
+               <h:selectOneMenu value="#{CreateNewPackageUIBean.unsubscribedChannelId}">
+                  <f:selectItems value="#{CreateNewPackageUIBean.unsubscribedChannels}" />
+               </h:selectOneMenu>
+            <br/>
+            <input type="radio" name="channelGroup" value="2">Create New Channel</input>
+               <input name="newChannelName" type="text"/>
+
+         </rich:panel>
+
+         <h:panelGrid id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
+
+            <h:commandButton style="margin-top: 10px;" value="CANCEL"
+                             action="#{CreateNewPackageUIBean.createPackage}" styleClass="buttonmed"/>
+
+            <h:commandButton style="margin-top: 10px;" value="CONTINUE"
+                             action="#{CreateNewPackageUIBean.createPackage}" styleClass="buttonmed"/>
+
+         </h:panelGrid>
 
       </h:form>
 

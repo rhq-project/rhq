@@ -20,15 +20,21 @@ package org.rhq.enterprise.gui.content;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import javax.faces.application.FacesMessage;
+import javax.faces.model.SelectItem;
 import org.apache.commons.fileupload.FileItem;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.composite.ChannelComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
+import org.rhq.enterprise.server.content.ChannelManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -37,15 +43,28 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Jason Dobies
  */
 public class CreateNewPackageUIBean {
-    // Attributes  --------------------------------------------
 
     private PackageType packageType;
 
     private String packageName;
+    private String version;
+
+    private int selectedArchitectureId;
+    private int selectedPackageTypeId;
+
+    /**
+     * If the user selects to add the package to an existing channel that the resource is already subscribed to,
+     * this will be populated with that channel ID.
+     */
+    private int subscribedChannelId;
+
+    /**
+     * If the user selects to add the package to an existing channel taht the resource is not already subscribed to,
+     * this will be populated with that channel ID.
+     */
+    private int unsubscribedChannelId;
 
     private Integer selectedType;
-
-    // Actions  --------------------------------------------
 
     public String createPackage() {
         // Collect the necessary information
@@ -113,7 +132,69 @@ public class CreateNewPackageUIBean {
         return "successOrFailure";
     }
 
-    // Accessors  --------------------------------------------
+    public SelectItem[] getArchitectures() {
+        ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
+        List<Architecture> architectures = contentUIManager.getArchitectures();
+
+        SelectItem[] items = new SelectItem[architectures.size()];
+        int itemCounter = 0;
+        for (Architecture arch : architectures) {
+            SelectItem item = new SelectItem(arch.getId(), arch.getName());
+            items[itemCounter++] = item;
+        }
+
+        return items;
+    }
+
+    public SelectItem[] getPackageTypes() {
+        Resource resource = EnterpriseFacesContextUtility.getResource();
+
+        ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
+        List<PackageType> packageTypes = contentUIManager.getPackageTypes(resource.getResourceType().getId());
+
+        SelectItem[] items = new SelectItem[packageTypes.size()];
+        int itemCounter = 0;
+        for (PackageType packageType : packageTypes) {
+            SelectItem item = new SelectItem(packageType.getId(), packageType.getDisplayName());
+            items[itemCounter++] = item;
+        }
+
+        return items;
+    }
+
+    public SelectItem[] getSubscribedChannels() {
+        Resource resource = EnterpriseFacesContextUtility.getResource();
+
+        ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
+        List<ChannelComposite> channels = channelManager.getResourceSubscriptions(resource.getId());
+
+        SelectItem[] items = new SelectItem[channels.size()];
+        int itemCounter = 0;
+        for (ChannelComposite channelComposite : channels) {
+            Channel channel = channelComposite.getChannel();
+            SelectItem item = new SelectItem(channel.getId(), channel.getName());
+            items[itemCounter++] = item;
+        }
+
+        return items;
+    }
+
+    public SelectItem[] getUnsubscribedChannels() {
+        Resource resource = EnterpriseFacesContextUtility.getResource();
+
+        ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
+        List<ChannelComposite> channels = channelManager.getAvailableResourceSubscriptions(resource.getId());
+
+        SelectItem[] items = new SelectItem[channels.size()];
+        int itemCounter = 0;
+        for (ChannelComposite channelComposite : channels) {
+            Channel channel = channelComposite.getChannel();
+            SelectItem item = new SelectItem(channel.getId(), channel.getName());
+            items[itemCounter++] = item;
+        }
+
+        return items;
+    }
 
     public Integer getSelectedType() {
         return selectedType;
@@ -137,5 +218,45 @@ public class CreateNewPackageUIBean {
 
     public void setPackageName(String packageName) {
         this.packageName = packageName;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public int getSelectedArchitectureId() {
+        return selectedArchitectureId;
+    }
+
+    public void setSelectedArchitectureId(int selectedArchitectureId) {
+        this.selectedArchitectureId = selectedArchitectureId;
+    }
+
+    public int getSelectedPackageTypeId() {
+        return selectedPackageTypeId;
+    }
+
+    public void setSelectedPackageTypeId(int selectedPackageTypeId) {
+        this.selectedPackageTypeId = selectedPackageTypeId;
+    }
+
+    public int getSubscribedChannelId() {
+        return subscribedChannelId;
+    }
+
+    public void setSubscribedChannelId(int subscribedChannelId) {
+        this.subscribedChannelId = subscribedChannelId;
+    }
+
+    public int getUnsubscribedChannelId() {
+        return unsubscribedChannelId;
+    }
+
+    public void setUnsubscribedChannelId(int unsubscribedChannelId) {
+        this.unsubscribedChannelId = unsubscribedChannelId;
     }
 }

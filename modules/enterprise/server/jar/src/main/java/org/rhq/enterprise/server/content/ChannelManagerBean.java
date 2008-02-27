@@ -172,7 +172,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         pc.initDefaultOrderingField("c.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            Channel.QUERY_FIND_CHANNELS_BY_RESOURCE_ID, pc);
+            Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID, pc);
         Query countQuery = entityManager.createNamedQuery(Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT);
 
         query.setParameter("resourceId", resourceId);
@@ -201,6 +201,24 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         long count = (Long) countQuery.getSingleResult();
 
         return new PageList<ChannelComposite>(results, (int) count, pc);
+    }
+
+    public List<ChannelComposite> getResourceSubscriptions(int resourceId) {
+        Query query = entityManager.createNamedQuery(Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID);
+
+        query.setParameter("resourceId", resourceId);
+
+        List<ChannelComposite> results = query.getResultList();
+        return results;
+    }
+
+    public List<ChannelComposite> getAvailableResourceSubscriptions(int resourceId) {
+        Query query = entityManager.createNamedQuery(Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID);
+
+        query.setParameter("resourceId", resourceId);
+
+        List<ChannelComposite> results = query.getResultList();
+        return results;
     }
 
     @SuppressWarnings("unchecked")

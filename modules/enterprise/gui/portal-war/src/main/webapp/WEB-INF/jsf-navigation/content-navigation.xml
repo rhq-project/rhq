@@ -63,6 +63,16 @@
    </navigation-rule>
 
    <navigation-rule>
+      <from-view-id>/rhq/resource/content/deploy.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>begin</from-outcome>
+         <to-view-id>/rhq/resource/content/create.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
       <from-view-id>/rhq/resource/content/history.xhtml</from-view-id>
      
       <navigation-case>

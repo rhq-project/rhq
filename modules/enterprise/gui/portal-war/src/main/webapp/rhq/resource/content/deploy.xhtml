@@ -111,6 +111,20 @@
             </rich:dataTable>
 
       </rich:panel>
+
+      <rich:panel styleClass="BlockContent">
+         <f:facet name="header"><h:outputText value="Upload New Package"/></f:facet>
+
+         <p>The following option will begin the workflow to upload a new package into the system. Once
+         the package information has been specified and the file uploaded, the workflow to deploy the newly
+         created package to this resource will resume.</p>
+
+          <h:commandButton action="begin"
+                           value="UPLOAD NEW PACKAGE" styleClass="on-pager-button buttonsmall"/>
+          
+          <br/>
+      </rich:panel>
+
       </h:form>
 
 

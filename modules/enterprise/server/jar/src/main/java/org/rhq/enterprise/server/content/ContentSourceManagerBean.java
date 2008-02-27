@@ -1149,21 +1149,23 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(1000 * 60 * 30)
-    public long outputPackageVersionBits(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream) {
-        return outputPackageVersionBitsRange(resourceId, packageDetailsKey, outputStream, 0, -1);
+    public long outputPackageVersionBitsGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
+        OutputStream outputStream) {
+        return outputPackageVersionBitsRangeGivenResource(resourceId, packageDetailsKey, outputStream, 0, -1);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(1000 * 60 * 30)
-    public long outputPackageVersionBits(PackageDetailsKey packageDetailsKey, OutputStream outputStream) {
-        return outputPackageVersionBitsRange(packageDetailsKey, outputStream, 0, -1);
+    public long outputPackageVersionBits(int resourceTypeId, PackageDetailsKey packageDetailsKey,
+        OutputStream outputStream) {
+        return outputPackageVersionBitsRange(resourceTypeId, packageDetailsKey, outputStream, 0, -1);
     }
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(1000 * 60 * 30)
-    public long outputPackageVersionBitsRange(PackageDetailsKey packageDetailsKey, OutputStream outputStream,
-        long startByte, long endByte) {
+    public long outputPackageVersionBitsRange(int resourceTypeId, PackageDetailsKey packageDetailsKey,
+        OutputStream outputStream, long startByte, long endByte) {
         if (startByte < 0) {
             throw new IllegalArgumentException("startByte[" + startByte + "] < 0");
         }
@@ -1173,7 +1175,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         }
 
         // what package version?
-        Query query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY_ONLY);
+        Query query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
+        query.setParameter("resourceTypeId", resourceTypeId);
         query.setParameter("packageName", packageDetailsKey.getName());
         query.setParameter("packageTypeName", packageDetailsKey.getPackageTypeName());
         query.setParameter("architectureName", packageDetailsKey.getArchitectureName());
@@ -1187,7 +1190,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(1000 * 60 * 30)
-    public long outputPackageVersionBitsRange(int resourceId, PackageDetailsKey packageDetailsKey,
+    public long outputPackageVersionBitsRangeGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream, long startByte, long endByte) {
         if (startByte < 0) {
             throw new IllegalArgumentException("startByte[" + startByte + "] < 0");

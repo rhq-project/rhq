@@ -326,7 +326,7 @@ public interface ContentSourceManagerLocal {
      * remote repository.
      *
      * <p>This is the same as calling
-     * {@link #outputPackageVersionBitsRange(int, PackageDetailsKey, OutputStream, long, long)} with the start/end bytes
+     * {@link #outputPackageVersionBitsRangeGivenResource(int, PackageDetailsKey, OutputStream, long, long)} with the start/end bytes
      * of 0 and -1 respectively.</p>
      *
      * @param  resourceId        identifies the resource making the request; if this resource is not allowed to see the
@@ -337,9 +337,10 @@ public interface ContentSourceManagerLocal {
      *
      * @return the number of bytes written to the output stream
      */
-    long outputPackageVersionBits(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream);
+    long outputPackageVersionBitsGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
+        OutputStream outputStream);
 
-    long outputPackageVersionBits(PackageDetailsKey packageDetailsKey, OutputStream outputStream);
+    long outputPackageVersionBits(int resourceTypeId, PackageDetailsKey packageDetailsKey, OutputStream outputStream);
 
     /**
      * Requests that the actual content data (the "bits") of the identified package version be streamed down to the
@@ -361,9 +362,9 @@ public interface ContentSourceManagerLocal {
      *
      * @return the number of bytes written to the output stream
      */
-    long outputPackageVersionBitsRange(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream,
-        long startByte, long endByte);
+    long outputPackageVersionBitsRangeGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
+        OutputStream outputStream, long startByte, long endByte);
 
-    long outputPackageVersionBitsRange(PackageDetailsKey packageDetailsKey, OutputStream outputStream, long startByte,
-        long endByte);
+    long outputPackageVersionBitsRange(int resourceTypeId, PackageDetailsKey packageDetailsKey,
+        OutputStream outputStream, long startByte, long endByte);
 }

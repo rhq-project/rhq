@@ -40,6 +40,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.server.content.ContentServerService;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
@@ -69,6 +70,7 @@ import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ContentManager extends AgentService implements ContainerService, ContentAgentService, ContentServices {
     // Attributes  --------------------------------------------
@@ -245,9 +247,12 @@ public class ContentManager extends AgentService implements ContainerService, Co
         outputStream = remoteOutputStream(outputStream);
         long count = 0;
         if (resourceExists) {
-            serverService.downloadPackageBits(contextImpl.getResourceId(), packageDetailsKey, outputStream);
+            serverService
+                .downloadPackageBitsGivenResource(contextImpl.getResourceId(), packageDetailsKey, outputStream);
         } else {
-            serverService.downloadPackageBits(packageDetailsKey, outputStream);
+            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+            Resource resource = LookupUtil.getResourceManager().getResourceById(overlord, contextImpl.getResourceId());
+            serverService.downloadPackageBits(resource.getResourceType().getId(), packageDetailsKey, outputStream);
         }
         return count;
     }
@@ -262,7 +267,10 @@ public class ContentManager extends AgentService implements ContainerService, Co
             serverService.downloadPackageBitsRange(contextImpl.getResourceId(), packageDetailsKey, outputStream,
                 startByte, endByte);
         } else {
-            serverService.downloadPackageBitsRange(packageDetailsKey, outputStream, startByte, endByte);
+            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+            Resource resource = LookupUtil.getResourceManager().getResourceById(overlord, contextImpl.getResourceId());
+            serverService.downloadPackageBitsRange(resource.getResourceType().getId(), packageDetailsKey, outputStream,
+                startByte, endByte);
         }
         return count;
     }

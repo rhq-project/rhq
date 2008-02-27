@@ -77,26 +77,29 @@ public class ContentServerServiceImpl implements ContentServerService {
         return null;
     }
 
-    public long downloadPackageBits(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream) {
+    public long downloadPackageBitsGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
+        OutputStream outputStream) {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
-        return manager.outputPackageVersionBits(resourceId, packageDetailsKey, outputStream);
+        return manager.outputPackageVersionBitsGivenResource(resourceId, packageDetailsKey, outputStream);
     }
 
-    public long downloadPackageBits(PackageDetailsKey packageDetailsKey, OutputStream outputStream) {
+    public long downloadPackageBits(int resourceTypeId, PackageDetailsKey packageDetailsKey, OutputStream outputStream) {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
-        return manager.outputPackageVersionBits(packageDetailsKey, outputStream);
+        return manager.outputPackageVersionBits(resourceTypeId, packageDetailsKey, outputStream);
     }
 
-    public long downloadPackageBitsRange(int resourceId, PackageDetailsKey packageDetailsKey,
+    public long downloadPackageBitsRangeGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream, long startByte, long endByte) {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
-        return manager.outputPackageVersionBitsRange(resourceId, packageDetailsKey, outputStream, startByte, endByte);
+        return manager.outputPackageVersionBitsRangeGivenResource(resourceId, packageDetailsKey, outputStream,
+            startByte, endByte);
     }
 
-    public long downloadPackageBitsRange(PackageDetailsKey packageDetailsKey, OutputStream outputStream,
-        long startByte, long endByte) {
+    public long downloadPackageBitsRange(int resourceTypeId, PackageDetailsKey packageDetailsKey,
+        OutputStream outputStream, long startByte, long endByte) {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
-        return manager.outputPackageVersionBitsRange(packageDetailsKey, outputStream, startByte, endByte);
+        return manager.outputPackageVersionBitsRange(resourceTypeId, packageDetailsKey, outputStream, startByte,
+            endByte);
     }
 
     public PageList<PackageVersionMetadataComposite> getPackageVersionMetadata(int resourceId, PageControl pc) {

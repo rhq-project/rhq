@@ -60,6 +60,7 @@ public class EventsFormPrepareAction extends MetricsControlAction {
         HttpServletResponse response) throws Exception {
 
         EventsForm eForm = (EventsForm) form;
+        super.execute(mapping, form, request, response); // Get the display time range
 
         eventManager = LookupUtil.getEventManager();
 
@@ -68,7 +69,7 @@ public class EventsFormPrepareAction extends MetricsControlAction {
         int groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
         int parent = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
         int type = WebUtility.getOptionalIntRequestParameter(request, "type", -1);
-        // TODO enhance for groups
+
         WebUser user = SessionUtils.getWebUser(request.getSession());
         Subject subject = user.getSubject();
 
@@ -105,7 +106,6 @@ public class EventsFormPrepareAction extends MetricsControlAction {
 
         eForm.setEvents((PageList<EventComposite>) events);
 
-        super.execute(mapping, form, request, response);
         return null;
     }
 

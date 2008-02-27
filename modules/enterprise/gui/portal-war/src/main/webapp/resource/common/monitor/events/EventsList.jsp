@@ -79,14 +79,15 @@
    
    <html:form action="/resource/common/monitor/visibility/Events" >
 <table width="100%" align="center" cellspacing="0" cellpadding="0" border="0">
-<tr colspan="3">
-  <td class="FilterLine" colspan="3"><b>
+<tr colspan="4">
+  <td class="FilterLine" colspan="4"><b>
    <fmt:message key="resource.common.monitor.events.FilterBy" />
   </b></td>
 </tr>
+<tr class="FilterLabelText">
+  <td width="5%"/><td>Severity</td><td class="FilterLabelText">Source</td><td class="FilterLabelText">Search String</td></tr>
 <tr>
-<tr><td class="FilterLabelText">Severity</td><td class="FilterLabelText">Source</td><td class="FilterLabelText">Search String</td></tr>
-<tr>
+   <td width="5%"/>
    <td>
      <html:select property="sevFilter">
         <html:option value=""/>
@@ -104,12 +105,6 @@
       <html:text property="searchString"/>
    </td>
 </tr>
-<tr>
-  <td>
-   <b><fmt:message key="resource.common.monitor.events.FilterUpdate"/></b>
-   <html:image page="/images/dash-button_go-arrow.gif" border="0"/>
-  </td>
-  </tr>
   <tr>
     <tiles:insert definition=".resource.common.monitor.visibility.metricsDisplayControlForm">
       <tiles:put name="form" beanName="EventsForm"/>
@@ -127,6 +122,7 @@
 </html:form>
 <p/>
 <table width="98%" align="center" cellspacing="0" cellpadding="0" border="0" >
+<tr class="FilterLine"><td><b><fmt:message key="resource.common.monitor.events.ListOfEvents"/></b></td></tr>
 <tr>
    <td>
    <c:set var="emptyMsg"><fmt:message key="resource.common.monitor.events.EmptyList"/></c:set>

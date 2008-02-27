@@ -332,24 +332,98 @@ public class EventManagerBean implements EventManagerLocal {
         return comp;
     }
 
+    /**
+     * Return a list of events for the passed event.
+     * We got an event id passed, so the user wants to directly see this event and
+     * not the most up to date one.
+     * We will present him with the given event surrounded by previous and later
+     * events for the same resource(s).
+     */
+    public PageList<EventComposite> getEventsForEvent(Subject subject, int[] resourceIds, int eventId, PageControl pc) {
+        PageList<EventComposite> pl = new PageList<EventComposite>(pc);
+
+        if (eventId <= 0 || resourceIds == null || resourceIds.length == 0)
+            return pl;
+
+        String query = "SELECT detail, id, ";
+        if (dbType instanceof PostgresqlDatabaseType)
+            query += "substr(location, 1, 30) "; // TODO take chars from end of string
+        else if (dbType instanceof OracleDatabaseType)
+            query += "substr(location, -1, 30 )";
+        else
+            throw new RuntimeException("Unknown database type : " + dbType);
+        query += ",severity, timestamp, res_id FROM ( "
+            + " SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, res.id  as res_id "
+            + " FROM rhq_event e1, rhq_event e  ";
+        query += "JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id "
+            + "  INNER  JOIN RHQ_resource res ON res.id = evs.resource_id ";
+        query += "WHERE e1.timestamp < e.timestamp   AND e.id = ? AND res.id IN ( ";
+        query += JDBCUtil.generateInBinds(resourceIds.length);
+        query += " ) ";
+        query += " ORDER BY e1.id DESC LIMIT 5 ) AS r1 ";
+        query += " UNION " + " ( "
+            + "  SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, res.id as res_id "
+            + " FROM rhq_event e1, rhq_event e  ";
+        query += "        JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id "
+            + "       INNER  JOIN RHQ_resource res ON res.id = evs.resource_id "
+            + " WHERE e1.timestamp >= e.timestamp  AND e.id = ?  AND res.id IN ( ";
+        query += JDBCUtil.generateInBinds(resourceIds.length);
+        query += " ) ";
+        query += "ORDER BY e1.id ASC LIMIT 6 ) ORDER BY timestamp";
+
+        Connection conn = null;
+        PreparedStatement stm = null;
+        ResultSet rs = null;
+        try {
+            conn = rhqDs.getConnection();
+            stm = conn.prepareStatement(query.toString());
+            stm.setInt(1, eventId);
+            int i = 2;
+            JDBCUtil.bindNTimes(stm, resourceIds, i);
+            i += resourceIds.length;
+            stm.setInt(i, eventId);
+            i++;
+            JDBCUtil.bindNTimes(stm, resourceIds, i);
+            i += resourceIds.length;
+
+            rs = stm.executeQuery();
+            while (rs.next()) {
+                EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(2), rs.getString(3), EventSeverity
+                    .valueOf(rs.getString(4)), rs.getTimestamp(5), rs.getInt(6));
+                pl.add(ec);
+            }
+
+        } catch (SQLException sq) {
+            log.error("getEvents: Error retreiving events: " + sq.getMessage());
+            return pl;
+        } finally {
+            JDBCUtil.safeClose(conn, stm, rs);
+        }
+
+        return pl;
+    }
+
     public PageList<EventComposite> getEvents(Subject subject, int[] resourceIds, long begin, long end,
         EventSeverity severity, int eventId, String source, String searchString, PageControl pc) {
 
         PageList<EventComposite> pl = new PageList<EventComposite>(pc);
         if (eventId > -1) {
-            //            try {
-            //                Event event = entityManager.find(Event.class, eventId);
-            //                pl.add(event);
-            //                // TODO extend with list of "surrounding" events
-            //                return pl;
-            //            } catch (NoResultException nre) {
-            //                log.debug("Event with id " + eventId + " does not exist");
-            //            }
-            // TODO fix this case 
+            /*
+             * We got an event id passed, so the user wants to directly see this event and
+             * not the most up to date one.
+             * We will present him with the given event surrounded by previous and later
+             * events for the same resource(s).
+             */
+            pl = getEventsForEvent(subject, resourceIds, eventId, pc);
+            if (pl.size() > 0)
+                return pl;
         }
 
+        if (resourceIds == null || resourceIds.length == 0)
+            return pl;
+
         /*
-         * We're still here - either the passed event was not found or we got called without 
+         * We're still here - either the specified event was not found or we got called without 
          * passing any specific event. Return a bunch of events for the resource etc.
          */
         String query = "SELECT ev.detail, ev.id, ";

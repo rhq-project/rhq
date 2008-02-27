@@ -20,6 +20,30 @@
     <td>
 
   --%>
+    <tr>
+    <td colspan="<c:out value="${count + 2}"/>" valign="top">
+      <a name="eventDetail"></a>
+      <div id="eventDetailTable"
+           style="position: relative; height: 230px; display: none; ">
+      <div class="eventDetails">
+      <table cellspacing="0" width="100%">
+        <tr>
+          <td class="eventsTabOn" nowrap="true"><fmt:message key="resource.common.monitor.events.ListOfEvents"/></td>
+          <td valign="top" style="text-align: right; border-bottom: solid; border-width: 1px; border-color: #000000;">
+            <html:img page="/images/dash-icon_delete.gif"
+                      onclick="new Effect.Fade($('eventDetailTable'))"/>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="8"> 
+            <div id="eventsSummary"  style="height:200px; overflow:auto;">Timeline here</div>
+          </td>
+        </tr>
+      </table>
+      </div>
+      </div>
+    </td>
+  </tr>
   <c:if test="${not hideLogs}">
     <tiles:insert page="/resource/common/monitor/visibility/EventLogs.jsp"/>
   </c:if>
@@ -52,50 +76,7 @@
     </td>
     <td></td>
   </tr>
-  <tr>
-    <td colspan="<c:out value="${count + 2}"/>" valign="top">
-      <a name="eventDetail"></a>
-      <div id="eventDetailTable"
-           style="position: relative; height: 230px; display: none; ">
-      <div class="eventDetails">
-      <table cellspacing="0" width="100%">
-        <tr>
-          <td id="ALLEventsTab" width="10%" class="eventsTabOn" nowrap="true">
-            <a href="#eventDetail" onclick="filterEventsDetails('ALL')" class="black"><fmt:message key="resource.common.monitor.label.events.All"/></a>
-          </td>
-          <td id="ERREventsTab" width="10%" class="eventsTab" nowrap="true">
-            <a href="#eventDetail" onclick="filterEventsDetails('ERR')" class="red"><fmt:message key="resource.common.monitor.label.events.Error"/></a>
-          </td>
-          <td id="WRNEventsTab" width="10%" class="eventsTab" nowrap="true">
-            <a href="#eventDetail" onclick="filterEventsDetails('WRN')" class="yellow"><fmt:message key="resource.common.monitor.label.events.Warn"/></a>
-          </td>
-          <td id="INFEventsTab" width="10%" class="eventsTab" nowrap="true">
-            <a href="#eventDetail" onclick="filterEventsDetails('INF')" class="green"><fmt:message key="resource.common.monitor.label.events.Info"/></a>
-          </td>
-          <td id="DBGEventsTab" width="10%" class="eventsTab" nowrap="true">
-            <a href="#eventDetail" onclick="filterEventsDetails('DBG')" class="green"><fmt:message key="resource.common.monitor.label.events.Debug"/></a>
-          </td>
-          <td id="ALREventsTab" width="10%" class="eventsTab" nowrap="true">
-            <a href="#eventDetail" onclick="filterEventsDetails('ALR')" class="red"><fmt:message key="resource.common.monitor.label.events.Alert"/></a>
-          </td>
-          <td id="CTLEventsTab" width="10%" class="eventsTab" nowrap="true">
-            <a href="#eventDetail" onclick="filterEventsDetails('CTL')" class="navy"><fmt:message key="resource.common.monitor.label.events.Control"/></a>
-          </td>
-          <td valign="top" style="text-align: right; border-bottom: solid; border-width: 1px; border-color: #000000;">
-            <html:img page="/images/dash-icon_delete.gif"
-                      onclick="new Effect.Fade($('eventDetailTable'))"/>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="8"> 
-            <div id="eventsSummary"  style="height:200px; overflow:auto;">Timeline here</div>
-          </td>
-        </tr>
-      </table>
-      </div>
-      </div>
-    </td>
-  </tr>
+
 <%--
 </table>
 </td>

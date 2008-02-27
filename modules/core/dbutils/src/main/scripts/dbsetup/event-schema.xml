@@ -45,6 +45,8 @@
       <column name="TIMESTAMP" required="true" type="TIMESTAMP"/>
       <column name="SEVERITY" required="true" size="20" type="VARCHAR2"/>
       <column name="DETAIL" required="true" size="4000" type="VARCHAR2"/>
+      <column name="ACK_TIME" type="TIMESTAMP"/>
+      <column name="ACK_USER" size="100" type="VARCHAR2"/>
 
       <index name="RHQ_EVENT_IDX" unique="false">
          <field ref="EVENT_SOURCE_ID"/>         

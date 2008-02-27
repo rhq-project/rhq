@@ -20,31 +20,66 @@ package org.rhq.enterprise.gui.inventory.resource;
 
 import javax.faces.application.FacesMessage;
 
-import org.rhq.core.domain.auth.Subject;
+import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * A JSF managed bean that backs the /rhq/resource/inventory/edit-connection.xhtml page.
+ * A JSF managed bean that backs the Connection Properties section of the /rhq/resource/inventory/view.xhtml page.
  *
  * @author Ian Springer
  */
-public class EditConnectionPropertiesUIBean extends ViewConnectionPropertiesUIBean {
-    public static final String MANAGED_BEAN_NAME = "EditConnectionPropertiesUIBean";
-
-    private static final String OUTCOME_SUCCESS = "success";
-    private static final String OUTCOME_FAILURE = "failure";
+public class ConnectionPropertiesUIBean extends AbstractConfigurationUIBean {
+    public static final String MANAGED_BEAN_NAME = "ConnectionPropertiesUIBean";
 
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
-    public String begin() {
-        return OUTCOME_SUCCESS;
+    @Nullable
+    protected ConfigurationDefinition lookupConfigurationDefinition() {
+        int resourceTypeId = EnterpriseFacesContextUtility.getResource().getResourceType().getId();
+        ConfigurationDefinition configurationDefinition = this.configurationManager
+            .getPluginConfigurationDefinitionForResourceType(EnterpriseFacesContextUtility.getSubject(), resourceTypeId);
+        return configurationDefinition;
+    }
+
+    @Nullable
+    protected Configuration lookupConfiguration() {
+        Configuration configuration = this.configurationManager.getCurrentPluginConfiguration(
+            EnterpriseFacesContextUtility.getSubject(), EnterpriseFacesContextUtility.getResource().getId());
+        if (configuration != null) {
+            ConfigurationMaskingUtility.maskConfiguration(configuration, getConfigurationDefinition());
+        }
+        return configuration;
+    }
+
+    protected int getConfigurationDefinitionKey() {
+        return EnterpriseFacesContextUtility.getResource().getResourceType().getId();
+    }
+
+    protected int getConfigurationKey() {
+        return EnterpriseFacesContextUtility.getResource().getId();
+    }
+
+    public String getNullConfigurationDefinitionMessage() {
+        return "Can not find this resource's plugin configuration definition.";
+    }
+
+    public String getNullConfigurationMessage() {
+        return "This resource's plugin configuration has not been initialized.";
+    }
+    
+    public String edit() {
+        return SUCCESS_OUTCOME;
     }
 
     public String update() {
@@ -60,17 +95,22 @@ public class EditConnectionPropertiesUIBean extends ViewConnectionPropertiesUIBe
         String errorMessage = update.getErrorMessage();
         if (errorMessage == null) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Connection properties updated.");
-            return OUTCOME_SUCCESS;
+            clearConfiguration();
+            return SUCCESS_OUTCOME;
         } else {
             // non-null error message, means some exception was thrown, caught, and put into the update details
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "Unable to update this resource's connection properties.", errorMessage);
-            return OUTCOME_FAILURE;
+            return FAILURE_OUTCOME;
         }
     }
 
     public String cancel() {
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Connection properties not updated.");
-        return OUTCOME_SUCCESS;
+        return SUCCESS_OUTCOME;
+    }
+
+    public String finish() {
+        return SUCCESS_OUTCOME;
     }
 }

@@ -17,11 +17,22 @@ public enum EventSeverity {
      * @return if more severe
      */
     public boolean isMoreSevereThan(EventSeverity other) {
-
         if (other == null) // If other is null, our severity is always higher
             return true;
 
         return (ordinal() > other.ordinal());
+    }
+
+    /**
+     * Determine if this severity is at least as severe as that of other
+     * @param other EventSeverity to compare
+     * @return if at least as severe
+     */
+    public boolean isAtLeastAsSevereAs(EventSeverity other) {
+        if (other == null) // If other is null, our severity is always higher
+            return true;
+
+        return (ordinal() >= other.ordinal());
     }
 
     /**

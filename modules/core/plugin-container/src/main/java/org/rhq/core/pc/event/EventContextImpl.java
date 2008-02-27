@@ -18,20 +18,17 @@
  */
 package org.rhq.core.pc.event;
 
-import java.util.Set;
-import java.util.HashSet;
-
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.hyperic.sigar.Sigar;
-
-import org.rhq.core.pluginapi.event.EventContext;
-import org.rhq.core.pluginapi.event.EventPoller;
+import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
-import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pluginapi.event.EventContext;
+import org.rhq.core.pluginapi.event.EventPoller;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Ian Springer
@@ -45,25 +42,42 @@ public class EventContextImpl implements EventContext {
         this.eventManager = PluginContainer.getInstance().getEventManager();
     }
 
-    public void publishEvent(@NotNull Event event, @NotNull String sourceLocation) {
+    public void publishEvent(@NotNull Event event) {
         //noinspection ConstantConditions
         if (event == null)
             throw new IllegalArgumentException("event parameter must not be null.");
-        //noinspection ConstantConditions
-        if (sourceLocation == null)
-            throw new IllegalArgumentException("sourceLocation parameter must not be null.");
+        EventDefinition eventDefinition = EventUtility.getEventDefinition(event.getType(), this.resource.getResourceType());
+        if (eventDefinition == null)
+            throw new IllegalArgumentException("Event has unknown event type - no EventDefinition exists with name '" + event.getType() + "'.");
         Set<Event> events = new HashSet<Event>();
         events.add(event);
-        EventSource eventSource = createEventSource(event.getType(), sourceLocation);
-        this.eventManager.publishEvents(events, eventSource);
+        this.eventManager.publishEvents(events, this.resource);
     }
 
-    public void registerEventPoller(@NotNull EventPoller poller) {
+    public void registerEventPoller(@NotNull EventPoller poller, int pollingInterval) {
         //noinspection ConstantConditions
         if (poller == null)
             throw new IllegalArgumentException("poller parameter must not be null.");
-        EventSource eventSource = createEventSource(poller.getEventType(), poller.getSourceLocation());
-        this.eventManager.registerEventPoller(poller, eventSource);
+        String sourceLocation = null;
+        registerEventPollerInternal(poller, pollingInterval, sourceLocation);
+    }
+
+    public void registerEventPoller(@NotNull EventPoller poller, int pollingInterval, @NotNull String sourceLocation) {
+        //noinspection ConstantConditions
+        if (poller == null)
+            throw new IllegalArgumentException("poller parameter must not be null.");
+        //noinspection ConstantConditions
+        if (sourceLocation == null)
+            throw new IllegalArgumentException("sourceLocation parameter must not be null.");
+        registerEventPollerInternal(poller, pollingInterval, sourceLocation);
+    }
+
+    public void unregisterEventPoller(@NotNull String eventType) {
+        //noinspection ConstantConditions
+        if (eventType == null)
+            throw new IllegalArgumentException("eventType parameter must not be null.");
+        String sourceLocation = null;
+        unregisterEventPollerInternal(eventType, sourceLocation);
     }
 
     public void unregisterEventPoller(@NotNull String eventType, @NotNull String sourceLocation) {
@@ -73,42 +87,26 @@ public class EventContextImpl implements EventContext {
         //noinspection ConstantConditions
         if (sourceLocation == null)
             throw new IllegalArgumentException("sourceLocation parameter must not be null.");
-        EventSource eventSource = createEventSource(eventType, sourceLocation);
-        this.eventManager.unregisterEventPoller(eventSource);
+        unregisterEventPollerInternal(eventType, sourceLocation);
     }
 
     @NotNull
     public Sigar getSigar() {
         return this.eventManager.getSigar();
     }
-
-    private EventSource createEventSource(String eventType, String sourceLocation) {
-        EventDefinition eventDefinition = getEventDefinition(eventType);
+    
+    private void registerEventPollerInternal(EventPoller poller, int pollingInterval, String sourceLocation) {
+        EventDefinition eventDefinition = EventUtility.getEventDefinition(poller.getEventType(), this.resource.getResourceType());
         if (eventDefinition == null)
-        {
-            throw new IllegalArgumentException("Unknown type - no EventDefinition found with name '" + eventType + "'.");
-        }
-        EventSource eventSource = new EventSource(sourceLocation, eventDefinition, this.resource);
-        return eventSource;
+            throw new IllegalArgumentException("Poller has unknown event type - no EventDefinition exists with name '" + poller.getEventType() + "'.");
+        int adjustedPollingInterval = Math.max(EventContext.MINIMUM_POLLING_INTERVAL, pollingInterval);
+        this.eventManager.registerEventPoller(poller, adjustedPollingInterval, this.resource, sourceLocation);
     }
 
-    /**
-     * Returns the {@link org.rhq.core.domain.event.EventDefinition} for the {@link Event} with the specified name.
-     *
-     * @param  eventName an <code>Event</code> name
-     *
-     * @return the event definition for the <code>Event</code> with the specified name
-     */
-    @Nullable
-    private EventDefinition getEventDefinition(String eventName) {
-        Set<EventDefinition> eventDefinitions = this.resource.getResourceType().getEventDefinitions();
-        if (eventDefinitions != null) {
-            for (EventDefinition eventDefinition : eventDefinitions) {
-                if (eventDefinition.getName().equals(eventName)) {
-                    return eventDefinition;
-                }
-            }
-        }
-        return null;
+    private void unregisterEventPollerInternal(String eventType, String sourceLocation) {
+        EventDefinition eventDefinition = EventUtility.getEventDefinition(eventType, this.resource.getResourceType());
+        if (eventDefinition == null)
+            throw new IllegalArgumentException("Unknown event type - no EventDefinition exists with name '" + eventType + "'.");
+        this.eventManager.unregisterEventPoller(this.resource, eventType, sourceLocation);
     }
 }

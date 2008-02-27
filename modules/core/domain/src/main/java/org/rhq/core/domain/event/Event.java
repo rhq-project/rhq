@@ -96,6 +96,13 @@ public class Event implements Serializable {
     @Column(name = "DETAIL", length = 4000, nullable = false)
     private String detail; // TODO lazify
 
+    @Column(name = "ACK_TIME")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date ackTime;
+
+    @Column(name = "ACK_USER", length = 100)
+    private String ackUser;
+
     @Transient
     private transient String detailExcerpt;
 
@@ -104,6 +111,12 @@ public class Event implements Serializable {
      */
     @Transient
     private transient String type;
+
+    /**
+     * The event's source location (i.e. the location field of its {@link EventSource}).
+     */
+    @Transient
+    private transient String sourceLocation;
 
     /* no-arg constructor required by EJB spec */
     protected Event() {
@@ -118,11 +131,14 @@ public class Event implements Serializable {
      */
     public Event(@NotNull
     String type, @NotNull
+    String sourceLocation, @NotNull
     Date timestamp, @NotNull
     EventSeverity severity, @NotNull
     String detail) {
         if (type == null)
             throw new IllegalArgumentException("type parameter must not be null.");
+        if (sourceLocation == null)
+            throw new IllegalArgumentException("sourceLocation parameter must not be null.");
         if (timestamp == null)
             throw new IllegalArgumentException("timestamp parameter must not be null.");
         if (severity == null)
@@ -130,6 +146,7 @@ public class Event implements Serializable {
         if (detail == null)
             throw new IllegalArgumentException("detail parameter must not be null.");
         this.type = type;
+        this.sourceLocation = sourceLocation;
         this.timestamp = timestamp;
         this.severity = severity;
         this.detail = detail;
@@ -151,6 +168,11 @@ public class Event implements Serializable {
         return this.type;
     }
 
+    @Nullable
+    public String getSourceLocation() {
+        return this.sourceLocation;
+    }
+
     @NotNull
     public Date getTimestamp() {
         return this.timestamp;
@@ -164,6 +186,16 @@ public class Event implements Serializable {
     @NotNull
     public String getDetail() {
         return this.detail;
+    }
+
+    @Nullable
+    public Date getAckTime() {
+        return ackTime;
+    }
+
+    @Nullable
+    public String getAckUser() {
+        return ackUser;
     }
 
     @Override
@@ -195,8 +227,9 @@ public class Event implements Serializable {
 
     @Override
     public String toString() {
-        return "Event[" + "id=" + this.id + ", " + "source=" + this.source + ", " + "timestamp=" + this.timestamp
-            + ", " + "severity=" + this.severity + ", " + "detail=" + this.detail + "]";
+        return this.getClass().getSimpleName() + "["
+                + "id=" + this.id + ", " + "source=" + this.source + ", " + "timestamp=" + this.timestamp
+                + ", " + "severity=" + this.severity + ", " + "detail=" + this.detail + "]";
 
     }
 

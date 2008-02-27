@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
@@ -452,8 +453,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
         resource.setVersion(details.getResourceVersion());
         resource.setDescription(details.getResourceDescription());
         resource.setResourceType(details.getResourceType());
-        Configuration pluginConfiguration = details.getPluginConfiguration();
 
+        Configuration pluginConfiguration = details.getPluginConfiguration();
+        ConfigurationUtility.normalizeConfiguration(details.getPluginConfiguration(), details.getResourceType().getPluginConfigurationDefinition());
         // If the plugin didn't already set the notes field, set it to something useful.
         if ((pluginConfiguration != null) && (pluginConfiguration.getNotes() == null)) {
             pluginConfiguration.setNotes("plugin config for " + resource.getResourceType() + " resource w/ key '"
@@ -919,7 +921,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     throw new InvalidPluginConfigurationException("Failed to start component for resource " + resource
                         + ".", t);
                 }
-
                 throw new PluginContainerException("Failed to start component for resource " + resource + ".", t);
             } finally {
                 Thread.currentThread().setContextClassLoader(startingClassLoader);
@@ -1172,14 +1173,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         // build our actual platform resource now that we've discovered it
-        platform = new Resource();
-
-        platform.setResourceKey(platformToUse.getResourceKey());
-        platform.setName(platformToUse.getResourceName());
-        platform.setVersion(platformToUse.getResourceVersion());
-        platform.setDescription(platformToUse.getResourceDescription());
-        platform.setResourceType(platformToUse.getResourceType());
-        platform.setPluginConfiguration(platformToUse.getPluginConfiguration());
+        platform = createNewResource(platformToUse);
         platform.setAgent(this.agent);
 
         log.info("Detected new platform resource " + platform);

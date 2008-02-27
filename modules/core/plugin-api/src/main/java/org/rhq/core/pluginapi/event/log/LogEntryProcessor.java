@@ -18,20 +18,32 @@
  */
 package org.rhq.core.pluginapi.event.log;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.util.Set;
+
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.event.Event;
 
 /**
+ * A processor for entries from a log file. Each LogEntryProcessor instance is associated with a
+ * {@link org.rhq.core.pluginapi.event.log.LogFileEventPoller}. Whenever the LogFileEventPoller's poll() method
+ * detects new lines have been appended to the log file is is tailing, it calls the
+ * {@link #processLines(java.io.BufferedReader)} method, passing it a buffered reader containing the new lines.
+ *
  * @author Ian Springer
  */
 public interface LogEntryProcessor {
     /**
-     * Processes the specified line from a log file, and returns an Event if appropriate, or otherwise, null.
+     * Processes the specified lines from a log file, and returns a set of Events if appropriate, or otherwise, null.
      *
-     * @param line the line to be processed
-     * @return an Event if appropriate, or otherwise, null
+     * @param bufferedReader a buffered reader from which the lines can be read
+     *
+     * @return a set of Events if appropriate, or otherwise, null
+     * 
+     * @throws java.io.IOException if reading lines from the supplied buffer reader fails
      */
     @Nullable
-    Event processLine(String line);
+    Set<Event> processLines(BufferedReader bufferedReader) throws IOException;
 }

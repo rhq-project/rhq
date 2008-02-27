@@ -79,7 +79,7 @@ public class EventManagerTest extends AbstractEJB3Test {
 
             Date now = new Date();
             EventSource evSrc = new EventSource("ESource", eDef, resource);
-            Event ev = new Event("EType", now, EventSeverity.INFO, "This is a test");
+            Event ev = new Event("EType", "ESource", now, EventSeverity.INFO, "This is a test");
             Set<Event> eventSet = new HashSet<Event>();
             eventSet.add(ev);
             Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>();
@@ -128,7 +128,7 @@ public class EventManagerTest extends AbstractEJB3Test {
 
             Date now = new Date();
             EventSource evSrc = new EventSource("ESource", eDef, resource);
-            Event ev = new Event("EType", now, EventSeverity.INFO, "This is a 2nd test");
+            Event ev = new Event("EType", "ESource", now, EventSeverity.INFO, "This is a 2nd test");
             Set<Event> eventSet = new HashSet<Event>();
             eventSet.add(ev);
             Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>();

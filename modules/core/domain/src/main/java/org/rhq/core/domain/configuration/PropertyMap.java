@@ -163,6 +163,15 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
         return (PropertySimple) get(name);
     }
 
+    public String getSimpleValue(String name, String defaultValue) {
+        PropertySimple property = (PropertySimple) getMap().get(name);
+        if ((property != null) && (property.getStringValue() != null)) {
+            return property.getStringValue();
+        } else {
+            return defaultValue;
+        }
+    }
+
     /**
      * Looks for a child list property with the given name in the map and returns it. <code>null</code> is returned if
      * it is not found.

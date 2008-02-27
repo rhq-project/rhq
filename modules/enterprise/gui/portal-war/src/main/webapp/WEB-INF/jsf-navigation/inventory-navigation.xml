@@ -21,11 +21,12 @@
          <to-view-id>/rhq/resource/inventory/edit-general.xhtml</to-view-id>
       </navigation-case>
 
-      <!-- === EditConnectionPropertiesUIBean ======================= -->
+      <!-- === ConnectionPropertiesUIBean ======================= -->
 
       <navigation-case>
-         <from-action>#{EditConnectionPropertiesUIBean.begin}</from-action>
-         <to-view-id>/rhq/resource/inventory/edit-connection.xhtml</to-view-id>         
+         <from-action>#{ConnectionPropertiesUIBean.edit}</from-action>
+         <to-view-id>/rhq/resource/inventory/edit-connection.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
       </navigation-case>
 
       <!-- === DetermineChildResourceCreationTypeUIBean ======================= -->
@@ -109,7 +110,52 @@
          <redirect/>
       </navigation-case>
 
+       <navigation-case>
+          <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+          <to-view-id>/rhq/resource/inventory/edit-plugin-config-map.xhtml</to-view-id>
+       </navigation-case>
+
+       <navigation-case>
+          <from-action>#{ConfigHelperUIBean.addNewMap}</from-action>
+          <to-view-id>/rhq/resource/inventory/add-plugin-config-map.xhtml</to-view-id>
+       </navigation-case>
+
+       <navigation-case>
+          <from-action>#{ConfigHelperUIBean.addNewOpenMapMemberProperty}</from-action>
+          <to-view-id>/rhq/resource/inventory/add-plugin-config-simple.xhtml</to-view-id>
+       </navigation-case>
+
    </navigation-rule>
+
+    <navigation-rule>
+
+       <from-view-id>/rhq/resource/inventory/edit-plugin-config-map.xhtml</from-view-id>
+
+       <navigation-case>
+          <to-view-id>/rhq/resource/inventory/edit-connection.xhtml</to-view-id>
+       </navigation-case>
+
+    </navigation-rule>
+
+    <navigation-rule>
+
+       <from-view-id>/rhq/resource/inventory/add-plugin-config-map.xhtml</from-view-id>
+
+       <navigation-case>
+          <to-view-id>/rhq/resource/inventory/edit-connection.xhtml</to-view-id>
+       </navigation-case>
+
+    </navigation-rule>
+
+    <navigation-rule>
+
+       <from-view-id>/rhq/resource/inventory/add-plugin-config-simple.xhtml</from-view-id>
+
+       <navigation-case>
+          <to-view-id>/rhq/resource/inventory/edit-connection.xhtml</to-view-id>
+       </navigation-case>
+
+    </navigation-rule>
 
    <navigation-rule>
 

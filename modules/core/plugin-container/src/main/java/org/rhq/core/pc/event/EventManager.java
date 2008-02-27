@@ -32,7 +32,9 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
+import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.event.transfer.EventReport;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.util.LoggingThreadFactory;
@@ -52,7 +54,8 @@ public class EventManager implements ContainerService {
     private static final int SENDER_PERIOD_SECS = 30;
 
     private static final String POLLER_THREAD_POOL_NAME = "EventManager.poller";
-    private static final int POLLER_THREAD_POOL_CORE_SIZE = 5; // TODO: Make this configurable.
+    private static final int POLLER_THREAD_POOL_CORE_SIZE = 1;
+    private static final int POLLER_THREAD_POOL_MAX_SIZE = 3;
     private static final int POLLER_INITIAL_DELAY_SECS = 0;
 
     private PluginContainerConfiguration pcConfig;
@@ -60,7 +63,7 @@ public class EventManager implements ContainerService {
     private EventReport activeReport = new EventReport();
     private ReentrantReadWriteLock reportLock = new ReentrantReadWriteLock(true);
     private ScheduledThreadPoolExecutor pollerThreadPool;
-    private Map<EventSource, Runnable> pollerThreads;
+    private Map<PollerKey, Runnable> pollerThreads;
     private Sigar sigar;
 
     public void initialize() {
@@ -75,7 +78,8 @@ public class EventManager implements ContainerService {
         // registerEventPoller().
         this.pollerThreadPool = new ScheduledThreadPoolExecutor(POLLER_THREAD_POOL_CORE_SIZE, new LoggingThreadFactory(
                 POLLER_THREAD_POOL_NAME, true));
-        this.pollerThreads = new HashMap<EventSource, Runnable>();
+        this.pollerThreadPool.setMaximumPoolSize(POLLER_THREAD_POOL_MAX_SIZE);
+        this.pollerThreads = new HashMap<PollerKey, Runnable>();
 
         this.sigar = new Sigar();
     }
@@ -94,12 +98,15 @@ public class EventManager implements ContainerService {
         this.pcConfig = config;
     }
 
-    void publishEvents(@NotNull Set<Event> events, @NotNull EventSource eventSource) {
+    void publishEvents(@NotNull Set<Event> events, @NotNull Resource resource) {
         try {
             this.reportLock.readLock().lock();
-            this.activeReport.addEvents(events, eventSource);
+            for (Event event : events) {
+                EventSource eventSource = createEventSource(event, resource);
+                this.activeReport.addEvent(event, eventSource);
+            }
         } catch (Throwable t) {
-            log.error("Failed to add Events " + events + " to Event report.", t);
+            log.error("Failed to add Events for " + resource + " to Event report: " + events, t);
         } finally {
             this.reportLock.readLock().unlock();
         }
@@ -136,23 +143,76 @@ public class EventManager implements ContainerService {
         }
     }
 
-    void registerEventPoller(EventPoller poller, EventSource eventSource) {
-        long pollingInterval = Math.max(EventPoller.MINIMUM_POLLING_INTERVAL, Math.min(EventPoller.MAXIMUM_POLLING_INTERVAL, poller.getPollingInterval()));
-        EventPollerRunner pollerRunner = new EventPollerRunner(poller, eventSource, this);
+    void registerEventPoller(EventPoller poller, int pollingInterval, Resource resource, String sourceLocation) {
+        EventPollerRunner pollerRunner = new EventPollerRunner(poller, resource, this);
         Runnable pollerFuture =
                 (Runnable) this.pollerThreadPool.scheduleAtFixedRate(pollerRunner, POLLER_INITIAL_DELAY_SECS,
                         pollingInterval, TimeUnit.SECONDS);
-        this.pollerThreads.put(eventSource, pollerFuture);
+        PollerKey pollerKey = new PollerKey(resource.getId(), poller.getEventType(), sourceLocation);
+        this.pollerThreads.put(pollerKey, pollerFuture);
     }
 
-    void unregisterEventPoller(EventSource eventSource) {
-        if (this.pollerThreads.containsKey(eventSource)) {
-            Runnable pollerFuture = this.pollerThreads.get(eventSource);
-            boolean wasRemoved = this.pollerThreadPool.remove(pollerFuture);
+    void unregisterEventPoller(Resource resource, String eventType, String sourceLocation) {
+        PollerKey pollerKey = new PollerKey(resource.getId(), eventType, sourceLocation);
+        if (this.pollerThreads.containsKey(pollerKey)) {
+            Runnable pollerThread = this.pollerThreads.get(pollerKey);
+            boolean wasRemoved = this.pollerThreadPool.remove(pollerThread);
             if (!wasRemoved) {
-                log.error("Failed to remove poller with " + eventSource + " from thread pool.");
+                log.error("Failed to remove poller with " + pollerKey + " from thread pool.");
             }
-            this.pollerThreads.remove(eventSource);
+            this.pollerThreads.remove(pollerKey);
+        }
+    }
+
+    private EventSource createEventSource(Event event, Resource resource) {
+        EventDefinition eventDefinition = EventUtility.getEventDefinition(event.getType(), resource.getResourceType());
+        if (eventDefinition == null)
+        {
+            throw new IllegalArgumentException("Unknown type - no EventDefinition found with name '" + event.getType() + "'.");
+        }
+        //noinspection ConstantConditions
+        return new EventSource(event.getSourceLocation(), eventDefinition, resource);
+    }
+
+    class PollerKey
+    {
+        int resourceId;
+        String eventType;
+        String sourceLocation;
+
+        PollerKey(int resourceId, String eventType, String sourceLocation) {
+            this.resourceId = resourceId;
+            this.eventType = eventType;
+            this.sourceLocation = sourceLocation;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+
+            PollerKey that = (PollerKey) obj;
+
+            if (resourceId != that.resourceId) return false;
+            if (!eventType.equals(that.eventType)) return false;
+            if (sourceLocation != null ? !sourceLocation.equals(that.sourceLocation) : that.sourceLocation != null)
+                return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result;
+            result = resourceId;
+            result = 31 * result + eventType.hashCode();
+            result = 31 * result + (sourceLocation != null ? sourceLocation.hashCode() : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return super.toString(); // TODO: Implement this method.
         }
     }
 }

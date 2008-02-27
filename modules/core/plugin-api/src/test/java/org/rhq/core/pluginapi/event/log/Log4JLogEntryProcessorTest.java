@@ -20,6 +20,10 @@ package org.rhq.core.pluginapi.event.log;
 
 import java.util.Date;
 import java.util.Calendar;
+import java.util.Set;
+import java.util.Iterator;
+import java.io.StringReader;
+import java.io.BufferedReader;
 
 import org.testng.annotations.Test;
 
@@ -31,22 +35,31 @@ import org.rhq.core.domain.event.EventSeverity;
  */
 @Test
 public class Log4JLogEntryProcessorTest {
-    public void testProcessLine() {
+    public static final StringBuilder TEST_LOG = new StringBuilder();
+    static
+    {
+        TEST_LOG.append("2007-12-09 15:32:49,909 DEBUG [com.example.FooBar] run: IdleRemover notifying pools, interval: 450000");
+        TEST_LOG.append("2008-02-09 02:10:11,909 INFO [com.example.FooBar] yada yada yada");
+    }
+
+    public void testProcessLine() throws Exception {
         String eventType = "logEntry";
-        LogEntryProcessor processor = new Log4JLogEntryProcessor(eventType);
-        Event event = processor.processLine(
-                "2007-12-09 15:32:49,909 DEBUG [com.example.FooBar] run: IdleRemover notifying pools, interval: 450000");
-        assert event == null;
-        Event event2 = processor.processLine(
-                "2007-12-09 15:32:49,909 DEBUG [com.example.FooBar] yada yada yada");
-        //noinspection ConstantConditions
-        assert event2.getType().equals(eventType);
+        LogEntryProcessor processor = new Log4JLogEntryProcessor(eventType, null, null, dateFormat);
+        BufferedReader bufferedReader = new BufferedReader(new StringReader(TEST_LOG.toString()));
+        Set<Event> events = processor.processLines(bufferedReader);
+        assert events != null;
+        assert events.size() == 2;
+        Iterator<Event> eventIterator = events.iterator();
+        Event event1 = eventIterator.next();
+        assert event1.getType().equals(eventType);
         Calendar calendar = Calendar.getInstance();
         calendar.set(2007, 11, 9, 15, 32, 49);
         calendar.set(Calendar.MILLISECOND, 909);
         Date expectedDate = calendar.getTime();
-        assert event2.getTimestamp().equals(expectedDate);
-        assert event2.getSeverity().equals(EventSeverity.DEBUG);
-        assert event2.getDetail().equals("[com.example.FooBar] run: IdleRemover notifying pools, interval: 450000");
+        assert event1.getTimestamp().equals(expectedDate);
+        assert event1.getSeverity().equals(EventSeverity.DEBUG);
+        assert event1.getDetail().equals("[com.example.FooBar] run: IdleRemover notifying pools, interval: 450000");
+        Event event2 = eventIterator.next();
+        assert event2.getDetail().equals("[com.example.FooBar] yada yada yada");
     }
 }

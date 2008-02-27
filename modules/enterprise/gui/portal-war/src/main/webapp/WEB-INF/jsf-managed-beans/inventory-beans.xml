@@ -20,13 +20,15 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
-   <!-- /rhq/resource/inventory/view.xhtml -->
+   <!-- /rhq/resource/inventory/view.xhtml and /rhq/resource/inventory/edit-connection.xhtml -->
 
    <managed-bean>
-      <managed-bean-name>ViewConnectionPropertiesUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ViewConnectionPropertiesUIBean</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
+      <managed-bean-name>ConnectionPropertiesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ConnectionPropertiesUIBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
+
+   <!-- /rhq/resource/inventory/view.xhtml -->
 
    <managed-bean>
       <managed-bean-name>ListChildResourcesUIBean</managed-bean-name>
@@ -103,14 +105,6 @@
    <managed-bean>
       <managed-bean-name>EditGeneralPropertiesUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.EditGeneralPropertiesUIBean</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
-   </managed-bean>
-
-   <!-- /rhq/resource/inventory/edit-connection.xhtml -->
-
-   <managed-bean>
-      <managed-bean-name>EditConnectionPropertiesUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.EditConnectionPropertiesUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 

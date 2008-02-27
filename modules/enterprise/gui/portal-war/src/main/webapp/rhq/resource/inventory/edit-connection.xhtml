@@ -31,18 +31,16 @@
 
             <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
-            <onc:config configurationDefinition="#{EditConnectionPropertiesUIBean.configurationDefinition}"
-                        configuration="#{EditConnectionPropertiesUIBean.configuration}"
-                        accessMapActionExpression="#{EditConnectionPropertiesUIBean.accessMap}"
-                        addNewMapActionExpression="#{EditConnectionPropertiesUIBean.addNewMap}"
-                        nullConfigurationDefinitionMessage="#{EditConnectionPropertiesUIBean.nullConfigurationDefinitionMessage}"
-                        nullConfigurationMessage="#{EditConnectionPropertiesUIBean.nullConfigurationMessage}"
+            <onc:config configurationDefinition="#{ConnectionPropertiesUIBean.configurationDefinition}"
+                        configuration="#{ConnectionPropertiesUIBean.configuration}"
+                        nullConfigurationDefinitionMessage="#{ConnectionPropertiesUIBean.nullConfigurationDefinitionMessage}"
+                        nullConfigurationMessage="#{ConnectionPropertiesUIBean.nullConfigurationMessage}"
                         prevalidate="true"/>
 
             <h:panelGroup layout="block" styleClass="BlockContent">
                <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
-                  <h:commandButton type="submit" action="#{EditConnectionPropertiesUIBean.update}" value="OK"/>
-                  <h:commandButton type="submit" action="#{EditConnectionPropertiesUIBean.cancel}" immediate="true" value="Cancel"/>
+                  <h:commandButton type="submit" action="#{ConnectionPropertiesUIBean.update}" value="OK"/>
+                  <h:commandButton type="submit" action="#{ConnectionPropertiesUIBean.cancel}" immediate="true" value="Cancel"/>
                </h:panelGrid>
             </h:panelGroup>
             

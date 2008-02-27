@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * A report of resource {@link Event}s that the Plugin Container periodically sends to the Server. The report contains
@@ -38,22 +40,28 @@ import org.rhq.core.domain.event.EventSource;
 public class EventReport implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private static final int MAX_EVENTS_PER_SOURCE = 1000;
+
+    private final Log log = LogFactory.getLog(this.getClass());
+
     private Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>();
 
     /**
-     * Adds the given Events to this report.
+     * Adds the given Event to this report.
      *
-     * @param events the Events to be added
+     * @param event the Event to be added
      * @param eventSource the source of the Event to be added
      */
-    public void addEvents(@NotNull Set<Event> events, @NotNull EventSource eventSource) {
+    public void addEvent(@NotNull Event event, @NotNull EventSource eventSource) {
         Set<Event> eventSet = this.events.get(eventSource);
-        if (eventSet == null)
-        {
+        if (eventSet == null) {
             eventSet = new LinkedHashSet<Event>();
             this.events.put(eventSource, eventSet);
         }
-        eventSet.addAll(events);
+        if (eventSet.size() < MAX_EVENTS_PER_SOURCE)
+            eventSet.add(event);
+        else if (eventSet.size() == MAX_EVENTS_PER_SOURCE)
+            log.warn(eventSource + " contains the maximum allowed Events per source (" + MAX_EVENTS_PER_SOURCE + ") - no more Events from this source will be added to this report.");
     }
 
     /**
@@ -68,6 +76,6 @@ public class EventReport implements Serializable {
 
     @Override
     public String toString() {
-        return "EventReport[" + this.events + "]";
+        return this.getClass().getSimpleName() + "[" + this.events + "]";
     }
 }

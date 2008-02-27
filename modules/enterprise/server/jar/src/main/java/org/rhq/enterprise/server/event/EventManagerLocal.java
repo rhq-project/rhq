@@ -59,7 +59,7 @@ public interface EventManagerLocal {
     public int purgeEventData(Date deleteUpToTime) throws SQLException;
 
     /**
-     * Retreive the events for the given resources that happened in the given time frame.
+     * Retrieve the events for the given resources that happened in the given time frame.
      * @param subject
      * @param resources Resources we are interested in
      * @param startDate Start time of interest
@@ -69,7 +69,7 @@ public interface EventManagerLocal {
     public List<Event> getEventsForResources(Subject subject, List<Resource> resources, long startDate, long endDate);
 
     /**
-     * Retreive the events for the given resource that happened in the given time frame.
+     * Retrieve the events for the given resource that happened in the given time frame.
      * @param subject
      * @param resourceId
      * @param startDate
@@ -93,7 +93,7 @@ public interface EventManagerLocal {
         EventSeverity object, int eventId, String source, String searchString, PageControl pc);
 
     /**
-     * Retreive the count of events for the given resource in the time between begin and end, nicely separated
+     * Retrieve the count of events for the given resource in the time between begin and end, nicely separated
      * in numBuckets.
      * @param subject    Subject of the caller
      * @param resourceId Id of the resource we want to know the data
@@ -159,7 +159,7 @@ public interface EventManagerLocal {
     /**
      * Obtain detail information about the passed event
      * @param subject Subject of the caller
-     * @param eventId ID of the desifed event.
+     * @param eventId ID of the desired event.
      * @return
      */
     public EventComposite getEventDetailForEventId(Subject subject, int eventId);

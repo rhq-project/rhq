@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -49,11 +51,13 @@ public abstract class ConfigurationUtility {
      * @param configurationDefinition the configuration definition to normalize the configuration against
      */
     public static void normalizeConfiguration(@NotNull
-    Configuration configuration, @NotNull
+    Configuration configuration, @Nullable
     ConfigurationDefinition configurationDefinition) {
-        Map<String, PropertyDefinition> childPropertyDefinitions = configurationDefinition.getPropertyDefinitions();
-        for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
-            normalizeProperty(childPropertyDefinition, configuration);
+        if (configurationDefinition != null) {
+            Map<String, PropertyDefinition> childPropertyDefinitions = configurationDefinition.getPropertyDefinitions();
+            for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
+                normalizeProperty(childPropertyDefinition, configuration);
+            }
         }
     }
 
@@ -61,7 +65,7 @@ public abstract class ConfigurationUtility {
      * Validate the given configuration according to the given configuration definition. That is, check that any
      * required properties in the top-level configuration Map or any sub-Maps, are defined and, in the case of simple
      * properties, check that they have a non-null value. A list of messages describing any errors that were found is
-     * returned. Addititionally, any undefined or null simple properties will be assigned a value of "".
+     * returned. Additionally, any undefined or null simple properties will be assigned a value of "".
      *
      * @param  configuration           the configuration to be validated
      * @param  configurationDefinition the configuration definition to validate the configuration against
@@ -70,14 +74,15 @@ public abstract class ConfigurationUtility {
      */
     @NotNull
     public static List<String> validateConfiguration(@NotNull
-    Configuration configuration, @NotNull
+    Configuration configuration, @Nullable
     ConfigurationDefinition configurationDefinition) {
         List<String> errorMessages = new ArrayList<String>();
-        Map<String, PropertyDefinition> childPropertyDefinitions = configurationDefinition.getPropertyDefinitions();
-        for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
-            validateProperty(childPropertyDefinition, configuration, errorMessages);
+        if (configurationDefinition != null) {
+            Map<String, PropertyDefinition> childPropertyDefinitions = configurationDefinition.getPropertyDefinitions();
+            for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
+                validateProperty(childPropertyDefinition, configuration, errorMessages);
+            }
         }
-
         return errorMessages;
     }
 

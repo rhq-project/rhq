@@ -32,16 +32,6 @@ import org.rhq.core.domain.event.Event;
  */
 public interface EventPoller {
     /**
-     * Minimum polling interval, in seconds.
-     */
-    int MINIMUM_POLLING_INTERVAL = 60; // 1 minute
-
-    /**
-     * Maximum polling interval, in seconds.
-     */
-    int MAXIMUM_POLLING_INTERVAL = 600; // 10 minutes
-
-    /**
      * Returns the type of event (i.e. the {@link org.rhq.core.domain.event.EventDefinition} name) that this poller
      * checks for.
      *
@@ -52,26 +42,10 @@ public interface EventPoller {
     String getEventType();
 
     /**
-     * Returns the location that should be polled for {@link Event}s.
-     *
-     * @return the location that should be polled for {@link Event}s
-     */
-    @NotNull
-    String getSourceLocation();
-
-    /**
      * Poll for new Events (i.e. Events that have occurred since the last time poll() was called).
      * 
      * @return any new Events (i.e. Events that have occurred since the last time poll() was called)
      */
     @Nullable
     Set<Event> poll();
-    
-    /**
-     * Returns the number of seconds to wait between polls. If a value less than {@link #MINIMUM_POLLING_INTERVAL} is
-     * specified, {@link #MINIMUM_POLLING_INTERVAL} will be used instead.
-     *
-     * @return the number of seconds to wait between polls
-     */
-    long getPollingInterval();
 }

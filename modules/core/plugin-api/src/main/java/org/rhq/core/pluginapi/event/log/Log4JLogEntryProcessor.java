@@ -18,14 +18,20 @@
  */
 package org.rhq.core.pluginapi.event.log;
 
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.File;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.text.ParseException;
+import java.util.Set;
+import java.util.Calendar;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -33,21 +39,24 @@ import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 
 /**
+ * A {@link org.rhq.core.pluginapi.event.log.LogEntryProcessor} for Log4J log files.
+ *
  * @author Ian Springer
  */
 public class Log4JLogEntryProcessor implements LogEntryProcessor {
     private static final String REGEX = "(.*) (TRACE|DEBUG|INFO|WARN|ERROR|FATAL) (.*)";
     private static final Pattern PATTERN = Pattern.compile(REGEX);
+    
     private static final String ISO8601_DATE_PATTERN = "yyyy-MM-dd kk:mm:ss,SSS";
     private static final DateFormat ISO8601_DATE_FORMAT = new SimpleDateFormat(ISO8601_DATE_PATTERN);
-    private static final String ABSOLUTE_DATE_PATTERN = "HH:mm:ss,SSS";
+    private static final String ABSOLUTE_DATE_PATTERN = "kk:mm:ss,SSS";
     private static final DateFormat ABSOLUTE_DATE_FORMAT = new SimpleDateFormat(ABSOLUTE_DATE_PATTERN);
-    private static final String DATE_DATE_PATTERN = "dd MMM yyyy HH:mm:ss,SSS";
+    private static final String DATE_DATE_PATTERN = "dd MMM yyyy kk:mm:ss,SSS";
     private static final DateFormat DATE_DATE_FORMAT = new SimpleDateFormat(DATE_DATE_PATTERN);
 
     private static final Map<Priority, EventSeverity> PRIORITY_TO_SEVERITY_MAP = new HashMap();
-    static
-    {
+
+    static {
         PRIORITY_TO_SEVERITY_MAP.put(Priority.TRACE, EventSeverity.DEBUG);
         PRIORITY_TO_SEVERITY_MAP.put(Priority.DEBUG, EventSeverity.DEBUG);
         PRIORITY_TO_SEVERITY_MAP.put(Priority.INFO, EventSeverity.INFO);
@@ -57,65 +66,125 @@ public class Log4JLogEntryProcessor implements LogEntryProcessor {
     }
 
     private String eventType;
-    private LogEntry currentEntry;
+    private File logFile;
+    private EventSeverity minimumSeverity;
+    private Pattern includesPattern;
+    private DateFormat dateFormat;
 
-    public Log4JLogEntryProcessor(String eventType) {
+    public Log4JLogEntryProcessor(String eventType, File logFile) {
         this.eventType = eventType;
+        this.logFile = logFile;
     }
 
     @Nullable
-    public Event processLine(String line) {
-        Event event = null;
+    public Set<Event> processLines(BufferedReader lines) throws IOException {
+        Set<Event> events = new HashSet();
+        LogEntry currentEntry = null;
+        String line;
+        while ((line = lines.readLine()) != null) {
+            currentEntry = processLine(line, events, currentEntry);
+        }
+        return events;
+    }
+
+    public void setMinimumSeverity(EventSeverity minimumSeverity) {
+        this.minimumSeverity = minimumSeverity;
+    }
+
+    public void setIncludesPattern(Pattern includesPattern) {
+        this.includesPattern = includesPattern;
+    }
+
+    public void setDateFormat(DateFormat dateFormat) {
+        this.dateFormat = dateFormat;
+    }
+
+    private LogEntry processLine(String line, Set<Event> events, LogEntry currentEntry) {
         // For now, we only support the default pattern: Date Priority [Category] Message
         // e.g.: 2007-12-09 15:32:49,514 DEBUG [com.example.FooBar] run: IdleRemover notifying pools, interval: 450000
         Matcher matcher = PATTERN.matcher(line);
         if (matcher.matches()) {
-            if (this.currentEntry != null) {
-                // A matching line tells us the previous entry has no more additional lines; we can therefore create an 
-                // Event for the entry.
-                EventSeverity severity = PRIORITY_TO_SEVERITY_MAP.get(this.currentEntry.getPriority());
-                event = new Event(this.eventType, this.currentEntry.getDate(), severity, this.currentEntry.getDetail());
+            if (currentEntry != null) {
+                // A matching line tells us the previous entry has no more additional lines; we can therefore create an
+                // Event for that entry.
+                EventSeverity severity = PRIORITY_TO_SEVERITY_MAP.get(currentEntry.getPriority());
+                if (severity.isAtLeastAsSevereAs(this.minimumSeverity) &&
+                        (this.includesPattern == null ||
+                         this.includesPattern.matcher(currentEntry.getDetail()).matches())) {
+                    Event event = new Event(this.eventType, this.logFile.getPath(), currentEntry.getDate(), severity, currentEntry.getDetail());
+                    events.add(event);
+                }
             }
             // Start building up a new entry...
-            this.currentEntry = processPrimaryLine(matcher);
+            currentEntry = processPrimaryLine(matcher);
         } else {
             // If the line didn't our regex, assume it's an additional line (e.g. part of a stack trace).
-            if (this.currentEntry != null) {
-                this.currentEntry.appendLineToDetail(line);                
+            if (currentEntry != null) {
+                currentEntry.appendLineToDetail(line);
             }
         }
-        return event;
+        return currentEntry;
     }
 
     private LogEntry processPrimaryLine(Matcher matcher) {
         String dateString = matcher.group(1);
+        Date timestamp = parseDateString(dateString);
         String priorityString = matcher.group(2);
-        String detail = matcher.group(3);
-
-        Date timestamp;
-        // TODO: Make date format configurable via event source config.
-        try {
-            timestamp = ISO8601_DATE_FORMAT.parse(dateString);
-        } catch (ParseException e) {
-            try {
-                timestamp = ABSOLUTE_DATE_FORMAT.parse(dateString);
-            } catch (ParseException e1) {
-                try {
-                    timestamp = DATE_DATE_FORMAT.parse(dateString);
-                } catch (ParseException e2) {
-                    throw new RuntimeException(
-                        "Unable to parse date '" + dateString + "' using either ISO8601, ABSOLUTE, or DATE formats.");
-                }
-            }
-        }
         Priority priority = Priority.valueOf(priorityString);
-        // Just store the entry until this method is called again, at which point we can see if the entry has any
-        // additional lines (e.g. a stack trace).
+        String detail = matcher.group(3);
         return new LogEntry(timestamp, priority, detail);
     }
 
-    private enum Priority
-    {
+   private Date parseDateString(String dateString)
+   {
+      Date timestamp = null;
+      if (this.dateFormat != null) {
+          try {
+              timestamp = this.dateFormat.parse(dateString);
+          } catch (ParseException e) {
+              throw new RuntimeException("Unable to parse date '" + dateString + "' using specified date format '" + this.dateFormat + "'.");
+          }
+      }
+      if (timestamp == null)
+      {
+          try {
+              timestamp = ISO8601_DATE_FORMAT.parse(dateString);
+          } catch (ParseException e) {
+              try {
+                  timestamp = DATE_DATE_FORMAT.parse(dateString);
+              } catch (ParseException e1) {
+                  try {
+                      timestamp = ABSOLUTE_DATE_FORMAT.parse(dateString);
+                  } catch (ParseException e2) {
+                      throw new RuntimeException(
+                              "Unable to parse date '" + dateString +
+                                      "' using either ISO8601, DATE, or ABSOLUTE date formats. Please specify a date format.");
+                  }
+              }
+          }
+      }
+      setDateIfNotSet(timestamp);
+      return timestamp;
+   }
+
+    private void setDateIfNotSet(Date timestamp) {
+        Calendar date = convertToCalendar(timestamp);
+        // If the format specified a time, but no date, the date will be Jan 1, 1970. In this case, set the date to
+        // today's date.
+        if (date.get(Calendar.YEAR) == 1970) {            
+            Calendar currentDate = Calendar.getInstance();
+            date.set(currentDate.get(Calendar.YEAR), currentDate.get(Calendar.MONTH), currentDate.get(Calendar.DATE));
+            timestamp.setTime(date.getTimeInMillis());
+        }
+    }
+
+    private Calendar convertToCalendar(Date timestamp) {
+        Calendar date = Calendar.getInstance();
+        date.setTime(timestamp);
+        return date;
+    }
+
+    private enum Priority {
         TRACE,
         DEBUG,
         INFO,
@@ -124,8 +193,7 @@ public class Log4JLogEntryProcessor implements LogEntryProcessor {
         FATAL
     }
 
-    private class LogEntry
-    {
+    private class LogEntry {
         private Date date;
         private Priority priority;
         private StringBuilder detail;

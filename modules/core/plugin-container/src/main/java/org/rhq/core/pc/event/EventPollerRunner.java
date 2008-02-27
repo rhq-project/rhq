@@ -22,28 +22,29 @@ import java.util.Set;
 
 import org.rhq.core.pluginapi.event.EventPoller;
 import org.rhq.core.domain.event.Event;
-import org.rhq.core.domain.event.EventSource;
+import org.rhq.core.domain.resource.Resource;
 
 /**
- * A thread for running an {@link EventPoller} to check for new {@link Event}s.
+ * A thread for running an {@link EventPoller} to check for new {@link Event}s of a certain type from a particular
+ * Resource.
  *
  * @author Ian Springer
  */
 public class EventPollerRunner implements Runnable {    
     private EventPoller eventPoller;
-    private EventSource eventSource;
+    private Resource resource;
     private EventManager eventManager;
 
-    public EventPollerRunner(EventPoller eventPoller, EventSource eventSource, EventManager eventManager) {
+    public EventPollerRunner(EventPoller eventPoller, Resource resource, EventManager eventManager) {
         this.eventPoller = eventPoller;
-        this.eventSource = eventSource;
+        this.resource = resource;
         this.eventManager = eventManager;
     }
 
     public void run() {
         Set<Event> events = this.eventPoller.poll();
         if (events != null) {
-            eventManager.publishEvents(events, this.eventSource);
+            this.eventManager.publishEvents(events, this.resource);
         }
     }
 }

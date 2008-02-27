@@ -19,6 +19,7 @@
 package org.rhq.core.pluginapi.event;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.hyperic.sigar.Sigar;
 
 import org.rhq.core.domain.event.Event;
@@ -28,19 +29,44 @@ import org.rhq.core.domain.event.Event;
  */
 public interface EventContext {
     /**
+     * Minimum polling interval, in seconds.
+     */
+    int MINIMUM_POLLING_INTERVAL = 60; // 1 minute
+
+    /**
      * Publishes the specified Event. This means the Plugin Container will queue the Event to be sent to the Server.
      *
      * @param event the Event to be published
-     * @param sourceLocation the location of the source of the Event
      */
-    void publishEvent(@NotNull Event event, @NotNull String sourceLocation);
+    void publishEvent(@NotNull Event event);
+
+    /**
+     * Tells the plugin container to start polling for Events using the specified EventPoller.
+     *
+     * @param poller the poller that will be used
+     * @param pollingInterval the number of seconds to wait between polls. If the value less than
+     *                        {@link #MINIMUM_POLLING_INTERVAL} is specified, {@link #MINIMUM_POLLING_INTERVAL} will be
+     *                        used instead.
+     */
+    void registerEventPoller(@NotNull EventPoller poller, int pollingInterval);
 
     /**
      * Tells the plugin container to start polling the specified source for Events using the specified EventPoller.
      *
      * @param poller the poller that will be used
+     * @param pollingInterval the number of seconds to wait between polls. If the value less than
+ *                        {@link #MINIMUM_POLLING_INTERVAL} is specified, {@link #MINIMUM_POLLING_INTERVAL} will be
+     * @param sourceLocation the location of the source to start polling
      */
-    void registerEventPoller(@NotNull EventPoller poller);
+    void registerEventPoller(@NotNull EventPoller poller, int pollingInterval, @NotNull String sourceLocation);
+
+    /**
+     * Tells the plugin container to stop polling for Events of the specified type (i.e.
+     * {@link org.rhq.core.domain.event.EventDefinition} name).
+     *
+     * @param eventType the type of Event to stop polling for
+     */
+    void unregisterEventPoller(@NotNull String eventType);
 
     /**
      * Tells the plugin container to stop polling the specified source for Events of the specified type (i.e.

@@ -142,7 +142,7 @@ public class EventDefinition implements Externalizable {
 
     @Override
     public String toString() {
-        return "EventDefinition[" + "id=" + this.id + ", "
+        return this.getClass().getSimpleName() + "[" + "id=" + this.id + ", "
             + "resourceType.name=" + ((this.resourceType != null) ? this.resourceType.getName() : "null") + ", "
             + "name=" + this.name
             + "]";

@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -32,6 +31,7 @@ import org.hyperic.sigar.FileInfo;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.pluginapi.event.EventContext;
@@ -42,16 +42,13 @@ import org.rhq.core.pluginapi.event.EventPoller;
  *
  * @author Ian Springer
  */
-public class LogFileEventPoller implements EventPoller {
-    private static final long DEFAULT_POLLING_INTERVAL = 60;
-
+public class LogFileEventPoller implements EventPoller {    
     private final Log log = LogFactory.getLog(this.getClass());
 
     private String eventType;
     private File logFile;
     private FileInfo logFileInfo;
     private LogEntryProcessor entryProcessor;
-    private long pollingInterval;
 
     public LogFileEventPoller(EventContext eventContext, String eventType, File logFile, LogEntryProcessor entryProcessor) {
         this.eventType = eventType;
@@ -63,7 +60,6 @@ public class LogFileEventPoller implements EventPoller {
             throw new RuntimeException(e);
         }
         this.entryProcessor = entryProcessor;
-        this.pollingInterval = DEFAULT_POLLING_INTERVAL;
     }
 
     @NotNull
@@ -76,9 +72,14 @@ public class LogFileEventPoller implements EventPoller {
         return this.logFile.getPath();
     }
 
+    @Nullable
     public Set<Event> poll() {
         if (!this.logFile.exists()) {
             log.warn("Log file [" + this.logFile + "' being polled does not exist.");
+            return null;
+        }
+        if (this.logFile.isDirectory()) {
+            log.error("Log file [" + this.logFile + "' being polled is a directory, not a regular file.");
             return null;
         }
         try {
@@ -92,7 +93,7 @@ public class LogFileEventPoller implements EventPoller {
     }
 
     private Set<Event> processNewLines() {
-        Set<Event> events = new HashSet<Event>();
+        Set<Event> events = null;
         Reader reader = null;
         try {
             reader = new FileReader(this.logFile);
@@ -102,14 +103,8 @@ public class LogFileEventPoller implements EventPoller {
             if (offset > 0) {
                 reader.skip(offset);
             }
-            String line;
-            BufferedReader buffer = new BufferedReader(reader);
-            while ((line = buffer.readLine()) != null) {
-                Event event = this.entryProcessor.processLine(line);
-                if (event != null) {
-                    events.add(event);
-                }
-            }
+            BufferedReader bufferedReader = new BufferedReader(reader);
+            events = this.entryProcessor.processLines(bufferedReader);
         } catch (IOException e) {
             log.error("Failed to read log file being tailed: " + this.logFile, e);
         } finally {
@@ -122,14 +117,6 @@ public class LogFileEventPoller implements EventPoller {
             }
         }
         return events;
-    }
-
-    public long getPollingInterval() {
-        return this.pollingInterval;
-    }
-
-    public void setPollingInterval(long pollingInterval) {
-        this.pollingInterval = pollingInterval;
     }
 
     private long getOffset() {
@@ -163,5 +150,4 @@ public class LogFileEventPoller implements EventPoller {
 
         return previousFileInfo.getSize();
     }
-
 }

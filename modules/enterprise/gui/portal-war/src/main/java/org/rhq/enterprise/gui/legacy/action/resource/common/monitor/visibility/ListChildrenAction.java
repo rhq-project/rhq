@@ -125,11 +125,9 @@ public class ListChildrenAction extends TilesAction {
 
                 // set "info about autogroup" so that we can use that info in the JSP later
                 // definitionId is already set in the backend
-                if (resource == null) {
-                    for (MetricDisplaySummary tmp : metrics) {
-                        tmp.setParentId(parentId);
-                        tmp.setChildTypeId(resourceTypeId);
-                    }
+                for (MetricDisplaySummary tmp : metrics) {
+                    tmp.setParentId(parentId);
+                    tmp.setChildTypeId(resourceTypeId);
                 }
 
                 displaySummary.add(new AutoGroupCompositeDisplaySummary(child, metrics));

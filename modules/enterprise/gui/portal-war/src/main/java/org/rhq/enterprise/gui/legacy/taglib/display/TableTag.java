@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpUtils;
@@ -36,12 +37,14 @@ import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspTagException;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.PageContext;
+
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.util.RequestUtils;
 import org.apache.taglibs.standard.tag.common.core.NullAttributeException;
 import org.apache.taglibs.standard.tag.el.core.ExpressionUtil;
+
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -1046,7 +1049,7 @@ public class TableTag extends TablePropertyTag {
      * appropriate string back to the caller.
      */
     protected String group(String value, int group) {
-        if ((group == 1) & (this.nextRow.size() > 0)) { // we are at the begining of the next row so copy the contents from .
+        if ((group == 1) && (this.nextRow.size() > 0)) { // we are at the begining of the next row so copy the contents from .
 
             // nextRow to the previousRow.
             this.previousRow.clear();

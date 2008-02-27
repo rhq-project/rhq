@@ -67,7 +67,7 @@ public class PerfDataPointCollection extends DataPointCollection {
         }
 
         default: {
-            result = new String();
+            result = "";
         }
         }
 

@@ -56,7 +56,7 @@ public abstract class PlatformDiscoveryComponent implements ResourceDiscoveryCom
         // (it is usually the hostname, but is not guaranteed to be)
         String key = determineResourceKey(context);
 
-        // build the resource name based on the plugin container name and possibly hostname
+        // build the resource name
         String name = determineResourceName(context);
 
         // use the platform type description as the description for this resource
@@ -90,23 +90,21 @@ public abstract class PlatformDiscoveryComponent implements ResourceDiscoveryCom
      * @return the new platform's resource key
      */
     protected String determineResourceKey(ResourceDiscoveryContext context) {
-        String name = context.getPluginContainerName();
+        String pcName = context.getPluginContainerName();
+        String resourceKey = pcName;
 
-        if (name == null) {
-            name = getHostname(context.getSystemInformation());
+        if (pcName == null) {
+            resourceKey = getHostname(context.getSystemInformation());
         }
 
-        return name;
+        return resourceKey;
     }
 
     /**
      * This will determine what the new platform's resource name should be. This default
      * implementation first tries to use the plugin container's name which is guaranteed
      * to be unique across all agents/plugin containers.  If, for some odd reason, it is
-     * <code>null</code>, the platform's hostname is used. If the plugin container's name
-     * is not <code>null</code> but it is not the hostname of the platform (as detected
-     * by {@link #getHostname(SystemInfo)}), the name will consist of the platform's
-     * hostname appeneded with the plugin container's name.
+     * <code>null</code>, the platform's hostname is used.
      * 
      * @param context the discovery context used to get the plugin container name or host name if its needed
      * 
@@ -114,11 +112,10 @@ public abstract class PlatformDiscoveryComponent implements ResourceDiscoveryCom
      */
     protected String determineResourceName(ResourceDiscoveryContext context) {
         String pcName = context.getPluginContainerName();
-        String hostName = getHostname(context.getSystemInformation());
-        String resourceName = hostName;
+        String resourceName = pcName;
 
-        if ((pcName != null) && (!pcName.equals(hostName))) {
-            resourceName = hostName + " (" + pcName + ")";
+        if (pcName == null) {
+            resourceName = getHostname(context.getSystemInformation());
         }
 
         return resourceName;

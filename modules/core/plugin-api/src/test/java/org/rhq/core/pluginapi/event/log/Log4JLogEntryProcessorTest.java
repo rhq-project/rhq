@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.Iterator;
 import java.io.StringReader;
 import java.io.BufferedReader;
+import java.io.File;
 
 import org.testng.annotations.Test;
 
@@ -44,7 +45,8 @@ public class Log4JLogEntryProcessorTest {
 
     public void testProcessLine() throws Exception {
         String eventType = "logEntry";
-        LogEntryProcessor processor = new Log4JLogEntryProcessor(eventType, null, null, dateFormat);
+        String sourceLocation = "C:/test.log";
+        LogEntryProcessor processor = new Log4JLogEntryProcessor(eventType, new File(sourceLocation));
         BufferedReader bufferedReader = new BufferedReader(new StringReader(TEST_LOG.toString()));
         Set<Event> events = processor.processLines(bufferedReader);
         assert events != null;
@@ -52,6 +54,7 @@ public class Log4JLogEntryProcessorTest {
         Iterator<Event> eventIterator = events.iterator();
         Event event1 = eventIterator.next();
         assert event1.getType().equals(eventType);
+        assert event1.getSourceLocation().equals(sourceLocation);
         Calendar calendar = Calendar.getInstance();
         calendar.set(2007, 11, 9, 15, 32, 49);
         calendar.set(Calendar.MILLISECOND, 909);

@@ -66,7 +66,7 @@ public class EventManagerTest extends AbstractEJB3Test {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testSimple() throws Exception {
+    public void testEventsSimple() throws Exception {
 
         try {
             getTransactionManager().begin();
@@ -114,8 +114,8 @@ public class EventManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @Test
-    public void testManager() throws Exception {
+    //    @Test
+    public void testEventManager() throws Exception {
 
         try {
             getTransactionManager().begin();

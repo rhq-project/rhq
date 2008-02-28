@@ -59,12 +59,19 @@ public interface InstallerI18NResourceKeys {
             + "Bitte überprüfen Sie die Einstellungen und stellen Sie sicher, dass die Datenbak aktiv ist") })
     String INVALID_DATABASE_SETTINGS = "invalidDatabaseSettings";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "This page shows you the current configuration property settings \\n\\\n"
-        + "for this RHQ Server installation.  You may change some, all or none \\n\\\n"
-        + "of these as per your custom requirements.  Note that changes to \\n\\\n"
-        + "some of these settings will not take effect until you restart the \\n\\\n"
-        + "server.  If you change any of those settings, you will have to \\n\\\n"
-        + "immediately shutdown and restart the server to pick up those changes.") })
+    @I18NMessages( {
+        @I18NMessage(locale = "en", value = "This page shows you the current configuration property settings \\n\\\n"
+            + "for this RHQ Server installation.  You may change some, all or none \\n\\\n"
+            + "of these as per your custom requirements.  Note that changes to \\n\\\n"
+            + "some of these settings will not take effect until you restart the \\n\\\n"
+            + "server.  If you change any of those settings, you will have to \\n\\\n"
+            + "immediately shutdown and restart the server to pick up those changes."),
+        @I18NMessage(locale = "de", value = "Diese Seite zeigt Ihnen die aktuellen Konfigurationseinstellungen \\n\\\n"
+            + "für die Installation des RHQ Servers. Sie können keinen, einige oder alle\\n\\\n"
+            + "dieser Werte nach Ihren Anforderungen ändern. Bitte beachten sie, dass \\n\\\n"
+            + "einige dieser Änderungen erst nach einem Neustart des Servers aktiv werden. \\n\\\n"
+            + "Wenn Sie diese Einstellungen ändern, müssen Sie den Server sofort neu starten, damit \\n\\\n"
+            + "sie aufgegriffen werden.") })
     String SET_PROPERTIES_INSTRUCTIONS = "setPropertiesInstructions";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Install RHQ Server!"),

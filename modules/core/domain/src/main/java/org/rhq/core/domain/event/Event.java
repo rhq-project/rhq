@@ -105,15 +105,11 @@ public class Event implements Serializable {
     @Transient
     private transient String detailExcerpt;
 
-    /**
-     * The event's type (i.e. the name of its {@link EventDefinition}).
-     */
+    /** The event's type (i.e. the name of its {@link EventDefinition}). */
     @Transient
     private transient String type;
 
-    /**
-     * The event's source location (i.e. the location field of its {@link EventSource}).
-     */
+    /** The event's source location (i.e. the location field of its {@link EventSource}). */
     @Transient
     private transient String sourceLocation;
 
@@ -153,10 +149,12 @@ public class Event implements Serializable {
             this.detail = this.detail.substring(0, DETAIL_MAX_LENGTH);
     }
 
+    /** NOTE: This method is not intended to be called by plugins or the Plugin Container. */
     public int getId() {
         return this.id;
     }
 
+    /** NOTE: This method is not intended to be called by plugins or the Plugin Container. */
     @Nullable
     public EventSource getSource() {
         return this.source;
@@ -187,14 +185,67 @@ public class Event implements Serializable {
         return this.detail;
     }
 
+    /**
+     * Sets the time this Event was acknowledged. Set to null to indicate the Event has not been acknowledged.
+     *
+     * NOTE: This method is not intended to be called by plugins or the Plugin Container.
+     *
+     * @param ackTime the time this Event was acknowledged
+     */
+    public void setAckTime(@Nullable Date ackTime)
+    {
+        this.ackTime = ackTime;
+    }
+
+    /**
+     * Returns the time this Event was acknowledged. Returns null to indicate the Event has not been acknowledged.
+     *
+     * NOTE: This method is not intended to be called by plugins or the Plugin Container.
+     *
+     * @return the time this Event was acknowledged, or null if the Event has not been acknowledged
+     */
     @Nullable
     public Date getAckTime() {
         return ackTime;
     }
 
+    /**
+     * Sets the user who acknowledged this Event. Set to null to indicate the Event has not been acknowledged.
+     *
+     * NOTE: This method is not intended to be called by plugins or the Plugin Container.
+     *
+     * @param ackUser the user who acknowledged this Event
+     */
+    public void setAckUser(@Nullable String ackUser)
+    {
+        this.ackUser = ackUser;
+    }
+
+    /**
+     * Returns the user who acknowledged this Event. Set to null to indicate the Event has not been acknowledged.
+     *
+     * NOTE: This method is not intended to be called by plugins or the Plugin Container.
+     *
+     * @return the user who acknowledged this Event, or null if the Event has not been acknowledged
+     */
     @Nullable
     public String getAckUser() {
         return ackUser;
+    }
+
+    public String getDetailExcerpt() { // TODO get from DB
+        int len = 100;
+        if (detailExcerpt != null)
+            return detailExcerpt;
+
+        if (detail.length() < len)
+            len = detail.length();
+        detailExcerpt = detail.substring(0, len); // TODO
+        return detailExcerpt;
+    }
+
+    public void setDetailExcerpt(String detailExcerpt) {
+        this.detailExcerpt = detailExcerpt;
     }
 
     @Override
@@ -230,20 +281,5 @@ public class Event implements Serializable {
                 + "id=" + this.id + ", " + "source=" + this.source + ", " + "timestamp=" + this.timestamp
                 + ", " + "severity=" + this.severity + ", " + "detail=" + this.detail + "]";
 
-    }
-
-    public String getDetailExcerpt() { // TODO get from DB
-        int len = 100;
-        if (detailExcerpt != null)
-            return detailExcerpt;
-
-        if (detail.length() < len)
-            len = detail.length();
-        detailExcerpt = detail.substring(0, len); // TODO 
-        return detailExcerpt;
-    }
-
-    public void setDetailExcerpt(String detailExcerpt) {
-        this.detailExcerpt = detailExcerpt;
     }
 }

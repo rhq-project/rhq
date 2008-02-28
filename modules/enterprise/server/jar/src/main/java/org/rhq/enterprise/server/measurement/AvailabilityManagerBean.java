@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -35,9 +36,12 @@ import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.sql.DataSource;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
@@ -287,6 +291,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         return availabilityPoints;
     }
 
+    @SuppressWarnings("unchecked")
     public boolean mergeAvailabilityReport(AvailabilityReport report) {
         int reportSize = report.getResourceAvailability().size();
         String agentName = report.getAgentName();

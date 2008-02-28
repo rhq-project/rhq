@@ -19,8 +19,11 @@
 package org.rhq.enterprise.server.alert.engine;
 
 import java.util.List;
+
 import javax.ejb.Local;
+
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.composite.MeasurementBaselineComposite;
@@ -48,7 +51,7 @@ public interface AlertConditionCacheManagerLocal {
 
     /**
      * A MeasurementReport is full of MeasurementData objects. Each of these could potentially match against one of the
-     * cache's conditions. So, each must be check against it, to see whether it fires against any of the conditions.
+     * cache's conditions. So, each must be checked against it, to see whether it fires against any of the conditions.
      *
      * @return the number of conditions that were true against this argument
      */
@@ -75,6 +78,14 @@ public interface AlertConditionCacheManagerLocal {
      * @return the number of conditions that were true against this argument
      */
     AlertConditionCacheStats checkConditions(Availability... availability);
+
+    /**
+     * An EventReport is full of Event objects.  Each of these could potentially match against one of the cache's
+     * conditions. So, each must be checked against it, to see whether it fires against any of the conditions.
+     * 
+     * @return the number of conditions that were true against this argument
+     */
+    AlertConditionCacheStats checkConditions(Event... events);
 
     /**
      * When items are removed from inventory, their AlertDefinitions (as well as the corresponding Alerts, Conditions,

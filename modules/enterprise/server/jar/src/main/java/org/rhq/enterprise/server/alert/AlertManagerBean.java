@@ -599,10 +599,10 @@ public class AlertManagerBean implements AlertManagerLocal {
         } else if (category == AlertConditionCategory.EVENT) {
             if ((condition.getOption() != null) && (condition.getOption().length() > 0)) {
                 builder.append(AlertI18NFactory.getMessage(
-                    AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_LOG_CONDITION_STRING_MATCH, condition.getName(),
+                    AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_REGEX_MATCH, condition.getName(),
                     condition.getOption()));
             } else {
-                builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_LOG_CONDITION,
+                builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY,
                     condition.getName()));
             }
         } else if (category == AlertConditionCategory.AVAILABILITY) {

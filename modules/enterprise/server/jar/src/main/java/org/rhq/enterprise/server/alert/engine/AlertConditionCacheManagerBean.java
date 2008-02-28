@@ -19,12 +19,16 @@
 package org.rhq.enterprise.server.alert.engine;
 
 import java.util.List;
+
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.composite.MeasurementBaselineComposite;
@@ -33,6 +37,7 @@ import org.rhq.core.domain.resource.Resource;
 
 @Stateless
 public class AlertConditionCacheManagerBean implements AlertConditionCacheManagerLocal {
+    @SuppressWarnings("unused")
     private static final Log log = LogFactory.getLog(AlertConditionCacheManagerBean.class);
 
     @TransactionAttribute(TransactionAttributeType.NEVER)
@@ -63,6 +68,13 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
     public AlertConditionCacheStats checkConditions(Availability... availabilities) {
         AlertConditionCacheStats stats;
         stats = AlertConditionCache.getInstance().checkConditions(availabilities);
+        return stats;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public AlertConditionCacheStats checkConditions(Event... events) {
+        AlertConditionCacheStats stats;
+        stats = AlertConditionCache.getInstance().checkConditions(events);
         return stats;
     }
 

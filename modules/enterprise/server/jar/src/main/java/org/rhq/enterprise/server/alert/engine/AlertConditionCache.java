@@ -36,6 +36,7 @@ import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
@@ -59,6 +60,7 @@ import org.rhq.enterprise.server.alert.engine.jms.CachedConditionProducerLocal;
 import org.rhq.enterprise.server.alert.engine.model.AbstractCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.AlertConditionOperator;
 import org.rhq.enterprise.server.alert.engine.model.AvailabilityCacheElement;
+import org.rhq.enterprise.server.alert.engine.model.EventCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.InvalidCacheElementException;
 import org.rhq.enterprise.server.alert.engine.model.MeasurementBaselineCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.NumericDoubleCacheElement;
@@ -177,13 +179,13 @@ public class AlertConditionCache {
 
     /*
      * structure:
-     *      map< resourceId, list< StringCacheElement > >
+     *      map< resourceId, list< EventCacheElement > >
      * 
      * algorithm:
      *      When an EventReport comes across the line, use the Resource object it is coming from to get the list
      *      of cache elements representing conditions created against that resource's list of incoming Events  
      */
-    private Map<Integer, List<StringCacheElement>> eventsCache;
+    private Map<Integer, List<EventCacheElement>> eventsCache;
 
     /*
      * structure: 
@@ -238,7 +240,7 @@ public class AlertConditionCache {
         outOfBoundsBaselineMap = new HashMap<Integer, Tuple<OutOfBoundsCacheElement, OutOfBoundsCacheElement>>();
         resourceOperationCache = new HashMap<Integer, Map<Integer, List<ResourceOperationCacheElement>>>();
         availabilityCache = new HashMap<Integer, List<AvailabilityCacheElement>>();
-        eventsCache = new HashMap<Integer, List<StringCacheElement>>();
+        eventsCache = new HashMap<Integer, List<EventCacheElement>>();
         inverseAlertConditionMap = new HashMap<Integer, List<Tuple<AbstractCacheElement<?>, List<AbstractCacheElement<?>>>>>();
 
         alertConditionManager = LookupUtil.getAlertConditionManager();
@@ -466,6 +468,31 @@ public class AlertConditionCache {
             } else {
                 log.debug(getClass().getSimpleName() + " does not support checking conditions against "
                     + operationHistory.getClass().getSimpleName() + " types");
+            }
+
+            return stats;
+        } finally {
+            rwLock.readLock().unlock();
+        }
+    }
+
+    public AlertConditionCacheStats checkConditions(Event... events) {
+        if ((events == null) || (events.length == 0)) {
+            return new AlertConditionCacheStats();
+        }
+
+        rwLock.readLock().lock();
+
+        try {
+            AlertConditionCacheStats stats = new AlertConditionCacheStats();
+
+            for (Event event : events) {
+                Resource resource = event.getSource().getResource();
+
+                List<EventCacheElement> cacheElements = lookupEventCacheElements(resource.getId());
+
+                processCacheElements(cacheElements, event.getSeverity(), event.getTimestamp().getTime(), stats, event
+                    .getDetail());
             }
 
             return stats;
@@ -884,6 +911,10 @@ public class AlertConditionCache {
 
     private List<AvailabilityCacheElement> lookupAvailabilityCacheElements(int resourceId) {
         return availabilityCache.get(resourceId); // yup, might be null
+    }
+
+    private List<EventCacheElement> lookupEventCacheElements(int resourceId) {
+        return eventsCache.get(resourceId); // yup, might be null
     }
 
     private void insertAlertDefinition(Subject subject, AlertDefinition alertDefinition, AlertConditionCacheStats stats) {

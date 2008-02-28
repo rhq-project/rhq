@@ -57,6 +57,8 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 
 /**
@@ -83,6 +85,9 @@ public class EventManagerBean implements EventManagerLocal {
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource rhqDs;
     private DatabaseType dbType;
+
+    @EJB
+    private AlertConditionCacheManagerLocal alertConditionCacheManager;
 
     @EJB
     private ResourceGroupManagerLocal resGrpMgr;
@@ -138,7 +143,8 @@ public class EventManagerBean implements EventManagerLocal {
             statementSql = String.format(EVENT_INSERT_STMT, nextvalSql);
             ps = conn.prepareStatement(statementSql);
             for (EventSource eventSource : events.keySet()) {
-                for (Event event : events.get(eventSource)) {
+                Set<Event> eventData = events.get(eventSource);
+                for (Event event : eventData) {
                     int paramIndex = 1;
                     ps.setString(paramIndex++, eventSource.getEventDefinition().getName());
                     ps.setString(paramIndex++, eventSource.getEventDefinition().getResourceType().getName());
@@ -150,6 +156,8 @@ public class EventManagerBean implements EventManagerLocal {
                     ps.setString(paramIndex++, event.getDetail());
                     ps.addBatch();
                 }
+
+                //notifyAlertConditionCacheManager("addEventData", eventData.toArray(new Event[0]));
             }
             ps.executeBatch();
 
@@ -159,6 +167,13 @@ public class EventManagerBean implements EventManagerLocal {
         } finally {
             JDBCUtil.safeClose(conn, ps, null);
         }
+    }
+
+    @SuppressWarnings("unused")
+    private void notifyAlertConditionCacheManager(String callingMethod, Event... events) {
+        AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(events);
+
+        log.debug(callingMethod + ": " + stats.toString());
     }
 
     public int purgeEventData(Date deleteUpToTime) throws SQLException {
@@ -491,6 +506,7 @@ public class EventManagerBean implements EventManagerLocal {
         return pl;
     }
 
+    @SuppressWarnings("unchecked")
     public EventComposite getEventDetailForEventId(Subject subject, int eventId) {
 
         Query q = entityManager.createNamedQuery(Event.GET_DETAILS_FOR_EVENT_IDS);

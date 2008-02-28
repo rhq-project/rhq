@@ -18,19 +18,21 @@
  */
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts;
 
-import sun.security.pkcs.EncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
@@ -44,6 +46,8 @@ import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+
+import sun.security.pkcs.EncodingException;
 
 /**
  * Utility class for dealing with rendering alert definition conditions.
@@ -85,7 +89,6 @@ public final class AlertDefUtil {
         // first format the LHS of the operator
         if (category == AlertConditionCategory.CONTROL) {
             try {
-                Subject subject = RequestUtils.getSubject(request);
                 Integer resourceTypeId = cond.getAlertDefinition().getResource().getResourceType().getId();
                 String operationName = cond.getName();
                 OperationManagerLocal operationManager = LookupUtil.getOperationManager();
@@ -129,12 +132,12 @@ public final class AlertDefUtil {
             || (category == AlertConditionCategory.CHANGE) || (category == AlertConditionCategory.TRAIT)) {
             textValue.append(RequestUtils.message(request, "alert.current.list.ValueChanged"));
         } else if (category == AlertConditionCategory.EVENT) {
-            String msgKey = "alert.config.props.CB.LogCondition";
+            String msgKey = "alert.config.props.CB.EventSeverity";
             List<String> args = new ArrayList<String>(2);
 
             //          args.add( ResourceLogEvent.getLevelString( Integer.parseInt( cond.getName() ) ) );
             if ((cond.getOption() != null) && (cond.getOption().length() > 0)) {
-                msgKey += ".StringMatch";
+                msgKey += ".RegexMatch";
                 args.add(cond.getOption());
             }
 

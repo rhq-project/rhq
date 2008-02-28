@@ -596,7 +596,7 @@ public class AlertManagerBean implements AlertManagerLocal {
         } else if ((category == AlertConditionCategory.CONFIGURATION_PROPERTY)
             || (category == AlertConditionCategory.CHANGE) || (category == AlertConditionCategory.TRAIT)) {
             builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CURRENT_LIST_VALUE_CHANGED));
-        } else if (category == AlertConditionCategory.LOG_EVENT) {
+        } else if (category == AlertConditionCategory.EVENT) {
             if ((condition.getOption() != null) && (condition.getOption().length() > 0)) {
                 builder.append(AlertI18NFactory.getMessage(
                     AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_LOG_CONDITION_STRING_MATCH, condition.getName(),

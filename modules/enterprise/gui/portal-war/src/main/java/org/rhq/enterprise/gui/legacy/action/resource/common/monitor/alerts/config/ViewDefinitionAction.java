@@ -20,18 +20,21 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 
 import java.util.List;
 import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.actions.TilesAction;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.legacy.beans.AlertConditionBean;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
@@ -64,11 +67,11 @@ public class ViewDefinitionAction extends TilesAction {
             AlertConditionCategory category = cond.getCategory();
             if ((category == AlertConditionCategory.THRESHOLD) || (category == AlertConditionCategory.BASELINE)
                 || (category == AlertConditionCategory.CHANGE) || (category == AlertConditionCategory.CONTROL)
-                || (category == AlertConditionCategory.AVAILABILITY) || (category == AlertConditionCategory.TRAIT)) {
+                || (category == AlertConditionCategory.AVAILABILITY) || (category == AlertConditionCategory.TRAIT)
+                || (category == AlertConditionCategory.EVENT)) {
                 // do nothing
             } else if ((category == AlertConditionCategory.ALERT)
-                || (category == AlertConditionCategory.CONFIGURATION_PROPERTY)
-                || (category == AlertConditionCategory.LOG_EVENT)) {
+                || (category == AlertConditionCategory.CONFIGURATION_PROPERTY)) {
                 canEditConditions = false;
             }
 

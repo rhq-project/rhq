@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.alert.engine.jms;
 
 import javax.ejb.Local;
 import javax.jms.JMSException;
+
 import org.rhq.enterprise.server.alert.engine.model.AbstractCacheElement;
 
 @Local

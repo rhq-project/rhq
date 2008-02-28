@@ -23,12 +23,13 @@ public abstract class AbstractEnumCacheElement<E extends Enum<E>> extends Abstra
         super(operator, value, conditionTriggerId);
     }
 
-    public AbstractEnumCacheElement(AlertConditionOperator operator, E operatorOption, E value, int conditionTriggerId) {
+    public AbstractEnumCacheElement(AlertConditionOperator operator, Object operatorOption, E value,
+        int conditionTriggerId) {
         super(operator, operatorOption, value, conditionTriggerId);
     }
 
     @Override
-    public boolean matches(E providedValue) {
+    public boolean matches(E providedValue, Object extraParams) {
         if (providedValue == null) {
             return false;
         }

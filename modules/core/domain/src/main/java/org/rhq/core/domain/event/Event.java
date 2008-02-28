@@ -80,7 +80,6 @@ public class Event implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "idGenerator")
     private int id;
 
-    @SuppressWarnings( { "UnusedDeclaration" })
     @JoinColumn(name = "EVENT_SOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private EventSource source;

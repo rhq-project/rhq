@@ -19,14 +19,15 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.condition;
 
 import org.apache.struts.action.ActionErrors;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ConditionBean;
 
-public class LogEventConverterValidator implements ConditionBeanConverterValidator {
+public class EventsConverterValidator implements ConditionBeanConverterValidator {
     public void exportProperties(Subject subject, ConditionBean fromBean, AlertCondition toCondition) {
-        toCondition.setCategory(AlertConditionCategory.LOG_EVENT);
+        toCondition.setCategory(AlertConditionCategory.EVENT);
         toCondition.setName(String.valueOf(fromBean.getLogLevel()));
         toCondition.setOption(fromBean.getLogMatch());
     }

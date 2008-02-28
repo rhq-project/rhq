@@ -20,23 +20,25 @@ package org.rhq.enterprise.server.alert.engine.model;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.cache.aop.annotation.InstanceOfPojoCacheable;
 
 @InstanceOfPojoCacheable
 public abstract class AbstractCacheElement<T> {
-    private final Log log = LogFactory.getLog(getClass());
+    protected final Log log = LogFactory.getLog(getClass());
 
     protected AlertConditionOperator alertConditionOperator;
-    protected T alertConditionOperatorOption;
+    protected Object alertConditionOperatorOption;
     protected T alertConditionValue;
     protected int alertConditionTriggerId;
     protected boolean active;
+    protected AbstractCacheElement<?> nextCacheElement;
 
     public AbstractCacheElement(AlertConditionOperator operator, T value, int conditionTriggerId) {
         this(operator, null, value, conditionTriggerId);
     }
 
-    public AbstractCacheElement(AlertConditionOperator operator, T operatorOption, T value, int conditionId) {
+    public AbstractCacheElement(AlertConditionOperator operator, Object operatorOption, T value, int conditionId) {
         if (getOperatorSupportsType(operator) == AlertConditionOperator.Type.NONE) {
             throw new UnsupportedAlertConditionOperatorException("operator '" + operator.toString() + "'"
                 + " is unsupported in class " + getClass().getSimpleName() + " for AlertConditionId=" + conditionId);
@@ -85,11 +87,15 @@ public abstract class AbstractCacheElement<T> {
         this.alertConditionTriggerId = conditionId;
     }
 
+    public void setNextCacheElement(AbstractCacheElement<?> nextCacheElement) {
+        this.nextCacheElement = nextCacheElement;
+    }
+
     public AlertConditionOperator getAlertConditionOperator() {
         return alertConditionOperator;
     }
 
-    public T getAlertConditionOperatorOption() {
+    public Object getAlertConditionOperatorOption() {
         return alertConditionOperatorOption;
     }
 
@@ -113,12 +119,12 @@ public abstract class AbstractCacheElement<T> {
         this.active = active;
     }
 
-    public final boolean process(T providedValue, boolean processIfActive) {
+    public final boolean process(T providedValue, Object extraParams) {
         String beforeString = this.toString();
-        boolean match = matches(providedValue);
+        boolean match = matches(providedValue, extraParams);
         String afterString = this.toString();
 
-        if ((processIfActive && match) || (!processIfActive)) {
+        if (log.isDebugEnabled()) {
             log.debug("comparing " + ((providedValue == null) ? "<null>" : providedValue) + " " + "against "
                 + beforeString + " " + (match ? "match" : ""));
             if (afterString.equals(beforeString) == false) {
@@ -134,7 +140,7 @@ public abstract class AbstractCacheElement<T> {
      * called by process(T, boolean) to determine whether or not the incoming value to the cache matches this cache
      * element or not.
      */
-    public abstract boolean matches(T providedValue);
+    public abstract boolean matches(T providedValue, Object extras);
 
     /**
      * For the most part, the operator itself denotes whether it makes comparisons against a sliding scale or not.

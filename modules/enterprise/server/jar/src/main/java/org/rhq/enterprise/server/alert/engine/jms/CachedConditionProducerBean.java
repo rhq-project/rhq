@@ -27,6 +27,7 @@ import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
 import javax.jms.Session;
+
 import org.rhq.enterprise.server.alert.engine.jms.model.ActiveAlertConditionMessage;
 import org.rhq.enterprise.server.alert.engine.jms.model.InactiveAlertConditionMessage;
 import org.rhq.enterprise.server.alert.engine.jms.model.OutOfBoundsConditionMessage;

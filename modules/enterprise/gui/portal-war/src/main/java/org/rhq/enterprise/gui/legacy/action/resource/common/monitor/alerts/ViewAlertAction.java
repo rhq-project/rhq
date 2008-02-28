@@ -22,8 +22,10 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -31,12 +33,13 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.core.util.NumberUtil;
@@ -111,7 +114,8 @@ public class ViewAlertAction extends TilesAction {
                     alertCondBean.setActualValue(scaledFormattedValue);
                 }
             } else if ((category == AlertConditionCategory.CONFIGURATION_PROPERTY)
-                || (category == AlertConditionCategory.LOG_EVENT)) {
+                || (category == AlertConditionCategory.EVENT)) {
+                // TODO: jmarques - add validation to make sure condition is a valid regex Pattern
                 alertCondBean.setActualValue(condLog.getValue());
             } else {
                 alertCondBean.setActualValue("??");

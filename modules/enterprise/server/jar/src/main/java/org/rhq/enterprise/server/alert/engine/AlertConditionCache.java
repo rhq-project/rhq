@@ -170,11 +170,20 @@ public class AlertConditionCache {
      *      map< resourceId, list< AvailabilityCacheElement > > >
      *
      * algorithm: 
-     *      This is perhaps the simplest structure in this cache.  When an Availability object comes across the
-     *      line, use the Resource object associated with it (attached to it) to get the list of cache elements
-     *      representing conditions created against this resource's availability.
+     *      When an Availability object comes across the line, use the Resource object associated/attached with it
+     *      to get the list of cache elements representing conditions created against this resource's availability.
      */
     private Map<Integer, List<AvailabilityCacheElement>> availabilityCache;
+
+    /*
+     * structure:
+     *      map< resourceId, list< StringCacheElement > >
+     * 
+     * algorithm:
+     *      When an EventReport comes across the line, use the Resource object it is coming from to get the list
+     *      of cache elements representing conditions created against that resource's list of incoming Events  
+     */
+    private Map<Integer, List<StringCacheElement>> eventsCache;
 
     /*
      * structure: 
@@ -229,6 +238,7 @@ public class AlertConditionCache {
         outOfBoundsBaselineMap = new HashMap<Integer, Tuple<OutOfBoundsCacheElement, OutOfBoundsCacheElement>>();
         resourceOperationCache = new HashMap<Integer, Map<Integer, List<ResourceOperationCacheElement>>>();
         availabilityCache = new HashMap<Integer, List<AvailabilityCacheElement>>();
+        eventsCache = new HashMap<Integer, List<StringCacheElement>>();
         inverseAlertConditionMap = new HashMap<Integer, List<Tuple<AbstractCacheElement<?>, List<AbstractCacheElement<?>>>>>();
 
         alertConditionManager = LookupUtil.getAlertConditionManager();
@@ -454,7 +464,7 @@ public class AlertConditionCache {
 
                 processCacheElements(cacheElements, operationStatus, resourceOperationHistory.getModifiedTime(), stats);
             } else {
-                log.debug(getClass().getSimpleName() + " does not support " + "checking conditions against "
+                log.debug(getClass().getSimpleName() + " does not support checking conditions against "
                     + operationHistory.getClass().getSimpleName() + " types");
             }
 
@@ -669,7 +679,7 @@ public class AlertConditionCache {
     }
 
     private <T extends AbstractCacheElement<S>, S> void processCacheElements(List<T> cacheElements, S providedValue,
-        long timestamp, AlertConditionCacheStats stats) {
+        long timestamp, AlertConditionCacheStats stats, Object... extraParams) {
         if (cacheElements == null) {
             return; // nothing to do
         }
@@ -677,7 +687,7 @@ public class AlertConditionCache {
         int errors = 0;
 
         for (T cacheElement : cacheElements) {
-            boolean matched = cacheElement.process(providedValue, false);
+            boolean matched = cacheElement.process(providedValue, extraParams);
 
             if (matched) // send positive event in case of a match
             {

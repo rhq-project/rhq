@@ -18,8 +18,10 @@
  */
 package org.rhq.core.domain.event;
 
-import org.jetbrains.annotations.NotNull;
-import org.rhq.core.domain.resource.ResourceType;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -31,10 +33,10 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.io.Externalizable;
-import java.io.ObjectOutput;
-import java.io.IOException;
-import java.io.ObjectInput;
+
+import org.jetbrains.annotations.NotNull;
+
+import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * The definition of a type of {@link Event} supported by a particular {@link ResourceType}.
@@ -58,11 +60,10 @@ public class EventDefinition implements Externalizable {
     @ManyToOne(fetch = FetchType.LAZY)
     private ResourceType resourceType;
 
-    @SuppressWarnings({"UnusedDeclaration"})
     @Column(name = "RESOURCE_TYPE_ID", insertable = false, updatable = false)
     private int resourceTypeId;
 
-    @Column(name="NAME", length = 100, nullable = false)
+    @Column(name = "NAME", length = 100, nullable = false)
     private String name;
 
     @Column(name = "DISPLAY_NAME", length = 100)
@@ -75,7 +76,9 @@ public class EventDefinition implements Externalizable {
     public EventDefinition() {
     }
 
-    public EventDefinition(@NotNull ResourceType resourceType, @NotNull String name) {
+    public EventDefinition(@NotNull
+    ResourceType resourceType, @NotNull
+    String name) {
         if (resourceType == null)
             throw new IllegalArgumentException("resourceType parameter must not be null.");
         if (name == null)
@@ -121,13 +124,17 @@ public class EventDefinition implements Externalizable {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
 
         EventDefinition that = (EventDefinition) obj;
 
-        if (!name.equals(that.name)) return false;
-        if (resourceTypeId != that.resourceTypeId) return false;
+        if (!name.equals(that.name))
+            return false;
+        if (resourceTypeId != that.resourceTypeId)
+            return false;
 
         return true;
     }
@@ -142,10 +149,8 @@ public class EventDefinition implements Externalizable {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + "id=" + this.id + ", "
-            + "resourceType.name=" + ((this.resourceType != null) ? this.resourceType.getName() : "null") + ", "
-            + "name=" + this.name
-            + "]";
+        return this.getClass().getSimpleName() + "[" + "id=" + this.id + ", " + "resourceType.name="
+            + ((this.resourceType != null) ? this.resourceType.getName() : "null") + ", " + "name=" + this.name + "]";
 
     }
 

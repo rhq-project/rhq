@@ -39,7 +39,7 @@ public final class OutOfBoundsCacheElement extends NumericDoubleCacheElement {
     }
 
     @Override
-    public boolean matches(Double value) {
+    public boolean matches(Double value, Object extraParams) {
         /*
          * dynamic measurements that often report at- or near-zero values, will end up having at- or near-zero baselines
          * created against them.  consequently, both high and low OOBs trigger because they're both within the 1e-9
@@ -59,6 +59,6 @@ public final class OutOfBoundsCacheElement extends NumericDoubleCacheElement {
          * if the OOB does NOT have an at- or near-zero alertConditionValue, default to regular threshold comparison as
          * defined in NumericDoubleCacheElement
          */
-        return super.matches(value);
+        return super.matches(value, extraParams);
     }
 }

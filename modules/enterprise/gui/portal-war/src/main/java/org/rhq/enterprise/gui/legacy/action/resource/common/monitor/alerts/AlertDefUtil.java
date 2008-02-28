@@ -128,7 +128,7 @@ public final class AlertDefUtil {
         } else if ((category == AlertConditionCategory.CONFIGURATION_PROPERTY)
             || (category == AlertConditionCategory.CHANGE) || (category == AlertConditionCategory.TRAIT)) {
             textValue.append(RequestUtils.message(request, "alert.current.list.ValueChanged"));
-        } else if (category == AlertConditionCategory.LOG_EVENT) {
+        } else if (category == AlertConditionCategory.EVENT) {
             String msgKey = "alert.config.props.CB.LogCondition";
             List<String> args = new ArrayList<String>(2);
 

@@ -19,15 +19,16 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.condition;
 
 import org.apache.struts.action.ActionErrors;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ConditionBean;
 
 public class ConverterValidatorManager {
     private static AvailabilityConverterValidator availabilityConverter;
     private static ConfigurationPropertyConverterValidator configurationPropertyConverter;
-    private static LogEventConverterValidator logEventConverter;
+    private static EventsConverterValidator eventsConverter;
     private static MeasurementConverterValidator measurementConverter;
     private static OperationConverterValidator operationConverter;
     private static TraitConverterValidator traitConverter;
@@ -35,7 +36,7 @@ public class ConverterValidatorManager {
     static {
         availabilityConverter = new AvailabilityConverterValidator();
         configurationPropertyConverter = new ConfigurationPropertyConverterValidator();
-        logEventConverter = new LogEventConverterValidator();
+        eventsConverter = new EventsConverterValidator();
         measurementConverter = new MeasurementConverterValidator();
         operationConverter = new OperationConverterValidator();
         traitConverter = new TraitConverterValidator();
@@ -50,8 +51,8 @@ public class ConverterValidatorManager {
             traitConverter.exportProperties(subject, fromBean, toCondition);
         } else if (fromBean.getTrigger().equals(configurationPropertyConverter.getTriggerName())) {
             configurationPropertyConverter.exportProperties(subject, fromBean, toCondition);
-        } else if (fromBean.getTrigger().equals(logEventConverter.getTriggerName())) {
-            logEventConverter.exportProperties(subject, fromBean, toCondition);
+        } else if (fromBean.getTrigger().equals(eventsConverter.getTriggerName())) {
+            eventsConverter.exportProperties(subject, fromBean, toCondition);
         } else if (fromBean.getTrigger().equals(availabilityConverter.getTriggerName())) {
             availabilityConverter.exportProperties(subject, fromBean, toCondition);
         } else if (fromBean.getTrigger().equals(operationConverter.getTriggerName())) {
@@ -71,8 +72,8 @@ public class ConverterValidatorManager {
             traitConverter.importProperties(subject, fromCondition, toBean);
         } else if (category == AlertConditionCategory.CONFIGURATION_PROPERTY) {
             configurationPropertyConverter.importProperties(subject, fromCondition, toBean);
-        } else if (category == AlertConditionCategory.LOG_EVENT) {
-            logEventConverter.importProperties(subject, fromCondition, toBean);
+        } else if (category == AlertConditionCategory.EVENT) {
+            eventsConverter.importProperties(subject, fromCondition, toBean);
         } else if (category == AlertConditionCategory.AVAILABILITY) {
             availabilityConverter.importProperties(subject, fromCondition, toBean);
         } else if (category == AlertConditionCategory.CONTROL) {
@@ -87,8 +88,8 @@ public class ConverterValidatorManager {
             return traitConverter.validate(bean, errors, index);
         } else if (bean.getTrigger().equals(configurationPropertyConverter.getTriggerName())) {
             return configurationPropertyConverter.validate(bean, errors, index);
-        } else if (bean.getTrigger().equals(logEventConverter.getTriggerName())) {
-            return logEventConverter.validate(bean, errors, index);
+        } else if (bean.getTrigger().equals(eventsConverter.getTriggerName())) {
+            return eventsConverter.validate(bean, errors, index);
         } else if (bean.getTrigger().equals(availabilityConverter.getTriggerName())) {
             return availabilityConverter.validate(bean, errors, index);
         } else if (bean.getTrigger().equals(operationConverter.getTriggerName())) {

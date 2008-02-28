@@ -19,16 +19,21 @@
 package org.rhq.core.domain.alert;
 
 public enum AlertConditionCategory {
-    AVAILABILITY("Resource Availability"), THRESHOLD("Measurement Threshold"), BASELINE("Measurement Baseline"), CHANGE(
-        "Measurement Value Change"), TRAIT("Measurement Trait"), CONTROL("Control Action"), ALERT("Alert Fired"), CONFIGURATION_PROPERTY(
-        "Configuration Property Value Change"), // used to be called custom property
-    LOG_EVENT("Log Event");
+    AVAILABILITY("Resource Availability"), // 
+    THRESHOLD("Measurement Threshold"), //
+    BASELINE("Measurement Baseline"), //
+    CHANGE("Measurement Value Change"), //
+    TRAIT("Measurement Trait"), //
+    CONTROL("Control Action"), //
+    ALERT("Alert Fired"), //
+    CONFIGURATION_PROPERTY("Configuration Property Value Change"), // used to be called custom property
+    EVENT("Log Event");
 
     /*
      * legacyOrder exists to support code that still uses the old EventConstants.TYPE_* attributes, which was one-based
      */
     private static final AlertConditionCategory[] legacyOrder = new AlertConditionCategory[] { THRESHOLD, BASELINE,
-        CONTROL, CHANGE, ALERT, CONFIGURATION_PROPERTY, LOG_EVENT };
+        CONTROL, CHANGE, ALERT, CONFIGURATION_PROPERTY, EVENT };
 
     // return new type-safe enum based off legacy index w/offset
     public static AlertConditionCategory make(int legacyIndex) {

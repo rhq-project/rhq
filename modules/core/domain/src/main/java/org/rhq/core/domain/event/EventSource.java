@@ -46,7 +46,7 @@ import org.rhq.core.domain.resource.Resource;
  * @author Ian Springer
  */
 @NamedQueries( {
-        // TODO
+// TODO
 })
 @Entity
 @Table(name = EventSource.TABLE_NAME)
@@ -68,7 +68,6 @@ public class EventSource implements Externalizable {
     @ManyToOne(fetch = FetchType.LAZY)
     private Resource resource;
 
-    @SuppressWarnings({"UnusedDeclaration"})
     @Column(name = "RESOURCE_ID", insertable = false, updatable = false)
     private int resourceId;
 
@@ -79,9 +78,10 @@ public class EventSource implements Externalizable {
     public EventSource() {
     }
 
-    public EventSource(@NotNull String location,
-                       @NotNull EventDefinition eventDefinition,
-                       @NotNull Resource resource) {
+    public EventSource(@NotNull
+    String location, @NotNull
+    EventDefinition eventDefinition, @NotNull
+    Resource resource) {
         if (location == null)
             throw new IllegalArgumentException("location parameter must not be null.");
         if (eventDefinition == null)
@@ -145,10 +145,9 @@ public class EventSource implements Externalizable {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + "id=" + this.id + ", "
-            + "eventDefinition.name=" + ((this.eventDefinition != null) ? this.eventDefinition.getName() : "null") + ", "
-            + "resource.name=" + ((this.resource != null) ? this.resource.getName() : "null") + ", "
-            + "location=" + this.location + "]";
+        return this.getClass().getSimpleName() + "[" + "id=" + this.id + ", " + "eventDefinition.name="
+            + ((this.eventDefinition != null) ? this.eventDefinition.getName() : "null") + ", " + "resource.name="
+            + ((this.resource != null) ? this.resource.getName() : "null") + ", " + "location=" + this.location + "]";
 
     }
 

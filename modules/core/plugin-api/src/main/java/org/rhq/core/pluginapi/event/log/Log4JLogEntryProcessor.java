@@ -26,10 +26,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Calendar;
+import java.util.LinkedHashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,13 +77,17 @@ public class Log4JLogEntryProcessor implements LogEntryProcessor {
     }
 
     @Nullable
-    public Set<Event> processLines(BufferedReader lines) throws IOException {
-        Set<Event> events = new HashSet();
+    public Set<Event> processLines(BufferedReader bufferedReader) throws IOException {
+        // Use a LinkedHashSet so the Events are in the same order as the log entries they correspond to.
+        Set<Event> events = new LinkedHashSet(); 
         LogEntry currentEntry = null;
         String line;
-        while ((line = lines.readLine()) != null) {
+        while ((line = bufferedReader.readLine()) != null) {
             currentEntry = processLine(line, events, currentEntry);
         }
+        // We've reached the end of the passed-in buffer, so assume the current entry is complete, and add an Event for
+        // it.
+        addEventForCurrentEntry(events, currentEntry);
         return events;
     }
 
@@ -104,26 +108,31 @@ public class Log4JLogEntryProcessor implements LogEntryProcessor {
         // e.g.: 2007-12-09 15:32:49,514 DEBUG [com.example.FooBar] run: IdleRemover notifying pools, interval: 450000
         Matcher matcher = PATTERN.matcher(line);
         if (matcher.matches()) {
-            if (currentEntry != null) {
-                // A matching line tells us the previous entry has no more additional lines; we can therefore create an
-                // Event for that entry.
-                EventSeverity severity = PRIORITY_TO_SEVERITY_MAP.get(currentEntry.getPriority());
-                if (severity.isAtLeastAsSevereAs(this.minimumSeverity) &&
-                        (this.includesPattern == null ||
-                         this.includesPattern.matcher(currentEntry.getDetail()).matches())) {
-                    Event event = new Event(this.eventType, this.logFile.getPath(), currentEntry.getDate(), severity, currentEntry.getDetail());
-                    events.add(event);
-                }
-            }
+            // A matching line tells us the previous entry has no more additional lines; we can therefore add an Event
+            // for that entry.
+            addEventForCurrentEntry(events, currentEntry);
             // Start building up a new entry...
             currentEntry = processPrimaryLine(matcher);
         } else {
-            // If the line didn't our regex, assume it's an additional line (e.g. part of a stack trace).
+            // If the line didn't match, assume it's an additional line (e.g. part of a stack trace).
             if (currentEntry != null) {
                 currentEntry.appendLineToDetail(line);
             }
         }
         return currentEntry;
+    }
+
+    private void addEventForCurrentEntry(Set<Event> events, LogEntry currentEntry)
+    {
+        if (currentEntry != null) {
+            EventSeverity severity = PRIORITY_TO_SEVERITY_MAP.get(currentEntry.getPriority());
+            if (severity.isAtLeastAsSevereAs(this.minimumSeverity) &&
+                    (this.includesPattern == null ||
+                     this.includesPattern.matcher(currentEntry.getDetail()).matches())) {
+                Event event = new Event(this.eventType, this.logFile.getPath(), currentEntry.getDate(), severity, currentEntry.getDetail());
+                events.add(event);
+            }
+        }
     }
 
     private LogEntry processPrimaryLine(Matcher matcher) {
@@ -217,8 +226,8 @@ public class Log4JLogEntryProcessor implements LogEntryProcessor {
         }
 
         void appendLineToDetail(String string) {
-            this.detail.append(string);
             this.detail.append("\n");
+            this.detail.append(string);
         }
     }
 }

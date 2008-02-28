@@ -39,14 +39,16 @@ public class Log4JLogEntryProcessorTest {
     public static final StringBuilder TEST_LOG = new StringBuilder();
     static
     {
-        TEST_LOG.append("2007-12-09 15:32:49,909 DEBUG [com.example.FooBar] run: IdleRemover notifying pools, interval: 450000");
-        TEST_LOG.append("2008-02-09 02:10:11,909 INFO [com.example.FooBar] yada yada yada");
+        TEST_LOG.append("2007-12-09 15:32:49,909 DEBUG [com.example.FooBar] run: IdleRemover notifying pools, interval: 450000\n");
+        TEST_LOG.append("2008-02-09 02:10:11,909 INFO [com.example.FooBar] a multi-line entry\n");
+        TEST_LOG.append("\tyada yada yada\n");
+        TEST_LOG.append("\twocka wocka wocka\n");
     }
 
     public void testProcessLine() throws Exception {
         String eventType = "logEntry";
-        String sourceLocation = "C:/test.log";
-        LogEntryProcessor processor = new Log4JLogEntryProcessor(eventType, new File(sourceLocation));
+        File logFile = new File("C:/test.log");
+        LogEntryProcessor processor = new Log4JLogEntryProcessor(eventType, logFile);
         BufferedReader bufferedReader = new BufferedReader(new StringReader(TEST_LOG.toString()));
         Set<Event> events = processor.processLines(bufferedReader);
         assert events != null;
@@ -54,7 +56,7 @@ public class Log4JLogEntryProcessorTest {
         Iterator<Event> eventIterator = events.iterator();
         Event event1 = eventIterator.next();
         assert event1.getType().equals(eventType);
-        assert event1.getSourceLocation().equals(sourceLocation);
+        assert new File(event1.getSourceLocation()).equals(logFile);
         Calendar calendar = Calendar.getInstance();
         calendar.set(2007, 11, 9, 15, 32, 49);
         calendar.set(Calendar.MILLISECOND, 909);
@@ -63,6 +65,7 @@ public class Log4JLogEntryProcessorTest {
         assert event1.getSeverity().equals(EventSeverity.DEBUG);
         assert event1.getDetail().equals("[com.example.FooBar] run: IdleRemover notifying pools, interval: 450000");
         Event event2 = eventIterator.next();
-        assert event2.getDetail().equals("[com.example.FooBar] yada yada yada");
+        assert event2.getDetail().startsWith("[com.example.FooBar] a multi-line entry\n");
+        assert event2.getDetail().endsWith("\twocka wocka wocka");
     }
 }

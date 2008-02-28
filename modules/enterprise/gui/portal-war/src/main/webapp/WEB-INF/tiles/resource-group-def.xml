@@ -236,6 +236,10 @@
             link="/resource/group/monitor/Visibility.do?category=COMPATIBLE"
             height="25" width="104"
             classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Events"
+            link="/resource/common/Events.do" mode="events"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
       <item value="Configure" mode="configure"
             link="/resource/group/monitor/Config.do"
             height="25" width="104"
@@ -252,6 +256,10 @@
             link="/resource/group/monitor/Visibility.do"
             height="25" width="104"
             classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Events"
+            link="/resource/common/Events.do" mode="events"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
       <item value="Configure" mode="configure"
             link="/resource/group/monitor/Config.do"
             height="25" width="104"
@@ -264,19 +272,24 @@
     <put name="subSelectedIndex" value="0"/>              
   </definition>
 
+  <definition name=".tabs.resource.group.monitor.events"
+              extends=".tabs.resource.group.monitor">
+    <put name="subSelectedIndex" value="1"/>              
+  </definition>
+
   <definition name=".tabs.resource.group.monitor.configVisibility"
               extends=".tabs.resource.group.monitor">
-    <put name="subSelectedIndex" value="1"/>  
+    <put name="subSelectedIndex" value="2"/>  
   </definition>
 
   <definition name=".tabs.resource.group.monitor.alerts"
               extends=".tabs.resource.group.monitor">
-    <put name="subSelectedIndex" value="2"/>
+    <put name="subSelectedIndex" value="3"/>
   </definition>
 
   <definition name=".tabs.resource.group.monitor.configAlerts"
               extends=".tabs.resource.group.monitor">
-    <put name="subSelectedIndex" value="3"/>
+    <put name="subSelectedIndex" value="4"/>
   </definition>
 
   <!-- no control -->
@@ -285,9 +298,15 @@
     <put name="subSelectedIndex" value="0"/>
   </definition>
 
+  <definition name=".tabs.resource.group.monitor.events.nocontrol"
+              extends=".tabs.resource.group.monitor.nocontrol">
+    <put name="subSelectedIndex" value="1"/>              
+  </definition>
+  
+
   <definition name=".tabs.resource.group.monitor.configVisibility.nocontrol"
               extends=".tabs.resource.group.monitor.nocontrol">
-    <put name="subSelectedIndex" value="1"/>
+    <put name="subSelectedIndex" value="2"/>
   </definition>
 
   <definition name=".tabs.resource.group.monitor.alerts.nocontrol"

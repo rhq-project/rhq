@@ -151,6 +151,10 @@
                link="/resource/common/monitor/Visibility.do" mode="currentHealth"
                height="25" width="104"
                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item value="Events"
+               link="/resource/common/Events.do" mode="events"
+               height="25" width="104"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
          <item value="Configure"
                link="/resource/common/monitor/Config.do" mode="configure"
                height="25" width="104"
@@ -162,10 +166,15 @@
                extends=".tabs.resource.common.monitor">
       <put name="subSelectedIndex" value="0"/>
    </definition>
+   
+   <definition name=".tabs.resource.common.monitor.events"
+               extends=".tabs.resource.common.monitor">
+      <put name="subSelectedIndex" value="1"/>
+   </definition>
 
    <definition name=".tabs.resource.common.monitor.configVisibility"
                extends=".tabs.resource.common.monitor">
-     <put name="subSelectedIndex" value="1"/>
+     <put name="subSelectedIndex" value="2"/>
    </definition>
 
    <definition name=".tabs.resource.common.monitor.configVisibility.defaults"
@@ -257,9 +266,7 @@
                controllerUrl="/resource/common/monitor/visibility/PerformanceFormPrepare.do"
                path="/resource/common/monitor/visibility/MainLayout.jsp"/>
 
-   <definition name=".resource.common.monitor.visibility.Events"
-               controllerUrl="/resource/common/monitor/visibility/EventsFormPrepare.do"
-               path="/resource/common/monitor/visibility/MainLayout.jsp"/>
+
 
 
    <definition name=".resource.common.monitor.visibility.listchildresources"
@@ -470,11 +477,6 @@
                value="1" link="XXX"
                height="21" width="102"
                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
-         <item icon="Events"
-               mode="events"
-               value="2" link="XXX"
-               height="21" width="102"
-               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>               
       </putList>
       <putList name="nometrics">
          <item icon="Indicators"
@@ -485,11 +487,6 @@
          <item icon="Perf"
                mode="performance"
                value="1" link="XXX"
-               height="21" width="102"
-               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
-         <item icon="Events"
-               mode="events"
-               value="2" link="XXX"
                height="21" width="102"
                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
       </putList>
@@ -509,11 +506,6 @@
                value="2" link="XXX"
                height="21" width="102"
                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
-         <item icon="Events"
-               mode="events"
-               value="3" link="XXX"
-               height="21" width="102"
-               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
       </putList>
    </definition>
 
@@ -521,5 +513,9 @@
    <definition name=".resource.common.monitor.visibility.timeline"
                path="/resource/common/monitor/visibility/Timeline.jsp"
                controllerUrl="/resource/common/monitor/visibility/Timeline.do"/>
+               
+   <definition name=".resource.common.events.Events"
+               controllerUrl="/resource/common/events/EventsFormPrepare.do"
+               path="/resource/common/monitor/events/EventsList.jsp"/>               
 
 </tiles-definitions>

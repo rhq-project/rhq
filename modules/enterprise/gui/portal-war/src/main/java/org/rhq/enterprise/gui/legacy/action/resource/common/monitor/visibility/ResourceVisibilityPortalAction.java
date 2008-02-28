@@ -55,11 +55,4 @@ public abstract class ResourceVisibilityPortalAction extends ResourceController 
         return null;
     }
 
-    public ActionForward events(ActionMapping mapping, ActionForm form, HttpServletRequest request,
-        HttpServletResponse response) throws Exception {
-        super.setNavMapLocation(request, mapping, Constants.MONITOR_VISIBILITY_LOC);
-
-        return null;
-    }
-
 }

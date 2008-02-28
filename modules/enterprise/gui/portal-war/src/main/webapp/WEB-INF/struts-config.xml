@@ -223,6 +223,7 @@
 
       <form-bean name="PerformanceForm"
                  type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.PerformanceForm"/>
+                 
       <form-bean name="CompareMetricsForm"
                  type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.CompareMetricsForm"/>
 
@@ -231,7 +232,6 @@
 
       <form-bean name="EventsForm"
                  type="org.rhq.enterprise.gui.legacy.action.resource.common.events.EventsForm"/>
-
 
       <form-bean name="MapForm"
                  type="org.rhq.enterprise.gui.action.resource.common.ActionArgumentForm"/>
@@ -3085,28 +3085,6 @@
          <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" redirect="true"/>
       </action>
 
-      <action path="/resource/common/monitor/visibility/Events"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.events.ListEventsAction"
-              name="EventsForm"
-              scope="request"
-              input="/resource/common/monitor/Visibility.do?mode=events">
-         <forward name="success" path="/resource/common/monitor/Visibility.do?mode=events"/>
-         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" redirect="true"/>
-      </action>
-      
-      <action path="/resource/common/monitor/visibility/EventsFormPrepare"
-              name="EventsForm"
-              scope="request"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.events.EventsFormPrepareAction">
-         <set-property property="title" value="View+Events"/>
-      </action>
-
-      <action path="/resource/common/monitor/events/OneEventDetail"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.events.OneEventDetailAction"
-              scope="request"
-              parameter="action"
-              name="EventsForm">
-      </action>
 
       <action path="/resource/common/monitor/visibility/SelectResources"
               name="ProblemMetricsDisplayForm"
@@ -3148,7 +3126,7 @@
       </action>
 
       <action path="/resource/common/monitor/visibility/EventDetails"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.EventDetailsAction">
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.events.EventDetailsAction">
          <forward name="success" path="/common/AJAXResponse.jsp"/>
       </action>
 
@@ -3191,6 +3169,42 @@
          <forward name="remove" path="/resource/common/monitor/Config.do?mode=configure"/>
          <forward name="failure" path="/resource/common/monitor/Config.do?mode=configure"/>
          <forward name="success" path="/resource/common/monitor/Config.do?mode=configure"/>
+      </action>
+
+      <!--  === Resource Monitor>Events Tab === -->
+      <action path="/resource/common/Events"
+              forward=".resource.common.events.layout">
+      </action>
+
+      <action path="/resource/common/events/EventPortal"
+              parameter="mode"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.events.EventsPortalAction"
+              input="/resource/common/events/Events.do?mode=events">
+      </action>
+
+      <action path="/resource/common/events/EventsFormPrepare"
+              name="EventsForm"
+              scope="request"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.events.EventsFormPrepareAction">
+         <set-property property="title" value="View+Events"/>
+         <forward name="success" path="/resource/common/events/Events.do?mode=events"/>
+      </action>
+
+      <action path="/resource/common/events/Events"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.events.ListEventsAction"
+              name="EventsForm"
+              scope="request"
+              input="/resource/common/events/Events.do?mode=events">
+      <!--    <forward name="success" path="/resource/common/events/Events.do?mode=events"/>  -->
+         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" redirect="true"/>
+      </action>
+      
+
+      <action path="/resource/common/events/OneEventDetail"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.events.OneEventDetailAction"
+              scope="request"
+              parameter="action"
+              name="EventsForm">
       </action>
 
    </action-mappings>

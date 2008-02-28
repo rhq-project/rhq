@@ -66,11 +66,7 @@ public class VisibilityPortalAction extends ResourceVisibilityPortalAction {
 
     private static final String TITLE_PERFORMANCE = "resource.common.monitor.visibility.PerformanceTitle";
 
-    private static final String TITLE_EVENTS = "resource.common.monitor.visibility.EventsTitle";
-
     private static final String PORTLET_PERFORMANCE = ".resource.common.monitor.visibility.Performance";
-
-    private static final String PORTLET_EVENTS = ".resource.common.monitor.visibility.Events";
 
     private static final String ERR_PLATFORM_PERMISSION = "resource.common.monitor.visibility.error.PlatformPermission";
 
@@ -144,7 +140,6 @@ public class VisibilityPortalAction extends ResourceVisibilityPortalAction {
         map.setProperty(ParamConstants.MODE_MON_COMPARE_METRICS, "compareMetrics");
         map.setProperty(ParamConstants.MODE_MON_METRIC_METADATA, "metricMetadata");
         map.setProperty("showTraitHistory", "showTraitHistory"); // TODO constant
-        map.setProperty("events", "events"); // TODO constant
 
         return map;
     }
@@ -183,17 +178,6 @@ public class VisibilityPortalAction extends ResourceVisibilityPortalAction {
         setResource(request);
 
         Portal portal = Portal.createPortal(TITLE_PERFORMANCE, PORTLET_PERFORMANCE);
-        request.setAttribute(AttrConstants.PORTAL_KEY, portal);
-        return null;
-    }
-
-    @Override
-    public ActionForward events(ActionMapping mapping, ActionForm form, HttpServletRequest request,
-        HttpServletResponse response) throws Exception {
-
-        super.events(mapping, form, request, response);
-        setResource(request);
-        Portal portal = Portal.createPortal(TITLE_EVENTS, PORTLET_EVENTS);
         request.setAttribute(AttrConstants.PORTAL_KEY, portal);
         return null;
     }

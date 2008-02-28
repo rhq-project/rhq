@@ -14,7 +14,7 @@
 
        var indicatorDiv = document.getElementById("eventDetailDiv");
        var xmlhttp = getXMLHttpRequest();
-       var url = "/resource/common/monitor/events/OneEventDetail.do"; 
+       var url = "/resource/common/events/OneEventDetail.do"; 
            url += "?action=getDetail&eventId=" + eventId;
        xmlhttp.open('GET',url,true);
        xmlhttp.onreadystatechange=function()
@@ -37,26 +37,28 @@
    </table>
       </td> <%-- opened in MainLayout.jsp --%>
 
-   <td valign="top">
-   <table width="100%" cellpadding="0" cellspacing="0" border="0">
+<c:choose>
+  <c:when test="${not empty Resource}">
+    <tiles:insert definition=".page.title.resource.common.full">
+      <tiles:put name="titleName"><hq:inventoryHierarchy resourceId="${Resource.id}"/></tiles:put>
+      <tiles:put name="resource" beanName="Resource"/>
+      <tiles:put name="resourceOwner" beanName="ResourceOwner"/>
+      <tiles:put name="resourceModifier" beanName="ResourceModifier"/>
+    </tiles:insert>
 
-      <tr>
-         <td colspan="3">
-            <tiles:insert definition=".resource.common.monitor.visibility.dashminitabs">
-               <tiles:put name="selectedIndex" value="2"/>
-               <tiles:put name="resourceId" beanName="Resource" beanProperty="id"/>
-               <tiles:put name="tabListName" value="standard"/>
-            </tiles:insert>
-         </td>
-      </tr>
-   </table>
- </td> <%-- closes the minitab section --%>
+</c:when>
+</c:choose>
+
+    <tiles:insert definition=".tabs.resource.common.monitor.events">
+      <tiles:put name="id" value="${param.id}"/>
+      <tiles:put name="resourceType" value="${Resource.resourceType.id}"/>
+    </tiles:insert>
       
 <%-- full width from here --%>     
 <table width="98%" align="center" cellspacing="0" cellpadding="0" border="0">
 <tr>
 <td>
-   <c:url var="sAction" value="/resource/common/monitor/visibility/Events.do">
+   <c:url var="sAction" value="/resource/common/Events.do">
       <c:if test="${not empty param.ps}">
          <c:param name="ps" value="${param.ps}"/>
       </c:if>
@@ -77,7 +79,7 @@
       </c:if>
    </c:url>
    
-   <html:form action="/resource/common/monitor/visibility/Events" >
+   <html:form action="/resource/common/events/Events" >
 <table width="100%" align="center" cellspacing="0" cellpadding="0" border="0">
 <tr colspan="4">
   <td class="FilterLine" colspan="4"><b>
@@ -139,22 +141,23 @@
       <display:column width="20%" property="timestamp" title="resource.common.monitor.events.TimeTitle"
          sortAttr="timestamp" defaultSort="true"/>
    </display:table>
-   <c:url var="pageAction" value="/resource/common/monitor/visibility/Events.do">
 
-   <c:if test="${not empty param.so}">
-      <c:param name="so" value="${param.so}"/>
-   </c:if>
-   <c:if test="${not empty param.sc}">
-      <c:param name="sc" value="${param.sc}"/>
-   </c:if>
-         
-   <c:if test="${not empty param.pn}">
-      <c:param name="pn" value="${param.pn}"/>
-   </c:if>
-   <c:if test="${not empty param.ps}">
-      <c:param name="ps" value="${param.ps}"/>
-   </c:if>
-</c:url>
+   <c:url var="pageAction" value="/resource/common/Events.do">
+      <c:param name="mode" value="events"/>
+      <c:if test="${not empty param.so}">
+         <c:param name="so" value="${param.so}"/>
+      </c:if>
+      <c:if test="${not empty param.sc}">
+         <c:param name="sc" value="${param.sc}"/>
+      </c:if>
+            
+      <c:if test="${not empty param.pn}">
+         <c:param name="pn" value="${param.pn}"/>
+      </c:if>
+      <c:if test="${not empty param.ps}">
+         <c:param name="ps" value="${param.ps}"/>
+      </c:if>
+   </c:url>
 
 
 </td>

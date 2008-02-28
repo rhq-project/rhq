@@ -146,6 +146,10 @@
                 extends=".main.layout"
                 controllerUrl="/resource/common/monitor/ConfigPortal.do" />
 
+    <definition name=".resource.common.events.layout"
+                extends=".main.layout"
+                controllerUrl="/resource/common/events/EventPortal.do" />
+
     <definition name=".admin.common.monitor.config.layout"
                 extends=".admin.home.layout"
                 controllerUrl="/resource/common/monitor/ConfigPortal.do">

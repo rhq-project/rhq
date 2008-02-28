@@ -31,6 +31,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.ChannelComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -151,14 +152,27 @@ public class CreateNewPackageUIBean {
            workflow and we'll deal with the refactoring later.
            jdobies, Feb 27, 2008
          */
+        PackageVersion packageVersion;
         try {
             ContentManagerLocal contentManager = LookupUtil.getContentManager();
-            contentManager.createPackageVersion(packageName, selectedPackageTypeId,
-                                                version, selectedArchitectureId, packageStream);
+            packageVersion = contentManager.createPackageVersion(packageName, selectedPackageTypeId,
+                                                                 version, selectedArchitectureId, packageStream);
         } catch (Exception e) {
             String errorMessages = ThrowableUtil.getAllMessages(e);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "Failed to create package [" + packageName + "] in channel. Cause: " + errorMessages);
+            return "failure";
+        }
+
+        // Add the package to the channel
+        try {
+            ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
+            channelManager.addPackageVersionsToChannel(subject, channelId, new int[]{packageVersion.getId()});
+        } catch (Exception e) {
+            String errorMessages = ThrowableUtil.getAllMessages(e);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "Failed to associate package [" + packageName + "] with channel ID [" + channelId + "]. Cause: " +
+                errorMessages);
             return "failure";
         }
 
@@ -287,7 +301,7 @@ public class CreateNewPackageUIBean {
 
     private int determineChannel(String channelOption, Subject subject, int resourceId) {
         int channelId = -1;
-        
+
         if (channelOption.equals(CHANNEL_OPTION_SUBSCRIBED)) {
             channelId = subscribedChannelId;
         }
@@ -296,6 +310,11 @@ public class CreateNewPackageUIBean {
 
             ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
             channelManager.subscribeResourceToChannels(subject, resourceId, new int[]{channelId});
+
+            // Change the subscribedChannelId so if we fall back to the page with a different error,
+            // the drop down for selecting an existing subscribed channel will be populated with this
+            // new channel
+            subscribedChannelId = channelId;
         }
         else if (channelOption.equals(CHANNEL_OPTION_NEW)) {
             ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
@@ -306,6 +325,11 @@ public class CreateNewPackageUIBean {
             channelId = newChannel.getId();
 
             channelManager.subscribeResourceToChannels(subject, resourceId, new int[]{channelId});
+
+            // Change the subscribedChannelId so if we fall back to the page with a different error,
+            // the drop down for selecting an existing subscribed channel will be populated with this
+            // new channel
+            subscribedChannelId = channelId;            
         }
 
         return channelId;

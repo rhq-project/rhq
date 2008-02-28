@@ -27,6 +27,7 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.jws.WebService;
+import javax.jws.WebParam;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -316,6 +317,19 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         }
 
         return;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void addPackageVersionsToChannel(Subject subject, int channelId, int[] packageVersionIds) throws Exception {
+        Channel channel = entityManager.find(Channel.class,  channelId);
+
+        for (int packageVersionId : packageVersionIds) {
+            PackageVersion packageVersion = entityManager.find(PackageVersion.class, packageVersionId);
+
+            ChannelPackageVersion mapping = new ChannelPackageVersion(channel, packageVersion);
+            entityManager.persist(mapping);
+        }
+        
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

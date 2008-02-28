@@ -156,6 +156,20 @@ public interface ChannelManagerRemote {
     int[] contentSourceIds) throws Exception;
 
     /**
+     * Associates the package versions (identified by their IDs) to the given channel (also identified by its ID).
+     *
+     * @param subject           the user asking to perform this
+     * @param channelId         the ID of the channel
+     * @param packageVersionIds the list of package version IDs to add to the channel
+     *
+     * @throws Exception if the channel or package version does not exist or the addition failed
+     */
+    void addPackageVersionsToChannel(@WebParam(name = "subject")
+    Subject subject, @WebParam(name = "channelId")
+    int channelId, @WebParam(name = "packageVersionIds")
+    int[] packageVersionIds) throws Exception;
+
+    /**
      * Removes the content sources (identified by their IDs) from the given channel (also identified by its ID). If one
      * of the content sources is already not a member of the channel, it is simply ignored (i.e. an exception will not
      * be thrown).

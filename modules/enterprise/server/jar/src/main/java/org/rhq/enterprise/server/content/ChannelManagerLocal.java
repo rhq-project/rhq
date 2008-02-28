@@ -129,6 +129,11 @@ public interface ChannelManagerLocal {
     void addContentSourcesToChannel(Subject subject, int channelId, int[] contentSourceIds) throws Exception;
 
     /**
+     * @see ChannelManagerRemote#addPackageVersionsToChannel(Subject, int, int[])
+     */
+    void addPackageVersionsToChannel(Subject subject, int channelId, int[] packageVersionIds) throws Exception;
+
+    /**
      * @see ChannelManagerRemote#removeContentSourcesFromChannel(Subject, int, int[])
      */
     void removeContentSourcesFromChannel(Subject subject, int channelId, int[] contentSourceIds) throws Exception;

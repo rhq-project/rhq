@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Arrays;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -35,8 +36,15 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result> {
+
+    private static final String PROP_SIMPLE_ALIAS = "simple";
+    private static final String TRAIT_ALIAS = "trait";
+    private static final String METRIC_DEF_ALIAS = "def";
+
     private enum JoinCondition {
-        RESOURCE_CONFIGURATION(".configuration", "conf"), PLUGIN_CONFIGURATION(".pluginConfiguration", "pluginConf");
+        RESOURCE_CONFIGURATION(".configuration", "conf"),
+        PLUGIN_CONFIGURATION(".pluginConfiguration", "pluginConf"),
+        SCHEDULES(".schedules", "sched");
 
         String subexpression;
         String alias;
@@ -165,7 +173,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
     private enum ParseContext {
         BEGIN(false), Pivot(false), Resource(false), ResourceParent(false), ResourceGrandParent(false), ResourceType(
-            false), Configuration(true), StringMatch(true), END(true);
+            false), Trait(true), Configuration(true), StringMatch(true), END(true);
 
         private boolean canTerminateExpression;
 
@@ -201,7 +209,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             return;
         }
 
-        String condition = null;
+        String condition;
         String value = null;
 
         /*
@@ -224,10 +232,11 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
          * the remainder of the passed expression should be in the form of '[groupBy] condition', so let's tokenize on
          * '.' and ' ' and continue the parse
          */
-        String[] original = condition.split("\\.| ");
-        String[] tokens = new String[original.length];
+        List<String> originalTokens = tokenizeCondition(condition);
+
+        String[] tokens = new String[originalTokens.size()];
         for (int i = 0; i < tokens.length; i++) {
-            tokens[i] = original[i].toLowerCase();
+            tokens[i] = originalTokens.get(i).toLowerCase();
         }
 
         /*
@@ -291,9 +300,19 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                     throw new InvalidExpressionException("Invalid resourceType subexpression: "
                         + PrintUtils.getDelimitedString(tokens, parseIndex, "."));
                 }
+            } else if (context == ParseContext.Trait) {
+                // SELECT res.id FROM Resource res JOIN res.schedules sched, sched.definition def, MeasurementDataTrait trait
+                // WHERE def.name = :arg1 AND trait.value = :arg2 AND trait.schedule = sched AND trait.id.timestamp =
+                // (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)
+                String traitName = parseTraitName(originalTokens);
+                joinConditions.add(JoinCondition.SCHEDULES);
+                populatePredicateCollections(METRIC_DEF_ALIAS + ".name", traitName, false);
+                populatePredicateCollections(TRAIT_ALIAS + ".value", value);
+                whereStatics.add(TRAIT_ALIAS + ".schedule = " + JoinCondition.SCHEDULES.alias);
+                whereStatics.add(TRAIT_ALIAS + ".id.timestamp = (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE " + JoinCondition.SCHEDULES.alias + ".id = mdt.schedule.id)");
             } else if (context == ParseContext.Configuration) {
-                String prefix = null;
-                JoinCondition joinCondition = null;
+                String prefix;
+                JoinCondition joinCondition;
 
                 if (subcontext == ParseSubContext.PluginConfiguration) {
                     prefix = "pluginconfiguration";
@@ -305,7 +324,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                     throw new InvalidExpressionException("Invalid configuration subcontext: " + subcontext);
                 }
 
-                String suffix = original[parseIndex].substring(prefix.length());
+                String suffix = originalTokens.get(parseIndex).substring(prefix.length());
                 if (suffix.length() < 3) {
                     throw new InvalidExpressionException("Unrecognized connection property '" + suffix + "'");
                 }
@@ -318,8 +337,9 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 String propertyName = suffix.substring(1, suffix.length() - 1);
 
                 joinConditions.add(joinCondition);
-                populatePredicateCollections("simple.name", propertyName, false);
-                populatePredicateCollections("simple.stringValue", value);
+                populatePredicateCollections(PROP_SIMPLE_ALIAS + ".name", propertyName, false);
+                populatePredicateCollections(PROP_SIMPLE_ALIAS + ".stringValue", value);
+                whereStatics.add(PROP_SIMPLE_ALIAS + ".configuration = " + joinCondition.alias);
             } else if (context == ParseContext.StringMatch) {
                 String lastArgumentName = getLastArgumentName();
                 String argumentValue = (String) whereReplacements.get(lastArgumentName);
@@ -373,6 +393,9 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             populatePredicateCollections(getResourceRelativeContextToken() + ".version", value);
         } else if (nextToken.equals("resourcetype")) {
             context = ParseContext.ResourceType;
+        } else if (nextToken.startsWith("trait")) {
+            context = ParseContext.Trait;
+            parseIndex--; // undo auto-inc, since this context requires element re-parse
         } else if (nextToken.startsWith("pluginconfiguration")) {
             context = ParseContext.Configuration;
             subcontext = ParseSubContext.PluginConfiguration;
@@ -602,9 +625,13 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         String result = "";
         for (JoinCondition joinCondition : joinConditions) {
             result += " JOIN " + getResourceRelativeContextToken() + joinCondition.subexpression + " "
-                + joinCondition.alias + ", PropertySimple simple ";
-
-            whereStatics.add("simple.configuration = " + joinCondition.alias);
+                + joinCondition.alias;
+            if (joinCondition == JoinCondition.SCHEDULES) {
+                result += " JOIN " + joinCondition.alias + ".definition " + METRIC_DEF_ALIAS;
+                result += ", MeasurementDataTrait " + TRAIT_ALIAS + " ";
+            } else {
+                result += ", PropertySimple " + PROP_SIMPLE_ALIAS + " ";
+            }
         }
 
         return result;
@@ -661,6 +688,45 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         }
 
         return result;
+    }
+
+    private List<String> tokenizeCondition(String condition) {
+        List<String> originalTokens = new ArrayList<String>();
+        String[] outerTokens = condition.split(" ");
+        for (String topToken : outerTokens) {
+            int bracketIndex = topToken.indexOf('[');
+            String preBracket;
+            String bracketed;
+            if (bracketIndex != -1) {
+                preBracket = topToken.substring(0, bracketIndex);
+                bracketed = topToken.substring(bracketIndex);
+            }
+            else {
+                preBracket = topToken;
+                bracketed = "";
+            }
+            // If there's a '[', tokenize on dots only in the portion before the '['; this is necessary because
+            // config prop names and trait names can both potentially contain dots.
+            String[] innerTokens = preBracket.split("\\.");
+            if (bracketed != null)
+                innerTokens[innerTokens.length - 1] += bracketed;
+            originalTokens.addAll(Arrays.asList(innerTokens));
+        }
+        return originalTokens;
+    }
+
+    private String parseTraitName(List<String> originalTokens)
+            throws InvalidExpressionException {
+        String prefix = "trait";
+        String suffix = originalTokens.get(parseIndex).substring(prefix.length());
+        if (suffix.length() < 3) {
+            throw new InvalidExpressionException("Unrecognized trait name '" + suffix + "'");
+        }
+        if ((suffix.charAt(0) != '[') || (suffix.charAt(suffix.length() - 1) != ']')) {
+            throw new InvalidExpressionException("Trait name '" + suffix
+                    + "' must be contained within '[' and ']' characters");
+        }
+        return suffix.substring(1, suffix.length() - 1);
     }
 
     private static class PrintUtils {

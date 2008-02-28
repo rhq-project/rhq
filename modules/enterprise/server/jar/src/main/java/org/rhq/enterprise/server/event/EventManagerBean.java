@@ -448,7 +448,7 @@ public class EventManagerBean implements EventManagerLocal {
         if (isFilled(source))
             query += " AND evs.location LIKE '%" + source + "%' ";
         if (isFilled(pc.getPrimarySortColumn())) {
-            query += "ORDER BY " + pc.getPrimarySortColumn() + pc.getPrimarySortOrder() + " ";
+            query += "ORDER BY " + pc.getPrimarySortColumn() + " " + pc.getPrimarySortOrder() + " ";
         } else
             query += "ORDER BY ev.timestamp ";
         query += "LIMIT ? OFFSET ?";

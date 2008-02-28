@@ -982,6 +982,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         Architecture architecture = entityManager.find(Architecture.class, architectureId);
 
         PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
+        newPackageVersion.setDisplayName(existingPackage.getName());
 
         // Write the content into the newly created package version. This may eventually move, but for now we'll just
         // use the byte array in the package version to store the bits.

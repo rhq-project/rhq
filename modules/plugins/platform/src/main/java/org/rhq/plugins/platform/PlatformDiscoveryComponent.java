@@ -51,20 +51,18 @@ public abstract class PlatformDiscoveryComponent implements ResourceDiscoveryCom
 
         SystemInfo systemInfo = context.getSystemInformation();
 
-        String key;
-        String name;
-        String version;
-        String description = context.getResourceType().getDescription();
-
         // platform resources will use the plugin container name as its key.
         // we are guaranteed this string is unique across all agents/plugin containers.
         // (it is usually the hostname, but is not guaranteed to be)
-        key = determineResourceKey(context);
+        String key = determineResourceKey(context);
 
-        // make the name the same as the key/plugin container name
-        // this is usually the hostname so its probably what you want
-        name = key;
+        // build the resource name based on the plugin container name and possibly hostname
+        String name = determineResourceName(context);
 
+        // use the platform type description as the description for this resource
+        String description = context.getResourceType().getDescription();
+
+        String version;
         try {
             version = systemInfo.getOperatingSystemName() + " " + systemInfo.getOperatingSystemVersion();
         } catch (Exception e) {
@@ -93,18 +91,60 @@ public abstract class PlatformDiscoveryComponent implements ResourceDiscoveryCom
      */
     protected String determineResourceKey(ResourceDiscoveryContext context) {
         String name = context.getPluginContainerName();
-        if (name != null) {
-            return name; // we've got it, no need to continue any further
+
+        if (name == null) {
+            name = getHostname(context.getSystemInformation());
         }
+
+        return name;
+    }
+
+    /**
+     * This will determine what the new platform's resource name should be. This default
+     * implementation first tries to use the plugin container's name which is guaranteed
+     * to be unique across all agents/plugin containers.  If, for some odd reason, it is
+     * <code>null</code>, the platform's hostname is used. If the plugin container's name
+     * is not <code>null</code> but it is not the hostname of the platform (as detected
+     * by {@link #getHostname(SystemInfo)}), the name will consist of the platform's
+     * hostname appeneded with the plugin container's name.
+     * 
+     * @param context the discovery context used to get the plugin container name or host name if its needed
+     * 
+     * @return the new platform's resource key
+     */
+    protected String determineResourceName(ResourceDiscoveryContext context) {
+        String pcName = context.getPluginContainerName();
+        String hostName = getHostname(context.getSystemInformation());
+        String resourceName = hostName;
+
+        if ((pcName != null) && (!pcName.equals(hostName))) {
+            resourceName = hostName + " (" + pcName + ")";
+        }
+
+        return resourceName;
+    }
+
+    /**
+     * Tries to determine this platform's hostname, using the (possibly native)
+     * system info API.  If, for whatever reason, this method cannot determine the
+     * hostname, a generic "Unnamed Platform" String will be returned (this will
+     * rarely, if ever, happen under normal situations).
+     * 
+     * @param systemInformation
+     * 
+     * @return the platform's hostname (will never be <code>null</code>)
+     */
+    protected String getHostname(SystemInfo systemInformation) {
+        String name;
 
         // ask the system info class to get us the hostname - possibly via the native library
         try {
-            name = context.getSystemInformation().getHostname();
+            name = systemInformation.getHostname();
         } catch (Exception e) {
             name = null;
         }
 
-        // under certain conditions, might not be able to natively get the hostname so try to get it via Java
+        // under certain conditions, we might not be able to natively get the hostname so try to get it via Java
         if (name == null) {
             try {
                 name = InetAddress.getLocalHost().getHostAddress();
@@ -117,7 +157,6 @@ public abstract class PlatformDiscoveryComponent implements ResourceDiscoveryCom
                 name = "Unnamed Platform";
             }
         }
-
         return name;
     }
 

@@ -75,13 +75,13 @@ public class CreateNewPackageUIBean {
      * If the user selects to add the package to an existing channel that the resource is already subscribed to,
      * this will be populated with that channel ID.
      */
-    private int subscribedChannelId;
+    private String subscribedChannelId;
 
     /**
      * If the user selects to add the package to an existing channel taht the resource is not already subscribed to,
      * this will be populated with that channel ID.
      */
-    private int unsubscribedChannelId;
+    private String unsubscribedChannelId;
 
     /**
      * If the user selects to add the package to a new channel, this will be populated with the new channel's name.
@@ -130,7 +130,7 @@ public class CreateNewPackageUIBean {
         }
 
         // Determine which channel the package will go into
-        int channelId = determineChannel(channelOption, subject, resource.getId());
+        String channelId = determineChannel(channelOption, subject, resource.getId());
 
         // Grab a stream for the file being uploaded
         InputStream packageStream;
@@ -166,8 +166,10 @@ public class CreateNewPackageUIBean {
 
         // Add the package to the channel
         try {
+            int iChannelId = Integer.parseInt(channelId);
+
             ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
-            channelManager.addPackageVersionsToChannel(subject, channelId, new int[]{packageVersion.getId()});
+            channelManager.addPackageVersionsToChannel(subject, iChannelId, new int[]{packageVersion.getId()});
         } catch (Exception e) {
             String errorMessages = ThrowableUtil.getAllMessages(e);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
@@ -275,19 +277,19 @@ public class CreateNewPackageUIBean {
         this.selectedPackageTypeId = selectedPackageTypeId;
     }
 
-    public int getSubscribedChannelId() {
+    public String getSubscribedChannelId() {
         return subscribedChannelId;
     }
 
-    public void setSubscribedChannelId(int subscribedChannelId) {
+    public void setSubscribedChannelId(String subscribedChannelId) {
         this.subscribedChannelId = subscribedChannelId;
     }
 
-    public int getUnsubscribedChannelId() {
+    public String getUnsubscribedChannelId() {
         return unsubscribedChannelId;
     }
 
-    public void setUnsubscribedChannelId(int unsubscribedChannelId) {
+    public void setUnsubscribedChannelId(String unsubscribedChannelId) {
         this.unsubscribedChannelId = unsubscribedChannelId;
     }
 
@@ -299,17 +301,18 @@ public class CreateNewPackageUIBean {
         this.newChannelName = newChannelName;
     }
 
-    private int determineChannel(String channelOption, Subject subject, int resourceId) {
-        int channelId = -1;
+    private String determineChannel(String channelOption, Subject subject, int resourceId) {
+        String channelId = null;
 
         if (channelOption.equals(CHANNEL_OPTION_SUBSCRIBED)) {
             channelId = subscribedChannelId;
         }
         else if (channelOption.equals(CHANNEL_OPTION_UNSUBSCRIBED)) {
             channelId = unsubscribedChannelId;
+            int iChannelId = Integer.parseInt(channelId);
 
             ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
-            channelManager.subscribeResourceToChannels(subject, resourceId, new int[]{channelId});
+            channelManager.subscribeResourceToChannels(subject, resourceId, new int[]{iChannelId});
 
             // Change the subscribedChannelId so if we fall back to the page with a different error,
             // the drop down for selecting an existing subscribed channel will be populated with this
@@ -322,9 +325,9 @@ public class CreateNewPackageUIBean {
             Channel newChannel = new Channel(newChannelName);
             newChannel = channelManager.createChannel(subject, newChannel);
 
-            channelId = newChannel.getId();
+            channelId = Integer.toString(newChannel.getId());
 
-            channelManager.subscribeResourceToChannels(subject, resourceId, new int[]{channelId});
+            channelManager.subscribeResourceToChannels(subject, resourceId, new int[]{newChannel.getId()});
 
             // Change the subscribedChannelId so if we fall back to the page with a different error,
             // the drop down for selecting an existing subscribed channel will be populated with this

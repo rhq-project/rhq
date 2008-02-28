@@ -197,10 +197,10 @@
 <tr>
   <td class="BlockLabel">&nbsp;</td>
   <logic:messagesPresent property="condition[${i}].controlAction">
-  <c:set var="controlActionErrs" value="true"/>
+  	<c:set var="controlActionErrs" value="true"/>
   </logic:messagesPresent>
   <logic:messagesPresent property="condition[${i}].controlActionStatus">
-  <c:set var="controlActionStatusErrs" value="true"/>
+  	<c:set var="controlActionStatusErrs" value="true"/>
   </logic:messagesPresent>
   <c:choose>
   <c:when test="${controlActionErrs or controlActionStatusErrs}">
@@ -213,13 +213,13 @@
     <html:radio property="condition[${i}].trigger" value="onOperation"/>
     <fmt:message key="alert.config.props.CB.Content.ControlAction"/>&nbsp;
     <html:select property="condition[${i}].controlAction">
-    <html:option value="" key="alert.dropdown.SelectOption"/>
-    <html:optionsCollection property="controlActions"/>
+       <html:option value="" key="alert.dropdown.SelectOption"/>
+       <html:optionsCollection property="controlActions"/>
     </html:select>
     &nbsp;<fmt:message key="alert.config.props.CB.Content.Comparator.="/>&nbsp;
     <html:select property="condition[${i}].controlActionStatus">
-    <html:option value="" key="alert.dropdown.SelectOption"/>
-    <html:options property="controlActionStatuses"/>
+       <html:option value="" key="alert.dropdown.SelectOption"/>
+       <html:options property="controlActionStatuses"/>
     </html:select>
     <c:if test="${controlActionErrs}">
     <br><span class="ErrorFieldContent">- <html:errors property="condition[${i}].controlAction"/></span>
@@ -230,25 +230,39 @@
   </td>
 </tr>
 
-<!-- JBNADM-1571: comment out for now, but will be re-enabled later -->
-<!-- 
 <tr>
   <td class="BlockLabel">&nbsp;</td>
-  <td class="BlockContent" nowrap>
-    <html:radio property="condition[${i}].trigger" value="onLog"/>
-    <fmt:message key="alert.config.props.CB.Content.Log"/>
-    <html:select property="condition[${i}].logLevel">
-      <html:option value="-1" key="any"/>
-      <html:option value="3" key="resource.common.monitor.label.events.Error"/>
-      <html:option value="4" key="resource.common.monitor.label.events.Warn"/>
-      <html:option value="6" key="resource.common.monitor.label.events.Info"/>
-      <html:option value="7" key="resource.common.monitor.label.events.Debug"/>
+  <logic:messagesPresent property="condition[${i}].eventSeverity">
+  	<c:set var="eventSeverityErrs" value="true"/>
+  </logic:messagesPresent>
+  <logic:messagesPresent property="condition[${i}].eventDetails">
+  	<c:set var="eventDetailsErrs" value="true"/>
+  </logic:messagesPresent>
+  <c:choose>
+  <c:when test="${eventSeverityErrs or eventDetailsErrs}">
+  <td class="ErrorField">
+  </c:when>
+  <c:otherwise>
+  <td class="BlockContent">
+  </c:otherwise>
+  </c:choose>
+    <html:radio property="condition[${i}].trigger" value="onEvent"/>
+    <fmt:message key="alert.config.props.CB.Content.EventSeverity"/>
+    <html:select property="condition[${i}].eventSeverity">
+       <html:option value="" key="alert.dropdown.SelectOption"/>
+       <html:options property="eventSeverities"/>
     </html:select>
     <fmt:message key="alert.config.props.CB.Content.Match"/>
-    <html:text property="condition[${i}].logMatch" size="10" maxlength="30"/>
+    <html:text property="condition[${i}].eventDetails" size="10" maxlength="30"/>
+    </td>
+    <c:if test="${eventSeverityErrs}">
+    <br><span class="ErrorFieldContent">- <html:errors property="condition[${i}].eventSeverity"/></span>
+    </c:if>
+    <c:if test="${eventDetailsErrs}">
+    <br><span class="ErrorFieldContent">- <html:errors property="condition[${i}].eventDetails"/></span>
+    </c:if>
   </td>
 </tr>
- -->
 
 <c:if test="${numConditions != 1}">
 <tiles:insert definition=".events.config.conditions.condition.deletelink">

@@ -19,9 +19,11 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config;
 
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.struts.action.ActionErrors;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.condition.ConverterValidatorManager;
 
 /**
@@ -41,8 +43,8 @@ public final class ConditionBean {
     private String controlAction;
     private String controlActionStatus;
     private String customProperty;
-    private int logLevel;
-    private String logMatch;
+    private String eventSeverity;
+    private String eventDetails;
     private String availability;
     private String availabilityStatus;
 
@@ -157,20 +159,20 @@ public final class ConditionBean {
         this.customProperty = customProperty;
     }
 
-    public int getLogLevel() {
-        return logLevel;
+    public String getEventSeverity() {
+        return eventSeverity;
     }
 
-    public void setLogLevel(int logLevel) {
-        this.logLevel = logLevel;
+    public void setEventSeverity(String eventSeverity) {
+        this.eventSeverity = eventSeverity;
     }
 
-    public String getLogMatch() {
-        return logMatch;
+    public String getEventDetails() {
+        return eventDetails;
     }
 
-    public void setLogMatch(String logMatch) {
-        this.logMatch = logMatch;
+    public void setEventDetails(String logMatch) {
+        this.eventDetails = logMatch;
     }
 
     public String getAvailability() {

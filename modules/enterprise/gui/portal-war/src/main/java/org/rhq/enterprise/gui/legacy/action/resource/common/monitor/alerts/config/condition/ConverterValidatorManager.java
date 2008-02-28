@@ -100,7 +100,6 @@ public class ConverterValidatorManager {
     }
 
     public static void setDefaults(ConditionBean bean) {
-        bean.setLogLevel(-1);
         bean.setTrigger(measurementConverter.getTriggerName());
         bean.setThresholdType(MeasurementConverterValidator.TYPE_ABS);
     }

@@ -135,7 +135,7 @@ public final class AlertDefUtil {
             String msgKey = "alert.config.props.CB.EventSeverity";
             List<String> args = new ArrayList<String>(2);
 
-            //          args.add( ResourceLogEvent.getLevelString( Integer.parseInt( cond.getName() ) ) );
+            args.add(cond.getName());
             if ((cond.getOption() != null) && (cond.getOption().length() > 0)) {
                 msgKey += ".RegexMatch";
                 args.add(cond.getOption());

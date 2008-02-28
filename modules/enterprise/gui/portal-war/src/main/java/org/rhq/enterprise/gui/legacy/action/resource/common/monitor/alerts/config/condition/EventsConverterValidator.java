@@ -18,7 +18,11 @@
  */
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.condition;
 
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
 import org.apache.struts.action.ActionErrors;
+import org.apache.struts.action.ActionMessage;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
@@ -28,22 +32,37 @@ import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.confi
 public class EventsConverterValidator implements ConditionBeanConverterValidator {
     public void exportProperties(Subject subject, ConditionBean fromBean, AlertCondition toCondition) {
         toCondition.setCategory(AlertConditionCategory.EVENT);
-        toCondition.setName(String.valueOf(fromBean.getLogLevel()));
-        toCondition.setOption(fromBean.getLogMatch());
+        toCondition.setName(fromBean.getEventSeverity());
+        toCondition.setOption(fromBean.getEventDetails());
     }
 
     public void importProperties(Subject subject, AlertCondition fromCondition, ConditionBean toBean) {
         toBean.setTrigger(getTriggerName());
-        toBean.setLogLevel(Integer.parseInt(fromCondition.getName()));
-        toBean.setLogMatch(fromCondition.getOption());
+        toBean.setEventSeverity(fromCondition.getName());
+        toBean.setEventDetails(fromCondition.getOption());
     }
 
     public boolean validate(ConditionBean bean, ActionErrors errors, int index) {
-        // Nothing is required
+        if (0 == bean.getEventSeverity().length()) {
+            ActionMessage err = new ActionMessage("alert.config.error.NoEventSeveritySelected");
+            errors.add("condition[" + index + "].eventSeverity", err);
+            return false;
+        }
+
+        if (null != bean.getEventDetails() && 0 != bean.getEventDetails().length()) {
+            try {
+                Pattern.compile(bean.getEventDetails());
+            } catch (PatternSyntaxException pse) {
+                ActionMessage err = new ActionMessage("alert.config.error.InvalidEventDetails");
+                errors.add("condition[" + index + "].eventDetails", err);
+                return false;
+            }
+        }
+
         return true;
     }
 
     public String getTriggerName() {
-        return "onLog";
+        return "onEvent";
     }
 }

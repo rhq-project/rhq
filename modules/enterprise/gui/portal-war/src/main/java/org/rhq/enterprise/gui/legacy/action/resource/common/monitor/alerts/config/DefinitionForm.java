@@ -24,19 +24,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.validator.GenericValidator;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessage;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
@@ -106,6 +110,9 @@ public final class DefinitionForm extends ResourceForm {
     private static String[] controlActionStatuses = { OperationRequestStatus.INPROGRESS.name(),
         OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.FAILURE.name(),
         OperationRequestStatus.CANCELED.name() };
+
+    private static String[] eventSeverities = { EventSeverity.DEBUG.name(), EventSeverity.INFO.name(),
+        EventSeverity.WARN.name(), EventSeverity.ERROR.name(), EventSeverity.FATAL.name() };
 
     private static OptionItem[] availabilityOptions;
 
@@ -406,6 +413,10 @@ public final class DefinitionForm extends ResourceForm {
 
     public String[] getControlActionStatuses() {
         return controlActionStatuses;
+    }
+
+    public String[] getEventSeverities() {
+        return eventSeverities;
     }
 
     public OptionItem[] getAvailabilityOptions() {

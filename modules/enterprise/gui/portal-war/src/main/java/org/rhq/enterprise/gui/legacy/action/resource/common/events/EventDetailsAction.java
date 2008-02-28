@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
+package org.rhq.enterprise.gui.legacy.action.resource.common.events;
 
 import java.util.List;
 import java.util.Map;

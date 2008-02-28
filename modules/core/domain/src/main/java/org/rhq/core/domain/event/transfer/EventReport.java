@@ -42,7 +42,9 @@ public class EventReport implements Serializable {
 
     private static final int MAX_EVENTS_PER_SOURCE = 1000;
 
-    private final Log log = LogFactory.getLog(this.getClass());
+    // The log field must be either static final or transient, since sending this class over the wire will cause
+    // InvalidClassExceptions (due to the Server having a different version of Commons Logging).
+    private static final Log LOG = LogFactory.getLog(EventReport.class);
 
     private Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>();
 
@@ -61,7 +63,7 @@ public class EventReport implements Serializable {
         if (eventSet.size() < MAX_EVENTS_PER_SOURCE)
             eventSet.add(event);
         else if (eventSet.size() == MAX_EVENTS_PER_SOURCE)
-            log.warn(eventSource + " contains the maximum allowed Events per source (" + MAX_EVENTS_PER_SOURCE + ") - no more Events from this source will be added to this report.");
+            LOG.warn(eventSource + " contains the maximum allowed Events per source (" + MAX_EVENTS_PER_SOURCE + ") - no more Events from this source will be added to this report.");
     }
 
     /**

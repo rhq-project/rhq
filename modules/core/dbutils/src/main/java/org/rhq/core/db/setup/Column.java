@@ -51,6 +51,7 @@ class Column {
     protected String m_sDefault;
     protected int m_iInitialSequence = 1;
     protected int m_iIncrementSequence = 1;
+    private String ondelete;
 
     protected String m_strTableName;
 
@@ -95,6 +96,8 @@ class Column {
                     this.m_iInitialSequence = Integer.parseInt(strValue);
                 } else if (strName.equalsIgnoreCase("references")) {
                     this.m_sReferences = strValue;
+                } else if (strName.equalsIgnoreCase("ondelete")) {
+                    this.ondelete = strValue;
                 } else if (strName.equalsIgnoreCase("increment")) {
                     // Get the increment value for the autoincrement default
                     this.m_iIncrementSequence = Integer.parseInt(strValue);
@@ -178,6 +181,10 @@ class Column {
         return this.m_sReferences;
     }
 
+    protected String getOnDelete() {
+        return this.ondelete;
+    }
+
     protected String getsDefault() {
         return this.m_sDefault;
     }
@@ -229,6 +236,13 @@ class Column {
 
         if (this.m_sReferences != null) {
             strCmd += " REFERENCES " + this.getReferences();
+            if (this.ondelete != null) {
+                strCmd += " ON DELETE " + this.getOnDelete();
+            }
+        } else if (this.ondelete != null) {
+            throw new RuntimeException("Specifying 'ondelete' requires a 'references' attribute also: "
+                + this.m_strTableName + ":" + this.getName());
+
         }
 
         return strCmd;

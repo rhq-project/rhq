@@ -20,13 +20,16 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
@@ -49,8 +52,11 @@ public class ConfigMetricsAction extends BaseAction {
     @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
+
         ActionForward forward;
-        log.trace("modify-metric-schedules action");
+
+        if (log.isTraceEnabled())
+            log.trace("modify-metric-schedules action");
 
         Subject subject = WebUtility.getSubject(request);
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();

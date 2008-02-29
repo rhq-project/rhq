@@ -847,9 +847,14 @@ public class AlertConditionCache {
     @Deprecated
     private AlertConditionOperator getAlertConditionOperator(AlertConditionCategory category, String comparator,
         String conditionOption) {
-        if (category == AlertConditionCategory.CONTROL || category == AlertConditionCategory.EVENT) {
+        if (category == AlertConditionCategory.CONTROL) {
             // the UI currently only supports one operator for control
             return AlertConditionOperator.EQUALS;
+        }
+
+        if (category == AlertConditionCategory.EVENT) {
+            // the UI currently only supports one operator for events
+            return AlertConditionOperator.GREATER_THAN_OR_EQUAL_TO;
         }
 
         if ((category == AlertConditionCategory.CHANGE) || (category == AlertConditionCategory.TRAIT)) {

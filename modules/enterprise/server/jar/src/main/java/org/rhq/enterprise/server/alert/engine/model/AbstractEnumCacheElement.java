@@ -50,10 +50,14 @@ public abstract class AbstractEnumCacheElement<E extends Enum<E>> extends Abstra
             alertConditionValue = providedValue;
 
             return results;
+        } else if (alertConditionOperator == AlertConditionOperator.LESS_THAN_OR_EQUAL_TO) {
+            return (providedValue.ordinal() <= alertConditionValue.ordinal());
         } else if (alertConditionOperator == AlertConditionOperator.LESS_THAN) {
             return (providedValue.ordinal() < alertConditionValue.ordinal());
         } else if (alertConditionOperator == AlertConditionOperator.GREATER_THAN) {
             return (providedValue.ordinal() > alertConditionValue.ordinal());
+        } else if (alertConditionOperator == AlertConditionOperator.GREATER_THAN_OR_EQUAL_TO) {
+            return (providedValue.ordinal() >= alertConditionValue.ordinal());
         } else if (alertConditionOperator == AlertConditionOperator.CHANGES_TO) {
             Boolean results = null;
 
@@ -94,9 +98,12 @@ public abstract class AbstractEnumCacheElement<E extends Enum<E>> extends Abstra
 
     @Override
     public AlertConditionOperator.Type getOperatorSupportsType(AlertConditionOperator operator) {
-        if ((operator == AlertConditionOperator.LESS_THAN) || (operator == AlertConditionOperator.EQUALS)
-            || (operator == AlertConditionOperator.GREATER_THAN) || (operator == AlertConditionOperator.CHANGES)
-            || (operator == AlertConditionOperator.CHANGES_TO) || (operator == AlertConditionOperator.CHANGES_FROM)) {
+        if ((operator == AlertConditionOperator.LESS_THAN_OR_EQUAL_TO)
+            || (operator == AlertConditionOperator.LESS_THAN) || (operator == AlertConditionOperator.EQUALS)
+            || (operator == AlertConditionOperator.GREATER_THAN)
+            || (operator == AlertConditionOperator.GREATER_THAN_OR_EQUAL_TO)
+            || (operator == AlertConditionOperator.CHANGES) || (operator == AlertConditionOperator.CHANGES_TO)
+            || (operator == AlertConditionOperator.CHANGES_FROM)) {
             return operator.getDefaultType();
         }
 

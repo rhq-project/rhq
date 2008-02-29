@@ -22,10 +22,12 @@ public enum AlertConditionOperator {
     /*
      * absolute value comparison operators
      */
+    LESS_THAN_OR_EQUAL_TO(Type.STATEFUL), //
     LESS_THAN(Type.STATEFUL), // 
     EQUALS(Type.STATELESS), // 
     REGEX(Type.STATELESS), // more flexible form of EQUALS
     GREATER_THAN(Type.STATEFUL), //
+    GREATER_THAN_OR_EQUAL_TO(Type.STATEFUL), //
 
     /*
      * operator based on state deltas

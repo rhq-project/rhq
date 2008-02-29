@@ -124,7 +124,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                 discoverForResource(server, report, false);
             }
         } else {
-            // Run a single scan for just a resource and its descendents
+            // Run a single scan for just a resource and its descendants
             discoverForResource(resource, report, false);
         }
     }
@@ -133,7 +133,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
      * @param  parent         The parent resource to look for children of
      * @param  report         The report to add the resource to
      * @param  parentReported true if the resources parent is already in the inventory report and therefore will include
-     *                        this resource and its descendents in the report under that root
+     *                        this resource and its descendants in the report under that root
      *
      * @throws PluginContainerException
      */
@@ -196,7 +196,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                 Resource matchedResource = inventoryManager.mergeResourceFromDiscovery(childResource, parent);
                 boolean thisInReport = false;
                 if ((matchedResource.getId() == 0) && !parentReported) {
-                    report.addAddedRoot(parent); //matchedResource);
+                    report.addAddedRoot(parent);
                     thisInReport = true;
                     parentReported = true;
                 }

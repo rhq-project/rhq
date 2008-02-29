@@ -142,20 +142,6 @@ ANT Script that provides ways to package the agent.
          </fileset>
       </copy>
 
-      <property name="trunk.dir" location="${basedir}/../../.."/>
-      <property name="product_connectors.dir" location="${trunk.dir}/etc/product_connectors"/>
-
-      <!-- these cause the build to take a long time, uncomment to build the connectors into the agent dist -->
-      <!--
-      <copy todir="${agent.distro.dir}/product_connectors">
-         <fileset dir="${basedir}/src/etc/product_connectors"/>
-         <fileset dir="${product_connectors.dir}"/>
-         <fileset dir="${settings.localRepository}/org/rhq/rhq-rtfilter/${project.version}">
-            <include name="rhq-rtfilter-${project.version}.jar"/>
-         </fileset>
-      </copy>
-      -->
-
       <delete file="${basedir}/target/rhq-agent-${project.version}.zip" />
       <zip destfile="${basedir}/target/rhq-agent-${project.version}.zip" >
          <fileset dir="${agent.distro.dir}">
@@ -164,13 +150,7 @@ ANT Script that provides ways to package the agent.
          </fileset>
       </zip>
 
-      <!-- these cause the build to take a long time, uncomment to build the connectors into the agent dist -->
-      <!--
-      <delete file="${basedir}/target/rhq-agent-${project.version}-with-connectors.zip" />
-      <zip destfile="${basedir}/target/rhq-agent-${project.version}-with-connectors.zip" >
-         <fileset dir="${agent.distro.dir}" />
-      </zip>
-      -->
+      <antcall target="package-distro-with-connectors" />
    </target>
 
    <!--
@@ -196,6 +176,27 @@ ANT Script that provides ways to package the agent.
          </manifest>
       </jar>
 
+   </target>
+
+   <!--
+   =======================================================================
+   -->
+   <target name="package-distro-with-connectors" if="agent-with-connectors">       
+      <property name="trunk.dir" location="${basedir}/../../.."/>
+      <property name="product_connectors.dir" location="${trunk.dir}/etc/product_connectors"/>
+
+      <copy todir="${agent.distro.dir}/product_connectors">
+         <fileset dir="${basedir}/src/etc/product_connectors"/>
+         <fileset dir="${product_connectors.dir}"/>
+         <fileset dir="${settings.localRepository}/org/rhq/rhq-rtfilter/${project.version}">
+            <include name="rhq-rtfilter-${project.version}.jar"/>
+         </fileset>
+      </copy>
+
+       <delete file="${basedir}/target/rhq-agent-${project.version}-with-connectors.zip" />
+      <zip destfile="${basedir}/target/rhq-agent-${project.version}-with-connectors.zip" >
+         <fileset dir="${agent.distro.dir}" />
+      </zip>
    </target>
 
 </project>

@@ -217,9 +217,6 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_DISCOVERING_RESOURCE_TYPE_DONE, typeToDiscover
                     .getPlugin(), typeToDiscover.getName()));
                 out.println();
-            } else {
-                out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_RESOURCE_TYPE_NOT_DISCOVERABLE, typeToDiscover
-                    .getPlugin(), typeToDiscover.getName()));
             }
         }
 

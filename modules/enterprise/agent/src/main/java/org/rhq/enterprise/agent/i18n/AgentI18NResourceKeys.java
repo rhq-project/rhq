@@ -1326,16 +1326,13 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("The plugin [{0}] has no resource type named [{1}]")
     String DISCOVERY_BAD_PLUGIN_RESOURCE_TYPE_NAME = "PromptCommand.discovery.bad-plugin-resource-type-name";
 
-    @I18NMessage("{0}.{1} Starting discovery...")
+    @I18NMessage("{0}.{1}: Starting discovery...")
     String DISCOVERY_DISCOVERING_RESOURCE_TYPE = "PromptCommand.discovery.discovering-resource-type";
 
-    @I18NMessage("{0}.{1} Done.")
+    @I18NMessage("{0}.{1}: Done.")
     String DISCOVERY_DISCOVERING_RESOURCE_TYPE_DONE = "PromptCommand.discovery.discovering-resource-type-done";
 
-    @I18NMessage("{0}.{1}: Not a discoverable server - skipping")
-    String DISCOVERY_RESOURCE_TYPE_NOT_DISCOVERABLE = "PromptCommand.discovery.type-not-discoverable";
-
-    @I18NMessage("{0}.{1}: process scan detected a server - scan=[{2}], process=[{3}]")
+    @I18NMessage("{0}.{1}: Process scan detected a server - scan=[{2}], process=[{3}]")
     String DISCOVERY_PROCESS_SCAN = "PromptCommand.discovery.process-scan";
 
     @I18NMessage("{0}.{1}: key=[{2}] name=[{3}] version=[{4}] description=[{5}]")

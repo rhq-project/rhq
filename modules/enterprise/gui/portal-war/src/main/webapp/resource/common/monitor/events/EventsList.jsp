@@ -58,7 +58,8 @@
 <table width="98%" align="center" cellspacing="0" cellpadding="0" border="0">
 <tr>
 <td>
-   <c:url var="sAction" value="/resource/common/Events.do">
+   <c:url var="sAction" value="/resource/common/events/Events.do">
+      <c:param name="mode" value="events"/>
       <c:if test="${not empty param.ps}">
          <c:param name="ps" value="${param.ps}"/>
       </c:if>
@@ -79,7 +80,7 @@
       </c:if>
    </c:url>
    
-   <html:form action="/resource/common/events/Events" >
+   <html:form action="${sAction}" >
 <table width="100%" align="center" cellspacing="0" cellpadding="0" border="0">
 <tr colspan="4">
   <td class="FilterLine" colspan="4"><b>
@@ -142,23 +143,7 @@
          sortAttr="timestamp" defaultSort="true"/>
    </display:table>
 
-   <c:url var="pageAction" value="/resource/common/Events.do">
-      <c:param name="mode" value="events"/>
-      <c:if test="${not empty param.so}">
-         <c:param name="so" value="${param.so}"/>
-      </c:if>
-      <c:if test="${not empty param.sc}">
-         <c:param name="sc" value="${param.sc}"/>
-      </c:if>
-            
-      <c:if test="${not empty param.pn}">
-         <c:param name="pn" value="${param.pn}"/>
-      </c:if>
-      <c:if test="${not empty param.ps}">
-         <c:param name="ps" value="${param.ps}"/>
-      </c:if>
-   </c:url>
-
+  <%-- put paging controls here --%>
 
 </td>
 </tr>

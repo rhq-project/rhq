@@ -125,7 +125,7 @@ public class EventDetailsAction extends BaseAction {
                 }
 
                 html.append('>');
-                html.append("<a href=\"/resource/common/monitor/Visibility.do?mode=events&amp;eventId=");
+                html.append("<a href=\"/resource/common/Events.do?mode=events&amp;eventId=");
                 html.append(event.getEventId());
                 if (resourceId > -1) {
                     html.append("&amp;id=").append(event.getResourceId());

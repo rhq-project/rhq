@@ -3179,7 +3179,7 @@
       <action path="/resource/common/events/EventPortal"
               parameter="mode"
               type="org.rhq.enterprise.gui.legacy.action.resource.common.events.EventsPortalAction"
-              input="/resource/common/events/Events.do?mode=events">
+              input="/resource/common/Events.do?mode=events">
       </action>
 
       <action path="/resource/common/events/EventsFormPrepare"
@@ -3187,15 +3187,15 @@
               scope="request"
               type="org.rhq.enterprise.gui.legacy.action.resource.common.events.EventsFormPrepareAction">
          <set-property property="title" value="View+Events"/>
-         <forward name="success" path="/resource/common/events/Events.do?mode=events"/>
+    <!--      <forward name="success" path="/resource/common/events/Events.do?mode=events"/>  -->
       </action>
 
       <action path="/resource/common/events/Events"
               type="org.rhq.enterprise.gui.legacy.action.resource.common.events.ListEventsAction"
               name="EventsForm"
               scope="request"
-              input="/resource/common/events/Events.do?mode=events">
-      <!--    <forward name="success" path="/resource/common/events/Events.do?mode=events"/>  -->
+              input="/resource/common/Events.do?mode=events">
+         <forward name="success" path="/resource/common/Events.do?mode=events"/>
          <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" redirect="true"/>
       </action>
       

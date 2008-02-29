@@ -60,7 +60,7 @@ public class EventsFormPrepareAction extends MetricsControlAction {
         HttpServletResponse response) throws Exception {
 
         EventsForm eForm = (EventsForm) form;
-        super.execute(mapping, form, request, response); // Get the display time range
+        super.execute(mapping, form, request, response); // set the display time range
 
         eventManager = LookupUtil.getEventManager();
 
@@ -77,6 +77,9 @@ public class EventsFormPrepareAction extends MetricsControlAction {
         Map pref = user.getMetricRangePreference(true);
         long begin = (Long) pref.get(MonitorUtils.BEGIN);
         long end = (Long) pref.get(MonitorUtils.END);
+        Integer lastN = (Integer) pref.get(MonitorUtils.LASTN);
+        eForm.setRn(lastN);
+        request.getSession().setAttribute("rn", lastN);
 
         PageControl pc = getPageControlFromRequest(request);
 
@@ -104,9 +107,10 @@ public class EventsFormPrepareAction extends MetricsControlAction {
             event.setSourceLocation(htmlFormat(event.getSourceLocation(), null));
         }
 
+        ((PageList<EventComposite>) events).setTotalSize(256); // TODO remove, for debugging only
         eForm.setEvents((PageList<EventComposite>) events);
 
-        return null;
+        return null; // mapping.findForward(RetCodeConstants.SUCCESS_URL);
     }
 
     private PageControl getPageControlFromRequest(HttpServletRequest request) {

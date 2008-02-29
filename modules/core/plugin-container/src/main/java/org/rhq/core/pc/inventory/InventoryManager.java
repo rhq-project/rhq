@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
@@ -64,6 +65,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.content.ContentContextImpl;
@@ -104,6 +106,9 @@ import org.rhq.core.util.exception.WrappedRemotingException;
 public class InventoryManager extends AgentService implements ContainerService, DiscoveryAgentService {
     private static final String INVENTORY_THREAD_POOL_NAME = "InventoryManager.discovery";
     private static final String AVAIL_THREAD_POOL_NAME = "InventoryManager.availability";
+    private static final int AVAIL_THREAD_POOL_CORE_POOL_SIZE = 1;
+
+    private static final int OVERLORD_SUBJECT_ID = 1;
 
     private final Log log = LogFactory.getLog(InventoryManager.class);
 
@@ -167,9 +172,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 loadFromDisk();
             }
 
+            Resource discoveredPlatform = discoverPlatform();
             if (this.platform == null) {
-                // we need to discover the platform and start its resource component
-                platformDiscovery();
+                this.platform = discoveredPlatform;
+                log.info("Detected new platform resource " + this.platform);
+                initializePlatformComponent();
+            } else {
+                // If the platform's already in inventory, make sure its version is up-to-date.
+                updateResourceVersion(this.platform, discoveredPlatform.getVersion());
             }
 
             // Never run more than one discovery at a time?
@@ -191,7 +201,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
             // do not run more than one availability check at a time
-            availabilityThreadPoolExecutor = new ScheduledThreadPoolExecutor(1, new LoggingThreadFactory(
+            availabilityThreadPoolExecutor = new ScheduledThreadPoolExecutor(AVAIL_THREAD_POOL_CORE_POOL_SIZE, new LoggingThreadFactory(
                 AVAIL_THREAD_POOL_NAME, true));
             availabilityExecutor = new AvailabilityExecutor(this);
             availabilityThreadPoolExecutor.scheduleWithFixedDelay(availabilityExecutor, configuration
@@ -711,7 +721,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 // once we discover the platform, let's schedule an immediate server scan
                 if ((this.platform == null) || (this.platform.getId() == resourceId)) {
                     log.debug(resource.getId() + ": Platform discovery is needed");
-                    platformDiscovery();
+                    discoverPlatform();
                     newPlatformWasDeletedRecently = true;
                     scanIsNeeded = true;
                 } else if (isTopLevelServer) {
@@ -752,17 +762,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     public Resource mergeResourceFromDiscovery(Resource resource, Resource parent) throws PluginContainerException {
-        Resource match = findMatchingChildResource(resource, parent);
-        if (match == null) {
-            // This is a newly detected resource
-            log.debug("Detected server resource is new [" + resource + "]");
-
-            // 1 add it to the parent
-            parent.addChildResource(resource);
+        Resource existingResource = findMatchingChildResource(resource, parent);
+        if (existingResource != null) {
+            updateResourceVersion(existingResource, resource.getVersion());
+            resource = existingResource;
         }
-
-        if (match != null) {
-            resource = match;
+        else {
+            log.debug("Detected new Resource [" + resource + "]");
+            parent.addChildResource(resource);
         }
 
         if ((!this.configuration.isInsideAgent()) && (resource.getId() == 0)) {
@@ -1044,7 +1051,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 this.platform = inventoryFile.getPlatform();
                 this.resourceContainers = inventoryFile.getResourceContainers();
 
-                initializePlatformComponent(null);
+                initializePlatformComponent();
                 activateFromDisk(this.platform);
 
                 log.info("Inventory size [" + this.resourceContainers.size() + "] initialized from disk in ["
@@ -1102,7 +1109,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * its component.
      */
     @SuppressWarnings("unchecked")
-    private void platformDiscovery() {
+    private Resource discoverPlatform() {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginComponentFactory componentFactory = PluginContainer.getInstance().getPluginComponentFactory();
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
@@ -1137,8 +1144,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         } else {
             // this is very strange - there are no platform types - we should never be missing the built-in platform plugins
             log.error("Missing platform plugins - falling back to Java-only impl; this should only occur in tests");
-            addTestPlatform();
-            return;
+            return createTestPlatform();
         }
 
         if ((allDiscoveredPlatforms.size() < 1) || (allDiscoveredPlatforms.size() > 2)) {
@@ -1173,57 +1179,43 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         // build our actual platform resource now that we've discovered it
-        platform = createNewResource(platformToUse);
+        Resource platform = createNewResource(platformToUse);
         platform.setAgent(this.agent);
 
-        log.info("Detected new platform resource " + platform);
-
-        initializePlatformComponent(null);
-
-        return;
+        return platform;
     }
 
     /**
      * If for some reason the platform plugin is not available, this method can be called to add a "dummy" platform
      * resource. This is normally only used during tests.
      */
-    private void addTestPlatform() {
+    private Resource createTestPlatform() {
         ResourceType type = PluginContainer.getInstance().getPluginManager().getMetadataManager().addTestPlatformType();
-        platform = new Resource("testkey" + configuration.getContainerName(), "testplatform", type);
+        Resource platform = new Resource("testkey" + configuration.getContainerName(), "testplatform", type);
         platform.setAgent(this.agent);
-        ResourceComponent testPlatformComponent = new ResourceComponent() {
-            public AvailabilityType getAvailability() {
-                return AvailabilityType.UP;
-            }
-
-            public void start(ResourceContext context) {
-            }
-
-            public void stop() {
-            }
-        };
-
-        initializePlatformComponent(testPlatformComponent);
-        return;
+        return platform;
     }
 
     /**
      * This starts the given platform component. Do not call this method until the {@link #platform} has been determined
      * and set.
-     *
-     * @param platformComponent the component to start; if <code>null</code> (which is the typical use case), the
-     *                          component factory will be used to look up the component for the platform's resource type
      */
-    private void initializePlatformComponent(ResourceComponent platformComponent) {
+    private void initializePlatformComponent() {
         try {
             // now that we started the platform resource component, register it in our list of resource containers
-            // first see if we already have an existing ResourceContainer for platform and use this intead of
+            // first see if we already have an existing ResourceContainer for platform and use this instead of
             // creating a new one
             ResourceContainer platformContainer = getResourceContainer(platform);
             if (platformContainer == null) {
                 platformContainer = new ResourceContainer(platform);
                 if (!this.configuration.isInsideAgent()) {
                     platformContainer.setSynchronizationState(ResourceContainer.SynchronizationState.SYNCHRONIZED);
+                }
+                ResourceComponent platformComponent;
+                if (this.platform.getResourceType().equals(PluginMetadataManager.TEST_PLATFORM_TYPE)) {
+                    platformComponent = createTestPlatformComponent();
+                } else {
+                    platformComponent = null;
                 }
 
                 platformContainer.setResourceComponent(platformComponent); // If provided, this will be used, otherwise a lookup will be done
@@ -1472,5 +1464,56 @@ public class InventoryManager extends AgentService implements ContainerService, 
         ContentServices cm = PluginContainer.getInstance().getContentManager();
         ContentContext contentContext = new ContentContextImpl(resource.getId(), cm);
         return contentContext;
+    }
+
+    private ResourceComponent createTestPlatformComponent() {
+        return new ResourceComponent() {
+            public AvailabilityType getAvailability() {
+                return AvailabilityType.UP;
+            }
+
+            public void start(ResourceContext context) {
+            }
+
+            public void stop() {
+            }
+        };
+    }
+
+    private void updateResourceVersion(Resource resource, String version) {
+        String existingVersion = resource.getVersion();
+        boolean versionChanged = (existingVersion != null) ? !existingVersion.equals(version) : version != null;
+        if (versionChanged) {
+            log.debug("Discovery reported that version of " + resource + " changed from '" + existingVersion + "' to '"
+                    + version + "'.");
+            boolean versionShouldBeUpdated = resource.getInventoryStatus() != InventoryStatus.COMMITTED ||
+                    updateResourceVersionOnServer(resource);
+            if (versionShouldBeUpdated) {
+                resource.setVersion(version);
+                log.debug("Version of " + resource + " changed from '" + existingVersion + "' to '" + version + "'.");
+            }
+        }
+    }
+
+    private boolean updateResourceVersionOnServer(Resource resource) {
+        boolean versionUpdated = false;
+        ServerServices serverServices = this.configuration.getServerServices();
+        if (serverServices != null) {
+            try {
+                DiscoveryServerService discoveryServerService = serverServices.getDiscoveryServerService();
+                discoveryServerService.mergeResource(resource, OVERLORD_SUBJECT_ID);
+                // Only update the version in local inventory if the server sync succeeded, otherwise we won't know
+                // to try again the next time this method is called.
+                versionUpdated = true;
+                log.debug("New version for " + resource + " was successfully synced to the Server.");
+            }
+            catch (Exception e) {
+                log.error("Failed to sync-to-Server new version for " + resource + ".");
+            }
+            // TODO: It would be cool to publish a Resource-version-changed Event here. (ips, 02/29/08)
+        } else {
+            log.debug("Sync-to-Server of new version for " + resource + " cannot be done, because Plugin Container is not connected to Server.");
+        }
+        return versionUpdated;
     }
 }

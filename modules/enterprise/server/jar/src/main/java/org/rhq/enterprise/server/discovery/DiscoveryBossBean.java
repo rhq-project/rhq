@@ -315,6 +315,14 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
 
         Resource existingResource = getExistingResource(resource);
         if (existingResource != null) {
+            String version = resource.getVersion();
+            String existingVersion = existingResource.getVersion();
+            boolean versionChanged = (existingVersion != null) ? !existingVersion.equals(version) : version != null;
+            if (versionChanged) {
+                log.info("Version of " + existingResource + " changed from '" + existingVersion + "' to '" + version + "'.");
+                existingResource.setVersion(version);
+                entityManager.merge(existingResource);
+            }
             mergeResourceResponse = new MergeResourceResponse(existingResource.getId(), true);
         } else {
             Subject creator = this.subjectManager.findSubjectById(creatorSubjectId);

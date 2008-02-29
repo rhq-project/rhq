@@ -39,6 +39,8 @@ import org.rhq.core.domain.resource.ResourceType;
  * @author Greg Hinkle
  */
 public class PluginMetadataManager {
+    public static final ResourceType TEST_PLATFORM_TYPE = new ResourceType("Anonymous", "test", ResourceCategory.PLATFORM, null);
+
     private Log log = LogFactory.getLog(PluginMetadataManager.class);
 
     private Map<ResourceCategory, LinkedHashSet<ResourceType>> typesByCategory = new HashMap<ResourceCategory, LinkedHashSet<ResourceType>>();
@@ -67,9 +69,8 @@ public class PluginMetadataManager {
      * @return the very thin anonymous resource type object
      */
     public ResourceType addTestPlatformType() {
-        ResourceType type = new ResourceType("Anonymous", "test", ResourceCategory.PLATFORM, null);
-        addType(type);
-        return type;
+        addType(TEST_PLATFORM_TYPE);
+        return TEST_PLATFORM_TYPE;
     }
 
     // views

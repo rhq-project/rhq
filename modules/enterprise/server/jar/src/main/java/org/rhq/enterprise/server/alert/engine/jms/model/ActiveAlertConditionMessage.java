@@ -25,9 +25,9 @@ public class ActiveAlertConditionMessage extends AbstractAlertConditionMessage i
 
     private final String value;
 
-    public ActiveAlertConditionMessage(int alertConditionId, String value, long timestamp) {
+    public ActiveAlertConditionMessage(int alertConditionId, long timestamp, String value, Object... extraParams) {
         super(alertConditionId, timestamp);
-        this.value = value;
+        this.value = value + stringify(extraParams);
     }
 
     public String getValue() {
@@ -37,5 +37,24 @@ public class ActiveAlertConditionMessage extends AbstractAlertConditionMessage i
     @Override
     public String toString() {
         return "ActiveAlertConditionMessage" + "[ " + "value= " + value + ", " + super.toString() + " ]";
+    }
+
+    private String stringify(Object... extraParams) {
+        if (extraParams.length == 0) {
+            return "";
+        }
+
+        StringBuilder builder = new StringBuilder(", extraInfo=[");
+        boolean first = true;
+        for (Object extraParam : extraParams) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append(", ");
+            }
+            builder.append(extraParam);
+        }
+        builder.append("]");
+        return builder.toString();
     }
 }

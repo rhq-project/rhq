@@ -19,10 +19,13 @@
 package org.rhq.enterprise.server.alert.engine.test;
 
 import java.util.Set;
+
 import javax.persistence.EntityManager;
+
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
@@ -71,8 +74,8 @@ public class ActiveConditionProducerConsumerTest extends AbstractEJB3Test {
 
         try {
             String logValue = "testValue";
-            producerBean.sendActivateAlertConditionMessage(newAlertCondition.getId(), logValue, System
-                .currentTimeMillis());
+            producerBean.sendActivateAlertConditionMessage(newAlertCondition.getId(), System.currentTimeMillis(),
+                logValue);
 
             Thread.sleep(1000); // make sure the consumer has time to process it
 

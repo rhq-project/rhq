@@ -48,7 +48,6 @@ import org.rhq.enterprise.gui.legacy.beans.AlertConditionBean;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.legacy.events.EventConstants;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -64,7 +63,6 @@ public class ViewAlertAction extends TilesAction {
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         Subject subject = RequestUtils.getSubject(request);
-        MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
 
         // pass-through the alertId

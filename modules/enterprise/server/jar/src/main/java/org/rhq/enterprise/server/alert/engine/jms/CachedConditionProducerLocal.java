@@ -29,8 +29,8 @@ public interface CachedConditionProducerLocal {
      * Send a message to the appropriate JMS destination for processing. This destination handles creating and
      * persisting entities corresponding to triggered alert conditions.
      */
-    <T extends AbstractCacheElement<S>, S> void sendActivateAlertConditionMessage(int alertConditionId, S value,
-        long timestamp) throws JMSException;
+    <T extends AbstractCacheElement<S>, S> void sendActivateAlertConditionMessage(int alertConditionId, long timestamp,
+        S value, Object... extraParams) throws JMSException;
 
     void sendDeactivateAlertConditionMessage(int alertConditionId, long timestamp) throws JMSException;
 

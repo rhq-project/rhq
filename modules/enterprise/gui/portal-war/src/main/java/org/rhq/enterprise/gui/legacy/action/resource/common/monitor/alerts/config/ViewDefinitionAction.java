@@ -38,9 +38,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.legacy.beans.AlertConditionBean;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
-import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.legacy.events.EventConstants;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * View an alert definition.
@@ -51,9 +49,7 @@ public class ViewDefinitionAction extends TilesAction {
     @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
-        AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
         Subject subject = RequestUtils.getSubject(request);
-        DefinitionForm definitionForm = (DefinitionForm) form;
 
         // properties, also sets Request or RequestType request attribute
         AlertDefinition alertDef = AlertDefUtil.getAlertDefinition(request);

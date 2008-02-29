@@ -24,6 +24,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.event.Event;
+import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.composite.MeasurementBaselineComposite;
@@ -85,7 +86,7 @@ public interface AlertConditionCacheManagerLocal {
      * 
      * @return the number of conditions that were true against this argument
      */
-    AlertConditionCacheStats checkConditions(Event... events);
+    AlertConditionCacheStats checkConditions(EventSource source, Event... events);
 
     /**
      * When items are removed from inventory, their AlertDefinitions (as well as the corresponding Alerts, Conditions,

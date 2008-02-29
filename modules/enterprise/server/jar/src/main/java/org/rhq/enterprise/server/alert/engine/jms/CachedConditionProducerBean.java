@@ -53,8 +53,8 @@ public class CachedConditionProducerBean implements CachedConditionProducerLocal
     @Resource(mappedName = "queue/OutOfBoundsConditionQueue")
     private Queue outOfBoundsConditionQueue;
 
-    public <T extends AbstractCacheElement<S>, S> void sendActivateAlertConditionMessage(int alertConditionId, S value,
-        long timestamp) throws JMSException {
+    public <T extends AbstractCacheElement<S>, S> void sendActivateAlertConditionMessage(int alertConditionId,
+        long timestamp, S value, Object... extraParams) throws JMSException {
         Connection connection = factory.createConnection();
         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
         MessageProducer sender = session.createProducer(alertConditionQueue);
@@ -63,8 +63,8 @@ public class CachedConditionProducerBean implements CachedConditionProducerLocal
          * The triggered alert condition gets stored as a string anyway, so until this is made more flexible we'll just
          * send the string representation of the value for the AbstractCacheElement in the JMS message
          */
-        ActiveAlertConditionMessage conditionMessage = new ActiveAlertConditionMessage(alertConditionId, value
-            .toString(), timestamp);
+        ActiveAlertConditionMessage conditionMessage = new ActiveAlertConditionMessage(alertConditionId, timestamp,
+            value.toString(), extraParams);
 
         ObjectMessage message = session.createObjectMessage(conditionMessage);
 

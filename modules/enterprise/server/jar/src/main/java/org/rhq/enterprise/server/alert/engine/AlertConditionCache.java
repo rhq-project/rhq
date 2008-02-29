@@ -37,6 +37,8 @@ import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.event.Event;
+import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
@@ -476,7 +478,7 @@ public class AlertConditionCache {
         }
     }
 
-    public AlertConditionCacheStats checkConditions(Event... events) {
+    public AlertConditionCacheStats checkConditions(EventSource source, Event... events) {
         if ((events == null) || (events.length == 0)) {
             return new AlertConditionCacheStats();
         }
@@ -486,11 +488,10 @@ public class AlertConditionCache {
         try {
             AlertConditionCacheStats stats = new AlertConditionCacheStats();
 
+            Resource resource = source.getResource();
+            List<EventCacheElement> cacheElements = lookupEventCacheElements(resource.getId());
+
             for (Event event : events) {
-                Resource resource = event.getSource().getResource();
-
-                List<EventCacheElement> cacheElements = lookupEventCacheElements(resource.getId());
-
                 processCacheElements(cacheElements, event.getSeverity(), event.getTimestamp().getTime(), stats, event
                     .getDetail());
             }
@@ -733,12 +734,12 @@ public class AlertConditionCache {
                          */
                         cacheElement.setActive(true); // no harm to always set active (though, technically, STATELESS operators don't need it)
                         cachedConditionProducer.sendActivateAlertConditionMessage(cacheElement
-                            .getAlertConditionTriggerId(), providedValue, timestamp);
+                            .getAlertConditionTriggerId(), timestamp, providedValue, extraParams);
                     }
 
                     stats.matched++;
                 } catch (Exception e) {
-                    log.error(e.getMessage());
+                    log.error("Error processing matched cache element '" + cacheElement + "': " + e.getMessage());
                     errors++;
                 }
             } else // no match, negative event
@@ -755,7 +756,8 @@ public class AlertConditionCache {
                         cachedConditionProducer.sendDeactivateAlertConditionMessage(cacheElement
                             .getAlertConditionTriggerId(), timestamp);
                     } catch (Exception e) {
-                        log.error(e.getMessage());
+                        log.error("Error sending deactivation message for cache element '" + cacheElement + "': "
+                            + e.getMessage());
                         errors++;
                     }
                 } else {
@@ -845,7 +847,7 @@ public class AlertConditionCache {
     @Deprecated
     private AlertConditionOperator getAlertConditionOperator(AlertConditionCategory category, String comparator,
         String conditionOption) {
-        if (category == AlertConditionCategory.CONTROL) {
+        if (category == AlertConditionCategory.CONTROL || category == AlertConditionCategory.EVENT) {
             // the UI currently only supports one operator for control
             return AlertConditionOperator.EQUALS;
         }
@@ -930,7 +932,7 @@ public class AlertConditionCache {
             try {
                 insertAlertCondition(subject, resource, alertCondition, stats);
             } catch (RuntimeException re) {
-                log.error(re.getMessage());
+                log.error("Error inserting alert condition '" + alertCondition + "': " + re.getMessage());
             }
         }
     }
@@ -1081,6 +1083,26 @@ public class AlertConditionCache {
                     log.error("Missing schedule prevents element from being cached: " + cacheElement);
                 }
             }
+        } else if (alertConditionCategory == AlertConditionCategory.EVENT) {
+            EventSeverity eventSeverity = EventSeverity.valueOf(alertCondition.getName());
+            String eventDetails = alertCondition.getOption();
+
+            EventCacheElement cacheElement = null;
+            try {
+                if (eventDetails == null) {
+                    cacheElement = new EventCacheElement(alertConditionOperator, eventSeverity, alertConditionId);
+                } else {
+                    cacheElement = new EventCacheElement(alertConditionOperator, eventDetails, eventSeverity,
+                        alertConditionId);
+                }
+            } catch (InvalidCacheElementException icee) {
+                log
+                    .info("Failed to create EventCacheElement with parameters: "
+                        + getCacheElementErrorString(alertConditionId, alertConditionOperator, eventDetails,
+                            eventSeverity));
+            }
+
+            addTo("eventsCache", eventsCache, resource.getId(), cacheElement, alertConditionId, stats);
         }
     }
 
@@ -1203,7 +1225,7 @@ public class AlertConditionCache {
             try {
                 removeAlertCondition(alertCondition, stats);
             } catch (RuntimeException re) {
-                log.error(re.getMessage());
+                log.error("Error removing alert definition from cache: " + re.getMessage());
             }
         }
     }

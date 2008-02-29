@@ -157,7 +157,7 @@ public class EventManagerBean implements EventManagerLocal {
                     ps.addBatch();
                 }
 
-                //notifyAlertConditionCacheManager("addEventData", eventData.toArray(new Event[0]));
+                notifyAlertConditionCacheManager("addEventData", eventSource, eventData.toArray(new Event[0]));
             }
             ps.executeBatch();
 
@@ -170,8 +170,8 @@ public class EventManagerBean implements EventManagerLocal {
     }
 
     @SuppressWarnings("unused")
-    private void notifyAlertConditionCacheManager(String callingMethod, Event... events) {
-        AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(events);
+    private void notifyAlertConditionCacheManager(String callingMethod, EventSource source, Event... events) {
+        AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(source, events);
 
         log.debug(callingMethod + ": " + stats.toString());
     }

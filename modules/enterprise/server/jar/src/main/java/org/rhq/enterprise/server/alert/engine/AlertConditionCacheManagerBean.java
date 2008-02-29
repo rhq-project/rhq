@@ -29,6 +29,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.event.Event;
+import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.composite.MeasurementBaselineComposite;
@@ -72,9 +73,9 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
-    public AlertConditionCacheStats checkConditions(Event... events) {
+    public AlertConditionCacheStats checkConditions(EventSource source, Event... events) {
         AlertConditionCacheStats stats;
-        stats = AlertConditionCache.getInstance().checkConditions(events);
+        stats = AlertConditionCache.getInstance().checkConditions(source, events);
         return stats;
     }
 

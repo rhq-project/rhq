@@ -58,7 +58,7 @@ import org.rhq.core.domain.resource.Resource;
         + " JOIN ev.source evs JOIN evs.resource res WHERE res.id = :resourceId AND ev.severity = :severity "
         + " AND ev.timestamp BETWEEN :start AND :end "),
     @NamedQuery(name = Event.GET_DETAILS_FOR_EVENT_IDS, query = "SELECT "
-        + " new org.rhq.core.domain.event.composite.EventComposite(ev.detail, res.id, ev.id, evs.location) "
+        + " new org.rhq.core.domain.event.composite.EventComposite(ev.detail, res.id, ev.id, evs.location, ev.ackUser, ev.ackTime) "
         + " FROM Event ev JOIN ev.source evs JOIN evs.resource res WHERE ev.id IN (:eventIds) AND evs.id = ev.source"
         + "  AND res.id = evs.resource ") })
 @Entity
@@ -192,8 +192,8 @@ public class Event implements Serializable {
      *
      * @param ackTime the time this Event was acknowledged
      */
-    public void setAckTime(@Nullable Date ackTime)
-    {
+    public void setAckTime(@Nullable
+    Date ackTime) {
         this.ackTime = ackTime;
     }
 
@@ -216,8 +216,8 @@ public class Event implements Serializable {
      *
      * @param ackUser the user who acknowledged this Event
      */
-    public void setAckUser(@Nullable String ackUser)
-    {
+    public void setAckUser(@Nullable
+    String ackUser) {
         this.ackUser = ackUser;
     }
 
@@ -277,9 +277,8 @@ public class Event implements Serializable {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "["
-                + "id=" + this.id + ", " + "source=" + this.source + ", " + "timestamp=" + this.timestamp
-                + ", " + "severity=" + this.severity + ", " + "detail=" + this.detail + "]";
+        return this.getClass().getSimpleName() + "[" + "id=" + this.id + ", " + "source=" + this.source + ", "
+            + "timestamp=" + this.timestamp + ", " + "severity=" + this.severity + ", " + "detail=" + this.detail + "]";
 
     }
 }

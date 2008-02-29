@@ -26,6 +26,7 @@
 package org.rhq.enterprise.gui.legacy.taglib.display;
 
 import javax.servlet.jsp.JspException;
+import javax.servlet.jsp.PageContext;
 import javax.servlet.jsp.tagext.BodyTagSupport;
 
 import org.apache.commons.logging.Log;
@@ -476,27 +477,51 @@ public class ColumnTag extends BodyTagSupport implements Cloneable {
             results.append(" valign=\"top\"");
         }
         if (this.onClick != null) {
-            String oc;
             results.append(" onclick=\"");
 
-            TableTag tt = (TableTag) getParent();
-            int i = onClick.indexOf("_property:");
-            if (i >= 0) {
-                int pos = onClick.indexOf(":", i);
-                int pos2 = onClick.indexOf(":", pos + 1);
-                // TODO add some error checking
-                String prop = onClick.substring(pos + 1, pos2);
-                Object o = tt.lookup(pageContext, "smartRow", prop, null, true);
-                String rep = o.toString();
-                oc = onClick.replace("_property:" + prop + ":", rep);
-                results.append(oc);
-            } else {
-                results.append(onClick);
-            }
+            //            TableTag tt = (TableTag) getParent();
+            //            int i = onClick.indexOf("_property:");
+            //            if (i >= 0) {
+            //                int pos = onClick.indexOf(":", i);
+            //                int pos2 = onClick.indexOf(":", pos + 1);
+            //                // TODO add some error checking
+            //                String prop = onClick.substring(pos + 1, pos2);
+            //                Object o = tt.lookup(pageContext, "smartRow", prop, null, true);
+            //                String rep = o.toString();
+            //                oc = onClick.replace("_property:" + prop + ":", rep);
+            //                results.append(oc);
+            //            } else {
+            //                results.append(onClick);
+            //            }
+            results.append(replacePropertyIfPossible(onClick, pageContext));
             results.append("\"");
         }
 
         return results.toString();
+    }
+
+    public String replacePropertyIfPossible(String input, PageContext pageContext) {
+        int i = input.indexOf("_property:");
+        if (i >= 0) {
+            String oc = input;
+            TableTag tt = (TableTag) getParent();
+            int pos = input.indexOf(":", i);
+            int pos2 = input.indexOf(":", pos + 1);
+            // TODO add some error checking
+            String prop = input.substring(pos + 1, pos2);
+
+            String rep;
+            try {
+                Object o = tt.lookup(pageContext, "smartRow", prop, null, true);
+                rep = o.toString();
+                oc = input.replace("_property:" + prop + ":", rep);
+            } catch (JspException e) {
+                log.warn("Can't replace the _property on " + input + ": " + e.getMessage());
+            }
+            return oc;
+        } else
+            return input;
+
     }
 
     /**

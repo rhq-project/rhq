@@ -367,7 +367,7 @@ public class EventManagerBean implements EventManagerLocal {
             query += "substr(location, -1, 30 )";
         else
             throw new RuntimeException("Unknown database type : " + dbType);
-        query += ",severity, timestamp, res_id FROM ( "
+        query += ",severity, timestamp, res_id , ev.ack_user, ev.ack_time  FROM ( "
             + " SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, res.id  as res_id "
             + " FROM rhq_event e1, rhq_event e  ";
         query += "JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id "
@@ -404,7 +404,7 @@ public class EventManagerBean implements EventManagerLocal {
             rs = stm.executeQuery();
             while (rs.next()) {
                 EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(2), rs.getString(3), EventSeverity
-                    .valueOf(rs.getString(4)), rs.getTimestamp(5), rs.getInt(6));
+                    .valueOf(rs.getString(4)), rs.getTimestamp(5), rs.getInt(6), rs.getString(7), rs.getTimestamp(8));
                 pl.add(ec);
             }
 
@@ -448,7 +448,7 @@ public class EventManagerBean implements EventManagerLocal {
             query += "substr(evs.location, -1, 30 )";
         else
             throw new RuntimeException("Unknown database type : " + dbType);
-        query += ", ev.severity, ev.timestamp, res.id "
+        query += ", ev.severity, ev.timestamp, res.id, ev.ack_user, ev.ack_time "
             + "FROM RHQ_Event ev  INNER  JOIN RHQ_Event_Source evs ON evs.id = ev.event_source_id "
             + "INNER  JOIN RHQ_resource res ON res.id = evs.resource_id WHERE res.id IN ( ";
 
@@ -492,7 +492,7 @@ public class EventManagerBean implements EventManagerLocal {
             rs = stm.executeQuery();
             while (rs.next()) {
                 EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(2), rs.getString(3), EventSeverity
-                    .valueOf(rs.getString(4)), rs.getTimestamp(5), rs.getInt(6));
+                    .valueOf(rs.getString(4)), rs.getTimestamp(5), rs.getInt(6), rs.getString(7), rs.getTimestamp(8));
                 pl.add(ec);
             }
 
@@ -520,6 +520,23 @@ public class EventManagerBean implements EventManagerLocal {
             log.warn("getEventDetailForEventId: found " + composites.size() + " details");
             return new EventComposite();
         }
+    }
+
+    public EventComposite ackEvent(Subject subject, int eventId) {
+
+        EventComposite comp = new EventComposite();
+        try {
+            Event e = entityManager.find(Event.class, eventId);
+            Date now = new Date();
+            e.setAckTime(now);
+            e.setAckUser(subject.getName());
+            comp.setAckTime(now);
+            comp.setAckUser(subject.getName());
+        } catch (NoResultException nre) {
+            if (log.isDebugEnabled())
+                log.debug("ackEvent: Event with id " + eventId + " not found");
+        }
+        return comp;
     }
 
     private boolean isFilled(String in) {

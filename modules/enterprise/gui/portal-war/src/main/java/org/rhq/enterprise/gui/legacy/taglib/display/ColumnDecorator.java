@@ -19,9 +19,22 @@
 package org.rhq.enterprise.gui.legacy.taglib.display;
 
 public abstract class ColumnDecorator extends Decorator {
+
+    /** Backlink to the ColumnTag in which we live */
+    protected ColumnTag columnTag;
+
     public ColumnDecorator() {
         super();
     }
 
     public abstract String decorate(Object columnValue) throws Exception;
+
+    public ColumnTag getColumnTag() {
+        return columnTag;
+    }
+
+    public void setColumnTag(ColumnTag columnTag) {
+        this.columnTag = columnTag;
+    }
+
 }

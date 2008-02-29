@@ -37,6 +37,8 @@ public class EventComposite {
     String sourceLocation;
     EventSeverity severity;
     Date timestamp;
+    String ackUser;
+    Date ackTime;
 
     public EventComposite() {
         eventDetail = "- UNDEF -";
@@ -59,6 +61,17 @@ public class EventComposite {
         this.sourceLocation = sourceLocation;
     }
 
+    public EventComposite(String eventDetail, int resourceId, int eventId, String sourceLocation, String ackUser,
+        Date ackTime) {
+        super();
+        this.eventDetail = eventDetail;
+        this.resourceId = resourceId;
+        this.eventId = eventId;
+        this.sourceLocation = sourceLocation;
+        this.ackTime = ackTime;
+        this.ackUser = ackUser;
+    }
+
     public EventComposite(String eventDetail, int eventId, String sourceLocation, EventSeverity severity,
         Date timestamp, int resourceId) {
         super();
@@ -68,6 +81,19 @@ public class EventComposite {
         this.severity = severity;
         this.timestamp = timestamp;
         this.resourceId = resourceId;
+    }
+
+    public EventComposite(String eventDetail, int eventId, String sourceLocation, EventSeverity severity,
+        Date timestamp, int resourceId, String ackUser, Date ackTime) {
+        super();
+        this.eventDetail = eventDetail;
+        this.eventId = eventId;
+        this.sourceLocation = sourceLocation;
+        this.severity = severity;
+        this.timestamp = timestamp;
+        this.resourceId = resourceId;
+        this.ackTime = ackTime;
+        this.ackUser = ackUser;
     }
 
     public String getEventDetail() {
@@ -118,4 +144,26 @@ public class EventComposite {
         this.timestamp = timestamp;
     }
 
+    public String getAckUser() {
+        return ackUser;
+    }
+
+    public void setAckUser(String ackUser) {
+        this.ackUser = ackUser;
+    }
+
+    public Date getAckTime() {
+        return ackTime;
+    }
+
+    public void setAckTime(Date ackTime) {
+        this.ackTime = ackTime;
+    }
+
+    public String getAckTimeUser() {
+        if (ackUser != null)
+            return ackUser + ";" + ackTime;
+        else
+            return "";
+    }
 }

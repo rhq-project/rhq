@@ -259,7 +259,9 @@ public class TableTag extends TablePropertyTag {
                 ColumnDecorator coldec = tmpTag.getDecorator();
                 colDecorators[c] = coldec;
                 if (colDecorators[c] != null) {
-                    log.debug("adding column decorator: " + colDecorators[c]);
+                    if (log.isDebugEnabled())
+                        log.debug("adding column decorator: " + colDecorators[c]);
+                    colDecorators[c].setColumnTag(tmpTag);
                     colDecorators[c].init(this.pageContext, masterList);
                 }
             }

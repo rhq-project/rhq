@@ -3200,6 +3200,13 @@
       </action>
       
 
+      <action path="/resource/common/events/AckEvents"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.events.AckEventsAction"
+              scope="request"
+              parameter="action"
+              name="EventsForm">
+      </action>
+
       <action path="/resource/common/events/OneEventDetail"
               type="org.rhq.enterprise.gui.legacy.action.resource.common.events.OneEventDetailAction"
               scope="request"

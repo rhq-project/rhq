@@ -462,6 +462,31 @@
     </attribute>    
   </tag>
   <tag>
+   <name>userackdecorator</name>
+   <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.UserAckDecorator</tag-class>
+   <body-content>JSP</body-content>
+   <attribute>
+      <name>styleClass</name>
+      <required>true</required>
+      <rtexprvalue>false</rtexprvalue>
+      <type>String</type>
+   </attribute>    
+   <attribute>
+      <name>onclick</name>
+      <required>false</required>
+      <rtexprvalue>true</rtexprvalue>
+      <type>String</type>
+      <description>Handler for onclick() actions</description>
+   </attribute>
+   <attribute>
+      <name>id</name>
+      <required>false</required>
+      <rtexprvalue>false</rtexprvalue>
+      <type>String</type>
+      <description>Id of the internally generated div element</description>
+   </attribute>    
+  </tag>
+  <tag>
     <name>checkboxdecorator</name>
     <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.CheckBoxDecorator</tag-class>
     <body-content>JSP</body-content>

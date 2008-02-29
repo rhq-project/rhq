@@ -25,6 +25,22 @@
          }
        xmlhttp.send(null);
       }
+      
+   function ackOne(eventId) {
+
+       var indicatorDiv = document.getElementById("ack" + eventId);
+       var xmlhttp = getXMLHttpRequest();
+       var url = "/resource/common/events/AckEvents.do"; 
+           url += "?action=ackEvent&eventId=" + eventId;
+       xmlhttp.open('GET',url,true);
+       xmlhttp.onreadystatechange=function()
+         {
+             if (xmlhttp.readyState==4) {
+                 indicatorDiv.innerHTML = xmlhttp.responseText;
+             }
+         }
+       xmlhttp.send(null);
+      }
 
 //-->
 </script>
@@ -135,12 +151,15 @@
          sortAttr="eventId" />
       <display:column width="1%" property="severity" title="resource.common.monitor.events.SeverityTitle"
          sortAttr="severity"/>
-      <display:column width="20%" property="sourceLocation" title="resource.common.monitor.events.SourceTitle"
+      <display:column width="15%" property="sourceLocation" title="resource.common.monitor.events.SourceTitle"
          sortAttr="sourceLocation"/>
-      <display:column width="54%" property="eventDetail" title="resource.common.monitor.events.DetailTitle"
-          onClick="loadDetail(_property:eventId:)" />
+      <display:column width="40%" property="eventDetail" title="resource.common.monitor.events.DetailTitle"
+          onClick="loadDetail(_property:eventId:)" maxLength="40"/>
       <display:column width="20%" property="timestamp" title="resource.common.monitor.events.TimeTitle"
-         sortAttr="timestamp" defaultSort="true"/>
+         sortAttr="timestamp" defaultSort="true" maxLength="60"/>
+      <display:column width="20%" property="ackTimeUser" title="resource.common.monitor.events.Acknowledged">
+         <display:userackdecorator styleClass="tableCell" onclick="ackOne(_property:eventId:)" id="ack_property:eventId:"/>
+      </display:column>
    </display:table>
 
   <%-- put paging controls here --%>

@@ -37,35 +37,24 @@ import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * Provide the detail for an {@link Event}
+ * Acknowledge {@link Event}s
  * @author Heiko W. Rupp
  *
  */
-public class OneEventDetailAction extends DispatchAction {
+public class AckEventsAction extends DispatchAction {
 
-    public ActionForward getDetail(ActionMapping mapping, ActionForm form, HttpServletRequest request,
+    public ActionForward ackEvent(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
 
         int eventId = WebUtility.getRequiredIntRequestParameter(request, "eventId");
         EventManagerLocal eventManager = LookupUtil.getEventManager();
         Subject subject = WebUtility.getSubject(request);
 
-        EventsForm eForm = (EventsForm) form;
-
-        EventComposite comp = eventManager.getEventDetailForEventId(subject, eventId);
+        EventComposite comp = eventManager.ackEvent(subject, eventId);
 
         StringBuffer buf = new StringBuffer();
-        buf.append("<div title=\"Details for Event " + eventId + "\">");
-        buf.append("<b>Source: </b>");
-        buf.append(htmlFormat(comp.getSourceLocation(), eForm.getSourceFilter()));
-        buf.append("<p/>\n");
-        if (comp.getAckUser() != null && !comp.getAckUser().equals("")) {
-            buf.append("<b>Acknowledged by</b> ").append(comp.getAckUser());
-            buf.append(" <b>at</b> ").append(comp.getAckTime());
-            buf.append("<p/>\n");
-        }
-        buf.append("<b>Full detail: </b><br/>\n");
-        buf.append(htmlFormat(comp.getEventDetail(), eForm.getSearchString()));
+        buf.append("<div>");
+        buf.append(comp.getAckUser() + "/ " + comp.getAckTime());
         buf.append("</div>");
 
         Writer w = response.getWriter();
@@ -73,20 +62,5 @@ public class OneEventDetailAction extends DispatchAction {
         w.flush();
 
         return null;
-    }
-
-    /**
-     * Format the input so that CR becomes a html-break and
-     * a searchResult will be highlighted
-     * 
-     * TODO extend and put in a Util class together with the version from {@link EventsFormPrepareAction}
-     */
-    private String htmlFormat(String input, String searchResult) {
-        String output;
-        output = input.replaceAll("\\n", "<br/>\n");
-        if (searchResult != null && !searchResult.equals("")) {
-            output = output.replaceAll("(" + searchResult + ")", "<b>$1</b>");
-        }
-        return output;
     }
 }

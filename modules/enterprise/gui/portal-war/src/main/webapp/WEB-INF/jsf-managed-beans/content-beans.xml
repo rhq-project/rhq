@@ -167,4 +167,16 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
+   <!-- /rhq/resource/content/confirm-create.xhtml -->
+   <managed-bean>
+      <managed-bean-name>InstallationStepsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.InstallationStepsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>DeployPackagesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.DeployPackagesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
 </faces-config>

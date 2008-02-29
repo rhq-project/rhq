@@ -150,10 +150,21 @@ public interface ContentUIManagerLocal {
     PackageVersionComposite loadPackageVersionComposite(Subject user, int packageVersionId);
 
     /**
+     * Used to retrieve information about multiple packages to display to the user.
+     *
+     * @param user              user who wants to see the information
+     * @param packageVersionIds identifies what package versions to return info on
+     *
+     * @return package version information for each package identified
+     */
+    List<PackageVersionComposite> getPackageVersionComposites(Subject user, int[] packageVersionIds);
+
+    /**
      * Returns all architectures known to the system.
      *
      * @return list of all architectures in the database
      */
     List<Architecture> getArchitectures();
+
 
 }

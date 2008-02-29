@@ -2076,7 +2076,7 @@ ul.radio-group .unspecified {
    width: 15px;
 }
 
-/*--- Artifacts ---------------------*/
+/*--- Content ---------------------*/
 
 .revision-data-table {
 }
@@ -2089,6 +2089,26 @@ ul.radio-group .unspecified {
    background: #f0f0f0;
 }
 .revision-data-table-odd-row {
+}
+
+.instructions-data-table {
+}
+
+.instructions-data-table-header {
+   text-align: left;
+   background: #d9d9d9;
+}
+.instructions-data-table-even-row {
+   background: #f0f0f0;
+}
+.instructions-data-table-odd-row {
+   background: #ffffff;
+}
+.instructions-data-table-number-col {
+   width: 20px;
+}
+.instructions-data-table-description-col {
+   width: 80%;
 }
 
 /*--- Pagination ---------------------*/

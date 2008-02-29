@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.content;
 
 import java.util.List;
+import java.util.ArrayList;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -250,6 +251,19 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         q.setParameter("id", packageVersionId);
         PackageVersionComposite pv = (PackageVersionComposite) q.getSingleResult();
         return pv;
+    }
+
+    public List<PackageVersionComposite> getPackageVersionComposites(Subject user, int[] packageVersionIds) {
+        List<Integer> iPackageVersionIds = new ArrayList<Integer>(packageVersionIds.length);
+        for (int i : packageVersionIds) {
+            iPackageVersionIds.add(i);
+        }
+
+        Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_COMPOSITES_BY_IDS);
+        q.setParameter("ids", iPackageVersionIds);
+        List<PackageVersionComposite> results = q.getResultList();
+        
+        return results;
     }
 
     @SuppressWarnings("unchecked")

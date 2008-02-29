@@ -24,6 +24,7 @@ import java.util.List;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -164,12 +165,14 @@ public class CreateNewPackageUIBean {
             return "failure";
         }
 
+        int[] packageVersionList = new int[] {packageVersion.getId()};
+
         // Add the package to the channel
         try {
             int iChannelId = Integer.parseInt(channelId);
 
             ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
-            channelManager.addPackageVersionsToChannel(subject, iChannelId, new int[]{packageVersion.getId()});
+            channelManager.addPackageVersionsToChannel(subject, iChannelId, packageVersionList);
         } catch (Exception e) {
             String errorMessages = ThrowableUtil.getAllMessages(e);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
@@ -177,6 +180,36 @@ public class CreateNewPackageUIBean {
                 errorMessages);
             return "failure";
         }
+
+        // Put the package ID in the session so it can fit into the deploy existing package workflow
+        HttpSession session = request.getSession();
+        session.setAttribute("selectedPackages", packageVersionList);
+
+        return "success";
+    }
+
+    public String deployExisting() {
+        // Stuff the selected packages into an attribute for the next step in the flow
+        String[] selectedPackages = FacesContextUtility.getRequest().getParameterValues("selectedPackages");
+
+        if (selectedPackages == null || selectedPackages.length == 0) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "At least one package must be selected");
+            return "failure";
+        }
+
+        // Convert into int[] to hold on to the package version IDs we're going to deploy
+        // Ultimately, this will need to go in a holder object so we can populate and associate the configuration
+        // values if they exist
+        int[] selectedPackageIds = new int[selectedPackages.length];
+        int counter = 0;
+        for (String sPackageId : selectedPackages) {
+            int iPackageId = Integer.parseInt(sPackageId);
+            selectedPackageIds[counter++] = iPackageId;
+        }
+
+        HttpServletRequest request = FacesContextUtility.getRequest();
+        HttpSession session = request.getSession();
+        session.setAttribute("selectedPackages", selectedPackageIds);
 
         return "success";
     }

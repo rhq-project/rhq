@@ -98,6 +98,8 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <rich:column colspan="6">
+                        <onc:selectCommandButton action="#{CreateNewPackageUIBean.deployExisting}"
+                                                 value="DEPLOY SELECTED" target="selectedPackages" styleClass="on-pager-button buttonsmall"/>
 
                         <ui:include src="/rhq/resource/include/pagination.xhtml">
                            <ui:param name="paginationDataTableName" value="resourcePackageVersionsDataTable"/>
@@ -109,6 +111,7 @@
                </f:facet>
 
             </rich:dataTable>
+
 
       </rich:panel>
 

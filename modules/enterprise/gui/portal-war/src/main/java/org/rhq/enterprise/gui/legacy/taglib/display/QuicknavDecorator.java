@@ -48,7 +48,7 @@ public abstract class QuicknavDecorator extends ColumnDecorator implements Tag {
 
     private static final IconInfo ALERT_ICON_INFO = new IconInfo("/images/icon_hub_a.gif", "Alert");
 
-    private static final IconInfo CONTENT_ICON_INFO = new IconInfo("/images/icon_hub_t.gif", "Content");
+    private static final IconInfo CONTENT_ICON_INFO = new IconInfo("/images/icon_hub_p.gif", "Content");
 
     private static final String ICON_SRC_LOCKED = "/images/icon_hub_locked.gif";
 

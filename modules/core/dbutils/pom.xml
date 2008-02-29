@@ -174,7 +174,7 @@
                    </filterchain>
                  </loadfile>
                  <echo>Your database is currently at schema: ${rhq-dbutils-check}</echo>
-                 <fail message="Database schema is not up-to-date. Use -Ddbsetup">
+                 <fail message="Database schema is not up-to-date. Use -Ddbsetup or skip this check with -Ddbsetup-no-schema-check">
                     <condition>
                       <and>
                         <not>

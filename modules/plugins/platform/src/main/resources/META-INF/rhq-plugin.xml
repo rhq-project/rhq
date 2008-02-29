@@ -98,16 +98,46 @@
 
 
    <platform name="Windows"
-             class="PlatformComponent"
+             class="WindowsPlatformComponent"
              discovery="WindowsPlatformDiscoveryComponent"
              description="Microsoft Windows Operating System">
 
       &platformSubcategories;
+
+       <plugin-configuration>
+           <c:group name="Event Logs">
+               <c:simple-property name="eventTrackingEnabled" type="boolean" required="true" default="false"/>
+               <c:simple-property name="regularExpression" required="false"/>
+               <c:simple-property name="minimumSeverity">
+                   <c:property-options>
+                       <c:option value="Information"/>
+                       <c:option value="Warning" default="true"/>
+                       <c:option value="Error"/>
+                   </c:property-options>
+               </c:simple-property>
+           </c:group>
+       </plugin-configuration>
+
       &platformOperations;
       &nativeMetrics;
       &metrics;
+
+       <event name="Event Log" description="Windows event log" displayName="Event Log"/>
+
+       <content name="InstalledSoftware" displayName="Installed Software" category="deployable" description="Installed Windows Software">
+          <configuration>
+              <c:simple-property name="Publisher"/>
+              <c:simple-property name="Comments"/>
+              <c:simple-property name="Contact"/>
+              <c:simple-property name="HelpLink"/>
+              <c:simple-property name="HelpTelephone"/>
+              <c:simple-property name="InstallLocation"/>
+              <c:simple-property name="InstallSource"/>
+              <c:simple-property name="EstimatedSize" units="kilobytes"/>
+         </configuration>
+      </content>
    </platform>
-   
+
    <platform name="Linux"
              class="LinuxPlatformComponent"
              discovery="LinuxPlatformDiscoveryComponent"

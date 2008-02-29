@@ -44,7 +44,6 @@ public class InstallationStepsUIBean {
             deploySteps.add(new DeployPackageStep("0", "Backup some file somewhere"));
             deploySteps.add(new DeployPackageStep("1", "Do some more stuff"));
             deploySteps.add(new DeployPackageStep("2", "Restart something"));
-            deploySteps.add(new DeployPackageStep("3", "Drink beer"));
         }
 
         return deploySteps;

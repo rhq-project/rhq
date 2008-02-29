@@ -141,6 +141,58 @@
             </goals>
           </execution>
 
+          <execution>
+            <!--
+                 This execution will abort the build if the database schema is not up to date.
+                 If you want the build to continue, regardless of your currently installed schema,
+                 then pass -Ddbsetup-no-schema-check to the mvn command line.
+            -->
+            <id>test-db-schema-version</id>
+            <phase>test</phase>
+            <configuration>
+              <tasks>
+                 <echo>Querying the database to see if it is at ${db.schema.version}</echo>
+                 <sql driver="${rhq.test.ds.driver-class}"
+                      url="${rhq.test.ds.connection-url}"
+                      userid="${rhq.test.ds.user-name}"
+                      password="${rhq.test.ds.password}"
+                      onerror="continue"
+                      output="${java.io.tmpdir}/rhq-dbutils-check.out"
+                      print="true"
+                      showheaders="false">
+                   <classpath>
+                     <pathelement location="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"/>
+                     <pathelement location="${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar"/>
+                   </classpath>
+                   <transaction>
+                      SELECT PROPERTY_VALUE FROM RHQ_SYSTEM_CONFIG WHERE PROPERTY_KEY='DB_SCHEMA_VERSION'
+                   </transaction>
+                 </sql>
+                 <loadfile property="rhq-dbutils-check" srcFile="${java.io.tmpdir}/rhq-dbutils-check.out">
+                   <filterchain>
+                     <headfilter lines="1"/>
+                   </filterchain>
+                 </loadfile>
+                 <echo>Your database is currently at schema: ${rhq-dbutils-check}</echo>
+                 <fail message="Database schema is not up-to-date. Use -Ddbsetup">
+                    <condition>
+                      <and>
+                        <not>
+                          <isset property="dbsetup-no-schema-check"/>
+                        </not>
+                        <not>
+                          <contains string="${rhq-dbutils-check}" substring="${db.schema.version}"/>
+                        </not>
+                      </and>
+                    </condition>
+                 </fail>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+
         </executions>
       </plugin>
 

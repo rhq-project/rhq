@@ -18,7 +18,7 @@
 
 <html:link href=""
            onclick="window.open(help,'help','width=800,height=650,scrollbars=yes,toolbar=yes,left=80,top=80,resizable=yes'); return false;">
-   <html:img styleClass="pagehelp" page="/images/title_pagehelp.gif" border="0" align="right"/>
+   <%--<html:img styleClass="pagehelp" page="/images/title_pagehelp.gif" border="0" align="right"/>--%>
 </html:link>
 <html:link page="${link}">
    <fmt:message key="resource.hub.ResourceHubPageTitle"/>

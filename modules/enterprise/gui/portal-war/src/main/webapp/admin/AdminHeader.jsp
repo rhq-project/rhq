@@ -4,7 +4,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-<html:link href="" onclick="window.open(help,'help','width=800,height=650,scrollbars=yes,toolbar=yes,left=80,top=80,resizable=yes'); return false;"><html:img styleClass="pagehelp" page="/images/title_pagehelp.gif" border="0" align="right"/></html:link>
+<%--<html:link href="" onclick="window.open(help,'help','width=800,height=650,scrollbars=yes,toolbar=yes,left=80,top=80,resizable=yes'); return false;"><html:img styleClass="pagehelp" page="/images/title_pagehelp.gif" border="0" align="right"/></html:link>--%>
 <html:link page="/Admin.do"><fmt:message key="admin.admin.AdministrationTitle"/></html:link>
 <tiles:importAttribute name="location" ignore="true"/>
 <c:if test="${not empty location}">

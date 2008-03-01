@@ -98,6 +98,7 @@
                 <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml">
                   <property name="settings.localRepository" value="${settings.localRepository}" />
                   <property name="ojdbc14.version" value="${ojdbc14.version}" />
+                  <property name="postgresql.version" value="${postgresql.version}" />
                   <property name="task.classpath.property" refid="maven.test.classpath" />
                   <property name="rhq.ds.type-mapping" value="${rhq.test.ds.type-mapping}" />
                   <property name="rhq.ds.connection-url" value="${rhq.test.ds.connection-url}" />
@@ -126,6 +127,7 @@
                 <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-combine">
                   <property name="settings.localRepository" value="${settings.localRepository}" />
                   <property name="ojdbc14.version" value="${ojdbc14.version}" />
+                  <property name="postgresql.version" value="${postgresql.version}" />
                   <property name="task.classpath.property" refid="maven.test.classpath" />
                   <property name="rhq.ds.type-mapping" value="${rhq.test.ds.type-mapping}" />
                   <property name="rhq.ds.connection-url" value="${rhq.test.ds.connection-url}" />
@@ -145,47 +147,27 @@
             <!--
                  This execution will abort the build if the database schema is not up to date.
                  If you want the build to continue, regardless of your currently installed schema,
-                 then pass -Ddbsetup-no-schema-check to the mvn command line.
+                 then pass -Ddbsetup-do-not-check-schema to the mvn command line.
             -->
             <id>test-db-schema-version</id>
             <phase>test</phase>
             <configuration>
               <tasks>
-                 <echo>Querying the database to see if it is at ${db.schema.version}</echo>
-                 <sql driver="${rhq.test.ds.driver-class}"
-                      url="${rhq.test.ds.connection-url}"
-                      userid="${rhq.test.ds.user-name}"
-                      password="${rhq.test.ds.password}"
-                      onerror="continue"
-                      output="${java.io.tmpdir}/rhq-dbutils-check.out"
-                      print="true"
-                      showheaders="false">
-                   <classpath>
-                     <pathelement location="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"/>
-                     <pathelement location="${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar"/>
-                   </classpath>
-                   <transaction>
-                      SELECT PROPERTY_VALUE FROM RHQ_SYSTEM_CONFIG WHERE PROPERTY_KEY='DB_SCHEMA_VERSION'
-                   </transaction>
-                 </sql>
-                 <loadfile property="rhq-dbutils-check" srcFile="${java.io.tmpdir}/rhq-dbutils-check.out">
-                   <filterchain>
-                     <headfilter lines="1"/>
-                   </filterchain>
-                 </loadfile>
-                 <echo>Your database is currently at schema: ${rhq-dbutils-check}</echo>
-                 <fail message="Database schema is not up-to-date. Use -Ddbsetup or skip this check with -Ddbsetup-no-schema-check">
-                    <condition>
-                      <and>
-                        <not>
-                          <isset property="dbsetup-no-schema-check"/>
-                        </not>
-                        <not>
-                          <contains string="${rhq-dbutils-check}" substring="${db.schema.version}"/>
-                        </not>
-                      </and>
-                    </condition>
-                 </fail>
+                <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
+                <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-check-schema">
+                  <property name="settings.localRepository" value="${settings.localRepository}" />
+                  <property name="ojdbc14.version" value="${ojdbc14.version}" />
+                  <property name="postgresql.version" value="${postgresql.version}" />
+                  <property name="task.classpath.property" refid="maven.test.classpath" />
+                  <property name="rhq.ds.type-mapping" value="${rhq.test.ds.type-mapping}" />
+                  <property name="rhq.ds.connection-url" value="${rhq.test.ds.connection-url}" />
+                  <property name="rhq.ds.user-name" value="${rhq.test.ds.user-name}" />
+                  <property name="rhq.ds.password" value="${rhq.test.ds.password}" />
+                  <property name="project.version" value="${project.version}" />
+                  <property name="db.schema.version" value="${db.schema.version}" />
+                  <property name="rhq.ds.driver-class" value="${rhq.test.ds.driver-class}" />
+                  <property name="dbsetup-do-not-check-schema" value="${dbsetup-do-not-check-schema}" />
+                </ant>
               </tasks>
             </configuration>
             <goals>

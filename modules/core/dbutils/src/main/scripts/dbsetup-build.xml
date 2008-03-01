@@ -26,6 +26,11 @@ To run the default target, you must set one of the following properties to true:
    <condition property="do-dbsetup-export">
       <equals arg1="${dbsetup-export}" arg2="true"/>
    </condition>
+   <condition property="do-dbsetup-check-schema">
+      <not>
+         <equals arg1="${dbsetup-do-not-check-schema}" arg2="true"/>
+      </not>
+   </condition>
   
    <!-- load in the development environment properties - used as replacements for the @@@ strings in the dbsetup xml files -->
    <property file="${basedir}/src/main/scripts/dbsetup.properties"/>
@@ -51,6 +56,7 @@ To run the default target, you must set one of the following properties to true:
      <path id="full.task.classpath">
         <pathelement path="${task.classpath.property}" />
         <pathelement location="${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar" />
+        <pathelement location="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"/>
      </path>
      <property name="full.task.classpath.property" refid="full.task.classpath" /> 
      
@@ -285,4 +291,39 @@ To run the default target, you must set one of the following properties to true:
       </ant>
    </target>
 
+   <!-- Checks to see that the existing schema matches that of the db.schema.version property -->
+   <target name="dbsetup-check-schema"
+           description="Standalone target that checks an existing schema to see if it matches db.schema.version"
+           if="do-dbsetup-check-schema">
+      <echo>Querying the database to see if it is at db.schema.version=${db.schema.version} (pass -Ddbsetup-do-not-check-schema to skip this test)</echo>
+      <sql driver="${rhq.ds.driver-class}"
+           url="${rhq.ds.connection-url}"
+           userid="${rhq.ds.user-name}"
+           password="${rhq.ds.password}"
+           onerror="continue"
+           output="${basedir}/target/rhq-dbsetup-check.out"
+           print="true"
+           showheaders="false">
+         <classpath>
+            <pathelement location="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"/>
+            <pathelement location="${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar"/>
+         </classpath>
+         <transaction>
+            SELECT PROPERTY_VALUE FROM RHQ_SYSTEM_CONFIG WHERE PROPERTY_KEY='DB_SCHEMA_VERSION'
+         </transaction>
+      </sql>
+      <loadfile property="rhq-dbsetup-check" srcFile="${basedir}/target/rhq-dbsetup-check.out">
+         <filterchain>
+            <headfilter lines="1"/>
+         </filterchain>
+      </loadfile>
+      <echo>Your database is currently at schema: ${rhq-dbsetup-check}</echo>
+      <fail message="Database schema is not up-to-date. Use -Ddbsetup">
+         <condition>
+            <not>
+               <contains string="${rhq-dbsetup-check}" substring="${db.schema.version}"/>
+            </not>
+         </condition>
+      </fail>
+   </target>
 </project>

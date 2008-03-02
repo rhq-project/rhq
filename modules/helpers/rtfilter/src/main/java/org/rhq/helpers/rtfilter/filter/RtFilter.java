@@ -384,8 +384,7 @@ public class RtFilter implements Filter {
     private void rewindLogFileIfSizeDecreased() throws Exception {
         if (this.logFile.length() < this.lastLogFileSize) {
             if (log.isDebugEnabled()) {
-                log.debug("Logfile " + this.logFile
-                    + " has been truncated (probably by the JON agent) - rewinding writer...");
+                log.debug("Logfile " + this.logFile + " has been truncated (probably by RHQ) - rewinding writer...");
             }
 
             closeFileWriter();

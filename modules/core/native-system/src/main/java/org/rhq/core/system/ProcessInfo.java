@@ -191,7 +191,7 @@ public class ProcessInfo {
                 log
                     .debug("Unable to obtain all process info for process with pid ["
                         + this.pid
-                        + "]. The process is most likely owned by a user other than the user that owns the JON agent process ("
+                        + "]. The process is most likely owned by a user other than the user that owns the RHQ plugin container's process ("
                         + currentUserName + ").");
                 this.loggedPermissionsError = true;
             }

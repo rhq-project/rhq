@@ -59,7 +59,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
      */
     public void installJaasModules() {
         try {
-            log.info("Installing JON Server's JAAS login modules");
+            log.info("Installing RHQ Server's JAAS login modules");
             Properties conf = LookupUtil.getSystemManager().getSystemConfiguration();
             registerJaasModules(conf);
         } catch (Exception e) {

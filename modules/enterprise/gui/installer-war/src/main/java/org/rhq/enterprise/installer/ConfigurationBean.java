@@ -160,7 +160,7 @@ public class ConfigurationBean {
             // now deploy JON Server fully
             serverInfo.moveDeploymentArtifacts(true);
         } catch (Exception e) {
-            LOG.fatal("Failed to save properties and fully deploy - JON Server will not function properly", e);
+            LOG.fatal("Failed to save properties and fully deploy - RHQ Server will not function properly", e);
             lastError = getI18nMsg().getMsg(InstallerI18NResourceKeys.SAVE_FAILURE, e);
 
             return SavePropertiesResults.ERROR;

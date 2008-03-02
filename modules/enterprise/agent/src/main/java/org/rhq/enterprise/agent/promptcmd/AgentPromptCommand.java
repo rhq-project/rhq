@@ -39,15 +39,6 @@ public interface AgentPromptCommand {
     String getPromptCommandString();
 
     /**
-     * A command can optionally have one or more aliases to allow for a more flexible user experience. Aliases may
-     * include abbreviations ("quit" -> "q") as well as synonyms ("exit" <--> "quit")
-     *
-     * @return the set of prompt command string aliases - if the first prompt argument is not the value returned from
-     *         AgentPromptCommand#getPromptCommandString() , but matches any of the values in this set, then this prompt
-     *         command will be executed.
-     */
-    //Set<String> getPromptCommandStringAliases();
-    /**
      * Executes the agent prompt command with the given arguments.
      *
      * @param  agent the agent itself

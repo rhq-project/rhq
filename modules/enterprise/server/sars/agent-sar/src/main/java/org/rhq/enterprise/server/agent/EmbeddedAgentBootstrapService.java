@@ -41,8 +41,8 @@ import org.rhq.enterprise.agent.AgentConfigurationConstants;
 import org.rhq.enterprise.agent.AgentConfigurationUpgrade;
 
 /**
- * This is an MBean service that can be used to bootstrap a JON Agent that is embedded in a JON Server. This will create
- * a standalone classloader that will completely isolate the agent from any JON Server classloader (other than the
+ * This is an MBean service that can be used to bootstrap a RHQ Agent that is embedded in a RHQ Server. This will create
+ * a standalone classloader that will completely isolate the agent from any RHQ Server classloader (other than the
  * top-level system classloader). Note that this service MBean interface does not expose any agent-specific classes to
  * clients and it does not have direct access to any class outside of a select few classes found in the agent jar that
  * is in this service's classpath.
@@ -86,7 +86,7 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
     private File embeddedAgentDirectory = null;
 
     /**
-     * If <code>true</code>, this service will be told to start the agent immediately at startup by the JON Server.
+     * If <code>true</code>, this service will be told to start the agent immediately at startup by the RHQ Server.
      */
     private Boolean enabled = Boolean.FALSE;
 
@@ -106,12 +106,12 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
         //-- if this method signature changes, you must also change StartupServlet.startEmbeddedAgent
 
         if (!enabled.booleanValue()) {
-            log.info("Will not start the embedded JON agent - it is disabled");
+            log.info("Will not start the embedded RHQ agent - it is disabled");
             return;
         }
 
         if ((agent == null) && (embeddedAgentDirectory != null)) {
-            log.info("Starting the embedded JON Agent...");
+            log.info("Starting the embedded RHQ Agent...");
 
             // we need to store the preferences prior to starting the agent
             if (resetConfigurationAtStartup.booleanValue()) {
@@ -152,7 +152,7 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
             };
 
             // create our thread that starts the agent with the isolated class loader as its context
-            Thread agentThread = new Thread(agentRunnable, "Embedded JON Agent Main");
+            Thread agentThread = new Thread(agentRunnable, "Embedded RHQ Agent Main");
             agentThread.setDaemon(true);
             agentThread.setContextClassLoader(agentClassLoader);
             agentThread.start();
@@ -161,11 +161,11 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
             // at this point in time, the embedded agent bootstrap thread has finished and
             // the agent should have been started
             if (error[0] != null) {
-                log.error("Failed to start the embedded JON Agent. Cause: " + error[0]);
+                log.error("Failed to start the embedded RHQ Agent. Cause: " + error[0]);
                 throw error[0];
             }
 
-            log.info("Embedded JON Agent has been started!");
+            log.info("Embedded RHQ Agent has been started!");
             this.agent = agentObject[0];
         }
 
@@ -174,7 +174,7 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
 
     public void stopAgent() throws Exception {
         if (agent != null) {
-            log.info("Stopping the embedded JON Agent...");
+            log.info("Stopping the embedded RHQ Agent...");
 
             // all this funky threading/reflection is so we execute the command
             // in the isoloated context of the embedded agent
@@ -184,13 +184,13 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
                     try {
                         agent.getClass().getMethod("shutdown", new Class[0]).invoke(agent, new Object[0]);
                     } catch (Throwable t) {
-                        error[0] = new Exception("Failed to stop the embedded JON Agent. Cause: " + t);
+                        error[0] = new Exception("Failed to stop the embedded RHQ Agent. Cause: " + t);
                     }
                 }
             };
 
             // create our thread that executes the agent command with the isolated class loader as its context
-            Thread agentThread = new Thread(agentRunnable, "Embedded JON Agent Shutdown Request");
+            Thread agentThread = new Thread(agentRunnable, "Embedded RHQ Agent Shutdown Request");
             agentThread.setDaemon(true);
             agentThread.setContextClassLoader(agent.getClass().getClassLoader());
             agentThread.start();
@@ -202,7 +202,7 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
 
             if (error[0] == null) {
                 agent = null;
-                log.info("Embedded JON Agent has been stopped!");
+                log.info("Embedded RHQ Agent has been stopped!");
             } else {
                 log.warn(error[0].toString());
                 throw error[0];
@@ -352,7 +352,7 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
         };
 
         // create our thread that executes the agent command with the isolated class loader as its context
-        Thread agentThread = new Thread(agentRunnable, "Embedded JON Agent Prompt Command");
+        Thread agentThread = new Thread(agentRunnable, "Embedded RHQ Agent Prompt Command");
         agentThread.setDaemon(true);
         agentThread.setContextClassLoader(agent.getClass().getClassLoader());
         agentThread.start();

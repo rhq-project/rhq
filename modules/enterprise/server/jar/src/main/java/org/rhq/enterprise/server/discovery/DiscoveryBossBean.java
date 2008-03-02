@@ -118,7 +118,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
 
         agentManager.agentIsAlive(knownAgent); // we see something from the agent, so renew its alive counter.
 
-        log.info("Received inventory report from JON agent [" + knownAgent + "]. Number of added roots: "
+        log.info("Received inventory report from RHQ agent [" + knownAgent + "]. Number of added roots: "
             + report.getAddedRoots().size());
 
         InventoryReportResponse response = new InventoryReportResponse();
@@ -319,7 +319,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             String existingVersion = existingResource.getVersion();
             boolean versionChanged = (existingVersion != null) ? !existingVersion.equals(version) : version != null;
             if (versionChanged) {
-                log.info("Version of " + existingResource + " changed from '" + existingVersion + "' to '" + version + "'.");
+                log.info("Version of " + existingResource + " changed from '" + existingVersion + "' to '" + version
+                    + "'.");
                 existingResource.setVersion(version);
                 entityManager.merge(existingResource);
             }

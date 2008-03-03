@@ -320,6 +320,22 @@
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
+      <!-- Needed due to JDK 1.5 bug. -->
+      <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>jboss-jaxws</artifactId>
+         <version>2.0.1.SP2</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <!-- Needed due to JDK 1.5 bug. -->
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-annotations-ejb3</artifactId>
+         <version>4.2.1.GA</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+      
    </dependencies>
 
    <build>

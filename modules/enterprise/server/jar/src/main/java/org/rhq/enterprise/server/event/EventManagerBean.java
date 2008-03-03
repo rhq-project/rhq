@@ -188,6 +188,9 @@ public class EventManagerBean implements EventManagerLocal {
     @SuppressWarnings("unchecked")
     public List<Event> getEventsForResources(Subject subject, List<Resource> resources, long startDate, long endDate) {
 
+        if (resources == null || resources.size() == 0)
+            return new ArrayList<Event>();
+
         // TODO rewrite using getEvents
 
         Query q = entityManager.createNamedQuery(Event.FIND_EVENTS_FOR_RESOURCES_AND_TIME);
@@ -316,7 +319,7 @@ public class EventManagerBean implements EventManagerLocal {
     private EventSeverity[] getSeverityBucketsForResources(Subject subject, List<Resource> resources, long begin,
         long end, int numBuckets) {
         EventSeverity[] buckets = new EventSeverity[numBuckets];
-        if (resources == null) {
+        if (resources == null || resources.size() == 0) {
             return buckets; // TODO fill with some fake severity 'none' ?
         }
 

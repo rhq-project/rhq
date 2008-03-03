@@ -28,6 +28,7 @@ import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
@@ -160,11 +161,30 @@ public interface ContentUIManagerLocal {
     List<PackageVersionComposite> getPackageVersionComposites(Subject user, int[] packageVersionIds);
 
     /**
+     * Used to retrieve information about multiple packages to display to the user.
+     *
+     * @param user              user who wants to see the information
+     * @param packageVersionIds identifies what package versions to return info on
+     * @param pageControl       pagination controller
+     *
+     * @return package version information for each package identified
+     */
+    PageList<PackageVersionComposite> getPackageVersionComposites(Subject user, int[] packageVersionIds,
+                                                                  PageControl pageControl);
+
+    /**
      * Returns all architectures known to the system.
      *
      * @return list of all architectures in the database
      */
     List<Architecture> getArchitectures();
 
-
+    /**
+     * Retrieves a package version by its ID. One and only one package version must exist for the ID; an error
+     * will be thrown if exactly one package version is not found.
+     *
+     * @param packageVersionId identifies the package version
+     * @return package version entity
+     */
+    PackageVersion getPackageVersion(int packageVersionId);
 }

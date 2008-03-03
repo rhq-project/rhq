@@ -180,9 +180,7 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "          pv.generalPackage.packageType.category, "
         + "          pv.generalPackage.name, "
         + "          pv.architecture.name, "
-        + "          pv.generalPackage.classification, "
-        + "          pv.packageBits.id, "
-        + "          (SELECT count(pb.id) FROM pv.packageBits pb WHERE pb.bits IS NOT NULL) "
+        + "          pv.generalPackage.classification "
         + "       ) "
         + "  FROM PackageVersion pv " + " WHERE pv.id IN (:ids) "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionComposite( "
@@ -199,7 +197,10 @@ import org.rhq.core.domain.resource.ProductVersion;
         + " WHERE rc.resource.id = :resourceId "
         + "   AND (UPPER(pv.displayName) LIKE :filter "
         + "    OR UPPER(pv.shortDescription) LIKE :filter "
-        + "    OR UPPER(pv.longDescription) LIKE :filter" + "    OR :filter IS NULL) ") })
+        + "    OR UPPER(pv.longDescription) LIKE :filter" + "    OR :filter IS NULL) "),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_ID, query = "SELECT pv FROM PackageVersion pv WHERE pv.id = :id")
+
+    })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_VERSION_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_VERSION")
 public class PackageVersion implements Serializable {
@@ -226,6 +227,7 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_COMPOSITES_BY_IDS = "PackageVersion.findCompositesByIds";
     public static final String QUERY_FIND_COMPOSITE_BY_FILTERS = "PackageVersion.findCompositeByFilters";
     public static final String QUERY_FIND_COMPOSITE_BY_FILTERS_AND_ELIGIBILITY = "PackageVersion.findCompositeByFiltersAndEligibility";
+    public static final String QUERY_FIND_BY_ID = "PackageVersion.findById";
 
     // Attributes  --------------------------------------------
 

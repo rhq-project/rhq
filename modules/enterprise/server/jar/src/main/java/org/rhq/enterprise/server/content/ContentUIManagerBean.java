@@ -266,11 +266,41 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         return results;
     }
 
+    public PageList<PackageVersionComposite> getPackageVersionComposites(Subject user, int[] packageVersionIds,
+                                                                         PageControl pageControl) {
+        List<Integer> iPackageVersionIds = new ArrayList<Integer>(packageVersionIds.length);
+        for (int i : packageVersionIds) {
+            iPackageVersionIds.add(i);
+        }
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            PackageVersion.QUERY_FIND_COMPOSITES_BY_IDS, pageControl);
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager,
+            PackageVersion.QUERY_FIND_COMPOSITES_BY_IDS);
+
+        query.setParameter("ids", iPackageVersionIds);
+        queryCount.setParameter("ids", iPackageVersionIds);
+
+        long count = (Long) queryCount.getSingleResult();
+        List<PackageVersionComposite> results = query.getResultList();
+
+        return new PageList<PackageVersionComposite>(results, (int) count, pageControl);
+    }
+
     @SuppressWarnings("unchecked")
     public List<Architecture> getArchitectures() {
         Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_ALL);
         List<Architecture> architectures = q.getResultList();
         return architectures;
     }
-    
+
+    public PackageVersion getPackageVersion(int packageVersionId) {
+        Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_ID);
+
+        q.setParameter("id", packageVersionId);
+
+        PackageVersion pv = (PackageVersion)q.getSingleResult();
+
+        return pv;
+    }
 }

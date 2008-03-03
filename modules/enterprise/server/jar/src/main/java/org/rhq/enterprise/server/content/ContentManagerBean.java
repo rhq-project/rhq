@@ -45,6 +45,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
+import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -675,6 +676,29 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             // Throw so caller knows an error happened
             throw e;
         }
+    }
+
+    public List<DeployPackageStep> translateInstallationSteps(int resourceId, ResourcePackageDetails packageDetails)
+        throws Exception {
+        log.info("Retrieving installation steps for package [" + packageDetails + "]");
+
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        Agent agent = resource.getAgent();
+
+        // Make call to agent
+        List<DeployPackageStep> packageStepList;
+        try {
+            AgentClient agentClient = agentManager.getAgentClient(agent);
+            ContentAgentService agentService = agentClient.getContentAgentService();
+            packageStepList = agentService.translateInstallationSteps(resourceId, packageDetails);
+        } catch (PluginContainerException e) {
+            log.error("Error while sending deploy request to agent", e);
+
+            // Throw so caller knows an error happened
+            throw e;
+        }
+
+        return packageStepList;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)

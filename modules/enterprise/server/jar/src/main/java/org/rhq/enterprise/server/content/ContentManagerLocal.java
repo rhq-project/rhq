@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.content;
 
 import java.io.InputStream;
 import java.util.Set;
+import java.util.List;
 
 import javax.ejb.Local;
 
@@ -32,6 +33,7 @@ import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.domain.content.transfer.DeployPackageStep;
 
 /**
  * EJB interface to the server content subsystem.
@@ -92,7 +94,18 @@ public interface ContentManagerLocal {
      */
     void retrieveBitsFromResource(Subject user, int resourceId, int installedPackageId);
 
-    /////////////////////////////////////////////////////////////////////
+    /**
+     * Requests the plugin translate the installation steps of the specified package.
+     *
+     * @param resourceId     resource against which the package is being installed
+     * @param packageDetails package being installed 
+     * @return list of deployment steps if the plugin specified them; <code>null</code> if they cannot be determined
+     *         for this package
+     * @throws Exception if there is an error either contacting the agent or in the plugin's generation of the steps 
+     */
+    List<DeployPackageStep> translateInstallationSteps(int resourceId, ResourcePackageDetails packageDetails)
+        throws Exception;
+
     // The methods below should not be exposed to remote clients
 
     // Calls from the agent  --------------------------------------------

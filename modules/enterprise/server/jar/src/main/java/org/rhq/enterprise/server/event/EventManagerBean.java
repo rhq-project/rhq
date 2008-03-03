@@ -441,33 +441,17 @@ public class EventManagerBean implements EventManagerLocal {
          * We're still here - either the specified event was not found or we got called without 
          * passing any specific event. Return a bunch of events for the resource etc.
          */
-        String query = "SELECT ev.detail, ev.id, ";
-        if (dbType instanceof PostgresqlDatabaseType)
-            query += "substr(evs.location, 1, 30) "; // TODO take chars from end of string
-        else if (dbType instanceof OracleDatabaseType)
-            query += "substr(evs.location, -1, 30 )";
-        else
-            throw new RuntimeException("Unknown database type : " + dbType);
-        query += ", ev.severity, ev.timestamp, res.id, ev.ack_user, ev.ack_time "
-            + "FROM RHQ_Event ev  INNER  JOIN RHQ_Event_Source evs ON evs.id = ev.event_source_id "
-            + "INNER  JOIN RHQ_resource res ON res.id = evs.resource_id WHERE res.id IN ( ";
+        String query = setupEventsQuery(resourceIds, severity, source, searchString, pc, false);
+        runEventsQuery(resourceIds, begin, end, severity, source, searchString, pc, pl, query);
+        query = setupEventsQuery(resourceIds, severity, source, searchString, pc, true);
+        int totals = runEventsCountQuery(resourceIds, begin, end, severity, source, searchString, pc, pl, query);
+        pl.setTotalSize(totals);
 
-        query += JDBCUtil.generateInBinds(resourceIds.length);
-        query += " ) ";
+        return pl;
+    }
 
-        query += "  AND ev.timestamp BETWEEN ? AND ? ";
-        if (severity != null)
-            query += " AND ev.severity = ? ";
-        if (isFilled(searchString))
-            query += " AND ev.detail LIKE '%" + searchString + "%' ";
-        if (isFilled(source))
-            query += " AND evs.location LIKE '%" + source + "%' ";
-        if (isFilled(pc.getPrimarySortColumn())) {
-            query += "ORDER BY " + pc.getPrimarySortColumn() + " " + pc.getPrimarySortOrder() + " ";
-        } else
-            query += "ORDER BY ev.timestamp ";
-        query += "LIMIT ? OFFSET ?";
-
+    private void runEventsQuery(int[] resourceIds, long begin, long end, EventSeverity severity, String source,
+        String searchString, PageControl pc, PageList<EventComposite> pl, String query) {
         Connection conn = null;
         PreparedStatement stm = null;
         ResultSet rs = null;
@@ -481,6 +465,10 @@ public class EventManagerBean implements EventManagerLocal {
             stm.setTimestamp(i++, new Timestamp(end));
             if (severity != null)
                 stm.setString(i++, severity.toString());
+            if (isFilled(searchString))
+                stm.setString(i++, "'%" + searchString + "%'");
+            if (isFilled(source))
+                stm.setString(i++, "'%" + source + "%'");
             if (pc.getPageSize() > 0) {
                 stm.setInt(i++, pc.getPageSize());
                 stm.setInt(i++, pc.getStartRow());
@@ -498,12 +486,83 @@ public class EventManagerBean implements EventManagerLocal {
 
         } catch (SQLException sq) {
             log.error("getEvents: Error retreiving events: " + sq.getMessage());
-            return pl;
         } finally {
             JDBCUtil.safeClose(conn, stm, rs);
         }
+        return;
+    }
 
-        return pl;
+    private int runEventsCountQuery(int[] resourceIds, long begin, long end, EventSeverity severity, String source,
+        String searchString, PageControl pc, PageList<EventComposite> pl, String query) {
+        Connection conn = null;
+        PreparedStatement stm = null;
+        ResultSet rs = null;
+        int num = 0;
+        try {
+            conn = rhqDs.getConnection();
+            stm = conn.prepareStatement(query.toString());
+            int i = 1;
+            JDBCUtil.bindNTimes(stm, resourceIds, 1);
+            i += resourceIds.length;
+            stm.setTimestamp(i++, new Timestamp(begin));
+            stm.setTimestamp(i++, new Timestamp(end));
+            if (severity != null)
+                stm.setString(i++, severity.toString());
+            if (isFilled(searchString))
+                stm.setString(i++, "'%" + searchString + "%'");
+            if (isFilled(source))
+                stm.setString(i++, "'%" + source + "%'");
+
+            rs = stm.executeQuery();
+            while (rs.next()) {
+                num = rs.getInt(1);
+            }
+
+        } catch (SQLException sq) {
+            log.error("getEvents: Error retreiving events: " + sq.getMessage());
+        } finally {
+            JDBCUtil.safeClose(conn, stm, rs);
+        }
+        return num;
+    }
+
+    private String setupEventsQuery(int[] resourceIds, EventSeverity severity, String source, String searchString,
+        PageControl pc, boolean isCountQuery) {
+        String query;
+
+        if (isCountQuery) {
+            query = "SELECT count(ev.id) ";
+        } else {
+            query = "SELECT ev.detail, ev.id, ";
+            if (dbType instanceof PostgresqlDatabaseType)
+                query += "substr(evs.location, 1, 30) "; // TODO take chars from end of string
+            else if (dbType instanceof OracleDatabaseType)
+                query += "substr(evs.location, -1, 30 )";
+            else
+                throw new RuntimeException("Unknown database type : " + dbType);
+            query += ", ev.severity, ev.timestamp, res.id, ev.ack_user, ev.ack_time ";
+        }
+        query += "FROM RHQ_Event ev  INNER  JOIN RHQ_Event_Source evs ON evs.id = ev.event_source_id "
+            + "INNER  JOIN RHQ_resource res ON res.id = evs.resource_id WHERE res.id IN ( ";
+
+        query += JDBCUtil.generateInBinds(resourceIds.length);
+        query += " ) ";
+
+        query += "  AND ev.timestamp BETWEEN ? AND ? ";
+        if (severity != null)
+            query += " AND ev.severity = ? ";
+        if (isFilled(searchString))
+            query += " AND ev.detail LIKE ? ";
+        if (isFilled(source))
+            query += " AND evs.location LIKE ? ";
+        if (!isCountQuery) {
+            if (isFilled(pc.getPrimarySortColumn()) && !"null".equals(pc.getPrimarySortColumn())) {
+                query += "ORDER BY " + pc.getPrimarySortColumn() + " " + pc.getPrimarySortOrder() + " ";
+            } else
+                query += "ORDER BY ev.timestamp ";
+            query += "LIMIT ? OFFSET ?";
+        }
+        return query;
     }
 
     @SuppressWarnings("unchecked")

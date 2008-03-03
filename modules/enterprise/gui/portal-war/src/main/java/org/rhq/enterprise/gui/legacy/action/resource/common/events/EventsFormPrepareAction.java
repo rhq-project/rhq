@@ -107,7 +107,6 @@ public class EventsFormPrepareAction extends MetricsControlAction {
             event.setSourceLocation(htmlFormat(event.getSourceLocation(), null));
         }
 
-        ((PageList<EventComposite>) events).setTotalSize(256); // TODO remove, for debugging only
         eForm.setEvents((PageList<EventComposite>) events);
 
         return null; // mapping.findForward(RetCodeConstants.SUCCESS_URL);

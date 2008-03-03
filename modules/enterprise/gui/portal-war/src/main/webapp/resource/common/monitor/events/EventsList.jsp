@@ -41,7 +41,6 @@
          }
        xmlhttp.send(null);
       }
-
 //-->
 </script>
 
@@ -138,7 +137,7 @@
 </table>
 <html:hidden property="id"/>
 <html:hidden property="groupId"/>
-</html:form>
+
 <p/>
 <table width="98%" align="center" cellspacing="0" cellpadding="0" border="0" >
 <tr class="FilterLine"><td><b><fmt:message key="resource.common.monitor.events.ListOfEvents"/></b></td></tr>
@@ -146,27 +145,35 @@
    <td>
    <c:set var="emptyMsg"><fmt:message key="resource.common.monitor.events.EmptyList"/></c:set>
    <display:table items="${EventsForm.events}" var="event" width="100%" 
-         emptyMsg="${emptyMsg}" cellspacing="0" cellpadding="0" action="${sAction}">
+         emptyMsg="${emptyMsg}" cellspacing="0" cellpadding="0" action="${sAction}"
+         postfix="a" >
       <display:column width="4%" property="eventId" title="resource.common.monitor.events.IdTitle"
          sortAttr="eventId" />
       <display:column width="1%" property="severity" title="resource.common.monitor.events.SeverityTitle"
          sortAttr="severity"/>
       <display:column width="15%" property="sourceLocation" title="resource.common.monitor.events.SourceTitle"
-         sortAttr="sourceLocation"/>
+         sortAttr="evs.sourceLocation"/>
       <display:column width="40%" property="eventDetail" title="resource.common.monitor.events.DetailTitle"
           onClick="loadDetail(_property:eventId:)" maxLength="40"/>
       <display:column width="20%" property="timestamp" title="resource.common.monitor.events.TimeTitle"
          sortAttr="timestamp" defaultSort="true" maxLength="60"/>
       <display:column width="20%" property="ackTimeUser" title="resource.common.monitor.events.Acknowledged">
-         <display:userackdecorator styleClass="tableCell" onclick="ackOne(_property:eventId:)" id="ack_property:eventId:"/>
+         <display:userackdecorator onclick="ackOne(_property:eventId:)" id="ack_property:eventId:"/>
       </display:column>
    </display:table>
-
-  <%-- put paging controls here --%>
-
-</td>
-</tr>
+   </td>
+  </tr>
+  <tr>
+      <%-- paging controls here they define their own <td>, so it is not needed here --%>
+      <c:set var="pageList" value="${EventsForm.events}" />
+      <tiles:insert definition=".controls.paging">
+         <tiles:put name="pageList" beanName="pageList"/>
+         <tiles:put name="postfix" value=""/>
+         <tiles:put name="action" beanName="sAction"/>
+      </tiles:insert>
+  </tr>
 </table>      
+</html:form>
 <p/>
    
 

@@ -133,8 +133,10 @@ public class UserAckDecorator extends ColumnDecorator implements Tag {
             buf.append(click);
             buf.append("\"");
         }
-        buf.append(" class=\"");
-        buf.append(getStyleClass());
+        if (getStyleClass() != null) {
+            buf.append(" class=\"");
+            buf.append(getStyleClass());
+        }
         buf.append("\">");
         if (ackDone) {
             buf.append(obj.toString());

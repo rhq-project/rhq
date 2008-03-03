@@ -467,7 +467,7 @@
    <body-content>JSP</body-content>
    <attribute>
       <name>styleClass</name>
-      <required>true</required>
+      <required>false</required>
       <rtexprvalue>false</rtexprvalue>
       <type>String</type>
    </attribute>    

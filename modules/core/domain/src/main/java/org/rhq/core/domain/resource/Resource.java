@@ -73,6 +73,8 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.event.Event;
+import org.rhq.core.domain.event.EventSource;
 
 /**
  * Represents a JON managed resource (i.e. a platform, server, or service).
@@ -606,7 +608,11 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<InstalledPackageHistory> installedPackageHistory = new ArrayList<InstalledPackageHistory>();
-    
+
+    @SuppressWarnings({"UnusedDeclaration"})
+    @OneToMany(mappedBy = "resource", cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
+    private Set<EventSource> eventSources = new HashSet<EventSource>();
+
     @JoinColumn(name = "PRODUCT_VERSION_ID", referencedColumnName = "ID")
     @ManyToOne(fetch = FetchType.LAZY)
     private ProductVersion productVersion;
@@ -619,7 +625,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
      * Primarily for deserialization and cases where the resource object is just a reference to the real one in the db.
      * (Key is this avoids the irrelevant UUID generation that has contention problems.
      *
-     * @param id
+     * @param id the Resource's id
      */
     public Resource(int id) {
         this.id = id;

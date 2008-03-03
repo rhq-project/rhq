@@ -29,7 +29,7 @@ public class AggregatePluginConfigurationUpdateJob extends AbstractAggregateConf
     /**
      * Prefix for all job names and job groups names of aggregate plugin configuration updates.
      */
-    private static final String JOB_NAME_PREFIX = "jon-agg-plugin-config-update-";
+    private static final String JOB_NAME_PREFIX = "rhq-apcu-";
 
     private static String createUniqueJobName(ResourceGroup group, Subject subject) {
         return JOB_NAME_PREFIX + group.getId() + "-" + subject.getName().hashCode() + "-" + System.currentTimeMillis();

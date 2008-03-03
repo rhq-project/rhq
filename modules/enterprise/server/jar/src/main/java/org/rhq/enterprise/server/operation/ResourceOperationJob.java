@@ -42,7 +42,7 @@ public class ResourceOperationJob extends OperationJob {
     /**
      * Prefix for all job names and job groups names of resource operations.
      */
-    private static final String RESOURCE_JOB_NAME_PREFIX = "jon-resource-";
+    private static final String RESOURCE_JOB_NAME_PREFIX = "rhq-resource-";
 
     public static String createUniqueJobName(Resource resource, String operationName) {
         return RESOURCE_JOB_NAME_PREFIX + resource.getId() + "-" + operationName.hashCode() + "-"

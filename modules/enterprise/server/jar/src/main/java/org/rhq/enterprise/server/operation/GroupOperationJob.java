@@ -49,7 +49,7 @@ public class GroupOperationJob extends OperationJob {
     /**
      * Prefix for all job names and job groups names of group operations.
      */
-    private static final String GROUP_JOB_NAME_PREFIX = "jon-group-";
+    private static final String GROUP_JOB_NAME_PREFIX = "rhq-group-";
 
     public static String createUniqueJobName(ResourceGroup group, String operationName) {
         return GROUP_JOB_NAME_PREFIX + group.getId() + "-" + operationName.hashCode() + "-"

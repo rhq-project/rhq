@@ -303,7 +303,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         return mergeResourceResponse;
     }
 
-    public MergeResourceResponse mergeResource(Resource resource, int creatorSubjectId) {
+    public MergeResourceResponse addResource(Resource resource, int creatorSubjectId) {
         MergeResourceResponse mergeResourceResponse;
         try {
             validateResource(resource);
@@ -315,15 +315,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
 
         Resource existingResource = getExistingResource(resource);
         if (existingResource != null) {
-            String version = resource.getVersion();
-            String existingVersion = existingResource.getVersion();
-            boolean versionChanged = (existingVersion != null) ? !existingVersion.equals(version) : version != null;
-            if (versionChanged) {
-                log.info("Version of " + existingResource + " changed from '" + existingVersion + "' to '" + version
-                    + "'.");
-                existingResource.setVersion(version);
-                entityManager.merge(existingResource);
-            }
             mergeResourceResponse = new MergeResourceResponse(existingResource.getId(), true);
         } else {
             Subject creator = this.subjectManager.findSubjectById(creatorSubjectId);
@@ -352,6 +343,23 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         }
 
         return mergeResourceResponse;
+    }
+
+    public boolean updateResourceVersion(int resourceId, String version) {
+        Resource existingResource = this.entityManager.find(Resource.class, resourceId);
+        if (existingResource != null) {
+            String existingVersion = existingResource.getVersion();
+            boolean versionChanged = (existingVersion != null) ? !existingVersion.equals(version) : version != null;
+            if (versionChanged) {
+                log.info("Version of " + existingResource + " changed from '" + existingVersion + "' to '" + version
+                    + "'.");
+                existingResource.setVersion(version);
+                this.entityManager.merge(existingResource);
+            }
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private void validateInventoryReport(InventoryReport report) throws InvalidInventoryReportException {

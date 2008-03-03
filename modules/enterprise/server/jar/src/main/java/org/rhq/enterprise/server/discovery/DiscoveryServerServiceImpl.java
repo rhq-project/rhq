@@ -111,8 +111,13 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         resourceManager.addResourceError(resourceError);
     }
 
-    public MergeResourceResponse mergeResource(Resource resource, int creatorSubjectId) {
+    public MergeResourceResponse addResource(Resource resource, int creatorSubjectId) {
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
-        return discoveryBoss.mergeResource(resource, creatorSubjectId);
+        return discoveryBoss.addResource(resource, creatorSubjectId);
+    }
+
+    public boolean updateResourceVersion(int resourceId, String version) {
+        DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
+        return discoveryBoss.updateResourceVersion(resourceId, version);
     }
 }

@@ -415,7 +415,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // Tell the server to merge the resource into its inventory.
             DiscoveryServerService discoveryServerService = this.configuration.getServerServices()
                 .getDiscoveryServerService();
-            mergeResourceResponse = discoveryServerService.mergeResource(resource, ownerSubjectId);
+            mergeResourceResponse = discoveryServerService.addResource(resource, ownerSubjectId);
 
             // Sync our local resource up with the one now in server inventory.
             resource.setId(mergeResourceResponse.getResourceId());
@@ -1490,7 +1490,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     updateResourceVersionOnServer(resource);
             if (versionShouldBeUpdated) {
                 resource.setVersion(version);
-                log.debug("Version of " + resource + " changed from '" + existingVersion + "' to '" + version + "'.");
+                log.info("Version of " + resource + " changed from '" + existingVersion + "' to '" + version + "'.");
             }
         }
     }
@@ -1501,7 +1501,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (serverServices != null) {
             try {
                 DiscoveryServerService discoveryServerService = serverServices.getDiscoveryServerService();
-                discoveryServerService.mergeResource(resource, OVERLORD_SUBJECT_ID);
+                discoveryServerService.updateResourceVersion(resource.getId(), resource.getVersion());
                 // Only update the version in local inventory if the server sync succeeded, otherwise we won't know
                 // to try again the next time this method is called.
                 versionUpdated = true;

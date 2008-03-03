@@ -142,12 +142,22 @@ public interface DiscoveryBossLocal {
         Configuration pluginConfiguration) throws InvalidPluginConfigurationClientException, PluginContainerException;
 
     /**
-     * Merges the specified resource into inventory.
+     * Adds the specified resource to inventory, *auto-committing it*.
      *
      * @param  resource       the resource to be merged
-     * @param  ownerSubjectId
+     * @param  ownerSubjectId the user who should be the owner of the new Resource
      *
-     * @return a response containg the merged resource, as well as whether the resource already existed in inventory
+     * @return a response containing the merged resource, as well as whether the resource already existed in inventory
      */
-    MergeResourceResponse mergeResource(Resource resource, int ownerSubjectId);
+    MergeResourceResponse addResource(Resource resource, int ownerSubjectId);
+
+    /**
+     * Updates the version of the specified Resource in inventory, if it is indeed in inventory.
+     *
+     * @param resourceId the id of the Resource to be updated
+     * @param version the new version
+     * 
+     * @return true if the Resource was updated, or false if the Resource was not in inventory
+     */
+    boolean updateResourceVersion(int resourceId, String version);
 }

@@ -108,5 +108,15 @@ public interface DiscoveryServerService {
      *
      * @return a response containing the merged resource, as well as whether the resource already existed in inventory
      */
-    MergeResourceResponse mergeResource(Resource resource, int creatorSubjectId);
+    MergeResourceResponse addResource(Resource resource, int creatorSubjectId);
+
+    /**
+     * Updates the version of the specified Resource in inventory, if it is indeed in inventory.
+     *
+     * @param resourceId the id of the Resource to be updated
+     * @param version the new version
+     *
+     * @return true if the Resource was updated, or false if the Resource was not in inventory
+     */
+    boolean updateResourceVersion(int resourceId, String version);
 }

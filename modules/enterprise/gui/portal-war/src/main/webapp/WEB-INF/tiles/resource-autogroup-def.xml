@@ -72,6 +72,10 @@
             link="/resource/common/monitor/Visibility.do"
             height="25" width="104"
             classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+      <item value="Events"
+            link="/resource/common/Events.do" mode="events"
+            height="25" width="104"
+            classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>            
       <item value="Configure" mode="configure"
             link="/resource/common/monitor/Config.do"
             height="25" width="104"
@@ -84,15 +88,25 @@
     <put name="subSelectedIndex" value="0"/>
   </definition>
 
+  <definition name=".tabs.resource.autogroup.monitor.events"
+              extends=".tabs.resource.autogroup.monitor">
+    <put name="subSelectedIndex" value="1"/>
+  </definition>
+
   <!-- monitor config portals -->
   <definition name=".tabs.resource.autogroup.monitor.configVisibility"
               extends=".tabs.resource.autogroup.monitor">
-    <put name="subSelectedIndex" value="1"/>  
+    <put name="subSelectedIndex" value="2"/>  
   </definition>
 
-  <definition name=".tabs.resource.autogroup.monitor.configVisibility.nocontrol"
+  <definition name=".tabs.resource.autogroup.monitor.events.nocontrol"
               extends=".tabs.resource.autogroup.monitor">
     <put name="subSelectedIndex" value="1"/>
+  </definition>
+  
+  <definition name=".tabs.resource.autogroup.monitor.configVisibility.nocontrol"
+              extends=".tabs.resource.autogroup.monitor">
+    <put name="subSelectedIndex" value="2"/>
   </definition>
 
   <definition name=".resource.autogroup.monitor.config.ConfigMetrics"

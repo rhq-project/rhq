@@ -428,7 +428,7 @@ public abstract class FacesComponentUtility {
     }
 
     /**
-     * Sets the "unset" attribute on the specified component to the provided value. NOTE: This is a JON-specific
+     * Sets the "unset" attribute on the specified component to the provided value. NOTE: This is a RHQ-specific
      * attribute, which is only rendered for the Config component.
      *
      * @param input an input component

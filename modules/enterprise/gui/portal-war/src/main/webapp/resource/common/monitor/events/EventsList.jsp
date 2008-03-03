@@ -60,14 +60,32 @@
       <tiles:put name="resourceOwner" beanName="ResourceOwner"/>
       <tiles:put name="resourceModifier" beanName="ResourceModifier"/>
     </tiles:insert>
-
-</c:when>
+  </c:when>
+  <%-- TODO autogroups ? --%>
+  <c:otherwise>
+     <tiles:insert definition=".page.title.resource.group.full">
+        <tiles:put name="resource" beanName="Resource"/>
+        <tiles:put name="resourceOwner" beanName="ResourceOwner"/>
+        <tiles:put name="resourceModifier" beanName="ResourceModifier"/>
+     </tiles:insert>
+  </c:otherwise>
 </c:choose>
 
+<c:choose>
+  <c:when test="${not empty Resource }">
     <tiles:insert definition=".tabs.resource.common.monitor.events">
       <tiles:put name="id" value="${param.id}"/>
       <tiles:put name="resourceType" value="${Resource.resourceType.id}"/>
     </tiles:insert>
+  </c:when>
+  <%-- TODO autogroups ? --%>
+  <c:otherwise>
+    <tiles:insert definition=".tabs.resource.group.monitor">
+      <tiles:put name="id" value="${param.id}"/>
+      <tiles:put name="resourceType" value="${Resource.resourceType.id}"/>
+    </tiles:insert>
+  </c:otherwise>
+</c:choose>
       
 <%-- full width from here --%>     
 <table width="98%" align="center" cellspacing="0" cellpadding="0" border="0">
@@ -91,7 +109,7 @@
          <c:param name="id" value="${param.id}"/>
       </c:if>
       <c:if test="${not empty param.groupId}">
-         <c:param name="id" value="${param.groupId}"/>
+         <c:param name="groupId" value="${param.groupId}"/>
       </c:if>
    </c:url>
    
@@ -145,8 +163,7 @@
    <td>
    <c:set var="emptyMsg"><fmt:message key="resource.common.monitor.events.EmptyList"/></c:set>
    <display:table items="${EventsForm.events}" var="event" width="100%" 
-         emptyMsg="${emptyMsg}" cellspacing="0" cellpadding="0" action="${sAction}"
-         postfix="a" >
+         emptyMsg="${emptyMsg}" cellspacing="0" cellpadding="0" action="${sAction}">
       <display:column width="4%" property="eventId" title="resource.common.monitor.events.IdTitle"
          sortAttr="eventId" />
       <display:column width="1%" property="severity" title="resource.common.monitor.events.SeverityTitle"

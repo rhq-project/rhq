@@ -41,6 +41,8 @@
 	<classpathentry kind="src" path="modules/plugins/postgres/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/jmx/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jmx/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/apache/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/apache/src/main/java"/>
 	<classpathentry kind="src" path="etc/custom-plugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/custom-serverplugin/src/main/java"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/comm/src/test/resources"/>

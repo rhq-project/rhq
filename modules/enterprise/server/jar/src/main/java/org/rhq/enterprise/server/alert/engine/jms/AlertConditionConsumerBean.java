@@ -50,6 +50,7 @@ import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
     @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
     @ActivationConfigProperty(propertyName = "subscriptionDurability", propertyValue = "NonDurable") })
 public final class AlertConditionConsumerBean implements MessageListener {
+
     private final Log log = LogFactory.getLog(AlertConditionConsumerBean.class);
 
     @EJB
@@ -72,11 +73,12 @@ public final class AlertConditionConsumerBean implements MessageListener {
             log.error("Error getting content of jms message", je);
         }
 
-        Integer alertConditionId = conditionMessage.getAlertConditionId();
-        AlertCondition condition = alertConditionManager.getAlertConditionById(alertConditionId);
-        AlertDefinition definition = condition.getAlertDefinition();
-
+        AlertDefinition definition = null;
         try {
+            Integer alertConditionId = conditionMessage.getAlertConditionId();
+            AlertCondition condition = alertConditionManager.getAlertConditionById(alertConditionId);
+            definition = condition.getAlertDefinition();
+
             AlertSerializer.getSingleton().lock(definition.getId());
 
             /*
@@ -107,7 +109,9 @@ public final class AlertConditionConsumerBean implements MessageListener {
         } catch (Exception e) {
             log.error("Error persisting to alerts condition log", e);
         } finally {
-            AlertSerializer.getSingleton().unlock(definition.getId());
+            if (definition != null) {
+                AlertSerializer.getSingleton().unlock(definition.getId());
+            }
         }
     }
 }

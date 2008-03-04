@@ -27,6 +27,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -34,13 +35,14 @@ import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
+
 import org.jboss.annotation.IgnoreDependency;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
+
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
@@ -53,6 +55,8 @@ import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.alert.notification.RoleNotification;
 import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
@@ -234,18 +238,32 @@ public class AlertManagerBean implements AlertManagerLocal {
             return new HashMap<Integer, Integer>();
         }
 
-        Query q = entityManager.createNamedQuery(Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES);
-        q.setParameter("startDate", begin);
-        q.setParameter("endDate", end);
-        q.setParameter("schedIds", scheduleIds);
+        final int BATCH_SIZE = 1000;
+
+        int numSched = scheduleIds.size();
+        int rounds = numSched / BATCH_SIZE;
         Map<Integer, Integer> resMap = new HashMap<Integer, Integer>();
-        List<Object[]> ret = q.getResultList();
-        if (ret.size() > 0) {
-            for (Object[] obj : ret) {
-                Integer scheduleId = (Integer) obj[0];
-                Long tmp = (Long) obj[1];
-                int alertCount = tmp.intValue();
-                resMap.put(scheduleId, alertCount);
+
+        // iterate over the passed schedules ids when we have more than 1000 of them, as some
+        // databases bail out with more than 1000 resources in IN () clauses.
+        for (int round = 0; round < rounds; round++) {
+            int toIndex = round * BATCH_SIZE + BATCH_SIZE - 1;
+            if (toIndex > numSched) // don't run over the end of the list
+                toIndex = numSched;
+            List<Integer> scheds = scheduleIds.subList(round * BATCH_SIZE, toIndex);
+
+            Query q = entityManager.createNamedQuery(Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES);
+            q.setParameter("startDate", begin);
+            q.setParameter("endDate", end);
+            q.setParameter("schedIds", scheds);
+            List<Object[]> ret = q.getResultList();
+            if (ret.size() > 0) {
+                for (Object[] obj : ret) {
+                    Integer scheduleId = (Integer) obj[0];
+                    Long tmp = (Long) obj[1];
+                    int alertCount = tmp.intValue();
+                    resMap.put(scheduleId, alertCount);
+                }
             }
         }
 
@@ -533,12 +551,12 @@ public class AlertManagerBean implements AlertManagerLocal {
         StringBuilder builder = new StringBuilder();
 
         int conditionCounter = 1;
-        for (AlertConditionLog log : conditionLogs) {
+        for (AlertConditionLog aLog : conditionLogs) {
             builder.append(NEW_LINE);
 
             builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EMAIL_CONDITION_LOG_FORMAT,
-                conditionCounter, prettyPrintAlertCondition(log.getCondition()), new SimpleDateFormat(
-                    "yyyy/MM/dd HH:mm:ss z").format(new Date(log.getCtime())), log.getValue()));
+                conditionCounter, prettyPrintAlertCondition(aLog.getCondition()), new SimpleDateFormat(
+                    "yyyy/MM/dd HH:mm:ss z").format(new Date(aLog.getCtime())), aLog.getValue()));
             conditionCounter++;
         }
 

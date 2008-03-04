@@ -22,11 +22,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.resource.Resource;
@@ -216,19 +218,34 @@ public class MeasurementProblemManagerBean implements MeasurementProblemManagerL
             return new HashMap<Integer, Integer>();
         }
 
-        Query q = entityManager.createNamedQuery(MeasurementOutOfBounds.QUERY_COUNT_FOR_SCHEDULE_IDS_ADMIN);
-        q.setParameter("begin", begin);
-        q.setParameter("end", end);
-        q.setParameter("scheduleIds", scheduleIds);
+        final int BATCH_SIZE = 1000;
+
+        int numSched = scheduleIds.size();
+        int rounds = numSched / BATCH_SIZE;
 
         Map<Integer, Integer> resMap = new HashMap<Integer, Integer>();
-        List<Object[]> ret = q.getResultList();
-        if (ret.size() > 0) {
-            for (Object[] obj : ret) {
-                Integer scheduleId = (Integer) obj[0];
-                Long tmp = (Long) obj[1];
-                int oobCount = tmp.intValue();
-                resMap.put(scheduleId, oobCount);
+
+        // iterate over the passed schedules ids when we have more than 1000 of them, as some
+        // databases bail out with more than 1000 resources in IN () clauses.
+        for (int round = 0; round < rounds; round++) {
+            int toIndex = round * BATCH_SIZE + BATCH_SIZE - 1;
+            if (toIndex > numSched) // don't run over the end of the list
+                toIndex = numSched;
+            List<Integer> scheds = scheduleIds.subList(round * BATCH_SIZE, toIndex);
+
+            Query q = entityManager.createNamedQuery(MeasurementOutOfBounds.QUERY_COUNT_FOR_SCHEDULE_IDS_ADMIN);
+            q.setParameter("begin", begin);
+            q.setParameter("end", end);
+            q.setParameter("scheduleIds", scheds);
+
+            List<Object[]> ret = q.getResultList();
+            if (ret.size() > 0) {
+                for (Object[] obj : ret) {
+                    Integer scheduleId = (Integer) obj[0];
+                    Long tmp = (Long) obj[1];
+                    int oobCount = tmp.intValue();
+                    resMap.put(scheduleId, oobCount);
+                }
             }
         }
 

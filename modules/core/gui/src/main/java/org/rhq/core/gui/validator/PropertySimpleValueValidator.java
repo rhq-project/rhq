@@ -80,25 +80,25 @@ public class PropertySimpleValueValidator implements Validator, StateHolder {
         if (this.propertyDefinition != null) {
             switch (this.propertyDefinition.getType()) {
             case INTEGER: {
-                subValidators.add(new LongRangeValidator());
+                subValidators.add(new LongRangeValidator(Integer.MAX_VALUE, Integer.MIN_VALUE));
                 break;
             }
 
             case LONG: {
-                subValidators.add(new LongRangeValidator());
+                subValidators.add(new LongRangeValidator(Long.MAX_VALUE, Long.MIN_VALUE));
                 break;
             }
 
             case FLOAT: {
-                subValidators.add(new DoubleRangeValidator());
+                subValidators.add(new DoubleRangeValidator(Float.MAX_VALUE, Float.MIN_VALUE));
                 break;
             }
 
             case DOUBLE: {
-                subValidators.add(new DoubleRangeValidator());
+                subValidators.add(new DoubleRangeValidator(Double.MAX_VALUE, Double.MIN_VALUE));
                 break;
-                // There is no need for type-based validators for booleans or enums, because the UI input controls (e.g. radio
-                // buttons or pulldown menus) prevent invalid values from being entered.
+                // There is no need for type-based validators for booleans or enums, because the UI input controls
+                // (e.g. radio buttons or pulldown menus) prevent invalid values from being entered.
             }
             }
 

@@ -458,7 +458,7 @@ public abstract class FacesComponentUtility {
 
     public static boolean isOverride(UIComponent component) {
         Boolean override = (Boolean) component.getAttributes().get(OVERRIDE_ATTRIBUTE);
-        return (override != null) && override;
+        return (override == null || override);
     }
 
     /**

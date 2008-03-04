@@ -9,6 +9,7 @@
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
 <%@ page import="org.rhq.enterprise.server.test.AccessLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
+<%@ page import="java.lang.reflect.Method" %>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
@@ -148,7 +149,7 @@
                     out.println("<tr><td align='right'><b>" + pd.getName() + ": </b></td><td>");
 
                     Object reference = pd.getReadMethod() == null ? "-cant read-" : pd.getReadMethod().invoke(entity, new Object[]{});
-                    if (reference != null && reference.getClass().getName().startsWith("org.jboss.on.")) {
+                    if (reference != null && reference.getClass().getName().startsWith("org.rhq.core.domain")) {
                        java.lang.reflect.Method idMethod = null;
                        try {
                            idMethod = reference.getClass().getMethod("getId", new Class[0]);
@@ -157,17 +158,24 @@
                            try {
                                Object id = idMethod.invoke(reference,new Object[0]);
                                pageContext.setAttribute("child", reference);
-                               pageContext.setAttribute("cType", reference.getClass().getName());
+                               String className = reference.getClass().getName();
+                               className = className.substring(0,className.indexOf('_'));
+                               pageContext.setAttribute("cType", className);
+                               
                                %>
                                 <c:url var="url" value="browser.jsp?entityClass=${cType}&key=${child.id}&pEntity=${entityClass}&pKey=${param.key}"/>
                                    <a href="${url}">${child}</a><br>
                                <%
                             } catch (Exception e) { out.println("{exception: " + e.toString() + "}"); }
                         } else {
+                            try {
                             out.println(reference);
+                            } catch (Exception e) { out.println("<i>" + e.getClass().getSimpleName() + "</i>"); }
                         }
                     } else {
+                        try {
                         out.println(reference);
+                        } catch (Exception e) { out.println("<i>" + e.getClass().getSimpleName() + "</i>"); }
                     }
 
                     out.println("</td></tr>");
@@ -183,11 +191,13 @@
                 if (Collection.class.isAssignableFrom(pd.getPropertyType())) {
                     out.println("<h4>" + pd.getName() + ": </h4><ul>");
 
-                    Collection c = (Collection) pd.getReadMethod().invoke(entity, new Object[]{});
-                    for (Iterator iter = c.iterator(); iter.hasNext(); ) {
-                        Object child = iter.next();
-                        pageContext.setAttribute("child", child);
-                        pageContext.setAttribute("cType", child.getClass().getName());
+                    Method readMethod = pd.getReadMethod();
+                    if (readMethod != null) {
+                        Collection c = (Collection) readMethod.invoke(entity, new Object[]{});
+                        for (Iterator iter = c.iterator(); iter.hasNext(); ) {
+                            Object child = iter.next();
+                            pageContext.setAttribute("child", child);
+                            pageContext.setAttribute("cType", child.getClass().getName());
         %>
        <c:catch var="foo">
          <li><c:url var="url" value="browser.jsp?entityClass=${cType}&key=${child.id}&pEntity=${entityClass}&pKey=${param.key}"/>
@@ -199,6 +209,7 @@
          </li>
        </c:catch>
         <%
+                        }
                     }
                     out.write("</ul>");
                 }

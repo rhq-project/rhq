@@ -35,6 +35,7 @@ import java.beans.PropertyEditorManager;
 import java.beans.PropertyEditorSupport;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,6 +48,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.Id;
 import javax.persistence.PersistenceContext;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.core.domain.util.PersistenceUtility;
+import org.hibernate.Hibernate;
 
 /**
  * @author Greg Hinkle
@@ -146,8 +149,18 @@ public class AccessBean implements AccessLocal {
             }
 
             if (Collection.class.isAssignableFrom(pd.getPropertyType())) {
-                Object v = pd.getReadMethod().invoke(o);
-                System.out.println(pd.getName() + ": " + v);
+                Method m = pd.getReadMethod();
+                if (m != null) {
+                    Object v = pd.getReadMethod().invoke(o);
+                }
+            }
+
+           Method m = pd.getReadMethod();
+           if (m != null) {
+               Object v = pd.getReadMethod().invoke(o);
+               if (!Hibernate.isInitialized(v)) {
+                    Hibernate.initialize(v);
+                }
             }
         }
 

@@ -60,12 +60,12 @@ import org.rhq.core.domain.resource.Resource;
 
     // CANNOT USE DISTINCT HERE ON ORACLE DUE TO THE LOB COLUMN BEING SELECTED
     @NamedQuery(name = ContentServiceRequest.QUERY_FIND_BY_ID_WITH_INSTALLED_PKG_HIST, query = "SELECT csr "
-        + "  FROM ContentServiceRequest AS csr " + "       JOIN FETCH csr.installedPackageHistory ip "
-        + " WHERE csr.id IN (SELECT DISTINCT csr1.id " + "                    FROM ContentServiceRequest AS csr1 "
+        + "  FROM ContentServiceRequest AS csr JOIN FETCH csr.installedPackageHistory ip "
+        + " WHERE csr.id IN (SELECT DISTINCT csr1.id  FROM ContentServiceRequest AS csr1 "
         + "                   WHERE csr1.id = :id) "),
     @NamedQuery(name = ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST, query = "SELECT csr "
-        + "  FROM ContentServiceRequest AS csr " + "       JOIN FETCH csr.installedPackageHistory ip "
-        + " WHERE csr.id IN (SELECT DISTINCT csr1.id " + "                    FROM ContentServiceRequest AS csr1 "
+        + "  FROM ContentServiceRequest AS csr JOIN FETCH csr.installedPackageHistory ip "
+        + " WHERE csr.id IN (SELECT DISTINCT csr1.id FROM ContentServiceRequest AS csr1 "
         + "                   WHERE csr1.resource.id = :resourceId) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_REQ_ID_SEQ")
 @Table(name = "RHQ_CONTENT_REQ")

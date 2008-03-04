@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
@@ -132,6 +134,7 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
      *
      * @return the processes the plugin container has auto-discovered on behalf of the discovery component
      */
+    @NotNull
     public List<ProcessScanResult> getAutoDiscoveredProcesses() {
         return new ArrayList<ProcessScanResult>(processScanResults);
     }
@@ -144,6 +147,7 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
      *
      * @return list of plugin configurations, may be empty
      */
+    @NotNull
     public List<Configuration> getPluginConfigurations() {
         return new ArrayList<Configuration>(pluginConfigurations);
     }

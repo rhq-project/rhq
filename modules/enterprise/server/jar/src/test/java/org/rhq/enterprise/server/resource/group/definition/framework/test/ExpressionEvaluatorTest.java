@@ -20,7 +20,9 @@ package org.rhq.enterprise.server.resource.group.definition.framework.test;
 
 import java.util.Arrays;
 import java.util.List;
+
 import org.testng.annotations.Test;
+
 import org.rhq.enterprise.server.resource.group.definition.framework.ExpressionEvaluator;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 
@@ -52,7 +54,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         {
             "resource.resourceConfiguration[partition] = cluster-1",
 
-            "SELECT res.id FROM Resource res " + "  JOIN res.configuration conf, PropertySimple simple "
+            "SELECT res.id FROM Resource res " + "  JOIN res.resourceConfiguration conf, PropertySimple simple "
                 + " WHERE simple.name = :arg1 " + "   AND simple.stringValue = :arg2 "
                 + "   AND simple.configuration = conf " },
 
@@ -69,19 +71,19 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
             "groupBy resource.resourceConfiguration[partition-name]",
 
             "  SELECT simple.stringValue FROM Resource res "
-                + "    JOIN res.configuration conf, PropertySimple simple " + "   WHERE simple.name = :arg1 "
-                + "     AND simple.configuration = conf " + "GROUP BY simple.stringValue ",
+                + "    JOIN res.resourceConfigurationonfiguration conf, PropertySimple simple "
+                + "   WHERE simple.name = :arg1 " + "     AND simple.configuration = conf "
+                + "GROUP BY simple.stringValue ",
 
-            "SELECT res.id FROM Resource res " + "  JOIN res.configuration conf, PropertySimple simple "
+            "SELECT res.id FROM Resource res " + "  JOIN res.resourceConfiguration conf, PropertySimple simple "
                 + " WHERE simple.name = :arg1 " + "   AND simple.stringValue = :arg2 "
                 + "   AND simple.configuration = conf " },
         {
             "resource.resourceType.typeName = Windows" + ";" + "resource.trait[Trait.osversion] = 5.1",
 
             "SELECT res.id FROM Resource res JOIN res.schedules sched JOIN sched.definition def, MeasurementDataTrait trait"
-              + " WHERE res.resourceType.name = :arg1 AND def.name = :arg2 AND trait.value = :arg3 AND trait.schedule = sched AND trait.id.timestamp ="
-              + " (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)" }
-    };
+                + " WHERE res.resourceType.name = :arg1 AND def.name = :arg2 AND trait.value = :arg3 AND trait.schedule = sched AND trait.id.timestamp ="
+                + " (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)" } };
 
     @Test(groups = "integration.session")
     public void testWellFormedExpressions() throws Exception {

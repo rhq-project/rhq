@@ -24,8 +24,6 @@
                             description="the absolute path of the Apache server root directory"/>
          <c:simple-property name="executablePath" required="false"
                             description="the path to the Apache executable - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default value is 'bin/httpd' on UNIX or 'bin\Apache.exe' on Windows"/>
-         <c:simple-property name="serverBuilt" required="false" readOnly="true"
-                            description="the path to the Apache executable - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default value is 'bin/httpd' on UNIX or 'bin\Apache.exe' on Windows"/>
          <c:simple-property name="controlScriptPath" required="false"
                             description="the path to the Apache control script - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'bin/apachectl' on UNIX or the Apache executable on Windows"/>         
          <c:simple-property name="url" displayName="URL" required="false"
@@ -36,6 +34,33 @@
                             description="the TCP port of the Apache SNMP agent (typically '1610')"/>
          <c:simple-property name="snmpAgentCommunity" displayName="SNMP Agent Community" default="public"
                             description="the SNMP community of the Apache SNMP agent (typically 'public')"/>
+
+         <c:group name="errorLog">
+              <c:simple-property name="errorLogFilePath" type="file" required="false"
+                                 description="The absolute path to the error log file - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'logs/error_log' on UNIX or 'logs\error.log' on Windows."/>
+              <c:simple-property name="errorLogEventsEnabled" type="boolean"
+                                 description="A flag indicating whether of not generation of Events for new error log entries
+                                              is enabled."/>
+              <c:simple-property name="errorLogMinimumSeverity" required="false" default="error"
+                                 description="The minimum severity of error log entry Events that should be collected.
+                                              If not specified, there is no minimum severity (i.e. all
+                                              events will be collected).">
+                  <c:property-options>
+                     <c:option name="debug"  value="debug"/>
+                     <c:option name="info"   value="info"/>
+                     <c:option name="warn"   value="warn"/>
+                     <c:option name="error"  value="error" default="true"/>
+                     <c:option name="fatal"  value="fatal"/>
+                  </c:property-options>
+              </c:simple-property>
+              <c:simple-property name="errorLogIncludesPattern" required="false"
+                                 description="A regular expression against which an error log entry's detail is matched
+                                              to determine if an Event should be fired for that entry. If not
+                                              specified, no filtering of log entries will be done based on their
+                                              detail."/>
+
+          </c:group>
+          
       </plugin-configuration>
 
       <!-- all httpd processes that are not child processes of another httpd process -->
@@ -115,11 +140,13 @@
               description="the date and time this Apache server's binary was compiled"
               dataType="trait" defaultOn="true" displayType="summary"/>
 
-      <!-- traits determined va SNMP (format for property attribute is "MIB_column_name") -->
+      <!-- traits determined via SNMP (format for property attribute is "MIB_column_name") -->
 
       <metric displayName="Start Time" property="wwwServiceStartTime"
               description="the date and time this Apache server was last started"
               dataType="trait" defaultOn="true" displayType="summary"/>
+
+      <event name="errorLogEntry" description="an entry in the error log file"/>
 
       <service name="Apache Virtual Host" discovery="ApacheVirtualHostServiceDiscoveryComponent" class="ApacheVirtualHostServiceComponent">
 

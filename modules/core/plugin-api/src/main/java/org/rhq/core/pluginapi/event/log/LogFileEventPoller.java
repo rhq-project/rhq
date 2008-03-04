@@ -55,7 +55,7 @@ public class LogFileEventPoller implements EventPoller {
         this.logFile = logFile;
         Sigar sigar = eventContext.getSigar();
         try {
-            this.logFileInfo = sigar.getFileInfo(logFile.getPath());
+            this.logFileInfo = new LogFileInfo(sigar.getFileInfo(logFile.getPath()));
         } catch (SigarException e) {
             throw new RuntimeException(e);
         }

@@ -24,16 +24,24 @@ import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.event.EventContext;
+import org.rhq.core.pluginapi.event.EventPoller;
+import org.rhq.core.pluginapi.event.log.LogFileEventPoller;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -67,12 +75,23 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
     public static final String PLUGIN_CONFIG_PROP_SNMP_AGENT_PORT = "snmpAgentPort";
     public static final String PLUGIN_CONFIG_PROP_SNMP_AGENT_COMMUNITY = "snmpAgentCommunity";
 
+    public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH = "errorLogFilePath";
+    public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_EVENTS_ENABLED = "errorLogEventsEnabled";
+    public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_MINIMUM_SEVERITY = "errorLogMinimumSeverity";
+    public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_INCLUDES_PATTERN = "errorLogIncludesPattern";
+
     public static final String SERVER_BUILT_TRAIT = "serverBuilt";
 
     public static final String DEFAULT_EXECUTABLE_PATH = "bin" + File.separator
         + ((File.separatorChar == '/') ? "httpd" : "Apache.exe");
 
+    public static final String DEFAULT_ERROR_LOG_PATH = "logs" + File.separator
+        + ((File.separatorChar == '/') ? "error_log" : "error.log");
+
+    private static final String ERROR_LOG_ENTRY_EVENT_TYPE = "errorLogEntry";
+
     private ResourceContext resourceContext;
+    private EventContext eventContext;
     private SNMPClient snmpClient;
     private URL url;
     private ApacheBinaryInfo binaryInfo;
@@ -85,6 +104,7 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
     public void start(ResourceContext resourceContext) throws Exception {
         log.info("Initializing server component for server [" + resourceContext.getResourceKey() + "]...");
         this.resourceContext = resourceContext;
+        this.eventContext = resourceContext.getEventContext();
         this.snmpClient = new SNMPClient();
 
         SNMPSession snmpSession = getSNMPSession();
@@ -116,12 +136,12 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         }
 
         this.operationsDelegate = new ApacheServerOperationsDelegate(this, this.resourceContext.getSystemInformation());
+
+        startEventPollers();
     }
 
     public void stop() {
-        this.resourceContext = null;
-        this.snmpClient = null;
-        this.url = null;
+        stopEventPollers();
     }
 
     public AvailabilityType getAvailability() {
@@ -357,5 +377,36 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         }
 
         return propValue;
+    }
+
+    private void startEventPollers() {
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        Boolean enabled = Boolean.valueOf(pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_EVENTS_ENABLED, null));
+        if (enabled) {
+            File errorLogFile = resolvePathRelativeToServerRoot(pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH, DEFAULT_ERROR_LOG_PATH));
+            ApacheErrorLogEntryProcessor processor = new ApacheErrorLogEntryProcessor(ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile);
+            String includesPatternString = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_INCLUDES_PATTERN, null);
+            if (includesPatternString != null) {
+                try {
+                    Pattern includesPattern = Pattern.compile(includesPatternString);
+                    processor.setIncludesPattern(includesPattern);
+                } catch (PatternSyntaxException e) {
+                    throw new InvalidPluginConfigurationException("Includes pattern [" + includesPatternString + "] is not a valid regular expression.");
+                }
+            }
+            String minimumSeverityString = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_MINIMUM_SEVERITY, null);
+            if (minimumSeverityString != null) {
+                EventSeverity minimumSeverity = EventSeverity.valueOf(minimumSeverityString.toUpperCase());
+                processor.setMinimumSeverity(minimumSeverity);
+            }
+            EventPoller poller = new LogFileEventPoller(this.eventContext, ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile, processor);
+            this.eventContext.registerEventPoller(poller, 60, errorLogFile.getPath());
+        }
+    }
+
+    private void stopEventPollers() {
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        File errorLogFile = resolvePathRelativeToServerRoot(pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH, DEFAULT_ERROR_LOG_PATH));
+        this.eventContext.unregisterEventPoller(ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile.getPath());
     }
 }

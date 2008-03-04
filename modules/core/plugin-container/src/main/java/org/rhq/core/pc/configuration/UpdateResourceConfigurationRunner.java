@@ -20,8 +20,10 @@ package org.rhq.core.pc.configuration;
 
 import java.util.List;
 import java.util.concurrent.Callable;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
@@ -116,7 +118,7 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
         }
 
         if (this.configurationServerService != null) {
-            this.configurationServerService.completedConfigurationUpdate(response);
+            this.configurationServerService.completeConfigurationUpdate(response);
         }
 
         return response;

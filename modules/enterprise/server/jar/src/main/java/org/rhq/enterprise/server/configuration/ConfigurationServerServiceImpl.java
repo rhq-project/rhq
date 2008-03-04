@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.configuration;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -30,7 +31,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ConfigurationServerServiceImpl implements ConfigurationServerService {
     private static final Log LOG = LogFactory.getLog(ConfigurationServerServiceImpl.class);
 
-    public void completedConfigurationUpdate(ConfigurationUpdateResponse response) {
+    public void completeConfigurationUpdate(ConfigurationUpdateResponse response) {
         /*
          * Would be nice to get the resource name, but it is not in the response, so we could bring back the log message
          * that used to be here
@@ -52,6 +53,6 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
             }
         }
 
-        configurationManager.completedResourceConfigurationUpdate(response);
+        configurationManager.completeResourceConfigurationUpdate(response);
     }
 }

@@ -119,6 +119,7 @@
       <column name="CTIME" type="LONG"/>
       <column name="MTIME" type="LONG"/>
       <column name="ITIME" type="LONG"/>
+      <column name="RES_CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG"/>
       <column name="PLUGIN_CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG"/>
       <column name="MODIFIED_BY" required="false" type="INTEGER"/>
       <column name="LOCATION" required="false" size="100" type="VARCHAR2"/>

@@ -21,6 +21,7 @@ package org.rhq.core.clientapi.server.configuration;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 
@@ -114,4 +115,17 @@ public class ConfigurationUpdateResponse implements Serializable {
             setErrorMessage(null);
         }
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "[" + "configurationUpdateId=" + configurationUpdateId + ", "
+            + "ConfigurationUpdateStatus=" + status + ", " + "configuration=" + configuration + "]";
+    }
+
+    /*
+     *     private int configurationUpdateId;
+    private Configuration configuration;
+    private ConfigurationUpdateStatus status;
+    private String errorMessage;
+     */
 }

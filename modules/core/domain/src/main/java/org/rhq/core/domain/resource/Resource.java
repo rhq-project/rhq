@@ -59,6 +59,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
@@ -66,15 +67,13 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.content.Channel;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
-import org.rhq.core.domain.content.ResourceChannel;
 import org.rhq.core.domain.content.InstalledPackageHistory;
-import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.content.ResourceChannel;
+import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.event.Event;
-import org.rhq.core.domain.event.EventSource;
 
 /**
  * Represents a JON managed resource (i.e. a platform, server, or service).
@@ -384,8 +383,7 @@ import org.rhq.core.domain.event.EventSource;
         + "     AND avail.endTime IS NULL "
         + "GROUP BY res.id, res.name, res.resourceType.name, avail.availabilityType "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGES, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackages ip WHERE r.id = :id"),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGE_HIST, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackageHistory ip WHERE r.id = :id")
-        })
+    @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGE_HIST, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackageHistory ip WHERE r.id = :id") })
 @SequenceGenerator(name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
 @Table(name = "RHQ_RESOURCE")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -546,6 +544,10 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @XmlTransient
     private Resource parentResource;
 
+    @JoinColumn(name = "RES_CONFIGURATION_ID", referencedColumnName = "ID")
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    private Configuration resourceConfiguration = new Configuration();
+
     @JoinColumn(name = "PLUGIN_CONFIGURATION_ID", referencedColumnName = "ID")
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     private Configuration pluginConfiguration = new Configuration();
@@ -609,7 +611,6 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<InstalledPackageHistory> installedPackageHistory = new ArrayList<InstalledPackageHistory>();
 
-    @SuppressWarnings({"UnusedDeclaration"})
     @OneToMany(mappedBy = "resource", cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
     private Set<EventSource> eventSources = new HashSet<EventSource>();
 
@@ -625,7 +626,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
      * Primarily for deserialization and cases where the resource object is just a reference to the real one in the db.
      * (Key is this avoids the irrelevant UUID generation that has contention problems.
      *
-     * @param id the Resource's id
+     * @param id
      */
     public Resource(int id) {
         this.id = id;
@@ -812,6 +813,14 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public void setParentResource(@Nullable
     Resource parentResource) {
         this.parentResource = parentResource;
+    }
+
+    public Configuration getResourceConfiguration() {
+        return resourceConfiguration;
+    }
+
+    public void setResourceConfiguration(Configuration resourceConfiguration) {
+        this.resourceConfiguration = resourceConfiguration;
     }
 
     public Configuration getPluginConfiguration() {
@@ -1114,8 +1123,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return installedPackageHistory;
     }
 
-    public void addInstalledPackageHistory(InstalledPackageHistory history)
-    {
+    public void addInstalledPackageHistory(InstalledPackageHistory history) {
         if (this.installedPackageHistory == null) {
             installedPackageHistory = new ArrayList<InstalledPackageHistory>(1);
         }

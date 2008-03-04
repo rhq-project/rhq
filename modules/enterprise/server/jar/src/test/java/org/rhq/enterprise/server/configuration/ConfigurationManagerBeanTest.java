@@ -22,12 +22,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
+
 import javax.persistence.EntityManager;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
@@ -505,7 +509,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
                 history = resource.getResourceConfigurationUpdates().get(0);
 
-                assert history.getStatus().equals(ConfigurationUpdateStatus.FAILURE);
+                assert history.getStatus().equals(ConfigurationUpdateStatus.FAILURE) : "Status was "
+                    + history.getStatus();
                 assert history.getErrorMessage() != null;
                 assert history.getErrorMessage().indexOf("This simulates a failed update") > 0;
                 assert history.getConfiguration() != null;
@@ -605,6 +610,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         configurationManager.purgeResourceConfigurationUpdate(overlord, Integer.MIN_VALUE, false);
 
         // delete the request now
+        System.out.println("REQUEST WAS: " + request.toString());
         configurationManager.purgeResourceConfigurationUpdate(overlord, request.getId(), false);
 
         requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), pageControl);
@@ -727,10 +733,26 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         Configuration configuration2 = new Configuration();
         configuration2.put(new PropertySimple("myboolean", "true"));
 
+        Configuration activeConfigurationBefore = configurationManager.getActiveResourceConfiguration(resource.getId());
+
         configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration1);
         Thread.sleep(4000); // wait for the test agent to complete the request
+
+        Configuration activeConfigurationAfter = configurationManager.getActiveResourceConfiguration(resource.getId());
+        assert activeConfigurationBefore.equals(activeConfigurationAfter) : "ActiveResourceConfiguration was not supposed to change for a failed update -- old was: "
+            + activeConfigurationBefore + ", new was: " + activeConfigurationAfter;
+
         configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration2);
         Thread.sleep(4000); // wait for the test agent to complete the request
+
+        Configuration activeConfiguration = configurationManager.getActiveResourceConfiguration(resource.getId());
+        assert activeConfiguration != null : "ActiveResourceConfiguration was not updated with configuration2";
+        Map<String, PropertySimple> activeProperties = activeConfiguration.getSimpleProperties();
+        assert activeProperties.size() == 1;
+        assert activeProperties.containsKey("myboolean");
+        PropertySimple activeProperty = activeProperties.get("myboolean");
+        assert activeProperty.getName().equals("myboolean");
+        assert activeProperty.getStringValue().equals("true");
 
         // at this point in time, the round trip messaging is done and we have the agent response
         List<ResourceConfigurationUpdate> requests;
@@ -746,7 +768,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         ResourceConfigurationUpdate savedRequest = requests.get(0); // this is the one that failed
         ResourceConfigurationUpdate doomedRequest = requests.get(1); // this is the one that succeeded
 
-        configurationManager.purgeResourceConfigurationUpdates(overlord, new int[] { doomedRequest.getId() }, false);
+        configurationManager.purgeResourceConfigurationUpdate(overlord, doomedRequest.getId(), false);
 
         // now get the current configs/requests and
         // make sure we deleted the only one configuration that succeeded, leaving one update record
@@ -800,7 +822,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             ConfigurationUpdateStatus.SUCCESS, null);
 
         try {
-            configurationManager.completedResourceConfigurationUpdate(response);
+            configurationManager.completeResourceConfigurationUpdate(response);
             assert false : "Should not have been able to process an unknown request - we didn't persist it yet";
         } catch (Exception expected) {
             System.out.println("This was expected and OK:\n" + expected);
@@ -856,7 +878,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                                 .getConfiguration(), new NullPointerException("This simulates a failed update"));
                         }
 
-                        LookupUtil.getConfigurationManager().completedResourceConfigurationUpdate(response);
+                        LookupUtil.getConfigurationManager().completeResourceConfigurationUpdate(response);
                     } catch (Throwable t) {
                         t.printStackTrace();
                         throw new RuntimeException(t);

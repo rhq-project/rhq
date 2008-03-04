@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Set;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -31,6 +32,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +40,7 @@ import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
+
 import org.rhq.core.clientapi.agent.PluginPermissionException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
@@ -218,6 +221,15 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         configurationManager.completePluginConfigurationUpdate(update);
 
         return update;
+    }
+
+    public Configuration getActiveResourceConfiguration(int resourceId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        Configuration resourceConfiguration = resource.getResourceConfiguration();
+        if (resourceConfiguration != null) {
+            resourceConfiguration.getProperties().size(); // cause it's lazy
+        }
+        return resourceConfiguration;
     }
 
     @Nullable
@@ -488,6 +500,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
 
         resource.getResourceConfigurationUpdates().remove(doomedRequest);
         entityManager.remove(doomedRequest);
+        entityManager.flush();
 
         return;
     }
@@ -578,10 +591,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         }
 
         // let's make sure all IDs are zero - we want to persist a brand new copy
-        newConfiguration = newConfiguration.deepCopy(false);
+        Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
 
-        // create our new update request and assign it to our resource - its status will initally be "in progress"
-        ResourceConfigurationUpdate newUpdateRequest = new ResourceConfigurationUpdate(resource, newConfiguration,
+        // create our new update request and assign it to our resource - its status will initially be "in progress"
+        ResourceConfigurationUpdate newUpdateRequest = new ResourceConfigurationUpdate(resource, zeroedConfiguration,
             newSubject);
 
         newUpdateRequest.setStatus(newStatus);
@@ -600,7 +613,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         return newUpdateRequest;
     }
 
-    public void completedResourceConfigurationUpdate(ConfigurationUpdateResponse response) {
+    public void completeResourceConfigurationUpdate(ConfigurationUpdateResponse response) {
         log.debug("Received a configuration-update-completed message: " + response);
 
         ResourceConfigurationUpdate persistedRequest;
@@ -619,6 +632,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
                 failedConfiguration = entityManager.merge(failedConfiguration); // merge in any property error messages
                 persistedRequest.setConfiguration(failedConfiguration);
             }
+        } else if (response.getStatus() == ConfigurationUpdateStatus.SUCCESS) {
+            // link to the newer, persisted configuration object
+            Resource resource = persistedRequest.getResource();
+            resource.setResourceConfiguration(persistedRequest.getConfiguration().deepCopy(false));
         }
 
         // make sure we update the persisted request with the new status and any error message

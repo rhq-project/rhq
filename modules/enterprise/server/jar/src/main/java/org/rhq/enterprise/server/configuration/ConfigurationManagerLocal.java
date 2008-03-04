@@ -19,9 +19,12 @@
 package org.rhq.enterprise.server.configuration;
 
 import java.util.List;
+
 import javax.ejb.Local;
+
 import org.jetbrains.annotations.Nullable;
 import org.quartz.SchedulerException;
+
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
@@ -85,6 +88,8 @@ public interface ConfigurationManagerLocal {
     void completePluginConfigurationUpdate(PluginConfigurationUpdate update);
 
     void completeAggregatePluginConfigurationUpdate(int aggregatePluginConfigurationUpdateId);
+
+    Configuration getActiveResourceConfiguration(int resourceId);
 
     /**
      * Get the latest resource configuration for the {@link Resource} with the given id, or <code>null</code> if the
@@ -220,7 +225,7 @@ public interface ConfigurationManagerLocal {
      *                 be <code>null</code> to indicate that the configuration that was sent to the agent was used
      *                 as-is.
      */
-    void completedResourceConfigurationUpdate(ConfigurationUpdateResponse response);
+    void completeResourceConfigurationUpdate(ConfigurationUpdateResponse response);
 
     ConfigurationUpdateResponse executePluginConfigurationUpdate(PluginConfigurationUpdate update);
 

@@ -50,5 +50,5 @@ public interface ConfigurationServerService {
      * @param response information about the request that was completed (which may have succeeded or failed)
      */
     @Asynchronous(guaranteedDelivery = true)
-    void completedConfigurationUpdate(ConfigurationUpdateResponse response);
+    void completeConfigurationUpdate(ConfigurationUpdateResponse response);
 }

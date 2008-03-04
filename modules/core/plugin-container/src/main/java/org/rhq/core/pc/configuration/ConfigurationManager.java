@@ -24,8 +24,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
@@ -97,7 +99,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
                 error = new ConfigurationUpdateResponse(request.getConfigurationUpdateId(), request.getConfiguration(),
                     e);
 
-                configurationServerService.completedConfigurationUpdate(error);
+                configurationServerService.completeConfigurationUpdate(error);
             }
         }
 

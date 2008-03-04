@@ -21,6 +21,7 @@ package org.rhq.core.pc.configuration;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
@@ -113,7 +114,7 @@ public class ConfigurationManagerTest {
     }
 
     private class MockConfigurationServerService implements ConfigurationServerService {
-        public void completedConfigurationUpdate(ConfigurationUpdateResponse response) {
+        public void completeConfigurationUpdate(ConfigurationUpdateResponse response) {
             if (response.getConfigurationUpdateId() == 1) {
                 response.setStatus(ConfigurationUpdateStatus.SUCCESS);
             } else {

@@ -370,8 +370,8 @@ public class EventManagerBean implements EventManagerLocal {
             query += "substr(location, -1, 30 )";
         else
             throw new RuntimeException("Unknown database type : " + dbType);
-        query += ",severity, timestamp, res_id , ev.ack_user, ev.ack_time  FROM ( "
-            + " SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, res.id  as res_id "
+        query += ",severity, timestamp, res_id , ack_user, ack_time  FROM ( "
+            + " SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, res.id  as res_id, e1.ack_user as ack_user, e1.ack_time as ack_time "
             + " FROM rhq_event e1, rhq_event e  ";
         query += "JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id "
             + "  INNER  JOIN RHQ_resource res ON res.id = evs.resource_id ";
@@ -379,8 +379,9 @@ public class EventManagerBean implements EventManagerLocal {
         query += JDBCUtil.generateInBinds(resourceIds.length);
         query += " ) ";
         query += " ORDER BY e1.id DESC LIMIT 5 ) AS r1 ";
-        query += " UNION " + " ( "
-            + "  SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, res.id as res_id "
+        query += " UNION "
+            + " ( "
+            + "  SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, res.id as res_id, e1.ack_user as ack_user, e1.ack_time as ack_time "
             + " FROM rhq_event e1, rhq_event e  ";
         query += "        JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id "
             + "       INNER  JOIN RHQ_resource res ON res.id = evs.resource_id "

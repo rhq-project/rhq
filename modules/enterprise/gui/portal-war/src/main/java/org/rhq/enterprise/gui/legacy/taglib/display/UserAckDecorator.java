@@ -31,7 +31,8 @@ import org.apache.taglibs.standard.tag.el.core.ExpressionUtil;
 
 /**
  * This class is a ColumnDecorator tag that that
- * creates TODO
+ * creates either the name of someone that acknowledged the event
+ * or a message with an onclick() handler on it.
  * 
  * @author Heiko W. Rupp
  */
@@ -86,8 +87,6 @@ public class UserAckDecorator extends ColumnDecorator implements Tag {
 
     @Override
     public String decorate(Object obj) {
-        String name = null;
-        String value = null;
         String click = "";
 
         try {
@@ -192,8 +191,8 @@ public class UserAckDecorator extends ColumnDecorator implements Tag {
         context = null;
     }
 
-    private Object evalAttr(String name, String value, Class type) throws JspException, NullAttributeException {
-        return ExpressionUtil.evalNotNull("checkboxdecorator", name, value, type, this, context);
+    private Object evalAttr(String name, String val, Class<String> type) throws JspException, NullAttributeException {
+        return ExpressionUtil.evalNotNull("userackdecorator", name, val, type, this, context);
     }
 
     /**

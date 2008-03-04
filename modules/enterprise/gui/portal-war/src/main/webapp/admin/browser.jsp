@@ -159,7 +159,9 @@
                                Object id = idMethod.invoke(reference,new Object[0]);
                                pageContext.setAttribute("child", reference);
                                String className = reference.getClass().getName();
-                               className = className.substring(0,className.indexOf('_'));
+                               if (className.indexOf('_') > 0) {
+                                   className = className.substring(0,className.indexOf('_'));
+                               }
                                pageContext.setAttribute("cType", className);
                                
                                %>

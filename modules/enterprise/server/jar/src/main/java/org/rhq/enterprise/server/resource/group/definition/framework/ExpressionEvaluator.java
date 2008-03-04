@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.resource.group.definition.framework;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,7 +28,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Arrays;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -42,8 +42,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     private static final String METRIC_DEF_ALIAS = "def";
 
     private enum JoinCondition {
-        RESOURCE_CONFIGURATION(".configuration", "conf"),
-        PLUGIN_CONFIGURATION(".pluginConfiguration", "pluginConf"),
+        RESOURCE_CONFIGURATION(".resourceConfiguration", "conf"), // 
+        PLUGIN_CONFIGURATION(".pluginConfiguration", "pluginConf"), //
         SCHEDULES(".schedules", "sched");
 
         String subexpression;
@@ -309,7 +309,9 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 populatePredicateCollections(METRIC_DEF_ALIAS + ".name", traitName, false);
                 populatePredicateCollections(TRAIT_ALIAS + ".value", value);
                 whereStatics.add(TRAIT_ALIAS + ".schedule = " + JoinCondition.SCHEDULES.alias);
-                whereStatics.add(TRAIT_ALIAS + ".id.timestamp = (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE " + JoinCondition.SCHEDULES.alias + ".id = mdt.schedule.id)");
+                whereStatics.add(TRAIT_ALIAS
+                    + ".id.timestamp = (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE "
+                    + JoinCondition.SCHEDULES.alias + ".id = mdt.schedule.id)");
             } else if (context == ParseContext.Configuration) {
                 String prefix;
                 JoinCondition joinCondition;
@@ -700,8 +702,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             if (bracketIndex != -1) {
                 preBracket = topToken.substring(0, bracketIndex);
                 bracketed = topToken.substring(bracketIndex);
-            }
-            else {
+            } else {
                 preBracket = topToken;
                 bracketed = "";
             }
@@ -715,8 +716,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         return originalTokens;
     }
 
-    private String parseTraitName(List<String> originalTokens)
-            throws InvalidExpressionException {
+    private String parseTraitName(List<String> originalTokens) throws InvalidExpressionException {
         String prefix = "trait";
         String suffix = originalTokens.get(parseIndex).substring(prefix.length());
         if (suffix.length() < 3) {
@@ -724,7 +724,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         }
         if ((suffix.charAt(0) != '[') || (suffix.charAt(suffix.length() - 1) != ']')) {
             throw new InvalidExpressionException("Trait name '" + suffix
-                    + "' must be contained within '[' and ']' characters");
+                + "' must be contained within '[' and ']' characters");
         }
         return suffix.substring(1, suffix.length() - 1);
     }

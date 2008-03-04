@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.definition.group;
 
 import javax.faces.application.FacesMessage;
+
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
@@ -108,6 +109,10 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
         } catch (ResourceGroupUpdateException rgue) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "There was a problem adding one or more resource groups: " + rgue.getMessage());
+            return OUTCOME_FAILURE;
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "There was a problem calculating the results: "
+                + e.getMessage());
             return OUTCOME_FAILURE;
         }
 

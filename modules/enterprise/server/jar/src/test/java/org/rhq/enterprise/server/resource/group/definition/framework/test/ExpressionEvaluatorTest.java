@@ -71,9 +71,8 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
             "groupBy resource.resourceConfiguration[partition-name]",
 
             "  SELECT simple.stringValue FROM Resource res "
-                + "    JOIN res.resourceConfigurationonfiguration conf, PropertySimple simple "
-                + "   WHERE simple.name = :arg1 " + "     AND simple.configuration = conf "
-                + "GROUP BY simple.stringValue ",
+                + "    JOIN res.resourceConfiguration conf, PropertySimple simple " + "   WHERE simple.name = :arg1 "
+                + "     AND simple.configuration = conf " + "GROUP BY simple.stringValue ",
 
             "SELECT res.id FROM Resource res " + "  JOIN res.resourceConfiguration conf, PropertySimple simple "
                 + " WHERE simple.name = :arg1 " + "   AND simple.stringValue = :arg2 "

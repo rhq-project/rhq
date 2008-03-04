@@ -25,7 +25,7 @@
             
             <rich:datascroller id="#{paginationDataScrollerName}"
                                for="#{paginationDataTableName}"
-                               rendered="true"
+                               rendered="#{paginationDataModel.rowCount > PageControlSettingsUIBean.minimumPageSize}"
                                stepControls="show" fastControls="hide" boundaryControls="hide"
                                style="margin-top: .5ex;">
                <f:facet name="next">
@@ -52,9 +52,11 @@
 
             <h:panelGroup layout="block" style="margin-top: .4ex; float: right;">
                <h:outputText value="Total: #{paginationDataModel.rowCount}" style="margin-right: 1em; font-weight: bold; "/>
-               <h:outputText value="Items Per Page:" style="margin-right: 2em; font-weight: bold; "/>
+               <h:outputText value="Items Per Page:" style="margin-right: 2em; font-weight: bold; "
+                             rendered="#{paginationDataModel.rowCount > PageControlSettingsUIBean.minimumPageSize}"/>
                <h:selectOneListbox id="currentPageSize" size="1"
-                                   value="#{paginationPageControl.pageSize}">
+                                   value="#{paginationPageControl.pageSize}"
+                                   rendered="#{paginationDataModel.rowCount > PageControlSettingsUIBean.minimumPageSize}">
                   <a4j:support event="onchange" reRender="#{paginationDataTableName}, #{paginationDataScrollerName}"/>
                   <f:selectItems value="#{PageControlSettingsUIBean.pageSizes}" />
                </h:selectOneListbox>

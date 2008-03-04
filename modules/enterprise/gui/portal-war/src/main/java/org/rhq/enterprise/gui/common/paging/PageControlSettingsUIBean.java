@@ -27,4 +27,8 @@ public class PageControlSettingsUIBean {
     public SelectItem[] getPageSizes() {
         return pageSizes;
     }
+
+    public int getMinimumPageSize() {
+        return 15;
+    }
 }

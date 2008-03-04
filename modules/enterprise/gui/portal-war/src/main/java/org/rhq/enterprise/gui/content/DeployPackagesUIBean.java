@@ -1,19 +1,26 @@
 package org.rhq.enterprise.gui.content;
 
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import javax.faces.component.UIData;
 import javax.faces.model.DataModel;
+import javax.faces.application.FacesMessage;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -43,12 +50,26 @@ public class DeployPackagesUIBean extends PagedDataTableUIBean {
     public String deployPackages() {
         HttpServletRequest request = FacesContextUtility.getRequest();
         HttpSession session = request.getSession();
-        String[] packageIds = (String[])session.getAttribute("selectedPackages");
+        int[] packageIds = (int[])session.getAttribute("selectedPackages");
 
-        // Leaving this in for now until I fully implement the deployment call to the SLSB
-        log.info("Deploying packages");
-        for (String pkgId : packageIds) {
-            log.info("Package: " + pkgId);
+        // Going forward, we'll need to create this earlier and store the user entered configuration in these
+        // objects.  jdobies, Mar 3, 2008
+        ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
+        Set<ResourcePackageDetails> packagesToDeploy = new HashSet<ResourcePackageDetails>(packageIds.length);
+        for (int pkgId : packageIds) {
+            PackageVersion packageVersion = contentUIManager.getPackageVersion(pkgId);
+            ResourcePackageDetails pkgDetails = ContentUtils.toResourcePackageDetails(packageVersion);
+            packagesToDeploy.add(pkgDetails);
+        }
+
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        Resource resource = EnterpriseFacesContextUtility.getResource();
+
+        try {
+            ContentManagerLocal contentManager = LookupUtil.getContentManager();
+            contentManager.deployPackages(subject, resource.getId(), packagesToDeploy);
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Could not send deploy request to agent", e);
         }
 
         return "successOrFailure";

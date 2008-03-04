@@ -34,7 +34,7 @@ public class ContentUtils {
     /**
      * Translates the domain object package version, which will typically be returned for use in the UI, into the
      * transfer objects that will be send to the SLSB layer calls, such as deploy package and translate steps.
-     *
+     * 
      * @param packageVersion populated domain entity for a package version
      * @return transfer object populated with the necessary data to request package deployment related activities
      */
@@ -47,6 +47,20 @@ public class ContentUtils {
                                   pkgType.getName(), packageVersion.getArchitecture().getName());
 
         ResourcePackageDetails details = new ResourcePackageDetails(key);
+        details.setClassification(pkg.getClassification());
+        details.setDisplayName(packageVersion.getDisplayName());
+        details.setDisplayVersion(packageVersion.getDisplayVersion());
+//        details.setExtraProperties(packageVersion.getExtraProperties());
+        details.setFileCreatedDate(packageVersion.getFileCreatedDate());
+        details.setFileName(packageVersion.getFileName());
+        details.setFileSize(packageVersion.getFileSize());
+        details.setLicenseName(packageVersion.getLicenseName());
+        details.setLicenseVersion(packageVersion.getLicenseVersion());
+        details.setLongDescription(packageVersion.getLongDescription());
+        details.setMD5(packageVersion.getMD5());
+        details.setMetadata(packageVersion.getMetadata());
+        details.setSHA265(packageVersion.getSHA256());
+        details.setShortDescription(packageVersion.getShortDescription());
 
         return details;
     }

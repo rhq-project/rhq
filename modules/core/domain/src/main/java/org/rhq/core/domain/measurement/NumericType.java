@@ -18,6 +18,17 @@
  */
 package org.rhq.core.domain.measurement;
 
+/**
+ * More detailed description of numeric measurement data.
+ * 
+ * If dataType is "measurement", this further describes the measurement data.
+                  This defines whether the measurement values that get collected
+                  consistently increase over time or are dynamic and can "randomly"
+                  be higher or lower than previous values. The system will by itself generate
+                  per minute metris for data with measurementType of 
+                  trendsup or trendsdown.
+ * @author Heiko W. Rupp
+ */
 public enum NumericType {
     /** Data fluctuates up and down */
     DYNAMIC,

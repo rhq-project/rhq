@@ -22,6 +22,7 @@ package org.rhq.core.domain.measurement;
  * Data displayed in the summary view will appear in the main measurement display page. Data displayed in the detail
  * view will only appear in the UI when examining the entire set of metric data. The location in the UI where the
  * measurement data is shown is typically in a different area from where the trait data is shown.
+ * Note that metric collection is by default enabled for metrics with DisplayType.SUMMARY.
  *
  * @author John Mazzitelli
  */

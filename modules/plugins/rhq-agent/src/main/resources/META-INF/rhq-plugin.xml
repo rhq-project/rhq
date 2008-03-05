@@ -109,7 +109,7 @@
               defaultOn="true"
               units="seconds"
               category="availability"
-              measurementType="trendsup" />
+              measurementType="dynamic" />  <!-- changed to dynamic to prevent generation of per Minute metric. -->
 
       <metric property="NumberTotalCommandsReceived"
               displayName="Total Number Of Commands Received"

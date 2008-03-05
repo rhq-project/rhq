@@ -65,7 +65,12 @@
                      <onc:allSelect target="selectedPackages" />
                   </f:facet>
 
-                  <onc:select name="selectedPackages" value="#{item.id}"/>
+                  <ui:remove><!--
+                     Rendered attribute here will not show the checkbox if this package is of the same type as the
+                     package type that backs this resource (if it is content backed.
+                  --></ui:remove>
+                  <onc:select name="selectedPackages" value="#{item.id}"
+                              rendered="#{item.packageTypeName ne ListPackagesUIBean.contentBackedResourceTypeName}"/>
                </rich:column>
 
                <rich:column>

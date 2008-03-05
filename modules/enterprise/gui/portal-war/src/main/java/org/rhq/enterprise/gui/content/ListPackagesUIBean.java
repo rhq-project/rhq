@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.content;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,9 +28,11 @@ import javax.faces.model.SelectItem;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
-import org.rhq.core.domain.content.InstalledPackageHistoryStatus;
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -98,20 +99,6 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
         return "successOrFailure";
     }
 
-    public List<SelectItem> getInstalledPackageStatusList() {
-        List<SelectItem> items = new ArrayList<SelectItem>(5);
-        items.add(new SelectItem(InstalledPackageHistoryStatus.INSTALLED.getDisplayName(),
-            InstalledPackageHistoryStatus.INSTALLED.getDescription()));
-        items.add(new SelectItem(InstalledPackageHistoryStatus.BEING_INSTALLED.getDisplayName(),
-            InstalledPackageHistoryStatus.BEING_INSTALLED.getDescription()));
-        items.add(new SelectItem(InstalledPackageHistoryStatus.FAILED.getDisplayName(),
-            InstalledPackageHistoryStatus.FAILED.getDescription()));
-        items.add(new SelectItem(InstalledPackageHistoryStatus.DELETED.getDisplayName(),
-            InstalledPackageHistoryStatus.DELETED.getDescription()));
-        return items;
-    }
-
-    @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
             dataModel = new ListInstalledPackagesDataModel(PageControlView.InstalledPackagesList, MANAGED_BEAN_NAME);
@@ -126,6 +113,29 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
 
     public void setSelectedPackage(Integer selectedPackage) {
         this.selectedPackage = selectedPackage;
+    }
+
+    /**
+     * If the current resource is a content-backed resource, this call will return the name of the package type
+     * that does the resource backing. This is used to disallow the user to undeploy that package.
+     *
+     * @return name of a package type if the resource is content-backed; <code>null</code> otherwise
+     */
+    public String getContentBackedResourceTypeName() {
+        resource = EnterpriseFacesContextUtility.getResource();
+        ResourceType resourceType = resource.getResourceType();
+
+        if (resourceType.getCreationDataType() != ResourceCreationDataType.CONTENT)
+            return null;
+
+        ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
+        List<PackageType> packageTypes = contentUIManager.getPackageTypes(resourceType.getId());
+        for (PackageType type : packageTypes) {
+            if (type.isCreationData())
+                return type.getName();
+        }
+
+        return null;
     }
 
     // Inner Classes  --------------------------------------------

@@ -33,6 +33,7 @@
             
       <h:form id="pendingForm">
          <input type="hidden" name="groupId" value="${param.groupId}"/>
+         <input type="hidden" name="category" value="#{param.category}" />
       
         <rich:panel>
             <f:facet name="header">In Progress Operations</f:facet>
@@ -157,6 +158,7 @@
 
       <h:form id="historyForm">
          <input type="hidden" name="groupId" value="${param.groupId}"/>
+         <input type="hidden" name="category" value="#{param.category}" />
             
          <rich:panel>
             <f:facet name="header">Completed Operations</f:facet>

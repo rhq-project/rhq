@@ -23,6 +23,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -32,6 +33,7 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
+
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +58,8 @@ import org.jetbrains.annotations.NotNull;
 public class PropertyList extends Property {
     private static final long serialVersionUID = 1L;
 
-    @Cascade(value = { CascadeType.ALL, CascadeType.DELETE_ORPHAN })
+    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance
+    @Cascade(value = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "parentList", targetEntity = Property.class, fetch = FetchType.EAGER)
     //@IndexColumn(name = "list_index")  TODO GH: This seems broken
     private List<Property> list;
@@ -169,6 +172,7 @@ public class PropertyList extends Property {
      * @see org.rhq.core.domain.configuration.Property#readExternal(java.io.ObjectInput)
      */
     @Override
+    @SuppressWarnings("unchecked")
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         list = (List<Property>) in.readObject();

@@ -23,6 +23,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -32,6 +33,7 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
+
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +58,8 @@ import org.jetbrains.annotations.NotNull;
 public class PropertyMap extends Property implements AbstractPropertyMap {
     private static final long serialVersionUID = 1L;
 
-    @Cascade( { CascadeType.ALL, CascadeType.DELETE_ORPHAN })
+    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance
+    @Cascade( { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
     @MapKey(name = "name")
     @OneToMany(mappedBy = "parentMap", fetch = FetchType.EAGER)
     private Map<String, Property> map;
@@ -204,6 +207,7 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
      * @see org.rhq.core.domain.configuration.Property#readExternal(java.io.ObjectInput)
      */
     @Override
+    @SuppressWarnings("unchecked")
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         map = (Map<String, Property>) in.readObject();

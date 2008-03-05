@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.image.chart;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.Iterator;
+
 import org.rhq.enterprise.gui.image.data.IDataPoint;
 
 /**
@@ -38,22 +39,24 @@ public class AreaChart extends ColumnChart {
         super(width, height);
     }
 
+    @Override
     protected void init() {
         super.init();
         this.valueIndent = 0;
     }
 
+    @Override
     protected void paint(ChartGraphics g, Rectangle rect) {
         g.graphics.setColor(this.columnColor);
 
         DataPointCollection coll = this.getDataPoints();
-        Iterator iter = coll.iterator();
+        Iterator<IDataPoint> iter = coll.iterator();
 
         Rectangle rectBar = new Rectangle();
         rectBar.width = rect.width / coll.size();
 
         for (int index = 0; iter.hasNext() == true; index++) {
-            IDataPoint datapt = (IDataPoint) iter.next();
+            IDataPoint datapt = iter.next();
 
             if (Double.isNaN(datapt.getValue()) == true) {
                 continue;

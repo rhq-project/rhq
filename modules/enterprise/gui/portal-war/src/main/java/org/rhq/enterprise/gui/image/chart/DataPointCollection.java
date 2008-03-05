@@ -19,6 +19,8 @@
 package org.rhq.enterprise.gui.image.chart;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+
 import org.rhq.enterprise.gui.image.data.IDataPoint;
 
 /**
@@ -123,4 +125,15 @@ public class DataPointCollection extends ArrayList {
     public boolean retainAll(DataPointCollection c) {
         return super.retainAll(c);
     }
+
+    @Override
+    public Iterator<IDataPoint> iterator() {
+        return super.iterator();
+    }
+
+    @Override
+    public IDataPoint get(int index) {
+        return (IDataPoint) super.get(index);
+    }
+
 }

@@ -28,12 +28,14 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.event.Event;
 import org.rhq.enterprise.gui.image.chart.Chart;
 import org.rhq.enterprise.gui.image.chart.ColumnChart;
 import org.rhq.enterprise.gui.image.chart.DataPointCollection;
 import org.rhq.enterprise.gui.image.chart.EventPointCollection;
 import org.rhq.enterprise.gui.image.chart.LineChart;
 import org.rhq.enterprise.gui.image.chart.VerticalChart;
+import org.rhq.enterprise.gui.image.data.IDataPoint;
 import org.rhq.enterprise.gui.legacy.beans.ChartDataBean;
 
 /**
@@ -99,11 +101,11 @@ public class MetricChartServlet extends VerticalChartServlet {
         // charting just one set of data / event points, we'll plot a
         // ColumnChart.  Otherwise we'll plot a LineChart.
         ChartDataBean dataBean = (ChartDataBean) request.getSession().getAttribute(chartDataKey);
-        List dataPointsList;
+        List<List<IDataPoint>> dataPointsList;
         if (dataBean != null)
             dataPointsList = dataBean.getDataPoints();
         else
-            dataPointsList = new ArrayList();
+            dataPointsList = new ArrayList<List<IDataPoint>>();
         plotLineChart = (dataPointsList.size() > 1);
 
         // chart flags
@@ -119,10 +121,12 @@ public class MetricChartServlet extends VerticalChartServlet {
     @Override
     protected Chart createChart() {
         if (plotLineChart) {
-            log.trace("plotting a line chart");
+            if (log.isTraceEnabled())
+                log.trace("plotting a line chart");
             return new LineChart(getImageWidth(), getImageHeight());
         } else {
-            log.trace("plotting a column chart");
+            if (log.isTraceEnabled())
+                log.trace("plotting a column chart");
             return new ColumnChart(getImageWidth(), getImageHeight());
         }
     }
@@ -155,14 +159,14 @@ public class MetricChartServlet extends VerticalChartServlet {
         VerticalChart veritcalChart = (VerticalChart) chart;
 
         ChartDataBean dataBean = (ChartDataBean) request.getSession().getAttribute(chartDataKey);
-        List dataPointsList;
-        List eventsPointsList;
+        List<List<IDataPoint>> dataPointsList;
+        List<List<Event>> eventsPointsList;
         if (dataBean != null) {
             dataPointsList = dataBean.getDataPoints();
             eventsPointsList = dataBean.getEventPoints();
         } else {
-            dataPointsList = new ArrayList();
-            eventsPointsList = new ArrayList();
+            dataPointsList = new ArrayList<List<IDataPoint>>();
+            eventsPointsList = new ArrayList<List<Event>>();
         }
 
         // make sure they're the same size
@@ -171,23 +175,34 @@ public class MetricChartServlet extends VerticalChartServlet {
                 log.debug("got " + dataPointsList.size() + " set(s) of data / event points.");
             }
         } else {
-            throw new ServletException("Number of data point sets and number of event point sets must be the same.");
+            if (eventsPointsList.size() < dataPointsList.size()) {
+                if (log.isDebugEnabled())
+                    log.debug("Filling up eventsPointsList with empty List<Event>");
+                for (int i = eventsPointsList.size(); i < dataPointsList.size(); i++) {
+                    List<Event> dummy = new ArrayList<Event>();
+                    eventsPointsList.add(dummy);
+                }
+            } else {
+                throw new ServletException("Number of data point sets and number of event point sets must be the same.");
+            }
         }
 
         veritcalChart.setNumberDataSets(dataPointsList.size());
         int i = 0;
-        Iterator it = dataPointsList.iterator();
-        Iterator jt = eventsPointsList.iterator();
+        Iterator<List<IDataPoint>> it = dataPointsList.iterator();
+        Iterator<List<Event>> jt = eventsPointsList.iterator();
         while (it.hasNext() && jt.hasNext()) {
             // data points
-            List data = (List) it.next();
-            log.trace("plotting " + data.size() + " data points");
+            List<IDataPoint> data = it.next();
+            if (log.isTraceEnabled())
+                log.trace("plotting " + data.size() + " data points");
             DataPointCollection chartData = chart.getDataPoints(i);
             chartData.addAll(data);
 
             // events
-            List events = (List) jt.next();
-            log.trace("plotting " + events.size() + " event points");
+            List<Event> events = jt.next();
+            if (log.isTraceEnabled())
+                log.trace("plotting " + events.size() + " event points");
             EventPointCollection chartEvents = chart.getEventPoints(i);
             chartEvents.addAll(events);
 

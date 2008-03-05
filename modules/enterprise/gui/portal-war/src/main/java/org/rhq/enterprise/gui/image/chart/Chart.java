@@ -35,6 +35,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.image.WebImage;
+import org.rhq.enterprise.gui.image.data.IDataPoint;
 import org.rhq.enterprise.gui.image.data.IDisplayDataPoint;
 import org.rhq.enterprise.gui.image.data.IHighLowDataPoint;
 import org.rhq.enterprise.gui.image.data.IStackedDataPoint;
@@ -55,6 +56,7 @@ import org.rhq.enterprise.gui.image.data.IStackedDataPoint;
  * @see java.awt.Image
  */
 public abstract class Chart extends WebImage {
+
     private Log log = LogFactory.getLog(Chart.class.getName());
 
     ////////////////////////////////////////////////
@@ -480,7 +482,7 @@ public abstract class Chart extends WebImage {
         }
 
         // Adjust the interior of the rectangle
-        Rectangle rectAdj = this.adjustRectangle(g, rect);
+        this.adjustRectangle(g, rect);
 
         x2VertMarks = rect.x + rect.width + (this.lineWidth * 2);
         if (this.showRightLabels == true) {
@@ -488,9 +490,6 @@ public abstract class Chart extends WebImage {
         }
 
         xRLabel = x2VertMarks + this.textWhitespace;
-
-        int yVertLegend = rect.y + (this.height / 2)
-            - (m_metricsLegend.getAscent() * this.m_strValueLegend.length() / 2);
 
         // Calculate the Y axis
         rect.y = rect.y + this.topBorder;
@@ -524,8 +523,6 @@ public abstract class Chart extends WebImage {
         int y2Rect = yHorzMarks - this.lineWidth;
         rect.height = y2Rect - rect.y;
 
-        int xHorzLegend = (this.width / 2) - (m_metricsLegend.stringWidth(this.getUnitLegend()) / 2);
-        int xHorzMarks = rect.x + this.valueIndent;
     }
 
     /**
@@ -541,7 +538,6 @@ public abstract class Chart extends WebImage {
      */
     protected void calcRanges() {
         int cActualVals = 0;
-        int index;
         double unit;
         double topRange;
 
@@ -553,7 +549,7 @@ public abstract class Chart extends WebImage {
         Iterator<DataPointCollection> iterDataSet = this.m_collDataPointColl.iterator();
         while (iterDataSet.hasNext() == true) {
             // Each DataSet has a collection of data points.
-            Iterator iterDataPt = (iterDataSet.next()).iterator();
+            Iterator<IDataPoint> iterDataPt = (iterDataSet.next()).iterator();
 
             while (iterDataPt.hasNext() == true) {
                 IDisplayDataPoint datapt = (IDisplayDataPoint) iterDataPt.next();
@@ -621,8 +617,6 @@ public abstract class Chart extends WebImage {
                 range += (topbuf + botbuf);
                 unit = range / (this.valueLines - 1);
 
-                double tmp = range / unit;
-
                 this.m_floor = this.m_dLowValue - botbuf;
                 topRange = this.m_dPeakValue + topbuf;
             } else {
@@ -677,7 +671,7 @@ public abstract class Chart extends WebImage {
         int iWidth;
         int iMaxWidth = 0;
 
-        Iterator iter = this.getDataPoints().iterator();
+        Iterator<IDataPoint> iter = this.getDataPoints().iterator();
 
         while (iter.hasNext()) {
             iWidth = m_metricsLabel.stringWidth(((IDisplayDataPoint) iter.next()).getLabel());
@@ -759,7 +753,7 @@ public abstract class Chart extends WebImage {
         return (this.topBorder + cyLegend + cyLabel + cyBuf + this.bottomBorder);
     }
 
-    protected Collection initData(Collection coll) {
+    protected Collection<DataPointCollection> initData(Collection<DataPointCollection> coll) {
         return coll;
     }
 

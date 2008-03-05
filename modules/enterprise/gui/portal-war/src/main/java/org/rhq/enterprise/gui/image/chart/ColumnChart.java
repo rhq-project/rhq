@@ -22,6 +22,7 @@ import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.Iterator;
+
 import org.rhq.enterprise.gui.image.data.IDataPoint;
 import org.rhq.enterprise.gui.image.data.IHighLowDataPoint;
 
@@ -59,12 +60,14 @@ public class ColumnChart extends VerticalChart {
         super(width, height);
     }
 
+    @Override
     protected void init() {
         super.init();
         this.columnWidth = DEFAULT_COLUMN_WIDTH;
         this.valueIndent = 8;
     }
 
+    @Override
     protected void paint(ChartGraphics g, Rectangle rect) {
         /////////////////////////////////////////////////////////
         // Draw the Column Bars
@@ -76,10 +79,10 @@ public class ColumnChart extends VerticalChart {
         rectBar.width = this.columnWidth;
 
         DataPointCollection coll = this.getDataPoints();
-        Iterator iter = coll.iterator();
+        Iterator<IDataPoint> iter = coll.iterator();
 
         for (int index = 0; iter.hasNext() == true; index++) {
-            IDataPoint datapt = (IDataPoint) iter.next();
+            IDataPoint datapt = iter.next();
 
             Point ptData = this.getDataPoint(rect, index, coll);
             if (ptData == null) {
@@ -125,6 +128,7 @@ public class ColumnChart extends VerticalChart {
         }
     }
 
+    @Override
     protected boolean checkHighLow() {
         return true;
     }

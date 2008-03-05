@@ -28,9 +28,12 @@ import java.util.Iterator;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
+import org.rhq.enterprise.gui.image.data.IDataPoint;
 import org.rhq.enterprise.gui.image.data.IDisplayDataPoint;
+import org.rhq.enterprise.gui.image.data.IHighLowDataPoint;
 
 public class VerticalChart extends Chart {
+
     protected static final Color[] DEFAULT_COLORS = { new Color(0x00, 0x00, 0xFF), new Color(0xFF, 0x00, 0x00),
         new Color(0xCC, 0x00, 0x99), new Color(0x9B, 0xBA, 0x70), new Color(0xFF, 0xFF, 0x33),
         new Color(0x00, 0xFF, 0x00), new Color(0x00, 0xFF, 0xFF), new Color(0xA6, 0x78, 0x38),
@@ -87,11 +90,30 @@ public class VerticalChart extends Chart {
     }
 
     @Override
-    protected Collection initData(Collection coll) {
-        if ((this.m_fmtUnits == MeasurementUnits.PERCENTAGE) && ((this.m_dLowValue >= 0) && (this.m_dPeakValue <= 1))) {
+    protected Collection<DataPointCollection> initData(Collection<DataPointCollection> coll) {
+
+        if (this.m_fmtUnits == MeasurementUnits.PERCENTAGE) {
             this.floor = 0;
             this.ceiling = 1;
+            for (DataPointCollection dpc : coll) {
+                Iterator<IDataPoint> it = dpc.iterator();
+                while (it.hasNext()) {
+                    IDataPoint point = it.next();
+                    double ref;
+                    if (point instanceof IHighLowDataPoint) {
+                        ref = ((IHighLowDataPoint) point).getHighValue();
+                    } else
+                        ref = point.getValue();
+                    if (ref > this.ceiling)
+                        this.ceiling = ref;
+                }
+            }
         }
+
+        //        if ((this.m_fmtUnits == MeasurementUnits.PERCENTAGE) && ((this.m_dLowValue >= 0) && (this.m_dPeakValue <= 1))) {
+        //            this.floor = 0;
+        //            this.ceiling = 1;
+        //        }
 
         return coll;
     }
@@ -192,7 +214,6 @@ public class VerticalChart extends Chart {
 
         // Calculate points
         double dScale = this.scale(rect.height);
-        int lineWidth = this.lineWidth;
 
         int x2 = rect.x + rect.width;
         int y2 = rect.y + rect.height;
@@ -245,8 +266,6 @@ public class VerticalChart extends Chart {
             peakLabel.setRect(xPeakLabel, yPeakLabel, m_metricsLabel.stringWidth(Chart.PEAK), m_metricsLabel
                 .getHeight());
         }
-
-        int xHorzMarks = rect.x + this.valueIndent;
 
         //////////////////////////////////////////////////////////
         // Draw the Value (Y) Legend
@@ -351,7 +370,6 @@ public class VerticalChart extends Chart {
 
         graph.setFont(this.font);
 
-        Rectangle hit = new Rectangle();
         int xLast = 0;
 
         if (this.showLow == true) {

@@ -182,7 +182,8 @@ public abstract class ChartServlet extends ImageServlet {
         initializeChart(chart);
 
         // the subclass is responsible for plotting the data
-        log.debug("Plotting data...");
+        if (log.isDebugEnabled())
+            log.debug("Plotting data...");
         plotData(request, chart);
         return chart;
     }

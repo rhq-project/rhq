@@ -34,6 +34,7 @@ import org.rhq.core.domain.event.Event;
  * @see net.hyperic.chart.Chart
  */
 public class LineChart extends VerticalChart {
+
     private Color[] m_clrDataLines = VerticalChart.DEFAULT_COLORS;
     private boolean m_showLineEvents;
 
@@ -78,10 +79,10 @@ public class LineChart extends VerticalChart {
         g.graphics.setStroke(stroke);
 
         // Iterator through each data set
-        Iterator iterLines = this.getDataSetIterator();
+        Iterator<DataPointCollection> iterLines = this.getDataSetIterator();
         for (int line = 0; iterLines.hasNext() == true; line++) {
             // Draw the Line
-            DataPointCollection collDataPoints = (DataPointCollection) iterLines.next();
+            DataPointCollection collDataPoints = iterLines.next();
 
             Point ptData;
             int cActualPts = 0;
@@ -89,7 +90,6 @@ public class LineChart extends VerticalChart {
             int[] aiX = new int[cDataPts];
             int[] aiY = new int[cDataPts];
             int[] yDataPt = new int[cDataPts];
-            long[] timestamp = new long[cDataPts];
 
             for (int index = 0; index < cDataPts; index++) {
                 ptData = this.getDataPoint(rect, index, collDataPoints);

@@ -19,12 +19,15 @@
 package org.rhq.enterprise.gui.common.servlet;
 
 import java.io.IOException;
+
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 
 /**
@@ -102,22 +105,26 @@ public abstract class ImageServlet extends ParameterizedServlet {
     public ImageServlet() {
     }
 
+    @Override
     public void init() {
         if (log.isDebugEnabled()) {
             log.debug("java.awt.headless=" + System.getProperty("java.awt.headless"));
         }
     }
 
+    @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException {
         try {
             // parse the parameters
-            log.debug("Parsing parameters.");
+            if (log.isDebugEnabled())
+                log.debug("Parsing parameters.");
             parseParameters(request);
 
             Object imgObj = createImage(request);
 
             // render the chart
-            log.debug("Rendering image.");
+            if (log.isDebugEnabled())
+                log.debug("Rendering image.");
             ServletOutputStream out = response.getOutputStream();
 
             // we _never_ want the result cached by the browser, ever

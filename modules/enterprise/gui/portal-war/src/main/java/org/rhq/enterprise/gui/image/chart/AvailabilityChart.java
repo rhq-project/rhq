@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.image.chart;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
+
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.image.data.IDataPoint;
 
@@ -66,7 +67,6 @@ public class AvailabilityChart extends HealthChart {
         // Draw the Column Bars
 
         // Calculate Bar Width
-        int iNumPoints = this.getDataPoints().size();
 
         Rectangle rectBar = new Rectangle();
         int cDataPoints = this.getDataPoints().size();

@@ -308,7 +308,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
                     Subject overlord = subjectManager.getOverlord();
                     current = configurationManager.persistNewResourceConfigurationUpdateHistory(overlord, resourceId,
                         liveConfig, ConfigurationUpdateStatus.SUCCESS, null);
-                    resource.setResourceConfiguration(liveConfig);
+                    resource.setResourceConfiguration(liveConfig.deepCopy(false));
                 } catch (UpdateStillInProgressException e) {
                     // This means a config update is INPROGRESS.
                     // Return the current in this case since it is our latest committed active config.

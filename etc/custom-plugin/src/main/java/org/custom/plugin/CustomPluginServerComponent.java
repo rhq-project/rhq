@@ -78,7 +78,7 @@ public class CustomPluginServerComponent implements ResourceComponent, Measureme
     private ResourceContext resourceContext;
 
     /**
-     * This is called when your component has been started with the given context.  You normally initialize some internal
+     * This is called when your component has been started with the given context. You normally initialize some internal
      * state of your component as well as attempt to make a stateful connection to your managed resource.
      *
      * @see ResourceComponent#start(ResourceContext)

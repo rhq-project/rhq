@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.CpuPerc;
 import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.Swap;
 
@@ -47,6 +48,8 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.pluginapi.util.ObjectUtil;
+import org.rhq.core.system.CpuInformation;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 
@@ -56,6 +59,7 @@ import org.rhq.core.system.SystemInfo;
  * @author John Mazzitelli
  */
 public class PlatformComponent implements ResourceComponent, ConfigurationFacet, MeasurementFacet, OperationFacet {
+
     private final Log log = LogFactory.getLog(PlatformComponent.class);
 
     /**
@@ -76,9 +80,11 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
     private static final String TRAIT_OSVERSION = TRAIT_INDICATOR + "osversion";
 
     protected ResourceContext resourceContext;
+    private SystemInfo sysinfo;
 
     public void start(ResourceContext context) {
         this.resourceContext = context;
+        sysinfo = context.getSystemInformation();
     }
 
     public void stop() {
@@ -140,6 +146,30 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
                 property = property.substring(property.indexOf(".") + 1);
                 double swapValue = ((Number) getObjectProperty(platformSwapInfo, property)).doubleValue();
                 report.addData(new MeasurementDataNumeric(request, swapValue));
+            } else if (property.startsWith("CpuPerc.")) {
+
+                double result = 0.0;
+                property = property.substring(property.indexOf(".") + 1);
+
+                int numberOfCpus = 0;
+                try {
+                    numberOfCpus = sysinfo.getNumberOfCpus();
+                } catch (UnsupportedOperationException uoe) {
+                    if (log.isDebugEnabled())
+                        log.debug("Can't get number of CPUs ignoring metric " + property + " : " + uoe.getMessage());
+                }
+                if (numberOfCpus > 0) {
+                    for (int i = 0; i < numberOfCpus; i++) {
+                        CpuInformation cpuInfo = sysinfo.getCpu(i);
+                        CpuPerc cpuPerc = cpuInfo.getCpuPercentage();
+                        double value = ((Number) ObjectUtil.lookupAttributeProperty(cpuPerc, property)).doubleValue();
+                        result += value;
+                    }
+
+                    result /= numberOfCpus;
+
+                    report.addData(new MeasurementDataNumeric(request, result));
+                }
             }
         }
     }
@@ -153,14 +183,14 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
                 }
             }
         } catch (Exception skip) {
-            log.debug(skip);
+            if (log.isDebugEnabled())
+                log.debug(skip);
         }
 
         return Double.NaN;
     }
 
     private MeasurementDataTrait getMeasurementDataTrait(MeasurementScheduleRequest request) {
-        SystemInfo sysinfo = resourceContext.getSystemInformation();
         String name = request.getName();
 
         MeasurementDataTrait trait = new MeasurementDataTrait(request, "?");

@@ -85,6 +85,27 @@
               defaultOn="true"
               units="bytes"/>
 '>
+
+ <!ENTITY platformCpu '
+      <metric displayName="Idle" 
+               property="CpuPerc.idle" 
+               units="percentage" 
+               description="Idle percentage of all CPUs"/>
+      <metric displayName="System Load" 
+               property="CpuPerc.sys" 
+               displayType="summary" 
+               units="percentage" 
+               description="Percentage of all CPUs running in system mode"/>
+      <metric displayName="User Load" 
+               property="CpuPerc.user" 
+               displayType="summary" 
+               units="percentage" 
+               description="Percentage of all CPUs running in user mode"/>
+      <metric displayName="Wait Load" 
+               property="CpuPerc.wait" 
+               units="percentage" 
+               description="Percentage of all CPUs waiting on I/O"/>
+'>
 ]>
 
 <plugin name="Platforms"
@@ -120,6 +141,7 @@
 
       &platformOperations;
       &nativeMetrics;
+      &platformCpu;
       &metrics;
 
        <event name="Event Log" description="Windows event log" displayName="Event Log"/>
@@ -175,6 +197,7 @@
       <operation name="cleanYumMetadataCache" description="Deletes all cached package metadata" />
 
       &nativeMetrics;
+      &platformCpu;
       &metrics;
 
       <metric displayName="Distribution Name"
@@ -214,6 +237,7 @@
       &platformSubcategories;
       &platformOperations;
       &nativeMetrics;
+      &platformCpu;
       &metrics;
    </platform>
    
@@ -224,6 +248,7 @@
       &platformSubcategories;
       &platformOperations;
       &nativeMetrics;
+      &platformCpu;
       &metrics;
    </platform>
    
@@ -234,6 +259,7 @@
       &platformSubcategories;
       &platformOperations;
       &nativeMetrics;
+      &platformCpu;
       &metrics;
    </platform>
    
@@ -244,6 +270,7 @@
       &platformSubcategories;
       &platformOperations;
       &nativeMetrics;
+      &platformCpu;
       &metrics;
    </platform>
    
@@ -254,6 +281,7 @@
       &platformSubcategories;
       &platformOperations;
       &nativeMetrics;
+      &platformCpu;
       &metrics;
    </platform>
    

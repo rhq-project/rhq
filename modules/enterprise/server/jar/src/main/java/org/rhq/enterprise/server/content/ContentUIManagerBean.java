@@ -323,6 +323,12 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         List<InstalledPackageHistory> packages = query.getResultList();
 
         return new PageList<InstalledPackageHistory>(packages, (int) totalCount, pc);
+    }
 
+    public InstalledPackageHistory getInstalledPackageHistoryWithSteps(int historyId) {
+        Query query = entityManager.createNamedQuery(InstalledPackageHistory.QUERY_FIND_BY_ID_WITH_STEPS);
+        query.setParameter("id", historyId);
+        InstalledPackageHistory history = (InstalledPackageHistory)query.getSingleResult();
+        return history;
     }
 }

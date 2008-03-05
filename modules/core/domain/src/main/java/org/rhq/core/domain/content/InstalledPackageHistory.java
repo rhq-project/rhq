@@ -63,7 +63,9 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_CSR_ID, query = "SELECT iph FROM InstalledPackageHistory iph "
         + "WHERE iph.contentServiceRequest.id = :contentServiceRequestId"),
     @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_ID, query = "SELECT iph FROM InstalledPackageHistory iph "
-        + "WHERE iph.packageVersion.generalPackage.id = :packageId AND iph.resource.id = :resourceId")
+        + "WHERE iph.packageVersion.generalPackage.id = :packageId AND iph.resource.id = :resourceId"),
+    @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_ID_WITH_STEPS, query = "SELECT iph FROM InstalledPackageHistory iph "
+        + "LEFT JOIN FETCH iph.installationSteps WHERE iph.id = :id")
     })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_INSTALLED_PKG_HIST_ID_SEQ")
 @Table(name = "RHQ_INSTALLED_PKG_HIST")
@@ -76,6 +78,7 @@ public class InstalledPackageHistory implements Serializable {
     public static final String QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID = "InstalledPackageHistory.findByCsrIdAndPkgVerId";
     public static final String QUERY_FIND_BY_CSR_ID = "InstalledPackageHistory.findByCsrId";
     public static final String QUERY_FIND_BY_RESOURCE_ID_AND_PKG_ID = "InstalledPackageHistory.findByResourceIdAndPkgId";
+    public static final String QUERY_FIND_BY_ID_WITH_STEPS = "InstalledPackageHistory.findByIdWithSteps";
 
     // Attributes  --------------------------------------------
 

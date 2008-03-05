@@ -38,26 +38,8 @@
       </navigation-case>
 
       <navigation-case>
-         <from-outcome>viewArtifactRevision</from-outcome>
-         <to-view-id><![CDATA[/rhq/resource/artifact/content.xhtml?id=#{param.id}&amp;artifactId=#{param.artifactId}]]></to-view-id>
-         <redirect/>
-      </navigation-case>
-      
-      <navigation-case>
          <from-outcome>createArtifact</from-outcome>
          <to-view-id>/rhq/resource/content/create.xhtml</to-view-id>
-      </navigation-case>
-      
-      <navigation-case>
-         <from-outcome>updateArtifact</from-outcome>
-         <to-view-id>/rhq/resource/content/update.xhtml</to-view-id>
-      </navigation-case>
-      
-      <navigation-case>
-         <from-action>#{ListArtifactUIBean.deleteSelectedArtifacts}</from-action>
-         <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/resource/artifact/content.xhtml?id=#{param.id}</to-view-id>
-         <redirect/>
       </navigation-case>
       
    </navigation-rule>
@@ -84,6 +66,34 @@
      
       <navigation-case>
          <from-outcome>showContentServiceRequestDetails</from-outcome>
+         <to-view-id>/rhq/resource/content/history-request.xhtml?id=#{param.id}&amp;selectedRequestId=#{param.selectedRequestId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/history-request.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>showHistoryItem</from-outcome>
+         <to-view-id>/rhq/resource/content/history-request-item.xhtml?id=#{param.id}&amp;selectedHistoryId=#{param.selectedHistoryId}&amp;selectedRequestId=#{param.selectedRequestId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>returnToAllRequests</from-outcome>
+         <to-view-id>/rhq/resource/content/history.xhtml?id=${param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/history-request-item.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>returnToRequest</from-outcome>
          <to-view-id>/rhq/resource/content/history-request.xhtml?id=#{param.id}&amp;selectedRequestId=#{param.selectedRequestId}</to-view-id>
          <redirect/>
       </navigation-case>
@@ -120,18 +130,6 @@
        <from-outcome>cancel</from-outcome>
        <to-view-id>/rhq/resource/content/deploy.xhtml?id=${param.id}</to-view-id>
        <redirect/>
-      </navigation-case>
-      
-   </navigation-rule>
-
-   <navigation-rule>
-      <from-view-id>/rhq/resource/content/update.xhtml</from-view-id>
-      
-      <navigation-case>
-         <from-action>#{UpdateArtifactUIBean.updateArtifact}</from-action>
-         <from-outcome>successOrFailure</from-outcome>
-         <to-view-id>/rhq/resource/content/history.xhtml?id=${param.id}</to-view-id>
-         <redirect/>
       </navigation-case>
       
    </navigation-rule>

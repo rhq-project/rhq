@@ -206,4 +206,14 @@ public interface ContentUIManagerLocal {
      * @return list of history entries
      */
     PageList<InstalledPackageHistory> getInstalledPackageHistory(int contentServiceRequestId, PageControl pc);
+
+    /**
+     * Retrieves a specific history entry by its ID. This call will also load the list of installation steps and
+     * their results if they exist on the entry. One and only one history entry must exist for the ID; an error
+     * will be thrown if exactly one history entry is not found.
+     *
+     * @param historyId identifies the history entry
+     * @return history entry
+     */
+    InstalledPackageHistory getInstalledPackageHistoryWithSteps(int historyId);
 }

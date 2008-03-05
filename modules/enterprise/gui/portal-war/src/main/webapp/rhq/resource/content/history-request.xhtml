@@ -49,12 +49,12 @@
 
       <rich:column>
          <f:facet name="header">
-            <onc:sortableColumnHeader sort="iph.packageVersion.generalPackage.name">
+            <onc:sortableColumnHeader sort="iph.packageVersion.displayName">
                <h:outputText styleClass="headerText" value="Package Name" />
             </onc:sortableColumnHeader>
          </f:facet>
 
-         <h:outputText value="#{item.packageVersion.generalPackage.name}"/>
+         <h:outputText value="#{item.packageVersion.displayName}"/>
       </rich:column>
 
       <rich:column>
@@ -102,7 +102,12 @@
             <h:outputText styleClass="headerText" value="Details" />
          </f:facet>
 
-         <h:outputText value="VIEW"/>
+         <h:commandLink style="margin-top: 10px;" value="VIEW"
+                        action="showHistoryItem" styleClass="buttonmed">
+             <f:param name="selectedRequestId" value="#{ShowContentServiceRequestUIBean.selectedRequestId}"/>
+             <f:param name="selectedHistoryId" value="#{item.id}"/>
+         </h:commandLink>
+
       </rich:column>
 
       <f:facet name="footer">
@@ -120,6 +125,14 @@
    </rich:dataTable>
 
 </rich:panel>
+
+<p align="center">
+   <h:commandLink action="returnToAllRequests" value="Return to request list">
+      <f:param name="id" value="${param.id}"/>
+      <f:param name="selectedRequestId" value="${param.selectedRequestId}"/>
+   </h:commandLink>
+</p>
+
 </h:form>
 
 </ui:define>

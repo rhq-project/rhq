@@ -296,11 +296,33 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
 
     public PackageVersion getPackageVersion(int packageVersionId) {
         Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_ID);
-
         q.setParameter("id", packageVersionId);
-
         PackageVersion pv = (PackageVersion)q.getSingleResult();
-
         return pv;
+    }
+
+    public ContentServiceRequest getContentServiceRequest(int requestId) {
+        Query q = entityManager.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID);
+        q.setParameter("id", requestId);
+        ContentServiceRequest csr = (ContentServiceRequest)q.getSingleResult();
+        return csr;
+    }
+
+    public PageList<InstalledPackageHistory> getInstalledPackageHistory(int contentServiceRequestId, PageControl pc) {
+        pc.initDefaultOrderingField("iph.timestamp", PageOrdering.DESC);
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            InstalledPackageHistory.QUERY_FIND_BY_CSR_ID, pc);
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager,
+            InstalledPackageHistory.QUERY_FIND_BY_CSR_ID);
+
+        query.setParameter("contentServiceRequestId", contentServiceRequestId);
+        queryCount.setParameter("contentServiceRequestId", contentServiceRequestId);
+
+        long totalCount = (Long) queryCount.getSingleResult();
+        List<InstalledPackageHistory> packages = query.getResultList();
+
+        return new PageList<InstalledPackageHistory>(packages, (int) totalCount, pc);
+
     }
 }

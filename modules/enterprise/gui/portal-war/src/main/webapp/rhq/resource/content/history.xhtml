@@ -95,7 +95,11 @@
                 <h:outputText styleClass="headerText" value="Details"/>
             </f:facet>
 
-            <h:outputText value="View (will implement page soon)"/>
+           <h:commandLink style="margin-top: 10px;" value="VIEW"
+                          action="showContentServiceRequestDetails" styleClass="buttonmed">
+               <f:param name="selectedRequestId" value="#{item.id}"/>
+           </h:commandLink>
+            
         </rich:column>
 
         <rich:column>
@@ -191,7 +195,11 @@
                 <h:outputText styleClass="headerText" value="Details"/>
             </f:facet>
 
-            <h:outputText value="View (will implement page soon)"/>
+            <h:commandLink style="margin-top: 10px;" value="VIEW"
+                           action="showContentServiceRequestDetails" styleClass="buttonmed">
+                <f:param name="selectedRequestId" value="#{item.id}"/>
+            </h:commandLink>
+
         </rich:column>
 
         <rich:column>

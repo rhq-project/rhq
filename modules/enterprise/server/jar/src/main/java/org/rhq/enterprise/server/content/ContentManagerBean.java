@@ -489,6 +489,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 history.setErrorMessage(singleResponse.getErrorMessage());
             }
 
+            entityManager.persist(history);
             persistedRequest.addInstalledPackageHistory(history);
         }
     }

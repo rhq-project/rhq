@@ -63,6 +63,8 @@ import org.rhq.core.domain.resource.Resource;
         + "  FROM ContentServiceRequest AS csr JOIN FETCH csr.installedPackageHistory ip "
         + " WHERE csr.id IN (SELECT DISTINCT csr1.id  FROM ContentServiceRequest AS csr1 "
         + "                   WHERE csr1.id = :id) "),
+    @NamedQuery(name = ContentServiceRequest.QUERY_FIND_BY_ID, query = "SELECT csr "
+        + "  FROM ContentServiceRequest AS csr WHERE csr.id = :id"),
     @NamedQuery(name = ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST, query = "SELECT csr "
         + "  FROM ContentServiceRequest AS csr JOIN FETCH csr.installedPackageHistory ip "
         + " WHERE csr.id IN (SELECT DISTINCT csr1.id FROM ContentServiceRequest AS csr1 "
@@ -79,6 +81,7 @@ public class ContentServiceRequest implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE_WITH_NOT_STATUS = "ContentServiceRequest.findByResourceWithNotStatus";
     public static final String QUERY_FIND_BY_RESOURCE = "ContentServiceRequest.findByResource";
     public static final String QUERY_FIND_BY_ID_WITH_INSTALLED_PKG_HIST = "ContentServiceRequest.findByIdWithInstalledPackageHistory";
+    public static final String QUERY_FIND_BY_ID = "ContentServiceRequest.findById";
     public static final String QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST = "ContentServiceRequest.findByResourceWithInstalledPackageHistory";
 
     // Attributes  --------------------------------------------

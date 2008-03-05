@@ -118,7 +118,7 @@ public interface ContentUIManagerLocal {
      * @param resourceId  identifies the resource whose requests to retrieve
      * @param status      request status to not match
      * @param pageControl pagination controller
-     * @return list of Content requests for the specified resource
+     * @return list of content requests for the specified resource
      */
     PageList<ContentServiceRequest> getContentRequestsWithNotStatus(Subject user, int resourceId,
                                                                     ContentRequestStatus status, PageControl pageControl);
@@ -187,4 +187,23 @@ public interface ContentUIManagerLocal {
      * @return package version entity
      */
     PackageVersion getPackageVersion(int packageVersionId);
+
+    /**
+     * Retrieves a content request by its ID. One and only one content request must exist for the ID; an error
+     * will be thrown if exactly one content request is not found. 
+     *
+     * @param requestId identifies the request
+     * @return content request entity
+     */
+    ContentServiceRequest getContentServiceRequest(int requestId);
+
+    /**
+     * Returns a list of installed package history entries that were created as a result of executing the indicated
+     * request.
+     *
+     * @param contentServiceRequestId identifies the request that caused the history entries
+     * @param pc                      pagination controller
+     * @return list of history entries
+     */
+    PageList<InstalledPackageHistory> getInstalledPackageHistory(int contentServiceRequestId, PageControl pc);
 }

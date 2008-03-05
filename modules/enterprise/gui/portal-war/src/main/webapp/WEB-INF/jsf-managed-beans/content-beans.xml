@@ -10,6 +10,8 @@
       <managed-bean-class>org.rhq.enterprise.gui.content.ListPackagesUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
+
+   <!-- /rhq/resource/content/history.xhtml -->
    <managed-bean>
       <managed-bean-name>ListInProgressContentRequestsUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.content.ListInProgressContentRequestsUIBean</managed-bean-class>
@@ -18,6 +20,11 @@
    <managed-bean>
       <managed-bean-name>ListCompletedContentRequestsUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.content.ListCompletedContentRequestsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ShowContentServiceRequestUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ShowContentServiceRequestUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 

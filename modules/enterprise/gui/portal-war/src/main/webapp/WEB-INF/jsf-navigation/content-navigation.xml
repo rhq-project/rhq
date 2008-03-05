@@ -83,12 +83,12 @@
       <from-view-id>/rhq/resource/content/history.xhtml</from-view-id>
      
       <navigation-case>
-         <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/resource/operation/resourceOperationHistory.xhtml?id=#{param.id}</to-view-id>
+         <from-outcome>showContentServiceRequestDetails</from-outcome>
+         <to-view-id>/rhq/resource/content/history-request.xhtml?id=#{param.id}&amp;selectedRequestId=#{param.selectedRequestId}</to-view-id>
          <redirect/>
       </navigation-case>
-      
-   </navigation-rule> 
+
+   </navigation-rule>
 
    <navigation-rule>
       <from-view-id>/rhq/resource/content/create.xhtml</from-view-id>

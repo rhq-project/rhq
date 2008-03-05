@@ -60,6 +60,8 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID, query = "SELECT iph FROM InstalledPackageHistory iph "
         + "WHERE iph.contentServiceRequest.id = :contentServiceRequestId "
         + "AND iph.packageVersion.id = :packageVersionId " + "ORDER BY timestamp DESC"),
+    @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_CSR_ID, query = "SELECT iph FROM InstalledPackageHistory iph "
+        + "WHERE iph.contentServiceRequest.id = :contentServiceRequestId"),
     @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_ID, query = "SELECT iph FROM InstalledPackageHistory iph "
         + "WHERE iph.packageVersion.generalPackage.id = :packageId AND iph.resource.id = :resourceId")
     })
@@ -72,6 +74,7 @@ public class InstalledPackageHistory implements Serializable {
 
     public static final String QUERY_FIND_CONFIG_BY_PACKAGE_VERSION_AND_REQ = "InstalledPackageHistory.findConfigByPackageVersionAndReq";
     public static final String QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID = "InstalledPackageHistory.findByCsrIdAndPkgVerId";
+    public static final String QUERY_FIND_BY_CSR_ID = "InstalledPackageHistory.findByCsrId";
     public static final String QUERY_FIND_BY_RESOURCE_ID_AND_PKG_ID = "InstalledPackageHistory.findByResourceIdAndPkgId";
 
     // Attributes  --------------------------------------------

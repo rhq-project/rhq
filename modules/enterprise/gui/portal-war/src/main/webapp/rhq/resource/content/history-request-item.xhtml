@@ -35,25 +35,55 @@
    <ui:remove><!-- Ultimately, this page should display the deployment time configuration values specified by
                    the user. --></ui:remove>
 
-   <h:dataTable value="#{ShowInstalledPackageHistoryUIBean.historySelectItems}" var="item"
-                styleClass="revision-data-table"
-                headerClass="revision-data-table-header"
-                rowClasses="revision-data-table-even-row,revision-data-table-odd-row"
-                cellpadding="3"
-                cellspacing="0">
+   <table class="revision-data-table" width="100%">
+      <tr class="revision-data-table-even-row">
+         <td><b>Package Name</b></td>
+         <td>
+            <h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.packageVersion.displayName}"
+                          rendered="#{!empty ShowInstalledPackageHistoryUIBean.history.packageVersion.displayName}"/>
+            <h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.packageVersion.generalPackage.name}"
+                          rendered="#{empty ShowInstalledPackageHistoryUIBean.history.packageVersion.displayName}"/>
 
-      <h:column>
-          <b><h:outputText value="#{item.label}"/><f:verbatim>:</f:verbatim> </b>
-       </h:column>
-        <h:column>
-           <h:outputText value="#{item.value}"/>
-       </h:column>
+         </td>
+      </tr>
+      <tr class="revision-data-table-odd-row">
+         <td><b>Version</b></td>
+         <td>
+            <h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.packageVersion.displayVersion}"
+                          rendered="#{!empty ShowInstalledPackageHistoryUIBean.history.packageVersion.displayVersion}"/>
+            <h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.packageVersion.version}"
+                          rendered="#{empty ShowInstalledPackageHistoryUIBean.history.packageVersion.displayVersion}"/>
+         </td>
+      </tr>
+      <tr class="revision-data-table-even-row">
+         <td><b>Architecture</b></td>
+         <td>
+            <h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.packageVersion.architecture.name}"/>
+         </td>
+      </tr>
+      <tr class="revision-data-table-odd-row">
+         <td><b>Result</b></td>
+         <td>
+            <h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.status.displayName}"/>
+         </td>
+      </tr>
+      <tr class="revision-data-table-even-row">
+         <td valign="top"><b>Error Message</b></td>
+         <td>
+            <pre><h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.errorMessage}"
+                          rendered="#{!empty ShowInstalledPackageHistoryUIBean.history.errorMessage}"/></pre>
+            <h:outputText value="No errors encountered"
+                          rendered="#{empty ShowInstalledPackageHistoryUIBean.history.errorMessage}"/>
+         </td>
+      </tr>
+   </table>
+</rich:panel>
 
-   </h:dataTable>
+<rich:panel rendered="#{!empty ShowInstalledPackageHistoryUIBean.installationSteps}">
+   <f:facet name="header"><h:outputText value="Installation Step Details"/></f:facet>
 
    <h:dataTable value="#{ShowInstalledPackageHistoryUIBean.installationSteps}"
                 binding="#{ShowInstalledPackageHistoryUIBean.stepsData}"
-                rendered="#{!empty ShowInstalledPackageHistoryUIBean.installationSteps}"
                 var="item"
                 styleClass="instructions-data-table"
                 headerClass="instructions-data-table-header"

@@ -56,27 +56,6 @@ public class ShowInstalledPackageHistoryUIBean {
         this.history = history;
     }
 
-    @SuppressWarnings("unchecked")
-    public SelectItem[] getHistorySelectItems() {
-        PackageVersion pkgVersion = getHistory().getPackageVersion();
-
-        List items = new ArrayList();
-
-        items.add(new SelectItem(pkgVersion.getDisplayName(), "Package Name"));
-        items.add(new SelectItem(pkgVersion.getDisplayVersion(), "Version"));
-        items.add(new SelectItem(pkgVersion.getArchitecture().getName(), "Architecture"));
-        items.add(new SelectItem(history.getStatus().getDisplayName(), "Result"));
-
-        if (history.getErrorMessage() != null) {
-            items.add(new SelectItem(history.getErrorMessage(), "Error Message"));
-        }
-
-        SelectItem[] results = new SelectItem[items.size()];
-        results = (SelectItem[])items.toArray(results);
-
-        return results;
-    }
-
     public int getSelectedHistoryId() {
         if (selectedHistoryId == 0) {
             HttpServletRequest request = FacesContextUtility.getRequest();

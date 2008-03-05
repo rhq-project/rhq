@@ -45,7 +45,7 @@ public class ShowContentServiceRequestUIBean extends PagedDataTableUIBean {
     public ContentServiceRequest getContentServiceRequest() {
         if (contentServiceRequest == null) {
             ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
-            contentServiceRequest = contentUIManager.getContentServiceRequest(selectedRequestId);
+            contentServiceRequest = contentUIManager.getContentServiceRequest(getSelectedRequestId());
         }
 
         return contentServiceRequest;

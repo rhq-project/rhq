@@ -29,21 +29,28 @@
          
             <f:facet name="header"><h:outputText value="Deployed Content"/></f:facet>
 
-            <h:outputText value="Package Type Filter: " />
-            <h:selectOneMenu id="packageTypeFilter" 
-                             value="#{ListPackagesUIBean.packageTypeFilter}">
-               <a4j:support event="onchange" reRender="packagesDataTable, packagesDataTableScroller"/>
-               <f:selectItems value="#{ListPackagesUIBean.packageTypes}" />
-            </h:selectOneMenu>
-            <br/>
+            <h:panelGrid columns="2" width="100%">
 
-            <h:outputText value="Package Version Filter: " />
-            <h:selectOneMenu id="packageVersionFilter"
-                             value="#{ListPackagesUIBean.packageVersionFilter}">
-               <a4j:support event="onchange" reRender="packagesDataTable, packagesDataTableScroller"/>
-               <f:selectItems value="#{ListPackagesUIBean.packageVersions}" />
-            </h:selectOneMenu>
-            <br/>
+               <h:panelGroup>
+                  <h:outputText value="Package Type Filter: " />
+                  <h:selectOneMenu id="packageTypeFilter"
+                                   value="#{ListPackagesUIBean.packageTypeFilter}">
+                     <a4j:support event="onchange" reRender="packagesDataTable, packagesDataTableScroller"/>
+                     <f:selectItems value="#{ListPackagesUIBean.packageTypes}" />
+                  </h:selectOneMenu>
+               </h:panelGroup>
+
+               <h:panelGroup>
+                  <h:outputText value="Package Version Filter: " />
+                  <h:selectOneMenu id="packageVersionFilter"
+                                   value="#{ListPackagesUIBean.packageVersionFilter}">
+                     <a4j:support event="onchange" reRender="packagesDataTable, packagesDataTableScroller"/>
+                     <f:selectItems value="#{ListPackagesUIBean.packageVersions}" />
+                  </h:selectOneMenu>
+               </h:panelGroup>
+               
+            </h:panelGrid>
+
 
             <ui:param name="packagesDataModel" value="#{ListPackagesUIBean.dataModel}"/>
             <rich:dataTable binding="#{ListPackagesUIBean.dataTable}"

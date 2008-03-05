@@ -449,7 +449,7 @@ public final class DefinitionForm extends ResourceForm {
 
             // if there's a "type" param, then its an alert template (can't use isAlertTemplate because the
             // definitionForm was just cleared on reset()
-            if( request.getParameter("type") != null && request.getParameter("type").equalsIgnoreCase("") ) {
+            if( request.getParameter("type") == null || request.getParameter("type").equalsIgnoreCase("") ) {
                 AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
                 Integer resourceId = RequestUtils.getResourceId(request);
 

@@ -11,28 +11,28 @@
       <navigation-case>
          <!-- schedule an operation for deferred execution -->
          <from-outcome>viewOperationSchedules</from-outcome>
-         <to-view-id>/rhq/group/operation/groupOperationSchedules.xhtml?groupId=#{param.groupId}</to-view-id>
+         <to-view-id>/rhq/group/operation/groupOperationSchedules.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <!-- schedule an operation for immediate execution -->
          <from-outcome>viewOperationHistory</from-outcome>
-         <to-view-id>/rhq/group/operation/groupOperationHistory.xhtml?groupId=#{param.groupId}</to-view-id>
+         <to-view-id>/rhq/group/operation/groupOperationHistory.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <!-- catch all navigation-case: if any actions return 'success', go back here -->
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/group/operation/groupOperationScheduleNew.xhtml?groupId=#{param.groupId}&amp;opId=#{param.opId}</to-view-id>
+         <to-view-id>/rhq/group/operation/groupOperationScheduleNew.xhtml?groupId=#{param.groupId}&amp;opId=#{param.opId}&amp;category=#{param.category}</to-view-id>
          <redirect/>
       </navigation-case>
       
       <navigation-case>
          <!-- sorting rule --> 
          <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/group/operation/groupOperationScheduleNew.xhtml?groupId=#{param.groupId}</to-view-id>
+         <to-view-id>/rhq/group/operation/groupOperationScheduleNew.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect/>
       </navigation-case> 
       
@@ -45,21 +45,21 @@
       <navigation-case>
          <!-- catch all navigation-case: if any actions return 'success', go here -->
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/group/operation/groupOperationSchedules.xhtml?groupId=#{param.groupId}</to-view-id>
+         <to-view-id>/rhq/group/operation/groupOperationSchedules.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect/>
       </navigation-case>
       
       <navigation-case>
          <!-- sorting rule --> 
          <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/group/operation/groupOperationSchedules.xhtml?groupId=#{param.groupId}</to-view-id>
+         <to-view-id>/rhq/group/operation/groupOperationSchedules.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect/>
       </navigation-case> 
       
       <navigation-case>
          <!-- schedule an operation for immediate execution -->
          <from-outcome>viewOperationHistory</from-outcome>
-         <to-view-id>/rhq/group/operation/groupOperationHistory.xhtml?groupId=#{param.groupId}</to-view-id>
+         <to-view-id>/rhq/group/operation/groupOperationHistory.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect/>
       </navigation-case>
       
@@ -72,7 +72,7 @@
       <navigation-case>
          <!-- schedule an operation for immediate execution -->
          <from-outcome>viewOperationHistory</from-outcome>
-         <to-view-id>/rhq/group/operation/groupOperationHistory.xhtml?groupId=#{param.groupId}</to-view-id>
+         <to-view-id>/rhq/group/operation/groupOperationHistory.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect/>
       </navigation-case>
 
@@ -85,14 +85,14 @@
       <navigation-case>
          <!-- catch all navigation-case: if any actions return 'success', go here -->
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/group/operation/groupOperationHistory.xhtml?groupId=#{param.groupId}</to-view-id>
+         <to-view-id>/rhq/group/operation/groupOperationHistory.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect/>
       </navigation-case>
       
       <navigation-case>
          <!-- sorting rule --> 
          <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/group/operation/groupOperationHistory.xhtml?groupId=#{param.groupId}</to-view-id>
+         <to-view-id>/rhq/group/operation/groupOperationHistory.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect/>
       </navigation-case> 
       

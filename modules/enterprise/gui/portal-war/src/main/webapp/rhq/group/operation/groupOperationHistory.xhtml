@@ -96,9 +96,10 @@
                   <h:outputLink value="/rhq/group/operation/groupOperationHistoryDetails.xhtml" >
                      <f:param name="groupId" value="#{param.groupId}" />
                      <f:param name="opId" value="#{pendingItem.id}" />
+                     <f:param name="category" value="#{param.category}" />
+                     
                      <h:outputText value="#{pendingItem.operationDefinition.displayName}"/>
                   </h:outputLink>
-
                </rich:column>
                
                <rich:column>
@@ -232,6 +233,8 @@
                   <h:outputLink value="/rhq/group/operation/groupOperationHistoryDetails.xhtml" >
                      <f:param name="groupId" value="#{param.groupId}" />
                      <f:param name="opId" value="#{historyItem.id}" />
+                     <f:param name="category" value="#{param.category}" />
+                     
                      <h:outputText value="#{historyItem.operationDefinition.displayName}"/>
                   </h:outputLink>
                </rich:column>

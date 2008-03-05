@@ -68,6 +68,8 @@
                   <h:outputLink value="/rhq/group/operation/groupOperationScheduleDetails.xhtml" >
                      <f:param name="groupId" value="#{param.groupId}" />
                      <f:param name="jobId" value="#{item.jobId}" />
+                     <f:param name="category" value="#{param.category}" />
+                     
                      <h:outputText value="#{item.operationDisplayName}"/>
                   </h:outputLink>
                </rich:column>

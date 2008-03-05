@@ -45,7 +45,26 @@ public class ProcessExecutionUtility {
      * @return a process execution
      */
     public static ProcessExecution createProcessExecution(File file) {
+        return createProcessExecution((String) null, file);
+    }
+
+    /**
+     * Creates a ProcessExecution for the specified file for the current platform. If the current platform is Windows
+     * and the file name ends with ".bat" or ".cmd", the file will be assumed to be a Windows batch file, and the
+     * process execution will be initialized accordingly. Note, if the file is a UNIX script, its first line must be a
+     * valid #! reference to a script interpreter (e.g. #!/bin/sh), otherwise it will fail to execute. The returned
+     * ProcessExecution will have a non-null arguments list, an environment map that is a copy of the current process's
+     * environment, and a working directory set to its executable's parent directory.
+     *
+     * @param  prefix a command prefix applied prior to <code>file</code> execution. Typically a <code>sudo</code>
+     *                command. Ignored if null.
+     * @param  file an executable or a batch file
+     *
+     * @return a process execution
+     */
+    public static ProcessExecution createProcessExecution(String prefix, File file) {
         ProcessExecution processExecution;
+
         if (isWindows() && isBatchFile(file)) {
             String comSpec = System.getenv("COMSPEC");
             if (comSpec == null) {
@@ -58,17 +77,27 @@ public class ProcessExecutionUtility {
             }
 
             processExecution = new ProcessExecution(comSpec);
-            processExecution.setArguments(new String[] { "/C", file.getPath(), });
+            if (null == prefix) {
+                processExecution.setArguments(new String[] { "/C", file.getPath(), });
+            } else {
+                processExecution.setArguments(new String[] { "/C", prefix, file.getPath(), });
+            }
         } else {
-            processExecution = new ProcessExecution(file.getPath());
-            processExecution.setArguments(new ArrayList<String>());
+            if (null == prefix) {
+                processExecution = new ProcessExecution(file.getPath());
+                processExecution.setArguments(new ArrayList<String>());
+            } else {
+                processExecution = new ProcessExecution(prefix);
+                processExecution.setArguments(new ArrayList<String>());
+                processExecution.getArguments().add(file.getPath());
+            }
         }
 
         // Start out with a copy of our own environment, since Windows needs
         // certain system environment variables to find DLLs, etc., and even
         // on UNIX, many scripts will require certain environment variables
         // (PATH, JAVA_HOME, etc.).
-        Map<String, String> envVars = new LinkedHashMap(System.getenv());
+        Map<String, String> envVars = new LinkedHashMap<String, String>(System.getenv());
         processExecution.setEnvironmentVariables(envVars);
 
         // Many scripts (e.g. JBossAS scripts) assume their working directory is their parent directory.

@@ -54,7 +54,8 @@
             </onc:sortableColumnHeader>
          </f:facet>
 
-         <h:outputText value="#{item.packageVersion.displayName}"/>
+         <h:outputText value="#{item.packageVersion.displayName}" rendered="#{!empty item.packageVersion.displayName}"/>
+         <h:outputText value="#{item.packageVersion.generalPackage.name}" rendered="#{empty item.packageVersion.displayName}"/>
       </rich:column>
 
       <rich:column>

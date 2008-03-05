@@ -231,12 +231,16 @@
 
       </rich:panel>
 
+      <ui:remove><!-- The package mode isn't returning enough data to differentiate it from the new subtab, so
+                      disabling it for now until we decide if this is needed. --></ui:remove>
+      <!--
       <p align="center">
          <h:outputLink value="/rhq/resource/content/subscription_packages.xhtml">
             <f:param name="id" value="${param.id}"/>
             <h:outputText value="Switch To Package Mode" />
          </h:outputLink>
       </p>
+      -->
       
       </h:form>
 

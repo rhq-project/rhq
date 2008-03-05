@@ -37,6 +37,17 @@
 #    RHQ_SERVER_JAVA_OPTS - Java VM command line options to be
 #                           passed into the server's VM. If this is not defined
 #                           this script will pass in a default set of options.
+#                           If this is set, it completely overrides the
+#                           server's defaults. If you only want to add options
+#                           to the server's defaults, then you will want to
+#                           use RHQ_SERVER_ADDITIONAL_JAVA_OPTS instead.
+#
+#    RHQ_SERVER_ADDITIONAL_JAVA_OPTS - additional Java VM command line options
+#                                      to be passed into the server's VM. This
+#                                      is added to RHQ_SERVER_JAVA_OPTS; it
+#                                      is mainly used to augment the server's
+#                                      default set of options. This can be
+#                                      left unset if it is not needed.
 #
 #    RHQ_SERVER_CMDLINE_OPTS - If this is defined, these are the command line
 #                              arguments that will be passed to the RHQ Server.
@@ -55,7 +66,8 @@
 # RHQ_SERVER_DEBUG=true
 # JAVA_HOME=/path/to/java/installation
 # RHQ_SERVER_JAVA_EXE_FILE_PATH=/path/directly/to/java/executable
-# RHQ_SERVER_JAVA_OPTS=additional VM options
+# RHQ_SERVER_JAVA_OPTS=VM options
+# RHQ_SERVER_JAVA_ADDITIONAL_OPTS=additional VM options
 # RHQ_SERVER_CMDLINE_OPTS=additional run.sh options
 
 # ----------------------------------------------------------------------
@@ -203,9 +215,10 @@ if [ "x$RHQ_SERVER_JAVA_OPTS" = "x" ]; then
 fi
 RHQ_SERVER_JAVA_OPTS="$RHQ_SERVER_JAVA_OPTS -Djboss.platform.mbeanserver"
 debug_msg "RHQ_SERVER_JAVA_OPTS: $RHQ_SERVER_JAVA_OPTS"
+debug_msg "RHQ_SERVER_ADDITIONAL_JAVA_OPTS: $RHQ_SERVER_ADDITIONAL_JAVA_OPTS"
 
 # run.sh wants the options to be in the JAVA_OPTS variable
-JAVA_OPTS=$RHQ_SERVER_JAVA_OPTS
+JAVA_OPTS="$RHQ_SERVER_JAVA_OPTS $RHQ_SERVER_ADDITIONAL_JAVA_OPTS"
 export JAVA_OPTS
 
 # ----------------------------------------------------------------------

@@ -36,6 +36,17 @@
 #    RHQ_AGENT_JAVA_OPTS - Java VM command line options to be
 #                          passed into the agent's VM. If this is not defined
 #                          this script will pass in a default set of options.
+#                          If this is set, it completely overrides the
+#                          agent's defaults. If you only want to add options
+#                          to the agent's defaults, then you will want to
+#                          use RHQ_AGENT_ADDITIONAL_JAVA_OPTS instead.
+#
+#    RHQ_AGENT_ADDITIONAL_JAVA_OPTS - additional Java VM command line options
+#                                     to be passed into the agent's VM. This
+#                                     is added to RHQ_AGENT_JAVA_OPTS; it
+#                                     is mainly used to augment the agent's
+#                                     default set of options. This can be
+#                                     left unset if it is not needed.
 #
 #    RHQ_AGENT_CMDLINE_OPTS - If this is defined, these are the command line
 #                             arguments that will be passed to the RHQ Agent.
@@ -59,6 +70,7 @@
 # =============================================================================
 
 RHQ_AGENT_DEBUG=1
+RHQ_AGENT_ADDITIONAL_JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,address=9797,server=y,suspend=n"
 
 # ----------------------------------------------------------------------
 # Subroutine that simply dumps a message iff debug mode is enabled
@@ -158,7 +170,7 @@ done
 # ----------------------------------------------------------------------
 
 if [ "x$RHQ_AGENT_JAVA_OPTS" = "x" ]; then
-   RHQ_AGENT_JAVA_OPTS="-Xmx256m -Djava.net.preferIPv4Stack=true"
+   RHQ_AGENT_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true"
 fi
 
 # The RHQ Agent has a JNI library that it needs to find in order to
@@ -177,9 +189,8 @@ fi
 
 RHQ_AGENT_JAVA_OPTS="-Djava.library.path=${_JNI_PATH} ${RHQ_AGENT_JAVA_OPTS}"
 
-RHQ_AGENT_JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,address=9797,server=y,suspend=n ${RHQ_AGENT_JAVA_OPTS}"
-
 debug_msg "RHQ_AGENT_JAVA_OPTS: $RHQ_AGENT_JAVA_OPTS"
+debug_msg "RHQ_AGENT_ADDITIONAL_JAVA_OPTS: $RHQ_AGENT_ADDITIONAL_JAVA_OPTS"
 
 # ----------------------------------------------------------------------
 # Prepare the command line arguments passed to the RHQ Agent
@@ -210,7 +221,7 @@ if [ "x$_CYGWIN" != "x" ]; then
 fi
 
 # Build the command line that starts the VM
-CMD="${RHQ_AGENT_JAVA_EXE_FILE_PATH} ${RHQ_AGENT_JAVA_OPTS} ${_LOG_CONFIG} -cp $CLASSPATH org.rhq.enterprise.agent.AgentMain $RHQ_AGENT_CMDLINE_OPTS"
+CMD="${RHQ_AGENT_JAVA_EXE_FILE_PATH} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp ${CLASSPATH} org.rhq.enterprise.agent.AgentMain ${RHQ_AGENT_CMDLINE_OPTS}"
 
 debug_msg "Executing the agent with this command line:"
 debug_msg "$CMD"

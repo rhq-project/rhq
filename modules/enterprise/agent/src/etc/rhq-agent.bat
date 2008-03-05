@@ -39,6 +39,17 @@ rem
 rem    RHQ_AGENT_JAVA_OPTS - Java VM command line options to be
 rem                          passed into the agent's VM. If this is not defined
 rem                          this script will pass in a default set of options.
+rem                          If this is set, it completely overrides the
+rem                          agent's defaults. If you only want to add options
+rem                          to the agent's defaults, then you will want to
+rem                          use RHQ_AGENT_ADDITIONAL_JAVA_OPTS instead.
+rem
+rem    RHQ_AGENT_ADDITIONAL_JAVA_OPTS - additional Java VM command line options
+rem                                     to be passed into the agent's VM. This
+rem                                     is added to RHQ_AGENT_JAVA_OPTS; it
+rem                                     is mainly used to augment the agent's
+rem                                     default set of options. This can be
+rem                                     left unset if it is not needed.
 rem
 rem    RHQ_AGENT_CMDLINE_OPTS - If this is defined, these are the command line
 rem                             arguments that will be passed to the RHQ Agent.
@@ -130,6 +141,7 @@ set _JNI_PATH=%RHQ_AGENT_HOME%\lib
 set RHQ_AGENT_JAVA_OPTS="-Djava.library.path=%_JNI_PATH%" %RHQ_AGENT_JAVA_OPTS%
 
 if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_OPTS: %RHQ_AGENT_JAVA_OPTS%
+if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_ADDITIONAL_JAVA_OPTS: %RHQ_AGENT_ADDITIONAL_JAVA_OPTS%
 
 rem ----------------------------------------------------------------------
 rem Prepare the command line arguments passed to the RHQ Agent
@@ -151,7 +163,7 @@ if defined RHQ_AGENT_DEBUG (
    set _LOG_CONFIG=-Dlog4j.configuration=log4j.xml
 )
 
-set CMD="%RHQ_AGENT_JAVA_EXE_FILE_PATH%" %RHQ_AGENT_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" org.rhq.enterprise.agent.AgentMain %RHQ_AGENT_CMDLINE_OPTS%
+set CMD="%RHQ_AGENT_JAVA_EXE_FILE_PATH%" %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" org.rhq.enterprise.agent.AgentMain %RHQ_AGENT_CMDLINE_OPTS%
 
 if not defined _SETENV_ONLY (
    rem log4j 1.2.8 does not create the directory for us (later versions do)
@@ -200,7 +212,7 @@ rem ----------------------------------------------------------------------
 :done
 if defined RHQ_AGENT_DEBUG echo %0 done.
 if defined _SETENV_ONLY (
-endlocal & SET "RHQ_AGENT_HOME=%RHQ_AGENT_HOME%" & SET "RHQ_AGENT_JAVA_EXE_FILE_PATH=%RHQ_AGENT_JAVA_EXE_FILE_PATH%" & SET "RHQ_AGENT_JAVA_OPTS=%RHQ_AGENT_JAVA_OPTS%" & SET "RHQ_AGENT_BIN_DIR_PATH=%RHQ_AGENT_BIN_DIR_PATH%"
+endlocal & SET "RHQ_AGENT_HOME=%RHQ_AGENT_HOME%" & SET "RHQ_AGENT_JAVA_EXE_FILE_PATH=%RHQ_AGENT_JAVA_EXE_FILE_PATH%" & SET "RHQ_AGENT_JAVA_OPTS=%RHQ_AGENT_JAVA_OPTS%" & SET "RHQ_AGENT_ADDITIONAL_JAVA_OPTS=%RHQ_AGENT_ADDITIONAL_JAVA_OPTS%" & SET "RHQ_AGENT_BIN_DIR_PATH=%RHQ_AGENT_BIN_DIR_PATH%"
 ) else (
 endlocal
 )

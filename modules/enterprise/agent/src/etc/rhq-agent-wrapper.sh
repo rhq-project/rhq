@@ -21,7 +21,8 @@
 # RHQ_AGENT_DEBUG=true
 # JAVA_HOME=/path/to/java/installation
 # RHQ_AGENT_JAVA_EXE_FILE_PATH=/path/directly/to/java/executable
-# RHQ_AGENT_JAVA_OPTS=additional VM options
+# RHQ_AGENT_JAVA_OPTS=VM options
+# RHQ_AGENT_ADDITIONAL_JAVA_OPTS=additional VM options
 RHQ_AGENT_CMDLINE_OPTS=--daemon
 
 # Figure out where the RHQ Agent's home directory is and cd to it.

@@ -41,9 +41,11 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.helpers.rtfilter.util.ServletUtility;
 
 /**
- * ResponseTime filter. This filter takes all incoming requests and checks how long it takes to process them. When this
- * is deployed in Tomcat via conf/web.xml globally, there will be one instance of this filter per deployed webapp
- * inserted at the front of the whole filter chain.
+ * A servlet filter that measures how long it takes to service each request, and logs the stats to a log file. There
+ * is one log file per webapp, and one line per request. When this filter is deployed globally in Tomcat via
+ * conf/web.xml, there will be one instance of this filter per deployed webapp, inserted ahead of any per-webapp filters
+ * in the filter chain. We assume the same is true for other servlet containers, but Tomcat is the only servlet
+ * container that has been tested.
  *
  * @author Heiko W. Rupp
  * @author Ian Springer
@@ -75,15 +77,16 @@ public class RtFilter implements Filter {
     private File logFile;
     private long lastLogFileSize = 0;
     private long maxLogFileSize = DEFAULT_MAX_LOG_FILE_SIZE;
+    private String contextName;
 
     /**
      * Does the real magic. If a fatal exception occurs during processing, the filter will revert to an uninitialized
-     * state and refuse to process any further requests.
+     * state and refuse to process any further requests (see {@link #handleFatalError(Exception)}).
      *
      * @see javax.servlet.Filter#doFilter(javax.servlet.ServletRequest, javax.servlet.ServletResponse,
      *      javax.servlet.FilterChain)
      */
-    public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException,
+    public synchronized void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException,
         ServletException {
         long t1 = 0;
         HttpServletRequest hreq = null;
@@ -98,10 +101,7 @@ public class RtFilter implements Filter {
                     this.flushingNeeded = true;
                 }
             } catch (Exception e) {
-                log
-                    .fatal("JON response-time filter failed to process request. Please fix the following problem, then restart the servlet container: "
-                        + e);
-                this.initialized = false;
+                handleFatalError(e);
             }
         }
 
@@ -135,10 +135,7 @@ public class RtFilter implements Filter {
                     // If we got this far, write the request info to the log.
                     writeLogEntry(req, hresp, uri, url, t1);
                 } catch (Exception e) {
-                    log
-                        .fatal("JON response-time filter failed to process request. Please fix the following problem, then restart the servlet container: "
-                            + e);
-                    this.initialized = false;
+                    handleFatalError(e);
                 }
             }
         }
@@ -157,18 +154,16 @@ public class RtFilter implements Filter {
             log.debug("-- Filter init ");
             initializeParameters(filterConfig);
             ServletContext servletContext = filterConfig.getServletContext();
-            String contextName = ServletUtility.getContextRoot(servletContext);
-            String logFileName = this.logFilePrefix + contextName + "_rt.log";
+            this.contextName = ServletUtility.getContextRoot(servletContext);
+            String logFileName = this.logFilePrefix + this.contextName + "_rt.log";
             this.logFile = new File(this.logDirectory, logFileName);
-            log.info("Writing response-time log for webapp with context root '" + contextName + "' to '" + this.logFile
+            log.info("Writing response-time log for webapp with context root '" + this.contextName + "' to '" + this.logFile
                 + "'...");
             boolean append = true;
             openFileWriter(append);
             this.initialized = true;
         } catch (Exception e) {
-            log
-                .fatal("JON response-time filter failed to initialize. Please fix the following problem, then restart the servlet container: "
-                    + e);
+            handleFatalError(e);
         }
     }
 
@@ -186,6 +181,10 @@ public class RtFilter implements Filter {
     private void writeLogEntry(ServletRequest req, RtFilterResponseWrapper responseWrapper, String uri, String url,
         long t1) throws Exception {
         long duration = this.t2 - t1;
+        if (duration < 0) {
+            log.error("Calculated response time for request to [" + url + "] (" + duration + " ms) is negative!");
+            return;
+        }
         if (duration == 0) {
             // Impossible - we must be on Windows, where the system clock is only accurate to about 15 ms
             // (see http://www.simongbrown.com/blog/2007/08/20/millisecond_accuracy_in_java.html).
@@ -216,6 +215,7 @@ public class RtFilter implements Filter {
         if (this.flushingNeeded || ((this.requestCount % this.flushAfterLines) == 0)) {
             this.writer.flush();
             this.flushingNeeded = false;
+            this.lastLogFileSize = this.logFile.length();
         }
     }
 
@@ -360,8 +360,9 @@ public class RtFilter implements Filter {
         if (this.writer != null) {
             try {
                 this.writer.close();
+                log.debug("Closed writer for response time log '" + this.logFile + "'.");
             } catch (IOException e) {
-                log.error("Failed to close writer for response time log " + this.logFile);
+                log.error("Failed to close writer for response time log '" + this.logFile + "'.");
             }
         }
     }
@@ -384,9 +385,8 @@ public class RtFilter implements Filter {
     private void rewindLogFileIfSizeDecreased() throws Exception {
         if (this.logFile.length() < this.lastLogFileSize) {
             if (log.isDebugEnabled()) {
-                log.debug("Logfile " + this.logFile + " has been truncated (probably by RHQ) - rewinding writer...");
+                log.debug("Logfile " + this.logFile + " has been truncated (probably by RHQ Agent) - rewinding writer...");
             }
-
             closeFileWriter();
             boolean append = true;
             openFileWriter(append);
@@ -399,8 +399,12 @@ public class RtFilter implements Filter {
         if (queryString != null) {
             url += "?" + queryString;
         }
-
         return url;
+    }
+
+    private void handleFatalError(Exception e) {
+        this.initialized = false;
+        log.fatal("RHQ response-time filter experienced an unrecoverable failure. Response-time collection is now disabled for context '" + this.contextName + "'. Please post the below stack trace to the RHQ Forums: ", e);        
     }
 
     abstract class InitParams {

@@ -112,7 +112,7 @@ public class CallTimeData implements Serializable {
 
     private CallTimeDataValue addValue(Date beginTime, Date endTime, String destination) {
         if (beginTime.after(endTime)) {
-            throw new IllegalArgumentException("Begin time (" + beginTime + ") is after end time (" + endTime + ").");
+            throw new IllegalArgumentException("Begin time (" + beginTime + " [" + beginTime.getTime() + "]) is after end time (" + endTime + " [" + endTime.getTime() + "]).");
         }
 
         if (destination.length() > CallTimeDataKey.DESTINATION_MAX_LENGTH) {

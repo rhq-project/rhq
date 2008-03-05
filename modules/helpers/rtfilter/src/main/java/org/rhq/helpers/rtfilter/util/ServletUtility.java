@@ -50,7 +50,7 @@ public class ServletUtility {
      * @return
      */
     public static String getContextRoot(ServletContext servletContext) {
-        String ctxName = null;
+        String ctxName;
 
         /*
          * Get the servlet context. If we have servlet spec >=2.5, then there is a method on the servlet context for it.
@@ -64,26 +64,14 @@ public class ServletUtility {
             // First we check if the context-root was explicitly given in jboss-web.xml
             ctxName = getContextRootFromJbossWebXml(servletContext);
 
-            // Still nothing ? try application.xml
+            // Still nothing? try application.xml
             if (ctxName == null) {
                 ctxName = getContextRootFromApplicationXml(servletContext);
             }
 
-            // else if all fails take the name of the .war
+            // if all else fails, take the name of the .war
             if (ctxName == null) {
-                ctxName = servletContext.getRealPath("/");
-                if (ctxName.endsWith("/")) {
-                    ctxName = ctxName.substring(0, ctxName.length() - 1);
-                }
-
-                // the war name is from last / to end (sans .war)
-                ctxName = ctxName.substring(ctxName.lastIndexOf("/"), ctxName.length() - 4);
-
-                // Now remove crap that might be there
-                if (ctxName.endsWith("-exp")) {
-                    ctxName = ctxName.substring(0, ctxName.length() - 4);
-                    // TODO jboss sometimes has some strange 5 digits in the name
-                }
+                ctxName = getContextRootFromWarFileName(servletContext);
             }
 
             if ((ctxName == null) || "".equals(ctxName)) {
@@ -95,6 +83,24 @@ public class ServletUtility {
             ctxName = ctxName.substring(1);
         }
 
+        return ctxName;
+    }
+
+    private static String getContextRootFromWarFileName(ServletContext servletContext) {
+        String ctxName;
+        ctxName = servletContext.getRealPath("/");
+        if (ctxName.endsWith("/")) {
+            ctxName = ctxName.substring(0, ctxName.length() - 1);
+        }
+
+        // the war name is from last / to end (sans .war)
+        ctxName = ctxName.substring(ctxName.lastIndexOf("/"), ctxName.length() - 4);
+
+        // Now remove crap that might be there
+        if (ctxName.endsWith("-exp")) {
+            ctxName = ctxName.substring(0, ctxName.length() - 4);
+            // TODO jboss sometimes has some strange 5 digits in the name
+        }
         return ctxName;
     }
 

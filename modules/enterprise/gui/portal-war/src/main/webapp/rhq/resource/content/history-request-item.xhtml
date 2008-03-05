@@ -69,12 +69,7 @@
       </tr>
       <tr class="revision-data-table-even-row">
          <td valign="top"><b>Error Message</b></td>
-         <td>
-            <pre><h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.errorMessage}"
-                          rendered="#{!empty ShowInstalledPackageHistoryUIBean.history.errorMessage}"/></pre>
-            <h:outputText value="No errors encountered"
-                          rendered="#{empty ShowInstalledPackageHistoryUIBean.history.errorMessage}"/>
-         </td>
+         <td><pre><h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.errorMessage}" rendered="#{!empty ShowInstalledPackageHistoryUIBean.history.errorMessage}"/></pre></td>
       </tr>
    </table>
 </rich:panel>

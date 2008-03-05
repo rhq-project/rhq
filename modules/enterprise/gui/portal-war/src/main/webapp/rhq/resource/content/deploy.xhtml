@@ -24,6 +24,10 @@
          <rich:panel styleClass="BlockContent">
             <f:facet name="header"><h:outputText value="Packages Eligible for Deployment"/></f:facet>
 
+            <p>The following packages were found from the channels currently subscribed to by this resource. In order
+            to enable more existing packages for deployment, use the subscriptions sub-tab to subscribe this resource
+            to more channels.</p>
+
             <ui:param name="resourcePackageVersionsDataModel" value="#{ResourcePackageVersionsUIBean.dataModel}"/>
             <rich:dataTable binding="#{ResourcePackageVersionsUIBean.dataTable}"
                             id="resourcePackageVersionsDataTable"

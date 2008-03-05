@@ -23,12 +23,7 @@
       <!-- CURRENT CHANNELS -->
       <h:form id="currentPackageVersionsForm">
          <input type="hidden" name="id" value="${param.id}"/>
-         
-         <h:outputLink value="/rhq/resource/content/subscription.xhtml">
-            <f:param name="id" value="${param.id}"/>
-            <h:outputText value="Switch To Channel Mode" />
-         </h:outputLink>
-         
+                  
          <rich:panel styleClass="BlockContent">
             <f:facet name="header"><h:outputText value="Currently Subscribed Resource Packages"/></f:facet>
 
@@ -104,11 +99,13 @@
 
       </rich:panel>
       </h:form>
-      
-      <h:outputLink value="/rhq/resource/content/subscription.xhtml">
-         <f:param name="id" value="${param.id}"/>
-         <h:outputText value="Switch To Channel Mode" />
-      </h:outputLink>
+
+      <p align="center">
+         <h:outputLink value="/rhq/resource/content/subscription.xhtml">
+            <f:param name="id" value="${param.id}"/>
+            <h:outputText value="Switch To Channel Mode" />
+         </h:outputLink>
+      </p>
 
    </ui:define>
 </ui:composition>

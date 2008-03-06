@@ -155,6 +155,10 @@
                link="/resource/common/Events.do" mode="events"
                height="25" width="104"
                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
+         <item value="Timeline"
+               link="/rhq/resource/monitor/timeline.xhtml"
+               height="25" width="104"
+               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
          <item value="Configure"
                link="/resource/common/monitor/Config.do" mode="configure"
                height="25" width="104"

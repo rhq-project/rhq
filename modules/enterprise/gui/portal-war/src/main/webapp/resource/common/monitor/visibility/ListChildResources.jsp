@@ -163,6 +163,9 @@
                          onmouseout="menuLayers.hide()" border="0"/>
             </a>
           </c:if>
+          <c:if test="${!empty summary.composite.subcategory}">
+            <html:img page="/images/spacer.gif" width="1" height="1" border="0"/>
+          </c:if>
          </td>
       </tr>
       </c:if>

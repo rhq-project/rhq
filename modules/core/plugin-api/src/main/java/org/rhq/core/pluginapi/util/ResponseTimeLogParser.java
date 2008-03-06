@@ -98,7 +98,19 @@ public class ResponseTimeLogParser {
                 continue;
             }
 
-            if (isExcluded(logEntry.getUrl())) {
+            String url = logEntry.getUrl();
+
+            // The URL should always begin with a slash. If it doesn't, log an error and skip the entry,
+            // so we don't end up with bogus data in the DB.
+            if (url.charAt(0) != '/') {
+                String truncatedUrl = url.substring(0, Math.min(url.length(), 120));
+                if (url.length() > 120)
+                    truncatedUrl += "...";
+                log.error("URL parsed from response-time log file does not begin with '/': " + truncatedUrl);
+                continue;
+            }
+
+            if (isExcluded(url)) {
                 continue;
             }
 
@@ -108,7 +120,7 @@ public class ResponseTimeLogParser {
                 continue;
             }
 
-            String transformedUrl = applyTransforms(logEntry.getUrl());
+            String transformedUrl = applyTransforms(url);
             callTimeData.addCallData(transformedUrl, new Date(logEntry.getStartTime()), logEntry.getDuration());
         }
 

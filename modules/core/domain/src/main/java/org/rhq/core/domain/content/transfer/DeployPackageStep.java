@@ -57,6 +57,12 @@ public class DeployPackageStep implements Serializable {
     // Public  --------------------------------------------
 
     public DeployPackageStep(String stepKey, String description) {
+        if (stepKey == null)
+            throw new IllegalArgumentException("stepKey cannot be null");
+
+        if (description == null)
+            throw new IllegalArgumentException("description cannot be null");
+
         this.stepKey = stepKey;
         this.description = description;
     }
@@ -66,6 +72,21 @@ public class DeployPackageStep implements Serializable {
     public String toString() {
         return "DeployPackageStep[stepId=" + stepKey + ", stepResult=" + stepResult + ", description=" + description
             + "]";
+    }
+
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DeployPackageStep that = (DeployPackageStep) o;
+
+        if (!stepKey.equals(that.stepKey)) return false;
+
+        return true;
+    }
+
+    public int hashCode() {
+        return stepKey.hashCode();
     }
 
     public String getStepKey() {

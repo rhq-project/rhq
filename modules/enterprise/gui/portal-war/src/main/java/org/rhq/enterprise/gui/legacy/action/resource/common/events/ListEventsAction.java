@@ -77,6 +77,12 @@ public class ListEventsAction extends BaseAction {
         Map pref = user.getMetricRangePreference(true);
         long begin = (Long) pref.get(MonitorUtils.BEGIN);
         long end = (Long) pref.get(MonitorUtils.END);
+        Integer lastN = (Integer) pref.get(MonitorUtils.LASTN);
+        eForm.setRn(lastN);
+        request.getSession().setAttribute("rn", lastN);
+        Integer unit = (Integer) pref.get(MonitorUtils.UNIT);
+        eForm.setRu(unit);
+        request.getSession().setAttribute("ru", unit);
 
         PageControl pc = getPageControlFromRequest(request);
 

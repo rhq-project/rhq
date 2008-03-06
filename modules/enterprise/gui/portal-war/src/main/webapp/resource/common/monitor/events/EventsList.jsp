@@ -163,7 +163,16 @@
       <tiles:put name="form" beanName="EventsForm"/>
       <tiles:put name="formName" value="EventsForm"/>
       <tiles:put name="mode" beanName="mode"/>
-      <tiles:put name="id" value="${Resource.id}"/>
+      <c:if test="${not empty Resource}">
+         <tiles:put name="id" value="${Resource.id}"/>
+      </c:if>
+      <c:if test="${groupId > 0}">
+         <tiles:put name="groupId" beanName="groupId"/>
+      </c:if>
+      <c:if test="${parent > 0 && type>0 }">
+         <tiles:put name="type" value="${type}"/>
+         <tiles:put name="parent" value="${parent}"/>
+      </c:if>
       <c:if test="${not empty view}">
          <tiles:put name="view" beanName="view"/>
       </c:if>

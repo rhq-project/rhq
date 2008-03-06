@@ -26,7 +26,6 @@ import java.awt.Rectangle;
 import java.util.StringTokenizer;
 
 public class ChartGraphics {
-    private static final int DRAW_NONE = 0;
     private static final int DRAW_CENTERED = 1;
 
     protected static final int EVENT_HEIGHT = 11;
@@ -35,7 +34,6 @@ public class ChartGraphics {
     protected static final int HALF_EVENT_WIDTH = EVENT_HEIGHT / 2;
 
     private static final Font EVENT_FONT = new Font("Helvetica", Font.BOLD, 9);
-    private static FontMetrics m_metricsEvent;
 
     private Chart m_chart;
     public Graphics2D graphics;
@@ -44,7 +42,6 @@ public class ChartGraphics {
         this.m_chart = chart;
         this.graphics = graph;
 
-        m_metricsEvent = graph.getFontMetrics();
     }
 
     public void dispose() {
@@ -73,7 +70,6 @@ public class ChartGraphics {
         this.graphics.setColor(m_chart.legendTextColor);
 
         Rectangle rect = m_chart.getInteriorRectangle(this);
-        int yHorzLegend = rect.height - m_chart.bottomBorder;
 
         // Split out anything in parens (e.g., TIME (2:00pm to 3:00pm)
         String text1;

@@ -22,7 +22,9 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.Iterator;
+
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
+import org.rhq.enterprise.gui.image.data.IDataPoint;
 import org.rhq.enterprise.gui.image.data.IDisplayDataPoint;
 
 public class HorizontalChart extends Chart {
@@ -63,7 +65,7 @@ public class HorizontalChart extends Chart {
 
     protected String[] getUnitLabels() {
         DataPointCollection coll = this.getDataPoints();
-        Iterator iter = coll.iterator();
+        Iterator<IDataPoint> iter = coll.iterator();
         String[] result = new String[coll.size()];
 
         for (int i = 0; iter.hasNext() == true; i++) {
@@ -125,11 +127,6 @@ public class HorizontalChart extends Chart {
         // Calculate points
         double dScale = this.scale(rect.width);
         int lineWidth = this.lineWidth;
-
-        int x2 = rect.x + rect.width;
-        int y2 = rect.y + rect.height;
-
-        int yHorzMarks = rect.y + this.valueIndent;
 
         //////////////////////////////////////////////////////////
         // Draw the Value (Y) Legend
@@ -198,12 +195,4 @@ public class HorizontalChart extends Chart {
 
         return ptResult;
     }
-
-    //    protected boolean hasXLegend() {
-    //        return this.showValueLegend;
-    //    }
-    //
-    //    protected boolean hasYLegend() {
-    //        return this.showUnitLegend;
-    //    }
 }

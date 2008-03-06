@@ -49,6 +49,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.Group;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.enterprise.gui.common.servlet.HighLowMetricValue;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.DefaultConstants;
 import org.rhq.enterprise.gui.legacy.KeyConstants;
@@ -66,10 +67,10 @@ import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.auth.SessionNotFoundException;
 import org.rhq.enterprise.server.auth.SessionTimeoutException;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityPoint;
 import org.rhq.enterprise.server.measurement.BaselineCreationException;
-import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementNotFoundException;
@@ -532,7 +533,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
                 List<NumericMetricDataPoint> chartDataPoints = new ArrayList<NumericMetricDataPoint>(metricDataPoints
                     .size());
                 for (MeasurementDataNumericHighLowComposite metricDataPoint : metricDataPoints) {
-                    NumericMetricDataPoint chartDataPoint = new NumericMetricDataPoint(metricDataPoint);
+                    NumericMetricDataPoint chartDataPoint = new HighLowMetricValue(metricDataPoint);
                     chartDataPoints.add(chartDataPoint);
                 }
 

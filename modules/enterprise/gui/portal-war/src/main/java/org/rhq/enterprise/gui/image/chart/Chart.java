@@ -110,9 +110,6 @@ public abstract class Chart extends WebImage {
     private String m_strUnitLegend = DEFAULT_UNIT_LEGEND;
     private String m_strValueLegend = DEFAULT_VALUE_LEGEND;
 
-    private boolean m_useAbsTimeLabels = false;
-    private SmartLabelMaker m_smartLabelMaker = null;
-
     private Color m_clrFrame = DEFAULT_FRAME_COLOR;
     private Color m_clrLegendText = DEFAULT_LEGEND_TEXT_COLOR;
 
@@ -718,9 +715,7 @@ public abstract class Chart extends WebImage {
             int labelHeight = 0;
 
             if ((labels != null) && (labels.length > 0)) {
-                labelHeight = this.tickMarkHeight
-                    + ((labels != null) ? ChartGraphics.getStringHeight(labels[0], this.m_metricsLabel)
-                        : this.m_metricsLabel.getAscent());
+                labelHeight = this.tickMarkHeight + ChartGraphics.getStringHeight(labels[0], this.m_metricsLabel);
             } else {
                 labelHeight = this.tickMarkHeight + m_metricsLabel.getAscent();
             }
@@ -1062,8 +1057,4 @@ public abstract class Chart extends WebImage {
         this.m_strValueLegend = ((legend == null) ? Chart.EMPTY_STRING : legend);
     }
 
-    public void setAbsTimeLabels(boolean useAbsTimeLabels, long interval) {
-        m_useAbsTimeLabels = useAbsTimeLabels;
-        m_smartLabelMaker = new SmartLabelMaker(interval);
-    }
 }

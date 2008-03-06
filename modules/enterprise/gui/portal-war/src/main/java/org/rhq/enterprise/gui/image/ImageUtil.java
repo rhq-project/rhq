@@ -24,6 +24,7 @@ import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.io.InputStream;
+
 import javax.imageio.ImageIO;
 
 public class ImageUtil {
@@ -197,7 +198,6 @@ public class ImageUtil {
         byte[][] clrs = new byte[raster.getNumBands()][256];
         int[][] pixels = new int[raster.getNumBands()][];
         int nextClr = 0;
-        int[] clr = new int[256];
 
         for (int band = 0; band < raster.getNumBands(); band++) {
             pixels[band] = raster.getSamples(0, 0, raster.getWidth(), raster.getHeight(), band, (int[]) null);

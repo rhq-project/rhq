@@ -466,11 +466,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         Configuration pluginConfiguration = details.getPluginConfiguration();
         ConfigurationUtility.normalizeConfiguration(details.getPluginConfiguration(), details.getResourceType().getPluginConfigurationDefinition());
-        // If the plugin didn't already set the notes field, set it to something useful.
-        if ((pluginConfiguration != null) && (pluginConfiguration.getNotes() == null)) {
-            pluginConfiguration.setNotes("plugin config for " + resource.getResourceType() + " resource w/ key '"
-                + resource.getResourceKey() + "'");
-        }
 
         resource.setPluginConfiguration(pluginConfiguration);
         return resource;

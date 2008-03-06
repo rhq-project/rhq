@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.measurement;
 
 import java.util.List;
+import java.util.Date;
 import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
@@ -116,4 +117,6 @@ public interface AvailabilityManagerLocal {
      * @return <code>true</code> if the agent is a suspect agent and has been backfilled
      */
     boolean isAgentBackfilled(String agentName);
+
+    List<Availability> findAvailabilityWithinInterval(int resourceId, Date startDate, Date endDate);
 }

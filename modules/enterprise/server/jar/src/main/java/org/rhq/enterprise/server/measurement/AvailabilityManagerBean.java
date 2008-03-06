@@ -593,7 +593,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
      * @return A list of availabilities that cover at least the given date range
      */
     @SuppressWarnings("unchecked")
-    private List<Availability> findAvailabilityWithinInterval(int resourceId, Date startDate, Date endDate) {
+    public List<Availability> findAvailabilityWithinInterval(int resourceId, Date startDate, Date endDate) {
         Query q = entityManager.createNamedQuery(Availability.FIND_FOR_RESOURCE_WITHIN_INTERVAL);
         q.setParameter("resourceId", resourceId);
         q.setParameter("start", startDate.getTime());

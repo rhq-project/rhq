@@ -5,8 +5,8 @@
 <%@ taglib uri="/WEB-INF/tld/hq.tld" prefix="hq" %>
 <%@ taglib uri="/WEB-INF/tld/display.tld" prefix="display" %>
 
-<c:set var="subTabUrl" value="/resource/common/monitor/Visibility.do?mode=events"/>
-<c:set var="selfAction" value="${subTabUrl}&id=${Resource.id}"/>
+<c:set var="type" value="${param.type}"/>
+<c:set var="parent" value="${param.parent}"/>
 
 <script type="text/javascript" language="JavaScript">
 <!--
@@ -53,40 +53,51 @@
       </td> <%-- opened in MainLayout.jsp --%>
 
 <c:choose>
-  <c:when test="${not empty Resource}">
-    <tiles:insert definition=".page.title.resource.common.full">
-      <tiles:put name="titleName"><hq:inventoryHierarchy resourceId="${Resource.id}"/></tiles:put>
-      <tiles:put name="resource" beanName="Resource"/>
-      <tiles:put name="resourceOwner" beanName="ResourceOwner"/>
-      <tiles:put name="resourceModifier" beanName="ResourceModifier"/>
-    </tiles:insert>
-  </c:when>
-  <%-- TODO autogroups ? --%>
-  <c:otherwise>
-     <tiles:insert definition=".page.title.resource.group.full">
-        <tiles:put name="resource" beanName="Resource"/>
-        <tiles:put name="resourceOwner" beanName="ResourceOwner"/>
-        <tiles:put name="resourceModifier" beanName="ResourceModifier"/>
-     </tiles:insert>
-  </c:otherwise>
+   <c:when test="${groupId>0}">
+      <%-- comp group --%>
+      <tiles:insert definition=".page.title.resource.group.full">
+         <tiles:put name="resource" beanName="Resource" />
+         <tiles:put name="resourceOwner" beanName="ResourceOwner" />
+         <tiles:put name="resourceModifier" beanName="ResourceModifier" />
+      </tiles:insert>
+
+      <tiles:insert definition=".tabs.resource.group.monitor">
+         <tiles:put name="id" value="${param.id}" />
+         <tiles:put name="resourceType"
+            value="${Resource.resourceType.id}" />
+      </tiles:insert>
+   </c:when>
+   <c:when test="${parent > 0 && type > 0 }">
+      <%-- autogroup --%>
+      <tiles:insert definition=".page.title.resource.autogroup.full">
+         <tiles:put name="autogroupResourceId" value="${parent}" />
+         <tiles:put name="autogroupResourceType" value="${type}" />
+      </tiles:insert>
+
+      <tiles:insert definition=".tabs.resource.autogroup.monitor.events">
+         <tiles:put name="autogroupResourceId" value="${parent}" />
+         <tiles:put name="autogroupResourceType" value="${type}" />
+      </tiles:insert>
+   </c:when>
+   <c:otherwise>
+      <%-- single resource --%>
+      <tiles:insert definition=".page.title.resource.common.full">
+         <tiles:put name="titleName">
+            <hq:inventoryHierarchy resourceId="${Resource.id}" />
+         </tiles:put>
+         <tiles:put name="resource" beanName="Resource" />
+         <tiles:put name="resourceOwner" beanName="ResourceOwner" />
+         <tiles:put name="resourceModifier" beanName="ResourceModifier" />
+      </tiles:insert>
+
+      <tiles:insert definition=".tabs.resource.common.monitor.events">
+         <tiles:put name="id" value="${param.id}" />
+         <tiles:put name="resourceType"
+            value="${Resource.resourceType.id}" />
+      </tiles:insert>
+   </c:otherwise>
 </c:choose>
 
-<c:choose>
-  <c:when test="${not empty Resource }">
-    <tiles:insert definition=".tabs.resource.common.monitor.events">
-      <tiles:put name="id" value="${param.id}"/>
-      <tiles:put name="resourceType" value="${Resource.resourceType.id}"/>
-    </tiles:insert>
-  </c:when>
-  <%-- TODO autogroups ? --%>
-  <c:otherwise>
-    <tiles:insert definition=".tabs.resource.group.monitor">
-      <tiles:put name="id" value="${param.id}"/>
-      <tiles:put name="resourceType" value="${Resource.resourceType.id}"/>
-    </tiles:insert>
-  </c:otherwise>
-</c:choose>
-      
 <%-- full width from here --%>     
 <table width="98%" align="center" cellspacing="0" cellpadding="0" border="0">
 <tr>
@@ -110,6 +121,12 @@
       </c:if>
       <c:if test="${not empty param.groupId}">
          <c:param name="groupId" value="${param.groupId}"/>
+      </c:if>
+      <c:if test="${not empty param.type}">
+         <c:param name="type" value="${param.type}"/>
+      </c:if>
+      <c:if test="${not empty param.parent}">
+         <c:param name="type" value="${param.parent}"/>
       </c:if>
    </c:url>
    

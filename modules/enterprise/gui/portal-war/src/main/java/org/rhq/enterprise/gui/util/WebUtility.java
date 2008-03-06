@@ -82,6 +82,10 @@ public abstract class WebUtility {
             DefaultConstants.PAGENUM_DEFAULT);
         int pageSize = getOptionalIntRequestParameter(request, ParamConstants.PAGESIZE_PARAM + postfix,
             DefaultConstants.PAGESIZE_DEFAULT);
+
+        // Make sure the user doesn't go around us and create huge pages
+        pageSize = Math.min(pageSize, PageControl.SIZE_MAX);
+
         String sortOrderString = request.getParameter(ParamConstants.SORTORDER_PARAM + postfix);
         PageOrdering sortOrder = PageOrdering.ASC;
         if ((sortOrderString != null) && (sortOrderString.length() > 0)) {

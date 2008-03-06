@@ -46,9 +46,7 @@ public class PageControl implements Serializable, Cloneable {
     public PageControl(int pageNumber, int pageSize) {
         this();
         this.pageNumber = pageNumber;
-        if (pageSize < SIZE_MAX) {
-            this.pageSize = pageSize;
-        }
+        this.pageSize = pageSize;
     }
 
     public PageControl(int pageNumber, int pageSize, OrderingField... orderingFields) {

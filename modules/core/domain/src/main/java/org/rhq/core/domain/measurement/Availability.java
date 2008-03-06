@@ -20,6 +20,7 @@ package org.rhq.core.domain.measurement;
 
 import java.io.Serializable;
 import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -34,6 +35,7 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -62,9 +64,9 @@ import org.rhq.core.domain.resource.Resource;
         + " WHERE av.resource.id = :resourceId "
         + "   AND ((av.startTime <= :start AND (av.endTime >= :start OR av.endTime IS NULL) ) " /* availability straddles :start */
         + "       OR (av.startTime BETWEEN :start AND :end)) " /* interval
-                                                                                                             * straddles
-                                                                                                             * availability.startTime
-                                                                                                             */
+                                                                                                                           * straddles
+                                                                                                                           * availability.startTime
+                                                                                                                           */
         + "ORDER BY av.startTime ASC"),
     @NamedQuery(name = Availability.FIND_BY_RESOURCE_AND_DATE, query = "SELECT av FROM Availability av "
         + " WHERE av.resource.id = :resourceId " + "   AND av.startTime <= :aTime "
@@ -76,7 +78,8 @@ import org.rhq.core.domain.resource.Resource;
     // a downed platform because the platform plugins all return UP for platform availability.
     @NamedQuery(name = Availability.QUERY_IS_AGENT_BACKFILLED, query = "SELECT COUNT(DISTINCT av.availabilityType) "
         + "  FROM Availability av " + " WHERE av.availabilityType = 0 " + "   AND av.resource.agent.name = :agentName "
-        + "   AND av.resource.parentResource IS NULL " + "   AND av.endTime IS NULL") })
+        + "   AND av.resource.parentResource IS NULL " + "   AND av.endTime IS NULL"),
+    @NamedQuery(name = Availability.QUERY_DELETE_BY_RESOURCE_ID, query = "DELETE Availability a WHERE a.resource.id = :resourceId ") })
 @SequenceGenerator(name = "Generator", sequenceName = "RHQ_AVAILABILITY_ID_SEQ")
 @Table(name = "RHQ_AVAILABILITY")
 public class Availability implements Serializable {
@@ -88,6 +91,7 @@ public class Availability implements Serializable {
     public static final String FIND_FOR_RESOURCE_WITHIN_INTERVAL = "Availability.findForResourceWithinInterval";
     public static final String FIND_BY_RESOURCE_AND_DATE = "Availability.findByResourceAndDate";
     public static final String QUERY_IS_AGENT_BACKFILLED = "Availability.isAgentBackfilled";
+    public static final String QUERY_DELETE_BY_RESOURCE_ID = "Availability.deleteByResourceId";
 
     public static final String NATIVE_QUERY_PURGE = "DELETE FROM RHQ_AVAILABILITY WHERE END_TIME < ?";
 

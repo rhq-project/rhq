@@ -158,14 +158,16 @@ public class AlertManagerBean implements AlertManagerLocal {
          */
         Query query = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_RESOURCE);
         query.setParameter("resourceId", resourceId);
-        query.executeUpdate();
+        int deletedLogs = query.executeUpdate();
 
         query = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_RESOURCE);
         query.setParameter("resourceId", resourceId);
         int deletedAlerts = query.executeUpdate();
 
-        query = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_ORPHANED);
-        query.executeUpdate();
+        if (deletedLogs > 0 || deletedAlerts > 0) {
+            query = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_ORPHANED);
+            query.executeUpdate();
+        }
 
         return deletedAlerts;
     }

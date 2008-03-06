@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -43,6 +44,7 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
+
 import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.resource.Resource;
 
@@ -84,7 +86,9 @@ import org.rhq.core.domain.resource.Resource;
         + "FROM MeasurementSchedule ms WHERE ms.resource.id = :resourceId "
         + "AND (ms.definition.dataType = :dataType OR :dataType is null) "),
     @NamedQuery(name = MeasurementSchedule.GET_SCHEDULED_MEASUREMENTS_PER_MINUTED, query = "SELECT SUM(1000.0 / ms.interval) * 60.0 FROM MeasurementSchedule ms WHERE ms.enabled = true"),
-    @NamedQuery(name = MeasurementSchedule.DISABLE_ALL, query = "UPDATE MeasurementSchedule ms SET ms.enabled = false") })
+    @NamedQuery(name = MeasurementSchedule.DISABLE_ALL, query = "UPDATE MeasurementSchedule ms SET ms.enabled = false"),
+    @NamedQuery(name = MeasurementSchedule.DELETE_BY_RESOURCE_ID, query = "DELETE "
+        + "    FROM MeasurementSchedule ms WHERE ms.resource.id = :resourceId") })
 @SequenceGenerator(name = "RHQ_METRIC_SCHED_ID_SEQ", sequenceName = "RHQ_MEASUREMENT_SCHED_ID_SEQ")
 @Table(name = "RHQ_MEASUREMENT_SCHED", uniqueConstraints = { @UniqueConstraint(columnNames = { "DEFINITION",
     "RESOURCE_ID" }) })
@@ -127,6 +131,7 @@ public class MeasurementSchedule implements Serializable {
     public static final String DISABLE_ALL = "MeasurementSchedule.disableAll";
     public static final String FIND_ENABLED_BY_RESOURCES_AND_RESOURCE_TYPE = "MeasurementSchedule.FIND_ENABLED_BY_ResourcesS_AND_RESOURCE_TYPE";
     public static final String FIND_ENABLED_BY_RESOURCE_IDS_AND_RESOURCE_TYPE_ID = "MeasurementSchedule.FIND_ENABLED_BY_ResourceIds_AND_RESOURCE_TYPE";
+    public static final String DELETE_BY_RESOURCE_ID = "MeasurementSchedule.deleteByResourceId";
 
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_METRIC_SCHED_ID_SEQ")
     @Id
@@ -138,8 +143,15 @@ public class MeasurementSchedule implements Serializable {
      * calculated for the first time (a merge-persist cascade), or have it updated at some later point in time (a
      * merge-merge cascade).
      */
-    @OneToOne(mappedBy = "schedule", cascade = { CascadeType.MERGE, CascadeType.REMOVE }, fetch = FetchType.LAZY)
+    // TODO should this be @OneToMany or OneToOne
+    // Remove now performed by bulk delete
+    @OneToOne(mappedBy = "schedule", cascade = { CascadeType.MERGE }, fetch = FetchType.LAZY)
     private MeasurementBaseline baseline;
+
+    // Remove now performed by bulk delete
+    @OneToMany(mappedBy = "schedule", fetch = FetchType.LAZY)
+    @OrderBy("occurred DESC")
+    private List<MeasurementOutOfBounds> outOfBounds = new ArrayList<MeasurementOutOfBounds>();
 
     /**
      * The base definition of this Metric
@@ -171,10 +183,6 @@ public class MeasurementSchedule implements Serializable {
      * Is this metric schedule enabled
      */
     private boolean enabled;
-
-    @OneToMany(mappedBy = "schedule", cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
-    @OrderBy("occurred DESC")
-    private List<MeasurementOutOfBounds> outOfBounds = new ArrayList<MeasurementOutOfBounds>();
 
     public MeasurementSchedule() {
     }

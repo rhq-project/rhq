@@ -20,6 +20,7 @@ package org.rhq.core.domain.measurement.oob;
 
 import java.io.Serializable;
 import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -32,6 +33,7 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 
 /**
@@ -83,6 +85,7 @@ public class MeasurementOutOfBounds implements Serializable {
     public static final String QUERY_FIND_FOR_SCHEDULE = "MeasurementOutOfBounds.findForSchedule";
     public static final String QUERY_FIND_FOR_DEFINITION_AND_RESOURCEIDS_ADMIN = "MeasurementOutOfBounds.findForDefinitionAndResourceIdsAdmin";
     public static final String QUERY_COUNT_FOR_SCHEDULE_IDS_ADMIN = "MeasurementOutOfBounds.QUERY_COUNT_FOR_SCHEDULE_ADMIN";
+    public static final String QUERY_DELETE_BY_RESOURCE_ID = "DELETE FROM rhq_measurement_oob oob WHERE oob.schedule_id IN ( SELECT ms.id FROM rhq_measurement_sched ms WHERE ms.resource_id = :resourceId )";
 
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_MEASUREMENT_OOB_ID_SEQ")
     @Id

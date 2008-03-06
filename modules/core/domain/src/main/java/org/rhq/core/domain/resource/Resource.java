@@ -562,7 +562,9 @@ public class Resource implements Comparable<Resource>, Externalizable {
     // by primary key which will also put the plugin configuration updates in chronological order
     private List<PluginConfigurationUpdate> pluginConfigurationUpdates = new ArrayList<PluginConfigurationUpdate>();
 
-    @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE)
+    //@OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE)
+    // Remove now handled via bulk delete
+    @OneToMany(mappedBy = "resource")
     private Set<MeasurementSchedule> schedules = new LinkedHashSet<MeasurementSchedule>();
 
     @JoinColumn(name = "AGENT_ID", referencedColumnName = "ID")
@@ -575,7 +577,9 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @ManyToMany(mappedBy = "explicitResources", fetch = FetchType.LAZY)
     private Set<ResourceGroup> explicitGroups = new HashSet<ResourceGroup>();
 
-    @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE)
+    //@OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE)
+    // Remove now handled via bulk delete
+    @OneToMany(mappedBy = "resource")
     @OrderBy("startTime")
     private List<Availability> availability;
 

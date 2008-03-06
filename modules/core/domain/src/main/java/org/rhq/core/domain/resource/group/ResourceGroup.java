@@ -206,6 +206,8 @@ public class ResourceGroup extends Group {
 
     public static final String QUERY_FIND_RESOURCE_NAMES_BY_GROUP_ID = "ResourceGroup.findResourceNamesByGroupId";
     public static final String QUERY_FIND_BY_GROUP_DEFINITION_AND_EXPRESSION = "ResourceGroup.findByGroupDefinitionAndExpression";
+    public static final String QUERY_DELETE_EXPLICIT_RESOURCE_BY_RESOURCE_ID = "DELETE FROM RHQ_RESOURCE_GROUP_RES_EXP_MAP WHERE RESOURCE_ID = :resourceId";
+    public static final String QUERY_DELETE_IMPLICIT_RESOURCE_BY_RESOURCE_ID = "DELETE FROM RHQ_RESOURCE_GROUP_RES_IMP_MAP WHERE RESOURCE_ID = :resourceId";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")

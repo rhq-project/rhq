@@ -20,6 +20,7 @@ package org.rhq.core.domain.measurement;
 
 import java.io.Serializable;
 import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -105,6 +106,7 @@ public class MeasurementBaseline implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE = "MeasurementBaseline.findBaselinesForResource";
     public static final String QUERY_FIND_BY_RESOURCE_IDS_AND_DEF_IDS = "MeasurementBaseline.findBaselineForResourceIdsAndDefinitionIds";
     public static final String QUERY_FIND_BY_COMPUTE_TIME = "MeasurementBaseline.findByComputeTime";
+    public static final String QUERY_DELETE_BY_RESOURCE_ID = "DELETE FROM rhq_measurement_bline bl WHERE bl.schedule_id IN ( SELECT ms.id FROM rhq_measurement_sched ms WHERE ms.resource_id = :resourceId )";
     public static final String NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_POSTGRES;
     public static final String NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_ORACLE;
     public static final String NATIVE_QUERY_DELETE_EXISTING_AUTOBASELINES_POSTGRES;

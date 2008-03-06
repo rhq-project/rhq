@@ -45,11 +45,15 @@ import org.quartz.SchedulerException;
 
 import org.jboss.annotation.IgnoreDependency;
 
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.ResourceChannel;
-import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementBaseline;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -311,39 +315,29 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void deleteSingleResourceInNewTransaction(Subject user, Resource resource) {
-        // if this resource was subscribed to channels, unsubscribe it
-        // we are guaranteed to be in a new tx, so doing a bulk delete FIRST THING is ok
-        entityManager.createNamedQuery(ResourceChannel.DELETE_BY_RESOURCE_ID).setParameter("resourceId",
-            resource.getId()).executeUpdate();
 
-        resource = entityManager.find(Resource.class, resource.getId());
+        int resourceId = resource.getId();
+
+        /*
+         * Perform bulk deletes at the beginning of a new transaction only: From bill burke's ejb3 book:
+         * "Be very careful how you use bulk UPDATE and DELETE. It is possible, depending on the vendor impl 
+         * to create inconsistencies between the database and entities that are already being managed by 
+         * the current persistence context. Vendor impls are required only to execute the update/delete 
+         * directly on the database, they do not have to modify the state of any currently managed entity. 
+         * For this reason it is recommended that you do these operations within their own transaction or 
+         * at the beginning of a transaction (before any entities are access that might be affected by these 
+         * bulk op calls). Alternatively, executing entitymanager.flush() and clear() before executing a bulk 
+         * op will keep you safe"
+         */
+        doBulkDelete(resourceId);
+
+        resource = entityManager.find(Resource.class, resourceId);
 
         if (log.isDebugEnabled()) {
             log.debug("User [" + user + "] is deleting resource [" + resource + "]");
         }
 
-        // we need to manually remove this resource from all its implicit and explicit groups
-        Set<ResourceGroup> groups = new HashSet<ResourceGroup>(resource.getImplicitGroups());
-        for (ResourceGroup group : groups) {
-            group.removeImplicitResource(resource);
-            entityManager.merge(group);
-        }
-
-        entityManager.flush();
-
-        groups = new HashSet<ResourceGroup>(resource.getExplicitGroups());
-        for (ResourceGroup group : groups) {
-            group.removeExplicitResource(resource);
-            entityManager.merge(group);
-        }
-
-        entityManager.flush();
-
-        cleanupCircularObjectGraphs(resource.getId());
-        cleanupScheduledOperationsForResource(resource.getId());
-        entityManager.flush();
-
-        alertConditionCacheManager.updateConditions(resource);
+        doCleanup(resource, resourceId);
 
         // now we can purge the resource, let cascading do the rest
         entityManager.remove(resource);
@@ -351,8 +345,77 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return;
     }
 
-    private void cleanupScheduledOperationsForResource(Integer resourceId) {
+    // entry point for performance measurement
+    // TODO: Cleanup, work in progress (jshaughn)    
+    private void doBulkDelete(int resourceId) {
+
+        // bulk delete: unsubscribe from subscribed channels
+        entityManager.createNamedQuery(ResourceChannel.DELETE_BY_RESOURCE_ID).setParameter("resourceId", resourceId)
+            .executeUpdate();
+
+        // bulk delete: unmap from explicit groups
+        // TODO: should this be a NamedQuery? (jshaughn)        
+        entityManager.createNativeQuery(ResourceGroup.QUERY_DELETE_EXPLICIT_RESOURCE_BY_RESOURCE_ID).setParameter(
+            "resourceId", resourceId).executeUpdate();
+
+        // bulk delete: unmap from implicit groups
+        // TODO: should this be a NamedQuery? (jshaughn)
+        entityManager.createNativeQuery(ResourceGroup.QUERY_DELETE_IMPLICIT_RESOURCE_BY_RESOURCE_ID).setParameter(
+            "resourceId", resourceId).executeUpdate();
+
+        // bulk delete: measurement oob
+        // TODO: should this be a NamedQuery? (jshaughn)
+        entityManager.createNativeQuery(MeasurementOutOfBounds.QUERY_DELETE_BY_RESOURCE_ID).setParameter("resourceId",
+            resourceId).executeUpdate();
+
+        // bulk delete: measurement baseline
+        // TODO: should this be a NamedQuery? (jshaughn)
+        entityManager.createNativeQuery(MeasurementBaseline.QUERY_DELETE_BY_RESOURCE_ID).setParameter("resourceId",
+            resourceId).executeUpdate();
+
+        // bulk delete: measurement schedule, note this must come after baseline and oob
+        entityManager.createNamedQuery(MeasurementSchedule.DELETE_BY_RESOURCE_ID)
+            .setParameter("resourceId", resourceId).executeUpdate();
+
+        // bulk delete: availability
+        entityManager.createNamedQuery(Availability.QUERY_DELETE_BY_RESOURCE_ID).setParameter("resourceId", resourceId)
+            .executeUpdate();
+    }
+
+    // entry point for performance measurement
+    // TODO: Cleanup, work in progress (jshaughn)
+    private void doCleanup(Resource resource, int resourceId) {
+        /*
+        //Prior cleanup code moved to bulk delete
+          
+        // we need to manually remove this resource from all its implicit and explicit groups
+        Set<ResourceGroup> groups = new HashSet<ResourceGroup>(resource.getImplicitGroups());
+        for (ResourceGroup group : groups) {
+            group.removeImplicitResource(resource);
+            entityManager.merge(group);
+        }
+        entityManager.flush();
+
+        groups = new HashSet<ResourceGroup>(resource.getExplicitGroups());
+        for (ResourceGroup group : groups) {
+            group.removeExplicitResource(resource);
+            entityManager.merge(group);
+        }
+        entityManager.flush();
+        */
+
         Subject overlord = subjectManager.getOverlord();
+
+        cleanupCircularObjectGraphs(overlord, resourceId);
+        cleanupScheduledOperationsForResource(overlord, resourceId);
+
+        entityManager.flush();
+
+        alertConditionCacheManager.updateConditions(resource);
+    }
+
+    private void cleanupScheduledOperationsForResource(Subject overlord, Integer resourceId) {
+
         try {
             List<ResourceOperationSchedule> schedules = operationManager.getScheduledResourceOperations(overlord,
                 resourceId);
@@ -375,7 +438,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
         } catch (SchedulerException se) {
             log.warn("Failed to get jobs for a resource being deleted [" + resourceId
-                + "]; will not attempt to unshedule anything", se);
+                + "]; will not attempt to unschedule anything", se);
         }
     }
 
@@ -383,7 +446,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
      * but first we must do explicit purging of parts of the data model that are circular (don't have a single, directed
      * path to each leaf)
      */
-    private void cleanupCircularObjectGraphs(Integer resourceId) {
+    private void cleanupCircularObjectGraphs(Subject overlord, Integer resourceId) {
         /*
          * Here, the alerts subsystem has a two paths from a resource to an alert condition log, so we are going to
          * explicitly delete the left-hand path
@@ -393,7 +456,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
          *   Alert             AlertCondition                     1\              /1                      n\
          * /n                     AlertConditionLogs
          */
-        alertManager.deleteAlerts(subjectManager.getOverlord(), resourceId);
+        alertManager.deleteAlerts(overlord, resourceId);
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

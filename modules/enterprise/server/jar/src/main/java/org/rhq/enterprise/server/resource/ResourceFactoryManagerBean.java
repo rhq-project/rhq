@@ -209,17 +209,15 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public Resource createInventoryResource(int parentResourceId, int resourceTypeId, String resourceName,
-        String resourceKey, Subject owner) {
+        String resourceKey) {
         // Load persisted entities
         Resource parentResource = entityManager.find(Resource.class, parentResourceId);
         ResourceType resourceType = entityManager.find(ResourceType.class, resourceTypeId);
 
+        Subject overLord = subjectManagerBean.getOverlord();
         // Check to see if the resource exists but marked as deleted
-        Resource resource =null;
-        //@Todo get this working.
-        //Commented out real line, but right now the owner is getting a permission error. Need to figure out why
-        //= resourceManagerBean.getResourceByParentAndKey(owner, parentResource, resourceKey,
-        //        resourceType.getPlugin(), resourceType.getName());
+        Resource resource = resourceManagerBean.getResourceByParentAndKey(overLord, parentResource, resourceKey,
+                resourceType.getPlugin(), resourceType.getName());
 
         if (resource == null)
         {
@@ -259,10 +257,6 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
         history.setErrorMessage(response.getErrorMessage());
         history.setStatus(response.getStatus());
 
-        // The subject who created the request will be used as the owner of the newly created resource.
-        String ownerName = history.getSubjectName();
-        Subject owner = subjectManagerBean.findSubjectByName(ownerName);
-
         // The configuration may now have error messages in it, so merge with the persisted one
         if (response.getResourceConfiguration() != null) {
             entityManager.merge(response.getResourceConfiguration());
@@ -271,7 +265,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
         // If the plugin reports it as successful, create the resource and mark it as committed
         if (response.getStatus() == CreateResourceStatus.SUCCESS) {
             resourceFactoryManager.createInventoryResource(history.getParentResource().getId(), history
-                .getResourceType().getId(), history.getCreatedResourceName(), response.getResourceKey(), owner);
+                .getResourceType().getId(), history.getCreatedResourceName(), response.getResourceKey());
         }
     }
 

@@ -169,17 +169,16 @@ public interface ResourceFactoryManagerLocal {
 
     /**
      * Creates a new resource in the inventory.
+     * This should NOT be made accessible to remote clients, do not call this unless you know what you are doing
      *
      * @param  parentResourceId parent of the new resource
      * @param  resourceTypeId   type of resource being created
      * @param  resourceName     name of the new resource
      * @param  resourceKey      resource key of the new resource
-     * @param  owner            owner of the new resource
      *
      * @return resource object after it's been persisted
      */
-    Resource createInventoryResource(int parentResourceId, int resourceTypeId, String resourceName, String resourceKey,
-        Subject owner);
+    Resource createInventoryResource(int parentResourceId, int resourceTypeId, String resourceName, String resourceKey);
 
     /**
      * Persists a record in the resource history to indicate a request has been made to create a configuration-backed

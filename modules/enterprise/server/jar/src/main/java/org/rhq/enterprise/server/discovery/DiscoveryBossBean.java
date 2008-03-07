@@ -354,6 +354,11 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
                 log.info("Version of " + existingResource + " changed from '" + existingVersion + "' to '" + version
                     + "'.");
                 existingResource.setVersion(version);
+
+                ProductVersion productVersion =
+                    productVersionManager.addProductVersion(existingResource.getResourceType(), version);
+                existingResource.setProductVersion(productVersion);
+
                 this.entityManager.merge(existingResource);
             }
             return true;
@@ -605,10 +610,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         }
 
         // Add a product version entry for the new resource.
-        if ((resource.getVersion() != null) && (resource.getVersion().length() > 0)) {
-            ProductVersion productVersion = productVersionManager.addProductVersion(type, resource.getVersion());
-            resource.setProductVersion(productVersion);
-        }
+        addProductVersionsRecursively(resource);
 
         // Get all the persisted ids from the descendants.
 
@@ -620,6 +622,24 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         // do NOT delete this flush/clear - it greatly improves performance
         entityManager.flush();
         entityManager.clear();
+    }
+
+    /**
+     * Ensures the resource has the proper relationship to its product version. This method will recursively dig
+     * into child resources, updating their versions as well.
+     *
+     * @param resource resource (along with its children) to which to add product version references
+     */
+    private void addProductVersionsRecursively(Resource resource) {
+        if ((resource.getVersion() != null) && (resource.getVersion().length() > 0)) {
+            ResourceType type = resource.getResourceType();
+            ProductVersion productVersion = productVersionManager.addProductVersion(type, resource.getVersion());
+            resource.setProductVersion(productVersion);
+        }
+
+        for (Resource child : resource.getChildResources()) {
+            addProductVersionsRecursively(child);
+        }
     }
 
     private void updateResponseRecursively(Resource resource, InventoryReportResponse response) {

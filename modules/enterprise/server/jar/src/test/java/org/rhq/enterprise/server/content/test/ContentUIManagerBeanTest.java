@@ -127,7 +127,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
 
         /* Expected results:
            - Package 1 - Included in the list; it has no product version thus is always applicable
-           - Packaeg 2 - Included in the list; it includes the resource's version in its product version list
+           - Package 2 - Included in the list; it includes the resource's version in its product version list
            - Package 3 - Not included; it contains a product version list but not the resource's version
            - Package 4 - Not included; it has no product version but it is already installed on the resource
 

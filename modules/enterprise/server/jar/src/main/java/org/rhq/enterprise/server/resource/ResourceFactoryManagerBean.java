@@ -18,20 +18,8 @@
  */
 package org.rhq.enterprise.server.resource;
 
-import java.io.InputStream;
-import java.util.List;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.clientapi.agent.inventory.CreateResourceRequest;
 import org.rhq.core.clientapi.agent.inventory.CreateResourceResponse;
 import org.rhq.core.clientapi.agent.inventory.DeleteResourceRequest;
@@ -67,6 +55,17 @@ import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import java.io.InputStream;
+import java.util.Calendar;
+import java.util.List;
+
 /**
  * Bean to handle interaction with the resource factory subsystem of the plugin container. !! Warning, the factory
  * interface is there to remove managed things from disk. Use caution when using this and don't confuse it with removing
@@ -101,6 +100,9 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
 
     @EJB
     private ResourceFactoryManagerLocal resourceFactoryManager;
+
+    @EJB
+    private ResourceManagerLocal resourceManagerBean;
 
     @EJB
     private ContentManagerLocal contentManagerLocal;
@@ -212,18 +214,31 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
         Resource parentResource = entityManager.find(Resource.class, parentResourceId);
         ResourceType resourceType = entityManager.find(ResourceType.class, resourceTypeId);
 
-        // Create the resource
-        Resource newResource = new Resource(resourceKey, resourceName, resourceType);
-        newResource.setParentResource(parentResource);
-        newResource.setAgent(parentResource.getAgent());
+        // Check to see if the resource exists but marked as deleted
+        Resource resource =null;
+        //@Todo get this working.
+        //Commented out real line, but right now the owner is getting a permission error. Need to figure out why
+        //= resourceManagerBean.getResourceByParentAndKey(owner, parentResource, resourceKey,
+        //        resourceType.getPlugin(), resourceType.getName());
 
-        // Since this is a user initiated create, we assume it's committed
-        newResource.setInventoryStatus(InventoryStatus.COMMITTED);
+        if (resource == null)
+        {
+            // Create the resource
+            resource = new Resource(resourceKey, resourceName, resourceType);
+            resource.setParentResource(parentResource);
+            resource.setAgent(parentResource.getAgent());
+            resource.setInventoryStatus(InventoryStatus.COMMITTED);
 
-        // Persist the resource
-        entityManager.persist(newResource);
+            // Persist the resource
+            entityManager.persist(resource);
+        }
+        else
+        {
+            resource.setInventoryStatus(InventoryStatus.COMMITTED);
+            resource.setItime(Calendar.getInstance().getTimeInMillis());
+        }        
 
-        return newResource;
+        return resource;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)

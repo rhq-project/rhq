@@ -111,7 +111,7 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
 
     // Test Cases  --------------------------------------------
 
-    @Test(enabled = false)
+    @Test(enabled = ENABLE_TESTS)
     public void testEligiblePackagesLogic() throws Exception {
 
         Subject overlord = subjectManager.getOverlord();

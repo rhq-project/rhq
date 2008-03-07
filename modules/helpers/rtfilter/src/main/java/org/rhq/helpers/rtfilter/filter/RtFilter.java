@@ -106,7 +106,7 @@ public class RtFilter implements Filter {
         }
 
         try {
-            chain.doFilter(req, resp);
+            chain.doFilter(req, hresp);
         } finally {
             if (this.initialized) {
                 try {
@@ -157,8 +157,8 @@ public class RtFilter implements Filter {
             this.contextName = ServletUtility.getContextRoot(servletContext);
             String logFileName = this.logFilePrefix + this.contextName + "_rt.log";
             this.logFile = new File(this.logDirectory, logFileName);
-            log.info("Writing response-time log for webapp with context root '" + this.contextName + "' to '" + this.logFile
-                + "'...");
+            log.info("Writing response-time log for webapp with context root '" + this.contextName + "' to '"
+                + this.logFile + "'...");
             boolean append = true;
             openFileWriter(append);
             this.initialized = true;
@@ -385,7 +385,8 @@ public class RtFilter implements Filter {
     private void rewindLogFileIfSizeDecreased() throws Exception {
         if (this.logFile.length() < this.lastLogFileSize) {
             if (log.isDebugEnabled()) {
-                log.debug("Logfile " + this.logFile + " has been truncated (probably by RHQ Agent) - rewinding writer...");
+                log.debug("Logfile " + this.logFile
+                    + " has been truncated (probably by RHQ Agent) - rewinding writer...");
             }
             closeFileWriter();
             boolean append = true;
@@ -404,7 +405,9 @@ public class RtFilter implements Filter {
 
     private void handleFatalError(Exception e) {
         this.initialized = false;
-        log.fatal("RHQ response-time filter experienced an unrecoverable failure. Response-time collection is now disabled for context '" + this.contextName + "'. Please post the below stack trace to the RHQ Forums: ", e);        
+        log.fatal(
+            "RHQ response-time filter experienced an unrecoverable failure. Response-time collection is now disabled for context '"
+                + this.contextName + "'. Please post the below stack trace to the RHQ Forums: ", e);
     }
 
     abstract class InitParams {

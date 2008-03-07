@@ -149,20 +149,25 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
         }
 
         if (parentContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
-            log.debug("Parent ResourceComponent not in a running state " + "to allow for runtime discovery "
-                + parent.toString());
+            log.debug("ResourceComponent for parent " + parent + " is not in the STARTED state, so we can't execute" +
+                      "runtime discovery on it.");
             return;
         }
 
         if (parent.getInventoryStatus() != InventoryStatus.COMMITTED) {
-            log.debug("Parent resource must first be imported (i.e., in the COMMITTED state) "
-                + "to allow for runtime discovery " + parent.toString());
+            log.debug("Parent " + parent + " must first be imported (i.e. in the COMMITTED state) "
+                + "to allow for runtime discovery.");
             return;
         }
 
         ResourceComponent parentComponent = parentContainer.getResourceComponent();
         if (parentComponent == null) {
-            log.debug("Parent ResourceComponent was null so we can't runtime discovery on " + parent.toString());
+            log.debug("ResourceComponent for parent " + parent + " was null, so we can't execute runtime discovery on it.");
+            return;
+        }
+        // TODO GH: This is doing a live availability check, is that right?
+        if (AvailabilityType.DOWN.equals(parentComponent.getAvailability())) {
+            log.debug("Availability of " + parent + " is DOWN, so we can't execute runtime discovery on it.");
             return;
         }
 
@@ -184,7 +189,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             }
 
             // For this resource type, discover all resources of that type on this parent resource
-            log.debug("Running Runtime discovery on server: " + parent.toString() + " for children: "
+            log.debug("Running Runtime discovery on server: " + parent + " for children of type: "
                 + childResourceType);
             Set<Resource> childResources = executeComponentDiscovery(childResourceType, discoveryComponent,
                 parentComponent);
@@ -224,21 +229,17 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
     private Set<Resource> executeComponentDiscovery(ResourceType resourceType, ResourceDiscoveryComponent component,
         ResourceComponent parentComponent) {
         try {
-            if (AvailabilityType.UP.equals(parentComponent.getAvailability())) // TODO GH: This is doing a live availability check, is that right?
-            {
-                ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, parentComponent,
-                    SystemInfoFactory.createSystemInfo(), Collections.EMPTY_LIST, Collections.EMPTY_LIST,
-                    pluginContainerConfiguration.getContainerName());
-                Set<DiscoveredResourceDetails> discoveredResources = component.discoverResources(context);
-                Set<Resource> newResources = new HashSet<Resource>();
-                if ((discoveredResources != null) && (discoveredResources.size() > 0)) {
-                    for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
-                        newResources.add(InventoryManager.createNewResource(discoveredResource));
-                    }
+            ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, parentComponent,
+                SystemInfoFactory.createSystemInfo(), Collections.EMPTY_LIST, Collections.EMPTY_LIST,
+                pluginContainerConfiguration.getContainerName());
+            Set<DiscoveredResourceDetails> discoveredResources = component.discoverResources(context);
+            Set<Resource> newResources = new HashSet<Resource>();
+            if ((discoveredResources != null) && (discoveredResources.size() > 0)) {
+                for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
+                    newResources.add(InventoryManager.createNewResource(discoveredResource));
                 }
-
-                return newResources;
             }
+            return newResources;
         } catch (Throwable e) {
             // TODO GH: Add server/parent - up/down semantics so this won't happen just because a server is not up
             log.warn("Failed to execute resource discovery", e);

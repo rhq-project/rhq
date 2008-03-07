@@ -35,6 +35,7 @@ import org.rhq.enterprise.gui.content.ChannelUnsubscriptionsUIBean;
 import org.rhq.enterprise.gui.content.ContentSourceChannelsUIBean;
 import org.rhq.enterprise.gui.content.ContentSourcePackageVersionsUIBean;
 import org.rhq.enterprise.gui.content.ContentSourceSyncResultsUIBean;
+import org.rhq.enterprise.gui.content.DeployPackagesUIBean;
 import org.rhq.enterprise.gui.content.ListChannelsUIBean;
 import org.rhq.enterprise.gui.content.ListCompletedContentRequestsUIBean;
 import org.rhq.enterprise.gui.content.ListContentSourcesUIBean;
@@ -44,7 +45,6 @@ import org.rhq.enterprise.gui.content.ListPackageTypesUIBean;
 import org.rhq.enterprise.gui.content.ListPackagesUIBean;
 import org.rhq.enterprise.gui.content.ResourceChannelsUIBean;
 import org.rhq.enterprise.gui.content.ResourcePackageVersionsUIBean;
-import org.rhq.enterprise.gui.content.DeployPackagesUIBean;
 import org.rhq.enterprise.gui.content.ShowContentServiceRequestUIBean;
 import org.rhq.enterprise.gui.definition.group.GroupDefinitionUIBean;
 import org.rhq.enterprise.gui.definition.group.ListGroupDefinitionsUIBean;
@@ -57,6 +57,7 @@ import org.rhq.enterprise.gui.inventory.resource.ListContainingGroupsUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListCreateResourceHistoryUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListDeleteResourceHistoryUIBean;
 import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationCompletedHistoryUIBean;
+import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationHistoryDetailsUIBean;
 import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationPendingHistoryUIBean;
 import org.rhq.enterprise.gui.operation.history.resource.ResourceOperationCompletedHistoryUIBean;
 import org.rhq.enterprise.gui.operation.history.resource.ResourceOperationPendingHistoryUIBean;
@@ -141,6 +142,8 @@ public enum PageControlView {
     ResourceGroupOperationCompletedHistory(ResourceGroupOperationCompletedHistoryUIBean.class),
     /** */
     ResourceGroupOperationPendingHistory(ResourceGroupOperationPendingHistoryUIBean.class),
+    /** */
+    ResourceGroupOperationHistoryDetails(ResourceGroupOperationHistoryDetailsUIBean.class),
 
     // Group Definition
 

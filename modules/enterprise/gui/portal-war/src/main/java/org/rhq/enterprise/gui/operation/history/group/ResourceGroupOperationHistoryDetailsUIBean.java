@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.operation.history.group;
 
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -86,8 +87,8 @@ public class ResourceGroupOperationHistoryDetailsUIBean extends PagedDataTableUI
             GroupOperationHistory groupHistory = getHistory();
 
             PageList<ResourceOperationHistory> resourceHistories = null;
-            resourceHistories = operationManager.getResourceOperationHistoriesByGroupId(subject, groupHistory.getId(),
-                pc);
+            resourceHistories = operationManager.getResourceOperationHistoriesByGroupHistoryId(subject, groupHistory
+                .getId(), pc);
 
             return resourceHistories;
         }

@@ -114,7 +114,7 @@
             <rich:dataTable rendered="#{resourceGroupOperationHistoryDetailsDataModel.rowCount gt 0}"
                             binding="#{ResourceGroupOperationHistoryDetailsUIBean.dataTable}"
                             id="resourceGroupOperationHistoryDetailsDataTable" 
-                            rows="0"
+                            rows="#{PageControl.ResourceGroupOperationHistoryDetails.pageSize}"
                             value="#{resourceGroupOperationHistoryDetailsDataModel}"
                             var="resourceHistoryItem"
                             width="100%"
@@ -123,7 +123,7 @@
                             footerClass="on-pager-footer">
                             
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="NONE" />
+                  <onc:paginationControl id="ResourceGroupOperationHistoryDetails" />
                </f:facet>
                
                <rich:column rendered="#{param.debug}">
@@ -188,6 +188,17 @@
                   
                   <h:outputText value="#{resourceHistoryItem.subjectName}"/>
                </rich:column>
+               
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="6">
+                        <ui:param name="paginationDataTableName" value="resourceGroupOperationHistoryDetailsDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{resourceGroupOperationHistoryDetailsDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ResourceGroupOperationHistoryDetails}"/>
+                        <ui:include src="/rhq/resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
                
             </rich:dataTable>
 

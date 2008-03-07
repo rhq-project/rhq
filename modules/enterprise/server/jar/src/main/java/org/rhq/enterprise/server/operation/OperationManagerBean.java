@@ -492,14 +492,22 @@ public class OperationManagerBean implements OperationManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceOperationHistory> getResourceOperationHistoriesByGroupId(Subject whoami, int historyId,
-        PageControl pc) {
-        OperationHistory rawHistory = getOperationHistoryByHistoryId(whoami, historyId);
-        GroupOperationHistory groupHistory = (GroupOperationHistory) rawHistory;
+    public PageList<ResourceOperationHistory> getResourceOperationHistoriesByGroupHistoryId(Subject whoami,
+        int historyId, PageControl pc) {
+        pc.initDefaultOrderingField("h.createdTime", PageOrdering.DESC);
 
-        List<ResourceOperationHistory> resourceHistories = groupHistory.getResourceOperationHistories();
-        PageList<ResourceOperationHistory> pagedResourceHistories = PersistenceUtility.createPaginationFilter(
-            entityManager, resourceHistories, pc);
+        String queryName = ResourceOperationHistory.QUERY_FIND_BY_GROUP_OPERATION_HISTORY_ID;
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
+
+        queryCount.setParameter("groupHistoryId", historyId);
+        query.setParameter("groupHistoryId", historyId);
+
+        long totalCount = (Long) queryCount.getSingleResult();
+        List<ResourceOperationHistory> list = query.getResultList();
+
+        PageList<ResourceOperationHistory> pagedResourceHistories;
+        pagedResourceHistories = new PageList<ResourceOperationHistory>(list, (int) totalCount, pc);
         return pagedResourceHistories;
     }
 

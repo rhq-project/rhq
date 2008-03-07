@@ -236,8 +236,8 @@ public interface OperationManagerLocal {
      *
      * @return the requested page of sorted resource operation history results for the given group history
      */
-    public PageList<ResourceOperationHistory> getResourceOperationHistoriesByGroupId(Subject whoami, int historyId,
-        PageControl pc);
+    public PageList<ResourceOperationHistory> getResourceOperationHistoriesByGroupHistoryId(Subject whoami,
+        int historyId, PageControl pc);
 
     /**
      * Get the operation history for a job ID. Note that the job ID is <b>not</b> the same thing as the history ID. See

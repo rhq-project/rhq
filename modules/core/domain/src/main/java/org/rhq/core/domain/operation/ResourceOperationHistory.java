@@ -27,6 +27,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
 
@@ -39,6 +40,8 @@ import org.rhq.core.domain.resource.Resource;
 @DiscriminatorValue("resource")
 @Entity
 @NamedQueries( {
+    @NamedQuery(name = ResourceOperationHistory.QUERY_FIND_BY_GROUP_OPERATION_HISTORY_ID, query = "select h "
+        + "from ResourceOperationHistory h " + "where h.groupOperationHistory.id = :groupHistoryId "),
     @NamedQuery(name = ResourceOperationHistory.QUERY_FIND_BY_RESOURCE_ID_AND_STATUS, query = "select h "
         + "from ResourceOperationHistory h " + "where h.resource.id = :resourceId " + "and h.status = :status"),
     @NamedQuery(name = ResourceOperationHistory.QUERY_FIND_BY_RESOURCE_ID_AND_NOT_STATUS, query = "select h "
@@ -52,6 +55,7 @@ import org.rhq.core.domain.resource.Resource;
         + "  and h.modifiedTime = (select min(h2.modifiedTime) " + "from ResourceOperationHistory h2 "
         + "where h2.resource.id = :resourceId " + "  and h2.status = 'INPROGRESS')") })
 public class ResourceOperationHistory extends OperationHistory {
+    public static final String QUERY_FIND_BY_GROUP_OPERATION_HISTORY_ID = "ResourceOperationHistory.findByGroupOperationHistoryId";
     public static final String QUERY_FIND_BY_RESOURCE_ID_AND_STATUS = "ResourceOperationHistory.findByResourceIdAndStatus";
     public static final String QUERY_FIND_BY_RESOURCE_ID_AND_NOT_STATUS = "ResourceOperationHistory.findByResourceIdAndNotStatus";
     public static final String QUERY_FIND_LATEST_COMPLETED_OPERATION = "ResourceOperationHistory.findLatestCompletedOperation";

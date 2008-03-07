@@ -194,7 +194,7 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "  FROM PackageVersion pv "
         + "  JOIN pv.channelPackageVersions cpv "
         + "  JOIN cpv.channel.resourceChannels rc "
-        + "  JOIN pv.productVersionPackageVersions pvpv "
+        + "  LEFT JOIN pv.productVersionPackageVersions pvpv "
         + " WHERE rc.resource.id = :resourceId "
         + "   AND cpv.channel.id = rc.channel.id "
         + "   AND (UPPER(pv.displayName) LIKE :filter "

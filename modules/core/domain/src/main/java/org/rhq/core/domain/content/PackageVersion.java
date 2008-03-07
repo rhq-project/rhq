@@ -194,10 +194,18 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "  FROM PackageVersion pv "
         + "  LEFT JOIN pv.channelPackageVersions cpv "
         + "  LEFT JOIN cpv.channel.resourceChannels rc "
+        + "  LEFT JOIN pv.productVersionPackageVersions pvpv "
+        + "  LEFT JOIN rc.resource.installedPackages ips "
         + " WHERE rc.resource.id = :resourceId "
         + "   AND (UPPER(pv.displayName) LIKE :filter "
-        + "    OR UPPER(pv.shortDescription) LIKE :filter "
-        + "    OR UPPER(pv.longDescription) LIKE :filter" + "    OR :filter IS NULL) "),
+        + "        OR UPPER(pv.shortDescription) LIKE :filter "
+        + "        OR UPPER(pv.longDescription) LIKE :filter "
+        + "        OR :filter IS NULL) "
+        + "   AND (pv.productVersionPackageVersions IS EMPTY "
+        + "        OR (pv.productVersionPackageVersions IS NOT EMPTY "
+        + "            AND pvpv.productVersion = rc.resource.productVersion)) "
+        + "   AND (ips.packageVersion <> pv)"
+    ),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_ID, query = "SELECT pv FROM PackageVersion pv WHERE pv.id = :id")
 
     })
@@ -226,7 +234,6 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_COMPOSITE_BY_ID = "PackageVersion.findCompositeById";
     public static final String QUERY_FIND_COMPOSITES_BY_IDS = "PackageVersion.findCompositesByIds";
     public static final String QUERY_FIND_COMPOSITE_BY_FILTERS = "PackageVersion.findCompositeByFilters";
-    public static final String QUERY_FIND_COMPOSITE_BY_FILTERS_AND_ELIGIBILITY = "PackageVersion.findCompositeByFiltersAndEligibility";
     public static final String QUERY_FIND_BY_ID = "PackageVersion.findById";
 
     // Attributes  --------------------------------------------

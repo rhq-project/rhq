@@ -381,7 +381,12 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
     }
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
-        EmsOperation operation = getEmsBean().getOperation(name);
+        return invokeOperation(name, parameters, getEmsBean());
+    }
+
+    public OperationResult invokeOperation(String name, Configuration parameters, EmsBean emsBean)  throws Exception
+    {
+        EmsOperation operation = emsBean.getOperation(name);
         if (operation == null) {
             throw new Exception("Operation [" + name + "] not found on bean [" + bean.getBeanName() + "]");
         }

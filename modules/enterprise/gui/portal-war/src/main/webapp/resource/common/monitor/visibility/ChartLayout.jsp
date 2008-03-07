@@ -82,8 +82,9 @@
                      <html:hidden property="chartName" value="${Resource.name}: ${chartedMetrics[0].metricName}"/>
                      <tiles:insert definition=".resource.common.monitor.visibility.charts.metric.chart"/>
                      &nbsp;<br>
-                     <tiles:insert definition=".resource.common.monitor.visibility.charts.metric.partrsrcs"/>
+<%--                      <tiles:insert definition=".resource.common.monitor.visibility.charts.metric.partrsrcs"/> 
                      &nbsp;<br>
+--%>                     
                      <tiles:insert definition=".resource.common.monitor.visibility.charts.metric.baselinerangeparams">
                         <tiles:put name="edit" value="false"/>
                      </tiles:insert>

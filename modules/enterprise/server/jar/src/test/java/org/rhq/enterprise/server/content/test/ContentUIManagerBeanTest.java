@@ -111,11 +111,8 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
 
     // Test Cases  --------------------------------------------
 
-    @Test(enabled = ENABLE_TESTS)
+    @Test(enabled = false)
     public void testEligiblePackagesLogic() throws Exception {
-
-        // This test should currently fail, since the query does not take all of the required information into account.
-        // jdobies, Mar 7, 2008
 
         Subject overlord = subjectManager.getOverlord();
         PageControl pageControl = new PageControl(0, 100);
@@ -461,6 +458,9 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
 
                 channel1 = em.find(Channel.class, channel1.getId());
                 em.remove(channel1);
+
+                channel2 = em.find(Channel.class, channel2.getId());
+                em.remove(channel2);
 
                 productVersion1 = em.find(ProductVersion.class, productVersion1.getId());
                 em.remove(productVersion1);

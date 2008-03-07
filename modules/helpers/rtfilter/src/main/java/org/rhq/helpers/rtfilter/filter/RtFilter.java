@@ -79,6 +79,8 @@ public class RtFilter implements Filter {
     private long maxLogFileSize = DEFAULT_MAX_LOG_FILE_SIZE;
     private String contextName;
 
+    private Object lock = new Object();
+
     /**
      * Does the real magic. If a fatal exception occurs during processing, the filter will revert to an uninitialized
      * state and refuse to process any further requests (see {@link #handleFatalError(Exception)}).
@@ -86,56 +88,61 @@ public class RtFilter implements Filter {
      * @see javax.servlet.Filter#doFilter(javax.servlet.ServletRequest, javax.servlet.ServletResponse,
      *      javax.servlet.FilterChain)
      */
-    public synchronized void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException,
+    public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException,
         ServletException {
         long t1 = 0;
         HttpServletRequest hreq = null;
         RtFilterResponseWrapper hresp = null;
-        if (this.initialized) {
-            try {
-                t1 = System.currentTimeMillis();
-                this.requestCount++;
-                hreq = (HttpServletRequest) req;
-                hresp = new RtFilterResponseWrapper(resp);
-                if ((this.requestCount > 1) && (t1 > (this.t2 + this.timeBetweenFlushes))) {
-                    this.flushingNeeded = true;
+
+        synchronized (lock) {
+            if (this.initialized) {
+                try {
+                    t1 = System.currentTimeMillis();
+                    this.requestCount++;
+                    hreq = (HttpServletRequest) req;
+                    hresp = new RtFilterResponseWrapper(resp);
+                    if ((this.requestCount > 1) && (t1 > (this.t2 + this.timeBetweenFlushes))) {
+                        this.flushingNeeded = true;
+                    }
+                } catch (Exception e) {
+                    handleFatalError(e);
                 }
-            } catch (Exception e) {
-                handleFatalError(e);
             }
         }
 
         try {
             chain.doFilter(req, hresp);
         } finally {
-            if (this.initialized) {
-                try {
-                    this.t2 = System.currentTimeMillis();
+            synchronized (lock) {
+                if (this.initialized) {
+                    try {
+                        this.t2 = System.currentTimeMillis();
 
-                    int statusCode = hresp.getStatus();
+                        int statusCode = hresp.getStatus();
 
-                    // Only log successful requests, since that's all JON 2.0 cares about for now...
-                    if ((statusCode < 200) || (statusCode >= 300)) {
-                        return;
-                    }
-
-                    String uri = hreq.getRequestURI();
-                    String url = getRequestURL(hreq);
-
-                    // If the input matches the passed don't log regexp, then don't log the request.
-                    if (this.dontLogPattern != null) {
-                        Matcher matcher = this.dontLogPattern.matcher((this.matchOnUriOnly) ? uri : url);
-                        if (matcher.matches()) {
+                        // Only log successful requests, since that's all JON 2.0 cares about for now...
+                        if ((statusCode < 200) || (statusCode >= 300)) {
                             return;
                         }
+
+                        String uri = hreq.getRequestURI();
+                        String url = getRequestURL(hreq);
+
+                        // If the input matches the passed don't log regexp, then don't log the request.
+                        if (this.dontLogPattern != null) {
+                            Matcher matcher = this.dontLogPattern.matcher((this.matchOnUriOnly) ? uri : url);
+                            if (matcher.matches()) {
+                                return;
+                            }
+                        }
+
+                        truncateLogFileIfMaxSizeExceeded();
+
+                        // If we got this far, write the request info to the log.
+                        writeLogEntry(req, hresp, uri, url, t1);
+                    } catch (Exception e) {
+                        handleFatalError(e);
                     }
-
-                    truncateLogFileIfMaxSizeExceeded();
-
-                    // If we got this far, write the request info to the log.
-                    writeLogEntry(req, hresp, uri, url, t1);
-                } catch (Exception e) {
-                    handleFatalError(e);
                 }
             }
         }
@@ -151,17 +158,19 @@ public class RtFilter implements Filter {
      */
     public void init(FilterConfig filterConfig) throws ServletException {
         try {
-            log.debug("-- Filter init ");
-            initializeParameters(filterConfig);
-            ServletContext servletContext = filterConfig.getServletContext();
-            this.contextName = ServletUtility.getContextRoot(servletContext);
-            String logFileName = this.logFilePrefix + this.contextName + "_rt.log";
-            this.logFile = new File(this.logDirectory, logFileName);
-            log.info("Writing response-time log for webapp with context root '" + this.contextName + "' to '"
-                + this.logFile + "'...");
-            boolean append = true;
-            openFileWriter(append);
-            this.initialized = true;
+            synchronized (lock) {
+                log.debug("-- Filter init ");
+                initializeParameters(filterConfig);
+                ServletContext servletContext = filterConfig.getServletContext();
+                this.contextName = ServletUtility.getContextRoot(servletContext);
+                String logFileName = this.logFilePrefix + this.contextName + "_rt.log";
+                this.logFile = new File(this.logDirectory, logFileName);
+                log.info("Writing response-time log for webapp with context root '" + this.contextName + "' to '"
+                    + this.logFile + "'...");
+                boolean append = true;
+                openFileWriter(append);
+                this.initialized = true;
+            }
         } catch (Exception e) {
             handleFatalError(e);
         }
@@ -173,9 +182,11 @@ public class RtFilter implements Filter {
      * @see javax.servlet.Filter#destroy()
      */
     public void destroy() {
-        log.debug("-- Filter destroy, " + this.requestCount + " requests processed");
-        closeFileWriter();
-        this.initialized = false;
+        synchronized (lock) {
+            log.debug("-- Filter destroy, " + this.requestCount + " requests processed");
+            closeFileWriter();
+            this.initialized = false;
+        }
     }
 
     private void writeLogEntry(ServletRequest req, RtFilterResponseWrapper responseWrapper, String uri, String url,

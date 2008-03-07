@@ -37,6 +37,7 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.gui.configuration.resource.ExistingResourceConfigurationUIBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -86,6 +87,11 @@ public class ListConfigurationUpdateUIBean extends PagedDataTableUIBean {
             ConfigurationManagerLocal manager = LookupUtil.getConfigurationManager();
 
             manager.rollbackResourceConfiguration(subject, resource.getId(), Integer.parseInt(rollbackTo));
+
+            // We've just updated the current Configuration, so clear the current Configuration that is cached in the
+            // Session, so the config view/edit pages will not display a stale version of the Configuration.
+            ExistingResourceConfigurationUIBean configUIBean = FacesContextUtility.getManagedBean(ExistingResourceConfigurationUIBean.class);
+            configUIBean.clearConfiguration();
 
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Rolled back resource configuration to version "
                 + rollbackTo);

@@ -52,6 +52,11 @@ public class ViewResourceConfigurationUpdateUIBean extends ExistingResourceConfi
         return configuration;
     }
 
+    protected int getConfigurationKey() {
+        return FacesContextUtility.getOptionalRequestParameter(ParamConstants.CONFIG_ID_PARAM,
+            Integer.class);
+    }
+
     @Override
     public String getNullConfigurationMessage() {
         int configId = FacesContextUtility.getRequiredRequestParameter(ParamConstants.CONFIG_ID_PARAM, Integer.class);

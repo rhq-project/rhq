@@ -92,7 +92,7 @@ public abstract class AbstractConfigurationUIBean {
         return configuration;
     }
 
-    protected void clearConfiguration() {
+    public void clearConfiguration() {
         this.configurationMap.remove(getConfigurationKey());
     }
 }

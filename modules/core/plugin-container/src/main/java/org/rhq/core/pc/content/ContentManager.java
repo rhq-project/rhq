@@ -376,8 +376,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         // Perform the discovery
         ContentFacet contentFacet = findContentFacet(resourceId);
         Set<ResourcePackageDetails> details = contentFacet.discoverDeployedPackages(type);
-        log
-            .info("Discovered number of packages: " + ((details != null) ? details.size() : null) + " for type: "
+        log.info("Discovered number of packages: " + ((details != null) ? details.size() : null) + " for type: "
                 + type);
 
         // Process the results

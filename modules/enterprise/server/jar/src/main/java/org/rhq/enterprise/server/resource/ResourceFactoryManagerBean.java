@@ -248,7 +248,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
 
         // There is some inconsistency if we're completing a request that was not in the database
         if (history == null) {
-            log.error("Attemping to complete a request that was not found in the database: " + response.getRequestId());
+            log.error("Attempting to complete a request that was not found in the database: " + response.getRequestId());
             return;
         }
 

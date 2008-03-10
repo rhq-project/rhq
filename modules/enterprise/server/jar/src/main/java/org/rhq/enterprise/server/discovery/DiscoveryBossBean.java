@@ -112,13 +112,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
 
         Agent knownAgent = agentManager.getAgentByName(agent.getName());
         if (knownAgent == null) {
-            throw new InvalidInventoryReportException("Unknown agent named [" + agent.getName()
-                + "] sent an inventory report - that report will be igonored");
+            throw new InvalidInventoryReportException("Unknown Agent named [" + agent.getName()
+                + "] sent an inventory report - that report will be ignored");
         }
 
         agentManager.agentIsAlive(knownAgent); // we see something from the agent, so renew its alive counter.
 
-        log.info("Received inventory report from RHQ agent [" + knownAgent + "]. Number of added roots: "
+        log.info("Received inventory report from RHQ Agent [" + knownAgent + "]. Number of added roots: "
             + report.getAddedRoots().size());
 
         InventoryReportResponse response = new InventoryReportResponse();

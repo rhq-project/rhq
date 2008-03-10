@@ -245,7 +245,7 @@ public class OperationInvocation implements Runnable {
             operationThreadPoolGateway.operationCompleted(this);
         }
 
-        // if we have a server that we need to tell, notify it of the results/failure/cancelation/timeout
+        // if we have a server that we need to tell, notify it of the results/failure/cancellation/timeout
         if (operationServerService != null) {
             if (failure == null) {
                 // Note that even if the operation was canceled and/or timed out, we may still get here.

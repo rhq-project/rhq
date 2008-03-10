@@ -44,8 +44,8 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.annotation.ejb.TransactionTimeout;
 
-import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -1028,6 +1028,70 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         existingPackage.addVersion(newPackageVersion);
 
         return newPackageVersion;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public PackageVersion persistPackageVersion(PackageVersion pv) {
+        entityManager.persist(pv);
+        return pv;
+    }
+
+    public PackageVersion persistOrMergePackageVersionSafely(PackageVersion pv) {
+        try {
+            pv = contentManager.persistPackageVersion(pv);
+        } catch (RuntimeException re) {
+            // If this exception was because the PV already exists, we should be able to find it.
+            // If we can find it, we ignore this exception because we assume it was because the PV already exists.
+            // If we can't find it, throw the original error since it needs to be reported.
+            Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
+            q.setParameter("packageName", pv.getGeneralPackage().getName());
+            q.setParameter("packageTypeName", pv.getGeneralPackage().getPackageType().getName());
+            q.setParameter("architectureName", pv.getArchitecture().getName());
+            q.setParameter("version", pv.getVersion());
+            q.setParameter("resourceTypeId", pv.getGeneralPackage().getPackageType().getResourceType().getId());
+
+            List<PackageVersion> found = q.getResultList();
+            if (found.size() != 1) {
+                throw re;
+            }
+            if (found.size() > 1) {
+                throw new RuntimeException("Expecting 1 package version - got: " + found);
+            }
+            pv.setId(found.get(0).getId());
+            pv = entityManager.merge(pv);
+        }
+
+        return pv;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public Package persistPackage(Package pkg) {
+        entityManager.persist(pkg);
+        return pkg;
+    }
+
+    public Package persistOrMergePackageSafely(Package pkg) {
+        try {
+            pkg = contentManager.persistPackage(pkg);
+        } catch (RuntimeException re) {
+            // If this exception was because the pkg already exists, we should be able to find it.
+            // If we can find it, we ignore this exception because we assume it was because the pkg already exists.
+            // If we can't find it, throw the original error since it needs to be reported.
+            Query q = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID);
+            q.setParameter("name", pkg.getName());
+            q.setParameter("packageTypeId", pkg.getPackageType().getId());
+            List<Package> found = q.getResultList();
+            if (found.size() != 1) {
+                throw re;
+            }
+            if (found.size() > 1) {
+                throw new RuntimeException("Expecting 1 package - got: " + found);
+            }
+            pkg.setId(found.get(0).getId());
+            pkg = entityManager.merge(pkg);
+        }
+
+        return pkg;
     }
 
     // Private  --------------------------------------------

@@ -27,6 +27,7 @@ import javax.ejb.Local;
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentServiceRequest;
+import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
@@ -216,4 +217,48 @@ public interface ContentManagerLocal {
      */
     PackageVersion createPackageVersion(String packageName, int packageTypeId, String version, int architectureId,
         InputStream packageBitStream);
+
+    /**
+     * Very simple method that pesists the given package version within its own transaction.
+     * 
+     * @param pv the package version to persist
+     * 
+     * @return the newly persisted package version
+     */
+    PackageVersion persistPackageVersion(PackageVersion pv);
+
+    /**
+     * Finds, and if it doesn't exist, persists the package version.
+     * If it already exists, it will return the merge the given PV with the object it found and return
+     * the merged PV.
+     * This performs its tasks safely; that is, it makes sure that no contraint violations occur
+     * if the package version already exists.
+     *
+     * @param pv the package version to find and possibly persist to the database
+     *
+     * @return the package version that was found/persisted
+     */
+    PackageVersion persistOrMergePackageVersionSafely(PackageVersion pv);
+
+    /**
+     * Very simple method that pesists the given package within its own transaction.
+     * 
+     * @param pkg the package to persist
+     * 
+     * @return the newly persisted package
+     */
+    Package persistPackage(Package pkg);
+
+    /**
+     * Finds, and if it doesn't exist, persists the package.
+     * If it already exists, it will return the merge the given package with the object it found and return
+     * the merged package.
+     * This performs its tasks safely; that is, it makes sure that no contraint violations occur
+     * if the package already exists.
+     *
+     * @param pkg the package to find and possibly persist to the database
+     *
+     * @return the package that was found/persisted
+     */
+    Package persistOrMergePackageSafely(Package pkg);
 }

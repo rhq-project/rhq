@@ -524,10 +524,8 @@ public class ContentManager extends AgentService implements ContainerService, Co
      */
     private ContentDiscoveryReport handleDiscoveredContent(Set<ResourcePackageDetails> details, int resourceId)
         throws Exception {
-        // If plugin returned null, it's not honoring the API. There's nothing to do since there are no
-        // content, so punch out.
+        // The plugin should at least return an empty set, but check for null too.
         if (details == null) {
-            log.warn("Null set of content details received for resource: " + resourceId);
             return null;
         }
 

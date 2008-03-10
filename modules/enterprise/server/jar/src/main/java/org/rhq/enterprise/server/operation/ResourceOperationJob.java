@@ -23,9 +23,6 @@ import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.operation.GroupOperationHistory;
-import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -69,8 +66,7 @@ public class ResourceOperationJob extends OperationJob {
 
             updateOperationScheduleEntity(jobDetail, context.getNextFireTime(), operationManager);
 
-            // we only got here because the user was allowed to execute / schedule the
-            // operation in the first place, thus it's safe to pass in the overlord here
+            // retrieve the stored schedule using the overlord so it succeeds no matter what
             schedule = operationManager.getResourceOperationSchedule(LookupUtil.getSubjectManager().getOverlord(),
                 jobDetail);
 
@@ -78,9 +74,14 @@ public class ResourceOperationJob extends OperationJob {
             // Create a new session even if user is logged in elsewhere, we don't want to attach to that user's session
             schedule.setSubject(getUserWithSession(schedule.getSubject(), false));
 
-            schedule = operationManager.getResourceOperationSchedule(schedule.getSubject(), jobDetail);
+            // for the security check, can the user who scheduled the operation in the first 
+            // place still have the authority to execute it against the resource in question
+            operationManager.getResourceOperationSchedule(schedule.getSubject(), jobDetail);
 
-            invokeOperationOnResource(jobDetail.getName(), jobDetail.getGroup(), schedule, null, operationManager);
+            ResourceOperationHistory resourceHistory = createOperationHistory(jobDetail.getName(),
+                jobDetail.getGroup(), schedule, null, operationManager);
+
+            invokeOperationOnResource(schedule, resourceHistory, operationManager);
         } catch (Exception e) {
             String error = "Failed to execute scheduled operation [" + schedule + "]";
             LogFactory.getLog(ResourceOperationJob.class).error(error, e);
@@ -103,29 +104,10 @@ public class ResourceOperationJob extends OperationJob {
      *
      * @throws Exception
      */
-    ResourceOperationHistory invokeOperationOnResource(String jobName, String jobGroup,
-        ResourceOperationSchedule schedule, GroupOperationHistory groupHistory, OperationManagerLocal operationManager)
-        throws Exception {
+    void invokeOperationOnResource(ResourceOperationSchedule schedule, ResourceOperationHistory resourceHistory,
+        OperationManagerLocal operationManager) throws Exception {
         // make sure the session is still valid
         schedule.setSubject(getUserWithSession(schedule.getSubject(), true));
-
-        // we need the operation definition to fill in the history item
-        OperationDefinition op;
-        op = operationManager.getSupportedResourceOperation(schedule.getSubject(), schedule.getResource().getId(),
-            schedule.getOperationName());
-
-        // first we need to create an INPROGRESS history item
-        Configuration parameters = schedule.getParameters();
-        if (parameters != null) {
-            parameters = parameters.deepCopy(false); // we need a copy to avoid constraint violations upon delete
-        }
-
-        ResourceOperationHistory history;
-        history = new ResourceOperationHistory(jobName, jobGroup, schedule.getSubject().getName(), op, parameters,
-            schedule.getResource(), groupHistory);
-        history.setStartedTime();
-
-        history = (ResourceOperationHistory) operationManager.updateOperationHistory(schedule.getSubject(), history);
 
         // now tell the agent to invoke it!
         try {
@@ -133,15 +115,15 @@ public class ResourceOperationJob extends OperationJob {
             AgentManagerLocal agentManager = LookupUtil.getAgentManager();
             AgentClient agentClient = agentManager.getAgentClient(resource.getId());
 
-            agentClient.getOperationAgentService().invokeOperation(history.getJobId().toString(), resource.getId(),
-                schedule.getOperationName(), schedule.getParameters());
+            agentClient.getOperationAgentService().invokeOperation(resourceHistory.getJobId().toString(),
+                resource.getId(), schedule.getOperationName(), schedule.getParameters());
         } catch (Exception e) {
             // failed to even send to the agent, immediately mark the job as failed
-            history.setErrorMessageFromThrowable(e);
-            operationManager.updateOperationHistory(getUserWithSession(schedule.getSubject(), true), history);
+            resourceHistory.setErrorMessageFromThrowable(e);
+            operationManager.updateOperationHistory(getUserWithSession(schedule.getSubject(), true), resourceHistory);
             throw e;
         }
 
-        return history;
+        return;
     }
 }

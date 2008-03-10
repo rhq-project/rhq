@@ -18,10 +18,14 @@
  */
 package org.rhq.enterprise.server.operation;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.logging.LogFactory;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.GroupOperationHistory;
@@ -32,7 +36,6 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -45,6 +48,19 @@ public class GroupOperationJob extends OperationJob {
     public static final String DATAMAP_INT_GROUP_ID = "groupId";
     public static final String DATAMAP_INT_ARRAY_EXECUTION_ORDER = "executionOrder"; // comma-separated list of IDs
     public static final String DATAMAP_BOOL_HALT_ON_FAILURE = "haltOnFailure";
+
+    class ResourceOperationDetailsComposite {
+        Resource resource;
+        ResourceOperationHistory history;
+        ResourceOperationSchedule schedule;
+
+        public ResourceOperationDetailsComposite(Resource resource, ResourceOperationHistory history,
+            ResourceOperationSchedule schedule) {
+            this.resource = resource;
+            this.history = history;
+            this.schedule = schedule;
+        }
+    }
 
     /**
      * Prefix for all job names and job groups names of group operations.
@@ -94,33 +110,71 @@ public class GroupOperationJob extends OperationJob {
 
             groupHistory = (GroupOperationHistory) operationManager.updateOperationHistory(user, groupHistory);
 
+            // get the resources to operate on, ordered or not
+            List<Resource> resourcesToOperateOn;
+            if (schedule.getExecutionOrder() != null) {
+                resourcesToOperateOn = schedule.getExecutionOrder();
+            } else {
+                ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+                PageControl pageControl = PageControl.getUnlimitedInstance();
+                resourcesToOperateOn = resourceManager.getExplicitResourcesByResourceGroup(user, group, pageControl);
+            }
+
+            // now create detail composites from the resource list
+            List<ResourceOperationDetailsComposite> resourceComposites = new ArrayList<ResourceOperationDetailsComposite>();
+            for (Resource nextResourceToOperateOn : resourcesToOperateOn) {
+                // create the non-quartz schedule entity for the given job execution context data
+                ResourceOperationSchedule resourceSchedule = createScheduleForResource(schedule, jobDetail.getGroup(),
+                    getUserWithSession(user, true), nextResourceToOperateOn);
+
+                // crate the resource-level history entity for the newly created non-quartz schedule entity
+                // this method also does the persisting
+                ResourceOperationHistory resourceHistory = createOperationHistory(resourceSchedule.getJobName(),
+                    resourceSchedule.getJobGroup(), resourceSchedule, groupHistory, operationManager);
+
+                // add all three elements to the composite, which will be iterated over below for the bulk of the work
+                resourceComposites.add(new ResourceOperationDetailsComposite(nextResourceToOperateOn, resourceHistory,
+                    resourceSchedule));
+            }
+
             // now tell the agents to invoke the operation for all resources
             if (schedule.getExecutionOrder() != null) {
-                // synchronously execute, waiting for each operation to finish before going to the next
-                for (Resource resource : schedule.getExecutionOrder()) {
-                    try {
-                        OperationHistory resourceHistory = invokeOperationOnResource(schedule, jobDetail.getGroup(),
-                            operationManager, getUserWithSession(user, true), resource, groupHistory);
+                boolean hadFailure = false;
 
-                        while (resourceHistory.getStatus() == OperationRequestStatus.INPROGRESS) {
+                // synchronously execute, waiting for each operation to finish before going to the next
+                for (ResourceOperationDetailsComposite composite : resourceComposites) {
+                    try {
+                        if (hadFailure) {
+                            // there was a failure during execution of this group operation;
+                            // thus, mark all remaining operation histories as cancelled
+                            composite.history.setStatus(OperationRequestStatus.CANCELED);
+                            operationManager.updateOperationHistory(getUserWithSession(user, true), composite.history);
+                            continue;
+                        }
+
+                        invokeOperationOnResource(composite, operationManager);
+
+                        int resourceHistoryId = composite.history.getId();
+                        OperationHistory updatedOperationHistory;
+                        do {
+                            Thread.sleep(5000);
+                            updatedOperationHistory = operationManager.getOperationHistoryByHistoryId(
+                                getUserWithSession(user, true), resourceHistoryId);
+
                             // if the duration was ridiculously long, let's break out of here. this will rarely
                             // be triggered because our operation manager will timeout long running operations for us
                             // (based on the operation's define timeout).  But, me being paranoid, I want to be able
                             // to break this infinite loop if for some reason the operation manager isn't doing its job.
                             // if the operation took longer than 24 hours, this breaks the loop.
-                            if (resourceHistory.getDuration() > (1000 * 60 * 60 * 24)) {
+                            if (updatedOperationHistory.getDuration() > (1000 * 60 * 60 * 24)) {
                                 break;
                             }
-
-                            Thread.sleep(5000);
-                            resourceHistory = operationManager.getOperationHistoryByHistoryId(getUserWithSession(user,
-                                true), resourceHistory.getId());
-                        }
+                        } while (updatedOperationHistory.getStatus() == OperationRequestStatus.INPROGRESS);
 
                         // halt the rest if we got a failure and were told not to go on
-                        if ((resourceHistory.getStatus() != OperationRequestStatus.SUCCESS)
+                        if ((updatedOperationHistory.getStatus() != OperationRequestStatus.SUCCESS)
                             && schedule.isHaltOnFailure()) {
-                            break;
+                            hadFailure = true;
                         }
                     } catch (Exception e) {
                         // failed to even send to the agent, immediately mark the job as failed
@@ -133,15 +187,10 @@ public class GroupOperationJob extends OperationJob {
                     }
                 }
             } else {
-                // send the invocation requests as fast as possible in no particular order
-                ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-                PageControl pageControl = PageControl.getUnlimitedInstance();
-                PageList<Resource> resources = resourceManager.getExplicitResourcesByResourceGroup(user, group,
-                    pageControl);
-                for (Resource resource : resources) {
+                // send the invocation requests without waiting for each to return
+                for (ResourceOperationDetailsComposite composite : resourceComposites) {
                     try {
-                        invokeOperationOnResource(schedule, jobDetail.getGroup(), operationManager, user, resource,
-                            groupHistory);
+                        invokeOperationOnResource(composite, operationManager);
                     } catch (Exception e) {
                         // failed to even send to the agent, immediately mark the job as failed
                         groupHistory.setErrorMessageFromThrowable(e);
@@ -160,11 +209,9 @@ public class GroupOperationJob extends OperationJob {
         }
     }
 
-    private ResourceOperationHistory invokeOperationOnResource(GroupOperationSchedule schedule, String jobGroup,
-        OperationManagerLocal operationManager, Subject user, Resource resource, GroupOperationHistory groupHistory)
-        throws Exception {
+    private ResourceOperationSchedule createScheduleForResource(GroupOperationSchedule schedule, String jobGroup,
+        Subject user, Resource resource) throws Exception {
         ResourceOperationSchedule resourceSchedule;
-        ResourceOperationHistory resourceHistory;
 
         // We need to provide a unique job name for the group member.
         // The job name will be unique but it will have a job group name of the group job.
@@ -182,9 +229,11 @@ public class GroupOperationJob extends OperationJob {
         resourceSchedule.setSubject(user);
         resourceSchedule.setResource(resource);
 
-        resourceHistory = new ResourceOperationJob().invokeOperationOnResource(resourceJobName, jobGroup,
-            resourceSchedule, groupHistory, operationManager);
+        return resourceSchedule;
+    }
 
-        return resourceHistory;
+    private void invokeOperationOnResource(ResourceOperationDetailsComposite composite,
+        OperationManagerLocal operationManager) throws Exception {
+        new ResourceOperationJob().invokeOperationOnResource(composite.schedule, composite.history, operationManager);
     }
 }

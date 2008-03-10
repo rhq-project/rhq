@@ -19,10 +19,16 @@
 package org.rhq.enterprise.server.operation;
 
 import java.util.Date;
+
 import org.apache.commons.logging.LogFactory;
 import org.quartz.Job;
 import org.quartz.JobDetail;
+
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.operation.GroupOperationHistory;
+import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.ScheduleJobId;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -71,5 +77,33 @@ public abstract class OperationJob implements Job {
             // produce proper results).  But again, this should not effect the actual operation invocation.
             LogFactory.getLog(OperationJob.class).error("Failed to update schedule entity for job: " + jobDetail, e);
         }
+    }
+
+    protected ResourceOperationHistory createOperationHistory(String jobName, String jobGroup,
+        ResourceOperationSchedule schedule, GroupOperationHistory groupHistory, OperationManagerLocal operationManager) {
+        // we need the operation definition to fill in the history item
+        OperationDefinition op;
+        op = operationManager.getSupportedResourceOperation(schedule.getSubject(), schedule.getResource().getId(),
+            schedule.getOperationName());
+
+        // first we need to create an INPROGRESS history item
+        Configuration parameters = schedule.getParameters();
+        if (parameters != null) {
+            parameters = parameters.deepCopy(false); // we need a copy to avoid constraint violations upon delete
+        }
+
+        ResourceOperationHistory history;
+        history = new ResourceOperationHistory(jobName, jobGroup, schedule.getSubject().getName(), op, parameters,
+            schedule.getResource(), groupHistory);
+
+        // resource-level ops can start immediately, group ops will be started as appropriate by the GroupOperationJob
+        if (groupHistory == null) {
+            history.setStartedTime();
+        }
+
+        // persist the results of the initial create
+        history = (ResourceOperationHistory) operationManager.updateOperationHistory(schedule.getSubject(), history);
+
+        return history;
     }
 }

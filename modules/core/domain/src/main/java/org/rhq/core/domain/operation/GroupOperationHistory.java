@@ -60,6 +60,7 @@ public class GroupOperationHistory extends OperationHistory {
         OperationDefinition operationDefinition, Configuration parameters, ResourceGroup group) {
         super(jobName, jobGroup, subjectName, operationDefinition, parameters);
         this.group = group;
+        setStartedTime(); // group operation histories are started implicitly
     }
 
     public ResourceGroup getGroup() {

@@ -282,7 +282,6 @@ public class OperationHistoryTest extends AbstractEJB3Test {
     private GroupOperationHistory createGroupResourceHistory(EntityManager em) {
         GroupOperationHistory g1 = new GroupOperationHistory("job2" + System.currentTimeMillis(), "group2", "user",
             newOperation, null, newGroup);
-        g1.setStartedTime();
         em.persist(g1);
         return g1;
     }

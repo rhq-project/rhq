@@ -21,6 +21,7 @@ package org.rhq.core.domain.operation;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
@@ -42,6 +43,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.rhq.core.domain.configuration.Configuration;
 
 /**
@@ -133,6 +135,9 @@ public abstract class OperationHistory implements Serializable {
 
     @Column(name = "CTIME", nullable = false)
     private long createdTime = System.currentTimeMillis();
+
+    @Column(name = "STIME", nullable = false)
+    private long startedTime;
 
     @Column(name = "MTIME", nullable = false)
     private long modifiedTime = System.currentTimeMillis();
@@ -282,10 +287,15 @@ public abstract class OperationHistory implements Serializable {
     }
 
     /**
-     * The time this entity was originally created; in other words, when the first operation invocation was originally
-     * made.
+     * The time this entity was originally created.  This may, but will not necessarily, be similar or nearly identical 
+     * to the {@link #getStartedTime()} value.  If this is an operation on a single resource, then these two figures
+     * will be very similar because resource operations are started immediately after the history element is created
+     * for them.  If this is an operation on a resource group, especially a large group, then these two figures might
+     * diverge considerably because all history elements are created up front, and then the process begins executing
+     * each in turn.
      *
      * @return creation time, in epoch milliseconds
+     * @see #getStartedTime()
      */
     public long getCreatedTime() {
         return this.createdTime;
@@ -302,6 +312,33 @@ public abstract class OperationHistory implements Serializable {
     }
 
     /**
+     * This method MUST be called when the corresponding operation is triggered, but before the request is sent down to
+     * the agent.  The started time is used in the calculation of {@link #getDuration()}, which is in turn used by the
+     * business layer to reason whether an operation has timed out.  If this method is never called, and if there are 
+     * any issues executing the corresponding operation, this history element will never time out and will forever stay
+     * in the {@link OperationRequestStatus#INPROGRESS} state. 
+     * 
+     * @throws IllegalArgumentException if an attempt is made to start this object more than once 
+     * @see #getCreatedTime()
+     */
+    public void setStartedTime() {
+        if (this.startedTime != 0) {
+            throw new IllegalArgumentException("Can only start an operation once");
+        }
+        this.startedTime = System.currentTimeMillis();
+    }
+
+    /**
+     * The time when corresponding operation was started.  If the corresponding operation has not yet been started, 
+     * this method will return 0.
+     * 
+     * @return started time, in epoch millis
+     */
+    public long getStartedTime() {
+        return this.startedTime;
+    }
+
+    /**
      * The duration of the operation invocation which simply is the difference between the {@link #getCreatedTime()} and
      * the {@link #getModifiedTime()}. If the operation hasn't completed yet, this will be the difference between the
      * current time and the created time.
@@ -309,7 +346,12 @@ public abstract class OperationHistory implements Serializable {
      * @return the duration of time that the operation took or is taking to complete
      */
     public long getDuration() {
-        long start = this.createdTime;
+        // by definition, the duration is 0 if the corresponding operation hasn't begun
+        if (this.startedTime == 0) {
+            return 0;
+        }
+
+        long start = this.startedTime;
         long end = this.modifiedTime;
 
         if ((status == null) || (status == OperationRequestStatus.INPROGRESS)) {

@@ -41,6 +41,7 @@
       <column name="ERROR_MESSAGE"        type="LONGVARCHAR" required="false"/>
       <column name="SUBJECT_NAME"         type="VARCHAR2"    required="true" size="100" />
       <column name="CTIME"                type="LONG"        required="true" />
+      <column name="STIME"                type="LONG"        required="true" />
       <column name="MTIME"                type="LONG"        required="true" />
       <column name="PARAMETERS_CONFIG_ID" type="INTEGER"     required="false" references="RHQ_CONFIG"/>
 

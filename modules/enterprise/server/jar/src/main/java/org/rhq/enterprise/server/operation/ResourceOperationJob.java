@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -122,6 +123,7 @@ public class ResourceOperationJob extends OperationJob {
         ResourceOperationHistory history;
         history = new ResourceOperationHistory(jobName, jobGroup, schedule.getSubject().getName(), op, parameters,
             schedule.getResource(), groupHistory);
+        history.setStartedTime();
 
         history = (ResourceOperationHistory) operationManager.updateOperationHistory(schedule.getSubject(), history);
 

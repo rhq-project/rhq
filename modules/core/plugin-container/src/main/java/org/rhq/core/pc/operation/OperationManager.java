@@ -76,7 +76,7 @@ public class OperationManager extends AgentService implements OperationAgentServ
         LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>(10000);
         LoggingThreadFactory threadFactory = new LoggingThreadFactory(SENDER_THREAD_POOL_NAME, true);
         int maxPoolSize = configuration.getOperationInvokerThreadPoolSize();
-        ThreadPoolExecutor threadPool = new ThreadPoolExecutor(maxPoolSize, maxPoolSize, 1000, TimeUnit.MILLISECONDS,
+        ThreadPoolExecutor threadPool = new ThreadPoolExecutor(1, maxPoolSize, 1000, TimeUnit.MILLISECONDS,
             queue, threadFactory);
         operationGateway = new OperationThreadPoolGateway(threadPool);
     }

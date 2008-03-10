@@ -1023,11 +1023,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             query = entityManager.createNamedQuery(Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES);
             query.setParameter("subject", user);
         }
-
         Resource parentResource = entityManager.getReference(Resource.class, parentResourceId);
         query.setParameter("parent", parentResource);
-
+        query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
         List<AutoGroupComposite> resourceAutoGroups = query.getResultList();
+
         for (AutoGroupComposite composite : resourceAutoGroups) {
             ResourceSubCategory sc = composite.getResourceType().getSubCategory();
             if (sc != null) {

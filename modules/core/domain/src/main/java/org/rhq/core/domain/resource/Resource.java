@@ -223,10 +223,10 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES, query = "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
         + "    FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
         + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory LEFT JOIN res.availability a WITH a.endTime is null "
-        + "   WHERE res.parentResource = :parent " + "     AND s = :subject " + "GROUP BY rt "),
+        + "   WHERE res.parentResource = :parent AND s = :subject  AND res.inventoryStatus = :inventoryStatus GROUP BY rt "),
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_ADMIN, query = "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
         + "    FROM Resource res LEFT JOIN res.availability a WITH a.endTime is null JOIN res.resourceType rt LEFT JOIN rt.subCategory "
-        + "   WHERE res.parentResource = :parent " + "GROUP BY rt"),
+        + "   WHERE res.parentResource = :parent AND res.inventoryStatus = :inventoryStatus GROUP BY rt"),
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_BY_CATEGORY_AND_INVENTORY_STATUS, query = "SELECT res "
         + "  FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + " WHERE res.parentResource = :parent " + "   AND res.resourceType.category = :category "

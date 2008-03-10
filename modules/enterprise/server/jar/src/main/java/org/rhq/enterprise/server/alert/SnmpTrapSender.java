@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.snmp4j.CommandResponderEvent;
@@ -68,6 +69,7 @@ import org.snmp4j.transport.AbstractTransportMapping;
 import org.snmp4j.transport.DefaultTcpTransportMapping;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.snmp4j.util.PDUFactory;
+
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
@@ -119,7 +121,7 @@ public class SnmpTrapSender implements PDUFactory {
 
     private int nonRepeaters = 0;
 
-    private List vbs = new ArrayList();
+    private List<VariableBinding> vbs = new ArrayList<VariableBinding>();
 
     private Address address;
 
@@ -131,15 +133,14 @@ public class SnmpTrapSender implements PDUFactory {
         this.snmpEnabled = init();
     }
 
-    private void checkTrapVariables(List vbs) {
+    private void checkTrapVariables(List<VariableBinding> vbs) {
+
         if ((pduType == PDU.INFORM) || (pduType == PDU.TRAP)) {
-            if ((vbs.size() == 0)
-                || ((vbs.size() > 1) && (!((VariableBinding) vbs.get(0)).getOid().equals(SnmpConstants.sysUpTime)))) {
+            if ((vbs.size() == 0) || ((vbs.size() >= 1) && (!(vbs.get(0)).getOid().equals(SnmpConstants.sysUpTime)))) {
                 vbs.add(0, new VariableBinding(SnmpConstants.sysUpTime, sysUpTime));
             }
 
-            if ((vbs.size() == 1)
-                || ((vbs.size() > 2) && (!((VariableBinding) vbs.get(1)).getOid().equals(SnmpConstants.snmpTrapOID)))) {
+            if ((vbs.size() == 1) || ((vbs.size() >= 2) && (!(vbs.get(1)).getOid().equals(SnmpConstants.snmpTrapOID)))) {
                 vbs.add(1, new VariableBinding(SnmpConstants.snmpTrapOID, trapOID));
             }
         }
@@ -218,7 +219,8 @@ public class SnmpTrapSender implements PDUFactory {
         responseEvent = snmp.send(request, target);
         if (responseEvent != null) {
             response = responseEvent.getResponse();
-            System.out.println("Received response after " + (System.currentTimeMillis() - startTime) + " millis");
+            if (log.isDebugEnabled())
+                log.debug("Received response after " + (System.currentTimeMillis() - startTime) + " millis");
         }
 
         snmp.close();
@@ -398,7 +400,8 @@ public class SnmpTrapSender implements PDUFactory {
     public synchronized void processPdu(CommandResponderEvent e) {
         PDU command = e.getPDU();
         if (command != null) {
-            System.out.println(command.toString());
+            if (log.isDebugEnabled())
+                log.debug(command.toString());
             if ((command.getType() != PDU.TRAP) && (command.getType() != PDU.V1TRAP)
                 && (command.getType() != PDU.REPORT) && (command.getType() != PDU.RESPONSE)) {
                 command.setErrorIndex(0);

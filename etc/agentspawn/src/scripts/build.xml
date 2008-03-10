@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="agentspawn" default="help">
+   
+   <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+      <classpath>
+         <pathelement location="${basedir}/ant-contrib-1.0b3.jar"/>
+      </classpath>
+   </taskdef>
+
+   <property file="${basedir}/agentspawn.properties" />
+
+   <if>
+      <os family="windows"/>
+      <then>
+         <property name="iswindows" value="true" />
+         <property name="perftest.agent.executable" value="${basedir}/agentspawn.bat" />
+      </then>
+      <else>
+         <property name="perftest.agent.executable" value="${basedir}/agentspawn.sh" />
+      </else>
+   </if>
+
+   <!-- ========== -->
+   <target name="help">
+      <echo>
+         Target are: copy, start, stop, clean
+         Run ant -projecthelp for more info.
+      </echo>
+   </target>
+
+   <!-- ========== -->
+   <target name="copy" description="Copies the source agent distro.">
+      <echo>The source agent distro is found here: ${perftest.agent.dist.zip}</echo>
+      <echo>The copied agent distros will be found here: ${perftest.agent.vm.dir}</echo>
+      <echo>The list of copied agents is: ${perftest.agent.vm.startports}</echo>
+
+      <!-- make sure the source distro exists and we create the dir where we copy all our agents -->
+      <available file="${perftest.agent.dist.zip}"
+                 type="file"
+                 property="_perftest.agent.dist.zip.present"/>
+      <fail unless="_perftest.agent.dist.zip.present"
+            message="Missing agent distribution at ${perftest.agent.dist.zip}"/>
+      <mkdir dir="${perftest.agent.vm.dir}" />
+
+      <!-- copy the source agent distro - make one copy for each VM -->
+      <foreach param="_index"
+               list="${perftest.agent.vm.startports}"
+               target="copy-agent-dist" />
+   </target>
+
+   <!-- ========== -->
+   <target name="copy-agent-dist" >
+      <echo>Copying agent distribution for agent [${_index}]</echo>
+      <unzip dest="${perftest.agent.vm.dir}/${_index}">
+         <fileset file="${perftest.agent.dist.zip}"/>
+      </unzip>
+      <echo>Copying agent spawn jar for agent [${_index}]</echo>
+      <copy todir="${perftest.agent.vm.dir}/${_index}" flatten="true">
+         <fileset dir="${perftest.agent.spawn.jar.dir}"
+                  includes="${perftest.agent.spawn.jar.name}"/>
+      </copy>
+      <chmod dir="${perftest.agent.vm.dir}/${_index}/bin" includes="*.sh" perm="ugo+rx"/>
+   </target>
+
+   <!-- ========== -->
+   <target name="start" description="Starts all the agent VMs.">
+      <echo>Starting all agent VMs...</echo>
+      <foreach param="_index"
+               list="${perftest.agent.vm.startports}"
+               target="run-single-agent" />
+      
+      <echo>All agent VMs should have been started.</echo>
+      <echo>Will pause for 60 seconds to make sure.</echo>
+      <sleep seconds="60" />
+   </target>
+   
+   <!-- ========== -->
+   <target name="run-single-agent" >
+      <propertycopy property="_javaopts"
+                    from="perftest.agent.vm.javaopts.default"/>
+      <propertycopy property="_javaopts"
+                    from="perftest.agent.vm.javaopts.${_index}"
+                    override="true"
+                    silent="true"/>
+
+      <propertycopy property="_sysprops"
+                    from="perftest.agent.vm.sysprops.default"/>
+      <propertycopy property="_sysprops"
+                    from="perftest.agent.vm.sysprops.${_index}"
+                    override="true"
+                    silent="true"/>
+
+      <propertycopy property="_cmdlineopts"
+                    from="perftest.agent.vm.cmdlineopts.default"/>
+      <propertycopy property="_cmdlineopts"
+                    from="perftest.agent.vm.cmdlineopts.${_index}"
+                    override="true"
+                    silent="true"/>
+
+      <propertycopy property="_sleep_millis"
+                    from="perftest.agent.vm.sleep-before-launch.default"/>
+      <propertycopy property="_sleep_millis"
+                    from="perftest.agent.vm.sleep-before-launch.${_index}"
+                    override="true"
+                    silent="true"/>
+
+      <echo>Pausing for ${_sleep_millis}ms before starting agent [${_index}]</echo>
+      <sleep milliseconds="${_sleep_millis}"/>
+      
+      <echo>Starting agent [${_index}] with Java options [${_javaopts} ${_sysprops}] and cmdline opts [${_cmdlineopts}]</echo>
+      
+      <forget>
+         <exec executable="${perftest.agent.executable}">
+            <arg line="start" />
+            <env key="_JAVAOPTS" value="${_javaopts} ${_sysprops} -Dperftest.agentdist=${perftest.agent.vm.dir}/${_index} -Dperftest.spawndir=${perftest.agent.vm.dir}/spawn -Dperftest.spawncount=${perftest.agent.vm.spawncount} -Dperftest.startport=${_index} -Dperftest.startpause=${_sleep_millis} -Dperftest.cmdline=${_cmdlineopts} -Drhq.agent.server.bind-address=${rhq.agent.server.bind-address} -Drhq.agent.server.bind-port=${rhq.agent.server.bind-port}" />
+            <env key="_JAR" value="${perftest.agent.vm.dir}/${_index}/${perftest.agent.spawn.jar.name}" />
+            <env key="_PIDFILE" value="${perftest.agent.vm.dir}/${_index}/agentspawn.pid" />
+            <env key="_OUT" value="${perftest.agent.vm.dir}/${_index}/agentspawn-output.txt" />
+         </exec>
+      </forget>
+      
+   </target>
+
+   <!-- ========== -->
+   <target name="clean" description="Deletes all copies of the source agent distro.">
+      <echo>Deleting the agents found here: ${perftest.agent.vm.dir}</echo>
+      <delete dir="${perftest.agent.vm.dir}" />
+      <echo>Deleting all Java Preferences</echo>
+      <delete dir="${user.home}/.java" />
+   </target>
+
+   <!-- ========== -->
+   <target name="stop" description="Stops all the agent VMs (not available on Windows).">
+      <fail if="iswindows" message="Stopping agent VMs with this script is not supported on Windows"/>
+
+      <echo>Stopping all agent VMs...</echo>
+      <foreach param="_index"
+               list="${perftest.agent.vm.startports}"
+               target="stop-single-agent" />
+      
+      <echo>All agent VMs should have been stopped.</echo>
+   </target>
+   
+   <!-- ========== -->
+   <target name="stop-single-agent">
+      <loadfile property="_pid"
+                srcfile="${perftest.agent.vm.dir}/${_index}/agentspawn.pid"
+                failonerror="false">
+         <filterchain>
+            <striplinebreaks/>
+         </filterchain>
+      </loadfile>
+
+      <echo>Stopping agent VM [${_index}] with pid [${_pid}]</echo>
+
+      <exec executable="kill">
+         <arg value="-TERM" />
+         <arg value="${_pid}" />
+      </exec>
+   </target>
+
+</project>

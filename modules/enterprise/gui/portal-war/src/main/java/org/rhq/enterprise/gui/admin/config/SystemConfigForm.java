@@ -35,8 +35,6 @@ public class SystemConfigForm extends BaseValidatorForm {
     private String baseUrl = "";
     private String helpUserId = "";
     private String helpPassword = "";
-    private String deleteUnitsVal = "0";
-    private String deleteUnits = "";
     private String maintIntervalVal = "0";
     private String maintInterval = "";
     private String rtPurgeVal = "0";
@@ -80,7 +78,6 @@ public class SystemConfigForm extends BaseValidatorForm {
         buf.append(" baseUrl=").append(baseUrl);
         buf.append(" helpUserId=").append(helpUserId);
         buf.append(" helpPassword=").append(helpPassword);
-        buf.append(" deleteUnits=").append(deleteUnits);
         buf.append(" ldapEnabled=").append(ldapEnabled);
         buf.append(" ldapUrl=").append(ldapUrl);
         buf.append(" ldapSsl=").append(ldapSsl);
@@ -117,8 +114,6 @@ public class SystemConfigForm extends BaseValidatorForm {
     public void reset(ActionMapping mapping, HttpServletRequest request) {
         helpUserId = "";
         helpPassword = "";
-        deleteUnits = "";
-        deleteUnitsVal = null;
         maintInterval = "";
         maintIntervalVal = null;
         rtPurge = "";
@@ -161,11 +156,6 @@ public class SystemConfigForm extends BaseValidatorForm {
         baseUrl = prop.getProperty(HQConstants.BaseURL);
         helpUserId = prop.getProperty(HQConstants.HelpUser);
         helpPassword = prop.getProperty(HQConstants.HelpUserPassword);
-
-        String deleteUnitsValStr = prop.getProperty(HQConstants.DataPurgeRaw);
-        Long deleteUnitInt = new Long(deleteUnitsValStr);
-        deleteUnits = findTimeUnit(deleteUnitInt.longValue());
-        deleteUnitsVal = calcTimeUnit(deleteUnitInt.longValue());
 
         String maintIntervalValStr = prop.getProperty(HQConstants.DataMaintenance);
         Long maintIntervalLong = new Long(maintIntervalValStr);
@@ -279,8 +269,6 @@ public class SystemConfigForm extends BaseValidatorForm {
         prop.setProperty(HQConstants.HelpUser, helpUserId);
         prop.setProperty(HQConstants.HelpUserPassword, helpPassword);
 
-        long deleteUnitInt = convertToMillisecond(Integer.parseInt(deleteUnitsVal), deleteUnits);
-        prop.setProperty(HQConstants.DataPurgeRaw, String.valueOf(deleteUnitInt));
         prop.setProperty(HQConstants.DataReindex, String.valueOf(reindex));
 
         long maintIntervalLong = convertToMillisecond(Integer.parseInt(maintIntervalVal), maintInterval);
@@ -357,22 +345,6 @@ public class SystemConfigForm extends BaseValidatorForm {
 
     public void setHelpUserId(String string) {
         helpUserId = string;
-    }
-
-    public String getDeleteUnitsVal() {
-        return deleteUnitsVal;
-    }
-
-    public void setDeleteUnitsVal(String v) {
-        deleteUnitsVal = v;
-    }
-
-    public String getDeleteUnits() {
-        return deleteUnits;
-    }
-
-    public void setDeleteUnits(String s) {
-        deleteUnits = s;
     }
 
     public String getMaintIntervalVal() {

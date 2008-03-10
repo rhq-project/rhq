@@ -59,60 +59,6 @@
 
 <!--  DATA MANAGER CONFIG CONTENTS -->
   <tr>
-    <td colspan="4" class="BlockContent"><fmt:message key="admin.settings.RestartNote"/></td>
-  </tr>
-  <tr>
-    <td class="BlockLabel"><fmt:message key="admin.settings.PurgeOlderThanLabel"/></td>
-    <td class="BlockContent">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-<logic:messagesPresent property="deleteUnitsVal">
-          <td class="ErrorField">
-            <html:text size="2" property="deleteUnitsVal" />
-          </td>
-          <td class="ErrorField" width="100%">
-            <html:select property="deleteUnits">
-              <html:option value="${CONST_DAYS}"><fmt:message key="admin.settings.Days"/></html:option>
-            </html:select>
-          </td>
-</logic:messagesPresent>
-<logic:messagesNotPresent property="deleteUnitsVal">
-          <td class="BlockContent">
-            <html:text size="2" property="deleteUnitsVal" />
-          </td>
-          <td class="BlockContent" width="100%">
-            <html:select property="deleteUnits">
-              <html:option value="${CONST_DAYS}"><fmt:message key="admin.settings.Days"/></html:option>
-            </html:select>
-          </td>
-</logic:messagesNotPresent>
-        </tr>
-<logic:messagesPresent property="deleteUnitsVal">
-        <tr>
-          <td class="ErrorField" colspan="2">
-            <span class="ErrorFieldContent">- <html:errors property="deleteUnitsVal"/></span>
-          </td>
-        </tr>
-</logic:messagesPresent>
-<logic:messagesNotPresent property="deleteUnitsVal">
-        <tr>
-          <td class="BlockContent" colspan="2">
-          </td>
-        </tr>
-</logic:messagesNotPresent>
-      </table>
-    </td>
-    <td class="BlockLabel"/>
-    <td class="BlockContent">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="BlockContent" colspan="2">
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-  <tr>
     <td class="BlockLabel"><fmt:message key="admin.settings.DataMaintInterval"/></td>
     <td class="BlockContent">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">

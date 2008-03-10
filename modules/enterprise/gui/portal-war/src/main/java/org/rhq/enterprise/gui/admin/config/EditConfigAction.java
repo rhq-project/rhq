@@ -19,19 +19,23 @@
 package org.rhq.enterprise.gui.admin.config;
 
 import java.util.Properties;
+
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
+import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -47,7 +51,7 @@ public class EditConfigAction extends BaseAction {
             return forward;
         }
 
-        Subject whoami = RequestUtils.getSubject(request);
+        Subject whoami = WebUtility.getSubject(request);
         SystemConfigForm cForm = (SystemConfigForm) form;
         ServletContext ctx = getServlet().getServletContext();
         SystemManagerLocal systemManager = LookupUtil.getSystemManager();
@@ -66,9 +70,9 @@ public class EditConfigAction extends BaseAction {
 
                 if (cForm.getLdapEnabled() != null) {
                     // cache in servlet context
-                    ctx.setAttribute(Constants.JAAS_PROVIDER_CTX_ATTR, HQConstants.LDAPJAASProvider);
+                    ctx.setAttribute(AttrConstants.JAAS_PROVIDER_CTX_ATTR, HQConstants.LDAPJAASProvider);
                 } else {
-                    ctx.setAttribute(Constants.JAAS_PROVIDER_CTX_ATTR, HQConstants.JDBCJAASProvider);
+                    ctx.setAttribute(AttrConstants.JAAS_PROVIDER_CTX_ATTR, HQConstants.JDBCJAASProvider);
                 }
             } catch (Exception e) {
                 String throwableMsgs = ThrowableUtil.getAllMessages(e, true);

@@ -189,24 +189,6 @@
 
      <form name="SystemConfigForm">
 
-      <field property="deleteUnitsVal" depends="required,intRange">
-        <arg0 key="common.field.value"/>
-        <arg1 name="intRange" key="${var:min}" resource="false"/>
-        <arg2 name="intRange" key="${var:max}" resource="false"/>
-        <var>
-          <var-name>min</var-name>
-          <var-value>1</var-value>
-        </var>
-        <var>
-          <var-name>max</var-name>
-          <var-value>7</var-value>
-        </var>
-        <msg name="required"
-              key="admin.settings.error.DeleteUnitsField"/>
-        <msg name="intRange"
-              key="admin.settings.error.DeleteUnitsField"/>
-      </field>
-
       <field property="ldapUrl" depends="validwhen">
         <arg0 key="admin.settings.LDAPUrlLabel"/>
         <var>

@@ -268,7 +268,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (container.getResourceComponent() != null) {
             try {
                 ResourceComponent component = container.createResourceComponentProxy(ResourceComponent.class,
-                    FacetLockType.WRITE, false);
+                    FacetLockType.WRITE, 0, false);
                 component.stop();
             } catch (Throwable t) {
                 throw new PluginContainerException("Cannot update plugin configuration - "
@@ -474,7 +474,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * Returns the known availability for the resource. If the availability is not known, <code>null</code> is returned.
      *
-     * @param  resource the resource whose availablity should be returned
+     * @param  resource the resource whose availability should be returned
      *
      * @return resource availability or <code>null</code> if not known
      */
@@ -1073,7 +1073,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 try {
                     ResourceComponent component = container.createResourceComponentProxy(ResourceComponent.class,
-                        FacetLockType.WRITE, true);
+                        FacetLockType.WRITE, 0, true);
                     component.stop();
                     log.debug(resource.getId() + ": Successfully de-activated resource");
                 } catch (Throwable t) {

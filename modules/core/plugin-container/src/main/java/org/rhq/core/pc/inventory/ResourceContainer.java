@@ -26,10 +26,14 @@ import java.lang.reflect.Proxy;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.Availability;
@@ -40,22 +44,23 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 
 /**
- * This object holds information relative to the running state of a resource component in the plugin container. It is
- * serializable for persistence to plugin container's storage mechanisms.
+ * This object holds information relative to the running state of a {@link ResourceComponent} in the Plugin Container.
+ * It is serializable for persistence to the Plugin Container's storage mechanisms.
  *
  * @author Greg Hinkle
  * @author John Mazzitelli
+ * @author Ian Springer
  */
 public class ResourceContainer implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public enum SynchronizationState {
         NEW, SYNCHRONIZED, DELETED_ON_AGENT, DELETED_ON_SERVER
-    };
+    }
 
     public enum ResourceComponentState {
         STARTED, STOPPED
-    };
+    }
 
     private transient ResourceComponent resourceComponent;
     private transient ResourceComponentState resourceComponentState = ResourceComponentState.STOPPED;
@@ -154,7 +159,7 @@ public class ResourceContainer implements Serializable {
                 toBeRemoved.add( current );
             }
         }
-        // first remove all the old versoins of the measurement schedules
+        // first remove all the old versions of the measurement schedules
         this.measurementSchedule.removeAll(toBeRemoved);
 
         // then add the new versions
@@ -185,20 +190,21 @@ public class ResourceContainer implements Serializable {
     /**
      * Creates a proxy to this container's resource component, essentially returning the component exposed as the given
      * facet interface. This proxy will ensure that calls to the component's interface are synchronized with the given
-     * lock type. If <code>lockType</code> is {@link FacetLockType#NONE} then the resource's actual component instance
-     * is returned as-is (i.e. it will not be wrapped in a proxy - which means this returns the same as
-     * {@link #getResourceComponent()}).
+     * lock type. If <code>lockType</code> is {@link FacetLockType#NONE} and there is no timeout, then the resource's
+     * actual component instance is returned as-is (i.e. it will not be wrapped in a proxy - which means this returns
+     * the same as {@link #getResourceComponent()}).
      *
      * @param  facetInterface the interface that the component implements and will expose via the proxy
      * @param  lockType       the type of lock to use when synchronizing access
+     * @param  timeout        if the method invocation thread has not completed after this many milliseconds, interrupt it;
+     *                        a value of <code>0</code> means to wait forever (generally not recommended)
      * @param  onlyIfStarted  if <code>true</code>, and the component is not started, an exception is thrown
-     *
      * @return a proxy that wraps the given component and exposes the given facet interface
      *
      * @throws PluginContainerException if the component does not exist or does not support the interface
      */
     @SuppressWarnings("unchecked")
-    public <T> T createResourceComponentProxy(Class<T> facetInterface, FacetLockType lockType, boolean onlyIfStarted)
+    public <T> T createResourceComponentProxy(Class<T> facetInterface, FacetLockType lockType, long timeout, boolean onlyIfStarted)
         throws PluginContainerException {
         if (onlyIfStarted) {
             if (!ResourceComponentState.STARTED.equals(getResourceComponentState())) {
@@ -219,15 +225,15 @@ public class ResourceContainer implements Serializable {
                 + "] interface: " + this);
         }
 
-        // if no locking is required, there is no need for a proxy - return the actual component
-        if (lockType == FacetLockType.NONE) {
+        // if no locking is required and there is no timeout, there is no need for a proxy - return the actual component
+        if (lockType == FacetLockType.NONE && timeout == 0) {
             return (T) resourceComponent;
         }
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
         // this is the handler that will actually acquire the lock and invoke the facet method call
-        LockedFacetInvocationHandler handler = new LockedFacetInvocationHandler(this, lockType);
+        LockedFacetInvocationHandler handler = new LockedFacetInvocationHandler(this, lockType, timeout);
 
         // this is the proxy that will look like the facet interface that the caller will use
         return (T) Proxy.newProxyInstance(classLoader, new Class<?>[] { facetInterface }, handler);
@@ -250,41 +256,60 @@ public class ResourceContainer implements Serializable {
      * component.
      */
     private static class LockedFacetInvocationHandler implements InvocationHandler {
-        private final ResourceContainer container;
-        private final Object component;
-        private final Lock lock;
+        private static final Log LOG = LogFactory.getLog(LockedFacetInvocationHandler.class);
 
-        public LockedFacetInvocationHandler(ResourceContainer container, FacetLockType lockType) {
+        private final ResourceContainer container;
+        private final Lock lock;
+        private long timeout;
+
+        /**
+         *
+         * @param container the resource container managing the resource component upon which the method will be invoked
+         * @param lockType the type of lock to use for the invocation
+         * @param timeout if the method invocation thread has not completed after this many milliseconds, interrupt it;
+         *                a value of <code>0</code> means to wait forever (generally not recommended)
+         */
+        public LockedFacetInvocationHandler(ResourceContainer container, FacetLockType lockType, long timeout) {
             // caller will always ensure:
             //    container's component is never null
-            //    lockType is never NONE
             this.container = container;
-            this.component = container.getResourceComponent();
-            this.lock = (lockType == FacetLockType.WRITE) ? container.getWriteFacetLock() : container
-                .getReadFacetLock();
+            if (lockType == FacetLockType.WRITE) {
+                this.lock = container.getWriteFacetLock();
+            } else if (lockType == FacetLockType.READ) {
+                this.lock = container.getReadFacetLock();
+            } else {
+                this.lock = null;
+            }
+            this.timeout = timeout;
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            Object results;
-
             // we really want to wait indefinitely, but to prevent an infinite deadlock, let's only wait an hour
-            if (lock.tryLock(3600, TimeUnit.SECONDS)) {
-                try {
-                    // this is the actual call into the plugin component's facet interface
-                    results = method.invoke(component, args);
-                } catch (InvocationTargetException ite) {
-                    throw (ite.getCause() != null) ? ite.getCause() : ite;
-                } finally {
-                    lock.unlock();
-                }
-            } else {
+            if (this.lock != null && !lock.tryLock(3600, TimeUnit.SECONDS)) {
                 throw new TimeoutException(
                     "Possible deadlock - could not obtain a lock when attempting to access method [" + method
-                        + "] for resource [" + container + "]; " + "facet-lock-status=["
-                        + container.getFacetLockStatus());
+                        + "] for resource [" + this.container + "]; " + "facet-lock-status=["
+                        + this.container.getFacetLockStatus());
             }
-
-            return results;
+            ComponentInvocationThread invocationThread = new ComponentInvocationThread(this.container.getResourceComponent(), method, args);
+            try {
+                // this is the actual call into the plugin component's facet interface
+                invocationThread.start();
+                invocationThread.join(this.timeout);
+                if (invocationThread.isAlive()) {
+                    LOG.debug("Call to " + this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "() with args [" + ((args != null) ? Arrays.asList(args) : "") + "] timed out. Interrupting the invocation thread...");
+                    invocationThread.interrupt();
+                    throw new TimeoutException("Call to " + this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "() with args [" + ((args != null) ? Arrays.asList(args) : "") + "] timed out.");
+                }
+            } finally {
+                if (this.lock != null) {
+                    this.lock.unlock();
+                }
+            }
+            if (invocationThread.getError() != null) {
+                throw invocationThread.getError();
+            }
+            return invocationThread.getResults();
         }
     }
 
@@ -292,5 +317,38 @@ public class ResourceContainer implements Serializable {
     private Object readResolve() throws java.io.ObjectStreamException {
         this.facetAccessLock = new ReentrantReadWriteLock();
         return this;
+    }
+
+    static class ComponentInvocationThread extends Thread {
+        private ResourceComponent component;
+        private Method method;
+        private Object[] args;
+        private Object results;
+        private Throwable error;
+
+        ComponentInvocationThread(ResourceComponent component, Method method, Object[] args) {
+            this.component = component;
+            this.method = method;
+            this.args = args;
+            setDaemon(true);
+        }
+
+        public void run() {
+            try {
+                this.results = this.method.invoke(this.component, this.args);
+            } catch (InvocationTargetException ite) {
+                this.error = (ite.getCause() != null) ? ite.getCause() : ite;
+            } catch (Throwable t) {
+                this.error = t;
+            }
+        }
+
+        public Object getResults() {
+            return results;
+        }
+
+        public Throwable getError() {
+            return error;
+        }
     }
 }

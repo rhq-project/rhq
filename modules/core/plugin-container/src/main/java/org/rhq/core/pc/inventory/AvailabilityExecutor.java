@@ -30,21 +30,25 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
+import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.clientapi.agent.PluginContainerException;
 
 /**
  * Runs a periodic scan for resource availability.
  *
  * @author Greg Hinkle
- * @author John Mazzitelli
+ * @author John Mazzitelli  
  */
 public class AvailabilityExecutor implements Runnable, Callable<AvailabilityReport> {
+    private static final int GET_AVAILABILITY_TIMEOUT = 5 * 1000; // 5 seconds
+
     private final Log log = LogFactory.getLog(AvailabilityExecutor.class);
 
     private InventoryManager inventoryManager;
     private AtomicBoolean sendChangedOnlyReport;
-    private Object lock = new Object();
-
+    private final Object lock = new Object();
+    
     public AvailabilityExecutor(InventoryManager inventoryManager) {
         this.inventoryManager = inventoryManager;
         this.sendChangedOnlyReport = new AtomicBoolean(false);
@@ -121,7 +125,17 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
 
     private void checkInventory(Resource resource, AvailabilityReport availabilityReport, boolean reportChangesOnly,
         boolean checkChildren) {
-        ResourceComponent resourceComponent = this.inventoryManager.getResourceComponent(resource);
+        ResourceContainer resourceContainer = this.inventoryManager.getResourceContainer(resource);
+        ResourceComponent resourceComponent = null;
+        if (resourceContainer != null) {
+            try {
+                resourceComponent = resourceContainer.createResourceComponentProxy(ResourceComponent.class, FacetLockType.NONE, GET_AVAILABILITY_TIMEOUT, false);
+            }
+            catch (PluginContainerException e) {
+                log.error("Could not create resource component proxy for " + resource, e);
+                // TODO: Should we throw an exception here instead of just logging an error?
+            }
+        }
 
         if (resourceComponent != null) {
             AvailabilityType current = null;
@@ -137,8 +151,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                     // started and check for real then - otherwise, keep assuming its down (this is for
                     // the case when a plugin component can't start for whatever reason or is just slow
                     // to start)
-                    ResourceContainer container = this.inventoryManager.getResourceContainer(resource);
-                    if (container.getResourceComponentState() == ResourceComponentState.STARTED) {
+                    if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
                         current = resourceComponent.getAvailability();
                     }
 
@@ -146,7 +159,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                         current = AvailabilityType.DOWN;
                     }
 
-                    if (container.getSynchronizationState() == ResourceContainer.SynchronizationState.SYNCHRONIZED) {
+                    if (resourceContainer.getSynchronizationState() == ResourceContainer.SynchronizationState.SYNCHRONIZED) {
                         Availability availability = inventoryManager.updateAvailability(resource, current);
 
                         // only add the availability to the report if it changed from its previous state

@@ -183,7 +183,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
      */
     protected ConfigurationFacet getConfigurationFacet(int resourceId, FacetLockType lockType)
         throws PluginContainerException {
-        return ComponentUtil.getComponent(resourceId, ConfigurationFacet.class, lockType, true);
+        return ComponentUtil.getComponent(resourceId, ConfigurationFacet.class, lockType, 0, true);
     }
 
     /**

@@ -584,7 +584,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
      */
     private ContentFacet findContentFacet(int resourceId) throws Exception {
         // in case some calls to here need only the read lock - for now, always lock down with the write lock
-        return ComponentUtil.getComponent(resourceId, ContentFacet.class, FacetLockType.WRITE, true);
+        return ComponentUtil.getComponent(resourceId, ContentFacet.class, FacetLockType.WRITE, 0, true);
     }
 
     /**

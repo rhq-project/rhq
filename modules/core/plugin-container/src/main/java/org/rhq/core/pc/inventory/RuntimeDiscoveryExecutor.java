@@ -29,6 +29,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -112,6 +113,8 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
     }
 
     private void runtimeDiscover(InventoryReport report) throws PluginContainerException {
+        // Always start out by refreshing availabilities, since we will only scan servers that are available.
+        this.inventoryManager.executeAvailabilityScanImmediately(true);
         if (this.resource == null) {
             // Run a full scan for all resources in the inventory
             Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
@@ -165,9 +168,11 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             log.debug("ResourceComponent for parent " + parent + " was null, so we can't execute runtime discovery on it.");
             return;
         }
-        // TODO GH: This is doing a live availability check, is that right?
-        if (AvailabilityType.DOWN.equals(parentComponent.getAvailability())) {
-            log.debug("Availability of " + parent + " is DOWN, so we can't execute runtime discovery on it.");
+
+        AvailabilityType availability = (parentContainer.getAvailability() != null) ?
+                parentContainer.getAvailability().getAvailabilityType() : null;
+        if (availability != AvailabilityType.UP) {
+            log.debug("Availability of " + parent + " is not UP, so we can't execute runtime discovery on it.");
             return;
         }
 

@@ -1051,7 +1051,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             q.setParameter("resourceTypeId", pv.getGeneralPackage().getPackageType().getResourceType().getId());
 
             List<PackageVersion> found = q.getResultList();
-            if (found.size() != 1) {
+            if (found == null || found.size() == 0) {
                 throw re;
             }
             if (found.size() > 1) {
@@ -1081,7 +1081,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             q.setParameter("name", pkg.getName());
             q.setParameter("packageTypeId", pkg.getPackageType().getId());
             List<Package> found = q.getResultList();
-            if (found.size() != 1) {
+            if (found == null || found.size() == 0) {
                 throw re;
             }
             if (found.size() > 1) {

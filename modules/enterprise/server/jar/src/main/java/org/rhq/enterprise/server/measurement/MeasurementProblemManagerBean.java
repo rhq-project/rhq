@@ -221,7 +221,7 @@ public class MeasurementProblemManagerBean implements MeasurementProblemManagerL
         final int BATCH_SIZE = 1000;
 
         int numSched = scheduleIds.size();
-        int rounds = numSched / BATCH_SIZE;
+        int rounds = (numSched / BATCH_SIZE) + 1;
 
         Map<Integer, Integer> resMap = new HashMap<Integer, Integer>();
 

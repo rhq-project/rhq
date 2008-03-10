@@ -243,7 +243,7 @@ public class AlertManagerBean implements AlertManagerLocal {
         final int BATCH_SIZE = 1000;
 
         int numSched = scheduleIds.size();
-        int rounds = numSched / BATCH_SIZE;
+        int rounds = (numSched / BATCH_SIZE) + 1;
         Map<Integer, Integer> resMap = new HashMap<Integer, Integer>();
 
         // iterate over the passed schedules ids when we have more than 1000 of them, as some

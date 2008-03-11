@@ -80,7 +80,7 @@ public interface InstallerI18NResourceKeys {
             + "server.  If you change any of those settings, you will have to \\n\\\n"
             + "immediately shutdown and restart the server to pick up those changes."),
         @I18NMessage(locale = "de", value = "Diese Seite zeigt Ihnen die aktuellen Konfigurationseinstellungen \\n\\\n"
-            + "für die Installation des RHQ Servers. Sie können keinen, einige oder alle\\n\\\n"
+            + "für die Installation des Servers. Sie können keinen, einige oder alle\\n\\\n"
             + "dieser Werte nach Ihren Anforderungen ändern. Bitte beachten sie, dass \\n\\\n"
             + "einige dieser Änderungen erst nach einem Neustart des Servers aktiv werden. \\n\\\n"
             + "Wenn Sie diese Einstellungen ändern, müssen Sie den Server sofort neu starten, damit \\n\\\n"
@@ -88,7 +88,7 @@ public interface InstallerI18NResourceKeys {
     String SET_PROPERTIES_INSTRUCTIONS = "setPropertiesInstructions";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Install the Server!"),
-        @I18NMessage(locale = "de", value = "RHQ Server installieren!") })
+        @I18NMessage(locale = "de", value = "Server installieren!") })
     String SAVE = "save";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Yes"), @I18NMessage(locale = "de", value = "Ja") })
@@ -109,16 +109,16 @@ public interface InstallerI18NResourceKeys {
     String REQUIRES_RESTART = "requiresRestart";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Welcome!"),
-        @I18NMessage(locale = "de", value = "Willkommen bei RHQ!") })
+        @I18NMessage(locale = "de", value = "Willkommen!") })
     String WELCOME_TITLE = "welcomeTitle";
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "You have reached the Installer. You will use this page \\n\\\n"
             + "to complete the installation and configuration of the Server. \\n\\\n"
             + "Once complete, you will be able to log on and begin using it."),
-        @I18NMessage(locale = "de", value = "Willkommen beim Installationsprogramm von RHQ. Mit diesem können Sie \\n\\\n"
-            + "die Installation und Konfiguration von RHQ komplettieren. \\n\\\n"
-            + "Nachdem dies geschehen ist, können Sie sich einloggen und mit RHQ arbeiten") })
+        @I18NMessage(locale = "de", value = "Willkommen beim Installationsprogramm. Mit diesem können Sie \\n\\\n"
+            + "die Installation und Konfiguration des Servers komplettieren. \\n\\\n"
+            + "Nachdem dies geschehen ist, können Sie sich einloggen und damit arbeiten") })
     String WELCOME_MESSAGE = "welcomeMessage";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Starting up, please wait..."),
@@ -126,7 +126,7 @@ public interface InstallerI18NResourceKeys {
     String STARTING = "starting";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "The server will be installed!"),
-        @I18NMessage(locale = "de", value = "RHQ wird installiert") })
+        @I18NMessage(locale = "de", value = "Der Server wird installiert") })
     String ALREADY_INSTALLED = "alreadyInstalled";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Done! Click here to get started!"),
@@ -410,14 +410,14 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("#ConfiguringtheRHQServer-OutgoingServerAuthenticationModeEnabled")
     String PROP_SECURITY_CLIENT_SERVER_AUTH_MODE_ENABLED_HELP = "propertySecurityClientServerAuthModeEnabledHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Agent Enabled"),
-        @I18NMessage(locale = "de", value = "Eingebetteten RHQ Agent verwenden") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Agenten Enabled"),
+        @I18NMessage(locale = "de", value = "Eingebetteten Agent verwenden") })
     String PROP_EMBEDDED_RHQ_AGENT_ENABLED = "propertyEmbeddedRHQAgentEnabled";
     @I18NMessage("#ConfiguringtheRHQServer-EmbeddedRHQAgentEnabled")
     String PROP_EMBEDDED_RHQ_AGENT_ENABLED_HELP = "propertyEmbeddedRHQAgentEnabledHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Agent Name"),
-        @I18NMessage(locale = "de", value = "Name des eingebetteten RHQ Agent") })
+        @I18NMessage(locale = "de", value = "Name des eingebetteten Agent") })
     String PROP_EMBEDDED_RHQ_AGENT_NAME = "propertyEmbeddedRHQAgentName";
     @I18NMessage("#ConfiguringtheRHQServer-EmbeddedRHQAgentName")
     String PROP_EMBEDDED_RHQ_AGENT_NAME_HELP = "propertyEmbeddedRHQAgentNameHelp";
@@ -432,7 +432,8 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("#ConfiguringtheRHQServer-EmbeddedRHQAgentResetConfiguration")
     String PROP_EMBEDDED_RHQ_AGENT_RESET_CONFIGURATION_HELP = "propertyEmbeddedRHQAgentResetConfigurationHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Email SMTP Hostname") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Email SMTP Hostname"),
+        @I18NMessage(locale = "de", value = "Hostname des SMTP Servers") })
     String PROP_EMAIL_SMTP_HOST = "propertyEmailSmtpHost";
     @I18NMessage("#ConfiguringtheRHQServer-EmailSMTPHostname")
     String PROP_EMAIL_SMTP_HOST_HELP = "propertyEmailSmtpHostHelp";
@@ -567,31 +568,31 @@ public interface InstallerI18NResourceKeys {
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "Please review the documentation linked below to learn more:"),
-        @I18NMessage(locale = "de", value = "Die unten aufgeführten Links enthalten weitere Informationen zu RHQ:") })
+        @I18NMessage(locale = "de", value = "Die unten aufgeführten Links enthalten weitere Informationen:") })
     String INTRODUCE_HELP_DOCS = "introduceHelpDocs";
 
     @I18NMessage("Installing")
     String HELP_DOC_RHQ_SERVER_INSTALL_GUIDE = "helpDocRHQServerInstallGuide";
     @I18NMessages( { @I18NMessage(locale = "en", value = "Server Installation Guide"),
-        @I18NMessage(locale = "de", value = "RHQ Server Installationsanleitung") })
+        @I18NMessage(locale = "de", value = "Server Installationsanleitung") })
     String HELP_DOC_RHQ_SERVER_INSTALL_GUIDE_LABEL = "helpDocRHQServerInstallGuideLabel";
 
     @I18NMessage("GUI+Console+Users+Guide")
     String HELP_DOC_RHQ_GUI_CONSOLE_USERS_GUIDE = "helpDocRHQGuiConsoleUsersGuide";
     @I18NMessages( { @I18NMessage(locale = "en", value = "GUI Console Users Guide"),
-        @I18NMessage(locale = "de", value = "Benutzerhandbuch RHQ GUI") })
+        @I18NMessage(locale = "de", value = "Benutzerhandbuch der GUI") })
     String HELP_DOC_RHQ_GUI_CONSOLE_USERS_GUIDE_LABEL = "helpDocRHQGuiConsoleUsersGuideLabel";
 
     @I18NMessage("Running+the+Server")
     String HELP_DOC_RHQ_SERVER_USERS_GUIDE = "helpDocRHQServerUsersGuide";
     @I18NMessages( { @I18NMessage(locale = "en", value = "Server Users Guide"),
-        @I18NMessage(locale = "de", value = "Benutzerhandbuch RHQ Server") })
+        @I18NMessage(locale = "de", value = "Benutzerhandbuch des Servers") })
     String HELP_DOC_RHQ_SERVER_USERS_GUIDE_LABEL = "helpDocRHQServerUsersGuideLabel";
 
     @I18NMessage("Running+the+Agent")
     String HELP_DOC_RHQ_AGENT_USERS_GUIDE = "helpDocRHQAgentUsersGuide";
     @I18NMessages( { @I18NMessage(locale = "en", value = "Agent Users Guide"),
-        @I18NMessage(locale = "de", value = "Benutzerhandbuch RHQ Agent") })
+        @I18NMessage(locale = "de", value = "Benutzerhandbuch für den Agent") })
     String HELP_DOC_RHQ_AGENT_USERS_GUIDE_LABEL = "helpDocRHQAgentUsersGuideLabel";
 
     @I18NMessage("FAQ")

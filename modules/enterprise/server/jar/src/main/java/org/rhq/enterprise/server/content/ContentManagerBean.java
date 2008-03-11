@@ -1057,12 +1057,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         RuntimeException error = null;
 
         try {
-            persisted = contentManager.persistPackageVersion(pv);
+            if (pv.getId() == 0) {
+                persisted = contentManager.persistPackageVersion(pv);
+            }
         } catch (RuntimeException re) {
             error = re;
         }
 
-        // If not attached, the PV already exists, so we should be able to find it.
+        // If we didn't persist, the PV already exists, so we should be able to find it.
         if (persisted == null) {
             Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
             q.setParameter("packageName", pv.getGeneralPackage().getName());
@@ -1076,16 +1078,18 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 throw error;
             }
             if (found.size() != 1) {
-                throw new RuntimeException("Expecting 1 package version - got: " + found);
+                throw new RuntimeException("Expecting 1 package version matching [" + pv + "] but got: " + found);
             }
 
             pv.setId(found.get(0).getId());
             persisted = entityManager.merge(pv);
 
-            log.warn("There was probably a very big and ugly EJB/hibernate error just above this log message - "
-                + "you can normally ignore that. We detected that a package version was already created when we"
-                + " tried to do it also - we will ignore this and just use the new package version that was "
-                + "created in the other thread");
+            if (error != null) {
+                log.warn("There was probably a very big and ugly EJB/hibernate error just above this log message - "
+                    + "you can normally ignore that. We detected that a package version was already created when we"
+                    + " tried to do it also - we will ignore this and just use the new package version that was "
+                    + "created in the other thread");
+            }
         } else {
             // the persisted object is unattached right now,
             // we want it attached so the caller always has an attached entity returned to it 
@@ -1115,12 +1119,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         RuntimeException error = null;
 
         try {
-            persisted = contentManager.persistPackage(pkg);
+            if (pkg.getId() == 0) {
+                persisted = contentManager.persistPackage(pkg);
+            }
         } catch (RuntimeException re) {
             error = re;
         }
 
-        // If not attached, the package already exists, so we should be able to find it.
+        // If we didn't persist, the package already exists, so we should be able to find it.
         if (persisted == null) {
             Query q = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID);
             q.setParameter("name", pkg.getName());
@@ -1131,15 +1137,17 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 throw error;
             }
             if (found.size() != 1) {
-                throw new RuntimeException("Expecting 1 package - got: " + found);
+                throw new RuntimeException("Expecting 1 package matching [" + pkg + "] but got: " + found);
             }
             pkg.setId(found.get(0).getId());
             persisted = entityManager.merge(pkg);
 
-            log.warn("There was probably a very big and ugly EJB/hibernate error just above this log message - "
-                + "you can normally ignore that. We detected that a package was already created when we"
-                + " tried to do it also - we will ignore this and just use the new package that was "
-                + "created in the other thread");
+            if (error != null) {
+                log.warn("There was probably a very big and ugly EJB/hibernate error just above this log message - "
+                    + "you can normally ignore that. We detected that a package was already created when we"
+                    + " tried to do it also - we will ignore this and just use the new package that was "
+                    + "created in the other thread");
+            }
         } else {
             // the persisted object is unattached right now,
             // we want it attached so the caller always has an attached entity returned to it 

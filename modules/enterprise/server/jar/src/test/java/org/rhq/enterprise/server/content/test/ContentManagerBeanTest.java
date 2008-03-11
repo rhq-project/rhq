@@ -167,6 +167,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
     // Test Cases  --------------------------------------------
 
+    @Test(enabled = true)
     public void testPersistSafely() throws Throwable {
 
         final String pkgName = "testPersistSafelyPackage";
@@ -214,6 +215,32 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             pkg = new Package(pkgName, pkgType);
             pv = new PackageVersion(pkg, pvName, arch);
             pv.setExtraProperties(configPojo);
+
+            persistedPkg = this.contentManager.persistOrMergePackageSafely(pkg);
+            assert persistedPkg != null;
+            assert persistedPkg.getId() > 0;
+            assert persistedPkg.equals(pkgPojo) : "not equal: " + persistedPkg + "<>" + pkgPojo;
+
+            persistedPV = this.contentManager.persistOrMergePackageVersionSafely(pv);
+            assert persistedPV != null;
+            assert persistedPV.getId() > 0;
+            assert persistedPV.equals(pvPojo) : "not equal: " + persistedPV + "<>" + pvPojo;
+            assert persistedPV.getExtraProperties() != null;
+            assert persistedPV.getExtraProperties().getId() > 0;
+            assert persistedPV.getExtraProperties().getSimple("one").getStringValue().equals("two");
+
+            // make sure we merged the existing entities - we should not have created new ones
+            assert pkgId == persistedPkg.getId();
+            assert pvId == persistedPV.getId();
+            assert configId == persistedPV.getExtraProperties().getId();
+            assert propId == persistedPV.getExtraProperties().getSimple("one").getId();
+
+            // now pass in existing entities with non-zero IDs
+            pkg = new Package(pkgName, pkgType);
+            pv = new PackageVersion(pkg, pvName, arch);
+            pv.setExtraProperties(configPojo);
+            pkg.setId(persistedPkg.getId());
+            pv.setId(persistedPV.getId());
 
             persistedPkg = this.contentManager.persistOrMergePackageSafely(pkg);
             assert persistedPkg != null;

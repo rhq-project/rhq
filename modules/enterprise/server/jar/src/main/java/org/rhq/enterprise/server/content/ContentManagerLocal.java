@@ -226,7 +226,7 @@ public interface ContentManagerLocal {
      *
      * @param pv the package version to persist
      * 
-     * @return the newly persisted package version, <code>null</code> if the package version already exists
+     * @return the newly persisted package version
      */
     PackageVersion persistPackageVersion(PackageVersion pv);
 
@@ -255,7 +255,7 @@ public interface ContentManagerLocal {
      * 
      * @param pkg the package to persist
      * 
-     * @return the newly persisted package, <code>null</code> if the package already exists
+     * @return the newly persisted package
      */
     Package persistPackage(Package pkg);
 

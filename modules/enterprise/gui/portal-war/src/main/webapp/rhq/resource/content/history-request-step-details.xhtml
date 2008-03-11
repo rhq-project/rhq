@@ -28,6 +28,12 @@
 <rich:panel>
    <f:facet name="header"><h:outputText value="Step Error"/></f:facet>
 
+   <p>
+      <b>Step Description:</b><br/>
+      <h:outputText value="#{ShowInstalledPackageHistoryUIBean.step.description}"/>
+   </p>
+
+   <b>Error Message:</b><br/>
    <pre>
    <h:outputText value="#{ShowInstalledPackageHistoryUIBean.step.errorMessage}"/>
    </pre>

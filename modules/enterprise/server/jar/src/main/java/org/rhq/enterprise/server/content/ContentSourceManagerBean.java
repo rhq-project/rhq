@@ -119,6 +119,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
     @EJB
     private ContentSourceManagerLocal contentSourceManager; //self
     @EJB
+    private ContentManagerLocal contentManager;
+    @EJB
     private SubjectManagerLocal subjectManager;
     @EJB
     private ProductVersionManagerLocal productVersionManager;
@@ -922,6 +924,13 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
             } catch (NoResultException nre) {
                 pkg = new Package(newDetails.getName(), pt);
                 pkg.setClassification(newDetails.getClassification());
+                // we would have liked to rely on merge cascading when we merge the PV
+                // but we need to watch out for the fact that we could be running at the
+                // same time an agent sent us a content report that wants to create the same package.
+                // if this is too hard a hit on performance, we can comment out the below line
+                // and just accept the fact we might fail if the package is created underneath us,
+                // which would cause our tx to rollback. the next sync should help us survive this failure.
+                pkg = this.contentManager.persistOrMergePackageSafely(pkg);
             }
 
             // find and, if necessary create, the architecture
@@ -987,7 +996,13 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
                 // this is fine, its the first time we've seen this PV, let merge just create a new one
             }
 
-            pv = entityManager.merge(pv);
+            // we normally would want to do this:
+            //    pv = entityManager.merge(pv);
+            // but we have to watch out for an agent sending us a content report at the same time that
+            // would create this PV concurrently.  If the below line takes too hard a hit on performance,
+            // we can replace it with the merge call mentioned above and hope this concurrency doesn't happen.
+            // if it does happen, we will rollback our tx and we'll have to wait for the next sync to fix it.
+            pv = contentManager.persistOrMergePackageVersionSafely(pv);
 
             // For each resource version that is supported, make sure we have an entry for that in product version
             Set<String> resourceVersions = newDetails.getResourceVersions();
@@ -1071,6 +1086,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
             if (attachedPvcs == null) {
                 log.warn("Content source adapter reported that a non-existing package was updated, adding it [" + key
                     + "]");
+                // I should probably not rely on persist cascade and use contentmanager.persistOrMergePackageVersionSafely
+                // however, this rarely will occur (should never occur really) so I won't worry about it
                 entityManager.persist(previousPvcs);
                 attachedPvcs = previousPvcs;
             }
@@ -1090,7 +1107,13 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
             pv.setSHA256(updatedDetails.getSHA265());
             pv.setShortDescription(updatedDetails.getShortDescription());
 
-            pv = entityManager.merge(pv);
+            // we normally would want to do this:
+            //    pv = entityManager.merge(pv);
+            // but we have to watch out for an agent sending us a content report at the same time that
+            // would create this PV concurrently.  If the below line takes too hard a hit on performance,
+            // we can replace it with the merge call mentioned above and hope this concurrency doesn't happen.
+            // if it does happen, we will rollback our tx and we'll have to wait for the next sync to fix it.
+            pv = contentManager.persistOrMergePackageVersionSafely(pv);
 
             attachedPvcs.setLocation(updatedDetails.getLocation());
 

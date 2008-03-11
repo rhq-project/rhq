@@ -199,7 +199,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                     PackageType packageType = (PackageType) packageTypeQuery.getSingleResult();
 
                     generalPackage = new Package(resourcePackage.getName(), packageType);
-                    entityManager.persist(generalPackage);
+                    generalPackage = persistOrMergePackageSafely(generalPackage);
                 }
 
                 // Create a new package version and attach to the general package
@@ -233,7 +233,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 packageVersion.setShortDescription(resourcePackage.getShortDescription());
                 packageVersion.setExtraProperties(resourcePackage.getExtraProperties());
 
-                entityManager.persist(packageVersion);
+                packageVersion = persistOrMergePackageVersionSafely(packageVersion);
             } // end package version null check
             else {
                 // If the package version was already in the system, see if there is an installed package for
@@ -996,7 +996,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         if (existingPackageList.size() == 0) {
             PackageType packageType = entityManager.find(PackageType.class, packageTypeId);
             existingPackage = new Package(packageName, packageType);
-            entityManager.persist(existingPackage);
+            existingPackage = persistOrMergePackageSafely(existingPackage);
         } else {
             existingPackage = (Package) existingPackageList.get(0);
         }
@@ -1021,7 +1021,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         newPackageVersion.setPackageBits(bits);
 
-        entityManager.persist(newPackageVersion);
+        newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
 
         existingPackage.addVersion(newPackageVersion);
 

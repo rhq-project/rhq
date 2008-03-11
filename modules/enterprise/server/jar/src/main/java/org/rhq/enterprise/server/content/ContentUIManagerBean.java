@@ -229,6 +229,8 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
     @SuppressWarnings("unchecked")
     public PageList<PackageVersionComposite> getPackageVersionCompositesByFilter(Subject user, int resourceId,
                                                                                  String filter, PageControl pc) {
+        pc.initDefaultOrderingField("pv.generalPackage.name", PageOrdering.ASC);
+
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
             PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS, pc);
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,

@@ -45,8 +45,8 @@
          </p>
          <p class="compact">
             <fmt:message key="about.MoreInfo.Label"/><br/>
-            <a href="mailto:sales@jboss.com"><fmt:message key="about.MoreInfo.LinkSales"/></a><br/>
-            <a href="mailto:support@jboss.com"><fmt:message key="about.MoreInfo.LinkSupport"/></a>
+            <a href="mailto:<fmt:message key="about.MoreInfo.LinkSales"/>"><fmt:message key="about.MoreInfo.LinkSales"/></a><br/>
+            <a href="mailto:<fmt:message key="about.MoreInfo.LinkSupport"/>"><fmt:message key="about.MoreInfo.LinkSupport"/></a>
          </p>
       </div>
    </div>

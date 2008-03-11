@@ -52,7 +52,7 @@
         <td class="menu_JBcom"><a href="http://www.jboss.org/"><fmt:message key="menu.top.c"/></a></td>
         <td class="menu_JBfed"><a href="http://www.redhat.com/"><fmt:message key="menu.top.d"/></a></td>
       --%>
-        <td class="menu_JBfed"><a href="http://rhq-project.org/">rhq-project.org</a></td>
+        <td class="menu_JBfed"><a href="http://<fmt:message key="product.url.domain"/>"><fmt:message key="product.url.domain"/></a></td>
     </tr>
     </table>
 

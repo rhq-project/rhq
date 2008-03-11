@@ -69,7 +69,7 @@ Firefox and other Gecko-based browsers to render the page in "Almost Standards" 
          <td class="menu_JBcom"><a href="http://www.jboss.org/">${msg["menu.top.c"]}</a></td>
          <td class="menu_JBfed"><a href="http://www.redhat.com/">${msg["menu.top.d"]}</a></td>
          --></ui:remove>
-         <td class="menu_JBfed"><a href="http://rhq-project.org/">rhq-project.org</a></td>
+         <td class="menu_JBfed"><a href="http://www.${msg['product.url.domain']}">${msg['product.url.domain']}</a></td>
       </tr>
    </table>
 </div>
@@ -165,8 +165,8 @@ Firefox and other Gecko-based browsers to render the page in "Almost Standards" 
             </p>
             <p class="compact">
                ${msg['about.MoreInfo.Label']}<br/>
-               <a href="mailto:sales@jboss.com">${msg['about.MoreInfo.LinkSales']}</a><br/>
-               <a href="mailto:support@jboss.com">${msg['about.MoreInfo.LinkSupport']}</a>
+               <a href="mailto:${msg['about.MoreInfo.LinkSales']}">${msg['about.MoreInfo.LinkSales']}</a><br/>
+               <a href="mailto:${msg['about.MoreInfo.LinkSupport']}">${msg['about.MoreInfo.LinkSupport']}</a>
             </p>
          </div>
       </div>

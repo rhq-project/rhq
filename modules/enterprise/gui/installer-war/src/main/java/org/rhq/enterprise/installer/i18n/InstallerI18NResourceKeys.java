@@ -33,6 +33,19 @@ import mazz.i18n.annotation.I18NResourceBundle;
 public interface InstallerI18NResourceKeys {
     Msg.BundleBaseName BUNDLE_BASE_NAME = new Msg.BundleBaseName("InstallerMessages");
 
+    @I18NMessage("${product.shortName}")
+    String PRODUCT_SHORTNAME = "product.shortName";
+    @I18NMessage("${product.name}")
+    String PRODUCT_NAME = "product.name";
+    @I18NMessage("${product.fullNname}")
+    String PRODUCT_FULLNAME = "product.fullName";
+    @I18NMessage("${product.url}")
+    String PRODUCT_URL = "product.url";
+    @I18NMessage("${product.sales.email}")
+    String PRODUCT_SALES_EMAIL = "product.sales.email";
+    @I18NMessage("${product.support.email}")
+    String PRODUCT_SUPPORT_EMAIL = "product.support.email";
+
     @I18NMessages( { @I18NMessage(locale = "en", value = "The {0} property value was an invalid number [{1}]"),
         @I18NMessage(locale = "de", value = "[{1}] ist ein ungültiger Zahlenwert für die Eigenschaft {0}") })
     String INVALID_NUMBER = "invalidNumber";
@@ -42,7 +55,7 @@ public interface InstallerI18NResourceKeys {
         @I18NMessage(locale = "de", value = "Die boolesche Eigenschaft muss entweder 'true' oder 'false' sein, war aber [{1}]") })
     String INVALID_BOOLEAN = "invalidBoolean";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Failed to save properties and fully deploy - RHQ Server will not function properly\\n\\\nCause: {0}") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Failed to save properties and fully deploy - the Server will not function properly\\n\\\nCause: {0}") })
     String SAVE_FAILURE = "saveFailure";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Error"), @I18NMessage(locale = "de", value = "Fehler") })
@@ -61,7 +74,7 @@ public interface InstallerI18NResourceKeys {
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "This page shows you the current configuration property settings \\n\\\n"
-            + "for this RHQ Server installation.  You may change some, all or none \\n\\\n"
+            + "for this Server installation.  You may change some, all or none \\n\\\n"
             + "of these as per your custom requirements.  Note that changes to \\n\\\n"
             + "some of these settings will not take effect until you restart the \\n\\\n"
             + "server.  If you change any of those settings, you will have to \\n\\\n"
@@ -74,7 +87,7 @@ public interface InstallerI18NResourceKeys {
             + "sie aufgegriffen werden.") })
     String SET_PROPERTIES_INSTRUCTIONS = "setPropertiesInstructions";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Install RHQ Server!"),
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Install the Server!"),
         @I18NMessage(locale = "de", value = "RHQ Server installieren!") })
     String SAVE = "save";
 
@@ -95,14 +108,14 @@ public interface InstallerI18NResourceKeys {
         @I18NMessage(locale = "de", value = "Neustart erforderlich?") })
     String REQUIRES_RESTART = "requiresRestart";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Welcome to RHQ!"),
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Welcome!"),
         @I18NMessage(locale = "de", value = "Willkommen bei RHQ!") })
     String WELCOME_TITLE = "welcomeTitle";
 
     @I18NMessages( {
-        @I18NMessage(locale = "en", value = "You have reached the RHQ Installer. You will use this page \\n\\\n"
-            + "to complete the installation and configuration of the RHQ Server. \\n\\\n"
-            + "Once complete, you will be able to log on and begin using RHQ"),
+        @I18NMessage(locale = "en", value = "You have reached the Installer. You will use this page \\n\\\n"
+            + "to complete the installation and configuration of the Server. \\n\\\n"
+            + "Once complete, you will be able to log on and begin using it."),
         @I18NMessage(locale = "de", value = "Willkommen beim Installationsprogramm von RHQ. Mit diesem können Sie \\n\\\n"
             + "die Installation und Konfiguration von RHQ komplettieren. \\n\\\n"
             + "Nachdem dies geschehen ist, können Sie sich einloggen und mit RHQ arbeiten") })
@@ -112,7 +125,7 @@ public interface InstallerI18NResourceKeys {
         @I18NMessage(locale = "de", value = "Bitte warten Sie bis der Server gestartet ist") })
     String STARTING = "starting";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "RHQ will be installed!"),
+    @I18NMessages( { @I18NMessage(locale = "en", value = "The server will be installed!"),
         @I18NMessage(locale = "de", value = "RHQ wird installiert") })
     String ALREADY_INSTALLED = "alreadyInstalled";
 
@@ -222,17 +235,17 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("#ConfiguringtheRHQServer-AspectDeployerPort")
     String PROP_ASPECT_DEPLOYER_PORT_HELP = "propertyAspectDeployerPortHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "RHQ Console Keystore") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Console Keystore") })
     String PROP_TOMCAT_KEYSTORE_FILENAME = "propertyTomcatKeystoreFilename";
     @I18NMessage("#ConfiguringtheRHQServer-RHQConsoleKeystore")
     String PROP_TOMCAT_KEYSTORE_FILENAME_HELP = "propertyTomcatKeystoreFilenameHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "RHQ Console Keystore Password") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Console Keystore Password") })
     String PROP_TOMCAT_KEYSTORE_PASSWORD = "propertyTomcatKeystorePassword";
     @I18NMessage("#ConfiguringtheRHQServer-RHQConsoleKeystorePassword")
     String PROP_TOMCAT_KEYSTORE_PASSWORD_HELP = "propertyTomcatKeystorePasswordHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "RHQ Console SSL Protocol") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Console SSL Protocol") })
     String PROP_TOMCAT_SSL_PROTOCOL = "propertyTomcatSslProtocol";
     @I18NMessage("#ConfiguringtheRHQServer-RHQConsoleSSLProtocol")
     String PROP_TOMCAT_SSL_PROTOCOL_HELP = "propertyTomcatSslProtocolHelp";
@@ -397,24 +410,24 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("#ConfiguringtheRHQServer-OutgoingServerAuthenticationModeEnabled")
     String PROP_SECURITY_CLIENT_SERVER_AUTH_MODE_ENABLED_HELP = "propertySecurityClientServerAuthModeEnabledHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded RHQ Agent Enabled"),
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Agent Enabled"),
         @I18NMessage(locale = "de", value = "Eingebetteten RHQ Agent verwenden") })
     String PROP_EMBEDDED_RHQ_AGENT_ENABLED = "propertyEmbeddedRHQAgentEnabled";
     @I18NMessage("#ConfiguringtheRHQServer-EmbeddedRHQAgentEnabled")
     String PROP_EMBEDDED_RHQ_AGENT_ENABLED_HELP = "propertyEmbeddedRHQAgentEnabledHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded RHQ Agent Name"),
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Agent Name"),
         @I18NMessage(locale = "de", value = "Name des eingebetteten RHQ Agent") })
     String PROP_EMBEDDED_RHQ_AGENT_NAME = "propertyEmbeddedRHQAgentName";
     @I18NMessage("#ConfiguringtheRHQServer-EmbeddedRHQAgentName")
     String PROP_EMBEDDED_RHQ_AGENT_NAME_HELP = "propertyEmbeddedRHQAgentNameHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded RHQ Agent Disable Native System") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Agent Disable Native System") })
     String PROP_EMBEDDED_RHQ_AGENT_DISABLE_NATIVE_SYSTEM = "propertyEmbeddedRHQAgentDisableNativeSystem";
     @I18NMessage("#ConfiguringtheRHQServer-EmbeddedRHQAgentDisableNativeSystem")
     String PROP_EMBEDDED_RHQ_AGENT_DISABLE_NATIVE_SYSTEM_HELP = "propertyEmbeddedRHQAgentDisableNativeSystemHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded RHQ Agent Reset Configuration") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Agent Reset Configuration") })
     String PROP_EMBEDDED_RHQ_AGENT_RESET_CONFIGURATION = "propertyEmbeddedRHQAgentResetConfiguration";
     @I18NMessage("#ConfiguringtheRHQServer-EmbeddedRHQAgentResetConfiguration")
     String PROP_EMBEDDED_RHQ_AGENT_RESET_CONFIGURATION_HELP = "propertyEmbeddedRHQAgentResetConfigurationHelp";
@@ -553,31 +566,31 @@ public interface InstallerI18NResourceKeys {
     // Help Documentation - links to the wiki
 
     @I18NMessages( {
-        @I18NMessage(locale = "en", value = "Please review the documentation linked below to learn more about RHQ:"),
+        @I18NMessage(locale = "en", value = "Please review the documentation linked below to learn more:"),
         @I18NMessage(locale = "de", value = "Die unten aufgeführten Links enthalten weitere Informationen zu RHQ:") })
     String INTRODUCE_HELP_DOCS = "introduceHelpDocs";
 
-    @I18NMessage("Installing+RHQ")
+    @I18NMessage("Installing")
     String HELP_DOC_RHQ_SERVER_INSTALL_GUIDE = "helpDocRHQServerInstallGuide";
-    @I18NMessages( { @I18NMessage(locale = "en", value = "RHQ Server Installation Guide"),
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Installation Guide"),
         @I18NMessage(locale = "de", value = "RHQ Server Installationsanleitung") })
     String HELP_DOC_RHQ_SERVER_INSTALL_GUIDE_LABEL = "helpDocRHQServerInstallGuideLabel";
 
-    @I18NMessage("RHQ+GUI+Console+Users+Guide")
+    @I18NMessage("GUI+Console+Users+Guide")
     String HELP_DOC_RHQ_GUI_CONSOLE_USERS_GUIDE = "helpDocRHQGuiConsoleUsersGuide";
-    @I18NMessages( { @I18NMessage(locale = "en", value = "RHQ GUI Console Users Guide"),
+    @I18NMessages( { @I18NMessage(locale = "en", value = "GUI Console Users Guide"),
         @I18NMessage(locale = "de", value = "Benutzerhandbuch RHQ GUI") })
     String HELP_DOC_RHQ_GUI_CONSOLE_USERS_GUIDE_LABEL = "helpDocRHQGuiConsoleUsersGuideLabel";
 
-    @I18NMessage("Running+the+RHQ+Server")
+    @I18NMessage("Running+the+Server")
     String HELP_DOC_RHQ_SERVER_USERS_GUIDE = "helpDocRHQServerUsersGuide";
-    @I18NMessages( { @I18NMessage(locale = "en", value = "RHQ Server Users Guide"),
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Users Guide"),
         @I18NMessage(locale = "de", value = "Benutzerhandbuch RHQ Server") })
     String HELP_DOC_RHQ_SERVER_USERS_GUIDE_LABEL = "helpDocRHQServerUsersGuideLabel";
 
-    @I18NMessage("Running+the+RHQ+Agent")
+    @I18NMessage("Running+the+Agent")
     String HELP_DOC_RHQ_AGENT_USERS_GUIDE = "helpDocRHQAgentUsersGuide";
-    @I18NMessages( { @I18NMessage(locale = "en", value = "RHQ Agent Users Guide"),
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Agent Users Guide"),
         @I18NMessage(locale = "de", value = "Benutzerhandbuch RHQ Agent") })
     String HELP_DOC_RHQ_AGENT_USERS_GUIDE_LABEL = "helpDocRHQAgentUsersGuideLabel";
 
@@ -589,7 +602,7 @@ public interface InstallerI18NResourceKeys {
 
     // the page that contains all the config props help text
     // this is under the help doc root
-    @I18NMessage("Configuring+the+RHQ+Server")
+    @I18NMessage("Configuring+the+Server")
     String HELP_DOC_RHQ_SERVER_PROP_PARENT_PAGE = "helpDocRHQServerPropParentPage";
 
     // as we translate our documentation - point to each language's root doc location

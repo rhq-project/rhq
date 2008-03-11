@@ -31,6 +31,9 @@
       <product.shortName>RHQ</product.shortName>
       <product.name>RHQ</product.name>
       <product.fullName>RHQ</product.fullName>
+      <product.url.domain>rhq-project.org</product.url.domain>
+      <product.sales.email>sales@rhq-project.org</product.sales.email>
+      <product.support.email>info@rhq-project.org</product.support.email>
    </properties>
 
    <dependencies>

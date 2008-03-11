@@ -472,18 +472,16 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
             history.setDeploymentConfigurationValues(deploymentConfiguration);
 
+            // If the package indicated installation steps, link them to the resulting history entry
+            List<DeployPackageStep> transferObjectSteps = singleResponse.getDeploymentSteps();
+            if (transferObjectSteps != null) {
+                List<PackageInstallationStep> installationSteps =
+                    translateInstallationSteps(transferObjectSteps, history);
+                history.setInstallationSteps(installationSteps);
+            }
+            
             if (singleResponse.getResult() == ContentResponseResult.SUCCESS) {
                 history.setStatus(InstalledPackageHistoryStatus.INSTALLED);
-
-                List<DeployPackageStep> transferObjectSteps = singleResponse.getDeploymentSteps();
-                if (transferObjectSteps != null) {
-                    List<PackageInstallationStep> installationSteps = translateInstallationSteps(transferObjectSteps,
-                        history);
-                    history.setInstallationSteps(installationSteps);
-                }
-
-                // We used to create the InstalledPackage entry here, but now we'll rely on the plugin container
-                // to trigger a discovery after the deploy request finishes
             } else {
                 history.setStatus(InstalledPackageHistoryStatus.FAILED);
                 history.setErrorMessage(singleResponse.getErrorMessage());

@@ -220,7 +220,10 @@ public interface ContentManagerLocal {
 
     /**
      * Very simple method that pesists the given package version within its own transaction.
-     * 
+     *
+     * <p>This method is here to support {@link #persistOrMergePackageVersionSafely(PackageVersion)},
+     * it is not meant for general consumption.</p>
+     *
      * @param pv the package version to persist
      * 
      * @return the newly persisted package version
@@ -234,6 +237,10 @@ public interface ContentManagerLocal {
      * This performs its tasks safely; that is, it makes sure that no contraint violations occur
      * if the package version already exists.
      *
+     * <p>This method is for a very specific use case - that is, when creating a package version
+     * in a place where, concurrently, someone else might try to create the same package version.
+     * It is not for general persisting/merging of package versions.</p>
+     *
      * @param pv the package version to find and possibly persist to the database
      *
      * @return the package version that was found/persisted
@@ -242,6 +249,9 @@ public interface ContentManagerLocal {
 
     /**
      * Very simple method that pesists the given package within its own transaction.
+     *
+     * <p>This method is here to support {@link #persistOrMergePackageSafely(Package)},
+     * it is not meant for general consumption.</p>
      * 
      * @param pkg the package to persist
      * 
@@ -256,6 +266,10 @@ public interface ContentManagerLocal {
      * This performs its tasks safely; that is, it makes sure that no contraint violations occur
      * if the package already exists.
      *
+     * <p>This method is for a very specific use case - that is, when creating a package
+     * in a place where, concurrently, someone else might try to create the same package.
+     * It is not for general persisting/merging of packages.</p>
+     * 
      * @param pkg the package to find and possibly persist to the database
      *
      * @return the package that was found/persisted

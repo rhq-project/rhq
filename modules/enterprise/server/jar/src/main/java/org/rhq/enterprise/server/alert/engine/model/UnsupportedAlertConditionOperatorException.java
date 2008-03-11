@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.alert.engine.model;
 
+/**
+ * @author Joseph Marques
+ */
+
 public class UnsupportedAlertConditionOperatorException extends InvalidCacheElementException {
     private static final long serialVersionUID = 1L;
 

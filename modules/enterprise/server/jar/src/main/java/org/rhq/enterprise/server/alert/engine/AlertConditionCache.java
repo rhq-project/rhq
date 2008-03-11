@@ -83,6 +83,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * The singleton that contains the actual caches for the alert subsystem.
+ * 
+ * @author Joseph Marques
+ * @author John Mazzittelli
  */
 public class AlertConditionCache {
     private static final Log log = LogFactory.getLog(AlertConditionCache.class);
@@ -290,10 +293,20 @@ public class AlertConditionCache {
 
             AlertConditionCacheStats stats = new AlertConditionCacheStats();
 
-            PageList<AlertDefinition> alertDefinitions = alertDefinitionManager.getAllAlertDefinitionsWithConditions();
             Subject overlord = subjectManager.getOverlord();
+            List<AlertDefinition> alertDefinitions = alertDefinitionManager
+                .getAllAlertDefinitionsWithConditions(overlord);
 
             for (AlertDefinition alertDefinition : alertDefinitions) {
+                /* 
+                 * don't insert recovery alerts initially, they should only be added when the definition they're 
+                 * recovering for triggers an alert; which is why this check is in the loadCaches() method instead
+                 * of at the top of body of the insertAlertDefinition() method.  
+                 */
+                if (alertDefinition.getRecoveryId() != 0) {
+                    continue;
+                }
+
                 /*
                  * deleted alertDefinitions should never come back from the alertDefinitionManager methods, so don't
                  * check for that
@@ -311,7 +324,7 @@ public class AlertConditionCache {
 
             while (true) {
                 PageList<MeasurementBaselineComposite> baselines = measurementBaselineManager
-                    .getAllDynamicMeasurementBaselines(pc);
+                    .getAllDynamicMeasurementBaselines(overlord, pc);
 
                 if (baselines.size() <= 0) {
                     break; // didn't get any rows back, must not have any data or no more rows left to process

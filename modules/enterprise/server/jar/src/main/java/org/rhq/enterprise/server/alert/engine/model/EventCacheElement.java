@@ -22,6 +22,10 @@ import java.util.regex.Pattern;
 
 import org.rhq.core.domain.event.EventSeverity;
 
+/**
+ * @author Joseph Marques
+ */
+
 public class EventCacheElement extends AbstractEnumCacheElement<EventSeverity> {
 
     private final Pattern eventDetailsPattern;

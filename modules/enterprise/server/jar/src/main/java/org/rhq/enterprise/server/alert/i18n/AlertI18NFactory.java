@@ -27,6 +27,8 @@ import mazz.i18n.Msg;
  * Convenience utility that creates I18N {@link Logger loggers} and {@link Msg messages} for you in the alerts subsystem
  * SLSB and weblayer-related classes. These factory methods are used to create I18N objects that access the
  * corresponding property resource bundle.
+ * 
+ * @author Joseph Marques
  */
 public class AlertI18NFactory {
     private static final Msg.BundleBaseName bundleBaseName = new Msg.BundleBaseName("alert-messages");

@@ -19,8 +19,14 @@
 package org.rhq.enterprise.server.alert;
 
 import java.util.List;
+
 import javax.ejb.Local;
+
 import org.rhq.core.domain.alert.AlertConditionLog;
+
+/**
+ * @author Joseph Marques
+ */
 
 @Local
 public interface AlertConditionLogManagerLocal {

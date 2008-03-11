@@ -19,10 +19,13 @@
 package org.rhq.enterprise.server.alert.engine.mbean;
 
 import org.jboss.system.ServiceMBeanSupport;
+
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * An MBean that exposes various structures contained with the AlertConditionCache
+ * 
+ * @author Joseph Marques
  */
 public class AlertConditionCacheMonitor extends ServiceMBeanSupport implements AlertConditionCacheMonitorMBean {
     public String[] getCacheNames() {

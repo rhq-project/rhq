@@ -20,6 +20,10 @@ package org.rhq.enterprise.server.alert.engine.model;
 
 import org.rhq.enterprise.server.alert.engine.model.AlertConditionOperator.Type;
 
+/**
+ * @author Joseph Marques
+ */
+
 public final class OutOfBoundsCacheElement extends NumericDoubleCacheElement {
     public OutOfBoundsCacheElement(AlertConditionOperator operator, Double value, int scheduleId) {
         super(operator, value, scheduleId);

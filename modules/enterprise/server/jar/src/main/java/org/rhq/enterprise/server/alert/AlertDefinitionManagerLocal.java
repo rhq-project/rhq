@@ -18,20 +18,23 @@
  */
 package org.rhq.enterprise.server.alert;
 
+import java.util.List;
+
 import javax.ejb.Local;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 /**
  * all methods that aren't getters appropriately update the contents of the AlertConditionCache
  *
- * @author Greg Hinkle
+ * @author Joseph Marques
  */
 @Local
 public interface AlertDefinitionManagerLocal {
-    PageList<AlertDefinition> getAllAlertDefinitionsWithConditions();
+    List<AlertDefinition> getAllAlertDefinitionsWithConditions(Subject user);
 
     PageList<AlertDefinition> getAlertDefinitions(Subject user, int resourceId, PageControl pageControl);
 
@@ -45,6 +48,8 @@ public interface AlertDefinitionManagerLocal {
     int enableAlertDefinitions(Subject user, Integer[] alertDefinitionIds);
 
     int disableAlertDefinitions(Subject user, Integer[] alertDefinitionIds);
+
+    List<AlertDefinition> getAllRecoveryDefinitionsById(Subject user, Integer alertDefinitionId);
 
     void copyAlertDefinitions(Subject user, Integer[] alertDefinitionIds);
 

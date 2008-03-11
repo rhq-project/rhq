@@ -27,8 +27,10 @@ import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertDampeningEvent;
 import org.rhq.core.domain.alert.AlertDefinition;
@@ -43,6 +45,8 @@ import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
 
 /**
  * Use the default message provider
+ * 
+ * @author Joseph Marques
  */
 @MessageDriven(activationConfig = {
     @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),

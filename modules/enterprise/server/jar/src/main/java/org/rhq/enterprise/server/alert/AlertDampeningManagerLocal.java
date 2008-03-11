@@ -19,7 +19,12 @@
 package org.rhq.enterprise.server.alert;
 
 import javax.ejb.Local;
+
 import org.rhq.core.domain.alert.AlertDampeningEvent;
+
+/**
+ * @author Joseph Marques
+ */
 
 @Local
 public interface AlertDampeningManagerLocal {

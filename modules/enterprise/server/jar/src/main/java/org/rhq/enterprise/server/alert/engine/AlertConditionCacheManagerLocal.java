@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.alert.engine;
 
+/**
+ * @author Joseph Marques
+ */
+
 import java.util.List;
 
 import javax.ejb.Local;

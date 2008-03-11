@@ -19,18 +19,21 @@
 package org.rhq.enterprise.server.alert;
 
 import java.util.List;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -45,8 +48,9 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * @author Greg Hinkle
+ * @author Joseph Marques
  */
+
 @Stateless
 public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
     @SuppressWarnings("unused")
@@ -80,11 +84,16 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<AlertDefinition> getAllAlertDefinitionsWithConditions() {
+    public List<AlertDefinition> getAllAlertDefinitionsWithConditions(Subject user) {
+        if (authorizationManager.isOverlord(user) == false) {
+            throw new PermissionException("User [" + user.getName() + "] does not have permission to call "
+                + "getAllAlertDefinitionsWithConditions; only the overlord has that right");
+        }
+
         Query query = entityManager.createNamedQuery(AlertDefinition.QUERY_FIND_ALL_WITH_CONDITIONS);
         List<AlertDefinition> list = query.getResultList();
 
-        return new PageList<AlertDefinition>(list, PageControl.getUnlimitedInstance());
+        return list;
     }
 
     @SuppressWarnings("unchecked")
@@ -145,9 +154,23 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         entityManager.persist(alertDefinition);
         entityManager.flush();
 
+        boolean addToCache = false;
+        // don't notify on an alert template, only for those that get attached to a resource
         // Only add to the cache if the alert definition was created as active
         if ((resourceId != null) && alertDefinition.getEnabled()) {
-            // don't notify on an alert template, only for those that get attached to a resource
+            // if this is a recovery alert
+            if (alertDefinition.getRecoveryId() != 0) {
+                // only add to the cache if the to-be-recovered definition is disabled, and thus needs recovering
+                AlertDefinition toBeRecoveredDefinition = getAlertDefinitionById(user, alertDefinition.getRecoveryId());
+                if (toBeRecoveredDefinition.getEnabled() == false) {
+                    addToCache = true;
+                }
+            } else {
+                addToCache = true;
+            }
+        }
+
+        if (addToCache) {
             notifyAlertConditionCacheManager("createAlertDefinition", alertDefinition, AlertDefinitionEvent.CREATED);
         }
 
@@ -237,6 +260,20 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public List<AlertDefinition> getAllRecoveryDefinitionsById(Subject user, Integer alertDefinitionId) {
+        if (authorizationManager.isOverlord(user) == false) {
+            throw new PermissionException("User [" + user.getName() + "] does not have permission to call "
+                + "getAllRecoveryDefinitionsById; only the overlord has that right");
+        }
+
+        Query query = entityManager.createNamedQuery(AlertDefinition.QUERY_FIND_ALL_BY_RECOVERY_DEFINITION_ID);
+        query.setParameter("recoveryDefinitionId", alertDefinitionId);
+
+        List<AlertDefinition> list = query.getResultList();
+        return list;
+    }
+
     public AlertDefinition updateAlertDefinition(Subject user, AlertDefinition alertDefinition)
         throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
         boolean isAlertTemplate = (alertDefinition.getResourceType() != null);
@@ -287,7 +324,24 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
              * if you were JUST_ENABLED or STILL_ENABLED, you are moving to the ENABLED state, which means you need to
              * be added to the cache as the last half of this update
              */
-            notifyAlertConditionCacheManager("updateAlertDefinition", newAlertDefinition, AlertDefinitionEvent.CREATED);
+
+            boolean addToCache = false;
+            // if this was a recovery alert, or was recently turned into one
+            if (newAlertDefinition.getRecoveryId() != 0) {
+                // only add to the cache if the to-be-recovered definition is disabled, and thus needs recovering
+                AlertDefinition toBeRecoveredDefinition = getAlertDefinitionById(user, newAlertDefinition
+                    .getRecoveryId());
+                if (toBeRecoveredDefinition.getEnabled() == false) {
+                    addToCache = true;
+                }
+            } else {
+                addToCache = true;
+            }
+
+            if (addToCache) {
+                notifyAlertConditionCacheManager("updateAlertDefinition", newAlertDefinition,
+                    AlertDefinitionEvent.CREATED);
+            }
         }
 
         /*

@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.alert.engine.model;
 
+/**
+ * @author Joseph Marques
+ */
+
 public enum AlertConditionOperator {
     /*
      * absolute value comparison operators

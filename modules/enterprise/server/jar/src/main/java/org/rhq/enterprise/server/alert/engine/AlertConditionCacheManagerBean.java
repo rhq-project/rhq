@@ -36,6 +36,10 @@ import org.rhq.core.domain.measurement.composite.MeasurementBaselineComposite;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.resource.Resource;
 
+/**
+ * @author Joseph Marques
+ */
+
 @Stateless
 public class AlertConditionCacheManagerBean implements AlertConditionCacheManagerLocal {
     @SuppressWarnings("unused")

@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.alert.engine;
 
+/**
+ * @author Joseph Marques
+ */
+
 public class AlertConditionCacheManagerException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 

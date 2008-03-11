@@ -20,6 +20,10 @@ package org.rhq.enterprise.server.alert.engine.model;
 
 import org.rhq.core.domain.operation.OperationRequestStatus;
 
+/**
+ * @author Joseph Marques
+ */
+
 public final class ResourceOperationCacheElement extends AbstractEnumCacheElement<OperationRequestStatus> {
     public ResourceOperationCacheElement(AlertConditionOperator operator, OperationRequestStatus value,
         int conditionTriggerId) {

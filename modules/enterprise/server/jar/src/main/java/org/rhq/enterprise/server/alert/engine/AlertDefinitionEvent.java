@@ -18,6 +18,13 @@
  */
 package org.rhq.enterprise.server.alert.engine;
 
+/**
+ * @author Joseph Marques
+ */
+
 public enum AlertDefinitionEvent {
-    CREATED, DELETED, ENABLED, DISABLED;
+    CREATED, // when an alert definition is created, notify the cache by passing the definition and this event type 
+    DELETED, // when an alert definition is deleted, notify the cache by passing the definition and this event type
+    ENABLED, // when an alert definition is enabled, notify the cache by passing the definition and this event type
+    DISABLED;// when an alert definition is disable, notify the cache by passing the definition and this event type
 }

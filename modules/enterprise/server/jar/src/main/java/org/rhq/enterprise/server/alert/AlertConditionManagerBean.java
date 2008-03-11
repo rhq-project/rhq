@@ -21,8 +21,13 @@ package org.rhq.enterprise.server.alert;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.enterprise.server.RHQConstants;
+
+/**
+ * @author Joseph Marques
+ */
 
 @Stateless
 public class AlertConditionManagerBean implements AlertConditionManagerLocal {

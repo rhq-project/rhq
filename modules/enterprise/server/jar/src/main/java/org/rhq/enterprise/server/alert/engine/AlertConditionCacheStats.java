@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.alert.engine;
 
+/**
+ * @author Joseph Marques
+ */
+
 public class AlertConditionCacheStats {
     public int created;
     public int updated;

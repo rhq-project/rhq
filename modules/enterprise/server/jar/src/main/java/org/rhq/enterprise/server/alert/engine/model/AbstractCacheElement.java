@@ -23,6 +23,10 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.cache.aop.annotation.InstanceOfPojoCacheable;
 
+/**
+ * @author Joseph Marques
+ */
+
 @InstanceOfPojoCacheable
 public abstract class AbstractCacheElement<T> {
     protected final Log log = LogFactory.getLog(getClass());

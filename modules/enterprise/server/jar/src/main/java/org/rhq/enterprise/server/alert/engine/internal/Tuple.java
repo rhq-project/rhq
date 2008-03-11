@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.alert.engine.internal;
 
+/**
+ * @author Joseph Marques
+ */
+
 public class Tuple<L, R> {
     public L lefty;
     public R righty;

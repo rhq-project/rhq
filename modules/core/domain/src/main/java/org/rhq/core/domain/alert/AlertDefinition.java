@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
@@ -41,6 +42,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
@@ -56,6 +58,9 @@ import org.rhq.core.domain.resource.ResourceType;
     @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL_WITH_CONDITIONS, query = "SELECT a "
         + "  FROM AlertDefinition a " + "       LEFT JOIN FETCH a.conditions " + " WHERE a.deleted = false "
         + "       AND a.resource IS NOT NULL"),
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL_BY_RECOVERY_DEFINITION_ID, query = "SELECT a "
+        + "  FROM AlertDefinition a " + "       LEFT JOIN FETCH a.conditions "
+        + " WHERE a.deleted = false AND a.enabled = true " + "       AND a.recoveryId = :recoveryDefinitionId"),
     @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_ALERT_TEMPLATE_ID, query = "SELECT a.id "
         + "  FROM AlertDefinition a " + " WHERE a.parentId = :alertTemplateId " + "       AND a.deleted = false"),
     @NamedQuery(name = AlertDefinition.QUERY_FIND_RESOURCE_IDS_WITH_NO_ACTIVE_TEMPLATE_DEFINITION, query = "SELECT res.id "
@@ -77,6 +82,7 @@ public class AlertDefinition implements Serializable {
 
     public static final String QUERY_FIND_ALL = "AlertDefinition.findAll";
     public static final String QUERY_FIND_ALL_WITH_CONDITIONS = "AlertDefinition.findAllWithConditions";
+    public static final String QUERY_FIND_ALL_BY_RECOVERY_DEFINITION_ID = "AlertDefinition.findAllByRecoveryDefinitionId";
     public static final String QUERY_FIND_BY_ALERT_TEMPLATE_ID = "AlertDefinition.findByAlertTemplateId";
     public static final String QUERY_FIND_RESOURCE_IDS_WITH_NO_ACTIVE_TEMPLATE_DEFINITION = "AlertDefinition.findResourceIdsWithNoDefinition";
     public static final String QUERY_FIND_BY_RESOURCE = "AlertDefinition.findByResource";
@@ -100,8 +106,8 @@ public class AlertDefinition implements Serializable {
     /**
      * If this field is non-null, then this alert def is a copy of the resource type alert def with the specified id.
      */
-    @Column(name = "PARENT_ID")
-    private Integer parentId;
+    @Column(name = "PARENT_ID", nullable = false)
+    private Integer parentId = new Integer(0);
 
     @Column(name = "DESCRIPTION")
     private String description;
@@ -348,6 +354,10 @@ public class AlertDefinition implements Serializable {
     }
 
     public void setWillRecover(boolean willRecover) {
+        if (willRecover && getRecoveryId() != 0) {
+            throw new IllegalStateException(
+                "An alert definition can either be a recovery definition or a definition to-be-recovered, but not both.");
+        }
         this.willRecover = willRecover;
     }
 
@@ -372,6 +382,10 @@ public class AlertDefinition implements Serializable {
     }
 
     public void setRecoveryId(Integer actOnTriggerId) {
+        if (getWillRecover() && actOnTriggerId != 0) {
+            throw new IllegalStateException(
+                "An alert definition can either be a recovery definition or a definition to-be-recovered, but not both.");
+        }
         this.recoveryId = actOnTriggerId;
     }
 

@@ -22,6 +22,10 @@ import mazz.i18n.annotation.I18NMessage;
 import mazz.i18n.annotation.I18NMessages;
 import mazz.i18n.annotation.I18NResourceBundle;
 
+/**
+ * @author Joseph Marques
+ */
+
 @I18NResourceBundle(baseName = "alert-messages", defaultLocale = "en")
 public interface AlertI18NResourceKeys {
     @I18NMessages( { @I18NMessage("Availability goes {0}") })

@@ -67,6 +67,8 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
+import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NFactory;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NResourceKeys;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -81,7 +83,7 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * @author Greg Hinkle
+ * @author Joseph Marques
  * @author Ian Springer
  */
 @Stateless
@@ -92,6 +94,9 @@ public class AlertManagerBean implements AlertManagerLocal {
     @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(AlertManagerBean.class);
 
+    @EJB
+    @IgnoreDependency
+    private AlertConditionCacheManagerLocal alertConditionCacheManager;
     @EJB
     private AlertConditionLogManagerLocal alertConditionLogManager;
     @EJB
@@ -573,7 +578,6 @@ public class AlertManagerBean implements AlertManagerLocal {
         // first format the LHS of the operator
         if (category == AlertConditionCategory.CONTROL) {
             try {
-                Subject subject = subjectManager.getOverlord();
                 Integer resourceTypeId = condition.getAlertDefinition().getResource().getResourceType().getId();
                 String operationName = condition.getName();
                 OperationManagerLocal operationManager = LookupUtil.getOperationManager(); // TODO why is this here? Why not the class wide variable?
@@ -635,6 +639,7 @@ public class AlertManagerBean implements AlertManagerLocal {
         return builder.toString();
     }
 
+    @SuppressWarnings("deprecation")
     private String prettyPrintAlertURL(Alert alert) {
         StringBuilder builder = new StringBuilder();
 
@@ -672,22 +677,39 @@ public class AlertManagerBean implements AlertManagerLocal {
         Subject overlord = subjectManager.getOverlord();
         Integer recoveryDefinitionId = firedDefinition.getRecoveryId();
 
-        if ((recoveryDefinitionId != null) && (recoveryDefinitionId != 0)) {
+        if (recoveryDefinitionId != 0) {
             log.debug("Processing recovery rules...");
             log.debug("Found recoveryDefinitionId " + recoveryDefinitionId);
 
-            AlertDefinition recoveryDefinition = alertDefinitionManager.getAlertDefinitionById(overlord,
+            AlertDefinition toBeRecoveredDefinition = alertDefinitionManager.getAlertDefinitionById(overlord,
                 recoveryDefinitionId);
-            boolean wasEnabled = recoveryDefinition.getEnabled();
+            boolean wasEnabled = toBeRecoveredDefinition.getEnabled();
 
-            log.debug(firedDefinition + (wasEnabled ? "does not need to recover " : "needs to recover ")
-                + recoveryDefinition + (wasEnabled ? ", it was already disabled " : ", it was currently enabled "));
+            log
+                .debug(firedDefinition + (wasEnabled ? "does not need to recover " : "needs to recover ")
+                    + toBeRecoveredDefinition
+                    + (wasEnabled ? ", it was already enabled " : ", it was currently disabled "));
 
             if (!wasEnabled) {
                 /*
                  * recover the other alert, go through the manager layer so as to update the alert cache
                  */
                 alertDefinitionManager.enableAlertDefinitions(overlord, new Integer[] { recoveryDefinitionId });
+            }
+
+            /*
+             * an alert definition may have several recovery definitions; if ONE of the recovery definitions fires, 
+             * and thus re-enables the to-be-recovered alert definition, ALL recovery definitions (for that alert
+             * definition) must be removed from cache (including the one that just fired)
+             */
+            List<AlertDefinition> relatedRecoveryDefinitions = alertDefinitionManager.getAllRecoveryDefinitionsById(
+                overlord, toBeRecoveredDefinition.getId());
+            for (AlertDefinition relatedRecoveryDefinition : relatedRecoveryDefinitions) {
+                /*
+                 * bypass the manager layer and reuse the AlertDefinitionEvent construct to update the cache;
+                 * we don't want to actually disable these definitions, just remove them from the cache
+                 */
+                alertConditionCacheManager.updateConditions(relatedRecoveryDefinition, AlertDefinitionEvent.DISABLED);
             }
         } else if (firedDefinition.getWillRecover()) {
             log.debug("Disabling " + firedDefinition + " until recovered manually or by recovery definition");
@@ -698,6 +720,21 @@ public class AlertManagerBean implements AlertManagerLocal {
              * go through the manager layer so as to update the alert cache
              */
             alertDefinitionManager.disableAlertDefinitions(overlord, new Integer[] { firedDefinition.getId() });
+
+            /*
+             * an alert definition may have several recovery definitions; if this to-be-recovered alert definition
+             * fires an alert, it will be disabled; at this point, all of its (enabled) recovery definitions must be
+             * added to the cache
+             */
+            List<AlertDefinition> recoveryDefinitions = alertDefinitionManager.getAllRecoveryDefinitionsById(overlord,
+                firedDefinition.getId());
+            for (AlertDefinition recoveryDefinition : recoveryDefinitions) {
+                /* 
+                 * bypass the manager layer and reuse the AlertDefinitionEvent construct to update the cache; we don't
+                 * want to enable these definitions (cause they are already enabled), just add them them to the cache
+                 */
+                alertConditionCacheManager.updateConditions(recoveryDefinition, AlertDefinitionEvent.ENABLED);
+            }
         }
     }
 }

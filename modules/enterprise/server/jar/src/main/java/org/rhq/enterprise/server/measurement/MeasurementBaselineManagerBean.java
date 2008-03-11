@@ -23,6 +23,7 @@ import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -31,8 +32,10 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.sql.DataSource;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.PostgresqlDatabaseType;
@@ -235,6 +238,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         }
     }
 
+    @SuppressWarnings("unchecked")
     public PageList<MeasurementBaselineComposite> _calculateAutoBaselinesLIST(long computeTime, PageControl pc) {
         pc.initDefaultOrderingField("mb.id");
 
@@ -347,8 +351,13 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<MeasurementBaselineComposite> getAllDynamicMeasurementBaselines(PageControl pc) {
+    public PageList<MeasurementBaselineComposite> getAllDynamicMeasurementBaselines(Subject user, PageControl pc) {
         pc.initDefaultOrderingField("mb.id");
+
+        if (authorizationManager.isOverlord(user) == false) {
+            throw new PermissionException("User [" + user.getName() + "] does not have permission to call "
+                + "getAllDynamicMeasurementBaselines; only the overlord has that right");
+        }
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
             MeasurementBaseline.QUERY_FIND_ALL_DYNAMIC_MEASUREMENT_BASELINES, pc);

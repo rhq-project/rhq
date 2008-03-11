@@ -20,6 +20,10 @@ package org.rhq.enterprise.server.alert.engine.jms.model;
 
 import java.io.Serializable;
 
+/**
+ * @author Joseph Marques
+ */
+
 public class InactiveAlertConditionMessage extends AbstractAlertConditionMessage implements Serializable {
     private static final long serialVersionUID = 1L;
 

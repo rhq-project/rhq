@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.alert.engine.model;
 
+/**
+ * @author Joseph Marques
+ */
+
 /*
  * If even one element in the Measurement cache were a Double, then they all need to be compared
  */

@@ -16,7 +16,7 @@
         
         <column name="REQUIRED" required="true" type="SMALLINT"/>
 
-        <column name="RECOVERY_ID" type="INTEGER" required="false"/>
+        <column name="RECOVERY_ID" type="INTEGER" required="true"/> <!-- required, but 0 effectively means null -->
         <column name="WILL_RECOVER" required="true" default="false" type="BOOLEAN"/>
         <column name="NOTIFY_FILTERED" required="true" default="false" type="BOOLEAN"/>
         <column name="CONTROL_FILTERED" required="true" default="FALSE" type="BOOLEAN"/>

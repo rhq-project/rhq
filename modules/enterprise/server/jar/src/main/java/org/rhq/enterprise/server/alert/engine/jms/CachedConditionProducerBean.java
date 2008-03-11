@@ -38,6 +38,8 @@ import org.rhq.enterprise.server.alert.engine.model.AbstractCacheElement;
  * processing. These messages reference alert conditions that have triggered (become true). The contents will be picked
  * at on the other end of the non-durable queue by the consumer, which will then create and persist the appropriate log
  * message.
+ * 
+ * @author Joseph Marques
  */
 @Stateless
 public class CachedConditionProducerBean implements CachedConditionProducerLocal {

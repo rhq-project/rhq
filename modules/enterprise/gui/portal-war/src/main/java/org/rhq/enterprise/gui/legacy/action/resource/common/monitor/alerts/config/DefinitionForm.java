@@ -46,7 +46,6 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.legacy.Constants;
-import org.rhq.enterprise.gui.legacy.exception.ParameterNotFoundException;
 import org.rhq.enterprise.gui.legacy.action.resource.ResourceForm;
 import org.rhq.enterprise.gui.legacy.beans.OptionItem;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
@@ -449,7 +448,7 @@ public final class DefinitionForm extends ResourceForm {
 
             // if there's a "type" param, then its an alert template (can't use isAlertTemplate because the
             // definitionForm was just cleared on reset()
-            if( request.getParameter("type") == null || request.getParameter("type").equalsIgnoreCase("") ) {
+            if (request.getParameter("type") == null || request.getParameter("type").equalsIgnoreCase("")) {
                 AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
                 Integer resourceId = RequestUtils.getResourceId(request);
 
@@ -465,6 +464,9 @@ public final class DefinitionForm extends ResourceForm {
 
             Map<String, Integer> alertDefinitionNameToIdMap = new HashMap<String, Integer>(alertDefinitions.size());
             for (AlertDefinition alertDefinition : alertDefinitions) {
+                if (alertDefinition.getRecoveryId() != 0) {
+                    continue; // already a recovery definition for something else
+                }
                 alertDefinitionNameToIdMap.put(alertDefinition.getName(), alertDefinition.getId());
             }
 

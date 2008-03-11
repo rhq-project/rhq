@@ -19,7 +19,9 @@
 package org.rhq.enterprise.server.measurement;
 
 import java.util.List;
+
 import javax.ejb.Local;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.NumericType;
@@ -117,5 +119,5 @@ public interface MeasurementBaselineManagerLocal {
      *
      * @return all baselines for all measurements whose values are dynamic in nature
      */
-    PageList<MeasurementBaselineComposite> getAllDynamicMeasurementBaselines(PageControl pc);
+    PageList<MeasurementBaselineComposite> getAllDynamicMeasurementBaselines(Subject subject, PageControl pc);
 }

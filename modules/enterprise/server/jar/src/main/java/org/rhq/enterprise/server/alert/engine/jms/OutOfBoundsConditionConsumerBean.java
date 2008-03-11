@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.alert.engine.jms;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
 import javax.jms.Message;
@@ -27,8 +28,10 @@ import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.enterprise.server.RHQConstants;
@@ -37,6 +40,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Use the default message provider
+ * 
+ * @author Joseph Marques
  */
 @MessageDriven(activationConfig = {
     @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),

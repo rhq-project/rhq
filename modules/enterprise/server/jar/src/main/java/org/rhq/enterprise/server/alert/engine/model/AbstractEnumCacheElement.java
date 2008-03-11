@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.alert.engine.model;
 
+/**
+ * @author Joseph Marques
+ */
+
 public abstract class AbstractEnumCacheElement<E extends Enum<E>> extends AbstractCacheElement<E> {
     public AbstractEnumCacheElement(AlertConditionOperator operator, E value, int conditionTriggerId) {
         super(operator, value, conditionTriggerId);

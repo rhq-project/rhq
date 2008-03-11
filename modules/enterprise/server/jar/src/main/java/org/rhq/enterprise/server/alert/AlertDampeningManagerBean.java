@@ -21,20 +21,28 @@ package org.rhq.enterprise.server.alert;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDampeningEvent;
-import org.rhq.core.domain.alert.AlertDampeningEvent.Type;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertDampeningEvent.Type;
 import org.rhq.enterprise.server.RHQConstants;
+
+/**
+ * @author Joseph Marques
+ */
 
 @Stateless
 public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
@@ -119,7 +127,6 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
                      * consequences we'll call it and pass 1 as the second argument
                      */
                     fire = this.shouldFireConsecutiveCountAlert(alertDefinitionId, 1);
-                    ;
                 }
             } else if (category == AlertDampening.Category.CONSECUTIVE_COUNT) {
                 /*

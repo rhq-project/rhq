@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.alert;
 
 import java.util.List;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -28,8 +29,10 @@ import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDampening;
@@ -37,6 +40,10 @@ import org.rhq.core.domain.alert.AlertDampeningEvent;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.enterprise.server.RHQConstants;
+
+/**
+ * @author Joseph Marques
+ */
 
 @Stateless
 public class AlertConditionLogManagerBean implements AlertConditionLogManagerLocal {

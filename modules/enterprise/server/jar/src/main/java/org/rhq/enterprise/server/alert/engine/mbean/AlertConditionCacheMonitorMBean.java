@@ -19,11 +19,14 @@
 package org.rhq.enterprise.server.alert.engine.mbean;
 
 import javax.management.ObjectName;
+
 import org.jboss.mx.util.ObjectNameFactory;
 import org.jboss.system.ServiceMBean;
 
 /**
  * An MBean that exposes various structures contained with the AlertConditionCache
+ * 
+ * @author Joseph Marques
  */
 public interface AlertConditionCacheMonitorMBean extends ServiceMBean {
     /**

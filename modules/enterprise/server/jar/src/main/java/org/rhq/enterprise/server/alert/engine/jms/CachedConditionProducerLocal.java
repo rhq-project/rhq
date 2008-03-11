@@ -23,6 +23,10 @@ import javax.jms.JMSException;
 
 import org.rhq.enterprise.server.alert.engine.model.AbstractCacheElement;
 
+/**
+ * @author Joseph Marques
+ */
+
 @Local
 public interface CachedConditionProducerLocal {
     /**

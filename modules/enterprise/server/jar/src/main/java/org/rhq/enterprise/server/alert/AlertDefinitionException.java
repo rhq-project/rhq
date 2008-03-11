@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.alert;
 
+/**
+ * @author Joseph Marques
+ */
+
 public class AlertDefinitionException extends Exception {
     private static final long serialVersionUID = 1L;
 

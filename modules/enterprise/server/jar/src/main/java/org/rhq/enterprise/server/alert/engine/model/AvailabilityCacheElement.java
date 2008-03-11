@@ -20,6 +20,10 @@ package org.rhq.enterprise.server.alert.engine.model;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 
+/**
+ * @author Joseph Marques
+ */
+
 public final class AvailabilityCacheElement extends AbstractEnumCacheElement<AvailabilityType> {
     public AvailabilityCacheElement(AlertConditionOperator operator, AvailabilityType operatorOption,
         AvailabilityType value, int conditionTriggerId) {

@@ -19,13 +19,18 @@
 package org.rhq.enterprise.server.alert;
 
 import javax.ejb.Local;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.alert.notification.RoleNotification;
 import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+
+/**
+ * @author Joseph Marques
+ */
 
 @Local
 public interface AlertNotificationManagerLocal {

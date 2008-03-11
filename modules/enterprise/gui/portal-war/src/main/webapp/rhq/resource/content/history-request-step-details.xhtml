@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main.xhtml">
+
+<ui:param name="pageTitle" value="View Content for Resource '#{ResourceUIBean.name}'"/>
+<ui:param name="selectedTabName" value="Content.History"/>
+
+<ui:define name="content">
+
+<!-- Content Requests Table -->
+
+<h:form id="contentRequestsForm">
+<input type="hidden" name="id" value="${param.id}"/>
+
+<rich:panel>
+   <f:facet name="header"><h:outputText value="Step Error"/></f:facet>
+
+   <pre>
+   <h:outputText value="#{ShowInstalledPackageHistoryUIBean.step.errorMessage}"/>
+   </pre>
+
+   <p align="center">
+      <h:commandLink action="returnToHistory" value="Return to History Entry">
+         <f:param name="id" value="${param.id}"/>
+         <f:param name="selectedRequestId" value="${param.selectedRequestId}"/>
+         <f:param name="selectedHistoryId" value="${param.selectedHistoryId}"/>
+      </h:commandLink>
+   </p>
+
+</rich:panel>
+
+</h:form>
+
+
+</ui:define>
+</ui:composition>
+
+</html>

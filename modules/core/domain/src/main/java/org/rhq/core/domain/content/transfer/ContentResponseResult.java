@@ -24,9 +24,19 @@ package org.rhq.core.domain.content.transfer;
  * @author Jason Dobies
  */
 public enum ContentResponseResult {
-    SUCCESS,
+    SUCCESS("Success"),
 
-    FAILURE,
+    FAILURE("Failed"),
 
-    NOT_PERFORMED
+    NOT_PERFORMED("Not Performed");
+
+    private String displayName;
+
+    ContentResponseResult(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String toString() {
+        return displayName;
+    }
 }

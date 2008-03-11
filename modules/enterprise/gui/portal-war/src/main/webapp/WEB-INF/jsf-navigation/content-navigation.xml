@@ -98,6 +98,23 @@
          <redirect/>
       </navigation-case>
 
+      <navigation-case>
+         <from-outcome>stepDetails</from-outcome>
+         <to-view-id>/rhq/resource/content/history-request-step-details.xhtml?id=#{param.id}&amp;selectedHistoryId=#{param.selectedHistoryId}&amp;selectedRequestId=#{param.selectedRequestId}&amp;stepId=#{param.stepId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/history-request-step-details.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>returnToHistory</from-outcome>
+         <to-view-id>/rhq/resource/content/history-request-item.xhtml?id=#{param.id}&amp;selectedHistoryId=#{param.selectedHistoryId}&amp;selectedRequestId=#{param.selectedRequestId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
    </navigation-rule>
 
    <navigation-rule>

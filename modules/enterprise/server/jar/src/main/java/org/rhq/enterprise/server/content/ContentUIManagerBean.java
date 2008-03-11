@@ -36,6 +36,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
@@ -332,5 +333,10 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         query.setParameter("id", historyId);
         InstalledPackageHistory history = (InstalledPackageHistory)query.getSingleResult();
         return history;
+    }
+
+    public PackageInstallationStep getPackageInstallationStep(int stepId) {
+        PackageInstallationStep step = entityManager.find(PackageInstallationStep.class, stepId);
+        return step;
     }
 }

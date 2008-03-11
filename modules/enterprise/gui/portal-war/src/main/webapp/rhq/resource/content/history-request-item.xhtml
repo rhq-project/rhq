@@ -95,6 +95,18 @@
       </h:column>
 
       <h:column>
+         <f:facet name="header">Errors</f:facet>
+
+         <h:commandLink action="stepDetails" value="View" rendered="#{!empty item.errorMessage}">
+            <f:param name="id" value="${param.id}"/>
+            <f:param name="stepId" value="#{item.id}"/>
+            <f:param name="selectedRequestId" value="${param.selectedRequestId}"/>
+            <f:param name="selectedHistoryId" value="${param.selectedHistoryId}"/>
+         </h:commandLink>
+
+      </h:column>
+      
+      <h:column>
          <f:facet name="header">Result</f:facet>
          <h:outputText value="#{item.result}"/>
       </h:column>

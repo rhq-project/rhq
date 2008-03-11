@@ -29,6 +29,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
@@ -216,4 +217,12 @@ public interface ContentUIManagerLocal {
      * @return history entry
      */
     InstalledPackageHistory getInstalledPackageHistoryWithSteps(int historyId);
+
+    /**
+     * Retrieves a specific step entry by its ID.
+     *
+     * @param stepId identifies the step to retrieve
+     * @return step entry
+     */
+    PackageInstallationStep getPackageInstallationStep(int stepId);
 }

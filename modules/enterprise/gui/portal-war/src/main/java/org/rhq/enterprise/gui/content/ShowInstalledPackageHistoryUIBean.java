@@ -43,6 +43,8 @@ public class ShowInstalledPackageHistoryUIBean {
     private List<PackageInstallationStep> installationSteps;
     private UIData stepsData;
 
+    private PackageInstallationStep step;
+
     public InstalledPackageHistory getHistory() {
         if (history == null) {
             ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
@@ -54,6 +56,18 @@ public class ShowInstalledPackageHistoryUIBean {
 
     public void setHistory(InstalledPackageHistory history) {
         this.history = history;
+    }
+
+    public PackageInstallationStep getStep() {
+        if (step == null) {
+            HttpServletRequest request = FacesContextUtility.getRequest();
+            int stepId = Integer.parseInt(request.getParameter("stepId"));
+
+            ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
+            step = contentUIManager.getPackageInstallationStep(stepId);
+        }
+
+        return step;
     }
 
     public int getSelectedHistoryId() {

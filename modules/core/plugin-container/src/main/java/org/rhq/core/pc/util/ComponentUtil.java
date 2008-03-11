@@ -65,7 +65,7 @@ public class ComponentUtil {
      * is {@link FacetLockType#NONE}, the returned object is the component itself and will allow immediate and
      * concurrent access to the component without synchronization. If it is {@link FacetLockType#READ} or
      * {@link FacetLockType#WRITE}, the returned object is actually a proxy to the component that restricts access to
-     * the component's facet methods by sychronizing on the component's read or write lock. You would request
+     * the component's facet methods by synchronizing on the component's read or write lock. You would request
      * synchronized access to a component if you want to make calls to the facet interface that require that it not run
      * concurrently with any other component call in any other facet. For example, if you want to update a configuration
      * via the configuration facet, you would ask for a write lock to prohibit any other facet call from concurrently
@@ -75,29 +75,28 @@ public class ComponentUtil {
      * @param  resourceId     identifies the resource whose facet component interface is to be returned
      * @param  facetInterface the resource component's facet type that is to be returned
      * @param  lockType       how access to the facet should be synchronized
-     * @param  timeout        if the method invocation thread has not completed after this many milliseconds, interrupt it;
-     *                        a value of <code>0</code> means to wait forever (generally not recommended)
+     * @param  timeout        if the method invocation thread has not completed after this many milliseconds, interrupt
+     *                        it; value must be positive
      * @param  daemonThread   whether or not the thread used for the invocation should be a daemon thread
-     * @param  onlyIfStarted  if <code>true</code>, and the component is not started, an exception is thrown @return the resource's <code>T</code> component interface
+     * @param  onlyIfStarted  if <code>true</code>, and the component is not started, an exception is thrown
+     *
+     * @return the resource's <code>T</code> component interface
      *
      * @throws PluginContainerException if the resource does not have a component or it does not support the given facet
      *                                  interface or it is not started and <code>onlyIfStarted</code> is <code>
      *                                  true</code>
      *
-     * @see    ResourceContainer#createResourceComponentProxy(Class
+     * @see    ResourceContainer#createResourceComponentProxy(Class, FacetLockType, long, boolean, boolean)
      */
     @SuppressWarnings("unchecked")
     public static <T> T getComponent(int resourceId, Class<T> facetInterface, FacetLockType lockType,
                                      long timeout, boolean daemonThread, boolean onlyIfStarted) throws PluginContainerException {
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-
-        // get the resource container that wraps the given resource
         ResourceContainer resourceContainer = inventoryManager.getResourceContainer(resourceId);
         if (resourceContainer == null) {
             throw new PluginContainerException("Resource component container could not be retrieved for resource: "
                 + resourceId);
         }
-
         return resourceContainer.createResourceComponentProxy(facetInterface, lockType, timeout, daemonThread, onlyIfStarted);
     }
 }

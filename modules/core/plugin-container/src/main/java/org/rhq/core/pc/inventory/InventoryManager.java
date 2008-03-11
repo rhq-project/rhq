@@ -108,7 +108,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private static final String AVAIL_THREAD_POOL_NAME = "InventoryManager.availability";
     private static final int AVAIL_THREAD_POOL_CORE_POOL_SIZE = 1;
 
-    private static final int OVERLORD_SUBJECT_ID = 1;
+    private static final int COMPONENT_STOP_TIMEOUT = 5 * 1000; // 5 seconds
 
     private final Log log = LogFactory.getLog(InventoryManager.class);
 
@@ -268,7 +268,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (container.getResourceComponent() != null) {
             try {
                 ResourceComponent component = container.createResourceComponentProxy(ResourceComponent.class,
-                    FacetLockType.WRITE, 0, true, false);
+                    FacetLockType.WRITE, COMPONENT_STOP_TIMEOUT, true, false);
                 component.stop();
             } catch (Throwable t) {
                 throw new PluginContainerException("Cannot update plugin configuration - "
@@ -1073,9 +1073,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 try {
                     ResourceComponent component = container.createResourceComponentProxy(ResourceComponent.class,
-                        FacetLockType.WRITE, 0, true, true);
+                        FacetLockType.WRITE, COMPONENT_STOP_TIMEOUT, true, true);
                     component.stop();
-                    log.debug(resource.getId() + ": Successfully de-activated resource");
+                    log.debug(resource.getId() + ": Successfully deactivated resource");
                 } catch (Throwable t) {
                     log.warn("Error stopping component for resource [" + resource + "]");
                 }

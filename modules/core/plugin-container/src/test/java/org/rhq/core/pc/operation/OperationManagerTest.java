@@ -527,7 +527,7 @@ public class OperationManagerTest {
 
     private class MockOperationManager extends OperationManager {
         @Override
-        protected OperationFacet getOperationFacet(int resourceId) {
+        protected OperationFacet getOperationFacet(int resourceId, long timeout) {
             return new MockOperationFacet();
         }
 

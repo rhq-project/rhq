@@ -58,6 +58,8 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
     private static final String SENDER_THREAD_POOL_NAME = "ConfigurationManager.threadpool";
 
+    private static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
+
     private PluginContainerConfiguration pluginContainerConfiguration;
     private ExecutorService threadPool;
 
@@ -183,7 +185,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     protected ConfigurationFacet getConfigurationFacet(int resourceId, FacetLockType lockType)
         throws PluginContainerException {
         boolean daemonThread = (lockType != FacetLockType.WRITE);
-        return ComponentUtil.getComponent(resourceId, ConfigurationFacet.class, lockType, 0, daemonThread, true);
+        return ComponentUtil.getComponent(resourceId, ConfigurationFacet.class, lockType, FACET_METHOD_TIMEOUT, daemonThread, true);
     }
 
     /**

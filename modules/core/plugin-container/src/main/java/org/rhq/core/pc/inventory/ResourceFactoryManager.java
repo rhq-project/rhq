@@ -58,6 +58,8 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
  * @author Jason Dobies
  */
 public class ResourceFactoryManager extends AgentService implements ContainerService, ResourceFactoryAgentService {
+    private static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
+
     // Attributes  --------------------------------------------
 
     private final Log log = LogFactory.getLog(ResourceFactoryManager.class);
@@ -229,7 +231,7 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
      */
     private DeleteResourceFacet getDeleteResourceFacet(int resourceId) throws PluginContainerException {
         DeleteResourceFacet facet = ComponentUtil.getComponent(resourceId, DeleteResourceFacet.class,
-            FacetLockType.WRITE, 0, false, true);
+            FacetLockType.WRITE, FACET_METHOD_TIMEOUT, false, true);
         return facet;
     }
 
@@ -245,7 +247,7 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
      */
     private CreateChildResourceFacet getCreateChildResourceFacet(int parentResourceId) throws PluginContainerException {
         CreateChildResourceFacet facet = ComponentUtil.getComponent(parentResourceId, CreateChildResourceFacet.class,
-            FacetLockType.WRITE, 0, false, true);
+            FacetLockType.WRITE, FACET_METHOD_TIMEOUT, false, true);
         return facet;
     }
 

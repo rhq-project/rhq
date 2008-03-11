@@ -56,7 +56,7 @@ public class ResourceContainerTest {
         System.out.println("Testing proxy call that should fail...");
         ResourceComponent naughtyResourceComponent = new MockResourceComponent(true);
         resourceContainer.setResourceComponent(naughtyResourceComponent);        
-        resourceComponentProxy = resourceContainer.createResourceComponentProxy(ResourceComponent.class, FacetLockType.NONE, 0, true, false);
+        resourceComponentProxy = resourceContainer.createResourceComponentProxy(ResourceComponent.class, FacetLockType.NONE, Long.MAX_VALUE, true, false);
         try {
             resourceComponentProxy.getAvailability();
             assert (false);

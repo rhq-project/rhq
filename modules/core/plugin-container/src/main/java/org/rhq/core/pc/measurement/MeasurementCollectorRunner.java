@@ -74,7 +74,7 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
                     log.debug("Measurements not collected for inactive resource component: " + container.getResource());
                 } else {
                     MeasurementFacet measurementComponent = ComponentUtil.getComponent(id, MeasurementFacet.class,
-                        FacetLockType.READ, 0, true, true);
+                        FacetLockType.READ, MeasurementManager.FACET_METHOD_TIMEOUT, true, true);
 
                     getValues(measurementComponent, report, requests);
                 }

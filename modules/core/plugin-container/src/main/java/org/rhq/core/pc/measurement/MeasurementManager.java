@@ -71,6 +71,8 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     private static final String COLLECTOR_THREAD_POOL_NAME = "MeasurementManager.collector";
     private static final String SENDER_THREAD_POOL_NAME = "MeasurementManager.sender";
 
+    static final int FACET_METHOD_TIMEOUT = 30 * 1000; // 60 seconds
+
     private static final Log LOG = LogFactory.getLog(MeasurementManager.class);
 
     private ScheduledThreadPoolExecutor collectorThreadPool;
@@ -365,7 +367,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         MeasurementFacet measurementFacet;
 
         try {
-            measurementFacet = ComponentUtil.getComponent(resourceId, MeasurementFacet.class, FacetLockType.READ, 0, true, true);
+            measurementFacet = ComponentUtil.getComponent(resourceId, MeasurementFacet.class, FacetLockType.READ, FACET_METHOD_TIMEOUT, true, true);
         } catch (Exception e) {
             LOG.warn("Cannot get measurement facet for resource [" + resourceId + "]. Cause: " + e);
             return null;

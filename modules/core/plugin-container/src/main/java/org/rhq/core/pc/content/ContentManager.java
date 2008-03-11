@@ -71,6 +71,8 @@ import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 
 public class ContentManager extends AgentService implements ContainerService, ContentAgentService, ContentServices {
+    private static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
+
     // Attributes  --------------------------------------------
 
     private final Log log = LogFactory.getLog(ContentManager.class);
@@ -584,7 +586,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
      */
     private ContentFacet findContentFacet(int resourceId) throws Exception {
         // in case some calls to here need only the read lock - for now, always lock down with the write lock
-        return ComponentUtil.getComponent(resourceId, ContentFacet.class, FacetLockType.WRITE, 0, false, true);
+        return ComponentUtil.getComponent(resourceId, ContentFacet.class, FacetLockType.WRITE, FACET_METHOD_TIMEOUT, false, true);
     }
 
     /**

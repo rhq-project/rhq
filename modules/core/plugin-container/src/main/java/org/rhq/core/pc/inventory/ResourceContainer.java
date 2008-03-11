@@ -198,12 +198,12 @@ public class ResourceContainer implements Serializable {
      *
      * @param  facetInterface the interface that the component implements and will expose via the proxy
      * @param  lockType       the type of lock to use when synchronizing access
-     * @param  timeout        if the method invocation thread has not completed after this many milliseconds, interrupt it;
-     *                        a value of <code>0</code> means to wait forever (generally not recommended)
+     * @param  timeout        if the method invocation thread has not completed after this many milliseconds, interrupt
+     *                        it; value must be positive
      * @param  daemonThread   whether or not the thread used for the invocation should be a daemon thread
-     * @param  onlyIfStarted  if <code>true</code>, and the component is not started, an exception is thrown @return a proxy that wraps the given component and exposes the given facet interface
+     * @param  onlyIfStarted  if <code>true</code>, and the component is not started, an exception is thrown
      *
-     * @return a proxy to this container's resource component
+     * @return a proxy that wraps the given component and exposes the given facet interface
      *
      * @throws PluginContainerException if the component does not exist or does not implement the interface
      */
@@ -285,7 +285,7 @@ public class ResourceContainer implements Serializable {
          *                  caller must ensure the container's component is never null
          * @param lockType the type of lock to use for the invocation
          * @param timeout if the method invocation thread has not completed after this many milliseconds, interrupt it;
-         *                a value of <code>0</code> means to wait forever (generally not recommended)
+         *                value must be positive
          * @param daemonThread whether or not the thread used for the invocation should be a daemon thread
          */
         public ResourceComponentInvocationHandler(ResourceContainer container, FacetLockType lockType, long timeout, boolean daemonThread) {
@@ -297,8 +297,8 @@ public class ResourceContainer implements Serializable {
             } else {
                 this.lock = null;
             }
-            if (timeout < 0) {
-                throw new IllegalArgumentException("timeout value is negative.");
+            if (timeout <= 0) {
+                throw new IllegalArgumentException("timeout value is not positive.");
             }
             this.timeout = timeout;
             this.daemonThread = daemonThread;
@@ -312,13 +312,7 @@ public class ResourceContainer implements Serializable {
             String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "()";
             String methodArgs = "[" + ((args != null) ? Arrays.asList(args) : "") + "]";
             try {
-                if (this.timeout == 0) {
-                    // TODO: Do we really want to wait forever, or should we default to an hour or something?
-                    future.get();
-                }
-                else {
-                    future.get(this.timeout, TimeUnit.MILLISECONDS);
-                }
+                future.get(this.timeout, TimeUnit.MILLISECONDS);
             }
             catch (InterruptedException e) {
                 LOG.error("Thread '" + Thread.currentThread().getName() + "' was interrupted.");
@@ -350,9 +344,7 @@ public class ResourceContainer implements Serializable {
         return this;
     }
 
-    static class ComponentInvocationThread extends Thread {
-        private static final int DEFAULT_LOCK_TIMEOUT_IN_SECONDS = 30 * 60; // 1/2 hour
-
+    private static class ComponentInvocationThread extends Thread {
         private final ResourceContainer resourceContainer;
         private final Method method;
         private final Object[] args;
@@ -372,10 +364,8 @@ public class ResourceContainer implements Serializable {
 
         public void run() {
             ResourceComponent resourceComponent = this.resourceContainer.getResourceComponent();
-            // We really want to wait indefinitely, but to prevent an infinite deadlock, let's only wait a half hour.
-            long lockTimeout = (this.lockTimeout != 0) ? this.lockTimeout : DEFAULT_LOCK_TIMEOUT_IN_SECONDS;
             try {
-                if (this.lock != null && !lock.tryLock(lockTimeout, TimeUnit.SECONDS)) {
+                if (this.lock != null && !this.lock.tryLock(this.lockTimeout, TimeUnit.SECONDS)) {
                     throw new TimeoutException(
                         "Possible deadlock - could not obtain a lock while attempting to invoke method [" + this.method
                             + "] on resource component [" + resourceComponent + "]; facet-lock-status=["

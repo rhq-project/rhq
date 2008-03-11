@@ -176,14 +176,14 @@ public class ConfigurationManager extends AgentService implements ContainerServi
      *
      * @param  resourceId identifies the resource whose facet is to be returned
      * @param  lockType   how access to the facet is synchronized
-     *
      * @return the resource's configuration facet component
      *
-     * @throws PluginContainerException
+     * @throws PluginContainerException on error
      */
     protected ConfigurationFacet getConfigurationFacet(int resourceId, FacetLockType lockType)
         throws PluginContainerException {
-        return ComponentUtil.getComponent(resourceId, ConfigurationFacet.class, lockType, 0, true);
+        boolean daemonThread = (lockType != FacetLockType.WRITE);
+        return ComponentUtil.getComponent(resourceId, ConfigurationFacet.class, lockType, 0, daemonThread, true);
     }
 
     /**

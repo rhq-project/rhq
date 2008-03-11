@@ -27,7 +27,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -41,6 +41,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 
 /**
@@ -141,13 +142,14 @@ public class ResourceContainer implements Serializable {
     }
 
     /**
-    * updates the measurementSchedule with the modifications made in the measurementScheduleUpdate
+    * Updates the measurementSchedule with the modifications made in the measurementScheduleUpdate.
+     *
     * @param measurementScheduleUpdate the updates to the current measurementSchedule
+     *
     * @return true if the schedule was updated successfully, false otherwise
     */
     public boolean updateMeasurementSchedule( Set<MeasurementScheduleRequest> measurementScheduleUpdate)
     {
-
         Set<Integer> updateScheduleIds = new HashSet<Integer>();
         for(MeasurementScheduleRequest update: measurementScheduleUpdate ) {
             updateScheduleIds.add( update.getScheduleId() );
@@ -198,13 +200,15 @@ public class ResourceContainer implements Serializable {
      * @param  lockType       the type of lock to use when synchronizing access
      * @param  timeout        if the method invocation thread has not completed after this many milliseconds, interrupt it;
      *                        a value of <code>0</code> means to wait forever (generally not recommended)
-     * @param  onlyIfStarted  if <code>true</code>, and the component is not started, an exception is thrown
-     * @return a proxy that wraps the given component and exposes the given facet interface
+     * @param  daemonThread   whether or not the thread used for the invocation should be a daemon thread
+     * @param  onlyIfStarted  if <code>true</code>, and the component is not started, an exception is thrown @return a proxy that wraps the given component and exposes the given facet interface
      *
-     * @throws PluginContainerException if the component does not exist or does not support the interface
+     * @return a proxy to this container's resource component
+     *
+     * @throws PluginContainerException if the component does not exist or does not implement the interface
      */
     @SuppressWarnings("unchecked")
-    public <T> T createResourceComponentProxy(Class<T> facetInterface, FacetLockType lockType, long timeout, boolean onlyIfStarted)
+    public <T> T createResourceComponentProxy(Class<T> facetInterface, FacetLockType lockType, long timeout, boolean daemonThread, boolean onlyIfStarted)
         throws PluginContainerException {
         if (onlyIfStarted) {
             if (!ResourceComponentState.STARTED.equals(getResourceComponentState())) {
@@ -233,7 +237,7 @@ public class ResourceContainer implements Serializable {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
         // this is the handler that will actually acquire the lock and invoke the facet method call
-        LockedFacetInvocationHandler handler = new LockedFacetInvocationHandler(this, lockType, timeout);
+        ResourceComponentInvocationHandler handler = new ResourceComponentInvocationHandler(this, lockType, timeout, daemonThread);
 
         // this is the proxy that will look like the facet interface that the caller will use
         return (T) Proxy.newProxyInstance(classLoader, new Class<?>[] { facetInterface }, handler);
@@ -242,36 +246,49 @@ public class ResourceContainer implements Serializable {
     private String getFacetLockStatus() {
         StringBuilder str = new StringBuilder("Facet lock status for [" + getResource());
 
-        str.append("], is-write-locked=[" + facetAccessLock.isWriteLocked());
-        str.append("], is-write-locked-by-current-thread=[" + facetAccessLock.isWriteLockedByCurrentThread());
-        str.append("], read-locks=[" + facetAccessLock.getReadLockCount());
-        str.append("], waiting-for-lock-queue-size=[" + facetAccessLock.getQueueLength());
+        str.append("], is-write-locked=[").append(facetAccessLock.isWriteLocked());
+        str.append("], is-write-locked-by-current-thread=[").append(facetAccessLock.isWriteLockedByCurrentThread());
+        str.append("], read-locks=[").append(facetAccessLock.getReadLockCount());
+        str.append("], waiting-for-lock-queue-size=[").append(facetAccessLock.getQueueLength());
         str.append("]");
 
         return str.toString();
     }
 
     /**
-     * This is a proxy object that is used to obtain a facet lock before passing the invocation call to the actual
-     * component.
+     * This is a ResourceComponent proxy that invokes component methods in pooled threads. Depending on the parameters
+     * passed to its constructor, it may also:
+     *
+     *   1) obtain a facet lock before passing the invocation call to the actual component, and/or
+     *   2) interrupt the invocation thread and throw a {@link TimeoutException} if its execution time exceeds a
+     *      specified timeout
      */
-    private static class LockedFacetInvocationHandler implements InvocationHandler {
-        private static final Log LOG = LogFactory.getLog(LockedFacetInvocationHandler.class);
+    private static class ResourceComponentInvocationHandler implements InvocationHandler {
+        private static final Log LOG = LogFactory.getLog(ResourceComponentInvocationHandler.class);
+
+        private static final String DAEMON_THREAD_POOL_NAME = "ResourceContainer.invoker.daemon";
+        private static final String NON_DAEMON_THREAD_POOL_NAME = "ResourceContainer.invoker.nonDaemon";
+
+        private static final ExecutorService DAEMON_THREAD_POOL = Executors.newCachedThreadPool(new LoggingThreadFactory(
+                DAEMON_THREAD_POOL_NAME, true));
+        private static final ExecutorService NON_DAEMON_THREAD_POOL = Executors.newCachedThreadPool(new LoggingThreadFactory(
+                NON_DAEMON_THREAD_POOL_NAME, false));        
 
         private final ResourceContainer container;
         private final Lock lock;
-        private long timeout;
+        private final long timeout;
+        private final boolean daemonThread;
 
         /**
          *
-         * @param container the resource container managing the resource component upon which the method will be invoked
+         * @param container the resource container managing the resource component upon which the method will be invoked;
+         *                  caller must ensure the container's component is never null
          * @param lockType the type of lock to use for the invocation
          * @param timeout if the method invocation thread has not completed after this many milliseconds, interrupt it;
          *                a value of <code>0</code> means to wait forever (generally not recommended)
+         * @param daemonThread whether or not the thread used for the invocation should be a daemon thread
          */
-        public LockedFacetInvocationHandler(ResourceContainer container, FacetLockType lockType, long timeout) {
-            // caller will always ensure:
-            //    container's component is never null
+        public ResourceComponentInvocationHandler(ResourceContainer container, FacetLockType lockType, long timeout, boolean daemonThread) {
             this.container = container;
             if (lockType == FacetLockType.WRITE) {
                 this.lock = container.getWriteFacetLock();
@@ -280,32 +297,46 @@ public class ResourceContainer implements Serializable {
             } else {
                 this.lock = null;
             }
+            if (timeout < 0) {
+                throw new IllegalArgumentException("timeout value is negative.");
+            }
             this.timeout = timeout;
+            this.daemonThread = daemonThread;
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            // we really want to wait indefinitely, but to prevent an infinite deadlock, let's only wait an hour
-            if (this.lock != null && !lock.tryLock(3600, TimeUnit.SECONDS)) {
-                throw new TimeoutException(
-                    "Possible deadlock - could not obtain a lock when attempting to access method [" + method
-                        + "] for resource [" + this.container + "]; " + "facet-lock-status=["
-                        + this.container.getFacetLockStatus());
-            }
-            ComponentInvocationThread invocationThread = new ComponentInvocationThread(this.container.getResourceComponent(), method, args);
+            ComponentInvocationThread invocationThread = new ComponentInvocationThread(this.container, method, args, this.lock, this.timeout);
+            ExecutorService threadPool = this.daemonThread ? DAEMON_THREAD_POOL : NON_DAEMON_THREAD_POOL;
+            // This is the actual call into the plugin component's facet interface.
+            Future<?> future = threadPool.submit(invocationThread);
+            String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "()";
+            String methodArgs = "[" + ((args != null) ? Arrays.asList(args) : "") + "]";
             try {
-                // this is the actual call into the plugin component's facet interface
-                invocationThread.start();
-                invocationThread.join(this.timeout);
-                if (invocationThread.isAlive()) {
-                    LOG.debug("Call to " + this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "() with args [" + ((args != null) ? Arrays.asList(args) : "") + "] timed out. Interrupting the invocation thread...");
-                    invocationThread.interrupt();
-                    throw new TimeoutException("Call to " + this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "() with args [" + ((args != null) ? Arrays.asList(args) : "") + "] timed out.");
+                if (this.timeout == 0) {
+                    // TODO: Do we really want to wait forever, or should we default to an hour or something?
+                    future.get();
                 }
-            } finally {
-                if (this.lock != null) {
-                    this.lock.unlock();
+                else {
+                    future.get(this.timeout, TimeUnit.MILLISECONDS);
                 }
             }
+            catch (InterruptedException e) {
+                LOG.error("Thread '" + Thread.currentThread().getName() + "' was interrupted.");
+                if (this.daemonThread) {
+                    future.cancel(true);
+                }
+                throw new RuntimeException("Call to " + methodName + " with args " + methodArgs + " was rudely interrupted.", e);
+            }
+            catch (ExecutionException e) {
+                // This will never happen, since we catch and swallow Throwable in ComponentInvocationThread.run().
+                throw e.getCause();
+            }
+            catch (java.util.concurrent.TimeoutException e) {
+                LOG.debug("Call to " + methodName + " with args " + methodArgs + " timed out. Interrupting the invocation thread...");
+                future.cancel(true);
+                throw new TimeoutException("Call to " + methodName + " with args " + methodArgs + " timed out.");
+            }
+            // If we got this far, the call completed.
             if (invocationThread.getError() != null) {
                 throw invocationThread.getError();
             }
@@ -320,26 +351,50 @@ public class ResourceContainer implements Serializable {
     }
 
     static class ComponentInvocationThread extends Thread {
-        private ResourceComponent component;
-        private Method method;
-        private Object[] args;
+        private static final int DEFAULT_LOCK_TIMEOUT_IN_SECONDS = 30 * 60; // 1/2 hour
+
+        private final ResourceContainer resourceContainer;
+        private final Method method;
+        private final Object[] args;
+        private final Lock lock;
+        private final long lockTimeout;
+
         private Object results;
         private Throwable error;
 
-        ComponentInvocationThread(ResourceComponent component, Method method, Object[] args) {
-            this.component = component;
+        ComponentInvocationThread(ResourceContainer resourceContainer, Method method, Object[] args, Lock lock, long lockTimeout) {
+            this.resourceContainer = resourceContainer;
             this.method = method;
             this.args = args;
-            setDaemon(true);
+            this.lock = lock;
+            this.lockTimeout = lockTimeout;
         }
 
         public void run() {
+            ResourceComponent resourceComponent = this.resourceContainer.getResourceComponent();
+            // We really want to wait indefinitely, but to prevent an infinite deadlock, let's only wait a half hour.
+            long lockTimeout = (this.lockTimeout != 0) ? this.lockTimeout : DEFAULT_LOCK_TIMEOUT_IN_SECONDS;
             try {
-                this.results = this.method.invoke(this.component, this.args);
+                if (this.lock != null && !lock.tryLock(lockTimeout, TimeUnit.SECONDS)) {
+                    throw new TimeoutException(
+                        "Possible deadlock - could not obtain a lock while attempting to invoke method [" + this.method
+                            + "] on resource component [" + resourceComponent + "]; facet-lock-status=["
+                            + this.resourceContainer.getFacetLockStatus());
+                }
+            }
+            catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            try {
+                this.results = this.method.invoke(resourceComponent, this.args);
             } catch (InvocationTargetException ite) {
                 this.error = (ite.getCause() != null) ? ite.getCause() : ite;
             } catch (Throwable t) {
                 this.error = t;
+            } finally {
+                if (this.lock != null) {
+                    this.lock.unlock();
+                }
             }
         }
 

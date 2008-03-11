@@ -174,7 +174,7 @@ public class OperationManager extends AgentService implements OperationAgentServ
      * @throws PluginContainerException
      */
     protected OperationFacet getOperationFacet(int resourceId) throws PluginContainerException {
-        return ComponentUtil.getComponent(resourceId, OperationFacet.class, FacetLockType.WRITE, 0, false);
+        return ComponentUtil.getComponent(resourceId, OperationFacet.class, FacetLockType.WRITE, 0, false, false);
     }
 
     /**

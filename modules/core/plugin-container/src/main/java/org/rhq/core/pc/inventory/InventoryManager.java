@@ -268,7 +268,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (container.getResourceComponent() != null) {
             try {
                 ResourceComponent component = container.createResourceComponentProxy(ResourceComponent.class,
-                    FacetLockType.WRITE, 0, false);
+                    FacetLockType.WRITE, 0, true, false);
                 component.stop();
             } catch (Throwable t) {
                 throw new PluginContainerException("Cannot update plugin configuration - "
@@ -1073,7 +1073,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 try {
                     ResourceComponent component = container.createResourceComponentProxy(ResourceComponent.class,
-                        FacetLockType.WRITE, 0, true);
+                        FacetLockType.WRITE, 0, true, true);
                     component.stop();
                     log.debug(resource.getId() + ": Successfully de-activated resource");
                 } catch (Throwable t) {

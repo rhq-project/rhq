@@ -31,14 +31,14 @@ import org.rhq.core.pc.inventory.ResourceContainer;
  */
 public class ComponentUtil {
     /**
-     * Gets the resource type of the resource identified with the given ID. An exception is thrown if it cannot be
+     * Gets the Resource type of the Resource identified with the given ID. An exception is thrown if it cannot be
      * determined.
      *
-     * @param  resourceId
+     * @param  resourceId the Resource id
      *
-     * @return the resource's {@link ResourceType}
+     * @return the Resource's {@link ResourceType}
      *
-     * @throws PluginContainerException if the resource is not known
+     * @throws PluginContainerException if the Resource is not known
      */
     @SuppressWarnings("unchecked")
     public static ResourceType getResourceType(int resourceId) throws PluginContainerException {
@@ -77,18 +77,18 @@ public class ComponentUtil {
      * @param  lockType       how access to the facet should be synchronized
      * @param  timeout        if the method invocation thread has not completed after this many milliseconds, interrupt it;
      *                        a value of <code>0</code> means to wait forever (generally not recommended)
-     * @param  onlyIfStarted  if <code>true</code>, and the component is not started, an exception is thrown
-     * @return the resource's <code>T</code> component interface
+     * @param  daemonThread   whether or not the thread used for the invocation should be a daemon thread
+     * @param  onlyIfStarted  if <code>true</code>, and the component is not started, an exception is thrown @return the resource's <code>T</code> component interface
      *
      * @throws PluginContainerException if the resource does not have a component or it does not support the given facet
      *                                  interface or it is not started and <code>onlyIfStarted</code> is <code>
      *                                  true</code>
      *
-     * @see    ResourceContainer#createResourceComponentProxy(Class, FacetLockType, long, boolean)
+     * @see    ResourceContainer#createResourceComponentProxy(Class
      */
     @SuppressWarnings("unchecked")
     public static <T> T getComponent(int resourceId, Class<T> facetInterface, FacetLockType lockType,
-                                     long timeout, boolean onlyIfStarted) throws PluginContainerException {
+                                     long timeout, boolean daemonThread, boolean onlyIfStarted) throws PluginContainerException {
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
 
         // get the resource container that wraps the given resource
@@ -98,6 +98,6 @@ public class ComponentUtil {
                 + resourceId);
         }
 
-        return resourceContainer.createResourceComponentProxy(facetInterface, lockType, 0, onlyIfStarted);
+        return resourceContainer.createResourceComponentProxy(facetInterface, lockType, timeout, daemonThread, onlyIfStarted);
     }
 }

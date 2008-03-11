@@ -229,7 +229,7 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
      */
     private DeleteResourceFacet getDeleteResourceFacet(int resourceId) throws PluginContainerException {
         DeleteResourceFacet facet = ComponentUtil.getComponent(resourceId, DeleteResourceFacet.class,
-            FacetLockType.WRITE, 0, true);
+            FacetLockType.WRITE, 0, false, true);
         return facet;
     }
 
@@ -245,7 +245,7 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
      */
     private CreateChildResourceFacet getCreateChildResourceFacet(int parentResourceId) throws PluginContainerException {
         CreateChildResourceFacet facet = ComponentUtil.getComponent(parentResourceId, CreateChildResourceFacet.class,
-            FacetLockType.WRITE, 0, true);
+            FacetLockType.WRITE, 0, false, true);
         return facet;
     }
 

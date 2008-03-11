@@ -79,7 +79,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
      * @throws Exception if failed to create and prepare the report
      */
     public AvailabilityReport call() throws Exception {
-        log.debug("Running Availability Scan");
+        log.debug("Running Availability Scan...");
 
         AvailabilityReport availabilityReport;
 
@@ -129,11 +129,10 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         ResourceComponent resourceComponent = null;
         if (resourceContainer != null) {
             try {
-                resourceComponent = resourceContainer.createResourceComponentProxy(ResourceComponent.class, FacetLockType.NONE, GET_AVAILABILITY_TIMEOUT, false);
+                resourceComponent = resourceContainer.createResourceComponentProxy(ResourceComponent.class, FacetLockType.NONE, GET_AVAILABILITY_TIMEOUT, true, false);
             }
             catch (PluginContainerException e) {
-                log.error("Could not create resource component proxy for " + resource, e);
-                // TODO: Should we throw an exception here instead of just logging an error?
+                throw new IllegalStateException("Could not create resource component proxy for " + resource, e);
             }
         }
 
@@ -160,7 +159,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                     }
 
                     if (resourceContainer.getSynchronizationState() == ResourceContainer.SynchronizationState.SYNCHRONIZED) {
-                        Availability availability = inventoryManager.updateAvailability(resource, current);
+                        Availability availability = this.inventoryManager.updateAvailability(resource, current);
 
                         // only add the availability to the report if it changed from its previous state
                         // if this is the first time we've been executed, reportChangesOnly will be false
@@ -171,7 +170,12 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                     }
                 } catch (Throwable e) {
                     // TODO GH: Put errors in report
-                    log.debug("Failed to collect availability on resource " + resource, e);
+                    if (log.isDebugEnabled())
+                        if (e instanceof TimeoutException)
+                            // no need to log the stack trace for timeouts...
+                            log.debug("Failed to collect availability on resource " + resource, e);
+                        else
+                            log.debug("Failed to collect availability on resource " + resource + " (call timed out)");
                 }
             }
 

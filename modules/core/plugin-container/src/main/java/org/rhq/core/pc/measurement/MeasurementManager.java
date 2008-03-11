@@ -365,7 +365,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         MeasurementFacet measurementFacet;
 
         try {
-            measurementFacet = ComponentUtil.getComponent(resourceId, MeasurementFacet.class, FacetLockType.READ, 0, true);
+            measurementFacet = ComponentUtil.getComponent(resourceId, MeasurementFacet.class, FacetLockType.READ, 0, true, true);
         } catch (Exception e) {
             LOG.warn("Cannot get measurement facet for resource [" + resourceId + "]. Cause: " + e);
             return null;

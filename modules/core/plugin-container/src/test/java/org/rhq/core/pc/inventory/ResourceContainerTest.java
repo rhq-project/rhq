@@ -36,10 +36,10 @@ public class ResourceContainerTest {
     public void testCreateResourceComponentProxy() throws Exception {
         Resource resource = new Resource();
         ResourceContainer resourceContainer = new ResourceContainer(resource);
-        ResourceComponent resourceComponent = new MockResourceComponent();
+        ResourceComponent resourceComponent = new MockResourceComponent(false);
         resourceContainer.setResourceComponent(resourceComponent);
-        ResourceComponent resourceComponentProxy = resourceContainer.createResourceComponentProxy(ResourceComponent.class, FacetLockType.NONE, 50, false);
-        assert resourceComponentProxy != null;
+        System.out.println("Testing proxy call that should time out...");
+        ResourceComponent resourceComponentProxy = resourceContainer.createResourceComponentProxy(ResourceComponent.class, FacetLockType.NONE, 50, true, false);
         try {
             resourceComponentProxy.getAvailability();
             assert (false);
@@ -47,13 +47,35 @@ public class ResourceContainerTest {
         catch (RuntimeException e) {
             assert (e instanceof TimeoutException);
         }
-        resourceComponentProxy = resourceContainer.createResourceComponentProxy(ResourceComponent.class, FacetLockType.NONE, 150, false);
+        System.out.println("SUCCESS!");
+        System.out.println("Testing proxy call that should complete successfully...");
+        resourceComponentProxy = resourceContainer.createResourceComponentProxy(ResourceComponent.class, FacetLockType.NONE, 150, true, false);
         AvailabilityType avail = resourceComponentProxy.getAvailability();
-        assert (avail == AvailabilityType.UP);                         
+        assert (avail == AvailabilityType.UP);
+        System.out.println("SUCCESS!");
+        System.out.println("Testing proxy call that should fail...");
+        ResourceComponent naughtyResourceComponent = new MockResourceComponent(true);
+        resourceContainer.setResourceComponent(naughtyResourceComponent);        
+        resourceComponentProxy = resourceContainer.createResourceComponentProxy(ResourceComponent.class, FacetLockType.NONE, 0, true, false);
+        try {
+            resourceComponentProxy.getAvailability();
+            assert (false);
+        }
+        catch (RuntimeException e) {
+            assert (e instanceof MockRuntimeException);
+        }
+        System.out.println("SUCCESS!");
+        // TODO: Test proxy locking.
     }
 
     class MockResourceComponent implements ResourceComponent
     {
+        private boolean naughty;
+
+        MockResourceComponent(boolean naughty) {
+            this.naughty = naughty;
+        }
+
         public void start(ResourceContext resourceContext) throws Exception {
         }
 
@@ -61,6 +83,9 @@ public class ResourceContainerTest {
         }
 
         public AvailabilityType getAvailability() {
+            if (this.naughty) {
+                throw new MockRuntimeException();
+            }
             try {
                 Thread.sleep(100);
             }
@@ -69,5 +94,8 @@ public class ResourceContainerTest {
             }
             return AvailabilityType.UP;
         }
+    }
+
+    class MockRuntimeException extends RuntimeException {
     }
 }

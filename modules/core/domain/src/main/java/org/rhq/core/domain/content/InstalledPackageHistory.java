@@ -64,7 +64,7 @@ import org.rhq.core.domain.resource.Resource;
         + "WHERE iph.contentServiceRequest.id = :contentServiceRequestId"),
     @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_ID, query = "SELECT iph FROM InstalledPackageHistory iph "
         + "WHERE iph.packageVersion.generalPackage.id = :packageId AND iph.resource.id = :resourceId"),
-    @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_ID_WITH_STEPS, query = "SELECT iph FROM InstalledPackageHistory iph "
+    @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_ID_WITH_STEPS, query = "SELECT DISTINCT iph FROM InstalledPackageHistory iph "
         + "LEFT JOIN FETCH iph.installationSteps WHERE iph.id = :id")
     })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_INSTALLED_PKG_HIST_ID_SEQ")

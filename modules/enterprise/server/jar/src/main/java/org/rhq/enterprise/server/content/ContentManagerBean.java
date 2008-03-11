@@ -1030,17 +1030,40 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public PackageVersion persistPackageVersion(PackageVersion pv) {
+        // EM.persist requires related entities to be attached, let's attach them now
+
+        // package has persist cascade enabled, so skip loading it if we'll allow it to be created here
+        if (pv.getGeneralPackage().getId() > 0) {
+            pv.setGeneralPackage(entityManager.find(Package.class, pv.getGeneralPackage().getId()));
+        }
+
+        // arch has persist cascade enabled, so skip loading it if we'll allow it to be created here
+        if (pv.getArchitecture().getId() > 0) {
+            pv.setArchitecture(entityManager.find(Architecture.class, pv.getArchitecture().getId()));
+        }
+
+        // config is optional but has persist cascade enabled, so skip loading it if we'll allow it to be created here
+        if (pv.getExtraProperties() != null && pv.getExtraProperties().getId() > 0) {
+            pv.setExtraProperties(entityManager.find(Configuration.class, pv.getExtraProperties().getId()));
+        }
+
+        // our object's relations are now full attached, we can persist it
         entityManager.persist(pv);
         return pv;
     }
 
     public PackageVersion persistOrMergePackageVersionSafely(PackageVersion pv) {
+        PackageVersion attached = null;
+        RuntimeException error = null;
+
         try {
-            pv = contentManager.persistPackageVersion(pv);
+            attached = contentManager.persistPackageVersion(pv);
         } catch (RuntimeException re) {
-            // If this exception was because the PV already exists, we should be able to find it.
-            // If we can find it, we ignore this exception because we assume it was because the PV already exists.
-            // If we can't find it, throw the original error since it needs to be reported.
+            error = re;
+        }
+
+        // If not attached, the PV already exists, so we should be able to find it.
+        if (attached == null) {
             Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
             q.setParameter("packageName", pv.getGeneralPackage().getName());
             q.setParameter("packageTypeName", pv.getGeneralPackage().getPackageType().getName());
@@ -1049,47 +1072,71 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             q.setParameter("resourceTypeId", pv.getGeneralPackage().getPackageType().getResourceType().getId());
 
             List<PackageVersion> found = q.getResultList();
-            if (found == null || found.size() == 0) {
-                throw re;
+            if (error != null && found.size() == 0) {
+                throw error;
             }
-            if (found.size() > 1) {
+            if (found.size() != 1) {
                 throw new RuntimeException("Expecting 1 package version - got: " + found);
             }
+
             pv.setId(found.get(0).getId());
-            pv = entityManager.merge(pv);
+            attached = entityManager.merge(pv);
+
+            log.warn("There was probably a very big and ugly EJB/hibernate error just above this log message - "
+                + "you can normally ignore that. We detected that a package version was already created when we"
+                + " tried to do it also - we will ignore this and just use the new package version that was "
+                + "created in the other thread");
         }
 
-        return pv;
+        return attached;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public Package persistPackage(Package pkg) {
+        // EM.persist requires related entities to be attached, let's attach them now
+        pkg.setPackageType(entityManager.find(PackageType.class, pkg.getPackageType().getId()));
+
+        // our object's relations are now full attached, we can persist it
         entityManager.persist(pkg);
         return pkg;
     }
 
     public Package persistOrMergePackageSafely(Package pkg) {
+        Package attached = null;
+        RuntimeException error = null;
+
+        // we need the package ID because if persistPackage fails, pkg will have an unattached reference
+        int packageId = pkg.getPackageType().getId();
+
         try {
-            pkg = contentManager.persistPackage(pkg);
+            attached = contentManager.persistPackage(pkg);
         } catch (RuntimeException re) {
-            // If this exception was because the pkg already exists, we should be able to find it.
-            // If we can find it, we ignore this exception because we assume it was because the pkg already exists.
-            // If we can't find it, throw the original error since it needs to be reported.
+            error = re;
+        }
+
+        // If not attached, the package already exists, so we should be able to find it.
+        if (attached == null) {
             Query q = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID);
             q.setParameter("name", pkg.getName());
-            q.setParameter("packageTypeId", pkg.getPackageType().getId());
+            q.setParameter("packageTypeId", packageId);
+
             List<Package> found = q.getResultList();
-            if (found == null || found.size() == 0) {
-                throw re;
+            if (error != null && found.size() == 0) {
+                throw error;
             }
-            if (found.size() > 1) {
+            if (found.size() != 1) {
                 throw new RuntimeException("Expecting 1 package - got: " + found);
             }
             pkg.setId(found.get(0).getId());
-            pkg = entityManager.merge(pkg);
+            attached = entityManager.merge(pkg);
+
+            log.warn("There was probably a very big and ugly EJB/hibernate error just above this log message - "
+                + "you can normally ignore that. We detected that a package was already created when we"
+                + " tried to do it also - we will ignore this and just use the new package that was "
+                + "created in the other thread");
         }
 
-        return pkg;
+        return attached;
     }
 
     // Private  --------------------------------------------

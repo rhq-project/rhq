@@ -167,6 +167,97 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
     // Test Cases  --------------------------------------------
 
+    public void testPersistSafely() throws Throwable {
+
+        final String pkgName = "testPersistSafelyPackage";
+        final String pvName = "testPersistSafelyPackageVersion version";
+        final PackageType pkgType = packageType1;
+        final Architecture arch = architecture1;
+
+        // these will not have any JPA stubs inside them (i.e. no lazy exceptions will occur with these)
+        Package pkgPojo = new Package(pkgName, pkgType);
+        PackageVersion pvPojo = new PackageVersion(pkgPojo, pvName, arch);
+        Configuration configPojo = new Configuration();
+        configPojo.put(new PropertySimple("one", "two"));
+        pvPojo.setExtraProperties(configPojo);
+
+        Package persistedPkg = null;
+        PackageVersion persistedPV = null;
+
+        try {
+            // create the entities that we will pass to the persist methods - these will get altered
+            Package pkg = new Package(pkgName, pkgType);
+            PackageVersion pv = new PackageVersion(pkg, pvName, arch);
+            pv.setExtraProperties(configPojo);
+
+            persistedPkg = this.contentManager.persistOrMergePackageSafely(pkg);
+            assert persistedPkg != null;
+            assert persistedPkg.getId() > 0;
+            assert persistedPkg.equals(pkgPojo) : "not equal: " + persistedPkg + "<>" + pkgPojo;
+
+            persistedPV = this.contentManager.persistOrMergePackageVersionSafely(pv);
+            assert persistedPV != null;
+            assert persistedPV.getId() > 0;
+            assert persistedPV.equals(pvPojo) : "not equal: " + persistedPV + "<>" + pvPojo;
+            assert persistedPV.getExtraProperties() != null;
+            assert persistedPV.getExtraProperties().getId() > 0;
+            assert persistedPV.getExtraProperties().getSimple("one").getStringValue().equals("two");
+
+            // remember their new IDs - we want to make sure the same IDs are reused later
+            int pkgId = persistedPkg.getId();
+            int pvId = persistedPV.getId();
+            int configId = persistedPV.getExtraProperties().getId();
+            int propId = persistedPV.getExtraProperties().getSimple("one").getId();
+
+            // we've persisted them, let's make sure our "safely" methods still work
+            // create new entities that we will pass to the persist methods - these will get altered
+            pkg = new Package(pkgName, pkgType);
+            pv = new PackageVersion(pkg, pvName, arch);
+            pv.setExtraProperties(configPojo);
+
+            persistedPkg = this.contentManager.persistOrMergePackageSafely(pkg);
+            assert persistedPkg != null;
+            assert persistedPkg.getId() > 0;
+            assert persistedPkg.equals(pkgPojo) : "not equal: " + persistedPkg + "<>" + pkgPojo;
+
+            persistedPV = this.contentManager.persistOrMergePackageVersionSafely(pv);
+            assert persistedPV != null;
+            assert persistedPV.getId() > 0;
+            assert persistedPV.equals(pvPojo) : "not equal: " + persistedPV + "<>" + pvPojo;
+            assert persistedPV.getExtraProperties() != null;
+            assert persistedPV.getExtraProperties().getId() > 0;
+            assert persistedPV.getExtraProperties().getSimple("one").getStringValue().equals("two");
+
+            // make sure we merged the existing entities - we should not have created new ones
+            assert pkgId == persistedPkg.getId();
+            assert pvId == persistedPV.getId();
+            assert configId == persistedPV.getExtraProperties().getId();
+            assert propId == persistedPV.getExtraProperties().getSimple("one").getId();
+
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw t;
+        } finally {
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+
+            try {
+                if (persistedPV != null && persistedPV.getId() > 0) {
+                    persistedPV = em.find(PackageVersion.class, persistedPV.getId());
+                    em.remove(persistedPV);
+                }
+                if (persistedPkg != null && persistedPkg.getId() > 0) {
+                    persistedPkg = em.find(Package.class, persistedPkg.getId());
+                    em.remove(persistedPkg);
+                }
+            } finally {
+                getTransactionManager().commit();
+                em.close();
+            }
+        }
+
+    }
+
     @SuppressWarnings("unchecked")
     @Test(enabled = true)
     public void testInventoryMerge() throws Exception {

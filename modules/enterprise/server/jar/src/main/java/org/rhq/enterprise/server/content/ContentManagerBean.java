@@ -475,11 +475,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             // If the package indicated installation steps, link them to the resulting history entry
             List<DeployPackageStep> transferObjectSteps = singleResponse.getDeploymentSteps();
             if (transferObjectSteps != null) {
-                List<PackageInstallationStep> installationSteps =
-                    translateInstallationSteps(transferObjectSteps, history);
+                List<PackageInstallationStep> installationSteps = translateInstallationSteps(transferObjectSteps,
+                    history);
                 history.setInstallationSteps(installationSteps);
             }
-            
+
             if (singleResponse.getResult() == ContentResponseResult.SUCCESS) {
                 history.setStatus(InstalledPackageHistoryStatus.INSTALLED);
             } else {
@@ -1105,9 +1105,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         Package attached = null;
         RuntimeException error = null;
 
-        // we need the package ID because if persistPackage fails, pkg will have an unattached reference
-        int packageId = pkg.getPackageType().getId();
-
         try {
             attached = contentManager.persistPackage(pkg);
         } catch (RuntimeException re) {
@@ -1118,7 +1115,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         if (attached == null) {
             Query q = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID);
             q.setParameter("name", pkg.getName());
-            q.setParameter("packageTypeId", packageId);
+            q.setParameter("packageTypeId", pkg.getPackageType().getId());
 
             List<Package> found = q.getResultList();
             if (error != null && found.size() == 0) {

@@ -1053,17 +1053,17 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     public PackageVersion persistOrMergePackageVersionSafely(PackageVersion pv) {
-        PackageVersion attached = null;
+        PackageVersion persisted = null;
         RuntimeException error = null;
 
         try {
-            attached = contentManager.persistPackageVersion(pv);
+            persisted = contentManager.persistPackageVersion(pv);
         } catch (RuntimeException re) {
             error = re;
         }
 
         // If not attached, the PV already exists, so we should be able to find it.
-        if (attached == null) {
+        if (persisted == null) {
             Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
             q.setParameter("packageName", pv.getGeneralPackage().getName());
             q.setParameter("packageTypeName", pv.getGeneralPackage().getPackageType().getName());
@@ -1080,15 +1080,24 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             }
 
             pv.setId(found.get(0).getId());
-            attached = entityManager.merge(pv);
+            persisted = entityManager.merge(pv);
 
             log.warn("There was probably a very big and ugly EJB/hibernate error just above this log message - "
                 + "you can normally ignore that. We detected that a package version was already created when we"
                 + " tried to do it also - we will ignore this and just use the new package version that was "
                 + "created in the other thread");
+        } else {
+            // the persisted object is unattached right now,
+            // we want it attached so the caller always has an attached entity returned to it 
+            persisted = entityManager.find(PackageVersion.class, persisted.getId());
+            persisted.getGeneralPackage().getId();
+            persisted.getArchitecture().getId();
+            if (persisted.getExtraProperties() != null) {
+                persisted.getExtraProperties().getId();
+            }
         }
 
-        return attached;
+        return persisted;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -1102,17 +1111,17 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     public Package persistOrMergePackageSafely(Package pkg) {
-        Package attached = null;
+        Package persisted = null;
         RuntimeException error = null;
 
         try {
-            attached = contentManager.persistPackage(pkg);
+            persisted = contentManager.persistPackage(pkg);
         } catch (RuntimeException re) {
             error = re;
         }
 
         // If not attached, the package already exists, so we should be able to find it.
-        if (attached == null) {
+        if (persisted == null) {
             Query q = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID);
             q.setParameter("name", pkg.getName());
             q.setParameter("packageTypeId", pkg.getPackageType().getId());
@@ -1125,15 +1134,20 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 throw new RuntimeException("Expecting 1 package - got: " + found);
             }
             pkg.setId(found.get(0).getId());
-            attached = entityManager.merge(pkg);
+            persisted = entityManager.merge(pkg);
 
             log.warn("There was probably a very big and ugly EJB/hibernate error just above this log message - "
                 + "you can normally ignore that. We detected that a package was already created when we"
                 + " tried to do it also - we will ignore this and just use the new package that was "
                 + "created in the other thread");
+        } else {
+            // the persisted object is unattached right now,
+            // we want it attached so the caller always has an attached entity returned to it 
+            persisted = entityManager.find(Package.class, persisted.getId());
+            persisted.getPackageType().getId();
         }
 
-        return attached;
+        return persisted;
     }
 
     // Private  --------------------------------------------

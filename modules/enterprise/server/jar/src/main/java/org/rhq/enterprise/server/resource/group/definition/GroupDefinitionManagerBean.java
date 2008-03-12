@@ -200,7 +200,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
         long endTime = System.currentTimeMillis();
 
-        log.info("calculateGroupMembership took " + (endTime - startTime) + " millis");
+        log.debug("calculateGroupMembership took " + (endTime - startTime) + " millis");
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -256,7 +256,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
         long endTime = System.currentTimeMillis();
 
-        log.info("calculateGroupMembership_helper took " + (endTime - startTime) + " millis");
+        log.debug("calculateGroupMembership_helper took " + (endTime - startTime) + " millis");
 
         return resourceGroupId;
     }

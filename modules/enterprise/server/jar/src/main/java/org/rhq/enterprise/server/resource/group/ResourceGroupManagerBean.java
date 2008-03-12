@@ -174,7 +174,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
                 }
             } catch (SchedulerException e1) {
                 log.warn("Failed to get jobs for a group being deleted [" + group
-                    + "]; will not attempt to unshedule anything", e1);
+                    + "]; will not attempt to unschedule anything", e1);
             }
         }
 
@@ -331,7 +331,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
         long endTime = System.currentTimeMillis();
 
-        log.info("addResourcesToGroup took " + (endTime - startTime) + " millis");
+        log.debug("addResourcesToGroup took " + (endTime - startTime) + " millis");
 
         return mergedResult;
     }
@@ -553,7 +553,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     @SuppressWarnings("unchecked")
     public List<Resource> getResourcesForAutoGroup(Subject subject, int autoGroupParentResourceId,
         int autoGroupChildResourceTypeId) {
-        List<Resource> resources = null;
+        List<Resource> resources;
         try {
             Query q = entityManager.createNamedQuery(Resource.QUERY_FIND_FOR_AUTOGROUP);
             q.setParameter("type", autoGroupChildResourceTypeId);

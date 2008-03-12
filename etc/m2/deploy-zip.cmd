@@ -11,9 +11,9 @@ set POM_ARGS=
 set POM_FILE=%5
 if not "%POM_FILE%" == "" set POM_ARGS=-DgeneratePom=false -DpomFile=%POM_FILE%
 set PACKAGING=zip
-if "%JON_M2_REPO%" == "" set JON_M2_REPO=%USERPROFILE%\.m2\repository
+if "%RHQ_M2_REPO%" == "" set RHQ_M2_REPO=%USERPROFILE%\.m2\repository
 
-mvn deploy:deploy-file -Dfile=%FILE% -DgroupId=%GROUP_ID% -DartifactId=%ARTIFACT_ID% -Dversion=%VERSION% -Dpackaging=%PACKAGING% %POM_ARGS% -Durl="file://%JON_M2_REPO%" -DrepositoryId=local
+mvn deploy:deploy-file -Dfile=%FILE% -DgroupId=%GROUP_ID% -DartifactId=%ARTIFACT_ID% -Dversion=%VERSION% -Dpackaging=%PACKAGING% %POM_ARGS% -Durl="file://%RHQ_M2_REPO%" -DrepositoryId=local
 
 endlocal
 exit /b 0
@@ -21,5 +21,5 @@ exit /b 0
 :USAGE
 echo Usage: deploy-zip path/to/zipfile groupId artifactId version [path/to/pomfile] >&2
 echo. >&2
-echo For example: deploy-zip jboss-4.2.1.GA.zip jboss jboss 4.2.1.GA >&2
+echo For example: deploy-zip jboss-4.2.2.GA.zip jboss jboss 4.2.2.GA >&2
 exit /b 1

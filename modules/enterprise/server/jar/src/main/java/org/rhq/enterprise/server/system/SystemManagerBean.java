@@ -77,9 +77,9 @@ public class SystemManagerBean implements SystemManagerLocal {
         "RHQ_MEASUREMENT_DATA_NUM_1H", "RHQ_MEASUREMENT_DATA_TRAIT", "RHQ_CALLTIME_DATA_KEY",
         "RHQ_CALLTIME_DATA_VALUE", "RHQ_MEASUREMENT_OOB", "RHQ_AVAILABILITY" };
 
-    private final String[] INDEXES = { "MEASUREMENT_DATA_1H_ID_TIME_PK", "MEASUREMENT_DATA_6H_ID_TIME_PK",
-        "MEASUREMENT_DATA_1D_ID_TIME_PK", "RHQ_MEAS_BASELINE_CTIME_IDX", "RHQ_MEAS_DATA_TRAIT_ID_TIME_PK",
-        "RHQ_MEAS_BASELINE_CTIME_IDX", "RHQ_MEASUREMENT_OOB_IDX" };
+    private final String[] ORA_INDEXES = { "RHQ_MEAS_DATA_1H_ID_TIME_PK", "RHQ_MEAS_DATA_6H_ID_TIME_PK",
+        "RHQ_MEAS_DATA_1D_ID_TIME_PK", "RHQ_MEAS_BASELINE_CTIME_IDX", "RHQ_MEAS_DATA_TRAIT_ID_TIME_PK",
+        "RHQ_MEASUREMENT_OOB_IDX" };
 
     protected Log log = LogFactory.getLog(SystemManagerBean.class);
 
@@ -226,8 +226,8 @@ public class SystemManagerBean implements SystemManagerLocal {
                     duration += doCommand(dbtype, conn, SQL_REINDEX, DATA_TABLES[i]);
                 }
             } else if (DatabaseTypeFactory.isOracle(dbtype)) {
-                for (int i = 0; i < INDEXES.length; i++) {
-                    duration += doCommand(dbtype, conn, SQL_REBUILD, INDEXES[i]);
+                for (int i = 0; i < ORA_INDEXES.length; i++) {
+                    duration += doCommand(dbtype, conn, SQL_REBUILD, ORA_INDEXES[i]);
                 }
             } else {
                 return -1;

@@ -23,31 +23,19 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
 import javax.persistence.EntityManager;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.transaction.TransactionManager;
+
 import org.hibernate.Session;
 import org.hibernate.engine.SessionFactoryImplementor;
 import org.hibernate.metadata.ClassMetadata;
 import org.testng.annotations.Test;
-import org.rhq.core.domain.auth.Principal;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.common.SystemConfiguration;
-import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Channel;
-import org.rhq.core.domain.content.ContentSource;
-import org.rhq.core.domain.content.ContentSourceSyncResults;
-import org.rhq.core.domain.content.ContentSourceType;
-import org.rhq.core.domain.content.InstalledPackage;
-import org.rhq.core.domain.content.PackageBits;
-import org.rhq.core.domain.content.PackageInstallationStep;
-import org.rhq.core.domain.content.PackageType;
-import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.PackageVersionContentSource;
+
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
@@ -57,6 +45,22 @@ import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.alert.notification.RoleNotification;
 import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
+import org.rhq.core.domain.auth.Principal;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.common.SystemConfiguration;
+import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.ContentServiceRequest;
+import org.rhq.core.domain.content.ContentSource;
+import org.rhq.core.domain.content.ContentSourceSyncResults;
+import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.InstalledPackage;
+import org.rhq.core.domain.content.PackageBits;
+import org.rhq.core.domain.content.PackageInstallationStep;
+import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1D;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric6H;
@@ -128,11 +132,7 @@ public class QueryAllTest extends AbstractEJB3Test {
         ResourceType.class.getSimpleName(),
 
         // content stuff
-        Architecture.class.getSimpleName(),
-        Channel.class.getSimpleName(),
-
-        // comment out until JBNADM-2814 is fixed
-        //ContentServiceRequest.class.getSimpleName(),
+        Architecture.class.getSimpleName(), Channel.class.getSimpleName(), ContentServiceRequest.class.getSimpleName(),
         ContentSource.class.getSimpleName(), ContentSourceType.class.getSimpleName(),
         InstalledPackage.class.getSimpleName(), Package.class.getSimpleName(), PackageBits.class.getSimpleName(),
         PackageInstallationStep.class.getSimpleName(), PackageType.class.getSimpleName(),

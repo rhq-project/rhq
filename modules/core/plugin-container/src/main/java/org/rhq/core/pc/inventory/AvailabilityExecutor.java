@@ -132,7 +132,11 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                 resourceComponent = resourceContainer.createResourceComponentProxy(ResourceComponent.class, FacetLockType.NONE, GET_AVAILABILITY_TIMEOUT, true, false);
             }
             catch (PluginContainerException e) {
-                throw new IllegalStateException("Could not create resource component proxy for " + resource, e);
+                if (log.isDebugEnabled()) {
+                    log.debug("Could not create resource component proxy for " + resource, e);
+                } else {
+                    log.warn("Could not create resource component proxy for " + resource);
+                }
             }
         }
 
@@ -179,7 +183,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                 }
             }
 
-            if (checkChildren) {
+            if (resourceComponent != null && checkChildren) {
                 // we used to check to see if (current == AvailabilityType.UP) here,  however, this causes a problem;
                 // if a resource and all of its children were previously UP, and the resource itself goes down (or,
                 // a user changes the resource's plugin configuration such that it makes it invalid and cannot connect

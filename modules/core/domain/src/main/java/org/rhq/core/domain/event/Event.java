@@ -50,6 +50,8 @@ import org.rhq.core.domain.resource.Resource;
  * @author Ian Springer
  */
 @NamedQueries( {
+    @NamedQuery(name = Event.DELETE_BY_RESOURCES, query = "DELETE FROM Event ev  "
+        + " WHERE ev.source IN ( SELECT evs FROM EventSource evs WHERE evs.resource IN (:resources))"),
     @NamedQuery(name = Event.FIND_EVENTS_FOR_RESOURCES_AND_TIME, query = "SELECT ev FROM Event ev "
         + " JOIN ev.source.resource res WHERE res IN (:resources) AND ev.timestamp BETWEEN :start AND :end "),
     @NamedQuery(name = Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME, query = "SELECT ev FROM Event ev "
@@ -70,6 +72,7 @@ public class Event implements Serializable {
     public static final String TABLE_NAME = "RHQ_EVENT";
     public static final int DETAIL_MAX_LENGTH = 4000;
 
+    public static final String DELETE_BY_RESOURCES = "Event.deleteByResources";
     public static final String FIND_EVENTS_FOR_RESOURCES_AND_TIME = "Event.FIND_EVENTS_FOR_RESOURCES_AND_TIME";
     public static final String FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME = "Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME";
     public static final String FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME_SEVERITY = "Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME_Severity";
@@ -80,7 +83,7 @@ public class Event implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "idGenerator")
     private int id;
 
-    @SuppressWarnings({"UnusedDeclaration"})
+    @SuppressWarnings( { "UnusedDeclaration" })
     @JoinColumn(name = "EVENT_SOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private EventSource source;

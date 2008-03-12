@@ -20,6 +20,7 @@ package org.rhq.core.domain.content;
 
 import java.io.Serializable;
 import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -33,6 +34,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 
@@ -63,7 +65,9 @@ import org.rhq.core.domain.resource.Resource;
         + "   WHERE res.id = :resourceId " + "ORDER BY pv.version"),
     @NamedQuery(name = InstalledPackage.QUERY_FIND_INSTALLED_PACKAGE_HISTORY, query = "SELECT ip "
         + "FROM InstalledPackage ip JOIN ip.resource res LEFT JOIN ip.packageVersion pv LEFT JOIN pv.generalPackage gp LEFT JOIN gp.packageType pt "
-        + "WHERE res.id = :resourceId " + "  AND gp.id = :generalPackageId") })
+        + "WHERE res.id = :resourceId " + "  AND gp.id = :generalPackageId"),
+    @NamedQuery(name = InstalledPackage.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM InstalledPackage ip "
+        + " WHERE ip.resource IN (:resources))") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_INSTALLED_PACKAGE_ID_SEQ")
 @Table(name = "RHQ_INSTALLED_PACKAGE")
 public class InstalledPackage implements Serializable {
@@ -81,6 +85,7 @@ public class InstalledPackage implements Serializable {
     public static final String QUERY_FIND_PACKAGE_LIST_TYPES = "InstalledPackage.findPackageListTypes";
     public static final String QUERY_FIND_PACKAGE_LIST_VERSIONS = "InstalledPackage.findPackageListVersions";
     public static final String QUERY_FIND_INSTALLED_PACKAGE_HISTORY = "InstalledPackage.findInstalledPackageHistory";
+    public static final String QUERY_DELETE_BY_RESOURCES = "InstalledPackage.deleteByResources";
 
     // Attributes  --------------------------------------------
 

@@ -19,11 +19,14 @@
 package org.rhq.core.domain.resource.test;
 
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
@@ -94,6 +97,7 @@ public class ResourceErrorTest extends AbstractEJB3Test {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void testQueries() throws Exception {
         ResourceError re;
         Query q;
@@ -131,10 +135,6 @@ public class ResourceErrorTest extends AbstractEJB3Test {
             assert errors.get(0).getDetail().equals("test detail");
             assert errors.get(0).getTimeOccurred() == 12345;
 
-            // test that we cascade remove from resource to its errors
-            em.remove(em.find(Resource.class, newResource.getId()));
-            errors = q.getResultList();
-            assert errors.size() == 0; // should have cascaded the remove
         } finally {
             getTransactionManager().rollback();
             em.close();

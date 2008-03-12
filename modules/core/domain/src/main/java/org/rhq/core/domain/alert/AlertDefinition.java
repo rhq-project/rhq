@@ -74,7 +74,8 @@ import org.rhq.core.domain.resource.ResourceType;
     @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE, query = "SELECT a " + "  FROM AlertDefinition a "
         + " WHERE a.resource.id = :id " + "       AND a.deleted = false"),
     @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE_TYPE, query = "SELECT a " + "  FROM AlertDefinition a "
-        + " WHERE a.resourceType.id = :typeId " + "       AND a.deleted = false") })
+        + " WHERE a.resourceType.id = :typeId " + "       AND a.deleted = false"),
+    @NamedQuery(name = AlertDefinition.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertDefinition ad WHERE ad.resource IN (:resources))") })
 @SequenceGenerator(name = "RHQ_ALERT_DEFINITION_ID_SEQ", sequenceName = "RHQ_ALERT_DEFINITION_ID_SEQ", allocationSize = 10)
 @Table(name = "RHQ_ALERT_DEFINITION")
 public class AlertDefinition implements Serializable {
@@ -87,6 +88,7 @@ public class AlertDefinition implements Serializable {
     public static final String QUERY_FIND_RESOURCE_IDS_WITH_NO_ACTIVE_TEMPLATE_DEFINITION = "AlertDefinition.findResourceIdsWithNoDefinition";
     public static final String QUERY_FIND_BY_RESOURCE = "AlertDefinition.findByResource";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE = "AlertDefinition.findByResourceType";
+    public static final String QUERY_DELETE_BY_RESOURCES = "AlertDefinition.deleteByResources";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_ALERT_DEFINITION_ID_SEQ")

@@ -53,13 +53,16 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = ResourceOperationHistory.QUERY_FIND_OLDEST_INPROGRESS_OPERATION, query = "select h "
         + "from ResourceOperationHistory h " + "where h.resource.id = :resourceId " + "  and h.status = 'INPROGRESS' "
         + "  and h.modifiedTime = (select min(h2.modifiedTime) " + "from ResourceOperationHistory h2 "
-        + "where h2.resource.id = :resourceId " + "  and h2.status = 'INPROGRESS')") })
+        + "where h2.resource.id = :resourceId " + "  and h2.status = 'INPROGRESS')"),
+    @NamedQuery(name = ResourceOperationHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM ResourceOperationHistory roh "
+        + " WHERE roh.resource IN (:resources))") })
 public class ResourceOperationHistory extends OperationHistory {
     public static final String QUERY_FIND_BY_GROUP_OPERATION_HISTORY_ID = "ResourceOperationHistory.findByGroupOperationHistoryId";
     public static final String QUERY_FIND_BY_RESOURCE_ID_AND_STATUS = "ResourceOperationHistory.findByResourceIdAndStatus";
     public static final String QUERY_FIND_BY_RESOURCE_ID_AND_NOT_STATUS = "ResourceOperationHistory.findByResourceIdAndNotStatus";
     public static final String QUERY_FIND_LATEST_COMPLETED_OPERATION = "ResourceOperationHistory.findLatestCompletedOperation";
     public static final String QUERY_FIND_OLDEST_INPROGRESS_OPERATION = "ResourceOperationHistory.findOldestInProgressOperation";
+    public static final String QUERY_DELETE_BY_RESOURCES = "ResourceOperationHistory.deleteByResources";
 
     private static final long serialVersionUID = 1L;
 

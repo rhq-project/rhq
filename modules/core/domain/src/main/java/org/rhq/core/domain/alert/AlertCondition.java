@@ -21,6 +21,7 @@ package org.rhq.core.domain.alert;
 import java.io.Serializable;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -37,6 +38,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 
 /**
@@ -45,11 +47,14 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 @Entity
 @NamedQueries( {
     @NamedQuery(name = "AlertCondition.findByTriggerId", query = "SELECT a FROM AlertCondition AS a WHERE a.triggerId = :tid"),
-    @NamedQuery(name = "AlertCondition.findAll", query = "SELECT a FROM AlertCondition AS a") })
+    @NamedQuery(name = "AlertCondition.findAll", query = "SELECT a FROM AlertCondition AS a"),
+    @NamedQuery(name = AlertCondition.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertCondition ac WHERE ac.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))") })
 @SequenceGenerator(name = "RHQ_ALERT_CONDITION_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_ID_SEQ")
 @Table(name = "RHQ_ALERT_CONDITION")
 public class AlertCondition implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    public static final String QUERY_DELETE_BY_RESOURCES = "AlertCondition.deleteByResources";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_ALERT_CONDITION_ID_SEQ")
@@ -271,8 +276,8 @@ public class AlertCondition implements Serializable {
 
     @Override
     public String toString() {
-        return "org.rhq.core.domain.alert.AlertCondition" + "[ " + "id=" + id + ", " + "category=" + category
-            + ", " + "measurementDefinition=" + measurementDefinition + ", " + "name=" + name + ", " + "comparator="
+        return "org.rhq.core.domain.alert.AlertCondition" + "[ " + "id=" + id + ", " + "category=" + category + ", "
+            + "measurementDefinition=" + measurementDefinition + ", " + "name=" + name + ", " + "comparator="
             + comparator + ", " + "threshold=" + threshold + ", " + "option=" + option + ", " + alertDefinition + " ]";
     }
 }

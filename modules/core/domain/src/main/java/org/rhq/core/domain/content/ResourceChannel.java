@@ -20,6 +20,7 @@ package org.rhq.core.domain.content;
 
 import java.io.Serializable;
 import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -28,6 +29,7 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
+
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -39,10 +41,12 @@ import org.rhq.core.domain.resource.Resource;
 @Entity
 @IdClass(ResourceChannelPK.class)
 @NamedQueries( {
+    @NamedQuery(name = ResourceChannel.DELETE_BY_RESOURCES, query = "DELETE ResourceChannel rc WHERE rc.resource IN ( :resources )"),
     @NamedQuery(name = ResourceChannel.DELETE_BY_RESOURCE_ID, query = "DELETE ResourceChannel rc WHERE rc.resource.id = :resourceId"),
     @NamedQuery(name = ResourceChannel.DELETE_BY_CHANNEL_ID, query = "DELETE ResourceChannel rc WHERE rc.channel.id = :channelId") })
 @Table(name = "RHQ_CHANNEL_RESOURCE_MAP")
 public class ResourceChannel implements Serializable {
+    public static final String DELETE_BY_RESOURCES = "ResourceChannel.deleteByResources";
     public static final String DELETE_BY_RESOURCE_ID = "ResourceChannel.deleteByResourceId";
     public static final String DELETE_BY_CHANNEL_ID = "ResourceChannel.deleteByChannelId";
 

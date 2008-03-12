@@ -22,12 +22,15 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.transaction.TransactionManager;
+
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
@@ -38,6 +41,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityPoint;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -54,6 +58,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     private static final AvailabilityType DOWN = AvailabilityType.DOWN;
 
     private AvailabilityManagerLocal availabilityManager;
+    private ResourceManagerLocal resourceManager;
 
     private Subject overlord;
     private Agent theAgent;
@@ -66,7 +71,10 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     @BeforeMethod
     public void beforeMethod() {
         try {
+            prepareScheduler();
+
             this.availabilityManager = LookupUtil.getAvailabilityManager();
+            this.resourceManager = LookupUtil.getResourceManager();
             this.overlord = LookupUtil.getSubjectManager().getOverlord();
         } catch (Throwable t) {
             // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
@@ -78,25 +86,46 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
     @AfterMethod
     public void afterMethod() throws Exception {
-        getTransactionManager().begin();
-        EntityManager em = getEntityManager();
+        try {
+            if (theAgent != null) {
+                getTransactionManager().begin();
+                EntityManager em = getEntityManager();
 
-        if (theResource != null) {
-            em.remove(em.find(Resource.class, theResource.getId()));
-            theResource = null;
+                if (theResource != null) {
+                    Resource r = em.find(Resource.class, theResource.getId());
+                    r.setAgent(null);
+                }
+
+                Agent a = em.find(Agent.class, theAgent.getId());
+                theAgent = null;
+
+                em.remove(a);
+                getTransactionManager().commit();
+            }
+
+            if (theResource != null) {
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, theResource);
+                //resourceManager.deleteResource(overlord, theResource.getId());
+                theResource = null;
+            }
+
+            if (theResourceType != null) {
+                getTransactionManager().begin();
+                EntityManager em = getEntityManager();
+
+                em.remove(em.find(ResourceType.class, theResourceType.getId()));
+                theResourceType = null;
+
+                getTransactionManager().commit();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         }
 
-        if (theResourceType != null) {
-            em.remove(em.find(ResourceType.class, theResourceType.getId()));
-            theResourceType = null;
+        finally {
+            unprepareScheduler();
         }
-
-        if (theAgent != null) {
-            em.remove(em.find(Agent.class, theAgent.getId()));
-            theAgent = null;
-        }
-
-        getTransactionManager().commit();
     }
 
     @Test(enabled = ENABLE_TESTS)
@@ -519,15 +548,10 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             // delete all the new resources we added, but don't delete "theResource" (item #0) - afterMethod will do that one
             start = System.currentTimeMillis();
-            em = beginTx();
             for (int i = 1; i < allResources.size(); i++) {
-                em.remove(em.find(Resource.class, allResources.get(i).getId()));
-                if ((i % 20) == 0) {
-                    em = commitAndBegin(em);
-                }
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, allResources.get(i));
             }
 
-            commitAndClose(em);
             em = null;
 
             System.out.println("testAgentBackfillPerformance: deleting resources took "
@@ -979,15 +1003,10 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             // delete all the new resources we added, but don't delete "theResource" (item #0) - afterMethod will do that one
             start = System.currentTimeMillis();
-            em = beginTx();
             for (int i = 1; i < allResources.size(); i++) {
-                em.remove(em.find(Resource.class, allResources.get(i).getId()));
-                if ((i % 20) == 0) {
-                    em = commitAndBegin(em);
-                }
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, allResources.get(i));
             }
 
-            commitAndClose(em);
             em = null;
 
             System.out.println("testMergeReportPerformance: deleting resources took "

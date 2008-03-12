@@ -21,6 +21,7 @@ package org.rhq.core.domain.resource;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -45,7 +46,8 @@ import javax.persistence.Table;
 @Entity(name = "DeleteResourceHistory")
 @NamedQueries( {
     @NamedQuery(name = DeleteResourceHistory.QUERY_FIND_WITH_STATUS, query = "SELECT drh from DeleteResourceHistory AS drh where drh.status = :status"),
-    @NamedQuery(name = DeleteResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, query = "SELECT drh from DeleteResourceHistory AS drh WHERE drh.resource.parentResource.id = :id") })
+    @NamedQuery(name = DeleteResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, query = "SELECT drh from DeleteResourceHistory AS drh WHERE drh.resource.parentResource.id = :id"),
+    @NamedQuery(name = DeleteResourceHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM DeleteResourceHistory drh WHERE drh.resource IN (:resources))") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DELETE_RES_HIST_ID_SEQ")
 @Table(name = "RHQ_DELETE_RES_HIST")
 public class DeleteResourceHistory {
@@ -53,6 +55,7 @@ public class DeleteResourceHistory {
 
     public static final String QUERY_FIND_WITH_STATUS = "DeleteResourceHistory.findWithStatus";
     public static final String QUERY_FIND_BY_PARENT_RESOURCE_ID = "DeleteResourceHistory.findByParentResourceId";
+    public static final String QUERY_DELETE_BY_RESOURCES = "DeleteResourceHistory.deleteByResources";
 
     // Attributes  --------------------------------------------
 

@@ -56,6 +56,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -67,11 +68,13 @@ import org.rhq.enterprise.server.util.SessionTestHelper;
 @Test
 public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     private ConfigurationManagerLocal configurationManager;
+    private ResourceManagerLocal resourceManager;
     private Resource newResource1;
     private Resource newResource2;
     private ResourceGroup compatibleGroup;
     private PageControl pageControl;
     private Agent agent;
+    private Subject overlord;
 
     /**
      * Prepares things for the entire test class.
@@ -83,6 +86,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         pageControl.addDefaultOrderingField("cu.id", PageOrdering.ASC);
 
         configurationManager = LookupUtil.getConfigurationManager();
+        resourceManager = LookupUtil.getResourceManager();
+        overlord = LookupUtil.getSubjectManager().getOverlord();
 
         TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
         TestServices testServices = new TestServices();
@@ -130,40 +135,66 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
     @AfterMethod
     public void afterMethod() throws Exception {
-        unprepareScheduler();
-
-        getTransactionManager().begin();
-        EntityManager em = getEntityManager();
         try {
-            ResourceGroup group = em.find(ResourceGroup.class, compatibleGroup.getId());
-            ResourceType type = em.find(ResourceType.class, newResource1.getResourceType().getId());
-            Resource res1 = em.find(Resource.class, newResource1.getId());
-            Resource res2 = em.find(Resource.class, newResource2.getId());
-            Agent a = em.find(Agent.class, agent.getId());
-
-            res1.setAgent(null);
-            res2.setAgent(null);
-
-            group.removeExplicitResource(res1);
-            group.removeExplicitResource(res2);
-
-            em.remove(a);
-            em.remove(res1);
-            em.remove(res2);
-            em.remove(group);
-            em.remove(type);
-
-            getTransactionManager().commit();
-        } catch (Exception e) {
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
             try {
-                System.out.println(e);
-                getTransactionManager().rollback();
-            } catch (Exception ignore) {
+                ResourceGroup group = em.find(ResourceGroup.class, compatibleGroup.getId());
+                Resource res1 = em.find(Resource.class, newResource1.getId());
+                Resource res2 = em.find(Resource.class, newResource2.getId());
+                Agent a = em.find(Agent.class, agent.getId());
+
+                res1.setAgent(null);
+                res2.setAgent(null);
+
+                group.removeExplicitResource(res1);
+                group.removeExplicitResource(res2);
+                em.remove(group);
+                em.remove(a);
+
+                getTransactionManager().commit();
+            } catch (Exception e) {
+                try {
+                    System.out.println(e);
+                    getTransactionManager().rollback();
+                } catch (Exception ignore) {
+                }
+
+                throw e;
+            } finally {
+                em.close();
             }
 
-            throw e;
+            try {
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, newResource1);
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, newResource2);
+            } catch (Exception e) {
+                System.out.println(e);
+                throw e;
+            }
+
+            getTransactionManager().begin();
+            em = getEntityManager();
+            try {
+                ResourceType type = em.find(ResourceType.class, newResource1.getResourceType().getId());
+
+                em.remove(type);
+
+                getTransactionManager().commit();
+            } catch (Exception e) {
+                try {
+                    System.out.println(e);
+                    getTransactionManager().rollback();
+                } catch (Exception ignore) {
+                }
+
+                throw e;
+            } finally {
+                em.close();
+            }
+
         } finally {
-            em.close();
+            unprepareScheduler();
         }
     }
 

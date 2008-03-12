@@ -552,70 +552,82 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     private Configuration pluginConfiguration = new Configuration();
 
-    @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
-    @OrderBy
-    // by primary key which will also put the resource configuration updates in chronological order
-    private List<ResourceConfigurationUpdate> resourceConfigurationUpdates = new ArrayList<ResourceConfigurationUpdate>();
-
-    @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
-    @OrderBy
-    // by primary key which will also put the plugin configuration updates in chronological order
-    private List<PluginConfigurationUpdate> pluginConfigurationUpdates = new ArrayList<PluginConfigurationUpdate>();
-
-    //@OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE)
-    // Remove now handled via bulk delete
-    @OneToMany(mappedBy = "resource")
-    private Set<MeasurementSchedule> schedules = new LinkedHashSet<MeasurementSchedule>();
-
     @JoinColumn(name = "AGENT_ID", referencedColumnName = "ID")
     @ManyToOne(fetch = FetchType.LAZY)
     private Agent agent;
 
+    // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
+    @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
+    private Set<AlertDefinition> alertDefinitions = new LinkedHashSet<AlertDefinition>();
+
+    // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
+    @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
+    @OrderBy
+    // by primary key which will also put the resource configuration updates in chronological order
+    private List<ResourceConfigurationUpdate> resourceConfigurationUpdates = new ArrayList<ResourceConfigurationUpdate>();
+
+    // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
+    @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
+    @OrderBy
+    // by primary key which will also put the plugin configuration updates in chronological order
+    private List<PluginConfigurationUpdate> pluginConfigurationUpdates = new ArrayList<PluginConfigurationUpdate>();
+
+    // bulk delete
     @ManyToMany(mappedBy = "implicitResources", fetch = FetchType.LAZY)
     private Set<ResourceGroup> implicitGroups = new HashSet<ResourceGroup>();
 
+    // bulk delete 
     @ManyToMany(mappedBy = "explicitResources", fetch = FetchType.LAZY)
     private Set<ResourceGroup> explicitGroups = new HashSet<ResourceGroup>();
 
-    //@OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE)
-    // Remove now handled via bulk delete
-    @OneToMany(mappedBy = "resource")
-    @OrderBy("startTime")
-    private List<Availability> availability;
-
-    @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
-    private Set<AlertDefinition> alertDefinitions = new LinkedHashSet<AlertDefinition>();
-
-    @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.LAZY)
     @OrderBy
     private List<ContentServiceRequest> contentServiceRequests = new ArrayList<ContentServiceRequest>();
 
-    @OneToMany(mappedBy = "parentResource", cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    // bulk delete @OneToMany(mappedBy = "parentResource", cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "parentResource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.LAZY)
     @OrderBy
     private List<CreateResourceHistory> createChildResourceRequests = new ArrayList<CreateResourceHistory>();
 
-    @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
+    // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
+    @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
     @OrderBy
     private List<DeleteResourceHistory> deleteResourceRequests = new ArrayList<DeleteResourceHistory>();
 
-    @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
+    // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
+    @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
     @OrderBy
     // by primary key which will also put the operation histories in chronological order
     private List<ResourceOperationHistory> operationHistories = new ArrayList<ResourceOperationHistory>();
 
-    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
-    private List<ResourceError> resourceErrors = new ArrayList<ResourceError>();
+    // bulk delete @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.LAZY)
+    private Set<InstalledPackage> installedPackages = new HashSet<InstalledPackage>();
 
+    // bulk delete @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "resource", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH }, fetch = FetchType.LAZY)
+    private List<InstalledPackageHistory> installedPackageHistory = new ArrayList<InstalledPackageHistory>();
+
+    // bulk delete
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY)
     private Set<ResourceChannel> resourceChannels = new HashSet<ResourceChannel>();
 
-    @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<InstalledPackage> installedPackages = new HashSet<InstalledPackage>();
+    // bulk delete @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "resource")
+    private Set<MeasurementSchedule> schedules = new LinkedHashSet<MeasurementSchedule>();
 
-    @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<InstalledPackageHistory> installedPackageHistory = new ArrayList<InstalledPackageHistory>();
+    //bulk delete @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "resource")
+    @OrderBy("startTime")
+    private List<Availability> availability;
 
-    @OneToMany(mappedBy = "resource", cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
+    // bulk delete @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
+    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY)
+    private List<ResourceError> resourceErrors = new ArrayList<ResourceError>();
+
+    // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY)
     private Set<EventSource> eventSources = new HashSet<EventSource>();
 
     @JoinColumn(name = "PRODUCT_VERSION_ID", referencedColumnName = "ID")

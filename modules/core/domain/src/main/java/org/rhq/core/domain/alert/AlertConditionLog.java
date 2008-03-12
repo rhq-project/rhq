@@ -19,6 +19,7 @@
 package org.rhq.core.domain.alert;
 
 import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -47,13 +48,15 @@ import javax.persistence.Table;
         + "WHERE iacl.condition.alertDefinition.resource.id = :resourceId " + ")"),
     @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_ALERT_CTIME, query = "DELETE AlertConditionLog acl "
         + "WHERE acl.id IN " + "( SELECT iacl.id " + "FROM AlertConditionLog iacl "
-        + "WHERE iacl.alert.ctime BETWEEN :begin AND :end " + ")") })
+        + "WHERE iacl.alert.ctime BETWEEN :begin AND :end " + ")"),
+    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertConditionLog acl WHERE acl.condition IN ( SELECT ac FROM AlertCondition ac WHERE ac.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources)))") })
 @SequenceGenerator(name = "RHQ_ALERT_CONDITION_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_LOG_ID_SEQ")
 @Table(name = "RHQ_ALERT_CONDITION_LOG")
 public class AlertConditionLog implements Serializable {
     public static final String QUERY_FIND_UNMATCHED_LOG_BY_ALERT_CONDITION_ID = "AlertConditinLog.findUnmatchedLogByAlertConditionId";
     public static final String QUERY_FIND_UNMATCHED_LOGS_BY_ALERT_DEFINITION_ID = "AlertConditinLog.findUnmatchedLogsByAlertDefinitionId";
     public static final String QUERY_DELETE_BY_RESOURCE = "AlertConditionLog.deleteByResource";
+    public static final String QUERY_DELETE_BY_RESOURCES = "AlertConditionLog.deleteByResources";
     public static final String QUERY_DELETE_BY_ALERT_CTIME = "AlertConditionLog.deleteByAlertCTime";
 
     public static final int MAX_LOG_LENGTH = 250;

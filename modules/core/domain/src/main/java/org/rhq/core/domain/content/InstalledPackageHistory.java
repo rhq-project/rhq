@@ -23,6 +23,7 @@ import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -34,14 +35,16 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.persistence.OneToMany;
+
 import org.hibernate.annotations.NamedQueries;
 import org.hibernate.annotations.NamedQuery;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
 
@@ -65,8 +68,9 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_ID, query = "SELECT iph FROM InstalledPackageHistory iph "
         + "WHERE iph.packageVersion.generalPackage.id = :packageId AND iph.resource.id = :resourceId"),
     @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_ID_WITH_STEPS, query = "SELECT DISTINCT iph FROM InstalledPackageHistory iph "
-        + "LEFT JOIN FETCH iph.installationSteps WHERE iph.id = :id")
-    })
+        + "LEFT JOIN FETCH iph.installationSteps WHERE iph.id = :id"),
+    @NamedQuery(name = InstalledPackageHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM InstalledPackageHistory iph "
+        + " WHERE iph.resource IN (:resources))") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_INSTALLED_PKG_HIST_ID_SEQ")
 @Table(name = "RHQ_INSTALLED_PKG_HIST")
 public class InstalledPackageHistory implements Serializable {
@@ -79,6 +83,7 @@ public class InstalledPackageHistory implements Serializable {
     public static final String QUERY_FIND_BY_CSR_ID = "InstalledPackageHistory.findByCsrId";
     public static final String QUERY_FIND_BY_RESOURCE_ID_AND_PKG_ID = "InstalledPackageHistory.findByResourceIdAndPkgId";
     public static final String QUERY_FIND_BY_ID_WITH_STEPS = "InstalledPackageHistory.findByIdWithSteps";
+    public static final String QUERY_DELETE_BY_RESOURCES = "InstalledPackageHistory.deleteByResources";
 
     // Attributes  --------------------------------------------
 

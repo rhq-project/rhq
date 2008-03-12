@@ -19,6 +19,7 @@
 package org.rhq.core.domain.alert.notification;
 
 import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
@@ -34,17 +35,22 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.alert.AlertDefinition;
 
 @DiscriminatorColumn(name = "NOTIFICATION_TYPE", discriminatorType = DiscriminatorType.STRING)
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@NamedQueries( { @NamedQuery(name = AlertNotification.DELETE_BY_ID, query = "DELETE FROM AlertNotification an WHERE an.id IN ( :ids )") })
+@NamedQueries( {
+    @NamedQuery(name = AlertNotification.DELETE_BY_ID, query = "DELETE FROM AlertNotification an WHERE an.id IN ( :ids )"),
+    @NamedQuery(name = AlertNotification.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))") })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIFICATION_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIFICATION")
 public abstract class AlertNotification implements Serializable {
     public static final String DELETE_BY_ID = "AlertNotification.deleteById";
+    public static final String QUERY_DELETE_BY_RESOURCES = "AlertNotification.deleteByResources";
 
     private static final long serialVersionUID = 1L;
 

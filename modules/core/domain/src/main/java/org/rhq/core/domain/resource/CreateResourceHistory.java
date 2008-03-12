@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.Date;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -40,6 +41,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.InstalledPackage;
 
@@ -52,7 +54,8 @@ import org.rhq.core.domain.content.InstalledPackage;
 @NamedQueries( {
     @NamedQuery(name = CreateResourceHistory.QUERY_FIND_WITH_STATUS, query = "SELECT crh FROM CreateResourceHistory AS crh WHERE crh.status = :status"),
     @NamedQuery(name = CreateResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, query = "SELECT crh FROM CreateResourceHistory AS crh WHERE crh.parentResource.id = :id"),
-    @NamedQuery(name = CreateResourceHistory.QUERY_FIND_BY_ID, query = "SELECT crh FROM CreateResourceHistory AS crh WHERE crh.id = :id") })
+    @NamedQuery(name = CreateResourceHistory.QUERY_FIND_BY_ID, query = "SELECT crh FROM CreateResourceHistory AS crh WHERE crh.id = :id"),
+    @NamedQuery(name = CreateResourceHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM CreateResourceHistory crh WHERE crh.parentResource IN (:resources))") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CREATE_RES_HIST_ID_SEQ")
 @Table(name = "RHQ_CREATE_RES_HIST")
 public class CreateResourceHistory implements Serializable {
@@ -61,6 +64,7 @@ public class CreateResourceHistory implements Serializable {
     public static final String QUERY_FIND_WITH_STATUS = "CreateResourceHistory.findWithStatus";
     public static final String QUERY_FIND_BY_PARENT_RESOURCE_ID = "CreateResourceHistory.findByParentResourceId";
     public static final String QUERY_FIND_BY_ID = "CreateResourceHistory.findById";
+    public static final String QUERY_DELETE_BY_RESOURCES = "CreateResourceHistory.deleteByResources";
 
     // Attributes  --------------------------------------------
 

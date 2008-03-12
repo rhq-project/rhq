@@ -21,6 +21,7 @@ package org.rhq.core.domain.alert;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -48,13 +49,15 @@ import javax.persistence.TemporalType;
         + "ORDER BY ade.eventTime ASC"),
     @NamedQuery(name = AlertDampeningEvent.QUERY_FIND_BY_ALERT_DEFINITION_ID, query = "  SELECT ade "
         + "    FROM AlertDampeningEvent ade " + "   WHERE ade.alertDefinition.id = :alertDefinitionId "
-        + "     AND ade.used = false " + "ORDER BY ade.eventTime DESC ") })
+        + "     AND ade.used = false " + "ORDER BY ade.eventTime DESC "),
+    @NamedQuery(name = AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertDampeningEvent ade WHERE ade.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))") })
 @SequenceGenerator(name = "RHQ_ALERT_DAMPEN_EVENT_ID_SEQ", sequenceName = "RHQ_ALERT_DAMPEN_EVENT_ID_SEQ")
 @Table(name = "RHQ_ALERT_DAMPEN_EVENT")
 public class AlertDampeningEvent implements Serializable {
     public static final String QUERY_FIND_LATEST_BY_ALERT_DEFINITION_ID = "AlertDampeningEvent.findLatestByAlertDefinitionId";
     public static final String QUERY_FIND_BY_TIME_AND_TYPES = "AlertDampeningEvent.findByTimeAndTypes";
     public static final String QUERY_FIND_BY_ALERT_DEFINITION_ID = "AlertDampeningEvent.findByAlertDefinitionId";
+    public static final String QUERY_DELETE_BY_RESOURCES = "AlertDampeningEvent.deleteByResources";
 
     public enum Type {
         POSITIVE, POSITIVE_AGAIN, NEGATIVE, UNCHANGED;
@@ -116,8 +119,8 @@ public class AlertDampeningEvent implements Serializable {
 
     @Override
     public String toString() {
-        return "org.rhq.core.domain.alert.AlertDampeningEvent" + "[ " + "id=" + id + ", " + "eventType="
-            + eventType + ", " + "eventTime=" + new SimpleDateFormat("MMM d, hh:mm:ss a").format(eventTime) + ", "
-            + "used=" + used + " ]";
+        return "org.rhq.core.domain.alert.AlertDampeningEvent" + "[ " + "id=" + id + ", " + "eventType=" + eventType
+            + ", " + "eventTime=" + new SimpleDateFormat("MMM d, hh:mm:ss a").format(eventTime) + ", " + "used=" + used
+            + " ]";
     }
 }

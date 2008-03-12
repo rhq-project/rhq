@@ -24,6 +24,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+
 import org.rhq.core.domain.configuration.group.AggregateResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 
@@ -42,7 +43,8 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_RESOURCE_ID, query = "SELECT cu "
         + "  FROM ResourceConfigurationUpdate cu " + " WHERE cu.resource.id = :resourceId "
         + "   AND cu.modifiedTime = ( SELECT MAX(cu2.modifiedTime) " + "   FROM ResourceConfigurationUpdate cu2 "
-        + "  WHERE cu2.resource.id = :resourceId) ") })
+        + "  WHERE cu2.resource.id = :resourceId) "),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM ResourceConfigurationUpdate rcu WHERE rcu.resource IN (:resources))") })
 public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUpdate {
     private static final long serialVersionUID = 1L;
 
@@ -50,6 +52,7 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
     public static final String QUERY_FIND_ALL_BY_RESOURCE_ID = "ResourceConfigurationUpdate.findAllByResourceId";
     public static final String QUERY_FIND_CURRENTLY_ACTIVE_CONFIG = "ResourceConfigurationUpdate.findCurrentlyActiveConfig";
     public static final String QUERY_FIND_LATEST_BY_RESOURCE_ID = "ResourceConfigurationUpdate.findByResource";
+    public static final String QUERY_DELETE_BY_RESOURCES = "ResourceConfigurationUpdate.deleteByResources";
 
     @JoinColumn(name = "CONFIG_RES_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne

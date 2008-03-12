@@ -87,6 +87,17 @@ public interface ResourceManagerLocal {
     List<Integer> deleteResource(Subject user, Integer resourceId);
 
     /**
+     * Deletes the given resources (but not their children) in a new transaction. This is normally used only within this
+     * manager bean itself. Clients normally should call {@link #deleteResource(Subject, Integer)}. If you call this
+     * method, make sure you have a specific reason for it; check to see if calling
+     * {@link #deleteResource(Subject, Integer)} would not be more appropriate.
+     *
+     * @param user     the user that deleted the resource
+     * @param resource the actual resources to remove
+     */
+    void deleteResourcesInNewTransaction(Subject user, List<Resource> resources);
+
+    /**
      * Deletes the given resource (but not its children) in a new transaction. This is normally used only within this
      * manager bean itself. Clients normally should call {@link #deleteResource(Subject, Integer)}. If you call this
      * method, make sure you have a specific reason for it; check to see if calling

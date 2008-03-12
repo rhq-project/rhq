@@ -87,8 +87,7 @@ import org.rhq.core.domain.resource.Resource;
         + "AND (ms.definition.dataType = :dataType OR :dataType is null) "),
     @NamedQuery(name = MeasurementSchedule.GET_SCHEDULED_MEASUREMENTS_PER_MINUTED, query = "SELECT SUM(1000.0 / ms.interval) * 60.0 FROM MeasurementSchedule ms WHERE ms.enabled = true"),
     @NamedQuery(name = MeasurementSchedule.DISABLE_ALL, query = "UPDATE MeasurementSchedule ms SET ms.enabled = false"),
-    @NamedQuery(name = MeasurementSchedule.DELETE_BY_RESOURCE_ID, query = "DELETE "
-        + "    FROM MeasurementSchedule ms WHERE ms.resource.id = :resourceId") })
+    @NamedQuery(name = MeasurementSchedule.DELETE_BY_RESOURCES, query = "DELETE MeasurementSchedule ms WHERE ms.resource IN ( :resources )") })
 @SequenceGenerator(name = "RHQ_METRIC_SCHED_ID_SEQ", sequenceName = "RHQ_MEASUREMENT_SCHED_ID_SEQ")
 @Table(name = "RHQ_MEASUREMENT_SCHED", uniqueConstraints = { @UniqueConstraint(columnNames = { "DEFINITION",
     "RESOURCE_ID" }) })
@@ -131,7 +130,7 @@ public class MeasurementSchedule implements Serializable {
     public static final String DISABLE_ALL = "MeasurementSchedule.disableAll";
     public static final String FIND_ENABLED_BY_RESOURCES_AND_RESOURCE_TYPE = "MeasurementSchedule.FIND_ENABLED_BY_ResourcesS_AND_RESOURCE_TYPE";
     public static final String FIND_ENABLED_BY_RESOURCE_IDS_AND_RESOURCE_TYPE_ID = "MeasurementSchedule.FIND_ENABLED_BY_ResourceIds_AND_RESOURCE_TYPE";
-    public static final String DELETE_BY_RESOURCE_ID = "MeasurementSchedule.deleteByResourceId";
+    public static final String DELETE_BY_RESOURCES = "MeasurementSchedule.deleteByResources";
 
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_METRIC_SCHED_ID_SEQ")
     @Id

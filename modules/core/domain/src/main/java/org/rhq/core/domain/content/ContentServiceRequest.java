@@ -24,6 +24,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -41,6 +42,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -68,7 +70,8 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST, query = "SELECT csr "
         + "  FROM ContentServiceRequest AS csr JOIN FETCH csr.installedPackageHistory ip "
         + " WHERE csr.id IN (SELECT DISTINCT csr1.id FROM ContentServiceRequest AS csr1 "
-        + "                   WHERE csr1.resource.id = :resourceId) ") })
+        + "                   WHERE csr1.resource.id = :resourceId) "),
+    @NamedQuery(name = ContentServiceRequest.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM ContentServiceRequest csr WHERE csr.resource IN (:resources))") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_REQ_ID_SEQ")
 @Table(name = "RHQ_CONTENT_REQ")
 public class ContentServiceRequest implements Serializable {
@@ -83,6 +86,7 @@ public class ContentServiceRequest implements Serializable {
     public static final String QUERY_FIND_BY_ID_WITH_INSTALLED_PKG_HIST = "ContentServiceRequest.findByIdWithInstalledPackageHistory";
     public static final String QUERY_FIND_BY_ID = "ContentServiceRequest.findById";
     public static final String QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST = "ContentServiceRequest.findByResourceWithInstalledPackageHistory";
+    public static final String QUERY_DELETE_BY_RESOURCES = "ContentServiceRequest.deleteByResources";
 
     // Attributes  --------------------------------------------
 

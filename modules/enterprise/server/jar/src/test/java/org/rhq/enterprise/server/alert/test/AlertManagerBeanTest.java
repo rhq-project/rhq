@@ -19,10 +19,11 @@
 package org.rhq.enterprise.server.alert.test;
 
 import javax.persistence.EntityManager;
+
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
@@ -33,6 +34,7 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.alert.notification.EmailNotification;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -67,7 +69,7 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
     }
 
     public void testAlertDeleteInRange() {
-        assert 1 == alertManager.deleteAlerts(0, System.currentTimeMillis() + 600000); // go out into the future to make sure we get our alert
+        assert 1 == alertManager.deleteAlerts(0L, System.currentTimeMillis() + 600000L); // go out into the future to make sure we get our alert
     }
 
     private Resource createNewResource() throws Exception {
@@ -98,6 +100,7 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
                 ad.setResource(resource);
                 ad.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
                 ad.setConditionExpression(BooleanExpression.ALL);
+                ad.setRecoveryId(0);
                 em.persist(ad);
 
                 AlertCondition ac = new AlertCondition(ad, AlertConditionCategory.AVAILABILITY);

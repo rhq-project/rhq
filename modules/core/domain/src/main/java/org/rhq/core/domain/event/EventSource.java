@@ -22,10 +22,10 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.LinkedHashSet;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -35,10 +35,10 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.OneToMany;
-import javax.persistence.CascadeType;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -51,12 +51,14 @@ import org.rhq.core.domain.resource.Resource;
  * @author Ian Springer
  */
 @Entity
+@NamedQueries( { @NamedQuery(name = EventSource.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM EventSource evs WHERE evs.resource IN (:resources)") })
 @Table(name = EventSource.TABLE_NAME)
 @SequenceGenerator(name = "idGenerator", sequenceName = EventSource.TABLE_NAME + "_ID_SEQ", allocationSize = 100)
 public class EventSource implements Externalizable {
     private static final long serialVersionUID = 1L;
 
     public static final String TABLE_NAME = "RHQ_EVENT_SOURCE";
+    public static final String QUERY_DELETE_BY_RESOURCES = "EventSource.deleteByResources";
 
     @Id
     @Column(name = "ID", nullable = false)
@@ -77,10 +79,10 @@ public class EventSource implements Externalizable {
     @Column(name = "LOCATION", length = 2000, nullable = false)
     private String location;
 
-    @SuppressWarnings({"UnusedDeclaration"})
+    @SuppressWarnings( { "UnusedDeclaration" })
     @OneToMany(mappedBy = "source", cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
     private Set<Event> events = new HashSet<Event>();
-    
+
     /* no-arg constructor required by EJB spec and Externalizable (Externalizable also requires it to be public) */
     public EventSource() {
     }

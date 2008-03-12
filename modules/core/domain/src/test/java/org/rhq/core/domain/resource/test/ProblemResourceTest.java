@@ -19,6 +19,7 @@
 package org.rhq.core.domain.resource.test;
 
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.transaction.HeuristicMixedException;
@@ -26,13 +27,15 @@ import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
+
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDampening;
-import org.rhq.core.domain.alert.AlertDampening.Category;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
+import org.rhq.core.domain.alert.AlertDampening.Category;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -333,6 +336,7 @@ public class ProblemResourceTest extends AbstractEJB3Test {
         alertDef.setPriority(AlertPriority.MEDIUM);
         alertDef.setAlertDampening(new AlertDampening(Category.NONE));
         alertDef.setConditionExpression(BooleanExpression.ALL);
+        alertDef.setRecoveryId(0);
         em.persist(alertDef);
 
         alertDef2 = new AlertDefinition();
@@ -341,6 +345,7 @@ public class ProblemResourceTest extends AbstractEJB3Test {
         alertDef2.setPriority(AlertPriority.MEDIUM);
         alertDef2.setAlertDampening(new AlertDampening(Category.NONE));
         alertDef2.setConditionExpression(BooleanExpression.ALL);
+        alertDef2.setRecoveryId(0);
         em.persist(alertDef2);
     }
 

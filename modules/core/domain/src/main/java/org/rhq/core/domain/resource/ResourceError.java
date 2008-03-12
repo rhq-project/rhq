@@ -22,6 +22,7 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -35,6 +36,7 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @Entity
 @NamedQueries( {
+    @NamedQuery(name = ResourceError.QUERY_DELETE_BY_RESOURCES, query = "DELETE From ResourceError re WHERE re.resource IN (:resources)"),
     @NamedQuery(name = ResourceError.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT re FROM ResourceError re WHERE re.resource.id = :resourceId"),
     @NamedQuery(name = ResourceError.QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPE, query = "SELECT re FROM ResourceError re WHERE re.resource.id = :resourceId AND re.errorType = :errorType") })
 @SequenceGenerator(name = "RHQ_RESOURCE_ERROR_SEQ", sequenceName = "RHQ_RESOURCE_ERROR_ID_SEQ")
@@ -53,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 public class ResourceError implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    public static final String QUERY_DELETE_BY_RESOURCES = "ResourceError.deleteByResources";
     public static final String QUERY_FIND_BY_RESOURCE_ID = "ResourceError.findByResource";
     public static final String QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPE = "ResourceError.findByResourceAndErrorType";
 
@@ -190,6 +194,7 @@ public class ResourceError implements Serializable {
         this.timeOccurred = timeOccurred;
     }
 
+    @Override
     public String toString() {
         StringBuilder str = new StringBuilder("ResourceError: ");
         str.append("id=[").append(id);

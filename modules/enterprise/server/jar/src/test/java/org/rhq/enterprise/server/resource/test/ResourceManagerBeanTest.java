@@ -19,10 +19,13 @@
 package org.rhq.enterprise.server.resource.test;
 
 import java.util.List;
+
 import javax.persistence.EntityManager;
+
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -148,7 +151,7 @@ public class ResourceManagerBeanTest extends AbstractEJB3Test {
                 Resource res = em.find(Resource.class, resource.getId());
                 Agent agent = em.find(Agent.class, resource.getAgent().getId());
 
-                em.remove(res);
+                resourceManager.deleteResource(superuser, res.getId());
                 em.remove(agent);
                 em.remove(type);
 

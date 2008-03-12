@@ -22,7 +22,9 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 import java.util.Set;
+
 import javax.persistence.EntityManager;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.AfterClass;
@@ -30,6 +32,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.inventory.CreateResourceRequest;
 import org.rhq.core.clientapi.agent.inventory.CreateResourceResponse;
@@ -53,6 +56,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -67,6 +71,8 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
 
     private ResourceFactoryManagerLocal resourceFactoryManager;
     private ContentManagerLocal contentManager;
+    private ResourceManagerLocal resourceManager;
+    private Subject overlord;
 
     private MockResourceFactoryAgentService mockAgentService = new MockResourceFactoryAgentService();
 
@@ -82,7 +88,10 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
     public void setupBeforeClass() throws Exception {
         resourceFactoryManager = LookupUtil.getResourceFactoryManager();
         contentManager = LookupUtil.getContentManager();
+        resourceManager = LookupUtil.getResourceManager();
+        overlord = LookupUtil.getSubjectManager().getOverlord();
 
+        prepareScheduler();
         TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.resourceFactoryService = mockAgentService;
     }
@@ -90,6 +99,7 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
     @AfterClass
     public void teardownAfterClass() throws Exception {
         unprepareForTestAgents();
+        unprepareScheduler();
     }
 
     @BeforeMethod
@@ -460,13 +470,13 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
      */
     private void teardownResourceEnvironment() throws Exception {
         if (parentResource != null) {
+
+            resourceManager.deleteResource(overlord, parentResource.getId());
+
             getTransactionManager().begin();
             EntityManager em = getEntityManager();
             try {
                 ResourceType deleteMeType = em.find(ResourceType.class, parentResourceType.getId());
-                Resource deleteMeResource = em.find(Resource.class, parentResource.getId());
-
-                em.remove(deleteMeResource);
                 em.remove(deleteMeType);
 
                 getTransactionManager().commit();

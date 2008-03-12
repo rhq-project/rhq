@@ -175,7 +175,8 @@ import org.rhq.core.domain.resource.ResourceType;
         + "  FROM ResourceGroup g " + "  JOIN g.implicitResources res " + " WHERE g.id = :groupId "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_GROUP_DEFINITION_AND_EXPRESSION, query = "SELECT g "
         + "  FROM ResourceGroup g " + " WHERE g.groupByClause = :groupByClause "
-        + "   AND g.groupDefinition.id = :groupDefinitionId ") })
+        + "   AND g.groupDefinition.id = :groupDefinitionId ")
+})
 @SequenceGenerator(name = "id", sequenceName = "RHQ_RESOURCE_GROUP_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_GROUP")
 public class ResourceGroup extends Group {
@@ -206,8 +207,8 @@ public class ResourceGroup extends Group {
 
     public static final String QUERY_FIND_RESOURCE_NAMES_BY_GROUP_ID = "ResourceGroup.findResourceNamesByGroupId";
     public static final String QUERY_FIND_BY_GROUP_DEFINITION_AND_EXPRESSION = "ResourceGroup.findByGroupDefinitionAndExpression";
-    public static final String QUERY_DELETE_EXPLICIT_RESOURCE_BY_RESOURCE_ID = "DELETE FROM RHQ_RESOURCE_GROUP_RES_EXP_MAP WHERE RESOURCE_ID = :resourceId";
-    public static final String QUERY_DELETE_IMPLICIT_RESOURCE_BY_RESOURCE_ID = "DELETE FROM RHQ_RESOURCE_GROUP_RES_IMP_MAP WHERE RESOURCE_ID = :resourceId";
+    public static final String QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS = "DELETE FROM RHQ_RESOURCE_GROUP_RES_EXP_MAP WHERE RESOURCE_ID IN ( :resourceIds )";
+    public static final String QUERY_DELETE_IMPLICIT_BY_RESOURCE_IDS = "DELETE FROM RHQ_RESOURCE_GROUP_RES_IMP_MAP WHERE RESOURCE_ID IN ( :resourceIds )";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")

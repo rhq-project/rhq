@@ -21,9 +21,15 @@ package org.rhq.enterprise.server.measurement.test;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -32,6 +38,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -44,11 +51,25 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     private MeasurementSchedule measSched;
     private MeasurementSchedule measSched2;
     private EntityManager entityManager;
+    private ResourceManagerLocal resourceManager;
+    private Subject overlord;
 
     // for the large inventory test
     private List<Resource> allResources;
     private List<MeasurementDefinition> allDefs;
     private List<MeasurementSchedule> allScheds;
+
+    @BeforeMethod
+    public void beforeMethod() throws Exception {
+        this.prepareScheduler();
+        this.resourceManager = LookupUtil.getResourceManager();
+        this.overlord = LookupUtil.getSubjectManager().getOverlord();
+    }
+
+    @AfterMethod
+    public void afterMethod() throws Exception {
+        this.unprepareScheduler();
+    }
 
     /**
      * Tests auto-calculation with a large inventory.
@@ -208,8 +229,11 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             assert bl1.getComputeTime().after(bl1ComputeTime);
             assert bl2.getComputeTime().after(bl2ComputeTime);
 
+            commit();
+
             deleteResources();
-            commitAndBegin(); // this ensures we delete everything
+
+            begin();
         } catch (Throwable t) {
             System.out.println("TEST FAILURE STACK TRACE FOLLOWS:");
             t.printStackTrace();
@@ -253,6 +277,11 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         Object doomed;
 
         try {
+            resourceManager.deleteSingleResourceInNewTransaction(overlord, platform);
+            resourceManager.deleteSingleResourceInNewTransaction(overlord, platform2);
+
+            begin();
+
             deleteMeasurementDataNumeric1H(measSched);
             deleteMeasurementDataNumeric1H(measSched2);
 
@@ -268,17 +297,11 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
                 entityManager.remove(doomed);
             }
 
-            if ((doomed = entityManager.find(Resource.class, platform.getId())) != null) {
-                entityManager.remove(doomed);
-            }
-
-            if ((doomed = entityManager.find(Resource.class, platform2.getId())) != null) {
-                entityManager.remove(doomed);
-            }
-
             if ((doomed = entityManager.find(ResourceType.class, platformType.getId())) != null) {
                 entityManager.remove(doomed);
             }
+
+            commit();
         } catch (Exception e) {
             System.out.println("Cannot delete test resources, database still has test data in it");
             e.printStackTrace();
@@ -344,23 +367,16 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
                 deleteMeasurementDataNumeric1H(doomedSched);
                 if ((--dataCount % 1000) == 0) {
                     System.out.println(String.valueOf(dataCount) + " more test measurement data left to delete");
-                    commitAndBegin();
+                    commit();
                 }
             }
 
             // delete the resources which will cascade delete all schedules
-            int resourceCount = allResources.size();
             for (Resource doomedRes : allResources) {
-                if ((doomed = entityManager.find(Resource.class, doomedRes.getId())) != null) {
-                    entityManager.remove(doomed);
-                    if ((--resourceCount % 10) == 0) {
-                        System.out.println(String.valueOf(resourceCount) + " more test resources left to delete");
-                        commitAndBegin();
-                    }
-                }
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, doomedRes);
             }
 
-            commitAndBegin();
+            begin();
 
             for (MeasurementDefinition doomedDef : allDefs) {
                 if ((doomed = entityManager.find(MeasurementDefinition.class, doomedDef.getId())) != null) {

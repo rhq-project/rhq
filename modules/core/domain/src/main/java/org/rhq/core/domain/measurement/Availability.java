@@ -64,9 +64,9 @@ import org.rhq.core.domain.resource.Resource;
         + " WHERE av.resource.id = :resourceId "
         + "   AND ((av.startTime <= :start AND (av.endTime >= :start OR av.endTime IS NULL) ) " /* availability straddles :start */
         + "       OR (av.startTime BETWEEN :start AND :end)) " /* interval
-                                                                                                                           * straddles
-                                                                                                                           * availability.startTime
-                                                                                                                           */
+                                                                                                                                                * straddles
+                                                                                                                                                * availability.startTime
+                                                                                                                                                */
         + "ORDER BY av.startTime ASC"),
     @NamedQuery(name = Availability.FIND_BY_RESOURCE_AND_DATE, query = "SELECT av FROM Availability av "
         + " WHERE av.resource.id = :resourceId " + "   AND av.startTime <= :aTime "
@@ -79,7 +79,7 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = Availability.QUERY_IS_AGENT_BACKFILLED, query = "SELECT COUNT(DISTINCT av.availabilityType) "
         + "  FROM Availability av " + " WHERE av.availabilityType = 0 " + "   AND av.resource.agent.name = :agentName "
         + "   AND av.resource.parentResource IS NULL " + "   AND av.endTime IS NULL"),
-    @NamedQuery(name = Availability.QUERY_DELETE_BY_RESOURCE_ID, query = "DELETE Availability a WHERE a.resource.id = :resourceId ") })
+    @NamedQuery(name = Availability.QUERY_DELETE_BY_RESOURCES, query = "DELETE Availability a WHERE a.resource IN ( :resources )") })
 @SequenceGenerator(name = "Generator", sequenceName = "RHQ_AVAILABILITY_ID_SEQ")
 @Table(name = "RHQ_AVAILABILITY")
 public class Availability implements Serializable {
@@ -91,7 +91,7 @@ public class Availability implements Serializable {
     public static final String FIND_FOR_RESOURCE_WITHIN_INTERVAL = "Availability.findForResourceWithinInterval";
     public static final String FIND_BY_RESOURCE_AND_DATE = "Availability.findByResourceAndDate";
     public static final String QUERY_IS_AGENT_BACKFILLED = "Availability.isAgentBackfilled";
-    public static final String QUERY_DELETE_BY_RESOURCE_ID = "Availability.deleteByResourceId";
+    public static final String QUERY_DELETE_BY_RESOURCES = "Availability.deleteByResources";
 
     public static final String NATIVE_QUERY_PURGE = "DELETE FROM RHQ_AVAILABILITY WHERE END_TIME < ?";
 

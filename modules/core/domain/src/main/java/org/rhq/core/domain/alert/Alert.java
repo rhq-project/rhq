@@ -21,6 +21,7 @@ package org.rhq.core.domain.alert;
 import java.io.Serializable;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -36,6 +37,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 
 /**
@@ -77,7 +79,8 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
     @NamedQuery(name = Alert.QUERY_FIND_ALL, query = "SELECT a FROM Alert AS a"),
     @NamedQuery(name = Alert.QUERY_DELETE_BY_CTIME, query = "DELETE FROM Alert AS a WHERE a.ctime BETWEEN :begin AND :end"),
     @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCE, query = "DELETE Alert AS alert " + "WHERE alert.id IN "
-        + "( SELECT ia.id " + "FROM Alert ia " + "WHERE ia.alertDefinition.resource.id = :resourceId " + ")") })
+        + "( SELECT ia.id " + "FROM Alert ia " + "WHERE ia.alertDefinition.resource.id = :resourceId " + ")"),
+    @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM Alert a WHERE a.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))") })
 @SequenceGenerator(name = "RHQ_ALERT_ID_SEQ", sequenceName = "RHQ_ALERT_ID_SEQ", allocationSize = 100)
 @Table(name = "RHQ_ALERT")
 public class Alert implements Serializable {
@@ -91,6 +94,7 @@ public class Alert implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE_DATED = "Alert.findByResourceDated";
     public static final String QUERY_DELETE_BY_CTIME = "Alert.deleteByCTime";
     public static final String QUERY_DELETE_BY_RESOURCE = "Alert.deleteByResource";
+    public static final String QUERY_DELETE_BY_RESOURCES = "Alert.deleteByResources";
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCES = "Alert.findByMeasDefIdAndResources";
     public static final String QUERY_GET_ALERT_COUNT_FOR_SCHEDULES = "Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES";
 

@@ -305,7 +305,7 @@ public class ResourceContainer implements Serializable {
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            ComponentInvocationThread invocationThread = new ComponentInvocationThread(this.container, method, args, this.lock, this.timeout);
+            ComponentInvocationThread invocationThread = new ComponentInvocationThread(this.container, method, args, this.lock);
             ExecutorService threadPool = this.daemonThread ? DAEMON_THREAD_POOL : NON_DAEMON_THREAD_POOL;
             // This is the actual call into the plugin component's facet interface.
             Future<?> future = threadPool.submit(invocationThread);
@@ -328,6 +328,9 @@ public class ResourceContainer implements Serializable {
             catch (java.util.concurrent.TimeoutException e) {
                 LOG.debug("Call to " + methodName + " with args " + methodArgs + " timed out. Interrupting the invocation thread...");
                 future.cancel(true);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug(this.container.getFacetLockStatus());
+                }
                 throw new TimeoutException("Call to " + methodName + " with args " + methodArgs + " timed out.");
             }
             // If we got this far, the call completed.
@@ -349,31 +352,27 @@ public class ResourceContainer implements Serializable {
         private final Method method;
         private final Object[] args;
         private final Lock lock;
-        private final long lockTimeout;
 
         private Object results;
         private Throwable error;
 
-        ComponentInvocationThread(ResourceContainer resourceContainer, Method method, Object[] args, Lock lock, long lockTimeout) {
+        ComponentInvocationThread(ResourceContainer resourceContainer, Method method, Object[] args, Lock lock) {
             this.resourceContainer = resourceContainer;
             this.method = method;
             this.args = args;
             this.lock = lock;
-            this.lockTimeout = lockTimeout;
         }
 
         public void run() {
             ResourceComponent resourceComponent = this.resourceContainer.getResourceComponent();
-            try {
-                if (this.lock != null && !this.lock.tryLock(this.lockTimeout, TimeUnit.SECONDS)) {
-                    throw new TimeoutException(
-                        "Possible deadlock - could not obtain a lock while attempting to invoke method [" + this.method
-                            + "] on resource component [" + resourceComponent + "]; facet-lock-status=["
-                            + this.resourceContainer.getFacetLockStatus());
+            if (this.lock != null) {
+                try {
+                    this.lock.lockInterruptibly();
                 }
-            }
-            catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                // If we made it here, we have acquired the lock.
             }
             try {
                 this.results = this.method.invoke(resourceComponent, this.args);

@@ -199,7 +199,7 @@ public class RemotePojoInvocationCommandService extends CommandService implement
 
             response = new RemotePojoInvocationCommandResponse(remote_pojo_command, response_exception);
         } catch (NotPermittedException npe) {
-            LOG.warn(CommI18NResourceKeys.COMMAND_NOT_PERMITTED, target_interface_name + '.' + method_name, npe
+            LOG.debug(CommI18NResourceKeys.COMMAND_NOT_PERMITTED, target_interface_name + '.' + method_name, npe
                 .getSleepBeforeRetry());
             response = new RemotePojoInvocationCommandResponse(remote_pojo_command, npe);
         } catch (Exception e) {

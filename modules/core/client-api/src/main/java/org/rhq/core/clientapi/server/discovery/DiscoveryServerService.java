@@ -21,6 +21,7 @@ package org.rhq.core.clientapi.server.discovery;
 import java.util.Map;
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
+import org.rhq.core.communications.command.annotation.Timeout;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.InventoryReportResponse;
@@ -51,6 +52,7 @@ public interface DiscoveryServerService {
      * @throws InvalidInventoryReportException if the inventory report contains invalid data
      */
     @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_REPORT)
+    @Timeout(1000L * 60 * 30)
     InventoryReportResponse mergeInventoryReport(InventoryReport inventoryReport)
         throws InvalidInventoryReportException;
 

@@ -23,7 +23,7 @@
 
    <properties>
       <scm.module.path>modules/plugins/jmx/</scm.module.path>
-      <ems.version>1.2.0</ems.version>
+      <ems.version>1.2.1</ems.version>
    </properties>
 
    <dependencies>
@@ -39,13 +39,6 @@
          <groupId>mc4j</groupId>
          <artifactId>org-mc4j-ems</artifactId>
          <version>${ems.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>mc4j</groupId>
-         <artifactId>org-mc4j-ems-impl</artifactId>
-         <version>${ems.version}</version>
-         <scope>provided</scope>
       </dependency>
 
       <dependency>

@@ -122,13 +122,22 @@
       
    </target>
 
-   <!-- ========== -->
-   <target name="clean" description="Deletes all copies of the source agent distro.">
-      <echo>Deleting the agents found here: ${perftest.agent.vm.dir}</echo>
-      <delete dir="${perftest.agent.vm.dir}" />
-      <echo>Deleting all Java Preferences</echo>
-      <delete dir="${user.home}/.java" />
-   </target>
+    <!-- ========== -->
+    <target name="clean" description="Deletes all copies of the agent VMs.">
+       <echo>Deleting all agent VMs...</echo>
+       <foreach param="_index"
+                list="${perftest.agent.vm.startports}"
+                target="clean-single-vm" />
+       <echo>All agent VMs should have been deleted.</echo>
+    </target>
+
+    <!-- ========== -->
+    <target name="clean-single-vm" description="Deletes a single agent VM and its preferences.">
+       <echo>Deleting the agent VM found here: ${perftest.agent.vm.dir}/${_index}</echo>
+       <delete dir="${perftest.agent.vm.dir}/${_index}" />
+       <echo>Deleting all Java Preferences found here: ${user.home}/.java${_index}</echo>
+       <delete dir="${user.home}/.java${_index}" />
+    </target>
 
    <!-- ========== -->
    <target name="stop" description="Stops all the agent VMs (not available on Windows).">

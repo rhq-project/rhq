@@ -490,6 +490,13 @@ public class EventManagerBean implements EventManagerLocal {
 
         } catch (SQLException sq) {
             log.error("runEventsQuery: Error retreiving events: " + sq.getMessage(), sq);
+            log.error("query is [" + query + "].");
+            // these values should be useful in working out how we built the query in setupEventsQuery()
+            log.error("resourceIds[] has [" + resourceIds.length + "] members.");
+            log.error("severity is [" + severity + "].");
+            log.error("source is [" + source + "].");
+            log.error("searchString is [" + searchString + "].");
+            log.error("PageControl is [" + pc + "].");
         } finally {
             JDBCUtil.safeClose(conn, stm, rs);
         }

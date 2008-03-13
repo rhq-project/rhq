@@ -570,7 +570,7 @@ public class OperationManagerBean implements OperationManagerLocal {
     @SuppressWarnings("unchecked")
     public PageList<ResourceOperationHistory> getPendingResourceOperationHistories(Subject whoami, int resourceId,
         PageControl pc) {
-        pc.initDefaultOrderingField("h.createdTime", PageOrdering.DESC);
+        pc.initDefaultOrderingField("h.createdTime", PageOrdering.ASC);
 
         String queryName = ResourceOperationHistory.QUERY_FIND_BY_RESOURCE_ID_AND_STATUS;
         Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
@@ -631,7 +631,7 @@ public class OperationManagerBean implements OperationManagerLocal {
 
     @SuppressWarnings("unchecked")
     public PageList<GroupOperationHistory> getPendingGroupOperationHistories(Subject whoami, int groupId, PageControl pc) {
-        pc.initDefaultOrderingField("h.createdTime", PageOrdering.DESC);
+        pc.initDefaultOrderingField("h.createdTime", PageOrdering.ASC);
 
         String queryName = GroupOperationHistory.QUERY_FIND_BY_GROUP_ID_AND_STATUS;
         Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
@@ -1068,7 +1068,7 @@ public class OperationManagerBean implements OperationManagerLocal {
     @SuppressWarnings("unchecked")
     public PageList<ResourceOperationLastCompletedComposite> getRecentlyCompletedResourceOperations(Subject subject,
         PageControl pageControl) {
-        pageControl.initDefaultOrderingField("ro.createdTime", PageOrdering.DESC);
+        pageControl.initDefaultOrderingField("ro.createdTime", PageOrdering.ASC);
 
         Query query;
         Query count;
@@ -1096,7 +1096,7 @@ public class OperationManagerBean implements OperationManagerLocal {
     @SuppressWarnings("unchecked")
     public PageList<GroupOperationLastCompletedComposite> getRecentlyCompletedGroupOperations(Subject subject,
         PageControl pageControl) {
-        pageControl.initDefaultOrderingField("go.createdTime", PageOrdering.DESC);
+        pageControl.initDefaultOrderingField("go.createdTime", PageOrdering.ASC);
 
         Query query;
         Query count;

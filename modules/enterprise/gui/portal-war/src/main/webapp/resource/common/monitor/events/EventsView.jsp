@@ -41,7 +41,7 @@
     long begin = (Long) pref.get(MonitorUtils.BEGIN);
     long end = (Long) pref.get(MonitorUtils.END);
 
-      System.out.println("Displaying from " + new Date(begin) + " to " + new Date(end));
+      // System.out.println("Displaying from " + new Date(begin) + " to " + new Date(end));
 //    long end = System.currentTimeMillis();
 //    long begin = end - (1000L * 60 * 60 * 24);
 

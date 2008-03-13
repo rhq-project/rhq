@@ -28,11 +28,10 @@
             eventManager.getEvents(subject, new int[] {resourceId} , begin, end, null, -1,
                 null, null, new PageControl(0,100, new OrderingField()));
 
-    if (list.getTotalSize() != list.size()) {
+    /* TODO GH: Add alert to screen
+        if (list.getTotalSize() != list.size()) {
         tooManyEvents = true;
-        System.out.println("Too many events to load: " + list.getTotalSize());
-    }
-    System.out.println("Events: " + list.size());
+    }*/
 
 %>
 

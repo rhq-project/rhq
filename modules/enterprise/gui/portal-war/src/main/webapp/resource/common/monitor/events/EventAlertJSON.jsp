@@ -28,8 +28,6 @@
     pc.setPrimarySortOrder(PageOrdering.DESC);
     PageList<Alert> alerts = alertManager.findAlerts(resourceId, new Date(begin), pc);
 
-    System.out.println(System.currentTimeMillis() - end);
-
 %>
 
 { "events":

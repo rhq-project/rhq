@@ -38,7 +38,7 @@ public class ResourceContainerTest {
         ResourceContainer resourceContainer = new ResourceContainer(resource);
         ResourceComponent resourceComponent = new MockResourceComponent(false);
         resourceContainer.setResourceComponent(resourceComponent);
-        System.out.println("Testing proxy call that should time out...");
+        System.out.println("Testing proxy call that should timeout...");
         ResourceComponent resourceComponentProxy = resourceContainer.createResourceComponentProxy(ResourceComponent.class, FacetLockType.NONE, 50, true, false);
         try {
             resourceComponentProxy.getAvailability();
@@ -64,6 +64,11 @@ public class ResourceContainerTest {
         catch (RuntimeException e) {
             assert (e instanceof MockRuntimeException);
         }
+        System.out.println("SUCCESS!");
+        System.out.println("Testing proxy call that should not timeout because it is not to a method declared in the proxied interface...");
+        resourceComponentProxy = resourceContainer.createResourceComponentProxy(ResourceComponent.class, FacetLockType.NONE, 50, true, false);
+        String string = resourceComponentProxy.toString();
+        assert (string.equals(MockResourceComponent.class.toString()));
         System.out.println("SUCCESS!");
         // TODO: Test proxy locking.
     }
@@ -93,6 +98,16 @@ public class ResourceContainerTest {
                 return AvailabilityType.DOWN;
             }
             return AvailabilityType.UP;
+        }
+
+        public String toString() {
+            try {
+                Thread.sleep(100);
+            }
+            catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return this.getClass().toString();
         }
     }
 

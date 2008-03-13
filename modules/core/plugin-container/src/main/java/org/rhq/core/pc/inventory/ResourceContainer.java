@@ -237,7 +237,7 @@ public class ResourceContainer implements Serializable {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
         // this is the handler that will actually acquire the lock and invoke the facet method call
-        ResourceComponentInvocationHandler handler = new ResourceComponentInvocationHandler(this, lockType, timeout, daemonThread);
+        ResourceComponentInvocationHandler handler = new ResourceComponentInvocationHandler(this, lockType, timeout, daemonThread, facetInterface);
 
         // this is the proxy that will look like the facet interface that the caller will use
         return (T) Proxy.newProxyInstance(classLoader, new Class<?>[] { facetInterface }, handler);
@@ -255,6 +255,12 @@ public class ResourceContainer implements Serializable {
         return str.toString();
     }
 
+    // Recreate the facet lock on deserialization
+    private Object readResolve() throws java.io.ObjectStreamException {
+        this.facetAccessLock = new ReentrantReadWriteLock();
+        return this;
+    }
+    
     /**
      * This is a ResourceComponent proxy that invokes component methods in pooled threads. Depending on the parameters
      * passed to its constructor, it may also:
@@ -278,6 +284,7 @@ public class ResourceContainer implements Serializable {
         private final Lock lock;
         private final long timeout;
         private final boolean daemonThread;
+        private final Class facetInterface;
 
         /**
          *
@@ -285,10 +292,11 @@ public class ResourceContainer implements Serializable {
          *                  caller must ensure the container's component is never null
          * @param lockType the type of lock to use for the invocation
          * @param timeout if the method invocation thread has not completed after this many milliseconds, interrupt it;
-         *                value must be positive
+*                value must be positive
          * @param daemonThread whether or not the thread used for the invocation should be a daemon thread
+         * @param facetInterface the interface that the component implements that is being exposed by this proxy
          */
-        public ResourceComponentInvocationHandler(ResourceContainer container, FacetLockType lockType, long timeout, boolean daemonThread) {
+        public ResourceComponentInvocationHandler(ResourceContainer container, FacetLockType lockType, long timeout, boolean daemonThread, Class facetInterface) {
             this.container = container;
             if (lockType == FacetLockType.WRITE) {
                 this.lock = container.getWriteFacetLock();
@@ -302,12 +310,21 @@ public class ResourceContainer implements Serializable {
             }
             this.timeout = timeout;
             this.daemonThread = daemonThread;
+            this.facetInterface = facetInterface;
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            ComponentInvocationThread invocationThread = new ComponentInvocationThread(this.container, method, args, this.lock);
+            if (method.getDeclaringClass().equals(this.facetInterface)) {
+                return invokeInNewThreadWithLock(method, args);
+            } else {
+                // toString(), etc.
+                return invokeInCurrentThreadWithoutLock(method, args);
+            }
+        }
+
+        private Object invokeInNewThreadWithLock(Method method, Object[] args) throws Throwable {
             ExecutorService threadPool = this.daemonThread ? DAEMON_THREAD_POOL : NON_DAEMON_THREAD_POOL;
-            // This is the actual call into the plugin component's facet interface.
+            ComponentInvocationThread invocationThread = new ComponentInvocationThread(this.container, method, args, this.lock);
             Future<?> future = threadPool.submit(invocationThread);
             String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "()";
             String methodArgs = "[" + ((args != null) ? Arrays.asList(args) : "") + "]";
@@ -339,12 +356,15 @@ public class ResourceContainer implements Serializable {
             }
             return invocationThread.getResults();
         }
-    }
 
-    // Recreate the facet lock on deserialization
-    private Object readResolve() throws java.io.ObjectStreamException {
-        this.facetAccessLock = new ReentrantReadWriteLock();
-        return this;
+        private Object invokeInCurrentThreadWithoutLock(Method method, Object[] args) throws Throwable {
+            try {
+                return method.invoke(this.container.getResourceComponent(), args);
+            }
+            catch (InvocationTargetException ite) {
+                throw (ite.getCause() != null) ? ite.getCause() : ite;
+            }
+        }
     }
 
     private static class ComponentInvocationThread extends Thread {
@@ -375,6 +395,7 @@ public class ResourceContainer implements Serializable {
                 // If we made it here, we have acquired the lock.
             }
             try {
+                // This is the actual call into the resource component's facet interface.
                 this.results = this.method.invoke(resourceComponent, this.args);
             } catch (InvocationTargetException ite) {
                 this.error = (ite.getCause() != null) ? ite.getCause() : ite;

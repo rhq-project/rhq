@@ -106,6 +106,13 @@
          <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
          <to-view-id>/rhq/group/operation/view-results-map.xhtml</to-view-id>
       </navigation-case>
+      
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/group/operation/groupOperationHistoryDetails.xhtml?groupId=#{param.groupId}&amp;opId=#{param.opId}&amp;category=#{param.category}</to-view-id>
+         <redirect/>
+      </navigation-case> 
 
    </navigation-rule>
 

@@ -413,7 +413,7 @@ public class EventManagerBean implements EventManagerLocal {
             }
 
         } catch (SQLException sq) {
-            log.error("getEvents: Error retreiving events: " + sq.getMessage());
+            log.error("getEventsForEvent: Error retreiving events: " + sq.getMessage(), sq);
             return pl;
         } finally {
             JDBCUtil.safeClose(conn, stm, rs);
@@ -489,7 +489,7 @@ public class EventManagerBean implements EventManagerLocal {
             }
 
         } catch (SQLException sq) {
-            log.error("getEvents: Error retreiving events: " + sq.getMessage());
+            log.error("runEventsQuery: Error retreiving events: " + sq.getMessage(), sq);
         } finally {
             JDBCUtil.safeClose(conn, stm, rs);
         }
@@ -523,7 +523,7 @@ public class EventManagerBean implements EventManagerLocal {
             }
 
         } catch (SQLException sq) {
-            log.error("getEvents: Error retreiving events: " + sq.getMessage());
+            log.error("runEventsCountQuery: Error retreiving events: " + sq.getMessage(), sq);
         } finally {
             JDBCUtil.safeClose(conn, stm, rs);
         }

@@ -324,12 +324,12 @@ public class ResourceContainer implements Serializable {
 
         private Object invokeInNewThreadWithLock(Method method, Object[] args) throws Throwable {
             ExecutorService threadPool = this.daemonThread ? DAEMON_THREAD_POOL : NON_DAEMON_THREAD_POOL;
-            ComponentInvocationThread invocationThread = new ComponentInvocationThread(this.container, method, args, this.lock);
+            Callable invocationThread = new ComponentInvocationThread(this.container, method, args, this.lock);
             Future<?> future = threadPool.submit(invocationThread);
             String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "()";
             String methodArgs = "[" + ((args != null) ? Arrays.asList(args) : "") + "]";
             try {
-                future.get(this.timeout, TimeUnit.MILLISECONDS);
+                return future.get(this.timeout, TimeUnit.MILLISECONDS);
             }
             catch (InterruptedException e) {
                 LOG.error("Thread '" + Thread.currentThread().getName() + "' was interrupted.");
@@ -339,7 +339,7 @@ public class ResourceContainer implements Serializable {
                 throw new RuntimeException("Call to " + methodName + " with args " + methodArgs + " was rudely interrupted.", e);
             }
             catch (ExecutionException e) {
-                // This will never happen, since we catch and swallow Throwable in ComponentInvocationThread.run().
+                LOG.debug("Call to " + methodName + " with args " + methodArgs + " failed.", e);
                 throw e.getCause();
             }
             catch (java.util.concurrent.TimeoutException e) {
@@ -350,11 +350,6 @@ public class ResourceContainer implements Serializable {
                 }
                 throw new TimeoutException("Call to " + methodName + " with args " + methodArgs + " timed out.");
             }
-            // If we got this far, the call completed.
-            if (invocationThread.getError() != null) {
-                throw invocationThread.getError();
-            }
-            return invocationThread.getResults();
         }
 
         private Object invokeInCurrentThreadWithoutLock(Method method, Object[] args) throws Throwable {
@@ -367,14 +362,11 @@ public class ResourceContainer implements Serializable {
         }
     }
 
-    private static class ComponentInvocationThread extends Thread {
+    private static class ComponentInvocationThread implements Callable {
         private final ResourceContainer resourceContainer;
         private final Method method;
         private final Object[] args;
         private final Lock lock;
-
-        private Object results;
-        private Throwable error;
 
         ComponentInvocationThread(ResourceContainer resourceContainer, Method method, Object[] args, Lock lock) {
             this.resourceContainer = resourceContainer;
@@ -383,7 +375,7 @@ public class ResourceContainer implements Serializable {
             this.lock = lock;
         }
 
-        public void run() {
+        public Object call() throws Exception {
             ResourceComponent resourceComponent = this.resourceContainer.getResourceComponent();
             if (this.lock != null) {
                 try {
@@ -396,24 +388,19 @@ public class ResourceContainer implements Serializable {
             }
             try {
                 // This is the actual call into the resource component's facet interface.
-                this.results = this.method.invoke(resourceComponent, this.args);
-            } catch (InvocationTargetException ite) {
-                this.error = (ite.getCause() != null) ? ite.getCause() : ite;
-            } catch (Throwable t) {
-                this.error = t;
+                return this.method.invoke(resourceComponent, this.args);
+            } catch (InvocationTargetException e) {
+                Throwable cause = e.getCause();
+                throw (cause instanceof Exception) ? (Exception)cause : new Exception(cause);
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             } finally {
                 if (this.lock != null) {
                     this.lock.unlock();
                 }
             }
-        }
-
-        public Object getResults() {
-            return results;
-        }
-
-        public Throwable getError() {
-            return error;
         }
     }
 }

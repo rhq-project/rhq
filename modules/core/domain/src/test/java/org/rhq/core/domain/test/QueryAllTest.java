@@ -61,6 +61,7 @@ import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
+import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1D;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric6H;
@@ -141,6 +142,9 @@ public class QueryAllTest extends AbstractEJB3Test {
 
         // group stuff
         GroupDefinition.class.getSimpleName(), ResourceGroup.class.getSimpleName(),
+
+        // event
+        Event.class.getSimpleName(),
 
         // measurement calltime
         CallTimeDataKey.class.getSimpleName(), CallTimeDataValue.class.getSimpleName() };

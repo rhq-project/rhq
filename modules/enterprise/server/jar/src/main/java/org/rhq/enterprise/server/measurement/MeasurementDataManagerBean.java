@@ -78,12 +78,12 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
@@ -1078,6 +1078,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
         q.setFlushMode(FlushModeType.COMMIT);
         q.setParameter("resourceType", type);
         q.setParameter("resources", resources);
+        q.setParameter("dataType", DataType.MEASUREMENT);
 
         // <schedId, resId, defId>
         List<Object[]> schedules = q.getResultList();

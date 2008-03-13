@@ -123,14 +123,6 @@ public class ListChildrenAction extends TilesAction {
             for (AutoGroupComposite child : children) {
                 List<MetricDisplaySummary> metrics = getMetrics(resource, child, subject, begin, end);
 
-                // set "info about autogroup" so that we can use that info in the JSP later
-                // definitionId is already set in the backend
-                if (metrics != null)
-                    for (MetricDisplaySummary tmp : metrics) {
-                        tmp.setParentId(parentId);
-                        tmp.setChildTypeId(resourceTypeId);
-                    }
-
                 displaySummary.add(new AutoGroupCompositeDisplaySummary(child, metrics));
             }
         }

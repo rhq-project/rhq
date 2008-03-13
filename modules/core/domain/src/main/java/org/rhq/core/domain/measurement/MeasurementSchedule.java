@@ -65,7 +65,7 @@ import org.rhq.core.domain.resource.Resource;
         + " WHERE def.resourceType = :resourceType "
         + "   AND ms.definition = def "
         + "   AND res IN (:resources) "
-        + "   AND ms.enabled = true"),
+        + "   AND ms.enabled = true" + "   AND (def.dataType = :dataType OR :dataType is null )"),
     @NamedQuery(name = MeasurementSchedule.FIND_ENABLED_BY_RESOURCE_IDS_AND_RESOURCE_TYPE_ID, query = "SELECT ms.id, res.id, def.id "
         + "  FROM MeasurementSchedule ms "
         + "  JOIN ms.definition def "

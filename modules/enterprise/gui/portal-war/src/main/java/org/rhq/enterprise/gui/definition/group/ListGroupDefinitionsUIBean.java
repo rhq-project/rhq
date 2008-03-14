@@ -20,6 +20,8 @@ package org.rhq.enterprise.gui.definition.group;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -27,6 +29,7 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -65,10 +68,11 @@ public class ListGroupDefinitionsUIBean extends PagedDataTableUIBean {
     public String deleteSelectedGroupDefinitions() {
         String[] selectedGroupDefinitions = getSelectedGroupDefinitions();
         Integer[] groupDefinitionIds = getIntegerArray(selectedGroupDefinitions);
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
 
         try {
             for (Integer groupDefinitionId : groupDefinitionIds) {
-                groupDefinitionManager.removeGroupDefinition(groupDefinitionId);
+                groupDefinitionManager.removeGroupDefinition(subject, groupDefinitionId);
             }
 
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted selected group definitions.");

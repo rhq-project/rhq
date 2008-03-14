@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.resource.group.definition;
 
 import javax.ejb.Local;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -37,13 +38,13 @@ import org.rhq.enterprise.server.resource.group.definition.framework.InvalidExpr
 public interface GroupDefinitionManagerLocal {
     GroupDefinition getById(int groupDefinitionId) throws GroupDefinitionNotFoundException;
 
-    GroupDefinition createGroupDefinition(GroupDefinition newGroupDefinition)
+    GroupDefinition createGroupDefinition(Subject subject, GroupDefinition newGroupDefinition)
         throws GroupDefinitionAlreadyExistsException, GroupDefinitionCreateException;
 
-    GroupDefinition updateGroupDefinition(GroupDefinition updated) throws GroupDefinitionAlreadyExistsException,
-        GroupDefinitionUpdateException, InvalidExpressionException;
+    GroupDefinition updateGroupDefinition(Subject subject, GroupDefinition updated)
+        throws GroupDefinitionAlreadyExistsException, GroupDefinitionUpdateException, InvalidExpressionException;
 
-    void calculateGroupMembership(int groupDefinitionId) throws GroupDefinitionDeleteException,
+    void calculateGroupMembership(Subject subject, int groupDefinitionId) throws GroupDefinitionDeleteException,
         GroupDefinitionNotFoundException, InvalidExpressionException, ResourceGroupUpdateException;
 
     Integer calculateGroupMembership_helper(Subject subject, GroupDefinition groupDefinition,
@@ -53,9 +54,9 @@ public interface GroupDefinitionManagerLocal {
 
     PageList<GroupDefinition> getGroupDefinitions(PageControl pc);
 
-    void removeGroupDefinition(Integer groupDefinitionId) throws GroupDefinitionNotFoundException,
+    void removeGroupDefinition(Subject subject, Integer groupDefinitionId) throws GroupDefinitionNotFoundException,
         GroupDefinitionDeleteException;
 
-    void removeManagedResource_helper(GroupDefinition groupDefinition, Integer doomedGroupId)
+    void removeManagedResource_helper(Subject subject, GroupDefinition groupDefinition, Integer doomedGroupId)
         throws GroupDefinitionDeleteException;
 }

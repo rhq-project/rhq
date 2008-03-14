@@ -20,8 +20,10 @@ package org.rhq.enterprise.gui.definition.group;
 
 import javax.faces.application.FacesMessage;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionException;
@@ -78,7 +80,8 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
             groupDefinition.setExpression(expression.replaceAll("\\r", "\n").replaceAll("\\f", "\n").replaceAll("\\n+",
                 "\n"));
 
-            this.groupDefinitionManager.updateGroupDefinition(groupDefinition);
+            this.groupDefinitionManager.updateGroupDefinition(EnterpriseFacesContextUtility.getSubject(),
+                groupDefinition);
         } catch (GroupDefinitionException gde) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Problem updating group definition: "
                 + gde.getMessage());
@@ -96,8 +99,9 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
     public String createGroups() {
         try {
             GroupDefinition groupDefinition = GroupDefinitionUIBean.lookupGroupDefinition();
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
 
-            this.groupDefinitionManager.calculateGroupMembership(groupDefinition.getId());
+            this.groupDefinitionManager.calculateGroupMembership(subject, groupDefinition.getId());
         } catch (GroupDefinitionException gde) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Problem updating group definition: "
                 + gde.getMessage());

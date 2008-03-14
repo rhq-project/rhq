@@ -71,7 +71,7 @@ import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 
 public class ContentManager extends AgentService implements ContainerService, ContentAgentService, ContentServices {
-    private static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
+    private static final int FACET_METHOD_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
     // Attributes  --------------------------------------------
 
@@ -134,8 +134,9 @@ public class ContentManager extends AgentService implements ContainerService, Co
         discoveryThreadPoolExecutor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
         discoveryThreadPoolExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
 
-        crudExecutor = new ThreadPoolExecutor(1, 100, 1000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(
-            10000), new LoggingThreadFactory("Content.crud", true));
+        crudExecutor = new ThreadPoolExecutor(1, 5, 60, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(10000),
+                new LoggingThreadFactory("Content.crud", true));
 
         // When running in scheduled mode, create and schedule the thread pool for discovering content
         if (scheduledDiscoveriesEnabled) {
@@ -376,7 +377,9 @@ public class ContentManager extends AgentService implements ContainerService, Co
      */
     ContentDiscoveryReport performContentDiscovery(int resourceId, PackageType type) throws Exception {
         // Perform the discovery
-        ContentFacet contentFacet = findContentFacet(resourceId);
+        // Use only a read-locked component proxy
+        ContentFacet contentFacet = ComponentUtil.getComponent(resourceId, ContentFacet.class, FacetLockType.READ, FACET_METHOD_TIMEOUT, false, true);
+
         Set<ResourcePackageDetails> details = contentFacet.discoverDeployedPackages(type);
         log.info("Discovered number of packages: " + ((details != null) ? details.size() : null) + " for type: "
                 + type);
@@ -621,7 +624,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         // InventoryEventListener Implementation  --------------------------------------------
 
         public void resourceActivated(Resource resource) {
-            log.info("Found resource to schedule content discoveries for: " + resource);
+            log.debug("Checking to see if resource has content types to schedule discovery for: " + resource);
             ContentManager.this.scheduleDiscoveries(resource);
         }
 

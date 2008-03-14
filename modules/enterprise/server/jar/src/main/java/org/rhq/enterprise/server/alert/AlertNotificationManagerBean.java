@@ -18,8 +18,10 @@
  */
 package org.rhq.enterprise.server.alert;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -379,11 +381,31 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             return 0;
         }
 
-        Query query = entityManager.createNamedQuery(AlertNotification.DELETE_BY_ID);
-        query.setParameter("ids", Arrays.asList(notificationIds));
-        int recordsRemoved = query.executeUpdate();
+        Set<Integer> notificationIdSet = new HashSet<Integer>(Arrays.asList(notificationIds));
+        List<AlertNotification> notifications = new ArrayList<AlertNotification>(alertDefinition
+            .getAlertNotifications());
+        List<AlertNotification> toBeRemoved = new ArrayList<AlertNotification>();
 
-        return recordsRemoved;
+        int removed = 0;
+        for (AlertNotification notification : notifications) {
+            if (notificationIdSet.contains(notification.getId())) {
+                toBeRemoved.add(notification);
+                removed--;
+            }
+        }
+
+        alertDefinition.getAlertNotifications().removeAll(toBeRemoved);
+
+        if (isAlertTemplate) {
+            try {
+                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true);
+            } catch (InvalidAlertDefinitionException iade) {
+                // can this ever really happen?  if it does, the logs will know about it
+                LOG.error("Can not update alert template, invalid definition: " + alertDefinition);
+            }
+        }
+
+        return removed;
     }
 
     public void setSnmpNotification(Subject subject, Integer alertDefinitionId, SnmpNotification snmpNotification,

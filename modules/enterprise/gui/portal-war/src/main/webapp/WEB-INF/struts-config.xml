@@ -2623,7 +2623,7 @@
               scope="request"
               input="/alerts/Config.do?mode=viewOthers">
          <forward name="success" path="/alerts/Config.do?mode=viewOthers" redirect="true"/>
-         <forward name="failure" path="/alerts/Config.do?mode=list" redirect="true"/>
+         <forward name="failure" path="/alerts/Config.do?mode=viewOthers" redirect="true"/>
       </action>
 
       <action path="/alerts/RemoveRoles"
@@ -2632,7 +2632,7 @@
               scope="request"
               input="/alerts/Config.do?mode=viewRoles">
          <forward name="success" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
-         <forward name="failure" path="/alerts/Config.do?mode=list" redirect="true"/>
+         <forward name="failure" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
       </action>
 
       <action path="/alerts/RemoveUsers"
@@ -2641,7 +2641,7 @@
               scope="request"
               input="/alerts/Config.do?mode=viewUsers">
          <forward name="success" path="/alerts/Config.do?mode=viewUsers" redirect="true"/>
-         <forward name="failure" path="/alerts/Config.do?mode=list" redirect="true"/>
+         <forward name="failure" path="/alerts/Config.do?mode=viewUsers" redirect="true"/>
       </action>
 
       <action path="/alerts/SetSnmpProps"
@@ -2650,7 +2650,7 @@
               scope="request"
               input="/alerts/Config.do?mode=viewSnmp">
          <forward name="success" path="/alerts/Config.do?mode=viewSnmp" redirect="true"/>
-         <forward name="failure" path="/alerts/Config.do?mode=list" redirect="true"/>
+         <forward name="failure" path="/alerts/Config.do?mode=viewSnmp" redirect="true"/>
       </action>
 
       <!-- JBNADM-536 update for name and title property-->

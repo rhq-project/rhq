@@ -21,6 +21,7 @@ package org.rhq.core.domain.authz;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -35,13 +36,14 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import org.hibernate.Hibernate;
+
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
 import org.hibernate.annotations.CollectionOfElements;
 import org.jetbrains.annotations.NotNull;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.notification.RoleNotification;
+import org.rhq.core.domain.auth.Subject;
 
 /**
  * A role has zero or more {@link org.rhq.core.domain.resource.group.ResourceGroup}s assigned to it. You can assign a
@@ -241,7 +243,7 @@ public class Role implements Serializable {
     }
 
     public int getMemberCount() {
-        return Hibernate.isInitialized(this.subjects) ? this.getSubjects().size() : 0;
+        return this.getSubjects().size();
     }
 
     @Override

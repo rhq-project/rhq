@@ -37,6 +37,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -45,6 +46,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupAlreadyExistsException;
@@ -83,6 +85,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         return groupDefinition;
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public GroupDefinition createGroupDefinition(GroupDefinition newGroupDefinition)
         throws GroupDefinitionAlreadyExistsException, GroupDefinitionCreateException {
         validateName(newGroupDefinition.getName(), null);
@@ -96,6 +99,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         return newGroupDefinition;
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public GroupDefinition updateGroupDefinition(GroupDefinition groupDefinition)
         throws GroupDefinitionAlreadyExistsException, GroupDefinitionUpdateException, InvalidExpressionException {
         try {
@@ -140,6 +144,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         }
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void calculateGroupMembership(int groupDefinitionId) throws GroupDefinitionDeleteException,
         GroupDefinitionNotFoundException, InvalidExpressionException, ResourceGroupUpdateException {
         /*
@@ -203,6 +208,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         log.debug("calculateGroupMembership took " + (endTime - startTime) + " millis");
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public Integer calculateGroupMembership_helper(Subject overlord, GroupDefinition groupDefinition,
         ExpressionEvaluator.Result result) throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException {
@@ -289,6 +295,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         return new PageList<GroupDefinition>(results, (int) count, pc);
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void removeGroupDefinition(Integer groupDefinitionId) throws GroupDefinitionNotFoundException,
         GroupDefinitionDeleteException {
@@ -311,13 +318,12 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         throws GroupDefinitionDeleteException {
         ResourceGroup doomedGroup = entityManager.getReference(ResourceGroup.class, doomedGroupId);
         groupDefinition.removeResourceGroup(doomedGroup);
-        
+
         /*
          * using the group manager's delete method ensures that auditing data,
          * such as completed operations, is correctly removed
          */
         //resourceGroupManager.deleteResourceGroup( subjectManager.getOverlord(), doomedGroupId );
-        
         try {
             entityManager.remove(doomedGroup);
         } catch (Exception e) {

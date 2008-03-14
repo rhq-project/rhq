@@ -70,7 +70,8 @@ public class ResourceGroupOperationHistoryDetailsUIBean extends PagedDataTableUI
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ListGroupOperationHistoryDetailsDataModel(PageControlView.NONE, MANAGED_BEAN_NAME);
+            dataModel = new ListGroupOperationHistoryDetailsDataModel(
+                PageControlView.ResourceGroupOperationHistoryDetails, MANAGED_BEAN_NAME);
         }
 
         return dataModel;

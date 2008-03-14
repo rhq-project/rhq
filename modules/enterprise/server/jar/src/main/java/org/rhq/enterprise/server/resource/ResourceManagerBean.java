@@ -35,6 +35,7 @@ import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
@@ -113,7 +114,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     private final Log log = LogFactory.getLog(ResourceManagerBean.class);
 
     /** The number of resources that can be deleted in one transaction. */
-    private final int BULK_DELETE_SIZE = 300;
+    private final int BULK_DELETE_SIZE = 200;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -266,6 +267,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 doomedAgent = agentManager.getAgentByResourceId(resourceId);
             } catch (Exception e) {
                 doomedAgent = null;
+                log.warn("This warning should occur in TEST code only! " + e);
             }
         }
 
@@ -275,12 +277,41 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             // The test code does not always generate agents for the resources. Catch and log any problem but continue
             agentClient = agentManager.getAgentClient(resourceId);
         } catch (RuntimeException e) {
-            log.debug(e);
+            log.warn("This warning should occur in TEST code only! " + e);
         }
 
         // delete the resource and all its children
         log.info("User [" + user + "] is deleting resource [" + resource + "]");
-        deleteResourceRecursive(user, resource, deletedResourceIds);
+
+        // At times agent activity involving the resources being deleted cause a variety of, typically but not limited to,
+        // locking exceptions.  Retry any type of PersistenceException on the hope that the offending (concurrency)
+        // conflict will not re-occur.
+        // One problem we have seen a JBoss TreeCache locking problem described here:
+        //   http://jira.jboss.org/jira/browse/JBCACHE-1166
+        //   http://jira.jboss.com/jira/browse/JBCACHE-1151
+        //   Optimistic locking may solve this but until we cross that bridge we'll institute a wait/retry
+        //   for our delete attempt, hoping the lock will be released.
+        boolean done = false;
+        int count = 0, max = 20;
+        do {
+            try {
+                deleteResourceRecursive(user, resource, deletedResourceIds);
+                done = true;
+            } catch (RuntimeException e) {
+                if ((++count < max) && isPersistenceException(e)) {
+                    log
+                        .info("Retry# " + count + ": delete resource [" + resource + "] after persistence problem: "
+                            + e);
+                    try {
+                        Thread.sleep(500L);
+                    } catch (InterruptedException ie) {
+                        // ignore
+                    }
+                } else {
+                    throw e;
+                }
+            }
+        } while (!done);
 
         // still need to tell the agent about the removed resources so it stops avail reports
         if (agentClient != null) {
@@ -296,6 +327,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         return deletedResourceIds;
+    }
+
+    private boolean isPersistenceException(Exception e) {
+        boolean result = false;
+
+        for (Throwable t = e; (!result && (null != t)); t = t.getCause()) {
+            result = t instanceof PersistenceException;
+        }
+
+        return result;
     }
 
     private void deleteResourceRecursive(Subject user, Resource resource, List<Integer> deletedResourceIds) {

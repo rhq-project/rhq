@@ -42,15 +42,13 @@ import javax.persistence.SqlResultSetMapping;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
-import org.rhq.core.domain.event.EventDefinition;
 
 /**
  * Defines a type of {@link Resource} (e.g. a Linux platform, a JBossAS server, or a Datasource service).
@@ -175,7 +173,7 @@ import org.rhq.core.domain.event.EventDefinition;
         //               "ORDER BY crt2.name" +
         ")) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY) })
 @SqlResultSetMapping(name = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY, entities = { @EntityResult(entityClass = ResourceType.class) })
-@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
+// @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ResourceType implements Externalizable, Comparable<ResourceType> {
     private static final long serialVersionUID = 1L;
 
@@ -242,24 +240,24 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
 
     @ManyToMany(mappedBy = "parentResourceTypes", cascade = CascadeType.ALL)
     @OrderBy
-    @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
+    //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private Set<ResourceType> childResourceTypes;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     // persist so self-injecting plugins work
     @JoinTable(name = "RHQ_RESOURCE_TYPE_PARENTS", joinColumns = { @JoinColumn(name = "RESOURCE_TYPE_ID") }, inverseJoinColumns = { @JoinColumn(name = "PARENT_RESOURCE_TYPE_ID") })
     @OrderBy
-    @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
+    //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private Set<ResourceType> parentResourceTypes;
 
     @JoinColumn(name = "PLUGIN_CONFIG_DEF_ID")
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
+    //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private ConfigurationDefinition pluginConfigurationDefinition;
 
     @JoinColumn(name = "RES_CONFIG_DEF_ID")
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
+    //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private ConfigurationDefinition resourceConfigurationDefinition;
 
     @JoinColumn(name = "SUBCATEGORY_ID")
@@ -269,12 +267,13 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     @OrderBy
     // primary key
-    @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
+    //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private Set<MeasurementDefinition> metricDefinitions;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
-    @OrderBy // primary key
-    @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
+    @OrderBy
+    // primary key
+    //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private Set<EventDefinition> eventDefinitions;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
@@ -316,7 +315,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         this.parentResourceTypes = new LinkedHashSet<ResourceType>();
         this.metricDefinitions = new LinkedHashSet<MeasurementDefinition>();
         this.eventDefinitions = new LinkedHashSet<EventDefinition>();
-        this.operationDefinitions = new LinkedHashSet<OperationDefinition>();        
+        this.operationDefinitions = new LinkedHashSet<OperationDefinition>();
         this.packageTypes = new HashSet<PackageType>();
         this.subCategories = new ArrayList<ResourceSubCategory>();
 
@@ -564,7 +563,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     public void addEventDefinition(EventDefinition eventDefinition) {
         this.eventDefinitions.add(eventDefinition);
     }
-    
+
     public Set<OperationDefinition> getOperationDefinitions() {
         return operationDefinitions;
     }

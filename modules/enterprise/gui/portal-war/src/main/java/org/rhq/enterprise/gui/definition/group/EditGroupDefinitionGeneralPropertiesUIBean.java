@@ -90,6 +90,10 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "Syntax error in one of your group definitions: " + iee.getMessage());
             return OUTCOME_FAILURE;
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error updating group definition: "
+                + e.getMessage());
+            return OUTCOME_FAILURE;
         }
 
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "General properties updated.");

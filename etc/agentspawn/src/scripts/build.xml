@@ -128,6 +128,12 @@
        <foreach param="_index"
                 list="${perftest.agent.vm.startports}"
                 target="clean-single-vm" />
+
+       <!-- TODO: really should just delete each individual agent's
+            but we don't have a way to loop through each port number
+            so just delete the entire spawn dir -->
+       <delete dir="${perftest.agent.vm.dir}/spawn" />
+
        <echo>All agent VMs should have been deleted.</echo>
     </target>
 

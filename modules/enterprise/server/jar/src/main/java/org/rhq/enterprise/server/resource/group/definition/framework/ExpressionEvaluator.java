@@ -289,9 +289,9 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 // since a parent *is* a resource, support the exact same processing
                 parseExpression_resourceContext(value, tokens, nextToken);
             } else if (context == ParseContext.ResourceType) {
-                if (nextToken.equals("pluginname")) {
+                if (nextToken.equals("plugin")) {
                     populatePredicateCollections(getResourceRelativeContextToken() + ".resourceType.plugin", value);
-                } else if (nextToken.equals("typename")) {
+                } else if (nextToken.equals("name")) {
                     populatePredicateCollections(getResourceRelativeContextToken() + ".resourceType.name", value);
                 } else if (nextToken.equals("category")) {
                     populatePredicateCollections(getResourceRelativeContextToken() + ".resourceType.category",
@@ -393,7 +393,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             populatePredicateCollections(getResourceRelativeContextToken() + ".name", value);
         } else if (nextToken.equals("version")) {
             populatePredicateCollections(getResourceRelativeContextToken() + ".version", value);
-        } else if (nextToken.equals("resourcetype")) {
+        } else if (nextToken.equals("type")) {
             context = ParseContext.ResourceType;
         } else if (nextToken.startsWith("trait")) {
             context = ParseContext.Trait;

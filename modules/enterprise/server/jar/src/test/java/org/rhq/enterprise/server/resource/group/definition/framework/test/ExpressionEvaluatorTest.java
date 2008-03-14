@@ -36,11 +36,11 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
 
         "SELECT res.id FROM Resource res " + "WHERE res.version = :arg1" },
 
-        { "resource.resourceType.pluginName = harry",
+        { "resource.type.plugin = harry",
 
         "SELECT res.id FROM Resource res " + "WHERE res.resourceType.plugin = :arg1" },
 
-        { "resource.resourceType.typeName = sally",
+        { "resource.type.name = sally",
 
         "SELECT res.id FROM Resource res " + "WHERE res.resourceType.name = :arg1" },
 
@@ -59,7 +59,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
                 + "   AND simple.configuration = conf " },
 
         {
-            "groupBy resource.resourceType.pluginName; " + "groupBy resource.resourceType.typeName",
+            "groupBy resource.type.plugin; " + "groupBy resource.type.name",
 
             "  SELECT res.resourceType.plugin, res.resourceType.name " + "    FROM Resource res "
                 + "GROUP BY res.resourceType.plugin, res.resourceType.name",
@@ -78,7 +78,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
                 + " WHERE simple.name = :arg1 " + "   AND simple.stringValue = :arg2 "
                 + "   AND simple.configuration = conf " },
         {
-            "resource.resourceType.typeName = Windows" + ";" + "resource.trait[Trait.osversion] = 5.1",
+            "resource.type.name = Windows" + ";" + "resource.trait[Trait.osversion] = 5.1",
 
             "SELECT res.id FROM Resource res JOIN res.schedules sched JOIN sched.definition def, MeasurementDataTrait trait"
                 + " WHERE res.resourceType.name = :arg1 AND def.name = :arg2 AND trait.value = :arg3 AND trait.schedule = sched AND trait.id.timestamp ="

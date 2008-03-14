@@ -24,7 +24,8 @@ import org.rhq.core.pc.util.FacetLockType;
  * This exception is thrown when a method invoked on a proxied
  * {@link org.rhq.core.pluginapi.inventory.ResourceComponent} times out.
  *
- * @see ResourceContainer#createResourceComponentProxy(Class, FacetLockType, long, boolean) 
+ * @see ResourceContainer#createResourceComponentProxy(Class, FacetLockType, long, boolean, boolean)
+ * @see org.rhq.core.pc.util.ComponentUtil#getComponent(int, Class, FacetLockType, long, boolean, boolean)
  *
  * @author Ian Springer
  */

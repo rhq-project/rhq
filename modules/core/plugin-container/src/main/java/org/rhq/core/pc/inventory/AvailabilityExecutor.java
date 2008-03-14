@@ -157,6 +157,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                     // to start)
                     if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
                         current = resourceComponent.getAvailability();
+                    } else {
+                        this.inventoryManager.activateResource(resource, resourceContainer, false);
                     }
                 } catch (Throwable e) {
                     // TODO GH: Put errors in report

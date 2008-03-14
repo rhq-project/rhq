@@ -84,11 +84,10 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
 
     public void start(ResourceContext context) {
         this.resourceContext = context;
-        sysinfo = context.getSystemInformation();
+        this.sysinfo = context.getSystemInformation();
     }
 
     public void stop() {
-        resourceContext = null;
     }
 
     public AvailabilityType getAvailability() {
@@ -97,14 +96,14 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
     }
 
     public Configuration loadResourceConfiguration() {
-        // platform configuration is "read-only" and are implemented as metrics
+        // platform configuration is "read-only" and is exposed as traits
         Configuration config = new Configuration();
         return config;
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         // most of the platform configuration are "read-only" and
-        // are implemented as metric traits nothing to update
+        // are implemented as traits - nothing to update
         report.setErrorMessage("Cannot update platform resource configuration - it is read only");
         report.setStatus(ConfigurationUpdateStatus.FAILURE);
         return;

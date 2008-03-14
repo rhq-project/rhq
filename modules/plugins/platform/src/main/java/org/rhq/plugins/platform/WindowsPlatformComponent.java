@@ -24,17 +24,13 @@ import java.util.Set;
  * @author Greg Hinkle
  */
 public class WindowsPlatformComponent extends PlatformComponent implements ContentFacet {
-
     private Win32EventLogDelegate eventLogDelegate;
-
 
     public void start(ResourceContext context) {
         super.start(context);
-
         if (context.getPluginConfiguration().getSimple("eventTrackingEnabled").getBooleanValue()) {
             eventLogDelegate = new Win32EventLogDelegate(context.getPluginConfiguration());
             eventLogDelegate.open();
-            
             context.getEventContext().registerEventPoller(eventLogDelegate, 60);
         }
     }
@@ -42,7 +38,7 @@ public class WindowsPlatformComponent extends PlatformComponent implements Conte
     public void stop() {
         super.stop();
         if (eventLogDelegate != null) {
-            resourceContext.getEventContext().unregisterEventPoller("Event Log", "---");
+            resourceContext.getEventContext().unregisterEventPoller(eventLogDelegate.getEventType());
             eventLogDelegate.close();
         }
     }

@@ -25,12 +25,13 @@ import java.util.regex.PatternSyntaxException;
 
 /**
  * A delegate for reading windows event logs and returning them as RHQ events. Supports
- * filtering by regular expression of the content as well as minimum severity.
+ * filtering by regular expression of the content, as well as minimum severity.
  *
  * @author Greg Hinkle
  */
 public class Win32EventLogDelegate implements EventPoller {
-
+    private static final String EVENT_TYPE = "Event Log";
+    
     private final Log log = LogFactory.getLog(Win32EventLogDelegate.class);
 
     private String[] logNames;
@@ -134,7 +135,7 @@ public class Win32EventLogDelegate implements EventPoller {
 
         Event convertedEvent =
                 new Event(
-                        "Event Log",
+                        EVENT_TYPE,
                         event.getLogName(),
                         new Date(event.getTimeGenerated() * 1000),
                         convertSeverity(event.getEventType()),
@@ -158,7 +159,7 @@ public class Win32EventLogDelegate implements EventPoller {
 
     @NotNull
     public String getEventType() {
-        return "Event Log";
+        return EVENT_TYPE;
     }
 
     @Nullable

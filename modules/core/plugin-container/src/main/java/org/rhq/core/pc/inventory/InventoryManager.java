@@ -1441,6 +1441,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private OperationContext getOperationContext(Resource resource) {
+        if (resource.getResourceType().getOperationDefinitions() == null
+                || resource.getResourceType().getOperationDefinitions().isEmpty()) {
+            return null;
+        }
+
         if (resource.getId() == 0) {
             log.warn("RESOURCE ID IS 0! Operation features may not work - resource needs to be synced with server");
         }
@@ -1452,6 +1457,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private ContentContext getContentContext(Resource resource) {
+        if (resource.getResourceType().getPackageTypes() == null
+                || resource.getResourceType().getPackageTypes().isEmpty()) {
+            return null;
+        }
+
         if (resource.getId() == 0) {
             log.warn("RESOURCE ID IS 0! Content features may not work - resource needs to be synced with server");
         }

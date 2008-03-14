@@ -145,10 +145,11 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
 
             // Only report availability for committed resources; don't bother with new, ignored or deleted resources.
             if (resource.getInventoryStatus() == InventoryStatus.COMMITTED) {
-                try {
-                    // this is what we think the availability is, based on a previous check
-                    Availability previous = this.inventoryManager.getAvailabilityIfKnown(resource);
 
+                // this is what we think the availability is, based on a previous check
+                Availability previous = this.inventoryManager.getAvailabilityIfKnown(resource);
+
+                try {
                     // if the component is started, ask what its current availability is as of right now
                     // if its not started, then assume its down, our next time checking we'll see if its
                     // started and check for real then - otherwise, keep assuming its down (this is for
@@ -157,29 +158,30 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                     if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
                         current = resourceComponent.getAvailability();
                     }
-
-                    if (current == null) {
-                        current = AvailabilityType.DOWN;
-                    }
-
-                    if (resourceContainer.getSynchronizationState() == ResourceContainer.SynchronizationState.SYNCHRONIZED) {
-                        Availability availability = this.inventoryManager.updateAvailability(resource, current);
-
-                        // only add the availability to the report if it changed from its previous state
-                        // if this is the first time we've been executed, reportChangesOnly will be false
-                        // and we will send a full report as our very first report
-                        if ((previous == null) || (previous.getAvailabilityType() != current) || !reportChangesOnly) {
-                            availabilityReport.addAvailability(availability);
-                        }
-                    }
                 } catch (Throwable e) {
                     // TODO GH: Put errors in report
-                    if (log.isDebugEnabled())
+                    if (log.isDebugEnabled()) {
                         if (e instanceof TimeoutException)
                             // no need to log the stack trace for timeouts...
                             log.debug("Failed to collect availability on resource " + resource, e);
                         else
                             log.debug("Failed to collect availability on resource " + resource + " (call timed out)");
+                    }
+                }
+
+                if (current == null) {
+                    current = AvailabilityType.DOWN;
+                }
+
+                if (resourceContainer.getSynchronizationState() == ResourceContainer.SynchronizationState.SYNCHRONIZED) {
+                    Availability availability = this.inventoryManager.updateAvailability(resource, current);
+
+                    // only add the availability to the report if it changed from its previous state
+                    // if this is the first time we've been executed, reportChangesOnly will be false
+                    // and we will send a full report as our very first report
+                    if ((previous == null) || (previous.getAvailabilityType() != current) || !reportChangesOnly) {
+                        availabilityReport.addAvailability(availability);
+                    }
                 }
             }
 

@@ -19,8 +19,10 @@
 package org.rhq.core.domain.configuration.group;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -32,6 +34,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.rhq.core.domain.configuration.AbstractConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -89,6 +92,11 @@ public abstract class AbstractAggregateConfigurationUpdate extends AbstractConfi
                 PropertySimple changesPropertySimple = (PropertySimple) nextProperty;
                 PropertySimple aggregatePropertySimple = (PropertySimple) aggregate.get(nextPropertyName);
 
+                // gracefully handle the fact that there are different lists amongst the various resources
+                if (aggregatePropertySimple == null) {
+                    continue;
+                }
+
                 // use MIXED_VALUES_MARKER on the left-hand side because getStringValue() can return null
                 if (MIXED_VALUES_MARKER.equals(aggregatePropertySimple.getStringValue())) {
                     continue; // it's already been nulled out, either naturally or via this algo, so continue
@@ -103,14 +111,38 @@ public abstract class AbstractAggregateConfigurationUpdate extends AbstractConfi
                 PropertyMap changesPropertyMap = (PropertyMap) nextProperty;
                 PropertyMap aggregatePropertyMap = (PropertyMap) aggregate.get(nextPropertyName);
 
+                // gracefully handle the fact that there are different maps amongst the various resources
+                if (aggregatePropertyMap == null) {
+                    continue;
+                }
+
                 mergeIntoAggregate(aggregatePropertyMap.getMap(), changesPropertyMap.getMap());
             } else if (nextProperty instanceof PropertyList) {
-                throw new UnsupportedOperationException("PropertyList type not supported for aggregate updates");
+                PropertyList changesPropertyList = (PropertyList) nextProperty;
+                PropertyList aggregatePropertyList = (PropertyList) aggregate.get(nextPropertyName);
+
+                // gracefully handle the fact that there are different lists amongst the various resources
+                if (aggregatePropertyList == null) {
+                    continue;
+                }
+
+                mergeIntoAggregate(getPropertyMap(aggregatePropertyList.getList()), getPropertyMap(changesPropertyList
+                    .getList()));
             } else {
                 throw new UnsupportedOperationException("Property of type '" + nextProperty.getClass().getSimpleName()
                     + "' " + "not supported for aggregate updates");
             }
         }
+    }
+
+    private static Map<String, Property> getPropertyMap(List<Property> properties) {
+        Map<String, Property> results = new HashMap<String, Property>();
+
+        for (Property property : properties) {
+            results.put(property.getName(), property);
+        }
+
+        return results;
     }
 
     public AbstractAggregateConfigurationUpdate(ResourceGroup group, Configuration configuration, String subjectName) {

@@ -13,7 +13,7 @@
 
       <layout class="org.apache.log4j.PatternLayout">
          <!-- The default pattern: Date Priority [Category] Message\n -->
-         <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%t] (%c{5}) - %m%n"/>
+         <param name="ConversionPattern" value="%d{ISO8601} %-5p [%t] (%c{5}) - %m%n"/>
       </layout>
    </appender>
 
@@ -24,12 +24,12 @@
 
       <param name="Threshold"      value="DEBUG"/>
       <param name="File"           value="logs/agent.log"/>
-      <param name="MaxBackupIndex" value="2"/>
-      <param name="MaxFileSize"    value="5000KB"/>
+      <param name="MaxBackupIndex" value="9"/>
+      <param name="MaxFileSize"    value="10MB"/>
       <param name="Append"         value="true"/>
 
       <layout class="org.apache.log4j.PatternLayout">
-         <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%t] (%c{5})- %m%n"/>
+         <param name="ConversionPattern" value="%d{ISO8601} %-5p [%t] (%c{5})- %m%n"/>
       </layout>
 
    </appender>

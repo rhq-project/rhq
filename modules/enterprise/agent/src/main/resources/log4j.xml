@@ -13,7 +13,7 @@
 
       <layout class="org.apache.log4j.PatternLayout">
          <!-- The default pattern: Date Priority [Category] Message\n -->
-         <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%t] (%c{5}) - %m%n"/>
+         <param name="ConversionPattern" value="%d{ISO8601} %-5p [%t] (%c{5}) - %m%n"/>
       </layout>
    </appender>
 
@@ -29,7 +29,7 @@
       <param name="Append"         value="true"/>
 
       <layout class="org.apache.log4j.PatternLayout">
-         <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%t] (%c{5})- %m%n"/>
+         <param name="ConversionPattern" value="%d{ISO8601} %-5p [%t] (%c{5})- %m%n"/>
       </layout>
 
    </appender>

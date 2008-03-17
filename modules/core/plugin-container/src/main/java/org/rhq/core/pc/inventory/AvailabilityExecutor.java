@@ -188,20 +188,13 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             }
 
             if (checkChildren) {
-                // we used to check to see if (current == AvailabilityType.UP) here,  however, this causes a problem;
-                // if a resource and all of its children were previously UP, and the resource itself goes down (or,
-                // a user changes the resource's plugin configuration such that it makes it invalid and cannot connect
-                // to the resource), then we used to only report the resource was DOWN - but because of the if-check,
-                // we never reported the children being DOWN (they always remained with a green light; whether or not
-                // they really were up - we never knew the true status because if the parent wasn't UP, we never bothered
-                // checking the children).
-                // TODO: should we still check current != null (that is, UP or DOWN)?
-                // I leave this check in here for now - this means we never check children unless the resource is committed;
-                // if resource has an inventory status of anything other than committed, we never put its children's
-                // availabilities in the report
-                if (current != null) {
+                if (current == AvailabilityType.UP) {
                     for (Resource child : resource.getChildResources()) {
                         checkInventory(child, availabilityReport, reportChangesOnly, true);
+                    }
+                } else {
+                    for (Resource child : resource.getChildResources()) {
+                        markDown(child, availabilityReport, reportChangesOnly);
                     }
                 }
             }
@@ -209,6 +202,24 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
 
         return;
     }
+
+    /**
+     * Marks all descendent resources as down for the report
+     * @param resource
+     * @param availabilityReport
+     * @param changesOnly
+     */
+    private void markDown(Resource resource, AvailabilityReport availabilityReport, boolean changesOnly) {
+        Availability previous = this.inventoryManager.getAvailabilityIfKnown(resource);
+        if (!changesOnly || previous == null || previous.getAvailabilityType() != AvailabilityType.DOWN) {
+            Availability availability = this.inventoryManager.updateAvailability(resource, AvailabilityType.DOWN);
+            availabilityReport.addAvailability(availability);
+        }
+        for (Resource child : resource.getChildResources()) {
+            markDown(child, availabilityReport, changesOnly);
+        }
+    }
+
 
     /**
      * This tells the executor to send a full availability report the next time it sends one. Package-scoped so the

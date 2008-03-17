@@ -241,6 +241,19 @@ public class ContentManager extends AgentService implements ContainerService, Co
 
     // ContentServices Implementation  --------------------------------------------
 
+    public long downloadPackageBitsForChildResource(ContentContext context, String childResourceTypeName,
+        PackageDetailsKey key, OutputStream outputStream) {
+
+        ContentContextImpl contextImpl = (ContentContextImpl) context;
+        ContentServerService serverService = getContentServerService();
+        outputStream = remoteOutputStream(outputStream);
+
+        long count = serverService.downloadPackageBitsForChildResource(contextImpl.getResourceId(),
+            childResourceTypeName, key, outputStream);
+
+        return count;
+    }
+
     public long downloadPackageBits(ContentContext context, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream, boolean resourceExists) {
         ContentContextImpl contextImpl = (ContentContextImpl) context; // this has to be of this type, we gave it to the plugin
@@ -248,10 +261,10 @@ public class ContentManager extends AgentService implements ContainerService, Co
         outputStream = remoteOutputStream(outputStream);
         long count = 0;
         if (resourceExists) {
-            serverService
+            count = serverService
                 .downloadPackageBitsGivenResource(contextImpl.getResourceId(), packageDetailsKey, outputStream);
         } else {
-            serverService.downloadPackageBits(contextImpl.getResourceId(), packageDetailsKey, outputStream);
+            // TODO: Figure out how to support this; the APIs require the resource to get the bits
         }
         return count;
     }
@@ -263,11 +276,10 @@ public class ContentManager extends AgentService implements ContainerService, Co
         outputStream = remoteOutputStream(outputStream);
         long count = 0;
         if (resourceExists) {
-            serverService.downloadPackageBitsRangeGivenResource(contextImpl.getResourceId(), packageDetailsKey,
+            count = serverService.downloadPackageBitsRangeGivenResource(contextImpl.getResourceId(), packageDetailsKey,
                 outputStream, startByte, endByte);
         } else {
-            serverService.downloadPackageBitsRange(contextImpl.getResourceId(), packageDetailsKey, outputStream,
-                startByte, endByte);
+            // TODO: Figure out how to support this; the APIs require the resource to get the bits
         }
         return count;
     }

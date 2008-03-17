@@ -37,6 +37,7 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -85,11 +86,10 @@ public class ContentServerServiceImpl implements ContentServerService {
         return manager.outputPackageVersionBitsGivenResource(resourceId, packageDetailsKey, outputStream);
     }
 
-    public long downloadPackageBits(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream) {
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        Resource resource = LookupUtil.getResourceManager().getResourceById(overlord, resourceId);
+    public long downloadPackageBitsForChildResource(int parentResourceId, String resourceTypeName, PackageDetailsKey packageDetailsKey, OutputStream outputStream) {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
-        return manager.outputPackageVersionBits(resource.getResourceType().getId(), packageDetailsKey, outputStream);
+        return manager.outputPackageBitsForChildResource(parentResourceId, resourceTypeName,
+            packageDetailsKey, outputStream);
     }
 
     public long downloadPackageBitsRangeGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
@@ -97,15 +97,6 @@ public class ContentServerServiceImpl implements ContentServerService {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
         return manager.outputPackageVersionBitsRangeGivenResource(resourceId, packageDetailsKey, outputStream,
             startByte, endByte);
-    }
-
-    public long downloadPackageBitsRange(int resourceId, PackageDetailsKey packageDetailsKey,
-        OutputStream outputStream, long startByte, long endByte) {
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        Resource resource = LookupUtil.getResourceManager().getResourceById(overlord, resourceId);
-        ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
-        return manager.outputPackageVersionBitsRange(resource.getResourceType().getId(), packageDetailsKey,
-            outputStream, startByte, endByte);
     }
 
     public PageList<PackageVersionMetadataComposite> getPackageVersionMetadata(int resourceId, PageControl pc) {

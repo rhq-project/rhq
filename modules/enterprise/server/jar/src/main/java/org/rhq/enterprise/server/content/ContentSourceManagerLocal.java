@@ -340,8 +340,6 @@ public interface ContentSourceManagerLocal {
     long outputPackageVersionBitsGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream);
 
-    long outputPackageVersionBits(int resourceTypeId, PackageDetailsKey packageDetailsKey, OutputStream outputStream);
-
     /**
      * Requests that the actual content data (the "bits") of the identified package version be streamed down to the
      * caller over the given output stream that the caller provides. This method will <b>not</b> be responsible for
@@ -365,6 +363,23 @@ public interface ContentSourceManagerLocal {
     long outputPackageVersionBitsRangeGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream, long startByte, long endByte);
 
-    long outputPackageVersionBitsRange(int resourceTypeId, PackageDetailsKey packageDetailsKey,
-        OutputStream outputStream, long startByte, long endByte);
+    /**
+     * Requests the bits of a package being used to create a child resource be stream down to the caller over
+     * the given output stream. This method will <b>not</b> take care of closing the stream when it is finished;
+     * it is the caller's responsibility. This may be a time-consuming method call because
+     * if the bits have not yet been loaded (i.e. the content source where the package version lives
+     * {@link ContentSource#isLazyLoad() is lazy loading} then this may be the time when it is downloaded from the
+     * remote repository.
+     *
+     * @param parentResourceId  identifies the parent resource under which the new resource is being created
+     * @param resourceTypeName  type of child resource being created
+     * @param packageDetailsKey package being used to create the child resource
+     * @param outputStream      an output stream where the server should write the package contents. It is up to the
+     *                          caller to prepare this output stream in order to write the package content to an
+     *                          appropriate location.
+     *
+     * @return the number of bytes written to the output stream
+     */
+    long outputPackageBitsForChildResource(int parentResourceId, String resourceTypeName,
+        PackageDetailsKey packageDetailsKey, OutputStream outputStream);
 }

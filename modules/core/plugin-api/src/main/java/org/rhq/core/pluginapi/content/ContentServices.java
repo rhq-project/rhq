@@ -38,8 +38,7 @@ public interface ContentServices {
      * Requests that the plugin container download and stream the bits for the specified package. If the package cannot
      * be found, an exception will be thrown.
      *
-     * @param  context           identifies the resource requesting the bits; this is passed in through the
-     *                           {@link ContentFacet#startContentFacet(ContentContext)} method.
+     * @param  context           identifies the resource requesting the bits
      * @param  packageDetailsKey identifies the package
      * @param  outputStream      an output stream where the plugin container should write the package contents. It is up
      *                           to the plugin, before making this call, to prepare this output stream in order to write
@@ -56,8 +55,7 @@ public interface ContentServices {
      * Requests that the plugin container download and stream the bits for the specified package. If the package cannot
      * be found, an exception will be thrown.
      *
-     * @param  context           identifies the resource requesting the bits; this is passed in through the
-     *                           {@link ContentFacet#startContentFacet(ContentContext)} method.
+     * @param  context           identifies the resource requesting the bits
      * @param  packageDetailsKey identifies the package
      * @param  outputStream      an output stream where the plugin container should write the package contents. It is up
      *                           to the plugin, before making this call, to prepare this output stream in order to write
@@ -73,10 +71,26 @@ public interface ContentServices {
         OutputStream outputStream, long startByte, long endByte, boolean resourceExists);
 
     /**
+     * Requests the plugin container download and stream the bits for the specified package. This method should be
+     * used when retrieving the bits for a package being installed during the creation of a new resource.
+     *
+     * @param context               identifies the parent resource onto which the child resource will be created
+     * @param childResourceTypeName identifies the type of child resource being created
+     * @param key                   identifies the specific package being deployed for the resource creation
+     * @param outputStream          an output stream where the plugin container should write the package contents. It
+     *                              is up to the plugin, before making this call, to prepare this output stream in
+     *                              order to write the package content to an appropriate location. It is also up to
+     *                              the caller to close this stream once the write is completed. 
+     *
+     * @return the number of bytes written to the output stream
+     */
+    long downloadPackageBitsForChildResource(ContentContext context, String childResourceTypeName,
+         PackageDetailsKey key, OutputStream outputStream);
+
+    /**
      * Requests the size, in bytes, of the identified package version.
      *
-     * @param  context           identifies the resource requesting the info; this is passed in through the
-     *                           {@link ContentFacet#startContentFacet(ContentContext)} method.
+     * @param  context           identifies the resource requesting the info
      * @param  packageDetailsKey identifies the package whose size is to be returned
      *
      * @return the size, in number of bytes, of the package version
@@ -91,8 +105,7 @@ public interface ContentServices {
      * <p>Because the result set is potentially large, callers should consider caching the returned data. You can use
      * {@link #getResourceSubscriptionMD5(ContentContext)} to determine when the cached data is stale.</p>
      *
-     * @param  context identifies the resource requesting the data; this is passed in through the
-     *                 {@link ContentFacet#startContentFacet(ContentContext)} method.
+     * @param  context identifies the resource requesting the data
      * @param  pc      this method can potentially return a large set; this page control object allows the caller to
      *                 page through that large set, as opposed to requesting the entire set in one large chunk
      *
@@ -105,8 +118,7 @@ public interface ContentServices {
      * the resource is subscribed to has changed its contents (that is, if a package version was added/updated/removed
      * from it).
      *
-     * @param  context identifies the resource requesting the data; this is passed in through the
-     *                 {@link ContentFacet#startContentFacet(ContentContext)} method.
+     * @param  context identifies the resource requesting the data
      *
      * @return the MD5 of all package versions' metadata
      *

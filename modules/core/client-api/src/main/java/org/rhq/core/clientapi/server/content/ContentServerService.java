@@ -120,9 +120,6 @@ public interface ContentServerService {
     @LimitedConcurrency(CONCURRENCY_LIMIT_CONTENT_DOWNLOAD)
     long downloadPackageBitsGivenResource(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream);
 
-    @LimitedConcurrency(CONCURRENCY_LIMIT_CONTENT_DOWNLOAD)
-    long downloadPackageBits(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream);
-
     /**
      * Requests that the server download and stream the bits for the specified package. If the package cannot be found,
      * an exception will be thrown.
@@ -143,9 +140,21 @@ public interface ContentServerService {
     long downloadPackageBitsRangeGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream, long startByte, long endByte);
 
+    /**
+     * Downloads the package bits used to create a package used as the backing of a resource.
+     *
+     * @param parentResourceId  identifies the parent resource under which the new resource is being created
+     * @param resourceTypeName  type of child resource being created
+     * @param packageDetailsKey package being used to create the child resource
+     * @param outputStream      an output stream where the server should write the package contents. It is up to the
+     *                          caller to prepare this output stream in order to write the package content to an
+     *                          appropriate location.
+     * 
+     * @return the number of bytes written to the output stream
+     */
     @LimitedConcurrency(CONCURRENCY_LIMIT_CONTENT_DOWNLOAD)
-    long downloadPackageBitsRange(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream,
-        long startByte, long endByte);
+    long downloadPackageBitsForChildResource(int parentResourceId, String resourceTypeName,
+        PackageDetailsKey packageDetailsKey, OutputStream outputStream);
 
     /**
      * Requests all {@link PackageVersion#getMetadata() metadata} for all package versions that the given resource

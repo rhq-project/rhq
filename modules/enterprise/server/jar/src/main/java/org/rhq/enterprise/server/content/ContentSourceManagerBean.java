@@ -83,6 +83,7 @@ import org.rhq.core.domain.content.composite.PackageVersionFile;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
 import org.rhq.core.domain.resource.ProductVersion;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.MD5Generator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -1170,6 +1171,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         return digestString;
     }
 
+
+
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(1000 * 60 * 30)
     public long outputPackageVersionBitsGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
@@ -1179,35 +1182,27 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(1000 * 60 * 30)
-    public long outputPackageVersionBits(int resourceTypeId, PackageDetailsKey packageDetailsKey,
-        OutputStream outputStream) {
-        return outputPackageVersionBitsRange(resourceTypeId, packageDetailsKey, outputStream, 0, -1);
-    }
+    public long outputPackageBitsForChildResource(int parentResourceId, String resourceTypeName,
+                                                  PackageDetailsKey packageDetailsKey, OutputStream outputStream) {
+        Resource parentResource = entityManager.find(Resource.class, parentResourceId);
+        ResourceType parentResourceType = parentResource.getResourceType();
 
-    @SuppressWarnings("unchecked")
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(1000 * 60 * 30)
-    public long outputPackageVersionBitsRange(int resourceTypeId, PackageDetailsKey packageDetailsKey,
-        OutputStream outputStream, long startByte, long endByte) {
-        if (startByte < 0) {
-            throw new IllegalArgumentException("startByte[" + startByte + "] < 0");
-        }
+        Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_PARENT_AND_NAME);
+        query.setParameter("parent", parentResourceType);
+        query.setParameter("name", resourceTypeName);
 
-        if ((endByte > -1) && (endByte < startByte)) {
-            throw new IllegalArgumentException("endByte[" + endByte + "] < startByte[" + startByte + "]");
-        }
+        ResourceType childResourceType = (ResourceType)query.getSingleResult();
 
-        // what package version?
-        Query query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
-        query.setParameter("resourceTypeId", resourceTypeId);
+        query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
         query.setParameter("packageName", packageDetailsKey.getName());
         query.setParameter("packageTypeName", packageDetailsKey.getPackageTypeName());
         query.setParameter("architectureName", packageDetailsKey.getArchitectureName());
         query.setParameter("version", packageDetailsKey.getVersion());
-        int packageVersionId = ((PackageVersion) query.getSingleResult()).getId();
+        query.setParameter("resourceTypeId", childResourceType.getId());
+        PackageVersion packageVersion = (PackageVersion)query.getSingleResult();
 
-        return outputPackageVersionBitsRangeHelper(-1, packageDetailsKey, outputStream, startByte, endByte,
-            packageVersionId);
+        return outputPackageVersionBitsRangeHelper(parentResourceId, packageDetailsKey,
+            outputStream, 0, -1, packageVersion.getId());
     }
 
     @SuppressWarnings("unchecked")

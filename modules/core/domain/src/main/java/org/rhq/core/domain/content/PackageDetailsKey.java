@@ -59,20 +59,20 @@ public class PackageDetailsKey implements Serializable {
     // Constructors  --------------------------------------------
 
     public PackageDetailsKey(String name, String version, String packageTypeName, String architectureName) {
-        if (name == null) {
-            throw new IllegalArgumentException("name cannot be null");
+        if (name == null || name.length() == 0) {
+            throw new IllegalArgumentException("name cannot be null or zero length");
         }
 
-        if (version == null) {
-            throw new IllegalArgumentException("version cannot be null");
+        if (version == null || version.length() == 0) {
+            throw new IllegalArgumentException("version cannot be null or zero length");
         }
 
-        if (packageTypeName == null) {
-            throw new IllegalArgumentException("packageTypeName cannot be null");
+        if (packageTypeName == null || packageTypeName.length() == 0) {
+            throw new IllegalArgumentException("packageTypeName cannot be null or zero length");
         }
 
-        if (architectureName == null) {
-            throw new IllegalArgumentException("architectureName cannot be null");
+        if (architectureName == null || architectureName.length() == 0) {
+            throw new IllegalArgumentException("architectureName cannot be null or zero length");
         }
 
         this.name = name;

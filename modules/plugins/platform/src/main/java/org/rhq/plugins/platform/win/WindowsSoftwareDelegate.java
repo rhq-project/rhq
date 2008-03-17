@@ -50,6 +50,8 @@ public class WindowsSoftwareDelegate {
 
 
                 if (displayName != null && installDateString != null && version != null) {
+                    if (version.length() == 0)
+                        version = "1";
 
                     ResourcePackageDetails details =
                             new ResourcePackageDetails(

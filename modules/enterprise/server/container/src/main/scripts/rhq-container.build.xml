@@ -356,7 +356,7 @@ rhq.server.email.from-address=rhqadmin@localhost
 
 # Operations/controls timeout
 # Defines the default timeout for all operations (specified in seconds)
-rhq.server.operatirhq-timeout=600
+rhq.server.operation-timeout=600
 
 # Concurrency limits for incoming UI and agent messages
 rhq.server.startup.web.max-connections=305

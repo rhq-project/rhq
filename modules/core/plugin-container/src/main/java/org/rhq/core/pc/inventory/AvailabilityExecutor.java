@@ -187,7 +187,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                 }
             }
 
-            if (resourceComponent != null && checkChildren) {
+            if (checkChildren) {
                 // we used to check to see if (current == AvailabilityType.UP) here,  however, this causes a problem;
                 // if a resource and all of its children were previously UP, and the resource itself goes down (or,
                 // a user changes the resource's plugin configuration such that it makes it invalid and cannot connect

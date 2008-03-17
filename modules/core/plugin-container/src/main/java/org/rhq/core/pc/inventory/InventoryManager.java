@@ -261,23 +261,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
         throws InvalidPluginConfigurationClientException, PluginContainerException {
         ResourceContainer container = getResourceContainer(resourceId);
         if (container == null) {
-            throw new PluginContainerException("Cannot update plugin configuration for unknown resource [" + resourceId
+            throw new PluginContainerException("Cannot update plugin configuration for unknown Resource with id [" + resourceId
                 + "]");
         }
 
-        if (container.getResourceComponent() != null) {
-            try {
-                ResourceComponent component = container.createResourceComponentProxy(ResourceComponent.class,
-                    FacetLockType.WRITE, COMPONENT_STOP_TIMEOUT, true, false);
-                component.stop();
-            } catch (Throwable t) {
-                throw new PluginContainerException("Cannot update plugin configuration - "
-                    + "failed to stop component for resource [" + resourceId + "]", t);
-            }
-        }
-
         Resource resource = container.getResource();
+        // First stop the resource component.
+        deactivateResource(resource);
+        // Then update the resource's plugin config.
         resource.setPluginConfiguration(newPluginConfiguration);
+        // And finally restart the resource component.
         try {
             activateResource(resource, container, true);
         } catch (InvalidPluginConfigurationException e) {
@@ -1060,7 +1053,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     /**
-     * Shutdown the resource components from the bottom up.
+     * Shutdown the ResourceComponents from the bottom up.
      */
     private void deactivateResource(Resource resource) {
         this.inventoryLock.writeLock().lock();
@@ -1075,13 +1068,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     ResourceComponent component = container.createResourceComponentProxy(ResourceComponent.class,
                         FacetLockType.WRITE, COMPONENT_STOP_TIMEOUT, true, true);
                     component.stop();
-                    log.debug(resource.getId() + ": Successfully deactivated resource");
+                    log.debug("Successfully deactivated resource with id [" + resource.getId() + "].");
                 } catch (Throwable t) {
-                    log.warn("Error stopping component for resource [" + resource + "]");
+                    log.warn("Plugin Error: Failed to stop component for [" + resource + "].");
                 }
 
                 container.setResourceComponentState(ResourceComponentState.STOPPED);
-                log.debug(resource.getId() + ": Set component state to STOPPED");
+                log.debug("Set component state to STOPPED for resource with id [" + resource.getId() + "].");
             }
         } finally {
             this.inventoryLock.writeLock().unlock();

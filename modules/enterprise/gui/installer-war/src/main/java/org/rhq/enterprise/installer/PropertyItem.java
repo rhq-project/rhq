@@ -19,9 +19,14 @@
 package org.rhq.enterprise.installer;
 
 import java.net.InetAddress;
+import java.util.List;
 import java.util.Locale;
+
 import javax.faces.context.FacesContext;
+import javax.faces.model.SelectItem;
+
 import mazz.i18n.Msg;
+
 import org.rhq.enterprise.installer.i18n.InstallerI18NResourceKeys;
 
 /**
@@ -46,17 +51,18 @@ import org.rhq.enterprise.installer.i18n.InstallerI18NResourceKeys;
  */
 public class PropertyItem {
     private String propertyName;
-    private Class propertyType;
+    private Class<?> propertyType;
     private int fieldSize;
     private boolean requiresRestart;
     private boolean secret;
     private boolean advanced;
+    private List<SelectItem> options;
     private String propertyLabelResourceBundleKey;
     private String helpResourceBundleKey;
     private Msg i18nMsg;
 
-    public PropertyItem(String name, Class type, String labelBundleKey, String helpBundleKey, boolean requiresRestart,
-        boolean secret, boolean advanced) {
+    public PropertyItem(String name, Class<?> type, String labelBundleKey, String helpBundleKey,
+        boolean requiresRestart, boolean secret, boolean advanced) {
         setPropertyName(name);
         setPropertyType(type);
         setPropertyLabelResourceBundleKey(labelBundleKey);
@@ -76,6 +82,16 @@ public class PropertyItem {
         }
     }
 
+    /**
+     * Use this constructor to define a property that is rendered with a drop down box of options
+     * to choose from.
+     */
+    public PropertyItem(String name, Class<?> type, String labelBundleKey, String helpBundleKey,
+        boolean requiresRestart, boolean secret, boolean advanced, List<SelectItem> options) {
+        this(name, type, labelBundleKey, helpBundleKey, requiresRestart, secret, advanced);
+        setOptions(options);
+    }
+
     public String getPropertyName() {
         return propertyName;
     }
@@ -84,11 +100,11 @@ public class PropertyItem {
         this.propertyName = propertyName;
     }
 
-    public Class getPropertyType() {
+    public Class<?> getPropertyType() {
         return propertyType;
     }
 
-    public void setPropertyType(Class propertyType) {
+    public void setPropertyType(Class<?> propertyType) {
         this.propertyType = propertyType;
     }
 
@@ -118,6 +134,14 @@ public class PropertyItem {
 
     public boolean isAdvanced() {
         return advanced;
+    }
+
+    public List<SelectItem> getOptions() {
+        return options;
+    }
+
+    public void setOptions(List<SelectItem> options) {
+        this.options = options;
     }
 
     public void setAdvanced(boolean hidden) {

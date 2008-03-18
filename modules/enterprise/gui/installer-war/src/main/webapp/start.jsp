@@ -44,18 +44,22 @@
             </f:facet>
             <h:inputText size="#{prop.itemDefinition.fieldSize}"
                          value="#{prop.value}"
-                         rendered="#{prop.itemDefinition.propertyType.name eq 'java.lang.Integer' || prop.itemDefinition.propertyType.name eq 'java.net.InetAddress'}" />
+                         rendered="#{prop.itemDefinition.options == null && (prop.itemDefinition.propertyType.name eq 'java.lang.Integer' || prop.itemDefinition.propertyType.name eq 'java.net.InetAddress')}" />
             <h:inputText size="#{prop.itemDefinition.fieldSize}"
                          value="#{prop.value}"
-                         rendered="#{prop.itemDefinition.propertyType.name eq 'java.lang.String' && !prop.itemDefinition.secret}" />
+                         rendered="#{prop.itemDefinition.options == null && (prop.itemDefinition.propertyType.name eq 'java.lang.String' && !prop.itemDefinition.secret)}" />
             <h:inputSecret size="#{prop.itemDefinition.fieldSize}"
                            value="#{prop.value}"
-                           rendered="#{prop.itemDefinition.propertyType.name eq 'java.lang.String' && prop.itemDefinition.secret}" />
+                           rendered="#{prop.itemDefinition.options == null && (prop.itemDefinition.propertyType.name eq 'java.lang.String' && prop.itemDefinition.secret)}" />
             <h:selectOneRadio value="#{prop.value}"
-                              rendered="#{prop.itemDefinition.propertyType.name eq 'java.lang.Boolean'}">
+                              rendered="#{prop.itemDefinition.options == null && (prop.itemDefinition.propertyType.name eq 'java.lang.Boolean')}">
                <f:selectItem itemLabel="#{bundle.yesString}" itemValue="true"/>
                <f:selectItem itemLabel="#{bundle.noString}" itemValue="false"/>
             </h:selectOneRadio>
+            <h:selectOneMenu value="#{prop.value}"
+                             rendered="#{prop.itemDefinition.options != null}">
+               <f:selectItems value="#{prop.itemDefinition.options}" />
+            </h:selectOneMenu>
          </h:column>
          <h:column>
             <f:facet name="header">

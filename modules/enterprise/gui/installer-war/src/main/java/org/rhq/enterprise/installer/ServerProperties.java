@@ -23,6 +23,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+
+import javax.faces.model.SelectItem;
+
 import org.rhq.enterprise.installer.i18n.InstallerI18NResourceKeys;
 
 public class ServerProperties {
@@ -119,9 +122,17 @@ public class ServerProperties {
     public static final String PROP_CONCURRENCY_LIMIT_MEAS_REPORT = "rhq.server.concurrency-limit.measurement-report";
     public static final String PROP_CONCURRENCY_LIMIT_MEASSCHED_REQ = "rhq.server.concurrency-limit.measurement-schedule-request";
 
+    public static final List<SelectItem> DATABASE_TYPES;
+    static {
+        DATABASE_TYPES = new ArrayList<SelectItem>();
+        DATABASE_TYPES.add(new SelectItem("PostgreSQL", "PostgreSQL"));
+        DATABASE_TYPES.add(new SelectItem("Oracle10g", "Oracle 10g"));
+        //DATABASE_TYPES.add(new SelectItem("MySQL", "MySQL"));
+    }
+
     private PropertyItem[] allPropertyItems = {
         new PropertyItem(PROP_DATABASE_TYPE, String.class, InstallerI18NResourceKeys.PROP_DATABASE_TYPE,
-            InstallerI18NResourceKeys.PROP_DATABASE_TYPE_HELP, false, false, false),
+            InstallerI18NResourceKeys.PROP_DATABASE_TYPE_HELP, false, false, false, DATABASE_TYPES),
         new PropertyItem(PROP_DATABASE_CONNECTION_URL, String.class,
             InstallerI18NResourceKeys.PROP_DATABASE_CONNECTION_URL,
             InstallerI18NResourceKeys.PROP_DATABASE_CONNECTION_URL_HELP, false, false, false),

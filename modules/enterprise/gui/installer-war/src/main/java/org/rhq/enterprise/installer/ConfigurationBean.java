@@ -157,7 +157,7 @@ public class ConfigurationBean {
                 serverInfo.createNewDatabaseSchema(configurationAsProperties);
             }
 
-            // now deploy JON Server fully
+            // now deploy RHQ Server fully
             serverInfo.moveDeploymentArtifacts(true);
         } catch (Exception e) {
             LOG.fatal("Failed to save properties and fully deploy - RHQ Server will not function properly", e);

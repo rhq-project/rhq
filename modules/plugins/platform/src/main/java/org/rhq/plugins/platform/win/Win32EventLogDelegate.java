@@ -38,7 +38,7 @@ public class Win32EventLogDelegate implements EventPoller {
     private EventLog[] eventLogs;
     private int[] lastCollectedEventId;
 
-    private EventSeverity minumumSeverity;
+    private EventSeverity minimumSeverity;
     private Pattern regularExpression;
 
     private int eventsChecked;
@@ -48,23 +48,22 @@ public class Win32EventLogDelegate implements EventPoller {
 
         this.logNames = EventLog.getLogNames();
 
-        String minimumSeverityString = config.getSimpleValue("minimumSeverity","Error");
+        String minimumSeverityString = config.getSimpleValue("minimumSeverity", "Error");
         if ("Information".equals(minimumSeverityString)) {
-            minumumSeverity = EventSeverity.INFO;
+            minimumSeverity = EventSeverity.INFO;
         } else if ("Warning".equals(minimumSeverityString)) {
-            minumumSeverity = EventSeverity.WARN;
+            minimumSeverity = EventSeverity.WARN;
         } else if ("Error".equals(minimumSeverityString)) {
-            minumumSeverity = EventSeverity.ERROR;
+            minimumSeverity = EventSeverity.ERROR;
         }
 
-
-        String regexString = config.getSimpleValue("regularExpression",null);
+        String regexString = config.getSimpleValue("regularExpression", null);
         try {
             if (regexString != null) {
                 regularExpression = Pattern.compile(regexString);
             }
         } catch (PatternSyntaxException pse) {
-            log.warn("Event tracking regular expression not valid, no filtering will take place",pse);
+            log.warn("Event tracking regular expression not valid, no filtering will take place", pse);
         }
 
     }
@@ -126,11 +125,11 @@ public class Win32EventLogDelegate implements EventPoller {
         eventsChecked++;
 
         if (regularExpression != null) {
-            if (!regularExpression.matcher(event.getMessage()).matches())
+            if (!regularExpression.matcher(event.getMessage()).find())
                 return null;
         }
 
-        if (!convertSeverity(event.getEventType()).isAtLeastAsSevereAs(minumumSeverity))
+        if (!convertSeverity(event.getEventType()).isAtLeastAsSevereAs(minimumSeverity))
             return null;
 
         Event convertedEvent =

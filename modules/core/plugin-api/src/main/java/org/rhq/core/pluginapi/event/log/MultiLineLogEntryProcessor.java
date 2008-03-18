@@ -115,7 +115,7 @@ public abstract class MultiLineLogEntryProcessor implements LogEntryProcessor {
         if (currentEntry != null) {
             if (currentEntry.getSeverity().isAtLeastAsSevereAs(this.minimumSeverity) &&
                     (this.includesPattern == null ||
-                            this.includesPattern.matcher(currentEntry.getDetail()).matches())) {
+                            this.includesPattern.matcher(currentEntry.getDetail()).find())) {
                 Event event = new Event(this.eventType, this.logFile.getPath(), currentEntry.getDate(), currentEntry.getSeverity(), currentEntry.getDetail());
                 events.add(event);
             }

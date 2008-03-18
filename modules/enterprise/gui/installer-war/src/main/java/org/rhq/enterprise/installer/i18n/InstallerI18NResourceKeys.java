@@ -46,6 +46,30 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("${product.support.email}")
     String PRODUCT_SUPPORT_EMAIL = "product.support.email";
 
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Database Settings")
+    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    String DATABASE_PROPERTIES_NOTE = "databasePropertiesNote";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Settings")
+    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    String SERVER_PROPERTIES_NOTE = "serverPropertiesNote";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "If your DB server needs a user and database created, press:")
+    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    String CREATE_DATABASE_NOTE = "createDatabaseNote";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Create Database")
+    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    String CREATE_DATABASE_BUTTON = "createDatabaseButton";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "To see if you can connect to your DB server, press:")
+    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    String TEST_DATABASE_NOTE = "testDatabaseNote";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Test Connection")
+    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    String TEST_DATABASE_BUTTON = "testDatabaseButton";
+
     @I18NMessages( { @I18NMessage(locale = "en", value = "The {0} property value was an invalid number [{1}]"),
         @I18NMessage(locale = "de", value = "[{1}] ist ein ungültiger Zahlenwert für die Eigenschaft {0}") })
     String INVALID_NUMBER = "invalidNumber";

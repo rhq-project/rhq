@@ -18,14 +18,20 @@
  */
 package org.rhq.enterprise.installer;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+
 import javax.faces.context.FacesContext;
+
 import mazz.i18n.Msg;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.enterprise.installer.i18n.InstallerI18NResourceKeys;
 
 public class ConfigurationBean {
@@ -35,6 +41,7 @@ public class ConfigurationBean {
     private Boolean showAdvancedSettings;
     private List<PropertyItemWithValue> configuration;
     private String lastError;
+    private String lastTest;
     private Msg i18nMsg;
 
     public ConfigurationBean() {
@@ -78,6 +85,45 @@ public class ConfigurationBean {
         return retConfig;
     }
 
+    /**
+     * Loads in the server's current configuration and returns all the settings except
+     * database related properties.
+     *
+     * @return current server settings, minus database related settings
+     * 
+     * @see #getDatabaseConfiguration()
+     * @see #getConfiguration()
+     */
+    public List<PropertyItemWithValue> getNonDatabaseConfiguration() {
+        List<PropertyItemWithValue> allConfig = getConfiguration();
+        List<PropertyItemWithValue> retConfig = new ArrayList<PropertyItemWithValue>();
+        for (PropertyItemWithValue item : allConfig) {
+            if (!item.getItemDefinition().getPropertyName().startsWith(ServerProperties.PREFIX_PROP_DATABASE)) {
+                retConfig.add(item);
+            }
+        }
+        return retConfig;
+    }
+
+    /**
+     * Loads in the server's current configuration and returns only the database related properties.
+     *
+     * @return current database settings
+     * 
+     * @see #getNonDatabaseConfiguration()
+     * @see #getConfiguration()
+     */
+    public List<PropertyItemWithValue> getDatabaseConfiguration() {
+        List<PropertyItemWithValue> allConfig = getConfiguration();
+        List<PropertyItemWithValue> retConfig = new ArrayList<PropertyItemWithValue>();
+        for (PropertyItemWithValue item : allConfig) {
+            if (item.getItemDefinition().getPropertyName().startsWith(ServerProperties.PREFIX_PROP_DATABASE)) {
+                retConfig.add(item);
+            }
+        }
+        return retConfig;
+    }
+
     public void setConfiguration(List<PropertyItemWithValue> newConfig) {
         PropertyItemWithValue oldValue;
 
@@ -111,11 +157,35 @@ public class ConfigurationBean {
         return lastError;
     }
 
+    public String getLastTest() {
+        return lastTest;
+    }
+
+    public String testConnection() {
+        Properties configurationAsProperties = getConfigurationAsProperties(configuration);
+        Connection conn = null;
+        try {
+            conn = serverInfo.getDatabaseConnection(configurationAsProperties);
+            lastTest = "OK";
+        } catch (SQLException sqle) {
+            LOG.warn("Installer failed to test connection", sqle);
+            lastTest = sqle.toString();
+        } finally {
+            if (conn != null)
+                try {
+                    conn.close();
+                } catch (Exception e) {
+                }
+        }
+
+        return "TEST_DONE";
+    }
+
     public SavePropertiesResults save() {
         Properties configurationAsProperties = getConfigurationAsProperties(configuration);
 
-        boolean validProperties = serverInfo.isDatabaseConnectionValid(configurationAsProperties);
-        if (!validProperties) {
+        testConnection(); // so our lastTest gets set and the user will be able to get the error in the UI
+        if (lastTest == null || !lastTest.equals("OK")) {
             return SavePropertiesResults.DBINVALID;
         }
 

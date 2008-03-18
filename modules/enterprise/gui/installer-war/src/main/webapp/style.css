@@ -48,3 +48,6 @@ a:active {
     font-family: Verdana, Helvetica, Arial, sans-serif;
     color: white;
 }
+.warningColor { 
+    color: red; background: yellow;
+}

@@ -29,11 +29,12 @@ import javax.faces.model.SelectItem;
 import org.rhq.enterprise.installer.i18n.InstallerI18NResourceKeys;
 
 public class ServerProperties {
-    public static final String PROP_DATABASE_CONNECTION_URL = "rhq.server.database.connection-url";
-    public static final String PROP_DATABASE_DRIVER_CLASS = "rhq.server.database.driver-class";
-    public static final String PROP_DATABASE_USERNAME = "rhq.server.database.user-name";
-    public static final String PROP_DATABASE_PASSWORD = "rhq.server.database.password";
-    public static final String PROP_DATABASE_TYPE = "rhq.server.database.type-mapping";
+    public static final String PREFIX_PROP_DATABASE = "rhq.server.database.";
+    public static final String PROP_DATABASE_TYPE = PREFIX_PROP_DATABASE + "type-mapping";
+    public static final String PROP_DATABASE_CONNECTION_URL = PREFIX_PROP_DATABASE + "connection-url";
+    public static final String PROP_DATABASE_DRIVER_CLASS = PREFIX_PROP_DATABASE + "driver-class";
+    public static final String PROP_DATABASE_USERNAME = PREFIX_PROP_DATABASE + "user-name";
+    public static final String PROP_DATABASE_PASSWORD = PREFIX_PROP_DATABASE + "password";
 
     public static final String PROP_SERVER_BIND_ADDRESS = "jboss.bind.address";
     public static final String PROP_HTTP_PORT = "rhq.server.startup.web.http.port";
@@ -130,7 +131,16 @@ public class ServerProperties {
         //DATABASE_TYPES.add(new SelectItem("MySQL", "MySQL"));
     }
 
+    public static final List<SelectItem> CLIENT_AUTH_MODES;
+    static {
+        CLIENT_AUTH_MODES = new ArrayList<SelectItem>();
+        CLIENT_AUTH_MODES.add(new SelectItem("none"));
+        CLIENT_AUTH_MODES.add(new SelectItem("want"));
+        CLIENT_AUTH_MODES.add(new SelectItem("need"));
+    }
+
     private PropertyItem[] allPropertyItems = {
+        // the order of DB properties is very important here - start.jsp expects these to be in the configuration in this order
         new PropertyItem(PROP_DATABASE_TYPE, String.class, InstallerI18NResourceKeys.PROP_DATABASE_TYPE,
             InstallerI18NResourceKeys.PROP_DATABASE_TYPE_HELP, false, false, false, DATABASE_TYPES),
         new PropertyItem(PROP_DATABASE_CONNECTION_URL, String.class,
@@ -143,6 +153,7 @@ public class ServerProperties {
             InstallerI18NResourceKeys.PROP_DATABASE_USERNAME_HELP, false, false, false),
         new PropertyItem(PROP_DATABASE_PASSWORD, String.class, InstallerI18NResourceKeys.PROP_DATABASE_PASSWORD,
             InstallerI18NResourceKeys.PROP_DATABASE_PASSWORD_HELP, false, true, false),
+
         new PropertyItem(PROP_SERVER_BIND_ADDRESS, String.class, InstallerI18NResourceKeys.PROP_SERVER_BIND_ADDRESS,
             InstallerI18NResourceKeys.PROP_SERVER_BIND_ADDRESS_HELP, true, false, false),
         new PropertyItem(PROP_HTTP_PORT, Integer.class, InstallerI18NResourceKeys.PROP_HTTP_PORT,
@@ -233,7 +244,7 @@ public class ServerProperties {
             InstallerI18NResourceKeys.PROP_SECURITY_SERVER_TRUSTSTORE_PASSWORD_HELP, false, true, true),
         new PropertyItem(PROP_SECURITY_SERVER_CLIENT_AUTH_MODE, String.class,
             InstallerI18NResourceKeys.PROP_SECURITY_SERVER_CLIENT_AUTH_MODE,
-            InstallerI18NResourceKeys.PROP_SECURITY_SERVER_CLIENT_AUTH_MODE_HELP, false, false, true),
+            InstallerI18NResourceKeys.PROP_SECURITY_SERVER_CLIENT_AUTH_MODE_HELP, false, false, true, CLIENT_AUTH_MODES),
         new PropertyItem(PROP_SECURITY_CLIENT_SECURE_SOCKET_PROTOCOL, String.class,
             InstallerI18NResourceKeys.PROP_SECURITY_CLIENT_SECURE_SOCKET_PROTOCOL,
             InstallerI18NResourceKeys.PROP_SECURITY_CLIENT_SECURE_SOCKET_PROTOCOL_HELP, false, false, true),

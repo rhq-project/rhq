@@ -572,7 +572,7 @@ public class ServerInformation {
      *
      * @throws SQLException if cannot successfully connect to the database
      */
-    private Connection getDatabaseConnection(Properties props) throws SQLException {
+    public Connection getDatabaseConnection(Properties props) throws SQLException {
         if (props == null) {
             props = getServerProperties();
         }

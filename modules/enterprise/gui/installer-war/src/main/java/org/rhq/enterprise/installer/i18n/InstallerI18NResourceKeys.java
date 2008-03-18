@@ -410,7 +410,7 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("#ConfiguringtheServer-OutgoingServerAuthenticationModeEnabled")
     String PROP_SECURITY_CLIENT_SERVER_AUTH_MODE_ENABLED_HELP = "propertySecurityClientServerAuthModeEnabledHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Agenten Enabled"),
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Agent Enabled"),
         @I18NMessage(locale = "de", value = "Eingebetteten Agent verwenden") })
     String PROP_EMBEDDED_RHQ_AGENT_ENABLED = "propertyEmbeddedRHQAgentEnabled";
     @I18NMessage("#ConfiguringtheServer-EmbeddedRHQAgentEnabled")

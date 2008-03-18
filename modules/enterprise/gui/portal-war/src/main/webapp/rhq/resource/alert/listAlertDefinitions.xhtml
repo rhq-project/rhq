@@ -114,7 +114,7 @@
                      <h:outputText styleClass="headerText" value="Template" />
                   </f:facet>
                   
-                  <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.parentId}">
+                  <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.parentId and item.parentId ne 0}">
                      <f:param name="mode" value="viewRoles"/>
                      <f:param name="type" value="#{item.resource.resourceType.id}"/>
                      <f:param name="from" value="#{item.id}"/>

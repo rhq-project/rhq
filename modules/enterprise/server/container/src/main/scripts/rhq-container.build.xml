@@ -4,7 +4,40 @@
 
 <project name="rhq-container" basedir=".">
 
-  <target name="initialize">
+  <property name="default.rhq.server.database.connection-url" value="jdbc:postgresql://127.0.0.1:5432/rhq"/>
+  <property name="default.rhq.server.database.driver-class" value="org.postgresql.Driver"/>
+  <property name="default.rhq.server.database.user-name" value="rhqadmin"/>
+  <property name="default.rhq.server.database.password" value="rhqadmin"/>
+  <property name="default.rhq.server.database.type-mapping" value="PostgreSQL"/>
+
+  <target name="set-predeploy-prop">
+    <condition property="predeploy" value="true">
+       <or>
+          <equals arg1="${dev.profile.active}" arg2="true" />
+          <equals arg1="${developer}" arg2="true" />
+       </or>
+    </condition>  
+  </target>
+  
+  <target name="set-dev-server-props" if="predeploy">  
+     <echo>***** Using dev database settings in rhq-server.properties...</echo>  
+     <property name="rhq.server.database.connection-url" value="${rhq.test.ds.connection-url}"/>
+     <property name="rhq.server.database.driver-class" value="${rhq.test.ds.driver-class}"/>
+     <property name="rhq.server.database.user-name" value="${rhq.test.ds.user-name}"/>
+     <property name="rhq.server.database.password" value="${rhq.test.ds.password}"/>
+     <property name="rhq.server.database.type-mapping" value="${rhq.test.ds.type-mapping}"/>
+  </target>
+
+  <target name="set-default-server-props" unless="predeploy">  
+     <echo>***** Using default database settings in rhq-server.properties...</echo>    
+     <property name="rhq.server.database.connection-url" value="${default.rhq.server.database.connection-url}"/>
+     <property name="rhq.server.database.driver-class" value="${default.rhq.server.database.driver-class}"/>
+     <property name="rhq.server.database.user-name" value="${default.rhq.server.database.user-name}"/>
+     <property name="rhq.server.database.password" value="${default.rhq.server.database.password}"/>
+     <property name="rhq.server.database.type-mapping" value="${default.rhq.server.database.type-mapping}"/>
+  </target>
+
+  <target name="initialize" depends="set-predeploy-prop, set-dev-server-props, set-default-server-props">
     <property name="jboss.home" location="${project.build.outputDirectory}/jbossas" />
 
     <property name="hypersonic.lock.file" location="${jboss.home}/server/default/data/hypersonic/localDB.lck" />
@@ -20,18 +53,11 @@
     <property name="jms.postgres.dir" value="jms-postgres.rej"/>
 
     <condition property="use-postgres" value="true">
-       <equals arg1="${rhq.ds.type-mapping}" arg2="PostgreSQL" casesensitive="false" />
+       <not><contains string="${rhq.server.database.type-mapping}" substring="Oracle" casesensitive="false" /></not>
     </condition>
 
     <condition property="copy.dev.resources" value="true">
        <equals arg1="${dev.profile.active}" arg2="true" />
-    </condition>
-
-    <condition property="predeploy" value="true">
-       <or>
-          <equals arg1="${dev.profile.active}" arg2="true" />
-          <equals arg1="${developer}" arg2="true" />
-       </or>
     </condition>
 
     <condition property="predeploy-postgres" value="true">
@@ -236,26 +262,8 @@
           failonerror="false"/>
 
   </target>
-
-  <target name="set-dev-server-props" if="predeploy">  
-     <echo>***** Using dev database settings in rhq-server.properties...</echo>  
-     <property name="rhq.server.database.connection-url" value="${rhq.test.ds.connection-url}"/>
-     <property name="rhq.server.database.driver-class" value="${rhq.test.ds.driver-class}"/>
-     <property name="rhq.server.database.user-name" value="${rhq.test.ds.user-name}"/>
-     <property name="rhq.server.database.password" value="${rhq.test.ds.password}"/>
-     <property name="rhq.server.database.type-mapping" value="${rhq.test.ds.type-mapping}"/>
-  </target>
-
-  <target name="set-default-server-props" unless="predeploy">  
-     <echo>***** Using default database settings in rhq-server.properties...</echo>    
-     <property name="rhq.server.database.connection-url" value="${default.rhq.server.database.connection-url}"/>
-     <property name="rhq.server.database.driver-class" value="${default.rhq.server.database.driver-class}"/>
-     <property name="rhq.server.database.user-name" value="${default.rhq.server.database.user-name}"/>
-     <property name="rhq.server.database.password" value="${default.rhq.server.database.password}"/>
-     <property name="rhq.server.database.type-mapping" value="${default.rhq.server.database.type-mapping}"/>
-  </target>
   
-  <target name="prepare-bin-dir" depends="set-dev-server-props, set-default-server-props">
+  <target name="prepare-bin-dir">
     <echo>*** Preparing bin dir... ***</echo>
     <echo>connection URL is ${rhq.server.database.connection-url}</echo>
     <property name="rhq.bin.dir" location="${project.build.outputDirectory}/bin" />

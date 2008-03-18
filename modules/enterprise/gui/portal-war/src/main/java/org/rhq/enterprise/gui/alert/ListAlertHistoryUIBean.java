@@ -24,16 +24,19 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.composite.AlertWithLatestConditionLog;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
@@ -58,6 +61,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     private Resource resource;
     private String dateFilter;
+    private String dateErrors;
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
 
     public ListAlertHistoryUIBean() {
@@ -77,6 +81,14 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public void setDateFilter(String dateFilter) {
         this.dateFilter = dateFilter;
+    }
+
+    public String getDateErrors() {
+        return this.dateErrors;
+    }
+
+    public void setDateErrors(String dateErrors) {
+        this.dateErrors = dateErrors;
     }
 
     public String deleteSelectedAlerts() {
@@ -148,7 +160,8 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
                     DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
                     date = df.parse(dateStr);
                 } catch (ParseException pe) {
-                    throw new RuntimeException(pe.getMessage(), pe.getCause());
+                    ListAlertHistoryUIBean.this.setDateErrors("Error: Invalid date filter, format is MM/dd/yyyy");
+                    // do nothing else, things will pass through will a null date and function properly
                 }
             }
 

@@ -17,6 +17,7 @@
 
    <ui:param name="pageTitle" value="List Fired Alerts for Resource '#{ResourceUIBean.name}'"/>
    <ui:param name="selectedTabName" value="Alert.History"/>
+   
    <ui:define name="content">
    
       <h:form id="alertHistoryForm">
@@ -28,11 +29,12 @@
             </f:facet>
 
             <h:panelGrid columns="2" width="90%" style="min-width: 800px;">
-               <h:panelGrid columns="3" cellspacing="3" style="float: left;">
+               <h:panelGrid columns="4" cellspacing="3" style="float: left;">
                   <h:outputLabel for="dateFilter" value="Date Filter: " />
                   <h:inputText id="dateFilter" value="#{ListAlertHistoryUIBean.dateFilter}" />
-                  <a4j:commandButton value="GO" reRender="alertHistoryDataTable, alertHistoryDataTableScroller"
+                  <a4j:commandButton value="GO" reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
                                      styleClass="buttonmed"/>
+                  <h:outputText id="dateErrors" value="#{ListAlertHistoryUIBean.dateErrors}" />
                </h:panelGrid>
             </h:panelGrid>
 

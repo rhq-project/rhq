@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.Calendar;
 import java.util.Set;
 import java.util.Iterator;
+import java.util.regex.Pattern;
 import java.io.StringReader;
 import java.io.BufferedReader;
 import java.io.File;
@@ -36,26 +37,27 @@ import org.rhq.core.domain.event.EventSeverity;
  */
 @Test
 public class Log4JLogEntryProcessorTest {
-    public static final StringBuilder TEST_LOG = new StringBuilder();
+    private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+    private static final StringBuilder TEST_LOG = new StringBuilder();
     static
     {
-        TEST_LOG.append("2007-12-09 15:32:49,909 DEBUG [com.example.FooBar] run: IdleRemover notifying pools, interval: 450000\n");
-        TEST_LOG.append("2008-02-09 02:10:11,909 INFO [com.example.FooBar] a multi-line entry\n");
-        TEST_LOG.append("\tyada yada yada\n");
-        TEST_LOG.append("\twocka wocka wocka\n");
+        TEST_LOG.append("2007-12-09 15:32:49,909 DEBUG [com.example.FooBar] run: IdleRemover notifying pools, interval: 450000").append(LINE_SEPARATOR);
+        TEST_LOG.append("2008-02-09 02:10:11,909 INFO [com.example.FooBar] a multi-line entry").append(LINE_SEPARATOR);
+        TEST_LOG.append("\tyada yada yada").append(LINE_SEPARATOR);
+        TEST_LOG.append("\twocka wocka").append(LINE_SEPARATOR);
     }
 
     public void testProcessLine() throws Exception {
         String eventType = "logEntry";
         File logFile = new File("C:/test.log");
-        LogEntryProcessor processor = new Log4JLogEntryProcessor(eventType, logFile);
+        System.out.println("Testing with no includes pattern...");
+        Log4JLogEntryProcessor processor = new Log4JLogEntryProcessor(eventType, logFile);
         BufferedReader bufferedReader = new BufferedReader(new StringReader(TEST_LOG.toString()));
         Set<Event> events = processor.processLines(bufferedReader);
-        assert events != null;
-        assert events.size() == 2;
+        assert events != null && events.size() == 2;
         Iterator<Event> eventIterator = events.iterator();
         Event event1 = eventIterator.next();
-        assert event1.getType().equals(eventType);
+        assert eventType.equals(event1.getType());
         assert new File(event1.getSourceLocation()).equals(logFile);
         Calendar calendar = Calendar.getInstance();
         calendar.set(2007, 11, 9, 15, 32, 49);
@@ -66,6 +68,21 @@ public class Log4JLogEntryProcessorTest {
         assert event1.getDetail().equals("[com.example.FooBar] run: IdleRemover notifying pools, interval: 450000");
         Event event2 = eventIterator.next();
         assert event2.getDetail().startsWith("[com.example.FooBar] a multi-line entry\n");
-        assert event2.getDetail().endsWith("\twocka wocka wocka");
+        assert event2.getDetail().endsWith("\twocka wocka");
+        System.out.println("SUCCESS!");
+        System.out.println("Testing with matching includes pattern...");
+        processor.setIncludesPattern(Pattern.compile("wocka wocka"));
+        bufferedReader = new BufferedReader(new StringReader(TEST_LOG.toString()));
+        events = processor.processLines(bufferedReader);
+        assert events != null && events.size() == 1;        
+        event1 = events.iterator().next();
+        assert event1.getDetail().endsWith("\twocka wocka");
+        System.out.println("SUCCESS!");
+        System.out.println("Testing with non-matching includes pattern...");
+        processor.setIncludesPattern(Pattern.compile("hubba bubba"));
+        bufferedReader = new BufferedReader(new StringReader(TEST_LOG.toString()));
+        events = processor.processLines(bufferedReader);
+        assert events != null && events.size() == 0;
+        System.out.println("SUCCESS!");
     }
 }

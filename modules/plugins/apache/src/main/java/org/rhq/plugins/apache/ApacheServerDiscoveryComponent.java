@@ -195,10 +195,9 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         // The port value will be in the form "1.3.6.1.2.1.6.XXXXX",
         // where "1.3.6.1.2.1.6" represents the TCP protocol ID,
         // and XXXXX is the actual port number
-        String port = fullPort.substring(fullPort.lastIndexOf(".") + 1);
+        int port = Integer.parseInt(fullPort.substring(fullPort.lastIndexOf(".") + 1));
 
-        String url = "http://" + host + ":" + port + "/";
-        return url;
+        return "http://" + host + ":" + port + "/";
     }
 
     @Nullable

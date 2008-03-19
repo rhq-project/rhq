@@ -5,33 +5,34 @@
 
 package org.rhq.plugins.platform.win;
 
-import org.hyperic.sigar.win32.EventLog;
-import org.hyperic.sigar.win32.Win32Exception;
-import org.hyperic.sigar.win32.EventLogRecord;
-import org.rhq.core.pluginapi.event.EventPoller;
-import org.rhq.core.domain.event.Event;
-import org.rhq.core.domain.event.EventSeverity;
-import org.rhq.core.domain.configuration.Configuration;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.util.Set;
-import java.util.HashSet;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.win32.EventLog;
+import org.hyperic.sigar.win32.EventLogRecord;
+import org.hyperic.sigar.win32.Win32Exception;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.event.Event;
+import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.pluginapi.event.EventPoller;
 
 /**
  * A delegate for reading windows event logs and returning them as RHQ events. Supports
  * filtering by regular expression of the content, as well as minimum severity.
  *
- * @author Greg Hinkle
+ * @author Greg Hinkle, Jay Shaughnessy
  */
 public class Win32EventLogDelegate implements EventPoller {
     private static final String EVENT_TYPE = "Event Log";
-    
+
     private final Log log = LogFactory.getLog(Win32EventLogDelegate.class);
 
     private String[] logNames;
@@ -66,18 +67,25 @@ public class Win32EventLogDelegate implements EventPoller {
             log.warn("Event tracking regular expression not valid, no filtering will take place", pse);
         }
 
+        eventLogs = new EventLog[logNames.length];
+        lastCollectedEventId = new int[logNames.length];
+
+        for (int i = 0; (i < logNames.length); ++i) {
+            eventLogs[i] = new EventLog();
+        }
     }
 
     public void open() {
         try {
-            eventLogs = new EventLog[logNames.length];
-            lastCollectedEventId = new int[logNames.length];
-
             int i = 0;
             for (String logName : logNames) {
-                eventLogs[i] = new EventLog();
+
                 eventLogs[i].open(logName);
+
+                // note, the first processed event will be the next one generated, this one
+                // was generated in the past, prior to this call to open(). 
                 lastCollectedEventId[i] = eventLogs[i].getNewestRecord();
+
                 i++;
             }
         } catch (Win32Exception e) {
@@ -95,22 +103,26 @@ public class Win32EventLogDelegate implements EventPoller {
         }
     }
 
+    @Nullable
     public Set<Event> checkForNewEvents() {
         Set<Event> convertedEvents = null;
         for (int i = 0; i < eventLogs.length; i++) {
             try {
                 int newest = eventLogs[i].getNewestRecord();
                 if (newest > lastCollectedEventId[i]) {
-                    for (int eventId = lastCollectedEventId[i]; eventId <= newest; eventId++) {
+                    for (int eventId = lastCollectedEventId[i] + 1; eventId <= newest; eventId++) {
                         eventsChecked++;
 
                         EventLogRecord event = eventLogs[i].read(eventId);
                         Event convertedEvent = handleEvent(event);
 
-                        if (convertedEvents == null) {
-                            convertedEvents = new HashSet<Event>();
+                        if (null != convertedEvent) {
+                            if (null == convertedEvents) {
+                                convertedEvents = new HashSet<Event>();
+                            }
+
+                            convertedEvents.add(convertedEvent);
                         }
-                        convertedEvents.add(convertedEvent);
                     }
                     lastCollectedEventId[i] = newest;
                 }
@@ -132,27 +144,22 @@ public class Win32EventLogDelegate implements EventPoller {
         if (!convertSeverity(event.getEventType()).isAtLeastAsSevereAs(minimumSeverity))
             return null;
 
-        Event convertedEvent =
-                new Event(
-                        EVENT_TYPE,
-                        event.getLogName(),
-                        new Date(event.getTimeGenerated() * 1000),
-                        convertSeverity(event.getEventType()),
-                        event.getMessage());
+        Event convertedEvent = new Event(EVENT_TYPE, event.getLogName(), new Date(event.getTimeGenerated() * 1000),
+            convertSeverity(event.getEventType()), event.getMessage());
         eventsFired++;
         return convertedEvent;
     }
 
     private EventSeverity convertSeverity(short type) {
         switch (type) {
-            case EventLog.EVENTLOG_INFORMATION_TYPE:
-                return EventSeverity.INFO;
-            case EventLog.EVENTLOG_WARNING_TYPE:
-                return EventSeverity.WARN;
-            case EventLog.EVENTLOG_ERROR_TYPE:
-                return EventSeverity.ERROR;
-            default:
-                return EventSeverity.DEBUG;
+        case EventLog.EVENTLOG_INFORMATION_TYPE:
+            return EventSeverity.INFO;
+        case EventLog.EVENTLOG_WARNING_TYPE:
+            return EventSeverity.WARN;
+        case EventLog.EVENTLOG_ERROR_TYPE:
+            return EventSeverity.ERROR;
+        default:
+            return EventSeverity.DEBUG;
         }
     }
 
@@ -165,7 +172,6 @@ public class Win32EventLogDelegate implements EventPoller {
     public Set<Event> poll() {
         return checkForNewEvents();
     }
-
 
     public int getEventsChecked() {
         return eventsChecked;

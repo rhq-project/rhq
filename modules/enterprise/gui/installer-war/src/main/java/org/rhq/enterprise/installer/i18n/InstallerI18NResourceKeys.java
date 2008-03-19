@@ -70,6 +70,18 @@ public interface InstallerI18NResourceKeys {
     /*TODO , @I18NMessage(locale = "de", value = "") */})
     String TEST_DATABASE_BUTTON = "testDatabaseButton";
 
+    @I18NMessages( { @I18NMessage(locale = "en", value = "A database schema already exists. What do you want to do?")
+    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    String EXISTING_SCHEMA_QUESTION = "existingSchemaQuestion";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Overwrite it (and lose existing data)")
+    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    String EXISTING_SCHEMA_ANSWER_OVERWRITE = "existingSchemaAnswerOverwrite";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Keep and, if necessary, upgrade it")
+    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    String EXISTING_SCHEMA_ANSWER_UPGRADE = "existingSchemaAnswerUpgrade";
+
     @I18NMessages( { @I18NMessage(locale = "en", value = "The {0} property value was an invalid number [{1}]"),
         @I18NMessage(locale = "de", value = "[{1}] ist ein ungültiger Zahlenwert für die Eigenschaft {0}") })
     String INVALID_NUMBER = "invalidNumber";

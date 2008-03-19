@@ -44,6 +44,7 @@ public class ConfigurationBean {
     private String lastError;
     private String lastTest;
     private String lastCreate;
+    private String existingSchemaAnswer;
     private Msg i18nMsg;
 
     public ConfigurationBean() {
@@ -272,6 +273,23 @@ public class ConfigurationBean {
         return StartPageResults.STAY;
     }
 
+    public boolean isDatabaseSchemaExist() {
+        try {
+            Properties configurationAsProperties = getConfigurationAsProperties(configuration);
+            return serverInfo.isDatabaseSchemaExist(configurationAsProperties);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public String getExistingSchemaAnswer() {
+        return this.existingSchemaAnswer;
+    }
+
+    public void setExistingSchemaAnswer(String existingSchemaAnswer) {
+        this.existingSchemaAnswer = existingSchemaAnswer;
+    }
+
     public StartPageResults save() {
         Properties configurationAsProperties = getConfigurationAsProperties(configuration);
 
@@ -312,9 +330,15 @@ public class ConfigurationBean {
             // save the properties
             serverInfo.setServerProperties(configurationAsProperties);
 
-            // create the db schema or upgrade it if it exists
+            // prepare the db schema
             if (serverInfo.isDatabaseSchemaExist(configurationAsProperties)) {
-                serverInfo.upgradeExistingDatabaseSchema(configurationAsProperties);
+                if (existingSchemaAnswer == null)
+                    return StartPageResults.STAY; // user didn't tell us what to do, re-display the page with the question
+
+                if (existingSchemaAnswer.equals("overwrite"))
+                    serverInfo.createNewDatabaseSchema(configurationAsProperties);
+                else
+                    serverInfo.upgradeExistingDatabaseSchema(configurationAsProperties);
             } else {
                 serverInfo.createNewDatabaseSchema(configurationAsProperties);
             }

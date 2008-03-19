@@ -32,10 +32,12 @@ a:active {
 }
 .oddRow { 
     font-family: Verdana, Helvetica, Arial, sans-serif; 
+    font-size: 80%;
     color: white; background: #781F1C; 
 }
 .evenRow { 
     font-family: Verdana, Helvetica, Arial, sans-serif; 
+    font-size: 80%;
     color: white; background: #591616; 
 }
 .javascriptWarning { 

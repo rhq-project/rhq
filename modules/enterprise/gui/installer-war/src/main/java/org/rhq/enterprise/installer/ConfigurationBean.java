@@ -229,7 +229,7 @@ public class ConfigurationBean {
                 sql2 = "CREATE DATABASE rhq WITH OWNER = rhq ENCODING = 'SQL_ASCII' TABLESPACE = pg_default";
             } else if (dbType.equalsIgnoreCase("oracle10g")) {
                 sql1 = "CREATE USER rhq IDENTIFIED BY rhq";
-                sql2 = "GRANT connect, resource TO rhq;";
+                sql2 = "GRANT connect, resource TO rhq";
             } else {
                 throw new Exception("Unknown database type: " + dbType);
             }

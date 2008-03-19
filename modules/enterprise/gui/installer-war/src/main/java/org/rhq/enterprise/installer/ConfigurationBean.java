@@ -19,7 +19,7 @@
 package org.rhq.enterprise.installer;
 
 import java.sql.Connection;
-import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -32,6 +32,7 @@ import mazz.i18n.Msg;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.installer.i18n.InstallerI18NResourceKeys;
 
 public class ConfigurationBean {
@@ -42,6 +43,7 @@ public class ConfigurationBean {
     private List<PropertyItemWithValue> configuration;
     private String lastError;
     private String lastTest;
+    private String lastCreate;
     private Msg i18nMsg;
 
     public ConfigurationBean() {
@@ -154,22 +156,26 @@ public class ConfigurationBean {
     }
 
     public String getLastError() {
-        return lastError;
+        return (lastError != null) ? lastError.replaceAll("'", "\\\\'") : null;
     }
 
     public String getLastTest() {
-        return lastTest;
+        return (lastTest != null) ? lastTest.replaceAll("'", "\\\\'") : null;
     }
 
-    public String testConnection() {
+    public String getLastCreate() {
+        return (lastCreate != null) ? lastCreate.replaceAll("'", "\\\\'") : null;
+    }
+
+    public StartPageResults testConnection() {
         Properties configurationAsProperties = getConfigurationAsProperties(configuration);
         Connection conn = null;
         try {
             conn = serverInfo.getDatabaseConnection(configurationAsProperties);
             lastTest = "OK";
-        } catch (SQLException sqle) {
-            LOG.warn("Installer failed to test connection", sqle);
-            lastTest = sqle.toString();
+        } catch (Exception e) {
+            LOG.warn("Installer failed to test connection", e);
+            lastTest = e.toString();
         } finally {
             if (conn != null)
                 try {
@@ -178,15 +184,101 @@ public class ConfigurationBean {
                 }
         }
 
-        return "TEST_DONE";
+        return StartPageResults.STAY;
     }
 
-    public SavePropertiesResults save() {
+    public StartPageResults createDatabase() {
+        Properties config = getConfigurationAsProperties(configuration);
+        String dbType = config.getProperty(ServerProperties.PROP_DATABASE_TYPE, "-unknown-");
+        Connection conn = null;
+        Statement stmt = null;
+
+        // If we successfully add the user/database, we'll change the values in the UI
+        // by modifying the configuration property items that this bean manages.
+        PropertyItemWithValue propertyItemUsername = null;
+        PropertyItemWithValue propertyItemPassword = null;
+        PropertyItemWithValue propertyItemUrl = null;
+
+        for (PropertyItemWithValue item : configuration) {
+            String propName = item.getItemDefinition().getPropertyName();
+            if (propName.equals(ServerProperties.PROP_DATABASE_USERNAME)) {
+                propertyItemUsername = item;
+            } else if (propName.equals(ServerProperties.PROP_DATABASE_PASSWORD)) {
+                propertyItemPassword = item;
+            } else if (propName.equals(ServerProperties.PROP_DATABASE_CONNECTION_URL)) {
+                propertyItemUrl = item;
+            }
+        }
+
+        // i'm really logging this to force an NPE if any propertyItemXXX are null. NPE's should never happen,
+        // but if some weird thing happens and they are null, I want to abort prior to even attempting to
+        // execute the DDL
+        LOG.info("Will attempt to create user/database 'rhq' using URL [" + propertyItemUrl.getValue()
+            + "] and admin user [" + propertyItemUsername.getValue() + "]. Admin password was"
+            + (propertyItemPassword.getValue().length() > 0 ? " not " : " ") + "empty");
+
+        try {
+            String sql1, sql2;
+
+            conn = serverInfo.getDatabaseConnection(config);
+            conn.setAutoCommit(true);
+            stmt = conn.createStatement();
+
+            if (dbType.equalsIgnoreCase("postgresql")) {
+                sql1 = "CREATE ROLE rhq LOGIN ENCRYPTED PASSWORD 'rhq' NOSUPERUSER NOINHERIT CREATEDB NOCREATEROLE";
+                sql2 = "CREATE DATABASE rhq WITH OWNER = rhq ENCODING = 'SQL_ASCII' TABLESPACE = pg_default";
+            } else if (dbType.equalsIgnoreCase("oracle10g")) {
+                sql1 = "CREATE USER rhq IDENTIFIED BY rhq";
+                sql2 = "GRANT connect, resource TO rhq;";
+            } else {
+                throw new Exception("Unknown database type: " + dbType);
+            }
+
+            stmt.addBatch(sql1);
+            stmt.addBatch(sql2);
+            int[] results = stmt.executeBatch();
+
+            if (results[0] == Statement.EXECUTE_FAILED)
+                throw new Exception("Failed to execute: " + sql1);
+            if (results[1] == Statement.EXECUTE_FAILED)
+                throw new Exception("Failed to execute: " + sql2);
+
+            // success! let's set our properties to the values we just created
+            propertyItemUsername.setValue("rhq");
+            propertyItemPassword.setValue("rhq");
+            if (dbType.equalsIgnoreCase("postgresql")) {
+                propertyItemUrl.setValue(propertyItemUrl.getValue() + "/rhq");
+            }
+
+            testConnection();
+
+            lastCreate = "OK";
+        } catch (Exception e) {
+            LOG.warn("Installer failed to create database", e);
+            lastCreate = ThrowableUtil.getAllMessages(e);
+        } finally {
+            if (stmt != null)
+                try {
+                    stmt.close();
+                } catch (Exception e) {
+                }
+            if (conn != null)
+                try {
+                    conn.close();
+                } catch (Exception e) {
+                }
+        }
+
+        return StartPageResults.STAY;
+    }
+
+    public StartPageResults save() {
         Properties configurationAsProperties = getConfigurationAsProperties(configuration);
 
         testConnection(); // so our lastTest gets set and the user will be able to get the error in the UI
         if (lastTest == null || !lastTest.equals("OK")) {
-            return SavePropertiesResults.DBINVALID;
+            lastError = lastTest;
+            return StartPageResults.ERROR;
         }
 
         for (PropertyItemWithValue newValue : configuration) {
@@ -196,7 +288,7 @@ public class ConfigurationBean {
                 } catch (Exception e) {
                     lastError = getI18nMsg().getMsg(InstallerI18NResourceKeys.INVALID_NUMBER,
                         newValue.getItemDefinition().getPropertyLabel(), newValue.getValue());
-                    return SavePropertiesResults.ERROR;
+                    return StartPageResults.ERROR;
                 }
             } else if (Boolean.class.isAssignableFrom(newValue.getItemDefinition().getPropertyType())) {
                 try {
@@ -208,7 +300,7 @@ public class ConfigurationBean {
                 } catch (Exception e) {
                     lastError = getI18nMsg().getMsg(InstallerI18NResourceKeys.INVALID_BOOLEAN,
                         newValue.getItemDefinition().getPropertyLabel(), newValue.getValue());
-                    return SavePropertiesResults.ERROR;
+                    return StartPageResults.ERROR;
                 }
             }
         }
@@ -233,10 +325,10 @@ public class ConfigurationBean {
             LOG.fatal("Failed to save properties and fully deploy - RHQ Server will not function properly", e);
             lastError = getI18nMsg().getMsg(InstallerI18NResourceKeys.SAVE_FAILURE, e);
 
-            return SavePropertiesResults.ERROR;
+            return StartPageResults.ERROR;
         }
 
-        return SavePropertiesResults.SUCCESS;
+        return StartPageResults.SUCCESS;
     }
 
     private Properties getConfigurationAsProperties(List<PropertyItemWithValue> config) {

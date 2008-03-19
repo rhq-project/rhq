@@ -14,7 +14,7 @@
    <navigation-rule>
       <from-view-id>/start.jsp</from-view-id>
       <navigation-case>
-         <from-outcome>TEST_DONE</from-outcome>
+         <from-outcome>STAY</from-outcome>
          <to-view-id>/start.jsp</to-view-id>
          <redirect/>
       </navigation-case>

@@ -140,11 +140,10 @@ public class ServerInformation {
      * data/tables and recreated.</p>
      *
      * @param  props
-     *
-     * @return <code>true</code> if the schema and its initial database has been created; <code>false</code> if one or
-     *         more errors occurred
+     * 
+     * @throws Exception if failed to create the new schema for some reason
      */
-    public boolean createNewDatabaseSchema(Properties props) {
+    public void createNewDatabaseSchema(Properties props) throws Exception {
         if (props == null) {
             props = getServerProperties();
         }
@@ -156,7 +155,6 @@ public class ServerInformation {
 
         logfile.delete(); // do not keep logs from previous dbsetup runs
 
-        boolean ok;
         try {
             // extract the dbsetup files which are located in the dbutils jar
             String dbsetupSchemaXmlFile = extractDatabaseXmlFile("db-schema-combined.xml", props);
@@ -167,13 +165,12 @@ public class ServerInformation {
             dbsetup.uninstall(dbsetupSchemaXmlFile);
             dbsetup.setup(dbsetupSchemaXmlFile);
             dbsetup.setup(dbsetupDataXmlFile, null, true, false);
-            ok = true;
         } catch (Exception e) {
             LOG.fatal("Cannot install the database schema - RHQ Server will not run properly", e);
-            ok = false;
+            throw e;
         }
 
-        return ok;
+        return;
     }
 
     /**
@@ -184,11 +181,10 @@ public class ServerInformation {
      * occur.</p>
      *
      * @param  props
-     *
-     * @return <code>true</code> if the schema has been upgraded; <code>false</code> if an exception occurred during
-     *         upgrading
+     * 
+     * @throws Exception if the upgrade failed for some reason
      */
-    public boolean upgradeExistingDatabaseSchema(Properties props) {
+    public void upgradeExistingDatabaseSchema(Properties props) throws Exception {
         if (props == null) {
             props = getServerProperties();
         }
@@ -200,7 +196,6 @@ public class ServerInformation {
 
         logfile.delete(); // do not keep logs from previous dbupgrade runs
 
-        boolean ok;
         try {
             // extract the dbupgrade ANT script which is located in the dbutils jar
             String dbupgradeXmlFile = extractDatabaseXmlFile("db-upgrade.xml", props);
@@ -212,14 +207,12 @@ public class ServerInformation {
             antProps.setProperty("target.schema.version", "LATEST");
 
             startAnt(new File(dbupgradeXmlFile), "db-ant-tasks.properties", antProps, logfile);
-
-            ok = true;
         } catch (Exception e) {
             LOG.fatal("Cannot upgrade the database schema - RHQ Server will not run properly", e);
-            ok = false;
+            throw e;
         }
 
-        return ok;
+        return;
     }
 
     /**

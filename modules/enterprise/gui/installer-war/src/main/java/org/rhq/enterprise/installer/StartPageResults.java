@@ -18,6 +18,6 @@
  */
 package org.rhq.enterprise.installer;
 
-public enum SavePropertiesResults {
-    SUCCESS, DBINVALID, ERROR
+public enum StartPageResults {
+    SUCCESS, DBINVALID, ERROR, STAY
 }

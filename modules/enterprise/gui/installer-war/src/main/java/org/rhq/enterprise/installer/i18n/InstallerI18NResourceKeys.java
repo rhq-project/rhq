@@ -54,7 +54,7 @@ public interface InstallerI18NResourceKeys {
     /*TODO , @I18NMessage(locale = "de", value = "") */})
     String SERVER_PROPERTIES_NOTE = "serverPropertiesNote";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "If your DB server needs a user and database created, press:")
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Create a default database/user if needed. Use your DB admininstrator's username, password and URL")
     /*TODO , @I18NMessage(locale = "de", value = "") */})
     String CREATE_DATABASE_NOTE = "createDatabaseNote";
 
@@ -62,7 +62,7 @@ public interface InstallerI18NResourceKeys {
     /*TODO , @I18NMessage(locale = "de", value = "") */})
     String CREATE_DATABASE_BUTTON = "createDatabaseButton";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "To see if you can connect to your DB server, press:")
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Confirm if these settings are valid")
     /*TODO , @I18NMessage(locale = "de", value = "") */})
     String TEST_DATABASE_NOTE = "testDatabaseNote";
 

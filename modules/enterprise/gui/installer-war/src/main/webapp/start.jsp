@@ -32,7 +32,7 @@
          <h:outputText value="#{bundle.databasePropertiesNote}" />
       </h3>
 
-      <h:panelGrid columns="1">
+      <h:panelGrid columns="2">
          <h:panelGrid columns="2"
                       rowClasses="evenRow,oddRow">
             <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[0].itemDefinition.help}', 'propertyHelp')">
@@ -83,23 +83,35 @@
                          value="#{configurationBean.databaseConfiguration[4].value}" />
          </h:panelGrid>
 
-         <h:panelGroup>
-             <i><h:outputText value="#{bundle.testDatabaseNote}" /></i>
-             <h:commandButton id="testDatabaseButton"
-                              action="#{configurationBean.testConnection}"
-                              value="#{bundle.testDatabaseButton}"/>
-             <h:panelGroup rendered="#{configurationBean.lastTest != null && configurationBean.lastTest != 'OK'}">
-                <h:graphicImage value="/images/warning.gif" alt="Error" onclick="alert('#{configurationBean.lastTest}')" onmouseover="this.style.cursor='pointer'" onmouseout="this.style.cursor='default'"/>
-             </h:panelGroup>
-             <h:panelGroup rendered="#{configurationBean.lastTest != null && configurationBean.lastTest == 'OK'}">
-                <h:graphicImage value="/images/ok.gif" alt="OK"/>
-             </h:panelGroup>
-         </h:panelGroup>
+         <h:panelGrid columns="1" border="1" width="250">
+            <h:panelGrid columns="1">
+               <h:outputText value="#{bundle.testDatabaseNote}" style="font-size: 66%"/>
+               <h:panelGrid columns="2">
+                  <h:commandButton id="testDatabaseButton"
+                                   action="#{configurationBean.testConnection}"
+                                   value="#{bundle.testDatabaseButton}"/>
+                  <h:panelGroup rendered="#{configurationBean.lastTest != null && configurationBean.lastTest != 'OK'}">
+                     <h:graphicImage value="/images/warning.gif" alt="Error" onclick="alert('#{configurationBean.lastTest}')" onmouseover="this.style.cursor='pointer'" onmouseout="this.style.cursor='default'"/>
+                  </h:panelGroup>
+                  <h:panelGroup rendered="#{configurationBean.lastTest != null && configurationBean.lastTest == 'OK'}">
+                     <h:graphicImage value="/images/ok.gif" alt="OK"/>
+                  </h:panelGroup>
+               </h:panelGrid>
+            </h:panelGrid>
 
-         <h:panelGroup rendered="false">
-             <i><h:outputText value="#{bundle.createDatabaseNote}" /></i>
-             <h:commandButton id="createDatabaseButton" action="#{configurationBean.save}" value="#{bundle.createDatabaseButton}" />
-         </h:panelGroup>
+            <h:panelGrid columns="1">
+               <h:outputText value="#{bundle.createDatabaseNote}" style="font-size: 66%"/>
+               <h:panelGrid columns="2">
+                  <h:commandButton id="createDatabaseButton" action="#{configurationBean.createDatabase}" value="#{bundle.createDatabaseButton}" />
+                  <h:panelGroup rendered="#{configurationBean.lastCreate != null && configurationBean.lastCreate != 'OK'}">
+                     <h:graphicImage value="/images/warning.gif" alt="Error" onclick="alert('#{configurationBean.lastCreate}')" onmouseover="this.style.cursor='pointer'" onmouseout="this.style.cursor='default'"/>
+                  </h:panelGroup>
+                  <h:panelGroup rendered="#{configurationBean.lastCreate != null && configurationBean.lastCreate == 'OK'}">
+                     <h:graphicImage value="/images/ok.gif" alt="OK"/>
+                  </h:panelGroup>
+               </h:panelGrid>
+            </h:panelGrid>
+         </h:panelGrid>
       </h:panelGrid>
 
       <h3 align="center">

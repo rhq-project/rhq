@@ -214,7 +214,7 @@ public class ConfigurationBean {
         // i'm really logging this to force an NPE if any propertyItemXXX are null. NPE's should never happen,
         // but if some weird thing happens and they are null, I want to abort prior to even attempting to
         // execute the DDL
-        LOG.info("Will attempt to create user/database 'rhq' using URL [" + propertyItemUrl.getValue()
+        LOG.info("Will attempt to create user/database 'rhqadmin' using URL [" + propertyItemUrl.getValue()
             + "] and admin user [" + propertyItemUsername.getValue() + "]. Admin password was"
             + (propertyItemPassword.getValue().length() > 0 ? " not " : " ") + "empty");
 
@@ -226,11 +226,11 @@ public class ConfigurationBean {
             stmt = conn.createStatement();
 
             if (dbType.equalsIgnoreCase("postgresql")) {
-                sql1 = "CREATE ROLE rhq LOGIN ENCRYPTED PASSWORD 'rhq' NOSUPERUSER NOINHERIT CREATEDB NOCREATEROLE";
-                sql2 = "CREATE DATABASE rhq WITH OWNER = rhq ENCODING = 'SQL_ASCII' TABLESPACE = pg_default";
+                sql1 = "CREATE ROLE rhqadmin LOGIN ENCRYPTED PASSWORD 'rhqadmin' NOSUPERUSER NOINHERIT CREATEDB NOCREATEROLE";
+                sql2 = "CREATE DATABASE rhq WITH OWNER = rhqadmin ENCODING = 'SQL_ASCII' TABLESPACE = pg_default";
             } else if (dbType.equalsIgnoreCase("oracle10g")) {
-                sql1 = "CREATE USER rhq IDENTIFIED BY rhq";
-                sql2 = "GRANT connect, resource TO rhq";
+                sql1 = "CREATE USER rhqadmin IDENTIFIED BY rhqadmin";
+                sql2 = "GRANT connect, resource TO rhqadmin";
             } else {
                 throw new Exception("Unknown database type: " + dbType);
             }
@@ -245,8 +245,8 @@ public class ConfigurationBean {
                 throw new Exception("Failed to execute: " + sql2);
 
             // success! let's set our properties to the values we just created
-            propertyItemUsername.setValue("rhq");
-            propertyItemPassword.setValue("rhq");
+            propertyItemUsername.setValue("rhqadmin");
+            propertyItemPassword.setValue("rhqadmin");
             if (dbType.equalsIgnoreCase("postgresql")) {
                 propertyItemUrl.setValue(propertyItemUrl.getValue() + "/rhq");
             }

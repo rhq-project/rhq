@@ -1045,7 +1045,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
         try {
             // Overall package count on the request
-            Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID_WITH_INSTALLED_PKG_HIST);
+            Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID);
             query.setParameter("id", request.getId());
 
             List<?> resultList = query.getResultList();
@@ -1055,7 +1055,12 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 + resultList.size();
 
             // Quick check for the status of each
-            for (InstalledPackageHistory historyEntry : request.getInstalledPackageHistory()) {
+            query = em.createNamedQuery(InstalledPackageHistory.QUERY_FIND_BY_CSR_ID);
+            query.setParameter("contentServiceRequestId", request.getId());
+
+            List<InstalledPackageHistory> historyEntries = query.getResultList();
+
+            for (InstalledPackageHistory historyEntry : historyEntries) {
                 assert historyEntry.getContentServiceRequest().equals(request) : "ContentServiceRequest relationship not set up correctly for package history";
                 assert historyEntry.getStatus() == InstalledPackageHistoryStatus.BEING_INSTALLED : "Incorrect status on installed package history. Expected: BEING_INSTALLED, Found: "
                     + historyEntry.getStatus();

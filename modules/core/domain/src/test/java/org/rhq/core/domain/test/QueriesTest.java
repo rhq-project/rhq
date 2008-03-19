@@ -72,7 +72,6 @@ public class QueriesTest extends AbstractEJB3Test {
         add(PackageVersion.QUERY_FIND_BY_CHANNEL_ID, new Object[] { "channelId", 1 });
         add(PackageVersion.QUERY_FIND_METADATA_BY_RESOURCE_ID, new Object[] { "resourceId", 1 });
         add(PackageVersion.QUERY_FIND_BY_CHANNEL_ID_WITH_PACKAGE, new Object[] { "channelId", 1 });
-        add(ContentServiceRequest.QUERY_FIND_BY_ID_WITH_INSTALLED_PKG_HIST, new Object[] { "id", 1 });
         add(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST, new Object[] { "resourceId", 1 });
 
         // great, empty sub-selects on oracle makes the query croak?

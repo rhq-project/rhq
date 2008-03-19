@@ -60,13 +60,10 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_NOT_STATUS, query = "SELECT csr FROM ContentServiceRequest AS csr WHERE csr.resource.id = :resourceId AND csr.status <> :status"),
     @NamedQuery(name = ContentServiceRequest.QUERY_FIND_BY_RESOURCE, query = "SELECT csr FROM ContentServiceRequest AS csr WHERE csr.resource.id = :resourceId"),
 
-    // CANNOT USE DISTINCT HERE ON ORACLE DUE TO THE LOB COLUMN BEING SELECTED
-    @NamedQuery(name = ContentServiceRequest.QUERY_FIND_BY_ID_WITH_INSTALLED_PKG_HIST, query = "SELECT DISTINCT csr "
-        + "  FROM ContentServiceRequest AS csr JOIN FETCH csr.installedPackageHistory ip "
-        + " WHERE csr.id IN (SELECT DISTINCT csr1.id  FROM ContentServiceRequest AS csr1 "
-        + "                   WHERE csr1.id = :id) "),
     @NamedQuery(name = ContentServiceRequest.QUERY_FIND_BY_ID, query = "SELECT csr "
         + "  FROM ContentServiceRequest AS csr WHERE csr.id = :id"),
+
+    // TODO: This query won't work without distinct in the outer clause. We need to migrate the tests away from using this.
     @NamedQuery(name = ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST, query = "SELECT csr "
         + "  FROM ContentServiceRequest AS csr JOIN FETCH csr.installedPackageHistory ip "
         + " WHERE csr.id IN (SELECT DISTINCT csr1.id FROM ContentServiceRequest AS csr1 "
@@ -83,7 +80,6 @@ public class ContentServiceRequest implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE_WITH_STATUS = "ContentServiceRequest.findByResourceWithStatus";
     public static final String QUERY_FIND_BY_RESOURCE_WITH_NOT_STATUS = "ContentServiceRequest.findByResourceWithNotStatus";
     public static final String QUERY_FIND_BY_RESOURCE = "ContentServiceRequest.findByResource";
-    public static final String QUERY_FIND_BY_ID_WITH_INSTALLED_PKG_HIST = "ContentServiceRequest.findByIdWithInstalledPackageHistory";
     public static final String QUERY_FIND_BY_ID = "ContentServiceRequest.findById";
     public static final String QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST = "ContentServiceRequest.findByResourceWithInstalledPackageHistory";
     public static final String QUERY_DELETE_BY_RESOURCES = "ContentServiceRequest.deleteByResources";

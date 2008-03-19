@@ -420,7 +420,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         log.info("Completing deploy package response: " + response);
 
         // Load persisted request
-        Query query = entityManager.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID_WITH_INSTALLED_PKG_HIST);
+        Query query = entityManager.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID);
         query.setParameter("id", response.getRequestId());
         ContentServiceRequest persistedRequest = (ContentServiceRequest) query.getSingleResult();
         Resource resource = persistedRequest.getResource();
@@ -592,7 +592,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         log.info("Completing delete package response: " + response);
 
         // Load persisted request
-        Query query = entityManager.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID_WITH_INSTALLED_PKG_HIST);
+        Query query = entityManager.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID);
         query.setParameter("id", response.getRequestId());
         ContentServiceRequest persistedRequest = (ContentServiceRequest) query.getSingleResult();
 
@@ -874,7 +874,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void failRequest(int requestId, Throwable error) {
-        Query query = entityManager.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID_WITH_INSTALLED_PKG_HIST);
+        Query query = entityManager.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID);
         query.setParameter("id", requestId);
 
         ContentServiceRequest persistedRequest = (ContentServiceRequest) query.getSingleResult();

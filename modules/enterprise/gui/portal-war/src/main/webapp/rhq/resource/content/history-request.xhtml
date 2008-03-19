@@ -31,6 +31,41 @@
 
 <rich:panel>
    <f:facet name="header"><h:outputText value="Request Details"/></f:facet>
+   <ui:param name="csr" value="#{ShowContentServiceRequestUIBean.contentServiceRequest}"/>
+
+   <table class="revision-data-table" width="100%">
+
+      <tr class="revision-data-table-even-row">
+         <td valign="top"><b>Status</b></td>
+         <td><h:outputText value="#{csr.status}"/></td>
+      </tr>
+
+      <tr class="revision-data-table-odd-row">
+         <td valign="top"><b>Request Type</b></td>
+         <td><h:outputText value="#{csr.contentRequestType}"/></td>
+      </tr>
+
+      <tr class="revision-data-table-even-row">
+         <td valign="top"><b>Timestamp</b></td>
+         <td><h:outputText value="#{csr.createdDate}"/></td>
+      </tr>
+
+      <tr class="revision-data-table-odd-row">
+         <td valign="top"><b>User</b></td>
+         <td><h:outputText value="#{csr.subjectName}"/></td>
+      </tr>
+
+      <tr class="revision-data-table-even-row">
+         <td valign="top"><b>Error</b></td>
+         <td><pre><h:outputText value="#{csr.errorMessage}"/></pre></td>
+      </tr>
+
+   </table>
+
+</rich:panel>
+
+<rich:panel>
+   <f:facet name="header"><h:outputText value="Package Audit Trail"/></f:facet>
 
    <ui:param name="packageHistoryDataModel" value="#{ShowContentServiceRequestUIBean.dataModel}"/>
    <rich:dataTable binding="#{ShowContentServiceRequestUIBean.dataTable}"

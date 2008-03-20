@@ -54,6 +54,7 @@
         <mapping class="org.rhq.core.domain.content.ResourceChannel" />
         <mapping class="org.rhq.core.domain.event.Event" />
         <mapping class="org.rhq.core.domain.event.EventDefinition" />
+        <mapping class="org.rhq.core.domain.event.EventSource" />
         <mapping class="org.rhq.core.domain.measurement.Availability" />
         <mapping class="org.rhq.core.domain.measurement.MeasurementBaseline" />
         <mapping class="org.rhq.core.domain.measurement.MeasurementData" />

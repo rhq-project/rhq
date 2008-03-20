@@ -156,7 +156,7 @@
                height="25" width="104"
                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
          <item value="Timeline"
-               link="/rhq/resource/monitor/timeline.xhtml"
+               link="/rhq/resource/monitor/timeline.xhtml" mode="timeline"
                height="25" width="104"
                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
          <item value="Configure"
@@ -178,7 +178,7 @@
 
    <definition name=".tabs.resource.common.monitor.configVisibility"
                extends=".tabs.resource.common.monitor">
-     <put name="subSelectedIndex" value="2"/>
+     <put name="subSelectedIndex" value="3"/>
    </definition>
 
    <definition name=".tabs.resource.common.monitor.configVisibility.defaults"

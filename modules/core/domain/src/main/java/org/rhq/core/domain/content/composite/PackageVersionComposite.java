@@ -20,10 +20,12 @@ package org.rhq.core.domain.content.composite;
 
 import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.configuration.Configuration;
 
 public class PackageVersionComposite {
 
     private final PackageVersion packageVersion;
+    private final Configuration extraProperties;
     private final String packageTypeName;
     private final PackageCategory packageCategory;
     private final String packageName;
@@ -34,13 +36,22 @@ public class PackageVersionComposite {
 
     public PackageVersionComposite(PackageVersion packageVersion, String packageTypeName,
         PackageCategory packageCategory, String packageName, String architectureName, String packageClassification) {
-        this(packageVersion, packageTypeName, packageCategory, packageName, architectureName, packageClassification, 0, 0);
+        this(packageVersion, packageTypeName, packageCategory, packageName, architectureName, packageClassification,
+            0, 0);
     }
 
     public PackageVersionComposite(PackageVersion packageVersion, String packageTypeName,
         PackageCategory packageCategory, String packageName, String architectureName, String packageClassification,
         Number packageBitsId, Number isPackageBitsInDatabase) {
+        this(packageVersion, null, packageTypeName, packageCategory, packageName, architectureName,
+            packageClassification, packageBitsId, isPackageBitsInDatabase);
+    }
+
+    public PackageVersionComposite(PackageVersion packageVersion, Configuration extraProperties, String packageTypeName,
+        PackageCategory packageCategory, String packageName, String architectureName, String packageClassification,
+        Number packageBitsId, Number isPackageBitsInDatabase) {
         this.packageVersion = packageVersion;
+        this.extraProperties = extraProperties;
         this.packageTypeName = packageTypeName;
         this.packageCategory = packageCategory;
         this.packageName = packageName;
@@ -52,6 +63,10 @@ public class PackageVersionComposite {
 
     public PackageVersion getPackageVersion() {
         return packageVersion;
+    }
+
+    public Configuration getExtraProperties() {
+        return extraProperties;
     }
 
     public String getPackageTypeName() {

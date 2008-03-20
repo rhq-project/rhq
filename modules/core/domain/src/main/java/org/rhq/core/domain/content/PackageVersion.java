@@ -173,7 +173,19 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "          pv.packageBits.id, "
         + "          (SELECT count(pb.id) FROM pv.packageBits pb WHERE pb.bits IS NOT NULL) "
         + "       ) "
-        + "  FROM PackageVersion pv " + " WHERE pv.id = :id "),
+        + "  FROM PackageVersion pv WHERE pv.id = :id "),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_COMPOSITE_BY_ID_WITH_PROPS, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionComposite( "
+        + "          pv, "
+        + "          (SELECT c FROM Configuration c WHERE c.id = pv.extraProperties.id), "
+        + "          pv.generalPackage.packageType.name, "
+        + "          pv.generalPackage.packageType.category, "
+        + "          pv.generalPackage.name, "
+        + "          pv.architecture.name, "
+        + "          pv.generalPackage.classification, "
+        + "          pv.packageBits.id, "
+        + "          (SELECT count(pb.id) FROM pv.packageBits pb WHERE pb.bits IS NOT NULL) "
+        + "       ) "
+        + "  FROM PackageVersion pv WHERE pv.id = :id"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_COMPOSITES_BY_IDS, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionComposite( "
         + "          pv, "
         + "          pv.generalPackage.packageType.name, "
@@ -182,7 +194,7 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "          pv.architecture.name, "
         + "          pv.generalPackage.classification "
         + "       ) "
-        + "  FROM PackageVersion pv " + " WHERE pv.id IN (:ids) "),
+        + "  FROM PackageVersion pv WHERE pv.id IN (:ids) "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionComposite( "
         + "          pv, "
         + "          pv.generalPackage.packageType.displayName, "
@@ -237,6 +249,7 @@ public class PackageVersion implements Serializable {
     public static final String FIND_EXTRA_PROPS_IF_NO_CONTENT_SOURCES_OR_CHANNELS = "PackageVersion.findOrphanedExtraProps";
     public static final String FIND_FILES_IF_NO_CONTENT_SOURCES_OR_CHANNELS = "PackageVersion.findOrphanedFiles";
     public static final String QUERY_FIND_COMPOSITE_BY_ID = "PackageVersion.findCompositeById";
+    public static final String QUERY_FIND_COMPOSITE_BY_ID_WITH_PROPS = "PackageVersion.findCompositeByIdWithProps";
     public static final String QUERY_FIND_COMPOSITES_BY_IDS = "PackageVersion.findCompositesByIds";
     public static final String QUERY_FIND_COMPOSITE_BY_FILTERS = "PackageVersion.findCompositeByFilters";
     public static final String QUERY_FIND_BY_ID = "PackageVersion.findById";

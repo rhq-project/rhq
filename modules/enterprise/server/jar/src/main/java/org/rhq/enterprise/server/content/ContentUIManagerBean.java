@@ -256,6 +256,13 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         return pv;
     }
 
+    public PackageVersionComposite loadPackageVersionCompositeWithExtraProperties(Subject user, int packageVersionId) {
+        Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_COMPOSITE_BY_ID_WITH_PROPS);
+        q.setParameter("id", packageVersionId);
+        PackageVersionComposite pv = (PackageVersionComposite) q.getSingleResult();
+        return pv;
+    }
+
     public List<PackageVersionComposite> getPackageVersionComposites(Subject user, int[] packageVersionIds) {
         List<Integer> iPackageVersionIds = new ArrayList<Integer>(packageVersionIds.length);
         for (int i : packageVersionIds) {

@@ -152,6 +152,17 @@ public interface ContentUIManagerLocal {
     PackageVersionComposite loadPackageVersionComposite(Subject user, int packageVersionId);
 
     /**
+     * Used to retrieve information about a package version to display to a user. This call will also load the
+     * extra properties configuration object on the package version. 
+     *
+     * @param  user             user who wants to see the information
+     * @param  packageVersionId identifies what package version to return info on
+     *
+     * @return the information on the package version
+     */
+    PackageVersionComposite loadPackageVersionCompositeWithExtraProperties(Subject user, int packageVersionId);
+
+    /**
      * Used to retrieve information about multiple packages to display to the user.
      *
      * @param user              user who wants to see the information

@@ -38,7 +38,7 @@ public class PackageVersionDetailsUIBean {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
             ContentUIManagerLocal manager = LookupUtil.getContentUIManager();
-            this.packageVersionComposite = manager.loadPackageVersionComposite(subject, id);
+            this.packageVersionComposite = manager.loadPackageVersionCompositeWithExtraProperties(subject, id);
         }
     }
 }

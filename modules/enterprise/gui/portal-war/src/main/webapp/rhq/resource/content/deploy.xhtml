@@ -35,7 +35,7 @@
                             value="#{resourcePackageVersionsDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 20%, 14%, 15%, 10%, 40%"
+                            columnsWidth="1%, 15%, 10%, 10%, 10%, 54%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 
@@ -58,7 +58,11 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.packageName}"/>
+                  <h:outputLink value="../../content/packageVersion.xhtml">
+                     <f:param name="id" value="#{item.packageVersion.id}"/>
+                     <h:outputText value="#{item.packageName}"/>
+                  </h:outputLink>
+
                </rich:column>
 
                <rich:column>

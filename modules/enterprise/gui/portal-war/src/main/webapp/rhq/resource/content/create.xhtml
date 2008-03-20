@@ -27,15 +27,15 @@
 
             <table>
                <tr>
-                  <td align="right"><b>Name:*</b></td>
+                  <td align="right"><b>Name*</b></td>
                   <td align="left"><h:inputText value="#{CreateNewPackageUIBean.packageName}"/></td>
                </tr>
                <tr>
-                  <td align="right"><b>Version:*</b></td>
+                  <td align="right"><b>Version*</b></td>
                   <td align="left"><h:inputText value="#{CreateNewPackageUIBean.version}"/></td>
                </tr>
                <tr>
-                  <td align="right"><b>Architecture:*</b></td>
+                  <td align="right"><b>Architecture*</b></td>
                   <td align="left">
                      <h:selectOneMenu value="#{CreateNewPackageUIBean.selectedArchitectureId}">
                         <f:selectItems value="#{CreateNewPackageUIBean.architectures}" />
@@ -43,7 +43,7 @@
                   </td>
                </tr>
                <tr>
-                  <td align="right"><b>Type:*</b></td>
+                  <td align="right"><b>Type*</b></td>
                   <td align="left">
                      <h:selectOneMenu value="#{CreateNewPackageUIBean.selectedPackageTypeId}">
                         <f:selectItems value="#{CreateNewPackageUIBean.packageTypes}" />
@@ -51,12 +51,12 @@
                   </td>
                </tr>
                <tr>
-                  <td align="right"><b>File:*</b></td>
+                  <td align="right"><b>File*</b></td>
                   <td align="left"><onc:upload id="uploadFile"/></td>
                </tr>
             </table>
 
-            <p>* denotes a required field.</p>
+            <div class="note-panel"><span class="required-marker-text">*</span><span> denotes a required field.</span></div>
 
          </rich:panel>
 

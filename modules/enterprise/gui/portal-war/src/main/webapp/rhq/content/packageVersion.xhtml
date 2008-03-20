@@ -155,7 +155,31 @@
                      <h:outputText value="#{item.packageBitsInDatabase}" />
                   </td>
                </tr>               
+
+               <c:if test="#{!empty item.extraProperties}">
+                  <c:forEach items="#{item.extraProperties.properties}" var="prop" varStatus="rowCounter">
+
+                      <c:choose>
+                         <c:when test="#{rowCounter.index % 2 == 1}">
+                            <c:set var="rowStyle" scope="page" value="package-details-odd-row"/>
+                         </c:when>
+                         <c:otherwise>
+                            <c:set var="rowStyle" scope="page" value="package-details-even-row"/>
+                         </c:otherwise>
+                      </c:choose>
+
+                     <tr class="${rowStyle}">
+                        <td class="package-details-key-column"><b><h:outputText value="#{prop.name}"/></b></td>
+                        <td class="package-details-value-column">
+                           <h:outputText value="#{prop.stringValue}" />
+                        </td>
+                     </tr>
+
+                  </c:forEach>
+               </c:if>
+
             </table>
+
          </rich:panel>
 
       </h:form>

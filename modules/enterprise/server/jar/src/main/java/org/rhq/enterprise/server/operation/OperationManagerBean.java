@@ -1061,7 +1061,38 @@ public class OperationManagerBean implements OperationManagerLocal {
                 }
             }
         } catch (Throwable t) {
-            LOG.warn("Failed to check for timed out operations. Cause: " + t);
+            LOG.warn("Failed to check for timed out resource operations. Cause: " + t);
+        }
+
+        /*
+         * since multiple resource operation histories from different agents can report at the same time, 
+         * it's possible that OperationManagerBean.updateOperationHistory will be called concurrently from 
+         * two different transactions. when this happens, neither thread sees what the other is doing (due 
+         * to current transaction isolation level settings), so the handler code that checks to see whether 
+         * some resourceOperationHistory was the last one in the group to finish might not function the way 
+         * you'd think it would in a purely serial environment.
+         * 
+         * since CheckForTimedOutOperationsJob is already called on a periodic basis (currently set for 60 
+         * seconds), if we fix it to also check for this condition - any group operations that are INPROGRESS
+         * but which don't have any INPROGRESS resource operation children - we needn't touch anything that 
+         * concerns the in-band handler code mentioned in the above paragraph.
+         */
+        try {
+            Query query = entityManager.createNamedQuery(GroupOperationHistory.QUERY_FIND_ABANDONED_IN_PROGRESS);
+            query.setParameter("status", OperationRequestStatus.INPROGRESS);
+            List<GroupOperationHistory> groupHistories = query.getResultList();
+            for (GroupOperationHistory groupHistory : groupHistories) {
+                boolean hadFailure = false;
+                for (ResourceOperationHistory resourceHistory : groupHistory.getResourceOperationHistories()) {
+                    if (resourceHistory.getStatus() != OperationRequestStatus.SUCCESS) {
+                        hadFailure = true;
+                        break;
+                    }
+                }
+                groupHistory.setStatus(hadFailure ? OperationRequestStatus.FAILURE : OperationRequestStatus.SUCCESS);
+            }
+        } catch (Throwable t) {
+            LOG.warn("Failed to check for completed group operations. Cause: " + t);
         }
     }
 

@@ -66,11 +66,13 @@
       <h:commandButton value="Submit" action="#{CreateNewPackageChildResourceUIBean.createResource}"/>
 
    </h:form>
-   
-   <h:outputLink value="/rhq/resource/inventory/view.xhtml">
-      <f:param name="id" value="${ResourceUIBean.id}"/>
-      <h:outputText value="&lt; Back to Inventory Tab"/>
-   </h:outputLink>
+
+   <p align="center">
+      <h:outputLink value="/rhq/resource/inventory/view.xhtml">
+         <f:param name="id" value="${ResourceUIBean.id}"/>
+         <h:outputText value="Back to Inventory"/>
+      </h:outputLink>
+   </p>
 
 </ui:define>
 

@@ -19,5 +19,5 @@
 package org.rhq.enterprise.installer;
 
 public enum StartPageResults {
-    SUCCESS, DBINVALID, ERROR, STAY
+    SUCCESS, DBINVALID, ERROR, STAY, CREATEDB
 }

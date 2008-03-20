@@ -19,6 +19,11 @@
          <redirect/>
       </navigation-case>
       <navigation-case>
+         <from-outcome>CREATEDB</from-outcome>
+         <to-view-id>/createdb.jsp</to-view-id>
+         <redirect/>
+      </navigation-case>
+      <navigation-case>
          <from-outcome>SUCCESS</from-outcome>
          <to-view-id>/welcome.jsp</to-view-id>
          <redirect/>
@@ -30,6 +35,15 @@
       <navigation-case>
          <from-outcome>ERROR</from-outcome>
          <to-view-id>/save_error.jsp</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+ 
+   <navigation-rule>
+      <from-view-id>/createdb.jsp</from-view-id>
+      <navigation-case>
+         <from-outcome>STAY</from-outcome>
+         <to-view-id>/start.jsp</to-view-id>
+         <redirect/>
       </navigation-case>
    </navigation-rule>
  

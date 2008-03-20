@@ -102,7 +102,7 @@
             <h:panelGrid columns="1">
                <h:outputText value="#{bundle.createDatabaseNote}" style="font-size: 66%"/>
                <h:panelGrid columns="2">
-                  <h:commandButton id="createDatabaseButton" action="#{configurationBean.createDatabase}" value="#{bundle.createDatabaseButton}" />
+                  <h:commandButton id="createDatabaseButton" action="#{configurationBean.showCreateDatabasePage}" value="#{bundle.createDatabaseButton}" />
                   <h:panelGroup rendered="#{configurationBean.lastCreate != null && configurationBean.lastCreate != 'OK'}">
                      <h:graphicImage value="/images/warning.gif" alt="Error" onclick="alert('#{configurationBean.lastCreate}')" onmouseover="this.style.cursor='pointer'" onmouseout="this.style.cursor='default'"/>
                   </h:panelGroup>

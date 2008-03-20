@@ -46,6 +46,26 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("${product.support.email}")
     String PRODUCT_SUPPORT_EMAIL = "product.support.email";
 
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Create Database/User")
+    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    String CREATE_DATABASE_USER_TITLE = "createDatabaseUserTitle";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Enter your database administrator's information here and press the button to create a database and user.")
+    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    String CREATE_DATABASE_USER_HELP = "createDatabaseUserHelp";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "DB Connection URL")
+    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    String ADMIN_CONNECTION_URL = "adminConnectionUrl";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "DB Admin Username")
+    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    String ADMIN_USERNAME = "adminUsername";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "DB Admin Password")
+    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    String ADMIN_PASSWORD = "adminPassword";
+
     @I18NMessages( { @I18NMessage(locale = "en", value = "Database Settings")
     /*TODO , @I18NMessage(locale = "de", value = "") */})
     String DATABASE_PROPERTIES_NOTE = "databasePropertiesNote";
@@ -54,7 +74,7 @@ public interface InstallerI18NResourceKeys {
     /*TODO , @I18NMessage(locale = "de", value = "") */})
     String SERVER_PROPERTIES_NOTE = "serverPropertiesNote";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Create a default database/user if needed. Use your DB admininstrator's username, password and URL")
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Create a database/user if needed")
     /*TODO , @I18NMessage(locale = "de", value = "") */})
     String CREATE_DATABASE_NOTE = "createDatabaseNote";
 

@@ -45,6 +45,9 @@ public class ConfigurationBean {
     private String lastTest;
     private String lastCreate;
     private String existingSchemaAnswer;
+    private String adminConnectionUrl;
+    private String adminUsername;
+    private String adminPassword;
     private Msg i18nMsg;
 
     public ConfigurationBean() {
@@ -168,6 +171,48 @@ public class ConfigurationBean {
         return (lastCreate != null) ? lastCreate.replaceAll("'", "\\\\'") : null;
     }
 
+    public String getAdminConnectionUrl() {
+        if (adminConnectionUrl == null) {
+            adminConnectionUrl = getConfigurationAsProperties(configuration).getProperty(
+                ServerProperties.PROP_DATABASE_CONNECTION_URL);
+        }
+        return adminConnectionUrl;
+    }
+
+    public void setAdminConnectionUrl(String adminUrl) {
+        this.adminConnectionUrl = adminUrl;
+    }
+
+    public String getAdminUsername() {
+        if (adminUsername == null) {
+            Properties config = getConfigurationAsProperties(configuration);
+            String dbtype = config.getProperty(ServerProperties.PROP_DATABASE_TYPE);
+            if (dbtype != null) {
+                if (dbtype.toLowerCase().indexOf("oracle") > -1) {
+                    adminUsername = "sys";
+                } else if (dbtype.toLowerCase().indexOf("postgres") > -1) {
+                    adminUsername = "postgres";
+                } else if (dbtype.toLowerCase().indexOf("mysql") > -1) {
+                    adminUsername = "mysqladmin";
+                }
+            }
+        }
+
+        return adminUsername;
+    }
+
+    public void setAdminUsername(String adminUsername) {
+        this.adminUsername = adminUsername;
+    }
+
+    public String getAdminPassword() {
+        return adminPassword;
+    }
+
+    public void setAdminPassword(String adminPassword) {
+        this.adminPassword = adminPassword;
+    }
+
     public StartPageResults testConnection() {
         Properties configurationAsProperties = getConfigurationAsProperties(configuration);
         Connection conn = null;
@@ -188,9 +233,22 @@ public class ConfigurationBean {
         return StartPageResults.STAY;
     }
 
+    public StartPageResults showCreateDatabasePage() {
+        adminConnectionUrl = null;
+        adminUsername = null;
+        adminPassword = null;
+        return StartPageResults.CREATEDB;
+    }
+
     public StartPageResults createDatabase() {
         Properties config = getConfigurationAsProperties(configuration);
         String dbType = config.getProperty(ServerProperties.PROP_DATABASE_TYPE, "-unknown-");
+
+        Properties adminConfig = new Properties();
+        adminConfig.put(ServerProperties.PROP_DATABASE_CONNECTION_URL, adminConnectionUrl);
+        adminConfig.put(ServerProperties.PROP_DATABASE_USERNAME, adminUsername);
+        adminConfig.put(ServerProperties.PROP_DATABASE_PASSWORD, adminPassword);
+
         Connection conn = null;
         Statement stmt = null;
 
@@ -211,17 +269,18 @@ public class ConfigurationBean {
             }
         }
 
-        // i'm really logging this to force an NPE if any propertyItemXXX are null. NPE's should never happen,
-        // but if some weird thing happens and they are null, I want to abort prior to even attempting to
-        // execute the DDL
-        LOG.info("Will attempt to create user/database 'rhqadmin' using URL [" + propertyItemUrl.getValue()
-            + "] and admin user [" + propertyItemUsername.getValue() + "]. Admin password was"
-            + (propertyItemPassword.getValue().length() > 0 ? " not " : " ") + "empty");
+        if (propertyItemUsername == null || propertyItemPassword == null || propertyItemUrl == null) {
+            throw new NullPointerException("Missing a property item - this is a bug please report it");
+        }
+
+        LOG.info("Will attempt to create user/database 'rhqadmin' using URL [" + getAdminConnectionUrl()
+            + "] and admin user [" + getAdminUsername() + "]. Admin password was"
+            + (getAdminPassword().length() > 0 ? " not " : " ") + "empty");
 
         try {
             String sql1, sql2;
 
-            conn = serverInfo.getDatabaseConnection(config);
+            conn = serverInfo.getDatabaseConnection(adminConfig);
             conn.setAutoCommit(true);
             stmt = conn.createStatement();
 
@@ -247,8 +306,10 @@ public class ConfigurationBean {
             // success! let's set our properties to the values we just created
             propertyItemUsername.setValue("rhqadmin");
             propertyItemPassword.setValue("rhqadmin");
-            if (dbType.equalsIgnoreCase("postgresql")) {
-                propertyItemUrl.setValue(propertyItemUrl.getValue() + "/rhq");
+            if (dbType.equalsIgnoreCase("postgresql") || dbType.equalsIgnoreCase("mysql")) {
+                if (!propertyItemUrl.getValue().endsWith("/rhq")) {
+                    propertyItemUrl.setValue(propertyItemUrl.getValue() + "/rhq");
+                }
             }
 
             testConnection();
@@ -258,6 +319,10 @@ public class ConfigurationBean {
             LOG.warn("Installer failed to create database", e);
             lastCreate = ThrowableUtil.getAllMessages(e);
         } finally {
+            adminConnectionUrl = null;
+            adminUsername = null;
+            adminPassword = null;
+
             if (stmt != null)
                 try {
                     stmt.close();

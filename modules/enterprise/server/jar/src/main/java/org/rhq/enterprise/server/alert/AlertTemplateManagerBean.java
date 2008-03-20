@@ -31,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
@@ -40,6 +41,7 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 
@@ -105,6 +107,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         return list;
     }
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public int createAlertTemplate(Subject user, AlertDefinition alertTemplate, Integer resourceTypeId)
         throws InvalidAlertDefinitionException, ResourceTypeNotFoundException {
         ResourceType type = resourceTypeManager.getResourceTypeById(user, resourceTypeId);
@@ -157,6 +160,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         }
     }
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void removeAlertTemplates(Subject user, Integer[] alertTemplateIds, boolean cascade) {
         for (Integer alertTemplateId : alertTemplateIds) {
             alertDefinitionManager.removeAlertDefinitions(user, new Integer[] { alertTemplateId });
@@ -170,6 +174,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         }
     }
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void enableAlertTemplates(Subject user, Integer[] alertTemplateIds, boolean cascade) {
         for (Integer alertTemplateId : alertTemplateIds) {
             alertDefinitionManager.enableAlertDefinitions(user, new Integer[] { alertTemplateId });
@@ -183,6 +188,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         }
     }
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void disableAlertTemplates(Subject user, Integer[] alertTemplateIds, boolean cascade) {
         for (Integer alertTemplateId : alertTemplateIds) {
             alertDefinitionManager.disableAlertDefinitions(user, new Integer[] { alertTemplateId });
@@ -196,6 +202,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         }
     }
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public AlertDefinition updateAlertTemplate(Subject user, AlertDefinition alertTemplate, boolean cascade)
         throws InvalidAlertDefinitionException {
         AlertDefinition updatedTemplate = null;

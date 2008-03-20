@@ -43,115 +43,115 @@
          <input type="hidden" name="id" value="${param.id}"/>
             
          <rich:panel>
-            <f:facet name="header">Details</f:facet>
-            <table>
-               <tr>
-                  <td align="right"><b>Package Type Name:</b></td>
-                  <td align="left">
-                     <h:outputText value="#{item.packageTypeName}" />
-                  </td>
-               </tr>
-               <tr>
-                  <td align="right"><b>Package Category:</b></td>
-                  <td align="left">
-                     <h:outputText value="#{item.packageCategory}" />
-                  </td>
-               </tr>
-               <tr>
-                  <td align="right"><b>Package Name:</b></td>
-                  <td align="left">
+            <f:facet name="header">Package Details</f:facet>
+            <table cellspacing="0" cellpadding="5" width="100%">
+               <tr class="package-details-even-row">
+                  <td align="right" class="package-details-key-column"><b>Package Name:</b></td>
+                  <td class="package-details-value-column">
                      <h:outputText value="#{item.packageName}" />
                   </td>
                </tr>
-               <tr>
-                  <td align="right"><b>Package Classification:</b></td>
-                  <td align="left">
+               <tr class="package-details-odd-row">
+                  <td class="package-details-key-column"><b>Package Type Name:</b></td>
+                  <td class="package-details-value-column">
+                     <h:outputText value="#{item.packageTypeName}" />
+                  </td>
+               </tr>
+               <tr class="package-details-even-row">
+                  <td class="package-details-key-column"><b>Package Category:</b></td>
+                  <td class="package-details-value-column">
+                     <h:outputText value="#{item.packageCategory}" />
+                  </td>
+               </tr>
+               <tr class="package-details-odd-row">
+                  <td class="package-details-key-column"><b>Package Classification:</b></td>
+                  <td class="package-details-value-column">
                      <h:outputText value="#{item.packageClassification}" />
                   </td>
                </tr>
-               <tr>
-                  <td align="right"><b>Name:</b></td>
-                  <td align="left">
+               <tr class="package-details-even-row">
+                  <td class="package-details-key-column"><b>Name:</b></td>
+                  <td class="package-details-value-column">
                      <h:outputText value="#{item.packageVersion.displayName}" />
                   </td>
                </tr>
-               <tr>
-                  <td align="right"><b>Version:</b></td>
-                  <td align="left">
+               <tr class="package-details-odd-row">
+                  <td class="package-details-key-column"><b>Version:</b></td>
+                  <td class="package-details-value-column">
                      <h:outputText value="#{item.packageVersion.displayVersion}" />
                   </td>
                </tr>
-               <tr>
-                  <td align="right"><b>Architecture:</b></td>
-                  <td align="left">
+               <tr class="package-details-even-row">
+                  <td class="package-details-key-column"><b>Architecture:</b></td>
+                  <td class="package-details-value-column">
                      <h:outputText value="#{item.packageVersion.architecture.name}" />
                   </td>
                </tr>               
-               <tr>
-                  <td align="right"><b>Short Description:</b></td>
-                  <td align="left">
-                     <h:outputText value="#{item.packageVersion.shortDescription}"/>
+               <tr class="package-details-odd-row">
+                  <td class="package-details-key-column"><b>Short Description:</b></td>
+                  <td class="package-details-value-column">
+                     <h:outputText value="#{item.packageVersion.shortDescription}" escape="false"/>
                   </td>
                </tr>
-               <tr>
-                  <td align="right"><b>Long Description:</b></td>
-                  <td align="left">
-                     <h:outputText value="#{item.packageVersion.longDescription}"/>
+               <tr class="package-details-even-row">
+                  <td class="package-details-key-column"><b>Long Description:</b></td>
+                  <td class="package-details-value-column">
+                     <h:outputText value="#{item.packageVersion.longDescription}" escape="false"/>
                   </td>
                </tr>
-               <tr>
-                  <td align="right"><b>File Name:</b></td>
-                  <td align="left">
+               <tr class="package-details-odd-row">
+                  <td class="package-details-key-column"><b>File Name:</b></td>
+                  <td class="package-details-value-column">
                      <h:outputText value="#{item.packageVersion.fileName}" />
                   </td>
                </tr>
-               <tr>
-                  <td align="right"><b>File Size:</b></td>
-                  <td align="left">
+               <tr class="package-details-even-row">
+                  <td class="package-details-key-column"><b>File Size:</b></td>
+                  <td class="package-details-value-column">
                      <h:outputText value="#{item.packageVersion.fileSize}" />
                   </td>
                </tr>
-               <tr>
-                  <td align="right"><b>MD5:</b></td>
-                  <td align="left">
+               <tr class="package-details-odd-row">
+                  <td class="package-details-key-column"><b>MD5:</b></td>
+                  <td class="package-details-value-column">
                      <h:outputText value="#{item.packageVersion.MD5}" />
                   </td>
                </tr>
-               <tr>
-                  <td align="right"><b>SHA256:</b></td>
-                  <td align="left">
+               <tr class="package-details-even-row">
+                  <td class="package-details-key-column"><b>SHA256:</b></td>
+                  <td class="package-details-value-column">
                      <h:outputText value="#{item.packageVersion.SHA256}" />
                   </td>
                </tr>
-               <tr>
-                  <td align="right"><b>File Created Date:</b></td>
-                  <td align="left">
+               <tr class="package-details-odd-row">
+                  <td class="package-details-key-column"><b>File Created Date:</b></td>
+                  <td class="package-details-value-column">
                      <h:outputText value="#{item.packageVersion.fileCreatedDate}">
                         <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                      </h:outputText>
                   </td>
                </tr>
-               <tr>
-                  <td align="right"><b>License Name:</b></td>
-                  <td align="left">
+               <tr class="package-details-even-row">
+                  <td class="package-details-key-column"><b>License Name:</b></td>
+                  <td class="package-details-value-column">
                      <h:outputText value="#{item.packageVersion.licenseName}" />
                   </td>
                </tr>
-               <tr>
-                  <td align="right"><b>License Version:</b></td>
-                  <td align="left">
+               <tr class="package-details-odd-row">
+                  <td class="package-details-key-column"><b>License Version:</b></td>
+                  <td class="package-details-value-column">
                      <h:outputText value="#{item.packageVersion.licenseVersion}" />
                   </td>
                </tr>               
-               <tr>
-                  <td align="right"><b>Is Package Content Downloaded?:</b></td>
-                  <td align="left">
+               <tr class="package-details-even-row">
+                  <td class="package-details-key-column"><b>Is Package Content Downloaded?:</b></td>
+                  <td class="package-details-value-column">
                      <h:outputText value="#{item.packageBitsAvailable}" />
                   </td>
                </tr>               
-               <tr>
-                  <td align="right"><b>Is Package Content Stored in Database?:</b></td>
-                  <td align="left">
+               <tr class="package-details-odd-row">
+                  <td class="package-details-key-column"><b>Is Package Content Stored in Database?:</b></td>
+                  <td class="package-details-value-column">
                      <h:outputText value="#{item.packageBitsInDatabase}" />
                   </td>
                </tr>               

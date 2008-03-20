@@ -2111,6 +2111,22 @@ ul.radio-group .unspecified {
    width: 80%;
 }
 
+.package-details-key-column {
+   width: 200px;
+   text-align: right;
+   vertical-align: top;
+}
+.package-details-value-column {
+   text-align: left;
+   vertical-align: top;
+}
+.package-details-even-row {
+   background: #f0f0f0;
+}
+.package-details-odd-row {
+   background: #ffffff;
+}
+
 /*--- Pagination ---------------------*/
 
 .on-pager-footer {

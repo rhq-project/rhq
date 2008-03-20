@@ -51,7 +51,7 @@ import org.rhq.enterprise.server.util.TimingVoodoo;
 
 /**
  * Compresses data that increases in size over time to maintain the system for long durations. Any table that
- * continuously grows in a non-negligable manner should be compressed and/or purged in this job.
+ * continuously grows in a non-negligible manner should be compressed and/or purged in this job.
  *
  * @author Greg Hinkle
  */
@@ -61,7 +61,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
 
     private static final String DATASOURCE_NAME = RHQConstants.DATASOURCE_JNDI_NAME;
 
-    private static final long SECOND = 1000;
+    private static final long SECOND = 1000L;
     private static final long MINUTE = SECOND * 60;
     private static final long HOUR = MINUTE * 60;
     private static final long DAY = HOUR * 24;

@@ -347,15 +347,15 @@
          <parent-resource-type name="Mac OS X" plugin="Platforms"/>
       </runs-inside>
 
-      <metric property="fileSystemUsage.free" displayName="Free Space" units="bytes" displayType="summary"/>
+      <metric property="fileSystemUsage.free" displayName="Free Space" units="kilobytes" displayType="summary"/>
       <metric property="fileSystemUsage.usePercent" displayName="Used Percentage" units="percentage" displayType="summary"/>
-      <metric property="fileSystemUsage.total" displayName="Capacity" units="bytes" dataType="trait" defaultOn="true"/>
+      <metric property="fileSystemUsage.total" displayName="Capacity" units="kilobytes" dataType="trait" defaultOn="true"/>
       <metric property="fileSystem.typeName" displayName="Volume Type" dataType="trait" displayType="summary"/>
       <metric property="fileSystem.sysTypeName" displayName="Drive Type" dataType="trait" displayType="summary"/>
       <metric property="fileSystem.devName" displayName="name" dataType="trait" defaultOn="true"/>
       <metric property="fileSystemUsage.freeFiles" displayName="Free Files"/>
       <metric property="fileSystem.flags" displayName="Flags" dataType="trait" defaultOn="true"/>
-      <metric property="fileSystemUsage.used" displayName="Used" units="bytes" defaultOn="true"/>
+      <metric property="fileSystemUsage.used" displayName="Used" units="kilobytes" defaultOn="true"/>
       <metric property="fileSystemUsage.diskReads" displayName="Disk Reads" measurementType="trendsup" displayType="summary"/>
       <metric property="fileSystemUsage.diskWrites" displayName="Disk Writes" measurementType="trendsup" displayType="summary"/>
       <metric property="fileSystemUsage.diskReadBytes" displayName="Disk Read Bytes" measurementType="trendsup" units="bytes" defaultOn="true"/>

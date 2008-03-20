@@ -412,7 +412,7 @@ public class ConfigurationBean {
             serverInfo.moveDeploymentArtifacts(true);
         } catch (Exception e) {
             LOG.fatal("Failed to save properties and fully deploy - RHQ Server will not function properly", e);
-            lastError = getI18nMsg().getMsg(InstallerI18NResourceKeys.SAVE_FAILURE, e);
+            lastError = getI18nMsg().getMsg(InstallerI18NResourceKeys.SAVE_FAILURE, ThrowableUtil.getAllMessages(e));
 
             return StartPageResults.ERROR;
         }

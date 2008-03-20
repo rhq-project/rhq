@@ -20,11 +20,6 @@
 <ui:param name="selectedTabName" value="Inventory"/>
 <ui:define name="content">
 
-   <h:outputLink value="/rhq/resource/inventory/view.xhtml">
-      <f:param name="id" value="${ResourceUIBean.id}"/>
-      <h:outputText value="&lt; Back to Inventory Tab"/>
-   </h:outputLink>
-
    <h:form id="uploadForm" enctype="multipart/form-data">
 
       <input type="hidden" name="id" value="${ResourceUIBean.id}"/>

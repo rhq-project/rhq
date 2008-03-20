@@ -18,6 +18,10 @@
    </head>
 
    <body>
+      <p align="center">
+         <h:graphicImage url="/images/logo.png" alt="RHQ logo"/>
+      </p>
+
       <h1 align="center"><h:outputText value="#{bundle.createDatabaseUserTitle}" /></h1>
       <h:form>
          <h:panelGrid columns="1" style="margin-left: auto; margin-right: auto; text-align: center;">

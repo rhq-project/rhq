@@ -144,9 +144,9 @@
       </navigation-case>
 
       <navigation-case>
-       <from-outcome>cancel</from-outcome>
-       <to-view-id>/rhq/resource/content/deploy.xhtml?id=${param.id}</to-view-id>
-       <redirect/>
+         <from-outcome>cancel</from-outcome>
+         <to-view-id>/rhq/resource/content/deploy.xhtml?id=${param.id}</to-view-id>
+         <redirect/>
       </navigation-case>
       
    </navigation-rule>

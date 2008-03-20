@@ -48,18 +48,12 @@
                          value="#{InstalledPluginsUIBean.installedPlugins}"
                          var="plugin"
                          width="100%"
-                         columnsWidth="1%, 20%, 45%, 15%, 9%"
+                         columnsWidth="20%, 45%, 15%, 9%"
                          headerClass="tableRowHeader"
                          footerClass="on-pager-footer">
 
 
-            <rich:column>
-               <f:facet name="header">
-                  <onc:allSelect target="selectedPlugin"/>
-               </f:facet>
 
-               <onc:select name="selectedPlugin" value="#{plugin.id}"/>
-            </rich:column>
 
             <rich:column rendered="#{param.debug}">
                <f:facet name="header">
@@ -117,31 +111,6 @@
 
    </rich:panel>
 </h:form>
-
-<rich:panel>
-    <f:facet name="header">
-       <h:outputText value="Upload Plugin"/>
-    </f:facet>
-
-    <h:panelGrid columns="1" width="100%">
-
-       <h:form id="uploadForm" enctype="multipart/form-data">
-
-
-            <table>
-               <tr>
-                  <td><b>Plugin File:</b></td>
-                  <td><onc:upload id="uploadFile"/></td>
-               </tr>
-            </table>
-
-            <h:commandButton style="margin-top: 10px;" value="UPLOAD"
-                             action="#{InstalledPluginsUIBean.uploadPlugin}" styleClass="buttonmed"/>
-      </h:form>
-
-    </h:panelGrid>
-
-</rich:panel>
 
 </ui:define>
 

@@ -169,6 +169,12 @@
                   <property name="rhq.test.ds.password" value="${rhq.test.ds.password}" />
                   <property name="rhq.test.ds.type-mapping" value="${rhq.test.ds.type-mapping}" />
                   
+                  <property name="default.rhq.server.database.connection-url" value="${default.rhq.server.database.connection-url}" />
+                  <property name="default.rhq.server.database.driver-class" value="${default.rhq.server.database.driver-class}" />
+                  <property name="default.rhq.server.database.user-name" value="${default.rhq.server.database.user-name}" />
+                  <property name="default.rhq.server.database.password" value="${default.rhq.server.database.password}" />
+                  <property name="default.rhq.server.database.type-mapping" value="${default.rhq.server.database.type-mapping}" />
+                  
                   <!-- default server settings used by installer -->
                   <property name="rhq.server.http.port" value="${rhq.server.http.port}" />
                   <property name="rhq.server.https.port" value="${rhq.server.https.port}" />                  

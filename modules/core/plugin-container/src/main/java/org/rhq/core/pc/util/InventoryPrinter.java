@@ -19,6 +19,7 @@
 package org.rhq.core.pc.util;
 
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -176,14 +177,14 @@ public class InventoryPrinter {
             return;
         }
 
+        Availability avail = resourceContainer.getAvailability();
+        AvailabilityType availType = null;
+        if (avail != null) {
+            availType = avail.getAvailabilityType();
+        }
+        String availString = (availType == null) ? "UNKNOWN" : availType.toString();
+
         if (dumpXml) {
-            Availability avail = resourceContainer.getAvailability();
-            AvailabilityType availType = null;
-
-            if (avail != null) {
-                availType = avail.getAvailabilityType();
-            }
-
             exportWriter.printf("%s<resource>\n", indent);
             exportWriter.printf("%s   <id>%d</id>\n", indent, resource.getId());
             exportWriter.printf("%s   <key>%s</key>\n", indent, resource.getResourceKey());
@@ -194,8 +195,7 @@ public class InventoryPrinter {
             exportWriter
                 .printf("%s   <inventory-status>%s</inventory-status>\n", indent, resource.getInventoryStatus());
             exportWriter.printf("%s   <type>%s</type>\n", indent, resource.getResourceType().getName());
-            exportWriter.printf("%s   <availabilityType>%s</availabilityType>\n", indent,
-                (availType == null) ? "unknown" : availType);
+            exportWriter.printf("%s   <availabilityType>%s</availabilityType>\n", indent, availString);
             exportWriter.printf("%s   <category>%s</category>\n", indent, resource.getResourceType().getCategory());
             exportWriter.printf("%s   <container>\n", indent);
             exportWriter.printf("%s      <availability>%s</availability>\n", indent, avail);
@@ -221,7 +221,8 @@ public class InventoryPrinter {
                 exportWriter.printf("%s   <children>\n", indent);
             }
         } else {
-            exportWriter.printf("%s+ %s\n", indent, resource);
+            exportWriter.printf("%s+ %s (sync=%s, state=%s, avail=%s)\n", indent, resource,
+                    resourceContainer.getSynchronizationState(), resourceContainer.getResourceComponentState(), availString);
         }
 
         if (recurseChildren) {

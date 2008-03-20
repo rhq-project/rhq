@@ -1485,7 +1485,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.debug("Discovery reported that version of " + resource + " changed from '" + existingVersion + "' to '"
                     + version + "'.");
             boolean versionShouldBeUpdated = resource.getInventoryStatus() != InventoryStatus.COMMITTED ||
-                    updateResourceVersionOnServer(resource);
+                    updateResourceVersionOnServer(resource, version);
             if (versionShouldBeUpdated) {
                 resource.setVersion(version);
                 log.info("Version of " + resource + " changed from '" + existingVersion + "' to '" + version + "'.");
@@ -1493,17 +1493,17 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    private boolean updateResourceVersionOnServer(Resource resource) {
+    private boolean updateResourceVersionOnServer(Resource resource, String newVersion) {
         boolean versionUpdated = false;
         ServerServices serverServices = this.configuration.getServerServices();
         if (serverServices != null) {
             try {
                 DiscoveryServerService discoveryServerService = serverServices.getDiscoveryServerService();
-                discoveryServerService.updateResourceVersion(resource.getId(), resource.getVersion());
+                discoveryServerService.updateResourceVersion(resource.getId(), newVersion);
                 // Only update the version in local inventory if the server sync succeeded, otherwise we won't know
                 // to try again the next time this method is called.
                 versionUpdated = true;
-                log.debug("New version for " + resource + " was successfully synced to the Server.");
+                log.debug("New version for " + resource + " (" + newVersion + ") was successfully synced to the Server.");
             }
             catch (Exception e) {
                 log.error("Failed to sync-to-Server new version for " + resource + ".");

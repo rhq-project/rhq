@@ -35,6 +35,7 @@ import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
@@ -68,6 +69,13 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         String url = pluginConfig.getSimple(URL_CONFIG_PROP).getStringValue();
         try {
             this.url = new URL(url);
+            if (this.url.getPort() == 0) {
+                throw new InvalidPluginConfigurationException(
+                    "The 'url' connection property is invalid - 0 is not a valid port; please change the value to the " +
+                    "port this virtual host is listening on. NOTE: If the 'url' property was set this way " +
+                    "after autodiscovery, you most likely did not include the port in the ServerName directive for " +
+                    "this virtual host in httpd.conf.");
+            }
         } catch (MalformedURLException e) {
             throw new Exception("Value of '" + URL_CONFIG_PROP + "' connection property ('" + url
                 + "') is not a valid URL.");

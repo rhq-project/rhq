@@ -122,10 +122,10 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
                 this.url = new URL(url);
                 if (this.url.getPort() == 0) {
                     throw new InvalidPluginConfigurationException(
-                        "'url' connection property is invalid - 0 is not a valid port; please change the value to the " +
+                        "The 'url' connection property is invalid - 0 is not a valid port; please change the value to the " +
                         "port the \"main\" Apache server is listening on. NOTE: If the 'url' property was set this way " +
                         "after autodiscovery, you most likely did not include the port in the ServerName directive for " +
-                        "the \"main\" Apache server.");
+                        "the \"main\" Apache server in httpd.conf.");
                 }
             } catch (MalformedURLException e) {
                 throw new InvalidPluginConfigurationException("Value of '" + PLUGIN_CONFIG_PROP_URL

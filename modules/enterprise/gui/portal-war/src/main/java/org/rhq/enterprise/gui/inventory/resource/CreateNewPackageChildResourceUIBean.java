@@ -30,6 +30,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -69,9 +70,10 @@ public class CreateNewPackageChildResourceUIBean {
 
     private String resourceName;
     private String packageName;
-    private String packageVersion;
-    private String architecture;
+    private String packageVersion = "1.0"; // Default to 1.0 for first visit to the page
 
+    private int selectedArchitectureId;
+    
     private CreateResourceHistory retryCreateItem;
     private ConfigurationDefinition configurationDefinition;
     private Configuration configuration;
@@ -117,12 +119,11 @@ public class CreateNewPackageChildResourceUIBean {
         Resource parentResource = EnterpriseFacesContextUtility.getResource();
         Configuration deployTimeConfiguration = getConfiguration();
         ConfigurationMaskingUtility.unmaskConfiguration(deployTimeConfiguration, getConfigurationDefinition());
-        int architectureId = Integer.parseInt(architecture);
 
         try {
             ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
             resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), getResourceName(),
-                pluginConfiguration, packageName, packageVersion, architectureId, deployTimeConfiguration,
+                pluginConfiguration, packageName, packageVersion, selectedArchitectureId, deployTimeConfiguration,
                 packageContentStream);
         } catch (Exception e) {
             String errorMessages = ThrowableUtil.getAllMessages(e);
@@ -141,12 +142,24 @@ public class CreateNewPackageChildResourceUIBean {
         return OUTCOME_SUCCESS;
     }
 
-    // Other Methods  --------------------------------------------
+    public SelectItem[] getArchitectures() {
+        ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
+        List<Architecture> architectures = contentUIManager.getArchitectures();
+
+        SelectItem[] items = new SelectItem[architectures.size()];
+        int itemCounter = 0;
+        for (Architecture arch : architectures) {
+            SelectItem item = new SelectItem(arch.getId(), arch.getName());
+            items[itemCounter++] = item;
+        }
+
+        return items;
+    }
 
     private ResourceType lookupResourceType() {
         ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        ResourceType resourceType = null;
+        ResourceType resourceType;
         try {
             resourceType = resourceTypeManager.getResourceTypeById(subject, getResourceTypeId());
         } catch (ResourceTypeNotFoundException e) {
@@ -240,14 +253,6 @@ public class CreateNewPackageChildResourceUIBean {
         this.resourceName = resourceName;
     }
 
-    public String getArchitecture() {
-        return architecture;
-    }
-
-    public void setArchitecture(String architecture) {
-        this.architecture = architecture;
-    }
-
     public String getPackageName() {
         return packageName;
     }
@@ -262,6 +267,14 @@ public class CreateNewPackageChildResourceUIBean {
 
     public void setPackageVersion(String packageVersion) {
         this.packageVersion = packageVersion;
+    }
+
+    public int getSelectedArchitectureId() {
+        return selectedArchitectureId;
+    }
+
+    public void setSelectedArchitectureId(int selectedArchitectureId) {
+        this.selectedArchitectureId = selectedArchitectureId;
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {

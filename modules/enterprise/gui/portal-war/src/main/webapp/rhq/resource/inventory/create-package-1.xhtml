@@ -25,49 +25,60 @@
       <input type="hidden" name="id" value="${ResourceUIBean.id}"/>
       <input type="hidden" name="type" value="#{CreateNewPackageChildResourceUIBean.resourceType.id}"/>
       <h:inputHidden value="#{CreateNewPackageChildResourceUIBean.packageType}" converter="PackageTypeConverter"/>
-      
-      <p><h:outputText value="In order to create a new #{CreateNewPackageChildResourceUIBean.resourceType.name}, a new
-      package must be deployed as the basis for the Resource. The following information is required to
-      create the package:"/></p>
-      
-      <table>
-         <tr>
-            <td>Resource Name:</td>
-            <td><h:inputText value="#{CreateNewPackageChildResourceUIBean.resourceName}"/></td>
-         </tr>
-         <tr>
-            <td>Package Name:</td>
-            <td><h:inputText value="#{CreateNewPackageChildResourceUIBean.packageName}"/></td>
-         </tr>
-         <tr>
-            <td>Package Version:</td>
-            <td><h:inputText value="#{CreateNewPackageChildResourceUIBean.packageVersion}"/></td>
-         </tr>
-         <tr>
-            <td>Package Architecture:</td>
-            <td><h:inputText value="#{CreateNewPackageChildResourceUIBean.architecture}"/></td>
-         </tr>
-         <tr>
-            <td>File:</td>
-            <td><onc:upload id="uploadFile"/></td>
-         </tr>
-      </table>
 
-      <onc:config configurationDefinition="#{CreateNewPackageChildResourceUIBean.configurationDefinition}"
-                  configuration="#{CreateNewPackageChildResourceUIBean.configuration}"
-                  nullConfigurationDefinitionMessage="#{CreateNewPackageChildResourceUIBean.nullConfigurationDefinitionMessage}"
-                  nullConfigurationMessage="#{CreateNewPackageChildResourceUIBean.nullConfigurationMessage}"/>
-      
-      <h:commandButton value="Submit" action="#{CreateNewPackageChildResourceUIBean.createResource}"/>
+      <rich:panel>
+
+         <f:facet name="header">Create New Resource</f:facet>
+
+         <p><h:outputText value="In order to create a new #{CreateNewPackageChildResourceUIBean.resourceType.name}, a new
+         package must be deployed as the basis for the resource. The following information is required to
+         create the package."/></p>
+
+         <table>
+            <tr>
+               <td align="right"><b>Resource Name*</b></td>
+               <td align="left"><h:inputText value="#{CreateNewPackageChildResourceUIBean.resourceName}"/></td>
+            </tr>
+            <tr>
+               <td align="right"><b>Package Name*</b></td>
+               <td align="left"><h:inputText value="#{CreateNewPackageChildResourceUIBean.packageName}"/></td>
+            </tr>
+            <tr>
+               <td align="right"><b>Package Version*</b></td>
+               <td align="left"><h:inputText value="#{CreateNewPackageChildResourceUIBean.packageVersion}"/></td>
+            </tr>
+            <tr>
+               <td align="right"><b>Package Architecture*</b></td>
+               <td align="left">
+                  <h:selectOneMenu value="#{CreateNewPackageChildResourceUIBean.selectedArchitectureId}">
+                     <f:selectItems value="#{CreateNewPackageChildResourceUIBean.architectures}" />
+                  </h:selectOneMenu>
+               </td>
+            </tr>
+            <tr>
+               <td align="right"><b>File*</b></td>
+               <td align="left"><onc:upload id="uploadFile"/></td>
+            </tr>
+         </table>
+
+         <onc:config configurationDefinition="#{CreateNewPackageChildResourceUIBean.configurationDefinition}"
+                     configuration="#{CreateNewPackageChildResourceUIBean.configuration}"
+                     nullConfigurationDefinitionMessage="#{CreateNewPackageChildResourceUIBean.nullConfigurationDefinitionMessage}"
+                     nullConfigurationMessage="#{CreateNewPackageChildResourceUIBean.nullConfigurationMessage}"/>
+
+         <h:panelGrid id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
+
+            <h:commandButton style="margin-top: 10px;" value="CANCEL"
+                             action="cancel" styleClass="buttonmed"/>
+
+            <h:commandButton style="margin-top: 10px;" value="CREATE"
+                             action="#{CreateNewPackageChildResourceUIBean.createResource}" styleClass="buttonmed"/>
+
+         </h:panelGrid>
+
+      </rich:panel>
 
    </h:form>
-
-   <p align="center">
-      <h:outputLink value="/rhq/resource/inventory/view.xhtml">
-         <f:param name="id" value="${ResourceUIBean.id}"/>
-         <h:outputText value="Back to Inventory"/>
-      </h:outputLink>
-   </p>
 
 </ui:define>
 

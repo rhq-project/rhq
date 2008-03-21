@@ -405,11 +405,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
      * @param  response       the response to the inventory report being processed
      * @param  agent          the agent that should be set on the resource being merged
      *
-     * @return the merged resource (may potentially be a copy of the resource object that was passed in)
-     *
      * @throws InvalidInventoryReportException if a critical field in the resource is missing or invalid
      */
-    private Resource mergeResource(@NotNull
+    private void mergeResource(@NotNull
     Resource resource, @Nullable
     Resource parentResource, @NotNull
     InventoryReportResponse response, @NotNull
@@ -420,7 +418,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         Resource existingResource = getExistingResource(resource);
 
         if (existingResource != null) {
-            resource = updatePreviouslyInventoriedResource(resource, existingResource, parentResource, response);
+            updatePreviouslyInventoriedResource(resource, existingResource, parentResource, response);
             response.addIdMapping(resource.getUuid(), existingResource.getId());
         } else {
             presetAgent(resource, agent);
@@ -431,8 +429,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             log.debug("Resource merged: resource/millis=" + resource.getName() + '/'
                 + (System.currentTimeMillis() - start));
         }
-
-        return resource;
+        return;
     }
 
     private void presetAgent(Resource resource, Agent agent) {
@@ -516,56 +513,29 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         return existingResource;
     }
 
-    private Resource updatePreviouslyInventoriedResource(Resource resource, Resource existingResource,
+    private void updatePreviouslyInventoriedResource(Resource resource, Resource existingResource,
         Resource parentResource, InventoryReportResponse response) throws InvalidInventoryReportException {
         assert (parentResource == null) || (parentResource.getId() != 0);
 
-        // Do *not* allow agent to change inventory status.
-        resource.setInventoryStatus(existingResource.getInventoryStatus());
-        switch (existingResource.getInventoryStatus()) {
-        case DELETED: {
-            // TODO GH: This seems wrong... the agent always reports as new and the server should not be ignored
-            log
-                .warn("Resource found in inventory with status 'DELETED' - changing its status to 'NEW' and updating it...");
-            resource.setInventoryStatus(InventoryStatus.NEW); // reset status to 'NEW'
-            resource.setItime(System.currentTimeMillis());
-            break;
+        // The below block is for Resources that were created via the RHQ GUI, whose descriptions will be null.
+        if (existingResource.getDescription() == null && resource.getDescription() != null) {
+            log.debug("Setting description of existing resource with id " + existingResource.getId() + " to '" +
+                    resource.getDescription() + "' (as reported by agent)...");
+            existingResource.setDescription(resource.getDescription());
         }
 
-        case NEW:
-        case IGNORED: {
-            // Allow agent to freely update a resource that is still awaiting approval...
-            log.debug("Platform [" + existingResource + "] is already awaiting inventory approval - updating it...");
-            break;
+        // Log a warning if the agent says the Resource key has changed (should rarely happen).
+        if ((existingResource.getResourceKey() != null) &&
+                !existingResource.getResourceKey().equals(resource.getResourceKey())) {
+            log.warn("Agent reported that key for " + existingResource + " has changed from '"
+                + existingResource.getResourceKey() + "' to '" + resource.getResourceKey() + "'.");
         }
 
-        case COMMITTED: {
-            // Once a platform has been committed to inventory, there are certain fields we never want to allow
-            // an agent to modify or we should at least log when something strange is changed.
-            // TODO: Should we bother checking name, description, commentText, etc.?
-            if ((existingResource.getResourceKey() != null)
-                && !existingResource.getResourceKey().equals(resource.getResourceKey())) {
-                // Log a message if the business key changes (should rarely happen).
-                log.info("Business key for resource [" + existingResource + "] changed from '"
-                    + existingResource.getResourceKey() + "' to '" + resource.getResourceKey()
-                    + "' - updating inventory...");
-            }
-
-            break;
-        }
-        }
-
-        // NOTE: Recursively merge descendant resources first, otherwise we'll get TransientObjectExceptions when we
-        //       call merge().
-        resource.setParentResource(parentResource); // critical to do this before merging, to prevent TransientObjectExceptions
         for (Resource childResource : resource.getChildResources()) {
-            // It's important to specify the existing resource, which is an attached entity bean, as the parent.
+            // It's important to specify the existing Resource, which is an attached entity bean, as the parent.
             mergeResource(childResource, existingResource, response, existingResource.getAgent());
-        }
-
-        // TODO GH: What should we be merging in here?
-        //resource = entityManager.merge(resource);
-        return resource;
+        }        
+        return;
     }
 
     private void initResourceTypes(Resource resource) throws InvalidInventoryReportException {

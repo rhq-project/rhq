@@ -27,23 +27,9 @@
   </tr>
   <tr>
     <td width="20%" class="BlockLabel">&nbsp;</td>
-    <c:choose>
-    <c:when test="${useroperations['MANAGE_SECURITY']}">
     <td width="30%" class="BlockContent"><html:link page="/admin/user/UserAdmin.do?mode=new"><fmt:message key="admin.home.NewUser"/></html:link></td>
-    </c:when>
-    <c:otherwise>
-    <td width="30%" class="BlockContent">&nbsp;</td>
-    </c:otherwise>
-    </c:choose>
     <td width="20%" class="BlockLabel">&nbsp;</td>
-    <c:choose>
-    <c:when test="${useroperations['MANAGE_SECURITY']}">
     <td width="30%" class="BlockContent"><html:link page="/admin/role/RoleAdmin.do?mode=new"><fmt:message key="admin.home.NewRole"/></html:link></td>
-    </c:when>
-    <c:otherwise>
-    <td width="30%" class="BlockContent">&nbsp;</td>
-    </c:otherwise>
-    </c:choose>
   </tr>
   <tr>
     <td colspan="4" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
@@ -55,7 +41,6 @@
 <br>
 <br>
 <!--  /  -->
-<c:if test="${useroperations['MANAGE_SETTINGS']}">
 
 <tiles:insert definition=".header.tab">
   <tiles:put name="tabKey" value="admin.home.CompanyWideSettingsTab"/>
@@ -96,13 +81,12 @@
    </tr>
 </table>
 <!--  /  -->
-</c:if>
+
 
 <!--  some empty space -->
 <br>
 <br>
 <!--  /  -->
-<c:if test="${useroperations['MANAGE_SETTINGS']}">
 
 <tiles:insert definition=".header.tab">
   <tiles:put name="tabKey" value="admin.home.Content"/>
@@ -123,6 +107,5 @@
    </tr>
 </table>
 <!--  /  -->
-</c:if>
 
 <tiles:insert definition=".page.footer"/>

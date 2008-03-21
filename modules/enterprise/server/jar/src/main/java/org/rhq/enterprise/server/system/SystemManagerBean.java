@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 import javax.annotation.PostConstruct;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -40,10 +41,13 @@ import javax.management.ObjectName;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.mx.util.MBeanServerLocator;
 import org.jboss.system.server.ServerConfig;
+
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
@@ -117,6 +121,7 @@ public class SystemManagerBean implements SystemManagerLocal {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public Properties getSystemConfiguration() {
         Properties properties = new Properties();
 
@@ -134,6 +139,7 @@ public class SystemManagerBean implements SystemManagerLocal {
         return properties;
     }
 
+    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void setSystemConfiguration(Subject subject, Properties properties) {
         Map<String, SystemConfiguration> configMap = new HashMap<String, SystemConfiguration>();
@@ -172,6 +178,7 @@ public class SystemManagerBean implements SystemManagerLocal {
      * @param properties the full set of system configurations, in case the changed value needs to be compared against
      *                   other values
      */
+    @SuppressWarnings("deprecation")
     private void verifyNewSystemConfigurationProperty(String name, String value, Properties properties) {
         if (HQConstants.BaselineDataSet.equals(name)) {
             // 1h table holds at most 14 days worth of data, make sure we don't set a dataset more than that
@@ -369,7 +376,8 @@ public class SystemManagerBean implements SystemManagerLocal {
      *
      * @param licenseData a byte array of the license data
      */
-    public void updateLicense(byte[] licenseData) {
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void updateLicense(Subject subject, byte[] licenseData) {
         try {
             MBeanServer mbs = MBeanServerLocator.locateJBoss();
             ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
@@ -398,7 +406,7 @@ public class SystemManagerBean implements SystemManagerLocal {
         }
     }
 
-    public File saveLicenseFile(File dataDir, String licenseFileName, byte[] licenseData) throws IOException {
+    private File saveLicenseFile(File dataDir, String licenseFileName, byte[] licenseData) throws IOException {
         log.debug("Updating license file in directory: " + dataDir.getAbsolutePath());
 
         // Copy file to data dir

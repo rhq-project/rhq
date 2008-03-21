@@ -18,11 +18,11 @@
  */
 package org.rhq.enterprise.server.system;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Date;
 import java.util.Properties;
+
 import javax.ejb.Local;
+
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.license.License;
@@ -110,9 +110,7 @@ public interface SystemManagerLocal {
 
     License getLicense();
 
-    void updateLicense(byte[] licenseData);
-
-    File saveLicenseFile(File dataDir, String licenseFileName, byte[] licenseData) throws IOException;
+    void updateLicense(Subject subject, byte[] licenseData);
 
     Date getExpiration();
 

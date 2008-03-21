@@ -23,22 +23,23 @@
 package org.rhq.enterprise.gui.admin.config;
 
 import java.util.Properties;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
-import org.rhq.core.domain.authz.Permission;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.Portal;
 import org.rhq.enterprise.gui.legacy.action.BaseDispatchAction;
-import org.rhq.enterprise.gui.legacy.util.BizappUtils;
-import org.rhq.enterprise.server.authz.PermissionException;
 
 /**
  * Action that is triggered when the RHQ server configuration is to be edited.
  */
 public class ConfigAction extends BaseDispatchAction {
+    @Override
     protected Properties getKeyMethodMap() {
         Properties map = new Properties();
         map.setProperty(Constants.MODE_EDIT, "editConfig");
@@ -47,9 +48,6 @@ public class ConfigAction extends BaseDispatchAction {
 
     public ActionForward editConfig(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
-        if (!BizappUtils.hasPermission(request, Permission.MANAGE_SETTINGS)) {
-            throw new PermissionException("User not authorized to configure server settings");
-        }
 
         Portal portal = Portal.createPortal("admin.settings.EditServerConfig.Title", ".admin.config.EditConfig");
         portal.setDialog(true);

@@ -19,10 +19,11 @@
 package org.rhq.enterprise.gui.admin.plugin;
 
 import java.util.Collection;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -32,8 +33,6 @@ public class InstalledPluginsUIBean {
     private final Log log = LogFactory.getLog(InstalledPluginsUIBean.class);
 
     public static final String MANAGED_BEAN_NAME = "InstalledPluginsUIBean";
-
-    private MeasurementScheduleManagerLocal measurementScheduleManager = LookupUtil.getMeasurementScheduleManager();
 
     private ResourceMetadataManagerLocal resourceMetadataManagerBean = LookupUtil.getResourceMetadataManager();
 
@@ -47,6 +46,4 @@ public class InstalledPluginsUIBean {
     public void uploadPlugin() {
     }
 
-    public void pluginDetails() {
-    }
 }

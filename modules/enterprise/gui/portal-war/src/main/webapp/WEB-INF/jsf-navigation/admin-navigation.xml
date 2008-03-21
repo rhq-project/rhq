@@ -15,5 +15,18 @@
       </navigation-case>
       
    </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/admin/plugin/plugin-list.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-action>#{InstalledPluginsUIBean.uploadPlugin}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/admin/plugin/plugin-list.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+   </navigation-rule>
    
 </faces-config>

@@ -20,8 +20,10 @@ package org.rhq.enterprise.gui.admin;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -31,6 +33,7 @@ import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ListAlertTemplatesUIBean extends PagedDataTableUIBean {
@@ -38,11 +41,21 @@ public class ListAlertTemplatesUIBean extends PagedDataTableUIBean {
 
     private ResourceType resourceType;
     private AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
+    private AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
 
     public ListAlertTemplatesUIBean() {
     }
 
     public String createNewAlertTemplate() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        boolean isAuthorized = authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS);
+
+        if (!isAuthorized) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "User is not authorized to create new alert templates");
+            return "success"; // go back to the same page to show message
+        }
+
         return "createNewAlertTemplate";
     }
 

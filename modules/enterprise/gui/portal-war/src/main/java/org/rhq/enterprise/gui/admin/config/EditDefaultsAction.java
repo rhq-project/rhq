@@ -23,22 +23,22 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.Portal;
 import org.rhq.enterprise.gui.legacy.action.BaseDispatchAction;
-import org.rhq.enterprise.gui.legacy.util.BizappUtils;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -48,9 +48,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class EditDefaultsAction extends BaseDispatchAction {
     public ActionForward getMonitorDefaults(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse resp) throws Exception {
-        if (!BizappUtils.hasPermission(request, Permission.MANAGE_SETTINGS)) {
-            throw new PermissionException("User not authorized to configure monitor defaults");
-        }
 
         ResourceTypeManagerLocal typeMgr = LookupUtil.getResourceTypeManager();
 

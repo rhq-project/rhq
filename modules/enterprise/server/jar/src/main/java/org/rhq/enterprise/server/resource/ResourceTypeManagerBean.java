@@ -27,18 +27,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -50,7 +52,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
-import org.rhq.enterprise.server.authz.RequiredPermission;
 
 /**
  * A manager that provides methods for creating, updating, deleting, and querying
@@ -180,6 +181,7 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
         return results;
     }
 
+    @SuppressWarnings("unchecked")
     public List<ResourceType> getUtilizedChildResourceTypesByCategory(Subject subject, Resource parentResource,
         ResourceCategory category) {
         final String QUERY_NAME = ResourceType.QUERY_FIND_UTILIZED_CHILDREN_BY_CATEGORY;
@@ -200,18 +202,15 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
     }
 
     /**
-     * Obtain ResourceTypes that match a given category or all if category is null. Note that the caller needs to have
-     * Permission.MANAGE_SETTING in order to successfully call this method.
+     * Obtain ResourceTypes that match a given category or all if category is null.
      *
      * @param  subject  subject of the caller
      * @param  category the category to check for. If this is null, entries from all categories will be returned.
      *
      * @return a List of ResourceTypes
      *
-     * @see    Permission
      * @see    ResourceCategory
      */
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
     @SuppressWarnings("unchecked")
     public List<ResourceType> getAllResourceTypesByCategory(Subject subject, ResourceCategory category) {
         Query query;

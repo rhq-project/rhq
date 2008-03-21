@@ -81,7 +81,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         boolean hasPermission = false;
 
         if (isAlertTemplate) {
-            hasPermission = authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_INVENTORY);
+            hasPermission = authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS);
         } else {
             hasPermission = authorizationManager.hasResourcePermission(subject, Permission.MANAGE_ALERTS,
                 alertDefinition.getResource().getId());

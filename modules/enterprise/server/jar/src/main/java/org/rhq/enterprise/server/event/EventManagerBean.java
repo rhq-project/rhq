@@ -80,6 +80,8 @@ public class EventManagerBean implements EventManagerLocal {
     private static final String EVENT_INSERT_STMT = "INSERT INTO RHQ_Event (id, event_source_id, timestamp, severity, detail) "
         + "VALUES (%s, (SELECT id FROM RHQ_Event_Source WHERE event_def_id = (SELECT id FROM RHQ_Event_Def WHERE name = ? AND resource_type_id = (SELECT id FROM RHQ_Resource_Type WHERE name = ? AND plugin = ?)) AND resource_id = ? AND location = ?), ?, ?, ?)";
 
+    private static final int DEFAULT_EVENTS_PAGE_SIZE = 15;
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -178,7 +180,6 @@ public class EventManagerBean implements EventManagerLocal {
     }
 
     public int purgeEventData(Date deleteUpToTime) throws SQLException {
-
         Query q = entityManager.createQuery("DELETE FROM Event e WHERE e.timestamp < :cutOff");
         q.setParameter("cutOff", deleteUpToTime);
         int deleted = q.executeUpdate();
@@ -365,23 +366,27 @@ public class EventManagerBean implements EventManagerLocal {
             return pl;
 
         String query = "SELECT detail, id, substr(location, 1, 30) ";
-        query += ", severity, timestamp, res_id , ack_user, ack_time  FROM ( "
-            + " SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, evs.resource_id as res_id, e1.ack_user as ack_user, e1.ack_time as ack_time "
+        query += ", severity, timestamp, res_id , ack_user, ack_time  FROM ( ";
+        String innerQuery1 = " SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, evs.resource_id as res_id, e1.ack_user as ack_user, e1.ack_time as ack_time "
             + " FROM rhq_event e1, rhq_event e  ";
-        query += "JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id ";
-        query += "WHERE e1.timestamp < e.timestamp   AND e.id = ? AND evs.resource_id IN ( ";
-        query += JDBCUtil.generateInBinds(resourceIds.length);
-        query += " ) ";
-        query += " ORDER BY e1.id DESC LIMIT 5 ) AS r1 ";
-        query += " UNION "
-            + " ( "
-            + "  SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, evs.resource_id as res_id, e1.ack_user as ack_user, e1.ack_time as ack_time "
-            + " FROM rhq_event e1, rhq_event e  ";
-        query += "        JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id "
-            + " WHERE e1.timestamp >= e.timestamp  AND e.id = ?  AND evs.resource_id IN ( ";
-        query += JDBCUtil.generateInBinds(resourceIds.length);
-        query += " ) ";
-        query += "ORDER BY e1.id ASC LIMIT 6 ) ORDER BY timestamp";
+        innerQuery1 += "JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id ";
+        innerQuery1 += "WHERE e1.timestamp < e.timestamp AND e.id = ? AND evs.resource_id IN ( ";
+        innerQuery1 += JDBCUtil.generateInBinds(resourceIds.length);
+        innerQuery1 += " ) ";
+        innerQuery1 += " ORDER BY e1.id DESC";
+        innerQuery1 = addResultsLimitToQuery(innerQuery1, DEFAULT_EVENTS_PAGE_SIZE / 2);
+        query += innerQuery1;
+        query += ") UNION (";
+        String innerQuery2 = "SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, evs.resource_id as res_id, e1.ack_user as ack_user, e1.ack_time as ack_time "
+            + " FROM rhq_event e1, rhq_event e ";
+        innerQuery2 += " JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id "
+            + " WHERE e1.timestamp >= e.timestamp AND e.id = ? AND evs.resource_id IN ( ";
+        innerQuery2 += JDBCUtil.generateInBinds(resourceIds.length);
+        innerQuery2 += " ) ";
+        innerQuery2 += "ORDER BY e1.id ASC";
+        innerQuery2 = addResultsLimitToQuery(innerQuery2, (DEFAULT_EVENTS_PAGE_SIZE / 2) + 1);
+        query += innerQuery2;
+        query += ") ORDER BY timestamp, id";
 
         Connection conn = null;
         PreparedStatement stm = null;
@@ -588,6 +593,22 @@ public class EventManagerBean implements EventManagerLocal {
         return queryWithPaging.toString();
     }
 
+    private String addResultsLimitToQuery(String query, int maxResults) {
+        StringBuilder string = new StringBuilder();
+        if (this.dbType instanceof PostgresqlDatabaseType) {
+            string.append(query);
+            string.append(" LIMIT ").append(maxResults);
+        }
+        else if (this.dbType instanceof OracleDatabaseType) {
+            string.append("SELECT * FROM (");
+            string.append(query);
+            string.append(") WHERE rownum <= ").append(maxResults);
+        } else {
+            throw new RuntimeException("Unknown database type : " + this.dbType);
+        }
+        return string.toString();
+    }
+    
     @SuppressWarnings("unchecked")
     public EventComposite getEventDetailForEventId(Subject subject, int eventId) {
 

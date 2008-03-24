@@ -55,6 +55,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
@@ -363,29 +364,21 @@ public class EventManagerBean implements EventManagerLocal {
         if (eventId <= 0 || resourceIds == null || resourceIds.length == 0)
             return pl;
 
-        String query = "SELECT detail, id, ";
-        if (dbType instanceof PostgresqlDatabaseType)
-            query += "substr(location, 1, 30) "; // TODO take chars from end of string
-        else if (dbType instanceof OracleDatabaseType)
-            query += "substr(location, -1, 30 )";
-        else
-            throw new RuntimeException("Unknown database type : " + dbType);
-        query += ",severity, timestamp, res_id , ack_user, ack_time  FROM ( "
-            + " SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, res.id  as res_id, e1.ack_user as ack_user, e1.ack_time as ack_time "
+        String query = "SELECT detail, id, substr(location, 1, 30) ";
+        query += ", severity, timestamp, res_id , ack_user, ack_time  FROM ( "
+            + " SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, evs.resource_id as res_id, e1.ack_user as ack_user, e1.ack_time as ack_time "
             + " FROM rhq_event e1, rhq_event e  ";
-        query += "JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id "
-            + "  INNER  JOIN RHQ_resource res ON res.id = evs.resource_id ";
-        query += "WHERE e1.timestamp < e.timestamp   AND e.id = ? AND res.id IN ( ";
+        query += "JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id ";
+        query += "WHERE e1.timestamp < e.timestamp   AND e.id = ? AND evs.resource_id IN ( ";
         query += JDBCUtil.generateInBinds(resourceIds.length);
         query += " ) ";
         query += " ORDER BY e1.id DESC LIMIT 5 ) AS r1 ";
         query += " UNION "
             + " ( "
-            + "  SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, res.id as res_id, e1.ack_user as ack_user, e1.ack_time as ack_time "
+            + "  SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, evs.resource_id as res_id, e1.ack_user as ack_user, e1.ack_time as ack_time "
             + " FROM rhq_event e1, rhq_event e  ";
         query += "        JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id "
-            + "       INNER  JOIN RHQ_resource res ON res.id = evs.resource_id "
-            + " WHERE e1.timestamp >= e.timestamp  AND e.id = ?  AND res.id IN ( ";
+            + " WHERE e1.timestamp >= e.timestamp  AND e.id = ?  AND evs.resource_id IN ( ";
         query += JDBCUtil.generateInBinds(resourceIds.length);
         query += " ) ";
         query += "ORDER BY e1.id ASC LIMIT 6 ) ORDER BY timestamp";
@@ -395,7 +388,7 @@ public class EventManagerBean implements EventManagerLocal {
         ResultSet rs = null;
         try {
             conn = rhqDs.getConnection();
-            stm = conn.prepareStatement(query.toString());
+            stm = conn.prepareStatement(query);
             stm.setInt(1, eventId);
             int i = 2;
             JDBCUtil.bindNTimes(stm, resourceIds, i);
@@ -413,7 +406,7 @@ public class EventManagerBean implements EventManagerLocal {
             }
 
         } catch (SQLException sq) {
-            log.error("getEventsForEvent: Error retreiving events: " + sq.getMessage(), sq);
+            log.error("getEventsForEvent: Error retrieving events: " + sq.getMessage(), sq);
             return pl;
         } finally {
             JDBCUtil.safeClose(conn, stm, rs);
@@ -461,7 +454,7 @@ public class EventManagerBean implements EventManagerLocal {
         ResultSet rs = null;
         try {
             conn = rhqDs.getConnection();
-            stm = conn.prepareStatement(query.toString());
+            stm = conn.prepareStatement(query);
             int i = 1;
             JDBCUtil.bindNTimes(stm, resourceIds, 1);
             i += resourceIds.length;
@@ -473,13 +466,6 @@ public class EventManagerBean implements EventManagerLocal {
                 stm.setString(i++, "'%" + searchString + "%'");
             if (isFilled(source))
                 stm.setString(i++, "'%" + source + "%'");
-            if (pc.getPageSize() > 0) {
-                stm.setInt(i++, pc.getPageSize());
-                stm.setInt(i++, pc.getStartRow());
-            } else {
-                stm.setInt(i++, 15); // fallback
-                stm.setInt(i++, 0);
-            }
 
             rs = stm.executeQuery();
             while (rs.next()) {
@@ -489,7 +475,7 @@ public class EventManagerBean implements EventManagerLocal {
             }
 
         } catch (SQLException sq) {
-            log.error("runEventsQuery: Error retreiving events: " + sq.getMessage(), sq);
+            log.error("runEventsQuery: Error retrieving events: " + sq.getMessage(), sq);
             log.error("query is [" + query + "].");
             // these values should be useful in working out how we built the query in setupEventsQuery()
             log.error("resourceIds[] has [" + resourceIds.length + "] members.");
@@ -511,7 +497,7 @@ public class EventManagerBean implements EventManagerLocal {
         int num = 0;
         try {
             conn = rhqDs.getConnection();
-            stm = conn.prepareStatement(query.toString());
+            stm = conn.prepareStatement(query);
             int i = 1;
             JDBCUtil.bindNTimes(stm, resourceIds, 1);
             i += resourceIds.length;
@@ -530,7 +516,7 @@ public class EventManagerBean implements EventManagerLocal {
             }
 
         } catch (SQLException sq) {
-            log.error("runEventsCountQuery: Error retreiving events: " + sq.getMessage(), sq);
+            log.error("runEventsCountQuery: Error retrieving events: " + sq.getMessage(), sq);
         } finally {
             JDBCUtil.safeClose(conn, stm, rs);
         }
@@ -544,22 +530,16 @@ public class EventManagerBean implements EventManagerLocal {
         if (isCountQuery) {
             query = "SELECT count(ev.id) ";
         } else {
-            query = "SELECT ev.detail, ev.id, ";
-            if (dbType instanceof PostgresqlDatabaseType)
-                query += "substr(evs.location, 1, 30) "; // TODO take chars from end of string
-            else if (dbType instanceof OracleDatabaseType)
-                query += "substr(evs.location, -1, 30 )";
-            else
-                throw new RuntimeException("Unknown database type : " + dbType);
-            query += ", ev.severity, ev.timestamp, res.id, ev.ack_user, ev.ack_time ";
+            query = "SELECT ev.detail, ev.id, substr(evs.location, 1, 30) " +
+                    ", ev.severity, ev.timestamp, evs.resource_id, ev.ack_user, ev.ack_time ";
         }
-        query += "FROM RHQ_Event ev  INNER  JOIN RHQ_Event_Source evs ON evs.id = ev.event_source_id "
-            + "INNER  JOIN RHQ_resource res ON res.id = evs.resource_id WHERE res.id IN ( ";
+        query += "FROM RHQ_Event ev INNER JOIN RHQ_Event_Source evs ON evs.id = ev.event_source_id "
+                + "WHERE evs.resource_id IN ( ";
 
         query += JDBCUtil.generateInBinds(resourceIds.length);
         query += " ) ";
 
-        query += "  AND ev.timestamp BETWEEN ? AND ? ";
+        query += " AND ev.timestamp BETWEEN ? AND ? ";
         if (severity != null)
             query += " AND ev.severity = ? ";
         if (isFilled(searchString))
@@ -567,13 +547,45 @@ public class EventManagerBean implements EventManagerLocal {
         if (isFilled(source))
             query += " AND evs.location LIKE ? ";
         if (!isCountQuery) {
-            if (isFilled(pc.getPrimarySortColumn()) && !"null".equals(pc.getPrimarySortColumn())) {
-                query += "ORDER BY " + pc.getPrimarySortColumn() + " " + pc.getPrimarySortOrder() + " ";
-            } else
-                query += "ORDER BY ev.timestamp ";
-            query += "LIMIT ? OFFSET ?";
+            query = addSortingToQuery(query, pc);
+            // NOTE: Add paging to the query last, since for Oracle, the whole query will become an inner SELECT in the
+            //       paging SELECTs.
+            query = addPagingToQuery(query, pc);
         }
         return query;
+    }
+
+    private String addSortingToQuery(String query, PageControl pageControl) {
+        StringBuilder queryWithSorting = new StringBuilder(query);
+        if (!isFilled(pageControl.getPrimarySortColumn()) || "null".equals(pageControl.getPrimarySortColumn())) {
+            pageControl.setPrimarySort("ev.timestamp", PageOrdering.ASC);
+        }
+        queryWithSorting.append(" ORDER BY ").append(pageControl.getPrimarySortColumn());
+        if (pageControl.getPrimarySortOrder() != null) {
+           queryWithSorting.append(" ").append(pageControl.getPrimarySortOrder());
+        }
+        if (!pageControl.getPrimarySortColumn().equalsIgnoreCase("ev.id")) {
+            queryWithSorting.append(", ev.id");
+        }
+        return queryWithSorting.toString();
+    }
+
+    private String addPagingToQuery(String query, PageControl pageControl) {
+        StringBuilder queryWithPaging = new StringBuilder();
+        if (this.dbType instanceof PostgresqlDatabaseType) {
+            queryWithPaging.append(query);
+            queryWithPaging.append(" LIMIT ").append(pageControl.getPageSize());
+            queryWithPaging.append(" OFFSET ").append(pageControl.getStartRow());
+        } else if (this.dbType instanceof OracleDatabaseType) {
+            int minRowNum = pageControl.getStartRow() + 1;
+            int maxRowNum = minRowNum + pageControl.getPageSize() - 1;
+            queryWithPaging.append("SELECT * FROM (SELECT /*+ FIRST_ROWS(n) */ allResults.*, rownum rnum FROM (");
+            queryWithPaging.append(query);
+            queryWithPaging.append(") allResults WHERE rownum <= ").append(maxRowNum).append(") WHERE rnum >= ").append(minRowNum);
+        } else {
+            throw new RuntimeException("Unknown database type : " + this.dbType);
+        }
+        return queryWithPaging.toString();
     }
 
     @SuppressWarnings("unchecked")
@@ -610,9 +622,6 @@ public class EventManagerBean implements EventManagerLocal {
     }
 
     private boolean isFilled(String in) {
-        if (in != null && !in.equals(""))
-            return true;
-        else
-            return false;
+        return in != null && !in.equals("");
     }
 }

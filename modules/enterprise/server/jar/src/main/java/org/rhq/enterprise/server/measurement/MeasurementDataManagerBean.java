@@ -975,7 +975,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
             if (aggregate.isEmpty()) {
                 if (log.isTraceEnabled()) {
                     log.trace("There was no measurement data available for schedules " + Arrays.toString(scheduleIds)
-                        + " in the timframe [" + new Date(begin) + ", " + new Date(end) + "]");
+                        + " in the timeframe [" + new Date(begin) + ", " + new Date(end) + "]");
                 }
 
                 summary.setValuesPresent(false);

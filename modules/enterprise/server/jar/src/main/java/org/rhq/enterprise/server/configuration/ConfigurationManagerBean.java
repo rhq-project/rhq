@@ -239,6 +239,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         Resource resource;
         ResourceConfigurationUpdate current;
 
+
         // Get the latest configuration as known to the server (i.e. persisted in the DB).
         try {
             Query query = entityManager
@@ -432,6 +433,13 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
     @SuppressWarnings("unchecked")
     public PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject whoami, int resourceId,
         PageControl pc) {
+
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        if (resource.getResourceType().getResourceConfigurationDefinition() == null
+                || resource.getResourceType().getResourceConfigurationDefinition().getPropertyDefinitions().isEmpty()) {
+            return new PageList<ResourceConfigurationUpdate>(pc);
+        }
+
         pc.initDefaultOrderingField("cu.id", PageOrdering.DESC);
 
         String queryName = ResourceConfigurationUpdate.QUERY_FIND_ALL_BY_RESOURCE_ID;
@@ -452,7 +460,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
                 updates.add(latest);
             }
         } else if (updates.size() > 0) {
-            Resource resource = updates.get(0).getResource();
+            resource = updates.get(0).getResource();
             if (!authorizationManager.canViewResource(whoami, resource.getId())) {
                 throw new PermissionException("User [" + whoami.getName()
                     + "] does not have permission to view resource [" + resource + "]");

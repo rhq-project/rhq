@@ -37,9 +37,9 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 @Entity
 @NamedQueries( {
     @NamedQuery(name = GroupOperationHistory.QUERY_FIND_ABANDONED_IN_PROGRESS, query = "select h "
-        + "from GroupOperationHistory h where h.id = "
-        + "(select distinct ih.id GroupOperationHistory join ih.resourceOperationHistories iroh "
-        + "where iroh.status <> :status and ih.status = :status)"),
+        + "from GroupOperationHistory h where h.id IN "
+        + "( select distinct ih.id from GroupOperationHistory ih join ih.resourceOperationHistories iroh "
+        + "where iroh.status <> :status and ih.status = :status )"),
     @NamedQuery(name = GroupOperationHistory.QUERY_FIND_BY_GROUP_ID_AND_STATUS, query = "select h "
         + "from GroupOperationHistory h " + "where h.group.id = :groupId " + "and h.status = :status"),
     @NamedQuery(name = GroupOperationHistory.QUERY_FIND_BY_GROUP_ID_AND_NOT_STATUS, query = "select h "

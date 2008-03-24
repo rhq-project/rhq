@@ -120,8 +120,8 @@ public class RtFilter implements Filter {
 
                         int statusCode = hresp.getStatus();
 
-                        // Only log successful requests, since that's all JON 2.0 cares about for now...
-                        if ((statusCode < 200) || (statusCode >= 300)) {
+                        // Only log successful requests (2xx or 3xx), since that's all JON 2.0 cares about for now...
+                        if ((statusCode < 200) || (statusCode >= 400)) {
                             return;
                         }
 

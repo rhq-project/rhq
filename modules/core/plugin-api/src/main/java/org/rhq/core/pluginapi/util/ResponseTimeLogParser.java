@@ -114,9 +114,9 @@ public class ResponseTimeLogParser {
                 continue;
             }
 
-            // Only collect stats for successful requests...
+            // Only collect stats for successful (2xx or 3xx) requests...
             if ((logEntry.getStatusCode() != null)
-                && ((logEntry.getStatusCode() < 200) || (logEntry.getStatusCode() >= 300))) {
+                && ((logEntry.getStatusCode() < 200) || (logEntry.getStatusCode() >= 400))) {
                 continue;
             }
 

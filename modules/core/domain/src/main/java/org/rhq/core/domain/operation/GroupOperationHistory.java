@@ -36,9 +36,10 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 @DiscriminatorValue("group")
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = GroupOperationHistory.QUERY_FIND_ABANDONED_IN_PROGRESS, query = "select distinct h "
-        + "from GroupOperationHistory h JOIN h.resourceOperationHistories roh " + "where roh.status <> :status "
-        + "and h.status = :status"),
+    @NamedQuery(name = GroupOperationHistory.QUERY_FIND_ABANDONED_IN_PROGRESS, query = "select h "
+        + "from GroupOperationHistory h where h.id = "
+        + "(select dictinct ih.id GroupOperationHistory join ih.resourceOperationHistories iroh "
+        + "where iroh.status <> :status and ih.status = :status)"),
     @NamedQuery(name = GroupOperationHistory.QUERY_FIND_BY_GROUP_ID_AND_STATUS, query = "select h "
         + "from GroupOperationHistory h " + "where h.group.id = :groupId " + "and h.status = :status"),
     @NamedQuery(name = GroupOperationHistory.QUERY_FIND_BY_GROUP_ID_AND_NOT_STATUS, query = "select h "

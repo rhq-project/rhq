@@ -141,7 +141,9 @@ public class Alert implements Serializable {
     public Alert(AlertDefinition alertDefinition, long ctime) {
         this.alertDefinition = alertDefinition;
         setAlertNotificationLog(new AlertNotificationLog(alertDefinition));
-        alertDefinition.addAlert(this);
+        // Do not load the collection side from a one-to-many, This is very slow to load all existing alerts
+        // and unnecessary for creating the link
+        // alertDefinition.addAlert(this);
         this.ctime = ctime;
         if (alertDefinition.getOperationDefinition() != null) {
             setTriggeredOperation(alertDefinition.getOperationDefinition().getDisplayName());

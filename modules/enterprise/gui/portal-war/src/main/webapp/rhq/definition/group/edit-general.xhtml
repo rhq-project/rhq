@@ -69,8 +69,9 @@
 	   </rich:panel>
 	   
 	   <h:panelGroup layout="block" styleClass="BlockContent">
-          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
+          <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
              <h:commandButton type="submit" action="#{EditGroupDefinitionGeneralPropertiesUIBean.update}" value="OK"/>
+             <h:commandButton type="submit" action="#{EditGroupDefinitionGeneralPropertiesUIBean.reset}" value="Reset"/>
              <h:commandButton type="submit" action="#{EditGroupDefinitionGeneralPropertiesUIBean.cancel}" immediate="true" value="Cancel"/>
           </h:panelGrid>
        </h:panelGroup>

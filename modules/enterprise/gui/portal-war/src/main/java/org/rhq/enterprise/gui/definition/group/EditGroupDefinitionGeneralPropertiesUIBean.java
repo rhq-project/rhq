@@ -35,6 +35,7 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
 
     private static final String OUTCOME_SUCCESS = "success";
     private static final String OUTCOME_FAILURE = "failure";
+    private static final String TEMPORARY_EXPRESSION_ATTRIBUTE_NAME = "temporaryGroupDefExpr";
 
     private String name;
     private String description;
@@ -56,7 +57,16 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
         this.name = groupDefinition.getName();
         this.description = groupDefinition.getDescription();
         this.recursive = groupDefinition.isRecursive();
-        this.expression = groupDefinition.getExpression();
+
+        String previousExpression = (String) FacesContextUtility.getRequest().getSession().getAttribute(
+            TEMPORARY_EXPRESSION_ATTRIBUTE_NAME);
+        FacesContextUtility.getRequest().getSession().removeAttribute(TEMPORARY_EXPRESSION_ATTRIBUTE_NAME);
+        if (previousExpression == null) {
+            this.expression = groupDefinition.getExpression();
+        } else {
+            this.expression = previousExpression;
+        }
+
     }
 
     public String begin() {
@@ -80,8 +90,10 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
             groupDefinition.setExpression(expression.replaceAll("\\r", "\n").replaceAll("\\f", "\n").replaceAll("\\n+",
                 "\n"));
 
+            FacesContextUtility.getRequest().getSession().setAttribute(TEMPORARY_EXPRESSION_ATTRIBUTE_NAME, expression);
             this.groupDefinitionManager.updateGroupDefinition(EnterpriseFacesContextUtility.getSubject(),
                 groupDefinition);
+
         } catch (GroupDefinitionException gde) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Problem updating group definition: "
                 + gde.getMessage());
@@ -98,6 +110,10 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
 
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "General properties updated.");
         return OUTCOME_SUCCESS;
+    }
+
+    public String reset() {
+        return OUTCOME_FAILURE;
     }
 
     public String createGroups() {

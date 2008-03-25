@@ -49,22 +49,22 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
     public MeasurementReport call() {
         MeasurementReport report = null;
         try {
-            measurementManager.getLock().readLock().lock();
+            this.measurementManager.getLock().readLock().lock();
 
             report = this.measurementManager.getActiveReport();
             long start = System.currentTimeMillis();
 
             InventoryManager im = PluginContainer.getInstance().getInventoryManager();
 
-            Set<ScheduledMeasurementInfo> requests = measurementManager.getNextScheduledSet();
+            Set<ScheduledMeasurementInfo> requests = this.measurementManager.getNextScheduledSet();
 
             if (requests != null) {
                 if ((System.currentTimeMillis() - 30000L) > requests.iterator().next().getNextCollection()) {
-                    measurementManager.incrementLateCollections(requests.size());
+                    this.measurementManager.incrementLateCollections(requests.size());
                     log.debug("Measurement collection is falling behind... Missed requested time by ["
                         + (System.currentTimeMillis() - requests.iterator().next().getNextCollection()) + "ms]");
 
-                    measurementManager.reschedule(requests);
+                    this.measurementManager.reschedule(requests);
                     return report;
                 }
 
@@ -79,12 +79,9 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
                     getValues(measurementComponent, report, requests);
                 }
 
-                measurementManager.reschedule(requests);
+                this.measurementManager.reschedule(requests);
 
                 report.incrementCollectionTime(System.currentTimeMillis() - start);
-
-                log.debug("Measurement collection for [" + report.getDataCount() + "] took "
-                    + report.getCollectionTime() + "ms");
             }
         } catch (Throwable t) {
             log.error("Failed to run measurement collection", t);

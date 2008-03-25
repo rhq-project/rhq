@@ -633,15 +633,17 @@ public class ContentManager extends AgentService implements ContainerService, Co
             ResourceType resourceType = ComponentUtil.getResourceType(resourceId);
             log.info("Updating versions for " + resourceType.getName() + " Resource with id " + resourceId + " and its descendants...");
             InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-            if (resourceType.getCategory() == ResourceCategory.PLATFORM) {
-                inventoryManager.executePlatformScanImmediately();
-            }
-            if ((resourceType.getCategory() == ResourceCategory.SERVER && resourceType.getParentResourceTypes().isEmpty()) ||
-                 resourceType.getCategory() == ResourceCategory.PLATFORM) {
+            if (isPlatformOrTopLevelServer(resourceType)) {
                 inventoryManager.executeServerScanImmediately();
             }
+            // Always execute a service scan...
             inventoryManager.executeServiceScanImmediately();
         }
+    }
+
+    private boolean isPlatformOrTopLevelServer(ResourceType resourceType) {
+        return (resourceType.getCategory() == ResourceCategory.SERVER && resourceType.getParentResourceTypes().isEmpty()) ||
+             resourceType.getCategory() == ResourceCategory.PLATFORM;
     }
 
     // Inner Classes  --------------------------------------------

@@ -172,7 +172,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 loadFromDisk();
             }
 
-            executePlatformScanImmediately();
+            executePlatformScan();
 
             // Never run more than one discovery at a time?
             inventoryThreadPoolExecutor = new ScheduledThreadPoolExecutor(1, new LoggingThreadFactory(
@@ -245,12 +245,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return null;
     }
 
-    public void executePlatformScanImmediately() {
+    void executePlatformScan() {
         log.debug("Executing platform scan...");
         Resource discoveredPlatform = discoverPlatform();
         if (this.platform == null) {
             this.platform = discoveredPlatform;
-            log.info("Detected new platform resource " + this.platform);
+            log.info("Detected new platform " + this.platform);
             initializePlatformComponent();
         } else {
             // If the platform's already in inventory, make sure its version is up-to-date.

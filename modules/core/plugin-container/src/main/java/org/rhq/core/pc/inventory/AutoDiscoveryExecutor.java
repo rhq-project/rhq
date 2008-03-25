@@ -125,6 +125,8 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
      */
     @SuppressWarnings("unchecked")
     private void pluginDiscovery(InventoryReport report) {
+        inventoryManager.executePlatformScan();
+
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
 

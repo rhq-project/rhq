@@ -20,6 +20,9 @@ package org.rhq.enterprise.gui.definition.group;
 
 import javax.faces.application.FacesMessage;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -31,6 +34,8 @@ import org.rhq.enterprise.server.resource.group.definition.framework.InvalidExpr
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class EditGroupDefinitionGeneralPropertiesUIBean {
+    private final Log log = LogFactory.getLog(EditGroupDefinitionGeneralPropertiesUIBean.class);
+
     public static final String MANAGED_BEAN_NAME = "EditGroupDefinitionGeneralPropertiesUIBean";
 
     private static final String OUTCOME_SUCCESS = "success";
@@ -97,14 +102,17 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
         } catch (GroupDefinitionException gde) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Problem updating group definition: "
                 + gde.getMessage());
+            log.error("Problem updating group definition: ", gde);
             return OUTCOME_FAILURE;
         } catch (InvalidExpressionException iee) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "Syntax error in one of your group definitions: " + iee.getMessage());
+            log.error("Syntax error in one of your group definitions: ", iee);
             return OUTCOME_FAILURE;
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error updating group definition: "
                 + e.getMessage());
+            log.error("Error updating group definition: ", e);
             return OUTCOME_FAILURE;
         }
 
@@ -125,18 +133,22 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
         } catch (GroupDefinitionException gde) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Problem updating group definition: "
                 + gde.getMessage());
+            log.error("Problem updating group definition: ", gde);
             return OUTCOME_FAILURE;
         } catch (InvalidExpressionException iee) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "Syntax error in one of your group definition expressions: " + iee.getMessage());
+            log.error("Syntax error in one of your group definition expressions: ", iee);
             return OUTCOME_FAILURE;
         } catch (ResourceGroupUpdateException rgue) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "There was a problem adding one or more resource groups: " + rgue.getMessage());
+            log.error("There was a problem adding one or more resource groups: ", rgue);
             return OUTCOME_FAILURE;
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "There was a problem calculating the results: "
                 + e.getMessage());
+            log.error("There was a problem calculating the results: ", e);
             return OUTCOME_FAILURE;
         }
 

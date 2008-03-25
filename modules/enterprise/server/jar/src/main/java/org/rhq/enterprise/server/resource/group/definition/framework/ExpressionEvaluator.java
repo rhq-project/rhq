@@ -603,7 +603,19 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             String bindArgument = replacement.getKey();
             Object bindValue = replacement.getValue();
 
-            query.setParameter(bindArgument, bindValue);
+            /*
+             * bind as the most appropriate type; today only integers and strings are supported
+             * 
+             * note: this is only meant to be a short-term solution to work around JBNADM-3141;
+             *       the appropriate/proper solution would be to include type information into
+             *       the whereReplacements map during the parse, and then switch on the type to
+             *       cast the data to the appropriate type during the binding here
+             */
+            try {
+                query.setParameter(bindArgument, Integer.valueOf(bindValue.toString()));
+            } catch (NumberFormatException nfe) {
+                query.setParameter(bindArgument, bindValue);
+            }
         }
 
         return query.getResultList();

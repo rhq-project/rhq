@@ -22,25 +22,25 @@
 <table width="100%" cellpadding="0" cellspacing="0" border="0" id="listTable">
 <!-- PLATFORM CONTENTS -->
 	<tr class="ListHeaderDark">
-      <td width="85%" class="ListHeaderInactiveSorted"><fmt:message key="resource.hub.PlatformTypeTH"/>s</td>
-      <td width="15%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
-      <td width="15%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
-  	</tr>
+      <td width="50%" class="ListHeaderInactiveSorted"><fmt:message key="resource.hub.PlatformTypeTH"/>s</td>
+      <td width="25%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
+      <td width="25%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
+      </tr>
   	<c:set var="PlatformServices" value="${PlatformServices}"/>
     <c:forEach var="entry" varStatus="status" items="${platformTypes}">
     <tr class="ListRowSelected">
       <td class="ListCellPrimary"><c:out value="${entry.name}"/></td>
-      <td class="ListCell" align="center">
+      <td class="ListCell" align="center" nowrap="nowrap">
          <c:if test="${monitorEnabled}">
-         <html:link page="/admin/platform/monitor/Config.do?mode=configure&id=${entry.id}&type=${entry.id}">
-              <html:img page="/images/tbb_editMetricTemplate.gif" width="136" height="16" border="0"/>
+         <html:link page="/admin/platform/monitor/Config.do?mode=configure&id=${entry.id}&type=${entry.id}" styleClass="buttonsmall">
+             Edit Metric Template
          </html:link>
          </c:if>
      </td>
-      <td class="ListCell" align="center">
+      <td class="ListCell" align="center" nowrap="nowrap">
         <c:if test="${monitorEnabled}">   
-        <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${entry.id}"> 
-            <html:img page="/images/tbb_editAlerts.gif" width="73" height="16" border="0"/>
+        <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${entry.id}" styleClass="buttonsmall">
+            Edit Alert Templates
         </html:link>
         </c:if>
       </td>
@@ -61,9 +61,9 @@
 
 <!-- SERVER CONTENTS -->
 	<tr class="ListHeaderDark">
-      <td width="85%" class="ListHeaderInactiveSorted"><fmt:message key="resource.hub.ServerTypeTH"/>s</td>
-      <td width="15%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
-      <td width="15%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
+      <td width="50%" class="ListHeaderInactiveSorted"><fmt:message key="resource.hub.ServerTypeTH"/>s</td>
+      <td width="25%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
+      <td width="25%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
   	</tr>
   	<c:set var="Services" value="${Services}"/> 
     <c:forEach var="entry" varStatus="status" items="${serverTypes}">
@@ -71,15 +71,15 @@
       <td class="ListCellPrimary"><c:out value="${entry.name}"/></td>
       <td class="ListCell" align="center">
          <c:if test="${monitorEnabled}">
-         <html:link page="/admin/platform/monitor/Config.do?mode=configure&type=${entry.id}">
-             <html:img page="/images/tbb_editMetricTemplate.gif" width="136" height="16" border="0"/>
+         <html:link page="/admin/platform/monitor/Config.do?mode=configure&type=${entry.id}" styleClass="buttonsmall">
+             Edit Metric Template
          </html:link>
          </c:if>
       </td>
       <td class="ListCell" align="center">
         <c:if test="${monitorEnabled}">   
-          <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${entry.id}">
-           <html:img page="/images/tbb_editAlerts.gif" width="73" height="16" border="0"/>
+          <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${entry.id}" styleClass="buttonsmall">
+              Edit Alert Templates
           </html:link>
         </c:if>
         </td>

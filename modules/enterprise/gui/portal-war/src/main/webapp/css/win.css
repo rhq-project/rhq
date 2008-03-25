@@ -116,40 +116,6 @@ A.NotBold:hover {
    color: #FFFFFF;
 }
 
-/* BUTTONS */
-
-.buttonsmall
-{
-   font-size: 10px;
-   font-weight: bold;
-   color: #666666;
-   background-color: #FFFFFF;
-   border: 1px solid #B0B0B0;
-   padding: 0px 5px;
-   cursor: pointer;
-}
-
-.buttonmed
-{
-   font-size: 11px;
-   font-weight: bold;
-   color: #E6E8ED;
-   background-color: #828CA3;
-   border: 1px outset #626C83;
-   padding: 1px 10px;
-   cursor: pointer;
-}
-
-.buttonmed-disabled 
-{
-   font-size: 11px;
-   font-weight: bold;
-   color: #B6B8BD;
-   background-color: #828CA3;
-   border: 1px outset #626C83;
-   padding: 1px 10px;
-   cursor: default;
-}
 
 /* PAGE TITLE */
 .PageTitle {
@@ -1664,7 +1630,7 @@ body {
    margin-left: 250px;
    margin-right: 20px;
    margin-bottom: 20px;
-   height: 98px;
+   height: 90px;
 }
 
 #PageHeader h1 {
@@ -2186,4 +2152,44 @@ ul.radio-group .unspecified {
 .rich-datascr-textlinks {
 	color: #527fa8;
 	text-decoration:underline;
+}
+
+
+
+/* BUTTONS */
+
+.buttonsmall, A.buttonsmall, A.buttonsmall, A.buttonsmall:link, .ListCell A.buttonsmall
+{
+   font-size: 10px;
+   font-weight: bold;
+   color: #666666;
+   background-color: #FFFFFF;
+   border: 1px solid #B0B0B0;
+   padding: 0px 5px;
+   cursor: pointer;
+   text-decoration: none
+}
+
+
+.buttonmed
+{
+   font-size: 11px;
+   font-weight: bold;
+   color: #E6E8ED;
+   background-color: #828CA3;
+   border: 1px outset #626C83;
+   padding: 1px 10px;
+   cursor: pointer;
+}
+
+.buttonmed-disabled
+{
+   font-size: 11px;
+   font-weight: bold;
+   color: #B6B8BD;
+   background-color: #828CA3;
+   border: 1px outset #626C83;
+   padding: 1px 10px;
+   cursor: default;
+   text-wrap: none;
 }

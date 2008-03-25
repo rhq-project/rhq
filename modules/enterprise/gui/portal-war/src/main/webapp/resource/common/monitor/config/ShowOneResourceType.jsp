@@ -48,26 +48,28 @@
          <html:img page="/images/icon_indent_arrow.gif" width="16" height="16" border="0" /> 
          <c:out value="${serviceType.name}" />
       </td>
-      <td class="ListCell" align="center">
+      <td class="ListCell" align="center" nowrap="nowrap">
          <c:if test="${monitorEnabled}">
-         <html:link page="/admin/platform/monitor/Config.do?mode=configure&id=${serviceType.id}&type=${serviceType.id}">
-            <html:img page="/images/tbb_editMetricTemplate.gif" width="136" height="16" border="0" />
+         <html:link page="/admin/platform/monitor/Config.do?mode=configure&id=${serviceType.id}&type=${serviceType.id}" styleClass="buttonsmall">
+            Edit Metric Template
          </html:link>
          </c:if>
       </td>
-      <td class="ListCell" align="center">
+      <td class="ListCell" align="center" nowrap="nowrap">
          <c:if test="${monitorEnabled}">
-            <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${serviceType.id}">
-               <html:img page="/images/tbb_editAlerts.gif" width="73" height="16" border="0" />
+            <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${serviceType.id}" styleClass="buttonsmall">
+                Edit Alert Templates
             </html:link>
          </c:if>
       </td>
-      <%-- Now call ourslves with a larger indent to see if this entry has children  --%>
-      <tiles:insert
-         definition=".resource.common.monitor.config.ShowOneResourceType">
-         <tiles:put name="resourceType" beanName="serviceType" />
-         <tiles:put name="servicesMap" beanName="servicesMap" />
-         <tiles:put name="indent" value="${indent + 1}" />
-      </tiles:insert>
    </tr>
+
+    <%-- Now call ourslves with a larger indent to see if this entry has children  --%>
+    <tiles:insert
+       definition=".resource.common.monitor.config.ShowOneResourceType">
+       <tiles:put name="resourceType" beanName="serviceType" />
+       <tiles:put name="servicesMap" beanName="servicesMap" />
+       <tiles:put name="indent" value="${indent + 1}" />
+    </tiles:insert>
+    
 </c:forEach>

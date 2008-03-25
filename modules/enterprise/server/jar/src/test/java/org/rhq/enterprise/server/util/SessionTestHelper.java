@@ -32,6 +32,9 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.enterprise.server.auth.SessionManager;
 
 public class SessionTestHelper {
@@ -100,6 +103,9 @@ public class SessionTestHelper {
 
     public static ResourceType createNewResourceType(EntityManager em) {
         ResourceType type = new ResourceType(preprocess("testType"), "testPlugin", ResourceCategory.PLATFORM, null);
+        ConfigurationDefinition resourceConfigDef = new ConfigurationDefinition("Fake def", "Resource config def for fake test resource");
+        resourceConfigDef.put(new PropertyDefinitionSimple("fake property","fake",false, PropertySimpleType.BOOLEAN));
+        type.setResourceConfigurationDefinition(resourceConfigDef);
         em.persist(type);
         em.flush();
 

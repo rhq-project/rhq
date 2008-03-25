@@ -61,6 +61,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     private Set<String> whereStatics;
     private List<String> groupByElements;
 
+    private int expressionCount;
     private boolean isInvalid;
     private boolean isTestMode;
     private boolean resultsComputed;
@@ -83,6 +84,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         whereStatics = new HashSet<String>();
         groupByElements = new ArrayList<String>();
 
+        expressionCount = 0;
         isInvalid = false;
         isTestMode = false;
         resultsComputed = false;
@@ -137,6 +139,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
         try {
             parseExpression(expression);
+            expressionCount++;
         } catch (InvalidExpressionException iee) {
             isInvalid = true;
             throw iee;
@@ -455,6 +458,11 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     public void execute() {
         if (isInvalid) {
             throw new IllegalStateException("This evaluator previously threw an exception and can no longer be used");
+        }
+
+        // if there are no expressions, leave the default value for computedJPQLStatement
+        if (this.expressionCount == 0) {
+            return;
         }
 
         // build the initial query

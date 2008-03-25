@@ -71,6 +71,11 @@ public class StringUtils {
     public static List<String> getStringAsList(String input, String regexSplitter, boolean ignoreEmptyTokens) {
         List<String> results = new ArrayList<String>();
 
+        if (input == null) {
+            // gracefully return a 0-element list if the input is null
+            return results;
+        }
+
         for (String lineItem : input.split(regexSplitter)) {
             // allow user to visual separate data, but ignore blank lines
             if (ignoreEmptyTokens && lineItem.trim().equals("")) {

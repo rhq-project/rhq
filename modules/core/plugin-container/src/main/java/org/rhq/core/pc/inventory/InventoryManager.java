@@ -172,15 +172,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 loadFromDisk();
             }
 
-            Resource discoveredPlatform = discoverPlatform();
-            if (this.platform == null) {
-                this.platform = discoveredPlatform;
-                log.info("Detected new platform resource " + this.platform);
-                initializePlatformComponent();
-            } else {
-                // If the platform's already in inventory, make sure its version is up-to-date.
-                updateResourceVersion(this.platform, discoveredPlatform.getVersion());
-            }
+            executePlatformScanImmediately();
 
             // Never run more than one discovery at a time?
             inventoryThreadPoolExecutor = new ScheduledThreadPoolExecutor(1, new LoggingThreadFactory(
@@ -253,6 +245,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return null;
     }
 
+    public void executePlatformScanImmediately() {
+        log.debug("Executing platform scan...");
+        Resource discoveredPlatform = discoverPlatform();
+        if (this.platform == null) {
+            this.platform = discoveredPlatform;
+            log.info("Detected new platform resource " + this.platform);
+            initializePlatformComponent();
+        } else {
+            // If the platform's already in inventory, make sure its version is up-to-date.
+            updateResourceVersion(this.platform, discoveredPlatform.getVersion());
+        }
+    }
+    
     public void setConfiguration(PluginContainerConfiguration configuration) {
         this.configuration = configuration;
     }
@@ -1093,8 +1098,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     /**
-     * TODO GH: Move this to another class (this one is getting too big) Detects the top platform resource and starts
-     * its component.
+     * Detects the top platform resource and starts its ResourceComponent.
+     *
+     * TODO GH: Move this to another class (this one is getting too big)
      */
     @SuppressWarnings("unchecked")
     private Resource discoverPlatform() {

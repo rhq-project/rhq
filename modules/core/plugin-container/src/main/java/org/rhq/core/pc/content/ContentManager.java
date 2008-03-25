@@ -51,8 +51,10 @@ import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.pc.ContainerService;
@@ -116,7 +118,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
     // ContainerService Implementation  --------------------------------------------
 
     public void initialize() {
-        log.info("Initializing");
+        log.info("Initializing...");
 
         // Determine discovery mode - we only enable discovery if we are inside the agent and the period is positive non-zero
         if (configuration.isInsideAgent() && (configuration.getContentDiscoveryPeriod() > 0)) {
@@ -159,6 +161,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
     }
 
     public void shutdown() {
+        log.info("Shutting down...");
         discoveryThreadPoolExecutor.shutdown();
         crudExecutor.shutdown();
 
@@ -418,7 +421,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         // Perform the create
         ContentFacet contentFacet = findContentFacet(resourceId);
         DeployPackagesResponse response = contentFacet.deployPackages(packagesToDeploy, this);
-
+        updateVersionForResourceAndItsDescendants(resourceId, response);
         return response;
     }
 
@@ -623,6 +626,22 @@ public class ContentManager extends AgentService implements ContainerService, Co
         }
 
         return null;
+    }
+
+    private void updateVersionForResourceAndItsDescendants(int resourceId, DeployPackagesResponse response) throws PluginContainerException {
+        if (response.getOverallRequestResult() == ContentResponseResult.SUCCESS) {
+            ResourceType resourceType = ComponentUtil.getResourceType(resourceId);
+            log.info("Updating versions for " + resourceType.getName() + " Resource with id " + resourceId + " and its descendants...");
+            InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+            if (resourceType.getCategory() == ResourceCategory.PLATFORM) {
+                inventoryManager.executePlatformScanImmediately();
+            }
+            if ((resourceType.getCategory() == ResourceCategory.SERVER && resourceType.getParentResourceTypes().isEmpty()) ||
+                 resourceType.getCategory() == ResourceCategory.PLATFORM) {
+                inventoryManager.executeServerScanImmediately();
+            }
+            inventoryManager.executeServiceScanImmediately();
+        }
     }
 
     // Inner Classes  --------------------------------------------

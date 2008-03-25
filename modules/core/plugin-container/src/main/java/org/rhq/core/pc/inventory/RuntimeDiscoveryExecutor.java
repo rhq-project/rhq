@@ -83,7 +83,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
     public InventoryReport call() {
         try {
-            log.info("Running runtime report for resource: " + resource);
+            log.info("Running runtime scan for Resource: " + resource);
 
             Agent reportAgent = inventoryManager.getAgent();
 

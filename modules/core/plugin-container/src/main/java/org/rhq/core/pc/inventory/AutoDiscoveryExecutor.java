@@ -88,7 +88,7 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
     }
 
     public InventoryReport call() {
-        log.info("Executing auto discovery scan");
+        log.info("Executing server discovery scan...");
         InventoryReport report = new InventoryReport(inventoryManager.getAgent());
 
         try {

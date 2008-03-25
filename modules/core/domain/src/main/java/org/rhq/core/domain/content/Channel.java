@@ -59,14 +59,14 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = Channel.QUERY_FIND_CHANNELS_BY_RESOURCE_ID, query = "SELECT c "
         + "FROM ResourceChannel rc JOIN rc.channel c " + "WHERE rc.resource.id = :resourceId "),
 
-    @NamedQuery(name = Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite(c, COUNT(pv)) "
+    @NamedQuery(name = Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite( c, COUNT(pv.packageVersion) ) "
         + "FROM ResourceChannel rc JOIN rc.channel c LEFT JOIN c.channelPackageVersions pv "
         + "WHERE rc.resource.id = :resourceId "
         + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
     @NamedQuery(name = Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT(c) "
         + "FROM ResourceChannel rc JOIN rc.channel c " + "WHERE rc.resource.id = :resourceId "),
 
-    @NamedQuery(name = Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite(c, COUNT(pv)) "
+    @NamedQuery(name = Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite( c, COUNT(pv.packageVersion) ) "
         + "FROM Channel as c LEFT JOIN c.channelPackageVersions pv "
         + "WHERE c.id NOT IN ( SELECT rc.channel.id FROM ResourceChannel rc WHERE rc.resource.id = :resourceId ) "
         + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),

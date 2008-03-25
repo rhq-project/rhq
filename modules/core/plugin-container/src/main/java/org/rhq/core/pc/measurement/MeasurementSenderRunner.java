@@ -43,25 +43,26 @@ public class MeasurementSenderRunner implements Callable<MeasurementReport>, Run
 
     public MeasurementReport call() throws Exception {
         MeasurementReport report = this.measurementManager.swapReport();
+        if (report == null) {
+            LOG.error("Measurement report is null - nothing to do.");
+            return null;
+        }
 
         filterUnchangedTraits(report);
         perMinuteItizeData(report);
 
-        if (report.getNumericData().size() > 0) {
+        if (report.getDataCount() > 0) {
+            LOG.info("Measurement collection for [" + report.getDataCount() + "] metrics took " +
+                    report.getCollectionTime() + "ms - sending report to Server...");
             this.measurementManager.sendMeasurementReport(report);
+        } else {
+            LOG.debug("Measurement report contains no data - not sending to Server.");
         }
-
-        LOG
-            .info("Measurement collection for [" + report.getDataCount() + "] took " + report.getCollectionTime()
-                + "ms");
+        
         return report;
     }
 
     private void perMinuteItizeData(MeasurementReport report) {
-        if (report == null) {
-            return;
-        }
-
         Iterator<MeasurementDataNumeric> iter = report.getNumericData().iterator();
         while (iter.hasNext()) {
             MeasurementData d = iter.next();
@@ -81,10 +82,6 @@ public class MeasurementSenderRunner implements Callable<MeasurementReport>, Run
     }
 
     private void filterUnchangedTraits(MeasurementReport report) {
-        if (report == null) {
-            return;
-        }
-
         // TODO This is horribly inefficient because we're iterating the whole collection list for every set of collections
         // now filter TRAITS that have not changed since the last time
         List<MeasurementDataTrait> duplicates = new ArrayList<MeasurementDataTrait>();

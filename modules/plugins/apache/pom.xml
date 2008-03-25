@@ -1,12 +1,11 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-plugins-parent</artifactId>
-      <version>${rhq.version}</version>
+      <version>1.0.0.RC1</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -18,9 +17,8 @@
    <description>a plugin for managing Apache web servers (1.3 or 2.0)</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/apache/</connection>
-      <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/plugins/apache/
-      </developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC1/modules/plugins/apache</connection>
+      <developerConnection>scm:svn:http://jshaughn@svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC1/modules/plugins/apache</developerConnection>
    </scm>
 
    <properties>
@@ -89,28 +87,27 @@
                         <configuration>
                            <tasks>
                               <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...</echo>
-                              <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
-                              <mkdir dir="target/itest"/>
-                              <mkdir dir="target/itest/plugins"/>
-                              <mkdir dir="target/itest/lib"/>
+                              <property name="settings.localRepository" location="${user.home}/.m2/repository" />
+                              <mkdir dir="target/itest" />
+                              <mkdir dir="target/itest/plugins" />
+                              <mkdir dir="target/itest/lib" />
                               <copy toDir="target/itest/plugins" flatten="true">
                                  <fileset dir="${settings.localRepository}/">
-                                    <include
-                                       name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar"/>
+                                    <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
                                  </fileset>
                                  <fileset dir="${project.build.directory}">
-                                    <include name="${project.artifactId}-${project.version}.jar"/>
+                                    <include name="${project.artifactId}-${project.version}.jar" />
                                  </fileset>
                               </copy>
                               <unzip dest="target/itest/lib">
                                  <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
                                  <patternset>
-                                    <include name="**/lib/sigar.jar"/>
-                                    <include name="**/lib/bcel*.jar"/>
-                                    <include name="**/lib/*.so"/>
-                                    <include name="**/lib/*.sl"/>
-                                    <include name="**/lib/*.dll"/>
-                                    <include name="**/lib/*.dylib"/>
+                                    <include name="**/lib/sigar.jar" />
+                                    <include name="**/lib/bcel*.jar" />
+                                    <include name="**/lib/*.so" />
+                                    <include name="**/lib/*.sl" />
+                                    <include name="**/lib/*.dll" />
+                                    <include name="**/lib/*.dylib" />
                                  </patternset>
                               </unzip>
                               <move todir="target/itest/lib" flatten="true">
@@ -188,10 +185,10 @@
                         <phase>compile</phase>
                         <configuration>
                           <tasks>
-                            <mkdir dir="${rhq.deploymentDir}"/>
-                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                            <mkdir dir="${rhq.deploymentDir}" />
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                             <echo>*** Updating ${deployment.file}...</echo>
-                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
+                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
                           </tasks>
                         </configuration>
                         <goals>
@@ -204,9 +201,9 @@
                         <phase>clean</phase>
                         <configuration>
                           <tasks>
-                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                             <echo>*** Deleting ${deployment.file}...</echo>
-                            <delete file="${deployment.file}"/>
+                            <delete file="${deployment.file}" />
                           </tasks>
                         </configuration>
                         <goals>

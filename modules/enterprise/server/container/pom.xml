@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>${rhq.version}</version>
+    <version>1.0.0.RC1</version>
     <relativePath>../../../../pom.xml</relativePath>
   </parent>
 
@@ -17,8 +17,8 @@
   <description>The full RHQ container build, including the JBossAS server and all config/deploy files</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/container/</connection>
-    <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/container/</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC1/modules/enterprise/server/container</connection>
+    <developerConnection>scm:svn:http://jshaughn@svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC1/modules/enterprise/server/container</developerConnection>
   </scm>
 
   <properties>
@@ -67,7 +67,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>safe-invoker</artifactId>
-      <version>1.0.2</version>
+      <version>1.0.0.RC1</version>
     </dependency>
 
 <!--
@@ -265,15 +265,15 @@
                         <phase>package</phase>
                         <configuration>
                           <tasks>
-                            <property name="deployment.dir" location="${rhq.containerDir}"/>
+                            <property name="deployment.dir" location="${rhq.containerDir}" />
                             <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
                             <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
-                               <fileset dir="${basedir}/target/${project.build.finalName}"/>
+                               <fileset dir="${basedir}/target/${project.build.finalName}" />
                             </copy>
                             <!-- Make sure shell scripts are readable and executable. -->
                             <chmod perm="ug+x" verbose="true">
-                               <fileset dir="${deployment.dir}/bin" includes="*.sh"/>
-                               <fileset dir="${deployment.dir}/jbossas/bin" includes="*.sh"/>
+                               <fileset dir="${deployment.dir}/bin" includes="*.sh" />
+                               <fileset dir="${deployment.dir}/jbossas/bin" includes="*.sh" />
                             </chmod>
                           </tasks>
                         </configuration>
@@ -287,9 +287,9 @@
                         <phase>clean</phase>
                         <configuration>
                           <tasks>
-                            <property name="deployment.dir" location="${rhq.containerDir}"/>
+                            <property name="deployment.dir" location="${rhq.containerDir}" />
                             <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
-                            <delete dir="${deployment.dir}"/>
+                            <delete dir="${deployment.dir}" />
                           </tasks>
                         </configuration>
                         <goals>

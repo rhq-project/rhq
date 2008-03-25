@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>${rhq.version}</version>
+      <version>1.0.0.RC1</version>
    </parent>
 
   <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
   <description>Database schema setup, upgrade and other utilities</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/core/dbutils/</connection>
-    <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/core/dbutils/</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC1/modules/core/dbutils</connection>
+    <developerConnection>scm:svn:http://jshaughn@svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC1/modules/core/dbutils</developerConnection>
   </scm>
 
   <properties>
@@ -94,7 +94,7 @@
             <phase>test</phase>
             <configuration>
               <tasks>
-                <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
+                <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                 <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml">
                   <property name="settings.localRepository" value="${settings.localRepository}" />
                   <property name="ojdbc14.version" value="${ojdbc14.version}" />
@@ -123,7 +123,7 @@
             <phase>process-classes</phase>
             <configuration>
               <tasks>
-                <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
+                <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                 <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-combine">
                   <property name="settings.localRepository" value="${settings.localRepository}" />
                   <property name="ojdbc14.version" value="${ojdbc14.version}" />
@@ -153,7 +153,7 @@
             <phase>test</phase>
             <configuration>
               <tasks>
-                <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
+                <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                 <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-check-schema">
                   <property name="settings.localRepository" value="${settings.localRepository}" />
                   <property name="ojdbc14.version" value="${ojdbc14.version}" />
@@ -225,10 +225,10 @@
                         <phase>compile</phase>
                         <configuration>
                           <tasks>
-                            <mkdir dir="${rhq.deploymentDir}"/>
-                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                            <mkdir dir="${rhq.deploymentDir}" />
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                             <echo>*** Updating ${deployment.file}...</echo>
-                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
+                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
                           </tasks>
                         </configuration>
                         <goals>
@@ -241,9 +241,9 @@
                         <phase>clean</phase>
                         <configuration>
                           <tasks>
-                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                             <echo>*** Deleting ${deployment.file}...</echo>
-                            <delete file="${deployment.file}"/>
+                            <delete file="${deployment.file}" />
                           </tasks>
                         </configuration>
                         <goals>

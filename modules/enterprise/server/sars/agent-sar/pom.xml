@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-enterprise-server-sars-parent</artifactId>
-    <version>${rhq.version}</version>
+    <version>1.0.0.RC1</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
   <description>The SAR that allows the server to embed the agent</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/sars/agent-sar/</connection>
-    <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/sars/agent-sar/</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC1/modules/enterprise/server/sars/agent-sar</connection>
+    <developerConnection>scm:svn:http://jshaughn@svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC1/modules/enterprise/server/sars/agent-sar</developerConnection>
   </scm>
 
   <properties>
@@ -158,14 +158,14 @@
                         <phase>package</phase>
                         <configuration>
                           <tasks>
-                            <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
                             <echo>*** Copying updated files from target${file.separator}classes${file.separator} to ${deployment.dir}${file.separator}...</echo>
                             <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
-                               <fileset dir="target/rhq-agent"/>
+                               <fileset dir="target/rhq-agent" />
                             </copy>
-                            <property name="deployment.descriptor.file" location="${deployment.dir}/META-INF/jboss-service.xml"/>
+                            <property name="deployment.descriptor.file" location="${deployment.dir}/META-INF/jboss-service.xml" />
                             <echo>*** Touching ${deployment.descriptor.file} to force redeployment of ${rhq.deploymentName}...</echo>
-                            <touch file="${deployment.descriptor.file}"/>
+                            <touch file="${deployment.descriptor.file}" />
                           </tasks>
                         </configuration>
                         <goals>
@@ -178,9 +178,9 @@
                         <phase>clean</phase>
                         <configuration>
                           <tasks>
-                            <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
                             <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
-                            <delete dir="${deployment.dir}"/>
+                            <delete dir="${deployment.dir}" />
                           </tasks>
                         </configuration>
                         <goals>

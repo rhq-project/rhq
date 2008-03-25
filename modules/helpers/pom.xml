@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>${rhq.version}</version>
+    <version>1.0.0.RC1</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -17,8 +17,8 @@
   <description>parent POM for all JON helpers</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/helpers/</connection>
-    <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/helpers/</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC1/modules/helpers</connection>
+    <developerConnection>scm:svn:http://jshaughn@svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC1/modules/helpers</developerConnection>
   </scm>
 
   <properties>

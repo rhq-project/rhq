@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>${rhq.version}</version>
+      <version>1.0.0.RC1</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
    <description>RHQ plugin container</description>
 
    <scm>
-     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/core/plugin-container/</connection>
-     <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/core/plugin-container/</developerConnection>
+     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC1/modules/core/plugin-container</connection>
+     <developerConnection>scm:svn:http://jshaughn@svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC1/modules/core/plugin-container</developerConnection>
    </scm>
 
    <properties>
@@ -111,7 +111,7 @@
               <tasks>
                  <echo>SIGAR java library version used is ${sigar.version}</echo>
                  <echo>Copying/unzipping SIGAR native libraries (version ${sigar.version}) to local build directory</echo>
-                 <mkdir dir="${project.build.directory}/jboss-sigar"/>
+                 <mkdir dir="${project.build.directory}/jboss-sigar" />
                  <copy toDir="${project.build.directory}/jboss-sigar">
                     <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
                  </copy>

@@ -94,10 +94,24 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     }
 
     public void testPurge() throws Throwable {
-
         addDataToBePurged();
         triggerDataPurgeJobNow();
         makeSureDataIsPurged();
+    }
+
+    public void testPurgeWhenDeleting() throws Throwable {
+        addDataToBePurged();
+        try {
+            List<Integer> deletedIds = LookupUtil.getResourceManager().deleteResource(
+                LookupUtil.getSubjectManager().getOverlord(), new Integer(newResource.getId()));
+            assert deletedIds.size() == 1 : "didn't delete resource: " + deletedIds;
+            assert deletedIds.get(0).intValue() == newResource.getId() : "what was deleted? : " + deletedIds;
+
+            // I don't have the resource anymore so I can't use makeSureDataIsPurged to test
+            // this test method will at least ensure no exceptions occur in resource manager
+        } finally {
+            newResource = null; // so our tear-down method doesn't try to delete it again
+        }
     }
 
     private void addDataToBePurged() throws NotSupportedException, SystemException, Throwable {

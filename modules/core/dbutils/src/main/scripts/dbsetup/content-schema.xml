@@ -102,8 +102,8 @@
    <table name="RHQ_PACKAGE_VERSION">
       <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
       <column name="DISPLAY_NAME" size="200" type="VARCHAR2" required="false"/>
-      <column name="SHORT_DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
-      <column name="LONG_DESCRIPTION" size="4000" type="VARCHAR2" required="false"/>
+      <column name="SHORT_DESCRIPTION" size="10000" type="CLOB" required="false"/>
+      <column name="LONG_DESCRIPTION" size="50000" type="CLOB" required="false"/>
       <column name="VERSION" size="500" type="VARCHAR2" required="true"/>
       <column name="DISPLAY_VERSION" size="500" type="VARCHAR2" required="false"/>
       <column name="FILE_NAME" size="255" type="VARCHAR2" required="false"/>

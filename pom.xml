@@ -9,12 +9,12 @@
 
   <name>RHQ</name>
   <description>parent POM for all RHQ modules</description>
-  <url>http://www.jboss.org/services/jbossnetwork</url>
-  <inceptionYear>2005</inceptionYear>
+  <url>http://rhq-project.org/</url>
+  <inceptionYear>2008</inceptionYear>
 
   <organization>
-    <name>JBoss, Inc.</name>
-    <url>http://jboss.com/</url>
+    <name>RHQ Project Advisory Board (Hyperic &amp; Red Hat, Inc.)</name>
+    <url>http://rhq-project.org/</url>
   </organization>
 
   <scm>
@@ -24,7 +24,7 @@
 
   <issueManagement>
     <system>jira</system>
-    <url>http://jira.jboss.com/jira/browse/JBNADM</url>
+    <url>http://jira.rhq-project.org/</url>
   </issueManagement>
 
   <properties>
@@ -61,7 +61,8 @@
     <!-- misc properties -->
     <server.quartzDelegate>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</server.quartzDelegate>
 
-    <!-- defaults for datasource used by dbsetup and unit+integration tests - these may be overridden in ~/.m2/settings.xml -->
+    <!-- defaults for datasource used by dbsetup, unit+integration tests, and dev container build - 
+         these may be overridden in ~/.m2/settings.xml -->
     <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhq</rhq.test.ds.connection-url>
     <rhq.test.ds.driver-class>org.postgresql.Driver</rhq.test.ds.driver-class>
     <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>

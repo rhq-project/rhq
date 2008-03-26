@@ -332,6 +332,8 @@ public class RtFilter implements Filter {
     /**
      * Open a BufferedWriter that can be used to write the log lines.
      *
+     * @param append if true, append to the end of the file; if false, truncate the file and write from the beginning
+     *
      * @throws Exception if the logfile cannot be opened for writing
      */
     private void openFileWriter(boolean append) throws Exception {
@@ -377,7 +379,7 @@ public class RtFilter implements Filter {
 
     private void truncateLogFileIfMaxSizeExceeded() throws Exception {
         if (this.logFile.length() > this.maxLogFileSize) {
-            log.info("Response time log '" + this.logFile + "' has exceeded maximum file size (" + this.maxLogFileSize
+            log.warn("Response time log '" + this.logFile + "' has exceeded maximum file size (" + this.maxLogFileSize
                 + " bytes) - truncating it...");
             closeFileWriter();
             boolean append = false;

@@ -106,7 +106,8 @@ public class ResponseTimeLogParser {
                 String truncatedUrl = url.substring(0, Math.min(url.length(), 120));
                 if (url.length() > 120)
                     truncatedUrl += "...";
-                log.error("URL parsed from response-time log file does not begin with '/': " + truncatedUrl);
+                log.error("URL ('" + truncatedUrl + "') parsed from response-time log file does not begin with '/'. " +
+                        "Line being parsed is [" + currentLine + "].");
                 continue;
             }
 

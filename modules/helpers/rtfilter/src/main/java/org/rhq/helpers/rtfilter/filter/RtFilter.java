@@ -79,7 +79,7 @@ public class RtFilter implements Filter {
     private long maxLogFileSize = DEFAULT_MAX_LOG_FILE_SIZE;
     private String contextName;
 
-    private Object lock = new Object();
+    private final Object lock = new Object();
 
     /**
      * Does the real magic. If a fatal exception occurs during processing, the filter will revert to an uninitialized
@@ -91,16 +91,14 @@ public class RtFilter implements Filter {
     public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException,
         ServletException {
         long t1 = 0;
-        HttpServletRequest hreq = null;
-        RtFilterResponseWrapper hresp = null;
+        HttpServletRequest hreq = (HttpServletRequest) req;
+        RtFilterResponseWrapper hresp = new RtFilterResponseWrapper(resp);
 
         synchronized (lock) {
             if (this.initialized) {
                 try {
                     t1 = System.currentTimeMillis();
                     this.requestCount++;
-                    hreq = (HttpServletRequest) req;
-                    hresp = new RtFilterResponseWrapper(resp);
                     if ((this.requestCount > 1) && (t1 > (this.t2 + this.timeBetweenFlushes))) {
                         this.flushingNeeded = true;
                     }
@@ -159,14 +157,13 @@ public class RtFilter implements Filter {
     public void init(FilterConfig filterConfig) throws ServletException {
         try {
             synchronized (lock) {
-                log.debug("-- Filter init ");
                 initializeParameters(filterConfig);
                 ServletContext servletContext = filterConfig.getServletContext();
                 this.contextName = ServletUtility.getContextRoot(servletContext);
                 String logFileName = this.logFilePrefix + this.contextName + "_rt.log";
                 this.logFile = new File(this.logDirectory, logFileName);
-                log.info("Writing response-time log for webapp with context root '" + this.contextName + "' to '"
-                    + this.logFile + "'...");
+                log.info("-- Filter init: Writing response-time log for webapp with context root '" + this.contextName
+                        + "' to '" + this.logFile + "' (hashCode=" + hashCode() + ")...");
                 boolean append = true;
                 openFileWriter(append);
                 this.initialized = true;
@@ -183,7 +180,7 @@ public class RtFilter implements Filter {
      */
     public void destroy() {
         synchronized (lock) {
-            log.debug("-- Filter destroy, " + this.requestCount + " requests processed");
+            log.info("-- Filter destroy: " + this.requestCount + " requests processed (hashCode=" + hashCode() + ").");
             closeFileWriter();
             this.initialized = false;
         }

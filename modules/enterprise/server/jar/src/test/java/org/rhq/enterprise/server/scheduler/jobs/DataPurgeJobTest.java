@@ -1,7 +1,10 @@
 package org.rhq.enterprise.server.scheduler.jobs;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -26,12 +29,21 @@ import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.event.Event;
+import org.rhq.core.domain.event.EventDefinition;
+import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.event.EventSource;
+import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
@@ -45,7 +57,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     private Resource newResource;
 
     @BeforeMethod
-    public void beforeMethod() throws Exception {
+    public void beforeMethod() throws Throwable {
         try {
             prepareScheduler();
             TestServerCommunicationsService agentContainer = prepareForTestAgents();
@@ -53,11 +65,12 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         } catch (Throwable t) {
             System.err.println("Cannot prepare test: " + t);
             t.printStackTrace();
+            throw t;
         }
     }
 
     @AfterMethod
-    public void afterMethod() throws Exception {
+    public void afterMethod() throws Throwable {
         try {
             deleteNewResource(newResource);
             unprepareForTestAgents();
@@ -65,20 +78,17 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         } catch (Throwable t) {
             System.err.println("Cannot unprepare test: " + t);
             t.printStackTrace();
+            throw t;
         }
     }
 
-    public void testPurge() throws Exception {
-
-        // TODO: add a bunch of data that is to be purged
-        // - availabilities
-        // - events
-        // - response times?
-
+    public void testPurge() throws Throwable {
+        // add a bunch of data that is to be purged
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
         try {
             try {
+                // add alerts
                 AlertDefinition ad = newResource.getAlertDefinitions().iterator().next();
                 for (long timestamp = 0; timestamp < 1000; timestamp++) {
                     Alert newAlert = createNewAlert(em, ad, timestamp);
@@ -88,18 +98,27 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 em.flush();
                 em.clear();
 
+                // add availabilities
                 for (long timestamp = 0; timestamp < 2000; timestamp += 2) {
                     Availability newAvail = createNewAvailability(em, newResource, timestamp, timestamp + 1);
+                    assert newAvail.getStartTime().getTime() == timestamp : "bad avail persisted:" + newAvail;
+                    assert newAvail.getEndTime().getTime() == (timestamp + 1) : "bad avail persisted:" + newAvail;
                     assert newAvail.getId() > 0 : "avail not persisted:" + newAvail;
                 }
                 em.flush();
                 em.clear();
 
+                // add events
+                createNewEvents(newResource, 0, 1000);
+
                 getTransactionManager().commit();
-            } catch (Exception e) {
+            } catch (Throwable t) {
                 getTransactionManager().rollback();
-                throw e;
+                throw t;
             }
+        } catch (Throwable t) {
+            System.err.println("!!!!! DataPurgeJobTest.testPurge failed: " + ThrowableUtil.getAllMessages(t));
+            throw t;
         } finally {
             em.close();
         }
@@ -165,6 +184,28 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         return;
     }
 
+    private void createNewEvents(Resource res, long timestamp, int count) {
+        EventDefinition ed = res.getResourceType().getEventDefinitions().iterator().next();
+        EventSource source = new EventSource("datapurgejobtest", ed, res);
+        Map<EventSource, Set<Event>> eventMap = new HashMap<EventSource, Set<Event>>();
+        Set<Event> events = new HashSet<Event>();
+        for (int i = 0; i < count; i++) {
+            events.add(new Event(ed.getName(), source.getLocation(), new Date(timestamp + i), EventSeverity.DEBUG,
+                "details"));
+        }
+        eventMap.put(source, events);
+
+        EventManagerLocal mgr = LookupUtil.getEventManager();
+        mgr.addEventData(eventMap);
+        PageList<EventComposite> persistedEvents = mgr.getEvents(LookupUtil.getSubjectManager().getOverlord(),
+            new int[] { res.getId() }, timestamp - 1, timestamp + count + 1, EventSeverity.DEBUG, -1, null, null,
+            new PageControl());
+        assert persistedEvents.getTotalSize() == count : "did not persist all events, only persisted "
+            + persistedEvents.getTotalSize();
+
+        return;
+    }
+
     private Availability createNewAvailability(EntityManager em, Resource res, long start, long end) {
         Availability a = new Availability(res, new Date(start), AvailabilityType.UP);
         if (end > 0) {
@@ -202,7 +243,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
                 em.persist(resourceType);
 
-                Agent agent = new Agent("testagent", "testaddress", 1, "", "testtoken");
+                Agent agent = new Agent("testagent" + now, "testaddress" + now, 1, "", "testtoken" + now);
                 em.persist(agent);
                 em.flush();
 
@@ -228,6 +269,10 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 EmailNotification an = new EmailNotification(ad, "foo@bar.com");
                 em.persist(an);
                 ad.addAlertNotification(an);
+
+                EventDefinition ed = new EventDefinition(resourceType, "DataPurgeJobTestEventDefinition");
+                em.persist(ed);
+                resourceType.addEventDefinition(ed);
             } catch (Exception e) {
                 System.out.println("CANNOT PREPARE TEST: " + e);
                 getTransactionManager().rollback();

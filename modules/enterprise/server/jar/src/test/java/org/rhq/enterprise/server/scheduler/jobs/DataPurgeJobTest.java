@@ -10,6 +10,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import javax.persistence.EntityManager;
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
 
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -92,6 +94,13 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     }
 
     public void testPurge() throws Throwable {
+
+        addDataToBePurged();
+        triggerDataPurgeJobNow();
+        makeSureDataIsPurged();
+    }
+
+    private void addDataToBePurged() throws NotSupportedException, SystemException, Throwable {
         // add a bunch of data that is to be purged
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
@@ -135,12 +144,12 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         } finally {
             em.close();
         }
+    }
 
-        triggerDataPurgeJobNow();
-
+    private void makeSureDataIsPurged() throws NotSupportedException, SystemException {
         // now that our data purge job is done, make sure none of our test data is left behind
         getTransactionManager().begin();
-        em = getEntityManager();
+        EntityManager em = getEntityManager();
         try {
             Resource res = em.find(Resource.class, newResource.getId());
 
@@ -158,16 +167,22 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             assert es.getEvents().size() == 0 : "didn't purge all events";
 
             // check calltime data
+            int calltimeScheduleId = 0;
+            for (MeasurementSchedule sched : res.getSchedules()) {
+                if (sched.getDefinition().getDataType() == DataType.CALLTIME) {
+                    calltimeScheduleId = sched.getId();
+                    break;
+                }
+            }
+            assert calltimeScheduleId > 0 : "why don't we have a calltime schedule?";
             PageList<CallTimeDataComposite> calltimeData = LookupUtil.getCallTimeDataManager()
-                .getCallTimeDataForResource(LookupUtil.getSubjectManager().getOverlord(),
-                    res.getSchedules().iterator().next().getId(), 0, Long.MAX_VALUE, new PageControl());
+                .getCallTimeDataForResource(LookupUtil.getSubjectManager().getOverlord(), calltimeScheduleId, 0,
+                    Long.MAX_VALUE, new PageControl());
             assert calltimeData.getTotalSize() == 0 : "didn't purge all calltime data";
         } finally {
             getTransactionManager().rollback();
             em.close();
         }
-
-        return;
     }
 
     private void triggerDataPurgeJobNow() throws Exception {
@@ -208,8 +223,16 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     }
 
     private void createNewCalltimeData(Resource res, long timestamp, int count) {
-        MeasurementSchedule schedule = res.getSchedules().iterator().next();
-        MeasurementScheduleRequest msr = new MeasurementScheduleRequest(schedule);
+        MeasurementSchedule calltimeSchedule = null;
+        for (MeasurementSchedule sched : res.getSchedules()) {
+            if (sched.getDefinition().getDataType() == DataType.CALLTIME) {
+                calltimeSchedule = sched;
+                break;
+            }
+        }
+        assert calltimeSchedule != null : "why don't we have a calltime schedule?";
+
+        MeasurementScheduleRequest msr = new MeasurementScheduleRequest(calltimeSchedule);
 
         Set<CallTimeData> dataset = new HashSet<CallTimeData>();
         CallTimeData data = new CallTimeData(msr);
@@ -226,7 +249,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         mgr.addCallTimeData(dataset);
 
         PageList<CallTimeDataComposite> persistedData = mgr.getCallTimeDataForResource(LookupUtil.getSubjectManager()
-            .getOverlord(), schedule.getId(), timestamp - 1, timestamp + count + 1, new PageControl());
+            .getOverlord(), calltimeSchedule.getId(), timestamp - 1, timestamp + count + 1, new PageControl());
         // just a few sanity checks
         assert persistedData.getTotalSize() == count : "did not persist all calltime data, only persisted: "
             + persistedData.getTotalSize();
@@ -324,6 +347,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 em.persist(ed);
                 resourceType.addEventDefinition(ed);
 
+                // add calltime schedule
                 MeasurementDefinition def = new MeasurementDefinition(resourceType, "DataPurgeJobTestCalltimeMeasDef");
                 def.setCategory(MeasurementCategory.PERFORMANCE);
                 def.setDataType(DataType.CALLTIME);
@@ -334,6 +358,20 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 def.setDisplayType(DisplayType.SUMMARY);
                 em.persist(def);
                 MeasurementSchedule schedule = new MeasurementSchedule(def, resource);
+                em.persist(schedule);
+                def.addSchedule(schedule);
+                resource.addSchedule(schedule);
+
+                // add trait schedule
+                def = new MeasurementDefinition(resourceType, "DataPurgeJobTestTraitMeasDef");
+                def.setCategory(MeasurementCategory.PERFORMANCE);
+                def.setDataType(DataType.TRAIT);
+                def.setDefaultInterval(12345);
+                def.setDefaultOn(true);
+                def.setDisplayName(def.getName());
+                def.setDisplayType(DisplayType.SUMMARY);
+                em.persist(def);
+                schedule = new MeasurementSchedule(def, resource);
                 em.persist(schedule);
                 def.addSchedule(schedule);
                 resource.addSchedule(schedule);

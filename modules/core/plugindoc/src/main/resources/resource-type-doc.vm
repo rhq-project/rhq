@@ -61,11 +61,15 @@ h2. Metrics
 #if ( ${resourceType.metricDefinitions.isEmpty()} )
 _none_
 #else
-|| Name || Description ||
+|| Name || Type || Description || Internal Name ||
 #foreach( ${metricDefinition} in ${resourceType.metricDefinitions} )
-| ${metricDefinition.displayName} | {noformat:nopanel=true}$!{metricDefinition.description}{noformat} |
+| ${metricDefinition.displayName} | ${metricDefinition.dataType.toString().toLowerCase()} | $!{metricDefinition.description} | ${metricDefinition.name} |
 #end
 #end
+
+{note}
+The Internal Name is what must be used to reference Traits in Dynamic Group Definition expressions.
+{note}
 
 
 h2. Configuration Properties
@@ -80,7 +84,7 @@ _none_
 #else
 || Name || Description ||
 #foreach( ${operationDefinition} in ${resourceType.operationDefinitions} )
-| ${operationDefinition.displayName} | {noformat:nopanel=true}$!{operationDefinition.description}{noformat} |
+| ${operationDefinition.displayName} | $!{operationDefinition.description} |
 #end
 #end
 
@@ -92,6 +96,6 @@ _none_
 #else
 || Name || Category || Description ||
 #foreach( ${packageType} in ${resourceType.packageTypes} )
-| ${packageType.displayName} | ${packageType.category} | {noformat:nopanel=true}$!{artifactType.description}{noformat} |
+| ${packageType.displayName} | ${packageType.category} | $!{artifactType.description} |
 #end
 #end

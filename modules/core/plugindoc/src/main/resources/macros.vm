@@ -7,9 +7,12 @@ ${resourceType.name}#if ( !${resourceType.name.endsWith("${resourceType.category
 #if ( !${config} )
 _none_
 #else
-|| Name || Description || Required ||
+|| Name || Description || Required || Internal Name ||
 #foreach( ${propertyDefinition} in ${config.propertyDefinitions} )
-| ${propertyDefinition.displayName} | $!{propertyDefinition.description} | #if ( ${propertyDefinition.required} ) yes #else no #end |
+| ${propertyDefinition.displayName} | $!{propertyDefinition.description} | #if ( ${propertyDefinition.required} ) yes #else no #end | ${propertyDefinition.name} |
 #end
+{note}
+The Internal Name is what must be used to reference Configuration Properties in Dynamic Group Definition expressions.
+{note}
 #end
 #end

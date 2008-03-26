@@ -125,6 +125,14 @@
          <version>1.1.4</version>
       </dependency>
 
+      <!-- used by a test JSP -->
+      <dependency>
+         <groupId>hibernate</groupId>
+         <artifactId>hibernate3</artifactId>
+         <version>3.2.r14201-1</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
       <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
       <dependency>
          <groupId>hibernate-annotations</groupId>

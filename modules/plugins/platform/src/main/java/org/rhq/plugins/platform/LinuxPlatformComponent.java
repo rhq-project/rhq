@@ -74,14 +74,16 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
     @Override
     public void start(ResourceContext context) {
         super.start(context);
-        RpmPackageDiscoveryDelegate.setSystemInfo(this.resourceContext.getSystemInformation());
-        RpmPackageDiscoveryDelegate.checkExecutables();
-        /*
-         *    DebPackageDiscoveryDelegate.setSystemInfo(this.resourceContext.getSystemInformation());
-         * DebPackageDiscoveryDelegate.checkExecutables();
-         */
 
-        startWithContentContext(context.getContentContext());
+        // TODO: temporarily disabling RPM content stuff
+
+        //RpmPackageDiscoveryDelegate.setSystemInfo(this.resourceContext.getSystemInformation());
+        //RpmPackageDiscoveryDelegate.checkExecutables();
+
+        //DebPackageDiscoveryDelegate.setSystemInfo(this.resourceContext.getSystemInformation());
+        //DebPackageDiscoveryDelegate.checkExecutables();
+
+        //startWithContentContext(context.getContentContext());
     }
 
     @Override

@@ -147,6 +147,7 @@
 
        <event name="Event Log" description="Windows event log" displayName="Event Log"/>
 
+<!-- temporarily disable content
        <content name="InstalledSoftware" displayName="Installed Software" category="deployable" description="Installed Windows Software">
           <configuration>
               <c:simple-property name="Publisher"/>
@@ -159,6 +160,7 @@
               <c:simple-property name="EstimatedSize" units="kilobytes"/>
          </configuration>
       </content>
+-->
    </platform>
 
    <platform name="Linux"
@@ -214,6 +216,7 @@
               displayType="summary"
               defaultOn="true" />
 
+<!-- temporarily disable content
       <content name="rpm" displayName="RPM File" category="deployable" description="Red Hat installable package">
          <configuration>
             <c:simple-property name="version" displayName="Version"/>
@@ -228,7 +231,8 @@
             <c:simple-property name="Architecture"/>
          </configuration>
       </content>
-      
+-->
+
    </platform>
    
    <platform name="Solaris"

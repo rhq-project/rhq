@@ -421,7 +421,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         // Perform the create
         ContentFacet contentFacet = findContentFacet(resourceId);
         DeployPackagesResponse response = contentFacet.deployPackages(packagesToDeploy, this);
-        updateVersionForResourceAndItsDescendants(resourceId, response);
+        
         return response;
     }
 
@@ -626,24 +626,6 @@ public class ContentManager extends AgentService implements ContainerService, Co
         }
 
         return null;
-    }
-
-    private void updateVersionForResourceAndItsDescendants(int resourceId, DeployPackagesResponse response) throws PluginContainerException {
-        if (response.getOverallRequestResult() == ContentResponseResult.SUCCESS) {
-            ResourceType resourceType = ComponentUtil.getResourceType(resourceId);
-            log.info("Updating versions for " + resourceType.getName() + " Resource with id " + resourceId + " and its descendants...");
-            InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-            if (isPlatformOrTopLevelServer(resourceType)) {
-                inventoryManager.executeServerScanImmediately();
-            }
-            // Always execute a service scan...
-            inventoryManager.executeServiceScanImmediately();
-        }
-    }
-
-    private boolean isPlatformOrTopLevelServer(ResourceType resourceType) {
-        return (resourceType.getCategory() == ResourceCategory.SERVER && resourceType.getParentResourceTypes().isEmpty()) ||
-             resourceType.getCategory() == ResourceCategory.PLATFORM;
     }
 
     // Inner Classes  --------------------------------------------

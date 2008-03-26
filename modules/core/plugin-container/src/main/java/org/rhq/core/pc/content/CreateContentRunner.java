@@ -23,11 +23,17 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.server.content.ContentServerService;
+import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackagesRequest;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.pc.util.ComponentUtil;
+import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.pc.PluginContainer;
 
 /**
  * Runnable to allow threaded creation of a content.
@@ -104,5 +110,41 @@ public class CreateContentRunner implements Runnable {
         if (serverService != null) {
             serverService.completeDeployPackageRequest(response);
         }
+
+        // Trigger a resource discovery to pick up on any potential changes to the resource that occurred by
+        // this package deployment
+        if (response.getOverallRequestResult() == ContentResponseResult.SUCCESS) {
+
+            try {
+                ResourceType resourceType = ComponentUtil.getResourceType(request.getResourceId());
+                InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+
+                if (executeServerScan(resourceType)) {
+                    inventoryManager.executeServerScanImmediately();
+                }
+
+                // Always execute a service scan
+                inventoryManager.executeServiceScanImmediately();
+            } catch (Throwable throwable) {
+                log.warn("Error occurred on resource discovery request" + throwable);
+            }
+        }
+
     }
+
+    /**
+     * Returns whether or not the given resource type requires a server scan to pick up potential changes.
+     *
+     * @param resourceType type of resource that packages were deployed against
+     * @return <code>true</code> if the resource type refers to a resource that is updated in a server scan;
+     *         <code>false</code> otherwise
+     */
+    private boolean executeServerScan(ResourceType resourceType) {
+        boolean execute =
+            resourceType.getCategory() == ResourceCategory.PLATFORM ||
+            (resourceType.getCategory() == ResourceCategory.SERVER && resourceType.getParentResourceTypes().isEmpty());
+
+        return execute;
+    }
+    
 }

@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.scheduler.jobs;
 
+import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +26,8 @@ import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -84,6 +88,13 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 em.flush();
                 em.clear();
 
+                for (long timestamp = 0; timestamp < 2000; timestamp += 2) {
+                    Availability newAvail = createNewAvailability(em, newResource, timestamp, timestamp + 1);
+                    assert newAvail.getId() > 0 : "avail not persisted:" + newAvail;
+                }
+                em.flush();
+                em.clear();
+
                 getTransactionManager().commit();
             } catch (Exception e) {
                 getTransactionManager().rollback();
@@ -95,14 +106,20 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
         triggerDataPurgeJobNow();
 
-        // TODO: now that our data purge job is done, make sure none of our test data is left behind
+        // now that our data purge job is done, make sure none of our test data is left behind
         getTransactionManager().begin();
         em = getEntityManager();
         try {
             Resource res = em.find(Resource.class, newResource.getId());
+
+            // check alerts
             Set<AlertDefinition> alertDefinitions = res.getAlertDefinitions();
             assert alertDefinitions.size() == 1 : "why are we missing our alert definitions?: " + alertDefinitions;
             assert alertDefinitions.iterator().next().getAlerts().size() == 0 : "didn't purge alerts";
+
+            // check availabilities
+            List<Availability> avails = res.getAvailability();
+            assert avails.size() == 0 : "didn't purge availabilities";
         } finally {
             getTransactionManager().rollback();
             em.close();
@@ -146,6 +163,15 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         }
 
         return;
+    }
+
+    private Availability createNewAvailability(EntityManager em, Resource res, long start, long end) {
+        Availability a = new Availability(res, new Date(start), AvailabilityType.UP);
+        if (end > 0) {
+            a.setEndTime(new Date(end));
+        }
+        em.persist(a);
+        return a;
     }
 
     private Alert createNewAlert(EntityManager em, AlertDefinition ad, long timestamp) {

@@ -1,5 +1,6 @@
 package org.rhq.enterprise.server.scheduler.jobs;
 
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -66,21 +67,55 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     public void testPurge() throws Exception {
 
         // TODO: add a bunch of data that is to be purged
-        // - alerts
         // - availabilities
         // - events
         // - response times?
 
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+        try {
+            try {
+                AlertDefinition ad = newResource.getAlertDefinitions().iterator().next();
+                for (long timestamp = 0; timestamp < 1000; timestamp++) {
+                    Alert newAlert = createNewAlert(em, ad, timestamp);
+                    assert newAlert.getCtime() == timestamp : "bad alert persisted:" + newAlert;
+                    assert newAlert.getId() > 0 : "alert not persisted:" + newAlert;
+                }
+                em.flush();
+                em.clear();
+
+                getTransactionManager().commit();
+            } catch (Exception e) {
+                getTransactionManager().rollback();
+                throw e;
+            }
+        } finally {
+            em.close();
+        }
+
         triggerDataPurgeJobNow();
 
         // TODO: now that our data purge job is done, make sure none of our test data is left behind
+        getTransactionManager().begin();
+        em = getEntityManager();
+        try {
+            Resource res = em.find(Resource.class, newResource.getId());
+            Set<AlertDefinition> alertDefinitions = res.getAlertDefinitions();
+            assert alertDefinitions.size() == 1 : "why are we missing our alert definitions?: " + alertDefinitions;
+            assert alertDefinitions.iterator().next().getAlerts().size() == 0 : "didn't purge alerts";
+        } finally {
+            getTransactionManager().rollback();
+            em.close();
+        }
+
+        return;
     }
 
     private void triggerDataPurgeJobNow() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
 
         SchedulerLocal schedulerBean = LookupUtil.getSchedulerBean();
-        schedulerBean.scheduleSimpleCronJob(DataPurgeJob.class, true, false, "0 0 * * * ?");
+        schedulerBean.scheduleSimpleCronJob(DataPurgeJob.class, true, false, "0 0 0 1 1 ? 2099");
 
         schedulerBean.addGlobalJobListener(new JobListener() {
             public String getName() {
@@ -111,6 +146,21 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         }
 
         return;
+    }
+
+    private Alert createNewAlert(EntityManager em, AlertDefinition ad, long timestamp) {
+        AlertCondition ac = ad.getConditions().iterator().next();
+        AlertConditionLog acl = new AlertConditionLog(ac, timestamp);
+        em.persist(acl);
+
+        Alert a = new Alert(ad, timestamp);
+        em.persist(a);
+
+        AlertNotificationLog anl = new AlertNotificationLog(ad);
+        anl.setAlert(a);
+        em.persist(anl);
+
+        return a;
     }
 
     private Resource createNewResource() throws Exception {
@@ -147,17 +197,11 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 AlertCondition ac = new AlertCondition(ad, AlertConditionCategory.AVAILABILITY);
                 ac.setComparator("==");
                 em.persist(ac);
+                ad.addCondition(ac);
 
                 EmailNotification an = new EmailNotification(ad, "foo@bar.com");
                 em.persist(an);
-
-                AlertConditionLog acl = new AlertConditionLog(ac, now);
-                em.persist(acl);
-
-                Alert a = new Alert(ad, now);
-                AlertNotificationLog anl = new AlertNotificationLog(ad);
-                anl.setAlert(a);
-                em.persist(a);
+                ad.addAlertNotification(an);
             } catch (Exception e) {
                 System.out.println("CANNOT PREPARE TEST: " + e);
                 getTransactionManager().rollback();

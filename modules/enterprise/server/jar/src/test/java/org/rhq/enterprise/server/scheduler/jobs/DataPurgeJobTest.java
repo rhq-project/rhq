@@ -41,6 +41,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementCategory;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -55,6 +56,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
@@ -146,6 +148,9 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 // add calltime/response times
                 createNewCalltimeData(newResource, 0, 1000);
 
+                // create trait data
+                createNewTraitData(newResource, 1000);
+
                 getTransactionManager().commit();
             } catch (Throwable t) {
                 getTransactionManager().rollback();
@@ -193,6 +198,21 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 .getCallTimeDataForResource(LookupUtil.getSubjectManager().getOverlord(), calltimeScheduleId, 0,
                     Long.MAX_VALUE, new PageControl());
             assert calltimeData.getTotalSize() == 0 : "didn't purge all calltime data";
+
+            // check trait data (purge job does NOT purge anything, so traits should still be there)
+            MeasurementSchedule traitSchedule = null;
+            for (MeasurementSchedule sched : res.getSchedules()) {
+                if (sched.getDefinition().getDataType() == DataType.TRAIT) {
+                    traitSchedule = sched;
+                    break;
+                }
+            }
+            assert traitSchedule != null : "why don't we have a trait schedule?";
+
+            List<MeasurementDataTrait> persistedTraits = LookupUtil.getMeasurementDataManager()
+                .getAllTraitDataForResourceAndDefinition(res.getId(), traitSchedule.getDefinition().getId());
+            assert persistedTraits.size() != 0 : "why did we purge trait data";
+
         } finally {
             getTransactionManager().rollback();
             em.close();
@@ -234,6 +254,30 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         }
 
         return;
+    }
+
+    private void createNewTraitData(Resource res, int count) {
+        MeasurementSchedule traitSchedule = null;
+        for (MeasurementSchedule sched : res.getSchedules()) {
+            if (sched.getDefinition().getDataType() == DataType.TRAIT) {
+                traitSchedule = sched;
+                break;
+            }
+        }
+        assert traitSchedule != null : "why don't we have a trait schedule?";
+
+        MeasurementScheduleRequest msr = new MeasurementScheduleRequest(traitSchedule);
+
+        Set<MeasurementDataTrait> dataset = new HashSet<MeasurementDataTrait>();
+        for (int i = 0; i < count; i++) {
+            dataset.add(new MeasurementDataTrait(msr, "DataPurgeJobTestTrait" + i));
+        }
+        MeasurementDataManagerLocal mgr = LookupUtil.getMeasurementDataManager();
+        mgr.addTraitData(dataset); // this really just added a single trait - its value just changed "count" times
+
+        List<MeasurementDataTrait> persistedTraits = mgr.getAllTraitDataForResourceAndDefinition(res.getId(),
+            traitSchedule.getDefinition().getId());
+        assert persistedTraits.size() == 1 : "did not persist trait data:" + persistedTraits;
     }
 
     private void createNewCalltimeData(Resource res, long timestamp, int count) {

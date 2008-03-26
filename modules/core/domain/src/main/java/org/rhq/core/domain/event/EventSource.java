@@ -79,7 +79,6 @@ public class EventSource implements Externalizable {
     @Column(name = "LOCATION", length = 2000, nullable = false)
     private String location;
 
-    @SuppressWarnings( { "UnusedDeclaration" })
     @OneToMany(mappedBy = "source", cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
     private Set<Event> events = new HashSet<Event>();
 
@@ -122,6 +121,10 @@ public class EventSource implements Externalizable {
     @NotNull
     public String getLocation() {
         return this.location;
+    }
+
+    public Set<Event> getEvents() {
+        return events;
     }
 
     @Override

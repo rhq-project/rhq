@@ -139,6 +139,10 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             // check availabilities
             List<Availability> avails = res.getAvailability();
             assert avails.size() == 0 : "didn't purge availabilities";
+
+            // check events
+            EventSource es = res.getEventSources().iterator().next();
+            assert es.getEvents().size() == 0 : "didn't purge all events";
         } finally {
             getTransactionManager().rollback();
             em.close();

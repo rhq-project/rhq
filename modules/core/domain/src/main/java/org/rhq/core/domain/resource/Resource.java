@@ -1152,6 +1152,10 @@ public class Resource implements Comparable<Resource>, Externalizable {
         this.installedPackageHistory = installedPackageHistory;
     }
 
+    public Set<EventSource> getEventSources() {
+        return eventSources;
+    }
+
     public ProductVersion getProductVersion() {
         return productVersion;
     }
@@ -1192,8 +1196,8 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public String toString() {
         String type = (resourceType != null) ? resourceType.getName() : "- type not set -";
 
-        return "Resource[id=" + this.id + ", type=" + type + ", key=" + this.resourceKey + ", name=" + this.name +
-                ((this.version != null && !this.version.equals("")) ? ", version=" + this.version : "") + "]";
+        return "Resource[id=" + this.id + ", type=" + type + ", key=" + this.resourceKey + ", name=" + this.name
+            + ((this.version != null && !this.version.equals("")) ? ", version=" + this.version : "") + "]";
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

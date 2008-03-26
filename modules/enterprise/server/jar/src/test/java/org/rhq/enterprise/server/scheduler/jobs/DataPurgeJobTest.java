@@ -36,6 +36,14 @@ import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementCategory;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.calltime.CallTimeData;
+import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -44,6 +52,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.event.EventManagerLocal;
+import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
@@ -111,6 +120,9 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 // add events
                 createNewEvents(newResource, 0, 1000);
 
+                // add calltime/response times
+                createNewCalltimeData(newResource, 0, 1000);
+
                 getTransactionManager().commit();
             } catch (Throwable t) {
                 getTransactionManager().rollback();
@@ -118,6 +130,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             }
         } catch (Throwable t) {
             System.err.println("!!!!! DataPurgeJobTest.testPurge failed: " + ThrowableUtil.getAllMessages(t));
+            t.printStackTrace();
             throw t;
         } finally {
             em.close();
@@ -143,6 +156,12 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             // check events
             EventSource es = res.getEventSources().iterator().next();
             assert es.getEvents().size() == 0 : "didn't purge all events";
+
+            // check calltime data
+            PageList<CallTimeDataComposite> calltimeData = LookupUtil.getCallTimeDataManager()
+                .getCallTimeDataForResource(LookupUtil.getSubjectManager().getOverlord(),
+                    res.getSchedules().iterator().next().getId(), 0, Long.MAX_VALUE, new PageControl());
+            assert calltimeData.getTotalSize() == 0 : "didn't purge all calltime data";
         } finally {
             getTransactionManager().rollback();
             em.close();
@@ -188,6 +207,33 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         return;
     }
 
+    private void createNewCalltimeData(Resource res, long timestamp, int count) {
+        MeasurementSchedule schedule = res.getSchedules().iterator().next();
+        MeasurementScheduleRequest msr = new MeasurementScheduleRequest(schedule);
+
+        Set<CallTimeData> dataset = new HashSet<CallTimeData>();
+        CallTimeData data = new CallTimeData(msr);
+
+        for (int i = 0; i < count; i++) {
+            for (int j = 0; j < count; j++) {
+                data.addCallData("DataPurgeJobTestCalltimeData" + j, new Date(timestamp), 777);
+            }
+        }
+
+        dataset.add(data);
+
+        CallTimeDataManagerLocal mgr = LookupUtil.getCallTimeDataManager();
+        mgr.addCallTimeData(dataset);
+
+        PageList<CallTimeDataComposite> persistedData = mgr.getCallTimeDataForResource(LookupUtil.getSubjectManager()
+            .getOverlord(), schedule.getId(), timestamp - 1, timestamp + count + 1, new PageControl());
+        // just a few sanity checks
+        assert persistedData.getTotalSize() == count : "did not persist all calltime data, only persisted: "
+            + persistedData.getTotalSize();
+        assert persistedData.get(0).getCount() == count : "did not persist all endpoint calltime data, only persisted: "
+            + persistedData.get(0).getCount();
+    }
+
     private void createNewEvents(Resource res, long timestamp, int count) {
         EventDefinition ed = res.getResourceType().getEventDefinitions().iterator().next();
         EventSource source = new EventSource("datapurgejobtest", ed, res);
@@ -204,7 +250,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         PageList<EventComposite> persistedEvents = mgr.getEvents(LookupUtil.getSubjectManager().getOverlord(),
             new int[] { res.getId() }, timestamp - 1, timestamp + count + 1, EventSeverity.DEBUG, -1, null, null,
             new PageControl());
-        assert persistedEvents.getTotalSize() == count : "did not persist all events, only persisted "
+        assert persistedEvents.getTotalSize() == count : "did not persist all events, only persisted: "
             + persistedEvents.getTotalSize();
 
         return;
@@ -277,6 +323,21 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 EventDefinition ed = new EventDefinition(resourceType, "DataPurgeJobTestEventDefinition");
                 em.persist(ed);
                 resourceType.addEventDefinition(ed);
+
+                MeasurementDefinition def = new MeasurementDefinition(resourceType, "DataPurgeJobTestCalltimeMeasDef");
+                def.setCategory(MeasurementCategory.PERFORMANCE);
+                def.setDataType(DataType.CALLTIME);
+                def.setDefaultInterval(12345);
+                def.setDefaultOn(true);
+                def.setDestinationType("DataPurgeJobTestDestType");
+                def.setDisplayName(def.getName());
+                def.setDisplayType(DisplayType.SUMMARY);
+                em.persist(def);
+                MeasurementSchedule schedule = new MeasurementSchedule(def, resource);
+                em.persist(schedule);
+                def.addSchedule(schedule);
+                resource.addSchedule(schedule);
+
             } catch (Exception e) {
                 System.out.println("CANNOT PREPARE TEST: " + e);
                 getTransactionManager().rollback();

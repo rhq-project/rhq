@@ -53,7 +53,7 @@ public abstract class Constraint implements Serializable {
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ")
     @Id
-    private long id;
+    private int id;
 
     @Column(name = "DETAILS", nullable = false)
     protected String details;
@@ -70,11 +70,11 @@ public abstract class Constraint implements Serializable {
         this.propertyDefinitionSimple = propertyDefinitionSimple;
     }
 
-    public long getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(int id) {
         this.id = id;
     }
 

@@ -17,7 +17,7 @@
 
    <scm>
       <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/JBossON_2_0_0_Alpha2</connection>
-      <developerConnection>scm:svn:http://jshaughn@svn.rhq-project.org/repos/rhq/tags/JBossON_2_0_0_Alpha2</developerConnection>
+      <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/tags/JBossON_2_0_0_Alpha2</developerConnection>
    </scm>
 
    <properties>

@@ -17,7 +17,7 @@
 
    <scm>
       <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/postgres/</connection>
-      <developerConnection>scm:svn:http://jshaughn@svn.rhq-project.org/repos/rhq/trunk/modules/plugins/postgres/</developerConnection>
+      <developerConnection>scm:svn:http://${maven.username}@svn.rhq-project.org/repos/rhq/trunk/modules/plugins/postgres/</developerConnection>
    </scm>
 
    <properties>

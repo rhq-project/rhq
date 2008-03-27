@@ -175,7 +175,9 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             // check alerts
             Set<AlertDefinition> alertDefinitions = res.getAlertDefinitions();
             assert alertDefinitions.size() == 1 : "why are we missing our alert definitions?: " + alertDefinitions;
-            assert alertDefinitions.iterator().next().getAlerts().size() == 0 : "didn't purge alerts";
+            AlertDefinition ad = alertDefinitions.iterator().next();
+            assert ad.getAlerts().size() == 0 : "didn't purge alerts";
+            //assert ad.getConditions().iterator().next().getConditionLogs().size() == 0 : "didn't purge condition logs";
 
             // check availabilities
             List<Availability> avails = res.getAvailability();

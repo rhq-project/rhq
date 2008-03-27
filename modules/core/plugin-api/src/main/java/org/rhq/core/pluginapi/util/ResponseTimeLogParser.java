@@ -51,9 +51,9 @@ public class ResponseTimeLogParser {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    // TODO: Do we even need to support a time multiplier?
-    // Find out if durations in Apache RT logs are in something other than milliseconds.
-    // (ips, 11/29/07)
+    /**
+     * The parser will multiply by this factor to convert the duration from the log into milliseconds.
+     */
     private double timeMultiplier;
     private long startingOffset;
     private File logFile;
@@ -70,12 +70,13 @@ public class ResponseTimeLogParser {
     }
 
     /**
-     * Parse the logfile, starting at the offset corresponding to the file's size after the last time this method was
+     * Parse the log file, starting at the offset corresponding to the file's size after the last time this method was
      * called. Immediately after parsing, the file will be truncated, permissions permitting. If the log file does not
      * exist, a warning will be logged and the method will return. The parsed response-time data will be added to the
      * passed-in CallTimeData object.
      *
      * @param callTimeData the parsed response-time data will be added to this object
+     * @throws IOException if an error occurs reading the log file
      */
     public synchronized void parseLog(CallTimeData callTimeData) throws IOException {
         log.debug("Parsing response-time log file " + this.logFile + "...");
@@ -170,9 +171,11 @@ public class ResponseTimeLogParser {
     /**
      * Parses a line from a response time log and returns a LogEntry.
      *
-     * @param  line the line to be parsed
+     * @param line the line to be parsed
      *
      * @return a LogEntry representing the line
+     *
+     * @throws Exception if parsing of the line fails
      */
     @NotNull
     protected LogEntry parseLine(String line) throws Exception {

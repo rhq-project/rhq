@@ -58,6 +58,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public static final String RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP;
 
     private static final String RESPONSE_TIME_METRIC = "ResponseTime";
+    private static final double RESPONSE_TIME_LOG_TIME_MULTIPLIER = 0.1;
 
     private ResourceContext<ApacheServerComponent> resourceContext;
     private URL url;
@@ -84,7 +85,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         ResponseTimeConfiguration responseTimeConfig = new ResponseTimeConfiguration(pluginConfig);
         File logFile = responseTimeConfig.getLogFile();
         if (logFile != null) {
-            this.logParser = new ResponseTimeLogParser(logFile);
+            this.logParser = new ResponseTimeLogParser(logFile, RESPONSE_TIME_LOG_TIME_MULTIPLIER);
             this.logParser.setExcludes(responseTimeConfig.getExcludes());
             this.logParser.setTransforms(responseTimeConfig.getTransforms());
         }

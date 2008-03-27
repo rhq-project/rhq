@@ -65,6 +65,12 @@
          <version>1.5</version>
       </dependency>
 
+      <dependency>
+         <groupId>org.codehaus.swizzle</groupId>
+         <artifactId>swizzle-confluence</artifactId>
+         <version>1.2.Alpha1</version>
+      </dependency>
+      
    </dependencies>
 
 </project>

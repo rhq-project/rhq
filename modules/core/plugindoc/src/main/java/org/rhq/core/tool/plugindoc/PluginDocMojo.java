@@ -22,8 +22,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Set;
+import java.util.HashMap;
+
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -38,20 +42,25 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.swizzle.confluence.Confluence;
+import org.codehaus.swizzle.confluence.Page;
+import org.codehaus.swizzle.confluence.SwizzleException;
+
 import org.rhq.core.clientapi.agent.metadata.InvalidPluginDescriptorException;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * Generates Confluence-Wiki-format documentation for a RHQ plugin based on the plugin's descriptor (i.e.
- * rhq-plugin.xml). Invoke from a RHQ plugin module directory as follows: <code>mvn org.rhq:rhq-core-plugindoc:plugindoc
- * </code>
+ * rhq-plugin.xml). Invoke from a RHQ plugin module directory as follows:
+ * <code>mvn org.rhq:rhq-core-plugindoc:plugindoc</code>
  *
  * @author                       Ian Springer
  * @goal                         plugindoc
  * @requiresProject
  * @requiresDependencyResolution
  */
+@SuppressWarnings({"UnusedDeclaration"})
 public class PluginDocMojo extends AbstractMojo {
     private static final String PLUGIN_DESCRIPTOR_PATH = "src/main/resources/META-INF/rhq-plugin.xml";
     private static final String OUTPUT_DIR_PATH = "target/plugindoc";
@@ -69,6 +78,30 @@ public class PluginDocMojo extends AbstractMojo {
      */
     @SuppressWarnings( { "UnusedDeclaration" })
     private MavenProject project;
+
+    /**
+     * The main Confluence URL (e.g. "http://support.rhq-project.org/").
+     *
+     * @parameter expression="${confluenceUrl}"
+     */
+    private String confluenceUrl;
+
+    /**
+     * The Confluence space (e.g. "RHQ").
+     *
+     * @parameter expression="${confluenceSpace}"
+     */
+    private String confluenceSpace;
+
+    /**
+     * @parameter expression="${confluenceUserName}"
+     */
+    private String confluenceUserName;
+
+    /**
+     * @parameter expression="${confluencePassword}"
+     */
+    private String confluencePassword;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
         File pluginXmlFile = new File(this.project.getBasedir(), PLUGIN_DESCRIPTOR_PATH);
@@ -90,10 +123,13 @@ public class PluginDocMojo extends AbstractMojo {
         File outputDir = new File(this.project.getBasedir(), OUTPUT_DIR_PATH);
         outputDir.mkdirs();
         for (ResourceType resourceType : resourceTypes) {
-            log.info("Generating plugin doc for '" + resourceType.getName() + "' resource type...");
+            log.info("Generating plugin doc for '" + resourceType.getName() + "' Resource type...");
             templateProcessor.getContext().put("resourceType", resourceType);
             File outputFile = new File(outputDir, resourceType.getName() + ".wiki");
             templateProcessor.processTemplate(outputFile);
+            if (this.confluenceUrl != null) {
+                publishPage(outputFile, resourceType);
+            }
         }
     }
 
@@ -143,5 +179,51 @@ public class PluginDocMojo extends AbstractMojo {
                 }
             }
         }
+    }
+
+    private void publishPage(File contentFile, ResourceType resourceType) throws MojoExecutionException {
+        String endpoint = this.confluenceUrl + "/rpc/xmlrpc";
+        String title = getPageTitle(resourceType);
+        try {
+            Confluence confluence = new Confluence(endpoint);
+            confluence.login(this.confluenceUserName, this.confluencePassword);
+            Page page;
+            try {
+                page = confluence.getPage(this.confluenceSpace, title);
+            }
+            catch (SwizzleException e) {
+                page = null;
+            }
+            if (page == null) {
+                page = new Page(new HashMap());
+                page.setSpace(this.confluenceSpace);
+                page.setTitle(title);
+            }
+            page.setContent(getContentAsString(contentFile));
+            confluence.storePage(page);
+            confluence.logout();
+        }
+        catch (Exception e) {
+            throw new MojoExecutionException("Failed to publish plugin doc page to Confluence.", e);
+        }
+    }
+
+    private static String getPageTitle(ResourceType resourceType) {
+        String title = resourceType.getName();
+        if (!resourceType.getName().endsWith(resourceType.getCategory().toString())) {
+           title += " " + resourceType.getCategory();
+        }
+        return title;
+    }
+
+    private static String getContentAsString(File contentFile) throws IOException {
+        StringBuilder content = new StringBuilder();
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(contentFile)));
+        String line;
+        while((line = bufferedReader.readLine()) != null) {
+            content.append(line).append("\n");
+        }
+        bufferedReader.close();
+        return content.toString();
     }
 }

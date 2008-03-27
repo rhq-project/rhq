@@ -64,6 +64,7 @@ import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -455,6 +456,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         // bulk delete: measurement baseline, must come before MeasurementSchedule
         q = entityManager.createNamedQuery(MeasurementBaseline.QUERY_DELETE_BY_RESOURCES);
+        q.setParameter("resources", resources);
+        q.executeUpdate();
+
+        // bulk delete: measurement traits, must come before MeasurementSchedule 
+        q = entityManager.createNamedQuery(MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 

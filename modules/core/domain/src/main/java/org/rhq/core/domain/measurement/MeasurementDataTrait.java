@@ -47,7 +47,8 @@ import javax.persistence.Table;
         + "   WHERE x.id.scheduleId = mdt.id.scheduleId" + " ) "),
     @NamedQuery(name = MeasurementDataTrait.FIND_ALL_FOR_RESOURCE_AND_DEFINITION, query = "SELECT trait, d.displayName "
         + "FROM MeasurementDataTrait trait JOIN trait.schedule s JOIN s.definition d JOIN s.resource r "
-        + " WHERE r.id = :resourceId " + "  AND d.id = :definitionId " + "ORDER BY trait.id.timestamp DESC ") })
+        + " WHERE r.id = :resourceId " + "  AND d.id = :definitionId " + "ORDER BY trait.id.timestamp DESC "),
+    @NamedQuery(name = MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES, query = "DELETE MeasurementDataTrait t WHERE t.schedule IN ( SELECT ms FROM MeasurementSchedule ms WHERE ms.resource IN ( :resources ) )") })
 @Table(name = "RHQ_MEASUREMENT_DATA_TRAIT")
 public class MeasurementDataTrait extends MeasurementData {
     /**
@@ -70,6 +71,8 @@ public class MeasurementDataTrait extends MeasurementData {
      * is second parameter
      */
     public static final String FIND_ALL_FOR_RESOURCE_AND_DEFINITION = "MeasurementDataTrait.FIND_ALL_FOR_RESOURCE_AND_DEFINITION";
+
+    public static final String QUERY_DELETE_BY_RESOURCES = "MeasurementDataTrait.deleteByResources";
 
     private static final long serialVersionUID = 1L;
 

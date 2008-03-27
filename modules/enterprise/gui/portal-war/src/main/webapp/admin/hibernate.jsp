@@ -19,6 +19,7 @@
 <%@ page import="java.util.*" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
+<%@ page import="org.hibernate.EmptyInterceptor" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
@@ -51,6 +52,7 @@
     long executionTime = 0;
     String error = null;
     QueryTranslator qt = null;
+    final List<String> executedSQL = new ArrayList<String>();
     if (hql != null) {
 
         InitialContext ic = new InitialContext();
@@ -58,7 +60,34 @@
         EntityManager em = ((EntityManagerFactory) ic.lookup("java:/RHQEntityManagerFactory"))
                 .createEntityManager();
 
+
         org.hibernate.Session s = PersistenceUtility.getHibernateSession(em);
+        SessionFactoryImplementor sfi = (SessionFactoryImplementor) s.getSessionFactory();
+
+
+
+        s = sfi.openSession(new EmptyInterceptor() {
+            public String onPrepareStatement(String s) {
+//                System.out.println("### Executing: " + s);
+                executedSQL.add(s);
+                return super.onPrepareStatement(s);
+            }
+            
+
+            public void preFlush(Iterator entities) {
+                List entityList = createList(entities);
+                for (Object obj : entityList) {
+                    System.out.println("$$$$$$$$$$$: " + obj);
+                }
+            }
+            private List createList(Iterator iterator) {
+                List list = new ArrayList();
+                while (iterator.hasNext()) {
+                    list.add(iterator.next());
+                }
+                return list;
+            }
+        });
 
 
         qt = new ASTQueryTranslatorFactory().createQueryTranslator(
@@ -68,8 +97,10 @@
                         (SessionFactoryImplementor) s.getSessionFactory());
 
         qt.compile(null,true);
+
         String sql = qt.getSQLString();
 
+        //((SessionFactoryImplementor) s.getSessionFactory()).getInterceptor();
         out.write("<b>SQL: </b><textarea rows=\"10\" cols=\"120\">" + sql + "</textarea>");
 
         Set<String> parameterNames = qt.getParameterTranslations().getNamedParameterNames();
@@ -98,7 +129,7 @@
             long start = System.currentTimeMillis();
             try {
                 //results = qt.list((SessionImplementor) s, new QueryParameters());
-                Query q = em.createQuery(hql);
+                org.hibernate.Query q = s.createQuery(hql);
                 Iterator iter = parameterNames.iterator();
                 while(iter.hasNext()) {
                     String pn = (String) iter.next();
@@ -112,7 +143,8 @@
                     out.println("parameter " + pn + " = " + paramterValue);
                     q.setParameter(pn,paramterValue);
                 }
-                results = q.getResultList();
+                results = q.list(); //getResultList();
+
                 request.setAttribute("results",results);
 
             } catch (Exception e) {
@@ -134,12 +166,16 @@
 <br/>
 
 <c:if test="${param['execute'] != null and results != null}">
-    <b>Executed in <%=executionTime%>ms. Found <%=results.size()%> rows.</b>
+    <b>Executed in <%=executionTime%>ms. Found <%=results.size()%> rows. <%=executedSQL.size()%> round trips.</b>
 </c:if>
+
+
 <c:if test="${error != null}">
     <pre>${error}</pre>
 </c:if>
 <c:if test="${results != null}">
+    <hr>
+
     <table border="1">
 
         <%
@@ -158,16 +194,30 @@
                         out.println("<td>" + col + "</td>");
                     }
                 } else {
-                    out.println("<td>" + row + "</td>");                    
+                    out.println("<td>" + row + "</td>");
                 }
                 out.println("</tr>");
             }
         %>
 
     </table>
+
+    <hr>
+
+
+    <b>Executed Sql: </b>
+    <table border="1">
+
+        <%
+            for (String row : executedSQL) {
+                out.println("<tr>");
+                out.println("<td><span style=\"font-family: monospace\">" + row + "</span></td>");
+                out.println("</tr>");
+            }
+        %>
+
+    </table>
 </c:if>
-
-
 
 </body>
 </html>

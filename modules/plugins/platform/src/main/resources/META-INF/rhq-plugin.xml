@@ -196,8 +196,10 @@
       </plugin-configuration>
       
       &platformOperations;
-      
+
+<!-- temporarily disable content
       <operation name="cleanYumMetadataCache" description="Deletes all cached package metadata" />
+-->
 
       &nativeMetrics;
       &platformCpu;

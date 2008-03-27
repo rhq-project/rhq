@@ -19,15 +19,23 @@
 package org.rhq.enterprise.server.measurement;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.jboss.annotation.ejb.TransactionTimeout;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
@@ -37,6 +45,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 
@@ -45,6 +54,8 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
  */
 @Stateless
 public class MeasurementProblemManagerBean implements MeasurementProblemManagerLocal {
+    private final Log log = LogFactory.getLog(MeasurementProblemManagerBean.class);
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -276,4 +287,21 @@ public class MeasurementProblemManagerBean implements MeasurementProblemManagerL
 
         return (int) count;
     }
+
+    /**
+     * Purge OOB data older than a given time.
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(30 * 60 * 1000)
+    public int purgeMeasurementOOBs(Date purgeAfter) {
+        log.debug("Purging OOB data older than " + purgeAfter);
+        StopWatch watch = new StopWatch();
+        Query q = entityManager.createNamedQuery(MeasurementOutOfBounds.QUERY_DELETE_BY_TIME);
+        q.setParameter("oldest", purgeAfter.getTime());
+        int rows = q.executeUpdate();
+        log.info("Done purging [" + rows + "] OOBs older than " + purgeAfter + " in (" + ((watch.getElapsed()) / 1000L)
+            + " seconds)");
+        return rows;
+    }
+
 }

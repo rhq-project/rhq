@@ -78,6 +78,8 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
     private CallTimeDataManagerLocal callTimeDataManager;
     @EJB
     private EventManagerLocal eventManager;
+    @EJB
+    private MeasurementProblemManagerLocal measurementProblemManager;
 
     private boolean purgeDefaultsLoaded = false;
     private long purge1h;
@@ -168,6 +170,12 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         deleteUpToTime = new Date(now - this.purgeEvent);
         int deleted = eventManager.purgeEventData(deleteUpToTime);
         log.info("Deleted [" + deleted + "] events");
+
+        // Purge OOB data - note we piggy back on the "events" cutoff time - an OOB is a "kind of event" in a way
+        log.info("Purging OOBs older than " + TimeUtil.toString(now - this.purgeEvent));
+        deleteUpToTime = new Date(now - this.purgeEvent);
+        deleted = measurementProblemManager.purgeMeasurementOOBs(deleteUpToTime);
+        log.info("Deleted [" + deleted + "] OOBs");
 
         // Purge alerts
         try {

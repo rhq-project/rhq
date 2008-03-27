@@ -47,6 +47,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
+import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -148,8 +149,11 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 // add calltime/response times
                 createNewCalltimeData(newResource, 0, 1000);
 
-                // create trait data
+                // add trait data
                 createNewTraitData(newResource, 0, 100);
+
+                // add OOB data
+                createNewOOBData(newResource, 0, 1000, em);
 
                 getTransactionManager().commit();
             } catch (Throwable t) {
@@ -177,7 +181,8 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             assert alertDefinitions.size() == 1 : "why are we missing our alert definitions?: " + alertDefinitions;
             AlertDefinition ad = alertDefinitions.iterator().next();
             assert ad.getAlerts().size() == 0 : "didn't purge alerts";
-            //assert ad.getConditions().iterator().next().getConditionLogs().size() == 0 : "didn't purge condition logs";
+            Set<AlertConditionLog> clogs = ad.getConditions().iterator().next().getConditionLogs();
+            assert clogs.size() == 0 : "didn't purge condition logs: " + clogs.size();
 
             // check availabilities
             List<Availability> avails = res.getAvailability();
@@ -201,7 +206,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                     Long.MAX_VALUE, new PageControl());
             assert calltimeData.getTotalSize() == 0 : "didn't purge all calltime data";
 
-            // check trait data (purge job does NOT purge anything, so traits should still be there)
+            // check trait data
             MeasurementSchedule traitSchedule = null;
             for (MeasurementSchedule sched : res.getSchedules()) {
                 if (sched.getDefinition().getDataType() == DataType.TRAIT) {
@@ -214,7 +219,22 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             List<MeasurementDataTrait> persistedTraits = LookupUtil.getMeasurementDataManager()
                 .getAllTraitDataForResourceAndDefinition(res.getId(), traitSchedule.getDefinition().getId());
             // TODO our purge should blow away all by the last trait since our trait history is very old
+            // today, we do NOT purge old trait data - they only delete when you delete a resource
+            // so I've commented out this assert test.  We'll want to enable this assert test once we
+            // implement trait purging
             //assert persistedTraits.size() == 1 : "bad purged trait data:" + persistedTraits.size();
+
+            // check OOB data
+            MeasurementSchedule measSchedule = null;
+            for (MeasurementSchedule sched : res.getSchedules()) {
+                if (sched.getDefinition().getDataType() == DataType.MEASUREMENT) {
+                    measSchedule = sched;
+                    break;
+                }
+            }
+            assert measSchedule != null : "why don't we have a meas schedule?";
+            assert measSchedule.getOutOfBounds().size() == 0 : "didn't purge all OOB data: "
+                + measSchedule.getOutOfBounds().size();
 
         } finally {
             getTransactionManager().rollback();
@@ -257,6 +277,25 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         }
 
         return;
+    }
+
+    private void createNewOOBData(Resource res, int timestamp, int count, EntityManager em) {
+        MeasurementSchedule measSchedule = null;
+        for (MeasurementSchedule sched : res.getSchedules()) {
+            if (sched.getDefinition().getDataType() == DataType.MEASUREMENT) {
+                measSchedule = sched;
+                break;
+            }
+        }
+        assert measSchedule != null : "why don't we have a normal meas schedule?";
+
+        MeasurementOutOfBounds oob;
+        for (int i = 0; i < count; i++) {
+            oob = new MeasurementOutOfBounds(measSchedule, timestamp + i, 7.7d);
+            em.persist(oob);
+            assert oob.getId() > 0 : "didn't persist OOB";
+        }
+        em.flush();
     }
 
     private void createNewTraitData(Resource res, int timestamp, int count) {
@@ -352,16 +391,17 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     }
 
     private Alert createNewAlert(EntityManager em, AlertDefinition ad, long timestamp) {
-        AlertCondition ac = ad.getConditions().iterator().next();
-        AlertConditionLog acl = new AlertConditionLog(ac, timestamp);
-        em.persist(acl);
-
         Alert a = new Alert(ad, timestamp);
         em.persist(a);
 
         AlertNotificationLog anl = new AlertNotificationLog(ad);
         anl.setAlert(a);
         em.persist(anl);
+
+        AlertCondition ac = ad.getConditions().iterator().next();
+        AlertConditionLog acl = new AlertConditionLog(ac, timestamp);
+        acl.setAlert(a);
+        em.persist(acl);
 
         return a;
     }
@@ -429,6 +469,20 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 def = new MeasurementDefinition(resourceType, "DataPurgeJobTestTraitMeasDef");
                 def.setCategory(MeasurementCategory.PERFORMANCE);
                 def.setDataType(DataType.TRAIT);
+                def.setDefaultInterval(12345);
+                def.setDefaultOn(true);
+                def.setDisplayName(def.getName());
+                def.setDisplayType(DisplayType.SUMMARY);
+                em.persist(def);
+                schedule = new MeasurementSchedule(def, resource);
+                em.persist(schedule);
+                def.addSchedule(schedule);
+                resource.addSchedule(schedule);
+
+                // add normal measurment schedule
+                def = new MeasurementDefinition(resourceType, "DataPurgeJobTestNormalMeasDef");
+                def.setCategory(MeasurementCategory.PERFORMANCE);
+                def.setDataType(DataType.MEASUREMENT);
                 def.setDefaultInterval(12345);
                 def.setDefaultOn(true);
                 def.setDisplayName(def.getName());

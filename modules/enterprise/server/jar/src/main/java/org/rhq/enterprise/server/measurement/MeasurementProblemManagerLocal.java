@@ -18,7 +18,9 @@
  */
 package org.rhq.enterprise.server.measurement;
 
+import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import javax.ejb.Local;
@@ -131,4 +133,12 @@ public interface MeasurementProblemManagerLocal {
      * Get the oob counts for the passed schedules at once and stuff them in a map<scheduleId,oobCount>
      */
     public Map<Integer, Integer> getMeasurementSchedulesOOBCount(long begin, long end, List<Integer> scheduleIds);
+
+    /**
+     * Used to purge old OOB data.
+     * @param purgeAfter any OOB data older than this epoch time will be purged
+     * @return number of purged OOB records
+     * @throws SQLException
+     */
+    int purgeMeasurementOOBs(Date purgeAfter);
 }

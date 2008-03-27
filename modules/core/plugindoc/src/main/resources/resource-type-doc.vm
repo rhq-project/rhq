@@ -44,7 +44,7 @@ _none_
 #else
 || Name || Query ||
 #foreach( ${processScan} in ${resourceType.processScans} )
-| ${processScan.name} | {noformat:nopanel=true}${processScan.query}{noformat} |
+| ${processScan.name} | ${processScan.query} |
 #end
 #end
 

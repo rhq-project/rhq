@@ -54,6 +54,7 @@ public class VelocityTemplateProcessor {
         velocityConfig.setProperty("resource.loader", "class");
         velocityConfig.setProperty("class.resource.loader.class",
             "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+        velocityConfig.setProperty("eventhandler.referenceinsertion.class", EscapeConfluenceReference.class.getName());        
         velocityConfig.setProperty("velocimacro.library", "macros.vm");
         return velocityConfig;
     }

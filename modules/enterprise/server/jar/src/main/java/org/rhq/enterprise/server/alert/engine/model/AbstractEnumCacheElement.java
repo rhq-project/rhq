@@ -33,7 +33,7 @@ public abstract class AbstractEnumCacheElement<E extends Enum<E>> extends Abstra
     }
 
     @Override
-    public boolean matches(E providedValue, Object extraParams) {
+    public boolean matches(E providedValue, Object... extraParams) {
         if (providedValue == null) {
             return false;
         }

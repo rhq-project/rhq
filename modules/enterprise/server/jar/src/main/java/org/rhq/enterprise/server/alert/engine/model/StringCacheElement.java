@@ -50,7 +50,7 @@ public class StringCacheElement extends AbstractCacheElement<String> {
     }
 
     @Override
-    public boolean matches(String providedValue, Object extraParams) {
+    public boolean matches(String providedValue, Object... extraParams) {
         if (providedValue == null) {
             return false;
         }

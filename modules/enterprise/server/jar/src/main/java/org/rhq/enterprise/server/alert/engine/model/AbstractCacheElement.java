@@ -123,7 +123,7 @@ public abstract class AbstractCacheElement<T> {
         this.active = active;
     }
 
-    public final boolean process(T providedValue, Object extraParams) {
+    public final boolean process(T providedValue, Object... extraParams) {
         String beforeString = this.toString();
         boolean match = matches(providedValue, extraParams);
         String afterString = this.toString();
@@ -144,7 +144,7 @@ public abstract class AbstractCacheElement<T> {
      * called by process(T, boolean) to determine whether or not the incoming value to the cache matches this cache
      * element or not.
      */
-    public abstract boolean matches(T providedValue, Object extras);
+    public abstract boolean matches(T providedValue, Object... extras);
 
     /**
      * For the most part, the operator itself denotes whether it makes comparisons against a sliding scale or not.

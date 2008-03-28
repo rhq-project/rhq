@@ -31,7 +31,7 @@ public class NumericDoubleCacheElement extends AbstractCacheElement<Double> {
     }
 
     @Override
-    public boolean matches(Double providedValue, Object extraParams) {
+    public boolean matches(Double providedValue, Object... extraParams) {
         if (providedValue == null) {
             return false;
         }

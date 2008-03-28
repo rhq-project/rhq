@@ -30,6 +30,12 @@ public class EventCacheElement extends AbstractEnumCacheElement<EventSeverity> {
 
     private final Pattern eventDetailsPattern;
 
+    private String fixPattern(String regex) {
+        boolean sw = regex.startsWith(".*");
+        boolean ew = regex.endsWith(".*");
+        return (!sw ? ".*" : "") + regex + (!ew ? ".*" : "");
+    }
+
     public EventCacheElement(AlertConditionOperator operator, EventSeverity value, int conditionTriggerId) {
         super(operator, value, conditionTriggerId);
         eventDetailsPattern = null;
@@ -38,20 +44,22 @@ public class EventCacheElement extends AbstractEnumCacheElement<EventSeverity> {
     public EventCacheElement(AlertConditionOperator operator, String eventDetails, EventSeverity value,
         int conditionTriggerId) {
         super(operator, eventDetails, value, conditionTriggerId);
+        eventDetails = fixPattern(eventDetails);
         eventDetailsPattern = Pattern.compile(eventDetails, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
             | Pattern.DOTALL);
     }
 
     @Override
-    public boolean matches(EventSeverity providedValue, Object extraParams) {
+    public boolean matches(EventSeverity providedValue, Object... extraParams) {
         boolean matches = super.matches(providedValue, extraParams);
 
         if (matches && eventDetailsPattern != null) {
-            if (!(extraParams instanceof String)) {
-                log.debug(getClass().getSimpleName() + " expected a String, but recieved a "
+            Object firstParam = extraParams[0];
+            if (!(firstParam instanceof String)) {
+                log.error(getClass().getSimpleName() + " expected a String, but recieved a "
                     + extraParams.getClass().getSimpleName());
             } else {
-                matches = matches && eventDetailsPattern.matcher((String) extraParams).matches();
+                matches = matches && eventDetailsPattern.matcher((String) firstParam).matches();
             }
         }
 

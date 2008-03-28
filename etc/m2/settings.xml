@@ -56,7 +56,7 @@
             <!--<maven.test.skip>true</maven.test.skip>-->
             <!--<maven.test.failure.ignore>true</maven.test.failure.ignore>-->
             <!--<maven.test.error.ignore>true</maven.test.error.ignore>-->
-            <!--<surefire.usefile>false</surefire.usefile>-->
+            <!--<surefire.useFile>false</surefire.useFile>-->
             <!-- If you don't want to use the default location of {trunk}/dev-container/
                  for your dev RHQ container, then set the below prop to the desired location. -->
             <!--<rhq.containerDir>C:/opt/rhq-server</rhq.containerDir>-->

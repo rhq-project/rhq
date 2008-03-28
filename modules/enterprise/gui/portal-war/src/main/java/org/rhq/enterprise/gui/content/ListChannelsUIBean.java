@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.content;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Channel;
 import org.rhq.core.domain.util.PageControl;
@@ -35,7 +36,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ListChannelsUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ListChannelsUIBean";
 
-    private ChannelManagerLocal contentSourceManager = LookupUtil.getChannelManagerLocal();
+    private ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
 
     public ListChannelsUIBean() {
     }
@@ -52,7 +53,7 @@ public class ListChannelsUIBean extends PagedDataTableUIBean {
         if (ids.length > 0) {
             try {
                 for (Integer id : ids) {
-                    contentSourceManager.deleteChannel(subject, id);
+                    channelManager.deleteChannel(subject, id);
                 }
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted [" + ids.length + "] channels.");

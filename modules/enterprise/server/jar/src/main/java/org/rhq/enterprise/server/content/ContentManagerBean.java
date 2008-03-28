@@ -468,6 +468,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             List deploymentConfigurationResults = deploymentConfigurationQuery.getResultList();
             if (deploymentConfigurationResults.size() > 0) {
                 deploymentConfiguration = (Configuration) deploymentConfigurationResults.get(0);
+                deploymentConfiguration = deploymentConfiguration.deepCopy(false);
             }
 
             history.setDeploymentConfigurationValues(deploymentConfiguration);

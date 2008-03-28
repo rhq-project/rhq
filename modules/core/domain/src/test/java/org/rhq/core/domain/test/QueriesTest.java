@@ -37,6 +37,7 @@ import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.Channel;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
@@ -72,10 +73,8 @@ public class QueriesTest extends AbstractEJB3Test {
         add(PackageVersion.QUERY_FIND_BY_CHANNEL_ID, new Object[] { "channelId", 1 });
         add(PackageVersion.QUERY_FIND_METADATA_BY_RESOURCE_ID, new Object[] { "resourceId", 1 });
         add(PackageVersion.QUERY_FIND_BY_CHANNEL_ID_WITH_PACKAGE, new Object[] { "channelId", 1 });
-        add(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST, new Object[] { "resourceId", 1 });
 
-        // great, empty sub-selects on oracle makes the query croak?
-        //add(Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, new Object[] { "resourceId", 1 });
+        add(Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, new Object[] { "resourceId", 1 });
 
         add(PackageBits.QUERY_PACKAGE_BITS_LOADED_STATUS_PACKAGE_VERSION_ID, new Object[] { "id", 1 });
         add(CreateResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, new Object[] { "id", 1 });

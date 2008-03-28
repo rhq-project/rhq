@@ -76,7 +76,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ContentManagerBeanTest extends AbstractEJB3Test {
     // Attributes  --------------------------------------------
 
-    private static final boolean ENABLE_TESTS = false;
+    private static final boolean ENABLE_TESTS = true;
 
     /**
      * ContentAgentService method implementations should synchronize on this to allow the test method to pause before
@@ -167,7 +167,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
     // Test Cases  --------------------------------------------
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testPersistSafely() throws Throwable {
 
         final String pkgName = "testPersistSafelyPackage";
@@ -286,7 +286,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
     }
 
     @SuppressWarnings("unchecked")
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testInventoryMerge() throws Exception {
         // Setup  --------------------------------------------
         ContentDiscoveryReport report = new ContentDiscoveryReport();
@@ -441,50 +441,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    @Test(enabled = ENABLE_TESTS)
-    public void testDeployMultiplePackages() throws Exception {
-        Subject overlord = subjectManager.getOverlord();
-        PackageVersion packageVersion1 = package1.getVersions().get(0);
-        System.out.println("PV1: " + packageVersion1.getId());
-        PackageVersion packageVersion2 = package2.getVersions().get(0);
-        System.out.println("PV2: " + packageVersion2.getId());
-
-        // Make sure the mock is configured to return a success
-        this.contentAgentService.setResponseReturnStatus(ContentResponseResult.SUCCESS);
-        this.contentAgentService.setThrowError(false);
-
-        synchronized (responseLock) {
-            Set<Integer> packageVersionIds = new HashSet<Integer>();
-            packageVersionIds.add(packageVersion1.getId());
-
-            Set<Integer> resourceIds = new HashSet<Integer>();
-            resourceIds.add(resource1.getId());
-            contentManager.deployPackages(overlord, resourceIds, packageVersionIds);
-
-            responseLock.notifyAll();
-        }
-
-        // Give the agent service a second to make sure it finishes out its call
-        Thread.sleep(1000);
-
-        getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-        try {
-            // Package 1, Version 2
-            Query query = em.createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_VER_ID);
-            query.setParameter("resourceId", resource1.getId());
-            query.setParameter("packageVersionId", packageVersion1.getId());
-
-            List<InstalledPackage> results = query.getResultList();
-            assert results.size() == 1 : "Incorrect number of installed packages for package 1, version 2. Expected: 1, Found: "
-                + results.size();
-        } finally {
-            getTransactionManager().rollback();
-            em.close();
-        }
-    }
-
     @Test(enabled = ENABLE_TESTS)
     public void testSuccessfulDeployPackages() throws Exception {
         // Setup  --------------------------------------------
@@ -516,6 +472,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         // Make sure the mock is configured to return a success
         this.contentAgentService.setResponseReturnStatus(ContentResponseResult.SUCCESS);
         this.contentAgentService.setThrowError(false);
+        this.contentAgentService.setReturnIndividualResponses(true);
 
         // Test  --------------------------------------------
 
@@ -530,7 +487,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
             try {
                 // Content request
-                Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
+                Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE);
                 query.setParameter("resourceId", resource1.getId());
 
                 List<?> results = query.getResultList();
@@ -603,9 +560,10 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 historyEntity = (InstalledPackageHistory) results.get(0);
                 assert historyEntity.getStatus() == InstalledPackageHistoryStatus.BEING_INSTALLED : "Incorrect status on second entity. Expected: BEING_INSTALLED, Found: "
                     + historyEntity.getStatus();
-
-                responseLock.notifyAll();
+                
             } finally {
+                responseLock.notifyAll();
+
                 getTransactionManager().rollback();
                 em.close();
             }
@@ -620,7 +578,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         EntityManager em = getEntityManager();
         try {
             // Content request
-            Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
+            Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE);
             query.setParameter("resourceId", resource1.getId());
 
             List<?> results = query.getResultList();
@@ -698,6 +656,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         // Make sure the mock is configured to return a success
         this.contentAgentService.setResponseReturnStatus(ContentResponseResult.SUCCESS);
         this.contentAgentService.setThrowError(false);
+        this.contentAgentService.setReturnIndividualResponses(true);
         this.contentAgentService.setDeployPackageSteps(stepResults);
 
         // Test  --------------------------------------------
@@ -713,7 +672,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
             try {
                 // Content request
-                Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
+                Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE);
                 query.setParameter("resourceId", resource1.getId());
 
                 List<?> results = query.getResultList();
@@ -725,13 +684,13 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                     + request.getContentRequestType();
                 assert request.getStatus() == ContentRequestStatus.IN_PROGRESS : "Request status incorrect. Expected: IN_PROGRESS, Found: "
                     + request.getStatus();
-                assert request.getInstalledPackageHistory().size() == 2 : "Incorrect number of installed packages attached to request. Expected: 2, Found: "
+                assert request.getInstalledPackageHistory().size() == 1 : "Incorrect number of installed packages attached to request. Expected: 1, Found: "
                     + request.getInstalledPackageHistory().size();
 
                 // Verify a history entry has been added for each package in the request
                 Set<InstalledPackageHistory> history = request.getInstalledPackageHistory();
 
-                assert history.size() == 2 : "Incorrect number of history entries on request. Expected: 2, Found: "
+                assert history.size() == 1 : "Incorrect number of history entries on request. Expected: 2, Found: "
                     + history.size();
 
                 for (InstalledPackageHistory historyEntry : history) {
@@ -739,19 +698,9 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                         + historyEntry.getStatus();
                 }
 
-                // Ensure the installed package has not been added to the resoure yet
-
-                // Package 1, Version 2
-                query = em.createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_VER_ID);
-                query.setParameter("resourceId", resource1.getId());
-                query.setParameter("packageVersionId", packageVersion1.getId());
-
-                results = query.getResultList();
-                assert results.size() == 0 : "Incorrect number of installed packages for package 1, version 2. Expected: 0, Found: "
-                    + results.size();
-
-                responseLock.notifyAll();
             } finally {
+                responseLock.notifyAll();
+
                 getTransactionManager().rollback();
                 em.close();
             }
@@ -766,7 +715,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         EntityManager em = getEntityManager();
         try {
             // Content request
-            Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
+            Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE);
             query.setParameter("resourceId", resource1.getId());
 
             List<?> results = query.getResultList();
@@ -780,7 +729,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             // Verify a history entry has been added for the completion of the request per package
             Set<InstalledPackageHistory> history = request.getInstalledPackageHistory();
 
-            assert history.size() == 4 : "Incorrect number of history entries on request. Expected: 4, Found: "
+            assert history.size() == 2 : "Incorrect number of history entries on request. Expected: 2, Found: "
                 + history.size();
 
             // Check for Package 1
@@ -863,6 +812,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         // Make sure the mock is configured to return a failure
         this.contentAgentService.setResponseReturnStatus(ContentResponseResult.FAILURE);
         this.contentAgentService.setThrowError(false);
+        this.contentAgentService.setReturnIndividualResponses(true);
 
         // Test  --------------------------------------------
         contentManager.deployPackages(overlord, resource1.getId(), installUs);
@@ -877,7 +827,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
         try {
             // Content request
-            Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
+            Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE);
             query.setParameter("resourceId", resource1.getId());
 
             List<?> results = query.getResultList();
@@ -932,6 +882,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         // Make sure the mock is configured to return a failure
         this.contentAgentService.setResponseReturnStatus(ContentResponseResult.FAILURE);
         this.contentAgentService.setThrowError(true);
+        this.contentAgentService.setReturnIndividualResponses(false);
 
         // Test  --------------------------------------------
         try {
@@ -948,7 +899,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
         try {
             // Content request
-            Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
+            Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE);
             query.setParameter("resourceId", resource1.getId());
 
             List<?> results = query.getResultList();
@@ -1022,6 +973,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             originalRequestedPackage.setPackageVersion(packageVersion);
             originalRequestedPackage.setStatus(InstalledPackageHistoryStatus.BEING_INSTALLED);
             originalRequestedPackage.setTimestamp(new Date());
+            originalRequestedPackage.setResource(resource1);
 
             request.addInstalledPackageHistory(originalRequestedPackage);
 
@@ -1030,6 +982,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             getTransactionManager().commit();
         } catch (Throwable t) {
             getTransactionManager().rollback();
+
+            assert false : "Error during setup: " + t;
         } finally {
             em.close();
         }
@@ -1048,11 +1002,15 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_ID);
             query.setParameter("id", request.getId());
 
-            List<?> resultList = query.getResultList();
+            List<ContentServiceRequest> resultList = query.getResultList();
+
+            assert resultList.size() == 1 :
+                "Incorrect number of requests loaded. Expected: 1, Found: " + resultList.size();
+
             request = (ContentServiceRequest) resultList.get(0);
 
-            assert request.getInstalledPackageHistory().size() == 3 : "Incorrect number of being installed packages on request. Expected: 3, Found: "
-                + resultList.size();
+            assert request.getInstalledPackageHistory().size() == 3 :
+                "Incorrect number of being installed packages on request. Expected: 3, Found: " + resultList.size();
 
             // Quick check for the status of each
             query = em.createNamedQuery(InstalledPackageHistory.QUERY_FIND_BY_CSR_ID);
@@ -1086,6 +1044,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         // Make sure the mock is configured to return a success
         this.contentAgentService.setResponseReturnStatus(ContentResponseResult.SUCCESS);
         this.contentAgentService.setThrowError(false);
+        this.contentAgentService.setReturnIndividualResponses(true);
 
         // Test  --------------------------------------------
 
@@ -1099,7 +1058,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
             try {
                 // Content request
-                Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
+                Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE);
                 query.setParameter("resourceId", resource1.getId());
 
                 List<?> results = query.getResultList();
@@ -1135,7 +1094,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         EntityManager em = getEntityManager();
         try {
             // Content request
-            Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST);
+            Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE);
             query.setParameter("resourceId", resource1.getId());
 
             List<?> results = query.getResultList();
@@ -1152,7 +1111,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             query.setParameter("packageVersionId", installedPackage1.getPackageVersion().getId());
 
             results = query.getResultList();
-            assert results.size() == 0 : "Incorrect number of installed packages for package 1, version 2. Expected: 0, Found: "
+            assert results.size() == 1: "Incorrect number of installed packages for package 1, version 2. Expected: 0, Found: "
                 + results.size();
 
             // Package 2, Version 1
@@ -1305,12 +1264,12 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                     em.remove(ip);
                 }
 
-                for (ContentServiceRequest request : resource1.getContentServiceRequests()) {
-                    em.remove(request);
-                }
-
                 for (InstalledPackageHistory history : resource1.getInstalledPackageHistory()) {
                     em.remove(history);
+                }
+
+                for (ContentServiceRequest request : resource1.getContentServiceRequests()) {
+                    em.remove(request);
                 }
 
                 package1 = em.find(Package.class, package1.getId());
@@ -1382,6 +1341,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         private ContentResponseResult responseReturnStatus;
 
         private boolean throwError;
+        private boolean returnIndividualResponses = true;
 
         private List<DeployPackageStep> deployPackageSteps;
 
@@ -1414,6 +1374,15 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             this.deployPackageSteps = deployPackageSteps;
         }
 
+        /**
+         * If this is set to <code>true</code> the response will include an entry for each package requested.
+         *
+         * @param returnIndividualResponses flag indicating if individual package results should be returned
+         */
+        public void setReturnIndividualResponses(boolean returnIndividualResponses) {
+            this.returnIndividualResponses = returnIndividualResponses;
+        }
+
         // ContentAgentService Implementation  --------------------------------------------
 
         public Set<ResourcePackageDetails> getLastDiscoveredResourcePackages(int resourceId) {
@@ -1443,13 +1412,15 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                         // to do it. Since I'm skipping the PC entirely for this test, I'll do it here.
                         response.setRequestId(request.getRequestId());
 
-                        for (ResourcePackageDetails packageDetails : request.getPackages()) {
-                            DeployIndividualPackageResponse individualResponse = new DeployIndividualPackageResponse(
-                                packageDetails.getKey(), responseReturnStatus);
+                        if (returnIndividualResponses) {
+                            for (ResourcePackageDetails packageDetails : request.getPackages()) {
+                                DeployIndividualPackageResponse individualResponse = new DeployIndividualPackageResponse(
+                                    packageDetails.getKey(), responseReturnStatus);
 
-                            individualResponse.setDeploymentSteps(deployPackageSteps);
+                                individualResponse.setDeploymentSteps(deployPackageSteps);
 
-                            response.addPackageResponse(individualResponse);
+                                response.addPackageResponse(individualResponse);
+                            }
                         }
 
                         ContentManagerBeanTest.this.contentManager.completeDeployPackageRequest(response);

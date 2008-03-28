@@ -63,11 +63,6 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = ContentServiceRequest.QUERY_FIND_BY_ID, query = "SELECT csr "
         + "  FROM ContentServiceRequest AS csr WHERE csr.id = :id"),
 
-    // TODO: This query won't work without distinct in the outer clause. We need to migrate the tests away from using this.
-    @NamedQuery(name = ContentServiceRequest.QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST, query = "SELECT csr "
-        + "  FROM ContentServiceRequest AS csr JOIN FETCH csr.installedPackageHistory ip "
-        + " WHERE csr.id IN (SELECT DISTINCT csr1.id FROM ContentServiceRequest AS csr1 "
-        + "                   WHERE csr1.resource.id = :resourceId) "),
     @NamedQuery(name = ContentServiceRequest.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM ContentServiceRequest csr WHERE csr.resource IN (:resources))") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_REQ_ID_SEQ")
 @Table(name = "RHQ_CONTENT_REQ")
@@ -81,7 +76,6 @@ public class ContentServiceRequest implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE_WITH_NOT_STATUS = "ContentServiceRequest.findByResourceWithNotStatus";
     public static final String QUERY_FIND_BY_RESOURCE = "ContentServiceRequest.findByResource";
     public static final String QUERY_FIND_BY_ID = "ContentServiceRequest.findById";
-    public static final String QUERY_FIND_BY_RESOURCE_WITH_INSTALLED_PKG_HIST = "ContentServiceRequest.findByResourceWithInstalledPackageHistory";
     public static final String QUERY_DELETE_BY_RESOURCES = "ContentServiceRequest.deleteByResources";
 
     // Attributes  --------------------------------------------

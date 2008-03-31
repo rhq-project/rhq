@@ -38,7 +38,7 @@
       <div style="margin:5px">
          <p class="compact">
             <span class="DisplaySubhead"><fmt:message key="footer.aboutLink"/></span><br/>
-            <span class="DisplayLabel"><fmt:message key="footer.version"/> ${RHQVersion}</span>
+            <span class="DisplayLabel"><fmt:message key="footer.version"/> <fmt:message key="product.version"/></span>
          </p>
          <p class="compact">
             <fmt:message key="footer.shortCopyright"/> <fmt:message key="about.Copyright.Content"/>

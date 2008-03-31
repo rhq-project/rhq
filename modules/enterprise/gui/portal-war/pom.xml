@@ -33,6 +33,7 @@
       <product.url.domain>rhq-project.org</product.url.domain>
       <product.sales.email>sales@rhq-project.org</product.sales.email>
       <product.support.email>info@rhq-project.org</product.support.email>
+      <product.version>${project.version}</product.version>
    </properties>
 
    <dependencies>

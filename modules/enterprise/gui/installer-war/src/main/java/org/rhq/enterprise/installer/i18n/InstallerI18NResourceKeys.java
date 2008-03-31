@@ -46,60 +46,61 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("${product.support.email}")
     String PRODUCT_SUPPORT_EMAIL = "product.support.email";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Create Database/User")
-    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Create Database/User"),
+        @I18NMessage(locale = "de", value = "Datenbank mit -benutzer anlegen") })
     String CREATE_DATABASE_USER_TITLE = "createDatabaseUserTitle";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Enter your database administrator's information here and press the button to create a database and user.")
-    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( {
+        @I18NMessage(locale = "en", value = "Enter your database administrator's information here and press the button to create a database and user."),
+        @I18NMessage(locale = "de", value = "Geben Sie die Administratoreninformation hier ein, und clicken Sie den Button, um eine Datenbank mit Benutzer anzulegen.") })
     String CREATE_DATABASE_USER_HELP = "createDatabaseUserHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "DB Connection URL")
-    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( { @I18NMessage(locale = "en", value = "DB Connection URL"),
+        @I18NMessage(locale = "de", value = "URL der Datenbankverbindung") })
     String ADMIN_CONNECTION_URL = "adminConnectionUrl";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "DB Admin Username")
-    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( { @I18NMessage(locale = "en", value = "DB Admin Username"),
+        @I18NMessage(locale = "de", value = "Benutzername des Datenbankadministrators") })
     String ADMIN_USERNAME = "adminUsername";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "DB Admin Password")
-    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( { @I18NMessage(locale = "en", value = "DB Admin Password"),
+        @I18NMessage(locale = "de", value = "Passwort des Datenbankadministrators") })
     String ADMIN_PASSWORD = "adminPassword";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Database Settings")
-    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Database Settings"),
+        @I18NMessage(locale = "de", value = "Datenbankeinstellungen") })
     String DATABASE_PROPERTIES_NOTE = "databasePropertiesNote";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Settings")
-    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Settings"),
+        @I18NMessage(locale = "de", value = "Servereinstellungen") })
     String SERVER_PROPERTIES_NOTE = "serverPropertiesNote";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Create a database/user if needed")
-    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Create a database/user if needed"),
+        @I18NMessage(locale = "de", value = "DB mit -benutzer anlegen, falls nötig") })
     String CREATE_DATABASE_NOTE = "createDatabaseNote";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Create Database")
-    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Create Database"),
+        @I18NMessage(locale = "de", value = "Datenbank anlegen") })
     String CREATE_DATABASE_BUTTON = "createDatabaseButton";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Confirm if these settings are valid")
-    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Confirm if these settings are valid"),
+        @I18NMessage(locale = "de", value = "Überprüfen Sie, dass die Einstellungen gültig sind") })
     String TEST_DATABASE_NOTE = "testDatabaseNote";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Test Connection")
-    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Test Connection"),
+        @I18NMessage(locale = "de", value = "Verbindung testen") })
     String TEST_DATABASE_BUTTON = "testDatabaseButton";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "A database schema already exists. What do you want to do?")
-    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( { @I18NMessage(locale = "en", value = "A database schema already exists. What do you want to do?"),
+        @I18NMessage(locale = "de", value = "Das gewünschte Datenbankschema existiert schon. Was wollen Sie machen?") })
     String EXISTING_SCHEMA_QUESTION = "existingSchemaQuestion";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Overwrite it (and lose existing data)")
-    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Overwrite it (and lose existing data)"),
+        @I18NMessage(locale = "de", value = "Überschreiben (vorhandene Daten gehen verloren)") })
     String EXISTING_SCHEMA_ANSWER_OVERWRITE = "existingSchemaAnswerOverwrite";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Keep and, if necessary, upgrade it")
-    /*TODO , @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Keep and, if necessary, upgrade it"),
+        @I18NMessage(locale = "de", value = "Behalten und falls nötig aktualisieren.") })
     String EXISTING_SCHEMA_ANSWER_UPGRADE = "existingSchemaAnswerUpgrade";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "The {0} property value was an invalid number [{1}]"),

@@ -150,10 +150,6 @@ ANT Script that provides ways to package the agent.
          </fileset>
       </zip>
       
-      <mkdir dir="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}"/>
-      <copy file="${basedir}/target/rhq-agent-${project.version}.zip"
-            tofile="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}/rhq-enterprise-agent-${project.version}.zip"/>
-
       <antcall target="package-distro-with-connectors" />
    </target>
 
@@ -197,10 +193,15 @@ ANT Script that provides ways to package the agent.
          </fileset>
       </copy>
 
-       <delete file="${basedir}/target/rhq-agent-${project.version}-with-connectors.zip" />
+      <delete file="${basedir}/target/rhq-agent-${project.version}-with-connectors.zip" />
       <zip destfile="${basedir}/target/rhq-agent-${project.version}-with-connectors.zip" >
          <fileset dir="${agent.distro.dir}" />
       </zip>
+      
+      <mkdir dir="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}"/>
+      <copy file="${basedir}/target/rhq-agent-${project.version}-with-connectors.zip"
+            tofile="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}/rhq-enterprise-agent-${project.version}.zip"
+            verbose="true"/>      
    </target>
 
 </project>

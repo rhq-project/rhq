@@ -149,6 +149,10 @@ ANT Script that provides ways to package the agent.
             <exclude name="product_connectors/**/*"/>
          </fileset>
       </zip>
+      
+      <mkdir dir="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}"/>
+      <copy file="${basedir}/target/rhq-agent-${project.version}.zip"
+            tofile="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}/rhq-enterprise-agent-${project.version}.zip"/>
 
       <antcall target="package-distro-with-connectors" />
    </target>

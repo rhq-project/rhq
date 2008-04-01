@@ -21,16 +21,17 @@ package org.rhq.core.domain.configuration.group;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import javax.persistence.CascadeType;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.Resource;
@@ -105,14 +106,17 @@ public class AggregatePluginConfigurationUpdate extends AbstractAggregateConfigu
                 PropertyMap basePropertyMap = (PropertyMap) base.get(changesPropertyName);
 
                 merge(basePropertyMap.getMap(), changesPropertyMap.getMap());
-            } else if (changesProperty instanceof PropertyList) {
-                throw new UnsupportedOperationException(
-                    "PropertyList type not supported for aggregate plugin configuration updates");
-            } else {
-                throw new UnsupportedOperationException("Property of type '"
-                    + changesProperty.getClass().getSimpleName() + "' "
-                    + "not supported for aggregate plugin configuration updates");
             }
+            /*
+            else if (changesProperty instanceof PropertyList) {
+               throw new UnsupportedOperationException(
+                   "PropertyList type not supported for aggregate plugin configuration updates");
+            } else {
+               throw new UnsupportedOperationException("Property of type '"
+                   + changesProperty.getClass().getSimpleName() + "' "
+                   + "not supported for aggregate plugin configuration updates");
+            }
+            */
         }
     }
 

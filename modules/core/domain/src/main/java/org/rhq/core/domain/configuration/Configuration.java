@@ -489,6 +489,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
             builder.append(", notes=").append(this.notes);
         }
 
+        /* This makes toStrings extremely verbose for large configs
         for (Property property : this.getMap().values()) {
             builder.append(", ");
             builder.append(property.getName());
@@ -498,8 +499,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
             } else {
                 builder.append(property);
             }
-        }
-
+        }*/
         return builder.append("]").toString();
     }
 

@@ -82,6 +82,7 @@
                      <html:hidden property="chartName" value="${Resource.name}: ${chartedMetrics[0].metricName}"/>
                      <tiles:insert definition=".resource.common.monitor.visibility.charts.metric.chart"/>
                      &nbsp;<br>
+                     <html:hidden property="m" value="${ViewChartForm.m[0]}"/>
 <%--                      <tiles:insert definition=".resource.common.monitor.visibility.charts.metric.partrsrcs"/> 
                      &nbsp;<br>
 --%>                     

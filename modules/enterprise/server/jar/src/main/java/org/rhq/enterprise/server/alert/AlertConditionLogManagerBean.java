@@ -164,9 +164,8 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
              * But only if it represents a type of event we need to act on
              */
             AlertDampeningEvent alertDampeningEvent = new AlertDampeningEvent(alertDefinition, type);
-            alertDampening.addAlertDampeningEvent(alertDampeningEvent);
-            entityManager.merge(alertDefinition);
-
+            entityManager.persist(alertDampeningEvent);
+            
             log.debug("Need to process AlertDampeningEvent.Type of " + type + " " + "for AlertDefinition[ id="
                 + alertDefinition.getId() + " ]");
 

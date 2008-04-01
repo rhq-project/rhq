@@ -91,9 +91,9 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
             + "found " + oldestEvents.size());
 
         if (shouldFire) {
-            // mark them all as used, so they can't be used in the next DURATION_COUNT firing
             for (AlertDampeningEvent event : oldestEvents) {
-                event.markUsed();
+                event.setAlertDefinition(null);
+                entityManager.remove(event);
             }
         }
 
@@ -203,11 +203,10 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
             + positiveFires);
 
         if (positiveFires >= countNeeded) {
-            // mark events as 'used'
             for (AlertDampeningEvent event : events) {
-                event.markUsed();
+                event.setAlertDefinition(null);
+                entityManager.remove(event);
             }
-
             return true;
         }
 

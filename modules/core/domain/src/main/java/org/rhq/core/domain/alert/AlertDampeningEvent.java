@@ -105,6 +105,10 @@ public class AlertDampeningEvent implements Serializable {
         return alertDefinition;
     }
 
+    public void setAlertDefinition(AlertDefinition alertDefinition) {
+        this.alertDefinition = alertDefinition;
+    }
+
     public Type getEventType() {
         return eventType;
     }
@@ -115,6 +119,25 @@ public class AlertDampeningEvent implements Serializable {
 
     public void markUsed() {
         this.used = true;
+    }
+
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AlertDampeningEvent)) return false;
+
+        AlertDampeningEvent event = (AlertDampeningEvent) o;
+
+        if (eventTime != null ? !eventTime.equals(event.eventTime) : event.eventTime != null) return false;
+        if (eventType != event.eventType) return false;
+
+        return true;
+    }
+
+    public int hashCode() {
+        int result;
+        result = (eventType != null ? eventType.hashCode() : 0);
+        result = 31 * result + (eventTime != null ? eventTime.hashCode() : 0);
+        return result;
     }
 
     @Override

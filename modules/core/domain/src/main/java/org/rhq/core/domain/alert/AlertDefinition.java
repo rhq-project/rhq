@@ -23,25 +23,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Embedded;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderBy;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -463,6 +445,15 @@ public class AlertDefinition implements Serializable {
         this.operationDefinition = operationDefinition;
     }
 
+
+    public Set<AlertDampeningEvent> getAlertDampeningEvents() {
+        return alertDampeningEvents;
+    }
+
+    public boolean removeAlertDampeningEvent(AlertDampeningEvent event) {
+        return alertDampeningEvents.remove(event);
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -498,7 +489,7 @@ public class AlertDefinition implements Serializable {
 
     @Override
     public String toString() {
-        return "org.rhq.core.domain.alert.AlertDefinition" + "[ " + "id=" + id + ", " + "name=" + name + ", "
+       return "org.rhq.core.domain.alert.AlertDefinition" + "[ " + "id=" + id + ", " + "name=" + name + ", "
             + "conditionExpression=" + conditionExpression + ", " + "priority=" + priority + ", "
             + ((resource != null) ? ("resourceId=" + resource.getId()) : "")
             + ((resourceType != null) ? ("resourceTypeId=" + resourceType.getId()) : "") + " ]";

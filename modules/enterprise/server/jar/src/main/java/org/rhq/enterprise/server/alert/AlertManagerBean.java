@@ -182,11 +182,12 @@ public class AlertManagerBean implements AlertManagerLocal {
      */
     // gonna use bulk delete, make sure we are in new tx to not screw up caller's hibernate session
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public int deleteAlerts(long beginTime, long endTime) {
+    public int  deleteAlerts(long beginTime, long endTime) {
+        long start = System.currentTimeMillis();
         Query query = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_ALERT_CTIME);
         query.setParameter("begin", beginTime);
         query.setParameter("end", endTime);
-        query.executeUpdate();
+        int conditionsDeleted = query.executeUpdate();
 
         query = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_CTIME);
         query.setParameter("begin", beginTime);
@@ -194,7 +195,9 @@ public class AlertManagerBean implements AlertManagerLocal {
         int deletedAlerts = query.executeUpdate();
 
         query = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_ORPHANED);
-        query.executeUpdate();
+        int deletedNotifications = query.executeUpdate();
+
+        log.info("Delete [" + deletedAlerts + "] alerts, [" + conditionsDeleted + "] conditions, and [" + deletedNotifications + "] conditions in [" + (System.currentTimeMillis() - start) + "]ms");
 
         return deletedAlerts;
     }

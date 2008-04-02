@@ -35,9 +35,8 @@ public class DeletePackagesRequest implements Serializable {
     private final Set<ResourcePackageDetails> packages;
 
     public DeletePackagesRequest(int requestId, int resourceId, Set<ResourcePackageDetails> packages) {
-        if (packages == null) {
-            throw new NullPointerException("packages==null");
-        }
+        if (packages == null)
+            throw new IllegalArgumentException("packages cannot be null");
 
         this.requestId = requestId;
         this.resourceId = resourceId;

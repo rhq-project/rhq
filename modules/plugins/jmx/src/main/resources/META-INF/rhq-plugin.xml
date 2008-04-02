@@ -100,6 +100,8 @@
                  category="performance"
                  property="ProcessCpuTime"
                  description="The cpu time used by this process"
+                 dataType="measurement"
+                 measurementType="trendsup"
                  units="nanoseconds"/>
          <metric displayName="Committed Virtual Memory"
                  defaultOn="true"

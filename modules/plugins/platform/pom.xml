@@ -50,7 +50,7 @@
          <activation>
             <property>
                <name>maven.test.skip</name>
-               <value>false</value>
+               <value>!true</value>
             </property>
          </activation>
 

@@ -20,6 +20,9 @@
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="org.hibernate.EmptyInterceptor" %>
+<%@ page import="org.hibernate.persister.entity.SingleTableEntityPersister" %>
+<%@ page import="org.hibernate.engine.NamedQueryDefinition" %>
+<%@ page import="org.hibernate.hql.ParameterTranslations" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
@@ -35,12 +38,6 @@
 <form action="/admin/hibernate.jsp" method="post">
 
 
-    <b>JPQL: </b><textarea name="hql" type="text" rows="8" cols="120"><%=request.getParameter("hql")%></textarea>
-    <br/>
-    <input name="translate" type="submit" value="translate"/>
-    <input name="execute" type="submit" value="execute"/>
-
-<br/>
 <%
     if (!LookupUtil.getAuthorizationManager().isSystemSuperuser(SessionUtils.getWebUser(session).getSubject())) // no one but rhqadmin can view this page
     {
@@ -48,22 +45,32 @@
     }
 
     String hql = request.getParameter("hql");
+    String namedQuery = request.getParameter("namedQuery");
     List results = null;
     long executionTime = 0;
     String error = null;
     QueryTranslator qt = null;
     final List<String> executedSQL = new ArrayList<String>();
-    if (hql != null) {
 
         InitialContext ic = new InitialContext();
 
+        EntityManagerFactory emf = (EntityManagerFactory) ic.lookup("java:/RHQEntityManagerFactory");
         EntityManager em = ((EntityManagerFactory) ic.lookup("java:/RHQEntityManagerFactory"))
                 .createEntityManager();
 
 
         org.hibernate.Session s = PersistenceUtility.getHibernateSession(em);
         SessionFactoryImplementor sfi = (SessionFactoryImplementor) s.getSessionFactory();
+        
 
+        System.out.println(sfi.getClass());
+        Map stuff = sfi.getAllClassMetadata();
+        for (Object key : stuff.keySet()) {
+//            System.out.println(key.getClass().getSimpleName() + " = " + stuff.get(key));
+
+            SingleTableEntityPersister ep;
+
+        }
 
 
         s = sfi.openSession(new EmptyInterceptor() {
@@ -72,7 +79,7 @@
                 executedSQL.add(s);
                 return super.onPrepareStatement(s);
             }
-            
+
 
             public void preFlush(Iterator entities) {
                 List entityList = createList(entities);
@@ -89,22 +96,58 @@
             }
         });
 
+        if (namedQuery != null) {
+            NamedQueryDefinition queryDef = sfi.getNamedQuery(namedQuery);
+            if (queryDef != null) {
+                hql = queryDef.getQueryString();
+            }
+        }
 
-        qt = new ASTQueryTranslatorFactory().createQueryTranslator(
+        request.setAttribute("hql", hql);
+        request.setAttribute("namedQuery", namedQuery);
+
+
+        %>
+
+<table>
+    <tr>
+    <td><b>Named Query: </b></td><td><input type="text" name="namedQuery" size="100" value="<%=request.getAttribute("namedQuery") != null ? request.getAttribute("namedQuery") : ""%>"/></td></tr>
+    <tr><td><b>JPQL: </b></td><td><textarea name="hql" type="text" rows="8" cols="120"><%=request.getAttribute("hql") != null ? request.getAttribute("hql") : ""%></textarea></td></tr>
+
+    <tr><td><input name="translate" type="submit" value="translate"/>
+    <input name="execute" type="submit" value="execute"/></td></tr>
+    </table>
+
+<hr/>
+
+<%
+    if (hql != null || namedQuery != null) {
+        System.out.println("hql: " + hql);
+        String sql = null;
+        Set<String> parameterNames = null;
+        try {
+            qt = new ASTQueryTranslatorFactory().createQueryTranslator(
                         "test query",
                         hql,
                         null,
                         (SessionFactoryImplementor) s.getSessionFactory());
 
-        qt.compile(null,true);
+            qt.compile(null,false);
+            sql = qt.getSQLString();
 
-        String sql = qt.getSQLString();
+            out.write("<b>SQL: </b><textarea rows=\"10\" cols=\"120\">" + sql + "</textarea>");
 
-        //((SessionFactoryImplementor) s.getSessionFactory()).getInterceptor();
-        out.write("<b>SQL: </b><textarea rows=\"10\" cols=\"120\">" + sql + "</textarea>");
+            ParameterTranslations pt = qt.getParameterTranslations();
+            if (pt != null) {
+                parameterNames = pt.getNamedParameterNames();
+                request.setAttribute("parameterNames", parameterNames);
+            }
+        } catch (Exception e) {
+            error = getExceptionString(e);
+            request.setAttribute("error",error);
+        }
 
-        Set<String> parameterNames = qt.getParameterTranslations().getNamedParameterNames();
-        request.setAttribute("parameterNames", parameterNames);
+
         %>
 <br/>
     <c:if test="${parameterNames != null}">
@@ -143,15 +186,13 @@
                     out.println("parameter " + pn + " = " + paramterValue);
                     q.setParameter(pn,paramterValue);
                 }
+                q.setMaxResults(100);
                 results = q.list(); //getResultList();
 
                 request.setAttribute("results",results);
 
             } catch (Exception e) {
-                StringWriter sw = new StringWriter();
-                PrintWriter pw = new PrintWriter(sw);
-                e.printStackTrace(pw);
-                error = sw.toString();
+                error = getExceptionString(e);
                 request.setAttribute("error",error);
             }
             executionTime = (System.currentTimeMillis() - start);
@@ -218,6 +259,15 @@
 
     </table>
 </c:if>
+
+<%!
+    private String getExceptionString(Throwable t) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        t.printStackTrace(pw);
+        return sw.toString();
+    }
+%>
 
 </body>
 </html>

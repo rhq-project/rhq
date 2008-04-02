@@ -38,8 +38,10 @@
       </navigation-case>
 
       <navigation-case>
-         <from-outcome>createArtifact</from-outcome>
-         <to-view-id>/rhq/resource/content/create.xhtml</to-view-id>
+         <from-action>#{ListPackagesUIBean.deleteSelectedInstalledPackages}</from-action>
+         <from-outcome>successOrFailure</from-outcome>
+         <to-view-id>/rhq/resource/content/history.xhtml?id=${param.id}</to-view-id>
+         <redirect/>
       </navigation-case>
       
    </navigation-rule>

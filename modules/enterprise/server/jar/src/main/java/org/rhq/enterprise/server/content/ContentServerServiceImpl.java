@@ -71,13 +71,19 @@ public class ContentServerServiceImpl implements ContentServerService {
     }
 
     public void completeDeletePackageRequest(RemovePackagesResponse response) {
+        ContentManagerLocal contentManager = LookupUtil.getContentManager();
+        contentManager.completeDeletePackageRequest(response);
     }
 
     public void completeRetrievePackageBitsRequest(ContentServiceResponse response, InputStream contentStream) {
+        ContentManagerLocal contentManager = LookupUtil.getContentManager();
+        contentManager.completeRetrievePackageBitsRequest(response, contentStream);
     }
 
     public Set<ResourcePackageDetails> loadDependencies(int requestId, Set<PackageDetailsKey> dependencyPackages) {
-        return null;
+        ContentManagerLocal contentManager = LookupUtil.getContentManager();
+        Set<ResourcePackageDetails> packageDetails = contentManager.loadDependencies(requestId, dependencyPackages);
+        return packageDetails;
     }
 
     public long downloadPackageBitsGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,

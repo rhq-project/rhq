@@ -81,7 +81,6 @@ public class ContentManagerHelper {
 
         details.setClassification(generalPackage.getClassification());
         details.setDisplayName(packageVersion.getDisplayName());
-        details.setExtraProperties(packageVersion.getExtraProperties());
         details.setFileCreatedDate(packageVersion.getFileCreatedDate());
         details.setFileName(packageVersion.getFileName());
         details.setFileSize(packageVersion.getFileSize());
@@ -92,8 +91,6 @@ public class ContentManagerHelper {
         details.setMetadata(packageVersion.getMetadata());
         details.setSHA265(packageVersion.getSHA256());
         details.setShortDescription(packageVersion.getShortDescription());
-
-        details.setDeploymentTimeConfiguration(packageVersion.getExtraProperties());
 
         return details;
     }

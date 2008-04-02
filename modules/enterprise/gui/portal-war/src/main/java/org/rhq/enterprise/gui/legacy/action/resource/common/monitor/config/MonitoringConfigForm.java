@@ -25,10 +25,13 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config;
 
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.ImageButtonBean;
-import org.rhq.enterprise.gui.legacy.Constants;
+
+import org.rhq.enterprise.gui.legacy.NumberConstants;
 import org.rhq.enterprise.gui.legacy.action.resource.ResourceForm;
 
 /**
@@ -87,7 +90,7 @@ public class MonitoringConfigForm extends ResourceForm {
      * If we are working on the MeasurementDefinitions, should an update of a MetricDefinition value also update
      * existing schedules?
      */
-    private boolean schedulesShouldChange = true;
+    private boolean schedulesShouldChange;
 
     /**
      * Creates new MonitoringConfigForm
@@ -95,6 +98,7 @@ public class MonitoringConfigForm extends ResourceForm {
     public MonitoringConfigForm() {
         super();
         nullBtn = new ImageButtonBean();
+        schedulesShouldChange = true;
     }
 
     /**
@@ -106,14 +110,16 @@ public class MonitoringConfigForm extends ResourceForm {
         return collectionInterval * collectionUnit;
     }
 
+    @Override
     public void reset(ActionMapping mapping, HttpServletRequest request) {
-        this.collectionUnit = Constants.MINUTES;
+        this.collectionUnit = NumberConstants.MINUTES;
         this.collectionInterval = null;
         this.mids = new int[0];
         this.availableMids = new Integer[0];
         this.pendingMids = new Integer[0];
         this.filterBy = null;
         this.filterOptions = null;
+        this.schedulesShouldChange = false;
         super.reset(mapping, request);
     }
 

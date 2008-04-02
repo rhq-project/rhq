@@ -21,6 +21,7 @@ package org.rhq.core.domain.measurement;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -38,10 +39,12 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Version;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.resource.ResourceType;
 
@@ -315,6 +318,10 @@ public class MeasurementDefinition implements Serializable {
 
     public NumericType getNumericType() {
         return numericType;
+    }
+
+    public void setNumericType(NumericType type) {
+        numericType = type;
     }
 
     public void setMeasurementType(NumericType numericType) {

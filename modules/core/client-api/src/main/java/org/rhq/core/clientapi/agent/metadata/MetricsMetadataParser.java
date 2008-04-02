@@ -21,6 +21,7 @@ package org.rhq.core.clientapi.agent.metadata;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import org.rhq.core.clientapi.descriptor.configuration.MeasurementUnitsDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.MetricDescriptor;
 import org.rhq.core.domain.measurement.DataType;
@@ -131,6 +132,8 @@ public class MetricsMetadataParser {
 
             perMinuteMetric.setDisplayName(perMinuteMetric.getDisplayName() + " per Minute");
             perMinuteMetric.setPerMinute(true);
+            // Per minute is no longer monotonically increasing/decreasing, but swinging within some band
+            perMinuteMetric.setNumericType(NumericType.DYNAMIC);
 
             definitions.add(definition);
             definitions.add(perMinuteMetric);

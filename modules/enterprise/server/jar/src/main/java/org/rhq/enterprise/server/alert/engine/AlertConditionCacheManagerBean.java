@@ -91,7 +91,7 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
     }
 
     // this could potentially take really long, but we don't need to be in a transactional scope anyway
-    @TransactionAttribute(TransactionAttributeType.NEVER)
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public AlertConditionCacheStats updateConditions(List<MeasurementBaselineComposite> measurementBaselines) {
         AlertConditionCacheStats stats;
         stats = AlertConditionCache.getInstance().updateConditions(measurementBaselines);

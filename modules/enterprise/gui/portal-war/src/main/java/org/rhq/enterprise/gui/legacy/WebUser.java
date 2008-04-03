@@ -232,10 +232,12 @@ public class WebUser {
 
         String value = prop.getStringValue();
 
-        if (value == null)
-            throw new IllegalArgumentException("preference '" + key + "' requested is not valid");
+        // null values are allowed in maps, so it's necessary necessarily an exception - let that caller determine that
+        if (value != null) {
+            value = value.trim();
+        }
 
-        return value.trim();
+        return value;
     }
 
     public String getPreference(String key, String defaultValue) {

@@ -25,6 +25,7 @@
 
       <!-- dependency versions -->
       <el.version>1.0</el.version>
+      <hibernate-entitymanager.version>3.2.1.GA</hibernate-entitymanager.version>
       <jsf-facelets.version>1.1.14</jsf-facelets.version>
 
       <product.shortName>RHQ</product.shortName>
@@ -126,11 +127,18 @@
          <version>1.1.4</version>
       </dependency>
 
-      <!-- used by a test JSP -->
       <dependency>
          <groupId>hibernate</groupId>
          <artifactId>hibernate3</artifactId>
          <version>3.2.r14201-1</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <!-- used by a test JSP -->
+      <dependency>
+         <groupId>hibernate-entitymanager</groupId>
+         <artifactId>hibernate-entitymanager</artifactId>
+         <version>${hibernate-entitymanager.version}</version>
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 

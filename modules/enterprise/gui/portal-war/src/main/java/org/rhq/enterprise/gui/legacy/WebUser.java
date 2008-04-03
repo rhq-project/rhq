@@ -232,7 +232,7 @@ public class WebUser {
 
         String value = prop.getStringValue();
 
-        // null values are allowed in maps, so it's necessary necessarily an exception - let that caller determine that
+        // null values are often the default for many props; let the caller determine whether this is an error
         if (value != null) {
             value = value.trim();
         }

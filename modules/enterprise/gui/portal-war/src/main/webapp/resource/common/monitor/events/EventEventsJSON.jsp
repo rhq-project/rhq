@@ -10,6 +10,8 @@
 <%@ page import="org.rhq.enterprise.server.event.EventManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="java.text.SimpleDateFormat" %>
+<%@ page contentType="text/javascript" language="java" %>
+
 
 <%
     EventManagerLocal eventManager = LookupUtil.getEventManager();
@@ -82,7 +84,8 @@
 
             String link = "/resource/common/Events.do?mode=events&id=" + resourceId + "&eventId=" + event.getEventId();
 
-            String detail = event.getEventDetail().replaceAll("\"","\\\"");
+            String detail = event.getEventDetail().replaceAll("\"","\\\\\"");
+            
 
             %>
 

@@ -795,7 +795,7 @@ public interface CommI18NResourceKeys {
     @I18NMessages( { @I18NMessage("A remote output stream with an ID of [{0}] and server endpoint of [{1}] has not yet been assigned a sender object - cannot access the stream") })
     String REMOTE_OUTPUT_STREAM_HAS_NO_SENDER = "RemoteOutputStream.remote-output-stream-missing-sender";
 
-    @I18NMessages( { @I18NMessage("Failed to create a command sender for [{0]}") })
+    @I18NMessages( { @I18NMessage("Failed to create a command sender for [{0}]") })
     String FAILED_TO_CREATE_SENDER = "ServiceContainer.failed-to-create-sender";
 
     @I18NMessages( { @I18NMessage("Remote input stream with ID [{0}] has been idle and needs to be removed but failed to do so. Cause: [{1}]") })

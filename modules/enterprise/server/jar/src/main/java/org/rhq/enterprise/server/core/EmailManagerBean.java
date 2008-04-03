@@ -141,9 +141,7 @@ public class EmailManagerBean implements EmailManagerLocal {
         // better to be paranoid and on the safe side than risk it just to save one line of code
         template = template.replaceAll(TEMPLATE_TOKEN_TIMESTAMP, cleanse(timestamp, new Date().toString()));
 
-        /*
-         * if replacements lookup from the message bundle fails, these will look like "?some.dot.delimited.property?"
-         */
+        // if replacements lookup from the message bundle fails, these will look like "?some.dot.delimited.property?"
         template = template.replaceAll(TEMPLATE_TOKEN_CONDITIONS, cleanse(conditionLogs, "?Unknown Condition Logs?"));
 
         // better to be paranoid and on the safe side than risk it just to save one line of code

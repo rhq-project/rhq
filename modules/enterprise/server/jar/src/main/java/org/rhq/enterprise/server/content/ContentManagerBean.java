@@ -27,6 +27,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -432,6 +434,22 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         persistedRequest.setErrorMessage(response.getOverallRequestErrorMessage());
         persistedRequest.setStatus(translateRequestResultStatus(response.getOverallRequestResult()));
 
+        // All history entries on the request at this point should be considered "in progress". We need to make
+        // sure each of these is closed out in some capacity. Typically, this will be done by the response
+        // explicitly indicating the result of each individual package. However, we can't rely on the plugin
+        // always doing this, so we need to keep track of which ones are not closed to prevent dangling in progress
+        // entries.
+        Set<InstalledPackageHistory> requestInProgressEntries = persistedRequest.getInstalledPackageHistory();
+
+        // Convert to a map so we can easily remove entries from it as they are closed by the individual
+        // package responses.
+        Map<PackageVersion, InstalledPackageHistory> inProgressEntries =
+            new HashMap<PackageVersion, InstalledPackageHistory>(requestInProgressEntries.size());
+
+        for (InstalledPackageHistory history : requestInProgressEntries) {
+            inProgressEntries.put(history.getPackageVersion(), history);
+        }
+
         // Handle each individual package
         Date timestamp = new Date();
 
@@ -486,6 +504,33 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             } else {
                 history.setStatus(InstalledPackageHistoryStatus.FAILED);
                 history.setErrorMessage(singleResponse.getErrorMessage());
+            }
+
+            entityManager.persist(history);
+            persistedRequest.addInstalledPackageHistory(history);
+
+            // We're closing out the package request for this package version, so remove it from the cache of entries
+            // that need to be closed
+            inProgressEntries.remove(packageVersion);
+        }
+
+        // For any entries that were not closed, add closing entries
+        for (InstalledPackageHistory unclosed : inProgressEntries.values()) {
+            PackageVersion packageVersion = unclosed.getPackageVersion();
+
+            // Create the history entity
+            InstalledPackageHistory history = new InstalledPackageHistory();
+            history.setContentServiceRequest(persistedRequest);
+            history.setPackageVersion(packageVersion);
+            history.setResource(resource);
+            history.setTimestamp(timestamp);
+
+            // One option is to create a new status that indicates unknown. For now, just give them the same result
+            // as the overall request result
+            if (response.getOverallRequestResult() == ContentResponseResult.SUCCESS) {
+                history.setStatus(InstalledPackageHistoryStatus.INSTALLED);
+            } else {
+                history.setStatus(InstalledPackageHistoryStatus.FAILED);
             }
 
             entityManager.persist(history);
@@ -604,6 +649,22 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         persistedRequest.setErrorMessage(response.getOverallRequestErrorMessage());
         persistedRequest.setStatus(translateRequestResultStatus(response.getOverallRequestResult()));
 
+        // All history entries on the request at this point should be considered "in progress". We need to make
+        // sure each of these is closed out in some capacity. Typically, this will be done by the response
+        // explicitly indicating the result of each individual package. However, we can't rely on the plugin
+        // always doing this, so we need to keep track of which ones are not closed to prevent dangling in progress
+        // entries.
+        Set<InstalledPackageHistory> requestInProgressEntries = persistedRequest.getInstalledPackageHistory();
+
+        // Convert to a map so we can easily remove entries from it as they are closed by the individual
+        // package responses.
+        Map<PackageVersion, InstalledPackageHistory> inProgressEntries =
+            new HashMap<PackageVersion, InstalledPackageHistory>(requestInProgressEntries.size());
+
+        for (InstalledPackageHistory history : requestInProgressEntries) {
+            inProgressEntries.put(history.getPackageVersion(), history);
+        }
+
         // Handle each individual package
         Date timestamp = new Date();
 
@@ -636,6 +697,36 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 history.setStatus(InstalledPackageHistoryStatus.FAILED);
                 history.setErrorMessage(singleResponse.getErrorMessage());
             }
+
+            entityManager.persist(history);
+            persistedRequest.addInstalledPackageHistory(history);
+
+            // We're closing out the package request for this package version, so remove it from the cache of entries
+            // that need to be closed
+            inProgressEntries.remove(packageVersion);
+        }
+
+        // For any entries that were not closed, add closing entries
+        for (InstalledPackageHistory unclosed : inProgressEntries.values()) {
+            PackageVersion packageVersion = unclosed.getPackageVersion();
+
+            // Create the history entity
+            InstalledPackageHistory history = new InstalledPackageHistory();
+            history.setContentServiceRequest(persistedRequest);
+            history.setPackageVersion(packageVersion);
+            history.setResource(resource);
+            history.setTimestamp(timestamp);
+
+            // One option is to create a new status that indicates unknown. For now, just give them the same result
+            // as the overall request result
+            if (response.getOverallRequestResult() == ContentResponseResult.SUCCESS) {
+                history.setStatus(InstalledPackageHistoryStatus.DELETED);
+            } else {
+                history.setStatus(InstalledPackageHistoryStatus.FAILED);
+            }
+
+            entityManager.persist(history);
+            persistedRequest.addInstalledPackageHistory(history);
         }
     }
 

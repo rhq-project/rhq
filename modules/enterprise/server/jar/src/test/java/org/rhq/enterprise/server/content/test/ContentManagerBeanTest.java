@@ -933,6 +933,76 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = ENABLE_TESTS)
+    public void testDeployPackagesNoIndividualResponses() throws Exception {
+        // Setup  --------------------------------------------
+        Subject overlord = subjectManager.getOverlord();
+
+        Set<ResourcePackageDetails> installUs = new HashSet<ResourcePackageDetails>(1);
+
+        // Package 1, Version 2 with configuration values
+        Configuration deploymentConfiguration1 = new Configuration();
+        deploymentConfiguration1.put(new PropertySimple("property1", "value1"));
+
+        PackageVersion packageVersion1 = package1.getVersions().get(1);
+        PackageDetailsKey key1 = new PackageDetailsKey(package1.getName(), packageVersion1.getVersion(), package1
+            .getPackageType().getName(), packageVersion1.getArchitecture().getName());
+        ResourcePackageDetails packageDetails1 = new ResourcePackageDetails(key1);
+        packageDetails1.setDeploymentTimeConfiguration(deploymentConfiguration1);
+
+        installUs.add(packageDetails1);
+
+        // Make sure the mock is configured to return a failure
+        this.contentAgentService.setResponseReturnStatus(ContentResponseResult.FAILURE);
+        this.contentAgentService.setThrowError(false);
+        this.contentAgentService.setReturnIndividualResponses(false);
+
+        // Test  --------------------------------------------
+        contentManager.deployPackages(overlord, resource1.getId(), installUs);
+        
+        // Give the agent service a second to make sure it finishes out its call
+        Thread.sleep(1000);
+
+        // Verify  --------------------------------------------
+
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+
+        try {
+            // Content request
+            Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE);
+            query.setParameter("resourceId", resource1.getId());
+
+            List<?> results = query.getResultList();
+            assert results.size() == 1 : "Incorrect number of content service requests. Expected: 1, Found: "
+                + results.size();
+
+            ContentServiceRequest request = (ContentServiceRequest) results.get(0);
+            assert request.getStatus() == ContentRequestStatus.FAILURE: "Request status incorrect. Expected: FAILURE, Found: "
+                + request.getStatus();
+
+            // Check for Package 1
+            query = em.createNamedQuery(InstalledPackageHistory.QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID);
+            query.setParameter("contentServiceRequestId", request.getId());
+            query.setParameter("packageVersionId", packageVersion1.getId());
+
+            results = query.getResultList();
+
+            assert results.size() == 2 : "Incorrect number of history entries. Expected: 2, Found: " + results.size();
+
+            InstalledPackageHistory historyEntity = (InstalledPackageHistory) results.get(0);
+            assert historyEntity.getStatus() == InstalledPackageHistoryStatus.FAILED : "Incorrect status on first entity. Expected: FAILED, Found: "
+                + historyEntity.getStatus();
+
+            historyEntity = (InstalledPackageHistory) results.get(1);
+            assert historyEntity.getStatus() == InstalledPackageHistoryStatus.BEING_INSTALLED : "Incorrect status on first entity. Expected: BEING_INSTALLED, Found: "
+                + historyEntity.getStatus();
+        } finally {
+            getTransactionManager().rollback();
+            em.close();
+        }
+    }
+
+    @Test(enabled = ENABLE_TESTS)
     public void testLoadDependencies() throws Exception {
         // Setup  --------------------------------------------
         Set<PackageDetailsKey> loadUs = new HashSet<PackageDetailsKey>(3);
@@ -1104,6 +1174,139 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             ContentServiceRequest request = (ContentServiceRequest) results.get(0);
             assert request.getStatus() == ContentRequestStatus.SUCCESS : "Request status incorrect. Expected: SUCCESS, Found: "
                 + request.getStatus();
+
+            // Verify history entries
+            query = em.createNamedQuery(InstalledPackageHistory.QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID);
+            query.setParameter("contentServiceRequestId", request.getId());
+            query.setParameter("packageVersionId", installedPackage1.getPackageVersion().getId());
+
+            results = query.getResultList();
+
+            assert results.size() == 2 : "Incorrect number of history entries. Expected: 2, Found: " + results.size();
+
+            InstalledPackageHistory historyEntity = (InstalledPackageHistory) results.get(0);
+            assert historyEntity.getStatus() == InstalledPackageHistoryStatus.DELETED : "Incorrect status on first entity. Expected: DELETED, Found: "
+                + historyEntity.getStatus();
+
+            historyEntity = (InstalledPackageHistory) results.get(1);
+            assert historyEntity.getStatus() == InstalledPackageHistoryStatus.BEING_DELETED : "Incorrect status on first entity. Expected: BEING_DELETED, Found: "
+                + historyEntity.getStatus();
+
+            // Package 4, Version 2
+            query = em.createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_VER_ID);
+            query.setParameter("resourceId", resource1.getId());
+            query.setParameter("packageVersionId", installedPackage1.getPackageVersion().getId());
+
+            results = query.getResultList();
+            assert results.size() == 1: "Incorrect number of installed packages for package 1, version 2. Expected: 0, Found: "
+                + results.size();
+
+            // Package 2, Version 1
+            query = em.createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_VER_ID);
+            query.setParameter("resourceId", resource1.getId());
+            query.setParameter("packageVersionId", package5.getVersions().get(0).getId());
+
+            results = query.getResultList();
+            assert results.size() == 1 : "Incorrect number of installed packages for package 2, version 1. Expected: 1, Found: "
+                + results.size();
+        } finally {
+            getTransactionManager().rollback();
+            em.close();
+        }
+    }
+
+    @Test(enabled = ENABLE_TESTS)
+    public void testDeletePackagesNoIndividualResponses() throws Exception {
+        // Setup  --------------------------------------------
+        Subject overlord = subjectManager.getOverlord();
+
+        Set<Integer> deleteUs = new HashSet<Integer>(1);
+
+        // Delete installed package for package4
+        deleteUs.add(installedPackage1.getId());
+
+        // Leave package5 installed
+
+        // Make sure the mock is configured to return a success
+        this.contentAgentService.setResponseReturnStatus(ContentResponseResult.FAILURE);
+        this.contentAgentService.setThrowError(false);
+        this.contentAgentService.setReturnIndividualResponses(false);
+
+        // Test  --------------------------------------------
+
+        // Perform the deploy while locking the agent service. This allows us to check the state after the request
+        // is sent to the agent but before the agent has replied.
+        synchronized (responseLock) {
+            contentManager.deletePackages(overlord, resource1.getId(), deleteUs);
+
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+
+            try {
+                // Content request
+                Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE);
+                query.setParameter("resourceId", resource1.getId());
+
+                List<?> results = query.getResultList();
+                assert results.size() == 1 : "Incorrect number of content service requests. Expected: 1, Found: "
+                    + results.size();
+
+                ContentServiceRequest request = (ContentServiceRequest) results.get(0);
+                assert request.getStatus() == ContentRequestStatus.IN_PROGRESS : "Request status incorrect. Expected: IN_PROGRESS, Found: "
+                    + request.getStatus();
+
+                // Verify a history entry has been added for each package in the request
+                Set<InstalledPackageHistory> history = request.getInstalledPackageHistory();
+
+                assert history.size() == 1 : "Incorrect number of history entries on request. Expected: 1, Found: "
+                    + history.size();
+
+                for (InstalledPackageHistory historyEntry : history) {
+                    assert historyEntry.getStatus() == InstalledPackageHistoryStatus.BEING_DELETED : "Incorrect state on history entity. Expected: BEING_DELETED, Found: "
+                        + historyEntry.getStatus();
+                }
+            } finally {
+                getTransactionManager().rollback();
+                em.close();
+            }
+        }
+
+        // Verify  --------------------------------------------
+
+        // Give the agent service a second to make sure it finishes out its call
+        Thread.sleep(1000);
+
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+        try {
+            // Content request
+            Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE);
+            query.setParameter("resourceId", resource1.getId());
+
+            List<?> results = query.getResultList();
+            assert results.size() == 1 : "Incorrect number of content service requests. Expected: 1, Found: "
+                + results.size();
+
+            ContentServiceRequest request = (ContentServiceRequest) results.get(0);
+            assert request.getStatus() == ContentRequestStatus.FAILURE : "Request status incorrect. Expected: FAILURE, Found: "
+                + request.getStatus();
+
+            // Verify history entries
+            query = em.createNamedQuery(InstalledPackageHistory.QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID);
+            query.setParameter("contentServiceRequestId", request.getId());
+            query.setParameter("packageVersionId", installedPackage1.getPackageVersion().getId());
+
+            results = query.getResultList();
+
+            assert results.size() == 2 : "Incorrect number of history entries. Expected: 2, Found: " + results.size();
+
+            InstalledPackageHistory historyEntity = (InstalledPackageHistory) results.get(0);
+            assert historyEntity.getStatus() == InstalledPackageHistoryStatus.FAILED : "Incorrect status on first entity. Expected: FAILED, Found: "
+                + historyEntity.getStatus();
+
+            historyEntity = (InstalledPackageHistory) results.get(1);
+            assert historyEntity.getStatus() == InstalledPackageHistoryStatus.BEING_DELETED : "Incorrect status on first entity. Expected: BEING_DELETED, Found: "
+                + historyEntity.getStatus();
 
             // Package 4, Version 2
             query = em.createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_VER_ID);
@@ -1446,12 +1649,14 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                         // to do it. Since I'm skipping the PC entirely for this test, I'll do it here.
                         response.setRequestId(request.getRequestId());
 
-                        for (ResourcePackageDetails packageDetails : request.getPackages()) {
-                            RemoveIndividualPackageResponse individualResponse = new RemoveIndividualPackageResponse(
-                                packageDetails.getKey(), responseReturnStatus);
-                            response.addPackageResponse(individualResponse);
+                        if (returnIndividualResponses) {
+                            for (ResourcePackageDetails packageDetails : request.getPackages()) {
+                                RemoveIndividualPackageResponse individualResponse = new RemoveIndividualPackageResponse(
+                                    packageDetails.getKey(), responseReturnStatus);
+                                response.addPackageResponse(individualResponse);
+                            }
                         }
-
+                        
                         ContentManagerBeanTest.this.contentManager.completeDeletePackageRequest(response);
                     }
                 }

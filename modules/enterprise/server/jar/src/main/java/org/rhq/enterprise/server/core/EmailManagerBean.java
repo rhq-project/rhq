@@ -58,7 +58,7 @@ public class EmailManagerBean implements EmailManagerLocal {
      * The token string found in the email template file that will be replaced with an ascii tree structure containing
      * the names of resources up to the corresponding platform
      */
-    private static final String TEMPLATE_TOKEN_FULL_RESOURCE_HIERARCHY = "@@@FULL_RESOURCE_HIERARCHY@@@";
+    private static final String TEMPLATE_TOKEN_RESOURCE_HIERARCHY = "@@@FULL_RESOURCE_HIERARCHY@@@";
 
     /**
      * The token string found in the email template file that will be replaced with an alert name.
@@ -125,30 +125,29 @@ public class EmailManagerBean implements EmailManagerLocal {
         InputStream templateStream = this.getClass().getClassLoader().getResourceAsStream("alert-email-template.txt");
         String template = new String(StreamUtil.slurp(templateStream));
 
+        // the resource hierarchy could have backslash characters from new lines and/or resource names
+        template = template.replaceAll(TEMPLATE_TOKEN_RESOURCE_HIERARCHY, cleanse(resourceHierarchy,
+            "?Unknown Resource Hierarchy?"));
+
+        // resource names will have backslashes in them when they represent some windows file system service
+        template = template.replaceAll(TEMPLATE_TOKEN_RESOURCE_NAME, cleanse(resourceName, "?Unknown Resource?"));
+
+        // nothing preventing a user from creating an alert definition named "my\cool?definition"
+        template = template.replaceAll(TEMPLATE_TOKEN_ALERT_NAME, cleanse(alertName, "?Unknown Alert?"));
+
+        //if the priority enum for alerts changes in the future, we'll be safe
+        template = template.replaceAll(TEMPLATE_TOKEN_PRIORITY, cleanse(priority, "!! - Medium"));
+
+        // better to be paranoid and on the safe side than risk it just to save one line of code
+        template = template.replaceAll(TEMPLATE_TOKEN_TIMESTAMP, cleanse(timestamp, new Date().toString()));
+
         /*
-         * if we don't escape the regex special characters '\' and '$', they will be interpreted differently
-         * than desired; quoteReplacement was specifically written to help alleviate this common scenario:
-         * 
-         *    http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6523151
+         * if replacements lookup from the message bundle fails, these will look like "?some.dot.delimited.property?"
          */
-        resourceHierarchy = Matcher.quoteReplacement(resourceHierarchy);
-        template = template.replaceAll(TEMPLATE_TOKEN_FULL_RESOURCE_HIERARCHY,
-            (resourceHierarchy != null) ? resourceHierarchy : "?Unknown Resource Hierarchy?");
+        template = template.replaceAll(TEMPLATE_TOKEN_CONDITIONS, cleanse(conditionLogs, "?Unknown Condition Logs?"));
 
-        template = template.replaceAll(TEMPLATE_TOKEN_RESOURCE_NAME, (resourceName != null) ? resourceName
-            : "?Unknown Resource?");
-
-        template = template.replaceAll(TEMPLATE_TOKEN_ALERT_NAME, (alertName != null) ? alertName : "?Unknown Alert?");
-
-        template = template.replaceAll(TEMPLATE_TOKEN_PRIORITY, (priority != null) ? priority : "!! - Medium");
-
-        template = template.replaceAll(TEMPLATE_TOKEN_TIMESTAMP, (timestamp != null) ? timestamp : new Date()
-            .toString());
-
-        template = template.replaceAll(TEMPLATE_TOKEN_CONDITIONS, (conditionLogs != null) ? conditionLogs
-            : "?Unknown ConditionLogs?");
-
-        template = template.replaceAll(TEMPLATE_TOKEN_ALERT_URL, (alertUrl != null) ? alertUrl : "?Unknown URL?");
+        // better to be paranoid and on the safe side than risk it just to save one line of code
+        template = template.replaceAll(TEMPLATE_TOKEN_ALERT_URL, cleanse(alertUrl, "?Unknown URL?"));
 
         String subject = "[" + RHQConstants.PRODUCT_NAME + "] Alert";
 
@@ -164,5 +163,20 @@ public class EmailManagerBean implements EmailManagerLocal {
         message.put(subject, template);
 
         return message;
+    }
+
+    /*
+     * if we don't escape the regex special characters '\' and '$', they will be interpreted differently
+     * than desired; quoteReplacement was specifically written to help alleviate this common scenario:
+     * 
+     *    http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6523151
+     */
+    private String cleanse(String passedValue, String defaultValue) {
+        String results = passedValue;
+        if (results == null) {
+            results = defaultValue;
+        }
+        // cleanse no matter what, because it's possible the defaultValue has invalid characters too
+        return Matcher.quoteReplacement(results);
     }
 }

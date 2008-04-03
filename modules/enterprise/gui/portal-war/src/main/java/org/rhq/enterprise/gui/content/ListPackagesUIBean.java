@@ -31,8 +31,8 @@ import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -99,6 +99,7 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
         return "successOrFailure";
     }
 
+    @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
             dataModel = new ListInstalledPackagesDataModel(PageControlView.InstalledPackagesList, MANAGED_BEAN_NAME);
@@ -153,7 +154,7 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             Resource requestResource = EnterpriseFacesContextUtility.getResourceIfExists();
 
-            String packageTypeFilter = ListPackagesUIBean.this.getPackageTypeFilter();
+            Integer packageTypeFilter = ListPackagesUIBean.this.getPackageTypeFilterAsInteger();
             String packageVersionFilter = ListPackagesUIBean.this.getPackageVersionFilter();
 
             if (requestResource == null) {
@@ -186,7 +187,15 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
         if (packageTypeFilter == null) {
             packageTypeFilter = SelectItemUtils.getSelectItemFilter("contentForm:packageTypeFilter");
         }
-        return packageTypeFilter;
+        return SelectItemUtils.cleanse(packageTypeFilter);
+    }
+
+    public Integer getPackageTypeFilterAsInteger() {
+        String packageTypeFilterString = getPackageTypeFilter();
+        if (packageTypeFilterString != null) {
+            return Integer.parseInt(packageTypeFilterString);
+        }
+        return null;
     }
 
     public void setPackageTypeFilter(String packageTypeFilter) {
@@ -210,7 +219,7 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
         if (packageVersionFilter == null) {
             packageVersionFilter = SelectItemUtils.getSelectItemFilter("contentForm:packageVersionFilter");
         }
-        return packageVersionFilter;
+        return SelectItemUtils.cleanse(packageVersionFilter);
     }
 
     public void setPackageVersionFilter(String packageVersionFilter) {

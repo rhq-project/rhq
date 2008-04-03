@@ -19,17 +19,19 @@
 package org.rhq.enterprise.server.content;
 
 import java.util.List;
+
 import javax.ejb.Local;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
+import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentRequestStatus;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
-import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.InstalledPackageHistory;
-import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageInstallationStep;
+import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
@@ -109,7 +111,7 @@ public interface ContentUIManagerLocal {
      * @return list of artifact requests for the specified resource
      */
     PageList<ContentServiceRequest> getContentRequestsWithStatus(Subject user, int resourceId,
-                                                                 ContentRequestStatus status, PageControl pageControl);
+        ContentRequestStatus status, PageControl pageControl);
 
     /**
      * Returns a list of all content requests made against the specified resource that do not match the specified
@@ -122,7 +124,7 @@ public interface ContentUIManagerLocal {
      * @return list of content requests for the specified resource
      */
     PageList<ContentServiceRequest> getContentRequestsWithNotStatus(Subject user, int resourceId,
-                                                                    ContentRequestStatus status, PageControl pageControl);
+        ContentRequestStatus status, PageControl pageControl);
 
     /**
      * Returns a list of all installed packages on the specified resource.
@@ -132,14 +134,14 @@ public interface ContentUIManagerLocal {
      * @param pageControl pagination controller
      * @return pagable list of packages installed on the resource
      */
-    PageList<PackageListItemComposite> getInstalledPackages(Subject user, int resourceId, String packageTypeFilter,
-                                                            String packageVersionFilter, PageControl pageControl);
+    PageList<PackageListItemComposite> getInstalledPackages(Subject user, int resourceId, Integer packageTypeFilterId,
+        String packageVersionFilter, PageControl pageControl);
 
     PageList<InstalledPackageHistory> getInstalledPackageHistory(Subject subject, int resourceId, int generalPackageId,
-                                                                 PageControl pc);
+        PageControl pc);
 
     PageList<PackageVersionComposite> getPackageVersionCompositesByFilter(Subject user, int resourceId, String filter,
-                                                                          PageControl pc);
+        PageControl pc);
 
     /**
      * Used to retrieve information about a package version to display to a user.
@@ -182,7 +184,7 @@ public interface ContentUIManagerLocal {
      * @return package version information for each package identified
      */
     PageList<PackageVersionComposite> getPackageVersionComposites(Subject user, int[] packageVersionIds,
-                                                                  PageControl pageControl);
+        PageControl pageControl);
 
     /**
      * Returns all architectures known to the system.

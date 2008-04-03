@@ -38,12 +38,18 @@ public class SelectItemUtils {
 
     public static String getSelectItemFilter(String domIdentifier) {
         String result = FacesContextUtility.getOptionalRequestParameter(domIdentifier);
-
-        if (ALL.getValue().equals(result)) {
-            result = null;
-        }
-
+        result = cleanse(result);
         return result;
+    }
+
+    public static String cleanse(String value) {
+        if (value == null) {
+            return null;
+        }
+        if (ALL.getValue().equals(value)) {
+            return null;
+        }
+        return value;
     }
 
     private static SelectItem[] init(int size, boolean addAllFilter) {

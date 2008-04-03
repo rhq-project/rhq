@@ -21,9 +21,10 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 import org.apache.commons.validator.GenericValidator;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMessage;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConversionException;
@@ -62,7 +63,11 @@ class MeasurementConverterValidator implements ConditionBeanConverterValidator {
         } else if (fromBean.getThresholdType().equals(TYPE_PERC)) {
             toCondition.setCategory(AlertConditionCategory.BASELINE);
             toCondition.setOption(fromBean.getBaselineOption());
-            toCondition.setThreshold(NumberUtil.stringAsNumber(fromBean.getPercentage()).doubleValue());
+
+            MeasurementNumericValueAndUnits valueAndUnits = MeasurementConverter.parse(fromBean.getPercentage(),
+                definition.getUnits());
+
+            toCondition.setThreshold(valueAndUnits.getValue());
             toCondition.setComparator(fromBean.getPercentageComparator());
         } else {
             toCondition.setCategory(AlertConditionCategory.CHANGE);

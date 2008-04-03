@@ -20,10 +20,12 @@ package org.rhq.enterprise.gui.common.paging;
 
 import java.beans.FeatureDescriptor;
 import java.util.Iterator;
+
 import javax.el.ELContext;
 import javax.el.ELResolver;
 import javax.el.PropertyNotFoundException;
 import javax.el.PropertyNotWritableException;
+
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -131,15 +133,24 @@ public class PageControlELResolver extends ELResolver {
                 // work around for http://jira.jboss.com/jira/browse/RF-1133
                 workAroundRF1133(view);
 
-                // more casting
-                int pageSize = (Integer) value;
-
                 // find the user for this session-based operation
                 WebUser webUser = EnterpriseFacesContextUtility.getWebUser();
 
                 // update it
                 PageControl pc = webUser.getPageControl(view);
-                pc.setPageSize(pageSize);
+                if (value != null) {
+                    /* 
+                     * only update the pageSize if the user changed it, otherwise just use the value that was 
+                     * already persisted; this will happen if a user is viewing lots of data (say 100 items),
+                     * but one of their table filters reduces the results to less than 15 items (currently the
+                     * minimum number to start paging); if the user then removes this filter, this resolver
+                     * kicks in and attempts to resolve the new pageSize, but it doesn't exist because there
+                     * was no explicit user action to change it, so let's display whatever option the user
+                     * had before the paging control was suppressed in the first place
+                     */
+                    int pageSize = (Integer) value;
+                    pc.setPageSize(pageSize);
+                }
                 webUser.setPageControl(view, pc);
 
                 // don't let other resolvers touch this

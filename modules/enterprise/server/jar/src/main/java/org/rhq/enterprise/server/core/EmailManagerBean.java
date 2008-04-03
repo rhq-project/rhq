@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+
 import javax.annotation.Resource;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -31,6 +33,7 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -47,13 +50,13 @@ public class EmailManagerBean implements EmailManagerLocal {
     private static final Log LOG = LogFactory.getLog(EmailManagerBean.class);
 
     /**
-     * The token string found in the email template file that will be replaced with an ascii tree structure containing
-     * the names of resources up to the corresponding platform
+     * The token string found in the email template file that will be replaced with a resource name.
      */
     private static final String TEMPLATE_TOKEN_RESOURCE_NAME = "@@@RESOURCE_NAME@@@";
 
     /**
-     * The token string found in the email template file that will be replaced with a resource name.
+     * The token string found in the email template file that will be replaced with an ascii tree structure containing
+     * the names of resources up to the corresponding platform
      */
     private static final String TEMPLATE_TOKEN_FULL_RESOURCE_HIERARCHY = "@@@FULL_RESOURCE_HIERARCHY@@@";
 
@@ -122,6 +125,13 @@ public class EmailManagerBean implements EmailManagerLocal {
         InputStream templateStream = this.getClass().getClassLoader().getResourceAsStream("alert-email-template.txt");
         String template = new String(StreamUtil.slurp(templateStream));
 
+        /*
+         * if we don't escape the regex special characters '\' and '$', they will be interpreted differently
+         * than desired; quoteReplacement was specifically written to help alleviate this common scenario:
+         * 
+         *    http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6523151
+         */
+        resourceHierarchy = Matcher.quoteReplacement(resourceHierarchy);
         template = template.replaceAll(TEMPLATE_TOKEN_FULL_RESOURCE_HIERARCHY,
             (resourceHierarchy != null) ? resourceHierarchy : "?Unknown Resource Hierarchy?");
 

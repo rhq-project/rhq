@@ -106,8 +106,7 @@ public class ViewAlertAction extends TilesAction {
                 } else {
                     // Format threshold and value.
                     MeasurementDefinition definition = condLog.getCondition().getMeasurementDefinition();
-                    String scaledFormattedValue = MeasurementConverter.scaleAndFormat(value, definition.getUnits(),
-                        true);
+                    String scaledFormattedValue = MeasurementConverter.fit(value, definition.getUnits()).toString();
 
                     alertCondBean.setActualValue(scaledFormattedValue);
                 }

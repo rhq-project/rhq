@@ -181,8 +181,8 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
                     String firedValue = log.getValue();
                     if (condition.getMeasurementDefinition() != null) {
                         double measurementValue = Double.valueOf(log.getValue());
-                        firedValue = MeasurementConverter.scaleAndFormat(measurementValue, condition
-                            .getMeasurementDefinition().getUnits(), true);
+                        firedValue = MeasurementConverter.fit(measurementValue,
+                            condition.getMeasurementDefinition().getUnits()).toString();
                     }
 
                     results.add(new AlertWithLatestConditionLog(alert, displayText, firedValue));

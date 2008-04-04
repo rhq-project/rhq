@@ -86,10 +86,12 @@
 <%--                      <tiles:insert definition=".resource.common.monitor.visibility.charts.metric.partrsrcs"/> 
                      &nbsp;<br>
 --%>                     
+                     <c:if test="${ViewChartForm.showBaseline}">
                      <tiles:insert definition=".resource.common.monitor.visibility.charts.metric.baselinerangeparams">
                         <tiles:put name="edit" value="false"/>
                      </tiles:insert>
                      &nbsp;<br>
+                     </c:if>
                   </c:when>
 
                   <c:when test="${param.mode == MODE_MON_CHART_MMSR}">

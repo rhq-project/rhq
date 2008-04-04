@@ -42,6 +42,7 @@ import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.core.domain.resource.Resource;
@@ -624,10 +625,16 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         MeasurementBaselineManagerLocal baselineManager = LookupUtil.getMeasurementBaselineManager();
         int metricId = chartForm.getM()[0];
 
-        // This tile is only present in single-metric, single-resource mode and for numeric metrics.
+        // This tile is only present in single-metric, single-resource mode and for dynamic, numeric metrics.
         if (chartForm.getMode().equals(ParamConstants.MODE_MON_CHART_SMSR) && (metricId != 0)) {
             MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, metricId, resource.getId(),
                 true);
+            if (schedule.getDefinition().getNumericType() != NumericType.DYNAMIC) {
+                chartForm.setShowBaseline(false);
+                return;
+            } else {
+                chartForm.setShowBaseline(true);
+            }
 
             // Set the name to be displayed.
             //chartForm.setChartName(schedule.getDefinition().getName());

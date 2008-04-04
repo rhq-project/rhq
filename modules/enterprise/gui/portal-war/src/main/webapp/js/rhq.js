@@ -199,7 +199,7 @@ function writeProtectInputs(inputs)
  */
 function prepareInputsForSubmission(form)
 {
-   var inputs = form.getInputs();
+   var inputs = Form.getInputs(form);
    for (var i = 0; i < inputs.length; i++)
    {
       if (inputs[i].disabled)

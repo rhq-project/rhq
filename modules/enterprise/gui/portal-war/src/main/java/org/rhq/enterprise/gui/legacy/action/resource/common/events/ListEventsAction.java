@@ -84,7 +84,7 @@ public class ListEventsAction extends BaseAction {
         eForm.setRu(unit);
         request.getSession().setAttribute("ru", unit);
 
-        PageControl pc = getPageControlFromRequest(request);
+        PageControl pc = WebUtility.getPageControl(request);
 
         EventSeverity severityFilter = getSeverityFromString(eForm.getSevFilter());
         String sourceFilter = eForm.getSourceFilter();
@@ -122,23 +122,6 @@ public class ListEventsAction extends BaseAction {
         ActionForward forward = checkSubmit(request, mapping, form, returnRequestParams);
 
         return returnSuccess(request, mapping, returnRequestParams);
-    }
-
-    private PageControl getPageControlFromRequest(HttpServletRequest request) {
-
-        String pns = WebUtility.getOptionalRequestParameter(request, "pn", ""); // page number
-        String pss = WebUtility.getOptionalRequestParameter(request, "ps", "15"); // page size 
-        String sc = WebUtility.getOptionalRequestParameter(request, "sc", ""); // sort column
-
-        PageControl pc = new PageControl();
-        if (!pns.equals(""))
-            pc.setPageNumber(Integer.valueOf(pns));
-        if (!pss.equals(""))
-            pc.setPageSize(Integer.valueOf(pss));
-        if (!sc.equals(""))
-            pc.sortBy(sc);
-
-        return pc;
     }
 
     /**

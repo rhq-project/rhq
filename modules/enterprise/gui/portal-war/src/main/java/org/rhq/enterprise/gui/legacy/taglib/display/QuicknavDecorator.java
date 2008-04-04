@@ -23,6 +23,7 @@ import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspTagException;
 import javax.servlet.jsp.tagext.Tag;
 import javax.servlet.jsp.tagext.TagSupport;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.taglibs.standard.tag.el.core.ExpressionUtil;
@@ -46,9 +47,9 @@ public abstract class QuicknavDecorator extends ColumnDecorator implements Tag {
 
     private static final IconInfo OPERATIONS_ICON_INFO = new IconInfo("/images/icon_hub_o.gif", "Operations");
 
-    private static final IconInfo ALERT_ICON_INFO = new IconInfo("/images/icon_hub_a.gif", "Alert");
+    private static final IconInfo ALERT_ICON_INFO = new IconInfo("/images/icon_hub_a.gif", "Alerts");
 
-    private static final IconInfo CONTENT_ICON_INFO = new IconInfo("/images/icon_hub_p.gif", "Content");
+    private static final IconInfo CONTENT_ICON_INFO = new IconInfo("/images/icon_hub_p.gif", "Packages");
 
     private static final String ICON_SRC_LOCKED = "/images/icon_hub_locked.gif";
 

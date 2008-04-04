@@ -125,6 +125,7 @@ function changeDropDown (masterSelName, selName, selectVal){
   	}
   }
 }
+
 </script>
 
 <!--  GENERAL PROPERTIES TITLE -->
@@ -174,10 +175,6 @@ function changeDropDown (masterSelName, selName, selectVal){
           </script>
       </td>          
 </logic:messagesPresent>
-
-      <script language="JavaScript" type="text/javascript">
-        changeDropDown('category', 'resourceTypeId','<c:out value="${GroupForm.resourceTypeId}"/>');
-      </script>
 	</tr>
 	
 	
@@ -212,4 +209,8 @@ function changeDropDown (masterSelName, selName, selectVal){
       <td colspan="4" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
     </tr>
 </table>
+
+<script language="JavaScript" type="text/javascript">
+  changeDropDown('category', 'resourceTypeId','<c:out value="${GroupForm.resourceTypeId}"/>');
+</script>
 <!--  /  -->

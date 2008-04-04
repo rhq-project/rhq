@@ -733,7 +733,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             group.getImplicitResources().add(new Resource(nextResourceId));
 
             // and continue
-            toBeSearched.addAll(resourceManager.getChildrenResourceIds(nextResourceId));
+            toBeSearched.addAll(resourceManager.getChildrenResourceIds(nextResourceId, InventoryStatus.COMMITTED));
         }
     }
 
@@ -789,7 +789,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             implicitResources.remove(lightWeightRemoverReference);
 
             // and continue
-            toBeSearched.addAll(resourceManager.getChildrenResourceIds(nextResourceId));
+            toBeSearched.addAll(resourceManager.getChildrenResourceIds(nextResourceId, InventoryStatus.COMMITTED));
         }
     }
 

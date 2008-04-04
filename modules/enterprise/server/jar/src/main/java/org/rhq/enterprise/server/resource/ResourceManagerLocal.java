@@ -166,7 +166,7 @@ public interface ResourceManagerLocal {
 
     PageList<Resource> getChildResources(Subject user, Resource parent, PageControl pageControl);
 
-    List<Integer> getChildrenResourceIds(int parentResourceId);
+    List<Integer> getChildrenResourceIds(int parentResourceId, InventoryStatus status);
 
     List<Integer> getValidCommittedResourceIds(Integer[] resourceIds);
 

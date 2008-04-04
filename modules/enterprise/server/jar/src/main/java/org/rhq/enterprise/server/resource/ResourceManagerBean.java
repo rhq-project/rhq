@@ -801,9 +801,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<Integer> getChildrenResourceIds(int parentResourceId) {
+    public List<Integer> getChildrenResourceIds(int parentResourceId, InventoryStatus status) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_CHILDREN_IDS_ADMIN);
         query.setParameter("parentResourceId", parentResourceId);
+        query.setParameter("inventoryStatus", status);
 
         List<Integer> results = query.getResultList();
         return results;

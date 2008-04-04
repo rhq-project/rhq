@@ -151,7 +151,8 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_FIND_VALID_COMMITTED_RESOURCE_IDS_ADMIN, query = "SELECT res.id "
         + "  FROM Resource res " + " WHERE res.inventoryStatus = 'COMMITTED' " + "   AND res.id IN ( :resourceIds ) "),
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_IDS_ADMIN, query = "SELECT res.id " + "  FROM Resource res "
-        + " WHERE res.parentResource.id = :parentResourceId "),
+        + " WHERE res.parentResource.id = :parentResourceId "
+        + "   AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null)"),
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN, query = "SELECT res "
         + "  FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
         + " WHERE res.parentResource = :parent " + "   AND s = :subject "),

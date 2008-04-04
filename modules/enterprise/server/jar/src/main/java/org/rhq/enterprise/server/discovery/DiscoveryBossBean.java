@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Iterator;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -130,7 +132,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             // Make sure all platform, server, and service types are valid. Also, make sure they're fetched - otherwise
             // we'll get persistence exceptions when we try to merge OR persist the platform.
             long rootStart = System.currentTimeMillis();
-            initResourceTypes(root);
+            if (!initResourceTypes(root)) {
+                continue;
+            }
             if ((root.getParentResource() != Resource.ROOT) && (root.getParentResource().getId() != Resource.ROOT_ID)) {
                 // This is a new resource that has a parent that already exists.
                 Resource parent = getExistingResource(root.getParentResource());
@@ -151,7 +155,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             }
         }
 
-        log.info("Inventory merge complete for [" + response.getUuidToIntegerMapping().size() + "] resources in ["
+        log.info("Inventory merge complete for [" + response.getUuidToIntegerMapping().size() + "] Resources in ["
             + (System.currentTimeMillis() - start) + "]ms");
 
         return response;
@@ -307,10 +311,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         MergeResourceResponse mergeResourceResponse;
         try {
             validateResource(resource);
-            initResourceTypes(resource);
+
         } catch (InvalidInventoryReportException e) {
-            throw new IllegalStateException("Plugin container returned an invalid resource - "
-                + e.getLocalizedMessage());
+            throw new IllegalStateException("Plugin Container sent an invalid Resource - " + e.getLocalizedMessage());
+        }
+        if (!initResourceTypes(resource)) {
+            throw new IllegalStateException("Plugin Container sent a Resource with an unknown type - " + resource.getResourceType());
         }
 
         Resource existingResource = getExistingResource(resource);
@@ -538,19 +544,26 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         return;
     }
 
-    private void initResourceTypes(Resource resource) throws InvalidInventoryReportException {
+    private boolean initResourceTypes(Resource resource) {
         ResourceType resourceType;
         resourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin(resource.getResourceType().getName(),
             resource.getResourceType().getPlugin());
         if (resourceType == null) {
-            throw new InvalidInventoryReportException("Reported resource [" + resource + "] has an unknown type ["
-                + resource.getResourceType() + "]...");
+            log.error("Reported resource [" + resource + "] has an unknown type ["
+                + resource.getResourceType() + "]. The Agent most likely has a plugin named '"
+                + resource.getResourceType().getPlugin()
+                + "' installed that is not installed on the Server. Resource will be ignored...");
+            return false;
         }
 
         resource.setResourceType(resourceType);
-        for (Resource child : resource.getChildResources()) {
-            initResourceTypes(child);
+        for (Iterator<Resource> childIterator = resource.getChildResources().iterator(); childIterator.hasNext();) {
+            Resource child = childIterator.next();
+            if (!initResourceTypes(child)) {
+                childIterator.remove();                
+            }
         }
+        return true;
     }
 
     private void addResourceToInventory(Resource resource, Resource parentResource, InventoryReportResponse response) {

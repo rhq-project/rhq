@@ -51,7 +51,18 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     public InventoryReportResponse mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
         long start = System.currentTimeMillis();
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
-        InventoryReportResponse response = discoveryBoss.mergeInventoryReport(report);
+        InventoryReportResponse response;
+        try {
+            response = discoveryBoss.mergeInventoryReport(report);
+        }
+        catch (InvalidInventoryReportException e) {
+            log.error("Received invalid inventory report from agent [" + report.getAgent() + "].", e);
+            throw e;
+        }
+        catch (RuntimeException e) {
+            log.error("Fatal error occurred during merging of inventory report from agent [" + report.getAgent() + "].", e);
+            throw e;
+        }
         log.info("Performance: inventory merge of [" + response.getUuidToIntegerMapping().size() + "] resource in ("
             + (System.currentTimeMillis() - start) + ")ms");
         return response;

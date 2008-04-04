@@ -229,7 +229,7 @@
 
 <tr>
   <td>
-<div style="border:1px solid black;height:200px" id="eventDetailDiv" >
+<div style="border:1px solid black;height:200px;overflow:auto;" id="eventDetailDiv" >
 <fmt:message key="resource.common.monitor.events.ShowDetail"/>
 </div>
   </td>

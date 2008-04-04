@@ -59,11 +59,6 @@ public class EventDetailsAction extends BaseAction {
 
     Log log = LogFactory.getLog(EventDetailsAction.class);
 
-    /* (non-Javadoc)
-     * @see org.apache.struts.action.Action#execute(org.apache.struts.action.ActionMapping,
-     * org.apache.struts.action.ActionForm, javax.servlet.http.HttpServletRequest,
-     * javax.servlet.http.HttpServletResponse)
-     */
     @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {

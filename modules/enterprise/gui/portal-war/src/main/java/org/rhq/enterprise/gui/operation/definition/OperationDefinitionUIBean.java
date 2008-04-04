@@ -37,6 +37,7 @@ public abstract class OperationDefinitionUIBean extends PagedDataTableUIBean {
     private OperationDefinition operationDefinition = null;
 
     private String timeout = null;
+    private String description = null;
 
     public OperationDefinitionUIBean() {
     }
@@ -70,6 +71,17 @@ public abstract class OperationDefinitionUIBean extends PagedDataTableUIBean {
         }
 
         return this.timeout;
+    }
+
+    public String getDescription() {
+        if (description == null) {
+            return "";
+        }
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     @Override

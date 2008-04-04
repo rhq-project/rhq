@@ -94,9 +94,8 @@ public abstract class OperationScheduleUIBean extends PagedDataTableUIBean {
         OperationDefinitionParametersUIBean operationParametersUIBean = FacesContextUtility
             .getBean(OperationDefinitionParametersUIBean.class);
         Configuration configuration = operationParametersUIBean.getConfiguration();
-        String description = FacesContextUtility.getOptionalRequestParameter("newScheduleForm:notes");
-        OperationDefinitionUIBean operationDefUIBean;
 
+        OperationDefinitionUIBean operationDefUIBean;
         if (this instanceof ResourceOperationScheduleUIBean) {
             operationDefUIBean = FacesContextUtility.getBean(ResourceOperationDefinitionUIBean.class);
         } else if (this instanceof ResourceGroupOperationScheduleUIBean) {
@@ -108,18 +107,19 @@ public abstract class OperationScheduleUIBean extends PagedDataTableUIBean {
 
         try {
             // if the user selected a timeout, add it to our configuration
-            Integer selectedTimeout = Integer.parseInt(operationDefUIBean.getTimeout());
+            String timeout = operationDefUIBean.getTimeout();
+            if (!timeout.trim().equals("")) {
+                Integer.parseInt(timeout); // see if it fails, to return back to the UI
 
-            if (selectedTimeout != null) {
                 if (configuration == null) {
                     configuration = new Configuration();
                 }
 
-                configuration
-                    .put(new PropertySimple(OperationDefinition.TIMEOUT_PARAM_NAME, selectedTimeout.toString()));
+                configuration.put(new PropertySimple(OperationDefinition.TIMEOUT_PARAM_NAME, timeout));
             }
 
             String operationName = manager.getOperationDefinition(subject, operationId).getName();
+            String description = operationDefUIBean.getDescription();
 
             scheduleOperation(subject, operationName, configuration, simpleTrigger, description);
         } catch (Exception e) {

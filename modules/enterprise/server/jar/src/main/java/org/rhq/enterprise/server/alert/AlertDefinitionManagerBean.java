@@ -29,11 +29,15 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -45,6 +49,7 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -63,6 +68,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
     AuthorizationManagerLocal authorizationManager;
     @EJB
     AlertConditionCacheManagerLocal alertConditionCacheManager;
+    @EJB
+    @IgnoreDependency
+    MeasurementDefinitionManagerLocal measurementDefinitionManager;
 
     private boolean checkPermission(Subject subject, AlertDefinition alertDefinition) {
         /*
@@ -378,6 +386,13 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
             if (alertConditionCategory == AlertConditionCategory.ALERT) {
                 throw new InvalidAlertDefinitionException(
                     "AlertDefinitionManager does not yet support condition category: " + alertConditionCategory);
+            }
+            if (alertConditionCategory == AlertConditionCategory.BASELINE) {
+                MeasurementDefinition def = alertCondition.getMeasurementDefinition();
+                if (def.getNumericType() != NumericType.DYNAMIC) {
+                    throw new InvalidAlertDefinitionException("Invalid Condition: '" + def.getDisplayName()
+                        + "' is a trending metric, and thus will never have baselines calculated for it.");
+                }
             }
         }
 

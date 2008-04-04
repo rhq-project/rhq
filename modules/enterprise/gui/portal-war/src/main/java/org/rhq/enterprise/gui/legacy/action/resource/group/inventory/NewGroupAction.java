@@ -19,14 +19,17 @@
 package org.rhq.enterprise.gui.legacy.action.resource.group.inventory;
 
 import java.util.HashMap;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
@@ -62,7 +65,13 @@ public class NewGroupAction extends BaseAction {
         Subject subject = RequestUtils.getSubject(request);
         Integer resourceTypeId = newForm.getResourceTypeId();
         String newGroupName = newForm.getName();
-        GroupCategory category = newForm.getGroupCategory();
+        GroupCategory category = null;
+        try {
+            category = newForm.getGroupCategory();
+        } catch (Exception e) {
+            RequestUtils.setError(request, "resource.group.inventory.error.GroupTypeIsRequired");
+            return returnFailure(request, mapping);
+        }
 
         ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
         ResourceGroupManagerLocal resourceGroupManager = LookupUtil.getResourceGroupManager();

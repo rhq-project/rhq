@@ -142,7 +142,7 @@
 <tr>
    <td width="5%"/>
    <td>
-     <html:select property="sevFilter">
+     <html:select property="sevFilter" onchange="this.form.submit(); return true;">
         <html:option value=""/>
         <html:option value="DEBUG"/>
         <html:option value="INFO"/>

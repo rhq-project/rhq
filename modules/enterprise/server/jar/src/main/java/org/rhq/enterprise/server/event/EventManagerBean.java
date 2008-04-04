@@ -56,6 +56,7 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
@@ -468,9 +469,9 @@ public class EventManagerBean implements EventManagerLocal {
             if (severity != null)
                 stm.setString(i++, severity.toString());
             if (isFilled(searchString))
-                stm.setString(i++, "'%" + searchString + "%'");
+                stm.setString(i++, PersistenceUtility.formatSearchParameter(searchString));
             if (isFilled(source))
-                stm.setString(i++, "'%" + source + "%'");
+                stm.setString(i++, PersistenceUtility.formatSearchParameter(source));
 
             rs = stm.executeQuery();
             while (rs.next()) {
@@ -511,9 +512,9 @@ public class EventManagerBean implements EventManagerLocal {
             if (severity != null)
                 stm.setString(i++, severity.toString());
             if (isFilled(searchString))
-                stm.setString(i++, "'%" + searchString + "%'");
+                stm.setString(i++, PersistenceUtility.formatSearchParameter(searchString));
             if (isFilled(source))
-                stm.setString(i++, "'%" + source + "%'");
+                stm.setString(i++, PersistenceUtility.formatSearchParameter(source));
 
             rs = stm.executeQuery();
             while (rs.next()) {
@@ -535,11 +536,11 @@ public class EventManagerBean implements EventManagerLocal {
         if (isCountQuery) {
             query = "SELECT count(ev.id) ";
         } else {
-            query = "SELECT ev.detail, ev.id, substr(evs.location, 1, 30) " +
-                    ", ev.severity, ev.timestamp, evs.resource_id, ev.ack_user, ev.ack_time ";
+            query = "SELECT ev.detail, ev.id, substr(evs.location, 1, 30) "
+                + ", ev.severity, ev.timestamp, evs.resource_id, ev.ack_user, ev.ack_time ";
         }
         query += "FROM RHQ_Event ev INNER JOIN RHQ_Event_Source evs ON evs.id = ev.event_source_id "
-                + "WHERE evs.resource_id IN ( ";
+            + "WHERE evs.resource_id IN ( ";
 
         query += JDBCUtil.generateInBinds(resourceIds.length);
         query += " ) ";
@@ -548,9 +549,9 @@ public class EventManagerBean implements EventManagerLocal {
         if (severity != null)
             query += " AND ev.severity = ? ";
         if (isFilled(searchString))
-            query += " AND ev.detail LIKE ? ";
+            query += " AND upper(ev.detail) LIKE ? ";
         if (isFilled(source))
-            query += " AND evs.location LIKE ? ";
+            query += " AND upper(evs.location) LIKE ? ";
         if (!isCountQuery) {
             query = addSortingToQuery(query, pc);
             // NOTE: Add paging to the query last, since for Oracle, the whole query will become an inner SELECT in the
@@ -567,7 +568,7 @@ public class EventManagerBean implements EventManagerLocal {
         }
         queryWithSorting.append(" ORDER BY ").append(pageControl.getPrimarySortColumn());
         if (pageControl.getPrimarySortOrder() != null) {
-           queryWithSorting.append(" ").append(pageControl.getPrimarySortOrder());
+            queryWithSorting.append(" ").append(pageControl.getPrimarySortOrder());
         }
         if (!pageControl.getPrimarySortColumn().equalsIgnoreCase("ev.id")) {
             queryWithSorting.append(", ev.id");
@@ -586,7 +587,8 @@ public class EventManagerBean implements EventManagerLocal {
             int maxRowNum = minRowNum + pageControl.getPageSize() - 1;
             queryWithPaging.append("SELECT * FROM (SELECT /*+ FIRST_ROWS(n) */ allResults.*, rownum rnum FROM (");
             queryWithPaging.append(query);
-            queryWithPaging.append(") allResults WHERE rownum <= ").append(maxRowNum).append(") WHERE rnum >= ").append(minRowNum);
+            queryWithPaging.append(") allResults WHERE rownum <= ").append(maxRowNum).append(") WHERE rnum >= ")
+                .append(minRowNum);
         } else {
             throw new RuntimeException("Unknown database type : " + this.dbType);
         }
@@ -598,8 +600,7 @@ public class EventManagerBean implements EventManagerLocal {
         if (this.dbType instanceof PostgresqlDatabaseType) {
             string.append(query);
             string.append(" LIMIT ").append(maxResults);
-        }
-        else if (this.dbType instanceof OracleDatabaseType) {
+        } else if (this.dbType instanceof OracleDatabaseType) {
             string.append("SELECT * FROM (");
             string.append(query);
             string.append(") WHERE rownum <= ").append(maxResults);
@@ -608,7 +609,7 @@ public class EventManagerBean implements EventManagerLocal {
         }
         return string.toString();
     }
-    
+
     @SuppressWarnings("unchecked")
     public EventComposite getEventDetailForEventId(Subject subject, int eventId) {
 

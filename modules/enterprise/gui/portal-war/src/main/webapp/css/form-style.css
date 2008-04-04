@@ -111,8 +111,6 @@
 .ListCell a, .tableCell a,
    .ListCell a:link, .tableCell a:link,
    .ListCell a:visited, .tableCell a:visited {
-   color: black;
-   text-decoration: none;
    font-weight: normal;
 }
 

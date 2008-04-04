@@ -69,15 +69,16 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
       <display:checkboxdecorator name="users" onclick="ToggleSelection(this, widgetProperties)" styleClass="listMember"  suppress="${user.id == 2}" />
     </display:column>
   </c:if>
+    <display:column width="20%" property="name" sortAttr="s.name"
+                    title="username"
+                    href="/admin/user/UserAdmin.do?mode=view" paramId="u" paramProperty="id" />
+  
     <display:column width="20%" property="firstName" sortAttr="s.firstName"
                     title="admin.user.list.First" />
        
     <display:column width="20%" property="lastName" sortAttr="s.lastName"
                     title="admin.user.list.Last" />
-
-    <display:column width="20%" property="name" sortAttr="s.name"
-                    title="username"
-                    href="/admin/user/UserAdmin.do?mode=view" paramId="u" paramProperty="id" />
+                    
     <display:column width="20%" property="emailAddress" title="admin.user.list.Email" autolink="true" sortAttr="s.emailAddress"/>
     <display:column width="20%" property="department" title="admin.user.list.Department" sortAttr="s.department" />
   </display:table>

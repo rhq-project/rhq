@@ -26,8 +26,10 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Locale;
+
 import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.Swap;
+
 import org.rhq.core.util.exec.ProcessExecutor;
 import org.rhq.core.util.exec.ProcessExecutorResults;
 import org.rhq.core.util.exec.ProcessToStart;
@@ -286,5 +288,9 @@ public class JavaSystemInfo implements SystemInfo {
 
     private UnsupportedOperationException getUnsupportedException(String err) {
         return new UnsupportedOperationException("No native library available - " + err);
+    }
+
+    public String getSystemArchitecture() {
+        return System.getProperty("os.arch");
     }
 }

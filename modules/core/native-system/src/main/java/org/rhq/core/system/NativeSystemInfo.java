@@ -25,6 +25,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.FileSystemMap;
@@ -34,6 +35,7 @@ import org.hyperic.sigar.OperatingSystem;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.hyperic.sigar.Swap;
+
 import org.rhq.core.system.pquery.ProcessInfoQuery;
 
 /**
@@ -315,5 +317,10 @@ public class NativeSystemInfo implements SystemInfo {
      * this object.
      */
     NativeSystemInfo() {
+    }
+
+    public String getSystemArchitecture() {
+        OperatingSystem op = OperatingSystem.getInstance();
+        return op.getArch();
     }
 }

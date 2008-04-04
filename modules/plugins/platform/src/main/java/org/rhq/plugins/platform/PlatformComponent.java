@@ -78,6 +78,7 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
     private static final String TRAIT_HOSTNAME = TRAIT_INDICATOR + "hostname";
     private static final String TRAIT_OSNAME = TRAIT_INDICATOR + "osname";
     private static final String TRAIT_OSVERSION = TRAIT_INDICATOR + "osversion";
+    private static final String TRAIT_ARCH = TRAIT_INDICATOR + "sysarch";
 
     protected ResourceContext resourceContext;
     private SystemInfo sysinfo;
@@ -201,6 +202,8 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
                 trait.setValue(sysinfo.getOperatingSystemName());
             } else if (TRAIT_OSVERSION.indexOf(name) > -1) {
                 trait.setValue(sysinfo.getOperatingSystemVersion());
+            } else if (TRAIT_ARCH.indexOf(name) > -1) {
+                trait.setValue(sysinfo.getSystemArchitecture());
             } else {
                 log.error("Being asked to collect an unknown trait measurement: " + name);
             }

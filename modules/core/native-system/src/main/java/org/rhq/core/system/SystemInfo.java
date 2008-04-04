@@ -20,6 +20,7 @@ package org.rhq.core.system;
 
 import java.io.IOException;
 import java.util.List;
+
 import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.Swap;
 
@@ -63,6 +64,12 @@ public interface SystemInfo {
      * @return what the operating system says is its version
      */
     String getOperatingSystemVersion();
+
+    /**
+     * Returns the architecture of the underlying hardware
+     * @return
+     */
+    String getSystemArchitecture();
 
     /**
      * Returns the hostname that the system is known as.

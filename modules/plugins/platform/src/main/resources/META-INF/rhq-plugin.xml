@@ -50,6 +50,12 @@
               dataType="trait"
               displayType="summary"
               defaultOn="true" />
+      <metric displayName="Architecture"
+              property="Trait.sysarch"
+              description="Hardware architecture of the platform"
+              dataType="trait"
+              displayType="summary"
+              defaultOn="true"/>
 '>
  <!ENTITY nativeMetrics '      
       <metric displayName="Free Memory"

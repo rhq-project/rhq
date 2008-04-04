@@ -108,7 +108,7 @@ public abstract class OperationScheduleUIBean extends PagedDataTableUIBean {
 
         try {
             // if the user selected a timeout, add it to our configuration
-            Integer selectedTimeout = operationDefUIBean.getTimeout();
+            Integer selectedTimeout = Integer.parseInt(operationDefUIBean.getTimeout());
 
             if (selectedTimeout != null) {
                 if (configuration == null) {

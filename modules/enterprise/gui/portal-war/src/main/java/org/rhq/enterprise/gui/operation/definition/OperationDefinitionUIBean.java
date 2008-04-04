@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.operation.definition;
 
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.util.PageControl;
@@ -35,7 +36,7 @@ public abstract class OperationDefinitionUIBean extends PagedDataTableUIBean {
     protected OperationManagerLocal operationManager = LookupUtil.getOperationManager();
     private OperationDefinition operationDefinition = null;
 
-    private Integer timeout = null;
+    private String timeout = null;
 
     public OperationDefinitionUIBean() {
     }
@@ -55,16 +56,17 @@ public abstract class OperationDefinitionUIBean extends PagedDataTableUIBean {
         return this.operationDefinition.getName();
     }
 
-    public void setTimeout(Integer timeout) {
+    public void setTimeout(String timeout) {
         this.timeout = timeout;
     }
 
-    public Integer getTimeout() {
+    public String getTimeout() {
         // we want to cache the definition, but have a separately manageable timeout
         // this will allow the user to override the timeout and pass this along in the request submission
         if (this.timeout == null) {
             initOperationDefinition();
-            this.timeout = this.operationDefinition.getTimeout();
+            Integer defaultTimeout = this.operationDefinition.getTimeout();
+            this.timeout = (defaultTimeout == null) ? "" : String.valueOf(defaultTimeout);
         }
 
         return this.timeout;

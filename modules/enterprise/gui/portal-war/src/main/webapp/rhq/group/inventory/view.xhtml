@@ -269,11 +269,13 @@
          
             <h:commandButton action="#{ListResourceGroupMembersUIBean.addNewResources}"
                              value="ADD TO GROUP"
-                             styleClass="on-pager-button buttonsmall" />
+                             styleClass="on-pager-button buttonsmall" 
+                             rendered="#{GlobalPermissionsUIBean.inventory}" />
 
             <onc:selectCommandButton action="#{DeleteResourcesFromGroupUIBean.removeSelectedResources}"
                                      value="REMOVE FROM GROUP" target="selectedResources"
-                                     styleClass="on-pager-button buttonsmall"/>
+                                     styleClass="on-pager-button buttonsmall" 
+                                     rendered="#{GlobalPermissionsUIBean.inventory}" />
             
             <ui:param name="paginationDataTableName" value="resourceGroupMembersDataTable"/>
             <ui:param name="paginationDataModel" value="#{resourceGroupMembersDataModel}"/>

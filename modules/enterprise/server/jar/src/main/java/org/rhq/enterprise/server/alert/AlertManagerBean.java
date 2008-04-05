@@ -182,7 +182,7 @@ public class AlertManagerBean implements AlertManagerLocal {
      */
     // gonna use bulk delete, make sure we are in new tx to not screw up caller's hibernate session
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public int  deleteAlerts(long beginTime, long endTime) {
+    public int deleteAlerts(long beginTime, long endTime) {
         long start = System.currentTimeMillis();
         Query query = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_ALERT_CTIME);
         query.setParameter("begin", beginTime);
@@ -197,7 +197,8 @@ public class AlertManagerBean implements AlertManagerLocal {
         query = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_ORPHANED);
         int deletedNotifications = query.executeUpdate();
 
-        log.info("Delete [" + deletedAlerts + "] alerts, [" + conditionsDeleted + "] conditions, and [" + deletedNotifications + "] conditions in [" + (System.currentTimeMillis() - start) + "]ms");
+        log.info("Delete [" + deletedAlerts + "] alerts, [" + conditionsDeleted + "] conditions, and ["
+            + deletedNotifications + "] notifications in [" + (System.currentTimeMillis() - start) + "]ms");
 
         return deletedAlerts;
     }
@@ -399,10 +400,12 @@ public class AlertManagerBean implements AlertManagerLocal {
          * flushing org.jboss.on.domain.event.alert.AlertConditionLog.alert -> org.jboss.on.domain.event.alert.Alert"
          */
         this.createAlert(newAlert);
+        log.debug("New alert identifier=" + newAlert.getId());
 
         List<AlertConditionLog> unmatchedConditionLogs = alertConditionLogManager
             .getUnmatchedLogsByAlertDefinitionId(alertDefinitionId);
         for (AlertConditionLog unmatchedLog : unmatchedConditionLogs) {
+            log.debug("Matched alert condition log for alertId=" + newAlert.getId() + ": " + unmatchedLog);
             newAlert.addConditionLog(unmatchedLog); // adds both relationships
         }
 

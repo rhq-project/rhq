@@ -21,17 +21,20 @@ package org.rhq.enterprise.gui.admin.user;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -42,6 +45,7 @@ public class AddUserRolesAction extends BaseAction {
     /**
      * Add roles to the user specified in the given <code>AddUserRolesForm</code>.
      */
+    @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         Log log = LogFactory.getLog(AddUserRolesAction.class.getName());
@@ -80,11 +84,16 @@ public class AddUserRolesAction extends BaseAction {
             log.trace("adding role [" + pendingRoleIds[i] + "] for user [" + userId + "]");
         }
 
-        LookupUtil.getRoleManager()
-            .assignRolesToSubject(RequestUtils.getSubject(request), user.getId(), pendingRoleIds);
-
-        log.trace("removing pending user list");
-        SessionUtils.removeList(session, Constants.PENDING_ROLES_SES_ATTR);
+        try {
+            LookupUtil.getRoleManager().assignRolesToSubject(RequestUtils.getSubject(request), user.getId(),
+                pendingRoleIds);
+        } catch (PermissionException pe) {
+            RequestUtils.setError(request, "admin.role.error.StaticRole");
+            return returnFailure(request, mapping, Constants.USER_PARAM, userId);
+        } finally {
+            log.trace("removing pending user list");
+            SessionUtils.removeList(session, Constants.PENDING_ROLES_SES_ATTR);
+        }
 
         RequestUtils.setConfirmation(request, "admin.user.confirm.AddRoles");
         return returnSuccess(request, mapping, Constants.USER_PARAM, userId, false);

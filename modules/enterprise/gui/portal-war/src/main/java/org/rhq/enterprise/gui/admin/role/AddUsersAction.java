@@ -21,22 +21,26 @@ package org.rhq.enterprise.gui.admin.role;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * An Action that adds users for a role.
  */
 public class AddUsersAction extends BaseAction {
+    @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         Log log = LogFactory.getLog(AddUsersAction.class.getName());
@@ -70,10 +74,15 @@ public class AddUsersAction extends BaseAction {
             log.debug("adding user [" + pendingUserIds[i] + "] for role [" + roleId + "]");
         }
 
-        LookupUtil.getRoleManager().assignSubjectsToRole(RequestUtils.getSubject(request), roleId, pendingUserIds);
-
-        log.debug("removing pending user list");
-        SessionUtils.removeList(session, Constants.PENDING_USERS_SES_ATTR);
+        try {
+            LookupUtil.getRoleManager().assignSubjectsToRole(RequestUtils.getSubject(request), roleId, pendingUserIds);
+        } catch (PermissionException pe) {
+            RequestUtils.setError(request, "admin.role.error.StaticRole");
+            return returnFailure(request, mapping, Constants.ROLE_PARAM, roleId);
+        } finally {
+            log.debug("removing pending user list");
+            SessionUtils.removeList(session, Constants.PENDING_USERS_SES_ATTR);
+        }
 
         RequestUtils.setConfirmation(request, "admin.role.confirm.AddUsers");
         return returnSuccess(request, mapping, Constants.ROLE_PARAM, roleId);

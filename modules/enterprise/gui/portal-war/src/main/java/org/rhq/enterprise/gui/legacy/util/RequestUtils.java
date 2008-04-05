@@ -24,12 +24,14 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Map;
+
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.Globals;
@@ -37,6 +39,7 @@ import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionMessages;
 import org.apache.struts.util.MessageResources;
+
 import org.rhq.core.clientapi.util.ArrayUtil;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;

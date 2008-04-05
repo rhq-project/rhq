@@ -131,11 +131,12 @@
 <c:choose>
    <c:when test="${requestScope[CONST_ENABLED]}">
       <br/>
-
+      
       <tiles:insert definition=".resource.common.monitor.config.editConfigMetricsVisibility">
          <tiles:put name="section" value="${section}"/>
       </tiles:insert>
 
+      <hq:authorization permission="MANAGE_MEASUREMENTS">
       <c:set var="tmpMetrics" value="${requestScope.measurementSchedules}"/>
       <tiles:insert definition=".resource.common.monitor.config.toolbar.addToList">
          <tiles:put name="showAddToListBtn" value="false"/>
@@ -151,6 +152,7 @@
          <tiles:put name="showPagingControls" value="false"/>
          <tiles:put name="pageAction" beanName="selfAction"/>
       </tiles:insert>
+      </hq:authorization>
 
    </c:when>
    <c:when test="${not empty ResourceType}">
@@ -166,6 +168,7 @@
       --%>
       <tiles:insert definition=".resource.common.monitor.config.editConfigMetricsVisibility"/>
 
+      <hq:authorization permission="MANAGE_SETTINGS">
       <c:set var="tmpMetrics" value="${requestScope.measurementSchedules}"/>
       <tiles:insert definition=".resource.common.monitor.config.toolbar.addToList">
          <tiles:put name="showAddToListBtn" value="false"/>
@@ -185,6 +188,7 @@
          <tiles:put name="pageSizeParam" value="ps"/>
          <tiles:put name="pageAction" beanName="selfAction"/>
       </tiles:insert>
+      </hq:authorization>
 
    </c:when>
    <c:otherwise>

@@ -95,16 +95,13 @@
             </html:link>
          </td>
       </c:if>
-      
-      <hq:authorization permission="MANAGE_MEASUREMENTS">
+
       <td width="40" id="<c:out value="${widgetInstanceName}"/>DeleteButtonTd">
          <div id="<c:out value="${widgetInstanceName}"/>DeleteButtonDiv">
             <html:image page="${removeImg}" border="0" property="remove"/>
          </div>
       </td>
-      </hq:authorization>
-
-      <hq:authorization permission="MANAGE_MEASUREMENTS">
+      
       <c:if test="${not empty showIntervalControls and showIntervalControls}">
          <td class="BoldText" nowrap>
             <fmt:message key="resource.common.monitor.visibility.config.CollectionIntervalForSelectedLabel"/>
@@ -115,12 +112,10 @@
          <td>
             <html:select styleClass="FilterFormText" property="collectionUnit">
                <html:option value="1000">
-                  <fmt:message key="resource.common.monitor.visibility.config.Seconds"
-                        />
+                  <fmt:message key="resource.common.monitor.visibility.config.Seconds"/>
                </html:option>
                <html:option value="60000">
-                  <fmt:message key="resource.common.monitor.visibility.config.Minutes"
-                        />
+                  <fmt:message key="resource.common.monitor.visibility.config.Minutes"/>
                </html:option>
                <html:option value="3600000">
                   <fmt:message key="resource.common.monitor.visibility.config.Hours"/>
@@ -133,7 +128,6 @@
             </div>
          </td>
       </c:if>
-      </hq:authorization>
 
       <c:choose>
          <c:when test="${empty showPagingControls or showPagingControls}">

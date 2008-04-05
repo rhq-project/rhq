@@ -109,5 +109,16 @@
   <tr>
     <td colspan="4" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>
+  <c:if test="${not empty ResourceType}">
+  <tr>
+    <td class="BlockLabel">
+      &nbsp;
+    </td>
+    <td colspan="3" class="BlockContent">
+      <html:checkbox property="cascade" />
+      <fmt:message key="alert.config.props.CB.Template.Cascade" />
+    </td>
+  </tr>
+  </c:if>
 </table>
 &nbsp;<br>

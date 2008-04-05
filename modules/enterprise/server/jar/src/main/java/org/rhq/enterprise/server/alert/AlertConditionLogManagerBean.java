@@ -35,7 +35,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
-import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDampeningEvent;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.BooleanExpression;
@@ -93,6 +92,7 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
              */
             alertConditionLog.setCtime(ctime);
             alertConditionLog.setValue(value);
+            log.debug("Updating unmatched alert condition log: " + alertConditionLog);
 
             entityManager.merge(alertConditionLog); // update values, for
         } catch (NoResultException nre) // this is the expected case 90% of the time
@@ -142,11 +142,11 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
     public void checkForCompletedAlertConditionSet(int alertConditionId) {
         AlertCondition alertCondition = alertConditionManager.getAlertConditionById(alertConditionId);
         AlertDefinition alertDefinition = alertCondition.getAlertDefinition();
-        AlertDampening alertDampening = alertDefinition.getAlertDampening();
 
         // ok, so figure out whether all of the conditions have been met
         boolean conditionSetResult = evaluateConditionSet(alertDefinition);
 
+        log.debug("Alert definition with conditionId=" + alertConditionId + " evaluated to " + conditionSetResult);
         /*
          * The AlertDampeningEvents keep a running log of when all conditions have become true, as well as when they
          * become untrue (if they were most recently known to be true)
@@ -165,7 +165,7 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
              */
             AlertDampeningEvent alertDampeningEvent = new AlertDampeningEvent(alertDefinition, type);
             entityManager.persist(alertDampeningEvent);
-            
+
             log.debug("Need to process AlertDampeningEvent.Type of " + type + " " + "for AlertDefinition[ id="
                 + alertDefinition.getId() + " ]");
 

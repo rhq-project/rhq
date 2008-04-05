@@ -34,7 +34,8 @@ THIS TEXT WILL BE REMOVED.
          <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell"
                       rendered="#{ExistingResourceConfigurationUIBean.configuration != null and !ExistingResourceConfigurationUIBean.updateInProgress}">
             <h:commandButton value="EDIT" action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
-                             title="Edit this Configuration" styleClass="buttonmed"/>
+                             title="Edit this Configuration" styleClass="buttonmed" 
+                             rendered="${ResourceUIBean.permissions.configure}" />
          </h:panelGrid>
          
          <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
@@ -48,7 +49,8 @@ THIS TEXT WILL BE REMOVED.
          <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell"
                       rendered="#{ExistingResourceConfigurationUIBean.configuration != null and !ExistingResourceConfigurationUIBean.updateInProgress}">
             <h:commandButton value="EDIT" action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
-                             title="Edit this Configuration" styleClass="buttonmed"/>
+                             title="Edit this Configuration" styleClass="buttonmed" 
+                             rendered="${ResourceUIBean.permissions.configure}" />
          </h:panelGrid>
 
       </h:form>

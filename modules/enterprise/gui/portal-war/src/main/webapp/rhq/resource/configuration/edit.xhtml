@@ -35,7 +35,8 @@ THIS TEXT WILL BE REMOVED.
 
          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell" rendered="#{ExistingResourceConfigurationUIBean.configuration != null}">
             <h:commandButton value="SAVE" action="#{ExistingResourceConfigurationUIBean.updateConfiguration}"
-                             title="Click to Save Changes" styleClass="buttonmed"/>
+                             title="Click to Save Changes" styleClass="buttonmed"
+                             rendered="${ResourceUIBean.permissions.configure}" />
             <h:commandButton value="RESET" type="reset" immediate="true" 
                              title="Click to Reset Fields" styleClass="buttonmed"/>
          </h:panelGrid>

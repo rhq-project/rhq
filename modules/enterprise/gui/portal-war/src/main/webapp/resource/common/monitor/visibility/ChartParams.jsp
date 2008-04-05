@@ -86,6 +86,7 @@
       <table border="0">
          <tr>
             <td class="LinkBox">
+               <hq:authorization permission="MANAGE_ALERTS">
                <c:if test="${not multiResource}">
                   <c:url var="alertLink" value="/alerts/Config.do">
                      <c:param name="mode" value="new"/>
@@ -98,6 +99,7 @@
                   </html:link>
                   <br>
                </c:if>
+               </hq:authorization>
                <html:hidden property="saveChart" value="false"/>
                <html:link href="."
                           onclick="ViewChartForm.saveChart.value='true'; ViewChartForm.submit(); return false;">

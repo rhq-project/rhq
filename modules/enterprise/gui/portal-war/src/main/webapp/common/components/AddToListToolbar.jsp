@@ -5,6 +5,7 @@
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-logic" prefix="logic" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="/WEB-INF/tld/hq.tld" prefix="hq" %>
 
 <%-- the context-relative url for the "add to list button", and the
   -- (optional) name and value for a request parameter to be attached
@@ -94,12 +95,16 @@
             </html:link>
          </td>
       </c:if>
+      
+      <hq:authorization permission="MANAGE_MEASUREMENTS">
       <td width="40" id="<c:out value="${widgetInstanceName}"/>DeleteButtonTd">
          <div id="<c:out value="${widgetInstanceName}"/>DeleteButtonDiv">
             <html:image page="${removeImg}" border="0" property="remove"/>
          </div>
       </td>
+      </hq:authorization>
 
+      <hq:authorization permission="MANAGE_MEASUREMENTS">
       <c:if test="${not empty showIntervalControls and showIntervalControls}">
          <td class="BoldText" nowrap>
             <fmt:message key="resource.common.monitor.visibility.config.CollectionIntervalForSelectedLabel"/>
@@ -128,6 +133,7 @@
             </div>
          </td>
       </c:if>
+      </hq:authorization>
 
       <c:choose>
          <c:when test="${empty showPagingControls or showPagingControls}">

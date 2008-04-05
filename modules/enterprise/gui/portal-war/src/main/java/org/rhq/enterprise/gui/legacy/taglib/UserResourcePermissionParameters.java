@@ -19,10 +19,11 @@
 package org.rhq.enterprise.gui.legacy.taglib;
 
 import javax.servlet.jsp.tagext.TagSupport;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 
 /**
- * generate pagination info for a spicified list.
+ * generate pagination info for a specified list.
  */
 public class UserResourcePermissionParameters extends TagSupport {
     //----------------------------------------------------instance variables
@@ -57,6 +58,7 @@ public class UserResourcePermissionParameters extends TagSupport {
     /**
      * Release tag state.
      */
+    @Override
     public void release() {
         super.release();
     }

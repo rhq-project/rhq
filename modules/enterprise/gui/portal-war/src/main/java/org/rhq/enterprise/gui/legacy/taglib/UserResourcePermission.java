@@ -19,10 +19,11 @@
 package org.rhq.enterprise.gui.legacy.taglib;
 
 import java.util.Set;
-import javax.servlet.ServletContext;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.Resource;
@@ -73,12 +74,11 @@ public class UserResourcePermission extends UserResourcePermissionParameters {
 
         try {
             HttpServletRequest request = (HttpServletRequest) pageContext.getRequest();
-            ServletContext ctx = pageContext.getServletContext();
             user = RequestUtils.getSubject(request);
             ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
             Resource resource = resourceManager.getResourceById(user, getResource());
 
-            Set<Permission> permissions = LookupUtil.getAuthorizationManager().getExplicitResourcePermissions(user,
+            Set<Permission> permissions = LookupUtil.getAuthorizationManager().getImplicitResourcePermissions(user,
                 resource.getId());
             ResourcePermission resourcePermission = null;
             if (LookupUtil.getAuthorizationManager().isInventoryManager(user)) {

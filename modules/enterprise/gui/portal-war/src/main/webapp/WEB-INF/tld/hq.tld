@@ -15,10 +15,22 @@
    <description></description>
 
    <tag>
+      <name>authorization</name>
+      <tag-class>org.rhq.enterprise.gui.legacy.taglib.Authorization</tag-class>
+      <body-content>JSP</body-content>
+      <attribute>
+         <name>permission</name>
+         <required>true</required>
+         <rtexprvalue>false</rtexprvalue>
+      </attribute>
+   </tag>
+
+   <tag>
       <name>help</name>
       <tag-class>org.rhq.enterprise.gui.legacy.taglib.HelpTag</tag-class>
       <body-content>empty</body-content>
    </tag>
+   
    <tag>
       <name>userResourcePermissions</name>
       <tag-class>org.rhq.enterprise.gui.legacy.taglib.UserResourcePermission</tag-class>
@@ -34,6 +46,7 @@
          <rtexprvalue>true</rtexprvalue>
       </attribute>
    </tag>
+   
    <tag>
       <name>owner</name>
       <tag-class>org.rhq.enterprise.gui.legacy.taglib.OwnerTag</tag-class>

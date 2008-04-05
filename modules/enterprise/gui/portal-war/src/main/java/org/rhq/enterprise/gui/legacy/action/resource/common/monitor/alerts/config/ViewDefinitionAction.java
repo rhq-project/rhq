@@ -32,7 +32,6 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.core.domain.alert.AlertCondition;
-import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
@@ -56,27 +55,6 @@ public class ViewDefinitionAction extends TilesAction {
 
         // conditions
         Set<AlertCondition> conds = alertDef.getConditions();
-        boolean canEditConditions = true;
-
-        for (AlertCondition cond : conds) {
-            // if any of the conditions are EventConstants.TYPE_CHANGE, we cannot edit them
-            AlertConditionCategory category = cond.getCategory();
-            if ((category == AlertConditionCategory.THRESHOLD) || (category == AlertConditionCategory.BASELINE)
-                || (category == AlertConditionCategory.CHANGE) || (category == AlertConditionCategory.CONTROL)
-                || (category == AlertConditionCategory.AVAILABILITY) || (category == AlertConditionCategory.TRAIT)
-                || (category == AlertConditionCategory.EVENT)) {
-                // do nothing
-            } else if ((category == AlertConditionCategory.ALERT)
-                || (category == AlertConditionCategory.CONFIGURATION_PROPERTY)) {
-                canEditConditions = false;
-            }
-
-            if (!canEditConditions) {
-                break;
-            }
-        }
-
-        request.setAttribute("canEditConditions", canEditConditions);
 
         boolean isAlertTemplate = EventConstants.TYPE_ALERT_DEF_ID.equals(alertDef.getParentId());
         List<AlertConditionBean> alertDefConditions = AlertDefUtil.getAlertConditionBeanList(subject, request, conds,

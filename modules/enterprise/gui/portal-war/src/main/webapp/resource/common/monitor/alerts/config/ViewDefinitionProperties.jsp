@@ -65,14 +65,21 @@
     <td colspan="4" class="BlockBottomLine"><span style="height: 1px;"></span></td>
   </tr>
 </table>
-<tiles:insert definition=".toolbar.edit">
-<c:choose>
-  <c:when test="${not empty Resource}">
-    <tiles:put name="editUrl">/alerts/Config.do?mode=editProperties&id=<c:out value="${Resource.id}"/>&ad=<c:out value="${alertDef.id}"/></tiles:put>
-  </c:when>
-  <c:otherwise>
-    <tiles:put name="editUrl">/alerts/Config.do?mode=editProperties&type=<c:out value="${ResourceType.id}"/>&ad=<c:out value="${alertDef.id}"/></tiles:put>
-  </c:otherwise>
-</c:choose>
-</tiles:insert>
+
+<c:if test="${not empty Resource}">
+  <hq:authorization permission="MANAGE_ALERTS">
+    <tiles:insert definition=".toolbar.edit">
+      <tiles:put name="editUrl"><c:out value="/alerts/Config.do?mode=editProperties&ad=${alertDef.id}&id=${Resource.id}"/></tiles:put>
+    </tiles:insert>
+  </hq:authorization>
+</c:if>
+
+<c:if test="${not empty ResourceType}">
+  <hq:authorization permission="MANAGE_SETTINGS">
+    <tiles:insert definition=".toolbar.edit">
+      <tiles:put name="editUrl"><c:out value="/alerts/Config.do?mode=editProperties&ad=${alertDef.id}&type=${ResourceType.id}"/></tiles:put>
+    </tiles:insert>
+  </hq:authorization>
+</c:if>
+
 <br>

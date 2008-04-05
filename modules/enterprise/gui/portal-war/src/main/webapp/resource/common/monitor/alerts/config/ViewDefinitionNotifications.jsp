@@ -4,6 +4,7 @@
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-tiles" prefix="tiles" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="/WEB-INF/tld/hq.tld" prefix="hq" %>
 
 <c:url var="viewRolesUrl" value="/alerts/Config.do">
   <c:param name="mode" value="viewRoles"/>
@@ -124,7 +125,7 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
   <tiles:put name="selfUrl" beanName="selfUrl"/>
 </tiles:insert>
 
-<%-- if the attributes are not available, we can't display this tile: an error probably occured --%>
+<%-- if the attributes are not available, we can't display this tile: an error probably occurred --%>
 <c:if test="${param.mode != 'viewSnmp'}">
   <c:choose>
     <c:when test="${null == notifyList || empty listSize}">
@@ -132,22 +133,26 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
       <fmt:message key="alert.config.error.no.permission"/>
     </c:when>
     <c:otherwise>
-      <html:hidden property="so" value="${param.so}"/>
-      <html:hidden property="sc" value="${param.sc}"/>
-    
-      <tiles:insert definition=".toolbar.addToList">
-  <c:choose>
-  <c:when test="${not empty Resource}">
-    <tiles:put name="addToListUrl"><c:out value="/alerts/Config.do?mode=${addMode}&id=${Resource.id}&ad=${alertDef.id}"/></tiles:put>
-  </c:when>
-  <c:otherwise>
-    <tiles:put name="addToListUrl"><c:out value="/alerts/Config.do?mode=${addMode}&type=${ResourceType.id}&ad=${alertDef.id}"/></tiles:put>
-  </c:otherwise>
-  </c:choose>
-        <tiles:put name="widgetInstanceName" beanName="widgetInstanceName"/>
-        <tiles:put name="pageList" beanName="notifyList"/>
-        <tiles:put name="pageAction" beanName="selfUrl"/>
-      </tiles:insert>
+      <c:if test="${not empty Resource}">
+        <hq:authorization permission="MANAGE_ALERTS">
+          <tiles:insert definition=".toolbar.addToList">
+            <tiles:put name="addToListUrl"><c:out value="/alerts/Config.do?mode=${addMode}&id=${Resource.id}&ad=${alertDef.id}"/></tiles:put>
+            <tiles:put name="widgetInstanceName" beanName="widgetInstanceName"/>
+            <tiles:put name="pageList" beanName="notifyList"/>
+            <tiles:put name="pageAction" beanName="selfUrl"/>
+          </tiles:insert>
+        </hq:authorization>
+      </c:if>
+      <c:if test="${not empty ResourceType}">
+        <hq:authorization permission="MANAGE_SETTINGS">
+          <tiles:insert definition=".toolbar.addToList">
+            <tiles:put name="addToListUrl"><c:out value="/alerts/Config.do?mode=${addMode}&type=${ResourceType.id}&ad=${alertDef.id}"/></tiles:put>
+            <tiles:put name="widgetInstanceName" beanName="widgetInstanceName"/>
+            <tiles:put name="pageList" beanName="notifyList"/>
+            <tiles:put name="pageAction" beanName="selfUrl"/>
+          </tiles:insert>
+        </hq:authorization>
+      </c:if>
     </c:otherwise>
   </c:choose>
 </c:if>

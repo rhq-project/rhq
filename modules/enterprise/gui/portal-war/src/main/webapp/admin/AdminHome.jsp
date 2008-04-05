@@ -4,6 +4,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-html-el" prefix="html" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-tiles" prefix="tiles" %>
+<%@ taglib uri="/WEB-INF/tld/hq.tld" prefix="hq" %>
 
 <!--  PAGE TITLE -->
 <tiles:insert definition=".page.title.admin.admin">
@@ -83,6 +84,7 @@
 <!--  /  -->
 
 
+<hq:authorization permission="MANAGE_SETTINGS">
 <!--  some empty space -->
 <br>
 <br>
@@ -106,6 +108,7 @@
       <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
    </tr>
 </table>
+</hq:authorization>
 <!--  /  -->
 
 <tiles:insert definition=".page.footer"/>

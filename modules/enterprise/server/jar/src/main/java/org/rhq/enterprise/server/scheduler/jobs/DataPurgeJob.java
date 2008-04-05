@@ -33,6 +33,7 @@ import org.quartz.StatefulJob;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementCompressionManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -80,6 +81,7 @@ public class DataPurgeJob implements StatefulJob {
     private void compressData() {
         SystemManagerLocal systemManager = LookupUtil.getSystemManager();
         MeasurementCompressionManagerLocal compressionManager = LookupUtil.getMeasurementCompressionManager();
+        MeasurementDataManagerLocal measurementDataManager = LookupUtil.getMeasurementDataManager();
         AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
 
         // COMPRESS MEASUREMENT DATA
@@ -94,6 +96,29 @@ public class DataPurgeJob implements StatefulJob {
 
         long timeEnd = System.currentTimeMillis();
         LOG.info("Measurement data compression completed in [" + (timeEnd - timeStart) + "]ms");
+
+        // PURGE OLD TRAIT DATA
+        timeStart = System.currentTimeMillis();
+        LOG.info("Trait data purge starting at " + new Date(timeStart));
+        int traitsPurged = 0;
+        int traitsPurgeIterations = 0;
+
+        try {
+            final long oneYearAgo = timeStart - (1000L * 60 * 60 * 24 * 365);
+            int purged = 0;
+            LOG.info("Purging traits that are older than " + new Date(oneYearAgo));
+            do {
+                purged = measurementDataManager.purgeTraits(oneYearAgo);
+                traitsPurged += purged;
+                traitsPurgeIterations++;
+            } while (purged > 0);
+        } catch (Exception e) {
+            LOG.error("Unable to purge trait data: " + e, e);
+        }
+
+        timeEnd = System.currentTimeMillis();
+        LOG.info("Traits data purged [" + traitsPurged + "] in [" + traitsPurgeIterations
+            + "] iterations - completed in [" + (timeEnd - timeStart) + "]ms");
 
         // PURGE OLD AVAILABILITY DATA
         timeStart = System.currentTimeMillis();

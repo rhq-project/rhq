@@ -22,8 +22,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.ejb.Local;
+
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -44,6 +47,9 @@ import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
  */
 @Local
 public interface MeasurementDataManagerLocal {
+
+    int purgeTraits(long oldest);
+
     void mergeMeasurementReport(MeasurementReport report);
 
     void addNumericData(Set<MeasurementDataNumeric> data);

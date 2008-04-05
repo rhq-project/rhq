@@ -158,6 +158,25 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
     @IgnoreDependency
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
 
+    // doing a bulk delete in here, need to be in its own tx
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public int purgeTraits(long oldest) {
+        Connection conn = null;
+        PreparedStatement stmt = null;
+
+        try {
+            conn = rhqDs.getConnection();
+            stmt = conn.prepareStatement(MeasurementDataTrait.NATIVE_QUERY_PURGE);
+            stmt.setLong(1, oldest);
+            int deleted = stmt.executeUpdate();
+            return deleted;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to purge traits older than [" + oldest + "]", e);
+        } finally {
+            JDBCUtil.safeClose(conn, stmt, null);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void mergeMeasurementReport(MeasurementReport report) {

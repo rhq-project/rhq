@@ -74,6 +74,23 @@ public class MeasurementDataTrait extends MeasurementData {
 
     public static final String QUERY_DELETE_BY_RESOURCES = "MeasurementDataTrait.deleteByResources";
 
+    /*
+     * each time this is called, it will delete the oldest datum for each group of 
+     * data identified by schedule_id that has more than one element in it; so, this
+     * query should be called in the purge job until it returns zero
+     */
+    public static final String NATIVE_QUERY_PURGE = "" + // 
+        "DELETE FROM rhq_measurement_data_trait AS t " + //
+        "WHERE t.time_stamp = " + //
+        "(" + //
+        "        SELECT MIN(it.time_stamp) " + //
+        "        FROM rhq_measurement_data_trait AS it " + //
+        "        WHERE t.time_stamp < ? " + //
+        "        AND it.schedule_id = it.schedule_id " + //
+        "        GROUP BY it.schedule_id " + //
+        "        HAVING COUNT(it.schedule_id) > 1 " + //
+        ")";
+
     private static final long serialVersionUID = 1L;
 
     @Column(length = 255)

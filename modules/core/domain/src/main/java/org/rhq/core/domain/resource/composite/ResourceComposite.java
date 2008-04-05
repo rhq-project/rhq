@@ -30,6 +30,7 @@ import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  * @author Ian Springer
  */
 public class ResourceComposite {
@@ -58,9 +59,11 @@ public class ResourceComposite {
      * Provides specified permissions - used for non-admin queries.
      */
     public ResourceComposite(Resource resource, AvailabilityType availability, Number measure, Number inventory,
-        Number control, Number alert, Number configure, Number content) {
+        Number control, Number alert, Number configure, Number content, Number createChildResources,
+        Number deleteResources) {
         this(resource, availability, new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0, control
-            .intValue() > 0, alert.intValue() > 0, configure.intValue() > 0, content.intValue() > 0));
+            .intValue() > 0, alert.intValue() > 0, configure.intValue() > 0, content.intValue() > 0,
+            createChildResources.intValue() > 0, deleteResources.intValue() > 0));
     }
 
     /**

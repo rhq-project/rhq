@@ -342,7 +342,9 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + " (SELECT count(p) FROM r.permissions p WHERE p = 10), " // we want CONTROL, 10
         + " (SELECT count(p) FROM r.permissions p WHERE p = 7), " // we want MANAGE_ALERTS, 7
         + " (SELECT count(p) FROM r.permissions p WHERE p = 11), " // we want CONFIGURE, 11
-        + " (SELECT count(p) FROM r.permissions p WHERE p = 9)) " // we want MANAGE_CONTENT, 9
+        + " (SELECT count(p) FROM r.permissions p WHERE p = 9), " // we want MANAGE_CONTENT, 9
+        + " (SELECT count(p) FROM r.permissions p WHERE p = 6), " // we want CREATE_CHILD_RESOURCES, 6
+        + " (SELECT count(p) FROM r.permissions p WHERE p = 5)) " // we want DELETE_RESOURCES, 5
         + "FROM Resource res "
         + "     JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
         + "     LEFT JOIN res.availability a WITH a.endTime is null "

@@ -23,6 +23,7 @@ import java.util.Set;
 import org.rhq.core.domain.authz.Permission;
 
 /**
+ * @author Joseph Marques
  * @author Greg Hinkle
  */
 public class ResourcePermission {
@@ -38,27 +39,34 @@ public class ResourcePermission {
 
     private boolean content;
 
+    private boolean createChildResources;
+
+    private boolean deleteResource;
+
     /**
      * All permissions
      */
     public ResourcePermission() {
-        this(true, true, true, true, true, true);
+        this(true, true, true, true, true, true, true, true);
     }
 
     public ResourcePermission(boolean measure, boolean inventory, boolean control, boolean alert, boolean configure,
-        boolean content) {
+        boolean content, boolean createChildResources, boolean deleteResource) {
         this.measure = measure;
         this.inventory = inventory;
         this.control = control;
         this.alert = alert;
         this.configure = configure;
         this.content = content;
+        this.createChildResources = createChildResources;
+        this.deleteResource = deleteResource;
     }
 
     public ResourcePermission(Set<Permission> permissions) {
         this(permissions.contains(Permission.MANAGE_MEASUREMENTS), permissions.contains(Permission.MODIFY_RESOURCE),
             permissions.contains(Permission.CONTROL), permissions.contains(Permission.MANAGE_ALERTS), permissions
-                .contains(Permission.CONFIGURE), permissions.contains(Permission.MANAGE_CONTENT));
+                .contains(Permission.CONFIGURE), permissions.contains(Permission.MANAGE_CONTENT), permissions
+                .contains(Permission.CREATE_CHILD_RESOURCES), permissions.contains(Permission.DELETE_RESOURCE));
     }
 
     public boolean isMeasure() {
@@ -85,9 +93,25 @@ public class ResourcePermission {
         return content;
     }
 
+    public boolean isCreateChildResources() {
+        return createChildResources;
+    }
+
+    public boolean isDeleteResource() {
+        return deleteResource;
+    }
+
     @Override
     public String toString() {
-        return "ResourcePermission=[" + "measure: " + measure + ", inventory: " + inventory + ", control: " + control
-            + ", alert: " + alert + ", configure: " + configure + ", content: " + content + "]";
+        return "ResourcePermission=[" + //
+            "measure: " + measure + ", " + //
+            "inventory: " + inventory + ", " + //
+            "control: " + control + ", " + //
+            "alert: " + alert + ", " + // 
+            "configure: " + configure + ", " + //
+            "content: " + content + ", " + //
+            "createChildResources: " + createChildResources + ", " + //
+            "deleteResource: " + deleteResource + //
+            "]";
     }
 }

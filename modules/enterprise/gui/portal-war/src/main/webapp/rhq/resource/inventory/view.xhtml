@@ -265,7 +265,8 @@
             <onc:selectCommandButton action="#{DeleteResourcesUIBean.deleteSelectedResources}"
                                      value="DELETE SELECTED" target="selectedResources"
                                      onclick="if (!confirm('#{confirmDeleteMessage}')) return false"
-                                     styleClass="on-pager-button buttonsmall"/>
+                                     styleClass="on-pager-button buttonsmall"
+                                     rendered="#{ResourceUIBean.permissions.deleteResource}" />
             
             <ui:include src="../include/pagination.xhtml">
                <ui:param name="paginationDataTableName" value="childResourcesDataTable"/>
@@ -295,7 +296,8 @@
    }
 </script>
 
-<h:panelGrid columns="3" styleClass="data-table" columnClasses="resources-control-cell" style="margin-top: 7px;">
+<h:panelGrid columns="3" styleClass="data-table" columnClasses="resources-control-cell" style="margin-top: 7px;"
+             rendered="#{ResourceUIBean.permissions.createChildResources}" >
 
    <ui:remove><!-- column 1 --></ui:remove>
    <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.manuallyAddableChildTypesCount > 0}">

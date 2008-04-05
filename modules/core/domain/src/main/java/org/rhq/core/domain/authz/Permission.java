@@ -19,6 +19,7 @@
 package org.rhq.core.domain.authz;
 
 import java.util.EnumSet;
+
 import org.rhq.core.domain.auth.Subject;
 
 /**
@@ -26,6 +27,7 @@ import org.rhq.core.domain.auth.Subject;
  * Roles. There are two types of permissions - global and resource.
  *
  * @author Ian Springer
+ * @author Joseph Marques
  * @author Greg Hinkle
  */
 public enum Permission {

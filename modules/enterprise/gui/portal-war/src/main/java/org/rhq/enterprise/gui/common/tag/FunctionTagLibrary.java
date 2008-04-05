@@ -22,7 +22,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.text.SimpleDateFormat;
 import java.util.Set;
+
 import com.sun.facelets.tag.AbstractTagLibrary;
+
 import org.rhq.core.clientapi.util.units.DateFormatter;
 import org.rhq.core.clientapi.util.units.FormattedNumber;
 import org.rhq.core.clientapi.util.units.ScaleConstants;
@@ -124,7 +126,7 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Resource resource = EnterpriseFacesContextUtility.getResource();
         Set<Permission> resourcePerms = authorizationManager.getImplicitResourcePermissions(subject, resource.getId());
-        return convertPermissionSetToCompositeResourcePermission(resourcePerms);
+        return new ResourcePermission(resourcePerms);
     }
 
     /**
@@ -140,7 +142,7 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Set<Permission> groupPerms = authorizationManager.getImplicitGroupPermissions(subject, groupId);
-        return convertPermissionSetToCompositeResourcePermission(groupPerms);
+        return new ResourcePermission(groupPerms);
     }
 
     /**
@@ -163,12 +165,5 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         FormattedNumber fmtd = UnitsFormat.format(new UnitNumber(timestamp, unit, ScaleConstants.SCALE_MILLI),
             FacesContextUtility.getRequest().getLocale(), specs);
         return fmtd.toString();
-    }
-
-    private static ResourcePermission convertPermissionSetToCompositeResourcePermission(Set<Permission> resourcePerms) {
-        return new ResourcePermission(resourcePerms.contains(Permission.MANAGE_MEASUREMENTS), resourcePerms
-            .contains(Permission.MODIFY_RESOURCE), resourcePerms.contains(Permission.CONTROL), resourcePerms
-            .contains(Permission.MANAGE_ALERTS), resourcePerms.contains(Permission.CONFIGURE), resourcePerms
-            .contains(Permission.MANAGE_CONTENT));
     }
 }

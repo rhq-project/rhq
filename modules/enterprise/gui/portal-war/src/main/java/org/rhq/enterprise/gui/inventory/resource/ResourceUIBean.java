@@ -20,8 +20,10 @@ package org.rhq.enterprise.gui.inventory.resource;
 
 import java.util.List;
 import java.util.Set;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.Availability;
@@ -77,7 +79,7 @@ public class ResourceUIBean {
         this.parent = resourceManager.getParentResource(this.resource.getId());
         Set<Permission> resourcePerms = this.authorizationManager.getImplicitResourcePermissions(subject, this.resource
             .getId());
-        this.permissions = convertPermissionSetToCompositeResourcePermission(resourcePerms);
+        this.permissions = new ResourcePermission(resourcePerms);
         try {
             this.facets = this.resourceTypeManager.getResourceFacets(subject, getResourceType().getId());
         } catch (ResourceTypeNotFoundException e) {
@@ -183,12 +185,5 @@ public class ResourceUIBean {
         // TODO: To be more efficient, instead call a manager method that returns a ResourceComposite.
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         return LookupUtil.getResourceManager().getResourceById(subject, resourceId);
-    }
-
-    private static ResourcePermission convertPermissionSetToCompositeResourcePermission(Set<Permission> resourcePerms) {
-        return new ResourcePermission(resourcePerms.contains(Permission.MANAGE_MEASUREMENTS), resourcePerms
-            .contains(Permission.MODIFY_RESOURCE), resourcePerms.contains(Permission.CONTROL), resourcePerms
-            .contains(Permission.MANAGE_ALERTS), resourcePerms.contains(Permission.CONFIGURE), resourcePerms
-            .contains(Permission.MANAGE_CONTENT));
     }
 }

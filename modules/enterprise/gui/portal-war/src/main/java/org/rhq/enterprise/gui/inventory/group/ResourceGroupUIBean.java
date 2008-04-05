@@ -19,8 +19,10 @@
 package org.rhq.enterprise.gui.inventory.group;
 
 import java.util.Set;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceError;
@@ -61,7 +63,7 @@ public class ResourceGroupUIBean {
         this.subject = subject;
         Set<Permission> permissions = LookupUtil.getAuthorizationManager().getImplicitGroupPermissions(subject,
             this.resourceGroup.getId());
-        this.permissions = convertPermissionSetToCompositeResourcePermission(permissions);
+        this.permissions = new ResourcePermission(permissions);
     }
 
     public int getGroupId() {
@@ -149,12 +151,5 @@ public class ResourceGroupUIBean {
             Integer.class);
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         return LookupUtil.getResourceGroupManager().getResourceGroupWithAvailabilityById(subject, resourceGroupId);
-    }
-
-    private static ResourcePermission convertPermissionSetToCompositeResourcePermission(Set<Permission> resourcePerms) {
-        return new ResourcePermission(resourcePerms.contains(Permission.MANAGE_MEASUREMENTS), resourcePerms
-            .contains(Permission.MODIFY_RESOURCE), resourcePerms.contains(Permission.CONTROL), resourcePerms
-            .contains(Permission.MANAGE_ALERTS), resourcePerms.contains(Permission.CONFIGURE), resourcePerms
-            .contains(Permission.MANAGE_CONTENT));
     }
 }

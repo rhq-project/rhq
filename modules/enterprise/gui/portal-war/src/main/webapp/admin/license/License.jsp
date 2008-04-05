@@ -6,6 +6,7 @@
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-tiles" prefix="tiles" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="/WEB-INF/tld/hq.tld" prefix="hq" %>
 
 
 <tiles:insert definition=".portlet.confirm" flush="true"/>
@@ -82,10 +83,12 @@
         </c:otherwise>
     </c:choose>
 
+    <hq:authorization permission="MANAGE_SETTINGS">
         <tr>
             <td class="BlockContent" colspan="4" align="center"><html:link action="/admin/license/LicenseAdmin.do?mode=edit">Update License</html:link>
             </td>
         </tr>
+    </hq:authorization>
 
     </table>
 

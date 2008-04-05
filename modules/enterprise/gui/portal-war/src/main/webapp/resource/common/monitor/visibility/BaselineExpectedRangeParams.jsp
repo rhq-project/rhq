@@ -3,8 +3,11 @@
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-logic-el" prefix="logic" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="/WEB-INF/tld/hq.tld" prefix="hq" %>
 
 <!-- Content Block Title -->
+<c:if test="${not ViewChartForm.suppressBaselineSection}">
+
 <tiles:insert definition=".header.tab">
 <tiles:put name="tabKey"
 value="resource.common.monitor.visibility.chart.MetricBaselineAndExpectedRangeTab"/>
@@ -61,10 +64,10 @@ value="resource.common.monitor.visibility.chart.MetricBaselineAndExpectedRangeTa
       </c:otherwise>
       </c:choose>
       </span>
-      <c:if test="${not empty canManageMeasurements}">
+      <hq:authorization permission="MANAGE_MEASUREMENTS">
       - <html:link href="javascript:document.forms[0].submit();" onclick="clickLink('ViewChartForm', 'changeBaseline')"><fmt:message
       key="resource.common.monitor.visibility.chart.baseline.ChangeValueLink"/></html:link>
-      </c:if>
+      </hq:authorization>
       </c:otherwise>
       </c:choose>
     </td>
@@ -104,10 +107,10 @@ value="resource.common.monitor.visibility.chart.MetricBaselineAndExpectedRangeTa
       <fmt:message key="resource.common.monitor.visibility.chart.baseline.NotYetSet"/>
       </c:otherwise>
       </c:choose>
-      <c:if test="${not empty canManageMeasurements}">
+      <hq:authorization permission="MANAGE_MEASUREMENTS">
       - <html:link href="javascript:document.forms[0].submit();" onclick="clickLink('ViewChartForm', 'changeHighRange')"><fmt:message
       key="resource.common.monitor.visibility.chart.baseline.ChangeValueLink"/></html:link>
-      </c:if>
+      </hq:authorization>
       </c:otherwise>
       </c:choose>
       </span>
@@ -144,10 +147,10 @@ value="resource.common.monitor.visibility.chart.MetricBaselineAndExpectedRangeTa
       <fmt:message key="resource.common.monitor.visibility.chart.baseline.NotYetSet"/>
       </c:otherwise>
       </c:choose>
-      <c:if test="${not empty canManageMeasurements}">
+      <hq:authorization permission="MANAGE_MEASUREMENTS">
       - <html:link href="javascript:document.forms[0].submit();" onclick="clickLink('ViewChartForm', 'changeLowRange')"><fmt:message
       key="resource.common.monitor.visibility.chart.baseline.ChangeValueLink"/></html:link>
-      </c:if>
+      </hq:authorization>
       </c:otherwise>
       </c:choose>
       </span>
@@ -158,3 +161,5 @@ value="resource.common.monitor.visibility.chart.MetricBaselineAndExpectedRangeTa
       page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>
 </table>
+
+</c:if>

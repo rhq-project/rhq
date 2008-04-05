@@ -19,12 +19,15 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessage;
 import org.apache.struts.util.ImageButtonBean;
 import org.apache.struts.util.LabelValueBean;
+
 import org.rhq.enterprise.gui.legacy.DefaultConstants;
 import org.rhq.enterprise.gui.legacy.NumberConstants;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
@@ -53,6 +56,7 @@ public class ViewChartForm extends MetricDisplayRangeForm {
     private boolean showEvents;
     private boolean showBaseline;
     private boolean saveChart;
+    private boolean suppressBaselineSection;
     private ImageButtonBean redraw;
     private ImageButtonBean prevRange;
     private ImageButtonBean nextRange;
@@ -82,6 +86,7 @@ public class ViewChartForm extends MetricDisplayRangeForm {
         setDefaults();
     }
 
+    @Override
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("\n");
@@ -213,6 +218,7 @@ public class ViewChartForm extends MetricDisplayRangeForm {
         return sb.toString();
     }
 
+    @Override
     public void reset(ActionMapping mapping, HttpServletRequest request) {
         setDefaults();
         super.reset(mapping, request);
@@ -296,6 +302,14 @@ public class ViewChartForm extends MetricDisplayRangeForm {
 
     public void setShowBaseline(boolean showBaseline) {
         this.showBaseline = showBaseline;
+    }
+
+    public boolean getSuppressBaselineSection() {
+        return suppressBaselineSection;
+    }
+
+    public void setSuppressBaselineSection(boolean suppressBaselineSection) {
+        this.suppressBaselineSection = suppressBaselineSection;
     }
 
     public boolean getShowLowRange() {
@@ -599,6 +613,7 @@ public class ViewChartForm extends MetricDisplayRangeForm {
         }
     }
 
+    @Override
     public ActionErrors validate(ActionMapping mapping, HttpServletRequest request) {
         if (!shouldValidate(mapping, request)) {
             return null;
@@ -628,6 +643,7 @@ public class ViewChartForm extends MetricDisplayRangeForm {
      * Only validate if. 1) Any self-submitting buttons were clicked, and 2) the mapping specifies an input form to
      * return to. Child classes should call this to decide whether or not to perform custom validation steps.
      */
+    @Override
     protected boolean shouldValidate(ActionMapping mapping, HttpServletRequest request) {
         boolean isRedrawing = isRedrawClicked() || isPrevRangeClicked() || isNextRangeClicked() || getSaveChart()
             || isChangeBaselineClicked() || isSaveBaselineClicked() || isCancelBaselineClicked()
@@ -642,6 +658,7 @@ public class ViewChartForm extends MetricDisplayRangeForm {
         return MonitorUtils.getThresholdMenu();
     }
 
+    @Override
     protected void setDefaults() {
         super.setDefaults();
         super.setWantEndDate(true);

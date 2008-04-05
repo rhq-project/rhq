@@ -37,7 +37,6 @@ import org.apache.struts.tiles.ComponentContext;
 import org.rhq.core.clientapi.util.ArrayUtil;
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -127,15 +126,6 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         }
 
         AuthorizationManagerLocal authMgr = LookupUtil.getAuthorizationManager();
-
-        if ((resource != null)
-            && authMgr.hasResourcePermission(subject, Permission.MANAGE_MEASUREMENTS, resource.getId())) {
-            request.setAttribute("canManageMeasurements", "true");
-        }
-
-        if ((groupId > 0) && authMgr.hasGroupPermission(subject, Permission.MANAGE_MEASUREMENTS, groupId)) {
-            request.setAttribute("canManageMeasurements", "true");
-        }
 
         dataManager = LookupUtil.getMeasurementDataManager();
         resMgr = LookupUtil.getResourceManager();
@@ -630,10 +620,8 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
             MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, metricId, resource.getId(),
                 true);
             if (schedule.getDefinition().getNumericType() != NumericType.DYNAMIC) {
-                chartForm.setShowBaseline(false);
+                chartForm.setSuppressBaselineSection(true);
                 return;
-            } else {
-                chartForm.setShowBaseline(true);
             }
 
             // Set the name to be displayed.

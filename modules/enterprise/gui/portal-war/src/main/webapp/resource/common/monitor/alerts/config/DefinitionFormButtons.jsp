@@ -3,7 +3,9 @@
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-html-el" prefix="html" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-tiles" prefix="tiles" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="/WEB-INF/tld/hq.tld" prefix="hq" %>
 
+<hq:authorization permission="MANAGE_ALERTS">
 <tiles:insert definition=".form.buttons"/>
 <table width="100%" border="0" cellspacing="0" cellpadding="0">
   <tr>
@@ -13,3 +15,4 @@
     </td>
   </tr>
 </table>
+</hq:authorization>

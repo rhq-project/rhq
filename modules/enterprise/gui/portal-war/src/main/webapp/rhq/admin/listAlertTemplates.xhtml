@@ -136,12 +136,14 @@
                      <!-- colspan 654 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 6 : 5}">
                         <h:commandButton action="#{ListAlertTemplatesUIBean.createNewAlertTemplate}"
-                                         value="NEW TEMPLATE" styleClass="on-pager-button buttonsmall">
+                                         value="NEW TEMPLATE" styleClass="on-pager-button buttonsmall"
+                                         rendered="#{GlobalPermissionsUIBean.settings}" >
                            <f:param name="type" value="${param.type}"/>
                            <f:param name="mode" value="new"/>
                         </h:commandButton>
                         <onc:selectCommandButton action="#{ListAlertTemplatesUIBean.deleteSelectedAlertTemplates}"
-                                                 value="DELETE SELECTED" target="selectedAlertTemplates" styleClass="on-pager-button buttonsmall"/>
+                                                 value="DELETE SELECTED" target="selectedAlertTemplates" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{GlobalPermissionsUIBean.settings}" />
 
                         <ui:param name="paginationDataTableName" value="alertTemplatesDataTable"/>
                         <ui:param name="paginationDataModel" value="#{alertTemplatesDataModel}"/>

@@ -128,20 +128,23 @@
                      <!-- colspan 7:6 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 7 : 6}">
                         <h:commandButton action="#{ListAlertDefinitionsUIBean.createNewAlertDefinition}"
-                                         value="NEW DEFINITION" styleClass="on-pager-button buttonsmall">
+                                         value="NEW DEFINITION" styleClass="on-pager-button buttonsmall"
+                                         rendered="#{ResourceUIBean.permissions.alert}" >
                            <f:param name="id" value="${param.id}"/>
                            <f:param name="mode" value="new"/>
                         </h:commandButton>
                         <onc:selectCommandButton action="#{ListAlertDefinitionsUIBean.enableSelectedAlertDefinitions}"
-                                                 value="ENABLE SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"/>
+                                                 value="ENABLE SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{ResourceUIBean.permissions.alert}" />
                         <onc:selectCommandButton action="#{ListAlertDefinitionsUIBean.disableSelectedAlertDefinitions}"
-                                                 value="DISABLE SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"/>
-
+                                                 value="DISABLE SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{ResourceUIBean.permissions.alert}" />
                         <onc:selectCommandButton action="#{ListAlertDefinitionsUIBean.deleteSelectedAlertDefinitions}"
-                                                 value="DELETE SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"/>
+                                                 value="DELETE SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{ResourceUIBean.permissions.alert}" />
                         <onc:selectCommandButton action="#{ListAlertDefinitionsUIBean.copySelectedAlertDefinitions}"
                                                  value="COPY SELECTED" target="selectedAlertDefinitions" styleClass="on-pager-button buttonsmall"
-                                                 rendered="#{param.debug}" />
+                                                 rendered="#{ResourceUIBean.permissions.alert and param.debug}" />
 
                         <ui:param name="paginationDataTableName" value="alertDefinitionsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{alertDefinitionsDataModel}"/>

@@ -135,9 +135,11 @@
                   <rich:columnGroup>
                      <rich:column colspan="6">
                         <onc:selectCommandButton action="#{ListAlertHistoryUIBean.deleteSelectedAlerts}"
-                                                 value="Delete Selected" target="selectedAlerts" styleClass="on-pager-button buttonsmall"/>
+                                                 value="Delete Selected" target="selectedAlerts" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{ResourceUIBean.permissions.alert}" />
                         <h:commandButton action="#{ListAlertHistoryUIBean.purgeAllAlerts}"
-                                         value="PURGE ALL" styleClass="on-pager-button buttonsmall" />
+                                         value="PURGE ALL" styleClass="on-pager-button buttonsmall"
+                                         rendered="#{ResourceUIBean.permissions.alert}" />
 
                         <ui:param name="paginationDataTableName" value="alertHistoryDataTable"/>
                         <ui:param name="paginationDataModel" value="#{alertHistoryDataModel}"/>

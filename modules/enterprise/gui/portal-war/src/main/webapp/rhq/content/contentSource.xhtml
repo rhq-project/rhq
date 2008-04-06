@@ -142,19 +142,19 @@
          
          <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
             <h:commandButton rendered="${mode ne 'edit'}"
-                             value="Edit" action="#{ContentSourceDetailsUIBean.edit}"
+                             value="EDIT" action="#{ContentSourceDetailsUIBean.edit}"
                              alt="Edit" styleClass="buttonmed" id="editButton"/>
             <h:commandButton rendered="${mode ne 'edit'}"
-                             value="Test Connection" action="#{ContentSourceDetailsUIBean.test}"
+                             value="TEST CONNECTION" action="#{ContentSourceDetailsUIBean.test}"
                              alt="Test Connection" styleClass="buttonmed" id="testButton"/>
             <h:commandButton rendered="${mode ne 'edit'}"
-                             value="Synchronize" action="#{ContentSourceDetailsUIBean.sync}"
+                             value="SYNCHRONIZE" action="#{ContentSourceDetailsUIBean.sync}"
                              alt="Synchronize" styleClass="buttonmed" id="syncButton"/>
             <h:commandButton rendered="${mode eq 'edit'}"
-                             value="Save" action="#{ContentSourceDetailsUIBean.save}"
+                             value="SAVE" action="#{ContentSourceDetailsUIBean.save}"
                              alt="Save" styleClass="buttonmed" id="saveButton"/>
             <h:commandButton rendered="${mode eq 'edit'}"
-                             value="Cancel" action="#{ContentSourceDetailsUIBean.cancel}"
+                             value="CANCEL" action="#{ContentSourceDetailsUIBean.cancel}"
                              alt="Cancel" styleClass="buttonmed" id="cancelButton"/>
          </h:panelGrid>
 

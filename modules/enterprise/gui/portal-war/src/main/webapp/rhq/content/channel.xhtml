@@ -88,13 +88,13 @@
 
          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
             <h:commandButton rendered="${mode ne 'edit'}"
-                             value="Edit" action="#{ChannelDetailsUIBean.edit}"
+                             value="EDIT" action="#{ChannelDetailsUIBean.edit}"
                              alt="Edit" styleClass="buttonmed" id="editButton"/>
             <h:commandButton rendered="${mode eq 'edit'}"
-                             value="Save" action="#{ChannelDetailsUIBean.save}"
+                             value="SAVE" action="#{ChannelDetailsUIBean.save}"
                              alt="Save" styleClass="buttonmed" id="saveButton"/>
             <h:commandButton rendered="${mode eq 'edit'}"
-                             value="Cancel" action="#{ChannelDetailsUIBean.cancel}"
+                             value="CANCEL" action="#{ChannelDetailsUIBean.cancel}"
                              alt="Cancel" styleClass="buttonmed" id="cancelButton"/>
          </h:panelGrid>
 
@@ -474,11 +474,9 @@
                                     redirect to "#", which will do nothing but refresh the current page. -->
                          </ui:remove>
                          <onc:selectCommandButton action="#{ChannelPackageVersionsUIBean.installSelectedPackages}"
-                                                  value="Install Packages" target="selectedPackages"
+                                                  value="INSTALL PACKAGES" target="selectedPackages"
                                                   onclick="if (!confirm('#{confirmInstallMessage}')) return false"
                                                   styleClass="on-pager-button buttonsmall"/>
-
-
 
                         <ui:param name="paginationDataTableName" value="channelPackageVersionsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{channelPackageVersionsDataModel}"/>

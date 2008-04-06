@@ -49,7 +49,7 @@
                 <h:selectOneMenu value="#{CreateContentSourceUIBean.selectedContentSourceTypeName}">
                     <f:selectItems value="#{CreateContentSourceUIBean.contentSourceTypeNames}" />
                 </h:selectOneMenu>
-                <h:commandButton value="Select"
+                <h:commandButton value="SELECT"
                                  action="#{CreateContentSourceUIBean.changedSelectedContentSourceTypeName}"
                                  styleClass="buttonmed" />
             </h:panelGrid>
@@ -115,10 +115,10 @@
          
          <h:panelGrid rendered="#{CreateContentSourceUIBean.selectedContentSourceTypeName ne null}"
                       id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
-            <h:commandButton value="Save" action="#{CreateContentSourceUIBean.save}"
-                             alt="Save" styleClass="buttonmed" id="saveButton"/>
-            <h:commandButton value="Cancel" action="#{CreateContentSourceUIBean.cancel}" immediate="true"
-                             alt="Cancel" styleClass="buttonmed" id="cancelButton"/>
+            <h:commandButton value="SAVE" action="#{CreateContentSourceUIBean.save}"
+                             alt="save" styleClass="buttonmed" id="saveButton"/>
+            <h:commandButton value="CANCEL" action="#{CreateContentSourceUIBean.cancel}" immediate="true"
+                             alt="cancel" styleClass="buttonmed" id="cancelButton"/>
          </h:panelGrid>
 
       </h:form>

@@ -110,7 +110,8 @@
                   <rich:columnGroup>
                      <rich:column colspan="6">
                         <onc:selectCommandButton action="#{ResourceChannelsUIBean.deleteSelectedResourceChannels}"
-                                                 value="REMOVE SUBSCRIPTIONS" target="selectedResourceChannels" styleClass="on-pager-button buttonsmall"/>
+                                                 value="REMOVE SUBSCRIPTIONS" target="selectedResourceChannels" styleClass="on-pager-button buttonsmall"
+                                                 rendered="${GlobalPermissionsUIBean.inventory}"/>
 
                         <ui:include src="/rhq/resource/include/pagination.xhtml">
                            <ui:param name="paginationDataTableName" value="resourceChannelsDataTable"/>
@@ -128,7 +129,8 @@
       
       
       <!--  AVAILABLE CHANNELS -->
-      <h:form id="availableChannelForm">
+      <h:form id="availableChannelForm"
+              rendered="${GlobalPermissionsUIBean.inventory}">
          <input type="hidden" name="id" value="${param.id}"/>
          <rich:panel styleClass="BlockContent">
             <f:facet name="header"><h:outputText value="Available Channels"/></f:facet>

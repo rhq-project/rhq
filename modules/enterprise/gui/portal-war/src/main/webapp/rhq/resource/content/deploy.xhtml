@@ -130,10 +130,12 @@
          the package information has been specified and the file uploaded, the workflow to deploy the newly
          created package to this resource will resume.</p>
 
-          <h:commandButton action="uploadNew"
-                           value="UPLOAD NEW PACKAGE" styleClass="on-pager-button buttonsmall"/>
+      <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
+         <h:commandButton action="uploadNew"
+                           value="UPLOAD NEW PACKAGE" styleClass="buttonmed"/>
+      </h:panelGrid>
           
-          <br/>
+         <br/>
       </rich:panel>
 
       </h:form>

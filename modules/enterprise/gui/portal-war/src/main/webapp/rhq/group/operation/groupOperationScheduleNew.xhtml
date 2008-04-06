@@ -168,8 +168,8 @@
             </h:panelGrid>
          </rich:panel>
          
-         <h:panelGrid rendered="#{not empty param.opId}"
-                      columns="3" cellspacing="3">
+         <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell" 
+                      rendered="#{not empty param.opId}">
             <h:commandButton action="#{ResourceGroupOperationScheduleUIBean.schedule}" value="Schedule" styleClass="buttonmed"/>
          </h:panelGrid>
 

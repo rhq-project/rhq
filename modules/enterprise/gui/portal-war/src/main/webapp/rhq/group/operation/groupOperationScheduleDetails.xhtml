@@ -100,7 +100,9 @@
       <h:form id="scheduleForm">
          <input type="hidden" name="groupId" value="${param.groupId}"/>
          <input type="hidden" name="jobId" value="${param.jobId}"/>   
-         <h:commandButton action="#{ResourceGroupOperationScheduleUIBean.executeNow}" value="Execute Now" styleClass="buttonmed"/>
+         <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
+            <h:commandButton action="#{ResourceGroupOperationScheduleUIBean.executeNow}" value="Execute Now" styleClass="buttonmed"/>
+         </h:panelGrid>
       </h:form>
       
       <br />

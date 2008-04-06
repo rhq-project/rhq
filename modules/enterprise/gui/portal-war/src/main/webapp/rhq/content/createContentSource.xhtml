@@ -44,18 +44,15 @@
       <h:form id="setContentSourceType">
          <rich:panel>
             <f:facet name="header">Content Source Type</f:facet>
-            <table>
-               <tr>
-                  <td align="right">Select the type you want to create:</td>
-                  <td align="left">
-                     <h:selectOneMenu value="#{CreateContentSourceUIBean.selectedContentSourceTypeName}">
-                        <f:selectItems value="#{CreateContentSourceUIBean.contentSourceTypeNames}" />
-                     </h:selectOneMenu> 
-                     <h:commandButton value="Select"
-                                      action="#{CreateContentSourceUIBean.changedSelectedContentSourceTypeName}"/>
-                  </td>
-               </tr>
-            </table>
+            <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
+                <h:outputText value="Select the type you want to create:" />
+                <h:selectOneMenu value="#{CreateContentSourceUIBean.selectedContentSourceTypeName}">
+                    <f:selectItems value="#{CreateContentSourceUIBean.contentSourceTypeNames}" />
+                </h:selectOneMenu>
+                <h:commandButton value="Select"
+                                 action="#{CreateContentSourceUIBean.changedSelectedContentSourceTypeName}"
+                                 styleClass="buttonmed" />
+            </h:panelGrid>
          </rich:panel>
       </h:form>
 

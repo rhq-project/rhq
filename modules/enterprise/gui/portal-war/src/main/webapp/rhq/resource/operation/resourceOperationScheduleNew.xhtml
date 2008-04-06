@@ -139,7 +139,8 @@
          </rich:panel>
          
          <h:panelGrid rendered="#{not empty param.opId}"
-                      columns="3" cellspacing="3">
+                      columns="3" cellspacing="3"
+                      styleClass="buttons-table" columnClasses="button-cell">
             <h:commandButton action="#{ResourceOperationScheduleUIBean.schedule}" value="Schedule" styleClass="buttonmed"
                              rendered="#{ResourceUIBean.permissions.control}"/>
             <h:outputText value="Sorry, you do not have permission to execute or schedule operations against this resource"

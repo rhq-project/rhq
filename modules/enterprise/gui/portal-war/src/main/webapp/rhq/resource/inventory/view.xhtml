@@ -304,14 +304,16 @@
       <h:form id="manuallyAddResourceForm" onsubmit="addManuallyAddResourceTypeRequestParam(this)">
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
          <input type="hidden" name="type"/>
-         <b>Manually Add: </b>
-         <h:selectOneMenu id="manuallyAddResourceTypeInput" value="#{ListChildResourcesUIBean.manuallyAddResourceTypeId}">
-            <f:selectItem itemLabel="Select Type" itemValue="" itemDisabled="true"/>
-            <f:selectItems value="#{ListChildResourcesUIBean.manuallyAddableChildServerTypes}"/>
-            <f:selectItems value="#{ListChildResourcesUIBean.manuallyAddableChildServiceTypes}"/>
-         </h:selectOneMenu>
-         <h:commandButton action="#{ManuallyAddChildResourceUIBean.startWorkflow}" value="OK"
-                          styleClass="buttonmed" style="margin-left: 3px"/>
+         <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
+            <h:outputText style="font-weight: bold;" value="Manually Add:"/>
+            <h:selectOneMenu id="manuallyAddResourceTypeInput" value="#{ListChildResourcesUIBean.manuallyAddResourceTypeId}">
+               <f:selectItem itemLabel="Select Type" itemValue="" itemDisabled="true"/>
+               <f:selectItems value="#{ListChildResourcesUIBean.manuallyAddableChildServerTypes}"/>
+              <f:selectItems value="#{ListChildResourcesUIBean.manuallyAddableChildServiceTypes}"/>
+            </h:selectOneMenu>
+         	<h:commandButton action="#{ManuallyAddChildResourceUIBean.startWorkflow}" value="OK"
+                             styleClass="buttonmed" style="margin-left: 3px"/>
+         </h:panelGrid>
       </h:form>
    </h:panelGroup>
 
@@ -320,15 +322,17 @@
       <h:form id="createNewResourceForm" onsubmit="addCreateNewResourceTypeRequestParam(this)">
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
          <input type="hidden" name="type"/>
-         <b>Create New: </b>
          <input type="hidden" name="mode" value="edit"/>
-         <h:selectOneMenu id="createNewResourceTypeInput" value="#{ListChildResourcesUIBean.createNewResourceTypeId}">
-            <f:selectItem itemLabel="Select Type" itemValue="" itemDisabled="true"/>
-            <f:selectItems value="#{ListChildResourcesUIBean.creatableChildServerTypes}"/>
-            <f:selectItems value="#{ListChildResourcesUIBean.creatableChildServiceTypes}"/>
-         </h:selectOneMenu>
-         <h:commandButton id="createNewOKBtn" action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" value="OK"
-                          styleClass="buttonmed" style="margin-left: 3px"/>
+         <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
+            <h:outputText style="font-weight: bold;" value="Create New:"/>
+            <h:selectOneMenu id="createNewResourceTypeInput" value="#{ListChildResourcesUIBean.createNewResourceTypeId}">
+               <f:selectItem itemLabel="Select Type" itemValue="" itemDisabled="true"/>
+               <f:selectItems value="#{ListChildResourcesUIBean.creatableChildServerTypes}"/>
+               <f:selectItems value="#{ListChildResourcesUIBean.creatableChildServiceTypes}"/>
+            </h:selectOneMenu>
+         	<h:commandButton id="createNewOKBtn" action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" value="OK"
+                             styleClass="buttonmed" style="margin-left: 3px"/>
+         </h:panelGrid>
       </h:form>
    </h:panelGroup>
 
@@ -459,13 +463,14 @@
 
 </rich:dataTable>
 
-<h:panelGroup layout="block" rendered="#{!empty DetermineChildResourceCreationTypeUIBean.failedCreateHistory}">
+<h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell"
+             rendered="#{!empty DetermineChildResourceCreationTypeUIBean.failedCreateHistory}">
    <h:outputText value="Retry failed create"/>
    <h:selectOneMenu value="#{DetermineChildResourceCreationTypeUIBean.retryCreateItem}" converter="CreateResourceHistoryConverter">
       <f:selectItems value="#{DetermineChildResourceCreationTypeUIBean.failedCreateHistory}"/>
-   </h:selectOneMenu>
+   </h:selectOneMenu>   
    <h:commandButton action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" value="Retry Create" styleClass="buttonmed"/>
-</h:panelGroup>
+</h:panelGrid>
 
 </rich:panel>
 </h:form>

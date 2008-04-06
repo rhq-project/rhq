@@ -46,7 +46,9 @@
                   nullConfigurationDefinitionMessage="#{CreateNewConfigurationChildResourceUIBean.nullConfigurationDefinitionMessage}"
                   nullConfigurationMessage="#{CreateNewConfigurationChildResourceUIBean.nullConfigurationMessage}"/>
       
-      <h:commandButton value="Submit" action="#{CreateNewConfigurationChildResourceUIBean.createResource}" styleClass="buttonmed"/>
+      <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
+         <h:commandButton value="Submit" action="#{CreateNewConfigurationChildResourceUIBean.createResource}" styleClass="buttonmed"/>
+      </h:panelGrid>
 
    </h:form>
 

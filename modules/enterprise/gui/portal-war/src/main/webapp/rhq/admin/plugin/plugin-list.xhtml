@@ -134,8 +134,10 @@
                </tr>
             </table>
 
-            <h:commandButton style="margin-top: 10px;" value="UPLOAD"
-                             action="#{InstalledPluginsUIBean.uploadPlugin}" styleClass="buttonmed"/>
+            <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
+               <h:commandButton style="margin-top: 10px;" value="UPLOAD"
+                                action="#{InstalledPluginsUIBean.uploadPlugin}" styleClass="buttonmed"/>
+            </h:panelGrid>
       </h:form>
 
     </h:panelGrid>

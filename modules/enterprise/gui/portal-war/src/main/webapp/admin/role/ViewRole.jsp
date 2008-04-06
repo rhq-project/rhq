@@ -114,10 +114,10 @@ groupWidgetProperties = getWidgetProperties('<c:out value="${groupWidgetInstance
       <display:checkboxdecorator name="u" onclick="ToggleSelection(this, userWidgetProperties, true)" styleClass="listMember"/>
     </display:column>
   </c:if>
-  <display:column width="25%" property="firstName" title="admin.role.users.FirstNameTH" sortAttr="u.firstName" /> <!-- XXX sort turned off, can't get it to work -->
-  <display:column width="25%" property="lastName" title="admin.role.users.LastNameTH" sortAttr="u.lastName" /> <!-- XXX sort turned off, can't get it to work -->
   <display:column href="/admin/user/UserAdmin.do?mode=view" paramId="u" paramProperty="id"
-                  width="50%" property="name" title="admin.role.users.UsernameTH" sortAttr="u.name" />
+                  width="34%" property="name" title="admin.role.users.UsernameTH" sortAttr="u.name" />
+  <display:column width="33%" property="firstName" title="admin.role.users.FirstNameTH" sortAttr="u.firstName" /> <!-- XXX sort turned off, can't get it to work -->
+  <display:column width="33%" property="lastName" title="admin.role.users.LastNameTH" sortAttr="u.lastName" /> <!-- XXX sort turned off, can't get it to work -->
 </display:table>
 
 <c:if test="${useroperations['MANAGE_SECURITY']}">

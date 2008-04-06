@@ -19,15 +19,9 @@
       <html:img page="/images/spacer.gif" width="175" height="1" border="0"/><br>
       <fmt:message key="admin.role.perms.GlobalPermissions"/></td>
 
-    <!--  SPACER COLUMN  -->
-    <td class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1"/></td>
-    <!--  /  -->
-
     <td class="ListHeaderInactive" nowrap><div align="center">
       <html:img page="/images/spacer.gif" width="50" height="1" border="0"/><br>
       <fmt:message key="admin.role.perms.Authorized"/></div></td>
-
-    <td width="50%" class="ListHeaderInactive"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>
 
   <!-- EACH GLOBAL PERM ROW -->
@@ -36,9 +30,6 @@
   <tr class="ListRow">
     <td class="ListCell"><b><fmt:message key="admin.role.perms.perm.MANAGE_SECURITY"/></b></td>
 
-    <!--  SPACER COLUMN  -->
-    <td class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1"/></td>
-    <!--  /  -->
   <c:choose>
     <c:when test="${mode eq 'view'}">
       <c:choose>
@@ -60,9 +51,6 @@
   <tr class="ListRow">
     <td class="ListCell"><b><fmt:message key="admin.role.perms.perm.MANAGE_INVENTORY"/></b></td>
 
-    <!--  SPACER COLUMN  -->
-    <td class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1"/></td>
-    <!--  /  -->
   <c:choose>
     <c:when test="${mode eq 'view'}">
       <c:choose>
@@ -84,9 +72,6 @@
   <tr class="ListRow">
     <td class="ListCell"><b><fmt:message key="admin.role.perms.perm.MANAGE_SETTINGS"/></b></td>
 
-    <!--  SPACER COLUMN  -->
-    <td class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1"/></td>
-    <!--  /  -->
   <c:choose>
     <c:when test="${mode eq 'view'}">
       <c:choose>
@@ -112,51 +97,17 @@
       <html:img page="/images/spacer.gif" width="175" height="1" border="0"/><br>
       <fmt:message key="admin.role.perms.ResourcePermissions"/></td>
 
-    <!--  SPACER COLUMN  -->
-    <td class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1"/></td>
-    <!--  /  -->
-
     <td class="ListHeaderInactive" nowrap><div align="center">
       <html:img page="/images/spacer.gif" width="50" height="1" border="0"/><br>
       <fmt:message key="admin.role.perms.Authorized"/></div></td>
-
-    <td width="50%" class="ListHeaderInactive"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>
 
   <!-- EACH RESOURCE PERM ROW -->
-
-
-  <!-- VIEW_RESOURCE -->
-  <!-- 
-  <tr class="ListRow">
-    <td class="ListCell"><b><fmt:message key="admin.role.perms.perm.VIEW_RESOURCE"/></b></td>
-
-    <td class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1"/></td>
-  <c:choose>
-    <c:when test="${mode eq 'view'}">
-      <c:choose>
-        <c:when test="${rolePermissions['VIEW_RESOURCE']}">
-    <td align="center" class="ListCell"><html:img page="/images/permission_enabled.gif" width="11" height="11" border="0"/></td>
-        </c:when>
-        <c:otherwise>
-    <td align="center" class="ListCell"><html:img page="/images/permission_disabled.gif" width="11" height="11" border="0"/></td>
-        </c:otherwise>
-      </c:choose>
-    </c:when>
-    <c:otherwise>
-    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="VIEW_RESOURCE" onclick="ToggleSelection(this)"/></td>
-    </c:otherwise>
-  </c:choose>
-  </tr>
-    -->
 
   <!-- MODIFY_RESOURCE -->
   <tr class="ListRow">
     <td class="ListCell"><b><fmt:message key="admin.role.perms.perm.MODIFY_RESOURCE"/></b></td>
 
-    <!--  SPACER COLUMN  -->
-    <td class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1"/></td>
-    <!--  /  -->
   <c:choose>
     <c:when test="${mode eq 'view'}">
       <c:choose>
@@ -178,9 +129,6 @@
   <tr class="ListRow">
     <td class="ListCell"><b><fmt:message key="admin.role.perms.perm.DELETE_RESOURCE"/></b></td>
 
-    <!--  SPACER COLUMN  -->
-    <td class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1"/></td>
-    <!--  /  -->
   <c:choose>
     <c:when test="${mode eq 'view'}">
       <c:choose>
@@ -202,9 +150,6 @@
   <tr class="ListRow">
     <td class="ListCell"><b><fmt:message key="admin.role.perms.perm.CREATE_CHILD_RESOURCES"/></b></td>
 
-    <!--  SPACER COLUMN  -->
-    <td class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1"/></td>
-    <!--  /  -->
   <c:choose>
     <c:when test="${mode eq 'view'}">
       <c:choose>
@@ -226,9 +171,6 @@
   <tr class="ListRow">
     <td class="ListCell"><b><fmt:message key="admin.role.perms.perm.MANAGE_ALERTS"/></b></td>
 
-    <!--  SPACER COLUMN  -->
-    <td class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1"/></td>
-    <!--  /  -->
   <c:choose>
     <c:when test="${mode eq 'view'}">
       <c:choose>
@@ -250,9 +192,6 @@
   <tr class="ListRow">
     <td class="ListCell"><b><fmt:message key="admin.role.perms.perm.MANAGE_MEASUREMENTS"/></b></td>
 
-    <!--  SPACER COLUMN  -->
-    <td class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1"/></td>
-    <!--  /  -->
   <c:choose>
     <c:when test="${mode eq 'view'}">
       <c:choose>
@@ -274,9 +213,6 @@
   <tr class="ListRow">
     <td class="ListCell"><b><fmt:message key="admin.role.perms.perm.MANAGE_CONTENT"/></b></td>
 
-    <!--  SPACER COLUMN  -->
-    <td class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1"/></td>
-    <!--  /  -->
   <c:choose>
     <c:when test="${mode eq 'view'}">
       <c:choose>
@@ -298,9 +234,6 @@
   <tr class="ListRow">
     <td class="ListCell"><b><fmt:message key="admin.role.perms.perm.CONTROL"/></b></td>
 
-    <!--  SPACER COLUMN  -->
-    <td class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1"/></td>
-    <!--  /  -->
   <c:choose>
     <c:when test="${mode eq 'view'}">
       <c:choose>
@@ -322,9 +255,6 @@
   <tr class="ListRow">
     <td class="ListCell"><b><fmt:message key="admin.role.perms.perm.CONFIGURE"/></b></td>
 
-    <!--  SPACER COLUMN  -->
-    <td class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1"/></td>
-    <!--  /  -->
   <c:choose>
     <c:when test="${mode eq 'view'}">
       <c:choose>
@@ -348,8 +278,8 @@
   <script language="JavaScript" src="<html:rewrite page="/js/adminEditRole_checkAll.js"/>"></script>
 	<!-- CHECK ALL ROW  -->
   <tr class="ListRow">
-   <td class="ListCellCheckAll" colspan="2">&nbsp;</td>
-   <td class="ListCellCheckAll" colspan="7">
+   <td class="ListCellCheckAll">&nbsp;</td>
+   <td class="ListCellCheckAll" align="center">
     <input type="checkbox" name="checkAll" onclick="ToggleAll(this)">
     <fmt:message key="admin.role.perms.perm.CheckAll"/>
    </td>

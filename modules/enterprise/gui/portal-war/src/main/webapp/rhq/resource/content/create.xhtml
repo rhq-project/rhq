@@ -87,7 +87,8 @@
                              action="cancel" styleClass="buttonmed"/>
 
             <h:commandButton style="margin-top: 10px;" value="CONTINUE"
-                             action="#{CreateNewPackageUIBean.createPackage}" styleClass="buttonmed"/>
+                             action="#{CreateNewPackageUIBean.createPackage}" styleClass="buttonmed"
+                             rendered="${ResourceUIBean.permissions.content}"/>
 
          </h:panelGrid>
 

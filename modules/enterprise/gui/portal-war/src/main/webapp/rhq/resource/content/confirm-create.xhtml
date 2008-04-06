@@ -173,7 +173,8 @@
                                  action="cancel" styleClass="buttonmed"/>
 
                 <h:commandButton style="margin-top: 10px;" value="CONTINUE"
-                                 action="#{DeployPackagesUIBean.deployPackages}" styleClass="buttonmed"/>
+                                 action="#{DeployPackagesUIBean.deployPackages}" styleClass="buttonmed"
+                                 rendered="${ResourceUIBean.permissions.content}"/>
              </h:panelGrid>
           </rich:panel>
 

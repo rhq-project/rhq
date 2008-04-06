@@ -107,7 +107,8 @@
                   <rich:columnGroup>
                      <rich:column colspan="6">
                         <onc:selectCommandButton action="#{CreateNewPackageUIBean.deployExisting}"
-                                                 value="DEPLOY SELECTED" target="selectedPackages" styleClass="on-pager-button buttonsmall"/>
+                                                 value="DEPLOY SELECTED" target="selectedPackages" styleClass="on-pager-button buttonsmall"
+                                                 rendered="${ResourceUIBean.permissions.content}"/>
 
                         <ui:include src="/rhq/resource/include/pagination.xhtml">
                            <ui:param name="paginationDataTableName" value="resourcePackageVersionsDataTable"/>
@@ -123,7 +124,8 @@
 
       </rich:panel>
 
-      <rich:panel styleClass="BlockContent">
+      <rich:panel styleClass="BlockContent"
+                  rendered="${ResourceUIBean.permissions.content}">
          <f:facet name="header"><h:outputText value="Upload New Package"/></f:facet>
 
          <p>The following option will begin the workflow to upload a new package into the system. Once

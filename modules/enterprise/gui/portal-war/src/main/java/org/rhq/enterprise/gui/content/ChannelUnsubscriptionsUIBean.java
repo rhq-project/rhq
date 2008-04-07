@@ -20,9 +20,10 @@ package org.rhq.enterprise.gui.content;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -107,26 +108,33 @@ public class ChannelUnsubscriptionsUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
-    private class ChannelUnsubscriptionsDataModel extends PagedListDataModel<ResourceComposite> {
+    private class ChannelUnsubscriptionsDataModel extends PagedListDataModel<Resource> {
         public ChannelUnsubscriptionsDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public PageList<ResourceComposite> fetchPage(PageControl pc) {
+        public PageList<Resource> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             ResourceManagerLocal manager = LookupUtil.getResourceManager();
+            Integer channelId = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));
             String search = FacesContextUtility.getOptionalRequestParameter("searchString");
             String category = FacesContextUtility.getOptionalRequestParameter("searchCategory");
-            ResourceCategory catEnum = ResourceCategory.PLATFORM;
+            ResourceCategory categoryEnum = ResourceCategory.PLATFORM;
 
-            if (category != null) {
-                catEnum = ResourceCategory.valueOf(category);
+            if (search != null && search.trim().equals("")) {
+                search = null;
             }
 
-            PageList<ResourceComposite> results = manager.findResourceComposites(subject, catEnum, null, null, search,
-                pc);
+            if (category != null) {
+                categoryEnum = ResourceCategory.valueOf(category);
+            }
+
+            PageList<Resource> results = manager.getAvailableResourcesForChannel(subject, channelId, search,
+                categoryEnum, pc);
+
+            //PageList<ResourceComposite> results = manager.findResourceComposites(subject, categoryEnum, null, null, search, pc);
 
             return results;
         }

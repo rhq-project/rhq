@@ -242,6 +242,9 @@ public interface ResourceManagerLocal {
     PageList<Resource> getAvailableResourcesForResourceGroup(Subject user, int groupId, ResourceType type,
         ResourceCategory category, String nameFilter, Integer[] excludeIds, PageControl pageControl);
 
+    PageList<Resource> getAvailableResourcesForChannel(Subject user, Integer channelId, String search,
+        ResourceCategory category, PageControl pageControl);
+
     PageList<Resource> getAvailableResourcesForDashboardPortlet(Subject user, Integer typeId,
         ResourceCategory category, Integer[] excludeIds, PageControl pageControl);
 

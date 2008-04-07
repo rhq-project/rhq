@@ -20,9 +20,7 @@ package org.rhq.enterprise.gui.content;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.faces.model.DataModel;
 
@@ -30,14 +28,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.content.InstalledPackage;
-import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.InstalledPackageHistory;
+import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -111,9 +105,9 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
         results.add(new PackageTableDataValue("Architecture", current.getPackageVersion().getArchitecture().getName(),
             ((old != null) ? old.getPackageVersion().getArchitecture().getName() : null)));
         results.add(new PackageTableDataValue("File Name",
-            (current.getPackageVersion().getFileSize() != null) ? current.getPackageVersion().getFileName()
-                : null, (old != null) ? ((old.getPackageVersion().getFileSize() != null) ? old.getPackageVersion()
-                .getFileName() : null) : null));
+            (current.getPackageVersion().getFileSize() != null) ? current.getPackageVersion().getFileName() : null,
+            (old != null) ? ((old.getPackageVersion().getFileSize() != null) ? old.getPackageVersion().getFileName()
+                : null) : null));
         results.add(new PackageTableDataValue("File Size",
             (current.getPackageVersion().getFileSize() != null) ? current.getPackageVersion().getFileSize().toString()
                 : null, (old != null) ? ((old.getPackageVersion().getFileSize() != null) ? old.getPackageVersion()
@@ -128,11 +122,11 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
             : null, (old != null) ? ((old.getUser() != null) ? old.getUser().toString() : null) : null));
 
         // TODO: figure out how to know if the content is available
-/*
-        results.add(new PackageTableDataValue("Content loaded to server?", Boolean.toString(current.getPackageVersion()
-            .getPackageBits() != null), ((old != null) ? Boolean
-            .toString(old.getPackageVersion().getPackageBits() != null) : null)));
-*/
+        /*
+                results.add(new PackageTableDataValue("Content loaded to server?", Boolean.toString(current.getPackageVersion()
+                    .getPackageBits() != null), ((old != null) ? Boolean
+                    .toString(old.getPackageVersion().getPackageBits() != null) : null)));
+        */
 
         // If there are no extra properties defined for this package type, we can stop here
         ConfigurationDefinition definition = current.getPackageVersion().getGeneralPackage().getPackageType()
@@ -141,40 +135,40 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
             return results;
         }
 
-/*
-        Deployment configuration is no longer stored on the InstalledPackage. If we want this, we can have a query
-        that looks for the configuration in the audit trail.
+        /*
+                Deployment configuration is no longer stored on the InstalledPackage. If we want this, we can have a query
+                that looks for the configuration in the audit trail.
 
-        Map<String, PropertyDefinition> propertyDefinitions = definition.getPropertyDefinitions();
-        
-        Configuration currentConfiguration = current.getDeploymentConfigurationValues();
-        Configuration oldConfiguration = ((old != null) ? old.getDeploymentConfigurationValues() : null);
+                Map<String, PropertyDefinition> propertyDefinitions = definition.getPropertyDefinitions();
+                
+                Configuration currentConfiguration = current.getDeploymentConfigurationValues();
+                Configuration oldConfiguration = ((old != null) ? old.getDeploymentConfigurationValues() : null);
 
-        Map<String, PropertySimple> currentProperties = ((currentConfiguration != null) ? currentConfiguration
-            .getSimpleProperties() : new HashMap<String, PropertySimple>());
-        Map<String, PropertySimple> oldProperties = ((oldConfiguration != null) ? oldConfiguration
-            .getSimpleProperties() : new HashMap<String, PropertySimple>());
+                Map<String, PropertySimple> currentProperties = ((currentConfiguration != null) ? currentConfiguration
+                    .getSimpleProperties() : new HashMap<String, PropertySimple>());
+                Map<String, PropertySimple> oldProperties = ((oldConfiguration != null) ? oldConfiguration
+                    .getSimpleProperties() : new HashMap<String, PropertySimple>());
 
-        for (String name : propertyDefinitions.keySet()) {
-            PropertyDefinitionSimple propertyDefinition = definition.getPropertyDefinitionSimple(name);
-            String propertyName = propertyDefinition.getDisplayName();
+                for (String name : propertyDefinitions.keySet()) {
+                    PropertyDefinitionSimple propertyDefinition = definition.getPropertyDefinitionSimple(name);
+                    String propertyName = propertyDefinition.getDisplayName();
 
-            String currentPropertyValue;
-            String oldPropertyValue;
+                    String currentPropertyValue;
+                    String oldPropertyValue;
 
-            PropertySimple currentPropertySimple = currentProperties.get(name);
-            currentPropertyValue = ((currentPropertySimple != null) ? currentPropertySimple.getStringValue() : null);
+                    PropertySimple currentPropertySimple = currentProperties.get(name);
+                    currentPropertyValue = ((currentPropertySimple != null) ? currentPropertySimple.getStringValue() : null);
 
-            PropertySimple oldPropertySimple = oldProperties.get(name);
-            oldPropertyValue = ((oldPropertySimple != null) ? oldPropertySimple.getStringValue() : null);
+                    PropertySimple oldPropertySimple = oldProperties.get(name);
+                    oldPropertyValue = ((oldPropertySimple != null) ? oldPropertySimple.getStringValue() : null);
 
-            PackageTableDataValue packageTableDataValue = new PackageTableDataValue(propertyName, currentPropertyValue,
-                oldPropertyValue);
-            results.add(packageTableDataValue);
-        }
-*/
+                    PackageTableDataValue packageTableDataValue = new PackageTableDataValue(propertyName, currentPropertyValue,
+                        oldPropertyValue);
+                    results.add(packageTableDataValue);
+                }
+        */
 
-        results = new PageList<PackageTableDataValue>(results, results.size(), pageControl);
+        results = new PageList<PackageTableDataValue>(results, results.size(), PageControl.getUnlimitedInstance());
         return results;
     }
 
@@ -280,8 +274,8 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
             InstalledPackage currentInstalledPackage = contentUIManager.getInstalledPackage(currentInstalledPackageId);
             Package generalPackage = currentInstalledPackage.getPackageVersion().getGeneralPackage();
 
-            PageList<InstalledPackageHistory> result =
-                contentUIManager.getInstalledPackageHistory(subject, resource.getId(), generalPackage.getId(), pc);
+            PageList<InstalledPackageHistory> result = contentUIManager.getInstalledPackageHistory(subject, resource
+                .getId(), generalPackage.getId(), pc);
             return result;
         }
     }

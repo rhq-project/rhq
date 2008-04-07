@@ -191,7 +191,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
                 }
             }
 
-            return new PageList<AlertWithLatestConditionLog>(results, alerts.getTotalSize(), pageControl);
+            return new PageList<AlertWithLatestConditionLog>(results, alerts.getTotalSize(), pc);
         }
     }
 

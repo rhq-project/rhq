@@ -1508,6 +1508,36 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
+    public PageList<Resource> getAvailableResourcesForChannel(Subject user, Integer channelId, String search,
+        ResourceCategory category, PageControl pageControl) {
+        pageControl.initDefaultOrderingField("res.name");
+
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager,
+            Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL, pageControl);
+
+        queryCount.setParameter("channelId", channelId);
+        query.setParameter("channelId", channelId);
+
+        search = PersistenceUtility.formatSearchParameter(search);
+        queryCount.setParameter("search", search);
+        query.setParameter("search", search);
+
+        queryCount.setParameter("category", category);
+        query.setParameter("category", category);
+
+        query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
+        queryCount.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
+
+        long count = (Long) queryCount.getSingleResult();
+
+        List<Resource> resources = query.getResultList();
+
+        return new PageList(resources, (int) count, pageControl);
+    }
+
+    @SuppressWarnings("unchecked")
     public PageList<Resource> getAvailableResourcesForDashboardPortlet(Subject user, Integer typeId,
         ResourceCategory category, Integer[] excludeIds, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");

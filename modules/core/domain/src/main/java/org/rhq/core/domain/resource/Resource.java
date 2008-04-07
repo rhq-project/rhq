@@ -309,6 +309,16 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT_ADMIN, query = "SELECT count(res) "
         + "  FROM ResourceGroup rg JOIN rg.implicitResources res LEFT JOIN res.availability a WITH a.endTime is null "
         + " WHERE rg = :group " + "   AND res.inventoryStatus = 'COMMITTED' "),
+    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL, //
+    query = "SELECT res " //  
+        + "    FROM Resource AS res "
+        + "   WHERE res.id NOT IN "
+        + "       ( SELECT rc.resource.id "
+        + "           FROM ResourceChannel rc "
+        + "          WHERE rc.channel.id = :channelId ) "
+        + "     AND (:category = res.resourceType.category OR :category IS NULL) "
+        + "     AND (res.inventoryStatus = :inventoryStatus) "
+        + "     AND (UPPER(res.name) LIKE :search OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP, query = "SELECT res "
         + "  FROM Resource AS res " + " WHERE res.id NOT IN " + "       ( SELECT ires.id "
         + "           FROM Resource ires JOIN ires.explicitGroups AS irg " + "          WHERE irg.id = :groupId ) "
@@ -460,6 +470,8 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT = "ResourceWithAvailability.findImplicitByResourceGroup_count";
     public static final String QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_ADMIN = "ResourceWithAvailability.findImplicitByResourceGroup_admin";
     public static final String QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT_ADMIN = "ResourceWithAvailability.findImplicitByResourceGroup_count_admin";
+
+    public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL = "Resource.getAvailableResourcesForChannel";
 
     public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP = "Resource.getAvailableResourcesForResourceGroup";
     public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP_WITH_EXCLUDES = "Resource.getAvailableResourcesForResourceGroupWithExcludes";

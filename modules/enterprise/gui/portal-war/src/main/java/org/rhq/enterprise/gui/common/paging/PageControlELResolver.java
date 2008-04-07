@@ -133,11 +133,6 @@ public class PageControlELResolver extends ELResolver {
                 // work around for http://jira.jboss.com/jira/browse/RF-1133
                 workAroundRF1133(view);
 
-                // find the user for this session-based operation
-                WebUser webUser = EnterpriseFacesContextUtility.getWebUser();
-
-                // update it
-                PageControl pc = webUser.getPageControl(view);
                 if (value != null) {
                     /* 
                      * only update the pageSize if the user changed it, otherwise just use the value that was 
@@ -148,10 +143,18 @@ public class PageControlELResolver extends ELResolver {
                      * was no explicit user action to change it, so let's display whatever option the user
                      * had before the paging control was suppressed in the first place
                      */
+
+                    // find the user for this session-based operation
+                    WebUser webUser = EnterpriseFacesContextUtility.getWebUser();
+
+                    // update it
+                    PageControl pc = webUser.getPageControl(view);
+
                     int pageSize = (Integer) value;
                     pc.setPageSize(pageSize);
+
+                    webUser.setPageControl(view, pc);
                 }
-                webUser.setPageControl(view, pc);
 
                 // don't let other resolvers touch this
                 context.setPropertyResolved(true);

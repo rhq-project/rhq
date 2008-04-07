@@ -40,7 +40,7 @@
       <navigation-case>
          <from-action>#{ListPackagesUIBean.deleteSelectedInstalledPackages}</from-action>
          <from-outcome>successOrFailure</from-outcome>
-         <to-view-id>/rhq/resource/content/history.xhtml?id=${param.id}</to-view-id>
+         <to-view-id>/rhq/resource/content/history.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
       
@@ -85,7 +85,7 @@
 
       <navigation-case>
          <from-outcome>returnToAllRequests</from-outcome>
-         <to-view-id>/rhq/resource/content/history.xhtml?id=${param.id}</to-view-id>
+         <to-view-id>/rhq/resource/content/history.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
@@ -141,13 +141,13 @@
 
       <navigation-case>
          <from-outcome>successOrFailure</from-outcome>
-         <to-view-id>/rhq/resource/content/history.xhtml?id=${param.id}</to-view-id>
+         <to-view-id>/rhq/resource/content/history.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <from-outcome>cancel</from-outcome>
-         <to-view-id>/rhq/resource/content/deploy.xhtml?id=${param.id}</to-view-id>
+         <to-view-id>/rhq/resource/content/deploy.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
       
@@ -211,13 +211,13 @@
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/content/contentSource.xhtml?mode=view&amp;id=${param.id}</to-view-id>
+         <to-view-id>/rhq/content/contentSource.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <from-outcome>edit</from-outcome>
-         <to-view-id>/rhq/content/contentSource.xhtml?mode=edit&amp;id=${param.id}</to-view-id>
+         <to-view-id>/rhq/content/contentSource.xhtml?mode=edit&amp;id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
@@ -236,13 +236,13 @@
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/content/channel.xhtml?mode=view&amp;id=${param.id}</to-view-id>
+         <to-view-id>/rhq/content/channel.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <from-outcome>edit</from-outcome>
-         <to-view-id>/rhq/content/channel.xhtml?mode=edit&amp;id=${param.id}</to-view-id>
+         <to-view-id>/rhq/content/channel.xhtml?mode=edit&amp;id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
@@ -313,7 +313,7 @@
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/content/channelAssociations.xhtml?id=${param.id}</to-view-id>
+         <to-view-id>/rhq/content/channelAssociations.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
@@ -332,7 +332,7 @@
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=${param.id}</to-view-id>
+         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=#{param.id}&amp;searchCategory=#{ChannelUnsubscriptionsUIBean.searchCategory}&amp;searchString=#{ChannelUnsubscriptionsUIBean.searchString}</to-view-id>
          <redirect/>
       </navigation-case>
 

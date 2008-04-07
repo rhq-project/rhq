@@ -68,7 +68,7 @@
                             value="#{channelSubscriptionsDataModel}"
                             var="resourceitem"
                             width="100%"
-                            columnsWidth="1%, 20%, 15%, 15%"
+                            columnsWidth="1%, 20%, 15%, 15%, 49%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 
@@ -111,7 +111,9 @@
                
                <rich:column>
                   <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Resource Type" />
+                     <onc:sortableColumnHeader sort="rc.resource.resourceType.name">
+                        <h:outputText styleClass="headerText" value="Resource Type" />
+                     </onc:sortableColumnHeader>
                   </f:facet>
 
                   <h:outputText value="#{resourceitem.resourceType.name}"/>
@@ -192,9 +194,9 @@
                             id="channelUnsubscriptionsDataTable"
                             rows="#{PageControl.ChannelUnsubscriptionsList.pageSize}"
                             value="#{channelUnsubscriptionsDataModel}"
-                            var="compositeitem"
+                            var="availableitem"
                             width="100%"
-                            columnsWidth="1%, 20%, 15%, 15%, 45%, 4%"
+                            columnsWidth="1%, 20%, 15%, 15%, 49%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 
@@ -208,7 +210,7 @@
                      <onc:allSelect target="selectedChannelUnsubscriptions" />
                   </f:facet>
                   
-                  <onc:select name="selectedChannelUnsubscriptions" value="#{compositeitem.resource.id}" />
+                  <onc:select name="selectedChannelUnsubscriptions" value="#{availableitem.id}" />
                </rich:column>
 
                <rich:column rendered="#{param.debug}">
@@ -218,7 +220,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputText value="#{compositeitem.resource.id}"/>
+                  <h:outputText value="#{availableitem.id}"/>
                </rich:column>
 
                <rich:column>
@@ -229,9 +231,9 @@
                   </f:facet>
                
                   <h:outputLink value="/resource/common/monitor/Visibility.do">
-                     <f:param name="id" value="#{compositeitem.resource.id}"/>
+                     <f:param name="id" value="#{availableitem.id}"/>
                      <f:param name="mode" value="currentHealth"/>
-                     <h:outputText value="#{compositeitem.resource.name}" />
+                     <h:outputText value="#{availableitem.name}" />
                   </h:outputLink>
                </rich:column>
                
@@ -242,49 +244,34 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{compositeitem.resource.resourceType.name}"/>
+                  <h:outputText value="#{availableitem.resourceType.name}"/>
                </rich:column>
                
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="res.version">
-                           <h:outputText styleClass="headerText" value="Version" />
+                        <h:outputText styleClass="headerText" value="Version" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{compositeitem.resource.version}"/>
+                  <h:outputText value="#{availableitem.version}"/>
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="res.description">
-                        <h:outputText styleClass="headerText" value="Description" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Description" />
                   </f:facet>
 
-                  <h:outputText value="#{compositeitem.resource.description}"/>
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Availability"/>
-                  </f:facet>
-            
-                  <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up"
-                                  rendered="#{compositeitem.availability == 'UP'}"/>
-                  <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down"
-                                  rendered="#{compositeitem.availability == 'DOWN'}"/>
-                  <h:graphicImage value="/images/icon_available_grey.png" alt="Unknown" title="Unknown"
-                                  rendered="#{compositeitem.availability == null}"/>
+                  <h:outputText value="#{availableitem.description}"/>
                </rich:column>
 
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 6:5 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 7 : 6}">
+                     <rich:column colspan="#{param.debug ? 6 : 5}">
                         <onc:selectCommandButton action="#{ChannelUnsubscriptionsUIBean.associateSelectedContentSourcesWithChannel}"
                                                  value="SUBSCRIBE SELECTED" target="selectedChannelUnsubscriptions" styleClass="on-pager-button buttonsmall"/>
-
+                        
                         <ui:param name="paginationDataTableName" value="channelUnsubscriptionsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{channelUnsubscriptionsDataModel}"/>
                         <ui:param name="paginationPageControl" value="#{PageControl.ChannelUnsubscriptionsList}"/>

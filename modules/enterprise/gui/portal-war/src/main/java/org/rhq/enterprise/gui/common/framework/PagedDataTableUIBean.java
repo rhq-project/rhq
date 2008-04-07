@@ -19,17 +19,19 @@
 package org.rhq.enterprise.gui.common.framework;
 
 import javax.faces.model.DataModel;
+
 import org.richfaces.component.UIDataTable;
 import org.richfaces.component.UIDatascroller;
+
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.legacy.WebUser;
 
 public abstract class PagedDataTableUIBean {
-    protected PageControl pageControl;
+    private PageControl pageControl;
     protected DataModel dataModel;
-    protected UIDataTable dataTable;
-    protected UIDatascroller datascroller;
+    private UIDataTable dataTable;
+    private UIDatascroller datascroller;
 
     public PageControl getPageControl(WebUser user, PageControlView view) {
         if (pageControl == null) {

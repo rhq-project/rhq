@@ -77,14 +77,16 @@ public class MeasurementDataTrait extends MeasurementData {
     /*
      * each time this is called, it will delete the oldest datum for each group of 
      * data identified by schedule_id that has more than one element in it; so, this
-     * query should be called in the purge job until it returns zero
+     * query should be called in the purge job until it returns zero.
+     *
+     * NOTE: Avoid using the AS keyword in this query, because Oracle barfs on it.
      */
     public static final String NATIVE_QUERY_PURGE = "" + // 
-        "DELETE FROM rhq_measurement_data_trait AS t " + //
+        "DELETE FROM rhq_measurement_data_trait t " + //
         "WHERE t.time_stamp = " + //
         "(" + //
         "        SELECT MIN(it.time_stamp) " + //
-        "        FROM rhq_measurement_data_trait AS it " + //
+        "        FROM rhq_measurement_data_trait it " + //
         "        WHERE t.time_stamp < ? " + //
         "        AND it.schedule_id = it.schedule_id " + //
         "        GROUP BY it.schedule_id " + //

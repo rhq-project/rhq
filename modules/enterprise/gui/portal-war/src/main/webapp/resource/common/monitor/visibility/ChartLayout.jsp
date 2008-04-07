@@ -93,7 +93,7 @@
                   </c:when>
 
                   <c:when test="${param.mode == MODE_MON_CHART_MMSR}">
-                     <html:hidden property="chartName" value="${Resource.name}: XXX "/>
+                     <html:hidden property="chartName" value="${Resource.name}: Multimetric "/>
                      <tiles:insert definition=".resource.common.monitor.visibility.charts.metric.chart">
                         <tiles:put name="multiMetric" value="true"/>
                      </tiles:insert>

@@ -377,7 +377,7 @@ public class EventManagerBean implements EventManagerLocal {
         innerQuery1 += " ORDER BY e1.id DESC";
         innerQuery1 = addResultsLimitToQuery(innerQuery1, DEFAULT_EVENTS_PAGE_SIZE / 2);
         query += innerQuery1;
-        query += ") UNION (";
+        query += ") inner1 UNION (";
         String innerQuery2 = "SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, evs.resource_id as res_id, e1.ack_user as ack_user, e1.ack_time as ack_time "
             + " FROM rhq_event e1, rhq_event e ";
         innerQuery2 += " JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id "

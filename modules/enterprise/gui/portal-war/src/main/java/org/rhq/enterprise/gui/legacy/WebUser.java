@@ -1,22 +1,26 @@
 package org.rhq.enterprise.gui.legacy;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.HashMap;
 
 import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.common.paging.PageControlView;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
+import org.rhq.enterprise.gui.common.paging.PageControlView;
 
 /**
  * A representation of the person currently interacting with the application.
@@ -33,11 +37,10 @@ public class WebUser {
     public static final String PREF_METRIC_THRESHOLD = ".resource.common.monitor.visibility.metricThreshold";
     public static final String PREF_PAGE_REFRESH_PERIOD = ".page.refresh.period";
 
-    /** delimiter for preferences that are muti-valued and stringified */
-    public static final String PREF_LIST_DELIM = ",";
+    /** delimiter for preferences that are multi-valued and stringified */
+    private static final String PREF_LIST_DELIM = ",";
 
-    /** preference key namespace delimiter */
-    private static final String DOT = ".";
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private Subject subject;
     private String password;
@@ -168,7 +171,7 @@ public class WebUser {
     }
 
     public boolean getActive() {
-        return (this.subject == null) ? false : this.subject.getFactive();
+        return (this.subject != null && this.subject.getFactive());
     }
 
     public void setActive(boolean active) {
@@ -241,7 +244,7 @@ public class WebUser {
     }
 
     public String getPreference(String key, String defaultValue) {
-        String value = null;
+        String value;
         try {
             value = getPreference(key);
         } catch (IllegalArgumentException iae) {
@@ -261,18 +264,22 @@ public class WebUser {
     }
 
     /**
-     * Break the named preference
+     * Tokenize the named preference into a List of Strings. If no such preference exists, or the preference is null,
+     * an empty List will be returned.
      *
-     * @param delimiter the delimeter to break it up by
+     * @param delimiter the delimiter to break it up by
      * @param key the name of the preference
      * @return <code>List</code> of <code>String</code> tokens
      */
+    @NotNull
     public List<String> getPreferenceAsList(String key, String delimiter) {
+        String pref = null;
         try {
-            return StringUtil.explode(getPreference(key), delimiter);
+            pref = getPreference(key);
         } catch (IllegalArgumentException e) {
-            return new ArrayList<String>();
+            log.debug("A user preference named '" + key + "' does not exist.");
         }
+        return (pref != null) ? StringUtil.explode(pref, delimiter) : new ArrayList<String>();
     }
 
     public void setPreference(String key, List values) throws IllegalArgumentException {
@@ -327,7 +334,7 @@ public class WebUser {
      */
     public String getResourceFavoriteMetricsKey(String appdefTypeName) {
         StringBuffer sb = new StringBuffer(PREF_FAV_RESOURCE_METRICS_PREFIX);
-        sb.append(DOT).append(appdefTypeName);
+        sb.append('.').append(appdefTypeName);
         return sb.toString();
     }
 
@@ -347,7 +354,7 @@ public class WebUser {
 
         //  properties may be empty or unparseable strings (ex:
         //  "null"). if so, use their default values.
-        Boolean ro = null;
+        Boolean ro;
         try {
             ro = new Boolean(getPreference(PREF_METRIC_RANGE_RO));
         } catch (IllegalArgumentException nfe) {

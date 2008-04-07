@@ -82,8 +82,8 @@ import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageVersionFile;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
 import org.rhq.core.domain.resource.ProductVersion;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.MD5Generator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -332,7 +332,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ContentSource createContentSource(Subject subject, String name, String description, String typeName,
-        Configuration configuration, boolean lazyLoad, DownloadMode downloadMode) {
+        Configuration configuration, boolean lazyLoad, DownloadMode downloadMode) throws ContentSourceException {
         log.debug("User [" + subject + "] is creating a content source [" + name + "] of type [" + typeName + "]");
 
         // we first must get the content source type - if it doesn't exist, we throw an exception
@@ -351,13 +351,18 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         source.setLazyLoad(lazyLoad);
         source.setDownloadMode(downloadMode);
 
+        validateContentSource(source);
+
         source = createContentSource(subject, source);
 
         return source;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public ContentSource createContentSource(Subject subject, ContentSource contentSource) {
+    public ContentSource createContentSource(Subject subject, ContentSource contentSource)
+        throws ContentSourceException {
+        validateContentSource(contentSource);
+
         log.debug("User [" + subject + "] is creating content source [" + contentSource + "]");
 
         // these aren't cascaded during persist, but I want to set them to null anyway, just to be sure
@@ -380,7 +385,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public ContentSource updateContentSource(Subject subject, ContentSource contentSource) {
+    public ContentSource updateContentSource(Subject subject, ContentSource contentSource)
+        throws ContentSourceException {
+        validateContentSource(contentSource);
+
         log.debug("User [" + subject + "] is updating content source [" + contentSource + "]");
         contentSource = entityManager.merge(contentSource);
         log.debug("User [" + subject + "] updated content source [" + contentSource + "]");
@@ -399,6 +407,14 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         }
 
         return contentSource;
+    }
+
+    private void validateContentSource(ContentSource cs) throws ContentSourceException {
+        if (cs.getName() == null || cs.getName().trim().equals("")) {
+            throw new ContentSourceException("ContentSource name attribute is required");
+        }
+
+        // TODO: check if the name is already in use by some other content source in the system
     }
 
     public boolean testContentSourceConnection(int contentSourceId) {
@@ -1171,8 +1187,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         return digestString;
     }
 
-
-
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(1000 * 60 * 30)
     public long outputPackageVersionBitsGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
@@ -1183,7 +1197,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(1000 * 60 * 30)
     public long outputPackageBitsForChildResource(int parentResourceId, String resourceTypeName,
-                                                  PackageDetailsKey packageDetailsKey, OutputStream outputStream) {
+        PackageDetailsKey packageDetailsKey, OutputStream outputStream) {
         Resource parentResource = entityManager.find(Resource.class, parentResourceId);
         ResourceType parentResourceType = parentResource.getResourceType();
 
@@ -1191,7 +1205,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         query.setParameter("parent", parentResourceType);
         query.setParameter("name", resourceTypeName);
 
-        ResourceType childResourceType = (ResourceType)query.getSingleResult();
+        ResourceType childResourceType = (ResourceType) query.getSingleResult();
 
         query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
         query.setParameter("packageName", packageDetailsKey.getName());
@@ -1199,10 +1213,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         query.setParameter("architectureName", packageDetailsKey.getArchitectureName());
         query.setParameter("version", packageDetailsKey.getVersion());
         query.setParameter("resourceTypeId", childResourceType.getId());
-        PackageVersion packageVersion = (PackageVersion)query.getSingleResult();
+        PackageVersion packageVersion = (PackageVersion) query.getSingleResult();
 
-        return outputPackageVersionBitsRangeHelper(parentResourceId, packageDetailsKey,
-            outputStream, 0, -1, packageVersion.getId());
+        return outputPackageVersionBitsRangeHelper(parentResourceId, packageDetailsKey, outputStream, 0, -1,
+            packageVersion.getId());
     }
 
     @SuppressWarnings("unchecked")

@@ -21,26 +21,30 @@ package org.rhq.enterprise.gui.content;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.ChannelComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.content.ChannelManagerLocal;
+import org.rhq.enterprise.server.content.ContentException;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -100,7 +104,7 @@ public class CreateNewPackageUIBean {
         HttpServletRequest request = FacesContextUtility.getRequest();
 
         String channelOption = request.getParameter("channelOption");
-        FileItem fileItem = (FileItem)request.getAttribute("uploadForm:uploadFile");
+        FileItem fileItem = (FileItem) request.getAttribute("uploadForm:uploadFile");
 
         // Validate
         if (packageName == null || packageName.trim().equals("")) {
@@ -114,12 +118,12 @@ public class CreateNewPackageUIBean {
         }
 
         if (channelOption == null) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A channel deployment option must be specified");
+            FacesContextUtility
+                .addMessage(FacesMessage.SEVERITY_ERROR, "A channel deployment option must be specified");
             return null;
         }
 
-        if (channelOption.equals(CHANNEL_OPTION_NEW) &&
-            (newChannelName == null || newChannelName.trim().equals(""))) {
+        if (channelOption.equals(CHANNEL_OPTION_NEW) && (newChannelName == null || newChannelName.trim().equals(""))) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "When creating a new channel, the name of the channel to be created must be specified");
             return null;
@@ -131,7 +135,15 @@ public class CreateNewPackageUIBean {
         }
 
         // Determine which channel the package will go into
-        String channelId = determineChannel(channelOption, subject, resource.getId());
+        String channelId = null;
+        try {
+            channelId = determineChannel(channelOption, subject, resource.getId());
+        } catch (ContentException ce) {
+            String errorMessages = ThrowableUtil.getAllMessages(ce);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to determine channel. Cause: "
+                + errorMessages);
+            return "failure";
+        }
 
         // Grab a stream for the file being uploaded
         InputStream packageStream;
@@ -156,16 +168,16 @@ public class CreateNewPackageUIBean {
         PackageVersion packageVersion;
         try {
             ContentManagerLocal contentManager = LookupUtil.getContentManager();
-            packageVersion = contentManager.createPackageVersion(packageName, selectedPackageTypeId,
-                                                                 version, selectedArchitectureId, packageStream);
+            packageVersion = contentManager.createPackageVersion(packageName, selectedPackageTypeId, version,
+                selectedArchitectureId, packageStream);
         } catch (Exception e) {
             String errorMessages = ThrowableUtil.getAllMessages(e);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                "Failed to create package [" + packageName + "] in channel. Cause: " + errorMessages);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to create package [" + packageName
+                + "] in channel. Cause: " + errorMessages);
             return "failure";
         }
 
-        int[] packageVersionList = new int[] {packageVersion.getId()};
+        int[] packageVersionList = new int[] { packageVersion.getId() };
 
         // Add the package to the channel
         try {
@@ -175,9 +187,8 @@ public class CreateNewPackageUIBean {
             channelManager.addPackageVersionsToChannel(subject, iChannelId, packageVersionList);
         } catch (Exception e) {
             String errorMessages = ThrowableUtil.getAllMessages(e);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                "Failed to associate package [" + packageName + "] with channel ID [" + channelId + "]. Cause: " +
-                errorMessages);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to associate package [" + packageName
+                + "] with channel ID [" + channelId + "]. Cause: " + errorMessages);
             return "failure";
         }
 
@@ -334,25 +345,23 @@ public class CreateNewPackageUIBean {
         this.newChannelName = newChannelName;
     }
 
-    private String determineChannel(String channelOption, Subject subject, int resourceId) {
+    private String determineChannel(String channelOption, Subject subject, int resourceId) throws ContentException {
         String channelId = null;
 
         if (channelOption.equals(CHANNEL_OPTION_SUBSCRIBED)) {
             channelId = subscribedChannelId;
-        }
-        else if (channelOption.equals(CHANNEL_OPTION_UNSUBSCRIBED)) {
+        } else if (channelOption.equals(CHANNEL_OPTION_UNSUBSCRIBED)) {
             channelId = unsubscribedChannelId;
             int iChannelId = Integer.parseInt(channelId);
 
             ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
-            channelManager.subscribeResourceToChannels(subject, resourceId, new int[]{iChannelId});
+            channelManager.subscribeResourceToChannels(subject, resourceId, new int[] { iChannelId });
 
             // Change the subscribedChannelId so if we fall back to the page with a different error,
             // the drop down for selecting an existing subscribed channel will be populated with this
             // new channel
             subscribedChannelId = channelId;
-        }
-        else if (channelOption.equals(CHANNEL_OPTION_NEW)) {
+        } else if (channelOption.equals(CHANNEL_OPTION_NEW)) {
             ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
 
             Channel newChannel = new Channel(newChannelName);
@@ -360,12 +369,12 @@ public class CreateNewPackageUIBean {
 
             channelId = Integer.toString(newChannel.getId());
 
-            channelManager.subscribeResourceToChannels(subject, resourceId, new int[]{newChannel.getId()});
+            channelManager.subscribeResourceToChannels(subject, resourceId, new int[] { newChannel.getId() });
 
             // Change the subscribedChannelId so if we fall back to the page with a different error,
             // the drop down for selecting an existing subscribed channel will be populated with this
             // new channel
-            subscribedChannelId = channelId;            
+            subscribedChannelId = channelId;
         }
 
         return channelId;

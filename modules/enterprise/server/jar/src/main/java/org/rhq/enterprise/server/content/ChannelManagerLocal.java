@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.content;
 
 import java.util.List;
+
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
@@ -116,12 +117,12 @@ public interface ChannelManagerLocal {
     /**
      * @see ChannelManagerRemote#updateChannel(Subject, Channel)
      */
-    Channel updateChannel(Subject subject, Channel channel);
+    Channel updateChannel(Subject subject, Channel channel) throws ChannelException;
 
     /**
      * @see ChannelManagerRemote#createChannel(Subject, Channel)
      */
-    Channel createChannel(Subject subject, Channel channel);
+    Channel createChannel(Subject subject, Channel channel) throws ChannelException;
 
     /**
      * @see ChannelManagerRemote#addContentSourcesToChannel(Subject, int, int[])

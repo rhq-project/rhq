@@ -256,7 +256,9 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Channel updateChannel(Subject subject, Channel channel) {
+    public Channel updateChannel(Subject subject, Channel channel) throws ChannelException {
+        validateChannel(channel);
+
         // should we check non-null channel relationships and warn that we aren't changing them?
         log.debug("User [" + subject + "] is updating channel [" + channel + "]");
         channel = entityManager.merge(channel);
@@ -265,13 +267,24 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         return channel;
     }
 
+    private void validateChannel(Channel c) throws ChannelException {
+        if (c.getName() == null || c.getName().trim().equals("")) {
+            throw new ChannelException("Channel name is required");
+        }
+
+        // TODO: check if channel name conflicts with any other channel in the system
+    }
+
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Channel createChannel(Subject subject, Channel channel) {
+    public Channel createChannel(Subject subject, Channel channel) throws ChannelException {
+        validateChannel(channel);
+
+        // TODO: check if channel name conflicts with any other channel in the system
+
         log.debug("User [" + subject + "] is creating channel [" + channel + "]");
-
         entityManager.persist(channel);
-
         log.debug("User [" + subject + "] created channel [" + channel + "]");
+
         return channel; // now has the ID set
     }
 

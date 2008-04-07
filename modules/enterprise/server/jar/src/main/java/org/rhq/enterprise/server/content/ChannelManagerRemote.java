@@ -125,7 +125,7 @@ public interface ChannelManagerRemote {
      */
     Channel updateChannel(@WebParam(name = "subject")
     Subject subject, @WebParam(name = "channel")
-    Channel channel);
+    Channel channel) throws ChannelException;
 
     /**
      * Creates a new {@link Channel}. Note that the created channel will not have any content sources assigned and no
@@ -138,7 +138,7 @@ public interface ChannelManagerRemote {
      */
     Channel createChannel(@WebParam(name = "subject")
     Subject subject, @WebParam(name = "channel")
-    Channel channel);
+    Channel channel) throws ChannelException;
 
     /**
      * Adds the content sources (identified by their IDs) to the given channel (also identified by its ID). This will

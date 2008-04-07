@@ -172,7 +172,7 @@ public interface ContentSourceManagerRemote {
     String typeName, @WebParam(name = "configuration")
     Configuration configuration, @WebParam(name = "lazyLoad")
     boolean lazyLoad, @WebParam(name = "downloadMode")
-    DownloadMode downloadMode);
+    DownloadMode downloadMode) throws ContentSourceException;;
 
     /**
      * Update an existing {@link ContentSource} object and restarts its underlying adapter. This also forces the adapter
@@ -188,7 +188,7 @@ public interface ContentSourceManagerRemote {
      */
     ContentSource updateContentSource(@WebParam(name = "subject")
     Subject subject, @WebParam(name = "contentSource")
-    ContentSource contentSource);
+    ContentSource contentSource) throws ContentSourceException;;
 
     /**
      * Given a content source ID, this will test that the adapter responsible for pulling data from the content source's

@@ -24,8 +24,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.ContentSource;
@@ -33,6 +35,7 @@ import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.content.ContentException;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -124,10 +127,15 @@ public class CreateContentSourceUIBean {
     public String save() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
-        ContentSource created = manager.createContentSource(subject, newContentSource);
 
-        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Saved [" + created.getName() + "] with the ID of ["
-            + created.getId() + "]");
+        try {
+            ContentSource created = manager.createContentSource(subject, newContentSource);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Saved [" + created.getName()
+                + "] with the ID of [" + created.getId() + "]");
+        } catch (ContentException ce) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + ce.getMessage());
+            return "edit"; // stay in edit mode upon failure
+        }
 
         contentSourceTypes = null;
         selectedContentSourceType = null;

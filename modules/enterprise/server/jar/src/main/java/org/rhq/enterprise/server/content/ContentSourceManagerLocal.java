@@ -111,12 +111,12 @@ public interface ContentSourceManagerLocal {
      * 
      * @return The created content source.
      */
-    ContentSource createContentSource(Subject subject, ContentSource contentSource);
+    ContentSource createContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException;
 
     /**
      * @see ContentSourceManagerRemote#updateContentSource(Subject, ContentSource)
      */
-    ContentSource updateContentSource(Subject subject, ContentSource contentSource);
+    ContentSource updateContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException;
 
     /**
      * @see ContentSourceManagerRemote#testContentSourceConnection(int)

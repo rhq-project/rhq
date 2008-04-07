@@ -312,11 +312,17 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
             ChannelContentSource ccsmapping = channel.addContentSource(cs);
             entityManager.persist(ccsmapping);
 
+            Set<PackageVersion> alreadyAssociatedPVs = new HashSet<PackageVersion>(channel.getPackageVersions());
+
             // automatically associate all of the content source's package versions with this channel
+            // but, *skip* over the ones that are already linked to this channel from a previous association
             q.setParameter("id", cs.getId());
             List<PackageVersionContentSource> pvcss = q.getResultList();
             for (PackageVersionContentSource pvcs : pvcss) {
                 PackageVersion pv = pvcs.getPackageVersionContentSourcePK().getPackageVersion();
+                if (alreadyAssociatedPVs.contains(pv)) {
+                    continue; // skip if already associated with this channel
+                }
                 ChannelPackageVersion mapping = new ChannelPackageVersion(channel, pv);
                 entityManager.persist(mapping);
             }

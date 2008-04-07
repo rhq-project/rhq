@@ -19,17 +19,21 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Enumerated;
-import javax.persistence.EnumType;
+
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
 
 /**
@@ -38,6 +42,7 @@ import org.rhq.core.domain.content.transfer.ContentResponseResult;
  * @author Jason Dobies
  */
 @Entity
+@NamedQueries( { @NamedQuery(name = PackageInstallationStep.QUERY_DELETE_BY_RESOURCES, query = "DELETE PackageInstallationStep pis WHERE pis.installedPackageHistory IN ( SELECT iph FROM InstalledPackageHistory iph WHERE iph.resource IN ( :resources ) )") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_INST_STEP_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_INST_STEP")
 public class PackageInstallationStep implements Serializable {
@@ -45,6 +50,7 @@ public class PackageInstallationStep implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public static final String QUERY_DELETE_BY_RESOURCES = "PackageInstallationStep.deleteByResources";
     // Attributes  --------------------------------------------
 
     /**

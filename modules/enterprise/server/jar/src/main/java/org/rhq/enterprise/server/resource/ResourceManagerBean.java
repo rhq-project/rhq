@@ -56,8 +56,10 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.InstalledPackageHistory;
+import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.ResourceChannel;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
@@ -68,6 +70,7 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.ResourceOperationScheduleEntity;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
@@ -479,68 +482,92 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         q.setParameter("resources", resources);
         q.executeUpdate();
 
+        // bulk delete: events
         q = entityManager.createNamedQuery(Event.DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
+        // bulk delete: event source
         q = entityManager.createNamedQuery(EventSource.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
+        // bulk delete: Installed package history install step, must come before installed package history  
+        q = entityManager.createNamedQuery(PackageInstallationStep.QUERY_DELETE_BY_RESOURCES);
+        q.setParameter("resources", resources);
+        q.executeUpdate();
+
+        // bulk delete: Installed package history, must come before installed packages, content request  
         q = entityManager.createNamedQuery(InstalledPackageHistory.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
+        // bulk delete: Installed packages
         q = entityManager.createNamedQuery(InstalledPackage.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
+        // bulk delete: Content service requests
+        q = entityManager.createNamedQuery(ContentServiceRequest.QUERY_DELETE_BY_RESOURCES);
+        q.setParameter("resources", resources);
+        q.executeUpdate();
+
+        // bulk delete: Operation Schedule
+        q = entityManager.createNamedQuery(ResourceOperationScheduleEntity.QUERY_DELETE_BY_RESOURCES);
+        q.setParameter("resources", resources);
+        q.executeUpdate();
+
+        // bulk delete: Operation History
         q = entityManager.createNamedQuery(ResourceOperationHistory.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
+        // bulk delete: Delete History
         q = entityManager.createNamedQuery(DeleteResourceHistory.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
+        // bulk delete: Create History
         q = entityManager.createNamedQuery(CreateResourceHistory.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
+        // bulk delete: Config update
         q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
+        // bulk delete: Plugin Config update
         q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
-        // These alert related removals should occur in the order presented
+        // bulk delete: Alert condition log. Do not alter order of alert related deletes
         q = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
-        // These alert related removals should occur in the order presented
+        // bulk delete: Alert. Do not alter order of alert related deletes
         q = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
-        // These alert related removals should occur in the order presented
+        // bulk delete: Alert Condition. Do not alter order of alert related deletes
         q = entityManager.createNamedQuery(AlertCondition.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
-        // These alert related removals should occur in the order presented
+        // bulk delete: Alert Dampening. Do not alter order of alert related deletes
         q = entityManager.createNamedQuery(AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
-        // These alert related removals should occur in the order presented
+        // bulk delete: Alert Notification. Do not alter order of alert related deletes
         q = entityManager.createNamedQuery(AlertNotification.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
-        // These alert related removals should occur in the order presented
+        // bulk delete: Alert Definition. Do not alter order of alert related deletes
         q = entityManager.createNamedQuery(AlertDefinition.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();

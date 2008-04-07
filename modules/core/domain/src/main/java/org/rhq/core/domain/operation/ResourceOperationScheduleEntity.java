@@ -19,12 +19,14 @@
 package org.rhq.core.domain.operation;
 
 import java.util.Date;
+
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -35,9 +37,13 @@ import org.rhq.core.domain.resource.Resource;
 
 @DiscriminatorValue("resource")
 @Entity
-@NamedQueries( { @NamedQuery(name = ResourceOperationScheduleEntity.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT s "
-    + "  FROM ResourceOperationScheduleEntity s " + " WHERE s.resource.id = :resourceId ") })
+@NamedQueries( {
+    @NamedQuery(name = ResourceOperationScheduleEntity.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT s "
+        + "  FROM ResourceOperationScheduleEntity s " + " WHERE s.resource.id = :resourceId "),
+    @NamedQuery(name = ResourceOperationScheduleEntity.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM ResourceOperationScheduleEntity s "
+        + " WHERE s.resource IN (:resources))") })
 public class ResourceOperationScheduleEntity extends OperationScheduleEntity {
+    public static final String QUERY_DELETE_BY_RESOURCES = "ResourceOperationScheduleEntity.QUERY_DELETE_BY_RESOURCES";
     public static final String QUERY_FIND_BY_RESOURCE_ID = "ResourceOperationScheduleEntity.findByResourceId";
 
     private static final long serialVersionUID = 1L;

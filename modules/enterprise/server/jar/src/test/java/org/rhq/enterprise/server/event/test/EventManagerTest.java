@@ -114,7 +114,7 @@ public class EventManagerTest extends AbstractEJB3Test {
         }
     }
 
-    //    @Test
+    @Test
     public void testEventManager() throws Exception {
 
         try {

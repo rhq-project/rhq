@@ -645,24 +645,28 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
             }
 
             if (newBLValue != null) {
-                chartForm.setNewBaseline(MeasurementConverter.scaleAndFormat(newBLValue.getMean(), schedule, true));
+                chartForm.setNewBaseline(MeasurementConverter.format(newBLValue.getMean(), schedule.getDefinition()
+                    .getUnits(), true));
                 chartForm.setNewBaselineRaw(String.valueOf(newBLValue.getMean()));
             }
 
             MeasurementBaseline baselineValue = schedule.getBaseline();
             if (baselineValue != null) {
                 if (baselineValue.getMean() != null) {
-                    chartForm.setBaseline(MeasurementConverter.scaleAndFormat(baselineValue.getMean(), schedule, true));
+                    chartForm.setBaseline(MeasurementConverter.format(baselineValue.getMean(), schedule.getDefinition()
+                        .getUnits(), true));
                     chartForm.setBaselineRaw(String.valueOf(baselineValue.getMean()));
                 }
 
                 if (baselineValue.getMax() != null) {
-                    chartForm.setHighRange(MeasurementConverter.scaleAndFormat(baselineValue.getMax(), schedule, true));
+                    chartForm.setHighRange(MeasurementConverter.format(baselineValue.getMax(), schedule.getDefinition()
+                        .getUnits(), true));
                     chartForm.setHighRangeRaw(String.valueOf(baselineValue.getMax()));
                 }
 
                 if (baselineValue.getMin() != null) {
-                    chartForm.setLowRange(MeasurementConverter.scaleAndFormat(baselineValue.getMin(), schedule, true));
+                    chartForm.setLowRange(MeasurementConverter.format(baselineValue.getMin(), schedule.getDefinition()
+                        .getUnits(), true));
                     chartForm.setLowRangeRaw(String.valueOf(baselineValue.getMin()));
                 }
             }

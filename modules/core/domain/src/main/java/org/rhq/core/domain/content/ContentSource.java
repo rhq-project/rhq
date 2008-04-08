@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -46,6 +47,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+
 import org.rhq.core.domain.configuration.Configuration;
 
 /**
@@ -65,7 +67,14 @@ import org.rhq.core.domain.configuration.Configuration;
     @NamedQuery(name = ContentSource.QUERY_FIND_BY_ID_WITH_CONFIG, query = "SELECT cs " + "  FROM ContentSource cs "
         + "       LEFT JOIN FETCH cs.configuration" + " WHERE cs.id = :id "),
     @NamedQuery(name = ContentSource.QUERY_FIND_BY_CHANNEL_ID, // do not do a fetch join here
-    query = "SELECT cs FROM ContentSource cs LEFT JOIN cs.channelContentSources ccs WHERE ccs.channel.id = :id") })
+    query = "SELECT cs FROM ContentSource cs LEFT JOIN cs.channelContentSources ccs WHERE ccs.channel.id = :id"),
+    @NamedQuery(name = ContentSource.QUERY_FIND_AVAILABLE_BY_CHANNEL_ID, //
+    query = "SELECT cs " //  
+        + "    FROM ContentSource AS cs " // 
+        + "   WHERE cs.id NOT IN " //
+        + "       ( SELECT ccs.contentSource.id " // 
+        + "           FROM ChannelContentSource ccs " //
+        + "          WHERE ccs.channel.id = :channelId ) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_SOURCE_ID_SEQ")
 @Table(name = "RHQ_CONTENT_SOURCE")
 public class ContentSource implements Serializable {
@@ -74,6 +83,7 @@ public class ContentSource implements Serializable {
     public static final String QUERY_FIND_BY_NAME_AND_TYPENAME = "ContentSource.findByNameAndTypeName";
     public static final String QUERY_FIND_BY_ID_WITH_CONFIG = "ContentSource.findByIdWithConfig";
     public static final String QUERY_FIND_BY_CHANNEL_ID = "ContentSource.findByChannelId";
+    public static final String QUERY_FIND_AVAILABLE_BY_CHANNEL_ID = "ContentSource.findAvailableByChannelId";
 
     // Constants  --------------------------------------------
 

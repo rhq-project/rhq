@@ -68,6 +68,11 @@ public interface ContentSourceManagerLocal {
     Set<ContentSourceType> getAllContentSourceTypes();
 
     /**
+     * @see ContentSourceManagerRemote#getAvailableContentSourcesForChannel(Subject, Integer, PageControl)
+     */
+    PageList<ContentSource> getAvailableContentSourcesForChannel(Subject subject, Integer channelId, PageControl pc);
+
+    /**
      * @see ContentSourceManagerRemote#getAllContentSources(Subject, PageControl)
      */
     PageList<ContentSource> getAllContentSources(Subject subject, PageControl pc);

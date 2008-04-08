@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.content;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.util.PageControl;
@@ -85,7 +86,9 @@ public class ChannelDisassociationsUIBean extends PagedDataTableUIBean {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
 
-            PageList<ContentSource> results = manager.getAllContentSources(subject, pc);
+            int channelId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
+
+            PageList<ContentSource> results = manager.getAvailableContentSourcesForChannel(subject, channelId, pc);
             return results;
         }
     }

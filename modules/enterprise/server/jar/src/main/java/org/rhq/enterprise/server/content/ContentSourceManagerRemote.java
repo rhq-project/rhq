@@ -63,6 +63,18 @@ public interface ContentSourceManagerRemote {
     Set<ContentSourceType> getAllContentSourceTypes();
 
     /**
+     * Returns all {@link ContentSource} objects that are configured in the system but not presently
+     * associated with the channel identified by channelId
+     *
+     * @param  subject   user asking to perform this
+     * @param  channelId the identifier for the channel 
+     * @param  pc        pagination controls
+     *
+     * @return all content sources that are not presently associated with the channel identified by channelId
+     */
+    PageList<ContentSource> getAvailableContentSourcesForChannel(Subject subject, Integer channelId, PageControl pc);
+
+    /**
      * Returns all {@link ContentSource} objects that are configured in the system.
      *
      * @param  subject user asking to perform this

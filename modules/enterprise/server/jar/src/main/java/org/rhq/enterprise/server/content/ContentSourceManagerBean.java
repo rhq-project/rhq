@@ -242,6 +242,26 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         return new PageList<ContentSource>(results, (int) count, pc);
     }
 
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<ContentSource> getAvailableContentSourcesForChannel(Subject subject, Integer channelId,
+        PageControl pc) {
+        pc.initDefaultOrderingField("cs.name");
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            ContentSource.QUERY_FIND_AVAILABLE_BY_CHANNEL_ID, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
+            ContentSource.QUERY_FIND_AVAILABLE_BY_CHANNEL_ID);
+
+        query.setParameter("channelId", channelId);
+        countQuery.setParameter("channelId", channelId);
+
+        List<ContentSource> results = query.getResultList();
+        long count = (Long) countQuery.getSingleResult();
+
+        return new PageList<ContentSource>(results, (int) count, pc);
+    }
+
     public ContentSourceType getContentSourceType(String name) {
         Query q = entityManager.createNamedQuery(ContentSourceType.QUERY_FIND_BY_NAME_WITH_CONFIG_DEF);
         q.setParameter("name", name);

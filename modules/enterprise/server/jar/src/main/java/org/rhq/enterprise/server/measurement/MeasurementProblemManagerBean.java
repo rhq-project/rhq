@@ -239,7 +239,7 @@ public class MeasurementProblemManagerBean implements MeasurementProblemManagerL
         // iterate over the passed schedules ids when we have more than 1000 of them, as some
         // databases bail out with more than 1000 resources in IN () clauses.
         for (int round = 0; round < rounds; round++) {
-            int toIndex = round * BATCH_SIZE + BATCH_SIZE - 1;
+            int toIndex = round * BATCH_SIZE + BATCH_SIZE;
             if (toIndex > numSched) // don't run over the end of the list
                 toIndex = numSched;
             List<Integer> scheds = scheduleIds.subList(round * BATCH_SIZE, toIndex);

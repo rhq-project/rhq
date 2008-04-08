@@ -29,6 +29,7 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import org.rhq.enterprise.gui.legacy.AttrConstants;
+import org.rhq.enterprise.gui.legacy.KeyConstants;
 import org.rhq.enterprise.gui.legacy.Portal;
 import org.rhq.enterprise.gui.legacy.action.resource.ResourceController;
 
@@ -41,6 +42,9 @@ public class EventsPortalAction extends ResourceController {
     private static final String EVENTS_TITLE = "resource.common.monitor.events.EventsHeader"; // see ApplicationResource.properties
     private static final String EVENTS_PORTAL = ".resource.common.events.Events";
 
+    private static final String EDIT_RANGE_TITLE = "resource.common.monitor.visibility.MetricDisplayRangeTitle";
+    private static final String EDIT_RANGE_PORLET = ".resource.common.monitor.visibility.MetricDisplayRange";
+
     /* (non-Javadoc)
      * @see org.rhq.enterprise.gui.legacy.action.BaseDispatchAction#getKeyMethodMap()
      */
@@ -49,6 +53,7 @@ public class EventsPortalAction extends ResourceController {
 
         Properties map = new Properties();
         map.setProperty("events", "events");
+        map.setProperty(KeyConstants.MODE_MON_EDIT_RANGE, "editRange");
 
         return map;
     }
@@ -61,7 +66,15 @@ public class EventsPortalAction extends ResourceController {
         Portal portal = Portal.createPortal(EVENTS_TITLE, EVENTS_PORTAL);
         request.setAttribute(AttrConstants.PORTAL_KEY, portal);
         return null;
+    }
 
+    public ActionForward editRange(ActionMapping mapping, ActionForm form, HttpServletRequest request,
+        HttpServletResponse response) throws Exception {
+        setResource(request);
+        Portal portal = Portal.createPortal(EDIT_RANGE_TITLE, EDIT_RANGE_PORLET);
+        portal.setWorkflowPortal(true);
+        request.setAttribute(AttrConstants.PORTAL_KEY, portal);
+        return null;
     }
 
 }

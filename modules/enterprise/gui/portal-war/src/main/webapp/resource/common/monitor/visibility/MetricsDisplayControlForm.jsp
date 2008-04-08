@@ -140,7 +140,10 @@
             </html:select>
           </td>
           <td><html:image property="range" page="/images/dash-button_go-arrow.gif" border="0"/></td>
-          <td width="100%"><html:link href="javascript:document.${formName}.submit()" onclick="clickLink('${formName}', 'advanced')"><fmt:message key="resource.common.monitor.visibility.metricsToolbar.AdvancedSettingsBtn"/></html:link></td>
+          <td width="100%">
+          	<html:link href="javascript:document.${formName}.submit()" onclick="clickLink('${formName}', 'advanced')">
+          	  <fmt:message key="resource.common.monitor.visibility.metricsToolbar.AdvancedSettingsBtn"/>
+          	</html:link></td>
         </tr>
       </table>
     </td>

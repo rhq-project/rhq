@@ -152,7 +152,7 @@ public class ListEventsAction extends BaseAction {
         String output;
         output = input.replaceAll("\\n", "<br/>\n");
         if (searchResult != null && !searchResult.equals("")) {
-            output = output.replaceAll("(" + searchResult + ")", "<b>$1</b>");
+            output = output.replaceAll("(?i)(" + searchResult + ")", "<b>$1</b>");
         }
         return output;
     }

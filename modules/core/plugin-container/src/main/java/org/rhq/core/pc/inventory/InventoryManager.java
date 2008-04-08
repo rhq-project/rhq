@@ -1205,9 +1205,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceContainer platformContainer = getResourceContainer(platform);
             if (platformContainer == null) {
                 platformContainer = new ResourceContainer(platform);
+
+                /* Setting inventory status to COMMITTED and SynchronousState to Synchronized
+                 * for Embedded Console Platform resource
+                 */
                 if (!this.configuration.isInsideAgent()) {
                     platformContainer.setSynchronizationState(ResourceContainer.SynchronizationState.SYNCHRONIZED);
+                    platform.setInventoryStatus(InventoryStatus.COMMITTED);
                 }
+
                 ResourceComponent platformComponent;
                 if (this.platform.getResourceType().equals(PluginMetadataManager.TEST_PLATFORM_TYPE)) {
                     platformComponent = createTestPlatformComponent();

@@ -11,6 +11,7 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
       
 <ui:composition template="/rhq/layout/main.xhtml">
@@ -161,7 +162,6 @@
 
       <h:form id="channelUnsubscriptionsListForm">
          <input type="hidden" name="id" value="${param.id}"/>
-         <input type="hidden" name="searchString" value="${param.searchString}"/>
       
          <rich:panel>
             <f:facet name="header">
@@ -171,18 +171,27 @@
             <table>
                <tr>
                   <td>Search:</td>
-                  <td><h:inputText value="#{ChannelUnsubscriptionsUIBean.searchString}" /></td>
                   <td>
-                     <h:selectOneMenu value="#{ChannelUnsubscriptionsUIBean.searchCategory}">
+                     <h:inputText id="searchStringFilter" value="#{ChannelUnsubscriptionsUIBean.searchString}" />
+                  </td>
+                  <td>
+                     <h:selectOneMenu id="searchCategoryFilter" value="#{ChannelUnsubscriptionsUIBean.searchCategory}">
                         <f:selectItem itemValue="PLATFORM" itemLabel="Platform" />
                         <f:selectItem itemValue="SERVER" itemLabel="Server" />
                         <f:selectItem itemValue="SERVICE" itemLabel="Service" />
                      </h:selectOneMenu> 
                   </td>
                   <td>
-                     <h:commandLink action="#{ChannelUnsubscriptionsUIBean.doSearch}">
-                        <h:graphicImage value="/images/dash-button_go-arrow.gif"/>
-                     </h:commandLink>
+                     <h:graphicImage value="/images/dash-button_go-arrow.gif">
+                        <a4j:support event="onclick" reRender="channelUnsubscriptionsDataTable, channelUnsubscriptionsDataTableScroller"/>
+                     </h:graphicImage>
+                  </td>
+                  <td>
+                     <a4j:status>
+                        <f:facet name="start">
+                           <h:graphicImage value="/images/status_bar.gif"/>
+                        </f:facet>
+                     </a4j:status>
                   </td>
                </tr>
             </table>

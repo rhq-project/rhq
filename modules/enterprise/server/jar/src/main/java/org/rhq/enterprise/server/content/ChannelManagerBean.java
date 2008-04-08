@@ -203,6 +203,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         return new PageList<ChannelComposite>(results, (int) count, pc);
     }
 
+    @SuppressWarnings("unchecked")
     public List<ChannelComposite> getResourceSubscriptions(int resourceId) {
         Query query = entityManager.createNamedQuery(Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID);
 
@@ -212,6 +213,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
         return results;
     }
 
+    @SuppressWarnings("unchecked")
     public List<ChannelComposite> getAvailableResourceSubscriptions(int resourceId) {
         Query query = entityManager.createNamedQuery(Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID);
 

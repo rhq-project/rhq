@@ -46,8 +46,7 @@ public class ChannelUnsubscriptionsUIBean extends PagedDataTableUIBean {
 
     public String getSearchCategory() {
         if (this.searchCategory == null) {
-            this.searchCategory = FacesContextUtility.getOptionalRequestParameter("searchCategory",
-                ResourceCategory.PLATFORM.name());
+            this.searchCategory = ResourceCategory.PLATFORM.name();
         }
 
         return this.searchCategory;
@@ -58,19 +57,11 @@ public class ChannelUnsubscriptionsUIBean extends PagedDataTableUIBean {
     }
 
     public String getSearchString() {
-        if (this.searchString == null) {
-            this.searchString = FacesContextUtility.getOptionalRequestParameter("searchString");
-        }
-
         return this.searchString;
     }
 
     public void setSearchString(String searchString) {
         this.searchString = searchString;
-    }
-
-    public String doSearch() {
-        return "search";
     }
 
     public String associateSelectedContentSourcesWithChannel() {
@@ -119,8 +110,10 @@ public class ChannelUnsubscriptionsUIBean extends PagedDataTableUIBean {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             ResourceManagerLocal manager = LookupUtil.getResourceManager();
             Integer channelId = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));
-            String search = FacesContextUtility.getOptionalRequestParameter("searchString");
-            String category = FacesContextUtility.getOptionalRequestParameter("searchCategory");
+            String search = FacesContextUtility
+                .getOptionalRequestParameter("channelUnsubscriptionsListForm:searchStringFilter");
+            String category = FacesContextUtility
+                .getOptionalRequestParameter("channelUnsubscriptionsListForm:searchCategoryFilter");
             ResourceCategory categoryEnum = ResourceCategory.PLATFORM;
 
             if (search != null && search.trim().equals("")) {

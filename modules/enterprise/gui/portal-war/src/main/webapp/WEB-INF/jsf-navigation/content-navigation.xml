@@ -332,20 +332,20 @@
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=#{param.id}&amp;searchCategory=#{ChannelUnsubscriptionsUIBean.searchCategory}&amp;searchString=#{ChannelUnsubscriptionsUIBean.searchString}</to-view-id>
+         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <from-outcome>search</from-outcome>
-         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=#{param.id}&amp;searchCategory=#{ChannelUnsubscriptionsUIBean.searchCategory}&amp;searchString=#{ChannelUnsubscriptionsUIBean.searchString}</to-view-id>
+         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <!-- sorting rule --> 
          <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=#{param.id}&amp;searchCategory=#{ChannelUnsubscriptionsUIBean.searchCategory}&amp;searchString=#{ChannelUnsubscriptionsUIBean.searchString}</to-view-id>
+         <to-view-id>/rhq/content/channelSubscriptions.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case> 
       

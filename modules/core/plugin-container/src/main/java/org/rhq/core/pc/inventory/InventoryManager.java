@@ -634,10 +634,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceContainer container = this.resourceContainers.get(uuid);
             if (container != null) {
                 container.getResource().setId(idMap.get(uuid));
-
-                if (container.getResource().getResourceType().getCategory() == ResourceCategory.PLATFORM) {
-                    fireResourceActivated(container.getResource());
-                }
+                fireResourceActivated(container.getResource());
             }
         }
 
@@ -773,11 +770,17 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.debug("Adding resource " + resource + " to local inventory...");
             ResourceContainer resourceContainer = initResourceContainer(resource);
 
-            // We know the server will auto approve resources that aren't children of the platform who's parent's have already been committed
-            // Shortcut this and just set the status to committed in that case
-            // Also always commit everything for the embedded console
-            if (!this.configuration.isInsideAgent()
-                || ((!parent.equals(this.platform)) && (parent.getInventoryStatus() == InventoryStatus.COMMITTED))) {
+            // The chunk below used to automatically set to committed resources that:
+            // - Were not children of the platform itself
+            // - The resource's parent is committed
+            // This was disabled to prevent activation before the resource IDs were properly synced with the plugin
+            // container. It is still needed for the embedded console.
+            // The following conditions, used in the if statement, provided this ability:
+            // || ((!parent.equals(this.platform)) && (parent.getInventoryStatus() == InventoryStatus.COMMITTED))) {
+            // jdobies, Apr 8, 2008 - RHQ-255
+
+            // Always commit everything for the embedded console
+            if (!this.configuration.isInsideAgent()){
                 resource.setInventoryStatus(InventoryStatus.COMMITTED);
                 try {
                     activateResource(resource, resourceContainer, true); // just start 'em up as we find 'em for the embedded side
@@ -1385,8 +1388,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     void fireResourceActivated(Resource resource) {
         if ((resource == null) || (resource.getId() == 0)) {
+            log.debug("Not firing activated event for resource: " + resource);
             return;
         }
+
+        log.debug("Firing activated for resource: " + resource);
 
         for (InventoryEventListener listener : inventoryEventListeners) {
             // Catch anything to make sure we don't stop firing to other listeners

@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <dbsetup name="appdef-schema.xml">
 
     <table name="RHQ_SYSTEM_CONFIG">
         <column name="ID" default="sequence-only" initial="10001"
-            primarykey="true" required="true" type="INTEGER"/>
+                primarykey="true" required="true" type="INTEGER"/>
         <column name="PROPERTY_KEY" type="VARCHAR2" size="80"/>
         <column name="PROPERTY_VALUE" type="VARCHAR2" size="300"/>
-        <column name="DEFAULT_PROPERTY_VALUE" type="VARCHAR2" size="300" />
-        <column name="FREAD_ONLY" type="BOOLEAN" default="FALSE" />
+        <column name="DEFAULT_PROPERTY_VALUE" type="VARCHAR2" size="300"/>
+        <column name="FREAD_ONLY" type="BOOLEAN" default="FALSE"/>
 
         <index name="RHQ_SYSTEM_CONFIG_KEY_INDX" unique="true">
             <field ref="PROPERTY_KEY"/>

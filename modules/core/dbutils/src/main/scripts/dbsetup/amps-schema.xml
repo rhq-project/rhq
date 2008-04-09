@@ -1,24 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <dbsetup name="amps-schema.xml"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="urn:xmlns:rhq-dbsetup-schema">
 
 
-   <table name="RHQ_PLUGIN">
-      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-      <column name="NAME" size="200" type="VARCHAR2" required="true"/>
-      <column name="DISPLAY_NAME" size="200" type="VARCHAR2" required="true"/>
-      <column name="DESCRIPTION" size="4000" type="VARCHAR2" required="false"/>
-      <column name="VERSION" size="200" type="VARCHAR2" required="false"/>
-      <column name="ENABLED" type="BOOLEAN" required="true"/>
-      <column name="HELP" type="CLOB" required="false"/>
-      <column name="PATH" size="500" type="VARCHAR2" required="true"/>
-      <column name="MD5"  size="100" type="VARCHAR2" required="true"/>
-      <column name="CTIME" type="LONG" required="true"/>
+    <table name="RHQ_PLUGIN">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DISPLAY_NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="4000" type="VARCHAR2" required="false"/>
+        <column name="VERSION" size="200" type="VARCHAR2" required="false"/>
+        <column name="ENABLED" type="BOOLEAN" required="true"/>
+        <column name="HELP" type="CLOB" required="false"/>
+        <column name="PATH" size="500" type="VARCHAR2" required="true"/>
+        <column name="MD5" size="100" type="VARCHAR2" required="true"/>
+        <column name="CTIME" type="LONG" required="true"/>
 
-      <index name="RHQ_PLUGIN_NAME_IDX" unique="true">
-         <field ref="NAME"/>
-      </index>
-   </table>
+        <index name="RHQ_PLUGIN_NAME_IDX" unique="true">
+            <field ref="NAME"/>
+        </index>
+    </table>
 
 </dbsetup>

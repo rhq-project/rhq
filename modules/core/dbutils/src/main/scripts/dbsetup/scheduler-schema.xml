@@ -1,270 +1,270 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
-<dbsetup name="scheduler-schema.xml">                 
+<dbsetup name="scheduler-schema.xml">
 
-  <table name="RHQ_QRTZ_JOB_DETAILS">
-    <column name="JOB_NAME"          required="true"  type="VARCHAR2" size="80"/>
-    <column name="JOB_GROUP"         required="true"  type="VARCHAR2" size="80"/>
-    <column name="DESCRIPTION"       required="false" type="VARCHAR2" size="120"/>
-    <column name="JOB_CLASS_NAME"    required="true"  type="VARCHAR2" size="128"/>
-    <column name="IS_DURABLE"        required="true"  type="BOOLEAN"  default="FALSE"/>
-    <column name="IS_VOLATILE"       required="true"  type="BOOLEAN"/>
-    <column name="IS_STATEFUL"       required="true"  type="BOOLEAN"  default="FALSE"/>
-    <column name="REQUESTS_RECOVERY" required="true"  type="BOOLEAN"  default="FALSE"/>
-    <column name="JOB_DATA"          required="false" type="BLOB"/>
+    <table name="RHQ_QRTZ_JOB_DETAILS">
+        <column name="JOB_NAME" required="true" type="VARCHAR2" size="80"/>
+        <column name="JOB_GROUP" required="true" type="VARCHAR2" size="80"/>
+        <column name="DESCRIPTION" required="false" type="VARCHAR2" size="120"/>
+        <column name="JOB_CLASS_NAME" required="true" type="VARCHAR2" size="128"/>
+        <column name="IS_DURABLE" required="true" type="BOOLEAN" default="FALSE"/>
+        <column name="IS_VOLATILE" required="true" type="BOOLEAN"/>
+        <column name="IS_STATEFUL" required="true" type="BOOLEAN" default="FALSE"/>
+        <column name="REQUESTS_RECOVERY" required="true" type="BOOLEAN" default="FALSE"/>
+        <column name="JOB_DATA" required="false" type="BLOB"/>
 
-    <constraint name="RHQ_PK_QRTZ_JOB_DETAILS">
-      <primaryKey>
-        <field ref="JOB_NAME"/>
-        <field ref="JOB_GROUP"/>
-      </primaryKey>
-    </constraint>
-  </table>
+        <constraint name="RHQ_PK_QRTZ_JOB_DETAILS">
+            <primaryKey>
+                <field ref="JOB_NAME"/>
+                <field ref="JOB_GROUP"/>
+            </primaryKey>
+        </constraint>
+    </table>
 
-  <table name="RHQ_QRTZ_JOB_LISTENERS">
-    <column name="JOB_NAME"     required="true" type="VARCHAR2" size="80"/>
-    <column name="JOB_GROUP"    required="true" type="VARCHAR2" size="80"/>
-    <column name="JOB_LISTENER" required="true" type="VARCHAR2" size="80"/>
+    <table name="RHQ_QRTZ_JOB_LISTENERS">
+        <column name="JOB_NAME" required="true" type="VARCHAR2" size="80"/>
+        <column name="JOB_GROUP" required="true" type="VARCHAR2" size="80"/>
+        <column name="JOB_LISTENER" required="true" type="VARCHAR2" size="80"/>
 
-    <constraint name="RHQ_PK_QRTZ_JOB_LISTENERS">
-      <primaryKey>
-        <field ref="JOB_NAME"/>
-        <field ref="JOB_GROUP"/>
-        <field ref="JOB_LISTENER"/>
-      </primaryKey>
-    </constraint>
-    <constraint name="RHQ_FK_QRTZ_JOB_LSTNRS_JN_JG">
-      <foreignKey local="JOB_NAME,JOB_GROUP"
-                  references="RHQ_QRTZ_JOB_DETAILS(JOB_NAME,JOB_GROUP)"
-                  ondelete="cascade"/>
-    </constraint>
-  </table>
+        <constraint name="RHQ_PK_QRTZ_JOB_LISTENERS">
+            <primaryKey>
+                <field ref="JOB_NAME"/>
+                <field ref="JOB_GROUP"/>
+                <field ref="JOB_LISTENER"/>
+            </primaryKey>
+        </constraint>
+        <constraint name="RHQ_FK_QRTZ_JOB_LSTNRS_JN_JG">
+            <foreignKey local="JOB_NAME,JOB_GROUP"
+                        references="RHQ_QRTZ_JOB_DETAILS(JOB_NAME,JOB_GROUP)"
+                        ondelete="cascade"/>
+        </constraint>
+    </table>
 
-  <table name="RHQ_QRTZ_TRIGGERS">
-    <column name="TRIGGER_NAME"   type="VARCHAR2" required="true"  size="80"/>
-    <column name="TRIGGER_GROUP"  type="VARCHAR2" required="true"  size="80"/>
-    <column name="JOB_NAME"       type="VARCHAR2" required="true"  size="80"/>
-    <column name="JOB_GROUP"      type="VARCHAR2" required="true"  size="80"/>
-    <column name="IS_VOLATILE"    type="BOOLEAN"  required="true"/>
-    <column name="DESCRIPTION"    type="VARCHAR2" required="false" size="120"/>
-    <column name="NEXT_FIRE_TIME" type="LONG"     required="false"/>
-    <column name="PREV_FIRE_TIME" type="LONG"     required="false"/>
-    <column name="TRIGGER_STATE"  type="VARCHAR"  required="true"  size="16"/>
-    <column name="TRIGGER_TYPE"   type="VARCHAR"  required="true"  size="8"/>
-    <column name="START_TIME"     type="LONG"     required="true"/>
-    <column name="END_TIME"       type="LONG"     required="false"/>
-    <column name="CALENDAR_NAME"  type="VARCHAR2" required="false" size="80"/>
-    <column name="MISFIRE_INSTR"  type="INTEGER"  required="false"/>
-    <column name="JOB_DATA"       type="BLOB"     required="false"/>
+    <table name="RHQ_QRTZ_TRIGGERS">
+        <column name="TRIGGER_NAME" type="VARCHAR2" required="true" size="80"/>
+        <column name="TRIGGER_GROUP" type="VARCHAR2" required="true" size="80"/>
+        <column name="JOB_NAME" type="VARCHAR2" required="true" size="80"/>
+        <column name="JOB_GROUP" type="VARCHAR2" required="true" size="80"/>
+        <column name="IS_VOLATILE" type="BOOLEAN" required="true"/>
+        <column name="DESCRIPTION" type="VARCHAR2" required="false" size="120"/>
+        <column name="NEXT_FIRE_TIME" type="LONG" required="false"/>
+        <column name="PREV_FIRE_TIME" type="LONG" required="false"/>
+        <column name="TRIGGER_STATE" type="VARCHAR" required="true" size="16"/>
+        <column name="TRIGGER_TYPE" type="VARCHAR" required="true" size="8"/>
+        <column name="START_TIME" type="LONG" required="true"/>
+        <column name="END_TIME" type="LONG" required="false"/>
+        <column name="CALENDAR_NAME" type="VARCHAR2" required="false" size="80"/>
+        <column name="MISFIRE_INSTR" type="INTEGER" required="false"/>
+        <column name="JOB_DATA" type="BLOB" required="false"/>
 
-    <constraint name="RHQ_PK_QRTZ_TRIGGERS">
-      <primaryKey>
-        <field ref="TRIGGER_NAME"/>
-        <field ref="TRIGGER_GROUP"/>
-      </primaryKey>
-    </constraint>
-    <constraint name="RHQ_FK_QRTZ_TRIGGERS_JN_JG">
-      <foreignKey local="JOB_NAME,JOB_GROUP"
-                  references="RHQ_QRTZ_JOB_DETAILS(JOB_NAME,JOB_GROUP)"
-                  ondelete="cascade"/>
-    </constraint>
-    
-    <!-- Quartz docs recommend these indexes. -->
-    <index name="RHQ_QRTZ_TRIGGERS_JN_JG_IDX">
-       <field ref="JOB_NAME"/>
-       <field ref="JOB_GROUP"/>
-    </index>
-    <index name="RHQ_QRTZ_TRIGGERS_NFT_IDX">
-       <field ref="NEXT_FIRE_TIME"/>
-    </index>
-    <index name="RHQ_QRTZ_TRIGGERS_TS_IDX">
-       <field ref="TRIGGER_STATE"/>
-    </index>
-    <index name="RHQ_QRTZ_TRIGGERS_TS_NFT_IDX">
-       <field ref="TRIGGER_STATE"/>
-       <field ref="NEXT_FIRE_TIME"/>
-    </index>
+        <constraint name="RHQ_PK_QRTZ_TRIGGERS">
+            <primaryKey>
+                <field ref="TRIGGER_NAME"/>
+                <field ref="TRIGGER_GROUP"/>
+            </primaryKey>
+        </constraint>
+        <constraint name="RHQ_FK_QRTZ_TRIGGERS_JN_JG">
+            <foreignKey local="JOB_NAME,JOB_GROUP"
+                        references="RHQ_QRTZ_JOB_DETAILS(JOB_NAME,JOB_GROUP)"
+                        ondelete="cascade"/>
+        </constraint>
 
-  </table>
+        <!-- Quartz docs recommend these indexes. -->
+        <index name="RHQ_QRTZ_TRIGGERS_JN_JG_IDX">
+            <field ref="JOB_NAME"/>
+            <field ref="JOB_GROUP"/>
+        </index>
+        <index name="RHQ_QRTZ_TRIGGERS_NFT_IDX">
+            <field ref="NEXT_FIRE_TIME"/>
+        </index>
+        <index name="RHQ_QRTZ_TRIGGERS_TS_IDX">
+            <field ref="TRIGGER_STATE"/>
+        </index>
+        <index name="RHQ_QRTZ_TRIGGERS_TS_NFT_IDX">
+            <field ref="TRIGGER_STATE"/>
+            <field ref="NEXT_FIRE_TIME"/>
+        </index>
 
-  <table name="RHQ_QRTZ_SIMPLE_TRIGGERS">
-    <column name="TRIGGER_NAME"    type="VARCHAR2" required="true" size="80"/>
-    <column name="TRIGGER_GROUP"   type="VARCHAR2" required="true" size="80"/>
-    <column name="REPEAT_COUNT"    type="LONG"     required="true"/>
-    <column name="REPEAT_INTERVAL" type="LONG"     required="true"/>
-    <column name="TIMES_TRIGGERED" type="LONG"     required="true"/>
+    </table>
 
-    <constraint name="RHQ_PK_QRTZ_SIMPLE_TRIGGERS">
-      <primaryKey>
-        <field ref="TRIGGER_NAME"/>
-        <field ref="TRIGGER_GROUP"/>
-      </primaryKey>
-    </constraint>
-    <constraint name="RHQ_FK_QRTZ_SIMPLE_TRGRS_TN_TG">
-      <foreignKey local="TRIGGER_NAME,TRIGGER_GROUP"
-                  references="RHQ_QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP)"
-                  ondelete="cascade"/>
-    </constraint>
-    
-    <!-- Quartz docs recommend this index. -->
-	<!-- Commenting out, because Oracle auto-creates an index for the
- 	     primary key column(s) and fails if you try to create another
-		 index for the same column(s) (ips, 03/29/07).
-    -->
-	<!--
-    <index name="RHQ_QRTZ_SIMPLE_TRGRS_TN_TG_IDX">
-       <field ref="TRIGGER_NAME"/>
-       <field ref="TRIGGER_GROUP"/>
-    </index>
-	-->
-  </table>
+    <table name="RHQ_QRTZ_SIMPLE_TRIGGERS">
+        <column name="TRIGGER_NAME" type="VARCHAR2" required="true" size="80"/>
+        <column name="TRIGGER_GROUP" type="VARCHAR2" required="true" size="80"/>
+        <column name="REPEAT_COUNT" type="LONG" required="true"/>
+        <column name="REPEAT_INTERVAL" type="LONG" required="true"/>
+        <column name="TIMES_TRIGGERED" type="LONG" required="true"/>
 
-  <table name="RHQ_QRTZ_CRON_TRIGGERS">
-    <column name="TRIGGER_NAME"    type="VARCHAR2" size="80" required="true"/>
-    <column name="TRIGGER_GROUP"   type="VARCHAR2" size="80" required="true"/>
-    <column name="CRON_EXPRESSION" type="VARCHAR2" size="80" required="true"/>
-    <column name="TIME_ZONE_ID"    type="VARCHAR2" size="80" required="false"/>
+        <constraint name="RHQ_PK_QRTZ_SIMPLE_TRIGGERS">
+            <primaryKey>
+                <field ref="TRIGGER_NAME"/>
+                <field ref="TRIGGER_GROUP"/>
+            </primaryKey>
+        </constraint>
+        <constraint name="RHQ_FK_QRTZ_SIMPLE_TRGRS_TN_TG">
+            <foreignKey local="TRIGGER_NAME,TRIGGER_GROUP"
+                        references="RHQ_QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP)"
+                        ondelete="cascade"/>
+        </constraint>
 
-    <constraint name="RHQ_PK_QRTZ_CRON_TRIGGERS">
-      <primaryKey>
-        <field ref="TRIGGER_NAME"/>
-        <field ref="TRIGGER_GROUP"/>
-      </primaryKey>
-    </constraint>
-    <constraint name="RHQ_FK_QRTZ_CRON_TRIG_TN_TG">
-      <foreignKey local="TRIGGER_NAME,TRIGGER_GROUP"
-                  references="RHQ_QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP)"
-                  ondelete="cascade"/>
-    </constraint>
-    
-    <!-- Quartz docs recommend this index. -->
-	<!-- Commenting out, because Oracle auto-creates an index for the
- 	     primary key column(s) and fails if you try to create another
-		 index for the same column(s) (ips, 03/29/07).
-    -->
-	<!--
-    <index name="RHQ_QRTZ_CRON_TRGRS_TN_TG_IDX">
-       <field ref="TRIGGER_NAME"/>
-       <field ref="TRIGGER_GROUP"/>
-    </index>
-	-->
-  </table>
+        <!-- Quartz docs recommend this index. -->
+        <!-- Commenting out, because Oracle auto-creates an index for the
+              primary key column(s) and fails if you try to create another
+             index for the same column(s) (ips, 03/29/07).
+        -->
+        <!--
+      <index name="RHQ_QRTZ_SIMPLE_TRGRS_TN_TG_IDX">
+         <field ref="TRIGGER_NAME"/>
+         <field ref="TRIGGER_GROUP"/>
+      </index>
+      -->
+    </table>
 
-  <table name="RHQ_QRTZ_BLOB_TRIGGERS">
-    <column name="TRIGGER_NAME"  type="VARCHAR2" size="80" required="true"/>
-    <column name="TRIGGER_GROUP" type="VARCHAR2" size="80" required="true"/>
-    <column name="BLOB_DATA"     type="BLOB"               required="false"/>
+    <table name="RHQ_QRTZ_CRON_TRIGGERS">
+        <column name="TRIGGER_NAME" type="VARCHAR2" size="80" required="true"/>
+        <column name="TRIGGER_GROUP" type="VARCHAR2" size="80" required="true"/>
+        <column name="CRON_EXPRESSION" type="VARCHAR2" size="80" required="true"/>
+        <column name="TIME_ZONE_ID" type="VARCHAR2" size="80" required="false"/>
 
-    <constraint name="RHQ_PK_QRTZ_BLOB_TRIGGERS">
-      <primaryKey>
-        <field ref="TRIGGER_NAME"/>
-        <field ref="TRIGGER_GROUP"/>
-      </primaryKey>
-    </constraint>
-    <constraint name="RHQ_FK_QRTZ_BLOB_TRIGG_TN_TG">
-      <foreignKey local="TRIGGER_NAME,TRIGGER_GROUP"
-                  references="RHQ_QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP)"
-                  ondelete="cascade"/>
-    </constraint>
-    
-    <!-- Quartz docs recommend this index. -->
-	<!-- Commenting out, because Oracle auto-creates an index for the
- 	     primary key column(s) and fails if you try to create another
-		 index for the same column(s) (ips, 03/29/07).
-    -->
-	<!--
-    <index name="RHQ_QRTZ_BLOB_TRGRS_TN_TG_IDX">
-       <field ref="TRIGGER_NAME"/>
-       <field ref="TRIGGER_GROUP"/>
-    </index>
-    -->
-  </table>
-  
-  <table name="RHQ_QRTZ_TRIGGER_LISTENERS">
-    <column name="TRIGGER_NAME"     type="VARCHAR2" size="80" required="true"/>
-    <column name="TRIGGER_GROUP"    type="VARCHAR2" size="80" required="true"/>
-    <column name="TRIGGER_LISTENER" type="VARCHAR2" size="80" required="true"/>
+        <constraint name="RHQ_PK_QRTZ_CRON_TRIGGERS">
+            <primaryKey>
+                <field ref="TRIGGER_NAME"/>
+                <field ref="TRIGGER_GROUP"/>
+            </primaryKey>
+        </constraint>
+        <constraint name="RHQ_FK_QRTZ_CRON_TRIG_TN_TG">
+            <foreignKey local="TRIGGER_NAME,TRIGGER_GROUP"
+                        references="RHQ_QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP)"
+                        ondelete="cascade"/>
+        </constraint>
 
-    <constraint name="RHQ_PK_QRTZ_TRIGGER_LISTENERS">
-      <primaryKey>
-        <field ref="TRIGGER_NAME"/>
-        <field ref="TRIGGER_GROUP"/>
-        <field ref="TRIGGER_LISTENER"/>
-      </primaryKey>
-    </constraint>
-    <constraint name="RHQ_FK_QRTZ_TRGR_LSTNRS_TN_TG">
-      <foreignKey local="TRIGGER_NAME,TRIGGER_GROUP"
-                  references="RHQ_QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP)"
-                  ondelete="cascade"/>
-    </constraint>
+        <!-- Quartz docs recommend this index. -->
+        <!-- Commenting out, because Oracle auto-creates an index for the
+              primary key column(s) and fails if you try to create another
+             index for the same column(s) (ips, 03/29/07).
+        -->
+        <!--
+      <index name="RHQ_QRTZ_CRON_TRGRS_TN_TG_IDX">
+         <field ref="TRIGGER_NAME"/>
+         <field ref="TRIGGER_GROUP"/>
+      </index>
+      -->
+    </table>
 
-    <!-- Quartz docs recommend this index. -->
-    <index name="RHQ_QRTZ_TRGR_LSTNRS_TN_TG_IDX">
-       <field ref="TRIGGER_NAME"/>
-       <field ref="TRIGGER_GROUP"/>
-    </index>
+    <table name="RHQ_QRTZ_BLOB_TRIGGERS">
+        <column name="TRIGGER_NAME" type="VARCHAR2" size="80" required="true"/>
+        <column name="TRIGGER_GROUP" type="VARCHAR2" size="80" required="true"/>
+        <column name="BLOB_DATA" type="BLOB" required="false"/>
 
-  </table>
+        <constraint name="RHQ_PK_QRTZ_BLOB_TRIGGERS">
+            <primaryKey>
+                <field ref="TRIGGER_NAME"/>
+                <field ref="TRIGGER_GROUP"/>
+            </primaryKey>
+        </constraint>
+        <constraint name="RHQ_FK_QRTZ_BLOB_TRIGG_TN_TG">
+            <foreignKey local="TRIGGER_NAME,TRIGGER_GROUP"
+                        references="RHQ_QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP)"
+                        ondelete="cascade"/>
+        </constraint>
 
-  <table name="RHQ_QRTZ_FIRED_TRIGGERS">
-    <column name="ENTRY_ID"      primarykey="true" type="VARCHAR2" size="95" required="true"/>
-    <column name="TRIGGER_NAME"                    type="VARCHAR2" size="80" required="true"/>
-    <column name="TRIGGER_GROUP"                   type="VARCHAR2" size="80" required="true"/>
-    <column name="INSTANCE_NAME"                   type="VARCHAR2" size="80" required="true"/>
-    <column name="FIRED_TIME"                      type="LONG"               required="true"/>
-    <column name="STATE"                           type="VARCHAR2" size="16" required="true"/>
-    <column name="IS_VOLATILE"                     type="BOOLEAN"            required="true"/>
-    <column name="JOB_NAME"                        type="VARCHAR2" size="80" required="false"/>
-    <column name="JOB_GROUP"                       type="VARCHAR2" size="80" required="false"/>
-    <column name="IS_STATEFUL"                     type="BOOLEAN"            required="false"/>
-    <column name="REQUESTS_RECOVERY"               type="BOOLEAN"            required="false"/>
-    
-    <!-- Quartz docs recommend these indexes. -->
-    <index name="RHQ_QRTZ_FIRED_TRGRS_TN_IDX">
-       <field ref="TRIGGER_NAME"/>
-    </index>
-    <index name="RHQ_QRTZ_FIRED_TRGRS_TG_IDX">
-       <field ref="TRIGGER_GROUP"/>
-    </index>
-    <index name="RHQ_QRTZ_FIRED_TRGRS_TN_TG_IDX">
-       <field ref="TRIGGER_NAME"/>
-       <field ref="TRIGGER_GROUP"/>
-    </index>
-    <index name="RHQ_QRTZ_FIRED_TRGRS_IN_IDX">
-       <field ref="INSTANCE_NAME"/>
-    </index>
-    <index name="RHQ_QRTZ_FIRED_TRGRS_JN_IDX">
-       <field ref="JOB_NAME"/>
-    </index>
-    <index name="RHQ_QRTZ_FIRED_TRGRS_JG_IDX">
-       <field ref="JOB_GROUP"/>
-    </index>
+        <!-- Quartz docs recommend this index. -->
+        <!-- Commenting out, because Oracle auto-creates an index for the
+              primary key column(s) and fails if you try to create another
+             index for the same column(s) (ips, 03/29/07).
+        -->
+        <!--
+        <index name="RHQ_QRTZ_BLOB_TRGRS_TN_TG_IDX">
+           <field ref="TRIGGER_NAME"/>
+           <field ref="TRIGGER_GROUP"/>
+        </index>
+        -->
+    </table>
 
-  </table>
+    <table name="RHQ_QRTZ_TRIGGER_LISTENERS">
+        <column name="TRIGGER_NAME" type="VARCHAR2" size="80" required="true"/>
+        <column name="TRIGGER_GROUP" type="VARCHAR2" size="80" required="true"/>
+        <column name="TRIGGER_LISTENER" type="VARCHAR2" size="80" required="true"/>
 
-  <table name="RHQ_QRTZ_CALENDARS">
-    <column name="CALENDAR_NAME" primarykey="true" type="VARCHAR2" size="80" required="true"/>
-    <column name="CALENDAR"                        type="BLOB"               required="true"/>
-  </table>
+        <constraint name="RHQ_PK_QRTZ_TRIGGER_LISTENERS">
+            <primaryKey>
+                <field ref="TRIGGER_NAME"/>
+                <field ref="TRIGGER_GROUP"/>
+                <field ref="TRIGGER_LISTENER"/>
+            </primaryKey>
+        </constraint>
+        <constraint name="RHQ_FK_QRTZ_TRGR_LSTNRS_TN_TG">
+            <foreignKey local="TRIGGER_NAME,TRIGGER_GROUP"
+                        references="RHQ_QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP)"
+                        ondelete="cascade"/>
+        </constraint>
 
-  <table name="RHQ_QRTZ_PAUSED_TRIGGER_GRPS">
-    <column name="TRIGGER_GROUP" primarykey="true" type="VARCHAR2" size="80" required="true"/>
-  </table>
+        <!-- Quartz docs recommend this index. -->
+        <index name="RHQ_QRTZ_TRGR_LSTNRS_TN_TG_IDX">
+            <field ref="TRIGGER_NAME"/>
+            <field ref="TRIGGER_GROUP"/>
+        </index>
 
-  <table name="RHQ_QRTZ_SCHEDULER_STATE">
-    <column name="INSTANCE_NAME"     primarykey="true" type="VARCHAR2" size="80" required="true"/>
-    <column name="LAST_CHECKIN_TIME"                   type="LONG"               required="true"/>
-    <column name="CHECKIN_INTERVAL"                    type="LONG"               required="true"/>
-    <column name="RECOVERER"                           type="VARCHAR2" size="80" required="false"/>
-  </table>
+    </table>
 
-  <table name="RHQ_QRTZ_LOCKS">
-    <column name="LOCK_NAME" primarykey="true" type="VARCHAR2" size="40" required="true"/>
-    <data LOCK_NAME="TRIGGER_ACCESS" />
-    <data LOCK_NAME="JOB_ACCESS" />
-    <data LOCK_NAME="CALENDAR_ACCESS" />
-    <data LOCK_NAME="STATE_ACCESS" />
-    <data LOCK_NAME="MISFIRE_ACCESS" />
-  </table>
+    <table name="RHQ_QRTZ_FIRED_TRIGGERS">
+        <column name="ENTRY_ID" primarykey="true" type="VARCHAR2" size="95" required="true"/>
+        <column name="TRIGGER_NAME" type="VARCHAR2" size="80" required="true"/>
+        <column name="TRIGGER_GROUP" type="VARCHAR2" size="80" required="true"/>
+        <column name="INSTANCE_NAME" type="VARCHAR2" size="80" required="true"/>
+        <column name="FIRED_TIME" type="LONG" required="true"/>
+        <column name="STATE" type="VARCHAR2" size="16" required="true"/>
+        <column name="IS_VOLATILE" type="BOOLEAN" required="true"/>
+        <column name="JOB_NAME" type="VARCHAR2" size="80" required="false"/>
+        <column name="JOB_GROUP" type="VARCHAR2" size="80" required="false"/>
+        <column name="IS_STATEFUL" type="BOOLEAN" required="false"/>
+        <column name="REQUESTS_RECOVERY" type="BOOLEAN" required="false"/>
+
+        <!-- Quartz docs recommend these indexes. -->
+        <index name="RHQ_QRTZ_FIRED_TRGRS_TN_IDX">
+            <field ref="TRIGGER_NAME"/>
+        </index>
+        <index name="RHQ_QRTZ_FIRED_TRGRS_TG_IDX">
+            <field ref="TRIGGER_GROUP"/>
+        </index>
+        <index name="RHQ_QRTZ_FIRED_TRGRS_TN_TG_IDX">
+            <field ref="TRIGGER_NAME"/>
+            <field ref="TRIGGER_GROUP"/>
+        </index>
+        <index name="RHQ_QRTZ_FIRED_TRGRS_IN_IDX">
+            <field ref="INSTANCE_NAME"/>
+        </index>
+        <index name="RHQ_QRTZ_FIRED_TRGRS_JN_IDX">
+            <field ref="JOB_NAME"/>
+        </index>
+        <index name="RHQ_QRTZ_FIRED_TRGRS_JG_IDX">
+            <field ref="JOB_GROUP"/>
+        </index>
+
+    </table>
+
+    <table name="RHQ_QRTZ_CALENDARS">
+        <column name="CALENDAR_NAME" primarykey="true" type="VARCHAR2" size="80" required="true"/>
+        <column name="CALENDAR" type="BLOB" required="true"/>
+    </table>
+
+    <table name="RHQ_QRTZ_PAUSED_TRIGGER_GRPS">
+        <column name="TRIGGER_GROUP" primarykey="true" type="VARCHAR2" size="80" required="true"/>
+    </table>
+
+    <table name="RHQ_QRTZ_SCHEDULER_STATE">
+        <column name="INSTANCE_NAME" primarykey="true" type="VARCHAR2" size="80" required="true"/>
+        <column name="LAST_CHECKIN_TIME" type="LONG" required="true"/>
+        <column name="CHECKIN_INTERVAL" type="LONG" required="true"/>
+        <column name="RECOVERER" type="VARCHAR2" size="80" required="false"/>
+    </table>
+
+    <table name="RHQ_QRTZ_LOCKS">
+        <column name="LOCK_NAME" primarykey="true" type="VARCHAR2" size="40" required="true"/>
+        <data LOCK_NAME="TRIGGER_ACCESS"/>
+        <data LOCK_NAME="JOB_ACCESS"/>
+        <data LOCK_NAME="CALENDAR_ACCESS"/>
+        <data LOCK_NAME="STATE_ACCESS"/>
+        <data LOCK_NAME="MISFIRE_ACCESS"/>
+    </table>
 
 </dbsetup>

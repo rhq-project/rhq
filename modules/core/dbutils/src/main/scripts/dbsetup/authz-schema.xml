@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <dbsetup name="authz-schema.xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns="urn:xmlns:rhq-dbsetup-schema">
+         xmlns="urn:xmlns:rhq-dbsetup-schema">
 
     <table name="RHQ_ROLE">
         <column name="ID" default="sequence-only" initial="10001"
@@ -11,7 +11,7 @@
         <column name="FSYSTEM" type="BOOLEAN" default="false"/>
 
         <index name="RHQ_ROLE_NAME_KEY" unique="true">
-            <field ref="NAME" />
+            <field ref="NAME"/>
         </index>
     </table>
 
@@ -20,22 +20,22 @@
         <column name="RESOURCE_GROUP_ID" required="true" type="INTEGER" references="RHQ_RESOURCE_GROUP"/>
 
         <constraint name="RHQ_ROLE_RES_GROUP_MAP_KEY">
-          <primaryKey>
-            <field ref="ROLE_ID"/>
-            <field ref="RESOURCE_GROUP_ID"/>
-          </primaryKey>
+            <primaryKey>
+                <field ref="ROLE_ID"/>
+                <field ref="RESOURCE_GROUP_ID"/>
+            </primaryKey>
         </constraint>
     </table>
 
     <table name="RHQ_PERMISSION">
-       <column name="ROLE_ID" type="INTEGER" references="RHQ_ROLE" required="true"/>
-       <column name="OPERATION" type="INTEGER" required="true"/>
-       <constraint name="RHQ_PERMISSION_PK">
-          <primaryKey>
-             <field ref="ROLE_ID"/>
-             <field ref="OPERATION"/>
-          </primaryKey>
-       </constraint>
+        <column name="ROLE_ID" type="INTEGER" references="RHQ_ROLE" required="true"/>
+        <column name="OPERATION" type="INTEGER" required="true"/>
+        <constraint name="RHQ_PERMISSION_PK">
+            <primaryKey>
+                <field ref="ROLE_ID"/>
+                <field ref="OPERATION"/>
+            </primaryKey>
+        </constraint>
     </table>
 
     <table name="RHQ_SUBJECT">
@@ -49,8 +49,8 @@
         <column name="SMS_ADDRESS" size="100" type="VARCHAR2"/>
         <column name="PHONE_NUMBER" size="100" type="VARCHAR2"/>
         <column name="DEPARTMENT" size="100" type="VARCHAR2"/>
-        <column name="FACTIVE" required="true" type="BOOLEAN" default="true" />
-        <column name="FSYSTEM" required="true" type="BOOLEAN" default="false" />
+        <column name="FACTIVE" required="true" type="BOOLEAN" default="true"/>
+        <column name="FSYSTEM" required="true" type="BOOLEAN" default="false"/>
 
         <index name="RHQ_SUBJECT_AUTH_KEY" unique="true">
             <field ref="NAME"/>
@@ -62,10 +62,10 @@
         <column name="ROLE_ID" required="true" type="INTEGER" references="RHQ_ROLE"/>
 
         <constraint name="RHQ_SUBJECT_ROLE_MAPPING_KEY">
-          <primaryKey>
-            <field ref="SUBJECT_ID"/>
-            <field ref="ROLE_ID"/>
-          </primaryKey>
+            <primaryKey>
+                <field ref="SUBJECT_ID"/>
+                <field ref="ROLE_ID"/>
+            </primaryKey>
         </constraint>
     </table>
 

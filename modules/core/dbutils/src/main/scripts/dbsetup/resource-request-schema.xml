@@ -1,30 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
+        
 <dbsetup name="resource-request-schema.xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="urn:xmlns:rhq-dbsetup-schema">
 
-   <table name="RHQ_CREATE_RES_HIST">
-      <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
-      <column name="PARENT_RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
-      <column name="CREATED_RESOURCE_NAME" type="VARCHAR2" size="100" required="true"/>
-      <column name="NEW_RESOURCE_KEY" type="VARCHAR2" required="false" size="500"/>
-      <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
-      <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
-      <column name="SUBJECT_NAME" type="VARCHAR2" required="true" size="100"/>
-      <column name="CTIME" type="LONG" required="true"/>
-      <column name="MTIME" type="LONG" required="true"/>
-      <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
-      <column name="CONFIGURATION_ID" type="INTEGER" required="false" references="RHQ_CONFIG"/>
-      <column name="INSTALLED_PACKAGE_ID" type="INTEGER" required="false" references="RHQ_INSTALLED_PACKAGE"/>
-   </table>
+    <table name="RHQ_CREATE_RES_HIST">
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+        <column name="PARENT_RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+        <column name="CREATED_RESOURCE_NAME" type="VARCHAR2" size="100" required="true"/>
+        <column name="NEW_RESOURCE_KEY" type="VARCHAR2" required="false" size="500"/>
+        <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
+        <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
+        <column name="SUBJECT_NAME" type="VARCHAR2" required="true" size="100"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="MTIME" type="LONG" required="true"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
+        <column name="CONFIGURATION_ID" type="INTEGER" required="false" references="RHQ_CONFIG"/>
+        <column name="INSTALLED_PACKAGE_ID" type="INTEGER" required="false" references="RHQ_INSTALLED_PACKAGE"/>
+    </table>
 
-   <table name="RHQ_DELETE_RES_HIST">
-      <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
-      <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
-      <column name="SUBJECT_NAME" type="VARCHAR2" required="true" size="100"/>
-      <column name="CTIME" type="LONG" required="true"/>
-      <column name="MTIME" type="LONG" required="true"/>
-      <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
-      <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
-   </table>
+    <table name="RHQ_DELETE_RES_HIST">
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+        <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
+        <column name="SUBJECT_NAME" type="VARCHAR2" required="true" size="100"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="MTIME" type="LONG" required="true"/>
+        <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
+        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+    </table>
 
 </dbsetup>

@@ -1,363 +1,365 @@
 <?xml version="1.0" encoding="UTF-8"?>
+        
 <dbsetup name="measurement-schema.xml"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:xmlns:rhq-dbsetup-schema">
 
-   <table name="RHQ_MEASUREMENT_DEF">
+    <table name="RHQ_MEASUREMENT_DEF">
 
-      <!-- === required columns === -->
-      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-      <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE(ID)"/>
-      <column name="NAME" type="VARCHAR2" size="100" required="true"/>
+        <!-- === required columns === -->
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE(ID)"/>
+        <column name="NAME" type="VARCHAR2" size="100" required="true"/>
 
-      <!-- === optional columns === -->
-      <!-- an OSGI version range - if null, the metric def applies to all versions of the associated resource type -->
-      <column name="RESOURCE_VERSION_RANGE" type="VARCHAR2" size="100"/>
-      <column name="CATEGORY" type="SMALLINT"/>
-      <column name="UNITS" type="SMALLINT"/>
-      <column name="NUMERIC_TYPE" type="SMALLINT"/>
-      <column name="DISPLAY_TYPE" type="SMALLINT"/>
-      <column name="DATA_TYPE" type="SMALLINT"/>
-      <column name="PER_MINUTE" type="BOOLEAN" default="false"/>
-      <column name="DEFAULT_ON" type="BOOLEAN" default="false"/>
-      <column name="DEFAULT_INTERVAL" type="INTEGER" />
-      <column name="DISPLAY_NAME" type="VARCHAR2" size="100"/>
-      <column name="DISPLAY_ORDER" type="INTEGER" default="1000"/>
-      <column name="DESCRIPTION" type="VARCHAR2" size="500"/>
-      <column name="DESTINATION_TYPE" type="VARCHAR2" size="100"/>
+        <!-- === optional columns === -->
+        <!-- an OSGI version range - if null, the metric def applies to all versions of the associated resource type -->
+        <column name="RESOURCE_VERSION_RANGE" type="VARCHAR2" size="100"/>
+        <column name="CATEGORY" type="SMALLINT"/>
+        <column name="UNITS" type="SMALLINT"/>
+        <column name="NUMERIC_TYPE" type="SMALLINT"/>
+        <column name="DISPLAY_TYPE" type="SMALLINT"/>
+        <column name="DATA_TYPE" type="SMALLINT"/>
+        <column name="PER_MINUTE" type="BOOLEAN" default="false"/>
+        <column name="DEFAULT_ON" type="BOOLEAN" default="false"/>
+        <column name="DEFAULT_INTERVAL" type="INTEGER"/>
+        <column name="DISPLAY_NAME" type="VARCHAR2" size="100"/>
+        <column name="DISPLAY_ORDER" type="INTEGER" default="1000"/>
+        <column name="DESCRIPTION" type="VARCHAR2" size="500"/>
+        <column name="DESTINATION_TYPE" type="VARCHAR2" size="100"/>
 
-      <column name="VERSION" type="INTEGER" /> <!-- for optimistic locking -->
+        <column name="VERSION" type="INTEGER"/>
+        <!-- for optimistic locking -->
 
-      <!-- === business key (RESOURCE_TYPE_ID + NAME + PER_MIN) === -->
-      <index name="RHQ_METRIC_DEF_KEY_IDX" unique="true">
-         <field ref="RESOURCE_TYPE_ID"/>
-         <field ref="NAME"/>
-         <field ref="PER_MINUTE"/>
-      </index>
-   </table>
-
-
-   <table name="RHQ_MEASUREMENT_SCHED">
-      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-
-      <column name="ENABLED" type="BOOLEAN" default="false"/>
-      <column name="MTIME" type="TIMESTAMP" />
-      <column name="DEFINITION" type="INTEGER" references="RHQ_MEASUREMENT_DEF(ID)"/>
-      <column name="VERSION" type="INTEGER" />
-      <column name="COLL_INTERVAL" type="INTEGER" />
-      <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE(ID)"/>
-      <index name="RHQ_MEAS_SCHED_UNIQ" unique="true">
-         <field ref="RESOURCE_ID"/>
-         <field ref="DEFINITION"/>
-      </index>
-   </table>
+        <!-- === business key (RESOURCE_TYPE_ID + NAME + PER_MIN) === -->
+        <index name="RHQ_METRIC_DEF_KEY_IDX" unique="true">
+            <field ref="RESOURCE_TYPE_ID"/>
+            <field ref="NAME"/>
+            <field ref="PER_MINUTE"/>
+        </index>
+    </table>
 
 
-   <table name="RHQ_MEASUREMENT_BLINE">
-      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+    <table name="RHQ_MEASUREMENT_SCHED">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
 
-      <column name="BL_USER_ENTERED" type="BOOLEAN" default="false" required="true"/>
-      <column name="BL_MIN" type="DOUBLE" required="true"/>
-      <column name="BL_MAX" type="DOUBLE" required="true"/>
-      <column name="BL_MEAN" type="DOUBLE" required="true"/>
-      <column name="BL_COMPUTE_TIME" type="LONG" required="true"/>
-      <column name="SCHEDULE_ID" type="INTEGER" required="true" references="RHQ_MEASUREMENT_SCHED(ID)"/>
-      <index name="RHQ_MEAS_BASELINE_CTIME_IDX">
-         <field ref="BL_COMPUTE_TIME"/>
-      </index>
-   </table>
+        <column name="ENABLED" type="BOOLEAN" default="false"/>
+        <column name="MTIME" type="TIMESTAMP"/>
+        <column name="DEFINITION" type="INTEGER" references="RHQ_MEASUREMENT_DEF(ID)"/>
+        <column name="VERSION" type="INTEGER"/>
+        <column name="COLL_INTERVAL" type="INTEGER"/>
+        <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE(ID)"/>
+        <index name="RHQ_MEAS_SCHED_UNIQ" unique="true">
+            <field ref="RESOURCE_ID"/>
+            <field ref="DEFINITION"/>
+        </index>
+    </table>
 
 
-   <table name="RHQ_MEASUREMENT_DATA_NUM_1H" logging="false" cache="true"
-          tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@" storage-options="freelists 20">
+    <table name="RHQ_MEASUREMENT_BLINE">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
 
-      <column name="TIME_STAMP" required="true" type="LONG"/>
-      <column name="SCHEDULE_ID" required="true" type="INTEGER"/>
-      <column name="VALUE" required="false" type="DOUBLE"/>
-      <column name="MINVALUE" required="false" type="DOUBLE"/>
-      <column name="MAXVALUE" required="false" type="DOUBLE"/>
+        <column name="BL_USER_ENTERED" type="BOOLEAN" default="false" required="true"/>
+        <column name="BL_MIN" type="DOUBLE" required="true"/>
+        <column name="BL_MAX" type="DOUBLE" required="true"/>
+        <column name="BL_MEAN" type="DOUBLE" required="true"/>
+        <column name="BL_COMPUTE_TIME" type="LONG" required="true"/>
+        <column name="SCHEDULE_ID" type="INTEGER" required="true" references="RHQ_MEASUREMENT_SCHED(ID)"/>
+        <index name="RHQ_MEAS_BASELINE_CTIME_IDX">
+            <field ref="BL_COMPUTE_TIME"/>
+        </index>
+    </table>
 
-      <constraint name="RHQ_MEAS_DATA_1H_ID_TIME_PK">
-         <primaryKey>
+
+    <table name="RHQ_MEASUREMENT_DATA_NUM_1H" logging="false" cache="true"
+           tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@" storage-options="freelists 20">
+
+        <column name="TIME_STAMP" required="true" type="LONG"/>
+        <column name="SCHEDULE_ID" required="true" type="INTEGER"/>
+        <column name="VALUE" required="false" type="DOUBLE"/>
+        <column name="MINVALUE" required="false" type="DOUBLE"/>
+        <column name="MAXVALUE" required="false" type="DOUBLE"/>
+
+        <constraint name="RHQ_MEAS_DATA_1H_ID_TIME_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+
+    <table name="RHQ_MEASUREMENT_DATA_NUM_6H" logging="false" cache="true"
+           tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@" storage-options="freelists 20">
+
+        <column name="TIME_STAMP" required="true" type="LONG"/>
+        <column name="SCHEDULE_ID" required="true" type="INTEGER"/>
+        <column name="VALUE" required="false" type="DOUBLE"/>
+        <column name="MINVALUE" required="false" type="DOUBLE"/>
+        <column name="MAXVALUE" required="false" type="DOUBLE"/>
+
+        <constraint name="RHQ_MEAS_DATA_6H_ID_TIME_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+
+    <table name="RHQ_MEASUREMENT_DATA_NUM_1D" logging="false" cache="true"
+           tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@" storage-options="freelists 20">
+
+        <column name="TIME_STAMP" required="true" type="LONG"/>
+        <column name="SCHEDULE_ID" required="true" type="INTEGER"/>
+        <column name="VALUE" required="false" type="DOUBLE"/>
+        <column name="MINVALUE" required="false" type="DOUBLE"/>
+        <column name="MAXVALUE" required="false" type="DOUBLE"/>
+
+        <constraint name="RHQ_MEAS_DATA_1D_ID_TIME_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+
+    <table name="RHQ_MEASUREMENT_DATA_TRAIT">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="VARCHAR2" size="255"/>
+        <constraint name="RHQ_MEAS_DATA_TRAIT_ID_TIME_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+
+    <table name="RHQ_CALLTIME_DATA_KEY">
+        <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
+        <column name="SCHEDULE_ID" type="INTEGER" required="true"/>
+        <column name="CALL_DESTINATION" type="VARCHAR2" size="4000" required="true"/>
+        <index name="RHQ_CALLTIME_DATA_KEY_IDX" unique="true">
             <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
+            <field ref="CALL_DESTINATION"/>
+        </index>
+    </table>
 
 
-   <table name="RHQ_MEASUREMENT_DATA_NUM_6H" logging="false" cache="true"
-          tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@" storage-options="freelists 20">
+    <table name="RHQ_CALLTIME_DATA_VALUE">
+        <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
+        <column name="KEY_ID" type="INTEGER" references="RHQ_CALLTIME_DATA_KEY" required="true"/>
+        <column name="BEGIN_TIME" type="LONG" required="true"/>
+        <column name="END_TIME" type="LONG" required="true"/>
+        <column name="MINIMUM" type="DOUBLE" required="true"/>
+        <column name="MAXIMUM" type="DOUBLE" required="true"/>
+        <column name="TOTAL" type="DOUBLE" required="true"/>
+        <column name="COUNT" type="LONG" required="true"/>
+    </table>
 
-      <column name="TIME_STAMP" required="true" type="LONG"/>
-      <column name="SCHEDULE_ID" required="true" type="INTEGER"/>
-      <column name="VALUE" required="false" type="DOUBLE"/>
-      <column name="MINVALUE" required="false" type="DOUBLE"/>
-      <column name="MAXVALUE" required="false" type="DOUBLE"/>
 
-      <constraint name="RHQ_MEAS_DATA_6H_ID_TIME_PK">
-         <primaryKey>
+    <table name="RHQ_AVAILABILITY">
+        <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
+        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE(ID)"/>
+        <column name="START_TIME" type="LONG" required="true"/>
+        <column name="END_TIME" type="LONG" required="false"/>
+        <column name="AVAILABILITY_TYPE" type="SMALLINT" required="false"/>
+        <index name="RHQ_AVAIL_RESOURCE_START_IDX">
+            <field ref="RESOURCE_ID"/>
+            <field ref="START_TIME"/>
+        </index>
+        <!-- only one null row can exist for any resource -->
+        <index name="RHQ_AVAIL_RESOURCE_END_IDX" condition="END_TIME IS NULL">
+            <field ref="RESOURCE_ID"/>
+            <field ref="END_TIME"/>
+        </index>
+    </table>
+
+
+    <table name="RHQ_MEASUREMENT_OOB">
+        <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
+        <column name="SCHEDULE_ID" type="INTEGER" references="RHQ_MEASUREMENT_SCHED(ID)" required="true"/>
+        <column name="OCCURRED" type="LONG" required="true"/>
+        <column name="DIFF" type="DOUBLE" required="true"/>
+
+        <index name="RHQ_MEASUREMENT_OOB_IDX" unique="true">
             <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
+            <field ref="OCCURRED"/>
+        </index>
+    </table>
 
 
-   <table name="RHQ_MEASUREMENT_DATA_NUM_1D" logging="false" cache="true"
-          tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@" storage-options="freelists 20">
-
-      <column name="TIME_STAMP" required="true" type="LONG"/>
-      <column name="SCHEDULE_ID" required="true" type="INTEGER"/>
-      <column name="VALUE" required="false" type="DOUBLE"/>
-      <column name="MINVALUE" required="false" type="DOUBLE"/>
-      <column name="MAXVALUE" required="false" type="DOUBLE"/>
-
-      <constraint name="RHQ_MEAS_DATA_1D_ID_TIME_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
+    <table name="RHQ_NUMBERS">
+        <column name="i" type="INTEGER" default="sequence-only" initial="10001"
+                primarykey="true" required="true"/>
+    </table>
 
 
-   <table name="RHQ_MEASUREMENT_DATA_TRAIT">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER" />
-      <column name="VALUE" type="VARCHAR2" size="255" />
-      <constraint name="RHQ_MEAS_DATA_TRAIT_ID_TIME_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
-
-
-   <table name="RHQ_CALLTIME_DATA_KEY">
-      <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
-      <column name="SCHEDULE_ID" type="INTEGER" required="true"/>
-      <column name="CALL_DESTINATION" type="VARCHAR2" size="4000" required="true"/>
-      <index name="RHQ_CALLTIME_DATA_KEY_IDX" unique="true">
-         <field ref="SCHEDULE_ID"/>
-         <field ref="CALL_DESTINATION"/>
-      </index>
-   </table>
-
-
-   <table name="RHQ_CALLTIME_DATA_VALUE">
-      <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
-      <column name="KEY_ID" type="INTEGER" references="RHQ_CALLTIME_DATA_KEY" required="true"/>
-      <column name="BEGIN_TIME" type="LONG" required="true"/>
-      <column name="END_TIME" type="LONG" required="true"/>
-      <column name="MINIMUM" type="DOUBLE" required="true"/>
-      <column name="MAXIMUM" type="DOUBLE" required="true"/>
-      <column name="TOTAL" type="DOUBLE" required="true"/>
-      <column name="COUNT" type="LONG" required="true"/>
-   </table>
-
-
-   <table name="RHQ_AVAILABILITY">
-      <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
-      <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE(ID)"/>
-      <column name="START_TIME" type="LONG" required="true" />
-      <column name="END_TIME" type="LONG" required="false" />
-      <column name="AVAILABILITY_TYPE" type="SMALLINT" required="false" />
-      <index name="RHQ_AVAIL_RESOURCE_START_IDX">
-         <field ref="RESOURCE_ID"/>
-         <field ref="START_TIME"/>
-      </index>
-      <!-- only one null row can exist for any resource -->
-      <index name="RHQ_AVAIL_RESOURCE_END_IDX" condition="END_TIME IS NULL">
-         <field ref="RESOURCE_ID"/>
-         <field ref="END_TIME" />
-      </index>
-   </table>
-
-
-   <table name="RHQ_MEASUREMENT_OOB">
-      <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
-      <column name="SCHEDULE_ID" type="INTEGER" references="RHQ_MEASUREMENT_SCHED(ID)" required="true"/>
-      <column name="OCCURRED" type="LONG" required="true"/>
-      <column name="DIFF" type="DOUBLE" required="true"/>
-
-      <index name="RHQ_MEASUREMENT_OOB_IDX" unique="true">
-         <field ref="SCHEDULE_ID" />
-         <field ref="OCCURRED" />
-      </index>
-   </table>
-
-
-   <table name="RHQ_NUMBERS">
-      <column name="i" type="INTEGER" default="sequence-only" initial="10001"
-         primarykey="true" required="true" />
-   </table>
-
-
-   <table name="RHQ_MEAS_DATA_NUM_R00">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER"/>
-      <column name="VALUE" type="DOUBLE"/>
-      <constraint name="RHQ_MEAS_DATA_NUM_R00_ID_T_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
-   <table name="RHQ_MEAS_DATA_NUM_R01">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER"/>
-      <column name="VALUE" type="DOUBLE"/>
-      <constraint name="RHQ_MEAS_DATA_NUM_R01_ID_T_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
-   <table name="RHQ_MEAS_DATA_NUM_R02">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER"/>
-      <column name="VALUE" type="DOUBLE"/>
-      <constraint name="RHQ_MEAS_DATA_NUM_R02_ID_T_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
-   <table name="RHQ_MEAS_DATA_NUM_R03">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER"/>
-      <column name="VALUE" type="DOUBLE"/>
-      <constraint name="RHQ_MEAS_DATA_NUM_R03_ID_T_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
-   <table name="RHQ_MEAS_DATA_NUM_R04">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER"/>
-      <column name="VALUE" type="DOUBLE"/>
-      <constraint name="RHQ_MEAS_DATA_NUM_R04_ID_T_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
-   <table name="RHQ_MEAS_DATA_NUM_R05">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER"/>
-      <column name="VALUE" type="DOUBLE"/>
-      <constraint name="RHQ_MEAS_DATA_NUM_R05_ID_T_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
-   <table name="RHQ_MEAS_DATA_NUM_R06">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER"/>
-      <column name="VALUE" type="DOUBLE"/>
-      <constraint name="RHQ_MEAS_DATA_NUM_R06_ID_T_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
-   <table name="RHQ_MEAS_DATA_NUM_R07">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER"/>
-      <column name="VALUE" type="DOUBLE"/>
-      <constraint name="RHQ_MEAS_DATA_NUM_R07_ID_T_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
-   <table name="RHQ_MEAS_DATA_NUM_R08">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER"/>
-      <column name="VALUE" type="DOUBLE"/>
-      <constraint name="RHQ_MEAS_DATA_NUM_R08_ID_T_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
-   <table name="RHQ_MEAS_DATA_NUM_R09">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER"/>
-      <column name="VALUE" type="DOUBLE"/>
-      <constraint name="RHQ_MEAS_DATA_NUM_R09_ID_T_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
-   <table name="RHQ_MEAS_DATA_NUM_R10">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER"/>
-      <column name="VALUE" type="DOUBLE"/>
-      <constraint name="RHQ_MEAS_DATA_NUM_R10_ID_T_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
-   <table name="RHQ_MEAS_DATA_NUM_R11">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER"/>
-      <column name="VALUE" type="DOUBLE"/>
-      <constraint name="RHQ_MEAS_DATA_NUM_R11_ID_T_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
-   <table name="RHQ_MEAS_DATA_NUM_R12">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER"/>
-      <column name="VALUE" type="DOUBLE"/>
-      <constraint name="RHQ_MEAS_DATA_NUM_R12_ID_T_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
-   <table name="RHQ_MEAS_DATA_NUM_R13">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER"/>
-      <column name="VALUE" type="DOUBLE"/>
-      <constraint name="RHQ_MEAS_DATA_NUM_R13_ID_T_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
-   <table name="RHQ_MEAS_DATA_NUM_R14">
-      <column name="TIME_STAMP" type="LONG"/>
-      <column name="SCHEDULE_ID" type="INTEGER"/>
-      <column name="VALUE" type="DOUBLE"/>
-      <constraint name="RHQ_MEAS_DATA_NUM_R14_ID_T_PK">
-         <primaryKey>
-            <field ref="SCHEDULE_ID"/>
-            <field ref="TIME_STAMP"/>
-         </primaryKey>
-      </constraint>
-   </table>
+    <table name="RHQ_MEAS_DATA_NUM_R00">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="DOUBLE"/>
+        <constraint name="RHQ_MEAS_DATA_NUM_R00_ID_T_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+    <table name="RHQ_MEAS_DATA_NUM_R01">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="DOUBLE"/>
+        <constraint name="RHQ_MEAS_DATA_NUM_R01_ID_T_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+    <table name="RHQ_MEAS_DATA_NUM_R02">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="DOUBLE"/>
+        <constraint name="RHQ_MEAS_DATA_NUM_R02_ID_T_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+    <table name="RHQ_MEAS_DATA_NUM_R03">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="DOUBLE"/>
+        <constraint name="RHQ_MEAS_DATA_NUM_R03_ID_T_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+    <table name="RHQ_MEAS_DATA_NUM_R04">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="DOUBLE"/>
+        <constraint name="RHQ_MEAS_DATA_NUM_R04_ID_T_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+    <table name="RHQ_MEAS_DATA_NUM_R05">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="DOUBLE"/>
+        <constraint name="RHQ_MEAS_DATA_NUM_R05_ID_T_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+    <table name="RHQ_MEAS_DATA_NUM_R06">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="DOUBLE"/>
+        <constraint name="RHQ_MEAS_DATA_NUM_R06_ID_T_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+    <table name="RHQ_MEAS_DATA_NUM_R07">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="DOUBLE"/>
+        <constraint name="RHQ_MEAS_DATA_NUM_R07_ID_T_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+    <table name="RHQ_MEAS_DATA_NUM_R08">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="DOUBLE"/>
+        <constraint name="RHQ_MEAS_DATA_NUM_R08_ID_T_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+    <table name="RHQ_MEAS_DATA_NUM_R09">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="DOUBLE"/>
+        <constraint name="RHQ_MEAS_DATA_NUM_R09_ID_T_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+    <table name="RHQ_MEAS_DATA_NUM_R10">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="DOUBLE"/>
+        <constraint name="RHQ_MEAS_DATA_NUM_R10_ID_T_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+    <table name="RHQ_MEAS_DATA_NUM_R11">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="DOUBLE"/>
+        <constraint name="RHQ_MEAS_DATA_NUM_R11_ID_T_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+    <table name="RHQ_MEAS_DATA_NUM_R12">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="DOUBLE"/>
+        <constraint name="RHQ_MEAS_DATA_NUM_R12_ID_T_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+    <table name="RHQ_MEAS_DATA_NUM_R13">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="DOUBLE"/>
+        <constraint name="RHQ_MEAS_DATA_NUM_R13_ID_T_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
+    <table name="RHQ_MEAS_DATA_NUM_R14">
+        <column name="TIME_STAMP" type="LONG"/>
+        <column name="SCHEDULE_ID" type="INTEGER"/>
+        <column name="VALUE" type="DOUBLE"/>
+        <constraint name="RHQ_MEAS_DATA_NUM_R14_ID_T_PK">
+            <primaryKey>
+                <field ref="SCHEDULE_ID"/>
+                <field ref="TIME_STAMP"/>
+            </primaryKey>
+        </constraint>
+    </table>
 
 </dbsetup>

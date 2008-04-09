@@ -1,43 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
+        
 <dbsetup name="content-data.xml">
-   <table name="RHQ_ARCHITECTURE">
-      <data id="1" name="noarch" />
-      <data id="2" name="i386"/>
-      <data id="3" name="i486"/>
-      <data id="4" name="i586"/>
-      <data id="5" name="i686"/>
-      <data id="6" name="alpha"/>
-      <data id="7" name="alphaev6"/>
-      <data id="8" name="ia64"/>
-      <data id="9" name="sparc"/>
-      <data id="10" name="sparcv9"/>
-      <data id="11" name="sparc64"/>
-      <data id="12" name="src"/>
-      <data id="13" name="s390"/>
-      <data id="14" name="athlon"/>
-      <data id="15" name="s390x"/>
-      <data id="16" name="ppc"/>
-      <data id="17" name="ppc64"/>
-      <data id="18" name="pSeries"/>
-      <data id="19" name="iSeries"/>
-      <data id="20" name="x86_64"/>
-      <data id="21" name="ppc64iseries"/>
-      <data id="22" name="ppc64pseries"/>
-      <data id="23" name="sparc-solaris"/>
-      <data id="24" name="sparc.sun4u-solaris"/>
-      <data id="25" name="tar"/>
-      <data id="26" name="ia32e"/>
-      <data id="27" name="amd64"/>
-      <data id="28" name="i386-solaris"/>
-      <data id="29" name="nosrc"/>
-      <data id="30" name="sparc-solaris-patch"/>
-      <data id="31" name="i386-solaris-patch"/>
-      <data id="32" name="sparc-solaris-patch-cluster"/>
-      <data id="33" name="i386-solaris-patch-cluster"/>
-      <data id="34" name="noarch-solaris"/>
-      <data id="35" name="noarch-solaris-patch"/>
-      <data id="36" name="noarch-solaris-patch-cluster"/>
-      <data id="37" name="solaris-patch"/>
-      <data id="38" name="solaris-patch-cluster"/>
-   </table>
+    <table name="RHQ_ARCHITECTURE">
+        <data id="1" name="noarch"/>
+        <data id="2" name="i386"/>
+        <data id="3" name="i486"/>
+        <data id="4" name="i586"/>
+        <data id="5" name="i686"/>
+        <data id="6" name="alpha"/>
+        <data id="7" name="alphaev6"/>
+        <data id="8" name="ia64"/>
+        <data id="9" name="sparc"/>
+        <data id="10" name="sparcv9"/>
+        <data id="11" name="sparc64"/>
+        <data id="12" name="src"/>
+        <data id="13" name="s390"/>
+        <data id="14" name="athlon"/>
+        <data id="15" name="s390x"/>
+        <data id="16" name="ppc"/>
+        <data id="17" name="ppc64"/>
+        <data id="18" name="pSeries"/>
+        <data id="19" name="iSeries"/>
+        <data id="20" name="x86_64"/>
+        <data id="21" name="ppc64iseries"/>
+        <data id="22" name="ppc64pseries"/>
+        <data id="23" name="sparc-solaris"/>
+        <data id="24" name="sparc.sun4u-solaris"/>
+        <data id="25" name="tar"/>
+        <data id="26" name="ia32e"/>
+        <data id="27" name="amd64"/>
+        <data id="28" name="i386-solaris"/>
+        <data id="29" name="nosrc"/>
+        <data id="30" name="sparc-solaris-patch"/>
+        <data id="31" name="i386-solaris-patch"/>
+        <data id="32" name="sparc-solaris-patch-cluster"/>
+        <data id="33" name="i386-solaris-patch-cluster"/>
+        <data id="34" name="noarch-solaris"/>
+        <data id="35" name="noarch-solaris-patch"/>
+        <data id="36" name="noarch-solaris-patch-cluster"/>
+        <data id="37" name="solaris-patch"/>
+        <data id="38" name="solaris-patch-cluster"/>
+    </table>
 </dbsetup>

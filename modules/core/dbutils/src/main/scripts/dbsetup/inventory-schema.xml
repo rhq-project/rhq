@@ -1,250 +1,252 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
 <dbsetup name="inventory-schema.xml"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:xmlns:rhq-dbsetup-schema">
 
-  <!--  new agent -->
-  <table name="RHQ_AGENT">
-      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-      <column name="NAME" required="true" size="255" type="VARCHAR2"/>
-      <column name="ADDRESS" required="true" size="255" type="VARCHAR2"/>
-      <column name="PORT" required="true" type="INTEGER"/>
-      <column name="AGENTTOKEN" required="true" size="100" type="VARCHAR2"/>
-      <column name="REMOTE_ENDPOINT" required="false" size="4000" type="VARCHAR2"/>
-      <column name="CTIME" required="true" type="LONG"/>
-      <column name="MTIME" required="true" type="LONG"/>
-      <column name="LAST_AVAILABILITY_REPORT" required="false" type="TIMESTAMP" />
+    <!--  new agent -->
+    <table name="RHQ_AGENT">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" required="true" size="255" type="VARCHAR2"/>
+        <column name="ADDRESS" required="true" size="255" type="VARCHAR2"/>
+        <column name="PORT" required="true" type="INTEGER"/>
+        <column name="AGENTTOKEN" required="true" size="100" type="VARCHAR2"/>
+        <column name="REMOTE_ENDPOINT" required="false" size="4000" type="VARCHAR2"/>
+        <column name="CTIME" required="true" type="LONG"/>
+        <column name="MTIME" required="true" type="LONG"/>
+        <column name="LAST_AVAILABILITY_REPORT" required="false" type="TIMESTAMP"/>
 
-      <index name="RHQ_AGENT_NAME_UNIQUE" unique="true">
-         <field ref="NAME"/>
-      </index>
+        <index name="RHQ_AGENT_NAME_UNIQUE" unique="true">
+            <field ref="NAME"/>
+        </index>
 
-      <index name="RHQ_AGENT_ADDRESS_PORT" unique="true">
-         <field ref="ADDRESS"/>
-         <field ref="PORT"/>
-      </index>
+        <index name="RHQ_AGENT_ADDRESS_PORT" unique="true">
+            <field ref="ADDRESS"/>
+            <field ref="PORT"/>
+        </index>
 
-      <index name="RHQ_AGENT_TOKEN_UNIQUE" unique="true">
-         <field ref="AGENTTOKEN"/>
-      </index>
-   </table>
+        <index name="RHQ_AGENT_TOKEN_UNIQUE" unique="true">
+            <field ref="AGENTTOKEN"/>
+        </index>
+    </table>
 
-   <!-- NEW RESOURCE TYPES -->
-   <table name="RHQ_RESOURCE_TYPE">
-      <column name="ID" default="sequence-only" initial="10001"
-              primarykey="true" required="true" type="INTEGER"/>
-      <column name="NAME" type="VARCHAR2" size="100" required="true"/>
-      <column name="CATEGORY" type="VARCHAR2" size="16" required="true"/>
-      <column name="CREATION_DATA_TYPE" type="VARCHAR2" size="16" required="true"/>
-      <column name="CREATE_DELETE_POLICY" type="VARCHAR2" size="16" required="true"/>
-      <column name="SINGLETON" type="BOOLEAN" required="true"/>
-      <column name="SUPPORTS_MANUAL_ADD" type="BOOLEAN" required="true"/>
-      <column name="DESCRIPTION" type="VARCHAR2" size="1000"/>
-      <column name="PLUGIN" type="VARCHAR2" size="100"/>
-      <column name="CTIME" type="LONG"/>
-      <column name="MTIME" type="LONG"/>      
-      <column name="SUBCATEGORY_ID" type="INTEGER" />
-      <!--
-      TODO add support to DB setup for tables with circular dependencies and then add back this RI
-      <column name="SUBCATEGORY_ID" type="INTEGER" references="RHQ_RESOURCE_SUBCAT" />
-      -->
-      <column name="PLUGIN_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF(ID)"/>
-      <column name="RES_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF(ID)"/>
+    <!-- NEW RESOURCE TYPES -->
+    <table name="RHQ_RESOURCE_TYPE">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR2" size="100" required="true"/>
+        <column name="CATEGORY" type="VARCHAR2" size="16" required="true"/>
+        <column name="CREATION_DATA_TYPE" type="VARCHAR2" size="16" required="true"/>
+        <column name="CREATE_DELETE_POLICY" type="VARCHAR2" size="16" required="true"/>
+        <column name="SINGLETON" type="BOOLEAN" required="true"/>
+        <column name="SUPPORTS_MANUAL_ADD" type="BOOLEAN" required="true"/>
+        <column name="DESCRIPTION" type="VARCHAR2" size="1000"/>
+        <column name="PLUGIN" type="VARCHAR2" size="100"/>
+        <column name="CTIME" type="LONG"/>
+        <column name="MTIME" type="LONG"/>
+        <column name="SUBCATEGORY_ID" type="INTEGER"/>
+        <!--
+        TODO add support to DB setup for tables with circular dependencies and then add back this RI
+        <column name="SUBCATEGORY_ID" type="INTEGER" references="RHQ_RESOURCE_SUBCAT" />
+        -->
+        <column name="PLUGIN_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF(ID)"/>
+        <column name="RES_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF(ID)"/>
 
-      <index name="RHQ_RES_TYPE_IDX_PLG_NAME">
-         <field ref="NAME"/>
-         <field ref="PLUGIN"/>
-      </index>
-   </table>
+        <index name="RHQ_RES_TYPE_IDX_PLG_NAME">
+            <field ref="NAME"/>
+            <field ref="PLUGIN"/>
+        </index>
+    </table>
 
-   <!-- NEW RESOURCE SUBCATEGORIES -->
-   <table name="RHQ_RESOURCE_SUBCAT">
-      <column name="ID" default="sequence-only" initial="10001"
-              primarykey="true" required="true" type="INTEGER"/>
-      <column name="NAME" type="VARCHAR2" size="100"/>
-      <column name="DISPLAY_NAME" type="VARCHAR2" size="100"/>
-      <column name="DESCRIPTION" type="VARCHAR2" size="1000"/>
-      <column name="CTIME" type="LONG"/>
-      <column name="MTIME" type="LONG"/>
-      <column name="PARENT_SUBCATEGORY_ID" type="INTEGER" references="RHQ_RESOURCE_SUBCAT"/>
-      <!-- resourceTypeId is not required on child sub categories -->
-      <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
-   </table>
+    <!-- NEW RESOURCE SUBCATEGORIES -->
+    <table name="RHQ_RESOURCE_SUBCAT">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR2" size="100"/>
+        <column name="DISPLAY_NAME" type="VARCHAR2" size="100"/>
+        <column name="DESCRIPTION" type="VARCHAR2" size="1000"/>
+        <column name="CTIME" type="LONG"/>
+        <column name="MTIME" type="LONG"/>
+        <column name="PARENT_SUBCATEGORY_ID" type="INTEGER" references="RHQ_RESOURCE_SUBCAT"/>
+        <!-- resourceTypeId is not required on child sub categories -->
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
+    </table>
 
-   <!-- Many To Many mapping for resource type to its parents -->
-   <table name="RHQ_RESOURCE_TYPE_PARENTS">
-      <column name="RESOURCE_TYPE_ID" required="true" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
-      <column name="PARENT_RESOURCE_TYPE_ID" required="true" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
+    <!-- Many To Many mapping for resource type to its parents -->
+    <table name="RHQ_RESOURCE_TYPE_PARENTS">
+        <column name="RESOURCE_TYPE_ID" required="true" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
+        <column name="PARENT_RESOURCE_TYPE_ID" required="true" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
 
-      <!-- not using full words to fit index name length -->
-      <constraint name="RHQ_RES_TYPE_PARENTS_KEY">
-        <primaryKey>
-          <field ref="RESOURCE_TYPE_ID"/>
-          <field ref="PARENT_RESOURCE_TYPE_ID"/>
-        </primaryKey>
-      </constraint>
-   </table>
-   
-   <table name="RHQ_PROCESS_SCAN">
-      <column name="ID" default="sequence-only" initial="10001"
-              primarykey="true" required="true" type="INTEGER"/>
-      <column name="QUERY" type="VARCHAR2" size="256" required="true"/>
-      <column name="NAME" type="VARCHAR2" size="100" required="false"/>
-      <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
-      
-      <index name="RHQ_PROCESS_SCAN_QUERY_INDEX" unique="true">
-         <field ref="QUERY"/>
-         <field ref="RESOURCE_TYPE_ID"/>
-      </index>
-   </table>
+        <!-- not using full words to fit index name length -->
+        <constraint name="RHQ_RES_TYPE_PARENTS_KEY">
+            <primaryKey>
+                <field ref="RESOURCE_TYPE_ID"/>
+                <field ref="PARENT_RESOURCE_TYPE_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
 
-   <table name="RHQ_PRD_VER">
-      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-      <column name="VERSION" type="VARCHAR2" size="50" required="true"/>
-      <column name="RES_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
-   </table>
+    <table name="RHQ_PROCESS_SCAN">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="QUERY" type="VARCHAR2" size="256" required="true"/>
+        <column name="NAME" type="VARCHAR2" size="100" required="false"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
 
-   <table name="RHQ_RESOURCE">
-      <column name="ID" default="sequence-only" initial="10001"
-              primarykey="true" required="true" type="INTEGER"/>
-      <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
-      <column name="UUID" type="CHAR" size="36" required="true"/>
-      <column name="NAME" type="VARCHAR2" size="100"/>
-      <column name="RESOURCE_KEY" type="VARCHAR2" required="true" size="500"/>
-      <column name="AGENT_ID" required="false" type="INTEGER" references="RHQ_AGENT(id)"/>
-      <column name="INVENTORY_STATUS" type="VARCHAR2" size="20"/>
-      <column name="CONNECTED" type="BOOLEAN"/>
-      <column name="DESCRIPTION" type="VARCHAR2" size="1000"/>
-      <column name="VERSION" type="VARCHAR2" size="50"/>
-      <column name="CTIME" type="LONG"/>
-      <column name="MTIME" type="LONG"/>
-      <column name="ITIME" type="LONG"/>
-      <column name="RES_CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG"/>
-      <column name="PLUGIN_CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG"/>
-      <column name="MODIFIED_BY" required="false" type="INTEGER"/>
-      <column name="LOCATION" required="false" size="100" type="VARCHAR2"/>
-      <column name="PARENT_RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE"/>
-      <column name="PRODUCT_VERSION_ID" type="INTEGER" references="RHQ_PRD_VER"/>
+        <index name="RHQ_PROCESS_SCAN_QUERY_INDEX" unique="true">
+            <field ref="QUERY"/>
+            <field ref="RESOURCE_TYPE_ID"/>
+        </index>
+    </table>
 
-      <index name="RHQ_RESOURCE_idx_key">
-         <field ref="RESOURCE_KEY"/>
-      </index>
+    <table name="RHQ_PRD_VER">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="VERSION" type="VARCHAR2" size="50" required="true"/>
+        <column name="RES_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
+    </table>
 
-      <index name="RHQ_RESOURCE_idx_type">
-         <field ref="RESOURCE_TYPE_ID"/>
-      </index>
+    <table name="RHQ_RESOURCE">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
+        <column name="UUID" type="CHAR" size="36" required="true"/>
+        <column name="NAME" type="VARCHAR2" size="100"/>
+        <column name="RESOURCE_KEY" type="VARCHAR2" required="true" size="500"/>
+        <column name="AGENT_ID" required="false" type="INTEGER" references="RHQ_AGENT(id)"/>
+        <column name="INVENTORY_STATUS" type="VARCHAR2" size="20"/>
+        <column name="CONNECTED" type="BOOLEAN"/>
+        <column name="DESCRIPTION" type="VARCHAR2" size="1000"/>
+        <column name="VERSION" type="VARCHAR2" size="50"/>
+        <column name="CTIME" type="LONG"/>
+        <column name="MTIME" type="LONG"/>
+        <column name="ITIME" type="LONG"/>
+        <column name="RES_CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG"/>
+        <column name="PLUGIN_CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG"/>
+        <column name="MODIFIED_BY" required="false" type="INTEGER"/>
+        <column name="LOCATION" required="false" size="100" type="VARCHAR2"/>
+        <column name="PARENT_RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE"/>
+        <column name="PRODUCT_VERSION_ID" type="INTEGER" references="RHQ_PRD_VER"/>
 
-      <index name="RHQ_RESOURCE_idx_agent">
-         <field ref="AGENT_ID"/>
-      </index>
+        <index name="RHQ_RESOURCE_idx_key">
+            <field ref="RESOURCE_KEY"/>
+        </index>
 
-      <index name="RHQ_RESOURCE_idx_parent">
-         <field ref="PARENT_RESOURCE_ID"/>
-      </index>
+        <index name="RHQ_RESOURCE_idx_type">
+            <field ref="RESOURCE_TYPE_ID"/>
+        </index>
 
-   </table>
-   
-   <table name="RHQ_RESOURCE_ERROR">
-      <column name="ID"               type="INTEGER"     required="true"  default="sequence-only" initial="10001" primarykey="true" />
-      <column name="RESOURCE_ID"      type="INTEGER"     required="true"  references="RHQ_RESOURCE" />
-      <column name="TIME_OCCURRED"    type="LONG"        required="true" />
-      <column name="ERROR_TYPE"       type="VARCHAR2"    required="true"  size="32" />
-      <column name="SUMMARY"          type="VARCHAR2"    required="true"  size="1000" />
-      <column name="DETAIL"           type="LONGVARCHAR" required="false" />
-   </table>
+        <index name="RHQ_RESOURCE_idx_agent">
+            <field ref="AGENT_ID"/>
+        </index>
 
-   <table name="RHQ_GROUP_DEF">
-      <column name="ID" default="sequence-only" initial="10001"
-              primarykey="true" required="true" type="INTEGER"/>
-      <column name="NAME" required="true" size="100" type="VARCHAR2"/>
-      <column name="DESCRIPTION" size="100" type="VARCHAR2"/>
-      <column name="CTIME" type="LONG"/>
-      <column name="MTIME" type="LONG"/>
-      <column name="CALC_TIME" type="LONG"/>
-      <column name="RECURSIVE" type="BOOLEAN"/>  
-      <column name="EXPRESSION" type="VARCHAR2" size="1000"/>
-      
-      <index name="RHQ_GROUP_DEF_NAME" unique="true">
-         <field ref="NAME"/>
-      </index>    
-   </table>
+        <index name="RHQ_RESOURCE_idx_parent">
+            <field ref="PARENT_RESOURCE_ID"/>
+        </index>
 
-   <table name="RHQ_RESOURCE_GROUP">
-      <column name="ID" default="sequence-only" initial="10001"
-              primarykey="true" required="true" type="INTEGER"/>
-      <!-- this name can be longer than the size of the GROUP_BY column, which is used to uniquely identify it -->
-      <column name="NAME" required="true" size="600" type="VARCHAR2"/>
-      <column name="DESCRIPTION" size="100" type="VARCHAR2"/>
-      <column name="LOCATION" required="false" size="100" type="VARCHAR2"/>
-      <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE"/> <!-- Compatible groups only -->
-      <column name="CTIME" type="LONG"/>
-      <column name="MTIME" type="LONG"/>
-      <column name="MODIFIED_BY" required="false" type="INTEGER"/> <!-- TODO: Reorder to allow this references="RHQ_SUBJECT" -->
-      <column name="RECURSIVE" type="BOOLEAN"/>
-      
-      <column name="GROUP_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_GROUP_DEF"/>
-      <column name="GROUP_BY" size="500" type="VARCHAR2"/>
+    </table>
 
-      <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>
+    <table name="RHQ_RESOURCE_ERROR">
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+        <column name="TIME_OCCURRED" type="LONG" required="true"/>
+        <column name="ERROR_TYPE" type="VARCHAR2" required="true" size="32"/>
+        <column name="SUMMARY" type="VARCHAR2" required="true" size="1000"/>
+        <column name="DETAIL" type="LONGVARCHAR" required="false"/>
+    </table>
 
-      <index name="RHQ_RES_GROUP_NAME" unique="true">
-         <field ref="NAME"/>
-      </index>
-   </table>
+    <table name="RHQ_GROUP_DEF">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" required="true" size="100" type="VARCHAR2"/>
+        <column name="DESCRIPTION" size="100" type="VARCHAR2"/>
+        <column name="CTIME" type="LONG"/>
+        <column name="MTIME" type="LONG"/>
+        <column name="CALC_TIME" type="LONG"/>
+        <column name="RECURSIVE" type="BOOLEAN"/>
+        <column name="EXPRESSION" type="VARCHAR2" size="1000"/>
 
-   <!-- Many To Many mapping for groups to implicit resources -->
-   <table name="RHQ_RESOURCE_GROUP_RES_IMP_MAP">
-      <column name="RESOURCE_ID" required="true" type="INTEGER" references="RHQ_RESOURCE"/>
-      <column name="RESOURCE_GROUP_ID" required="true" type="INTEGER" references="RHQ_RESOURCE_GROUP"/>
+        <index name="RHQ_GROUP_DEF_NAME" unique="true">
+            <field ref="NAME"/>
+        </index>
+    </table>
 
-      <!-- not using full words to fit index name length -->
-      <constraint name="RHQ_RES_GROUP_RES_IMP_MAP_KEY">
-        <primaryKey>
-          <field ref="RESOURCE_ID"/>
-          <field ref="RESOURCE_GROUP_ID"/>
-        </primaryKey>
-      </constraint>
-   </table>
+    <table name="RHQ_RESOURCE_GROUP">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <!-- this name can be longer than the size of the GROUP_BY column, which is used to uniquely identify it -->
+        <column name="NAME" required="true" size="600" type="VARCHAR2"/>
+        <column name="DESCRIPTION" size="100" type="VARCHAR2"/>
+        <column name="LOCATION" required="false" size="100" type="VARCHAR2"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
+        <!-- Compatible groups only -->
+        <column name="CTIME" type="LONG"/>
+        <column name="MTIME" type="LONG"/>
+        <column name="MODIFIED_BY" required="false" type="INTEGER"/>
+        <!-- TODO: Reorder to allow this references="RHQ_SUBJECT" -->
+        <column name="RECURSIVE" type="BOOLEAN"/>
 
-   <!-- Many To Many mapping for groups to explicit resources -->
-   <table name="RHQ_RESOURCE_GROUP_RES_EXP_MAP">
-      <column name="RESOURCE_ID" required="true" type="INTEGER" references="RHQ_RESOURCE"/>
-      <column name="RESOURCE_GROUP_ID" required="true" type="INTEGER" references="RHQ_RESOURCE_GROUP"/>
+        <column name="GROUP_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_GROUP_DEF"/>
+        <column name="GROUP_BY" size="500" type="VARCHAR2"/>
 
-      <!-- not using full words to fit index name length -->
-      <constraint name="RHQ_RES_GROUP_RES_EXP_MAP_KEY">
-        <primaryKey>
-          <field ref="RESOURCE_ID"/>
-          <field ref="RESOURCE_GROUP_ID"/>
-        </primaryKey>
-      </constraint>
-   </table>
+        <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>
 
-   <table name="RHQ_CONFIG_GROUP_UPDATE">
-      <column name="ID"               type="INTEGER"     required="true"  default="sequence-only" initial="10001" primarykey="true" />
-      <column name="GROUP_ID"         type="INTEGER"     required="true"  references="RHQ_RESOURCE_GROUP"/>
-      <column name="CONFIGURATION_ID" type="INTEGER"     required="true"  references="RHQ_CONFIG" />
-      <column name="STATUS"           type="VARCHAR2"    required="true"  size="16" />
-      <column name="ERROR_MESSAGE"    type="LONGVARCHAR" required="false" />
-      <column name="SUBJECT_NAME"     type="VARCHAR2"    required="false" size="100" />
-      <column name="CTIME"            type="LONG"        required="true"  />
-      <column name="MTIME"            type="LONG"        required="true"  />
-      <column name="DTYPE"            type="VARCHAR2"    required="true"  size="10" />
-   </table>
+        <index name="RHQ_RES_GROUP_NAME" unique="true">
+            <field ref="NAME"/>
+        </index>
+    </table>
 
-   <table name="RHQ_CONFIG_UPDATE">
-      <column name="ID"                   type="INTEGER"     required="true"  default="sequence-only" initial="10001" primarykey="true" />
-      <column name="CONFIGURATION_ID"     type="INTEGER"     required="true"  references="RHQ_CONFIG" />
-      <column name="STATUS"               type="VARCHAR2"    required="true"  size="16" />
-      <column name="ERROR_MESSAGE"        type="LONGVARCHAR" required="false" />
-      <column name="SUBJECT_NAME"         type="VARCHAR2"    required="false" size="100" />
-      <column name="CTIME"                type="LONG"        required="true"  />
-      <column name="MTIME"                type="LONG"        required="true"  />
-      <column name="CONFIG_RES_ID"        type="INTEGER"     required="false"  references="RHQ_RESOURCE"/>
-      <column name="PLUGIN_CONFIG_RES_ID" type="INTEGER"     required="false"  references="RHQ_RESOURCE"/>
-      <column name="AGG_RES_UPDATE_ID"    type="INTEGER"     required="false" references="RHQ_CONFIG_GROUP_UPDATE" />
-      <column name="AGG_PLUGIN_UPDATE_ID" type="INTEGER"     required="false" references="RHQ_CONFIG_GROUP_UPDATE" />
-      <column name="DTYPE"                type="VARCHAR2"    required="true"  size="10" />
-   </table>
+    <!-- Many To Many mapping for groups to implicit resources -->
+    <table name="RHQ_RESOURCE_GROUP_RES_IMP_MAP">
+        <column name="RESOURCE_ID" required="true" type="INTEGER" references="RHQ_RESOURCE"/>
+        <column name="RESOURCE_GROUP_ID" required="true" type="INTEGER" references="RHQ_RESOURCE_GROUP"/>
 
- </dbsetup>
+        <!-- not using full words to fit index name length -->
+        <constraint name="RHQ_RES_GROUP_RES_IMP_MAP_KEY">
+            <primaryKey>
+                <field ref="RESOURCE_ID"/>
+                <field ref="RESOURCE_GROUP_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+    <!-- Many To Many mapping for groups to explicit resources -->
+    <table name="RHQ_RESOURCE_GROUP_RES_EXP_MAP">
+        <column name="RESOURCE_ID" required="true" type="INTEGER" references="RHQ_RESOURCE"/>
+        <column name="RESOURCE_GROUP_ID" required="true" type="INTEGER" references="RHQ_RESOURCE_GROUP"/>
+
+        <!-- not using full words to fit index name length -->
+        <constraint name="RHQ_RES_GROUP_RES_EXP_MAP_KEY">
+            <primaryKey>
+                <field ref="RESOURCE_ID"/>
+                <field ref="RESOURCE_GROUP_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+    <table name="RHQ_CONFIG_GROUP_UPDATE">
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+        <column name="GROUP_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_GROUP"/>
+        <column name="CONFIGURATION_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
+        <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
+        <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
+        <column name="SUBJECT_NAME" type="VARCHAR2" required="false" size="100"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="MTIME" type="LONG" required="true"/>
+        <column name="DTYPE" type="VARCHAR2" required="true" size="10"/>
+    </table>
+
+    <table name="RHQ_CONFIG_UPDATE">
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+        <column name="CONFIGURATION_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
+        <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
+        <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
+        <column name="SUBJECT_NAME" type="VARCHAR2" required="false" size="100"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="MTIME" type="LONG" required="true"/>
+        <column name="CONFIG_RES_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
+        <column name="PLUGIN_CONFIG_RES_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
+        <column name="AGG_RES_UPDATE_ID" type="INTEGER" required="false" references="RHQ_CONFIG_GROUP_UPDATE"/>
+        <column name="AGG_PLUGIN_UPDATE_ID" type="INTEGER" required="false" references="RHQ_CONFIG_GROUP_UPDATE"/>
+        <column name="DTYPE" type="VARCHAR2" required="true" size="10"/>
+    </table>
+
+</dbsetup>

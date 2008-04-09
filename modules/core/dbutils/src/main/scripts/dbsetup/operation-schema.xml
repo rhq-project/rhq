@@ -2,97 +2,97 @@
 
 <dbsetup name="operation-schema.xml">
 
-   <table name="RHQ_OPERATION_DEF">
+    <table name="RHQ_OPERATION_DEF">
 
-      <!-- === required columns === -->
-      
-      <column name="ID"               type="INTEGER"  required="true" default="sequence-only" initial="10001" primarykey="true" />
-      <column name="RESOURCE_TYPE_ID" type="INTEGER"  required="true" references="RHQ_RESOURCE_TYPE(ID)"/>
-      <column name="NAME"             type="VARCHAR2" required="true" size="100" />
-      
-      <!-- === optional columns === -->
-      
-      <!-- an OSGI version range - if null, the operation def applies to all versions of the associated resource type -->
-      <column name="RESOURCE_VERSION_RANGE" type="VARCHAR2" size="100"/>
-      
-      <!-- A parameter config definition is only required for operations that have parameters. -->
-      <!-- A results config definition is only required for operations that return data. -->
-      <column name="PARAMETER_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF(ID)"/>
-      <column name="RESULTS_CONFIG_DEF_ID"   type="INTEGER" references="RHQ_CONFIG_DEF(ID)"/>
-      <column name="DISPLAY_NAME"            type="VARCHAR2" size="100"/>
-      <column name="DESCRIPTION"             type="VARCHAR2" size="4000"/>
-      <column name="TIMEOUT"                 type="INTEGER" />
-      
-      <!-- === business key (RESOURCE_TYPE_ID + NAME) === -->
-      <index name="RHQ_OPERATION_DEF_KEY_IDX" unique="true">
-         <field ref="RESOURCE_TYPE_ID"/>
-         <field ref="NAME"/>
-      </index>
+        <!-- === required columns === -->
 
-   </table>
-   
-   <table name="RHQ_OPERATION_HISTORY">
-      <column name="ID"                   type="INTEGER"     required="true" default="sequence-only" initial="10001" primarykey="true" />
-      <column name="DTYPE"                type="VARCHAR2"    required="true" size="8"/>
-      <column name="JOB_NAME"             type="VARCHAR2"    required="true" size="100" />
-      <column name="JOB_GROUP"            type="VARCHAR2"    required="true" size="100" />
-      <column name="OPERATION_DEF_ID"     type="INTEGER"     required="true" references="RHQ_OPERATION_DEF" />
-      <column name="STATUS"               type="VARCHAR2"    required="true" size="16" />
-      <column name="ERROR_MESSAGE"        type="LONGVARCHAR" required="false"/>
-      <column name="SUBJECT_NAME"         type="VARCHAR2"    required="true" size="100" />
-      <column name="CTIME"                type="LONG"        required="true" />
-      <column name="STIME"                type="LONG"        required="true" />
-      <column name="MTIME"                type="LONG"        required="true" />
-      <column name="PARAMETERS_CONFIG_ID" type="INTEGER"     required="false" references="RHQ_CONFIG"/>
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE(ID)"/>
+        <column name="NAME" type="VARCHAR2" required="true" size="100"/>
 
-      <!-- for resource history -->      
-      <column name="RESOURCE_ID"       type="INTEGER" required="false" references="RHQ_RESOURCE"/>
-      <column name="RESULTS_CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG"/>
-      <column name="GROUP_HISTORY_ID"  type="INTEGER" required="false" references="RHQ_OPERATION_HISTORY"/>
-      
-      <!-- for group history -->
-      <column name="GROUP_ID" type="INTEGER" required="false" references="RHQ_RESOURCE_GROUP"/>
-      
-      <index name="RHQ_OPERATION_HISTORY_JOB_IDX" unique="true">
-         <field ref="JOB_NAME"/>
-         <field ref="JOB_GROUP"/>
-         <field ref="CTIME"/>
-      </index>
-      
-   </table>
+        <!-- === optional columns === -->
 
-   <!--
-   This table is really just to support some specific use-cases.
-   Specifically, to be able to get a list of histories for a specific schedule (aka quartz job)
-   and to be able to query a list of all schedules along with their associated resource/group IDs
-   possibly sorted by their next fire time.
-   Note that a NULL next fire time means it won't fire again and the row is probaby about to be deleted;
-   we can probably not even insert rows with NULL and make it a non-nullable field.  But rather than
-   code special conditions into the session bean, we'll allow a short-lived NULL next fire time row.
-   -->  
-   <table name="RHQ_OPERATION_SCHEDULE">
-      <column name="JOB_NAME"       type="VARCHAR2" required="true"  size="100"/>
-      <column name="JOB_GROUP"      type="VARCHAR2" required="true"  size="100" />
-      <column name="DTYPE"          type="VARCHAR2" required="true"  size="8"/>
-      <column name="NEXT_FIRE_TIME" type="LONG"     required="false" />
+        <!-- an OSGI version range - if null, the operation def applies to all versions of the associated resource type -->
+        <column name="RESOURCE_VERSION_RANGE" type="VARCHAR2" size="100"/>
 
-      <!-- for resource history -->
-      <column name="RESOURCE_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
+        <!-- A parameter config definition is only required for operations that have parameters. -->
+        <!-- A results config definition is only required for operations that return data. -->
+        <column name="PARAMETER_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF(ID)"/>
+        <column name="RESULTS_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF(ID)"/>
+        <column name="DISPLAY_NAME" type="VARCHAR2" size="100"/>
+        <column name="DESCRIPTION" type="VARCHAR2" size="4000"/>
+        <column name="TIMEOUT" type="INTEGER"/>
 
-      <!-- for group history -->
-      <column name="GROUP_ID" type="INTEGER" required="false" references="RHQ_RESOURCE_GROUP"/>
+        <!-- === business key (RESOURCE_TYPE_ID + NAME) === -->
+        <index name="RHQ_OPERATION_DEF_KEY_IDX" unique="true">
+            <field ref="RESOURCE_TYPE_ID"/>
+            <field ref="NAME"/>
+        </index>
 
-      <!-- 
-      Note that this is the same primary key that Quartz uses for its schedules (RHQ_qrtz_job_details).
-      We do not need to add DTYPE to the key, because we ensure the name/group are unique
-      across resource/group schedules
-      -->
-      <constraint name="RHQ_OPERATION_SCHEDULE_KEY">
-         <primaryKey>
+    </table>
+
+    <table name="RHQ_OPERATION_HISTORY">
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+        <column name="DTYPE" type="VARCHAR2" required="true" size="8"/>
+        <column name="JOB_NAME" type="VARCHAR2" required="true" size="100"/>
+        <column name="JOB_GROUP" type="VARCHAR2" required="true" size="100"/>
+        <column name="OPERATION_DEF_ID" type="INTEGER" required="true" references="RHQ_OPERATION_DEF"/>
+        <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
+        <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
+        <column name="SUBJECT_NAME" type="VARCHAR2" required="true" size="100"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="STIME" type="LONG" required="true"/>
+        <column name="MTIME" type="LONG" required="true"/>
+        <column name="PARAMETERS_CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG"/>
+
+        <!-- for resource history -->
+        <column name="RESOURCE_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
+        <column name="RESULTS_CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG"/>
+        <column name="GROUP_HISTORY_ID" type="INTEGER" required="false" references="RHQ_OPERATION_HISTORY"/>
+
+        <!-- for group history -->
+        <column name="GROUP_ID" type="INTEGER" required="false" references="RHQ_RESOURCE_GROUP"/>
+
+        <index name="RHQ_OPERATION_HISTORY_JOB_IDX" unique="true">
             <field ref="JOB_NAME"/>
             <field ref="JOB_GROUP"/>
-         </primaryKey>
-      </constraint>
-   </table>
+            <field ref="CTIME"/>
+        </index>
+
+    </table>
+
+    <!--
+    This table is really just to support some specific use-cases.
+    Specifically, to be able to get a list of histories for a specific schedule (aka quartz job)
+    and to be able to query a list of all schedules along with their associated resource/group IDs
+    possibly sorted by their next fire time.
+    Note that a NULL next fire time means it won't fire again and the row is probaby about to be deleted;
+    we can probably not even insert rows with NULL and make it a non-nullable field.  But rather than
+    code special conditions into the session bean, we'll allow a short-lived NULL next fire time row.
+    -->
+    <table name="RHQ_OPERATION_SCHEDULE">
+        <column name="JOB_NAME" type="VARCHAR2" required="true" size="100"/>
+        <column name="JOB_GROUP" type="VARCHAR2" required="true" size="100"/>
+        <column name="DTYPE" type="VARCHAR2" required="true" size="8"/>
+        <column name="NEXT_FIRE_TIME" type="LONG" required="false"/>
+
+        <!-- for resource history -->
+        <column name="RESOURCE_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
+
+        <!-- for group history -->
+        <column name="GROUP_ID" type="INTEGER" required="false" references="RHQ_RESOURCE_GROUP"/>
+
+        <!--
+        Note that this is the same primary key that Quartz uses for its schedules (RHQ_qrtz_job_details).
+        We do not need to add DTYPE to the key, because we ensure the name/group are unique
+        across resource/group schedules
+        -->
+        <constraint name="RHQ_OPERATION_SCHEDULE_KEY">
+            <primaryKey>
+                <field ref="JOB_NAME"/>
+                <field ref="JOB_GROUP"/>
+            </primaryKey>
+        </constraint>
+    </table>
 
 </dbsetup>

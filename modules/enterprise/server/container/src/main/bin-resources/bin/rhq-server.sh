@@ -76,10 +76,10 @@
 # has an external JBossAS configured.
 # ----------------------------------------------------------------------
 
-export JBOSS_HOME=
-export RUN_CONF=
-export JAVAC_JAR=
-export JBOSS_CLASSPATH=
+unset JBOSS_HOME
+unset RUN_CONF
+unset JAVAC_JAR
+unset JBOSS_CLASSPATH
 
 # ----------------------------------------------------------------------
 # Dumps a message iff debug mode is enabled

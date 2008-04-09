@@ -232,6 +232,9 @@
                   <addClasspath>true</addClasspath>
                   <classpathPrefix>lib/</classpathPrefix>
                 </manifest>
+                <manifestEntries>
+                  <Build-Number>${buildNumber}</Build-Number>
+                </manifestEntries>
               </archive>
             </configuration>
          </plugin>

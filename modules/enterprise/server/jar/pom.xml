@@ -392,7 +392,9 @@
 
          <plugin>
             <artifactId>maven-ejb-plugin</artifactId>
+            <version>2.1</version>
             <configuration>
+               <ejbVersion>3.0</ejbVersion>
                <archive>
                   <manifest>
                      <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
@@ -400,6 +402,9 @@
                      <addClasspath>true</addClasspath>
                      <classpathPrefix>lib/</classpathPrefix>
                   </manifest>
+                  <manifestEntries>
+                     <Build-Number>${buildNumber}</Build-Number>
+                  </manifestEntries>                 
                </archive>
             </configuration>
          </plugin>

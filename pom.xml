@@ -39,6 +39,8 @@
     <scm.branch>trunk</scm.branch>
     <scm.module.path />
 
+    <doUpdate>false</doUpdate>
+    
     <java5.home>${java.home}</java5.home>
 
     <!-- dependency versions -->
@@ -274,13 +276,16 @@
         <configuration>
           <archive>
             <manifest>
-              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>              
             </manifest>
+            <manifestEntries>
+               <Build-Number>${buildNumber}</Build-Number>
+            </manifestEntries>
           </archive>
         </configuration>
       </plugin>
-
+        
       <plugin>
         <artifactId>maven-enforcer-plugin</artifactId>
         <version>1.0-alpha-3</version>
@@ -332,7 +337,25 @@
           <downloadSources>true</downloadSources>
         </configuration>
       </plugin>
-
+         
+      <plugin>
+         <groupId>org.codehaus.mojo</groupId>
+         <artifactId>buildnumber-maven-plugin</artifactId>
+         <version>1.0-beta-1</version>
+         <executions>
+           <execution>
+             <phase>validate</phase>        
+             <goals>
+               <goal>create</goal>
+             </goals>
+           </execution>
+         </executions>
+         <configuration>
+           <doCheck>false</doCheck>
+           <doUpdate>${doUpdate}</doUpdate>
+         </configuration>
+      </plugin>
+         
     </plugins>
 
     <extensions>
@@ -431,16 +454,40 @@
 
       <profile>
          <id>prod</id>
+         
          <dependencies>
             <dependency>
                <groupId>ojdbc14</groupId>
                <artifactId>ojdbc14</artifactId>
             </dependency>
          </dependencies>
+
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>buildnumber-maven-plugin</artifactId>
+                  <version>1.0-beta-1</version>
+                  <executions>
+                    <execution>
+                      <phase>validate</phase>        
+                      <goals>
+                        <goal>create</goal>
+                      </goals>
+                    </execution>
+                  </executions>
+                  <configuration>                    
+                    <doCheck>true</doCheck>
+                    <doUpdate>true</doUpdate>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
       </profile>
 
       <profile>
          <id>oracle</id>
+         
          <dependencies>
             <dependency>
                <groupId>ojdbc14</groupId>
@@ -456,12 +503,13 @@
                <name>test.debug</name>
             </property>
          </activation>
+         
          <properties>
             <!-- See: http://maven.apache.org/plugins/maven-surefire-plugin/test-mojo.html#debugForkedProcess -->
             <maven.surefire.debug>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8797,server=y,suspend=y</maven.surefire.debug>
          </properties>
       </profile>
-
+      
   </profiles>
 
 </project>

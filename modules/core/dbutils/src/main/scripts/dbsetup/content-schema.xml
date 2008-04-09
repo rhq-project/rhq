@@ -11,7 +11,7 @@
    </table>
 
    <table name="RHQ_CONTENT_SOURCE_TYPE">
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
       <column name="NAME" size="30" type="VARCHAR2" required="true"/> <!-- size limit is important - see ContentSourceSyncJob.createJobName -->
       <column name="DISPLAY_NAME" size="200" type="VARCHAR2" required="false"/>
       <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
@@ -30,7 +30,7 @@
    </table>
 
    <table name="RHQ_CONTENT_SOURCE">
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
       <column name="NAME" size="30" type="VARCHAR2" required="true"/> <!-- size limit is important - see ContentSourceSyncJob.createJobName -->
       <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
       <column name="LAZY_LOAD" type="BOOLEAN" required="true"/>
@@ -50,7 +50,7 @@
    </table>
 
    <table name="RHQ_CHANNEL">
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
       <column name="NAME" size="200" type="VARCHAR2" required="true"/>
       <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
       <column name="CREATION_TIME" type="TIMESTAMP" required="true"/>
@@ -62,7 +62,7 @@
    </table>
 
    <table name="RHQ_PACKAGE_TYPE">
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
       <column name="NAME" size="200" type="VARCHAR2" required="true"/>
       <column name="DISPLAY_NAME" size="200" type="VARCHAR2" required="false"/>
       <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
@@ -82,7 +82,7 @@
    </table>
 
    <table name="RHQ_PACKAGE">
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
       <column name="NAME" size="200" type="VARCHAR2" required="true"/>
       <column name="CLASSIFICATION" size="200" type="VARCHAR2" required="false"/>
 
@@ -95,12 +95,12 @@
    </table>
 
    <table name="RHQ_PACKAGE_BITS">
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
       <column name="BITS" type="BLOB" required="false"/>
    </table>
 
    <table name="RHQ_PACKAGE_VERSION">
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
       <column name="DISPLAY_NAME" size="200" type="VARCHAR2" required="false"/>
       <column name="SHORT_DESCRIPTION" size="10000" type="CLOB" required="false"/>
       <column name="LONG_DESCRIPTION" size="50000" type="CLOB" required="false"/>
@@ -129,7 +129,7 @@
    </table>
 
    <table name="RHQ_CONTENT_REQ">
-      <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="1" primarykey="true"/>
+      <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
       <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
       <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
       <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
@@ -140,7 +140,7 @@
    </table>
 
    <table name="RHQ_INSTALLED_PACKAGE">
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
       <column name="INSTALLATION_TIME" type="TIMESTAMP" required="false"/>
 
       <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE" required="true"/>
@@ -149,7 +149,7 @@
    </table>
 
    <table name="RHQ_INSTALLED_PKG_HIST">
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
       <column name="STATUS" type="VARCHAR2" size="24" required="true"/>
       <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
       <column name="HISTORY_TIMESTAMP" type="TIMESTAMP" required="false"/>
@@ -161,7 +161,7 @@
    </table>
 
    <table name="RHQ_CONTENT_SRC_SYNC">
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
       <column name="STATUS" type="VARCHAR2" size="16" required="true"/>
       <column name="START_TIME" type="LONG" required="true"/>
       <column name="END_TIME" type="LONG" required="false"/>
@@ -171,7 +171,7 @@
    </table>
    
    <table name="RHQ_PACKAGE_INST_STEP">
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
       <column name="STEP_KEY" type="VARCHAR2" size="500" required="true"/>
       <column name="STEP_ORDER" type="INTEGER" required="true"/>
       <column name="DESCRIPTION" type="VARCHAR2" size="4000" required="true"/>

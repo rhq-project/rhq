@@ -5,7 +5,7 @@
 
   <!--  new agent -->
   <table name="RHQ_AGENT">
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
       <column name="NAME" required="true" size="255" type="VARCHAR2"/>
       <column name="ADDRESS" required="true" size="255" type="VARCHAR2"/>
       <column name="PORT" required="true" type="INTEGER"/>
@@ -31,7 +31,7 @@
 
    <!-- NEW RESOURCE TYPES -->
    <table name="RHQ_RESOURCE_TYPE">
-      <column name="ID" default="sequence-only" initial="1"
+      <column name="ID" default="sequence-only" initial="10001"
               primarykey="true" required="true" type="INTEGER"/>
       <column name="NAME" type="VARCHAR2" size="100" required="true"/>
       <column name="CATEGORY" type="VARCHAR2" size="16" required="true"/>
@@ -59,7 +59,7 @@
 
    <!-- NEW RESOURCE SUBCATEGORIES -->
    <table name="RHQ_RESOURCE_SUBCAT">
-      <column name="ID" default="sequence-only" initial="1"
+      <column name="ID" default="sequence-only" initial="10001"
               primarykey="true" required="true" type="INTEGER"/>
       <column name="NAME" type="VARCHAR2" size="100"/>
       <column name="DISPLAY_NAME" type="VARCHAR2" size="100"/>
@@ -86,7 +86,7 @@
    </table>
    
    <table name="RHQ_PROCESS_SCAN">
-      <column name="ID" default="sequence-only" initial="1"
+      <column name="ID" default="sequence-only" initial="10001"
               primarykey="true" required="true" type="INTEGER"/>
       <column name="QUERY" type="VARCHAR2" size="256" required="true"/>
       <column name="NAME" type="VARCHAR2" size="100" required="false"/>
@@ -105,7 +105,7 @@
    </table>
 
    <table name="RHQ_RESOURCE">
-      <column name="ID" default="sequence-only" initial="1"
+      <column name="ID" default="sequence-only" initial="10001"
               primarykey="true" required="true" type="INTEGER"/>
       <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
       <column name="UUID" type="CHAR" size="36" required="true"/>
@@ -145,7 +145,7 @@
    </table>
    
    <table name="RHQ_RESOURCE_ERROR">
-      <column name="ID"               type="INTEGER"     required="true"  default="sequence-only" initial="1" primarykey="true" />
+      <column name="ID"               type="INTEGER"     required="true"  default="sequence-only" initial="10001" primarykey="true" />
       <column name="RESOURCE_ID"      type="INTEGER"     required="true"  references="RHQ_RESOURCE" />
       <column name="TIME_OCCURRED"    type="LONG"        required="true" />
       <column name="ERROR_TYPE"       type="VARCHAR2"    required="true"  size="32" />
@@ -154,7 +154,7 @@
    </table>
 
    <table name="RHQ_GROUP_DEF">
-      <column name="ID" default="sequence-only" initial="1"
+      <column name="ID" default="sequence-only" initial="10001"
               primarykey="true" required="true" type="INTEGER"/>
       <column name="NAME" required="true" size="100" type="VARCHAR2"/>
       <column name="DESCRIPTION" size="100" type="VARCHAR2"/>
@@ -170,7 +170,7 @@
    </table>
 
    <table name="RHQ_RESOURCE_GROUP">
-      <column name="ID" default="sequence-only" initial="1"
+      <column name="ID" default="sequence-only" initial="10001"
               primarykey="true" required="true" type="INTEGER"/>
       <!-- this name can be longer than the size of the GROUP_BY column, which is used to uniquely identify it -->
       <column name="NAME" required="true" size="600" type="VARCHAR2"/>
@@ -221,7 +221,7 @@
    </table>
 
    <table name="RHQ_CONFIG_GROUP_UPDATE">
-      <column name="ID"               type="INTEGER"     required="true"  default="sequence-only" initial="1" primarykey="true" />
+      <column name="ID"               type="INTEGER"     required="true"  default="sequence-only" initial="10001" primarykey="true" />
       <column name="GROUP_ID"         type="INTEGER"     required="true"  references="RHQ_RESOURCE_GROUP"/>
       <column name="CONFIGURATION_ID" type="INTEGER"     required="true"  references="RHQ_CONFIG" />
       <column name="STATUS"           type="VARCHAR2"    required="true"  size="16" />
@@ -233,7 +233,7 @@
    </table>
 
    <table name="RHQ_CONFIG_UPDATE">
-      <column name="ID"                   type="INTEGER"     required="true"  default="sequence-only" initial="1" primarykey="true" />
+      <column name="ID"                   type="INTEGER"     required="true"  default="sequence-only" initial="10001" primarykey="true" />
       <column name="CONFIGURATION_ID"     type="INTEGER"     required="true"  references="RHQ_CONFIG" />
       <column name="STATUS"               type="VARCHAR2"    required="true"  size="16" />
       <column name="ERROR_MESSAGE"        type="LONGVARCHAR" required="false" />

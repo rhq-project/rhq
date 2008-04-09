@@ -5,7 +5,7 @@
 
 
    <table name="RHQ_PLUGIN">
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
       <column name="NAME" size="200" type="VARCHAR2" required="true"/>
       <column name="DISPLAY_NAME" size="200" type="VARCHAR2" required="true"/>
       <column name="DESCRIPTION" size="4000" type="VARCHAR2" required="false"/>

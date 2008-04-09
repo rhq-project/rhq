@@ -4,7 +4,7 @@
 
     <table name="RHQ_PRINCIPAL">
 
-        <column name="ID" default="sequence-only" initial="1"
+        <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>
         <column name="PRINCIPAL" required="true" type="VARCHAR2" size="100"/>
         <column name="PASSWORD" required="true" type="VARCHAR2" size="64"/>

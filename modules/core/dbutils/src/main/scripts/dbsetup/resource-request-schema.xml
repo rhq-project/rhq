@@ -3,7 +3,7 @@
          xmlns="urn:xmlns:rhq-dbsetup-schema">
 
    <table name="RHQ_CREATE_RES_HIST">
-      <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="1" primarykey="true"/>
+      <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
       <column name="PARENT_RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
       <column name="CREATED_RESOURCE_NAME" type="VARCHAR2" size="100" required="true"/>
       <column name="NEW_RESOURCE_KEY" type="VARCHAR2" required="false" size="500"/>
@@ -18,7 +18,7 @@
    </table>
 
    <table name="RHQ_DELETE_RES_HIST">
-      <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="1" primarykey="true"/>
+      <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
       <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
       <column name="SUBJECT_NAME" type="VARCHAR2" required="true" size="100"/>
       <column name="CTIME" type="LONG" required="true"/>

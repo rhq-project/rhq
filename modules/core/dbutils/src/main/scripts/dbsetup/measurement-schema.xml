@@ -5,7 +5,7 @@
    <table name="RHQ_MEASUREMENT_DEF">
 
       <!-- === required columns === -->
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
       <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE(ID)"/>
       <column name="NAME" type="VARCHAR2" size="100" required="true"/>
 
@@ -37,7 +37,7 @@
 
 
    <table name="RHQ_MEASUREMENT_SCHED">
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
 
       <column name="ENABLED" type="BOOLEAN" default="false"/>
       <column name="MTIME" type="TIMESTAMP" />
@@ -53,7 +53,7 @@
 
 
    <table name="RHQ_MEASUREMENT_BLINE">
-      <column name="ID" default="sequence-only" initial="1" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
 
       <column name="BL_USER_ENTERED" type="BOOLEAN" default="false" required="true"/>
       <column name="BL_MIN" type="DOUBLE" required="true"/>
@@ -135,7 +135,7 @@
 
 
    <table name="RHQ_CALLTIME_DATA_KEY">
-      <column name="ID" type="INTEGER" default="sequence-only" initial="1" primarykey="true" required="true"/>
+      <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
       <column name="SCHEDULE_ID" type="INTEGER" required="true"/>
       <column name="CALL_DESTINATION" type="VARCHAR2" size="4000" required="true"/>
       <index name="RHQ_CALLTIME_DATA_KEY_IDX" unique="true">
@@ -146,7 +146,7 @@
 
 
    <table name="RHQ_CALLTIME_DATA_VALUE">
-      <column name="ID" type="INTEGER" default="sequence-only" initial="1" primarykey="true" required="true"/>
+      <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
       <column name="KEY_ID" type="INTEGER" references="RHQ_CALLTIME_DATA_KEY" required="true"/>
       <column name="BEGIN_TIME" type="LONG" required="true"/>
       <column name="END_TIME" type="LONG" required="true"/>
@@ -158,7 +158,7 @@
 
 
    <table name="RHQ_AVAILABILITY">
-      <column name="ID" type="INTEGER" default="sequence-only" initial="1" primarykey="true" required="true"/>
+      <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
       <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE(ID)"/>
       <column name="START_TIME" type="LONG" required="true" />
       <column name="END_TIME" type="LONG" required="false" />
@@ -176,7 +176,7 @@
 
 
    <table name="RHQ_MEASUREMENT_OOB">
-      <column name="ID" type="INTEGER" default="sequence-only" initial="1" primarykey="true" required="true"/>
+      <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
       <column name="SCHEDULE_ID" type="INTEGER" references="RHQ_MEASUREMENT_SCHED(ID)" required="true"/>
       <column name="OCCURRED" type="LONG" required="true"/>
       <column name="DIFF" type="DOUBLE" required="true"/>
@@ -189,7 +189,7 @@
 
 
    <table name="RHQ_NUMBERS">
-      <column name="i" type="INTEGER" default="sequence-only" initial="1"
+      <column name="i" type="INTEGER" default="sequence-only" initial="10001"
          primarykey="true" required="true" />
    </table>
 

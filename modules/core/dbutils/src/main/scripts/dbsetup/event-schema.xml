@@ -6,7 +6,7 @@
    <!-- metadata -->
 
    <table name="RHQ_EVENT_DEF">
-      <column name="ID" default="sequence-only" initial="1"
+      <column name="ID" default="sequence-only" initial="10001"
               primarykey="true" required="true" type="INTEGER"/>
       <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE(ID)"/>
 
@@ -23,7 +23,7 @@
    <!-- instance data -->
 
     <table name="RHQ_EVENT_SOURCE">
-       <column name="ID" default="sequence-only" initial="1"
+       <column name="ID" default="sequence-only" initial="10001"
                primarykey="true" required="true" type="INTEGER"/>
        <column name="EVENT_DEF_ID" type="INTEGER" required="true" references="RHQ_EVENT_DEF(ID)"/>
        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE(ID)"/>
@@ -38,7 +38,7 @@
     </table>
 
    <table name="RHQ_EVENT">
-      <column name="ID" default="sequence-only" initial="1"
+      <column name="ID" default="sequence-only" initial="10001"
               primarykey="true" required="true" type="INTEGER"/>
       <column name="EVENT_SOURCE_ID" type="INTEGER" required="true" references="RHQ_EVENT_SOURCE(ID)"/>
 

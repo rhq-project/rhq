@@ -4,7 +4,7 @@
         xmlns="urn:xmlns:rhq-dbsetup-schema">
 
     <table name="RHQ_ROLE">
-        <column name="ID" default="sequence-only" initial="1" 
+        <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" required="true" size="100" type="VARCHAR2"/>
         <column name="DESCRIPTION" size="100" type="VARCHAR2"/>
@@ -39,7 +39,7 @@
     </table>
 
     <table name="RHQ_SUBJECT">
-        <column name="ID" default="sequence-only" initial="1" 
+        <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" required="true" size="100" type="VARCHAR2"/>
         <column name="CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG"/>

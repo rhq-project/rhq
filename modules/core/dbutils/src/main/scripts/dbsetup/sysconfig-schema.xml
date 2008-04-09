@@ -2,7 +2,7 @@
 <dbsetup name="appdef-schema.xml">
 
     <table name="RHQ_SYSTEM_CONFIG">
-        <column name="ID" default="sequence-only" initial="1"
+        <column name="ID" default="sequence-only" initial="10001"
             primarykey="true" required="true" type="INTEGER"/>
         <column name="PROPERTY_KEY" type="VARCHAR2" size="80"/>
         <column name="PROPERTY_VALUE" type="VARCHAR2" size="300"/>

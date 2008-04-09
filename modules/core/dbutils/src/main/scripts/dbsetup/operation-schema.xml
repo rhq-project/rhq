@@ -6,7 +6,7 @@
 
       <!-- === required columns === -->
       
-      <column name="ID"               type="INTEGER"  required="true" default="sequence-only" initial="1" primarykey="true" />
+      <column name="ID"               type="INTEGER"  required="true" default="sequence-only" initial="10001" primarykey="true" />
       <column name="RESOURCE_TYPE_ID" type="INTEGER"  required="true" references="RHQ_RESOURCE_TYPE(ID)"/>
       <column name="NAME"             type="VARCHAR2" required="true" size="100" />
       
@@ -32,7 +32,7 @@
    </table>
    
    <table name="RHQ_OPERATION_HISTORY">
-      <column name="ID"                   type="INTEGER"     required="true" default="sequence-only" initial="1" primarykey="true" />
+      <column name="ID"                   type="INTEGER"     required="true" default="sequence-only" initial="10001" primarykey="true" />
       <column name="DTYPE"                type="VARCHAR2"    required="true" size="8"/>
       <column name="JOB_NAME"             type="VARCHAR2"    required="true" size="100" />
       <column name="JOB_GROUP"            type="VARCHAR2"    required="true" size="100" />

@@ -19,7 +19,7 @@
 
   <scm>
     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk</connection>
-    <developerConnection>scm:svn:http://jshaughn@svn.rhq-project.org/repos/rhq/trunk</developerConnection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk</developerConnection>
   </scm>
 
   <issueManagement>

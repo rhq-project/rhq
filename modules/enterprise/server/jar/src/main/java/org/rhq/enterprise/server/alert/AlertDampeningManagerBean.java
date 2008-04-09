@@ -70,10 +70,10 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
 
     @SuppressWarnings("unchecked")
     private boolean shouldFireDurationCountAlert(int alertDefinitionId, int eventCountThreshold, long lastSeconds) {
+
         Date oldestEventTime = new Date(System.currentTimeMillis() - (lastSeconds * 1000));
 
         Query query = entityManager.createNamedQuery(AlertDampeningEvent.QUERY_FIND_BY_TIME_AND_TYPES);
-
         query.setParameter("alertDefinitionId", alertDefinitionId);
         query.setParameter("eventTypes", EnumSet.of(Type.POSITIVE, Type.POSITIVE_AGAIN));
         query.setParameter("oldestEventTime", oldestEventTime);
@@ -84,6 +84,7 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
         query.setMaxResults(eventCountThreshold);
 
         List<AlertDampeningEvent> oldestEvents = query.getResultList();
+        deleteAlertEventsOlderThan(alertDefinitionId, oldestEventTime);
 
         // if we have enough, it'll be exactly equal to the number need (thanks to setMaxResults)
         boolean shouldFire = (oldestEvents.size() == eventCountThreshold);
@@ -189,7 +190,9 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
 
     @SuppressWarnings("unchecked")
     private boolean shouldFirePartialCountAlert(int alertDefinitionId, long countNeeded, long period) {
+
         List<AlertDampeningEvent> events = getRecentAlertDampeningEvents(alertDefinitionId, period);
+        deleteAlertEventsOlderThan(alertDefinitionId, events.get(events.size() - 1).getEventTime());
 
         long positiveFires = 0;
         for (AlertDampeningEvent event : events) {
@@ -222,4 +225,18 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
         List<AlertDampeningEvent> results = query.getResultList();
         return results;
     }
+
+    private void deleteAlertEventsOlderThan(Integer alertDefinitionId, Date olderThan) {
+        Query query = entityManager.createNamedQuery(AlertDampeningEvent.QUERY_DELETE_BY_TIMESTAMP);
+        query.setParameter("alertDefinitionId", alertDefinitionId);
+        query.setParameter("oldest", olderThan);
+
+        int deletedCount = query.executeUpdate();
+
+        if (deletedCount > 0) {
+            log.debug("Deleted " + deletedCount + " stale AlertDampeningEvent" + ((deletedCount == 1) ? "" : "s")
+                + " for AlertDefinition[id=" + alertDefinitionId + "]");
+        }
+    }
+
 }

@@ -53,6 +53,6 @@ public interface AlertDefinitionManagerLocal {
 
     void copyAlertDefinitions(Subject user, Integer[] alertDefinitionIds);
 
-    AlertDefinition updateAlertDefinition(Subject user, AlertDefinition alertDefinition)
+    AlertDefinition updateAlertDefinition(Subject user, AlertDefinition alertDefinition, boolean updateInternals)
         throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
 }

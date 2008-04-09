@@ -20,16 +20,19 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
@@ -81,10 +84,10 @@ public class EditDefinitionPropertiesAction extends BaseAction {
 
         try {
             if (isAlertTemplate) {
-                alertTemplateManager.updateAlertTemplate(subject, alertDef, defForm.isCascade());
+                alertTemplateManager.updateAlertTemplate(subject, alertDef, defForm.isCascade(), false);
             } else {
                 // this will disallow updates if the alert definition has been deleted
-                alertDefinitionManager.updateAlertDefinition(subject, alertDef);
+                alertDefinitionManager.updateAlertDefinition(subject, alertDef, false);
             }
         } catch (AlertDefinitionException iade) {
             log.debug("alert definition update failed:", iade);

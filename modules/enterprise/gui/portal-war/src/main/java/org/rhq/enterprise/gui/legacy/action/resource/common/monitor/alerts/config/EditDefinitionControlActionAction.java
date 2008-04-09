@@ -20,15 +20,18 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
@@ -94,9 +97,9 @@ public class EditDefinitionControlActionAction extends BaseAction {
         alertDefinition.setOperationDefinition(operationDefinition);
 
         if (isAlertTemplate) {
-            alertTemplateManager.updateAlertTemplate(subject, alertDefinition, operationsForm.isCascade());
+            alertTemplateManager.updateAlertTemplate(subject, alertDefinition, operationsForm.isCascade(), false);
         } else {
-            alertDefinitionManager.updateAlertDefinition(subject, alertDefinition);
+            alertDefinitionManager.updateAlertDefinition(subject, alertDefinition, false);
         }
 
         return returnSuccess(request, mapping, params);

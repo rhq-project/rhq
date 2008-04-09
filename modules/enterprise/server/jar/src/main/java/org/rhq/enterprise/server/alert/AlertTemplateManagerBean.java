@@ -203,12 +203,12 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public AlertDefinition updateAlertTemplate(Subject user, AlertDefinition alertTemplate, boolean cascade)
-        throws InvalidAlertDefinitionException {
+    public AlertDefinition updateAlertTemplate(Subject user, AlertDefinition alertTemplate, boolean cascade,
+        boolean purgeInternals) throws InvalidAlertDefinitionException {
         AlertDefinition updatedTemplate = null;
 
         try {
-            updatedTemplate = alertDefinitionManager.updateAlertDefinition(user, alertTemplate); // do not allow direct undeletes of an alert definition
+            updatedTemplate = alertDefinitionManager.updateAlertDefinition(user, alertTemplate, purgeInternals); // do not allow direct undeletes of an alert definition
         } catch (AlertDefinitionUpdateException adue) {
             /* jmarques (Oct 10, 2007)
              *
@@ -231,7 +231,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                     .getAlertDefinitionById(user, alertDefinitionId);
                 childDefinition.update(alertTemplate); // don't touch parentId, resource, or resourceType
                 try {
-                    alertDefinitionManager.updateAlertDefinition(overlord, childDefinition); // if the child is deleted, we will undelete is as part of the update
+                    alertDefinitionManager.updateAlertDefinition(overlord, childDefinition, purgeInternals); // if the child is deleted, we will undelete is as part of the update
                 } catch (AlertDefinitionUpdateException adue) {
                     /* jmarques (Oct 10, 2007), as of this writing...
                      *

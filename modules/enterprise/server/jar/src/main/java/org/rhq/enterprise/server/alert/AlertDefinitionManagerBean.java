@@ -33,6 +33,8 @@ import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.AlertDampeningEvent;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -283,8 +285,12 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         return list;
     }
 
-    public AlertDefinition updateAlertDefinition(Subject user, AlertDefinition alertDefinition)
+    public AlertDefinition updateAlertDefinition(Subject user, AlertDefinition alertDefinition, boolean purgeInternals)
         throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
+        if (purgeInternals) {
+            purgeInternals(alertDefinition.getId());
+        }
+
         boolean isAlertTemplate = (alertDefinition.getResourceType() != null);
 
         if (checkPermission(user, alertDefinition) == false) {
@@ -405,5 +411,29 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
             alertDefinitionEvent);
 
         LOG.debug(methodName + ": " + stats.toString());
+    }
+
+    private void purgeInternals(int alertDefinitionId) {
+        Query alertDampeningEventPurgeQuery = entityManager
+            .createNamedQuery(AlertDampeningEvent.QUERY_DELETE_BY_ALERT_DEFINITION_ID);
+        Query unmatchedAlertConditionLogPurgeQuery = entityManager
+            .createNamedQuery(AlertConditionLog.QUERY_DELETE_UNMATCHED_BY_ALERT_DEFINITION_ID);
+
+        alertDampeningEventPurgeQuery.setParameter("alertDefinitionId", alertDefinitionId);
+        unmatchedAlertConditionLogPurgeQuery.setParameter("alertDefinitionId", alertDefinitionId);
+
+        int alertDampeningEventPurgeCount = alertDampeningEventPurgeQuery.executeUpdate();
+        int unmatchedAlertConditionLogPurgeCount = unmatchedAlertConditionLogPurgeQuery.executeUpdate();
+
+        LOG.debug("Update to AlertDefinition[id=" + alertDefinitionId
+            + " caused a purge of internal, dampening constructs.");
+        if (alertDampeningEventPurgeCount > 0) {
+            LOG.debug("Removed " + alertDampeningEventPurgeCount + " AlertDampeningEvent"
+                + (alertDampeningEventPurgeCount == 1 ? "" : "s"));
+        }
+        if (unmatchedAlertConditionLogPurgeCount > 0) {
+            LOG.debug("Removed " + unmatchedAlertConditionLogPurgeCount + " unmatched AlertConditionLog"
+                + (unmatchedAlertConditionLogPurgeCount == 1 ? "" : "s"));
+        }
     }
 }

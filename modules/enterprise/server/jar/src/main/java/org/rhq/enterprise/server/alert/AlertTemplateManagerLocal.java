@@ -48,6 +48,6 @@ public interface AlertTemplateManagerLocal {
 
     void disableAlertTemplates(Subject user, Integer[] alertTemplateIds, boolean cascade);
 
-    AlertDefinition updateAlertTemplate(Subject user, AlertDefinition alertDefinition, boolean cascade)
-        throws InvalidAlertDefinitionException;
+    AlertDefinition updateAlertTemplate(Subject user, AlertDefinition alertDefinition, boolean cascade,
+        boolean purgeInternals) throws InvalidAlertDefinitionException;
 }

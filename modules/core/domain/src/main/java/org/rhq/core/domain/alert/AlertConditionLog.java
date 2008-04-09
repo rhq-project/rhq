@@ -49,7 +49,13 @@ import javax.persistence.Table;
     @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_ALERT_CTIME, query = "DELETE AlertConditionLog acl "
         + "WHERE acl.id IN " + "( SELECT iacl.id " + "FROM AlertConditionLog iacl "
         + "WHERE iacl.alert.ctime BETWEEN :begin AND :end " + ")"),
-    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertConditionLog acl WHERE acl.condition IN ( SELECT ac FROM AlertCondition ac WHERE ac.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources)))") })
+    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCES, query = "DELETE AlertConditionLog acl WHERE acl.condition IN ( SELECT ac FROM AlertCondition ac WHERE ac.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources)))"),
+    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_UNMATCHED_BY_ALERT_DEFINITION_ID, //
+    query = "DELETE AlertConditionLog acl" // 
+        + "   WHERE acl.id IN ( SELECT iacl.id " //
+        + "                       FROM AlertConditionLog iacl" //
+        + "                      WHERE iacl.condition.alertDefinition.id = :alertDefinitionId )" // 
+        + "     AND acl.alert IS NULL") })
 @SequenceGenerator(name = "RHQ_ALERT_CONDITION_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_LOG_ID_SEQ")
 @Table(name = "RHQ_ALERT_CONDITION_LOG")
 public class AlertConditionLog implements Serializable {
@@ -58,6 +64,7 @@ public class AlertConditionLog implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCE = "AlertConditionLog.deleteByResource";
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertConditionLog.deleteByResources";
     public static final String QUERY_DELETE_BY_ALERT_CTIME = "AlertConditionLog.deleteByAlertCTime";
+    public static final String QUERY_DELETE_UNMATCHED_BY_ALERT_DEFINITION_ID = "AlertConditionLog.deleteUnmatchedByAlertDefinitionId";
 
     public static final int MAX_LOG_LENGTH = 250;
 

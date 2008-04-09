@@ -43,6 +43,7 @@ import javax.persistence.TemporalType;
     @NamedQuery(name = AlertDampeningEvent.QUERY_FIND_LATEST_BY_ALERT_DEFINITION_ID, query = "SELECT ade "
         + "FROM AlertDampeningEvent ade " + "WHERE ade.id = " + "( SELECT max(iade.id) FROM AlertDampeningEvent iade "
         + "WHERE iade.alertDefinition.id = :alertDefinitionId " + "AND iade.used = FALSE )"),
+    // do NOT change the ORDER BY clause of this query, the SLSB layer above it depends on the oldest event being first
     @NamedQuery(name = AlertDampeningEvent.QUERY_FIND_BY_TIME_AND_TYPES, query = "SELECT ade "
         + "FROM AlertDampeningEvent ade " + "WHERE ade.alertDefinition.id = :alertDefinitionId "
         + "AND ade.eventType IN (:eventTypes) " + "AND ade.eventTime > :oldestEventTime " + "AND ade.used = FALSE "
@@ -50,7 +51,12 @@ import javax.persistence.TemporalType;
     @NamedQuery(name = AlertDampeningEvent.QUERY_FIND_BY_ALERT_DEFINITION_ID, query = "  SELECT ade "
         + "    FROM AlertDampeningEvent ade " + "   WHERE ade.alertDefinition.id = :alertDefinitionId "
         + "     AND ade.used = false " + "ORDER BY ade.eventTime DESC "),
-    @NamedQuery(name = AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertDampeningEvent ade WHERE ade.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))") })
+    @NamedQuery(name = AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, query = "DELETE AlertDampeningEvent ade WHERE ade.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))"),
+    @NamedQuery(name = AlertDampeningEvent.QUERY_DELETE_BY_TIMESTAMP, // 
+    query = "DELETE AlertDampeningEvent ade " //
+        + "   WHERE ade.eventTime < :oldest " //
+        + "     AND ade.alertDefinition.id = :alertDefinitionId "),
+    @NamedQuery(name = AlertDampeningEvent.QUERY_DELETE_BY_ALERT_DEFINITION_ID, query = "DELETE AlertDampeningEvent ade WHERE ade.alertDefinition.id = :alertDefinitionId") })
 @SequenceGenerator(name = "RHQ_ALERT_DAMPEN_EVENT_ID_SEQ", sequenceName = "RHQ_ALERT_DAMPEN_EVENT_ID_SEQ")
 @Table(name = "RHQ_ALERT_DAMPEN_EVENT")
 public class AlertDampeningEvent implements Serializable {
@@ -58,6 +64,8 @@ public class AlertDampeningEvent implements Serializable {
     public static final String QUERY_FIND_BY_TIME_AND_TYPES = "AlertDampeningEvent.findByTimeAndTypes";
     public static final String QUERY_FIND_BY_ALERT_DEFINITION_ID = "AlertDampeningEvent.findByAlertDefinitionId";
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertDampeningEvent.deleteByResources";
+    public static final String QUERY_DELETE_BY_TIMESTAMP = "AlertDampeningEvent.deleteByTimestamp";
+    public static final String QUERY_DELETE_BY_ALERT_DEFINITION_ID = "AlertDampeningEvent.deleteByAlertDefinitionId";
 
     public enum Type {
         POSITIVE, POSITIVE_AGAIN, NEGATIVE, UNCHANGED;
@@ -121,18 +129,24 @@ public class AlertDampeningEvent implements Serializable {
         this.used = true;
     }
 
+    @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof AlertDampeningEvent)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof AlertDampeningEvent))
+            return false;
 
         AlertDampeningEvent event = (AlertDampeningEvent) o;
 
-        if (eventTime != null ? !eventTime.equals(event.eventTime) : event.eventTime != null) return false;
-        if (eventType != event.eventType) return false;
+        if (eventTime != null ? !eventTime.equals(event.eventTime) : event.eventTime != null)
+            return false;
+        if (eventType != event.eventType)
+            return false;
 
         return true;
     }
 
+    @Override
     public int hashCode() {
         int result;
         result = (eventType != null ? eventType.hashCode() : 0);

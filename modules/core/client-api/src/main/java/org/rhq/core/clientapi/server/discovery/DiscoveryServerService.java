@@ -19,6 +19,7 @@
 package org.rhq.core.clientapi.server.discovery;
 
 import java.util.Map;
+
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.communications.command.annotation.Timeout;
@@ -29,6 +30,7 @@ import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
+import org.rhq.core.domain.resource.ResourceErrorType;
 
 /**
  * The interface to a JON server's resource discovery subsystem.
@@ -89,6 +91,13 @@ public interface DiscoveryServerService {
      */
     @Asynchronous(guaranteedDelivery = true)
     void setResourceError(ResourceError resourceError);
+
+    /**
+     * Clears errors of type {@link ResourceErrorType}.INVALID_PLUGIN_CONFIGURATION
+     * @param resourceId id of the resource
+     */
+    @Asynchronous(guaranteedDelivery = true)
+    void clearResourceConfigError(int resourceId);
 
     /**
      * Retrieve a set of inventory statuses for a resource and potentially its descendants.

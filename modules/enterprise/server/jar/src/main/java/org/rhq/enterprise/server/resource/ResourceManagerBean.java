@@ -1663,6 +1663,20 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return;
     }
 
+    public void clearResourceConfigError(int resourceId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        if (resource == null) {
+            throw new ResourceNotFoundException("Error cleaning config errors for unknown resource: " + resourceId);
+        }
+        List<ResourceError> doomedErrors = resource.getResourceErrors(ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
+        // there should only ever be at most 1, but loop through the list just in case something got screwed up
+        // and there ended up more than 1 associated with the resource.
+        for (ResourceError doomedError : doomedErrors) {
+            entityManager.remove(doomedError);
+        }
+
+    }
+
     public void deleteResourceError(Subject user, int resourceErrorId) {
         ResourceError error = entityManager.find(ResourceError.class, resourceErrorId);
 

@@ -323,4 +323,10 @@ public interface ResourceManagerLocal {
     PageList<ResourceHealthComposite> getResourceHealth(Subject user, Integer[] resourceIds, PageControl pc);
 
     public List<AutoGroupComposite> getResourcesAutoGroups(Subject subject, List<Integer> resourceIds);
+
+    /**
+     * Clears errors of type {@link ResourceErrorType}.INVALID_PLUGIN_CONFIGURATION
+     * @param resourceId id of the resource
+     */
+    void clearResourceConfigError(int resourceId);
 }

@@ -19,8 +19,10 @@
 package org.rhq.enterprise.server.discovery;
 
 import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.domain.discovery.AvailabilityReport;
@@ -54,13 +56,12 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         InventoryReportResponse response;
         try {
             response = discoveryBoss.mergeInventoryReport(report);
-        }
-        catch (InvalidInventoryReportException e) {
+        } catch (InvalidInventoryReportException e) {
             log.error("Received invalid inventory report from agent [" + report.getAgent() + "].", e);
             throw e;
-        }
-        catch (RuntimeException e) {
-            log.error("Fatal error occurred during merging of inventory report from agent [" + report.getAgent() + "].", e);
+        } catch (RuntimeException e) {
+            log.error(
+                "Fatal error occurred during merging of inventory report from agent [" + report.getAgent() + "].", e);
             throw e;
         }
         log.info("Performance: inventory merge of [" + response.getUuidToIntegerMapping().size() + "] resource in ("
@@ -120,6 +121,11 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     public void setResourceError(ResourceError resourceError) {
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
         resourceManager.addResourceError(resourceError);
+    }
+
+    public void clearResourceConfigError(int resourceId) {
+        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+        resourceManager.clearResourceConfigError(resourceId);
     }
 
     public MergeResourceResponse addResource(Resource resource, int creatorSubjectId) {

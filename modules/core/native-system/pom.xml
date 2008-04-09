@@ -19,7 +19,7 @@
 
   <scm>
     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/core/native-system/</connection>
-    <developerConnection>scm:svn:http://jshaughn@svn.rhq-project.org/repos/rhq/trunk/modules/core/native-system/</developerConnection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/core/native-system/</developerConnection>
   </scm>
 
   <properties>

@@ -18,7 +18,7 @@
 
    <scm>
       <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/safe-invoker/</connection>
-      <developerConnection>scm:svn:http://jshaughn@svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/safe-invoker/</developerConnection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/safe-invoker/</developerConnection>
    </scm>
 
    <properties>

@@ -17,7 +17,7 @@
 
   <scm>
     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/plugins</connection>
-    <developerConnection>scm:svn:http://jshaughn@svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/plugins/</developerConnection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/plugins/</developerConnection>
   </scm>
 
   <properties>

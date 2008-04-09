@@ -17,7 +17,7 @@
 
   <scm>
     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/core/dbutils/</connection>
-    <developerConnection>scm:svn:http://jshaughn@svn.rhq-project.org/repos/rhq/trunk/modules/core/dbutils/</developerConnection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/core/dbutils/</developerConnection>
   </scm>
 
   <properties>

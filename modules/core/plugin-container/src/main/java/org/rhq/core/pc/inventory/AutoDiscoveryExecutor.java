@@ -163,9 +163,9 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                 SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
 
                 try {
-                    ProcessInfoQuery piq = new ProcessInfoQuery(systemInfo.getAllProcesses());
                     Set<ProcessScan> processScans = serverType.getProcessScans();
-                    if (processScans != null) {
+                    if (processScans != null && !processScans.isEmpty()) {
+                        ProcessInfoQuery piq = new ProcessInfoQuery(systemInfo.getAllProcesses());                        
                         for (ProcessScan processScan : processScans) {
                             List<ProcessInfo> queryResults = piq.query(processScan.getQuery());
                             if ((queryResults != null) && (queryResults.size() > 0)) {

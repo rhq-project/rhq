@@ -2,6 +2,7 @@
 
    <modelVersion>4.0.0</modelVersion>
 
+
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>

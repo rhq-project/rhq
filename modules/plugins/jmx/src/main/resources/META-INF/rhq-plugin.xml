@@ -258,6 +258,10 @@
          <metric displayName="Loaded Classes" property="LoadedClassCount" displayType="summary" description="The number of classes currently loaded in the VM"/>
          <metric displayName="Total Classes Loaded" property="TotalLoadedClassCount" description="The total number of classes loaded since the start of the VM"/>
          <metric displayName="Unloaded Classes" property="UnloadedClassCount" displayType="summary" description="The total number of classes unloaded since the start of the VM"/>
+
+         <resource-configuration>
+             <c:simple-property name="Verbose" type="boolean" description="Output verbose information to the output stream to regarding class loading. Typically, a Java virtual machine implementation prints a message each time a class file is loaded."/>
+         </resource-configuration>
       </service>
 
       <service name="java.util.logging" discovery="MBeanResourceDiscoveryComponent" class="JavaUtilLoggingResourceComponent"

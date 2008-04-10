@@ -71,7 +71,6 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationScheduleEntity;
-import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -110,6 +109,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
  *
  * @author Ian Springer
  * @author Joseph Marques
+ * @author Jay Shaughnessy (delete operations)
  */
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.resource.ResourceManagerRemote")
@@ -263,6 +263,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             throw new PermissionException("You do not have permission to delete resource [" + resourceId + "]");
         }
 
+        /** TODO: Remove agent deletion as potential fix for RHQ-124. Depending on results either delete or reinstate. Also, see below
         // if the resource has no parent, its a top root resource and its agent should be purged too
         // test code does not always follow this rule, so catch and continue.
         Agent doomedAgent = null;
@@ -274,6 +275,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 log.warn("This warning should occur in TEST code only! " + e);
             }
         }
+        */
 
         AgentClient agentClient = null;
 
@@ -299,6 +301,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         int count = 0, max = 20;
         do {
             try {
+                // the list must be cleared (simulates rollback), ids could change between attempts
+                deletedResourceIds.clear();
                 deleteResourceRecursive(user, resource, deletedResourceIds);
                 done = true;
             } catch (RuntimeException e) {
@@ -326,9 +330,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
         }
 
+        /** TODO: Remove agent deletion as potential fix for RHQ-124. Depending on results either delete or reinstate. Also, see above
         if (doomedAgent != null) {
             agentManager.deleteAgent(doomedAgent);
         }
+        */
 
         return deletedResourceIds;
     }
@@ -579,7 +585,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
      * Clean any of own caches as necessary. As much as possible this code should not generate
      * calls to the database.
      */
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     private void doCacheCleanup(Resource resource) {
         Subject overlord = subjectManager.getOverlord();
         int resourceId = resource.getId();
@@ -596,7 +601,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
      * @param resourceId
      * @return The number of scheduled operations for the resourceId
      */
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     private int cleanupScheduledOperationsForResource(Subject overlord, Integer resourceId) {
 
         int result = 0;

@@ -155,16 +155,11 @@
 	<tr>
 		<td class="FilterLine" colspan="4"><b><fmt:message key="resource.common.monitor.events.FilterBy" /></b></td>
 	</tr>
-	<tr class="FilterLabelText">
-		<td width="5%"/>
-		<td>Severity</td>
-		<td class="FilterLabelText">Source</td>
-		<td class="FilterLabelText">Search String</td>
-	</tr>
 	<tr>
 		<td width="5%"/>
 		<td>
-			<html:select property="sevFilter" onchange="this.form.submit(); return true;">
+            Severity:
+            <html:select property="sevFilter" onchange="this.form.submit(); return true;">
      			<html:option value=""/>
     			<html:option value="DEBUG"/>
     			<html:option value="INFO"/>
@@ -173,8 +168,8 @@
     			<html:option value="FATAL"/>
   			</html:select>
 		</td>
-		<td><html:text property="sourceFilter"/></td>
-		<td><html:text property="searchString"/></td>
+		<td>Source: <html:text property="sourceFilter"/></td>
+		<td>Search: <html:text property="searchString"/></td>
 	</tr>
 </table>
 

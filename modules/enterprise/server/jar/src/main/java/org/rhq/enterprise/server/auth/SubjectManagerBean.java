@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+
 import javax.ejb.CreateException;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -34,10 +35,13 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.security.Util;
 import org.jboss.security.auth.callback.UsernamePasswordHandler;
+
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -189,6 +193,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
         // we are ignoring roles - anything the caller gave us is thrown out
         subject.setRoles(null);
+        Configuration configuration = subject.getUserConfiguration();
+        configuration = entityManager.merge(configuration);
+        subject.setUserConfiguration(configuration);
 
         entityManager.persist(subject);
 

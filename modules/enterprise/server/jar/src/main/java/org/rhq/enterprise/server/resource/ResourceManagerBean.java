@@ -52,6 +52,7 @@ import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDampeningEvent;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
+import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
@@ -550,6 +551,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         // bulk delete: Alert condition log. Do not alter order of alert related deletes
         q = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_RESOURCES);
+        q.setParameter("resources", resources);
+        q.executeUpdate();
+
+        // bulk delete: Alert Notification Log. Do not alter order of alert related deletes
+        q = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 

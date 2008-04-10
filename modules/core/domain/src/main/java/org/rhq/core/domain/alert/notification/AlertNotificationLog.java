@@ -47,7 +47,12 @@ import org.rhq.core.domain.alert.AlertDefinition;
     query = "DELETE AlertNotificationLog anl " + //
         "     WHERE anl.id IN ( SELECT a.alertNotificationLog.id " + //
         "                         FROM Alert a " + //
-        "                        WHERE a.alertDefinition.resource.id = :resourceId )") })
+        "                        WHERE a.alertDefinition.resource.id = :resourceId )"),
+    @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, //
+    query = "DELETE AlertNotificationLog anl " + //
+        "     WHERE anl.id IN ( SELECT a.alertNotificationLog.id " + //
+        "                         FROM Alert a " + //
+        "                        WHERE a.alertDefinition.resource.id IN ( :resources ) )") })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIF_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIF_LOG")
 public class AlertNotificationLog implements Serializable {
@@ -55,6 +60,7 @@ public class AlertNotificationLog implements Serializable {
 
     public static final String QUERY_DELETE_BY_RESOURCE = "AlertNotificationLog.deleteByResource";
     public static final String QUERY_DELETE_BY_ALERT_CTIME = "AlertNotificationLog.deleteByAlertCtime";
+    public static final String QUERY_DELETE_BY_RESOURCES = "AlertNotificationLog.deleteByResources";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")

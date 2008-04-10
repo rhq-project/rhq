@@ -205,8 +205,8 @@ public class EventManagerBean implements EventManagerLocal {
         return ret;
     }
 
-    public List<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin, long endDate,
-        EventSeverity severity) {
+    public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
+        long endDate, EventSeverity severity, PageControl pc) {
 
         List<Resource> resources = resGrpMgr.getResourcesForAutoGroup(subject, parent, type);
         int[] resourceIds = new int[resources.size()];
@@ -214,8 +214,7 @@ public class EventManagerBean implements EventManagerLocal {
         for (Resource res : resources)
             resourceIds[i++] = res.getId();
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, -1, null, null,
-            new PageControl());
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, -1, null, null, pc);
         return comp;
     }
 
@@ -234,8 +233,8 @@ public class EventManagerBean implements EventManagerLocal {
         return comp;
     }
 
-    public List<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity severity) {
+    public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
+        EventSeverity severity, PageControl pc) {
 
         List<Resource> resources = resGrpMgr.getResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
         int[] resourceIds = new int[resources.size()];
@@ -243,12 +242,11 @@ public class EventManagerBean implements EventManagerLocal {
         for (Resource res : resources)
             resourceIds[i++] = res.getId();
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, -1, null, null,
-            new PageControl());
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, -1, null, null, pc);
         return comp;
     }
 
-    public List<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
+    public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
         EventSeverity severity, int eventId, String source, String searchString, PageControl pc) {
 
         List<Resource> resources = resGrpMgr.getResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
@@ -268,7 +266,7 @@ public class EventManagerBean implements EventManagerLocal {
         int[] buckets = new int[numBuckets];
 
         // TODO possibly rewrite query so that the db calculates the buckets (?)
-        List<EventComposite> events = getEventsForResource(subject, resourceId, begin, end, null);
+        List<EventComposite> events = getEventsForResource(subject, resourceId, begin, end, null, null);
 
         long timeDiff = end - begin;
         long timePerBucket = timeDiff / numBuckets;
@@ -345,11 +343,11 @@ public class EventManagerBean implements EventManagerLocal {
 
     @NotNull
     @SuppressWarnings("unchecked")
-    public List<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
-        EventSeverity severity) {
+    public PageList<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
+        EventSeverity severity, PageControl pc) {
 
         PageList<EventComposite> comp = getEvents(subject, new int[] { resourceId }, startDate, endDate, severity, -1,
-            null, null, new PageControl());
+            null, null, pc);
         return comp;
     }
 
@@ -423,6 +421,9 @@ public class EventManagerBean implements EventManagerLocal {
 
     public PageList<EventComposite> getEvents(Subject subject, int[] resourceIds, long begin, long end,
         EventSeverity severity, int eventId, String source, String searchString, PageControl pc) {
+
+        if (pc == null)
+            pc = new PageControl();
 
         PageList<EventComposite> pl = new PageList<EventComposite>(pc);
         if (eventId > -1) {

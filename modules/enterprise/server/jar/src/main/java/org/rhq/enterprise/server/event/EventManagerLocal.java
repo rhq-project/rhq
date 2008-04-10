@@ -75,19 +75,20 @@ public interface EventManagerLocal {
      * @param startDate
      * @param endDate
      * @param severity Severity of events we are interested in. Pass 'null' for all events.
+     * @param pc TODO
      * @return
      */
-    public List<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
-        EventSeverity severity);
+    public PageList<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
+        EventSeverity severity, PageControl pc);
 
-    public List<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity severity);
+    public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
+        EventSeverity severity, PageControl pc);
 
-    public List<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
+    public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
         EventSeverity severity, int eventId, String source, String searchString, PageControl pc);
 
-    public List<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin, long endDate,
-        EventSeverity object);
+    public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
+        long endDate, EventSeverity object, PageControl pc);
 
     public List<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin, long endDate,
         EventSeverity object, int eventId, String source, String searchString, PageControl pc);

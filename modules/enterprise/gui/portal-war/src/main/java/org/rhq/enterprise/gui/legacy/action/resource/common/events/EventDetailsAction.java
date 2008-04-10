@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.legacy.action.resource.common.events;
 
-import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -37,6 +36,8 @@ import org.rhq.core.clientapi.util.TimeUtil;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.composite.EventComposite;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.DefaultConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
@@ -56,6 +57,12 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Heiko W. Rupp
  */
 public class EventDetailsAction extends BaseAction {
+
+    /** How many chars of a detail do we show at most */
+    private static final int DETAIL_MAX_LEN = 100;
+
+    /** How many events do we show at most per dot */
+    private static final int MAX_EVENTS_PER_DOT = 30;
 
     Log log = LogFactory.getLog(EventDetailsAction.class);
 
@@ -77,28 +84,24 @@ public class EventDetailsAction extends BaseAction {
         int type = WebUtility.getOptionalIntRequestParameter(request, "type", -1);
 
         EventManagerLocal eventManager = LookupUtil.getEventManager();
-        List<EventComposite> events;
+        PageList<EventComposite> events;
 
         Subject subject = user.getSubject();
         if (resourceId > -1) {
-            events = eventManager.getEventsForResource(subject, resourceId, begin, begin + interval, null);
+            events = eventManager.getEventsForResource(subject, resourceId, begin, begin + interval, null,
+                new PageControl(0, MAX_EVENTS_PER_DOT));
         } else if (groupId > -1) {
-            events = eventManager.getEventsForCompGroup(subject, groupId, begin, begin + interval, null);
+            events = eventManager.getEventsForCompGroup(subject, groupId, begin, begin + interval, null,
+                new PageControl(0, MAX_EVENTS_PER_DOT));
         } else if (parent > -1 && type > -1) {
-            events = eventManager.getEventsForAutoGroup(subject, parent, type, begin, begin + interval, null);
+            events = eventManager.getEventsForAutoGroup(subject, parent, type, begin, begin + interval, null,
+                new PageControl(0, MAX_EVENTS_PER_DOT));
         } else {
             log.error("Unknown input combination, can't compute events for input");
             return null;
         }
 
         MessageResources res = getResources(request);
-        //        String formatString = res.getMessage(
-        //                StringConstants.UNIT_FORMAT_PREFIX_KEY + "epoch-millis");
-        //        DateFormatter.DateSpecifics dateSpecs;
-        //
-        //        dateSpecs = new DateFormatter.DateSpecifics();
-        //        dateSpecs.setDateFormat(new SimpleDateFormat(formatString));
-        //
         StringBuffer html;
         if (events.isEmpty()) {
             html = new StringBuffer(res.getMessage("resource.common.monitor.text.events.None"));
@@ -106,39 +109,41 @@ public class EventDetailsAction extends BaseAction {
             html = new StringBuffer("<ul class=\"boxy\">");
 
             for (EventComposite event : events) {
-                html.append("<li ");
+                html.append("<li> ");
 
                 EventSeverity severity = event.getSeverity();
-                if (severity == EventSeverity.FATAL || severity == EventSeverity.ERROR) {
-                    html.append("class=\"red\"");
-                } else if (severity == EventSeverity.WARN) {
-                    html.append("class=\"yellow\"");
-                } else if (severity == EventSeverity.INFO) {
-                    html.append("class=\"green\"");
-                } else {
-                    html.append("class=\"navy\"");
+                switch (severity) {
+                case FATAL:
+                    html.append("<img src=\"/images/event_fatal.gif\"/>");
+                    break;
+                case ERROR:
+                    html.append("<img src=\"/images/event_error.gif\"/>");
+                    break;
+                case WARN:
+                    html.append("<img src=\"/images/event_warn.gif\"/>");
+                    break;
+                case INFO:
+                    html.append("<img src=\"/images/event_info.gif\"/>");
+                    break;
+                case DEBUG:
+                    html.append("<img src=\"/images/event_debug.gif\"/>");
+                    break;
                 }
-
-                html.append('>');
-                html.append("<a href=\"/resource/common/Events.do?mode=events&amp;eventId=");
-                html.append(event.getEventId());
-                if (resourceId > -1) {
-                    html.append("&amp;id=").append(event.getResourceId());
-                } else if (groupId > -1) {
-                    html.append("&amp;groupId=").append(groupId);
-                } else {
-                    html.append("&amp;parent=").append(parent).append("&amp;type=").append(type);
-                }
-                html.append("\">");
-                html.append(event.getEventId());
-                html.append("</a>");
                 html.append(" ");
 
-                html.append(ridBadChars(event.getEventDetail()));
+                createLinkForResource(resourceId, groupId, parent, type, html, event, ridBadChars(event
+                    .getEventDetail()));
                 html.append("</li>");
             }
-
             html.append("</ul>");
+
+            if (events.getTotalSize() > MAX_EVENTS_PER_DOT) {
+                EventComposite event = events.get(events.size() - 1); // take the last one to initialize the list
+                html.append("<p/>");
+                createLinkForResource(resourceId, groupId, parent, type, html, event, res
+                    .getMessage("resource.common.monitor.text.events.MoreEvents"));
+                html.append("<p/>");
+            }
         }
 
         request.setAttribute(AttrConstants.AJAX_TYPE, StringConstants.AJAX_ELEMENT);
@@ -146,6 +151,32 @@ public class EventDetailsAction extends BaseAction {
         request.setAttribute(AttrConstants.AJAX_HTML, html);
 
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);
+    }
+
+    private void createLinkForResource(int resourceId, int groupId, int parent, int type, StringBuffer html,
+        EventComposite event, String text) {
+
+        html.append("<a href=\"/resource/common/Events.do?mode=events&amp;eventId=");
+        html.append(event.getEventId());
+        if (resourceId > -1) {
+            html.append("&amp;id=").append(event.getResourceId());
+        } else if (groupId > -1) {
+            html.append("&amp;groupId=").append(groupId);
+        } else {
+            html.append("&amp;parent=").append(parent).append("&amp;type=").append(type);
+        }
+        html.append("\">");
+        //html.append(event.getEventId());
+        if (text.contains("\n")) {
+            text = text.substring(0, text.indexOf("\n"));
+        }
+        if (text.length() > DETAIL_MAX_LEN) {
+            text = text.substring(0, DETAIL_MAX_LEN - 1);
+        }
+        html.append(text);
+        html.append("</a>");
+        html.append(" ");
+
     }
 
     // In our Javascript, we are enclosing the whole string in single-quotes.

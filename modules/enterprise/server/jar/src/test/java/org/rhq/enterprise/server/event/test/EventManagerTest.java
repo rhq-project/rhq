@@ -39,6 +39,7 @@ import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -147,11 +148,13 @@ public class EventManagerTest extends AbstractEJB3Test {
             assert buckets[2] == 0 : "Expected bucket 2 to have 0 entries, but had " + buckets[2];
 
             List<EventComposite> res = eventManager.getEventsForResource(null, resourceId, t1.getTime(), t2.getTime(),
+                null, new PageControl());
+            assert res.size() == 1 : "Expected 1 Event, got " + res.size();
+            res = eventManager.getEventsForResource(null, resourceId, t1.getTime(), t2.getTime(), EventSeverity.INFO,
                 null);
             assert res.size() == 1 : "Expected 1 Event, got " + res.size();
-            res = eventManager.getEventsForResource(null, resourceId, t1.getTime(), t2.getTime(), EventSeverity.INFO);
-            assert res.size() == 1 : "Expected 1 Event, got " + res.size();
-            res = eventManager.getEventsForResource(null, resourceId, t1.getTime(), t2.getTime(), EventSeverity.WARN);
+            res = eventManager.getEventsForResource(null, resourceId, t1.getTime(), t2.getTime(), EventSeverity.WARN,
+                null);
             assert res.size() == 0 : "Expected 0 Events, got " + res.size();
 
         } finally {

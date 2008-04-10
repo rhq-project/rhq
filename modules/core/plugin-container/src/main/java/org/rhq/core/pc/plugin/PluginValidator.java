@@ -30,6 +30,11 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.content.ContentFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 
 /**
  * A utility to test a set of plugins are valid.
@@ -116,7 +121,42 @@ public class PluginValidator {
                         + resourceType.getPlugin() + "]");
                 } else {
                     try {
-                        Class.forName(componentClass, false, pluginEnvironment.getPluginClassLoader());
+                        Class componentClazz =
+                                Class.forName(componentClass, false, pluginEnvironment.getPluginClassLoader());
+                        if (!ResourceComponent.class.isAssignableFrom(componentClazz)) {
+                            success = false;
+                            LOG.error("Component class [" + componentClass + "] for resource type ["
+                                + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
+                                + "] does not implement ResourceComponent.");
+                        }
+                        if (!resourceType.getMetricDefinitions().isEmpty()
+                                && !MeasurementFacet.class.isAssignableFrom(componentClazz)) {
+                            success = false;
+                            LOG.error("Component class [" + componentClass + "] for resource type ["
+                                + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
+                                + "] does not support measurement collection.");
+                        }
+                        if (!resourceType.getOperationDefinitions().isEmpty()
+                                && !OperationFacet.class.isAssignableFrom(componentClazz)) {
+                            success = false;
+                            LOG.error("Component class [" + componentClass + "] for resource type ["
+                                + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
+                                + "] does not support operations.");
+                        }
+                        if (!resourceType.getPackageTypes().isEmpty()
+                                && !ContentFacet.class.isAssignableFrom(componentClazz)) {
+                            success = false;
+                            LOG.error("Component class [" + componentClass + "] for resource type ["
+                                + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
+                                + "] does not support content management.");
+                        }
+                        if (resourceType.getResourceConfigurationDefinition() != null
+                                && !ConfigurationFacet.class.isAssignableFrom(componentClazz)) {
+                            success = false;
+                            LOG.error("Component class [" + componentClass + "] for resource type ["
+                                + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
+                                + "] does not configuration.");
+                        }
                     } catch (Exception e) {
                         success = false;
                         LOG.error("Cannot find component class [" + componentClass + "] for resource type ["

@@ -47,6 +47,8 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
  * @author Ian Springer
  */
 public class ApachePluginTest {
+    private static final String PLUGIN_NAME = "Apache";
+
     @BeforeSuite
     public void start() {
         //System.out.println("java.class.path=" + System.getProperty("java.class.path"));
@@ -73,9 +75,9 @@ public class ApachePluginTest {
     @Test
     public void testPluginLoad() {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
-        PluginEnvironment pluginEnvironment = pluginManager.getPlugin("Apache");
+        PluginEnvironment pluginEnvironment = pluginManager.getPlugin(PLUGIN_NAME);
         assert (pluginEnvironment != null) : "Null environment, plugin not loaded";
-        System.out.println("Plugin package: " + pluginEnvironment.getDescriptor().getPackage());
+        assert (pluginEnvironment.getPluginName().equals(PLUGIN_NAME));
     }
 
     @Test(dependsOnMethods = "testPluginLoad")

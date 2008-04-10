@@ -27,8 +27,9 @@ import org.rhq.core.pc.util.InventoryPrinter;
 public class PlatformPluginTest
 {
     private Log log = LogFactory.getLog(PlatformPluginTest.class);
+    private static final String PLUGIN_NAME = "Platforms";
 
-   @BeforeSuite
+    @BeforeSuite
    public void start()
    {
       try
@@ -61,11 +62,9 @@ public class PlatformPluginTest
    public void testPluginLoad()
    {
       PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
-
-      PluginEnvironment pluginEnvironment = pluginManager.getPlugin("Platforms");
+      PluginEnvironment pluginEnvironment = pluginManager.getPlugin(PLUGIN_NAME);
       assert (pluginEnvironment != null) : "Null environment, plugin not loaded";
-      System.out.println("Plugin package: " + pluginEnvironment.getDescriptor().getPackage());
-
+      assert (pluginEnvironment.getPluginName().equals(PLUGIN_NAME));
    }
 
    @Test(dependsOnMethods = "testPluginLoad")

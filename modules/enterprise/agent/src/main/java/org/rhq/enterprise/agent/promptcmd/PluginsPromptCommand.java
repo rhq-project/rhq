@@ -24,10 +24,11 @@ import java.util.Date;
 import java.util.List;
 import mazz.i18n.Msg;
 import org.rhq.core.clientapi.server.core.CoreServerService;
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.util.MD5Generator;
 import org.rhq.core.pc.PluginContainerConfiguration;
-import org.rhq.core.pc.plugin.PluginEnvironment;
+import org.rhq.core.pc.plugin.PluginDescriptorLoader;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.PluginUpdate;
@@ -114,12 +115,14 @@ public class PluginsPromptCommand implements AgentPromptCommand {
             out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGINS_LISTING_PLUGINS));
 
             for (File current_plugin : current_plugins) {
-                String plugin_name = "?cannot-parse-descriptor?";
+                String plugin_name;
                 try {
-                    PluginEnvironment plugin_env = new PluginEnvironment(current_plugin.toURL(), this.getClass()
-                        .getClassLoader(), null, false, null);
-                    plugin_name = plugin_env.getPluginName();
+                    PluginDescriptorLoader pluginDescriptorLoader = new PluginDescriptorLoader(current_plugin.toURL(),
+                            this.getClass().getClassLoader(), null, false, null);
+                    PluginDescriptor pluginDescriptor = pluginDescriptorLoader.loadPluginDescriptor();
+                    plugin_name = pluginDescriptor.getName();
                 } catch (Throwable t) {
+                    plugin_name = "?cannot-parse-descriptor?";
                 }
 
                 String filename = current_plugin.getName();

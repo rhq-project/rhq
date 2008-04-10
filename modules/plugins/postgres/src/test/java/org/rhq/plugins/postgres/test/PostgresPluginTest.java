@@ -52,6 +52,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 @Test(groups = "postgres-plugin")
 public class PostgresPluginTest {
     private Log log = LogFactory.getLog(PostgresPluginTest.class);
+    private static final String PLUGIN_NAME = "Postgres";
 
     @BeforeSuite
     public void start() {
@@ -78,9 +79,9 @@ public class PostgresPluginTest {
     public void testPluginLoad() {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
 
-        PluginEnvironment pluginEnvironment = pluginManager.getPlugin("Postgres");
+        PluginEnvironment pluginEnvironment = pluginManager.getPlugin(PLUGIN_NAME);
         assert (pluginEnvironment != null) : "Null environment, plugin not loaded";
-        System.out.println("Plugin package: " + pluginEnvironment.getDescriptor().getPackage());
+        assert (pluginEnvironment.getPluginName().equals(PLUGIN_NAME));
     }
 
     @Test(dependsOnMethods = "testPluginLoad")

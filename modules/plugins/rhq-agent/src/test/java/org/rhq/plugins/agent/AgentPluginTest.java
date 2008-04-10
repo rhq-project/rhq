@@ -88,9 +88,9 @@ public class AgentPluginTest {
      */
     public void testPluginLoad() {
         PluginManager pluginManager = pc.getPluginManager();
-        PluginEnvironment env = pluginManager.getPlugin(PLUGIN_NAME);
-        assert (env != null) : "Null environment, plugin not loaded";
-        assert AgentDiscoveryComponent.class.getPackage().getName().equals(env.getDescriptor().getPackage().toString());
+        PluginEnvironment pluginEnvironment = pluginManager.getPlugin(PLUGIN_NAME);
+        assert (pluginEnvironment != null) : "Null environment, plugin not loaded";
+        assert (pluginEnvironment.getPluginName().equals(PLUGIN_NAME));
     }
 
     /**

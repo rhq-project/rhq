@@ -884,6 +884,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             } catch (Throwable e) {
                 throw new PluginContainerException("Could not build component for resource [" + resource + "]", e);
             }
+            // give the container wrapper the component instance that is managing the resource
+            container.setResourceComponent(component);
         }
 
         // tell the component what its parent is, if it has a parent
@@ -891,9 +893,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (resource.getParentResource() != null) {
             parentComponent = getResourceComponent(resource.getParentResource());
         }
-
-        // give the container wrapper the component instance that is managing the resource
-        container.setResourceComponent(component);
 
         // start the resource but only if its parent component is running
         if ((resource.getParentResource() == null)
@@ -1525,15 +1524,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 // Only update the version in local inventory if the server sync succeeded, otherwise we won't know
                 // to try again the next time this method is called.
                 versionUpdated = true;
-                log.debug("New version for " + resource + " (" + newVersion
-                    + ") was successfully synced to the Server.");
+                if (log.isDebugEnabled()) {
+                    log.debug("New version for " + resource + " (" + newVersion
+                        + ") was successfully synced to the Server.");
+                }
             } catch (Exception e) {
                 log.error("Failed to sync-to-Server new version for " + resource + ".");
             }
             // TODO: It would be cool to publish a Resource-version-changed Event here. (ips, 02/29/08)
         } else {
-            log.debug("Sync-to-Server of new version for " + resource
-                + " cannot be done, because Plugin Container is not connected to Server.");
+            if (log.isDebugEnabled()) {
+                log.debug("Sync-to-Server of new version for " + resource
+                    + " cannot be done, because Plugin Container is not connected to Server.");
+            }
         }
         return versionUpdated;
     }

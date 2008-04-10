@@ -79,7 +79,7 @@ public class PluginComponentFactory implements ContainerService {
      * resourceType</code>. The new component will be loaded in the plugin classloader that belongs to the plugin
      * responsible for handling that specific resource type.
      *
-     * @param  resourceType
+     * @param  resourceType the type of Resource that the component will wrap
      *
      * @return a new resource component loaded in the proper plugin classloader
      *
@@ -98,7 +98,7 @@ public class PluginComponentFactory implements ContainerService {
 
     /**
      * This will load the class definition of <code>className</code> using the
-     * {@link PluginEnvironment#getClassLoader() plugin classloader} found in the given <code>environment</code>.
+     * {@link PluginEnvironment#getPluginClassLoader() plugin classloader} found in the given <code>environment</code>.
      *
      * @param  environment
      * @param  className
@@ -108,7 +108,7 @@ public class PluginComponentFactory implements ContainerService {
      * @throws PluginContainerException if the class could not be instantiated for some reason
      */
     private Object instantiateClass(PluginEnvironment environment, String className) throws PluginContainerException {
-        ClassLoader loader = environment.getClassLoader();
+        ClassLoader loader = environment.getPluginClassLoader();
 
         log.debug("Loading class: " + className);
 

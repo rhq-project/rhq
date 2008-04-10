@@ -116,7 +116,7 @@ public class PluginValidator {
                         + resourceType.getPlugin() + "]");
                 } else {
                     try {
-                        Class.forName(componentClass, false, pluginEnvironment.getClassLoader());
+                        Class.forName(componentClass, false, pluginEnvironment.getPluginClassLoader());
                     } catch (Exception e) {
                         success = false;
                         LOG.error("Cannot find component class [" + componentClass + "] for resource type ["
@@ -128,7 +128,7 @@ public class PluginValidator {
                 String discoveryClass = mm.getDiscoveryClass(resourceType);
                 if (discoveryClass != null) {
                     try {
-                        Class.forName(discoveryClass, false, pluginEnvironment.getClassLoader());
+                        Class.forName(discoveryClass, false, pluginEnvironment.getPluginClassLoader());
                     } catch (Exception e) {
                         success = false;
                         LOG.error("Cannot find discovery class [" + discoveryClass + "] for resource type ["

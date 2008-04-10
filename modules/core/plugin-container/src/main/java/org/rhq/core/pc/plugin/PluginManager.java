@@ -77,20 +77,22 @@ public class PluginManager implements ContainerService {
 
                 for (URL url : pluginUrls) {
                     log.debug("Plugin found at: " + url);
-                    PluginEnvironment isolatedEnvironment;
 
+                    PluginDescriptorLoader isolatedLoader;
+                    PluginDescriptor descriptor;
                     try {
-                        isolatedEnvironment = new PluginEnvironment(url, null, null, false, tmpDir);
+                        isolatedLoader = new PluginDescriptorLoader(url, null, null, false, tmpDir);
+                        descriptor = isolatedLoader.loadPluginDescriptor();
                     } catch (Throwable t) {
                         // probably due to invalid XML syntax in the deployment descriptor - the plugin will be ignored
                         log.error("Plugin at [" + url + "] could not be loaded and will therefore not be deployed.", t);
                         continue;
                     }
 
-                    String pluginName = isolatedEnvironment.getDescriptor().getName();
+                    String pluginName = descriptor.getName();
 
                     List<PluginDependencyGraph.PluginDependency> dependencies = new ArrayList<PluginDependencyGraph.PluginDependency>();
-                    for (PluginDescriptor.Depends dependency : isolatedEnvironment.getDescriptor().getDepends()) {
+                    for (PluginDescriptor.Depends dependency : descriptor.getDepends()) {
                         dependencies.add(new PluginDependencyGraph.PluginDependency(dependency.getPlugin(), dependency
                             .isUseClasses()));
                     }
@@ -98,7 +100,7 @@ public class PluginManager implements ContainerService {
                     graph.addPlugin(pluginName, dependencies);
                     pluginNamesUrls.put(pluginName, url);
 
-                    isolatedEnvironment.destroy(); // done with it - just needed it to parse the descriptor
+                    isolatedLoader.destroy(); // done with it - just needed it to parse the descriptor
                 }
 
                 // get the order that we have to deploy the plugins
@@ -133,7 +135,7 @@ public class PluginManager implements ContainerService {
                             //                    allUrls.size() );
                             //  allUrlsArray[0] = pluginUrl;
 
-                            ClassLoader classloader = lastDepEnvironment.getClassLoader();
+                            ClassLoader classloader = lastDepEnvironment.getPluginClassLoader();
 
                             loadPlugin(pluginUrl, PluginClassLoader.create(pluginJarName, pluginUrl, true, classloader,
                                 tmpDir));
@@ -162,7 +164,8 @@ public class PluginManager implements ContainerService {
      * @see ContainerService#shutdown()
      */
     public void shutdown() {
-        for (PluginEnvironment pluginEnvironment : loadedPlugins.values()) {
+        for (PluginEnvironment pluginEnvironment : this.loadedPlugins.values()) {
+            // Clean up the temp dirs that were used by the plugin classloaders.
             pluginEnvironment.destroy();
         }
     }
@@ -222,10 +225,11 @@ public class PluginManager implements ContainerService {
     private void loadPlugin(URL pluginUrl, ClassLoader classLoader) throws PluginContainerException {
         log.info("Loading plugin from: " + pluginUrl);
 
-        PluginEnvironment pluginEnvironment = new PluginEnvironment(pluginUrl, classLoader, null, configuration
-            .getTemporaryDirectory());
-        loadedPlugins.put(pluginEnvironment.getPluginName(), pluginEnvironment);
-        metadataManager.loadPlugin(pluginEnvironment.getDescriptor());
+        PluginDescriptorLoader pluginDescriptorLoader = new PluginDescriptorLoader(pluginUrl, classLoader, null, true, this.configuration.getTemporaryDirectory());
+        PluginDescriptor pluginDescriptor = pluginDescriptorLoader.loadPluginDescriptor();
+        PluginEnvironment pluginEnvironment = new PluginEnvironment(pluginDescriptor.getName(), pluginDescriptorLoader);
+        this.loadedPlugins.put(pluginEnvironment.getPluginName(), pluginEnvironment);
+        this.metadataManager.loadPlugin(pluginDescriptor);
     }
 
     /**
@@ -236,6 +240,8 @@ public class PluginManager implements ContainerService {
      * @param pluginNamesUrls map of all known plugin names and their plugin jar URLs
      * @param graph           the dependency graph
      * @param allUrls         where the results will be stored
+     *
+     * TODO: Use it or lose it.
      */
     private void getDependentUrls(String pluginName, Map<String, URL> pluginNamesUrls, PluginDependencyGraph graph,
         Set<URL> allUrls) {

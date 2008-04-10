@@ -1,15 +1,26 @@
 <%@page contentType="text/html"%>
 <%@page pageEncoding="UTF-8"%>
+<%@ page import="org.hibernate.engine.SessionFactoryImplementor" %>
+<%@ page import="org.rhq.core.domain.util.PersistenceUtility" %>
+<%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
+<%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
+<%@ page import="javax.naming.InitialContext" %>
+<%@ page import="javax.persistence.EntityManager" %>
+<%@ page import="javax.persistence.EntityManagerFactory" %>
+<%@ page import="javax.persistence.Id" %>
 <%@ page import="java.beans.BeanInfo" %>
 <%@ page import="java.beans.Introspector" %>
 <%@ page import="java.beans.PropertyDescriptor" %>
+<%@ page import="java.beans.PropertyEditor" %>
+<%@ page import="java.beans.PropertyEditorManager" %>
+<%@ page import="java.lang.reflect.Field" %>
+<%@ page import="java.lang.reflect.Method" %>
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Iterator" %>
 <%@ page import="java.util.List" %>
-<%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
-<%@ page import="org.rhq.enterprise.server.test.AccessLocal" %>
-<%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
-<%@ page import="java.lang.reflect.Method" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.SortedSet" %>
+<%@ page import="java.util.TreeSet" %>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
@@ -38,51 +49,45 @@
         <a href="${url}">Up to ${param.pEntity} (${param.pKey})</a>
     </c:if>
 
+    <%
+        InitialContext ic = new InitialContext();
+
+        EntityManagerFactory emf = (EntityManagerFactory) ic.lookup("java:/RHQEntityManagerFactory");
+        EntityManager em = ((EntityManagerFactory) ic.lookup("java:/RHQEntityManagerFactory"))
+                .createEntityManager();
+
+
+        org.hibernate.Session s = PersistenceUtility.getHibernateSession(em);
+        SessionFactoryImplementor sfi = (SessionFactoryImplementor) s.getSessionFactory();
+
+    %>
+
 
     <c:if test="${param.entityClass == null}">
         <c:set var="entityClass" value="org.rhq.core.domain.resource.Resource"/>
 
+        <%
+
+            Map<String, Object> metadata = sfi.getAllClassMetadata();
+            SortedSet<String> classes = new TreeSet<String>(metadata.keySet());
+
+        %>
+
        <ul>
 
-        <li><b>Inventory:</b></li>
-        <ul>
-        <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.resource.Agent"/><a href="${url}">Agents</a></li>
-        <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.resource.Resource"/><a href="${url}">Resources</a></li>
-        </ul>
+           <%
+                for (String className : classes) {
+                    Object val = metadata.get(className);
+                    String url = "browser.jsp?entityClass=" + className;
 
-        <li><b>Content:</b></li>
-          <ul>
-             <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.content.Package"/><a href="${url}">Packages</a></li>
-        <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.content.PackageVersion"/><a href="${url}">PackageVersions</a></li>
-        <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.content.InstalledPackage"/><a href="${url}">InstalledPackage</a></li>
-         </ul>
+                    className = className.replaceFirst(".*\\.(.*\\..*)","$1");
 
-        <li><b>Metadata:</b></li>
-          <ul>
-             <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.resource.ResourceType"/><a href="${url}">Resource Types</a></li>
-        <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.plugin.Plugin"/><a href="${url}">Plugins</a></li>
-        <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.configuration.Configuration"/><a href="${url}">Configuration</a></li>
-        </ul>
+                    out.println(
+                    "        <li><a href=\"" + url + "\">" + className +"</a></li>");
+                }
+           %>
 
-        <li><b>Measurement</b></li>
-          <ul>
-             <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.measurement.MeasurementDefinition"/><a href="${url}">Measurement Definition</a></li>
-        <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.measurement.MeasurementSchedule"/><a href="${url}">Measurement Schedule</a></li>
-       </ul>
 
-        <li><b>Alerts</b></li>
-          <ul>
-             <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.alert.AlertDefinition"/><a href="${url}">AlertDefinitions</a></li>
-        <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.alert.AlertDampeningEvent"/><a href="${url}">AlertDampeningEvents</a></li>
-        <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.alert.Alert"/><a href="${url}">Alerts</a></li>
-        </ul>
-
-        <li><b>AAA</b></li>
-          <ul>
-             <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.auth.Subject"/><a href="${url}">Subjects</a></li>
-        <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.auth.Principal"/><a href="${url}">Principals</a></li>
-        <li><c:url var="url" value="browser.jsp?entityClass=org.rhq.core.domain.authz.Role"/><a href="${url}">Roles</a></li>
-        </ul>
      </ul>
     </c:if>
 
@@ -91,16 +96,12 @@
        <c:set var="entityClass" value="${param.entityClass}"/>
     </c:if>
 
-    <%
-       javax.naming.InitialContext ctx = new javax.naming.InitialContext();
-       AccessLocal access = LookupUtil.getAccessLocal();
-    %>
-
    <c:if test="${param.mode == 'delete'}">
       <%
          String entityName = (String)pageContext.getRequest().getParameter("entityClass");
          String key = (String)pageContext.getRequest().getParameter("key");
-         access.delete(entityName,key);
+
+         em.remove(em.find(Class.forName(entityName),key));
          entityName = (String) pageContext.getRequest().getParameter("pEntity");
          key = (String) pageContext.getRequest().getParameter("pKey");
         ((HttpServletResponse)pageContext.getResponse()).sendRedirect(
@@ -115,7 +116,8 @@
         <%
            String entityName = (String)pageContext.findAttribute("entityClass");
            entityName = entityName.substring(entityName.lastIndexOf('.')+1);
-           List values = access.getAll(entityName);
+           List values = em.createQuery("from " + entityName + " d").setMaxResults(100).getResultList();
+
             pageContext.setAttribute("values", values);%>
         <c:forEach var="entity" items="${values}">
             <c:url var="url" value="browser.jsp?entityClass=${entityClass}&key=${entity.id}"/>
@@ -128,8 +130,13 @@
          <c:url var="url" value="browser.jsp?entityClass=${entityClass}"/>
          <h3>Details of ${entityClass} (${param.key})</h3>
          <a href="${url}">List all ${entityClass}</a><br>
-        <% Object entity = access.findDeep((String)pageContext.findAttribute("entityClass"),pageContext.getRequest().getParameter("key"));
+        <%
+            Class entityType = Class.forName((String)pageContext.findAttribute("entityClass"));
+            Object entity = em.find(entityType,
+                                    getConvertedKey(entityType,
+                                            pageContext.getRequest().getParameter("key")));
             pageContext.setAttribute("entity",entity);
+            
 
             BeanInfo beanInfo = Introspector.getBeanInfo(entity.getClass());
             PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
@@ -221,5 +228,32 @@
 
     </c:if>
 
+
+    <%!
+    public Object getConvertedKey(Class type, Object key) {
+        Class keyType = getKeyType(type);
+        System.out.println("Key type is: " + keyType);
+        PropertyEditor ed = PropertyEditorManager.findEditor(keyType);
+        if (ed != null) {
+            ed.setAsText(String.valueOf(key));
+            return ed.getValue();
+        } else {
+            return key;
+        }
+    }
+
+    public Class getKeyType(Class type) {
+        Field[] fields = type.getDeclaredFields();
+        for (Field f : fields) {
+            Id id = f.getAnnotation(javax.persistence.Id.class);
+            if (id != null) {
+                return f.getType();
+            }
+        }
+
+        return Integer.class;
+    }
+
+    %>
     </body>
 </html>

@@ -24,6 +24,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
@@ -70,8 +71,13 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
 
                 Integer id = requests.iterator().next().getResourceId();
                 ResourceContainer container = im.getResourceContainer(id);
-                if (container.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
-                    log.debug("Measurements not collected for inactive resource component: " + container.getResource());
+                if (container.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED
+                    || container.getAvailability() == null
+                    || container.getAvailability().getAvailabilityType() == AvailabilityType.DOWN) {
+                    // Don't collect metrics for resources that are down
+                    if (log.isDebugEnabled()) {
+                        log.debug("Measurements not collected for inactive resource component: " + container.getResource());
+                    }
                 } else {
                     MeasurementFacet measurementComponent = ComponentUtil.getComponent(id, MeasurementFacet.class,
                         FacetLockType.READ, MeasurementManager.FACET_METHOD_TIMEOUT, true, true);

@@ -135,7 +135,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                 if (log.isDebugEnabled()) {
                     log.debug("Could not create resource component proxy for " + resource, e);
                 } else {
-                    log.warn("Could not create resource component proxy for " + resource);
+                    log.warn("Could not create resource component proxy for " + resource + " due to " + e.toString());
                 }
             }
         }

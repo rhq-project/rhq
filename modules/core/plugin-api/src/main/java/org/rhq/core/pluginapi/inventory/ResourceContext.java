@@ -215,9 +215,9 @@ public class ResourceContext<T extends ResourceComponent> {
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
 
         try {
-            ProcessInfoQuery piq = new ProcessInfoQuery(systemInfo.getAllProcesses());
             Set<ProcessScan> processScans = this.resourceType.getProcessScans();
-            if (processScans != null) {
+            if (processScans != null && !processScans.isEmpty()) {
+                ProcessInfoQuery piq = new ProcessInfoQuery(systemInfo.getAllProcesses());
                 for (ProcessScan processScan : processScans) {
                     List<ProcessInfo> queryResults = piq.query(processScan.getQuery());
                     if ((queryResults != null) && (queryResults.size() > 0)) {

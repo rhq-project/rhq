@@ -119,8 +119,9 @@ public class Alert implements Serializable {
     // primary key
     private Set<AlertConditionLog> conditionLogs = new LinkedHashSet<AlertConditionLog>();
 
-    @JoinColumn(name = "ALERT_NOTIF_LOG_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+    //@JoinColumn(name = "ALERT_NOTIF_LOG_ID", referencedColumnName = "ID")
+    //@OneToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+    @OneToOne(mappedBy = "alert")
     private AlertNotificationLog alertNotificationLog;
 
     @Column(name = "TRIGGERED_OPERATION", nullable = true)
@@ -140,7 +141,6 @@ public class Alert implements Serializable {
      */
     public Alert(AlertDefinition alertDefinition, long ctime) {
         this.alertDefinition = alertDefinition;
-        setAlertNotificationLog(new AlertNotificationLog(alertDefinition));
         // Do not load the collection side from a one-to-many, This is very slow to load all existing alerts
         // and unnecessary for creating the link
         // alertDefinition.addAlert(this);

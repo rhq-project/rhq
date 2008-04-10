@@ -214,15 +214,6 @@ public class AlertManagerBean implements AlertManagerLocal {
         totalTime += (end - start);
 
         start = System.currentTimeMillis();
-        query = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_CTIME);
-        query.setParameter("begin", beginTime);
-        query.setParameter("end", endTime);
-        int deletedAlerts = query.executeUpdate();
-        end = System.currentTimeMillis();
-        log.debug("Performance: Deleted [" + deletedAlerts + "] alerts in [" + (end - start) + "]ms");
-        totalTime += (end - start);
-
-        start = System.currentTimeMillis();
         query = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_BY_ALERT_CTIME);
         query.setParameter("begin", beginTime);
         query.setParameter("end", endTime);
@@ -230,6 +221,15 @@ public class AlertManagerBean implements AlertManagerLocal {
         end = System.currentTimeMillis();
         log.debug("Performance: Deleted [" + deletedNotifications + "] alert notifications in [" + (end - start)
             + "]ms");
+        totalTime += (end - start);
+
+        start = System.currentTimeMillis();
+        query = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_CTIME);
+        query.setParameter("begin", beginTime);
+        query.setParameter("end", endTime);
+        int deletedAlerts = query.executeUpdate();
+        end = System.currentTimeMillis();
+        log.debug("Performance: Deleted [" + deletedAlerts + "] alerts in [" + (end - start) + "]ms");
         totalTime += (end - start);
 
         log.debug("Deleted [" + (deletedAlerts + conditionsDeleted + deletedNotifications) + "] "

@@ -38,8 +38,7 @@
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
         <column name="EVENT_TYPE" required="true" type="SMALLINT"/>
-        <column name="EVENT_TIMESTAMP" required="true" type="TIMESTAMP"/>
-        <column name="USED" required="true" type="BOOLEAN" default="FALSE"/>
+        <column name="EVENT_TIMESTAMP" required="true" type="TIMESTAMP"/>s
 
         <index name="RHQ_DAMPENING_EVENT_TYPE_IDX">
             <field ref="EVENT_TYPE"/>
@@ -47,7 +46,6 @@
         <index name="RHQ_DAMPENING_EVENT_TS_IDX">
             <field ref="EVENT_TIMESTAMP"/>
         </index>
-
     </table>
 
     <table name="RHQ_ALERT_CONDITION">
@@ -66,21 +64,11 @@
         <column name="TRIGGER_ID" required="false" type="INTEGER"/>
     </table>
 
-    <table name="RHQ_ALERT_NOTIF_LOG" tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@"
-           storage-options="freelists 5" cache="true" logging="false">
-        <column name="ID" default="sequence-only" initial="10001"
-                primarykey="true" required="true" type="INTEGER"/>
-        <column name="ROLES" required="false" size="200" type="VARCHAR2"/>
-        <column name="SUBJECTS" required="false" size="200" type="VARCHAR2"/>
-        <column name="EMAILS" required="false" size="200" type="VARCHAR2"/>
-    </table>
-
     <table name="RHQ_ALERT" tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@"
            storage-options="freelists 5" cache="true" logging="false">
         <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>
         <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
-        <column name="ALERT_NOTIF_LOG_ID" required="true" type="INTEGER" references="RHQ_ALERT_NOTIF_LOG(ID)"/>
         <column name="CTIME" required="true" type="LONG"/>
         <column name="TRIGGERED_OPERATION" required="false" type="VARCHAR2" size="255"/>
         <index name="RHQ_ALERT_IDX_TIME" unique="false">
@@ -89,9 +77,19 @@
         <index name="RHQ_ALERT_IDX_ALERTDEF" unique="false">
             <field ref="ALERT_DEFINITION_ID"/>
         </index>
-        <index name="RHQ_ALERT_IDX_ALERTNOTIFLOG" unique="false">
-            <field ref="ALERT_NOTIF_LOG_ID"/>
+    </table>
+
+    <table name="RHQ_ALERT_NOTIF_LOG" tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@"
+           storage-options="freelists 5" cache="true" logging="false">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="ALERT_ID" required="false" type="INTEGER" references="RHQ_ALERT(ID)"/>
+        <index name="RHQ_ALERT_IDX_ALERT" unique="true">
+            <field ref="ALERT_ID"/>
         </index>
+        <column name="ROLES" required="false" size="200" type="VARCHAR2"/>
+        <column name="SUBJECTS" required="false" size="200" type="VARCHAR2"/>
+        <column name="EMAILS" required="false" size="200" type="VARCHAR2"/>
     </table>
 
     <table name="RHQ_ALERT_CONDITION_LOG" tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@"

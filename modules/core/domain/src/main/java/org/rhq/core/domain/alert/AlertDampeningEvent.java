@@ -42,15 +42,15 @@ import javax.persistence.TemporalType;
 @NamedQueries( {
     @NamedQuery(name = AlertDampeningEvent.QUERY_FIND_LATEST_BY_ALERT_DEFINITION_ID, query = "SELECT ade "
         + "FROM AlertDampeningEvent ade " + "WHERE ade.id = " + "( SELECT max(iade.id) FROM AlertDampeningEvent iade "
-        + "WHERE iade.alertDefinition.id = :alertDefinitionId " + "AND iade.used = FALSE )"),
+        + "WHERE iade.alertDefinition.id = :alertDefinitionId )"),
     // do NOT change the ORDER BY clause of this query, the SLSB layer above it depends on the oldest event being first
     @NamedQuery(name = AlertDampeningEvent.QUERY_FIND_BY_TIME_AND_TYPES, query = "SELECT ade "
         + "FROM AlertDampeningEvent ade " + "WHERE ade.alertDefinition.id = :alertDefinitionId "
-        + "AND ade.eventType IN (:eventTypes) " + "AND ade.eventTime > :oldestEventTime " + "AND ade.used = FALSE "
+        + "AND ade.eventType IN (:eventTypes) " + "AND ade.eventTime > :oldestEventTime "
         + "ORDER BY ade.eventTime ASC"),
     @NamedQuery(name = AlertDampeningEvent.QUERY_FIND_BY_ALERT_DEFINITION_ID, query = "  SELECT ade "
         + "    FROM AlertDampeningEvent ade " + "   WHERE ade.alertDefinition.id = :alertDefinitionId "
-        + "     AND ade.used = false " + "ORDER BY ade.eventTime DESC "),
+        + "    ORDER BY ade.eventTime DESC "),
     @NamedQuery(name = AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, query = "DELETE AlertDampeningEvent ade WHERE ade.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))"),
     @NamedQuery(name = AlertDampeningEvent.QUERY_DELETE_BY_TIMESTAMP, // 
     query = "DELETE AlertDampeningEvent ade " //
@@ -91,10 +91,6 @@ public class AlertDampeningEvent implements Serializable {
     @Temporal(TemporalType.TIMESTAMP)
     private Date eventTime;
 
-    @Column(name = "USED")
-    @SuppressWarnings("unused")
-    private boolean used;
-
     protected AlertDampeningEvent() {
     } // JPA
 
@@ -102,7 +98,6 @@ public class AlertDampeningEvent implements Serializable {
         this.eventType = type;
         this.alertDefinition = alertDefinition;
         this.eventTime = new Date(System.currentTimeMillis());
-        this.used = false;
     }
 
     public int getId() {
@@ -123,10 +118,6 @@ public class AlertDampeningEvent implements Serializable {
 
     public Date getEventTime() {
         return eventTime;
-    }
-
-    public void markUsed() {
-        this.used = true;
     }
 
     @Override
@@ -157,7 +148,6 @@ public class AlertDampeningEvent implements Serializable {
     @Override
     public String toString() {
         return "org.rhq.core.domain.alert.AlertDampeningEvent" + "[ " + "id=" + id + ", " + "eventType=" + eventType
-            + ", " + "eventTime=" + new SimpleDateFormat("MMM d, hh:mm:ss a").format(eventTime) + ", " + "used=" + used
-            + " ]";
+            + ", " + "eventTime=" + new SimpleDateFormat("MMM d, hh:mm:ss a").format(eventTime) + " ]";
     }
 }

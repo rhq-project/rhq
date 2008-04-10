@@ -114,9 +114,11 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
                 em.persist(acl);
 
                 Alert a = new Alert(ad, now);
-                AlertNotificationLog anl = new AlertNotificationLog(ad);
-                anl.setAlert(a);
                 em.persist(a);
+
+                AlertNotificationLog anl = new AlertNotificationLog(a);
+                em.persist(anl);
+
             } catch (Exception e) {
                 System.out.println("CANNOT PREPARE TEST: " + e);
                 getTransactionManager().rollback();

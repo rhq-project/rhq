@@ -26,6 +26,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
@@ -74,13 +75,17 @@ public class AlertNotificationLog implements Serializable {
     @Column(name = "EMAILS", nullable = false)
     private String emails;
 
-    @OneToOne(mappedBy = "alertNotificationLog")
+    //@OneToOne(mappedBy = "alertNotificationLog")
+    @JoinColumn(name = "ALERT_ID", referencedColumnName = "ID")
+    @OneToOne
     private Alert alert;
 
     protected AlertNotificationLog() {
     } // JPA
 
-    public AlertNotificationLog(AlertDefinition alertDefinition) {
+    public AlertNotificationLog(Alert alert) {
+        AlertDefinition alertDefinition = alert.getAlertDefinition();
+
         StringBuilder rolesBuilder = new StringBuilder();
         StringBuilder subjectsBuilder = new StringBuilder();
         StringBuilder emailsBuilder = new StringBuilder();
@@ -113,6 +118,7 @@ public class AlertNotificationLog implements Serializable {
         roles = rolesBuilder.toString();
         subjects = subjectsBuilder.toString();
         emails = emailsBuilder.toString();
+        this.alert = alert;
     }
 
     public int getId() {

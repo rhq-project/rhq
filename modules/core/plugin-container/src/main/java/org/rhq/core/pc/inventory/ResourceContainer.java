@@ -23,13 +23,20 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Arrays;
-import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.Date;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -71,6 +78,7 @@ public class ResourceContainer implements Serializable {
     private Set<ResourcePackageDetails> installedPackages = new HashSet<ResourcePackageDetails>();
     private Set<MeasurementScheduleRequest> measurementSchedule;
     private SynchronizationState synchronizationState = SynchronizationState.NEW;
+    private transient Map<Integer, Object> proxyCache = new HashMap<Integer, Object>();
 
     public ResourceContainer(Resource resource) {
         this.resource = resource;
@@ -234,13 +242,28 @@ public class ResourceContainer implements Serializable {
             return (T) resourceComponent;
         }
 
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
-        // this is the handler that will actually acquire the lock and invoke the facet method call
-        ResourceComponentInvocationHandler handler = new ResourceComponentInvocationHandler(this, lockType, timeout, daemonThread, facetInterface);
+        // Check for a cached proxy
+        int key;
+        key = facetInterface.hashCode();
+        key = 31 * key + lockType.hashCode();
+        key = 31 * key + (int) (timeout ^ (timeout >>> 32));
+        key = 31 * key + (daemonThread ? 1 : 0);
 
-        // this is the proxy that will look like the facet interface that the caller will use
-        return (T) Proxy.newProxyInstance(classLoader, new Class<?>[] { facetInterface }, handler);
+        if (proxyCache == null)
+            proxyCache = new HashMap<Integer, Object>();
+        T proxy = (T) proxyCache.get(key);
+        if (proxy == null) {
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+
+            // this is the handler that will actually acquire the lock and invoke the facet method call
+            ResourceComponentInvocationHandler handler = new ResourceComponentInvocationHandler(this, lockType, timeout, daemonThread, facetInterface);
+
+            // this is the proxy that will look like the facet interface that the caller will use
+            proxy = (T) Proxy.newProxyInstance(classLoader, new Class<?>[] { facetInterface }, handler);
+            proxyCache.put(key, proxy);
+        }
+        return proxy;
     }
 
     private String getFacetLockStatus() {
@@ -285,6 +308,11 @@ public class ResourceContainer implements Serializable {
         private final long timeout;
         private final boolean daemonThread;
         private final Class facetInterface;
+        private static ThreadLocal<Boolean> asynchronous = new ThreadLocal<Boolean>() {
+            protected Boolean initialValue() {
+                return false;
+            }
+        };
 
         /**
          *
@@ -314,11 +342,19 @@ public class ResourceContainer implements Serializable {
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            if (method.getDeclaringClass().equals(this.facetInterface)) {
-                return invokeInNewThreadWithLock(method, args);
-            } else {
-                // toString(), etc.
-                return invokeInCurrentThreadWithoutLock(method, args);
+            boolean callIsAsync = asynchronous.get();
+            try {
+                // Make sure we don't make a thread call asynchronous when its already been pushed into another
+                // thread farther up the stack
+                if (method.getDeclaringClass().equals(this.facetInterface) && !callIsAsync) {
+                    return invokeInNewThreadWithLock(method, args);
+                } else {
+                    // toString(), etc.
+                    return invokeInCurrentThreadWithoutLock(method, args);
+                }
+            } finally {
+                if (!callIsAsync)
+                    asynchronous.set(false);
             }
         }
 
@@ -326,7 +362,6 @@ public class ResourceContainer implements Serializable {
             ExecutorService threadPool = this.daemonThread ? DAEMON_THREAD_POOL : NON_DAEMON_THREAD_POOL;
             Callable invocationThread = new ComponentInvocationThread(this.container, method, args, this.lock);
             Future<?> future = threadPool.submit(invocationThread);
-            String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "()";
             String methodArgs = "[" + ((args != null) ? Arrays.asList(args) : "") + "]";
             try {
                 return future.get(this.timeout, TimeUnit.MILLISECONDS);
@@ -336,18 +371,26 @@ public class ResourceContainer implements Serializable {
                 if (this.daemonThread) {
                     future.cancel(true);
                 }
+                String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "()";
                 throw new RuntimeException("Call to " + methodName + " with args " + methodArgs + " was rudely interrupted.", e);
             }
             catch (ExecutionException e) {
-                LOG.debug("Call to " + methodName + " with args " + methodArgs + " failed.", e);
+                if (LOG.isDebugEnabled()) {
+                    String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "()";
+                    LOG.debug("Call to " + methodName + " with args " + methodArgs + " failed.", e);
+                }
                 throw e.getCause();
             }
             catch (java.util.concurrent.TimeoutException e) {
-                LOG.debug("Call to " + methodName + " with args " + methodArgs + " timed out. Interrupting the invocation thread...");
+                if (LOG.isDebugEnabled()) {
+                    String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "()";
+                    LOG.debug("Call to " + methodName + " with args " + methodArgs + " timed out. Interrupting the invocation thread...");
+                }
                 future.cancel(true);
                 if (LOG.isDebugEnabled()) {
                     LOG.debug(this.container.getFacetLockStatus());
                 }
+                String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "()";                
                 throw new TimeoutException("Call to " + methodName + " with args " + methodArgs + " timed out.");
             }
         }

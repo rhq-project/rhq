@@ -196,7 +196,7 @@ public class MeasurementDefinition implements Serializable {
     /**
      * Version for optimistic locking. Don't ever set this yourself
      */
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "UnusedDeclaration"})
     @Version
     private int version;
 

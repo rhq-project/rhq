@@ -167,7 +167,7 @@ public class MeasurementReport implements Externalizable {
             long timestamp = in.readLong();
             String stringValue = in.readUTF();
 
-            // this should never be null, but i'm paranoid
+            // This should never be null, but I'm paranoid
             if (stringValue == null) {
                 stringValue = "";
             }

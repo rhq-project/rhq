@@ -52,12 +52,12 @@ import javax.persistence.Table;
 @Table(name = "RHQ_MEASUREMENT_DATA_TRAIT")
 public class MeasurementDataTrait extends MeasurementData {
     /**
-     * Find current traits for a resoure in :resourceId that have a certain displayType in :displayType
+     * Find current traits for a resource in :resourceId that have a certain displayType in :displayType
      */
     public static final String FIND_CURRENT_FOR_RESOURCE_AND_DISPLAY_TYPE = "MeasurementDataTrait.FindCurrentForResourceAndDislayType";
 
     /**
-     * Find all current traits for a resoure in :resourceId
+     * Find all current traits for a resource in :resourceId
      */
     public static final String FIND_CURRENT_FOR_RESOURCE = "MeasurementDataTrait.FindCurrentForResource";
 

@@ -52,12 +52,12 @@ import javax.persistence.Table;
 @Table(name = "RHQ_MEASUREMENT_DATA_TRAIT")
 public class MeasurementDataTrait extends MeasurementData {
     /**
-     * Find current traits for a resource in :resourceId that have a certain displayType in :displayType
+     * Find current traits for a Resource in :resourceId that have a certain displayType in :displayType
      */
     public static final String FIND_CURRENT_FOR_RESOURCE_AND_DISPLAY_TYPE = "MeasurementDataTrait.FindCurrentForResourceAndDislayType";
 
     /**
-     * Find all current traits for a resource in :resourceId
+     * Find all current traits for a Resource in :resourceId
      */
     public static final String FIND_CURRENT_FOR_RESOURCE = "MeasurementDataTrait.FindCurrentForResource";
 
@@ -75,11 +75,13 @@ public class MeasurementDataTrait extends MeasurementData {
     public static final String QUERY_DELETE_BY_RESOURCES = "MeasurementDataTrait.deleteByResources";
 
     /*
-     * each time this is called, it will delete the oldest datum for each group of 
-     * data identified by schedule_id that has more than one element in it; so, this
+     * Each time this is called, it will delete the oldest datum for each group of
+     * data identified by schedule_id that has more than one element in it; so this
      * query should be called in the purge job until it returns zero.
      *
-     * NOTE: Avoid using the AS keyword in this query, because Oracle barfs on it.
+     * NOTE: Avoid using the AS keyword in the FROM clauses in this query, because Oracle barfs on it
+     *       (see http://download.oracle.com/docs/cd/B19306_01/server.102/b14200/ap_standard_sql003.htm, subfeature id
+     *       E051-08).
      */
     public static final String NATIVE_QUERY_PURGE = "" + // 
         "DELETE FROM rhq_measurement_data_trait t " + //

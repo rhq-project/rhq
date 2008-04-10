@@ -134,6 +134,8 @@ case "`uname`" in
             ;;
    Darwin*) _DARWIN=true
             ;;
+   SunOS*) _SOLARIS=true
+            ;;
 esac
 
 # ----------------------------------------------------------------------
@@ -322,12 +324,21 @@ case "$1" in
         fi
 
         echo Stopping RHQ Server...
+        
+        if [ "x$_SOLARIS" != "x" ]; then
+        	kill -TERM `cat ${RHQ_SERVER_HOME}/jbossas/.jboss_pid`
+        	sleep 3
+        fi
 
         echo "RHQ Server (pid=${PID}) is stopping..."
 
         while [ "$RUNNING" = "1"  ]; do
            kill -TERM $PID
            sleep 2
+           if [ "x$_SOLARIS" != "x" ]; then
+               kill -9 $PID
+               sleep 2
+           fi
            check_status
         done
 

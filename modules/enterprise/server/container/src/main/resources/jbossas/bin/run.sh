@@ -229,6 +229,7 @@ while true; do
          -classpath "$JBOSS_CLASSPATH" \
          org.jboss.Main "$@" &
       JBOSS_PID=$!
+      echo $JBOSS_PID > $JBOSS_HOME/.jboss_pid 
       # Trap common signals and relay them to the background JBossAS process
       trap "kill -HUP  $JBOSS_PID" HUP
       trap "kill -TERM $JBOSS_PID" INT

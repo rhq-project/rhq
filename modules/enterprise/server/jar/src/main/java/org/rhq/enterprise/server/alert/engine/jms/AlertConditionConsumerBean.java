@@ -79,8 +79,15 @@ public final class AlertConditionConsumerBean implements MessageListener {
 
         AlertDefinition definition = null;
         try {
+            log.debug("Received message: " + conditionMessage);
+
             Integer alertConditionId = conditionMessage.getAlertConditionId();
             AlertCondition condition = alertConditionManager.getAlertConditionById(alertConditionId);
+            if (condition == null) {
+                log.info("AlertCondition[id=" + alertConditionId
+                    + "] has been removed after it was triggered; this message will be discarded");
+                return;
+            }
             definition = condition.getAlertDefinition();
 
             AlertSerializer.getSingleton().lock(definition.getId());
@@ -89,7 +96,6 @@ public final class AlertConditionConsumerBean implements MessageListener {
              * note that ctime is the time when the condition was known to be true, not the time we're persisting the
              * condition log message
              */
-            log.debug("Received message: " + conditionMessage);
             if (conditionMessage instanceof ActiveAlertConditionMessage) {
                 ActiveAlertConditionMessage activeConditionMessage = (ActiveAlertConditionMessage) conditionMessage;
 
@@ -111,7 +117,7 @@ public final class AlertConditionConsumerBean implements MessageListener {
                     + message.getClass().getSimpleName());
             }
         } catch (Exception e) {
-            log.error("Error persisting to alerts condition log", e);
+            log.error("Error handling " + conditionMessage + " - " + e.toString());
         } finally {
             if (definition != null) {
                 AlertSerializer.getSingleton().unlock(definition.getId());

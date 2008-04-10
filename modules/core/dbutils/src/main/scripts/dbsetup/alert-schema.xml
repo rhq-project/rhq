@@ -102,7 +102,10 @@
         <column name="ALERT_ID" required="false" type="INTEGER" references="RHQ_ALERT(ID)"/>
         <column name="CONDITION_ID" required="true" type="INTEGER" references="RHQ_ALERT_CONDITION(ID)"/>
         <column name="VALUE" required="false" size="250" type="VARCHAR2"/>
-        <index name="RHQ_ALERT_COND_LOG_IDX">
+        <index name="RHQ_ALERT_COND_LOG_IDX_TIME">
+            <field ref="CTIME" />
+        </index>
+        <index name="RHQ_ALERT_COND_LOG_IDX_ALERT">
             <field ref="ALERT_ID"/>
         </index>
     </table>

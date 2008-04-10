@@ -20,6 +20,7 @@ package org.rhq.core.domain.alert.notification;
 
 import java.io.Serializable;
 import java.util.Set;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -30,18 +31,29 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
 
 @Entity
-@NamedQueries( { @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_ORPHANED, query = "DELETE AlertNotificationLog anl "
-    + " WHERE anl.id NOT IN " + "   ( SELECT a.alertNotificationLog " + "       FROM Alert a " + "   )") })
+@NamedQueries( {
+    @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_ALERT_CTIME, //
+    query = "DELETE AlertNotificationLog anl " + //
+        "     WHERE anl.id IN ( SELECT a.alertNotificationLog.id " + //
+        "                         FROM Alert a " + //
+        "                        WHERE a.ctime BETWEEN :begin AND :end )"),
+    @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCE, //
+    query = "DELETE AlertNotificationLog anl " + //
+        "     WHERE anl.id IN ( SELECT a.alertNotificationLog.id " + //
+        "                         FROM Alert a " + //
+        "                        WHERE a.alertDefinition.resource.id = :resourceId )") })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIF_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIF_LOG")
 public class AlertNotificationLog implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_DELETE_ORPHANED = "AlertNotificationLog.deleteOrphaned";
+    public static final String QUERY_DELETE_BY_RESOURCE = "AlertNotificationLog.deleteByResource";
+    public static final String QUERY_DELETE_BY_ALERT_CTIME = "AlertNotificationLog.deleteByAlertCtime";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")

@@ -59,6 +59,7 @@ import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.engine.internal.Tuple;
 import org.rhq.enterprise.server.alert.engine.jms.CachedConditionProducerLocal;
+import org.rhq.enterprise.server.alert.engine.mbean.AlertConditionCacheMonitor;
 import org.rhq.enterprise.server.alert.engine.model.AbstractCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.AlertConditionOperator;
 import org.rhq.enterprise.server.alert.engine.model.AvailabilityCacheElement;
@@ -457,6 +458,9 @@ public class AlertConditionCache {
                 }
             }
 
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementMatches(stats.matched);
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementProcessingTime(stats.getAge());
+            log.debug("Check Measurements[size=" + measurementData.length + "] - " + stats);
             return stats;
         } finally {
             rwLock.readLock().unlock();
@@ -485,6 +489,9 @@ public class AlertConditionCache {
                     + operationHistory.getClass().getSimpleName() + " types");
             }
 
+            AlertConditionCacheMonitor.getMBean().incrementOperationCacheElementMatches(stats.matched);
+            AlertConditionCacheMonitor.getMBean().incrementOperationProcessingTime(stats.getAge());
+            log.debug("Check OperationHistory[size=1] - " + stats);
             return stats;
         } finally {
             rwLock.readLock().unlock();
@@ -509,6 +516,9 @@ public class AlertConditionCache {
                     .getDetail());
             }
 
+            AlertConditionCacheMonitor.getMBean().incrementEventCacheElementMatches(stats.matched);
+            AlertConditionCacheMonitor.getMBean().incrementEventProcessingTime(stats.getAge());
+            log.debug("Check Events[size=" + events.length + "] - " + stats);
             return stats;
         } finally {
             rwLock.readLock().unlock();
@@ -534,6 +544,9 @@ public class AlertConditionCache {
                 processCacheElements(cacheElements, availabilityType, availability.getStartTime().getTime(), stats);
             }
 
+            AlertConditionCacheMonitor.getMBean().incrementAvailabilityCacheElementMatches(stats.matched);
+            AlertConditionCacheMonitor.getMBean().incrementAvailabilityProcessingTime(stats.getAge());
+            log.debug("Check Availability[size=" + availabilities.length + "] - " + stats);
             return stats;
         } finally {
             rwLock.readLock().unlock();
@@ -991,6 +1004,7 @@ public class AlertConditionCache {
                 log.info("Failed to create NumericDoubleCacheElement with parameters: "
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, calculatedValue));
             }
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
         } else if (alertConditionCategory == AlertConditionCategory.CHANGE) {
             Integer measurementScheduleId = getMeasurementScheduleId(resource.getId(), measurementDefinition.getId(),
                 true);
@@ -1010,6 +1024,7 @@ public class AlertConditionCache {
                 log.info("Failed to create NumericDoubleCacheElement with parameters: "
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, measurementData));
             }
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
         } else if (alertConditionCategory == AlertConditionCategory.TRAIT) {
             Integer measurementScheduleId = getMeasurementScheduleId(resource.getId(), measurementDefinition.getId(),
                 true);
@@ -1029,6 +1044,7 @@ public class AlertConditionCache {
                 log.info("Failed to create StringCacheElement with parameters: "
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, measurementData));
             }
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
         } else if (alertConditionCategory == AlertConditionCategory.AVAILABILITY) {
             /*
              * This is a hack, because we're not respecting the persist alertCondition option, we're instead overriding
@@ -1050,6 +1066,7 @@ public class AlertConditionCache {
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator,
                         alertConditionOperatorOption, AvailabilityType.UP));
             }
+            AlertConditionCacheMonitor.getMBean().incrementAvailabilityCacheElementCount(stats.created - stats.deleted);
         } else if (alertConditionCategory == AlertConditionCategory.CONTROL) {
             String option = alertCondition.getOption();
             OperationRequestStatus operationRequestStatus = OperationRequestStatus.valueOf(option.toUpperCase());
@@ -1080,6 +1097,7 @@ public class AlertConditionCache {
                         + getCacheElementErrorString(alertConditionId, alertConditionOperator, null,
                             operationRequestStatus));
             }
+            AlertConditionCacheMonitor.getMBean().incrementOperationCacheElementCount(stats.created - stats.deleted);
         } else if (alertConditionCategory == AlertConditionCategory.THRESHOLD) {
             Double thresholdValue = alertCondition.getThreshold();
 
@@ -1101,6 +1119,7 @@ public class AlertConditionCache {
                     log.error("Missing schedule prevents element from being cached: " + cacheElement);
                 }
             }
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
         } else if (alertConditionCategory == AlertConditionCategory.EVENT) {
             EventSeverity eventSeverity = EventSeverity.valueOf(alertCondition.getName());
             String eventDetails = alertCondition.getOption();
@@ -1121,6 +1140,7 @@ public class AlertConditionCache {
             }
 
             addTo("eventsCache", eventsCache, resource.getId(), cacheElement, alertConditionId, stats);
+            AlertConditionCacheMonitor.getMBean().incrementEventCacheElementCount(stats.created - stats.deleted);
         }
     }
 

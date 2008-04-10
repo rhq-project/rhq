@@ -9,6 +9,6 @@
           name="rhq:service=MeasurementMonitor"/>
 
    <mbean code="org.rhq.enterprise.server.alert.engine.mbean.AlertConditionCacheMonitor"
-          name="rhq:service=AlertConditionCache"/>
+          name="rhq:service=AlertConditionCacheMonitor"/>
 
 </server>

@@ -161,18 +161,37 @@ public class AlertManagerBean implements AlertManagerLocal {
          * Since JPQL doesn't enforce cascade options, we need to delete the logs first and then the corresponding
          * Alerts
          */
+        long totalTime = 0L;
+
+        long start = System.currentTimeMillis();
         Query query = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_RESOURCE);
         query.setParameter("resourceId", resourceId);
-        int deletedLogs = query.executeUpdate();
+        int deletedConditionLogs = query.executeUpdate();
+        long end = System.currentTimeMillis();
+        totalTime += (end - start);
+        log.debug("Performance: Deleted [" + deletedConditionLogs + "] AlertConditionLogs in [" + (end - start)
+            + "]ms for resourceId[" + resourceId + "]");
 
+        start = System.currentTimeMillis();
+        query = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_BY_RESOURCE);
+        query.setParameter("resourceId", resourceId);
+        int deletedNotifications = query.executeUpdate();
+        end = System.currentTimeMillis();
+        totalTime += (end - start);
+        log.debug("Performance: Deleted [" + deletedNotifications + "] AlertNotificationLogs in [" + (end - start)
+            + "]ms for resourceId[" + resourceId + "]");
+
+        start = System.currentTimeMillis();
         query = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_RESOURCE);
         query.setParameter("resourceId", resourceId);
         int deletedAlerts = query.executeUpdate();
+        end = System.currentTimeMillis();
+        totalTime += (end - start);
+        log.debug("Performance: Deleted [" + deletedAlerts + "] Alerts in [" + (end - start) + "]ms for resourceId["
+            + resourceId + "]");
 
-        if (deletedLogs > 0 || deletedAlerts > 0) {
-            query = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_ORPHANED);
-            query.executeUpdate();
-        }
+        log.debug("Performance: Deleted [" + (deletedConditionLogs + deletedNotifications + deletedAlerts)
+            + "] alert audit entities in [" + (totalTime) + "]ms for resourceId[" + resourceId + "]");
 
         return deletedAlerts;
     }
@@ -183,22 +202,38 @@ public class AlertManagerBean implements AlertManagerLocal {
     // gonna use bulk delete, make sure we are in new tx to not screw up caller's hibernate session
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public int deleteAlerts(long beginTime, long endTime) {
+        long totalTime = 0;
+
         long start = System.currentTimeMillis();
         Query query = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_ALERT_CTIME);
         query.setParameter("begin", beginTime);
         query.setParameter("end", endTime);
         int conditionsDeleted = query.executeUpdate();
+        long end = System.currentTimeMillis();
+        log.debug("Performance: Deleted [" + conditionsDeleted + "] alert condition logs in [" + (end - start) + "]ms");
+        totalTime += (end - start);
 
+        start = System.currentTimeMillis();
         query = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_CTIME);
         query.setParameter("begin", beginTime);
         query.setParameter("end", endTime);
         int deletedAlerts = query.executeUpdate();
+        end = System.currentTimeMillis();
+        log.debug("Performance: Deleted [" + deletedAlerts + "] alerts in [" + (end - start) + "]ms");
+        totalTime += (end - start);
 
-        query = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_ORPHANED);
+        start = System.currentTimeMillis();
+        query = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_BY_ALERT_CTIME);
+        query.setParameter("begin", beginTime);
+        query.setParameter("end", endTime);
         int deletedNotifications = query.executeUpdate();
+        end = System.currentTimeMillis();
+        log.debug("Performance: Deleted [" + deletedNotifications + "] alert notifications in [" + (end - start)
+            + "]ms");
+        totalTime += (end - start);
 
-        log.info("Delete [" + deletedAlerts + "] alerts, [" + conditionsDeleted + "] conditions, and ["
-            + deletedNotifications + "] notifications in [" + (System.currentTimeMillis() - start) + "]ms");
+        log.debug("Deleted [" + (deletedAlerts + conditionsDeleted + deletedNotifications) + "] "
+            + "alert audit records in [" + (totalTime) + "]ms");
 
         return deletedAlerts;
     }

@@ -27,6 +27,7 @@ public class AlertConditionCacheStats {
     public int updated;
     public int deleted;
     public int matched;
+    private long bourneTime = System.currentTimeMillis();
 
     public void add(AlertConditionCacheStats stats) {
         this.created += stats.created;
@@ -35,9 +36,13 @@ public class AlertConditionCacheStats {
         this.matched += stats.matched;
     }
 
+    public long getAge() {
+        return (System.currentTimeMillis() - bourneTime);
+    }
+
     @Override
     public String toString() {
         return (getClass().getSimpleName() + "[ " + "created=" + created + ", " + "updated=" + updated + ", "
-            + "deleted=" + deleted + ", " + "matched=" + matched + " ]");
+            + "deleted=" + deleted + ", " + "matched=" + matched + ", age=" + getAge() + "ms ]");
     }
 }

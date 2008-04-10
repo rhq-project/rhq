@@ -3188,6 +3188,7 @@
               type="org.rhq.enterprise.gui.legacy.action.resource.common.events.EventsFormPrepareAction">
          <set-property property="title" value="View+Events"/>
     <!--      <forward name="success" path="/resource/common/events/Events.do?mode=events"/>  -->
+         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" />
       </action>
 
       <action path="/resource/common/events/Events"

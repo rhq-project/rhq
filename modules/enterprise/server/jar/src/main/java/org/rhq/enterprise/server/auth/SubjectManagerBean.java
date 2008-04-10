@@ -194,8 +194,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         // we are ignoring roles - anything the caller gave us is thrown out
         subject.setRoles(null);
         Configuration configuration = subject.getUserConfiguration();
-        configuration = entityManager.merge(configuration);
-        subject.setUserConfiguration(configuration);
+        if (configuration != null) {
+            configuration = entityManager.merge(configuration);
+            subject.setUserConfiguration(configuration);
+        }
 
         entityManager.persist(subject);
 

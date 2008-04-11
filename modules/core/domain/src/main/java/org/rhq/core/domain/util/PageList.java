@@ -55,7 +55,7 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
         this.totalSize = totalSize;
         if (collection.size() == 0 && totalSize > 0) {
             throw new IllegalArgumentException(
-                "Can not create a PageList from an empty collection whose totalSize is non-zero");
+                "Can not create a PageList passing an empty collection when the passed totalSize attribute was non-zero");
         }
         this.isUnbounded = false;
         this.pageControl = pageControl;

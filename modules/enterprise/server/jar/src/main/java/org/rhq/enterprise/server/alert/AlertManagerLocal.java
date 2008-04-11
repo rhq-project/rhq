@@ -59,7 +59,7 @@ public interface AlertManagerLocal {
         PageControl pageControl);
 
     // dateFilter is nullable
-    PageList<Alert> findAlerts(int resourceId, Date dateFilter, PageControl pc);
+    PageList<Alert> findAlerts(int resourceId, Integer alertDefinitionId, Date dateFilter, PageControl pc);
 
     void fireAlert(int alertDefinitionId);
 

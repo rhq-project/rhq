@@ -27,7 +27,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.legacy.WebUser;
 
-public abstract class PagedDataTableUIBean {
+public abstract class PagedDataTableUIBean extends EnterpriseFacesContextUIBean {
     private PageControl pageControl;
     protected DataModel dataModel;
     private UIDataTable dataTable;

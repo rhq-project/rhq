@@ -28,14 +28,18 @@
                <h:outputText value="Alerts"/>
             </f:facet>
 
-            <h:panelGrid columns="2" width="90%" style="min-width: 800px;">
-               <h:panelGrid columns="4" cellspacing="3" style="float: left;">
-                  <h:outputLabel for="dateFilter" value="Date Filter: " />
-                  <h:inputText id="dateFilter" value="#{ListAlertHistoryUIBean.dateFilter}" />
-                  <a4j:commandButton value="GO" reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
-                                     styleClass="buttonmed"/>
-                  <h:outputText id="dateErrors" value="#{ListAlertHistoryUIBean.dateErrors}" />
-               </h:panelGrid>
+            <h:panelGrid columns="4" cellspacing="3" style="float: left;">
+               <h:outputLabel for="dateFilter" value="Date Filter: " />
+               <h:inputText id="dateFilter" value="#{ListAlertHistoryUIBean.dateFilter}" />
+               <a4j:commandButton value="GO" reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
+                                  styleClass="buttonmed"/>
+               <h:outputText id="dateErrors" value="#{ListAlertHistoryUIBean.dateErrors}" />
+               <h:outputLabel for="alertDefinitionFilter" value="Alert Definition Filter: " />
+               <h:selectOneMenu id="alertDefinitionFilter" value="#{ListAlertHistoryUIBean.alertDefinitionFilter}">
+                   <a4j:support event="onchange" reRender="alertHistoryDataTable, alertHistoryDataTableScroller"/>
+                      
+                   <f:selectItems value="#{ListAlertHistoryUIBean.alertDefinitionSelectItems}"/>
+               </h:selectOneMenu>
             </h:panelGrid>
 
             <h:panelGrid columns="1" width="90%" style="min-width: 800px;">

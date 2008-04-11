@@ -381,7 +381,8 @@ public class AlertManagerBean implements AlertManagerLocal {
      * Get a page list of alerts for the resource with the specified appdef id.
      */
     @SuppressWarnings("unchecked")
-    public PageList<Alert> findAlerts(int resourceId, Date dateFilter, PageControl pageControl) {
+    public PageList<Alert> findAlerts(int resourceId, Integer alertDefinitionId, Date dateFilter,
+        PageControl pageControl) {
         pageControl.initDefaultOrderingField("a.ctime", PageOrdering.DESC);
 
         String queryStr = ((dateFilter == null) ? Alert.QUERY_FIND_BY_RESOURCE : Alert.QUERY_FIND_BY_RESOURCE_DATED);
@@ -401,6 +402,9 @@ public class AlertManagerBean implements AlertManagerLocal {
             query.setParameter("startDate", dateFilter.getTime());
             query.setParameter("endDate", nextDay.getTime());
         }
+
+        queryCount.setParameter("alertDefinitionId", alertDefinitionId);
+        query.setParameter("alertDefinitionId", alertDefinitionId);
 
         long totalCount = (Long) queryCount.getSingleResult();
 

@@ -27,6 +27,7 @@ import java.util.List;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log;
@@ -37,17 +38,20 @@ import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.composite.AlertWithLatestConditionLog;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.StringUtility;
+import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -62,7 +66,12 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
     private Resource resource;
     private String dateFilter;
     private String dateErrors;
+
+    private String alertDefinitionFilter;
+    private SelectItem[] alertDefinitionSelectItems;
+
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
+    private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
 
     public ListAlertHistoryUIBean() {
     }
@@ -89,6 +98,31 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public void setDateErrors(String dateErrors) {
         this.dateErrors = dateErrors;
+    }
+
+    public String getAlertDefinitionFilter() {
+        if (alertDefinitionFilter == null) {
+            alertDefinitionFilter = SelectItemUtils.getSelectItemFilter("alertHistoryForm:alertDefinitionFilter");
+        }
+        return SelectItemUtils.cleanse(alertDefinitionFilter);
+    }
+
+    public void setAlertDefinitionFilter(String alertDefinitionFilter) {
+        this.alertDefinitionFilter = alertDefinitionFilter;
+    }
+
+    public SelectItem[] getAlertDefinitionSelectItems() {
+        if (alertDefinitionSelectItems == null) {
+            List<IntegerOptionItem> optionItems = alertDefinitionManager.getAlertDefinitionOptionItems(getSubject(),
+                getResource().getId());
+            alertDefinitionSelectItems = SelectItemUtils.convertFromListOptionItem(optionItems, true);
+        }
+
+        return alertDefinitionSelectItems;
+    }
+
+    public void setAlertDefinitionSelectItems(SelectItem[] alertDefinitionSelectItems) {
+        this.alertDefinitionSelectItems = alertDefinitionSelectItems;
     }
 
     public String deleteSelectedAlerts() {
@@ -165,7 +199,9 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
                 }
             }
 
-            PageList<Alert> alerts = manager.findAlerts(requestResource.getId(), date, pc);
+            Integer alertDefinitionId = getAlertDefinitionId();
+
+            PageList<Alert> alerts = manager.findAlerts(requestResource.getId(), alertDefinitionId, date, pc);
 
             List<AlertWithLatestConditionLog> results = new ArrayList<AlertWithLatestConditionLog>(alerts.size());
 
@@ -193,6 +229,14 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
             return new PageList<AlertWithLatestConditionLog>(results, alerts.getTotalSize(), pc);
         }
+    }
+
+    private Integer getAlertDefinitionId() {
+        String alertDefinitionString = getAlertDefinitionFilter();
+        if (alertDefinitionString != null) {
+            return Integer.parseInt(alertDefinitionString);
+        }
+        return null;
     }
 
     private String[] getSelectedAlerts() {

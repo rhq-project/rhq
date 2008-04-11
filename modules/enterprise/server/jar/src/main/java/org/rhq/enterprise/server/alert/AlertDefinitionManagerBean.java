@@ -38,6 +38,7 @@ import org.rhq.core.domain.alert.AlertDampeningEvent;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
@@ -135,6 +136,25 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         }
 
         return alertDefinition;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<IntegerOptionItem> getAlertDefinitionOptionItems(Subject user, int resourceId) {
+        PageControl pageControl = PageControl.getUnlimitedInstance();
+        pageControl.initDefaultOrderingField("ad.name", PageOrdering.ASC);
+
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager,
+            AlertDefinition.QUERY_FIND_OPTION_ITEMS_BY_RESOURCE);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            AlertDefinition.QUERY_FIND_OPTION_ITEMS_BY_RESOURCE, pageControl);
+
+        queryCount.setParameter("resourceId", resourceId);
+        query.setParameter("resourceId", resourceId);
+
+        long totalCount = (Long) queryCount.getSingleResult();
+        List<IntegerOptionItem> list = query.getResultList();
+
+        return new PageList<IntegerOptionItem>(list, (int) totalCount, pageControl);
     }
 
     public int createAlertDefinition(Subject user, AlertDefinition alertDefinition, Integer resourceId)

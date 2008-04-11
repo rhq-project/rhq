@@ -24,6 +24,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -39,6 +40,8 @@ public interface AlertDefinitionManagerLocal {
     PageList<AlertDefinition> getAlertDefinitions(Subject user, int resourceId, PageControl pageControl);
 
     AlertDefinition getAlertDefinitionById(Subject user, int alertDefinitionId);
+
+    List<IntegerOptionItem> getAlertDefinitionOptionItems(Subject user, int resourceId);
 
     int createAlertDefinition(Subject user, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException;

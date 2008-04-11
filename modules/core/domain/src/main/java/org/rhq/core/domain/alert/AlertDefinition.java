@@ -23,7 +23,25 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -53,6 +71,11 @@ import org.rhq.core.domain.resource.ResourceType;
         + "                        FROM res.alertDefinitions ad "
         + "                       WHERE ad.parentId = :alertTemplateId "
         + "                             AND ad.deleted = FALSE ) )"),
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_OPTION_ITEMS_BY_RESOURCE, //
+    query = "SELECT new org.rhq.core.domain.common.composite.IntegerOptionItem(ad.id, ad.name) " //
+        + "    FROM AlertDefinition ad " //
+        + "   WHERE ad.resource.id = :resourceId " //
+        + "     AND ad.deleted = false"),
     @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE, query = "SELECT a " + "  FROM AlertDefinition a "
         + " WHERE a.resource.id = :id " + "       AND a.deleted = false"),
     @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE_TYPE, query = "SELECT a " + "  FROM AlertDefinition a "
@@ -68,6 +91,7 @@ public class AlertDefinition implements Serializable {
     public static final String QUERY_FIND_ALL_BY_RECOVERY_DEFINITION_ID = "AlertDefinition.findAllByRecoveryDefinitionId";
     public static final String QUERY_FIND_BY_ALERT_TEMPLATE_ID = "AlertDefinition.findByAlertTemplateId";
     public static final String QUERY_FIND_RESOURCE_IDS_WITH_NO_ACTIVE_TEMPLATE_DEFINITION = "AlertDefinition.findResourceIdsWithNoDefinition";
+    public static final String QUERY_FIND_OPTION_ITEMS_BY_RESOURCE = "AlertDefinition.findOptionItemsByResource";
     public static final String QUERY_FIND_BY_RESOURCE = "AlertDefinition.findByResource";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE = "AlertDefinition.findByResourceType";
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertDefinition.deleteByResources";
@@ -445,7 +469,6 @@ public class AlertDefinition implements Serializable {
         this.operationDefinition = operationDefinition;
     }
 
-
     public Set<AlertDampeningEvent> getAlertDampeningEvents() {
         return alertDampeningEvents;
     }
@@ -489,7 +512,7 @@ public class AlertDefinition implements Serializable {
 
     @Override
     public String toString() {
-       return "org.rhq.core.domain.alert.AlertDefinition" + "[ " + "id=" + id + ", " + "name=" + name + ", "
+        return "org.rhq.core.domain.alert.AlertDefinition" + "[ " + "id=" + id + ", " + "name=" + name + ", "
             + "conditionExpression=" + conditionExpression + ", " + "priority=" + priority + ", "
             + ((resource != null) ? ("resourceId=" + resource.getId()) : "")
             + ((resourceType != null) ? ("resourceTypeId=" + resourceType.getId()) : "") + " ]";

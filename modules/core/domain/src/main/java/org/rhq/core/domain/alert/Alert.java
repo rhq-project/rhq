@@ -59,8 +59,11 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "  JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s " + " WHERE s.id = :subjectId "
         + "   AND a.ctime >= :startDate " + "   AND ( :priority = a.alertDefinition.priority OR :priority IS NULL ) "
         + "   AND res.id IN ( :resourceIds )"),
-    @NamedQuery(name = Alert.QUERY_FIND_BY_RESOURCE, query = "SELECT a " + "FROM Alert AS a "
-        + "WHERE a.alertDefinition.resource.id = :id"),
+    @NamedQuery(name = Alert.QUERY_FIND_BY_RESOURCE, //
+    query = "SELECT a " // 
+        + "    FROM Alert AS a "
+        + "   WHERE a.alertDefinition.resource.id = :id "
+        + "     AND (a.alertDefinition.id = :alertDefinitionId OR :alertDefinitionId IS NULL) "),
     @NamedQuery(name = Alert.QUERY_FIND_BY_MEASUREMENT_DEFINITION_ID, query = "SELECT a " + "  FROM Alert AS a "
         + "  JOIN a.alertDefinition definition " + "  JOIN definition.conditions condition "
         + " WHERE condition.measurementDefinition.id = :measurementDefinitionId "
@@ -74,8 +77,12 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "  JOIN aDef.resource res" + "  JOIN condition.measurementDefinition mDef " + "  JOIN mDef.schedules sched"
         + " WHERE sched.definition = mDef.id" + "   AND sched.resource = res " + "   AND sched.id IN (:schedIds) "
         + "   AND (a.ctime BETWEEN :startDate AND :endDate)" + "GROUP BY sched.id"),
-    @NamedQuery(name = Alert.QUERY_FIND_BY_RESOURCE_DATED, query = "SELECT a " + "FROM Alert AS a "
-        + "WHERE a.alertDefinition.resource.id = :id " + "AND (a.ctime BETWEEN :startDate AND :endDate)"),
+    @NamedQuery(name = Alert.QUERY_FIND_BY_RESOURCE_DATED, //
+    query = "SELECT a " //
+        + "    FROM Alert AS a "
+        + "   WHERE a.alertDefinition.resource.id = :id "
+        + "     AND (a.alertDefinition.id = :alertDefinitionId OR :alertDefinitionId IS NULL) "
+        + "     AND (a.ctime BETWEEN :startDate AND :endDate)"),
     @NamedQuery(name = Alert.QUERY_FIND_ALL, query = "SELECT a FROM Alert AS a"),
     @NamedQuery(name = Alert.QUERY_DELETE_BY_CTIME, query = "DELETE FROM Alert AS a WHERE a.ctime BETWEEN :begin AND :end"),
     @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCE, query = "DELETE Alert AS alert " + "WHERE alert.id IN "

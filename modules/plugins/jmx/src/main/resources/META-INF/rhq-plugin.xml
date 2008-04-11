@@ -63,11 +63,6 @@
 
       </plugin-configuration>
 
-      <!-- Constituted services -->
-      <!--<service name="Virtual Machine" type="virtual">
-         <metric property="Operating System" displayName="Free Memory"/>
-      </service>-->
-
       <!-- JVM level services (One service per mbean) -->
       <service name="Operating System" discovery="MBeanResourceDiscoveryComponent" class="MBeanResourceComponent"
                createDeletePolicy="neither" singleton="true">
@@ -77,10 +72,7 @@
             <c:simple-property name="descriptionTemplate" default="Operating system information provided by the JVM."/>
 
          </plugin-configuration>
-         <!--<components>
-            <component type="measurement" class="JMXMeasurementComponent"/>
-            <component type="control" class="JMXControlComponent"/>
-         </components>-->
+
 
          <metric displayName="Free Physical Memory"
                  defaultOn="true"
@@ -166,15 +158,6 @@
                  property="DaemonThreadCount"
                  description="Count of threads marked as daemons in the system"/>
 
-         <!-- complex data not yet supported
-         <metric displayName="Thread Data"
-                 dataType="complex"
-                 defaultOn="false"
-                 category="performance"
-                 property="ThreadData"
-                 description="Detailed thread information"/>-->
-                 <!--class="ThreadDataMeasurementComponent"-->
-
          <resource-configuration>
             <c:simple-property name="ThreadContentionMonitoringEnabled" type="boolean"/>
             <c:simple-property name="ThreadCpuTimeEnabled" type="boolean"/>
@@ -196,6 +179,11 @@
          <metric displayName="Heap Usage" property="{HeapMemoryUsage.used}" displayType="summary" description="Current heap memory usage" units="bytes"/>
          <metric displayName="Non-Heap Usage" property="{NonHeapMemoryUsage.used}" displayType="summary" description="Current memory usage outside the heap" units="bytes"/>
          <metric displayName="Objects Pending Finalization" property="ObjectPendingFinalizationCount" description="The approximate number of objects for which finalization is pending."/>
+
+         <resource-configuration>
+             <c:simple-property name="Verbose" type="boolean" description="Output verbose information to the output stream to regarding Memory. Typically, a Java virtual machine implementation prints a message when it frees memory through garbage collection."/>
+         </resource-configuration>
+
 
          <service name="Memory Pool" discovery="MBeanResourceDiscoveryComponent" class="MBeanResourceComponent"
             description="A memory pool represents the memory resource managed by the Java virtual machine and is managed by one or more memory managers.">
@@ -241,7 +229,7 @@
             <c:simple-property name="objectName" readOnly="true" default="java.lang:type=Compilation"/>
             <c:simple-property name="nameTemplate" default="Compilation"/>
          </plugin-configuration>
-         <metric property="TotalCompilationTime" 
+         <metric property="TotalCompilationTime"
             displayType="summary"
             description="The approximate accumulated elapsed time spent in compilation"
             units="milliseconds"/>
@@ -290,9 +278,6 @@
                </c:map-property>
             </c:list-property>
          </resource-configuration>
-
       </service>
-
-
    </server>
 </plugin>

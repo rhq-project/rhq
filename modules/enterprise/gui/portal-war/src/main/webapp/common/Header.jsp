@@ -40,7 +40,7 @@
         |           
         <html:link page="/Admin.do"><fmt:message key="admin.admin.AdministrationTitle"/></html:link>
         |
-        <html:link href="" onclick="window.open('${helpBaseURL}Users+Guide','help','width=940,height=730,scrollbars=yes,toolbar=yes,left=40,top=40,resizable=yes'); return false;"><fmt:message key="header.help.link"/></html:link>
+        <html:link href="" onclick="window.open('${helpBaseURL}','help','width=940,height=730,scrollbars=yes,toolbar=yes,left=40,top=40,resizable=yes'); return false;"><fmt:message key="header.help.link"/></html:link>
         |
         <html:link page="/Logout.do"><fmt:message key="header.logout.link"/></html:link>
         </div>

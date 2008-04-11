@@ -459,7 +459,7 @@
                    </execution>
                  </executions>
                  <configuration>
-                   <doCheck>true</doCheck>
+                   <doCheck>false</doCheck>
                    <doUpdate>true</doUpdate>
                  </configuration>
               </plugin>

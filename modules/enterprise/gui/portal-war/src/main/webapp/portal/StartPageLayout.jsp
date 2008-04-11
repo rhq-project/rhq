@@ -55,9 +55,9 @@
 		<li class="category" id="solution"><fmt:message key="start.category.Solutions.title"/></li>
 		<li class="items">
 				<ul class="pipe">
-					<li class="first"><html:link target="_blank" href="${helpBaseURL}Users+Guide"><fmt:message key="start.category.Solutions.item.helpContents"/></html:link></li>
-					<li><html:link target="_blank" href="${helpBaseURL}Console+Reference"><fmt:message key="start.category.Solutions.item.consoleReference"/></html:link></li>
-					<li><html:link target="_blank" href="https://network.jboss.com/jbossnetwork/restricted/addCase.html"><fmt:message key="start.category.Solutions.item.openCase"/></html:link></li>
+					<li class="first"><html:link target="_blank" href="${helpBaseURL}"><fmt:message key="start.category.Solutions.item.helpContents"/></html:link></li>
+					<%--<li><html:link target="_blank" href="${helpBaseURL}Console+Reference"><fmt:message key="start.category.Solutions.item.consoleReference"/></html:link></li>--%>
+					<li><html:link target="_blank" href="https://support.redhat.com/jbossnetwork/restricted/addCase.html"><fmt:message key="start.category.Solutions.item.openCase"/></html:link></li>
 				</ul>
 		</li>
 

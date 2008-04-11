@@ -151,7 +151,7 @@ groupWidgetProperties = getWidgetProperties('<c:out value="${groupWidgetInstance
       <display:checkboxdecorator name="g" onclick="ToggleSelection(this, groupWidgetProperties, true)" styleClass="listMember"/>
     </display:column>
   </c:if>
-  <display:column width="25%" property="name" href="/resource/group/Inventory.do?mode=view&groupId=${group.id}" title="common.header.Group"
+  <display:column width="25%" property="name" href="/rhq/group/inventory/view.xhtml?category=${group.groupCategory.name}&groupId=${group.id}" title="common.header.Group"
                   sortAttr="r.name"/>
   <display:column width="75%" property="description" title="common.header.Description"/>
 </display:table>

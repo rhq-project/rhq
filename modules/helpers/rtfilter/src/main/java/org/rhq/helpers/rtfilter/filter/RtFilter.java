@@ -163,7 +163,7 @@ public class RtFilter implements Filter {
                 String logFileName = this.logFilePrefix + this.contextName + "_rt.log";
                 this.logFile = new File(this.logDirectory, logFileName);
                 log.info("-- Filter init: Writing response-time log for webapp with context root '" + this.contextName
-                        + "' to '" + this.logFile + "' (hashCode=" + hashCode() + ")...");
+                    + "' to '" + this.logFile + "' (hashCode=" + hashCode() + ")...");
                 boolean append = true;
                 openFileWriter(append);
                 this.initialized = true;
@@ -417,7 +417,7 @@ public class RtFilter implements Filter {
         this.initialized = false;
         log.fatal(
             "RHQ response-time filter experienced an unrecoverable failure. Response-time collection is now disabled for context '"
-                + this.contextName + "'. Please post the below stack trace to the RHQ Forums: ", e);
+                + this.contextName + "'.", e);
     }
 
     abstract class InitParams {

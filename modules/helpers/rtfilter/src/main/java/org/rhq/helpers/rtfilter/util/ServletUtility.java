@@ -21,9 +21,11 @@ package org.rhq.helpers.rtfilter.util;
 import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+
 import javax.servlet.ServletContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
@@ -38,6 +40,8 @@ public class ServletUtility {
     private static final Log LOG = LogFactory.getLog(ServletUtility.class);
 
     private static final String EAR_CONTENTS = ".ear-contents";
+
+    private static final String SEPARATOR = System.getProperty("file.separator");
 
     private ServletUtility() {
     }
@@ -79,7 +83,7 @@ public class ServletUtility {
             }
         }
 
-        if (ctxName.startsWith("/")) {
+        if (ctxName.startsWith(SEPARATOR)) {
             ctxName = ctxName.substring(1);
         }
 
@@ -89,12 +93,12 @@ public class ServletUtility {
     private static String getContextRootFromWarFileName(ServletContext servletContext) {
         String ctxName;
         ctxName = servletContext.getRealPath("/");
-        if (ctxName.endsWith("/")) {
+        if (ctxName.endsWith(SEPARATOR)) {
             ctxName = ctxName.substring(0, ctxName.length() - 1);
         }
 
         // the war name is from last / to end (sans .war)
-        ctxName = ctxName.substring(ctxName.lastIndexOf("/"), ctxName.length() - 4);
+        ctxName = ctxName.substring(ctxName.lastIndexOf(SEPARATOR), ctxName.length() - 4);
 
         // Now remove crap that might be there
         if (ctxName.endsWith("-exp")) {
@@ -121,7 +125,7 @@ public class ServletUtility {
 
         // get the path to application.xml
         path = path.substring(0, path.lastIndexOf(EAR_CONTENTS) + EAR_CONTENTS.length());
-        path += "/META-INF/application.xml";
+        path += SEPARATOR + "META-INF" + SEPARATOR + "application.xml";
         File file = new File(path);
         if ((file == null) || (!file.canRead())) {
             LOG.debug(path + " is not readable");
@@ -172,7 +176,8 @@ public class ServletUtility {
     private static String getContextRootFromJbossWebXml(ServletContext servletContext) {
         String ctxName = null;
         try {
-            InputStream jbossWeb = servletContext.getResourceAsStream("/WEB-INF/jboss-web.xml");
+            String path = SEPARATOR + "WEB-INF" + SEPARATOR + "jboss-web.xml";
+            InputStream jbossWeb = servletContext.getResourceAsStream(path);
             if (jbossWeb != null) {
                 DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
                 Document doc = db.parse(jbossWeb);

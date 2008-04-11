@@ -635,7 +635,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceContainer container = this.resourceContainers.get(uuid);
             if (container != null) {
                 container.getResource().setId(idMap.get(uuid));
-                fireResourceActivated(container.getResource());
+                // fireResourceActivated(container.getResource());
             }
         }
 
@@ -1385,7 +1385,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return;
         }
 
-        for (InventoryEventListener listener : inventoryEventListeners) {
+        InventoryEventListener[] iteratorSafeListeners = new InventoryEventListener[inventoryEventListeners.size()];
+        iteratorSafeListeners = inventoryEventListeners.toArray(iteratorSafeListeners);
+        for (InventoryEventListener listener : iteratorSafeListeners) {
             // Catch anything to make sure we don't stop firing to other listeners
             try {
                 listener.resourcesAdded(resources);
@@ -1403,7 +1405,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         log.debug("Firing activated for resource: " + resource);
 
-        for (InventoryEventListener listener : inventoryEventListeners) {
+        InventoryEventListener[] iteratorSafeListeners = new InventoryEventListener[inventoryEventListeners.size()];
+        iteratorSafeListeners = inventoryEventListeners.toArray(iteratorSafeListeners);
+        for (InventoryEventListener listener : iteratorSafeListeners) {
             // Catch anything to make sure we don't stop firing to other listeners
             try {
                 listener.resourceActivated(resource);
@@ -1424,7 +1428,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return;
         }
 
-        for (InventoryEventListener listener : inventoryEventListeners) {
+        InventoryEventListener[] iteratorSafeListeners = new InventoryEventListener[inventoryEventListeners.size()];
+        iteratorSafeListeners = inventoryEventListeners.toArray(iteratorSafeListeners);
+        for (InventoryEventListener listener : iteratorSafeListeners) {
             // Catch anything to make sure we don't stop firing to other listeners
             try {
                 listener.resourcesRemoved(resources);

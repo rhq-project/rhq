@@ -38,12 +38,12 @@
    </filter-mapping>
 
    <filter>
-     <filter-name>JonRtFilter</filter-name>
+     <filter-name>RhqRtFilter</filter-name>
      <filter-class>org.rhq.helpers.rtfilter.filter.RtFilter</filter-class>
    </filter>
 
    <filter-mapping>
-      <filter-name>JonRtFilter</filter-name>
+      <filter-name>RhqRtFilter</filter-name>
       <url-pattern>/*</url-pattern>
    </filter-mapping>
 

@@ -26,7 +26,7 @@
 
     PageControl pc = new PageControl(0, 100);
     pc.setPrimarySortOrder(PageOrdering.DESC);
-    PageList<Alert> alerts = alertManager.findAlerts(resourceId, new Date(begin), pc);
+    PageList<Alert> alerts = alertManager.findAlerts(resourceId, null, null, new Date(begin), pc);
 
 %>
 

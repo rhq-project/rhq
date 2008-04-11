@@ -63,7 +63,8 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
     query = "SELECT a " // 
         + "    FROM Alert AS a "
         + "   WHERE a.alertDefinition.resource.id = :id "
-        + "     AND (a.alertDefinition.id = :alertDefinitionId OR :alertDefinitionId IS NULL) "),
+        + "     AND (a.alertDefinition.id = :alertDefinitionId OR :alertDefinitionId IS NULL) "
+        + "     AND (a.alertDefinition.priority = :priority OR :priority IS NULL) "),
     @NamedQuery(name = Alert.QUERY_FIND_BY_MEASUREMENT_DEFINITION_ID, query = "SELECT a " + "  FROM Alert AS a "
         + "  JOIN a.alertDefinition definition " + "  JOIN definition.conditions condition "
         + " WHERE condition.measurementDefinition.id = :measurementDefinitionId "
@@ -82,6 +83,7 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "    FROM Alert AS a "
         + "   WHERE a.alertDefinition.resource.id = :id "
         + "     AND (a.alertDefinition.id = :alertDefinitionId OR :alertDefinitionId IS NULL) "
+        + "     AND (a.alertDefinition.priority = :priority OR :priority IS NULL) "
         + "     AND (a.ctime BETWEEN :startDate AND :endDate)"),
     @NamedQuery(name = Alert.QUERY_FIND_ALL, query = "SELECT a FROM Alert AS a"),
     @NamedQuery(name = Alert.QUERY_DELETE_BY_CTIME, query = "DELETE FROM Alert AS a WHERE a.ctime BETWEEN :begin AND :end"),

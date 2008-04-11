@@ -36,6 +36,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.composite.AlertWithLatestConditionLog;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
@@ -64,11 +65,14 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ListAlertHistoryUIBean";
 
     private Resource resource;
+
+    // filter stuff
     private String dateFilter;
     private String dateErrors;
-
     private String alertDefinitionFilter;
+    private String alertPriorityFilter;
     private SelectItem[] alertDefinitionSelectItems;
+    private SelectItem[] alertPrioritySelectItems;
 
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
     private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
@@ -100,6 +104,9 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
         this.dateErrors = dateErrors;
     }
 
+    /*
+     * definition filter stuff
+     */
     public String getAlertDefinitionFilter() {
         if (alertDefinitionFilter == null) {
             alertDefinitionFilter = SelectItemUtils.getSelectItemFilter("alertHistoryForm:alertDefinitionFilter");
@@ -123,6 +130,32 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public void setAlertDefinitionSelectItems(SelectItem[] alertDefinitionSelectItems) {
         this.alertDefinitionSelectItems = alertDefinitionSelectItems;
+    }
+
+    /*
+     * priority filter stuff
+     */
+    public String getAlertPriorityFilter() {
+        if (alertPriorityFilter == null) {
+            alertPriorityFilter = SelectItemUtils.getSelectItemFilter("alertHistoryForm:alertPriorityFilter");
+        }
+        return SelectItemUtils.cleanse(alertPriorityFilter);
+    }
+
+    public void setAlertPriorityFilter(String alertPriorityFilter) {
+        this.alertPriorityFilter = alertPriorityFilter;
+    }
+
+    public SelectItem[] getAlertPrioritySelectItems() {
+        if (alertPrioritySelectItems == null) {
+            alertPrioritySelectItems = SelectItemUtils.convertFromEnum(AlertPriority.class, true);
+        }
+
+        return alertPrioritySelectItems;
+    }
+
+    public void setAlertPrioritySelectItems(SelectItem[] alertPrioritySelectItems) {
+        this.alertPrioritySelectItems = alertPrioritySelectItems;
     }
 
     public String deleteSelectedAlerts() {
@@ -200,8 +233,10 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
             }
 
             Integer alertDefinitionId = getAlertDefinitionId();
+            AlertPriority alertPriority = getAlertPriority();
 
-            PageList<Alert> alerts = manager.findAlerts(requestResource.getId(), alertDefinitionId, date, pc);
+            PageList<Alert> alerts = manager.findAlerts(requestResource.getId(), alertDefinitionId, alertPriority,
+                date, pc);
 
             List<AlertWithLatestConditionLog> results = new ArrayList<AlertWithLatestConditionLog>(alerts.size());
 
@@ -235,6 +270,14 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
         String alertDefinitionString = getAlertDefinitionFilter();
         if (alertDefinitionString != null) {
             return Integer.parseInt(alertDefinitionString);
+        }
+        return null;
+    }
+
+    private AlertPriority getAlertPriority() {
+        String alertPriorityName = getAlertPriorityFilter();
+        if (alertPriorityName != null) {
+            return Enum.valueOf(AlertPriority.class, alertPriorityName);
         }
         return null;
     }

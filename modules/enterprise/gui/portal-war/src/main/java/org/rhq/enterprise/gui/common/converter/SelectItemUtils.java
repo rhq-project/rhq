@@ -36,6 +36,18 @@ public class SelectItemUtils {
         return results;
     }
 
+    public static <T extends Enum<T>> SelectItem[] convertFromEnum(Class<T> e, boolean addAllFilter) {
+        T[] enumElements = e.getEnumConstants();
+        SelectItem[] results = init(enumElements.length, addAllFilter);
+
+        int i = (addAllFilter ? 1 : 0);
+        for (T enumElement : enumElements) {
+            results[i++] = new SelectItem(enumElement.name(), enumElement.toString());
+        }
+
+        return results;
+    }
+
     public static String getSelectItemFilter(String domIdentifier) {
         String result = FacesContextUtility.getOptionalRequestParameter(domIdentifier);
         result = cleanse(result);

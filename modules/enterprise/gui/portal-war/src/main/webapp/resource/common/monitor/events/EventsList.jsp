@@ -186,12 +186,11 @@
 			</c:set>
 			<display:table items="${EventsForm.events}" var="event" width="100%" 
    			               emptyMsg="${emptyMsg}" cellspacing="0" cellpadding="0" action="${sAction}">
-				<display:column width="4%" property="eventId" title="resource.common.monitor.events.IdTitle" sortAttr="ev.id" />
 				<display:column width="1%" property="severity" title="resource.common.monitor.events.SeverityTitle" sortAttr="ev.severity"/>
 				<display:column width="15%" property="sourceLocation" title="resource.common.monitor.events.SourceTitle" sortAttr="evs.location"/>
-				<display:column width="40%" property="eventDetail" title="resource.common.monitor.events.DetailTitle" onClick="loadDetail(_property:eventId:)" maxLength="40"/>
+				<display:column width="50%" property="eventDetail" title="resource.common.monitor.events.DetailTitle" onClick="loadDetail(_property:eventId:)" maxLength="160"/>
 				<display:column width="20%" property="timestamp" title="resource.common.monitor.events.TimeTitle" sortAttr="ev.timestamp" defaultSort="true" maxLength="60"/>
-				<display:column width="20%" property="ackTimeUser" title="resource.common.monitor.events.Acknowledged">
+				<display:column width="14%" property="ackTimeUser" title="resource.common.monitor.events.Acknowledged">
 		  			<display:userackdecorator onclick="ackOne(_property:eventId:)" id="ack_property:eventId:"/>
       			</display:column>
    			</display:table>

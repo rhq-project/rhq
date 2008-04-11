@@ -37,7 +37,6 @@ import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -87,11 +86,10 @@ public class ViewAction extends TilesAction implements PortletConstants {
 
             try {
                 MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
-                PageControl pc = new PageControl(0, rows);
                 long start = System.currentTimeMillis();
-                list = problemManager.findProblemResources(subject, begin, pc);
+                list = problemManager.findProblemResources(subject, begin, rows);
                 long end = System.currentTimeMillis();
-                LOG.info("Performance: Took [" + (end - start) + "]ms to find " + rows + " problem resources");
+                LOG.debug("Performance: Took [" + (end - start) + "]ms to find " + rows + " problem resources");
             } catch (Exception e) {
                 throw new ServletException("Error finding problem resources", e);
             }

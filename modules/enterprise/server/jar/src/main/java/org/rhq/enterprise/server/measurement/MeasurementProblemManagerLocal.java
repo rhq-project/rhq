@@ -53,11 +53,11 @@ public interface MeasurementProblemManagerLocal {
      *
      * @param  subject    the user asking for the data
      * @param  oldestDate no problems will be returned that started before this time
-     * @param  pc
-     *
+     * @param  maxResources the maximum number of resources that should be returned
+     * 
      * @return the problems resources (only those resources visible to the user will be returned)
      */
-    PageList<ProblemResourceComposite> findProblemResources(Subject subject, long oldestDate, PageControl pc);
+    PageList<ProblemResourceComposite> findProblemResources(Subject subject, long oldestDate, int maxResources);
 
     /**
      * Add a new {@link MeasurementOutOfBounds OOB} to the database.

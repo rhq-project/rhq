@@ -65,6 +65,10 @@ public class ProblemResourceTest extends AbstractEJB3Test {
 
     private List<ProblemResourceComposite> results;
 
+    private enum ProblemType {
+        ALERT, OOB
+    }
+
     public void testProblemResourcesOOB() throws Throwable {
         getTransactionManager().begin();
         entityManager = getEntityManager();
@@ -72,23 +76,23 @@ public class ProblemResourceTest extends AbstractEJB3Test {
             setupResources(entityManager);
             assert entityManager.find(Resource.class, platform.getId()) != null : "Did not setup platform - cannot test";
 
-            assertResults(entityManager, fiveMinutesAgo, 0);
-            assertCount(entityManager, fiveMinutesAgo, 0);
+            assertResults(ProblemType.OOB, entityManager, fiveMinutesAgo, 0);
+            assertCount(ProblemType.OOB, entityManager, fiveMinutesAgo, 0);
 
             MeasurementOutOfBounds oob = new MeasurementOutOfBounds(measSched, now - 10000, 1);
             entityManager.persist(oob);
 
             //commitAndBegin();
-            results = assertResults(entityManager, fiveMinutesAgo, 1);
-            assertCount(entityManager, fiveMinutesAgo, 1);
+            results = assertResults(ProblemType.OOB, entityManager, fiveMinutesAgo, 1);
+            assertCount(ProblemType.OOB, entityManager, fiveMinutesAgo, 1);
             assertComposite(results.get(0), platform, 0, 1);
 
             MeasurementOutOfBounds oob2 = new MeasurementOutOfBounds(measSched2, now - 5000, 1);
             entityManager.persist(oob2);
 
             //commitAndBegin();
-            results = assertResults(entityManager, fiveMinutesAgo, 2);
-            assertCount(entityManager, fiveMinutesAgo, 2);
+            results = assertResults(ProblemType.OOB, entityManager, fiveMinutesAgo, 2);
+            assertCount(ProblemType.OOB, entityManager, fiveMinutesAgo, 2);
             int platform1Index = (results.get(0).getResourceId() == platform.getId()) ? 0 : 1;
             int platform2Index = 1 - platform1Index;
             assertComposite(results.get(platform1Index), platform, 0, 1);
@@ -98,46 +102,12 @@ public class ProblemResourceTest extends AbstractEJB3Test {
             entityManager.persist(oob3);
 
             //commitAndBegin();
-            results = assertResults(entityManager, fiveMinutesAgo, 2);
-            assertCount(entityManager, fiveMinutesAgo, 2);
+            results = assertResults(ProblemType.OOB, entityManager, fiveMinutesAgo, 2);
+            assertCount(ProblemType.OOB, entityManager, fiveMinutesAgo, 2);
             platform1Index = (results.get(0).getResourceId() == platform.getId()) ? 0 : 1;
             platform2Index = 1 - platform1Index;
             assertComposite(results.get(platform1Index), platform, 0, 1);
             assertComposite(results.get(platform2Index), platform2, 0, 2);
-
-            Alert alert2 = new Alert(alertDef2, now - 10000);
-            entityManager.persist(alert2);
-
-            //commitAndBegin();
-            results = assertResults(entityManager, fiveMinutesAgo, 2);
-            assertCount(entityManager, fiveMinutesAgo, 2);
-            platform1Index = (results.get(0).getResourceId() == platform.getId()) ? 0 : 1;
-            platform2Index = 1 - platform1Index;
-            assertComposite(results.get(platform1Index), platform, 0, 1);
-            assertComposite(results.get(platform2Index), platform2, 1, 2);
-
-            Alert alert3 = new Alert(alertDef2, now - 5000);
-            entityManager.persist(alert3);
-
-            //commitAndBegin();
-            results = assertResults(entityManager, fiveMinutesAgo, 2);
-            assertCount(entityManager, fiveMinutesAgo, 2);
-            platform1Index = (results.get(0).getResourceId() == platform.getId()) ? 0 : 1;
-            platform2Index = 1 - platform1Index;
-            assertComposite(results.get(platform1Index), platform, 0, 1);
-            assertComposite(results.get(platform2Index), platform2, 2, 2);
-
-            Availability avail2 = new Availability(platform2, null, AvailabilityType.DOWN);
-            entityManager.persist(avail2);
-
-            //commitAndBegin();
-            results = assertResults(entityManager, fiveMinutesAgo, 2);
-            assertCount(entityManager, fiveMinutesAgo, 2);
-            platform1Index = (results.get(0).getResourceId() == platform.getId()) ? 0 : 1;
-            platform2Index = 1 - platform1Index;
-            assertComposite(results.get(platform1Index), platform, 0, 1);
-            assertComposite(results.get(platform2Index), platform2, 2, 2);
-            assert results.get(platform2Index).getAvailabilityType() == AvailabilityType.DOWN;
 
             deleteResources();
         } catch (Throwable t) {
@@ -155,23 +125,23 @@ public class ProblemResourceTest extends AbstractEJB3Test {
             setupResources(entityManager);
             assert entityManager.find(Resource.class, platform.getId()) != null : "Did not setup platform - cannot test";
 
-            assertResults(entityManager, fiveMinutesAgo, 0);
-            assertCount(entityManager, fiveMinutesAgo, 0);
+            assertResults(ProblemType.ALERT, entityManager, fiveMinutesAgo, 0);
+            assertCount(ProblemType.ALERT, entityManager, fiveMinutesAgo, 0);
 
             Alert alert = new Alert(alertDef, now - 10000);
             entityManager.persist(alert);
 
             //commitAndBegin();
-            results = assertResults(entityManager, fiveMinutesAgo, 1);
-            assertCount(entityManager, fiveMinutesAgo, 1);
+            results = assertResults(ProblemType.ALERT, entityManager, fiveMinutesAgo, 1);
+            assertCount(ProblemType.ALERT, entityManager, fiveMinutesAgo, 1);
             assertComposite(results.get(0), platform, 1, 0);
 
             Alert alert2 = new Alert(alertDef2, now - 5000);
             entityManager.persist(alert2);
 
             //commitAndBegin();
-            results = assertResults(entityManager, fiveMinutesAgo, 2);
-            assertCount(entityManager, fiveMinutesAgo, 2);
+            results = assertResults(ProblemType.ALERT, entityManager, fiveMinutesAgo, 2);
+            assertCount(ProblemType.ALERT, entityManager, fiveMinutesAgo, 2);
             int platform1Index = (results.get(0).getResourceId() == platform.getId()) ? 0 : 1;
             int platform2Index = 1 - platform1Index;
             assertComposite(results.get(platform1Index), platform, 1, 0);
@@ -181,46 +151,12 @@ public class ProblemResourceTest extends AbstractEJB3Test {
             entityManager.persist(alert3);
 
             //commitAndBegin();
-            results = assertResults(entityManager, fiveMinutesAgo, 2);
-            assertCount(entityManager, fiveMinutesAgo, 2);
+            results = assertResults(ProblemType.ALERT, entityManager, fiveMinutesAgo, 2);
+            assertCount(ProblemType.ALERT, entityManager, fiveMinutesAgo, 2);
             platform1Index = (results.get(0).getResourceId() == platform.getId()) ? 0 : 1;
             platform2Index = 1 - platform1Index;
             assertComposite(results.get(platform1Index), platform, 1, 0);
             assertComposite(results.get(platform2Index), platform2, 2, 0);
-
-            MeasurementOutOfBounds oob2 = new MeasurementOutOfBounds(measSched2, now - 10000, 1);
-            entityManager.persist(oob2);
-
-            //commitAndBegin();
-            results = assertResults(entityManager, fiveMinutesAgo, 2);
-            assertCount(entityManager, fiveMinutesAgo, 2);
-            platform1Index = (results.get(0).getResourceId() == platform.getId()) ? 0 : 1;
-            platform2Index = 1 - platform1Index;
-            assertComposite(results.get(platform1Index), platform, 1, 0);
-            assertComposite(results.get(platform2Index), platform2, 2, 1);
-
-            MeasurementOutOfBounds oob3 = new MeasurementOutOfBounds(measSched2, now - 5000, 1);
-            entityManager.persist(oob3);
-
-            //commitAndBegin();
-            results = assertResults(entityManager, fiveMinutesAgo, 2);
-            assertCount(entityManager, fiveMinutesAgo, 2);
-            platform1Index = (results.get(0).getResourceId() == platform.getId()) ? 0 : 1;
-            platform2Index = 1 - platform1Index;
-            assertComposite(results.get(platform1Index), platform, 1, 0);
-            assertComposite(results.get(platform2Index), platform2, 2, 2);
-
-            Availability avail2 = new Availability(platform2, null, AvailabilityType.DOWN);
-            entityManager.persist(avail2);
-
-            //commitAndBegin();
-            results = assertResults(entityManager, fiveMinutesAgo, 2);
-            assertCount(entityManager, fiveMinutesAgo, 2);
-            platform1Index = (results.get(0).getResourceId() == platform.getId()) ? 0 : 1;
-            platform2Index = 1 - platform1Index;
-            assertComposite(results.get(platform1Index), platform, 1, 0);
-            assertComposite(results.get(platform2Index), platform2, 2, 2);
-            assert results.get(platform2Index).getAvailabilityType() == AvailabilityType.DOWN;
 
             deleteResources();
         } catch (Throwable t) {
@@ -231,6 +167,12 @@ public class ProblemResourceTest extends AbstractEJB3Test {
         }
     }
 
+    /**
+     * Both the Alert and OOB problem resource queries will also return resources
+     * that are currently down.
+     * 
+     * @throws Throwable
+     */
     public void testProblemResourcesAvailability() throws Throwable {
         getTransactionManager().begin();
         entityManager = getEntityManager();
@@ -238,15 +180,21 @@ public class ProblemResourceTest extends AbstractEJB3Test {
             setupResources(entityManager);
             assert entityManager.find(Resource.class, platform.getId()) != null : "Did not setup platform - cannot test";
 
-            assertResults(entityManager, fiveMinutesAgo, 0);
-            assertCount(entityManager, fiveMinutesAgo, 0);
+            assertResults(ProblemType.OOB, entityManager, fiveMinutesAgo, 0);
+            assertCount(ProblemType.OOB, entityManager, fiveMinutesAgo, 0);
+            assertResults(ProblemType.ALERT, entityManager, fiveMinutesAgo, 0);
+            assertCount(ProblemType.ALERT, entityManager, fiveMinutesAgo, 0);
 
             Availability avail = new Availability(platform, null, AvailabilityType.DOWN);
             entityManager.persist(avail);
 
             //commitAndBegin();
-            results = assertResults(entityManager, fiveMinutesAgo, 1);
-            assertCount(entityManager, fiveMinutesAgo, 1);
+            results = assertResults(ProblemType.ALERT, entityManager, fiveMinutesAgo, 1);
+            assertCount(ProblemType.ALERT, entityManager, fiveMinutesAgo, 1);
+            assertComposite(results.get(0), platform, 0, 0);
+            assert results.get(0).getAvailabilityType() == AvailabilityType.DOWN;
+            results = assertResults(ProblemType.OOB, entityManager, fiveMinutesAgo, 1);
+            assertCount(ProblemType.OOB, entityManager, fiveMinutesAgo, 1);
             assertComposite(results.get(0), platform, 0, 0);
             assert results.get(0).getAvailabilityType() == AvailabilityType.DOWN;
 
@@ -254,10 +202,19 @@ public class ProblemResourceTest extends AbstractEJB3Test {
             entityManager.persist(avail2);
 
             //commitAndBegin();
-            results = assertResults(entityManager, fiveMinutesAgo, 2);
-            assertCount(entityManager, fiveMinutesAgo, 2);
+            results = assertResults(ProblemType.ALERT, entityManager, fiveMinutesAgo, 2);
+            assertCount(ProblemType.ALERT, entityManager, fiveMinutesAgo, 2);
             int platform1Index = (results.get(0).getResourceId() == platform.getId()) ? 0 : 1;
             int platform2Index = 1 - platform1Index;
+            assertComposite(results.get(platform1Index), platform, 0, 0);
+            assert results.get(platform1Index).getAvailabilityType() == AvailabilityType.DOWN;
+            assertComposite(results.get(platform2Index), platform2, 0, 0);
+            assert results.get(platform2Index).getAvailabilityType() == AvailabilityType.DOWN;
+
+            results = assertResults(ProblemType.OOB, entityManager, fiveMinutesAgo, 2);
+            assertCount(ProblemType.OOB, entityManager, fiveMinutesAgo, 2);
+            platform1Index = (results.get(0).getResourceId() == platform.getId()) ? 0 : 1;
+            platform2Index = 1 - platform1Index;
             assertComposite(results.get(platform1Index), platform, 0, 0);
             assert results.get(platform1Index).getAvailabilityType() == AvailabilityType.DOWN;
             assertComposite(results.get(platform2Index), platform2, 0, 0);
@@ -272,16 +229,31 @@ public class ProblemResourceTest extends AbstractEJB3Test {
         }
     }
 
-    private List<ProblemResourceComposite> assertResults(EntityManager em, long oldest, long expectedSize) {
-        Query q = em.createNamedQuery(Resource.QUERY_FIND_PROBLEM_RESOURCES_ADMIN);
+    private List<ProblemResourceComposite> assertResults(ProblemType probType, EntityManager em, long oldest,
+        long expectedSize) {
+        Query q;
+
+        if (probType == ProblemType.ALERT) {
+            q = em.createNamedQuery(Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN);
+        } else {
+            q = em.createNamedQuery(Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB_ADMIN);
+        }
+
         q.setParameter("oldest", oldest);
         List<ProblemResourceComposite> resultList = q.getResultList();
         assert resultList.size() == expectedSize : "List was to be size=" + expectedSize + " but was " + resultList;
         return resultList;
     }
 
-    private int assertCount(EntityManager em, long oldest, long expectedCount) {
-        Query q = em.createNamedQuery(Resource.QUERY_FIND_PROBLEM_RESOURCES_COUNT_ADMIN);
+    private int assertCount(ProblemType probType, EntityManager em, long oldest, long expectedCount) {
+        Query q;
+
+        if (probType == ProblemType.ALERT) {
+            q = em.createNamedQuery(Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT_ADMIN);
+        } else {
+            q = em.createNamedQuery(Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB_COUNT_ADMIN);
+        }
+
         q.setParameter("oldest", oldest);
         int count = ((Number) q.getSingleResult()).intValue();
         assert count == expectedCount : "Expected the count to be " + expectedCount + " but was " + count;

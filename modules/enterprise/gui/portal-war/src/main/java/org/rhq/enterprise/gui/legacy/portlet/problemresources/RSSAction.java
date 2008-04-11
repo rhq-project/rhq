@@ -19,16 +19,18 @@
 package org.rhq.enterprise.gui.legacy.portlet.problemresources;
 
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.MessageResources;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.portlet.BaseRSSAction;
@@ -61,9 +63,8 @@ public class RSSAction extends BaseRSSAction {
         }
 
         MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
-        PageControl pc = new PageControl(0, rows);
         List<ProblemResourceComposite> results;
-        results = problemManager.findProblemResources(subject, begin, pc);
+        results = problemManager.findProblemResources(subject, begin, rows);
 
         if ((results != null) && (results.size() > 0)) {
             for (ProblemResourceComposite problem : results) {

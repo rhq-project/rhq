@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.measurement;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -62,20 +63,88 @@ public class MeasurementProblemManagerBean implements MeasurementProblemManagerL
     @EJB
     private AuthorizationManagerLocal authorizationManager;
 
-    @SuppressWarnings("unchecked")
-    public PageList<ProblemResourceComposite> findProblemResources(Subject subject, long oldestDate,
+    public PageList<ProblemResourceComposite> findProblemResources(Subject subject, long oldestDate, int maxResources) {
+
+        PageList<ProblemResourceComposite> problemsAlert;
+        PageList<ProblemResourceComposite> problemsOOB;
+        Map<Integer, ProblemResourceComposite> allProblems;
+
+        allProblems = new HashMap<Integer, ProblemResourceComposite>(maxResources);
+
+        // get the problem resources based on alerts and then based on OOBs
+        problemsAlert = findProblemResourcesAlert(subject, oldestDate, new PageControl(0, maxResources));
+        problemsOOB = findProblemResourcesOOB(subject, oldestDate, new PageControl(0, maxResources));
+
+        // put all alerted resources in the allProblems map
+        for (ProblemResourceComposite problem : problemsAlert) {
+            allProblems.put(new Integer(problem.getResourceId()), problem);
+        }
+
+        // now merge the OOB resources into allProblems
+        for (ProblemResourceComposite problem : problemsOOB) {
+            ProblemResourceComposite existing = allProblems.get(new Integer(problem.getResourceId()));
+            if (existing != null) {
+                problem = new ProblemResourceComposite(existing.getResourceId(), existing.getResourceName(), existing
+                    .getAvailabilityType(), existing.getNumAlerts(), problem.getNumOutOfBounds());
+            }
+            allProblems.put(new Integer(problem.getResourceId()), problem);
+        }
+
+        Collection<ProblemResourceComposite> problemComposites = allProblems.values();
+        if (problemComposites.size() <= maxResources) {
+            return new PageList<ProblemResourceComposite>(problemComposites, new PageControl(0, maxResources));
+        } else {
+            List<ProblemResourceComposite> returnList = new ArrayList<ProblemResourceComposite>(maxResources);
+            for (ProblemResourceComposite problem : problemComposites) {
+                returnList.add(problem);
+                if (returnList.size() == maxResources) {
+                    break;
+                }
+            }
+            return new PageList<ProblemResourceComposite>(returnList, new PageControl(0, maxResources));
+        }
+    }
+
+    private PageList<ProblemResourceComposite> findProblemResourcesAlert(Subject subject, long oldestDate,
         PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
         Query queryCount;
         Query query;
         if (authorizationManager.isInventoryManager(subject)) {
-            queryCount = entityManager.createNamedQuery(Resource.QUERY_FIND_PROBLEM_RESOURCES_COUNT_ADMIN);
+            queryCount = entityManager.createNamedQuery(Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT_ADMIN);
             query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                Resource.QUERY_FIND_PROBLEM_RESOURCES_ADMIN, pageControl);
+                Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN, pageControl);
         } else {
-            queryCount = entityManager.createNamedQuery(Resource.QUERY_FIND_PROBLEM_RESOURCES_COUNT);
-            query = PersistenceUtility.createQueryWithOrderBy(entityManager, Resource.QUERY_FIND_PROBLEM_RESOURCES,
+            queryCount = entityManager.createNamedQuery(Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT);
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT, pageControl);
+            queryCount.setParameter("subject", subject);
+            query.setParameter("subject", subject);
+        }
+
+        queryCount.setParameter("oldest", oldestDate);
+        query.setParameter("oldest", oldestDate);
+
+        long count = (Long) queryCount.getSingleResult();
+        List<ProblemResourceComposite> results = query.getResultList();
+
+        return new PageList<ProblemResourceComposite>(results, (int) count, pageControl);
+    }
+
+    private PageList<ProblemResourceComposite> findProblemResourcesOOB(Subject subject, long oldestDate,
+        PageControl pageControl) {
+        pageControl.initDefaultOrderingField("res.name");
+
+        Query queryCount;
+        Query query;
+        if (authorizationManager.isInventoryManager(subject)) {
+            queryCount = entityManager.createNamedQuery(Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB_COUNT_ADMIN);
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB_ADMIN, pageControl);
+        } else {
+            queryCount = entityManager.createNamedQuery(Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB_COUNT);
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager, Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB,
                 pageControl);
             queryCount.setParameter("subject", subject);
             query.setParameter("subject", subject);

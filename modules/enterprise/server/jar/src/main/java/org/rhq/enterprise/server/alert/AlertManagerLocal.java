@@ -42,13 +42,6 @@ public interface AlertManagerLocal {
 
     Alert updateAlert(Alert alert);
 
-    /**
-     * @deprecated still used in org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.RemoveAction but
-     *             not sure if that action is still in use
-     */
-    @Deprecated
-    void deleteAlerts(Integer[] ids);
-
     void deleteAlerts(Subject user, int resourceId, Integer[] ids);
 
     int deleteAlerts(Subject user, int resourceId);

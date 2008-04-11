@@ -131,11 +131,13 @@ public class AlertManagerBean implements AlertManagerLocal {
     /**
      * Remove the alerts with the specified id's.
      */
-    public void deleteAlerts(Integer[] ids) {
+    private void deleteAlerts(Integer[] ids) {
         for (Integer id : ids) {
             Alert alert = entityManager.find(Alert.class, id);
             if (alert != null) {
-                entityManager.remove(alert);
+                AlertNotificationLog anl = alert.getAlertNotificationLog();
+                entityManager.remove(anl);
+                entityManager.remove(alert); // condition logs will be removed with entity cascading
             }
         }
     }
@@ -158,8 +160,8 @@ public class AlertManagerBean implements AlertManagerLocal {
         }
 
         /*
-         * Since JPQL doesn't enforce cascade options, we need to delete the logs first and then the corresponding
-         * Alerts
+         * Since BULK delete JPQL doesn't enforce cascade options, we need to delete the logs first and then the 
+         * corresponding Alerts
          */
         long totalTime = 0L;
 
@@ -432,7 +434,7 @@ public class AlertManagerBean implements AlertManagerLocal {
         Alert newAlert = new Alert(alertDefinition, System.currentTimeMillis());
 
         /*
-         * this the AlertConditionLog children objects are already in the database, we need to persist the alert first
+         * the AlertConditionLog children objects are already in the database, we need to persist the alert first
          * to prevent:
          *
          * "TransientObjectException: object references an unsaved transient instance - save the transient instance before
@@ -441,14 +443,15 @@ public class AlertManagerBean implements AlertManagerLocal {
         this.createAlert(newAlert);
         log.debug("New alert identifier=" + newAlert.getId());
 
+        AlertNotificationLog alertNotifLog = new AlertNotificationLog(newAlert);
+        entityManager.persist(alertNotifLog);
+
         List<AlertConditionLog> unmatchedConditionLogs = alertConditionLogManager
             .getUnmatchedLogsByAlertDefinitionId(alertDefinitionId);
         for (AlertConditionLog unmatchedLog : unmatchedConditionLogs) {
             log.debug("Matched alert condition log for alertId=" + newAlert.getId() + ": " + unmatchedLog);
             newAlert.addConditionLog(unmatchedLog); // adds both relationships
         }
-
-        this.updateAlert(newAlert);
 
         // process recovery actions
         processRecovery(alertDefinition);

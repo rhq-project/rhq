@@ -22,9 +22,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -32,6 +34,7 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -85,7 +88,10 @@ public class ViewAction extends TilesAction implements PortletConstants {
             try {
                 MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
                 PageControl pc = new PageControl(0, rows);
+                long start = System.currentTimeMillis();
                 list = problemManager.findProblemResources(subject, begin, pc);
+                long end = System.currentTimeMillis();
+                LOG.info("Performance: Took [" + (end - start) + "]ms to find " + rows + " problem resources");
             } catch (Exception e) {
                 throw new ServletException("Error finding problem resources", e);
             }

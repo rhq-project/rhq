@@ -277,7 +277,7 @@ public class AlertCondition implements Serializable {
     @Override
     public String toString() {
         return "org.rhq.core.domain.alert.AlertCondition" + "[ " + "id=" + id + ", " + "category=" + category + ", "
-            + "measurementDefinition=" + measurementDefinition + ", " + "name=" + name + ", " + "comparator="
-            + comparator + ", " + "threshold=" + threshold + ", " + "option=" + option + ", " + alertDefinition + " ]";
+            + "measurementDefinition=" + measurementDefinition + ", " + "name=" + name + ", " + "comparator='"
+            + comparator + "', " + "threshold=" + threshold + ", " + "option=" + option + ", " + alertDefinition + " ]";
     }
 }

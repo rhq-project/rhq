@@ -21,15 +21,19 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
+import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -79,7 +83,7 @@ public class RemoveAction extends BaseAction {
         }
 
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-        alertManager.deleteAlerts(alertIds);
+        alertManager.deleteAlerts(RequestUtils.getSubject(request), resourceId, alertIds);
 
         log.debug("!!!!!!!!!!!!!!!! removing alerts!!!!!!!!!!!!");
 

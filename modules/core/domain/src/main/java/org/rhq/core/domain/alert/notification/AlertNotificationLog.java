@@ -81,7 +81,6 @@ public class AlertNotificationLog implements Serializable {
     @Column(name = "EMAILS", nullable = false)
     private String emails;
 
-    //@OneToOne(mappedBy = "alertNotificationLog")
     @JoinColumn(name = "ALERT_ID", referencedColumnName = "ID")
     @OneToOne
     private Alert alert;
@@ -117,6 +116,7 @@ public class AlertNotificationLog implements Serializable {
 
                 emailsBuilder.append(((EmailNotification) notification).getEmailAddress());
             } else {
+                //((SnmpNotification)notification).
                 // TODO: log that this type of AlertNotification is not supported yet for auditing
             }
         }

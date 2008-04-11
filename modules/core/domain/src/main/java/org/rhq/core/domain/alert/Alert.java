@@ -119,8 +119,6 @@ public class Alert implements Serializable {
     // primary key
     private Set<AlertConditionLog> conditionLogs = new LinkedHashSet<AlertConditionLog>();
 
-    //@JoinColumn(name = "ALERT_NOTIF_LOG_ID", referencedColumnName = "ID")
-    //@OneToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
     @OneToOne(mappedBy = "alert")
     private AlertNotificationLog alertNotificationLog;
 

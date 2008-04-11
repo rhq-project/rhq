@@ -36,6 +36,7 @@ import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.state.discovery.AutoDiscoveryRequest;
 import org.rhq.core.domain.state.discovery.AutoDiscoveryScanType;
 import org.rhq.core.pc.PluginContainer;
@@ -213,14 +214,15 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                         removalCandidates.remove(inventoriedResource);
 
                         if (inventoriedResource.getUuid().equals(newResource.getUuid())) {
-                            newResources.add(newResource);
+                            // The resource is new to the PC's local inventory.
+                            newResources.add(inventoriedResource);
+                        }
 
-                            // This was a new resource because it's parent hasn't been inventoried and is in the report too
+                        if (inventoriedResource.getInventoryStatus() == InventoryStatus.NEW) {
+                            // The resource is new to the Server inventory.
                             if (platformContainer.getSynchronizationState() == ResourceContainer.SynchronizationState.SYNCHRONIZED) {
-                                // The platform had already been inventoried, so this'll be a report root
+                                // The Platform is already in Server inventory, so this'll be a report root. Otherwise, it'll get included in the report under the Platform.
                                 report.addAddedRoot(inventoriedResource);
-                            } else {
-                                // TODO Update semantics?
                             }
                         }
                     }

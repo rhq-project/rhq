@@ -192,9 +192,6 @@ public class PluginDocMojo extends AbstractMojo {
                 page = confluence.getPage(this.confluenceSpace, title);
             }
             catch (SwizzleException e) {
-                page = null;
-            }
-            if (page == null) {
                 page = new Page(new HashMap());
                 page.setSpace(this.confluenceSpace);
                 page.setTitle(title);

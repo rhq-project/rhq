@@ -15,8 +15,8 @@
       
 <ui:composition template="/rhq/layout/main.xhtml">
 
-   <ui:param name="id" value="${param.id}" />
-   <ui:param name="mode" value="${param.mode}" />
+   <ui:param name="id" value="#{param.id}" />
+   <ui:param name="mode" value="#{param.mode}" />
    <ui:param name="pageTitle" value="Content Source '#{ContentSourceDetailsUIBean.contentSource.name}'"/>
    <ui:param name="item" value="#{ContentSourceDetailsUIBean.contentSource}" />
    

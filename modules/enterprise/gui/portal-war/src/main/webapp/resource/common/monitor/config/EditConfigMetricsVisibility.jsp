@@ -21,6 +21,9 @@
          <c:param name="parent" value="${param.parent}"/>
          <c:param name="type" value="${param.type}"/>
       </c:when>
+      <c:when test="${type!=null}">
+         <c:param name="type" value="${type}"/>
+      </c:when>
       <c:otherwise>
          <c:param name="id" value="${Resource.id}"/>
       </c:otherwise>
@@ -127,9 +130,58 @@
       <!-- / -->
 
    </c:when>
+   <c:when test="${type != null }">
+      <!-- METRIC SCHEDULES FOR A  RESOURCE TYPE -->
+      
+            <display:table items="${measurementSchedules}" var="schedule" action="${selfAction}"
+                     styleId="fromTable" width="100%" cellpadding="0" cellspacing="0" border="0" emptyMsg="${emptyMsg}"
+                     nowrapHeader="true">
+         <display:column value="${schedule.measurementDefinition.id}"
+                         title="<input type=\"checkbox\" onclick=\"ToggleAllRemoveGo(this, widgetProperties, 'listMember1')\" name=\"listMember1All\">"
+                         isLocalizedTitle="false" styleClass="ListCellCheckbox"
+                         width="1%" headerStyleClass="ListHeaderInactiveSorted">
+            <display:checkboxdecorator name="mids" onclick="ToggleRemoveGo(this, widgetProperties)"
+                                       styleClass="listMember1"/>
+         </display:column>
+         <display:column value="${schedule.measurementDefinition.displayName}" sortAttr="displayName"
+                         title="resource.common.monitor.visibility.config.MetricTH" width="25%"
+                         headerStyleClass="ListHeaderInactiveSorted"/>
+
+         <c:choose>
+            <c:when test="${schedule.measurementDefinition.description == null}">
+               <c:set var="description" value=""/>
+            </c:when>
+            <c:otherwise>
+               <c:set var="description" value="${schedule.measurementDefinition.description}"/>
+            </c:otherwise>
+         </c:choose>
+         <display:column sortAttr="description" value="${description}"
+                                  title="Description" isLocalizedTitle="false" width="39%"
+                                  headerStyleClass="ListHeaderInactiveSorted">
+         </display:column>
+
+         <display:column value="${schedule.measurementDefinition}" sortAttr="category"
+                         title="resource.common.monitor.visibility.config.CategoryTH" width="20%"
+                         headerStyleClass="ListHeaderInactiveSorted">
+               <display:measurementDataTypeDecorator/>
+         </display:column>
+         <display:column property="collectionEnabled" sortAttr="default_on"
+                         title="resource.common.monitor.visibility.config.CollectionEnabledTH"
+                         align="center"
+                         nowrap="true" width="15%" headerStyleClass="ListHeaderInactiveSorted">
+            <display:booleandecorator flagKey="yesno"/>
+         </display:column>
+         <display:column property="collectionInterval" sortAttr="default_interval"
+                         title="resource.common.monitor.visibility.config.CollectionIntervalTH"
+                         align="center" nowrap="true" width="15%" headerStyleClass="ListHeaderInactiveSorted">
+            <display:datedecorator isElapsedTime="true" isGroup="${groupId > 0 || isAutoGroup==true}"/>
+         </display:column>
+      </display:table>
+      
+   </c:when>
    <c:otherwise>
 
-      <!-- METRIC SCHEDULES FOR A SINGLE RESOURCE OR RESOURCE TYPE OR COMPAT GROUP-->
+      <!-- METRIC SCHEDULES FOR A SINGLE RESOURCE OR COMPAT GROUP-->
 
       <display:table items="${measurementSchedules}" var="schedule" action="${selfAction}"
                      styleId="fromTable" width="100%" cellpadding="0" cellspacing="0" border="0" emptyMsg="${emptyMsg}"

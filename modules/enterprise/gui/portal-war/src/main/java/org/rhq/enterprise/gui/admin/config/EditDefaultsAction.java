@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.admin.config;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -70,8 +72,18 @@ public class EditDefaultsAction extends BaseDispatchAction {
             serverTypesTmp = typeMgr.getAllResourceTypesByCategory(subject, ResourceCategory.SERVER);
         }
 
-        Map<Integer, SortedSet<ResourceType>> platformServices = typeMgr
-            .getChildResourceTypesForResourceTypes(platformTypesTmp);
+        /*
+         * platform-services do not have duplicates in the ResourceType table, therefore we only need
+         * to get a single set of them if there is even one platform that should be displayed on the UI
+         */
+        Map<Integer, SortedSet<ResourceType>> platformServices = new HashMap<Integer, SortedSet<ResourceType>>();
+        if (platformTypesTmp.size() > 0) {
+            platformServices = typeMgr.getChildResourceTypesForResourceTypes(Arrays.asList(platformTypesTmp.get(0)));
+        }
+
+        /*
+         * on the other hand, we want to get the entire map of sets for descendants of server types 
+         */
         Map<Integer, SortedSet<ResourceType>> services = typeMgr.getChildResourceTypesForResourceTypes(serverTypesTmp);
 
         platformTypes.addAll(platformTypesTmp);

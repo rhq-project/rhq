@@ -20,7 +20,7 @@
 
 
 <table width="100%" cellpadding="0" cellspacing="0" border="0" id="listTable">
-<!-- PLATFORM CONTENTS -->
+<!-- PLATFORMS -->
 	<tr class="ListHeaderDark">
       <td width="50%" class="ListHeaderInactiveSorted"><fmt:message key="resource.hub.PlatformTypeTH"/>s</td>
       <td width="25%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
@@ -45,12 +45,30 @@
         </c:if>
       </td>
     </tr>
+    
+  </c:forEach>
+<!--  /  -->
+
+    <tr>
+      <td><html:img page="/images/spacer.gif" width="1" height="15" border="0"/></td>
+      <td></td>
+      <td></td>
+    </tr>
+    
+<!-- PLATFORM SERVICES -->
+    <tr class="ListHeaderDark">
+      <td width="50%" class="ListHeaderInactiveSorted"><fmt:message key="resource.hub.PlatformServiceTypeTH"/>s</td>
+      <td width="25%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
+      <td width="25%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
+      </tr>
+    <c:set var="PlatformServices" value="${PlatformServices}"/>
+    <c:forEach var="entry" varStatus="status" items="${platformTypes}">
     <tiles:insert definition=".resource.common.monitor.config.ShowOneResourceType">
        <tiles:put name="resourceType" beanName="entry"/> 
        <tiles:put name="servicesMap" beanName="PlatformServices"/>
     </tiles:insert>
+    </c:forEach>
     
-  </c:forEach>
 <!--  /  -->
 
 	<tr>

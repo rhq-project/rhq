@@ -32,6 +32,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
@@ -96,12 +97,13 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    private List<Integer> getResourceIdsWithNoDefinitionFromThisTemplate(Subject user, int alertTemplateId,
+    private List<Integer> getCommittedResourceIdsWithNoDefinitionFromThisTemplate(Subject user, int alertTemplateId,
         int resourceTypeId) {
         Query query = entityManager
             .createNamedQuery(AlertDefinition.QUERY_FIND_RESOURCE_IDS_WITH_NO_ACTIVE_TEMPLATE_DEFINITION);
         query.setParameter("alertTemplateId", alertTemplateId);
         query.setParameter("resourceTypeId", resourceTypeId);
+        query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
 
         List<Integer> list = query.getResultList();
         return list;
@@ -119,6 +121,10 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
             try {
                 int definitionCount = 0;
                 for (Resource resource : type.getResources()) {
+                    if (resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
+                        continue;
+                    }
+
                     // make sure we perform the system side-effects as the overlord
                     updateAlertDefinitionsForResource(subjectManager.getOverlord(), alertTemplate, resource.getId());
 
@@ -274,8 +280,8 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
             /*
              * if the user deleted the alert definition spawned from a template, a cascade update will recreate it
              */
-            List<Integer> resourceIds = getResourceIdsWithNoDefinitionFromThisTemplate(overlord, alertTemplate.getId(),
-                alertTemplate.getResourceType().getId());
+            List<Integer> resourceIds = getCommittedResourceIdsWithNoDefinitionFromThisTemplate(overlord, alertTemplate
+                .getId(), alertTemplate.getResourceType().getId());
             try {
                 for (Integer resourceId : resourceIds) {
                     updateAlertDefinitionsForResource(overlord, alertTemplate, resourceId);

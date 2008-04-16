@@ -66,6 +66,7 @@ import org.rhq.core.domain.resource.ResourceType;
     @NamedQuery(name = AlertDefinition.QUERY_FIND_RESOURCE_IDS_WITH_NO_ACTIVE_TEMPLATE_DEFINITION, query = "SELECT res.id "
         + "  FROM Resource res "
         + " WHERE res.resourceType.id = :resourceTypeId "
+        + "       AND res.inventoryStatus = :inventoryStatus "
         + "       AND ( res.alertDefinitions IS EMPTY "
         + "             OR 0 = ( SELECT COUNT(ad) "
         + "                        FROM res.alertDefinitions ad "

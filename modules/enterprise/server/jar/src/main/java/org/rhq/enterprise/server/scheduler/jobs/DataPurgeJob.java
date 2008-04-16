@@ -101,24 +101,17 @@ public class DataPurgeJob implements StatefulJob {
         timeStart = System.currentTimeMillis();
         LOG.info("Trait data purge starting at " + new Date(timeStart));
         int traitsPurged = 0;
-        int traitsPurgeIterations = 0;
 
         try {
             final long oneYearAgo = timeStart - (1000L * 60 * 60 * 24 * 365);
-            int purged = 0;
             LOG.info("Purging traits that are older than " + new Date(oneYearAgo));
-            do {
-                purged = measurementDataManager.purgeTraits(oneYearAgo);
-                traitsPurged += purged;
-                traitsPurgeIterations++;
-            } while (purged > 0);
+            traitsPurged = measurementDataManager.purgeTraits(oneYearAgo);
         } catch (Exception e) {
             LOG.error("Unable to purge trait data: " + e, e);
         }
 
         timeEnd = System.currentTimeMillis();
-        LOG.info("Traits data purged [" + traitsPurged + "] in [" + traitsPurgeIterations
-            + "] iterations - completed in [" + (timeEnd - timeStart) + "]ms");
+        LOG.info("Traits data purged [" + traitsPurged + "] - completed in [" + (timeEnd - timeStart) + "]ms");
 
         // PURGE OLD AVAILABILITY DATA
         timeStart = System.currentTimeMillis();

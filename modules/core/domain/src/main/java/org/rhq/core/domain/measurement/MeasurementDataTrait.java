@@ -84,16 +84,16 @@ public class MeasurementDataTrait extends MeasurementData {
      *       E051-08).
      */
     public static final String NATIVE_QUERY_PURGE = "" //
-        + "DELETE " //
-        + "  FROM rhq_measurement_data_trait t " //
-        + " WHERE (t.schedule_id, t.time_stamp) IN " //
-        + "( " //
-        + "        SELECT MIN(it.time_stamp), it.schedule_id " //
-        + "          FROM rhq_measurement_data_trait it " //
-        + "         WHERE it.time_stamp < ? " // 
-        + "      GROUP BY it.schedule_id " // 
-        + "  HAVING COUNT(it.schedule_id) > 1 " //
-        + ") ";
+        + "DELETE FROM rhq_measurement_data_trait t " //
+        + "WHERE (t.schedule_id, t.time_stamp) in " //
+        + "  (SELECT t2.schedule_id, t2.time_stamp " //
+        + "   FROM rhq_measurement_data_trait t2, " //
+        + "     (SELECT max(t4.time_stamp) as mx, t4.schedule_id as schedule_id " //
+        + "      FROM rhq_measurement_data_trait t4 " //
+        + "      WHERE t4.time_stamp < 1 " //
+        + "      GROUP BY t4.schedule_id) t3 " //
+        + "   WHERE t2.schedule_id = t3.schedule_id " //
+        + "   AND t2.time_stamp < t3.mx) ";
 
     private static final long serialVersionUID = 1L;
 

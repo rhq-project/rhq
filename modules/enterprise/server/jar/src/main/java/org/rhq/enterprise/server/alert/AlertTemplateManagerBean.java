@@ -117,9 +117,20 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
 
         if (cascade) {
             try {
+                int definitionCount = 0;
                 for (Resource resource : type.getResources()) {
                     // make sure we perform the system side-effects as the overlord
                     updateAlertDefinitionsForResource(subjectManager.getOverlord(), alertTemplate, resource.getId());
+
+                    /* 
+                     * flush/clear after only 5 definitions (as opposed to a larger batch) because an alert
+                     * definition is actual many objects: the definition, the condition set, the notification
+                     * set, the alert dampening rules 
+                     */
+                    if (definitionCount++ % 5 == 0) {
+                        entityManager.flush();
+                        entityManager.clear();
+                    }
                 }
             } catch (AlertDefinitionCreationException adce) {
                 /* should never happen because AlertDefinitionCreationException is only ever
@@ -221,13 +232,12 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
 
         if (cascade) {
             Subject overlord = subjectManager.getOverlord();
-            List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplate.getId());
-            List<Integer> resourceIds = getResourceIdsWithNoDefinitionFromThisTemplate(user, alertTemplate.getId(),
-                alertTemplate.getResourceType().getId());
+            int definitionCount = 0;
 
             /*
              * update all of the definitions that were spawned from alert templates
              */
+            List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(overlord, alertTemplate.getId());
             for (Integer alertDefinitionId : alertDefinitions) {
                 AlertDefinition childDefinition = alertDefinitionManager
                     .getAlertDefinitionById(user, alertDefinitionId);
@@ -249,14 +259,36 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                      */
                     LOG.error("Attempt to update a deleted template " + alertTemplate.toSimpleString());
                 }
+
+                /* 
+                 * flush/clear after only 5 definitions (as opposed to a larger batch) because an alert
+                 * definition is actual many objects: the definition, the condition set, the notification
+                 * set, the alert dampening rules 
+                 */
+                if (definitionCount++ % 5 == 0) {
+                    entityManager.flush();
+                    entityManager.clear();
+                }
             }
 
             /*
              * if the user deleted the alert definition spawned from a template, a cascade update will recreate it
              */
+            List<Integer> resourceIds = getResourceIdsWithNoDefinitionFromThisTemplate(overlord, alertTemplate.getId(),
+                alertTemplate.getResourceType().getId());
             try {
                 for (Integer resourceId : resourceIds) {
                     updateAlertDefinitionsForResource(overlord, alertTemplate, resourceId);
+
+                    /* 
+                     * flush/clear after only 5 definitions (as opposed to a larger batch) because an alert
+                     * definition is actual many objects: the definition, the condition set, the notification
+                     * set, the alert dampening rules 
+                     */
+                    if (definitionCount++ % 5 == 0) {
+                        entityManager.flush();
+                        entityManager.clear();
+                    }
                 }
             } catch (AlertDefinitionCreationException adce) {
                 /* should never happen because AlertDefinitionCreationException is only ever

@@ -108,25 +108,27 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public int createAlertTemplate(Subject user, AlertDefinition alertTemplate, Integer resourceTypeId)
+    public int createAlertTemplate(Subject user, AlertDefinition alertTemplate, Integer resourceTypeId, boolean cascade)
         throws InvalidAlertDefinitionException, ResourceTypeNotFoundException {
         ResourceType type = resourceTypeManager.getResourceTypeById(user, resourceTypeId);
 
         alertTemplate.setResourceType(type); // mark this as an alert "template" definition
         int alertTemplateId = alertDefinitionManager.createAlertDefinition(user, alertTemplate, null);
 
-        try {
-            for (Resource resource : type.getResources()) {
-                // make sure we perform the system side-effects as the overlord
-                updateAlertDefinitionsForResource(subjectManager.getOverlord(), alertTemplate, resource.getId());
+        if (cascade) {
+            try {
+                for (Resource resource : type.getResources()) {
+                    // make sure we perform the system side-effects as the overlord
+                    updateAlertDefinitionsForResource(subjectManager.getOverlord(), alertTemplate, resource.getId());
+                }
+            } catch (AlertDefinitionCreationException adce) {
+                /* should never happen because AlertDefinitionCreationException is only ever
+                 * thrown if updateAlertDefinitionsForResource isn't called as the overlord
+                 *
+                 * but we'll log it anyway, just in case, so it isn't just swallowed
+                 */
+                LOG.error(adce);
             }
-        } catch (AlertDefinitionCreationException adce) {
-            /* should never happen because AlertDefinitionCreationException is only ever
-             * thrown if updateAlertDefinitionsForResource isn't called as the overlord
-             *
-             * but we'll log it anyway, just in case, so it isn't just swallowed
-             */
-            LOG.error(adce);
         }
 
         return alertTemplateId;

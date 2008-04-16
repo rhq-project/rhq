@@ -35,7 +35,7 @@ public interface AlertTemplateManagerLocal {
     PageList<AlertDefinition> getAlertTemplates(Subject user, int resourceTypeId, PageControl pageControl);
 
     // Create operation always cascades
-    int createAlertTemplate(Subject user, AlertDefinition alertDefinition, Integer resourceTypeId)
+    int createAlertTemplate(Subject user, AlertDefinition alertDefinition, Integer resourceTypeId, boolean cascade)
         throws InvalidAlertDefinitionException, ResourceTypeNotFoundException;
 
     // this is a system side-effect of template processing, and thus should only ever by called by the overlord user

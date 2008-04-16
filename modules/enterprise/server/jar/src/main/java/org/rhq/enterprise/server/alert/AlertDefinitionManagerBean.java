@@ -183,7 +183,6 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         }
 
         entityManager.persist(alertDefinition);
-        entityManager.flush();
 
         boolean addToCache = false;
         // don't notify on an alert template, only for those that get attached to a resource

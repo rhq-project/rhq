@@ -20,16 +20,19 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessages;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
@@ -80,7 +83,8 @@ public class NewDefinitionAction extends BaseAction {
         try {
             if (isAlertTemplate) {
                 AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
-                alertDefinitionId = alertTemplateManager.createAlertTemplate(subject, alertDef, defForm.getType());
+                alertDefinitionId = alertTemplateManager.createAlertTemplate(subject, alertDef, defForm.getType(),
+                    defForm.isCascade());
             } else {
                 AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
                 alertDefinitionId = alertDefinitionManager.createAlertDefinition(subject, alertDef, defForm.getId());

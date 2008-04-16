@@ -83,7 +83,7 @@
            storage-options="freelists 5" cache="true" logging="false">
         <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>
-        <column name="ALERT_ID" required="false" type="INTEGER" references="RHQ_ALERT(ID)"/>
+        <column name="ALERT_ID" required="true" type="INTEGER" references="RHQ_ALERT(ID)"/>
         <index name="RHQ_ALERT_IDX_ALERT" unique="true">
             <field ref="ALERT_ID"/>
         </index>

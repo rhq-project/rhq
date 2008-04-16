@@ -86,7 +86,7 @@ public class MeasurementDataTrait extends MeasurementData {
         + "   FROM rhq_measurement_data_trait t2, " //
         + "     (SELECT max(t4.time_stamp) as mx, t4.schedule_id as schedule_id " //
         + "      FROM rhq_measurement_data_trait t4 " //
-        + "      WHERE t4.time_stamp < 1 " //
+        + "      WHERE t4.time_stamp < ? " //
         + "      GROUP BY t4.schedule_id) t3 " //
         + "   WHERE t2.schedule_id = t3.schedule_id " //
         + "   AND t2.time_stamp < t3.mx) ";

@@ -130,17 +130,18 @@ public class UserAckDecorator extends ColumnDecorator implements Tag {
         if (!ackDone) {
             buf.append(" onclick=\"");
             buf.append(click);
-            buf.append("\" title=\"Click here to acknowledge\"");
+            buf.append("\"");
         }
         if (getStyleClass() != null) {
             buf.append(" class=\"");
             buf.append(getStyleClass());
+            buf.append("\"");
         }
         buf.append("\">");
         if (ackDone) {
             buf.append(obj.toString());
         } else
-            buf.append("Ack!");
+            buf.append("<u>Click to Acknowledge!</u>");
 
         buf.append("</div>");
 

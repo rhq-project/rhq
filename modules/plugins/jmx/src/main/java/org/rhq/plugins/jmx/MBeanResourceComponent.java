@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.lang.reflect.Method;
 
 import javax.management.openmbean.CompositeData;
 
@@ -260,13 +261,27 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
 
         String searchProperty = ps[0];
 
-        if (value instanceof CompositeData) {
-            CompositeData compositeData = ((CompositeData) value);
-            if (compositeData.containsKey(searchProperty)) {
-                value = compositeData.get(searchProperty);
-            } else {
-                log.debug("Unable to read attribute property [" + property + "] from composite data value");
+        // Values returned from EMS connections may be from JMX classes loaded in separate classloaders (for server compatibility)
+        // so we use reflection to be able to handle any instance of the CompositeData class.
+        Class[] interfaces = value.getClass().getInterfaces();
+        boolean isCompositeData = false;
+        for (Class intf : interfaces) {
+            if (intf.getName().equals(CompositeData.class.getName())) {
+                isCompositeData = true;
             }
+        }
+
+        if (value.getClass().getName().equals(CompositeData.class.getName())
+            || isCompositeData) {
+            try {
+                Method m = value.getClass().getMethod("get", String.class);
+                value = m.invoke(value, "used");
+            } catch (NoSuchMethodException e) {
+                /* Won't happen */
+            } catch (Exception e) {
+                log.info("Unable to read attribute property [" + property + "] from composite data value", e);
+            }
+
         } else {
             // Try to use reflection
             try {

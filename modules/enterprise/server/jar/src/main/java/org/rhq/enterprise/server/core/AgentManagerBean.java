@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.core;
 
 import java.util.Date;
 import java.util.List;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.ExcludeDefaultInterceptors;
@@ -28,9 +29,12 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TemporalType;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite;
@@ -140,7 +144,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         log.debug("Checking to see if there are agents that we suspect are down...");
 
         // TODO [mazz]: make this configurable via SystemManager bean
-        long maximumQuietTimeAllowed = 1000 * 60 * 2;
+        long maximumQuietTimeAllowed = 1000L * 60 * 2;
         try {
             String propStr = System.getProperty("rhq.server.agent-max-quiet-time-allowed");
             if (propStr != null) {
@@ -166,11 +170,11 @@ public class AgentManagerBean implements AgentManagerLocal {
 
             // Only show this message a few times so we do not flood the log with the same message if the agent is down a long time
             // we show it as soon as we detect it going down (within twice max quiet time allowed) or we show it
-            // after every 6th hour its detected to be down (again, within twice max quiet time).  Effectively, you'll see
+            // after every 6th hour it's detected to be down (again, within twice max quiet time).  Effectively, you'll see
             // this message appear about 4 times per 6-hours for a downed agent if using the default max quiet time.
             // Note that in here we also make sure the agent client is shutdown. We do it here because, even if the agent
             // was already backfilled, we still want to do this in case somehow the client was started again.
-            if ((timeSinceLastReport % 21600000) < (maximumQuietTimeAllowed * 2)) {
+            if ((timeSinceLastReport % 21600000L) < (maximumQuietTimeAllowed * 2L)) {
                 log.warn("Have not heard from agent [" + record.getAgentName() + "] since ["
                     + record.getLastAvailabilityReport() + "]. Will be backfilled since we suspect it is down");
 
@@ -181,14 +185,13 @@ public class AgentManagerBean implements AgentManagerLocal {
                 serverComm.removeDownedAgent(record.getRemoteEndpoint());
             }
 
-            // we can avoid doing this over and over again for agents that are down a long time by seeing if its
+            // we can avoid doing this over and over again for agents that are down a long time by seeing if it's
             // already backfilled.  Note that we do not log the above warn message down here in this if-statement,
             // because I think we still want to log that we think an agent is down periodically.
-            // We log about a downed agent every hour.
             // If it turns out we do not want to be that noisy, just move that warn message down in here so we only ever log
             // about a downed agent once, at the time it is first backfilled.
             if (!availabilityManager.isAgentBackfilled(record.getAgentName())) {
-                // make sure we lock out all processing of any availability reports that might come our want to avoid concurrency problems
+                // make sure we lock out all processing of any availability reports that might come our way to avoid concurrency problems
                 AvailabilityReportSerializer.getSingleton().lock(record.getAgentName());
                 try {
                     availabilityManager.setAllAgentResourceAvailabilities(record.getAgentId(), AvailabilityType.DOWN);

@@ -64,21 +64,22 @@ import org.rhq.core.domain.resource.Resource;
         + " WHERE av.resource.id = :resourceId "
         + "   AND ((av.startTime <= :start AND (av.endTime >= :start OR av.endTime IS NULL) ) " /* availability straddles :start */
         + "       OR (av.startTime BETWEEN :start AND :end)) " /* interval
-                                                                                                                                                * straddles
-                                                                                                                                                * availability.startTime
-                                                                                                                                                */
+                                                                                                                                                                            * straddles
+                                                                                                                                                                            * availability.startTime
+                                                                                                                                                                            */
         + "ORDER BY av.startTime ASC"),
     @NamedQuery(name = Availability.FIND_BY_RESOURCE_AND_DATE, query = "SELECT av FROM Availability av "
         + " WHERE av.resource.id = :resourceId " + "   AND av.startTime <= :aTime "
         + "   AND (av.endTime >= :aTime OR av.endTime IS NULL) "),
 
-    // Returns 1 if the agent is backfilled as DOWN, returns 0 if not.
+    // Returns 0 if the agent is backfilled as DOWN, returns 1 if not.
     // It does this very simply - if the platform is down, the only way it could have
     // gone down is by the check-suspect-agent's backfiller - avail reports never show
     // a downed platform because the platform plugins all return UP for platform availability.
-    @NamedQuery(name = Availability.QUERY_IS_AGENT_BACKFILLED, query = "SELECT COUNT(DISTINCT av.availabilityType) "
-        + "  FROM Availability av " + " WHERE av.availabilityType = 0 " + "   AND av.resource.agent.name = :agentName "
-        + "   AND av.resource.parentResource IS NULL " + "   AND av.endTime IS NULL"),
+    @NamedQuery(name = Availability.QUERY_IS_AGENT_BACKFILLED, query = "SELECT COUNT(DISTINCT av.availabilityType) FROM Availability av WHERE "
+        + "   av.resource.agent.name = :agentName AND "
+        + "   av.resource.parentResource IS NULL AND "
+        + "   av.endTime IS NULL AND " + "   NOT av.availabilityType = 0"),
     @NamedQuery(name = Availability.QUERY_DELETE_BY_RESOURCES, query = "DELETE Availability a WHERE a.resource IN ( :resources )") })
 @SequenceGenerator(name = "Generator", sequenceName = "RHQ_AVAILABILITY_ID_SEQ")
 @Table(name = "RHQ_AVAILABILITY")

@@ -469,10 +469,10 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
     }
 
     public boolean isAgentBackfilled(String agentName) {
-        // query returns 1 if the agent's platform is DOWN, 0 if not
+        // query returns 0 if the agent's platform is DOWN (or does not exist), 1 if not
         Query q = entityManager.createNamedQuery(Availability.QUERY_IS_AGENT_BACKFILLED);
         q.setParameter("agentName", agentName);
-        return ((Number) q.getSingleResult()).intValue() == 1;
+        return ((Number) q.getSingleResult()).intValue() == 0;
     }
 
     /**

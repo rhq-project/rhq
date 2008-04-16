@@ -75,10 +75,6 @@ public class MeasurementDataTrait extends MeasurementData {
     public static final String QUERY_DELETE_BY_RESOURCES = "MeasurementDataTrait.deleteByResources";
 
     /*
-     * Each time this is called, it will delete the oldest datum for each group of
-     * data identified by schedule_id that has more than one element in it; so this
-     * query should be called in the purge job until it returns zero.
-     *
      * NOTE: Avoid using the AS keyword in the FROM clauses in this query, because Oracle barfs on it
      *       (see http://download.oracle.com/docs/cd/B19306_01/server.102/b14200/ap_standard_sql003.htm, subfeature id
      *       E051-08).

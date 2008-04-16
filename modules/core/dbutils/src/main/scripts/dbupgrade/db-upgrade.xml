@@ -32,26 +32,9 @@ DB Upgrade:
    keyMatch="DB_SCHEMA_VERSION"
    targetSchemaVersion="${target.schema.version}">
 
-
     <schemaSpec version="2.0">
-      <!-- Empty initial schema to avoid install failure on default latest schema version -->
+        <!-- Empty initial schema to avoid install failure on default latest schema version -->
     </schemaSpec>
-
-	
-	<schemaSpec version="2.1">
-		<!-- Interval is long, as more than 596h are allowed -->
-			<schema-alterColumn
-				table="RHQ_MEASUREMENT_SCHED"
-				column="COLL_INTERVAL" 
-				columnType="LONG"/>
-		<schema-alterColumn
-			table="RHQ_MEASUREMENT_DEF"
-			column="DEFAULT_INTERVAL" 
-			columnType="LONG"/>
-	</schemaSpec>
-
-	
-
 </dbupgrade>
 
 </target>

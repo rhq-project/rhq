@@ -83,17 +83,16 @@ public class MeasurementDataTrait extends MeasurementData {
      *       (see http://download.oracle.com/docs/cd/B19306_01/server.102/b14200/ap_standard_sql003.htm, subfeature id
      *       E051-08).
      */
-    public static final String NATIVE_QUERY_PURGE = "" + // 
-        "DELETE FROM rhq_measurement_data_trait t " + //
-        "WHERE t.time_stamp = " + //
-        "(" + //
-        "        SELECT MIN(it.time_stamp) " + //
-        "        FROM rhq_measurement_data_trait it " + //
-        "        WHERE it.time_stamp < ? " + //
-        "        AND it.schedule_id = t.schedule_id " + //
-        "        GROUP BY it.schedule_id " + //
-        "        HAVING COUNT(it.schedule_id) > 1 " + //
-        ")";
+    public static final String NATIVE_QUERY_PURGE = "" //
+        + "DELETE " //
+        + "  FROM rhq_measurement_data_trait t " //
+        + " WHERE (t.schedule_id, t.time_stamp) IN " //
+        + "( " //
+        + "        SELECT MIN(it.time_stamp), it.schedule_id " //
+        + "          FROM rhq_measurement_data_trait it " //
+        + "      GROUP BY it.schedule_id " // 
+        + "  HAVING COUNT(it.schedule_id) > 1) " //
+        + ") ";
 
     private static final long serialVersionUID = 1L;
 

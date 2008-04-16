@@ -21,8 +21,11 @@ package org.rhq.enterprise.server.measurement;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
 import javax.ejb.Local;
+
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -163,6 +166,8 @@ public interface MeasurementScheduleManagerLocal {
     PageList<MeasurementScheduleComposite> getMeasurementSchedulesForResource(Subject subject, int resourceId,
         @Nullable
         DataType dataType, PageControl pageControl);
+
+    int getMeasurementScheduleCountForResource(int resourceId);
 
     /**
      * Disables all collection schedules in the given measurement definition IDs. This only disables the "templates", it

@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.ejb.EJB;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
@@ -39,10 +40,13 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.sql.DataSource;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
+
 import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
@@ -557,6 +561,14 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return new PageList<MeasurementScheduleComposite>(results, pageControl);
     }
 
+    @SuppressWarnings("unchecked")
+    public int getMeasurementScheduleCountForResource(int resourceId) {
+        Query query = entityManager.createNamedQuery(MeasurementSchedule.FIND_SCHEDULE_COUNT_FOR_RESOURCE);
+        query.setParameter("resourceId", resourceId);
+        long count = (Long) query.getSingleResult();
+        return (int) count;
+    }
+
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void disableDefaultCollectionForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds) {
         List<MeasurementDefinition> measurementDefinitions = getDefinitionsByIds(measurementDefinitionIds);
@@ -783,7 +795,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         AgentClient agentClient = LookupUtil.getAgentManager().getAgentClient(resource.getAgent());
         Set<ResourceMeasurementScheduleRequest> resourceMeasurementScheduleRequests = new HashSet<ResourceMeasurementScheduleRequest>();
         resourceMeasurementScheduleRequests.add(resourceMeasurementScheduleRequest);
-//        agentClient.getMeasurementAgentService().scheduleCollection(resourceMeasurementScheduleRequests);
+        //        agentClient.getMeasurementAgentService().scheduleCollection(resourceMeasurementScheduleRequests);
         agentClient.getMeasurementAgentService().updateCollection(resourceMeasurementScheduleRequests);
     }
 
@@ -873,7 +885,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             Query selectQuery = entityManager
                 .createQuery("SELECT new org.rhq.core.domain.measurement.MeasurementScheduleRequest( ms ) "
                     + "FROM MeasurementSchedule ms " + "WHERE ms.resource.id = :resourceId");
-            
+
             selectQuery.setFlushMode(FlushModeType.COMMIT);
             selectQuery.setParameter("resourceId", resourceId);
             List<MeasurementScheduleRequest> schedules = selectQuery.getResultList();

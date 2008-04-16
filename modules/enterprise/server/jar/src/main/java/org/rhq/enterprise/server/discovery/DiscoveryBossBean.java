@@ -21,10 +21,10 @@ package org.rhq.enterprise.server.discovery;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Iterator;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -34,14 +34,16 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.security.auth.login.LoginException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
-import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService.SynchronizationType;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
+import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService.SynchronizationType;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -49,7 +51,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.InventoryReportResponse;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ProductVersion;
@@ -62,7 +63,6 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
-import org.rhq.enterprise.server.alert.AlertDefinitionCreationException;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -316,7 +316,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             throw new IllegalStateException("Plugin Container sent an invalid Resource - " + e.getLocalizedMessage());
         }
         if (!initResourceTypes(resource)) {
-            throw new IllegalStateException("Plugin Container sent a Resource with an unknown type - " + resource.getResourceType());
+            throw new IllegalStateException("Plugin Container sent a Resource with an unknown type - "
+                + resource.getResourceType());
         }
 
         Resource existingResource = getExistingResource(resource);
@@ -361,8 +362,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
                     + "'.");
                 existingResource.setVersion(version);
 
-                ProductVersion productVersion =
-                    productVersionManager.addProductVersion(existingResource.getResourceType(), version);
+                ProductVersion productVersion = productVersionManager.addProductVersion(existingResource
+                    .getResourceType(), version);
                 existingResource.setProductVersion(productVersion);
 
                 this.entityManager.merge(existingResource);
@@ -525,14 +526,14 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
 
         // The below block is for Resources that were created via the RHQ GUI, whose descriptions will be null.
         if (existingResource.getDescription() == null && resource.getDescription() != null) {
-            log.debug("Setting description of existing resource with id " + existingResource.getId() + " to '" +
-                    resource.getDescription() + "' (as reported by agent)...");
+            log.debug("Setting description of existing resource with id " + existingResource.getId() + " to '"
+                + resource.getDescription() + "' (as reported by agent)...");
             existingResource.setDescription(resource.getDescription());
         }
 
         // Log a warning if the agent says the Resource key has changed (should rarely happen).
-        if ((existingResource.getResourceKey() != null) &&
-                !existingResource.getResourceKey().equals(resource.getResourceKey())) {
+        if ((existingResource.getResourceKey() != null)
+            && !existingResource.getResourceKey().equals(resource.getResourceKey())) {
             log.warn("Agent reported that key for " + existingResource + " has changed from '"
                 + existingResource.getResourceKey() + "' to '" + resource.getResourceKey() + "'.");
         }
@@ -540,7 +541,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         for (Resource childResource : resource.getChildResources()) {
             // It's important to specify the existing Resource, which is an attached entity bean, as the parent.
             mergeResource(childResource, existingResource, response, existingResource.getAgent());
-        }        
+        }
         return;
     }
 
@@ -549,9 +550,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         resourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin(resource.getResourceType().getName(),
             resource.getResourceType().getPlugin());
         if (resourceType == null) {
-            log.error("Reported resource [" + resource + "] has an unknown type ["
-                + resource.getResourceType() + "]. The Agent most likely has a plugin named '"
-                + resource.getResourceType().getPlugin()
+            log.error("Reported resource [" + resource + "] has an unknown type [" + resource.getResourceType()
+                + "]. The Agent most likely has a plugin named '" + resource.getResourceType().getPlugin()
                 + "' installed that is not installed on the Server. Resource will be ignored...");
             return false;
         }
@@ -560,7 +560,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         for (Iterator<Resource> childIterator = resource.getChildResources().iterator(); childIterator.hasNext();) {
             Resource child = childIterator.next();
             if (!initResourceTypes(child)) {
-                childIterator.remove();                
+                childIterator.remove();
             }
         }
         return true;
@@ -572,24 +572,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         entityManager.persist(resource);
         if (parentResource != null) {
             parentResource.addChildResource(resource);
-        }
-
-        ResourceType type = resource.getResourceType();
-        Subject overlord = subjectManager.getOverlord();
-        List<AlertDefinition> templates = alertTemplateManager.getAlertTemplates(overlord, type.getId(), PageControl
-            .getUnlimitedInstance());
-
-        try {
-            for (AlertDefinition template : templates) {
-                alertTemplateManager.updateAlertDefinitionsForResource(overlord, template, resource.getId());
-            }
-        } catch (AlertDefinitionCreationException adce) {
-            /* should never happen because AlertDefinitionCreationException is only ever
-             * thrown if updateAlertDefinitionsForResource isn't called as the overlord
-             *
-             * but we'll log it anyway, just in case, so it isn't just swallowed
-             */
-            log.error(adce);
         }
 
         // Add a product version entry for the new resource.

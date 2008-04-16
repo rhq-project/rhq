@@ -45,6 +45,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Joseph Marques
@@ -64,6 +65,8 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     AlertDefinitionManagerLocal alertDefinitionManager;
     @EJB
     AlertNotificationManagerLocal alertNotificationManager;
+    @EJB
+    AlertTemplateManagerLocal alertTemplateManager;
     @EJB
     ResourceTypeManagerLocal resourceTypeManager;
     @EJB
@@ -149,6 +152,24 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         }
 
         return alertTemplateId;
+    }
+
+    public void updateAlertDefinitionsForResource(Subject user, Integer resourceId)
+        throws AlertDefinitionCreationException {
+        if (authorizationManager.isOverlord(user) == false) {
+            throw new AlertDefinitionCreationException("Updating the alert definitions for a resource "
+                + "is an implicit system operation " + "and must only be performed by the overlord");
+        }
+
+        Resource resource = LookupUtil.getResourceManager().getResourceById(user, resourceId);
+        ResourceType resourceType = resource.getResourceType();
+
+        List<AlertDefinition> templates = getAlertTemplates(user, resourceType.getId(), PageControl
+            .getUnlimitedInstance());
+
+        for (AlertDefinition template : templates) {
+            alertTemplateManager.updateAlertDefinitionsForResource(user, template, resource.getId());
+        }
     }
 
     public void updateAlertDefinitionsForResource(Subject user, AlertDefinition alertTemplate, Integer resourceId)

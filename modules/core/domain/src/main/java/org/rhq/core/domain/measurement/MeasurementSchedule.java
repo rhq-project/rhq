@@ -85,6 +85,8 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = MeasurementSchedule.FIND_SCHEDULE_COMPOSITE_FOR_RESOURCE, query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite(ms.definition, ms.enabled, ms.interval) "
         + "FROM MeasurementSchedule ms WHERE ms.resource.id = :resourceId "
         + "AND (ms.definition.dataType = :dataType OR :dataType is null) "),
+    @NamedQuery(name = MeasurementSchedule.FIND_SCHEDULE_COUNT_FOR_RESOURCE, query = "SELECT COUNT(ms) "
+        + "FROM MeasurementSchedule ms WHERE ms.resource.id = :resourceId "),
     @NamedQuery(name = MeasurementSchedule.GET_SCHEDULED_MEASUREMENTS_PER_MINUTED, query = "SELECT SUM(1000.0 / ms.interval) * 60.0 FROM MeasurementSchedule ms WHERE ms.enabled = true"),
     @NamedQuery(name = MeasurementSchedule.DISABLE_ALL, query = "UPDATE MeasurementSchedule ms SET ms.enabled = false"),
     @NamedQuery(name = MeasurementSchedule.DELETE_BY_RESOURCES, query = "DELETE MeasurementSchedule ms WHERE ms.resource IN ( :resources )") })
@@ -125,6 +127,7 @@ public class MeasurementSchedule implements Serializable {
      * Find MeasureScheduleComposites for a resource. Resource id is passed in :resourceId
      */
     public static final String FIND_SCHEDULE_COMPOSITE_FOR_RESOURCE = "MeasurementDefinition.findScheduleCompositeForResource";
+    public static final String FIND_SCHEDULE_COUNT_FOR_RESOURCE = "MeasurementDefinition.findScheduleCountForResource";
 
     public static final String GET_SCHEDULED_MEASUREMENTS_PER_MINUTED = "MeasurementSchedule.getScheduledMeasurementsPerMinute";
     public static final String DISABLE_ALL = "MeasurementSchedule.disableAll";

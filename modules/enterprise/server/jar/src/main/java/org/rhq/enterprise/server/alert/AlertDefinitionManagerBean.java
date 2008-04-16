@@ -39,6 +39,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
+import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
@@ -50,8 +51,10 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -74,6 +77,12 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
     @EJB
     @IgnoreDependency
     MeasurementDefinitionManagerLocal measurementDefinitionManager;
+    @EJB
+    @IgnoreDependency
+    MeasurementBaselineManagerLocal measurementBaselineManager;
+    @EJB
+    @IgnoreDependency
+    SubjectManagerLocal subjectManager;
 
     private boolean checkPermission(Subject subject, AlertDefinition alertDefinition) {
         /*
@@ -159,7 +168,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
 
     public int createAlertDefinition(Subject user, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException {
-        checkAlertDefinition(alertDefinition);
+        checkAlertDefinition(alertDefinition, resourceId);
 
         // if this is an alert definition, set up the link to a resource
         if (resourceId != null) {
@@ -337,7 +346,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
          * only need to check the validity of the new alert definition if the authz checks pass *and* the old definition
          * is not currently deleted
          */
-        checkAlertDefinition(alertDefinition);
+        checkAlertDefinition(alertDefinition, isAlertTemplate ? null : alertDefinition.getResource().getId());
 
         AlertDefinitionUpdateType updateType = AlertDefinitionUpdateType.get(oldAlertDefinition, alertDefinition);
 
@@ -405,7 +414,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         }
     }
 
-    private void checkAlertDefinition(AlertDefinition alertDefinition) throws InvalidAlertDefinitionException {
+    private void checkAlertDefinition(AlertDefinition alertDefinition, Integer resourceId)
+        throws InvalidAlertDefinitionException {
         for (AlertCondition alertCondition : alertDefinition.getConditions()) {
             AlertConditionCategory alertConditionCategory = alertCondition.getCategory();
             if (alertConditionCategory == AlertConditionCategory.ALERT) {
@@ -413,10 +423,25 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
                     "AlertDefinitionManager does not yet support condition category: " + alertConditionCategory);
             }
             if (alertConditionCategory == AlertConditionCategory.BASELINE) {
+
                 MeasurementDefinition def = alertCondition.getMeasurementDefinition();
                 if (def.getNumericType() != NumericType.DYNAMIC) {
                     throw new InvalidAlertDefinitionException("Invalid Condition: '" + def.getDisplayName()
                         + "' is a trending metric, and thus will never have baselines calculated for it.");
+                }
+
+                /*
+                 * don't bother checking for the existence of a baseline against an alert template
+                 */
+                if (resourceId != null) {
+                    Subject overlord = subjectManager.getOverlord();
+                    MeasurementBaseline baseline = measurementBaselineManager
+                        .findBaselineForResourceAndMeasurementDefinition(overlord, resourceId, def.getId());
+                    if (baseline.getMean().equals(Double.NaN)) {
+                        throw new InvalidAlertDefinitionException("Invalid Condition: '" + def.getDisplayName()
+                            + "' does not have a baseline calculated for it yet, "
+                            + "thus there is no value for this alert condition to check against");
+                    }
                 }
             }
         }

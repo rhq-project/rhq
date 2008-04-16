@@ -92,7 +92,7 @@ public class MeasurementDataTrait extends MeasurementData {
         + "          FROM rhq_measurement_data_trait it " //
         + "         WHERE it.time_stamp < ? " // 
         + "      GROUP BY it.schedule_id " // 
-        + "  HAVING COUNT(it.schedule_id) > 1) " //
+        + "  HAVING COUNT(it.schedule_id) > 1 " //
         + ") ";
 
     private static final long serialVersionUID = 1L;

@@ -57,6 +57,9 @@
 
 <body onload="onLoad();" onresize="onResize();">
 
+<div id="loading" style="position: absolute; left:40%; top: 40%;z-index: 10"><img src="/images/LoadingEvents.png" alt="Loading events"/></div>
+
+
 <script type="text/javascript">
 
 
@@ -212,7 +215,6 @@ for (Availability avail : availabilities) {
     <div>Events: <span id="event-count"/></div>
     <div class="controls" id="controls"/>
 
-    <div id="loading" style="position: absolute; left:40%; top: 40%;z-index: 10"><img src="/images/LoadingEvents.png" alt="Loading events"/></div>
 
   </body>
 </html>

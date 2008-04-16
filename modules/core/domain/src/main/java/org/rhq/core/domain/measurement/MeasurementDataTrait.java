@@ -90,6 +90,7 @@ public class MeasurementDataTrait extends MeasurementData {
         + "( " //
         + "        SELECT MIN(it.time_stamp), it.schedule_id " //
         + "          FROM rhq_measurement_data_trait it " //
+        + "         WHERE it.time_stamp < ? " // 
         + "      GROUP BY it.schedule_id " // 
         + "  HAVING COUNT(it.schedule_id) > 1) " //
         + ") ";

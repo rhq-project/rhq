@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-plugins-parent</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <version>1.0.0.RC6</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
    <description>a plugin for monitoring RHQ agents</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/rhq-agent/</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/rhq-agent/</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC6/modules/plugins/rhq-agent</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC6/modules/plugins/rhq-agent</developerConnection>
    </scm>
 
    <properties>

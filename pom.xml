@@ -161,9 +161,9 @@
 
       <dependency>
         <groupId>org.hyperic</groupId>
-        <artifactId>sigar</artifactId>
+        <artifactId>sigar-dist</artifactId>
         <version>${sigar.version}</version>
-        <type>tgz</type>
+        <type>zip</type>
       </dependency>
 
       <dependency>

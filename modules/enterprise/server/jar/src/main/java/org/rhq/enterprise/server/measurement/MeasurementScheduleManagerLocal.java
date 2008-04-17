@@ -167,8 +167,6 @@ public interface MeasurementScheduleManagerLocal {
         @Nullable
         DataType dataType, PageControl pageControl);
 
-    int getMeasurementScheduleCountForResource(int resourceId);
-
     /**
      * Disables all collection schedules in the given measurement definition IDs. This only disables the "templates", it
      * does not disable actual schedules. For that capability, see

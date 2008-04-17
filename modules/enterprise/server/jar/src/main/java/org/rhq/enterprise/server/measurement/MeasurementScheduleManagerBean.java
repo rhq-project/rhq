@@ -73,6 +73,7 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.alert.AlertDefinitionCreationException;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -561,14 +562,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return new PageList<MeasurementScheduleComposite>(results, pageControl);
     }
 
-    @SuppressWarnings("unchecked")
-    public int getMeasurementScheduleCountForResource(int resourceId) {
-        Query query = entityManager.createNamedQuery(MeasurementSchedule.FIND_SCHEDULE_COUNT_FOR_RESOURCE);
-        query.setParameter("resourceId", resourceId);
-        long count = (Long) query.getSingleResult();
-        return (int) count;
-    }
-
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void disableDefaultCollectionForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds) {
         List<MeasurementDefinition> measurementDefinitions = getDefinitionsByIds(measurementDefinitionIds);
@@ -878,6 +871,27 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 int created = insertQuery.executeUpdate();
                 log.debug("Batch created [" + created + "] default measurement schedules for resource [" + resourceId
                     + "]");
+
+                /*
+                 * if the resource currently has no measurement schedules, that means it's a new resource that was just
+                 * recently moved to the committed state; the agent is requesting the schedules for the first time, which
+                 * will consequently create them in the database; this is why we got the measurementScheduleCount BEFORE
+                 * calling getSchedulesForResourceAndItsDescendants; this code path should only ever execute once per
+                 * resource committed into inventory
+                 */
+                if (created != 0) {
+                    Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+                    try {
+                        LookupUtil.getAlertTemplateManager().updateAlertDefinitionsForResource(overlord, resourceId);
+                    } catch (AlertDefinitionCreationException adce) {
+                        /* should never happen because AlertDefinitionCreationException is only ever
+                         * thrown if updateAlertDefinitionsForResource isn't called as the overlord
+                         *
+                         * but we'll log it anyway, just in case, so it isn't just swallowed
+                         */
+                        log.error(adce);
+                    }
+                }
             } catch (Exception e) {
                 log.debug("Could not create schedule for resourceId = " + resourceId, e);
             }

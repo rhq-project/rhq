@@ -71,7 +71,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     private static final String COLLECTOR_THREAD_POOL_NAME = "MeasurementManager.collector";
     private static final String SENDER_THREAD_POOL_NAME = "MeasurementManager.sender";
 
-    static final int FACET_METHOD_TIMEOUT = 30 * 1000; // 60 seconds
+    static final int FACET_METHOD_TIMEOUT = 30 * 1000; // 30 seconds
 
     private static final Log LOG = LogFactory.getLog(MeasurementManager.class);
 

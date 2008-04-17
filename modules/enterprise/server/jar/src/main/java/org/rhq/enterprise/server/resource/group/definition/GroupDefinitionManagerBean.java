@@ -259,6 +259,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         }
 
         entityManager.flush();
+        entityManager.clear();
 
         long endTime = System.currentTimeMillis();
 

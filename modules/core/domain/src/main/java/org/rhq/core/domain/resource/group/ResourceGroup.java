@@ -174,9 +174,8 @@ import org.rhq.core.domain.resource.ResourceType;
     @NamedQuery(name = ResourceGroup.QUERY_FIND_RESOURCE_NAMES_BY_GROUP_ID, query = "SELECT new org.rhq.core.domain.common.composite.IntegerOptionItem(res.id, res.name) "
         + "  FROM ResourceGroup g " + "  JOIN g.implicitResources res " + " WHERE g.id = :groupId "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_GROUP_DEFINITION_AND_EXPRESSION, query = "SELECT g "
-        + "  FROM ResourceGroup g " + " WHERE g.groupByClause = :groupByClause "
-        + "   AND g.groupDefinition.id = :groupDefinitionId ")
-})
+        + "  FROM ResourceGroup g " + " WHERE (g.groupByClause = :groupByClause OR :groupByClause IS NULL) "
+        + "   AND g.groupDefinition.id = :groupDefinitionId ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_RESOURCE_GROUP_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_GROUP")
 public class ResourceGroup extends Group {

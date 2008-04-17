@@ -99,15 +99,14 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
             this.groupDefinitionManager.updateGroupDefinition(EnterpriseFacesContextUtility.getSubject(),
                 groupDefinition);
 
+            // don't bother logging the GroupDefinitionException or InvalidExpressionException, since these are expected
         } catch (GroupDefinitionException gde) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Problem updating group definition: "
                 + gde.getMessage());
-            log.error("Problem updating group definition: ", gde);
             return OUTCOME_FAILURE;
         } catch (InvalidExpressionException iee) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                "Syntax error in one of your group definitions: " + iee.getMessage());
-            log.error("Syntax error in one of your group definitions: ", iee);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Syntax error in your group definition: "
+                + iee.getMessage());
             return OUTCOME_FAILURE;
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error updating group definition: "

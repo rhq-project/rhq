@@ -61,6 +61,9 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     private Set<String> whereStatics;
     private List<String> groupByElements;
 
+    private List<String> simpleSubExpressions;
+    private List<String> groupedSubExpressions;
+
     private int expressionCount;
     private boolean isInvalid;
     private boolean isTestMode;
@@ -83,6 +86,9 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         whereReplacements = new HashMap<String, Object>();
         whereStatics = new HashSet<String>();
         groupByElements = new ArrayList<String>();
+
+        simpleSubExpressions = new ArrayList<String>();
+        groupedSubExpressions = new ArrayList<String>();
 
         expressionCount = 0;
         isInvalid = false;
@@ -243,6 +249,20 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         }
 
         /*
+         * build the normalized expression outside of the parse, to keep the parse code as clean as possible;
+         * however, this string will be used to determine if the expression being added to this evaluator, based
+         * on whether it's grouped or not, compared against all expressions seen so far, is valid
+         */
+        StringBuilder normalizedSubExpressionBuilder = new StringBuilder();
+        for (String subExpressionToken : tokens) {
+            if (subExpressionToken.equals("groupby")) {
+                continue;
+            }
+            normalizedSubExpressionBuilder.append(subExpressionToken);
+        }
+        String normalizedSubExpression = normalizedSubExpressionBuilder.toString();
+
+        /*
          * it's easier to code a quick solution when each ParseContext can ignore additional whitespace from the
          * original expression
          */
@@ -262,9 +282,11 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
             if (context == ParseContext.BEGIN) {
                 if (nextToken.equals("resource")) {
+                    validateSubExpressionAgainstPreviouslySeen(normalizedSubExpression, false);
                     context = ParseContext.Resource;
                     deepestResourceContext = context;
                 } else if (nextToken.equals("groupby")) {
+                    validateSubExpressionAgainstPreviouslySeen(normalizedSubExpression, true);
                     isGroupBy = true;
                     context = ParseContext.Pivot;
                 } else {
@@ -747,6 +769,25 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 + "' must be contained within '[' and ']' characters");
         }
         return suffix.substring(1, suffix.length() - 1);
+    }
+
+    private void validateSubExpressionAgainstPreviouslySeen(String normalizedSubExpression, boolean grouped)
+        throws InvalidExpressionException {
+        if (grouped) {
+            if (groupedSubExpressions.contains(normalizedSubExpression)) {
+                throw new InvalidExpressionException(
+                    "Redundant 'groupby' expressions - these expressions must be unique");
+            }
+            if (simpleSubExpressions.contains(normalizedSubExpression)) {
+                throw new InvalidExpressionException("Can not group by the same condition you are filtering on");
+            }
+            groupedSubExpressions.add(normalizedSubExpression);
+        } else {
+            if (groupedSubExpressions.contains(normalizedSubExpression)) {
+                throw new InvalidExpressionException("Can not group by the same condition you are filtering on");
+            }
+            simpleSubExpressions.add(normalizedSubExpression);
+        }
     }
 
     private static class PrintUtils {

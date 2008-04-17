@@ -667,6 +667,13 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     public ResourceGroup findByGroupDefinitionAndGroupByClause(int groupDefinitionId, String groupByClause) {
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_GROUP_DEFINITION_AND_EXPRESSION);
 
+        /*
+         * since oracle interprets empty strings as null, let's cleanse the 
+         * groupByClause so that the processing is identical on postgres 
+         */
+        if (groupByClause.equals("")) {
+            groupByClause = null;
+        }
         query.setParameter("groupDefinitionId", groupDefinitionId);
         query.setParameter("groupByClause", groupByClause);
 

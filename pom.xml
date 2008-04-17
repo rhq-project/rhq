@@ -81,6 +81,7 @@
   </properties>
 
   <dependencyManagement>
+  
     <dependencies>
 
       <!-- GNU GetOpt (any modules that need to do command-line argument parsing should use this) -->
@@ -201,6 +202,7 @@
                  (see http://jira.codehaus.org/browse/MNG-2172). -->
 
     </dependencies>
+
   </dependencyManagement>
 
   <dependencies>

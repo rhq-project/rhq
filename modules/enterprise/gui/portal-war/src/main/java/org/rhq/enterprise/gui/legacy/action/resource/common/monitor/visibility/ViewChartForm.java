@@ -626,7 +626,7 @@ public class ViewChartForm extends MetricDisplayRangeForm {
 
         // If we are doing "Last N collection points", N must be
         // between 1 and 60.
-        if (getA().equals(ACTION_LASTN) && (getRu() == MonitorUtils.UNIT_COLLECTION_POINTS)) {
+        if (ACTION_LASTN.equals(getA()) && (getRu() == MonitorUtils.UNIT_COLLECTION_POINTS)) {
             if (getRn() != null) {
                 int numPoints = getRn();
                 if ((numPoints < 1) || (numPoints > DefaultConstants.DEFAULT_CHART_POINTS)) {

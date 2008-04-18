@@ -22,13 +22,13 @@
 
       <script src="http://simile.mit.edu/timeline/api/timeline-api.js" type="text/javascript"></script>
       <script src="http://simile.mit.edu/timeline/examples/examples.js" type="text/javascript"></script>
-      <title>Simple jsp page</title></head>
+      <title>Simple jsp page</title>
 
       <style type="text/css">
           .timeline-band-layer-inner { font-size: smaller; }
           .table-start-label { font-size: smaller; }
       </style>
-
+  </head>
   <%
     int eventId = WebUtility.getOptionalIntRequestParameter(request, "eventId", -1);
     int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
@@ -212,8 +212,8 @@ for (Availability avail : availabilities) {
 
   <div id="t1" style="height: 450px; border: 1px solid #aaa"></div>
 
-    <div>Events: <span id="event-count"/></div>
-    <div class="controls" id="controls"/>
+    <div>Events: <span id="event-count"></span></div>
+    <div class="controls" id="controls"></div>
 
 
   </body>

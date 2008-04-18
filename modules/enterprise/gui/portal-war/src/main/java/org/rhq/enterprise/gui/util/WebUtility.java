@@ -19,10 +19,13 @@
 package org.rhq.enterprise.gui.util;
 
 import java.util.Arrays;
+
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
@@ -206,7 +209,9 @@ public abstract class WebUtility {
         {
             mode = MetricsDisplayMode.AUTOGROUP;
         } else {
-            throw new IllegalArgumentException("Unknown input parameter combination - we can't go on");
+            mode = MetricsDisplayMode.UNSET;
+            if (LOG.isDebugEnabled())
+                LOG.debug("Unknown input parameter combination - we can't go on");
         }
 
         return mode;

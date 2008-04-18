@@ -14,7 +14,19 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
+import org.apache.struts.actions.DispatchAction;
+import org.apache.struts.util.MessageResources;
+
+import org.rhq.core.clientapi.util.StringUtil;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.KeyConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
@@ -24,29 +36,15 @@ import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.struts.action.ActionForm;
-import org.apache.struts.action.ActionForward;
-import org.apache.struts.action.ActionMapping;
-import org.apache.struts.actions.DispatchAction;
-import org.apache.struts.util.MessageResources;
-
 import org.rhq.enterprise.gui.util.MetricsDisplayMode;
 import org.rhq.enterprise.gui.util.WebUtility;
-
-import org.rhq.core.clientapi.util.StringUtil;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.DisplayType;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.enterprise.server.auth.SessionNotFoundException;
 import org.rhq.enterprise.server.auth.SessionTimeoutException;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementException;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
+import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -324,7 +322,7 @@ public class IndicatorChartsAction extends DispatchAction {
                     metrics = getViewMetricsForAutogroup(request, parent, type, viewName);
                     break;
                 default:
-                    throw new IllegalArgumentException("Invalid display mode " + mode);
+                    metrics = null;
                 }
             } catch (Exception e) {
                 log.error("Error loading metrics (they were not found in the session)", e);
@@ -363,7 +361,7 @@ public class IndicatorChartsAction extends DispatchAction {
         String key = KeyConstants.INDICATOR_VIEWS + generateSessionKey(request, ivf.getView());
         try {
             String metricsStr = user.getPreference(generatePrefsMetricsKey(key, viewName));
-            if (!("".equals(metricsStr))) {
+            if (metricsStr != null && !("".equals(metricsStr))) {
                 List<String> metricTokens = StringUtil.explode(metricsStr, PREF_DELIMITER);
                 for (String token : metricTokens) {
                     MetricDisplaySummary tmp = parseMetricToken(token);

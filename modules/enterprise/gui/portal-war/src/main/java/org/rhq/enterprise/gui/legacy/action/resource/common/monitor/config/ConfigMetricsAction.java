@@ -97,6 +97,10 @@ public class ConfigMetricsAction extends BaseAction {
             returnRequestParams.put("parent", parent);
             break;
         }
+
+        case UNSET:
+            // Do nothing, as we have invalid input
+            break;
         }
 
         forward = checkSubmit(request, mapping, form, returnRequestParams);

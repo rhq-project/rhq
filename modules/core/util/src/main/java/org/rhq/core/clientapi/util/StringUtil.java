@@ -295,6 +295,9 @@ public class StringUtil {
 
     public static List<String> explode(String s, String delim) {
         List<String> res = new ArrayList<String>();
+        if (s == null)
+            return res;
+
         StringTokenizer tok = new StringTokenizer(s, delim);
 
         while (tok.hasMoreTokens()) {
@@ -331,7 +334,7 @@ public class StringUtil {
      */
 
     public static String[] explodeQuoted(String arg) throws IllegalArgumentException {
-        ArrayList res = new ArrayList();
+        List<String> res = new ArrayList<String>();
         StringTokenizer quoteTok;
         boolean inQuote = false;
 
@@ -361,7 +364,7 @@ public class StringUtil {
             throw new IllegalArgumentException("Unbalanced quotation marks");
         }
 
-        return (String[]) res.toArray(new String[0]);
+        return res.toArray(new String[0]);
     }
 
     /**

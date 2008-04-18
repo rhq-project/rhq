@@ -21,12 +21,16 @@ package org.rhq.enterprise.server.auth.test;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
 import javax.security.auth.login.LoginException;
+
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.util.PageControl;
@@ -37,6 +41,7 @@ import org.rhq.enterprise.server.auth.SessionTimeoutException;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -404,5 +409,33 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         } finally {
             getTransactionManager().rollback();
         }
+    }
+
+    public void testDeleteUser() throws Exception {
+        getTransactionManager().begin();
+
+        try {
+            Subject overlord = subjectManager.getOverlord();
+
+            Subject new_user = new Subject("dummy-user", true, false);
+            new_user = subjectManager.createSubject(overlord, new_user);
+
+            Role new_role = new Role("dummy-role");
+            RoleManagerLocal roleManager = LookupUtil.getRoleManager();
+            new_role = roleManager.createRole(overlord, new_role);
+
+            //            new_user.addRole(new_role);
+            Integer[] subjectIds = new Integer[] { new_user.getId() };
+            roleManager.assignSubjectsToRole(overlord, new_role.getId(), subjectIds);
+            assert new_role.getSubjects().contains(new_user) : "New_role does not contain new_user";
+            int count = new_role.getSubjects().size();
+
+            subjectManager.deleteUsers(overlord, subjectIds);
+
+            assert new_role.getSubjects().size() == count - 1 : "User was not deleted from new_role";
+        } finally {
+            getTransactionManager().rollback();
+        }
+
     }
 }

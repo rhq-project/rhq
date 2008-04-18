@@ -21,8 +21,10 @@ package org.rhq.enterprise.server.auth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.ejb.CreateException;
 import javax.ejb.EJB;
@@ -443,16 +445,18 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         for (Integer doomedSubjectId : subjectIds) {
             Subject doomedSubject = findSubjectById(doomedSubjectId);
 
-            for (Role doomedRoleRelationship : doomedSubject.getRoles()) {
-                doomedSubject.removeRole(doomedRoleRelationship);
-                entityManager.merge(doomedRoleRelationship);
-            }
-
-            doomedSubject = entityManager.merge(doomedSubject);
-
             if (whoami.getName().equals(doomedSubject.getName())) {
                 throw new PermissionException("You cannot remove yourself: " + doomedSubject.getName());
             }
+
+            Set<Role> roles = doomedSubject.getRoles();
+            doomedSubject.setRoles(new HashSet<Role>()); // clean out roles
+
+            for (Role doomedRoleRelationship : roles) {
+                doomedRoleRelationship.removeSubject(doomedSubject);
+            }
+
+            doomedSubject = entityManager.merge(doomedSubject);
 
             // TODO: we need to reassign ownership of things this user used to own
 

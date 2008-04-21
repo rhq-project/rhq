@@ -153,8 +153,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
     @EJB
     private MeasurementDataManagerLocal measurementDataManager;
     @EJB
-    private MeasurementProblemManagerLocal problemManager;
-    @EJB
     @IgnoreDependency
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
 
@@ -983,8 +981,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
             summary.setDescription(definition.getDescription());
             summary.setMetricSource(definition.getResourceType().getName());
 
-            summary.setOobCount(problemManager.findMeasurementOutOfBoundCountForDefinitionAndResources(begin, end,
-                definitionId, resources));
+            summary.setOobCount(measurementProblemManager.findMeasurementOutOfBoundCountForDefinitionAndResources(
+                begin, end, definitionId, resources));
 
             /*
              * Get the aggregate data from the backend and check if it is empty or not. If it is empty (for all members

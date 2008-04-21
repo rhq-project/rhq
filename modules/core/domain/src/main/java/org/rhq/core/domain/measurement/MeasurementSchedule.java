@@ -50,6 +50,7 @@ import org.rhq.core.domain.resource.Resource;
 
 @Entity
 @NamedQueries( {
+    @NamedQuery(name = MeasurementSchedule.FIND_ALL_FOR_DEFINITIONS, query = "SELECT ms FROM MeasurementSchedule ms WHERE ms.definition IN (:definitions) "),
     /** Find all Schedules for a given Definition */
     @NamedQuery(name = "MeasurementSchedule.findForDefinition", query = "SELECT ms FROM MeasurementSchedule ms WHERE ms.definition = :definition"),
     @NamedQuery(name = "MeasurementSchedule.findByCategory", query = "SELECT ms FROM MeasurementSchedule ms WHERE ms.definition.category = :cat"),
@@ -131,6 +132,7 @@ public class MeasurementSchedule implements Serializable {
     public static final String FIND_ENABLED_BY_RESOURCES_AND_RESOURCE_TYPE = "MeasurementSchedule.FIND_ENABLED_BY_ResourcesS_AND_RESOURCE_TYPE";
     public static final String FIND_ENABLED_BY_RESOURCE_IDS_AND_RESOURCE_TYPE_ID = "MeasurementSchedule.FIND_ENABLED_BY_ResourceIds_AND_RESOURCE_TYPE";
     public static final String DELETE_BY_RESOURCES = "MeasurementSchedule.deleteByResources";
+    public static final String FIND_ALL_FOR_DEFINITIONS = "MeasurementSchedule.FIND_ALL_FOR_DEFINITIONS";
 
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_METRIC_SCHED_ID_SEQ")
     @Id

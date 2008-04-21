@@ -162,12 +162,12 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      */
     public void sendAgentUnschedule(Agent agent, List<MeasurementSchedule> schedules) {
         AgentClient ac = agentManager.getAgentClient(agent);
-        Set<Integer> ids = new HashSet<Integer>();
+        Set<Integer> resourceIds = new HashSet<Integer>();
         for (MeasurementSchedule sched : schedules) {
-            ids.add(sched.getResource().getId());
+            resourceIds.add(sched.getResource().getId());
         }
 
-        ac.getMeasurementAgentService().unscheduleCollection(ids);
+        ac.getMeasurementAgentService().unscheduleCollection(resourceIds);
     }
 
     /**
@@ -567,6 +567,14 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         List<MeasurementDefinition> measurementDefinitions = getDefinitionsByIds(measurementDefinitionIds);
         for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
             measurementDefinition.setDefaultOn(false);
+        }
+        
+        // Now that the schedules are all disabled in the database, we need to update the agents as well
+        if (measurementDefinitions.size()>0) {
+            Query q = entityManager.createNamedQuery(MeasurementSchedule.FIND_ALL_FOR_DEFINITIONS);
+            q.setParameter("definitions", measurementDefinitions);
+            List<MeasurementSchedule> schedules = q.getResultList();
+            sendAgentUnschedules(schedules);
         }
 
         return;

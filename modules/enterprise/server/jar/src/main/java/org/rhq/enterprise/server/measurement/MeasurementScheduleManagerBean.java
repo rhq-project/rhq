@@ -150,7 +150,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 resourceIds.add(info.getResourceId());
             }
 
-            ac.getMeasurementAgentService().unscheduleCollection(resourceIds);
+            ac.getMeasurementAgentService().unscheduleCollection(null); // TODO fix me
         }
     }
 
@@ -562,21 +562,52 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return new PageList<MeasurementScheduleComposite>(results, pageControl);
     }
 
+    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void disableDefaultCollectionForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds) {
+    public void disableDefaultCollectionForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds,
+        boolean updateSchedules) {
+
+        if (measurementDefinitionIds == null || measurementDefinitionIds.length == 0) {
+            if (log.isDebugEnabled())
+                log.debug("disableDefaultCollectionForMeasurementDefinitions: no definitions supplied");
+            return;
+        }
+
         List<MeasurementDefinition> measurementDefinitions = getDefinitionsByIds(measurementDefinitionIds);
         for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
             measurementDefinition.setDefaultOn(false);
         }
-        
-        // Now that the schedules are all disabled in the database, we need to update the agents as well
-        if (measurementDefinitions.size()>0) {
+
+        // Now that the definitions are all disabled in the database, we need to possibly update the
+        // schedules as well and send updates for them to the agents.
+        // We could do a bulk update, but we need to send the schedules to the agents too.
+        if (updateSchedules) {
+            Map<Integer, ResourceMeasurementScheduleRequest> reqMap = new HashMap<Integer, ResourceMeasurementScheduleRequest>();
             Query q = entityManager.createNamedQuery(MeasurementSchedule.FIND_ALL_FOR_DEFINITIONS);
             q.setParameter("definitions", measurementDefinitions);
             List<MeasurementSchedule> schedules = q.getResultList();
-            sendAgentUnschedules(schedules);
-        }
 
+            for (MeasurementSchedule sched : schedules) {
+                sched.setEnabled(false);
+
+                // Create update requests to feed to the agents
+                int resourceId = sched.getResource().getId();
+                if (!reqMap.containsKey(resourceId)) {
+                    ResourceMeasurementScheduleRequest req = new ResourceMeasurementScheduleRequest(resourceId);
+                    reqMap.put(resourceId, req);
+                }
+
+                ResourceMeasurementScheduleRequest req = reqMap.get(resourceId);
+                MeasurementScheduleRequest msr = new MeasurementScheduleRequest(sched);
+                req.addMeasurementScheduleRequest(msr);
+            }
+
+            // send schedule updates to agents
+            for (Integer resourceId : reqMap.keySet()) {
+                Resource resource = resourceManager.getResourceById(subject, resourceId);
+                sendUpdatedSchedulesToAgent(resource, reqMap.get(resourceId));
+            }
+        }
         return;
     }
 
@@ -630,6 +661,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void updateDefaultCollectionIntervalForMeasurementDefinitions(Subject subject,
         int[] measurementDefinitionIds, long collectionInterval, boolean updateExistingSchedules) {
+
         collectionInterval = verifyMinimumCollectionInterval(collectionInterval);
         List<MeasurementDefinition> measurementDefinitions = getDefinitionsByIds(measurementDefinitionIds);
         Map<Integer, ResourceMeasurementScheduleRequest> reqMap = new HashMap<Integer, ResourceMeasurementScheduleRequest>();
@@ -639,7 +671,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
             // check if schedules need to be updated as well
             if (updateExistingSchedules) {
-                // TODO rewrite the next lines as bulk update?
                 List<MeasurementSchedule> schedules = measurementDefinition.getSchedules();
                 for (MeasurementSchedule sched : schedules) {
                     sched.setInterval(collectionInterval);

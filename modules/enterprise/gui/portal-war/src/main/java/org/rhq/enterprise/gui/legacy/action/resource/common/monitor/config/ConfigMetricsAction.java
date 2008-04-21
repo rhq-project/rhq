@@ -121,7 +121,7 @@ public class ConfigMetricsAction extends BaseAction {
                 switch (mode) {
                 case RESOURCE_DEFAULT: {
                     scheduleManager.disableDefaultCollectionForMeasurementDefinitions(subject,
-                        measurementDefinitionIdsToUpdate);
+                        measurementDefinitionIdsToUpdate, monitoringConfigForm.getSchedulesShouldChange());
                     break;
                 }
 

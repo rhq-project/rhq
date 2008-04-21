@@ -174,8 +174,9 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @param subject
      * @param measurementDefinitionIds
+     * @param updateSchedules TODO
      */
-    void disableDefaultCollectionForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds);
+    void disableDefaultCollectionForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds, boolean updateSchedules);
 
     /**
      * Disables all collection schedules attached to the given resource whose schedules are based off the given

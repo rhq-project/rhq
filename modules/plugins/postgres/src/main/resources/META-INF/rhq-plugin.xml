@@ -237,7 +237,7 @@
                <c:simple-property name="server_encoding" default="SQL_ASCII" description="Sets the server (database) character set encoding." required="false" readOnly="true"/>
                <c:simple-property name="server_version" description="Shows the PostgreSQL version." required="false" readOnly="true"/>
                <c:simple-property name="server_version_num" type="integer" description="Shows the PostgreSQL version as an integer (e.g. 80204 translates to 8.2.4)." required="false" readOnly="true"/>
-               <c:simple-property name="shared_buffers" description="Sets the number of the shared memory buffers used by the server; default value is typically '1000'." required="false"/>
+               <c:simple-property name="shared_buffers" description="Sets the amount of memory for the shared memory buffers used by the server; default value is typically '32MB'. The value must be minimum 128kB or max_connections*16kB." required="false"/>
                <c:simple-property name="shared_preload_libraries" default="" description="Lists shared libraries to preload into server." required="false"/>
                <c:simple-property name="silent_mode" type="boolean" default="off" description="Runs the server silently." required="false"/>
                <c:simple-property name="sql_inheritance" type="boolean" default="on" description="Causes subtables to be included by default in various commands." required="false"/>

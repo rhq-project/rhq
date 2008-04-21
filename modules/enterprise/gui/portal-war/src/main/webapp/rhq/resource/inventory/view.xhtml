@@ -164,33 +164,33 @@
 
          <onc:icon name="m" 
                    url="/resource/common/monitor/Visibility.do" 
-                   alt="M" 
+                   alt="Monitor" 
                    visible="#{monitorEnabled}">
             <f:param name="mode" value="currentHealth"/>
          </onc:icon>
 
          <onc:icon name="i" 
                    url="/rhq/resource/inventory/view.xhtml" 
-                   alt="I"/>
+                   alt="Inventory"/>
 
          <onc:icon name="c" 
                    url="/rhq/resource/configuration/view.xhtml" 
-                   alt="C" 
+                   alt="Configure" 
                    visible="#{resourceComposite.resourceFacets.configuration}"/>
 
          <onc:icon name="o" 
                    url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml" 
-                   alt="O" 
+                   alt="Operations" 
                    visible="#{resourceComposite.resourceFacets.operation}"/>
 
          <onc:icon name="a" 
                    url="/rhq/resource/alert/listAlertDefinitions.xhtml" 
-                   alt="A" 
+                   alt="Alerts" 
                    visible="#{monitorEnabled}"/>
 
          <onc:icon name="p" 
                    url="/rhq/resource/content/view.xhtml" 
-                   alt="P"
+                   alt="Packages"
                    visible="#{resourceComposite.resourceFacets.content}"/>
 
       </onc:quickNav>

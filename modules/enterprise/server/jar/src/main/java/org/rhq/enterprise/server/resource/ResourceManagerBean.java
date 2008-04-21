@@ -93,7 +93,6 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.AlertDefinitionCreationException;
-import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -130,8 +129,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @IgnoreDependency
     private AlertTemplateManagerLocal alertTemplateManager;
     @EJB
-    private AlertManagerLocal alertManager;
-    @EJB
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
     @EJB
     private AuthorizationManagerLocal authorizationManager;
@@ -140,7 +137,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @EJB
     private SubjectManagerLocal subjectManager;
     @EJB
-    @IgnoreDependency
     private ResourceManagerLocal resourceManager; // ourself, for xactional semantic consistency
     @EJB
     @IgnoreDependency

@@ -21,12 +21,14 @@ package org.rhq.enterprise.server.test;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Set;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -60,7 +62,7 @@ public class MeasurementTestBean implements MeasurementTestLocal {
     private MeasurementServerService measurementServerService = new MeasurementServerServiceImpl();
 
     @EJB
-    MeasurementScheduleManagerLocal measurementScheduleManager;
+    private MeasurementScheduleManagerLocal measurementScheduleManager;
 
     /**
      * Send a test measurement report, full of lots of fake metrics, to the server.

@@ -71,18 +71,18 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
     private EntityManager entityManager;
 
     @EJB
-    AuthorizationManagerLocal authorizationManager;
+    private AuthorizationManagerLocal authorizationManager;
     @EJB
-    AlertConditionCacheManagerLocal alertConditionCacheManager;
-    @EJB
-    @IgnoreDependency
-    MeasurementDefinitionManagerLocal measurementDefinitionManager;
+    private AlertConditionCacheManagerLocal alertConditionCacheManager;
     @EJB
     @IgnoreDependency
-    MeasurementBaselineManagerLocal measurementBaselineManager;
+    private MeasurementDefinitionManagerLocal measurementDefinitionManager;
     @EJB
     @IgnoreDependency
-    SubjectManagerLocal subjectManager;
+    private MeasurementBaselineManagerLocal measurementBaselineManager;
+    @EJB
+    @IgnoreDependency
+    private SubjectManagerLocal subjectManager;
 
     private boolean checkPermission(Subject subject, AlertDefinition alertDefinition) {
         /*

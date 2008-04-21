@@ -60,17 +60,17 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     private EntityManager entityManager;
 
     @EJB
-    AuthorizationManagerLocal authorizationManager;
+    private AuthorizationManagerLocal authorizationManager;
     @EJB
-    AlertDefinitionManagerLocal alertDefinitionManager;
+    private AlertDefinitionManagerLocal alertDefinitionManager;
     @EJB
-    AlertNotificationManagerLocal alertNotificationManager;
+    private AlertNotificationManagerLocal alertNotificationManager;
     @EJB
-    AlertTemplateManagerLocal alertTemplateManager;
+    private AlertTemplateManagerLocal alertTemplateManager;
     @EJB
-    ResourceTypeManagerLocal resourceTypeManager;
+    private ResourceTypeManagerLocal resourceTypeManager;
     @EJB
-    SubjectManagerLocal subjectManager;
+    private SubjectManagerLocal subjectManager;
 
     @SuppressWarnings("unchecked")
     public PageList<AlertDefinition> getAlertTemplates(Subject user, int resourceTypeId, PageControl pageControl) {

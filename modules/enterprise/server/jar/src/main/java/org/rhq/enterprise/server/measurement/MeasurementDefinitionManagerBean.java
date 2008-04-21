@@ -47,13 +47,13 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
     private Log log = LogFactory.getLog(MeasurementDefinitionManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
-    EntityManager entityManager;
+    private EntityManager entityManager;
 
     @EJB
-    MeasurementDataManagerLocal measurementDataManager;
+    private MeasurementDataManagerLocal measurementDataManager;
 
     @EJB
-    MeasurementScheduleManagerLocal scheduleManager;
+    private MeasurementScheduleManagerLocal scheduleManager;
 
     public MeasurementDefinition getMeasurementDefinitionById(Subject subject, int id) {
         // TODO: AUTHZ CHECK

@@ -63,16 +63,16 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     private static final Log LOG = LogFactory.getLog(AlertNotificationManagerBean.class);
 
     @EJB
-    AlertDefinitionManagerLocal alertDefinitionManager;
+    private AlertDefinitionManagerLocal alertDefinitionManager;
     @EJB
     @IgnoreDependency
-    AlertTemplateManagerLocal alertTemplateManager;
+    private AlertTemplateManagerLocal alertTemplateManager;
     @EJB
-    AuthorizationManagerLocal authorizationManager;
+    private AuthorizationManagerLocal authorizationManager;
     @EJB
-    RoleManagerLocal roleManager;
+    private RoleManagerLocal roleManager;
     @EJB
-    SubjectManagerLocal subjectManager;
+    private SubjectManagerLocal subjectManager;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;

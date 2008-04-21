@@ -64,8 +64,6 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
     @EJB
-    private AlertNotificationManagerLocal alertNotificationManager;
-    @EJB
     private AlertTemplateManagerLocal alertTemplateManager;
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;

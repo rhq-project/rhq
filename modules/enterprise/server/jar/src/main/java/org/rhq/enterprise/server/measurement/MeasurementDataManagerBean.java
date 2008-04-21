@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
-import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -83,7 +82,6 @@ import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
@@ -123,9 +121,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @javax.annotation.Resource
-    private SessionContext ctx;
-
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource rhqDs;
 
@@ -148,8 +143,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
     private ResourceGroupManagerLocal resourceGroupManager;
     @EJB
     private CallTimeDataManagerLocal callTimeDataManager;
-    @EJB
-    private EventManagerLocal eventManager;
     @EJB
     private MeasurementDataManagerLocal measurementDataManager;
     @EJB

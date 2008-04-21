@@ -63,7 +63,6 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
-import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -90,8 +89,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
 
     @EJB
     private AgentManagerLocal agentManager;
-    @EJB
-    private AlertTemplateManagerLocal alertTemplateManager;
     @EJB
     private AuthorizationManagerLocal authorizationManager;
     @EJB

@@ -55,7 +55,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -74,9 +73,6 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
     private AuthorizationManagerLocal authorizationManager;
     @EJB
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
-    @EJB
-    @IgnoreDependency
-    private MeasurementDefinitionManagerLocal measurementDefinitionManager;
     @EJB
     @IgnoreDependency
     private MeasurementBaselineManagerLocal measurementBaselineManager;

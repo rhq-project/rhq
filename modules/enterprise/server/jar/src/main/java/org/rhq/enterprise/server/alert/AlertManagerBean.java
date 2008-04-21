@@ -614,11 +614,22 @@ public class AlertManagerBean implements AlertManagerLocal {
 
         int conditionCounter = 1;
         for (AlertConditionLog aLog : conditionLogs) {
+
+            String formattedValue = null;
+
+            try {
+                formattedValue = MeasurementConverter.format(Double.valueOf(aLog.getValue()), aLog.getCondition()
+                    .getMeasurementDefinition().getUnits(), true);
+            } catch (Exception e) {
+                // If the value does not parse just report the value as is.
+                formattedValue = aLog.getValue();
+            }
+
             builder.append(NEW_LINE);
 
             builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EMAIL_CONDITION_LOG_FORMAT,
                 conditionCounter, prettyPrintAlertCondition(aLog.getCondition()), new SimpleDateFormat(
-                    "yyyy/MM/dd HH:mm:ss z").format(new Date(aLog.getCtime())), aLog.getValue()));
+                    "yyyy/MM/dd HH:mm:ss z").format(new Date(aLog.getCtime())), formattedValue));
             conditionCounter++;
         }
 

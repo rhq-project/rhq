@@ -1,0 +1,537 @@
+<?xml version="1.0"?>
+<!DOCTYPE plugin [
+
+        <!ENTITY COMMON_IIS_METRICS '
+                <metric displayName="Bytes Sent"
+                property="Bytes Sent/sec"
+                defaultOn="true"
+                displayType="summary"
+                measurementType="trendsup"
+                units="bytes"/>
+        <metric displayName="Bytes Received"
+                property="Bytes Received/sec"
+                defaultOn="true"
+                displayType="summary"
+                measurementType="trendsup"
+                units="bytes"/>
+        <metric displayName="Total Files Sent"
+                property="Total Files Sent"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric displayName="Total Files Received"
+                property="Total Files Received"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric displayName="Total Files Transferred"
+                property="Total Files Transferred"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric displayName="Current Anonymous Users"
+                property="Current Anonymous Users"
+               defaultOn="true"
+                units="none"/>
+        <metric displayName="Current NonAnonymous Users"
+                property="Current NonAnonymous Users"
+                defaultOn="true"
+                units="none"/>
+        <metric displayName="Total Anonymous Users"
+                property="Total Anonymous Users"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Total NonAnonymous Users"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+       <metric property="Maximum Anonymous Users"
+                defaultOn="true"
+                units="none"/>
+        <metric property="Maximum NonAnonymous Users"
+                defaultOn="true"
+                units="none"/>
+        <metric property="Current Connections"
+                defaultOn="true"
+                displayType="summary"
+                units="none"/>
+        <metric property="Maximum Connections"
+                defaultOn="true"
+                units="none"/>
+        <metric property="Total Logon Attempts"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Total Get Requests"
+                defaultOn="true"
+                displayType="summary"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Total Post Requests"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Total Head Requests"
+                defaultOn="true"
+                measurementType="trendsup"
+               units="none"/>
+        <metric property="Total Put Requests"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Total Delete Requests"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Total Trace Requests"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Total Other Request Methods"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Total Method Requests"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Total CGI Requests"
+               defaultOn="true"
+                measurementType="trendsup"
+               units="none"/>
+        <metric property="Total ISAPI Extension Requests"
+               defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Total Not Found Errors"
+               defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Total Locked Errors"
+               defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Current CGI Requests"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Current ISAPI Extension Requests"
+                defaultOn="true"
+                units="none"/>
+        <metric property="Maximum CGI Requests"
+                defaultOn="true"
+                units="none"/>
+        <metric property="Maximum ISAPI Extension Requests"
+                defaultOn="true"
+                units="none"/>
+        <metric property="Total Blocked Async I/O Requests"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Total Allowed Async I/O Requests"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Total Rejected Async I/O Requests"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Current Blocked Async I/O Requests"
+                defaultOn="true"
+                units="none"/>
+        <metric property="Measured Async I/O Bandwidth Usage"
+                defaultOn="true"
+                units="none"/>
+                '>
+]>
+
+
+
+<plugin name="IIS"
+        displayName="IIS"
+        package="org.rhq.plugins.iis"
+        description="Monitoring of Microsoft IIS Services"
+        version="2.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+    <server name="IIS"
+            description="IIS Web Server"
+            discovery="IISServerDiscoveryComponent"
+            class="IISServerComponent">
+
+        <plugin-configuration>
+            <c:simple-property name="serviceName" default="W3SVC"/>
+            <c:list-property name="serviceDependants">
+                <c:simple-property name="serviceName"/>
+            </c:list-property>
+            <c:list-property name="serviceDependencies">
+                <c:simple-property name="serviceName"/>
+            </c:list-property>
+        </plugin-configuration>
+
+
+        &COMMON_IIS_METRICS;
+
+
+        <!-- Server only -->
+        <metric property="Total Connection Attempts (all instances)"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric property="Service Uptime"
+                defaultOn="true"
+                units="seconds"/>
+
+
+
+        <service name="VHost" description="IIS VHost"
+                discovery="IISVHostDiscoveryComponent"
+                class="IISVHostComponent">
+            <plugin-configuration>
+                <c:simple-property name="siteName"/>
+                <c:simple-property name="hostname"/>
+                <c:simple-property name="port"/>
+                <c:simple-property name="ipAddress"/>
+                <c:simple-property name="docRoot"/>
+                <c:simple-property name="ssl" type="boolean"/>
+                <c:simple-property name="logDirectory"/>
+            </plugin-configuration>
+
+            &COMMON_IIS_METRICS;
+
+        </service>
+    </server>
+
+
+    <!-- Plugin help -->
+    <help>
+        <![CDATA[
+  <h3>Configuring IIS for response time collection</h3>
+  <p>
+  In order to collection response time data for IIS the IIS log file format must be
+  configured to include the "Date" and "Time Taken" information. This can be enabled
+  in the IIS snap-in for the MMC. For each Web Site, select the
+  properties -> Web Site -> Enable Logging (Properties) -> Extended Properties tab and
+  enable these options. Your Web Site must be stopped and started to enable the settings.
+  </p>
+  ]]>
+    </help>
+
+
+    <!-- TODO : Add back the asp metrics
+
+      <metrics name="asp-server">
+    <metric name="Debugging Requests"
+            alias="DebugReqs"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="trendsup"
+            units="none"/>
+    <metric name="Errors During Script Runtime"
+            alias="ErrsInScriptRuntime"
+            template="${asp}:Platform=Win32:${name}"
+            category="THROUGHPUT"
+            group="Throughput"
+            defaultOn="false"
+            indicator="false"
+            collectionType="trendsup"
+            units="none"/>
+    <metric name="Errors From ASP Preprocessor"
+            alias="ErrsFromASPPreproc"
+            template="${asp}:Platform=Win32:${name}"
+            category="THROUGHPUT"
+            group="Throughput"
+            defaultOn="false"
+            indicator="false"
+            collectionType="trendsup"
+            units="none"/>
+    <metric name="Errors From Script Compilers"
+            alias="ErrsFromScriptCompilers"
+            template="${asp}:Platform=Win32:${name}"
+            category="THROUGHPUT"
+            group="Throughput"
+            defaultOn="false"
+            indicator="false"
+            collectionType="trendsup"
+            units="none"/>
+    <metric name="Request Bytes In Total"
+            alias="ReqBytesInTotal"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="trendsup"
+            units="B"/>
+    <metric name="Request Bytes Out Total"
+            alias="ReqBytesOutTotal"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="trendsup"
+            units="B"/>
+    <metric name="Request Execution Time"
+            alias="ReqExecTime"
+            template="${asp}:Platform=Win32:${name}"
+            category="PERFORMANCE"
+            group="Performance"
+            defaultOn="false"
+            indicator="true"
+            collectionType="dynamic"
+            units="sec"/>
+    <metric name="Request Wait Time"
+            alias="ReqWaitTime"
+            template="${asp}:Platform=Win32:${name}"
+            category="PERFORMANCE"
+            group="Performance"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="sec"/>
+    <metric name="Requests Disconnected"
+            alias="ReqsDisconnected"
+            template="${asp}:Platform=Win32:${name}"
+            category="THROUGHPUT"
+            group="Throughput"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+    <metric name="Requests Executing"
+            alias="ReqsExecuting"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+    <metric name="Requests Failed Total"
+            alias="ReqsFailedTotal"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="trendsup"
+            units="none"/>
+    <metric name="Requests Not Authorized"
+            alias="ReqsNotAuthorized"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="trendsup"
+            units="none"/>
+    <metric name="Requests Not Found"
+            alias="ReqsNotFound"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="trendsup"
+            units="none"/>
+    <metric name="Requests Queued"
+            alias="ReqsQueued"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="trendsup"
+            units="none"/>
+    <metric name="Requests Rejected"
+            alias="ReqsRejected"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="trendsup"
+            units="none"/>
+    <metric name="Requests Succeeded"
+            alias="ReqsSucceeded"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="trendsup"
+            units="none"/>
+    <metric name="Requests Timed Out"
+            alias="ReqsTimedOut"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="trendsup"
+            units="none"/>
+    <metric name="Requests Total"
+            alias="ReqsTotal"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="trendsup"
+            units="none"/>
+    <metric name="Script Engines Cached"
+            alias="ScriptEngsCached"
+            template="${asp}:Platform=Win32:${name}"
+            category="THROUGHPUT"
+            group="Throughput"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+    <metric name="Session Duration"
+            alias="SessionDuration"
+            template="${asp}:Platform=Win32:${name}"
+            category="THROUGHPUT"
+            group="Session"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="sec"/>
+    <metric name="Sessions Current"
+            alias="SessionsCurrent"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Session"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+    <metric name="Sessions Timed Out"
+            alias="SessionsTimedOut"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Session"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+    <metric name="Sessions Total"
+            alias="SessionsTotal"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Session"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+    <metric name="Templates Cached"
+            alias="TemplateCached"
+            template="${asp}:Platform=Win32:${name}"
+            category="THROUGHPUT"
+            group="Throughput"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+    <metric name="Template Cache Hit Rate"
+            alias="TmpltCacheHitRate"
+            template="${asp}:Platform=Win32:${name}"
+            category="THROUGHPUT"
+            group="Throughput"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+    <metric name="Template Notifications"
+            alias="TmpltNotifications"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+    <metric name="Transactions Aborted"
+            alias="TransAborted"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Transaction"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+    <metric name="Transactions Committed"
+            alias="TransCommitted"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Transaction"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+    <metric name="Transactions Pending"
+            alias="TransPending"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Transaction"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+    <metric name="Transactions Total"
+            alias="TransTotal"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Transaction"
+            defaultOn="false"
+            indicator="false"
+            collectionType="trendsup"
+            units="none"/>
+    <metric name="In Memory Templates Cached"
+            alias="InMemoryTmpltsCached"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+    <metric name="In Memory Template Cache Hit Rate"
+            alias="InMemTmpltCacheHitRate"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+    <metric name="Script Engine Cache Hit Rate"
+            alias="ScriptEngCacheHitRate"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+    <metric name="Engine Flush Notifications"
+            alias="EngFlushNotifications"
+            template="${asp}:Platform=Win32:${name}"
+            category="UTILIZATION"
+            group="Request Processing"
+            defaultOn="false"
+            indicator="false"
+            collectionType="dynamic"
+            units="none"/>
+  </metrics>
+
+    -->
+</plugin>

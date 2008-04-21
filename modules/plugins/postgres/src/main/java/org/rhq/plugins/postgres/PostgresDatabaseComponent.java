@@ -40,11 +40,13 @@ import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.plugins.database.DatabaseComponent;
 
 public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServerComponent>, MeasurementFacet,
-    CreateChildResourceFacet {
+    CreateChildResourceFacet, OperationFacet {
     private Log log = LogFactory.getLog(PostgresDatabaseComponent.class);
 
     private ResourceContext<PostgresServerComponent> resourceContext;
@@ -217,5 +219,30 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
         }
 
         return report;
+    }
+
+    public OperationResult invokeOperation(String name, Configuration parameters) 
+        throws InterruptedException, Exception {
+        
+        if ("resetStatistics".equals(name)) {
+            Statement stmt = null;
+            ResultSet rs = null;
+            try {
+                stmt = getConnection().createStatement();
+                rs = stmt.executeQuery("select * from pg_stat_reset()");
+                
+            } finally {
+                if (rs != null) {
+                    rs.close();
+                }
+
+                if (stmt != null) {
+                    stmt.close();
+                }
+            }
+            return null;
+        }
+        else
+            throw new UnsupportedOperationException("Operation [" + name + "] is not supported yet.");
     }
 }

@@ -68,7 +68,7 @@
           <html:select property="condition[${i}].percentageComparator">
             <hq:optionMessageList property="comparators" baseKey="alert.config.props.CB.Content.Comparator" filter="true"/>
           </html:select>
-          <html:text property="condition[${i}].percentage" size="6" maxlength="4"/>&nbsp;<fmt:message key="alert.config.props.CB.Content.Percent"/>&nbsp;
+          <html:text property="condition[${i}].percentage" size="6" maxlength="6"/>&nbsp;<fmt:message key="alert.config.props.CB.Content.Percent"/>&nbsp;
           <html:select property="condition[${i}].baselineOption" disabled="true">
           <html:option value="" key="alert.dropdown.SelectOption"/>
           </html:select>

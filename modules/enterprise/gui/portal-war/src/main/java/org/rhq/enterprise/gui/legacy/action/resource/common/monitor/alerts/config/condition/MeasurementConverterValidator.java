@@ -101,10 +101,13 @@ class MeasurementConverterValidator implements ConditionBeanConverterValidator {
 
             toBean.setAbsoluteComparator(fromCondition.getComparator());
             toBean.setPercentageComparator(null);
+
         } else if (fromCondition.getCategory() == AlertConditionCategory.BASELINE) {
             toBean.setThresholdType(TYPE_PERC);
             toBean.setBaselineOption(fromCondition.getOption());
-            toBean.setPercentage(NumberUtil.numberAsString(fromCondition.getThreshold()));
+
+            toBean.setPercentage(MeasurementConverter.format(fromCondition.getThreshold(), fromCondition
+                .getMeasurementDefinition().getUnits(), true));
 
             toBean.setAbsoluteComparator(null);
             toBean.setPercentageComparator(fromCondition.getComparator());

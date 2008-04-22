@@ -61,10 +61,12 @@ rem If the embedded JRE is to be used but is not available, the fallback
 rem JRE to be used will be determined by the JAVA_HOME environment variable.
 rem ===========================================================================
 
-set RHQ_AGENT_DEBUG=1
-set RHQ_AGENT_ADDITIONAL_JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,address=9797,server=y,suspend=n
-
 setlocal
+
+echo Enabling Agent DEBUG output...
+set RHQ_AGENT_DEBUG=1
+echo Enabling JPWP for remote debugging...
+set RHQ_AGENT_ADDITIONAL_JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,address=9797,server=y,suspend=n
 
 if "%1"=="_SETENV_ONLY" (
    set _SETENV_ONLY=true

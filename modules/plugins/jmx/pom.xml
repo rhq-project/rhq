@@ -21,8 +21,7 @@
    </scm>
 
    <properties>
-      <scm.module.path>modules/plugins/jmx/</scm.module.path>
-      <ems.version>1.2.2</ems.version>
+      <scm.module.path>modules/plugins/jmx/</scm.module.path>      
    </properties>
 
    <dependencies>
@@ -37,7 +36,7 @@
       <dependency>
          <groupId>mc4j</groupId>
          <artifactId>org-mc4j-ems</artifactId>
-         <version>${ems.version}</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       </dependency>
 
       <dependency>

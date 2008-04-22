@@ -28,12 +28,13 @@
                <h:outputText value="Alerts"/>
             </f:facet>
 
-            <h:panelGrid columns="4" cellspacing="3" style="float: left;">
+            <h:panelGrid columns="4" cellspacing="3">
                <h:outputLabel for="dateFilter" value="Date Filter: " />
                <h:inputText id="dateFilter" value="#{ListAlertHistoryUIBean.dateFilter}" />
                <a4j:commandButton value="GO" reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
                                   styleClass="buttonmed"/>
                <h:outputText id="dateErrors" value="#{ListAlertHistoryUIBean.dateErrors}" />
+
                <h:outputLabel for="alertDefinitionFilter" value="Alert Definition Filter: " />
                <h:selectOneMenu id="alertDefinitionFilter" value="#{ListAlertHistoryUIBean.alertDefinitionFilter}">
                    <a4j:support event="onchange" reRender="alertHistoryDataTable, alertHistoryDataTableScroller"/>
@@ -42,6 +43,7 @@
                </h:selectOneMenu>
                <rich:spacer/>
                <rich:spacer/>
+
                <h:outputLabel for="alertPriorityFilter" value="Alert Priority Filter: " />
                <h:selectOneMenu id="alertPriorityFilter" value="#{ListAlertHistoryUIBean.alertPriorityFilter}">
                    <a4j:support event="onchange" reRender="alertHistoryDataTable, alertHistoryDataTableScroller"/>
@@ -51,6 +53,8 @@
                <rich:spacer/>
                <rich:spacer/>
             </h:panelGrid>
+
+            <br/>
 
             <h:panelGrid columns="1" width="90%" style="min-width: 800px;">
 
@@ -166,6 +170,8 @@
             </rich:dataTable>
  
             </h:panelGrid>
+            
+            
 
          </rich:panel>
       </h:form>

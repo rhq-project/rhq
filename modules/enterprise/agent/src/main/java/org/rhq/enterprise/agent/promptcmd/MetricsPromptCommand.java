@@ -22,6 +22,8 @@ import java.io.PrintWriter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
 import javax.management.Attribute;
 import javax.management.AttributeList;
 import javax.management.MBeanAttributeInfo;
@@ -113,11 +115,23 @@ public class MetricsPromptCommand implements AgentPromptCommand {
             } else if (name.equals("Uptime")) {
                 value = formatSeconds(((Long) value).longValue());
             } else if (name.equals("JVMTotalMemory") || name.equals("JVMFreeMemory")) {
-                value = formatBytes(((Long) value).longValue());
+                //value = formatBytes(((Long) value).longValue());
+                continue;
             }
 
             name_value_pairs.put(name, value);
         }
+
+        MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
+        name_value_pairs.put("Memory - Heap",
+                "Used: " + formatBytes(memoryBean.getHeapMemoryUsage().getUsed())
+                + ", Committed: " + formatBytes(memoryBean.getHeapMemoryUsage().getCommitted())
+                + ", Max: " + formatBytes(memoryBean.getHeapMemoryUsage().getMax()));
+        name_value_pairs.put("Memory - Non Heap",
+                "Used: " + formatBytes(memoryBean.getNonHeapMemoryUsage().getUsed())
+                + ", Committed: " + formatBytes(memoryBean.getNonHeapMemoryUsage().getCommitted())
+                + ", Max: " + formatBytes(memoryBean.getNonHeapMemoryUsage().getMax()));
+
 
         out.println(MSG.getMsg(AgentI18NResourceKeys.METRICS_HEADER));
         out.println(StringUtil.justifyKeyValueStrings(name_value_pairs));
@@ -178,7 +192,7 @@ public class MetricsPromptCommand implements AgentPromptCommand {
                 ret_str += String.format("%.2f", new Object[] { (float) bytes / 1000000000L }) + " TB";
             }
 
-            ret_str += " (" + bytes + ")";
+            //ret_str += " (" + bytes + ")";
         } else {
             ret_str += bytes;
         }

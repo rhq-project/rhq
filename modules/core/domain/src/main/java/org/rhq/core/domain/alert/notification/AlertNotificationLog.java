@@ -121,10 +121,19 @@ public class AlertNotificationLog implements Serializable {
             }
         }
 
-        roles = rolesBuilder.toString();
-        subjects = subjectsBuilder.toString();
-        emails = emailsBuilder.toString();
+        // always make sure each notification field is non-null by "fixing" it
+        roles = fixup(rolesBuilder);
+        subjects = fixup(subjectsBuilder);
+        emails = fixup(emailsBuilder);
         this.alert = alert;
+    }
+
+    private String fixup(StringBuilder builder) {
+        if (builder.length() == 0) {
+            return "(none)";
+        } else {
+            return builder.toString();
+        }
     }
 
     public int getId() {

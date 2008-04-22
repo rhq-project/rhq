@@ -305,7 +305,7 @@
                   <version>2.0</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>(1.5,1.6]</version> <!-- 1.5.x -->
+                  <version>[1.5,1.6)</version> <!-- 1.5.x -->
                 </requireJavaVersion>
               </rules>
             </configuration>

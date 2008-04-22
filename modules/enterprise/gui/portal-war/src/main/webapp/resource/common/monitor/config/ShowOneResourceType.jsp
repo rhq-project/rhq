@@ -1,6 +1,6 @@
-<%@ page import="java.util.List" %>
 <%@ page import="java.util.SortedSet" %>
 <%@ page import="org.rhq.core.domain.resource.ResourceType" %>
+<%@ page import="org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite" %>
 <%@ page import="java.util.Map" %>
 <%@ page language="java" %>
 <%@ page errorPage="/common/Error.jsp" %>
@@ -16,16 +16,16 @@
 
 <%
     // find the right List within the map and put that in page context
-	Map<Integer,SortedSet<ResourceType>> serviceMap = (Map)pageContext.getAttribute("servicesMap");
+	Map<Integer,SortedSet<ResourceTypeTemplateCountComposite>> serviceMap = (Map)pageContext.getAttribute("servicesMap");
     if (serviceMap==null)
        return;
 
-	ResourceType ids = (ResourceType)pageContext.getAttribute("resourceType");
+    ResourceTypeTemplateCountComposite ids = (ResourceTypeTemplateCountComposite)pageContext.getAttribute("resourceType");
 	if (ids==null) {
 	   return;
 	}
-	int id = ids.getId();	
-	SortedSet<ResourceType> childServices = serviceMap.get(id);
+	int id = ids.getType().getId();	
+	SortedSet<ResourceTypeTemplateCountComposite> childServices = serviceMap.get(id);
 	if (childServices==null)
 	   return;
 	pageContext.setAttribute("servicesList", childServices);
@@ -46,20 +46,30 @@
             </c:otherwise>
          </c:choose> 
          <html:img page="/images/icon_indent_arrow.gif" width="16" height="16" border="0" /> 
-         <c:out value="${serviceType.name}" />
+         <c:out value="${serviceType.type.name}" />
       </td>
-      <td class="ListCell" align="center" nowrap="nowrap">
+      <td class="ListCell" align="left" nowrap="nowrap">
          <c:if test="${monitorEnabled}">
-         <html:link page="/admin/platform/monitor/Config.do?mode=configure&id=${serviceType.id}&type=${serviceType.id}" styleClass="buttonsmall">
+         <html:link page="/admin/platform/monitor/Config.do?mode=configure&id=${serviceType.type.id}&type=${serviceType.type.id}" styleClass="buttonsmall">
             Edit Metric Template
          </html:link>
+         <c:if test="${(serviceType.enabledMetricCount + serviceType.disabledMetricCount) > 0}">
+            <span title="(enabled | disabled)">  
+               (<c:out value="${serviceType.enabledMetricCount}" /> | <c:out value="${serviceType.disabledMetricCount}" />)
+            </span>
+         </c:if>
          </c:if>
       </td>
-      <td class="ListCell" align="center" nowrap="nowrap">
+      <td class="ListCell" align="left" nowrap="nowrap">
          <c:if test="${monitorEnabled}">
-            <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${serviceType.id}" styleClass="buttonsmall">
-                Edit Alert Templates
+            <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${serviceType.type.id}" styleClass="buttonsmall">
+               Edit Alert Templates
             </html:link>
+            <c:if test="${(serviceType.enabledAlertCount + serviceType.disabledAlertCount) > 0}">
+               <span title="(enabled | disabled)">  
+                  (<c:out value="${serviceType.enabledAlertCount}" /> | <c:out value="${serviceType.disabledAlertCount}" />)
+               </span>
+            </c:if>
          </c:if>
       </td>
    </tr>

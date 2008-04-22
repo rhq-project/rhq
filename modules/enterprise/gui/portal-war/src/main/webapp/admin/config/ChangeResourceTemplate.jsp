@@ -23,25 +23,35 @@
 <!-- PLATFORMS -->
 	<tr class="ListHeaderDark">
       <td width="50%" class="ListHeaderInactiveSorted"><fmt:message key="resource.hub.PlatformTypeTH"/>s</td>
-      <td width="25%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
-      <td width="25%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
+      <td width="25%" class="ListHeaderInactive" nowrap>&nbsp;</td>
+      <td width="25%" class="ListHeaderInactive" nowrap>&nbsp;</td>
       </tr>
   	<c:set var="PlatformServices" value="${PlatformServices}"/>
     <c:forEach var="entry" varStatus="status" items="${platformTypes}">
     <tr class="ListRowSelected">
-      <td class="ListCellPrimary"><c:out value="${entry.name}"/></td>
-      <td class="ListCell" align="center" nowrap="nowrap">
+      <td class="ListCellPrimary"><c:out value="${entry.type.name}"/></td>
+      <td class="ListCell" align="left" nowrap="nowrap">
          <c:if test="${monitorEnabled}">
-         <html:link page="/admin/platform/monitor/Config.do?mode=configure&id=${entry.id}&type=${entry.id}" styleClass="buttonsmall">
-             Edit Metric Template
+         <html:link page="/admin/platform/monitor/Config.do?mode=configure&id=${entry.type.id}&type=${entry.type.id}" styleClass="buttonsmall">
+            Edit Metric Template
          </html:link>
+         <c:if test="${(entry.enabledMetricCount + entry.disabledMetricCount) > 0}"> 
+            <span title="(enabled | disabled)">
+               (<c:out value="${entry.enabledMetricCount}" /> | <c:out value="${entry.disabledMetricCount}" />)
+            </span>
+         </c:if>
          </c:if>
      </td>
-      <td class="ListCell" align="center" nowrap="nowrap">
+      <td class="ListCell" align="left" nowrap="nowrap">
         <c:if test="${monitorEnabled}">   
-        <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${entry.id}" styleClass="buttonsmall">
-            Edit Alert Templates
+        <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${entry.type.id}" styleClass="buttonsmall">
+           Edit Alert Templates
         </html:link>
+         <c:if test="${(entry.enabledAlertCount + entry.disabledAlertCount) > 0}">
+            <span title="(enabled | disabled)"> 
+               (<c:out value="${entry.enabledAlertCount}" /> | <c:out value="${entry.disabledAlertCount}" />)
+            </span>
+         </c:if>
         </c:if>
       </td>
     </tr>
@@ -58,8 +68,8 @@
 <!-- PLATFORM SERVICES -->
     <tr class="ListHeaderDark">
       <td width="50%" class="ListHeaderInactiveSorted"><fmt:message key="resource.hub.PlatformServiceTypeTH"/>s</td>
-      <td width="25%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
-      <td width="25%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
+      <td width="25%" class="ListHeaderInactive" nowrap>&nbsp;</td>
+      <td width="25%" class="ListHeaderInactive" nowrap>&nbsp;</td>
       </tr>
     <c:set var="PlatformServices" value="${PlatformServices}"/>
     <c:forEach var="entry" varStatus="status" items="${platformTypes}">
@@ -80,25 +90,35 @@
 <!-- SERVER CONTENTS -->
 	<tr class="ListHeaderDark">
       <td width="50%" class="ListHeaderInactiveSorted"><fmt:message key="resource.hub.ServerTypeTH"/>s</td>
-      <td width="25%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
-      <td width="25%" class="ListHeaderInactive" align="center" nowrap>&nbsp;</td>
+      <td width="25%" class="ListHeaderInactive" nowrap>&nbsp;</td>
+      <td width="25%" class="ListHeaderInactive" nowrap>&nbsp;</td>
   	</tr>
   	<c:set var="Services" value="${Services}"/> 
     <c:forEach var="entry" varStatus="status" items="${serverTypes}">
     <tr class="ListRowSelected">
-      <td class="ListCellPrimary"><c:out value="${entry.name}"/></td>
-      <td class="ListCell" align="center">
+      <td class="ListCellPrimary"><c:out value="${entry.type.name}"/></td>
+      <td class="ListCell" align="left">
          <c:if test="${monitorEnabled}">
-         <html:link page="/admin/platform/monitor/Config.do?mode=configure&type=${entry.id}" styleClass="buttonsmall">
-             Edit Metric Template
+         <html:link page="/admin/platform/monitor/Config.do?mode=configure&type=${entry.type.id}" styleClass="buttonsmall">
+            Edit Metric Template
          </html:link>
+         <c:if test="${(entry.enabledMetricCount + entry.disabledMetricCount) > 0}">
+            <span title="(enabled | disabled)">  
+               (<c:out value="${entry.enabledMetricCount}" /> | <c:out value="${entry.disabledMetricCount}" />)
+            </span>
+         </c:if>
          </c:if>
       </td>
-      <td class="ListCell" align="center">
+      <td class="ListCell" align="left">
         <c:if test="${monitorEnabled}">   
-          <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${entry.id}" styleClass="buttonsmall">
-              Edit Alert Templates
+          <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${entry.type.id}" styleClass="buttonsmall">
+             Edit Alert Templates
           </html:link>
+         <c:if test="${(entry.enabledAlertCount + entry.disabledAlertCount) > 0}">
+            <span title="(enabled | disabled)">  
+               (<c:out value="${entry.enabledAlertCount}" /> | <c:out value="${entry.disabledAlertCount}" />)
+            </span>
+         </c:if>
         </c:if>
         </td>
     </tr>

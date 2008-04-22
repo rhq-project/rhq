@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.admin.config;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +37,7 @@ import org.apache.struts.action.ActionMapping;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.Portal;
 import org.rhq.enterprise.gui.legacy.action.BaseDispatchAction;
@@ -48,28 +50,28 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * Populate the list of types to configure metric defaults
  */
 public class EditDefaultsAction extends BaseDispatchAction {
+
+    ResourceTypeManagerLocal typeMgr = LookupUtil.getResourceTypeManager();
+    Map<Integer, ResourceTypeTemplateCountComposite> compositeMap;
+
+    @SuppressWarnings("deprecation")
     public ActionForward getMonitorDefaults(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse resp) throws Exception {
-
-        ResourceTypeManagerLocal typeMgr = LookupUtil.getResourceTypeManager();
 
         Subject subject = RequestUtils.getSubject(request);
 
         String viewMode = WebUtility.getOptionalRequestParameter(request, "viewMode", null);
 
-        List<ResourceType> platformTypesTmp;
-        List<ResourceType> serverTypesTmp;
-
         // Next two are needed to sort the result by name - could be done in the DB
-        SortedSet<ResourceType> platformTypes = new TreeSet<ResourceType>();
-        SortedSet<ResourceType> serverTypes = new TreeSet<ResourceType>();
+        List<ResourceType> platformTypes = null;
+        List<ResourceType> serverTypes = null;
 
         if ("existing".equals(viewMode)) {
-            platformTypesTmp = typeMgr.getUtilizedResourceTypesByCategory(subject, ResourceCategory.PLATFORM, null);
-            serverTypesTmp = typeMgr.getUtilizedResourceTypesByCategory(subject, ResourceCategory.SERVER, null);
+            platformTypes = typeMgr.getUtilizedResourceTypesByCategory(subject, ResourceCategory.PLATFORM, null);
+            serverTypes = typeMgr.getUtilizedResourceTypesByCategory(subject, ResourceCategory.SERVER, null);
         } else {
-            platformTypesTmp = typeMgr.getAllResourceTypesByCategory(subject, ResourceCategory.PLATFORM);
-            serverTypesTmp = typeMgr.getAllResourceTypesByCategory(subject, ResourceCategory.SERVER);
+            platformTypes = typeMgr.getAllResourceTypesByCategory(subject, ResourceCategory.PLATFORM);
+            serverTypes = typeMgr.getAllResourceTypesByCategory(subject, ResourceCategory.SERVER);
         }
 
         /*
@@ -77,21 +79,20 @@ public class EditDefaultsAction extends BaseDispatchAction {
          * to get a single set of them if there is even one platform that should be displayed on the UI
          */
         Map<Integer, SortedSet<ResourceType>> platformServices = new HashMap<Integer, SortedSet<ResourceType>>();
-        if (platformTypesTmp.size() > 0) {
-            platformServices = typeMgr.getChildResourceTypesForResourceTypes(Arrays.asList(platformTypesTmp.get(0)));
+        if (platformTypes.size() > 0) {
+            platformServices = typeMgr.getChildResourceTypesForResourceTypes(Arrays.asList(platformTypes.get(0)));
         }
 
         /*
          * on the other hand, we want to get the entire map of sets for descendants of server types 
          */
-        Map<Integer, SortedSet<ResourceType>> services = typeMgr.getChildResourceTypesForResourceTypes(serverTypesTmp);
+        Map<Integer, SortedSet<ResourceType>> services = typeMgr.getChildResourceTypesForResourceTypes(serverTypes);
 
-        platformTypes.addAll(platformTypesTmp);
-        serverTypes.addAll(serverTypesTmp);
-        request.setAttribute(AttrConstants.ALL_PLATFORM_TYPES_ATTR, platformTypes);
-        request.setAttribute(AttrConstants.ALL_SERVER_TYPES_ATTR, serverTypes);
-        request.setAttribute(AttrConstants.SERVICES_ATTR, services);
-        request.setAttribute(AttrConstants.PLATFORM_SERVICES_ATTR, platformServices);
+        initCompositeMap();
+        request.setAttribute(AttrConstants.ALL_PLATFORM_TYPES_ATTR, convertToComposite(platformTypes));
+        request.setAttribute(AttrConstants.PLATFORM_SERVICES_ATTR, convertToComposite(platformServices));
+        request.setAttribute(AttrConstants.ALL_SERVER_TYPES_ATTR, convertToComposite(serverTypes));
+        request.setAttribute(AttrConstants.SERVICES_ATTR, convertToComposite(services));
 
         request.setAttribute("viewMode", viewMode);
 
@@ -105,5 +106,34 @@ public class EditDefaultsAction extends BaseDispatchAction {
         Properties map = new Properties();
         map.setProperty("monitor", "getMonitorDefaults");
         return map;
+    }
+
+    private List<ResourceTypeTemplateCountComposite> convertToComposite(List<ResourceType> intermediates) {
+        List<ResourceTypeTemplateCountComposite> results = new ArrayList<ResourceTypeTemplateCountComposite>();
+        for (ResourceType next : intermediates) {
+            results.add(compositeMap.get(next.getId()));
+        }
+
+        return results;
+    }
+
+    private Map<Integer, SortedSet<ResourceTypeTemplateCountComposite>> convertToComposite(
+        Map<Integer, SortedSet<ResourceType>> intermediates) {
+        Map<Integer, SortedSet<ResourceTypeTemplateCountComposite>> results = new HashMap<Integer, SortedSet<ResourceTypeTemplateCountComposite>>();
+        for (Integer key : intermediates.keySet()) {
+            SortedSet<ResourceTypeTemplateCountComposite> composites = new TreeSet<ResourceTypeTemplateCountComposite>();
+            results.put(key, composites);
+
+            SortedSet<ResourceType> types = intermediates.get(key);
+            for (ResourceType next : types) {
+                composites.add(compositeMap.get(next.getId()));
+            }
+        }
+
+        return results;
+    }
+
+    private void initCompositeMap() {
+        compositeMap = typeMgr.getTemplateCountCompositeMap();
     }
 }

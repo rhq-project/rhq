@@ -27,6 +27,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
+import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
 /**
@@ -105,7 +106,7 @@ public interface ResourceTypeManagerLocal {
      * @see    Permission
      * @see    ResourceCategory
      */
-    public List<ResourceType> getAllResourceTypesByCategory(Subject subject, ResourceCategory category);
+    List<ResourceType> getAllResourceTypesByCategory(Subject subject, ResourceCategory category);
 
     /**
      * Return all ResourceTypes that are children of the passed ones
@@ -114,5 +115,7 @@ public interface ResourceTypeManagerLocal {
      *
      * @return SortedSet of ResourceTypes. If nothing is found, then this set is empty
      */
-    public Map<Integer, SortedSet<ResourceType>> getChildResourceTypesForResourceTypes(List<ResourceType> types);
+    Map<Integer, SortedSet<ResourceType>> getChildResourceTypesForResourceTypes(List<ResourceType> types);
+
+    Map<Integer, ResourceTypeTemplateCountComposite> getTemplateCountCompositeMap();
 }

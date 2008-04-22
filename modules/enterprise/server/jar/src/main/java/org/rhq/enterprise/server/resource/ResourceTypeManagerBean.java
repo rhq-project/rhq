@@ -40,6 +40,8 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -48,6 +50,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
+import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
@@ -73,6 +76,7 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
     private AuthorizationManagerLocal authorizationManager;
 
     @EJB
+    @IgnoreDependency
     private ResourceManagerLocal resourceManager;
 
     public ResourceType getResourceTypeById(Subject subject, int id) throws ResourceTypeNotFoundException {
@@ -267,7 +271,7 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
             ids.add(type.getId());
         }
 
-        Query q = entityManager.createNamedQuery(ResourceType.FIND_CHILDREN_FOR_RT);
+        Query q = entityManager.createNamedQuery(ResourceType.FIND_CHILDREN_BY_PARENT);
         q.setParameter("resourceType", types);
         List<ResourceType> childResourceTypes = q.getResultList();
 
@@ -401,5 +405,17 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
         }
 
         return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<Integer, ResourceTypeTemplateCountComposite> getTemplateCountCompositeMap() {
+        Query templateCountQuery = entityManager.createNamedQuery(ResourceType.FIND_ALL_TEMPLATE_COUNT_COMPOSITES);
+        List<ResourceTypeTemplateCountComposite> composites = templateCountQuery.getResultList();
+
+        Map<Integer, ResourceTypeTemplateCountComposite> compositeMap = new HashMap<Integer, ResourceTypeTemplateCountComposite>();
+        for (ResourceTypeTemplateCountComposite next : composites) {
+            compositeMap.put(next.getType().getId(), next);
+        }
+        return compositeMap;
     }
 }

@@ -80,9 +80,19 @@ import org.rhq.core.domain.operation.OperationDefinition;
         + "AND res.parentResource = :parent"),
     @NamedQuery(name = ResourceType.QUERY_FIND_CHILDREN + "_admin", query = "SELECT res.resourceType "
         + "FROM Resource res " + "WHERE res.parentResource = :parent"),
-    @NamedQuery(name = ResourceType.FIND_CHILDREN_FOR_RT, query = "SELECT DISTINCT rt FROM ResourceType AS rt "
+    @NamedQuery(name = ResourceType.FIND_CHILDREN_BY_PARENT, query = "SELECT DISTINCT rt FROM ResourceType AS rt "
         + "JOIN FETCH rt.parentResourceTypes AS pa " + // also fetch parents, as we need them later
         "WHERE pa IN (:resourceType)"),
+    @NamedQuery(name = ResourceType.FIND_ALL_TEMPLATE_COUNT_COMPOSITES, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite" //
+        + "(" //
+        + "  rt," //
+        + "  (SELECT COUNT(md) FROM MeasurementDefinition AS md WHERE md.resourceType = rt AND md.defaultOn = TRUE), "//
+        + "  (SELECT COUNT(md) FROM MeasurementDefinition AS md WHERE md.resourceType = rt AND md.defaultOn = FALSE), "//
+        + "  (SELECT COUNT(ad) FROM AlertDefinition AS ad WHERE ad.resourceType = rt AND ad.deleted = FALSE AND ad.enabled = TRUE), "//
+        + "  (SELECT COUNT(ad) FROM AlertDefinition AS ad WHERE ad.resourceType = rt AND ad.deleted = FALSE AND ad.enabled = FALSE) "//
+        + ")" //
+        + "FROM ResourceType AS rt"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_CATEGORY, query = "SELECT rt FROM ResourceType AS rt "
         + "WHERE rt.category = :category"),
     @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_BY_CATEGORY, query = "SELECT DISTINCT res.resourceType "
@@ -194,7 +204,8 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     /** find utilized (i.e. represented in inventory) child resource types for resource :parentResource and category :category */
     public static final String QUERY_FIND_UTILIZED_CHILDREN_BY_CATEGORY = "ResourceType.findUtilizedChildrenByCategory";
     /** find child resource types for the resource type passed in :resourceType */
-    public static final String FIND_CHILDREN_FOR_RT = "ResourceType.FIND_CHILDREN_FOR_RT";
+    public static final String FIND_CHILDREN_BY_PARENT = "ResourceType.findChildrenByParent";
+    public static final String FIND_ALL_TEMPLATE_COUNT_COMPOSITES = "ResourceType.findAllTemplateCountComposites";
     public static final String QUERY_FIND_BY_SUBCATEGORY = "ResourceType.findBySubCategory";
     public static final String QUERY_FIND_UTILIZED_BY_CATEGORY = "ResourceType.findUtilizedByCategory";
     public static final String QUERY_FIND_BY_RESOURCE_GROUP = "ResourceType.findByResourceGroup";

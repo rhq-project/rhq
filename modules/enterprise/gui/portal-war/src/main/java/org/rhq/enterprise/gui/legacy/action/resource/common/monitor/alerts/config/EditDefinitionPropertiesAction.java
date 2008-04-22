@@ -87,7 +87,7 @@ public class EditDefinitionPropertiesAction extends BaseAction {
                 alertTemplateManager.updateAlertTemplate(subject, alertDef, defForm.isCascade(), false);
             } else {
                 // this will disallow updates if the alert definition has been deleted
-                alertDefinitionManager.updateAlertDefinition(subject, alertDef, false);
+                alertDefinitionManager.updateAlertDefinition(subject, alertDef.getId(), alertDef, false);
             }
         } catch (AlertDefinitionException iade) {
             log.debug("alert definition update failed:", iade);

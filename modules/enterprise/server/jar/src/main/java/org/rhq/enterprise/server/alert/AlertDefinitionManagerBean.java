@@ -77,7 +77,6 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
     @IgnoreDependency
     private MeasurementBaselineManagerLocal measurementBaselineManager;
     @EJB
-    @IgnoreDependency
     private SubjectManagerLocal subjectManager;
 
     private boolean checkPermission(Subject subject, AlertDefinition alertDefinition) {
@@ -130,7 +129,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
     }
 
     public AlertDefinition getAlertDefinitionById(Subject user, int alertDefinitionId) {
-        LOG.debug("AlertDefinitionManager.getAlertDefinitionById(" + user + ", " + alertDefinitionId + ")");
+        //LOG.debug("AlertDefinitionManager.getAlertDefinitionById(" + user + ", " + alertDefinitionId + ")");
         AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefinitionId);
         if (alertDefinition != null) {
             // avoid NPEs if the caller passed an invalid id
@@ -309,15 +308,21 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         return list;
     }
 
-    public AlertDefinition updateAlertDefinition(Subject user, AlertDefinition alertDefinition, boolean purgeInternals)
-        throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
+    public AlertDefinition updateAlertDefinition(Subject user, int alertDefinitionId, AlertDefinition alertDefinition,
+        boolean purgeInternals) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
         if (purgeInternals) {
-            purgeInternals(alertDefinition.getId());
+            purgeInternals(alertDefinitionId);
         }
 
-        boolean isAlertTemplate = (alertDefinition.getResourceType() != null);
+        /*
+         * Method for catching ENABLE / DISABLE changes will use switch logic off of the delta instead of calling out to
+         * the enable/disable functions
+         */
+        AlertDefinition oldAlertDefinition = getAlertDefinitionById(user, alertDefinitionId);
 
-        if (checkPermission(user, alertDefinition) == false) {
+        boolean isAlertTemplate = (oldAlertDefinition.getResourceType() != null);
+
+        if (checkPermission(user, oldAlertDefinition) == false) {
             if (isAlertTemplate) {
                 throw new PermissionException("You do not have permission to modify this alert template");
             } else {
@@ -326,23 +331,17 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         }
 
         /*
-         * Method for catching ENABLE / DISABLE changes will use switch logic off of the delta instead of calling out to
-         * the enable/disable functions
+         * only need to check the validity of the new alert definition if the authz checks pass *and* the old definition
+         * is not currently deleted
          */
-        AlertDefinition oldAlertDefinition = getAlertDefinitionById(user, alertDefinition.getId());
+        checkAlertDefinition(oldAlertDefinition, isAlertTemplate ? null : oldAlertDefinition.getResource().getId());
 
         /*
          * Should not be able to update an alert definition if the old alert definition is in an invalid state
          */
-        if (alertDefinition.getDeleted()) {
-            throw new AlertDefinitionUpdateException("Can not update deleted " + alertDefinition.toSimpleString());
+        if (oldAlertDefinition.getDeleted()) {
+            throw new AlertDefinitionUpdateException("Can not update deleted " + oldAlertDefinition.toSimpleString());
         }
-
-        /*
-         * only need to check the validity of the new alert definition if the authz checks pass *and* the old definition
-         * is not currently deleted
-         */
-        checkAlertDefinition(alertDefinition, isAlertTemplate ? null : alertDefinition.getResource().getId());
 
         AlertDefinitionUpdateType updateType = AlertDefinitionUpdateType.get(oldAlertDefinition, alertDefinition);
 
@@ -352,10 +351,16 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
              * if you were JUST_DISABLED or STILL_ENABLED, you are coming from the ENABLED state, which means you need
              * to be removed from the cache as the first half of this update
              */
+            LOG.debug("Updating AlertConditionCacheManager with AlertDefinition[ id=" + oldAlertDefinition.getId()
+                + " ]...DELETING");
+            for (AlertCondition nextCondition : oldAlertDefinition.getConditions()) {
+                LOG.debug("OldAlertCondition[ id=" + nextCondition.getId() + " ]");
+            }
             notifyAlertConditionCacheManager("updateAlertDefinition", oldAlertDefinition, AlertDefinitionEvent.DELETED);
         }
 
-        AlertDefinition newAlertDefinition = entityManager.merge(alertDefinition);
+        oldAlertDefinition.update(alertDefinition);
+        AlertDefinition newAlertDefinition = entityManager.merge(oldAlertDefinition);
 
         if ((isAlertTemplate == false)
             && ((updateType == AlertDefinitionUpdateType.JUST_ENABLED) || (updateType == AlertDefinitionUpdateType.STILL_ENABLED))) {
@@ -378,6 +383,11 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
             }
 
             if (addToCache) {
+                LOG.debug("Updating AlertConditionCacheManager with AlertDefinition[ id=" + newAlertDefinition.getId()
+                    + " ]...CREATING");
+                for (AlertCondition nextCondition : newAlertDefinition.getConditions()) {
+                    LOG.debug("NewAlertCondition[ id=" + nextCondition.getId() + " ]");
+                }
                 notifyAlertConditionCacheManager("updateAlertDefinition", newAlertDefinition,
                     AlertDefinitionEvent.CREATED);
             }

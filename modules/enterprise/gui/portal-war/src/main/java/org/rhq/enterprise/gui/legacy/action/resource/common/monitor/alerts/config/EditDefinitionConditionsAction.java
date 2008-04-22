@@ -83,7 +83,7 @@ public class EditDefinitionConditionsAction extends BaseAction {
                 LookupUtil.getAlertTemplateManager().updateAlertTemplate(subject, alertDef, defForm.isCascade(), true);
             } else {
                 // this will disallow updates if the alert definition has been deleted
-                LookupUtil.getAlertDefinitionManager().updateAlertDefinition(subject, alertDef, true);
+                LookupUtil.getAlertDefinitionManager().updateAlertDefinition(subject, alertDef.getId(), alertDef, true);
             }
         } catch (AlertDefinitionException iade) {
             log.debug("alert definition update failed:", iade);

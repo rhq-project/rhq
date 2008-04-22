@@ -322,7 +322,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                     populatePredicateCollections(getResourceRelativeContextToken() + ".resourceType.category",
                         (value == null) ? null : ResourceCategory.valueOf(value.toUpperCase()));
                 } else {
-                    throw new InvalidExpressionException("Invalid resourceType subexpression: "
+                    throw new InvalidExpressionException("Invalid 'type' subexpression: "
                         + PrintUtils.getDelimitedString(tokens, parseIndex, "."));
                 }
             } else if (context == ParseContext.Trait) {
@@ -348,7 +348,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                     prefix = "resourceconfiguration";
                     joinCondition = JoinCondition.RESOURCE_CONFIGURATION;
                 } else {
-                    throw new InvalidExpressionException("Invalid configuration subcontext: " + subcontext);
+                    throw new InvalidExpressionException("Invalid 'configuration' subexpression: " + subcontext);
                 }
 
                 String suffix = originalTokens.get(parseIndex).substring(prefix.length());
@@ -432,7 +432,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             subcontext = ParseSubContext.ResourceConfiguration;
             parseIndex--; // undo auto-inc, since this context requires element re-parse
         } else {
-            throw new InvalidExpressionException("Invalid resource subexpression: "
+            throw new InvalidExpressionException("Invalid 'resource' subexpression: "
                 + PrintUtils.getDelimitedString(tokens, parseIndex, "."));
         }
     }

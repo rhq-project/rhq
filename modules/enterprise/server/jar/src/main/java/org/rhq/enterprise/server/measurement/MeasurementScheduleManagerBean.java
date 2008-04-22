@@ -103,11 +103,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     private AgentManagerLocal agentManager;
 
     @EJB
-    @IgnoreDependency
     private AuthorizationManagerLocal authorizationManager;
 
     @EJB
-    @IgnoreDependency
     private ResourceManagerLocal resourceManager;
 
     @EJB

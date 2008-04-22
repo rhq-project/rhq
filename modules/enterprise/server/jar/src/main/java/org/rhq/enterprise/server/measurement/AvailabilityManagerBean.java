@@ -40,8 +40,6 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
@@ -77,7 +75,6 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
     private DataSource dataSource;
 
     @EJB
-    @IgnoreDependency
     private AgentManagerLocal agentManager;
     @EJB
     private AuthorizationManagerLocal authorizationManager;

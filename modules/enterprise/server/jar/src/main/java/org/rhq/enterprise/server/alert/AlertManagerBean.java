@@ -95,9 +95,9 @@ public class AlertManagerBean implements AlertManagerLocal {
     private final Log log = LogFactory.getLog(AlertManagerBean.class);
 
     @EJB
-    @IgnoreDependency
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
     @EJB
+    @IgnoreDependency
     private AlertConditionLogManagerLocal alertConditionLogManager;
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;

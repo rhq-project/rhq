@@ -34,8 +34,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.EmailNotification;
@@ -65,7 +63,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
     @EJB
-    @IgnoreDependency
     private AlertTemplateManagerLocal alertTemplateManager;
     @EJB
     private AuthorizationManagerLocal authorizationManager;

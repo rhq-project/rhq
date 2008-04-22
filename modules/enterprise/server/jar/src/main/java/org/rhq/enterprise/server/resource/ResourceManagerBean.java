@@ -126,7 +126,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @EJB
     private AgentManagerLocal agentManager;
     @EJB
-    @IgnoreDependency
     private AlertTemplateManagerLocal alertTemplateManager;
     @EJB
     private AlertConditionCacheManagerLocal alertConditionCacheManager;

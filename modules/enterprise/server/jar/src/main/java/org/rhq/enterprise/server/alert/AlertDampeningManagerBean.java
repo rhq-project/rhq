@@ -32,8 +32,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDampeningEvent;
 import org.rhq.core.domain.alert.AlertDefinition;
@@ -50,7 +48,6 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
     private final Log log = LogFactory.getLog(AlertDampeningManagerBean.class);
 
     @EJB
-    @IgnoreDependency
     private AlertManagerLocal alertManager;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)

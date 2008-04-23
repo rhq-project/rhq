@@ -265,7 +265,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             // The test code does not always generate agents for the resources. Catch and log any problem but continue
             agentClient = agentManager.getAgentClient(resourceId);
         } catch (RuntimeException e) {
-            log.warn("This warning should occur in TEST code only! " + e);
+            log.warn("No AgentClient found for resource [" + resource
+                + "]. Unable to inform agent of inventory removal (this may be ok): " + e);
         }
 
         // delete the resource and all its children
@@ -308,7 +309,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             try {
                 agentClient.getDiscoveryAgentService().removeResource(resourceId);
             } catch (Exception e) {
-                log.warn("Couldn't send inventory removal request to agent for resource[" + resourceId + "]", e);
+                log.warn(" Unable to inform agent of inventory removal for resource [" + resourceId + "]", e);
             }
         }
 

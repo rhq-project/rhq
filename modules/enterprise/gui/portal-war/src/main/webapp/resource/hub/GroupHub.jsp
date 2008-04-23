@@ -40,13 +40,6 @@
              classname="org.rhq.core.domain.resource.group.GroupCategory"
              symbol="MIXED"/>
 
-<hq:constant var="CHART_VIEW"
-             classname="org.rhq.enterprise.gui.legacy.action.resource.hub.HubView"
-             symbol="CHART"/>
-<hq:constant var="LIST_VIEW"
-             classname="org.rhq.enterprise.gui.legacy.action.resource.hub.HubView"
-             symbol="LIST"/>
-
 <c:choose>
    <c:when test="${GroupHubForm.groupCategory == COMPAT_GROUP}">
       <fmt:message var="resourceTypeTH" key="resource.hub.GroupTypeTH"/>
@@ -72,7 +65,6 @@
 
 <html:form method="GET" action="/resource/hub/RemoveGroup.do">
 
-
    <c:if test="${not empty ResourceSummary}">
    <table width="100%" cellpadding="0" cellspacing="0" border="0">
    <tr>
@@ -80,7 +72,6 @@
 
    <c:url var="platformUrl" value="/ResourceHub.do">
       <c:param name="resourceCategory" value="${PLATFORM}"/>
-      <c:param name="view" value="${GroupHubForm.view}"/>
    </c:url>
    <html:link href="${platformUrl}">
       <fmt:message key="resource.hub.filter.platform"/>
@@ -90,7 +81,6 @@
 
    <c:url var="serverUrl" value="/ResourceHub.do">
       <c:param name="resourceCategory" value="${SERVER}"/>
-      <c:param name="view" value="${GroupHubForm.view}"/>
    </c:url>
    <html:link href="${serverUrl}">
       <fmt:message key="resource.hub.filter.server"/>
@@ -100,7 +90,6 @@
 
    <c:url var="serviceUrl" value="/ResourceHub.do">
       <c:param name="resourceCategory" value="${SERVICE}"/>
-      <c:param name="view" value="${GroupHubForm.view}"/>
    </c:url>
    <html:link href="${serviceUrl}">
       <fmt:message key="resource.hub.filter.service"/>
@@ -116,7 +105,6 @@
    <c:otherwise>
       <c:url var="groupUrl" value="/GroupHub.do">
          <c:param name="groupCategory" value="${COMPAT_GROUP}"/>
-         <c:param name="view" value="${GroupHubForm.view}"/>
       </c:url>
       <html:link href="${groupUrl}">
          <fmt:message key="resource.hub.filter.compatibleGroups"/>
@@ -133,7 +121,6 @@
       <c:otherwise>
          <c:url var="groupUrl" value="/GroupHub.do">
             <c:param name="groupCategory" value="${MIXED_GROUP}"/>
-            <c:param name="view" value="${GroupHubForm.view}"/>
          </c:url>
          <html:link href="${groupUrl}">
             <fmt:message key="resource.hub.filter.mixedGroups"/>
@@ -156,7 +143,6 @@
 
    <!-- FILTER TOOLBAR CONTENTS -->
 
-
    <c:url var="resourceTypeAction" value="/GroupHub.do">
       <c:if test="${not empty param.keywords}">
          <c:param name="keywords" value="${param.keywords}"/>
@@ -174,12 +160,11 @@
          <c:param name="resourceType" value="${param.resourceType}"/>
       </c:if>
       <c:param name="groupCategory" value="${GroupHubForm.groupCategory}"/>
-      <c:param name="view" value="${GroupHubForm.view}"/>
    </c:url>
 
    <table width="100%" cellpadding="0" cellspacing="0" border="0">
    <tr>
-   <td class="FilterLine" colspan="5">
+   <td class="FilterLine" colspan="2">
       <html:img page="/images/spacer.gif" width="1" height="1" border="0"/>
    </td>
    </tr>
@@ -220,47 +205,8 @@
       </c:if>
 
       <c:param name="groupCategory" value="${GroupHubForm.groupCategory}"/>
-      <c:choose>
-         <c:when test="${GroupHubForm.view == LIST_VIEW}">
-            <c:param name="view" value="LIST"/>
-         </c:when>
-         <c:otherwise>
-            <c:param name="view" value="CHART"/>
-         </c:otherwise>
-      </c:choose>
    </c:url>
 
-
-   <c:choose>
-      <c:when test="${GroupHubForm.view != CHART_VIEW}">
-         <td class="FilterImage" width="104">
-            <html:link href="${viewAction}">
-            <html:img page="/images/SubHub_ChartView_off.gif" alt="Chart View" width="104" height="15" border="0"
-               onmouseover="imageSwap (this, imagePath + 'SubHub_ChartView', '_over')"
-               onmouseout="imageSwap (this, imagePath + 'SubHub_ChartView', '_off')"/>
-            </html:link>
-         </td>
-         <td class="FilterImage" width="104">
-            <html:img page="/images/SubHub_ListView_on.gif" alt="List View" width="104" height="15" border="0"/>
-         </td>
-      </c:when>
-      <c:otherwise> <!-- CHART view -->
-         <td class="FilterImage" width="104">
-            <html:img page="/images/SubHub_ChartView_on.gif" alt="Chart View" width="104" height="15" border="0"/>
-         </td>
-         <td class="FilterImage" width="104">
-            <html:link href="${viewAction}">
-            <html:img page="/images/SubHub_ListView_off.gif" alt="List View" width="104" height="15" border="0"
-               onmouseover="imageSwap (this, imagePath + 'SubHub_ListView', '_over')"
-               onmouseout="imageSwap (this, imagePath + 'SubHub_ListView', '_off')"/>
-            </html:link>
-         </td>
-      </c:otherwise>
-   </c:choose>
-
-   <td class="FilterImage" width="5">
-   <html:img page="/images/spacer.gif" width="5" height="1" border="0"/>
-   </td>
    </tr>
    </table>
    <!-- / -->
@@ -286,11 +232,9 @@
          <c:param name="resourceType" value="${param.resourceType}"/>
       </c:if>
       <c:param name="groupCategory" value="${GroupHubForm.groupCategory}"/>
-      <c:param name="view" value="${GroupHubForm.view}"/>
    </c:url>
 
-   <c:choose>
-   <c:when test="${GroupHubForm.view != CHART_VIEW}">
+
       <display:table items="${AllResources}" var="groupComposite" action="${sAction}"
                      width="100%" cellspacing="0" cellpadding="0" styleId="resourceHub">
 
@@ -336,15 +280,6 @@
          </display:column>
 
       </display:table>
-
-   </c:when>
-   <c:otherwise> <!-- CHART view -->
-      <b>TODO</b>
-      <%-- <tiles:insert definition=".resource.common.monitor.visibility.minicharts">
-         <tiles:put name="Resources" beanName="AllResources"/>
-      </tiles:insert>--%>
-   </c:otherwise>
-   </c:choose>
    <!-- / -->
 
    <c:url var="pageAction" value="/GroupHub.do">
@@ -356,7 +291,6 @@
       </c:if>
 
       <c:param name="groupCategory" value="${GroupHubForm.groupCategory}"/>
-      <c:param name="view" value="${GroupHubForm.view}"/>
       
       <c:if test="${not empty param.so}">
          <c:param name="so" value="${param.so}"/>

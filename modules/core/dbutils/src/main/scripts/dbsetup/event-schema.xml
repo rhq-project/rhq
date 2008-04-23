@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<dbsetup name="measurement-schema.xml"
+<dbsetup name="event-schema.xml"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:xmlns:rhq-dbsetup-schema">
 
     <!-- metadata -->

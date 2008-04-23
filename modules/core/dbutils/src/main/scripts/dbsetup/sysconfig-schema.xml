@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<dbsetup name="appdef-schema.xml">
+<dbsetup name="sysconfig-schema.xml">
 
     <table name="RHQ_SYSTEM_CONFIG">
         <column name="ID" default="sequence-only" initial="10001"

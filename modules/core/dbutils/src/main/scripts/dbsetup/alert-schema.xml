@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<dbsetup name="events-schema.xml">
+<dbsetup name="alert-schema.xml">
 
     <table name="RHQ_ALERT_DEFINITION">
         <column name="ID" default="sequence-only" initial="10001"

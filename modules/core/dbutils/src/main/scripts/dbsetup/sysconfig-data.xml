@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
         
-<dbsetup name="common-data.xml">
+<dbsetup name="sysconfig-data.xml">
 
     <!--
     This file contains the seed data for the configuration table.
@@ -147,7 +147,6 @@
         <!-- How long to keep alerts around -->
         <data ID="51" PROPERTY_KEY="EVENT_PURGE" PROPERTY_VALUE="2678400000"
               DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="FALSE"/>
-
 
     </table>
 

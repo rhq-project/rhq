@@ -27,6 +27,20 @@
     <!-- dependency versions -->
     <el.version>1.0</el.version>
     <jsf-facelets.version>1.1.14</jsf-facelets.version>
+
+    <product.shortName>RHQ</product.shortName>
+    <product.name>RHQ</product.name>
+    <product.fullName>RHQ</product.fullName>
+    <product.url.domain>rhq-project.org</product.url.domain>
+    <product.sales.email>sales@rhq-project.org</product.sales.email>
+    <product.support.email>info@rhq-project.org</product.support.email>
+    <product.version>${project.version}</product.version>
+    <product.help.doc.root>http://support.rhq-project.org/display/RHQ/</product.help.doc.root>
+    <product.help.installation>Installing</product.help.installation>
+    <product.help.guide.server>Running+the+Server</product.help.guide.server>
+    <product.help.guide.agent>Running+the+Agent</product.help.guide.agent>
+    <product.help.FAQ>FAQ</product.help.FAQ>
+    <product.help.config.props>Configuring+the+Server#ConfiguringtheServer</product.help.config.props>
   </properties>
 
   <dependencies>
@@ -162,6 +176,13 @@
                 <include>**/*.properties</include>
               </includes>
             </resource>
+            <resource>
+                <filtering>true</filtering>
+                <directory>${basedir}/target/resources</directory>
+                <includes>
+                  <include>**/*.properties</include>
+                </includes>
+            </resource>
           </webResources>
         </configuration>
       </plugin>
@@ -176,7 +197,8 @@
               <tasks>
                 <!-- generate the I18N resource bundles -->
                 <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
-                  <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
+                  <!--<i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">-->
+                      <i18n outputdir="${basedir}/target/resources/WEB-INF/classes" defaultlocale="en" verbose="false" append="false" verify="true">
                     <classpath refid="maven.runtime.classpath" />
                     <classfileset dir="${project.build.outputDirectory}">
                        <include name="**/*I18NResourceKeys.class" />

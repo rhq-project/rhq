@@ -37,7 +37,7 @@ public interface InstallerI18NResourceKeys {
     String PRODUCT_SHORTNAME = "product.shortName";
     @I18NMessage("${product.name}")
     String PRODUCT_NAME = "product.name";
-    @I18NMessage("${product.fullNname}")
+    @I18NMessage("${product.fullName}")
     String PRODUCT_FULLNAME = "product.fullName";
     @I18NMessage("${product.url}")
     String PRODUCT_URL = "product.url";
@@ -45,6 +45,10 @@ public interface InstallerI18NResourceKeys {
     String PRODUCT_SALES_EMAIL = "product.sales.email";
     @I18NMessage("${product.support.email}")
     String PRODUCT_SUPPORT_EMAIL = "product.support.email";
+
+    // as we translate our documentation - point to each language's root doc location
+    @I18NMessages( { @I18NMessage(locale = "en", value = "${product.help.doc.root}") })
+    String HELP_DOC_ROOT = "helpDocRoot";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Create Database/User"),
         @I18NMessage(locale = "de", value = "Datenbank mit -benutzer anlegen") })
@@ -76,7 +80,7 @@ public interface InstallerI18NResourceKeys {
     String SERVER_PROPERTIES_NOTE = "serverPropertiesNote";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Create a database/user if needed"),
-        @I18NMessage(locale = "de", value = "DB mit -benutzer anlegen, falls nötig") })
+        @I18NMessage(locale = "de", value = "DB mit -benutzer anlegen, falls nï¿½tig") })
     String CREATE_DATABASE_NOTE = "createDatabaseNote";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Create Database"),
@@ -84,7 +88,7 @@ public interface InstallerI18NResourceKeys {
     String CREATE_DATABASE_BUTTON = "createDatabaseButton";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Confirm if these settings are valid"),
-        @I18NMessage(locale = "de", value = "Überprüfen Sie, dass die Einstellungen gültig sind") })
+        @I18NMessage(locale = "de", value = "ï¿½berprï¿½fen Sie, dass die Einstellungen gï¿½ltig sind") })
     String TEST_DATABASE_NOTE = "testDatabaseNote";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Test Connection"),
@@ -92,19 +96,19 @@ public interface InstallerI18NResourceKeys {
     String TEST_DATABASE_BUTTON = "testDatabaseButton";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "A database schema already exists. What do you want to do?"),
-        @I18NMessage(locale = "de", value = "Das gewünschte Datenbankschema existiert schon. Was wollen Sie machen?") })
+        @I18NMessage(locale = "de", value = "Das gewï¿½nschte Datenbankschema existiert schon. Was wollen Sie machen?") })
     String EXISTING_SCHEMA_QUESTION = "existingSchemaQuestion";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Overwrite it (and lose existing data)"),
-        @I18NMessage(locale = "de", value = "Überschreiben (vorhandene Daten gehen verloren)") })
+        @I18NMessage(locale = "de", value = "ï¿½berschreiben (vorhandene Daten gehen verloren)") })
     String EXISTING_SCHEMA_ANSWER_OVERWRITE = "existingSchemaAnswerOverwrite";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Keep and, if necessary, upgrade it"),
-        @I18NMessage(locale = "de", value = "Behalten und falls nötig aktualisieren.") })
+        @I18NMessage(locale = "de", value = "Behalten und falls nï¿½tig aktualisieren.") })
     String EXISTING_SCHEMA_ANSWER_UPGRADE = "existingSchemaAnswerUpgrade";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "The {0} property value was an invalid number [{1}]"),
-        @I18NMessage(locale = "de", value = "[{1}] ist ein ungültiger Zahlenwert für die Eigenschaft {0}") })
+        @I18NMessage(locale = "de", value = "[{1}] ist ein ungï¿½ltiger Zahlenwert fï¿½r die Eigenschaft {0}") })
     String INVALID_NUMBER = "invalidNumber";
 
     @I18NMessages( {
@@ -112,7 +116,7 @@ public interface InstallerI18NResourceKeys {
         @I18NMessage(locale = "de", value = "Die boolesche Eigenschaft muss entweder 'true' oder 'false' sein, war aber [{1}]") })
     String INVALID_BOOLEAN = "invalidBoolean";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Failed to save properties and fully deploy - the Server will not function properly\\n\\\nCause: {0}") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Failed to save properties and fully deploy - ${product.shortName} Server will not function properly\\n\\\nCause: {0}") })
     String SAVE_FAILURE = "saveFailure";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Error"), @I18NMessage(locale = "de", value = "Fehler") })
@@ -125,27 +129,27 @@ public interface InstallerI18NResourceKeys {
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "Could not connect to the database with the given database settings. \\n\\\n"
             + "Please check the database settings and make sure your database is running."),
-        @I18NMessage(locale = "de", value = "Eine Verbindung zur Datenbank ist mit den gebenen Einstellungen für die Datenbank nicht möglich. \\n\\\n"
-            + "Bitte überprüfen Sie die Einstellungen und stellen Sie sicher, dass die Datenbak aktiv ist") })
+        @I18NMessage(locale = "de", value = "Eine Verbindung zur Datenbank ist mit den gebenen Einstellungen fï¿½r die Datenbank nicht mï¿½glich. \\n\\\n"
+            + "Bitte ï¿½berprï¿½fen Sie die Einstellungen und stellen Sie sicher, dass die Datenbak aktiv ist") })
     String INVALID_DATABASE_SETTINGS = "invalidDatabaseSettings";
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "This page shows you the current configuration property settings \\n\\\n"
-            + "for this Server installation.  You may change some, all or none \\n\\\n"
+            + "for this ${product.shortName} Server installation.  You may change some, all or none \\n\\\n"
             + "of these as per your custom requirements.  Note that changes to \\n\\\n"
             + "some of these settings will not take effect until you restart the \\n\\\n"
             + "server.  If you change any of those settings, you will have to \\n\\\n"
             + "immediately shutdown and restart the server to pick up those changes."),
         @I18NMessage(locale = "de", value = "Diese Seite zeigt Ihnen die aktuellen Konfigurationseinstellungen \\n\\\n"
-            + "für die Installation des Servers. Sie können keinen, einige oder alle\\n\\\n"
-            + "dieser Werte nach Ihren Anforderungen ändern. Bitte beachten sie, dass \\n\\\n"
-            + "einige dieser Änderungen erst nach einem Neustart des Servers aktiv werden. \\n\\\n"
-            + "Wenn Sie diese Einstellungen ändern, müssen Sie den Server sofort neu starten, damit \\n\\\n"
+            + "fï¿½r die Installation des ${product.shortName} Servers. Sie kï¿½nnen keinen, einige oder alle\\n\\\n"
+            + "dieser Werte nach Ihren Anforderungen ï¿½ndern. Bitte beachten sie, dass \\n\\\n"
+            + "einige dieser ï¿½nderungen erst nach einem Neustart des Servers aktiv werden. \\n\\\n"
+            + "Wenn Sie diese Einstellungen ï¿½ndern, mï¿½ssen Sie den Server sofort neu starten, damit \\n\\\n"
             + "sie aufgegriffen werden.") })
     String SET_PROPERTIES_INSTRUCTIONS = "setPropertiesInstructions";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Install the Server!"),
-        @I18NMessage(locale = "de", value = "Server installieren!") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Install ${product.shortName} Server!"),
+        @I18NMessage(locale = "de", value = "${product.shortName} Server installieren!") })
     String SAVE = "save";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Yes"), @I18NMessage(locale = "de", value = "Ja") })
@@ -165,25 +169,25 @@ public interface InstallerI18NResourceKeys {
         @I18NMessage(locale = "de", value = "Neustart erforderlich?") })
     String REQUIRES_RESTART = "requiresRestart";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Welcome!"),
-        @I18NMessage(locale = "de", value = "Willkommen!") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Welcome to ${product.shortName}!"),
+        @I18NMessage(locale = "de", value = "Willkommen bei ${product.shortName}!") })
     String WELCOME_TITLE = "welcomeTitle";
 
     @I18NMessages( {
-        @I18NMessage(locale = "en", value = "You have reached the Installer. You will use this page \\n\\\n"
-            + "to complete the installation and configuration of the Server. \\n\\\n"
-            + "Once complete, you will be able to log on and begin using it."),
-        @I18NMessage(locale = "de", value = "Willkommen beim Installationsprogramm. Mit diesem können Sie \\n\\\n"
-            + "die Installation und Konfiguration des Servers komplettieren. \\n\\\n"
-            + "Nachdem dies geschehen ist, können Sie sich einloggen und damit arbeiten") })
+        @I18NMessage(locale = "en", value = "You have reached the ${product.shortName} Installer. You will use this page \\n\\\n"
+            + "to complete the installation and configuration of the ${product.shortName} Server. \\n\\\n"
+            + "Once complete, you will be able to log on and begin using ${product.shortName}"),
+        @I18NMessage(locale = "de", value = "Willkommen beim Installationsprogramm von ${product.shortName}. Mit diesem kï¿½nnen Sie \\n\\\n"
+            + "die Installation und Konfiguration von ${product.shortName} komplettieren. \\n\\\n"
+            + "Nachdem dies geschehen ist, kï¿½nnen Sie sich einloggen und mit ${product.shortName} arbeiten") })
     String WELCOME_MESSAGE = "welcomeMessage";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Starting up, please wait..."),
         @I18NMessage(locale = "de", value = "Bitte warten Sie bis der Server gestartet ist") })
     String STARTING = "starting";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "The server will be installed!"),
-        @I18NMessage(locale = "de", value = "Der Server wird installiert") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "${product.shortName} will be installed!"),
+        @I18NMessage(locale = "de", value = "${product.shortName} wird installiert") })
     String ALREADY_INSTALLED = "alreadyInstalled";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Done! Click here to get started!"),
@@ -195,7 +199,7 @@ public interface InstallerI18NResourceKeys {
     String START_INSTALLING_LINK = "startInstallingLink";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Back to configuration page"),
-        @I18NMessage(locale = "de", value = "Zurück zur Seite mit den Einstellungen") })
+        @I18NMessage(locale = "de", value = "Zurï¿½ck zur Seite mit den Einstellungen") })
     String BACK_TO_SETTINGS_LINK = "backToSettingsLink";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Show Advanced Settings"),
@@ -208,462 +212,460 @@ public interface InstallerI18NResourceKeys {
     @I18NMessages( { @I18NMessage(locale = "en", value = "Database Type"),
         @I18NMessage(locale = "de", value = "Datenbanktyp") })
     String PROP_DATABASE_TYPE = "propertyDatabaseType";
-    @I18NMessage("#ConfiguringtheServer-DatabaseType")
+    @I18NMessage("-DatabaseType")
     String PROP_DATABASE_TYPE_HELP = "propertyDatabaseTypeHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Database Connection URL"),
         @I18NMessage(locale = "de", value = "URL der Datenbankverbindung") })
     String PROP_DATABASE_CONNECTION_URL = "propertyDatabaseConnectionUrl";
-    @I18NMessage("#ConfiguringtheServer-DatabaseConnectionURL")
+    @I18NMessage("-DatabaseConnectionURL")
     String PROP_DATABASE_CONNECTION_URL_HELP = "propertyDatabaseConnectionUrlHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Database JDBC Driver Class"),
         @I18NMessage(locale = "de", value = "Klassnname des JDBC-Datenbanktreibers") })
     String PROP_DATABASE_DRIVER_CLASS = "propertyDatabaseDriverClass";
-    @I18NMessage("#ConfiguringtheServer-DatabaseJDBCDriverClass")
+    @I18NMessage("-DatabaseJDBCDriverClass")
     String PROP_DATABASE_DRIVER_CLASS_HELP = "propertyDatabaseDriverClassHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Database User Name"),
         @I18NMessage(locale = "de", value = "Name des Datenbankbenutzers") })
     String PROP_DATABASE_USERNAME = "propertyDatabaseUserName";
-    @I18NMessage("#ConfiguringtheServer-DatabaseUserName")
+    @I18NMessage("-DatabaseUserName")
     String PROP_DATABASE_USERNAME_HELP = "propertyDatabaseUserNameHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Database Password"),
         @I18NMessage(locale = "de", value = "Password des Datenbankbenutzers") })
     String PROP_DATABASE_PASSWORD = "propertyDatabasePassword";
-    @I18NMessage("#ConfiguringtheServer-DatabasePassword")
+    @I18NMessage("-DatabasePassword")
     String PROP_DATABASE_PASSWORD_HELP = "propertyDatabasePasswordHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Server Bind Address"),
         @I18NMessage(locale = "de", value = "IP-Adresse an die der Sever sich binden soll") })
     String PROP_SERVER_BIND_ADDRESS = "propertyBindAddress";
-    @I18NMessage("#ConfiguringtheServer-ServerBindAddress")
+    @I18NMessage("-ServerBindAddress")
     String PROP_SERVER_BIND_ADDRESS_HELP = "propertyBindAddressHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "HTTP Port") })
     String PROP_HTTP_PORT = "propertyHttpPort";
-    @I18NMessage("#ConfiguringtheServer-HTTPPort")
+    @I18NMessage("-HTTPPort")
     String PROP_HTTP_PORT_HELP = "propertyHttpPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Secure HTTPS Port"),
         @I18NMessage(locale = "de", value = "HTTPS Port") })
     String PROP_HTTPS_PORT = "propertyHttpsPort";
-    @I18NMessage("#ConfiguringtheServer-SecureHTTPSPort")
+    @I18NMessage("-SecureHTTPSPort")
     String PROP_HTTPS_PORT_HELP = "propertyHttpsPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Web Service Port") })
     String PROP_WEB_SERVICE_PORT = "propertyWebServicePort";
-    @I18NMessage("#ConfiguringtheServer-WebServicePort")
+    @I18NMessage("-WebServicePort")
     String PROP_WEB_SERVICE_PORT_HELP = "propertyWebServicePortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Naming Service Port") })
     String PROP_NAMING_SERVICE_PORT = "propertyNamingServicePort";
-    @I18NMessage("#ConfiguringtheServer-NamingServicePort")
+    @I18NMessage("-NamingServicePort")
     String PROP_NAMING_SERVICE_PORT_HELP = "propertyNamingServicePortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Naming Service RMI Port") })
     String PROP_NAMING_SERVICE_RMI_PORT = "propertyNamingServiceRmiPort";
-    @I18NMessage("#ConfiguringtheServer-NamingServiceRMIPort")
+    @I18NMessage("-NamingServiceRMIPort")
     String PROP_NAMING_SERVICE_RMI_PORT_HELP = "propertyNamingServiceRmiPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "JRMP Invoker RMI Port") })
     String PROP_JRMP_INVOKER_RMI_PORT = "propertyJrmpInvokerRmiPort";
-    @I18NMessage("#ConfiguringtheServer-JRMPInvokerRMIPort")
+    @I18NMessage("-JRMPInvokerRMIPort")
     String PROP_JRMP_INVOKER_RMI_PORT_HELP = "propertyJrmpInvokerRmiPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Pooled Invoker RMI Port") })
     String PROP_POOLED_INVOKER_RMI_PORT = "propertyPooledInvokerRmiPort";
-    @I18NMessage("#ConfiguringtheServer-PooledInvokerRMIPort")
+    @I18NMessage("-PooledInvokerRMIPort")
     String PROP_POOLED_INVOKER_RMI_PORT_HELP = "propertyPooledInvokerRmiPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "AJP Port") })
     String PROP_AJP_PORT = "propertyAjpPort";
-    @I18NMessage("#ConfiguringtheServer-AJPPort")
+    @I18NMessage("-AJPPort")
     String PROP_AJP_PORT_HELP = "propertyAjpPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Unified Invoker Port") })
     String PROP_UNIFIED_INVOKER_PORT = "propertyUnifiedInvokerPort";
-    @I18NMessage("#ConfiguringtheServer-UnifiedInvokerPort")
+    @I18NMessage("-UnifiedInvokerPort")
     String PROP_UNIFIED_INVOKER_PORT_HELP = "propertyUnifiedInvokerPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Aspect Deployer Port") })
     String PROP_ASPECT_DEPLOYER_PORT = "propertyAspectDeployerPort";
-    @I18NMessage("#ConfiguringtheServer-AspectDeployerPort")
+    @I18NMessage("-AspectDeployerPort")
     String PROP_ASPECT_DEPLOYER_PORT_HELP = "propertyAspectDeployerPortHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Console Keystore") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "RHQ Console Keystore") })
     String PROP_TOMCAT_KEYSTORE_FILENAME = "propertyTomcatKeystoreFilename";
-    @I18NMessage("#ConfiguringtheServer-RHQConsoleKeystore")
+    @I18NMessage("-RHQConsoleKeystore")
     String PROP_TOMCAT_KEYSTORE_FILENAME_HELP = "propertyTomcatKeystoreFilenameHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Console Keystore Password") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "RHQ Console Keystore Password") })
     String PROP_TOMCAT_KEYSTORE_PASSWORD = "propertyTomcatKeystorePassword";
-    @I18NMessage("#ConfiguringtheServer-RHQConsoleKeystorePassword")
+    @I18NMessage("-RHQConsoleKeystorePassword")
     String PROP_TOMCAT_KEYSTORE_PASSWORD_HELP = "propertyTomcatKeystorePasswordHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Console SSL Protocol") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "RHQ Console SSL Protocol") })
     String PROP_TOMCAT_SSL_PROTOCOL = "propertyTomcatSslProtocol";
-    @I18NMessage("#ConfiguringtheServer-RHQConsoleSSLProtocol")
+    @I18NMessage("-RHQConsoleSSLProtocol")
     String PROP_TOMCAT_SSL_PROTOCOL_HELP = "propertyTomcatSslProtocolHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Agent Communications Transport") })
     String PROP_CONNECTOR_TRANSPORT = "propertyConnectorTransport";
-    @I18NMessage("#ConfiguringtheServer-IncomingAgentCommunicationsTransport")
+    @I18NMessage("-IncomingAgentCommunicationsTransport")
     String PROP_CONNECTOR_TRANSPORT_HELP = "propertyConnectorTransportHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Agent Communications Bind Address") })
     String PROP_CONNECTOR_BIND_ADDRESS = "propertyConnectorBindAddress";
-    @I18NMessage("#ConfiguringtheServer-IncomingAgentCommunicationsBindAddress")
+    @I18NMessage("-IncomingAgentCommunicationsBindAddress")
     String PROP_CONNECTOR_BIND_ADDRESS_HELP = "propertyConnectorBindAddressHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Agent Communications Port") })
     String PROP_CONNECTOR_BIND_PORT = "propertyConnectorBindPort";
-    @I18NMessage("#ConfiguringtheServer-IncomingAgentCommunicationsPort")
+    @I18NMessage("-IncomingAgentCommunicationsPort")
     String PROP_CONNECTOR_BIND_PORT_HELP = "propertyConnectorBindPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Agent Communications Transport Parameters") })
     String PROP_CONNECTOR_TRANSPORT_PARAMS = "propertyConnectorTransportParams";
-    @I18NMessage("#ConfiguringtheServer-IncomingAgentCommunicationsTransportParameters")
+    @I18NMessage("-IncomingAgentCommunicationsTransportParameters")
     String PROP_CONNECTOR_TRANSPORT_PARAMS_HELP = "propertyConnectorTransportParamsHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Agent Multicast Detector Enabled") })
     String PROP_AGENT_MULTICAST_DETECTOR_ENABLED = "propertyAgentMulticastDetectorEnabled";
-    @I18NMessage("#ConfiguringtheServer-AgentMulticastDetectorEnabled")
+    @I18NMessage("-AgentMulticastDetectorEnabled")
     String PROP_AGENT_MULTICAST_DETECTOR_ENABLED_HELP = "propertyAgentMulticastDetectorEnabledHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Agent Multicast Detector Bind Address") })
     String PROP_AGENT_MULTICAST_DETECTOR_BIND_ADDRESS = "propertyAgentMulticastDetectorBindAddress";
-    @I18NMessage("#ConfiguringtheServer-AgentMulticastDetectorBindAddress")
+    @I18NMessage("-AgentMulticastDetectorBindAddress")
     String PROP_AGENT_MULTICAST_DETECTOR_BIND_ADDRESS_HELP = "propertyAgentMulticastDetectorBindAddressHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Agent Multicast Detector Multicast Address") })
     String PROP_AGENT_MULTICAST_DETECTOR_MULTICAST_ADDRESS = "propertyAgentMulticastDetectorMulticastAddress";
-    @I18NMessage("#ConfiguringtheServer-AgentMulticastDetectorMulticastAddress")
+    @I18NMessage("-AgentMulticastDetectorMulticastAddress")
     String PROP_AGENT_MULTICAST_DETECTOR_MULTICAST_ADDRESS_HELP = "propertyAgentMulticastDetectorMulticastAddressHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Agent Multicast Detector Port") })
     String PROP_AGENT_MULTICAST_DETECTOR_PORT = "propertyAgentMulticastDetectorPort";
-    @I18NMessage("#ConfiguringtheServer-AgentMulticastDetectorPort")
+    @I18NMessage("-AgentMulticastDetectorPort")
     String PROP_AGENT_MULTICAST_DETECTOR_PORT_HELP = "propertyAgentMulticastDetectorPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Security - Secure Socket Protocol") })
     String PROP_SECURITY_SERVER_SECURE_SOCKET_PROTOCOL = "propertySecurityServerSecureSocketProtocol";
-    @I18NMessage("#ConfiguringtheServer-IncomingSecureSocketProtocol")
+    @I18NMessage("-IncomingSecureSocketProtocol")
     String PROP_SECURITY_SERVER_SECURE_SOCKET_PROTOCOL_HELP = "propertySecurityServerSecureSocketProtocolHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Security - Keystore File") })
     String PROP_SECURITY_SERVER_KEYSTORE_FILE = "propertySecurityServerKeystoreFile";
-    @I18NMessage("#ConfiguringtheServer-IncomingKeystoreFile")
+    @I18NMessage("-IncomingKeystoreFile")
     String PROP_SECURITY_SERVER_KEYSTORE_FILE_HELP = "propertySecurityServerKeystoreFileHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Security - Keystore Algorithm") })
     String PROP_SECURITY_SERVER_KEYSTORE_ALGORITHM = "propertySecurityServerKeystoreAlgorithm";
-    @I18NMessage("#ConfiguringtheServer-IncomingKeystoreAlgorithm")
+    @I18NMessage("-IncomingKeystoreAlgorithm")
     String PROP_SECURITY_SERVER_KEYSTORE_ALGORITHM_HELP = "propertySecurityServerKeystoreAlgorithmHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Security - Keystore Type") })
     String PROP_SECURITY_SERVER_KEYSTORE_TYPE = "propertySecurityServerKeystoreType";
-    @I18NMessage("#ConfiguringtheServer-IncomingKeystoreType")
+    @I18NMessage("-IncomingKeystoreType")
     String PROP_SECURITY_SERVER_KEYSTORE_TYPE_HELP = "propertySecurityServerKeystoreTypeHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Security - Keystore Password") })
     String PROP_SECURITY_SERVER_KEYSTORE_PASSWORD = "propertySecurityServerKeystorePassword";
-    @I18NMessage("#ConfiguringtheServer-IncomingKeystorePassword")
+    @I18NMessage("-IncomingKeystorePassword")
     String PROP_SECURITY_SERVER_KEYSTORE_PASSWORD_HELP = "propertySecurityServerKeystorePasswordHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Security - Keystore Key Password") })
     String PROP_SECURITY_SERVER_KEYSTORE_KEY_PASSWORD = "propertySecurityServerKeystoreKeyPassword";
-    @I18NMessage("#ConfiguringtheServer-IncomingKeystoreKeyPassword")
+    @I18NMessage("-IncomingKeystoreKeyPassword")
     String PROP_SECURITY_SERVER_KEYSTORE_KEY_PASSWORD_HELP = "propertySecurityServerKeystoreKeyPasswordHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Security - Keystore Alias") })
     String PROP_SECURITY_SERVER_KEYSTORE_ALIAS = "propertySecurityServerKeystoreAlias";
-    @I18NMessage("#ConfiguringtheServer-IncomingKeystoreAlias")
+    @I18NMessage("-IncomingKeystoreAlias")
     String PROP_SECURITY_SERVER_KEYSTORE_ALIAS_HELP = "propertySecurityServerKeystoreAliasHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Security - Truststore File") })
     String PROP_SECURITY_SERVER_TRUSTSTORE_FILE = "propertySecurityServerTruststoreFile";
-    @I18NMessage("#ConfiguringtheServer-IncomingTruststoreFile")
+    @I18NMessage("-IncomingTruststoreFile")
     String PROP_SECURITY_SERVER_TRUSTSTORE_FILE_HELP = "propertySecurityServerTruststoreFileHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Security - Truststore Algorithm") })
     String PROP_SECURITY_SERVER_TRUSTSTORE_ALGORITHM = "propertySecurityServerTruststoreAlgorithm";
-    @I18NMessage("#ConfiguringtheServer-IncomingTruststoreAlgorithm")
+    @I18NMessage("-IncomingTruststoreAlgorithm")
     String PROP_SECURITY_SERVER_TRUSTSTORE_ALGORITHM_HELP = "propertySecurityServerTruststoreAlgorithmHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Security - Truststore Type") })
     String PROP_SECURITY_SERVER_TRUSTSTORE_TYPE = "propertySecurityServerTruststoreType";
-    @I18NMessage("#ConfiguringtheServer-IncomingTruststoreType")
+    @I18NMessage("-IncomingTruststoreType")
     String PROP_SECURITY_SERVER_TRUSTSTORE_TYPE_HELP = "propertySecurityServerTruststoreTypeHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Security - Truststore Password") })
     String PROP_SECURITY_SERVER_TRUSTSTORE_PASSWORD = "propertySecurityServerTruststorePassword";
-    @I18NMessage("#ConfiguringtheServer-IncomingTruststorePassword")
+    @I18NMessage("-IncomingTruststorePassword")
     String PROP_SECURITY_SERVER_TRUSTSTORE_PASSWORD_HELP = "propertySecurityServerTruststorePasswordHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Security - Client Authentication Mode") })
     String PROP_SECURITY_SERVER_CLIENT_AUTH_MODE = "propertySecurityServerClientAuthMode";
-    @I18NMessage("#ConfiguringtheServer-IncomingClientAuthenticationMode")
+    @I18NMessage("-IncomingClientAuthenticationMode")
     String PROP_SECURITY_SERVER_CLIENT_AUTH_MODE_HELP = "propertySecurityServerClientAuthModeHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Outgoing Security - Secure Socket Protocol") })
     String PROP_SECURITY_CLIENT_SECURE_SOCKET_PROTOCOL = "propertySecurityClientSecureSocketProtocol";
-    @I18NMessage("#ConfiguringtheServer-OutgoingSecureSocketProtocol")
+    @I18NMessage("-OutgoingSecureSocketProtocol")
     String PROP_SECURITY_CLIENT_SECURE_SOCKET_PROTOCOL_HELP = "propertySecurityClientSecureSocketProtocolHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Outgoing Security - Keystore File") })
     String PROP_SECURITY_CLIENT_KEYSTORE_FILE = "propertySecurityClientKeystoreFile";
-    @I18NMessage("#ConfiguringtheServer-OutgoingKeystoreFile")
+    @I18NMessage("-OutgoingKeystoreFile")
     String PROP_SECURITY_CLIENT_KEYSTORE_FILE_HELP = "propertySecurityClientKeystoreFileHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Outgoing Security - Keystore Algorithm") })
     String PROP_SECURITY_CLIENT_KEYSTORE_ALGORITHM = "propertySecurityClientKeystoreAlgorithm";
-    @I18NMessage("#ConfiguringtheServer-OutgoingKeystoreAlgorithm")
+    @I18NMessage("-OutgoingKeystoreAlgorithm")
     String PROP_SECURITY_CLIENT_KEYSTORE_ALGORITHM_HELP = "propertySecurityClientKeystoreAlgorithmHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Outgoing Security - Keystore Type") })
     String PROP_SECURITY_CLIENT_KEYSTORE_TYPE = "propertySecurityClientKeystoreType";
-    @I18NMessage("#ConfiguringtheServer-OutgoingKeystoreType")
+    @I18NMessage("-OutgoingKeystoreType")
     String PROP_SECURITY_CLIENT_KEYSTORE_TYPE_HELP = "propertySecurityClientKeystoreTypeHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Outgoing Security - Keystore Password") })
     String PROP_SECURITY_CLIENT_KEYSTORE_PASSWORD = "propertySecurityClientKeystorePassword";
-    @I18NMessage("#ConfiguringtheServer-OutgoingKeystorePassword")
+    @I18NMessage("-OutgoingKeystorePassword")
     String PROP_SECURITY_CLIENT_KEYSTORE_PASSWORD_HELP = "propertySecurityClientKeystorePasswordHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Outgoing Security - Keystore Key Password") })
     String PROP_SECURITY_CLIENT_KEYSTORE_KEY_PASSWORD = "propertySecurityClientKeystoreKeyPassword";
-    @I18NMessage("#ConfiguringtheServer-OutgoingKeystoreKeyPassword")
+    @I18NMessage("-OutgoingKeystoreKeyPassword")
     String PROP_SECURITY_CLIENT_KEYSTORE_KEY_PASSWORD_HELP = "propertySecurityClientKeystoreKeyPasswordHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Outgoing Security - Keystore Alias") })
     String PROP_SECURITY_CLIENT_KEYSTORE_ALIAS = "propertySecurityClientKeystoreAlias";
-    @I18NMessage("#ConfiguringtheServer-OutgoingKeystoreAlias")
+    @I18NMessage("-OutgoingKeystoreAlias")
     String PROP_SECURITY_CLIENT_KEYSTORE_ALIAS_HELP = "propertySecurityClientKeystoreAliasHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Outgoing Security - Truststore File") })
     String PROP_SECURITY_CLIENT_TRUSTSTORE_FILE = "propertySecurityClientTruststoreFile";
-    @I18NMessage("#ConfiguringtheServer-OutgoingTruststoreFile")
+    @I18NMessage("-OutgoingTruststoreFile")
     String PROP_SECURITY_CLIENT_TRUSTSTORE_FILE_HELP = "propertySecurityClientTruststoreFileHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Outgoing Security - Truststore Algorithm") })
     String PROP_SECURITY_CLIENT_TRUSTSTORE_ALGORITHM = "propertySecurityClientTruststoreAlgorithm";
-    @I18NMessage("#ConfiguringtheServer-OutgoingTruststoreAlgorithm")
+    @I18NMessage("-OutgoingTruststoreAlgorithm")
     String PROP_SECURITY_CLIENT_TRUSTSTORE_ALGORITHM_HELP = "propertySecurityClientTruststoreAlgorithmHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Outgoing Security - Truststore Type") })
     String PROP_SECURITY_CLIENT_TRUSTSTORE_TYPE = "propertySecurityClientTruststoreType";
-    @I18NMessage("#ConfiguringtheServer-OutgoingTruststoreType")
+    @I18NMessage("-OutgoingTruststoreType")
     String PROP_SECURITY_CLIENT_TRUSTSTORE_TYPE_HELP = "propertySecurityClientTruststoreTypeHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Outgoing Security - Truststore Password") })
     String PROP_SECURITY_CLIENT_TRUSTSTORE_PASSWORD = "propertySecurityClientTruststorePassword";
-    @I18NMessage("#ConfiguringtheServer-OutgoingTruststorePassword")
+    @I18NMessage("-OutgoingTruststorePassword")
     String PROP_SECURITY_CLIENT_TRUSTSTORE_PASSWORD_HELP = "propertySecurityClientTruststorePasswordHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Outgoing Security - Server Authentication Mode Enabled") })
     String PROP_SECURITY_CLIENT_SERVER_AUTH_MODE_ENABLED = "propertySecurityClientServerAuthModeEnabled";
-    @I18NMessage("#ConfiguringtheServer-OutgoingServerAuthenticationModeEnabled")
+    @I18NMessage("-OutgoingServerAuthenticationModeEnabled")
     String PROP_SECURITY_CLIENT_SERVER_AUTH_MODE_ENABLED_HELP = "propertySecurityClientServerAuthModeEnabledHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Agent Enabled"),
         @I18NMessage(locale = "de", value = "Eingebetteten Agent verwenden") })
     String PROP_EMBEDDED_RHQ_AGENT_ENABLED = "propertyEmbeddedRHQAgentEnabled";
-    @I18NMessage("#ConfiguringtheServer-EmbeddedRHQAgentEnabled")
+    @I18NMessage("-EmbeddedRHQAgentEnabled")
     String PROP_EMBEDDED_RHQ_AGENT_ENABLED_HELP = "propertyEmbeddedRHQAgentEnabledHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Agent Name"),
         @I18NMessage(locale = "de", value = "Name des eingebetteten Agent") })
     String PROP_EMBEDDED_RHQ_AGENT_NAME = "propertyEmbeddedRHQAgentName";
-    @I18NMessage("#ConfiguringtheServer-EmbeddedRHQAgentName")
+    @I18NMessage("-EmbeddedRHQAgentName")
     String PROP_EMBEDDED_RHQ_AGENT_NAME_HELP = "propertyEmbeddedRHQAgentNameHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Agent Disable Native System") })
     String PROP_EMBEDDED_RHQ_AGENT_DISABLE_NATIVE_SYSTEM = "propertyEmbeddedRHQAgentDisableNativeSystem";
-    @I18NMessage("#ConfiguringtheServer-EmbeddedRHQAgentDisableNativeSystem")
+    @I18NMessage("-EmbeddedRHQAgentDisableNativeSystem")
     String PROP_EMBEDDED_RHQ_AGENT_DISABLE_NATIVE_SYSTEM_HELP = "propertyEmbeddedRHQAgentDisableNativeSystemHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Embedded Agent Reset Configuration") })
     String PROP_EMBEDDED_RHQ_AGENT_RESET_CONFIGURATION = "propertyEmbeddedRHQAgentResetConfiguration";
-    @I18NMessage("#ConfiguringtheServer-EmbeddedRHQAgentResetConfiguration")
+    @I18NMessage("-EmbeddedRHQAgentResetConfiguration")
     String PROP_EMBEDDED_RHQ_AGENT_RESET_CONFIGURATION_HELP = "propertyEmbeddedRHQAgentResetConfigurationHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Email SMTP Hostname"),
         @I18NMessage(locale = "de", value = "Hostname des SMTP Servers") })
     String PROP_EMAIL_SMTP_HOST = "propertyEmailSmtpHost";
-    @I18NMessage("#ConfiguringtheServer-EmailSMTPHostname")
+    @I18NMessage("-EmailSMTPHostname")
     String PROP_EMAIL_SMTP_HOST_HELP = "propertyEmailSmtpHostHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Email SMTP Port") })
     String PROP_EMAIL_SMTP_PORT = "propertyEmailSmtpPort";
-    @I18NMessage("#ConfiguringtheServer-EmailSMTPPort")
+    @I18NMessage("-EmailSMTPPort")
     String PROP_EMAIL_SMTP_PORT_HELP = "propertyEmailSmtpPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Email From Address"),
         @I18NMessage(locale = "de", value = "E-Mail Absenderadresse") })
     String PROP_EMAIL_FROM_ADDRESS = "propertyEmailFromAddress";
-    @I18NMessage("#ConfiguringtheServer-EmailFromAddress")
+    @I18NMessage("-EmailFromAddress")
     String PROP_EMAIL_FROM_ADDRESS_HELP = "propertyEmailFromAddressHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Operation Invocation Default Timeout") })
     String PROP_OPERATION_TIMEOUT = "propertyOperationTimeout";
-    @I18NMessage("#ConfiguringtheServer-OperationInvocationDefaultTimeout")
+    @I18NMessage("-OperationInvocationDefaultTimeout")
     String PROP_OPERATION_TIMEOUT_HELP = "propertyOperationTimeoutHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Cluster - Partition Name") })
     String PROP_CLUSTER_PARTITION_NAME = "propertyClusterPartitionName";
-    @I18NMessage("#ConfiguringtheServer-PartitionName")
+    @I18NMessage("-PartitionName")
     String PROP_CLUSTER_PARTITION_NAME_HELP = "propertyClusterPartitionNameHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Cluster - Partition Bind Address") })
     String PROP_CLUSTER_PARTITION_BIND_ADDRESS = "propertyClusterPartitionBindAddress";
-    @I18NMessage("#ConfiguringtheServer-PartitionBindAddress")
+    @I18NMessage("-PartitionBindAddress")
     String PROP_CLUSTER_PARTITION_BIND_ADDRESS_HELP = "propertyClusterPartitionBindAddressHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Cluster - Partition UDP Multicast Group IP Address") })
     String PROP_CLUSTER_UDP_GROUP = "propertyClusterUdpGroup";
-    @I18NMessage("#ConfiguringtheServer-PartitionUDPMulticastGroupIPAddress")
+    @I18NMessage("-PartitionUDPMulticastGroupIPAddress")
     String PROP_CLUSTER_UDP_GROUP_HELP = "propertyClusterUdpGroupHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Cluster - Partition UDP Multicast Port") })
     String PROP_CLUSTER_HAPARTITION_PORT = "propertyClusterHaPartitionPort";
-    @I18NMessage("#ConfiguringtheServer-PartitionUDPMulticastPort")
+    @I18NMessage("-PartitionUDPMulticastPort")
     String PROP_CLUSTER_HAPARTITION_PORT_HELP = "propertyClusterHaPartitionPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Cluster - Partition UDP EJB3 Entity Cache Multicast Port") })
     String PROP_CLUSTER_EJB3CACHE_PORT = "propertyClusterEjb3CachePort";
-    @I18NMessage("#ConfiguringtheServer-PartitionUDPEJB3EntityCacheMulticastPort")
+    @I18NMessage("-PartitionUDPEJB3EntityCacheMulticastPort")
     String PROP_CLUSTER_EJB3CACHE_PORT_HELP = "propertyClusterEjb3CachePortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Cluster - Partition UDP Alert Cache Multicast Port") })
     String PROP_CLUSTER_ALERTCACHE_PORT = "propertyClusterAlertCachePort";
-    @I18NMessage("#ConfiguringtheServer-PartitionUDPAlertCacheMulticastPort")
+    @I18NMessage("-PartitionUDPAlertCacheMulticastPort")
     String PROP_CLUSTER_ALERTCACHE_PORT_HELP = "propertyClusterAlertCachePortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Cluster - Partition UDP Loopback") })
     String PROP_CLUSTER_UDP_LOOPBACK = "propertyClusterUdpLoopback";
-    @I18NMessage("#ConfiguringtheServer-PartitionUDPLoopback")
+    @I18NMessage("-PartitionUDPLoopback")
     String PROP_CLUSTER_UDP_LOOPBACK_HELP = "propertyClusterUdpLoopbackHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Cluster - HA JNDI Port") })
     String PROP_CLUSTER_HAJNDI_PORT = "propertyClusterHaJndiPort";
-    @I18NMessage("#ConfiguringtheServer-HAJNDIPort")
+    @I18NMessage("-HAJNDIPort")
     String PROP_CLUSTER_HAJNDI_PORT_HELP = "propertyClusterHaJndiPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Cluster - HA JNDI RMI Port") })
     String PROP_CLUSTER_HAJNDI_RMIPORT = "propertyClusterHaJndiRmiPort";
-    @I18NMessage("#ConfiguringtheServer-HAJNDIRMIPort")
+    @I18NMessage("-HAJNDIRMIPort")
     String PROP_CLUSTER_HAJNDI_RMIPORT_HELP = "propertyClusterHaJndiRmiPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Cluster - HA JNDI Auto Discovery Group Port") })
     String PROP_CLUSTER_HAJNDI_AUTODISCOVERPORT = "propertyClusterHaJndiAutoDiscoveryPort";
-    @I18NMessage("#ConfiguringtheServer-HAJNDIAutoDiscoveryGroupPort")
+    @I18NMessage("-HAJNDIAutoDiscoveryGroupPort")
     String PROP_CLUSTER_HAJNDI_AUTODISCOVERPORT_HELP = "propertyClusterHaJndiAutoDiscoveryPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Cluster - HA JRMP Invoker RMI Port") })
     String PROP_CLUSTER_HAJRMPINVOKER_RMIPORT = "propertyClusterHaJrmpInvokerRmiPort";
-    @I18NMessage("#ConfiguringtheServer-HAJRMPInvokerRMIPort")
+    @I18NMessage("-HAJRMPInvokerRMIPort")
     String PROP_CLUSTER_HAJRMPINVOKER_RMIPORT_HELP = "propertyClusterHaJrmpInvokerRmiPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Cluster - HA Pooled Invoker Port") })
     String PROP_CLUSTER_HAPOOLEDINVOKER_PORT = "propertyClusterHaPooledInvokerPort";
-    @I18NMessage("#ConfiguringtheServer-HAPooledInvokerPort")
+    @I18NMessage("-HAPooledInvokerPort")
     String PROP_CLUSTER_HAPOOLEDINVOKER_PORT_HELP = "propertyClusterHaPooledInvokerPortHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Cluster - JGroups UDP IP Time To Live") })
     String PROP_CLUSTER_JGROUPS_UDP_IP_TTL = "propertyClusterJGroupsUdpIpTtl";
-    @I18NMessage("#ConfiguringtheServer-JGroupsUDPIPTimeToLive")
+    @I18NMessage("-JGroupsUDPIPTimeToLive")
     String PROP_CLUSTER_JGROUPS_UDP_IP_TTL_HELP = "propertyClusterJGroupsUdpIpTtlHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Concurrency Limit - Maximum Web Connections") })
     String PROP_CONCURRENCY_LIMIT_WEBCONNS = "propertyConcurrencyLimitWebConns";
-    @I18NMessage("#ConfiguringtheServer-WebConnections")
+    @I18NMessage("-WebConnections")
     String PROP_CONCURRENCY_LIMIT_WEBCONNS_HELP = "propertyConcurrencyLimitWebConnsHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Concurrency Limit - Global") })
     String PROP_CONCURRENCY_LIMIT_GLOBAL = "propertyConcurrencyLimitGlobal";
-    @I18NMessage("#ConfiguringtheServer-GlobalConcurrencyLimit")
+    @I18NMessage("-GlobalConcurrencyLimit")
     String PROP_CONCURRENCY_LIMIT_GLOBAL_HELP = "propertyConcurrencyLimitGlobalHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Concurrency Limit - Inventory Reports") })
     String PROP_CONCURRENCY_LIMIT_INV_REPORT = "propertyConcurrencyLimitInventoryReport";
-    @I18NMessage("#ConfiguringtheServer-InventoryReport")
+    @I18NMessage("-InventoryReport")
     String PROP_CONCURRENCY_LIMIT_INV_REPORT_HELP = "propertyConcurrencyLimitInventoryReportHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Concurrency Limit - Availability Reports") })
     String PROP_CONCURRENCY_LIMIT_AVAIL_REPORT = "propertyConcurrencyLimitAvailabilityReport";
-    @I18NMessage("#ConfiguringtheServer-AvailabilityReport")
+    @I18NMessage("-AvailabilityReport")
     String PROP_CONCURRENCY_LIMIT_AVAIL_REPORT_HELP = "propertyConcurrencyLimitAvailabilityReportHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Concurrency Limit - Inventory Synchronizations") })
     String PROP_CONCURRENCY_LIMIT_INV_SYNC = "propertyConcurrencyLimitInventorySync";
-    @I18NMessage("#ConfiguringtheServer-InventorySynchronization")
+    @I18NMessage("-InventorySynchronization")
     String PROP_CONCURRENCY_LIMIT_INV_SYNC_HELP = "propertyConcurrencyLimitInventorySyncHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Concurrency Limit - Content Reports") })
     String PROP_CONCURRENCY_LIMIT_CONTENT_REPORT = "propertyConcurrencyLimitContentReport";
-    @I18NMessage("#ConfiguringtheServer-ContentReport")
+    @I18NMessage("-ContentReport")
     String PROP_CONCURRENCY_LIMIT_CONTENT_REPORT_HELP = "propertyConcurrencyLimitContentReportHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Concurrency Limit - Content Downloads") })
     String PROP_CONCURRENCY_LIMIT_CONTENT_DOWNLOAD = "propertyConcurrencyLimitContentDownload";
-    @I18NMessage("#ConfiguringtheServer-ContentDownload")
+    @I18NMessage("-ContentDownload")
     String PROP_CONCURRENCY_LIMIT_CONTENT_DOWNLOAD_HELP = "propertyConcurrencyLimitContentDownloadHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Concurrency Limit - Measurement Reports") })
     String PROP_CONCURRENCY_LIMIT_MEAS_REPORT = "propertyConcurrencyLimitMeasurementReport";
-    @I18NMessage("#ConfiguringtheServer-MeasurementReport")
+    @I18NMessage("-MeasurementReport")
     String PROP_CONCURRENCY_LIMIT_MEAS_REPORT_HELP = "propertyConcurrencyLimitMeasurementReportHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Concurrency Limit - Measurement Schedule Requests") })
     String PROP_CONCURRENCY_LIMIT_MEASSCHED_REQ = "propertyConcurrencyLimitMeasurementScheduleRequest";
-    @I18NMessage("#ConfiguringtheServer-MeasurementScheduleRequest")
+    @I18NMessage("-MeasurementScheduleRequest")
     String PROP_CONCURRENCY_LIMIT_MEASSCHED_REQ_HELP = "propertyConcurrencyLimitMeasurementScheduleRequestHelp";
 
     // Help Documentation - links to the wiki
 
     @I18NMessages( {
-        @I18NMessage(locale = "en", value = "Please review the documentation linked below to learn more:"),
-        @I18NMessage(locale = "de", value = "Die unten aufgeführten Links enthalten weitere Informationen:") })
+        @I18NMessage(locale = "en", value = "Please review the documentation linked below to learn more about RHQ:"),
+        @I18NMessage(locale = "de", value = "Die unten aufgefï¿½hrten Links enthalten weitere Informationen zu RHQ:") })
     String INTRODUCE_HELP_DOCS = "introduceHelpDocs";
 
-    @I18NMessage("Installing")
+    @I18NMessage("${product.help.installation}")
     String HELP_DOC_RHQ_SERVER_INSTALL_GUIDE = "helpDocRHQServerInstallGuide";
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Installation Guide"),
-        @I18NMessage(locale = "de", value = "Server Installationsanleitung") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "${product.shortName} Server Installation Guide"),
+        @I18NMessage(locale = "de", value = "${product.shortName} Server Installationsanleitung") })
     String HELP_DOC_RHQ_SERVER_INSTALL_GUIDE_LABEL = "helpDocRHQServerInstallGuideLabel";
 
     @I18NMessage("GUI+Console+Users+Guide")
     String HELP_DOC_RHQ_GUI_CONSOLE_USERS_GUIDE = "helpDocRHQGuiConsoleUsersGuide";
-    @I18NMessages( { @I18NMessage(locale = "en", value = "GUI Console Users Guide"),
-        @I18NMessage(locale = "de", value = "Benutzerhandbuch der GUI") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "${product.shortName} GUI Console Users Guide"),
+        @I18NMessage(locale = "de", value = "Benutzerhandbuch ${product.shortName} GUI") })
     String HELP_DOC_RHQ_GUI_CONSOLE_USERS_GUIDE_LABEL = "helpDocRHQGuiConsoleUsersGuideLabel";
 
-    @I18NMessage("Running+the+Server")
+    @I18NMessage("${product.help.guide.server}")
     String HELP_DOC_RHQ_SERVER_USERS_GUIDE = "helpDocRHQServerUsersGuide";
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Users Guide"),
-        @I18NMessage(locale = "de", value = "Benutzerhandbuch des Servers") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "${product.shortName} Server Users Guide"),
+        @I18NMessage(locale = "de", value = "Benutzerhandbuch ${product.shortName} Server") })
     String HELP_DOC_RHQ_SERVER_USERS_GUIDE_LABEL = "helpDocRHQServerUsersGuideLabel";
 
-    @I18NMessage("Running+the+Agent")
+    @I18NMessage("${product.help.guide.agent}")
     String HELP_DOC_RHQ_AGENT_USERS_GUIDE = "helpDocRHQAgentUsersGuide";
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Agent Users Guide"),
-        @I18NMessage(locale = "de", value = "Benutzerhandbuch für den Agent") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "${product.shortName} Agent Users Guide"),
+        @I18NMessage(locale = "de", value = "Benutzerhandbuch ${product.shortName} Agent") })
     String HELP_DOC_RHQ_AGENT_USERS_GUIDE_LABEL = "helpDocRHQAgentUsersGuideLabel";
 
-    @I18NMessage("FAQ")
+    @I18NMessage("${product.help.FAQ}")
     String HELP_DOC_FAQ = "helpDocFaq";
     @I18NMessages( { @I18NMessage(locale = "en", value = "Frequently Asked Questions"),
-        @I18NMessage(locale = "de", value = "Häufig gestellte Fragen") })
+        @I18NMessage(locale = "de", value = "Hï¿½ufig gestellte Fragen") })
     String HELP_DOC_FAQ_LABEL = "helpDocFaqLabel";
 
     // the page that contains all the config props help text
     // this is under the help doc root
-    @I18NMessage("Configuring+the+Server")
+    @I18NMessage("${product.help.config.props}")
     String HELP_DOC_RHQ_SERVER_PROP_PARENT_PAGE = "helpDocRHQServerPropParentPage";
 
-    // as we translate our documentation - point to each language's root doc location
-    @I18NMessages( { @I18NMessage(locale = "en", value = "http://support.rhq-project.org/display/RHQ/") })
-    String HELP_DOC_ROOT = "helpDocRoot";
+
 }

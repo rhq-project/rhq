@@ -35,6 +35,7 @@
       <product.sales.email>sales@rhq-project.org</product.sales.email>
       <product.support.email>info@rhq-project.org</product.support.email>
       <product.version>${project.version}</product.version>
+      <product.help.doc.root>http://support.rhq-project.org/display/RHQ/</product.help.doc.root>
    </properties>
 
    <dependencies>

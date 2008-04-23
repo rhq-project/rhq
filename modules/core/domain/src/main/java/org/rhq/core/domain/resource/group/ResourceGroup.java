@@ -45,6 +45,7 @@ import javax.persistence.Table;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -231,6 +232,11 @@ public class ResourceGroup extends Group {
     // by primary key which will also put the operation histories in chronological order
     private List<GroupOperationHistory> operationHistories = new ArrayList<GroupOperationHistory>();
 
+    @OneToMany(mappedBy = "group", cascade = { CascadeType.ALL })
+    @OrderBy
+    // by primary key which will also put the configuration updates in chronological order
+    private List<AbstractAggregateConfigurationUpdate> configurationUpdates = new ArrayList<AbstractAggregateConfigurationUpdate>();
+
     @JoinColumn(name = "GROUP_DEFINITION_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
     private GroupDefinition groupDefinition;
@@ -345,6 +351,16 @@ public class ResourceGroup extends Group {
     public void setOperationHistories(@NotNull
     List<GroupOperationHistory> operationHistories) {
         this.operationHistories = operationHistories;
+    }
+
+    @NotNull
+    public List<AbstractAggregateConfigurationUpdate> getConfigurationUpdates() {
+        return configurationUpdates;
+    }
+
+    public void setConfigurationUpdates(@NotNull
+    List<AbstractAggregateConfigurationUpdate> configurationUpdates) {
+        this.configurationUpdates = configurationUpdates;
     }
 
     public GroupDefinition getGroupDefinition() {

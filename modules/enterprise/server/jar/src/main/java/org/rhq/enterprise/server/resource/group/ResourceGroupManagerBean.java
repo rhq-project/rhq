@@ -43,6 +43,9 @@ import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -193,6 +196,25 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         group.getExplicitResources().retainAll(explicitResourcesToKeep);
 
         group.getExplicitResources().clear();
+
+        // break resource and plugin configuration update links in order to preserve individual change history
+        List<AbstractAggregateConfigurationUpdate> configurationUpdates = group.getConfigurationUpdates();
+
+        if (!configurationUpdates.isEmpty()) {
+            Query q = null;
+            int numRows = -1;
+
+            q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE);
+            q.setParameter("aggregateConfigurationUpdates", configurationUpdates);
+            numRows = q.executeUpdate();
+
+            q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE);
+            q.setParameter("aggregateConfigurationUpdates", configurationUpdates);
+            numRows = q.executeUpdate();
+        }
+
+        // entityManager.flush();
+
         entityManager.remove(group);
     }
 

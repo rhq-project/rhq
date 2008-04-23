@@ -44,7 +44,8 @@ import org.rhq.core.domain.resource.Resource;
         + "  FROM ResourceConfigurationUpdate cu " + " WHERE cu.resource.id = :resourceId "
         + "   AND cu.modifiedTime = ( SELECT MAX(cu2.modifiedTime) " + "   FROM ResourceConfigurationUpdate cu2 "
         + "  WHERE cu2.resource.id = :resourceId) "),
-    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM ResourceConfigurationUpdate rcu WHERE rcu.resource IN (:resources))") })
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM ResourceConfigurationUpdate rcu WHERE rcu.resource IN (:resources))"),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "UPDATE ResourceConfigurationUpdate rcu SET rcu.aggregateConfigurationUpdate = null WHERE rcu.aggregateConfigurationUpdate IN ( :aggregateConfigurationUpdates )") })
 public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUpdate {
     private static final long serialVersionUID = 1L;
 
@@ -53,6 +54,7 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
     public static final String QUERY_FIND_CURRENTLY_ACTIVE_CONFIG = "ResourceConfigurationUpdate.findCurrentlyActiveConfig";
     public static final String QUERY_FIND_LATEST_BY_RESOURCE_ID = "ResourceConfigurationUpdate.findByResource";
     public static final String QUERY_DELETE_BY_RESOURCES = "ResourceConfigurationUpdate.deleteByResources";
+    public static final String QUERY_DELETE_UPDATE_AGGREGATE = "ResourceConfigurationUpdate.deleteUpdateAggregate";
 
     @JoinColumn(name = "CONFIG_RES_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne

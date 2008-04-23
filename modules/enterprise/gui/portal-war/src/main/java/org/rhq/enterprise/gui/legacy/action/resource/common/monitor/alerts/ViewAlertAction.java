@@ -42,7 +42,6 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
-import org.rhq.core.util.NumberUtil;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.beans.AlertConditionBean;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
@@ -99,17 +98,19 @@ public class ViewAlertAction extends TilesAction {
                 alertCondBean.setActualValue(RequestUtils.message(request, "alert.current.list.ControlActualValue"));
             } else if ((category == AlertConditionCategory.THRESHOLD) || (category == AlertConditionCategory.BASELINE)
                 || (category == AlertConditionCategory.CHANGE)) {
-                // Let's actually format the value.
-                double value = NumberUtil.stringAsNumber(condLog.getValue()).doubleValue();
-                if (Double.isNaN(value)) {
-                    alertCondBean.setActualValue("??");
-                } else {
-                    // Format threshold and value.
-                    MeasurementDefinition definition = condLog.getCondition().getMeasurementDefinition();
-                    String scaledFormattedValue = MeasurementConverter.format(value, definition.getUnits(), true);
 
-                    alertCondBean.setActualValue(scaledFormattedValue);
+                // Format threshold and value.
+                MeasurementDefinition definition = condLog.getCondition().getMeasurementDefinition();
+                String firedValue;
+
+                try {
+                    firedValue = MeasurementConverter.format(Double.valueOf(condLog.getValue()), definition.getUnits(),
+                        true);
+                } catch (Exception e) {
+                    firedValue = "??";
                 }
+
+                alertCondBean.setActualValue(firedValue);
             } else if ((category == AlertConditionCategory.CONFIGURATION_PROPERTY)
                 || (category == AlertConditionCategory.EVENT)) {
                 // TODO: jmarques - add validation to make sure condition is a valid regex Pattern

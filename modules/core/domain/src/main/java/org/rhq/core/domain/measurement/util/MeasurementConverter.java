@@ -324,6 +324,28 @@ public class MeasurementConverter {
 
     public static MeasurementNumericValueAndUnits fit(Double origin, MeasurementUnits units, MeasurementUnits lowUnits,
         MeasurementUnits highUnits) {
+
+        // work-around for the various Chart descendants not properly setting their units field;      
+        if (null == units) {
+            return new MeasurementNumericValueAndUnits(origin, units);
+        }
+
+        // by definition, absolutely specified units don't scale to anything
+        if ((MeasurementUnits.Family.ABSOLUTE == units.getFamily())
+            || (MeasurementUnits.Family.DURATION == units.getFamily())) {
+            return new MeasurementNumericValueAndUnits(origin, units);
+        }
+
+        // by definition relative-valued units are self-scaled (converted at formatting)       
+        if (MeasurementUnits.Family.RELATIVE == units.getFamily()) {
+            return new MeasurementNumericValueAndUnits(origin, units);
+        }
+
+        // if the magnitude is zero, the best-fit also will spin around forever since it won't change
+        if (Math.abs(origin) < 1e-9) {
+            return new MeasurementNumericValueAndUnits(origin, units);
+        }
+
         boolean wasNegative = false;
 
         if (origin < 0) {
@@ -334,29 +356,9 @@ public class MeasurementConverter {
         MeasurementNumericValueAndUnits currentValueAndUnits = null;
         MeasurementNumericValueAndUnits nextValueAndUnits = new MeasurementNumericValueAndUnits(origin, units);
 
-        // work-around for the various Chart descendants not properly setting their units field;      
-        if (null == units) {
-            return nextValueAndUnits;
-        }
-
-        // by definition, absolutely specified units don't scale to anything
-        if ((nextValueAndUnits.getUnits().getFamily() == MeasurementUnits.Family.ABSOLUTE)
-            || (nextValueAndUnits.getUnits().getFamily() == MeasurementUnits.Family.DURATION)) {
-            return nextValueAndUnits;
-        }
-
-        // by definition relative-valued units are self-scaled (converted at formatting)       
-        if (MeasurementUnits.Family.RELATIVE == nextValueAndUnits.getUnits().getFamily()) {
-            return nextValueAndUnits;
-        }
-
-        // if the magnitude is zero, the best-fit also will spin around forever since it won't change
-        if (Math.abs(origin) < 1e-9) {
-            return nextValueAndUnits;
-        }
-
         // first, make the value smaller if it's too big
         int maxOrdinal = (highUnits != null) ? (highUnits.ordinal() + 1) : MeasurementUnits.values().length;
+
         do {
             currentValueAndUnits = nextValueAndUnits;
 
@@ -379,6 +381,7 @@ public class MeasurementConverter {
 
         // next, make the value bigger if it's too small
         int minOrdinal = (lowUnits != null) ? (lowUnits.ordinal() - 1) : -1;
+
         while (currentValueAndUnits.getValue() < 1.0) {
             int nextOrdinal = currentValueAndUnits.getUnits().ordinal() - 1;
             if (nextOrdinal == minOrdinal) {

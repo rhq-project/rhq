@@ -43,10 +43,11 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
     private static final String NULL_CONFIGURATION_STYLE_ATTRIBUTE = "nullConfigurationStyle";
     private static final String LIST_NAME_ATTRIBUTE = "listName";
     private static final String LIST_INDEX_ATTRIBUTE = "listIndex";
+    private static final String READ_ONLY_ATTRIBUTE = "readOnly";
 
     private ConfigurationDefinition configurationDefinition;
     private Configuration configuration;
-    private boolean readOnly;
+    private Boolean readOnly;
     private String listName;
     private Integer listIndex;
     private String nullConfigurationDefinitionMessage;
@@ -93,7 +94,11 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
     }
 
     public boolean isReadOnly() {
-        return readOnly;
+        if (this.readOnly == null) {
+            this.readOnly = FacesComponentUtility.getExpressionAttribute(this, READ_ONLY_ATTRIBUTE, Boolean.class);
+        }
+        
+        return (this.readOnly != null) ? this.readOnly : false;
     }
 
     public void setReadOnly(boolean readOnly) {
@@ -105,7 +110,7 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
             this.listName = FacesComponentUtility.getExpressionAttribute(this, LIST_NAME_ATTRIBUTE, String.class);
         }
 
-        return listName;
+        return this.listName;
     }
 
     public void setListName(String listName) {
@@ -117,7 +122,7 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
             this.listIndex = FacesComponentUtility.getExpressionAttribute(this, LIST_INDEX_ATTRIBUTE, Integer.class);
         }
 
-        return listIndex;
+        return this.listIndex;
     }
 
     public void setListIndex(Integer listIndex) {

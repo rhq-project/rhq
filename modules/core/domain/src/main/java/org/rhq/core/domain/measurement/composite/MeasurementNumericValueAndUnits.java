@@ -48,6 +48,7 @@ public class MeasurementNumericValueAndUnits implements MeasurementValueAndUnits
         return units;
     }
 
+    /** Equivalent to MeasurementConverter.format(value, units, true) */
     @Override
     public String toString() {
         return MeasurementConverter.format(value, units, true);

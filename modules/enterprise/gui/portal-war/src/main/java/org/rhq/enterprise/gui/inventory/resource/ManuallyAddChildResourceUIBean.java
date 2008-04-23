@@ -117,10 +117,16 @@ public class ManuallyAddChildResourceUIBean {
 
     public String startWorkflow() {
         try {
-            lookupResourceType();
+            this.type = lookupResourceType();
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Could not retrieve resource type.", e
                 .getLocalizedMessage());
+            return OUTCOME_BAD_TYPE;
+        }
+
+        if (this.configurationDefinition == null)
+        {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "There are no connection properties defined for " + this.type);
             return OUTCOME_BAD_TYPE;
         }
 

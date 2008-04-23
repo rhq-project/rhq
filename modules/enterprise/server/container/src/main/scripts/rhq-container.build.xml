@@ -282,6 +282,11 @@ rhq.server.database.type-mapping=${rhq.server.database.type-mapping}
 
 # Container configuration
 jboss.bind.address=0.0.0.0
+
+# If the bind address is set to anything besides 0.0.0.0, uncomment this
+# property and set to the same value; using ${jboss.bind.address} will not work.
+#   java.rmi.server.hostname=0.0.0.0
+
 rhq.server.startup.web.http.port=${rhq.server.http.port}
 rhq.server.startup.web.https.port=${rhq.server.https.port}
 rhq.server.startup.webservice.port=9093

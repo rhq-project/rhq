@@ -266,14 +266,13 @@
                                      value="DELETE SELECTED" target="selectedResources"
                                      onclick="if (!confirm('#{confirmDeleteMessage}')) return false"
                                      styleClass="on-pager-button buttonsmall"
-                                     rendered="#{ResourceUIBean.permissions.deleteResource}" />
+                                     rendered="#{ListChildResourcesUIBean.deletableChildTypesCount > 0 and ResourceUIBean.permissions.deleteResource}"/>
             
             <ui:include src="../include/pagination.xhtml">
                <ui:param name="paginationDataTableName" value="childResourcesDataTable"/>
                <ui:param name="paginationDataModel" value="#{childResourcesDataModel}"/>
                <ui:param name="paginationPageControl" value="#{PageControl.ChildResourcesList}"/>
             </ui:include>
-
          </rich:column>
       </rich:columnGroup>
    </f:facet>

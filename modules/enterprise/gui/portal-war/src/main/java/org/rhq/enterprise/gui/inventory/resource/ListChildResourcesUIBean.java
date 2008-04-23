@@ -20,15 +20,18 @@ package org.rhq.enterprise.gui.inventory.resource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 
 import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
+import javax.faces.application.FacesMessage;
 
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
@@ -55,6 +58,7 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
     private static final String DEFAULT_RESOURCE_TYPE_ID = "SELECT_TYPE";
 
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
+    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
     private String childTypeFilter;
 
@@ -105,8 +109,8 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
         this.manuallyAddableChildTypesCount = this.manuallyAddableChildServerTypes.size()
             + this.manuallyAddableChildServiceTypes.size();
 
-        List<ResourceType> deletableChildServerTypes = getCreatableResourceTypes(this.childServerTypes);
-        List<ResourceType> deletableChildServiceTypes = getCreatableResourceTypes(this.childServiceTypes);
+        List<ResourceType> deletableChildServerTypes = getDeleteableResourceTypes(this.childServerTypes);
+        List<ResourceType> deletableChildServiceTypes = getDeleteableResourceTypes(this.childServiceTypes);
         this.deletableChildTypesCount = deletableChildServerTypes.size() + deletableChildServiceTypes.size();
 
         this.manuallyAddResourceTypeId = DEFAULT_RESOURCE_TYPE_ID;
@@ -224,11 +228,10 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
 
     @Override
     public DataModel getDataModel() {
-        if (dataModel == null) {
-            dataModel = new ListChildResourcesDataModel(PageControlView.ChildResourcesList, MANAGED_BEAN_NAME);
+        if (this.dataModel == null) {
+            refreshDataModel();
         }
-
-        return dataModel;
+        return this.dataModel;
     }
 
     public String getManuallyAddResourceTypeId() {
@@ -253,6 +256,30 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
         if (this.childTypeFilter == null) {
             this.childTypeFilter = FacesContextUtility.getOptionalRequestParameter(CHILD_TYPE_FILTER_INPUT_CLIENT_ID);
         }
+    }
+
+    public String uninventorySelectedResources() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        String[] selectedResources = FacesContextUtility.getRequest().getParameterValues("selectedResources");
+        Integer[] selectedResourceIds = new Integer[selectedResources.length];
+        for (int i = 0; i < selectedResources.length; i++) {
+            selectedResourceIds[i] = Integer.parseInt(selectedResources[i]);
+        }
+        try {
+            this.resourceManager.deleteResources(subject, selectedResourceIds);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                "Uninventoried child Resource(s) with id(s) " + Arrays.asList(selectedResources) + ".");
+        }
+        catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "Failed to uninventory child Resource(s) with id(s) " + Arrays.asList(selectedResources) + ".");
+        }
+        refreshDataModel();
+        return "successOrFailure";
+    }
+
+    private void refreshDataModel() {
+        this.dataModel = new ListChildResourcesDataModel(PageControlView.ChildResourcesList, MANAGED_BEAN_NAME);
     }
 
     private List<ResourceType> getManuallyAddableResourceTypes(List<ResourceType> resourceTypes) {

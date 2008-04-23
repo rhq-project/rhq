@@ -148,10 +148,10 @@
 
    <rich:column>
       <f:facet name="header">
-         <onc:allSelect target="selectedResources" rendered="#{ListChildResourcesUIBean.deletableChildTypesCount > 0}"/>
+         <onc:allSelect target="selectedResources"/>
       </f:facet>
       
-      <onc:select name="selectedResources" value="#{resourceComposite.resource.id}" rendered="#{resourceComposite.resource.resourceType.deletable}"/>
+      <onc:select name="selectedResources" value="#{resourceComposite.resource.id}"/>
    </rich:column>
 
    <rich:column>
@@ -256,6 +256,10 @@
    <f:facet name="footer">
       <rich:columnGroup>
          <rich:column colspan="7">
+            <onc:selectCommandButton action="#{ListChildResourcesUIBean.uninventorySelectedResources}"
+                                     value="UNINVENTORY" target="selectedResources"
+                                     styleClass="on-pager-button buttonsmall"/>
+            
             <ui:param name="confirmDeleteMessage" value="#{msg['resource.inventory.view.deleteResourceConfirm']}"/>
             <ui:remove>
             <!-- NOTE: The onclick JavaScript block below should not return true under any circumstance. It is does so,
@@ -263,11 +267,12 @@
                        redirect to "#", which will do nothing but refresh the current page. -->
             </ui:remove>
             <onc:selectCommandButton action="#{DeleteResourcesUIBean.deleteSelectedResources}"
-                                     value="DELETE SELECTED" target="selectedResources"
+                                     value="DELETE" target="selectedResources"
                                      onclick="if (!confirm('#{confirmDeleteMessage}')) return false"
                                      styleClass="on-pager-button buttonsmall"
                                      rendered="#{ListChildResourcesUIBean.deletableChildTypesCount > 0 and ResourceUIBean.permissions.deleteResource}"/>
-            
+
+
             <ui:include src="../include/pagination.xhtml">
                <ui:param name="paginationDataTableName" value="childResourcesDataTable"/>
                <ui:param name="paginationDataModel" value="#{childResourcesDataModel}"/>

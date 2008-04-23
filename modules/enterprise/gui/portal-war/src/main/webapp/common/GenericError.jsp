@@ -46,7 +46,7 @@ if (exception != null) {
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td class="BlockTitle" width="100%"><fmt:message key="error.Error.Tab"/></td>
-          <td class="BlockTitle" align="right"><html:link href="" onclick="window.open('${helpBaseURL}Users+Guide','help','width=800,height=650,scrollbars=yes,left=80,top=80,resizable=yes'); return false;"><html:img page="/images/tt_help.gif" width="16" height="16" border="0"/></html:link></td>
+          <td class="BlockTitle" align="right"><html:link href="" onclick="window.open('${helpBaseURL}','help','width=800,height=650,scrollbars=yes,left=80,top=80,resizable=yes'); return false;"><html:img page="/images/tt_help.gif" width="16" height="16" border="0"/></html:link></td>
         </tr>
       </table>	
     </td>

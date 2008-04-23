@@ -23,7 +23,7 @@
       <table width="250" border="0" cellspacing="4" cellpadding="0">
         <tr> 
           <td rowspan="99"><html:img page="/images/spacer.gif" width="1" height="1" alt="" border="0"/></td>
-          <td width="100%"><html:link href="" onclick="window.open('${helpBaseURL}Users+Guide','help','width=940,height=730,scrollbars=yes,toolbar=yes,left=40,top=40,resizable=yes'); return false;"><html:img page="/images/toolbox_Help.gif" onmouseover="imageSwap(this, headerPath + 'toolbox_Help', '_on');" onmouseout="imageSwap(this, headerPath + 'toolbox_Help', '')" width="28" height="14" alt="" border="0"/></html:link></td>
+          <td width="100%"><html:link href="" onclick="window.open('${helpBaseURL}','help','width=940,height=730,scrollbars=yes,toolbar=yes,left=40,top=40,resizable=yes'); return false;"><html:img page="/images/toolbox_Help.gif" onmouseover="imageSwap(this, headerPath + 'toolbox_Help', '_on');" onmouseout="imageSwap(this, headerPath + 'toolbox_Help', '')" width="28" height="14" alt="" border="0"/></html:link></td>
         </tr>
       </table>
     </td>

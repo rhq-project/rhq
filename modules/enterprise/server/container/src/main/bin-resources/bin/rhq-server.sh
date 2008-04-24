@@ -67,7 +67,7 @@
 # JAVA_HOME=/path/to/java/installation
 # RHQ_SERVER_JAVA_EXE_FILE_PATH=/path/directly/to/java/executable
 # RHQ_SERVER_JAVA_OPTS=VM options
-# RHQ_SERVER_JAVA_ADDITIONAL_OPTS=additional VM options
+# RHQ_SERVER_ADDITIONAL_JAVA_OPTS=additional VM options
 # RHQ_SERVER_CMDLINE_OPTS=additional run.sh options
 
 # ----------------------------------------------------------------------

@@ -64,6 +64,7 @@ public class JavaTest {
      * Tests getting network adapter information.
      */
     // since the move to SIGAR, Java-only sysinfo doesn't support network adapters
+/*
     public void testGetNetworkAdapterInfo() {
         SystemInfo sysinfo = SystemInfoFactory.createJavaSystemInfo();
 
@@ -92,6 +93,7 @@ public class JavaTest {
             System.out.println("Network adapter found: " + adapter);
         }
     }
+*/
 
     /**
      * Just a test to run concurrent requests through the java layer.

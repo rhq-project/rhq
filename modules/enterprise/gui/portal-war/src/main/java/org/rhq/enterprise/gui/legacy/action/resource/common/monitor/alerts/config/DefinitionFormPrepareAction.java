@@ -20,8 +20,10 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -30,8 +32,9 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
 import org.apache.struts.util.LabelValueBean;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertDampening;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -140,6 +143,13 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
                     resource.getId(), false);
                 setDisabledName(schedule, definition);
             }
+        } else {
+            List<LabelValueBean> defaultBaselineLabels = getBaselineList(null);
+            for (MeasurementDefinition definition : dataDefinitions) {
+                RelatedOptionBean rob = new RelatedOptionBean(definition.getName(), String.valueOf(definition.getId()),
+                    defaultBaselineLabels);
+                baselines.add(rob);
+            }
         }
 
         defForm.setMetrics(dataDefinitions);
@@ -159,6 +169,9 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
     }
 
     private void setDisabledName(MeasurementSchedule schedule, MeasurementDefinition definition) {
+        if (schedule == null) {
+            return;
+        }
         if (schedule.isEnabled() == false) {
             String definitionName = definition.getDisplayName();
             definition.setDisplayName(definitionName + " (disabled)");

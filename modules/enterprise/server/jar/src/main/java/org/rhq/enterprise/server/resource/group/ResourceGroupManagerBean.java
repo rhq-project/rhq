@@ -717,18 +717,19 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         Query query = entityManager.createNamedQuery(ResourceType.QUERY_GET_RESOURCE_TYPE_COUNTS_BY_GROUP);
         query.setParameter("groupId", resourceGroupId);
 
-        List results = query.getResultList();
+        Subject overlord = subjectManager.getOverlord();
+        ResourceGroup resourceGroup = getResourceGroupById(overlord, resourceGroupId, null);
 
+        List results = query.getResultList();
         if (results.size() == 1) {
             Object[] info = (Object[]) results.get(0);
             int resourceTypeId = (Integer) info[0];
 
-            Subject overlord = subjectManager.getOverlord();
-
-            ResourceGroup resourceGroup = getResourceGroupById(overlord, resourceGroupId, null);
             ResourceType type = resourceTypeManager.getResourceTypeById(overlord, resourceTypeId);
 
             resourceGroup.setResourceType(type);
+        } else {
+            resourceGroup.setResourceType(null);
         }
     }
 

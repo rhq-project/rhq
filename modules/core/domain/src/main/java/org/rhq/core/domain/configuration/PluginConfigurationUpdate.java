@@ -47,7 +47,7 @@ import org.rhq.core.domain.resource.Resource;
         + "  FROM PluginConfigurationUpdate cu "
         + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM PluginConfigurationUpdate pcu WHERE pcu.resource IN (:resources))"),
-    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "UPDATE PluginConfigurationUpdate pcu SET pcu.aggregateConfigurationUpdate = null WHERE pcu.aggregateConfigurationUpdate IN ( :aggregateConfigurationUpdates )") })
+    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "UPDATE PluginConfigurationUpdate pcu SET pcu.aggregateConfigurationUpdate = null WHERE pcu.aggregateConfigurationUpdate IN ( select apcu FROM AggregatePluginConfigurationUpdate apcu WHERE apcu.group.id = :groupId )") })
 public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpdate {
     private static final long serialVersionUID = 1L;
 

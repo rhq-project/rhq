@@ -45,7 +45,7 @@ import org.rhq.core.domain.resource.Resource;
         + "   AND cu.modifiedTime = ( SELECT MAX(cu2.modifiedTime) " + "   FROM ResourceConfigurationUpdate cu2 "
         + "  WHERE cu2.resource.id = :resourceId) "),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM ResourceConfigurationUpdate rcu WHERE rcu.resource IN (:resources))"),
-    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "UPDATE ResourceConfigurationUpdate rcu SET rcu.aggregateConfigurationUpdate = null WHERE rcu.aggregateConfigurationUpdate IN ( :aggregateConfigurationUpdates )") })
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "UPDATE ResourceConfigurationUpdate rcu SET rcu.aggregateConfigurationUpdate = null WHERE rcu.aggregateConfigurationUpdate IN ( select arcu FROM AggregateResourceConfigurationUpdate arcu WHERE arcu.group.id = :groupId )") })
 public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUpdate {
     private static final long serialVersionUID = 1L;
 

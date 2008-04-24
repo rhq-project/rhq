@@ -21,10 +21,17 @@ package org.rhq.enterprise.gui.inventory.resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
+import java.util.Locale;
 
 import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
 import javax.faces.application.FacesMessage;
+
+import org.jvnet.inflector.Noun;
+import org.jvnet.inflector.Rule;
+import org.jvnet.inflector.Pluralizer;
+import org.jvnet.inflector.RuleBasedPluralizer;
+import org.jvnet.inflector.rule.SuffixInflectionRule;
 
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -37,6 +44,7 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.gui.util.CustomEnglishPluralizer;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -326,18 +334,14 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
 
     private List<SelectItem> convertToSelectItems(List<ResourceType> resourceTypes, boolean pluralize) {
         List<SelectItem> selectItems = new ArrayList<SelectItem>();
+        Pluralizer customPluralizer = new CustomEnglishPluralizer();
         for (ResourceType resourceType : resourceTypes) {
-            String label = NBSP + " - " + ((pluralize) ? pluralize(resourceType.getName()) : resourceType.getName());
+            String label = NBSP + " - " + ((pluralize) ? customPluralizer.pluralize(resourceType.getName()) : resourceType.getName());
             SelectItem selectItem = new SelectItem(resourceType.getId(), label);
             selectItem.setEscape(false); // so that the ampersands in the non-blanking spaces will not be escaped to &amp;
             selectItems.add(selectItem);
         }
-
         return selectItems;
-    }
-
-    private String pluralize(String name) {
-        return (name.endsWith("s")) ? name : (name + "s");
     }
 
     protected class ListChildResourcesDataModel extends PagedListDataModel<ResourceComposite> {
@@ -377,4 +381,5 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
             return resourceComposites;
         }
     }
+
 }

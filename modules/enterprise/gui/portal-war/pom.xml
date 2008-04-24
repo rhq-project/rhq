@@ -264,6 +264,12 @@
       </dependency>
 
       <dependency>
+         <groupId>org.jvnet</groupId>
+         <artifactId>inflector</artifactId>
+         <version>0.7.0</version>
+      </dependency>
+
+      <dependency>
          <groupId>org.richfaces.framework</groupId>
          <artifactId>richfaces-api</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->

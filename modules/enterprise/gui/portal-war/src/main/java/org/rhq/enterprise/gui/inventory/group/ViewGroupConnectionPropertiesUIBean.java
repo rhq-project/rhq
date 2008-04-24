@@ -19,8 +19,10 @@
 package org.rhq.enterprise.gui.inventory.group;
 
 import java.util.List;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -94,8 +96,9 @@ public class ViewGroupConnectionPropertiesUIBean {
             if (aggregateConfiguration != null) {
                 ConfigurationMaskingUtility.maskConfiguration(aggregateConfiguration, this.configurationDefinition);
             }
-        } catch (IllegalArgumentException iae) {
+        } catch (Exception e) {
             // do nothing, let null bubble up so that this object finishes constructing itself
+            aggregateConfiguration = null;
         }
 
         return aggregateConfiguration;
@@ -110,6 +113,7 @@ public class ViewGroupConnectionPropertiesUIBean {
     }
 
     public String getNullConfigurationMessage() {
-        return "Some resource in this group does not have its plugin configuration initialized.";
+        return "Some resource in this group does not have its plugin configuration initialized, "
+            + "or this group contains mixed resource types when it should only contain one.";
     }
 }

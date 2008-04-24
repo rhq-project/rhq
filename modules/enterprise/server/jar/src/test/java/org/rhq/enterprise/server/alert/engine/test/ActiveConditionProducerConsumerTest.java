@@ -43,7 +43,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * This is not actually deployed as a test since it was deemed more of a test of the embedded configuration to support
  * MDBs than any largely meaningful or complex logic.  For now, since it was written, it's being checked in.
  */
-// @Test
 public class ActiveConditionProducerConsumerTest extends AbstractEJB3Test {
     CachedConditionProducerBean producerBean;
 

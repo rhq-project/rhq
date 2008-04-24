@@ -63,7 +63,6 @@ public class JavaTest {
     /**
      * Tests getting network adapter information.
      */
-    @Test(enabled = false)
     // since the move to SIGAR, Java-only sysinfo doesn't support network adapters
     public void testGetNetworkAdapterInfo() {
         SystemInfo sysinfo = SystemInfoFactory.createJavaSystemInfo();

@@ -73,6 +73,10 @@ public class MeasurementConverterTest extends AbstractEJB3Test {
         testPrecisionScaling(new double[] { 128, 256, 512, 1024, 8192 }, MeasurementUnits.BYTES, new String[] {
             "0.1KB", "0.2KB", "0.5KB", "1KB", "8KB" }, MeasurementUnits.KILOBYTES);
 
+        // same test with negative numbers
+        testPrecisionScaling(new double[] { -128, -256, -512, -1024, -8192 }, MeasurementUnits.BYTES, new String[] {
+            "-0.1KB", "-0.2KB", "-0.5KB", "-1KB", "-8KB" }, MeasurementUnits.KILOBYTES);
+
         // test self scaling relative units
         testPrecisionScaling(new double[] { 0.0, 0.065, 1.0, 0.123456 }, MeasurementUnits.PERCENTAGE, new String[] {
             "0%", "6.5%", "100%", "12.3%" }, MeasurementUnits.PERCENTAGE);

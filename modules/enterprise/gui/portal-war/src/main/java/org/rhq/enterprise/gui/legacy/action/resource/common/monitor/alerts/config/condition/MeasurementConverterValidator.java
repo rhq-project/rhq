@@ -26,6 +26,7 @@ import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConversionException;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
@@ -53,22 +54,22 @@ class MeasurementConverterValidator implements ConditionBeanConverterValidator {
         toCondition.setMeasurementDefinition(definition);
 
         if (fromBean.getThresholdType().equals(TYPE_ABS)) {
-            toCondition.setCategory(AlertConditionCategory.THRESHOLD);
-
             MeasurementNumericValueAndUnits valueAndUnits = MeasurementConverter.parse(fromBean.getAbsoluteValue(),
                 definition.getUnits());
 
+            toCondition.setCategory(AlertConditionCategory.THRESHOLD);
             toCondition.setThreshold(valueAndUnits.getValue());
             toCondition.setComparator(fromBean.getAbsoluteComparator());
+
         } else if (fromBean.getThresholdType().equals(TYPE_PERC)) {
+            MeasurementNumericValueAndUnits threshold = MeasurementConverter.parse(fromBean.getPercentage(),
+                MeasurementUnits.PERCENTAGE);
+
             toCondition.setCategory(AlertConditionCategory.BASELINE);
+            toCondition.setThreshold(threshold.getValue());
+            toCondition.setComparator(fromBean.getPercentageComparator());
             toCondition.setOption(fromBean.getBaselineOption());
 
-            MeasurementNumericValueAndUnits valueAndUnits = MeasurementConverter.parse(fromBean.getPercentage(),
-                definition.getUnits());
-
-            toCondition.setThreshold(valueAndUnits.getValue());
-            toCondition.setComparator(fromBean.getPercentageComparator());
         } else {
             toCondition.setCategory(AlertConditionCategory.CHANGE);
         }
@@ -106,8 +107,9 @@ class MeasurementConverterValidator implements ConditionBeanConverterValidator {
             toBean.setThresholdType(TYPE_PERC);
             toBean.setBaselineOption(fromCondition.getOption());
 
-            toBean.setPercentage(MeasurementConverter.format(fromCondition.getThreshold(), fromCondition
-                .getMeasurementDefinition().getUnits(), true));
+            // The percent sign is fixed in the GUI, so scale up manually and format without units
+            Double threshold = MeasurementUnits.scaleUp(fromCondition.getThreshold(), MeasurementUnits.PERCENTAGE);
+            toBean.setPercentage(MeasurementConverter.format(threshold, MeasurementUnits.NONE, true));
 
             toBean.setAbsoluteComparator(null);
             toBean.setPercentageComparator(fromCondition.getComparator());

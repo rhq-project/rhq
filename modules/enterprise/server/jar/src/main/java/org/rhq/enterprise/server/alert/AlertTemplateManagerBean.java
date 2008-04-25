@@ -153,7 +153,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     }
 
     public void updateAlertDefinitionsForResource(Subject user, Integer resourceId)
-        throws AlertDefinitionCreationException {
+        throws AlertDefinitionCreationException, InvalidAlertDefinitionException {
         if (authorizationManager.isOverlord(user) == false) {
             throw new AlertDefinitionCreationException("Updating the alert definitions for a resource "
                 + "is an implicit system operation " + "and must only be performed by the overlord");
@@ -171,7 +171,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     }
 
     public void updateAlertDefinitionsForResource(Subject user, AlertDefinition alertTemplate, Integer resourceId)
-        throws AlertDefinitionCreationException {
+        throws AlertDefinitionCreationException, InvalidAlertDefinitionException {
         if (authorizationManager.isOverlord(user) == false) {
             throw new AlertDefinitionCreationException("Updating the alert definitions for a resource "
                 + "is an implicit system operation " + "and must only be performed by the overlord");
@@ -182,20 +182,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         childAlertDefinition.setParentId(alertTemplate.getId());
 
         // persist the child
-        try {
-            alertDefinitionManager.createAlertDefinition(user, childAlertDefinition, resourceId);
-        } catch (InvalidAlertDefinitionException iade) {
-            /*
-             * jmarques: 10/25/2007
-             *
-             * should never happen because InvalidAlertDefinitionException is only ever thrown if the passed template
-             * isn't a valid AlertDefinition, but that is highly unlikely considering the template was successfully
-             * persisted previously
-             *
-             * but we'll log it anyway, just in case, so it isn't just swallowed
-             */
-            LOG.error(iade);
-        }
+        alertDefinitionManager.createAlertDefinition(user, childAlertDefinition, resourceId);
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)

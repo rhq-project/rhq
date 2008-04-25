@@ -37,6 +37,7 @@ import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
+import org.rhq.enterprise.server.alert.AlertDefinitionException;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.legacy.events.EventConstants;
@@ -96,10 +97,16 @@ public class EditDefinitionControlActionAction extends BaseAction {
 
         alertDefinition.setOperationDefinition(operationDefinition);
 
-        if (isAlertTemplate) {
-            alertTemplateManager.updateAlertTemplate(subject, alertDefinition, operationsForm.isCascade(), false);
-        } else {
-            alertDefinitionManager.updateAlertDefinition(subject, alertDefinition.getId(), alertDefinition, false);
+        try {
+            if (isAlertTemplate) {
+                alertTemplateManager.updateAlertTemplate(subject, alertDefinition, operationsForm.isCascade(), false);
+            } else {
+                alertDefinitionManager.updateAlertDefinition(subject, alertDefinition.getId(), alertDefinition, false);
+            }
+        } catch (AlertDefinitionException iade) {
+            log.debug("alert definition update failed:", iade);
+            RequestUtils.setError(request, "alert.config.edit.definition.error", iade.getMessage(), "global");
+            return returnFailure(request, mapping, null);
         }
 
         return returnSuccess(request, mapping, params);

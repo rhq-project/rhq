@@ -92,7 +92,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
-import org.rhq.enterprise.server.alert.AlertDefinitionCreationException;
+import org.rhq.enterprise.server.alert.AlertDefinitionException;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -194,13 +194,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 // again, the overlord needs to call out to this system side-effect method
                 alertTemplateManager.updateAlertDefinitionsForResource(overlord, template, resource.getId());
             }
-        } catch (AlertDefinitionCreationException adce) {
-            /* should never happen because AlertDefinitionCreationException is only ever
-             * thrown if updateAlertDefinitionsForResource isn't called as the overlord
-             *
-             * but we'll log it anyway, just in case, so it isn't just swallowed
+        } catch (AlertDefinitionException ade) {
+            /* AlertDefinitionCreationException is only ever thrown if updateAlertDefinitionsForResource isn't called 
+             * as the overlord; however, InvalidAlertDefinitionException *could* still be thrown if the template itself
+             * is valid but is invalid with respect to the resource it is being applied to; so, make sure we log this
+             * so it isn't just swallowed, but catch the more generic AlertDefinitionException to make sure no 
+             * exceptions escape from this method and cause the resource creation context its called from to bomb
              */
-            log.error(adce);
+            log.error(ade);
         }
     }
 

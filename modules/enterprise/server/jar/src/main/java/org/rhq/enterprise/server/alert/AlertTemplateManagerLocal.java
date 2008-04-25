@@ -39,11 +39,12 @@ public interface AlertTemplateManagerLocal {
         throws InvalidAlertDefinitionException, ResourceTypeNotFoundException;
 
     // this is a system side-effect of template processing, and thus should only ever by called by the overlord user
-    void updateAlertDefinitionsForResource(Subject user, Integer resourceId) throws AlertDefinitionCreationException;
+    void updateAlertDefinitionsForResource(Subject user, Integer resourceId) throws AlertDefinitionCreationException,
+        InvalidAlertDefinitionException;
 
     // this is a system side-effect of template processing, and thus should only ever by called by the overlord user
     void updateAlertDefinitionsForResource(Subject user, AlertDefinition alertTemplate, Integer resourceId)
-        throws AlertDefinitionCreationException;
+        throws AlertDefinitionCreationException, InvalidAlertDefinitionException;
 
     void removeAlertTemplates(Subject user, Integer[] alertTemplateIds, boolean cascade);
 

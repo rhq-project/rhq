@@ -39,7 +39,6 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
-import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
@@ -434,20 +433,6 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
                 if (def.getNumericType() != NumericType.DYNAMIC) {
                     throw new InvalidAlertDefinitionException("Invalid Condition: '" + def.getDisplayName()
                         + "' is a trending metric, and thus will never have baselines calculated for it.");
-                }
-
-                /*
-                 * don't bother checking for the existence of a baseline against an alert template
-                 */
-                if (resourceId != null) {
-                    Subject overlord = subjectManager.getOverlord();
-                    MeasurementBaseline baseline = measurementBaselineManager
-                        .findBaselineForResourceAndMeasurementDefinition(overlord, resourceId, def.getId());
-                    if (baseline.getMean().equals(Double.NaN)) {
-                        throw new InvalidAlertDefinitionException("Invalid Condition: '" + def.getDisplayName()
-                            + "' does not have a baseline calculated for it yet, "
-                            + "thus there is no value for this alert condition to check against");
-                    }
                 }
             }
         }

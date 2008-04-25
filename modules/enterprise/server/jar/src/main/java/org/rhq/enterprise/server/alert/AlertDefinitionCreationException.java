@@ -22,7 +22,7 @@ package org.rhq.enterprise.server.alert;
  * @author Joseph Marques
  */
 
-public class AlertDefinitionCreationException extends Exception {
+public class AlertDefinitionCreationException extends AlertDefinitionException {
     private static final long serialVersionUID = 1L;
 
     public AlertDefinitionCreationException() {

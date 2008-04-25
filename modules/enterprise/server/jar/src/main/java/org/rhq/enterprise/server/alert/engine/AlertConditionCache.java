@@ -114,7 +114,13 @@ public class AlertConditionCache {
     private CountDownLatch baselineCalcLatch = null;
 
     private enum CacheName {
-        MeasurementDataCache, MeasurementTraitCache, MeasurementBaselineMap, OutOfBoundsBaselineMap, ResourceOperationCache, AvailabilityCache, Inverse;
+        MeasurementDataCache, //
+        MeasurementTraitCache, //
+        MeasurementBaselineMap, //
+        OutOfBoundsBaselineMap, //
+        ResourceOperationCache, //
+        AvailabilityCache, //
+        Inverse;
     }
 
     /*

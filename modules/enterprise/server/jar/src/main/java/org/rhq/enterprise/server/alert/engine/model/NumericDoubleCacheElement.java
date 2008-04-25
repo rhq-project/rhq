@@ -32,11 +32,16 @@ public class NumericDoubleCacheElement extends AbstractCacheElement<Double> {
 
     @Override
     public boolean matches(Double providedValue, Object... extraParams) {
-        if (providedValue == null) {
+        /* 
+         * allow null/NaN/infinite Numeric elements to be processed;
+         * 
+         * this will support baseline-based AlertConditions whose baselines haven't been calculated yet 
+         */
+        if (alertConditionValue == null || alertConditionValue.isNaN() || alertConditionValue.isInfinite()) {
             return false;
         }
 
-        if (providedValue.isNaN() || providedValue.isInfinite()) {
+        if (providedValue == null || providedValue.isNaN() || providedValue.isInfinite()) {
             return false;
         }
 

@@ -33,6 +33,8 @@ import org.apache.struts.tiles.actions.TilesAction;
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.KeyConstants;
+import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ChartUtility;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
 /**
@@ -51,9 +53,8 @@ public class ViewAction extends TilesAction {
         WebUser user = SessionUtils.getWebUser(request.getSession());
 
         //get all the displayed subtypes
-
-        List<String> chartList = user.getPreferenceAsList(Constants.USER_DASHBOARD_CHARTS,
-            Constants.DASHBOARD_DELIMITER);
+        ChartUtility chartUtility = new ChartUtility(user);
+        List<String> chartList = chartUtility.getAllChartsAsList();
 
         HashMap charts = new HashMap();
 

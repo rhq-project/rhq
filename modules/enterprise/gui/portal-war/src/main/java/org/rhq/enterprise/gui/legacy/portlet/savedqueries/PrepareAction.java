@@ -18,10 +18,7 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.savedqueries;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.struts.action.ActionForm;
@@ -32,6 +29,7 @@ import org.apache.struts.tiles.actions.TilesAction;
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ChartUtility;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
@@ -40,12 +38,12 @@ public class PrepareAction extends TilesAction {
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         PropertiesForm pForm = (PropertiesForm) form;
-
         WebUser user = SessionUtils.getWebUser(request.getSession());
+
+        ChartUtility chartUtility = new ChartUtility(user);
         pForm.setDisplayOnDash(true);
 
-        List chartList = StringUtil.explode(user.getPreference(Constants.USER_DASHBOARD_CHARTS),
-            DashboardUtils.DASHBOARD_DELIMITER);
+        ArrayList<String> chartList = chartUtility.getAllChartsAsList();
 
         HashMap charts = new HashMap();
 

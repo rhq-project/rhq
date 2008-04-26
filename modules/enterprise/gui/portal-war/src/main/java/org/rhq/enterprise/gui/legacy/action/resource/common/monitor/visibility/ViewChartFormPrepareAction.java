@@ -304,25 +304,13 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         return null;
     }
 
-    private ActionForward removeBadDashboardLink(HttpServletRequest request) throws SessionTimeoutException,
+    private ActionForward removeBadDashboardLink(HttpServletRequest request) throws Exception,
         SessionNotFoundException {
         // This was probably a bad favorites chart
         String query = request.getQueryString();
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        String userCharts = user.getPreference(KeyConstants.USER_DASHBOARD_CHARTS);
-        List<String> chartList = StringUtil.explode(userCharts, DashboardUtils.DASHBOARD_DELIMITER);
-        for (Object aChartList : chartList) {
-            String chart = (String) aChartList;
-            if (chart.indexOf(query) > 0) {
-                // Remove this and direct user to dash
-                userCharts = StringUtil.remove(userCharts, chart);
-                user.setPreference(KeyConstants.USER_DASHBOARD_CHARTS, userCharts);
-                user.persistPreferences();
-                request.setAttribute("toDashboard", "true");
-                return null;
-            }
-        }
-
+        ChartUtility chartUtility = new ChartUtility(user);
+        chartUtility.remove( query );
         return null;
     }
 

@@ -28,6 +28,7 @@ import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
+import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ChartUtility;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
@@ -50,12 +51,12 @@ public class ModifyAction extends BaseAction {
         String[] charts = pForm.getCharts();
 
         if (charts != null) {
-            String userCharts = user.getPreference(Constants.USER_DASHBOARD_CHARTS);
+            ChartUtility chartUtility = new ChartUtility( user );
+//            String userCharts = user.getPreference(Constants.USER_DASHBOARD_CHARTS);
             for (int i = 0; i < charts.length; i++) {
-                userCharts = StringUtil.remove(userCharts, charts[i]);
+                chartUtility.remove( charts[i]);
             }
 
-            user.setPreference(Constants.USER_DASHBOARD_CHARTS, userCharts);
             returnString = "remove";
         }
 

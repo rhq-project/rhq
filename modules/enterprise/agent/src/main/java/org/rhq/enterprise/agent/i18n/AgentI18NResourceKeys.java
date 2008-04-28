@@ -205,6 +205,9 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("<cannot get preferences: {0}>")
     String CANNOT_GET_PREFERENCES = "AgentConfiguration.cannot-get-preferences";
 
+    @I18NMessage("Failed to store preference key [{0}] : {1}")
+    String CANNOT_STORE_PREFERENCES = "AgentConfiguration.cannot-store-preferences";
+
     @I18NMessage("<unknown>")
     String UNKNOWN = "AgentConfiguration.unknown";
 

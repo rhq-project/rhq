@@ -23,7 +23,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+
 import mazz.i18n.Logger;
+
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
@@ -1005,6 +1007,12 @@ public class AgentConfiguration {
     public void setAgentSecurityToken(String value) {
         if (value != null) {
             m_preferences.put(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, value);
+            try {
+                m_preferences.flush();
+            } catch (BackingStoreException e) {
+                LOG.warn(LOG.getMsgString(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES),
+                    AgentConfigurationConstants.AGENT_SECURITY_TOKEN, e);
+            }
         } else {
             m_preferences.remove(AgentConfigurationConstants.AGENT_SECURITY_TOKEN);
         }

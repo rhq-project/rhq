@@ -24,15 +24,18 @@ import javax.faces.convert.Converter;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 
 public class IntegerOptionItemConverter implements Converter {
-    public Object getAsObject(FacesContext facesContext, UIComponent uiComponent, String string) {
-        String[] toks = string.split(":");
+    private static final char DELIMITER = ':';
 
-        return new IntegerOptionItem(Integer.parseInt(toks[0]), toks[1]);
+    public Object getAsObject(FacesContext facesContext, UIComponent uiComponent, String string) {
+        int index = string.indexOf(DELIMITER);
+        int id = Integer.parseInt(string.substring(0, index));
+        String displayName = string.substring(index + 1);
+        return new IntegerOptionItem(id, displayName);
     }
 
     @SuppressWarnings("unchecked")
     public String getAsString(FacesContext facesContext, UIComponent uiComponent, Object object) {
         IntegerOptionItem composite = (IntegerOptionItem) object;
-        return composite.getId() + ":" + composite.getDisplayName();
+        return composite.getId() + String.valueOf(DELIMITER) + composite.getDisplayName();
     }
 }

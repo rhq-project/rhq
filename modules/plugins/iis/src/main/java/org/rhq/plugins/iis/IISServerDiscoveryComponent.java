@@ -10,7 +10,6 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.system.OperatingSystemType;
 import org.apache.commons.logging.Log;
@@ -54,6 +53,7 @@ public class IISServerDiscoveryComponent implements ResourceDiscoveryComponent {
 
         log.debug("IIS installation found. Path: " + path + " Version: " + version);
 
+        Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
         DiscoveredResourceDetails details =
                 new DiscoveredResourceDetails(
                         discoveryContext.getResourceType(),
@@ -61,7 +61,7 @@ public class IISServerDiscoveryComponent implements ResourceDiscoveryComponent {
                         discoveryContext.getSystemInformation().getHostname() + " IIS Server",
                 version,
                         "IIS Server on " + discoveryContext.getSystemInformation().getHostname(),
-                        new Configuration(), null);
+                        pluginConfig, null);
 
         return Collections.singleton(details);
     }

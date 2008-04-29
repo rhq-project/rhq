@@ -29,6 +29,8 @@ import java.util.Set;
  */
 public class IISServerComponent implements ResourceComponent, MeasurementFacet {
 
+    private static final String WINDOWS_SERVICE_NAME = "W3SVC";
+
     private Log log = LogFactory.getLog(IISServerComponent.class);
     private ResourceContext resourceContext;
 
@@ -41,10 +43,10 @@ public class IISServerComponent implements ResourceComponent, MeasurementFacet {
 
     public AvailabilityType getAvailability() {
         try {
-            Service service = new Service("W3SVC");
+            Service service = new Service(WINDOWS_SERVICE_NAME);
             return (service.getStatus() == Service.SERVICE_RUNNING) ? AvailabilityType.UP : AvailabilityType.DOWN;
         } catch (Win32Exception e) {
-            log.warn("Unable to discover IIS");
+            log.warn("Unable to check status of IIS Windows service.");
         }
         return AvailabilityType.DOWN;
     }

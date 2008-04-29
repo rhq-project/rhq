@@ -2,7 +2,7 @@
 <!DOCTYPE plugin [
 
         <!ENTITY COMMON_IIS_METRICS '
-                <metric displayName="Bytes Sent"
+        <metric displayName="Bytes Sent"
                 property="Bytes Sent/sec"
                 defaultOn="true"
                 displayType="summary"
@@ -31,7 +31,7 @@
                 units="none"/>
         <metric displayName="Current Anonymous Users"
                 property="Current Anonymous Users"
-               defaultOn="true"
+                defaultOn="true"
                 units="none"/>
         <metric displayName="Current NonAnonymous Users"
                 property="Current NonAnonymous Users"
@@ -63,28 +63,34 @@
                 defaultOn="true"
                 measurementType="trendsup"
                 units="none"/>
-        <metric property="Total Get Requests"
+        <metric displayName="Total GET Requests"
+                property="Total Get Requests"
                 defaultOn="true"
                 displayType="summary"
                 measurementType="trendsup"
                 units="none"/>
-        <metric property="Total Post Requests"
+        <metric displayName="Total POST Requests"
+                property="Total Post Requests"
                 defaultOn="true"
                 measurementType="trendsup"
                 units="none"/>
-        <metric property="Total Head Requests"
-                defaultOn="true"
-                measurementType="trendsup"
-               units="none"/>
-        <metric property="Total Put Requests"
+        <metric displayName="Total HEAD Requests"
+                property="Total Head Requests"
                 defaultOn="true"
                 measurementType="trendsup"
                 units="none"/>
-        <metric property="Total Delete Requests"
+        <metric displayName="Total PUT Requests"
+                property="Total Put Requests"
                 defaultOn="true"
                 measurementType="trendsup"
                 units="none"/>
-        <metric property="Total Trace Requests"
+        <metric displayName="Total DELETE Requests"
+                property="Total Delete Requests"
+                defaultOn="true"
+                measurementType="trendsup"
+                units="none"/>
+        <metric displayName="Total TRACE Requests"
+                property="Total Trace Requests"
                 defaultOn="true"
                 measurementType="trendsup"
                 units="none"/>
@@ -97,19 +103,19 @@
                 measurementType="trendsup"
                 units="none"/>
         <metric property="Total CGI Requests"
-               defaultOn="true"
+                defaultOn="true"
                 measurementType="trendsup"
                units="none"/>
         <metric property="Total ISAPI Extension Requests"
-               defaultOn="true"
+                defaultOn="true"
                 measurementType="trendsup"
                 units="none"/>
         <metric property="Total Not Found Errors"
-               defaultOn="true"
+                defaultOn="true"
                 measurementType="trendsup"
                 units="none"/>
         <metric property="Total Locked Errors"
-               defaultOn="true"
+                defaultOn="true"
                 measurementType="trendsup"
                 units="none"/>
         <metric property="Current CGI Requests"
@@ -147,7 +153,6 @@
 ]>
 
 
-
 <plugin name="IIS"
         displayName="IIS"
         package="org.rhq.plugins.iis"
@@ -163,6 +168,7 @@
             discovery="IISServerDiscoveryComponent"
             class="IISServerComponent">
 
+        <!--
         <plugin-configuration>
             <c:simple-property name="serviceName" default="W3SVC"/>
             <c:list-property name="serviceDependants">
@@ -172,7 +178,7 @@
                 <c:simple-property name="serviceName"/>
             </c:list-property>
         </plugin-configuration>
-
+        -->
 
         &COMMON_IIS_METRICS;
 

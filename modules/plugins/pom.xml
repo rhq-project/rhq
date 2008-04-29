@@ -80,6 +80,7 @@
     <module>jmx</module>    
     <module>rhq-agent</module>
     <module>apache</module>
+    <module>iis</module>
     <module>database</module>
     <module>postgres</module>
 

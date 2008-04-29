@@ -42,6 +42,7 @@ import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 
 import org.jboss.annotation.IgnoreDependency;
+import org.jboss.annotation.ejb.TransactionTimeout;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
@@ -153,6 +154,7 @@ public class AlertManagerBean implements AlertManagerLocal {
 
     // gonna use bulk delete, make sure we are in new tx to not screw up caller's hibernate session
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(30 * 60 * 1000)
     public int deleteAlerts(Subject user, int resourceId) {
         if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_ALERTS, resourceId)) {
             throw new PermissionException("User [" + user.getName() + "] does not have permissions to delete alerts "

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.measurement;
 
 import java.sql.SQLException;
+
 import javax.ejb.Local;
 
 /**
@@ -47,6 +48,4 @@ public interface MeasurementCompressionManagerLocal {
     void purgeMeasurements(String tableName, long purgeAfter) throws SQLException;
 
     void truncateMeasurements(String tableName) throws SQLException;
-
-    String getAppropriateMeasurementTable(long beginTime);
 }

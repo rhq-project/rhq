@@ -38,6 +38,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
+import org.jboss.annotation.ejb.TransactionTimeout;
+
 import org.rhq.core.clientapi.util.TimeUtil;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
@@ -163,6 +165,8 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
      *
      * @param deleteUpToTime call-time data older than this time will be deleted
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(30 * 60 * 1000)
     public void purgeCallTimeData(Date deleteUpToTime) throws SQLException {
         log.debug("Purging call-time data older than " + TimeUtil.toString(deleteUpToTime.getTime()) + " from table "
             + DATA_VALUE_TABLE_NAME + "...");

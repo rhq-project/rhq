@@ -40,6 +40,8 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.ejb.TransactionTimeout;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
@@ -85,6 +87,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
 
     // doing a bulk delete in here, need to be in its own tx
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(30 * 60 * 1000)
     public int purgeAvailabilities(long oldest) {
         log.info("Purging availabilities that are older than " + new Date(oldest));
 

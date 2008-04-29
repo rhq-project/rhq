@@ -112,14 +112,6 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         }
     }
 
-    public String getAppropriateMeasurementTable(long beginTime) {
-        if (!this.purgeDefaultsLoaded) {
-            loadPurgeDefaults();
-        }
-
-        return MeasurementDataManagerUtility.getTable(beginTime);
-    }
-
     public void compressData() throws SQLException {
         if (!this.purgeDefaultsLoaded) {
             loadPurgeDefaults();
@@ -158,8 +150,6 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
 
         // Purge, we never store more than 1 year of data.
         compressionManager.purgeMeasurements(TAB_DATA_1D, now - this.purge1d);
-
-        // TODO GH: Compress/purge traits
 
         // Purge call-time data.
         Date deleteUpToTime = new Date(now - this.purgeCallTime);
@@ -388,6 +378,8 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
             + " in (" + ((watch.getElapsed()) / SECOND) + " seconds)");
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(30 * 60 * 1000)
     public void truncateMeasurements(String tableName) throws SQLException {
         // Make sure we only truncate the dead table... other tables may have live data in them
         if (tableName.equals(MeasurementDataManagerUtility.getDeadTable(System.currentTimeMillis()))) {

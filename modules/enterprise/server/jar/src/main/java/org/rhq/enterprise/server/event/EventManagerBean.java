@@ -32,6 +32,8 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -41,6 +43,8 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
+
+import org.jboss.annotation.ejb.TransactionTimeout;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -180,6 +184,8 @@ public class EventManagerBean implements EventManagerLocal {
         log.debug(callingMethod + ": " + stats.toString());
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(30 * 60 * 1000)
     public int purgeEventData(Date deleteUpToTime) throws SQLException {
         Query q = entityManager.createQuery("DELETE FROM Event e WHERE e.timestamp < :cutOff");
         q.setParameter("cutOff", deleteUpToTime);

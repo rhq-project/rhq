@@ -131,11 +131,6 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         // Purge, ensuring we don't purge data not yet compressed.
         compressionManager.truncateMeasurements(MeasurementDataManagerUtility.getDeadTable(last));
 
-        // Purge metric problems as well
-        /* TODO GH: Reimplement problem compression
-         * purgeMeasurements(TAB_PROB, Math.min(now - this.purgeRaw, last));
-         */
-
         // Compress 6 hour data
         last = compressionManager.compressData(TAB_DATA_1H, TAB_DATA_6H, SIX_HOUR, now);
 

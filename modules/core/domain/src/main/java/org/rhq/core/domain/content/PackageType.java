@@ -62,7 +62,8 @@ import org.rhq.core.domain.resource.ResourceType;
     @NamedQuery(name = PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_CREATION_FLAG, query = "SELECT pt FROM PackageType pt "
         + "JOIN pt.resourceType rt "
         + "LEFT JOIN FETCH pt.deploymentConfigurationDefinition cd "
-        + "LEFT JOIN FETCH cd.templates " + "WHERE rt.id = :typeId " + "AND pt.isCreationData = true") })
+        + "LEFT JOIN FETCH cd.templates cts "
+        + "WHERE rt.id = :typeId AND pt.isCreationData = true") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_TYPE_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_TYPE")
 @XmlAccessorType(XmlAccessType.FIELD)

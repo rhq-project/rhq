@@ -125,7 +125,7 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 7:6 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 7 : 6}">
+                     <rich:column colspan="#{param.debug ? 7 : 6}" width="100%">
                         <h:commandButton action="#{ListGroupDefinitionsUIBean.createNewGroupDefinition}"
                                          value="NEW DEFINITION" styleClass="on-pager-button buttonsmall">
                         </h:commandButton>

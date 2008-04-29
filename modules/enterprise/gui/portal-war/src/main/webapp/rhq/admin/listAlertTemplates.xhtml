@@ -134,7 +134,7 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 654 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 6 : 5}">
+                     <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
                         <h:commandButton action="#{ListAlertTemplatesUIBean.createNewAlertTemplate}"
                                          value="NEW TEMPLATE" styleClass="on-pager-button buttonsmall"
                                          rendered="#{GlobalPermissionsUIBean.settings}" >

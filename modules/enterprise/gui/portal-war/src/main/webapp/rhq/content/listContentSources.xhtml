@@ -150,7 +150,7 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 8:7 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 8 : 7}">
+                     <rich:column colspan="#{param.debug ? 8 : 7}" width="100%">
                         <h:commandButton action="#{ListContentSourcesUIBean.createNewContentSource}"
                                          value="CREATE NEW" styleClass="on-pager-button buttonsmall">
                            <f:param name="mode" value="new"/>

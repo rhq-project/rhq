@@ -258,7 +258,7 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 6:5 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 6 : 5}">
+                     <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
                         <onc:selectCommandButton action="#{ContentSourceChannelsUIBean.deleteSelectedContentSourceChannels}"
                                                  value="DISASSOCIATE SELECTED" target="selectedContentSourceChannels" styleClass="on-pager-button buttonsmall"/>
 
@@ -370,7 +370,7 @@
                
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="6">
+                     <rich:column colspan="6" width="100%">
                         <onc:selectCommandButton action="#{ContentSourceSyncResultsUIBean.deleteSelectedContentSourceSyncResults}"
                                                  value="DELETE SELECTED" target="selectedContentSourceSyncResults" styleClass="on-pager-button buttonsmall"/>
 
@@ -484,7 +484,7 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 6:5 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 6 : 5}">
+                     <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
                         <ui:param name="paginationDataTableName" value="contentSourcePackageVersionsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{contentSourcePackageVersionsDataModel}"/>
                         <ui:param name="paginationPageControl" value="#{PageControl.ContentSourcePackageVersionsList}"/>

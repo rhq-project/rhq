@@ -156,7 +156,7 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 7:6 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 7 : 6}">
+                     <rich:column colspan="#{param.debug ? 7 : 6}" width="100%">
                         <onc:selectCommandButton action="#{ChannelAssociationsUIBean.deleteSelectedChannelAssociations}"
                                                  value="DISASSOCIATE SELECTED" target="selectedChannelAssociations" styleClass="on-pager-button buttonsmall"/>
 
@@ -285,7 +285,7 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 7:6 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 7 : 6}">
+                     <rich:column colspan="#{param.debug ? 7 : 6}" width="100%">
                         <onc:selectCommandButton action="#{ChannelDisassociationsUIBean.associateSelectedContentSourcesWithChannel}"
                                                  value="ASSOCIATE SELECTED" target="selectedChannelDisassociations" styleClass="on-pager-button buttonsmall"/>
 

@@ -218,7 +218,7 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 8:7 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 8 : 7}">
+                     <rich:column colspan="#{param.debug ? 8 : 7}" width="100%">
                         <h:commandButton action="#{ChannelContentSourcesUIBean.associateWithContentSources}"
                                          value="ASSOCIATE..." styleClass="on-pager-button buttonsmall"/>
                         <onc:selectCommandButton action="#{ChannelContentSourcesUIBean.deleteSelectedChannelContentSources}"
@@ -333,7 +333,7 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 6:5 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 6 : 5}">
+                     <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
                         <h:commandButton action="#{ChannelResourcesUIBean.subscribeResources}"
                                          value="SUBSCRIBE..." styleClass="on-pager-button buttonsmall"/>
                         <onc:selectCommandButton action="#{ChannelResourcesUIBean.deleteSelectedChannelResources}"
@@ -465,7 +465,7 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 5:4 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 6 : 5}">
+                     <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
 
                          <ui:param name="confirmInstallMessage" value="#{msg['channel.view.deployPackageConfirm']}"/>
                          <ui:remove>

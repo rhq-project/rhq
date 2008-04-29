@@ -139,7 +139,7 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 6:5 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 6 : 5}">
+                     <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
                         <onc:selectCommandButton action="#{ChannelSubscriptionsUIBean.deleteSelectedChannelSubscriptions}"
                                                  value="UNSUBSCRIBE SELECTED" target="selectedChannelSubscriptions" styleClass="on-pager-button buttonsmall"/>
 
@@ -277,7 +277,7 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 6:5 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 6 : 5}">
+                     <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
                         <onc:selectCommandButton action="#{ChannelUnsubscriptionsUIBean.associateSelectedContentSourcesWithChannel}"
                                                  value="SUBSCRIBE SELECTED" target="selectedChannelUnsubscriptions" styleClass="on-pager-button buttonsmall"/>
                         

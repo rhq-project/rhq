@@ -21,9 +21,11 @@
       <h:form id="uploadForm" enctype="multipart/form-data">
          <input type="hidden" name="id" value="${param.id}"/>
 
-         <rich:panel>
+         <rich:panel rendered="#{CreateNewPackageUIBean.needRequestPackageDetails}">
 
-            <f:facet name="header">Upload New Package</f:facet>
+            <f:facet name="header">New Package Details</f:facet>
+
+            <input type="hidden" name="newPackage" value="true"/>
 
             <table>
                <tr>
@@ -50,14 +52,21 @@
                      </h:selectOneMenu>
                   </td>
                </tr>
-               <tr>
-                  <td align="right"><b>File*</b></td>
-                  <td align="left"><onc:upload id="uploadFile"/></td>
-               </tr>
             </table>
 
             <div class="note-panel"><span class="required-marker-text">*</span><span> denotes a required field.</span></div>
 
+         </rich:panel>
+
+         <rich:panel>
+            <f:facet name="header">Package File</f:facet>
+            
+            <table>
+               <tr>
+                  <td align="right"><b>File*</b></td>
+                  <td align="left"><onc:upload id="uploadFile"/></td>
+               </tr>
+            </table>            
          </rich:panel>
 
          <rich:panel>

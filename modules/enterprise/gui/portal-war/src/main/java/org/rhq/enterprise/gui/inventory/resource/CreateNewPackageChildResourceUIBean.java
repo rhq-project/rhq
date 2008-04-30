@@ -70,7 +70,7 @@ public class CreateNewPackageChildResourceUIBean {
 
     private String resourceName;
     private String packageName;
-    private String packageVersion = "1.0"; // Default to 1.0 for first visit to the page
+    private String packageVersion;
 
     private int selectedArchitectureId;
     
@@ -119,6 +119,11 @@ public class CreateNewPackageChildResourceUIBean {
         Resource parentResource = EnterpriseFacesContextUtility.getResource();
         Configuration deployTimeConfiguration = getConfiguration();
         ConfigurationMaskingUtility.unmaskConfiguration(deployTimeConfiguration, getConfigurationDefinition());
+
+        // For JON 2.0 RC3, no longer request the package version on a package-backed create, simply
+        // use the timestamp. The timestamp will also be used when creating new packages of this type, so
+        // we are effectively controlling the versioning for the user
+        packageVersion = Long.toString(System.currentTimeMillis());
 
         try {
             ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();

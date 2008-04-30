@@ -238,4 +238,16 @@ public interface ContentUIManagerLocal {
      * @return step entry
      */
     PackageInstallationStep getPackageInstallationStep(int stepId);
+
+    /**
+     * For a resource that is package-backed, this call will return a reference to the package that caused the
+     * resource.
+     *
+     * NOTE: This is not fully implemented, see the implementation itself for more details. 
+     *
+     * @param resourceId must identify a valid resource
+     * @return package if it is inventoried for the resource and the resource is package-backed; <code>null</code>
+     *         otherwise
+     */
+    InstalledPackage getBackingPackageForResource(int resourceId);
 }

@@ -348,4 +348,23 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         PackageInstallationStep step = entityManager.find(PackageInstallationStep.class, stepId);
         return step;
     }
+
+    public InstalledPackage getBackingPackageForResource(int resourceId) {
+
+        // TODO: jdobies, Apr 30, 2008: Tighten up getBackingPackageForResource implementation
+        // This implementation is not complete. This assumes there will only be one installed package against
+        // the resource. The likely place this will break is if the resource defines more than one package type,
+        // since this query does not take into account looking for the resource's backing package type specifically.
+        
+        Query query = entityManager.createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_ID);
+        query.setParameter("resourceId", resourceId);
+
+        List<InstalledPackage> resultList = query.getResultList();
+
+        if (resultList == null || resultList.size() != 1) {
+            return null;
+        }
+
+        return resultList.get(0);
+    }
 }

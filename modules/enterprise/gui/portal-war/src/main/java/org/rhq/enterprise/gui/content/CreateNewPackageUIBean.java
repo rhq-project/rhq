@@ -34,10 +34,14 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.composite.ChannelComposite;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -93,9 +97,40 @@ public class CreateNewPackageUIBean {
      */
     private String newChannelName;
 
+    /**
+     * Type of resource against which the package is being created. This is loaded from information in the request
+     * and is used to determine if we need to perform different handling for package-backed resources.
+     */
+    private ResourceType resourceType;
+
+    /**
+     * If this create is against a package-backed resource, this will hold the current package backing the resource.
+     * We'll use this to auto-populate the name, architecture, and type in the case of pushing an update.
+     */
+    private InstalledPackage backingPackage;
+
     private final Log log = LogFactory.getLog(this.getClass());
 
     public String createPackage() {
+        HttpServletRequest request = FacesContextUtility.getRequest();
+
+        String response;
+        if (request.getParameter("newPackage") != null) {
+            response = createNewPackage(packageName, version, selectedArchitectureId, selectedPackageTypeId);            
+        }
+        else {
+            String packageName = getBackingPackageName();
+            String version = Long.toString(System.currentTimeMillis());
+            int architectureId = getBackingPackageArchitectureId();
+            int packageTypeId = getBackingPackageTypeId();
+
+            response = createNewPackage(packageName, version, architectureId, packageTypeId);
+        }
+
+        return response;
+    }
+
+    public String createNewPackage(String packageName, String version, int architectureId, int packageTypeId) {
 
         // Collect the necessary information
         Subject subject = EnterpriseFacesContextUtility.getSubject();
@@ -168,8 +203,8 @@ public class CreateNewPackageUIBean {
         PackageVersion packageVersion;
         try {
             ContentManagerLocal contentManager = LookupUtil.getContentManager();
-            packageVersion = contentManager.createPackageVersion(packageName, selectedPackageTypeId, version,
-                selectedArchitectureId, packageStream);
+            packageVersion = contentManager.createPackageVersion(packageName, packageTypeId, version,
+                architectureId, packageStream);
         } catch (Exception e) {
             String errorMessages = ThrowableUtil.getAllMessages(e);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to create package [" + packageName
@@ -287,6 +322,58 @@ public class CreateNewPackageUIBean {
         }
 
         return items;
+    }
+
+    public boolean getNeedRequestPackageDetails() {
+        boolean isPackageBacked = isResourcePackageBacked();
+        boolean backingPackageExists = lookupBackingPackage() != null;
+
+        return !isPackageBacked || !backingPackageExists;
+    }
+
+    public boolean isResourcePackageBacked() {
+        Resource resource = EnterpriseFacesContextUtility.getResource();
+        ResourceType resourceType = resource.getResourceType();
+
+        return resourceType.getCreationDataType() == ResourceCreationDataType.CONTENT;
+    }
+
+    public InstalledPackage lookupBackingPackage() {
+        if (backingPackage == null) {
+            Resource resource = EnterpriseFacesContextUtility.getResource();
+
+            ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
+            backingPackage = contentUIManager.getBackingPackageForResource(resource.getId());
+        }
+
+        return backingPackage;
+    }
+
+    public String getBackingPackageName() {
+        InstalledPackage ip = lookupBackingPackage();
+        PackageVersion pv = ip.getPackageVersion();
+        Package p = pv.getGeneralPackage();
+
+        return p.getName();
+    }
+
+    public int getBackingPackageArchitectureId() {
+        InstalledPackage ip = lookupBackingPackage();
+        PackageVersion pv = ip.getPackageVersion();
+
+        return pv.getArchitecture().getId();
+    }
+
+    public int getBackingPackageTypeId() {
+        InstalledPackage ip = lookupBackingPackage();
+        PackageVersion pv = ip.getPackageVersion();
+        Package p = pv.getGeneralPackage();
+
+        return p.getPackageType().getId();
+    }
+
+    public String getNextBackingPackageVersion() {
+        return Long.toString(System.currentTimeMillis());
     }
 
     public String getPackageName() {

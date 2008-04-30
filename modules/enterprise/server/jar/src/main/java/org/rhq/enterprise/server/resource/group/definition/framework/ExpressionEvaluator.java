@@ -29,10 +29,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result> {
@@ -72,6 +72,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     private String computedJPQLStatement;
     private String computedJPQLGroupStatement;
 
+    private EntityManagerFacadeLocal entityManagerFacade;
+
     public ExpressionEvaluator() {
         /*
          * used LinkedHashMap for whereConditions on purpose so that the iterator will return them in the same order
@@ -97,6 +99,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
         computedJPQLStatement = "";
         computedJPQLGroupStatement = "";
+
+        entityManagerFacade = LookupUtil.getEntityManagerFacade();
     }
 
     public class Result {
@@ -618,8 +622,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             return Collections.emptyList();
         }
 
-        EntityManager em = LookupUtil.getEntityManager();
-        Query query = em.createQuery(queryStr);
+        Query query = entityManagerFacade.createQuery(queryStr);
 
         for (Map.Entry<String, Object> replacement : whereReplacements.entrySet()) {
             String bindArgument = replacement.getKey();

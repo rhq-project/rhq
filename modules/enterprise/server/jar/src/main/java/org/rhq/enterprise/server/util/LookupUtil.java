@@ -54,6 +54,8 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerBean;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.common.EntityManagerFacade;
+import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerBean;
@@ -75,12 +77,12 @@ import org.rhq.enterprise.server.core.EmailManagerBean;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
+import org.rhq.enterprise.server.event.EventManagerBean;
+import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerBean;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
-import org.rhq.enterprise.server.event.EventManagerBean;
-import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementCompressionManagerBean;
@@ -235,6 +237,10 @@ public final class LookupUtil {
 
     public static EmailManagerLocal getEmailManagerBean() {
         return lookupLocal(EmailManagerBean.class);
+    }
+
+    public static EntityManagerFacadeLocal getEntityManagerFacade() {
+        return lookupLocal(EntityManagerFacade.class);
     }
 
     public static EventManagerLocal getEventManager() {

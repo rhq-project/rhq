@@ -106,7 +106,7 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
             if (queryUtility.setMatchedKeyValues(bean.getBeanName().getKeyProperties())) {
                 // Only use beans that have all the properties we've made variables of
 
-                String resourceKey = bean.getBeanName().toString(); // The detected object name
+                String resourceKey = bean.getBeanName().getCanonicalName(); // The detected object name
 
                 String nameTemplate = (pluginConfiguration.getSimple(PROPERTY_NAME_TEMPLATE) != null) ? pluginConfiguration
                     .getSimple(PROPERTY_NAME_TEMPLATE).getStringValue()

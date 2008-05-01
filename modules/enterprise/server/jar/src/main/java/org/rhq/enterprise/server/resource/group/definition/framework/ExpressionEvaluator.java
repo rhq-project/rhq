@@ -37,6 +37,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result> {
 
+    private static final String INVALID_EXPRESSION_FORM_MSG = "Expression must be in the form of 'condition = value' or 'groupBy condition'";
+
     private static final String PROP_SIMPLE_ALIAS = "simple";
     private static final String TRAIT_ALIAS = "trait";
     private static final String METRIC_DEF_ALIAS = "def";
@@ -235,15 +237,15 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
          * makes the rest of the parsing a bit simpler because some ParseContexts need the value immediately in order to
          * properly build up internal maps constructs to be used in generating the requisite JPQL statement
          */
-        String[] conditionParts = expression.split("=");
-        if (conditionParts.length == 1) {
-            condition = conditionParts[0];
-        } else if (conditionParts.length == 2) {
-            condition = conditionParts[0];
-            value = conditionParts[1].trim();
+        int equalsIndex = expression.indexOf('=');
+        if (equalsIndex == -1) {
+            condition = expression;
         } else {
-            throw new InvalidExpressionException(
-                "Expression must be in the form of 'condition = value' or 'groupBy condition'");
+            condition = expression.substring(0, equalsIndex);
+            value = expression.substring(equalsIndex + 1).trim();
+            if (value.equals("")) {
+                throw new InvalidExpressionException(INVALID_EXPRESSION_FORM_MSG);
+            }
         }
 
         /*
@@ -291,10 +293,18 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
             if (context == ParseContext.BEGIN) {
                 if (nextToken.equals("resource")) {
+                    if (value == null) {
+                        // filter expressions must have "= <value>" part
+                        throw new InvalidExpressionException(INVALID_EXPRESSION_FORM_MSG);
+                    }
                     validateSubExpressionAgainstPreviouslySeen(normalizedSubExpression, false);
                     context = ParseContext.Resource;
                     deepestResourceContext = context;
                 } else if (nextToken.equals("groupby")) {
+                    if (value != null) {
+                        // grouped expressions must NOT have "= <value>" part
+                        throw new InvalidExpressionException(INVALID_EXPRESSION_FORM_MSG);
+                    }
                     validateSubExpressionAgainstPreviouslySeen(normalizedSubExpression, true);
                     isGroupBy = true;
                     context = ParseContext.Pivot;

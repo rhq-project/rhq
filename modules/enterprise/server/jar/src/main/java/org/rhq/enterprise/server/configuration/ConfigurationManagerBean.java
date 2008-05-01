@@ -143,6 +143,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         }
     }
 
+    // use requires new so that very, very large groups can have their plugin config updated without timeout
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void completePluginConfigurationUpdate(PluginConfigurationUpdate update) {
         // use EJB3 reference to ourself so that transaction semantics are correct
         ConfigurationUpdateResponse response = configurationManager.executePluginConfigurationUpdate(update);
@@ -238,7 +240,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
 
         Resource resource;
         ResourceConfigurationUpdate current;
-
 
         // Get the latest configuration as known to the server (i.e. persisted in the DB).
         try {
@@ -436,7 +437,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
 
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource.getResourceType().getResourceConfigurationDefinition() == null
-                || resource.getResourceType().getResourceConfigurationDefinition().getPropertyDefinitions().isEmpty()) {
+            || resource.getResourceType().getResourceConfigurationDefinition().getPropertyDefinitions().isEmpty()) {
             return new PageList<ResourceConfigurationUpdate>(pc);
         }
 

@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>1.0.0.RC8</version>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
   <description>The full RHQ container build, including the JBossAS server and all config/deploy files</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC8/modules/enterprise/server/container</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC8/modules/enterprise/server/container</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/container/</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/container/</developerConnection>
   </scm>
 
   <properties>
@@ -66,7 +66,7 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>safe-invoker</artifactId>
-      <version>1.0.0.RC8</version>
+      <version>1.0.2</version>
     </dependency>
 
 <!--

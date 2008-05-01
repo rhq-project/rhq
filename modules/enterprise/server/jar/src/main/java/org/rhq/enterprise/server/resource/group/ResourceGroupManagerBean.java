@@ -318,12 +318,10 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         Set<Integer> uniqueResourceIds = new HashSet<Integer>();
         uniqueResourceIds.addAll(Arrays.asList(resourceIds));
 
-        List<Integer> validCommittedResourceIds = resourceManager.getValidCommittedResourceIds(resourceIds);
-
         // list to hold the different types of errors
         List<Integer> alreadyMemberIds = new ArrayList<Integer>();
 
-        for (Integer resourceId : validCommittedResourceIds) {
+        for (Integer resourceId : resourceIds) {
             // if resource is already in the explicit list, no work needs to be done
             if (explicitResourceIds.contains(resourceId)) {
                 // record this id that already exists in group's explicit list
@@ -367,8 +365,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         Set<Integer> uniqueResourceIds = new HashSet<Integer>();
         uniqueResourceIds.addAll(Arrays.asList(resourceIds));
 
-        List<Integer> validCommittedResourceIds = resourceManager.getValidCommittedResourceIds(resourceIds);
-
         // list to hold the different types of errors
         List<Integer> notValidMemberIds = new ArrayList<Integer>();
 
@@ -377,7 +373,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         Collection<Resource> implicitResourcesToKeep = new ArrayList<Resource>(attachedGroup.getImplicitResources());
         boolean isRecursive = attachedGroup.isRecursive();
 
-        for (Integer resourceId : validCommittedResourceIds) {
+        for (Integer resourceId : resourceIds) {
             // no work needs to be done if the resource isn't in the explicit list
             if (!explicitResourceIds.contains(resourceId)) {
                 // record this id that doesn't belong to the group's explicit list

@@ -101,6 +101,11 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         computedJPQLGroupStatement = "";
 
         entityManagerFacade = LookupUtil.getEntityManagerFacade();
+
+        /*
+         * initialization for special handling that all dynagroups should get
+         */
+        whereStatics.add("res.inventoryStatus = org.rhq.core.domain.resource.InventoryStatus.COMMITTED");
     }
 
     public class Result {

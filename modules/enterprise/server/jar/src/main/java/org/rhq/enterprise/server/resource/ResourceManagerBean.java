@@ -825,15 +825,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<Integer> getValidCommittedResourceIds(Integer[] resourceIds) {
-        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_VALID_COMMITTED_RESOURCE_IDS_ADMIN);
-        query.setParameter("resourceIds", Arrays.asList(resourceIds));
-
-        List<Integer> results = query.getResultList();
-        return results;
-    }
-
-    @SuppressWarnings("unchecked")
     public PageList<Resource> getChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent,
         ResourceCategory category, InventoryStatus status, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");

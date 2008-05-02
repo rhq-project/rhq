@@ -30,6 +30,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.composite.PluginConfigurationUpdateResourceComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
@@ -332,6 +333,9 @@ public interface ConfigurationManagerLocal {
     boolean isResourceConfigurationUpdateInProgress(Subject whoami, int resourceId);
 
     AggregatePluginConfigurationUpdate getAggregatePluginConfigurationById(int configurationUpdateId);
+
+    PageList<PluginConfigurationUpdateResourceComposite> getPluginConfigurationUpdateCompositesByParentId(
+        int configurationUpdateId, PageControl pageControl);
 
     PageList<PluginConfigurationUpdate> getPluginConfigurationUpdatesByParentId(int configurationUpdateId,
         PageControl pageControl);

@@ -51,6 +51,7 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.composite.PluginConfigurationUpdateResourceComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
@@ -904,6 +905,22 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         }
 
         return update;
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<PluginConfigurationUpdateResourceComposite> getPluginConfigurationUpdateCompositesByParentId(
+        int configurationUpdateId, PageControl pageControl) {
+        pageControl.initDefaultOrderingField("cu.modifiedTime");
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            PluginConfigurationUpdate.QUERY_FIND_COMPOSITE_BY_PARENT_UPDATE_ID, pageControl);
+        query.setParameter("aggregateConfigurationUpdateId", configurationUpdateId);
+
+        long count = getPluginConfigurationUpdateCountByParentId(configurationUpdateId);
+
+        List<PluginConfigurationUpdateResourceComposite> results = query.getResultList();
+
+        return new PageList<PluginConfigurationUpdateResourceComposite>(results, (int) count, pageControl);
     }
 
     @SuppressWarnings("unchecked")

@@ -86,7 +86,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                  
-                  <h:outputText value="#{item.resource.name}"/>
+                  <h:outputText value="#{item.resourceName}"/>
                </rich:column>
                
                <rich:column>
@@ -96,7 +96,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                  
-                  <h:outputText value="#{item.status}"/>
+                  <h:outputText value="#{item.update.status}"/>
                </rich:column>
 
                <rich:column>
@@ -104,7 +104,7 @@
                       <h:outputText styleClass="headerText" value="Details" />
                   </f:facet>
                  
-                  <h:outputText value="#{item.errorMessage}"/>
+                  <h:outputText value="#{item.update.errorMessage}"/>
                </rich:column>
 
                <rich:column>
@@ -115,8 +115,8 @@
                   </f:facet>
                
                   <h:outputLink value="/rhq/resource/inventory/view.xhtml">
-                     <f:param name="id" value="#{item.resource.id}" />
-                     <h:outputText value="#{item.createdTime}">
+                     <f:param name="id" value="#{item.resourceId}" />
+                     <h:outputText value="#{item.update.createdTime}">
                         <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                      </h:outputText>
                   </h:outputLink>
@@ -129,7 +129,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.modifiedTime}" />
+                  <h:outputText value="#{item.update.modifiedTime}" />
                </rich:column>
                
                <rich:column>
@@ -139,7 +139,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{item.subjectName}" />
+                  <h:outputText value="#{item.update.subjectName}" />
                </rich:column>
 
                <f:facet name="footer">

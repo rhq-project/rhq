@@ -19,7 +19,8 @@
 package org.rhq.enterprise.gui.inventory.group;
 
 import javax.faces.model.DataModel;
-import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
+
+import org.rhq.core.domain.configuration.composite.PluginConfigurationUpdateResourceComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -47,7 +48,7 @@ public class ViewGroupConnectionPropertyDetailsUIBean extends PagedDataTableUIBe
     }
 
     private class ListGroupConnectionPropertyUpdateDetailsDataModel extends
-        PagedListDataModel<PluginConfigurationUpdate> {
+        PagedListDataModel<PluginConfigurationUpdateResourceComposite> {
         private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
         public ListGroupConnectionPropertyUpdateDetailsDataModel(PageControlView view, String beanName) {
@@ -55,7 +56,7 @@ public class ViewGroupConnectionPropertyDetailsUIBean extends PagedDataTableUIBe
         }
 
         @Override
-        public PageList<PluginConfigurationUpdate> fetchPage(PageControl pc) {
+        public PageList<PluginConfigurationUpdateResourceComposite> fetchPage(PageControl pc) {
             ResourceGroup requestResourceGroup = EnterpriseFacesContextUtility.getResourceGroup();
 
             if (requestResourceGroup == null) {
@@ -66,8 +67,8 @@ public class ViewGroupConnectionPropertyDetailsUIBean extends PagedDataTableUIBe
 
             int aggregatePluginConfigurationUpdateId = FacesContextUtility.getRequiredRequestParameter("apcuId",
                 Integer.class);
-            PageList<PluginConfigurationUpdate> childUpdates = configurationManager
-                .getPluginConfigurationUpdatesByParentId(aggregatePluginConfigurationUpdateId, pc);
+            PageList<PluginConfigurationUpdateResourceComposite> childUpdates = configurationManager
+                .getPluginConfigurationUpdateCompositesByParentId(aggregatePluginConfigurationUpdateId, pc);
 
             return childUpdates;
         }

@@ -1036,13 +1036,18 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         Integer[] aggregatePluginConfigurationUpdateIds) {
         //TODO: use subject and resourceGroupId to perform security check
         int removed = 0;
-        for (Integer id : aggregatePluginConfigurationUpdateIds) {
+        for (Integer apcuId : aggregatePluginConfigurationUpdateIds) {
             /*
              * use this strategy instead of AggregatePluginConfigurationUpdate.QUERY_DELETE_BY_ID because removing via
              * the entityManager will respect cascading rules, using a JPQL DELETE statement will not
              */
             try {
-                AggregatePluginConfigurationUpdate update = getAggregatePluginConfigurationById(id);
+                // break the plugin configuration update links in order to preserve individual change history
+                Query q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE);
+                q.setParameter("apcuId", apcuId);
+                q.executeUpdate();
+
+                AggregatePluginConfigurationUpdate update = getAggregatePluginConfigurationById(apcuId);
                 entityManager.remove(update);
                 removed++;
             } catch (Exception e) {

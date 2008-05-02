@@ -55,7 +55,8 @@ import org.rhq.core.domain.resource.Resource;
         + "  FROM PluginConfigurationUpdate cu "
         + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId GROUP BY cu.status"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM PluginConfigurationUpdate pcu WHERE pcu.resource IN (:resources))"),
-    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "UPDATE PluginConfigurationUpdate pcu SET pcu.aggregateConfigurationUpdate = null WHERE pcu.aggregateConfigurationUpdate IN ( select apcu FROM AggregatePluginConfigurationUpdate apcu WHERE apcu.group.id = :groupId )") })
+    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP, query = "UPDATE PluginConfigurationUpdate pcu SET pcu.aggregateConfigurationUpdate = null WHERE pcu.aggregateConfigurationUpdate IN ( select apcu FROM AggregatePluginConfigurationUpdate apcu WHERE apcu.group.id = :groupId )"),
+    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "UPDATE PluginConfigurationUpdate pcu SET pcu.aggregateConfigurationUpdate = null WHERE pcu.aggregateConfigurationUpdate IN ( select apcu FROM AggregatePluginConfigurationUpdate apcu WHERE apcu.id = :apcuId )") })
 public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpdate {
     private static final long serialVersionUID = 1L;
 
@@ -66,6 +67,7 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
     public static final String QUERY_FIND_BY_PARENT_UPDATE_ID = "PluginConfigurationUpdate.findByParentUpdateId";
     public static final String QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID = "PluginConfigurationUpdate.findStatusByParentUpdateId";
     public static final String QUERY_DELETE_BY_RESOURCES = "PluginConfigurationUpdate.deleteByResources";
+    public static final String QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP = "pluginConfigurationUpdate.deleteUpdateAggregateByGroup";
     public static final String QUERY_DELETE_UPDATE_AGGREGATE = "pluginConfigurationUpdate.deleteUpdateAggregate";
 
     @JoinColumn(name = "PLUGIN_CONFIG_RES_ID", referencedColumnName = "ID", nullable = true)

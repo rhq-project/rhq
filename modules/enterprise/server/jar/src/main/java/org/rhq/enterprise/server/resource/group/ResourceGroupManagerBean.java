@@ -204,7 +204,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         q.setParameter("groupId", groupId);
         numRows = q.executeUpdate();
 
-        q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE);
+        q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP);
         q.setParameter("groupId", groupId);
         numRows = q.executeUpdate();
 

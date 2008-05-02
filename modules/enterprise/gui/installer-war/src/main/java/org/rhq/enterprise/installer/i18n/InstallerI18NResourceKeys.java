@@ -80,7 +80,7 @@ public interface InstallerI18NResourceKeys {
     String SERVER_PROPERTIES_NOTE = "serverPropertiesNote";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Create a database/user if needed"),
-        @I18NMessage(locale = "de", value = "DB mit -benutzer anlegen, falls nï¿½tig") })
+        @I18NMessage(locale = "de", value = "DB mit -benutzer anlegen, falls nötig") })
     String CREATE_DATABASE_NOTE = "createDatabaseNote";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Create Database"),
@@ -88,7 +88,7 @@ public interface InstallerI18NResourceKeys {
     String CREATE_DATABASE_BUTTON = "createDatabaseButton";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Confirm if these settings are valid"),
-        @I18NMessage(locale = "de", value = "ï¿½berprï¿½fen Sie, dass die Einstellungen gï¿½ltig sind") })
+        @I18NMessage(locale = "de", value = "Überprüfen Sie, dass die Einstellungen gültig sind") })
     String TEST_DATABASE_NOTE = "testDatabaseNote";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Test Connection"),
@@ -96,19 +96,19 @@ public interface InstallerI18NResourceKeys {
     String TEST_DATABASE_BUTTON = "testDatabaseButton";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "A database schema already exists. What do you want to do?"),
-        @I18NMessage(locale = "de", value = "Das gewï¿½nschte Datenbankschema existiert schon. Was wollen Sie machen?") })
+        @I18NMessage(locale = "de", value = "Das gewünschte Datenbankschema existiert schon. Was wollen Sie machen?") })
     String EXISTING_SCHEMA_QUESTION = "existingSchemaQuestion";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Overwrite it (and lose existing data)"),
-        @I18NMessage(locale = "de", value = "ï¿½berschreiben (vorhandene Daten gehen verloren)") })
+        @I18NMessage(locale = "de", value = "Überschreiben (vorhandene Daten gehen verloren)") })
     String EXISTING_SCHEMA_ANSWER_OVERWRITE = "existingSchemaAnswerOverwrite";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Keep and, if necessary, upgrade it"),
-        @I18NMessage(locale = "de", value = "Behalten und falls nï¿½tig aktualisieren.") })
+        @I18NMessage(locale = "de", value = "Behalten und falls nötig aktualisieren.") })
     String EXISTING_SCHEMA_ANSWER_UPGRADE = "existingSchemaAnswerUpgrade";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "The {0} property value was an invalid number [{1}]"),
-        @I18NMessage(locale = "de", value = "[{1}] ist ein ungï¿½ltiger Zahlenwert fï¿½r die Eigenschaft {0}") })
+        @I18NMessage(locale = "de", value = "[{1}] ist ein ungültiger Zahlenwert für die Eigenschaft {0}") })
     String INVALID_NUMBER = "invalidNumber";
 
     @I18NMessages( {
@@ -116,7 +116,10 @@ public interface InstallerI18NResourceKeys {
         @I18NMessage(locale = "de", value = "Die boolesche Eigenschaft muss entweder 'true' oder 'false' sein, war aber [{1}]") })
     String INVALID_BOOLEAN = "invalidBoolean";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Failed to save properties and fully deploy - ${product.shortName} Server will not function properly\\n\\\nCause: {0}") })
+    @I18NMessages( {
+        @I18NMessage(locale = "en", value = "Failed to save properties and fully deploy - ${product.shortName} Server will not function properly\\n\\\nCause: {0}"),
+        @I18NMessage(locale = "de", value = "Konnte die Einstellungen nicht speichern und den Server vollständig starten.\\n\\\n"
+            + "Der ${product.shortName} Server wird nicht korrekt funktionieren.\\n\\\nGrund: {0}") })
     String SAVE_FAILURE = "saveFailure";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Error"), @I18NMessage(locale = "de", value = "Fehler") })
@@ -129,8 +132,8 @@ public interface InstallerI18NResourceKeys {
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "Could not connect to the database with the given database settings. \\n\\\n"
             + "Please check the database settings and make sure your database is running."),
-        @I18NMessage(locale = "de", value = "Eine Verbindung zur Datenbank ist mit den gebenen Einstellungen fï¿½r die Datenbank nicht mï¿½glich. \\n\\\n"
-            + "Bitte ï¿½berprï¿½fen Sie die Einstellungen und stellen Sie sicher, dass die Datenbak aktiv ist") })
+        @I18NMessage(locale = "de", value = "Eine Verbindung zur Datenbank ist mit den gebenen Einstellungen für die Datenbank nicht möglich. \\n\\\n"
+            + "Bitte überprüfen Sie die Einstellungen und stellen Sie sicher, dass die Datenbak aktiv ist") })
     String INVALID_DATABASE_SETTINGS = "invalidDatabaseSettings";
 
     @I18NMessages( {
@@ -141,10 +144,10 @@ public interface InstallerI18NResourceKeys {
             + "server.  If you change any of those settings, you will have to \\n\\\n"
             + "immediately shutdown and restart the server to pick up those changes."),
         @I18NMessage(locale = "de", value = "Diese Seite zeigt Ihnen die aktuellen Konfigurationseinstellungen \\n\\\n"
-            + "fï¿½r die Installation des ${product.shortName} Servers. Sie kï¿½nnen keinen, einige oder alle\\n\\\n"
-            + "dieser Werte nach Ihren Anforderungen ï¿½ndern. Bitte beachten sie, dass \\n\\\n"
-            + "einige dieser ï¿½nderungen erst nach einem Neustart des Servers aktiv werden. \\n\\\n"
-            + "Wenn Sie diese Einstellungen ï¿½ndern, mï¿½ssen Sie den Server sofort neu starten, damit \\n\\\n"
+            + "für die Installation des ${product.shortName} Servers. Sie können keinen, einige oder alle\\n\\\n"
+            + "dieser Werte nach Ihren Anforderungen ändern. Bitte beachten sie, dass \\n\\\n"
+            + "einige dieser Änderungen erst nach einem Neustart des Servers aktiv werden. \\n\\\n"
+            + "Wenn Sie diese Einstellungen ändern, müssen Sie den Server sofort neu starten, damit \\n\\\n"
             + "sie aufgegriffen werden.") })
     String SET_PROPERTIES_INSTRUCTIONS = "setPropertiesInstructions";
 
@@ -177,9 +180,9 @@ public interface InstallerI18NResourceKeys {
         @I18NMessage(locale = "en", value = "You have reached the ${product.shortName} Installer. You will use this page \\n\\\n"
             + "to complete the installation and configuration of the ${product.shortName} Server. \\n\\\n"
             + "Once complete, you will be able to log on and begin using ${product.shortName}"),
-        @I18NMessage(locale = "de", value = "Willkommen beim Installationsprogramm von ${product.shortName}. Mit diesem kï¿½nnen Sie \\n\\\n"
+        @I18NMessage(locale = "de", value = "Willkommen beim Installationsprogramm von ${product.shortName}. Mit diesem können Sie \\n\\\n"
             + "die Installation und Konfiguration von ${product.shortName} komplettieren. \\n\\\n"
-            + "Nachdem dies geschehen ist, kï¿½nnen Sie sich einloggen und mit ${product.shortName} arbeiten") })
+            + "Nachdem dies geschehen ist, können Sie sich einloggen und mit ${product.shortName} arbeiten") })
     String WELCOME_MESSAGE = "welcomeMessage";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Starting up, please wait..."),
@@ -199,7 +202,7 @@ public interface InstallerI18NResourceKeys {
     String START_INSTALLING_LINK = "startInstallingLink";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Back to configuration page"),
-        @I18NMessage(locale = "de", value = "Zurï¿½ck zur Seite mit den Einstellungen") })
+        @I18NMessage(locale = "de", value = "Zurück zur Seite mit den Einstellungen") })
     String BACK_TO_SETTINGS_LINK = "backToSettingsLink";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Show Advanced Settings"),
@@ -629,7 +632,7 @@ public interface InstallerI18NResourceKeys {
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "Please review the documentation linked below to learn more about RHQ:"),
-        @I18NMessage(locale = "de", value = "Die unten aufgefï¿½hrten Links enthalten weitere Informationen zu RHQ:") })
+        @I18NMessage(locale = "de", value = "Die unten aufgeführten Links enthalten weitere Informationen zu RHQ:") })
     String INTRODUCE_HELP_DOCS = "introduceHelpDocs";
 
     @I18NMessage("${product.help.installation}")
@@ -659,13 +662,12 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("${product.help.FAQ}")
     String HELP_DOC_FAQ = "helpDocFaq";
     @I18NMessages( { @I18NMessage(locale = "en", value = "Frequently Asked Questions"),
-        @I18NMessage(locale = "de", value = "Hï¿½ufig gestellte Fragen") })
+        @I18NMessage(locale = "de", value = "Häufig gestellte Fragen") })
     String HELP_DOC_FAQ_LABEL = "helpDocFaqLabel";
 
     // the page that contains all the config props help text
     // this is under the help doc root
     @I18NMessage("${product.help.config.props}")
     String HELP_DOC_RHQ_SERVER_PROP_PARENT_PAGE = "helpDocRHQServerPropParentPage";
-
 
 }

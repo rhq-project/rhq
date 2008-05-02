@@ -22,8 +22,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -32,7 +35,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.clientapi.agent.PluginContainerException;
 
 /**
  * Runs a periodic scan for resource availability.
@@ -48,7 +50,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     private InventoryManager inventoryManager;
     private AtomicBoolean sendChangedOnlyReport;
     private final Object lock = new Object();
-    
+
     public AvailabilityExecutor(InventoryManager inventoryManager) {
         this.inventoryManager = inventoryManager;
         this.sendChangedOnlyReport = new AtomicBoolean(false);
@@ -129,13 +131,11 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         ResourceComponent resourceComponent = null;
         if (resourceContainer != null) {
             try {
-                resourceComponent = resourceContainer.createResourceComponentProxy(ResourceComponent.class, FacetLockType.NONE, GET_AVAILABILITY_TIMEOUT, true, false);
-            }
-            catch (PluginContainerException e) {
+                resourceComponent = resourceContainer.createResourceComponentProxy(ResourceComponent.class,
+                    FacetLockType.NONE, GET_AVAILABILITY_TIMEOUT, true, false);
+            } catch (PluginContainerException e) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Could not create resource component proxy for " + resource, e);
-                } else {
-                    log.warn("Could not create resource component proxy for " + resource + " due to " + e.toString());
+                    log.debug("Could not create resource component proxy for " + resource + " due to " + e.toString());
                 }
             }
         }
@@ -220,7 +220,6 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             markDown(child, availabilityReport, changesOnly);
         }
     }
-
 
     /**
      * This tells the executor to send a full availability report the next time it sends one. Package-scoped so the

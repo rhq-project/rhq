@@ -5,20 +5,20 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <version>1.0.0.RC9</version>
    </parent>
 
    <groupId>org.rhq</groupId>
    <artifactId>safe-invoker</artifactId>
    <packaging>jar</packaging>
-   <version>1.0.2</version>
+   <version>1.0.0.RC9</version>
 
    <name>RHQ Enterprise Safe WebService Invoker</name>
    <description>A webservice invoker that safely calls returns ejb3 pojo's with lazy attributes</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/safe-invoker/</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/safe-invoker/</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC8/modules/enterprise/server/safe-invoker</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC8/modules/enterprise/server/safe-invoker</developerConnection>
    </scm>
 
    <properties>

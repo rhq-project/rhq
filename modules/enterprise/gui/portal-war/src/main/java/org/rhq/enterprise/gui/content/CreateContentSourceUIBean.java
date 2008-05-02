@@ -30,6 +30,7 @@ import javax.faces.model.SelectItem;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.DownloadMode;
@@ -159,12 +160,19 @@ public class CreateContentSourceUIBean {
             selectedContentSourceType = cst;
             newContentSource.setContentSourceType(cst);
 
-            // reset the configuration - make it null if there is on config for the new type
+            // reset the configuration - make it null if there is no config for the new type
             if (cst.getContentSourceConfigurationDefinition() == null) {
                 newContentSource.setConfiguration(null);
             } else {
-                newContentSource.setConfiguration(cst.getContentSourceConfigurationDefinition().getDefaultTemplate()
-                    .createConfiguration());
+                ConfigurationTemplate defaultTemplate =
+                    cst.getContentSourceConfigurationDefinition().getDefaultTemplate();
+
+                if (defaultTemplate != null) {
+                    newContentSource.setConfiguration(defaultTemplate.createConfiguration());
+                }
+                else {
+                    newContentSource.setConfiguration(null);
+                }
             }
 
             // reset the content source's sync schedule and other settings  to the new type's defaults

@@ -19,7 +19,9 @@
 package org.rhq.enterprise.server.resource.group;
 
 import java.util.List;
+
 import javax.ejb.Local;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
@@ -113,4 +115,6 @@ public interface ResourceGroupManagerLocal {
     ResourceGroup findByGroupDefinitionAndGroupByClause(int groupDefinitionId, String groupByClause);
 
     void setResourceType(int resourceGroupId) throws ResourceTypeNotFoundException;
+
+    int getImplicitGroupMemberCount(int resourceGroupId);
 }

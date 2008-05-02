@@ -345,6 +345,8 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT_ADMIN, query = "SELECT count(res) "
         + "  FROM ResourceGroup rg JOIN rg.implicitResources res LEFT JOIN res.availability a WITH a.endTime is null "
         + " WHERE rg = :group " + "   AND res.inventoryStatus = 'COMMITTED' "),
+    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_COUNT_ADMIN, query = "SELECT count(res) "
+        + "  FROM ResourceGroup rg JOIN rg.implicitResources res WHERE rg.id = :resourceGroupId "),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL, //
     query = "SELECT res " //  
         + "    FROM Resource AS res "
@@ -510,6 +512,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT = "ResourceWithAvailability.findImplicitByResourceGroup_count";
     public static final String QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_ADMIN = "ResourceWithAvailability.findImplicitByResourceGroup_admin";
     public static final String QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT_ADMIN = "ResourceWithAvailability.findImplicitByResourceGroup_count_admin";
+    public static final String QUERY_FIND_IMPLICIT_RESOURCES_COUNT_ADMIN = "Resource.findImplicitByResourceGroup_count_admin";
 
     public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL = "Resource.getAvailableResourcesForChannel";
 

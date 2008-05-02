@@ -18,18 +18,14 @@
  */
 package org.rhq.enterprise.gui.inventory.group;
 
-import java.util.List;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -85,17 +81,15 @@ public class ViewGroupConnectionPropertiesUIBean {
     @Nullable
     protected Configuration lookupConfiguration() {
         ResourceGroup compatibleGroup = EnterpriseFacesContextUtility.getResourceGroup();
-        List<Configuration> pluginConfigurations = null;
         Configuration aggregateConfiguration = null;
 
         try {
-            pluginConfigurations = configurationManager.getPluginConfigurationsForCompatibleGroup(compatibleGroup);
-            aggregateConfiguration = AbstractAggregateConfigurationUpdate
-                .getAggregateConfiguration(pluginConfigurations);
+            aggregateConfiguration = configurationManager
+                .getAggregatePluginConfigurationForCompatibleGroup(compatibleGroup);
 
-            if (aggregateConfiguration != null) {
-                ConfigurationMaskingUtility.maskConfiguration(aggregateConfiguration, this.configurationDefinition);
-            }
+            //            if (aggregateConfiguration != null) {
+            //                ConfigurationMaskingUtility.maskConfiguration(aggregateConfiguration, this.configurationDefinition);
+            //            }
         } catch (Exception e) {
             // do nothing, let null bubble up so that this object finishes constructing itself
             aggregateConfiguration = null;

@@ -38,6 +38,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.MapKey;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
@@ -84,12 +86,24 @@ import org.jetbrains.annotations.NotNull;
  * @see    PropertyMap
  */
 @Entity(name = "Configuration")
+@NamedQueries( { @NamedQuery(name = Configuration.QUERY_GET_PLUGIN_CONFIG_UNIQUE_COUNT_BY_GROUP_AND_PROP_NAME, query = "" //
+    + "  SELECT ps.stringValue, count(ps) "//
+    + "    FROM ResourceGroup rg " //
+    + "    JOIN rg.implicitResources res " //
+    + "    JOIN res.pluginConfiguration rpc, PropertySimple ps " //
+    + "         WHERE ps.configuration = rpc " //
+    + "           AND ps.name = :propertyName " //
+    + "           AND rg.id = :resourceGroupId " //
+    + "           AND ps.stringValue IS NOT NULL " //
+    + "GROUP BY ps.stringValue") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_ID_SEQ")
 @Table(name = "RHQ_CONFIG")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 public class Configuration implements Externalizable, Cloneable, AbstractPropertyMap {
     private static final long serialVersionUID = 1L;
+
+    public static final String QUERY_GET_PLUGIN_CONFIG_UNIQUE_COUNT_BY_GROUP_AND_PROP_NAME = "Configuration.getPluginConfigUniqueCountByGroupAndPropertyName";
 
     @GeneratedValue(generator = "SEQ", strategy = GenerationType.SEQUENCE)
     @Id

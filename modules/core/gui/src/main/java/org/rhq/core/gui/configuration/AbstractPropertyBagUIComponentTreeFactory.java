@@ -20,6 +20,7 @@ package org.rhq.core.gui.configuration;
 
 import java.util.Collection;
 import java.util.List;
+
 import javax.el.MethodExpression;
 import javax.el.ValueExpression;
 import javax.faces.application.FacesMessage;
@@ -40,9 +41,11 @@ import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.component.html.HtmlSelectOneRadio;
 import javax.faces.context.FacesContext;
 import javax.faces.validator.ValidatorException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -707,7 +710,11 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             input.setId(propertyId);
 
             Boolean shouldOverride = ((PropertySimple) property).getOverride();
-            FacesComponentUtility.setOverride(input, shouldOverride);
+            if (shouldOverride == null) {
+                FacesComponentUtility.setOverride(input, false);
+            } else {
+                FacesComponentUtility.setOverride(input, shouldOverride);
+            }
         }
 
         setInputOverrideExpression(input, propertyDefinitionSimple.getName());

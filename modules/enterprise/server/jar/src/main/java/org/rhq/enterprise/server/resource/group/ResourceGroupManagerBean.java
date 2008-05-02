@@ -722,6 +722,13 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         }
     }
 
+    public int getImplicitGroupMemberCount(int resourceGroupId) {
+        Query countQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_IMPLICIT_RESOURCES_COUNT_ADMIN);
+        countQuery.setParameter("resourceGroupId", resourceGroupId);
+        long count = (Long) countQuery.getSingleResult();
+        return (int) count;
+    }
+
     /*
      * This method constructs the implicit resource list based on an explicit resource passed to it.  If
      * <code>group.isRecursive()</code> is true, all of <code>resource</code>'s descendants will be added to the

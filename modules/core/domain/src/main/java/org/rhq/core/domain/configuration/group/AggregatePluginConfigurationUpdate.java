@@ -25,6 +25,7 @@ import java.util.Map;
 import javax.persistence.CascadeType;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
@@ -50,7 +51,7 @@ public class AggregatePluginConfigurationUpdate extends AbstractAggregateConfigu
 
     private static final long serialVersionUID = 1L;
 
-    @OneToMany(mappedBy = "aggregateConfigurationUpdate", cascade = { CascadeType.ALL })
+    @OneToMany(mappedBy = "aggregateConfigurationUpdate", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
     private List<PluginConfigurationUpdate> configurationUpdates = new ArrayList<PluginConfigurationUpdate>();
 
     protected AggregatePluginConfigurationUpdate() {
@@ -69,14 +70,13 @@ public class AggregatePluginConfigurationUpdate extends AbstractAggregateConfigu
         return this.configurationUpdates;
     }
 
-    public void addConfigurationUpdate(Resource updateTarget) {
+    public PluginConfigurationUpdate getPluginConfigurationUpdate(Resource updateTarget) {
         Configuration oldResourcePluginConfiguration = updateTarget.getPluginConfiguration();
         Configuration newResourcePluginConfiguration = getMergedConfiguration(oldResourcePluginConfiguration,
             this.configuration);
         PluginConfigurationUpdate update = new PluginConfigurationUpdate(updateTarget, newResourcePluginConfiguration,
             getSubjectName());
-        this.configurationUpdates.add(update);
-        update.setAggregateConfigurationUpdate(this);
+        return update;
     }
 
     private Configuration getMergedConfiguration(Configuration base, Configuration changes) {
@@ -123,6 +123,6 @@ public class AggregatePluginConfigurationUpdate extends AbstractAggregateConfigu
     @Override
     protected void appendToStringInternals(StringBuilder str) {
         super.appendToStringInternals(str);
-        str.append(", pluginConfigurationUpdates=").append(getConfigurationUpdates());
+        //str.append(", pluginConfigurationUpdates=").append(getConfigurationUpdates());
     }
 }

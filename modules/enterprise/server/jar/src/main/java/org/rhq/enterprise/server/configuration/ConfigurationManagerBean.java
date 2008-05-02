@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.configuration;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -50,8 +49,10 @@ import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -60,6 +61,7 @@ import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -131,16 +133,41 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         AggregatePluginConfigurationUpdate groupUpdate = configurationManager
             .getAggregatePluginConfigurationById(aggregatePluginConfigurationUpdateId);
 
-        for (PluginConfigurationUpdate singleUpdate : groupUpdate.getConfigurationUpdates()) {
-            configurationManager.completePluginConfigurationUpdate(singleUpdate);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
+            PluginConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID);
+        countQuery.setParameter("aggregateConfigurationUpdateId", aggregatePluginConfigurationUpdateId);
+        int childPluginConfigurateUpdateCount = ((Long) countQuery.getSingleResult()).intValue();
+
+        int rowsProcessed = 0;
+        PageControl pc = new PageControl(0, 50, new OrderingField("cu.id", PageOrdering.ASC));
+        while (true) {
+            List<PluginConfigurationUpdate> pagedChildUpdates = getPluginConfigurationUpdatesByParentId(
+                aggregatePluginConfigurationUpdateId, pc);
+            if (pagedChildUpdates.size() <= 0) {
+                break;
+            }
+            for (PluginConfigurationUpdate childUpdate : pagedChildUpdates) {
+                configurationManager.completePluginConfigurationUpdate(childUpdate);
+                if (childUpdate.getStatus() != ConfigurationUpdateStatus.SUCCESS) {
+                    groupUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
+                }
+            }
+
+            rowsProcessed += pagedChildUpdates.size();
+            if (rowsProcessed >= childPluginConfigurateUpdateCount) {
+                break;
+            }
+
+            pc.setPageNumber(pc.getPageNumber() + 1);
+            entityManager.flush();
+            entityManager.clear();
         }
 
-        groupUpdate.setStatus(ConfigurationUpdateStatus.SUCCESS); // to be overridden if there were any failures
-        for (PluginConfigurationUpdate childUpdate : groupUpdate.getConfigurationUpdates()) {
-            if (childUpdate.getStatus() != ConfigurationUpdateStatus.SUCCESS) {
-                groupUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
-            }
+        if (groupUpdate.getStatus() == ConfigurationUpdateStatus.INPROGRESS) {
+            // if nothing failed above, then we've succeeded
+            groupUpdate.setStatus(ConfigurationUpdateStatus.SUCCESS);
         }
+        entityManager.merge(groupUpdate);
     }
 
     // use requires new so that very, very large groups can have their plugin config updated without timeout
@@ -166,6 +193,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
             update.setStatus(response.getStatus());
             update.setErrorMessage(response.getErrorMessage());
         }
+
+        entityManager.merge(update);
     }
 
     // use requires new so that exceptions bubbling up from the agent.updatePluginConfiguration don't force callers to rollback as well
@@ -811,17 +840,41 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
 
         AggregatePluginConfigurationUpdate update = new AggregatePluginConfigurationUpdate(group,
             pluginConfigurationUpdate, whoami.getName());
-        for (Resource groupMember : group.getImplicitResources()) {
-            /*
-             * addConfigurationUpdate does all the magic of creating a new plugin configuration from the to-update
-             * elements of the aggregate
-             */
-            update.addConfigurationUpdate(groupMember);
-        }
-
         entityManager.persist(update);
-        for (PluginConfigurationUpdate childUpdate : update.getConfigurationUpdates()) {
-            entityManager.persist(childUpdate);
+
+        /* 
+         * efficiently create all resource-level plugin configuration update objects by 
+         * iterating the implicit list in smaller, more memory-manageable chunks
+         */
+        int pageNumber = 0;
+        int rowsProcessed = 0;
+        int groupMemberCount = resourceGroupManager.getImplicitGroupMemberCount(group.getId());
+        Subject overlord = subjectManager.getOverlord();
+        PageControl pc = new PageControl(pageNumber, 50, new OrderingField("res.id", PageOrdering.ASC));
+        while (true) {
+            List<Resource> pagedImplicit = resourceManager.getImplicitResourcesByResourceGroup(overlord, group, pc);
+            if (pagedImplicit.size() <= 0) {
+                break;
+            }
+
+            for (Resource implicitMember : pagedImplicit) {
+                /*
+                 * addConfigurationUpdate does all the magic of creating a new plugin configuration from the to-update
+                 * elements of the aggregate
+                 */
+                PluginConfigurationUpdate pcu = update.getPluginConfigurationUpdate(implicitMember);
+                pcu.setAggregateConfigurationUpdate(update);
+                entityManager.persist(pcu);
+            }
+
+            rowsProcessed += pagedImplicit.size();
+            if (rowsProcessed >= groupMemberCount) {
+                break;
+            }
+
+            pc.setPageNumber(pc.getPageNumber() + 1);
+            entityManager.flush();
+            entityManager.clear();
         }
 
         JobDataMap jobDataMap = new JobDataMap();
@@ -901,19 +954,44 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         return new PageList<PluginConfigurationUpdate>(results, (int) count, pageControl);
     }
 
-    public List<Configuration> getPluginConfigurationsForCompatibleGroup(ResourceGroup group) {
+    public Configuration getAggregatePluginConfigurationForCompatibleGroup(ResourceGroup group) {
         ResourceGroup compatibleGroup = entityManager.find(ResourceGroup.class, group.getId());
-        Set<Resource> groupMembers = compatibleGroup.getImplicitResources();
 
-        List<Configuration> pluginConfigurations = new ArrayList<Configuration>(groupMembers.size());
+        ConfigurationDefinition pluginConfigurationDefinition = compatibleGroup.getResourceType()
+            .getPluginConfigurationDefinition();
+        Configuration aggregatePluginConfiguration = calculateAggregateConfiguration(pluginConfigurationDefinition,
+            compatibleGroup);
 
-        for (Resource member : groupMembers) {
-            Configuration update = member.getPluginConfiguration();
-            update.getId(); // initialize
-            pluginConfigurations.add(update);
+        return aggregatePluginConfiguration;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Configuration calculateAggregateConfiguration(ConfigurationDefinition configurationDefinition,
+        ResourceGroup compatibleGroup) {
+        Configuration resultConfiguration = configurationDefinition.getDefaultTemplate().getConfiguration();
+
+        int groupSize = resourceGroupManager.getImplicitGroupMemberCount(compatibleGroup.getId());
+
+        Query query = entityManager
+            .createNamedQuery(Configuration.QUERY_GET_PLUGIN_CONFIG_UNIQUE_COUNT_BY_GROUP_AND_PROP_NAME);
+        query.setParameter("resourceGroupId", compatibleGroup.getId());
+
+        for (PropertySimple nextSimple : resultConfiguration.getSimpleProperties().values()) {
+            query.setParameter("propertyName", nextSimple.getName());
+            List<Object[]> results = query.getResultList();
+            if (results.size() == 1) {
+                Object[] identicalPropertyValueTuple = results.get(0);
+                if (groupSize == ((Long) identicalPropertyValueTuple[1]).intValue()) {
+                    nextSimple.setValue(identicalPropertyValueTuple[0]);
+                } else {
+                    nextSimple.setValue(AbstractAggregateConfigurationUpdate.MIXED_VALUES_MARKER);
+                }
+            } else {
+                nextSimple.setValue(AbstractAggregateConfigurationUpdate.MIXED_VALUES_MARKER);
+            }
         }
 
-        return pluginConfigurations;
+        return resultConfiguration;
     }
 
     @SuppressWarnings("unchecked")

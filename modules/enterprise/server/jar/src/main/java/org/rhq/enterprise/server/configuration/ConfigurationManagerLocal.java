@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.configuration;
 
-import java.util.List;
-
 import javax.ejb.Local;
 
 import org.jetbrains.annotations.Nullable;
@@ -341,7 +339,7 @@ public interface ConfigurationManagerLocal {
     int scheduleAggregatePluginConfigurationUpdate(Subject whoami, int compatibleGroupId,
         Configuration pluginConfigurationUpdate) throws SchedulerException;
 
-    List<Configuration> getPluginConfigurationsForCompatibleGroup(ResourceGroup group);
+    Configuration getAggregatePluginConfigurationForCompatibleGroup(ResourceGroup group);
 
     PageList<AggregatePluginConfigurationUpdate> getAggregatePluginConfigurationUpdatesByGroupId(int groupId,
         PageControl pc);

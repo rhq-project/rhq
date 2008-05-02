@@ -23,20 +23,20 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.Set;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.HashMap;
-import java.util.Arrays;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -156,24 +156,23 @@ public class ResourceContainer implements Serializable {
      *
     * @return true if the schedule was updated successfully, false otherwise
     */
-    public boolean updateMeasurementSchedule( Set<MeasurementScheduleRequest> measurementScheduleUpdate)
-    {
+    public boolean updateMeasurementSchedule(Set<MeasurementScheduleRequest> measurementScheduleUpdate) {
         Set<Integer> updateScheduleIds = new HashSet<Integer>();
-        for(MeasurementScheduleRequest update: measurementScheduleUpdate ) {
-            updateScheduleIds.add( update.getScheduleId() );
+        for (MeasurementScheduleRequest update : measurementScheduleUpdate) {
+            updateScheduleIds.add(update.getScheduleId());
         }
 
-        Set<MeasurementScheduleRequest> toBeRemoved  = new HashSet<MeasurementScheduleRequest>();
-        for( MeasurementScheduleRequest current : this.measurementSchedule ) {
-            if( updateScheduleIds.contains( current.getScheduleId() ) ) {
-                toBeRemoved.add( current );
+        Set<MeasurementScheduleRequest> toBeRemoved = new HashSet<MeasurementScheduleRequest>();
+        for (MeasurementScheduleRequest current : this.measurementSchedule) {
+            if (updateScheduleIds.contains(current.getScheduleId())) {
+                toBeRemoved.add(current);
             }
         }
         // first remove all the old versions of the measurement schedules
         this.measurementSchedule.removeAll(toBeRemoved);
 
         // then add the new versions
-        return  measurementSchedule.addAll(measurementScheduleUpdate);
+        return measurementSchedule.addAll(measurementScheduleUpdate);
     }
 
     public ResourceComponentState getResourceComponentState() {
@@ -216,8 +215,8 @@ public class ResourceContainer implements Serializable {
      * @throws PluginContainerException if the component does not exist or does not implement the interface
      */
     @SuppressWarnings("unchecked")
-    public <T> T createResourceComponentProxy(Class<T> facetInterface, FacetLockType lockType, long timeout, boolean daemonThread, boolean onlyIfStarted)
-        throws PluginContainerException {
+    public <T> T createResourceComponentProxy(Class<T> facetInterface, FacetLockType lockType, long timeout,
+        boolean daemonThread, boolean onlyIfStarted) throws PluginContainerException {
         if (onlyIfStarted) {
             if (!ResourceComponentState.STARTED.equals(getResourceComponentState())) {
                 throw new PluginContainerException("Resource component could not be retrieved for resource ["
@@ -242,7 +241,6 @@ public class ResourceContainer implements Serializable {
             return (T) resourceComponent;
         }
 
-
         // Check for a cached proxy
         int key;
         key = facetInterface.hashCode();
@@ -257,7 +255,8 @@ public class ResourceContainer implements Serializable {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
             // this is the handler that will actually acquire the lock and invoke the facet method call
-            ResourceComponentInvocationHandler handler = new ResourceComponentInvocationHandler(this, lockType, timeout, daemonThread, facetInterface);
+            ResourceComponentInvocationHandler handler = new ResourceComponentInvocationHandler(this, lockType,
+                timeout, daemonThread, facetInterface);
 
             // this is the proxy that will look like the facet interface that the caller will use
             proxy = (T) Proxy.newProxyInstance(classLoader, new Class<?>[] { facetInterface }, handler);
@@ -283,7 +282,7 @@ public class ResourceContainer implements Serializable {
         this.facetAccessLock = new ReentrantReadWriteLock();
         return this;
     }
-    
+
     /**
      * This is a ResourceComponent proxy that invokes component methods in pooled threads. Depending on the parameters
      * passed to its constructor, it may also:
@@ -298,10 +297,10 @@ public class ResourceContainer implements Serializable {
         private static final String DAEMON_THREAD_POOL_NAME = "ResourceContainer.invoker.daemon";
         private static final String NON_DAEMON_THREAD_POOL_NAME = "ResourceContainer.invoker.nonDaemon";
 
-        private static final ExecutorService DAEMON_THREAD_POOL = Executors.newCachedThreadPool(new LoggingThreadFactory(
-                DAEMON_THREAD_POOL_NAME, true));
-        private static final ExecutorService NON_DAEMON_THREAD_POOL = Executors.newCachedThreadPool(new LoggingThreadFactory(
-                NON_DAEMON_THREAD_POOL_NAME, false));        
+        private static final ExecutorService DAEMON_THREAD_POOL = Executors
+            .newCachedThreadPool(new LoggingThreadFactory(DAEMON_THREAD_POOL_NAME, true));
+        private static final ExecutorService NON_DAEMON_THREAD_POOL = Executors
+            .newCachedThreadPool(new LoggingThreadFactory(NON_DAEMON_THREAD_POOL_NAME, false));
 
         private final ResourceContainer container;
         private final Lock lock;
@@ -309,6 +308,7 @@ public class ResourceContainer implements Serializable {
         private final boolean daemonThread;
         private final Class facetInterface;
         private static ThreadLocal<Boolean> asynchronous = new ThreadLocal<Boolean>() {
+            @Override
             protected Boolean initialValue() {
                 return false;
             }
@@ -320,11 +320,12 @@ public class ResourceContainer implements Serializable {
          *                  caller must ensure the container's component is never null
          * @param lockType the type of lock to use for the invocation
          * @param timeout if the method invocation thread has not completed after this many milliseconds, interrupt it;
-*                value must be positive
+        *                value must be positive
          * @param daemonThread whether or not the thread used for the invocation should be a daemon thread
          * @param facetInterface the interface that the component implements that is being exposed by this proxy
          */
-        public ResourceComponentInvocationHandler(ResourceContainer container, FacetLockType lockType, long timeout, boolean daemonThread, Class facetInterface) {
+        public ResourceComponentInvocationHandler(ResourceContainer container, FacetLockType lockType, long timeout,
+            boolean daemonThread, Class facetInterface) {
             this.container = container;
             if (lockType == FacetLockType.WRITE) {
                 this.lock = container.getWriteFacetLock();
@@ -365,32 +366,35 @@ public class ResourceContainer implements Serializable {
             String methodArgs = "[" + ((args != null) ? Arrays.asList(args) : "") + "]";
             try {
                 return future.get(this.timeout, TimeUnit.MILLISECONDS);
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
                 LOG.error("Thread '" + Thread.currentThread().getName() + "' was interrupted.");
                 if (this.daemonThread) {
                     future.cancel(true);
                 }
-                String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "()";
-                throw new RuntimeException("Call to " + methodName + " with args " + methodArgs + " was rudely interrupted.", e);
-            }
-            catch (ExecutionException e) {
+                String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName()
+                    + "()";
+                throw new RuntimeException("Call to " + methodName + " with args " + methodArgs
+                    + " was rudely interrupted.", e);
+            } catch (ExecutionException e) {
                 if (LOG.isDebugEnabled()) {
-                    String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "()";
+                    String methodName = this.container.getResourceComponent().getClass().getName() + "."
+                        + method.getName() + "()";
                     LOG.debug("Call to " + methodName + " with args " + methodArgs + " failed.", e);
                 }
                 throw e.getCause();
-            }
-            catch (java.util.concurrent.TimeoutException e) {
+            } catch (java.util.concurrent.TimeoutException e) {
                 if (LOG.isDebugEnabled()) {
-                    String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "()";
-                    LOG.debug("Call to " + methodName + " with args " + methodArgs + " timed out. Interrupting the invocation thread...");
+                    String methodName = this.container.getResourceComponent().getClass().getName() + "."
+                        + method.getName() + "()";
+                    LOG.debug("Call to " + methodName + " with args " + methodArgs
+                        + " timed out. Interrupting the invocation thread...");
                 }
                 future.cancel(true);
                 if (LOG.isDebugEnabled()) {
                     LOG.debug(this.container.getFacetLockStatus());
                 }
-                String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName() + "()";                
+                String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName()
+                    + "()";
                 throw new TimeoutException("Call to " + methodName + " with args " + methodArgs + " timed out.");
             }
         }
@@ -398,8 +402,7 @@ public class ResourceContainer implements Serializable {
         private Object invokeInCurrentThreadWithoutLock(Method method, Object[] args) throws Throwable {
             try {
                 return method.invoke(this.container.getResourceComponent(), args);
-            }
-            catch (InvocationTargetException ite) {
+            } catch (InvocationTargetException ite) {
                 throw (ite.getCause() != null) ? ite.getCause() : ite;
             }
         }
@@ -423,8 +426,7 @@ public class ResourceContainer implements Serializable {
             if (this.lock != null) {
                 try {
                     this.lock.lockInterruptibly();
-                }
-                catch (InterruptedException e) {
+                } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
                 // If we made it here, we have acquired the lock.
@@ -434,7 +436,7 @@ public class ResourceContainer implements Serializable {
                 return this.method.invoke(resourceComponent, this.args);
             } catch (InvocationTargetException e) {
                 Throwable cause = e.getCause();
-                throw (cause instanceof Exception) ? (Exception)cause : new Exception(cause);
+                throw (cause instanceof Exception) ? (Exception) cause : new Exception(cause);
             } catch (RuntimeException e) {
                 throw e;
             } catch (Exception e) {

@@ -20,8 +20,14 @@ package org.rhq.enterprise.server.configuration.job;
 
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
+
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.OrderingField;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -53,9 +59,28 @@ public class AggregatePluginConfigurationUpdateJob extends AbstractAggregateConf
     }
 
     @Override
-    protected void processAggregateConfigurationUpdate(Subject subject, Integer configurationGroupUpdateId) {
+    protected void processAggregateConfigurationUpdate(Subject subject, Integer aggregatePluginConfigurationUpdateId) {
         ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
-        configurationManager.completeAggregatePluginConfigurationUpdate(configurationGroupUpdateId);
+        long childPluginConfigurationUpdateCount = configurationManager
+            .getPluginConfigurationUpdateCountByParentId(aggregatePluginConfigurationUpdateId);
+
+        int rowsProcessed = 0;
+        PageControl pc = new PageControl(0, 50, new OrderingField("cu.id", PageOrdering.ASC));
+        while (true) {
+            rowsProcessed += configurationManager.completeAggregatePluginConfigurationUpdateBatch(
+                aggregatePluginConfigurationUpdateId, pc);
+            if (rowsProcessed >= childPluginConfigurationUpdateCount) {
+                break;
+            }
+            pc.setPageNumber(pc.getPageNumber() + 1);
+        }
+
+        AggregatePluginConfigurationUpdate groupUpdate = configurationManager
+            .getAggregatePluginConfigurationById(aggregatePluginConfigurationUpdateId);
+        ConfigurationUpdateStatus groupUpdateResults = configurationManager
+            .updateAggregatePluginConfigurationUpdateStatus(aggregatePluginConfigurationUpdateId);
+        groupUpdate.setStatus(groupUpdateResults);
+        configurationManager.updateAggregatePluginConfigurationUpdate(groupUpdate);
     }
 }

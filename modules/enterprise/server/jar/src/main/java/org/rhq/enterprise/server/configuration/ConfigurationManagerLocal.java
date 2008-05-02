@@ -85,7 +85,7 @@ public interface ConfigurationManagerLocal {
      */
     void completePluginConfigurationUpdate(PluginConfigurationUpdate update);
 
-    void completeAggregatePluginConfigurationUpdate(int aggregatePluginConfigurationUpdateId);
+    int completeAggregatePluginConfigurationUpdateBatch(int aggregatePluginConfigurationUpdateId, PageControl pc);
 
     Configuration getActiveResourceConfiguration(int resourceId);
 
@@ -336,6 +336,8 @@ public interface ConfigurationManagerLocal {
     PageList<PluginConfigurationUpdate> getPluginConfigurationUpdatesByParentId(int configurationUpdateId,
         PageControl pageControl);
 
+    long getPluginConfigurationUpdateCountByParentId(int configurationUpdateId);
+
     int scheduleAggregatePluginConfigurationUpdate(Subject whoami, int compatibleGroupId,
         Configuration pluginConfigurationUpdate) throws SchedulerException;
 
@@ -343,6 +345,8 @@ public interface ConfigurationManagerLocal {
 
     PageList<AggregatePluginConfigurationUpdate> getAggregatePluginConfigurationUpdatesByGroupId(int groupId,
         PageControl pc);
+
+    ConfigurationUpdateStatus updateAggregatePluginConfigurationUpdateStatus(int aggregatePluginConfigurationUpdateId);
 
     int deleteAggregatePluginConfigurationUpdates(Subject subject, Integer resourceGroupId,
         Integer[] aggregatePluginConfigurationUpdateIds);

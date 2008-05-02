@@ -128,49 +128,20 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         return pluginConfiguration;
     }
 
-    public void completeAggregatePluginConfigurationUpdate(int aggregatePluginConfigurationUpdateId) {
-        // then loop over the results and update the aggregate as appropriate
-        AggregatePluginConfigurationUpdate groupUpdate = configurationManager
-            .getAggregatePluginConfigurationById(aggregatePluginConfigurationUpdateId);
-
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-            PluginConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID);
-        countQuery.setParameter("aggregateConfigurationUpdateId", aggregatePluginConfigurationUpdateId);
-        int childPluginConfigurateUpdateCount = ((Long) countQuery.getSingleResult()).intValue();
-
-        int rowsProcessed = 0;
-        PageControl pc = new PageControl(0, 50, new OrderingField("cu.id", PageOrdering.ASC));
-        while (true) {
-            List<PluginConfigurationUpdate> pagedChildUpdates = getPluginConfigurationUpdatesByParentId(
-                aggregatePluginConfigurationUpdateId, pc);
-            if (pagedChildUpdates.size() <= 0) {
-                break;
-            }
-            for (PluginConfigurationUpdate childUpdate : pagedChildUpdates) {
-                configurationManager.completePluginConfigurationUpdate(childUpdate);
-                if (childUpdate.getStatus() != ConfigurationUpdateStatus.SUCCESS) {
-                    groupUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
-                }
-            }
-
-            rowsProcessed += pagedChildUpdates.size();
-            if (rowsProcessed >= childPluginConfigurateUpdateCount) {
-                break;
-            }
-
-            pc.setPageNumber(pc.getPageNumber() + 1);
-            entityManager.flush();
-            entityManager.clear();
+    public int completeAggregatePluginConfigurationUpdateBatch(int aggregatePluginConfigurationUpdateId, PageControl pc) {
+        List<PluginConfigurationUpdate> pagedChildUpdates = getPluginConfigurationUpdatesByParentId(
+            aggregatePluginConfigurationUpdateId, pc);
+        if (pagedChildUpdates.size() <= 0) {
+            return 0;
+        }
+        for (PluginConfigurationUpdate childUpdate : pagedChildUpdates) {
+            configurationManager.completePluginConfigurationUpdate(childUpdate);
         }
 
-        if (groupUpdate.getStatus() == ConfigurationUpdateStatus.INPROGRESS) {
-            // if nothing failed above, then we've succeeded
-            groupUpdate.setStatus(ConfigurationUpdateStatus.SUCCESS);
-        }
-        entityManager.merge(groupUpdate);
+        return pagedChildUpdates.size();
     }
 
-    // use requires new so that very, very large groups can have their plugin config updated without timeout
+    // use requires new so that the group plugin config update UI reflects each update as it completes
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void completePluginConfigurationUpdate(PluginConfigurationUpdate update) {
         // use EJB3 reference to ourself so that transaction semantics are correct
@@ -942,16 +913,20 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
             PluginConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID, pageControl);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-            PluginConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID);
         query.setParameter("aggregateConfigurationUpdateId", configurationUpdateId);
-        countQuery.setParameter("aggregateConfigurationUpdateId", configurationUpdateId);
 
-        long count = (Long) countQuery.getSingleResult();
+        long count = getPluginConfigurationUpdateCountByParentId(configurationUpdateId);
 
         List<PluginConfigurationUpdate> results = query.getResultList();
 
         return new PageList<PluginConfigurationUpdate>(results, (int) count, pageControl);
+    }
+
+    public long getPluginConfigurationUpdateCountByParentId(int configurationUpdateId) {
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
+            PluginConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID);
+        countQuery.setParameter("aggregateConfigurationUpdateId", configurationUpdateId);
+        return (Long) countQuery.getSingleResult();
     }
 
     public Configuration getAggregatePluginConfigurationForCompatibleGroup(ResourceGroup group) {
@@ -1012,6 +987,32 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         results = query.getResultList();
 
         return new PageList<AggregatePluginConfigurationUpdate>(results, (int) count, pc);
+    }
+
+    @SuppressWarnings("unchecked")
+    public ConfigurationUpdateStatus updateAggregatePluginConfigurationUpdateStatus(
+        int aggregatePluginConfigurationUpdateId) {
+
+        AggregatePluginConfigurationUpdate groupUpdate = configurationManager
+            .getAggregatePluginConfigurationById(aggregatePluginConfigurationUpdateId);
+
+        Query query = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID);
+        query.setParameter("aggregateConfigurationUpdateId", aggregatePluginConfigurationUpdateId);
+
+        ConfigurationUpdateStatus groupUpdateStatus = null;
+        List<ConfigurationUpdateStatus> updateStatusTuples = query.getResultList();
+        if (updateStatusTuples.contains(ConfigurationUpdateStatus.INPROGRESS)) {
+            groupUpdateStatus = ConfigurationUpdateStatus.INPROGRESS;
+        } else if (updateStatusTuples.contains(ConfigurationUpdateStatus.FAILURE)) {
+            groupUpdateStatus = ConfigurationUpdateStatus.FAILURE;
+        } else {
+            groupUpdateStatus = ConfigurationUpdateStatus.SUCCESS;
+        }
+
+        groupUpdate.setStatus(groupUpdateStatus);
+        updateAggregatePluginConfigurationUpdate(groupUpdate);
+
+        return groupUpdateStatus; // if the caller wants to know what the new status was
     }
 
     public int deleteAggregatePluginConfigurationUpdates(Subject subject, Integer resourceGroupId,

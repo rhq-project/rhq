@@ -464,7 +464,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                 compatibleGroup.getId(), overrideAggregate);
 
             // instead of sleeping, let's directly execute what would normally be scheduled
-            configurationManager.completeAggregatePluginConfigurationUpdate(aggregateUpdateId);
+            //configurationManager.completeAggregatePluginConfigurationUpdate(aggregateUpdateId);
 
             AggregatePluginConfigurationUpdate update = configurationManager
                 .getAggregatePluginConfigurationById(aggregateUpdateId);

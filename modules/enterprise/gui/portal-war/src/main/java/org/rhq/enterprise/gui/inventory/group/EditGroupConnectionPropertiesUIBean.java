@@ -25,6 +25,7 @@ import org.quartz.SchedulerException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
@@ -43,7 +44,7 @@ public class EditGroupConnectionPropertiesUIBean extends ViewGroupConnectionProp
     }
 
     public String update() {
-        //        ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
+        ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
 
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         ResourceGroup resourceGroup = EnterpriseFacesContextUtility.getResourceGroup();

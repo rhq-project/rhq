@@ -46,6 +46,9 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID, query = "SELECT cu "
         + "  FROM PluginConfigurationUpdate cu "
         + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId"),
+    @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID, query = "SELECT cu.status "
+        + "  FROM PluginConfigurationUpdate cu "
+        + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId GROUP BY cu.status"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM PluginConfigurationUpdate pcu WHERE pcu.resource IN (:resources))"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "UPDATE PluginConfigurationUpdate pcu SET pcu.aggregateConfigurationUpdate = null WHERE pcu.aggregateConfigurationUpdate IN ( select apcu FROM AggregatePluginConfigurationUpdate apcu WHERE apcu.group.id = :groupId )") })
 public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpdate {
@@ -55,6 +58,7 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
     public static final String QUERY_FIND_CURRENTLY_ACTIVE_CONFIG = "PluginConfigurationUpdate.findCurrentlyActiveConfig";
     public static final String QUERY_FIND_LATEST_BY_RESOURCE_ID = "PluginConfigurationUpdate.findByResource";
     public static final String QUERY_FIND_BY_PARENT_UPDATE_ID = "PluginConfigurationUpdate.findByParentUpdateId";
+    public static final String QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID = "PluginConfigurationUpdate.findStatusByParentUpdateId";
     public static final String QUERY_DELETE_BY_RESOURCES = "PluginConfigurationUpdate.deleteByResources";
     public static final String QUERY_DELETE_UPDATE_AGGREGATE = "pluginConfigurationUpdate.deleteUpdateAggregate";
 

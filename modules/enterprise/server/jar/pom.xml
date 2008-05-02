@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>1.0.0.RC9</version>
+      <version>1.0.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
    <description>RHQ enterprise server main JAR</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC9/modules/enterprise/server/jar</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_0_RC9/modules/enterprise/server/jar</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/jar/</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/jar/</developerConnection>
    </scm>
 
    <properties>

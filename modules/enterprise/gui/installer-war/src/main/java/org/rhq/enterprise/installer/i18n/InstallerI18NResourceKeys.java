@@ -631,8 +631,8 @@ public interface InstallerI18NResourceKeys {
     // Help Documentation - links to the wiki
 
     @I18NMessages( {
-        @I18NMessage(locale = "en", value = "Please review the documentation linked below to learn more about RHQ:"),
-        @I18NMessage(locale = "de", value = "Die unten aufgeführten Links enthalten weitere Informationen zu RHQ:") })
+        @I18NMessage(locale = "en", value = "Please review the documentation linked below to learn more about ${product.shortName}:"),
+        @I18NMessage(locale = "de", value = "Die unten aufgeführten Links enthalten weitere Informationen zu ${product.shortName}:") })
     String INTRODUCE_HELP_DOCS = "introduceHelpDocs";
 
     @I18NMessage("${product.help.installation}")

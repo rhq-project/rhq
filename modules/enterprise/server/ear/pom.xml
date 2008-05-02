@@ -207,19 +207,7 @@
 
                  <artifactItem>
                    <groupId>org.rhq</groupId>
-                   <artifactId>rhq-platform-plugin</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
-
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
                    <artifactId>rhq-agent-plugin</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
-
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
-                   <artifactId>rhq-jmx-plugin</artifactId>
                    <version>${project.version}</version>
                  </artifactItem>
 
@@ -231,13 +219,31 @@
 
                  <artifactItem>
                    <groupId>org.rhq</groupId>
-                   <artifactId>rhq-postgres-plugin</artifactId>
+                   <artifactId>rhq-database-plugin</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+                 
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-jmx-plugin</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+                 
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-iis-plugin</artifactId>
                    <version>${project.version}</version>
                  </artifactItem>
 
                  <artifactItem>
                    <groupId>org.rhq</groupId>
-                   <artifactId>rhq-database-plugin</artifactId>
+                   <artifactId>rhq-platform-plugin</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+                 
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-postgres-plugin</artifactId>
                    <version>${project.version}</version>
                  </artifactItem>
 

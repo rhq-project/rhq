@@ -899,11 +899,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
             return null;
         }
 
-        // initialize all data that will be needed by AggregatePluginConfigurationUpdateJob caller
-        for (PluginConfigurationUpdate childUpdate : update.getConfigurationUpdates()) {
-            childUpdate.getResource().getAgent().getName();
-        }
-
         return update;
     }
 
@@ -1027,7 +1022,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         }
 
         groupUpdate.setStatus(groupUpdateStatus);
-        updateAggregatePluginConfigurationUpdate(groupUpdate);
+        configurationManager.updateAggregatePluginConfigurationUpdate(groupUpdate);
 
         return groupUpdateStatus; // if the caller wants to know what the new status was
     }

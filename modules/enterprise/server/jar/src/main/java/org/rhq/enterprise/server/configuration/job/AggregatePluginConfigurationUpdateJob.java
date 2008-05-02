@@ -22,8 +22,6 @@ import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
@@ -76,11 +74,6 @@ public class AggregatePluginConfigurationUpdateJob extends AbstractAggregateConf
             pc.setPageNumber(pc.getPageNumber() + 1);
         }
 
-        AggregatePluginConfigurationUpdate groupUpdate = configurationManager
-            .getAggregatePluginConfigurationById(aggregatePluginConfigurationUpdateId);
-        ConfigurationUpdateStatus groupUpdateResults = configurationManager
-            .updateAggregatePluginConfigurationUpdateStatus(aggregatePluginConfigurationUpdateId);
-        groupUpdate.setStatus(groupUpdateResults);
-        configurationManager.updateAggregatePluginConfigurationUpdate(groupUpdate);
+        configurationManager.updateAggregatePluginConfigurationUpdateStatus(aggregatePluginConfigurationUpdateId);
     }
 }

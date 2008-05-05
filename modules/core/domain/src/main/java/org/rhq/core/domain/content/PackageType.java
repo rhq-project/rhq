@@ -283,8 +283,9 @@ public class PackageType implements Serializable {
         this.description = newType.getDescription();
         this.category = newType.getCategory();
         this.discoveryInterval = newType.getDiscoveryInterval();
-        this.deploymentConfigurationDefinition = newType.getDeploymentConfigurationDefinition();
-        this.packageExtraPropertiesDefinition = newType.getPackageExtraPropertiesDefinition();
+        // Don't update references... these have to be linked to persistent objects
+//        this.deploymentConfigurationDefinition = newType.getDeploymentConfigurationDefinition();
+//        this.packageExtraPropertiesDefinition = newType.getPackageExtraPropertiesDefinition();
         this.isCreationData = newType.isCreationData();
         this.packages = newType.getPackages();
     }

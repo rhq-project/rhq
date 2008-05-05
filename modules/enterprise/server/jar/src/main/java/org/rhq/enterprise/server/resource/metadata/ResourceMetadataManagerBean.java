@@ -495,6 +495,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         mergedPackageTypes.retainAll(newType.getPackageTypes());
 
         for (PackageType mergedPackageType : mergedPackageTypes) {
+            updatePackageConfigurations(newPackageTypeDefinitions.get(mergedPackageType.getName()), mergedPackageType);
             mergedPackageType.update(newPackageTypeDefinitions.get(mergedPackageType.getName()));
             entityManager.merge(mergedPackageType);
         }
@@ -653,6 +654,52 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             // for any remaining children of this subCat, see if any of their children should be removed
             removeChildSubCategories(existingSubCat.getChildSubCategories(), newChildSubCategories);
         }
+    }
+
+
+    /**
+     * updates both configuration definitions on PackageType
+     */
+    private void updatePackageConfigurations(PackageType newType, PackageType existingType) {
+        ConfigurationDefinition newConfigurationDefinition = newType.getDeploymentConfigurationDefinition();
+        if (newConfigurationDefinition != null) {
+            if (existingType.getDeploymentConfigurationDefinition() == null) {
+                // everything new
+                entityManager.persist(newConfigurationDefinition);
+                existingType.setDeploymentConfigurationDefinition(newConfigurationDefinition);
+            } else {
+                // update existing
+                ConfigurationDefinition existingDefinition = existingType.getDeploymentConfigurationDefinition();
+                configurationMetadataManager.updateConfigurationDefinition(newConfigurationDefinition,
+                    existingDefinition);
+            }
+        } else {
+            // newDefinition == null
+            if (existingType.getDeploymentConfigurationDefinition() != null) {
+                existingType.setDeploymentConfigurationDefinition(null);
+            }
+        }
+
+
+        newConfigurationDefinition = newType.getPackageExtraPropertiesDefinition();
+        if (newConfigurationDefinition != null) {
+            if (existingType.getPackageExtraPropertiesDefinition() == null) {
+                // everything new
+                entityManager.persist(newConfigurationDefinition);
+                existingType.setPackageExtraPropertiesDefinition(newConfigurationDefinition);
+            } else {
+                // update existing
+                ConfigurationDefinition existingDefinition = existingType.getPackageExtraPropertiesDefinition();
+                configurationMetadataManager.updateConfigurationDefinition(newConfigurationDefinition,
+                    existingDefinition);
+            }
+        } else {
+            // newDefinition == null
+            if (existingType.getPackageExtraPropertiesDefinition() != null) {
+                existingType.setPackageExtraPropertiesDefinition(null);
+            }
+        }
+
     }
 
     /**

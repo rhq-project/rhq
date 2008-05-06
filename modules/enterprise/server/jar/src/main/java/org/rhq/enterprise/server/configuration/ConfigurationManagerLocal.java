@@ -86,7 +86,7 @@ public interface ConfigurationManagerLocal {
      */
     void completePluginConfigurationUpdate(PluginConfigurationUpdate update);
 
-    int completeAggregatePluginConfigurationUpdateBatch(int aggregatePluginConfigurationUpdateId, PageControl pc);
+    void completePluginConfigurationUpdate(Integer updateId);
 
     Configuration getActiveResourceConfiguration(int resourceId);
 
@@ -337,8 +337,7 @@ public interface ConfigurationManagerLocal {
     PageList<PluginConfigurationUpdateResourceComposite> getPluginConfigurationUpdateCompositesByParentId(
         int configurationUpdateId, PageControl pageControl);
 
-    PageList<PluginConfigurationUpdate> getPluginConfigurationUpdatesByParentId(int configurationUpdateId,
-        PageControl pageControl);
+    PageList<Integer> getPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl);
 
     long getPluginConfigurationUpdateCountByParentId(int configurationUpdateId);
 
@@ -350,7 +349,8 @@ public interface ConfigurationManagerLocal {
     PageList<AggregatePluginConfigurationUpdate> getAggregatePluginConfigurationUpdatesByGroupId(int groupId,
         PageControl pc);
 
-    ConfigurationUpdateStatus updateAggregatePluginConfigurationUpdateStatus(int aggregatePluginConfigurationUpdateId);
+    ConfigurationUpdateStatus updateAggregatePluginConfigurationUpdateStatus(int aggregatePluginConfigurationUpdateId,
+        String errorMessages);
 
     int deleteAggregatePluginConfigurationUpdates(Subject subject, Integer resourceGroupId,
         Integer[] aggregatePluginConfigurationUpdateIds);

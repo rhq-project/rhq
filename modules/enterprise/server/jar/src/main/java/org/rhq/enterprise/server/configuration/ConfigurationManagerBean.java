@@ -129,21 +129,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         return pluginConfiguration;
     }
 
-    public int completeAggregatePluginConfigurationUpdateBatch(int aggregatePluginConfigurationUpdateId, PageControl pc) {
-        List<PluginConfigurationUpdate> pagedChildUpdates = getPluginConfigurationUpdatesByParentId(
-            aggregatePluginConfigurationUpdateId, pc);
-        if (pagedChildUpdates.size() <= 0) {
-            return 0;
-        }
-        for (PluginConfigurationUpdate childUpdate : pagedChildUpdates) {
-            configurationManager.completePluginConfigurationUpdate(childUpdate);
-        }
-
-        return pagedChildUpdates.size();
+    public void completePluginConfigurationUpdate(Integer updateId) {
+        PluginConfigurationUpdate update = entityManager.find(PluginConfigurationUpdate.class, updateId);
+        configurationManager.completePluginConfigurationUpdate(update);
     }
 
-    // use requires new so that the group plugin config update UI reflects each update as it completes
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void completePluginConfigurationUpdate(PluginConfigurationUpdate update) {
         // use EJB3 reference to ourself so that transaction semantics are correct
         ConfigurationUpdateResponse response = configurationManager.executePluginConfigurationUpdate(update);
@@ -919,8 +909,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<PluginConfigurationUpdate> getPluginConfigurationUpdatesByParentId(int configurationUpdateId,
-        PageControl pageControl) {
+    public PageList<Integer> getPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("cu.modifiedTime");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -929,9 +918,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
 
         long count = getPluginConfigurationUpdateCountByParentId(configurationUpdateId);
 
-        List<PluginConfigurationUpdate> results = query.getResultList();
+        List<Integer> results = query.getResultList();
 
-        return new PageList<PluginConfigurationUpdate>(results, (int) count, pageControl);
+        return new PageList<Integer>(results, (int) count, pageControl);
     }
 
     public long getPluginConfigurationUpdateCountByParentId(int configurationUpdateId) {
@@ -1003,7 +992,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
 
     @SuppressWarnings("unchecked")
     public ConfigurationUpdateStatus updateAggregatePluginConfigurationUpdateStatus(
-        int aggregatePluginConfigurationUpdateId) {
+        int aggregatePluginConfigurationUpdateId, String errorMessages) {
 
         AggregatePluginConfigurationUpdate groupUpdate = configurationManager
             .getAggregatePluginConfigurationById(aggregatePluginConfigurationUpdateId);
@@ -1013,15 +1002,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
 
         ConfigurationUpdateStatus groupUpdateStatus = null;
         List<ConfigurationUpdateStatus> updateStatusTuples = query.getResultList();
-        if (updateStatusTuples.contains(ConfigurationUpdateStatus.INPROGRESS)) {
-            groupUpdateStatus = ConfigurationUpdateStatus.INPROGRESS;
-        } else if (updateStatusTuples.contains(ConfigurationUpdateStatus.FAILURE)) {
+        if (updateStatusTuples.contains(ConfigurationUpdateStatus.FAILURE) || errorMessages != null) {
             groupUpdateStatus = ConfigurationUpdateStatus.FAILURE;
         } else {
             groupUpdateStatus = ConfigurationUpdateStatus.SUCCESS;
         }
 
         groupUpdate.setStatus(groupUpdateStatus);
+        groupUpdate.setErrorMessage(errorMessages);
         configurationManager.updateAggregatePluginConfigurationUpdate(groupUpdate);
 
         return groupUpdateStatus; // if the caller wants to know what the new status was
@@ -1054,6 +1042,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
 
     public AggregatePluginConfigurationUpdate updateAggregatePluginConfigurationUpdate(
         AggregatePluginConfigurationUpdate groupUpdate) {
+        // TODO jmarques: if (errorMessages != null) set any remaining INPROGRESS children to FAILURE
         return entityManager.merge(groupUpdate);
     }
 }

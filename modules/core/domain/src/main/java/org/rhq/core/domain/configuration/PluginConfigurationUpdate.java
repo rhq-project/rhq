@@ -48,7 +48,7 @@ import org.rhq.core.domain.resource.Resource;
         + "SELECT new org.rhq.core.domain.configuration.composite.PluginConfigurationUpdateResourceComposite( cu, cu.resource.id, cu.resource.name ) "
         + "  FROM PluginConfigurationUpdate cu "
         + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId"),
-    @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID, query = "SELECT cu "
+    @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID, query = "SELECT cu.id "
         + "  FROM PluginConfigurationUpdate cu "
         + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID, query = "SELECT cu.status "

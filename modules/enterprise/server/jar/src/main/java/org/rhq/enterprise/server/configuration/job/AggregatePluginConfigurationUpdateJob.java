@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.configuration.job;
 
+import java.util.List;
+
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 
@@ -26,6 +28,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -60,20 +63,37 @@ public class AggregatePluginConfigurationUpdateJob extends AbstractAggregateConf
     protected void processAggregateConfigurationUpdate(Subject subject, Integer aggregatePluginConfigurationUpdateId) {
         ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
-        long childPluginConfigurationUpdateCount = configurationManager
-            .getPluginConfigurationUpdateCountByParentId(aggregatePluginConfigurationUpdateId);
+        String errorMessages = null;
+        try {
+            long childPluginConfigurationUpdateCount = configurationManager
+                .getPluginConfigurationUpdateCountByParentId(aggregatePluginConfigurationUpdateId);
 
-        int rowsProcessed = 0;
-        PageControl pc = new PageControl(0, 50, new OrderingField("cu.id", PageOrdering.ASC));
-        while (true) {
-            rowsProcessed += configurationManager.completeAggregatePluginConfigurationUpdateBatch(
-                aggregatePluginConfigurationUpdateId, pc);
-            if (rowsProcessed >= childPluginConfigurationUpdateCount) {
-                break;
+            int rowsProcessed = 0;
+            PageControl pc = new PageControl(0, 50, new OrderingField("cu.id", PageOrdering.ASC));
+            while (true) {
+                List<Integer> pagedChildUpdateIds = configurationManager.getPluginConfigurationUpdatesByParentId(
+                    aggregatePluginConfigurationUpdateId, pc);
+                if (pagedChildUpdateIds.size() <= 0) {
+                    break;
+                }
+
+                for (Integer childUpdateId : pagedChildUpdateIds) {
+                    configurationManager.completePluginConfigurationUpdate(childUpdateId);
+                }
+
+                rowsProcessed += pagedChildUpdateIds.size();
+                if (rowsProcessed >= childPluginConfigurationUpdateCount) {
+                    break;
+                }
+
+                pc.setPageNumber(pc.getPageNumber() + 1);
             }
-            pc.setPageNumber(pc.getPageNumber() + 1);
+        } catch (Exception e) {
+            errorMessages = ThrowableUtil.getAllMessages(e);
+        } finally {
+            configurationManager.updateAggregatePluginConfigurationUpdateStatus(aggregatePluginConfigurationUpdateId,
+                errorMessages);
         }
 
-        configurationManager.updateAggregatePluginConfigurationUpdateStatus(aggregatePluginConfigurationUpdateId);
     }
 }

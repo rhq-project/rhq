@@ -13,7 +13,7 @@
   <packaging>maven-plugin</packaging>
 
   <name>RHQ Enterprise Server License Generator Maven Plugin</name>
-  <description>a Maven plugin for generating license files for JON Enterprise Server</description>
+  <description>a Maven plugin for generating license files for RHQ Enterprise Server</description>
 
   <scm>
     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/license-gen/</connection>

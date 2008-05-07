@@ -13,7 +13,7 @@
   <packaging>pom</packaging>
 
   <name>RHQ Helpers</name>
-  <description>parent POM for all JON helpers</description>
+  <description>parent POM for all RHQ helpers</description>
 
   <scm>
     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/helpers/</connection>

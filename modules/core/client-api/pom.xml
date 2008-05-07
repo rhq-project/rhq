@@ -13,7 +13,7 @@
    <packaging>jar</packaging>
 
    <name>RHQ Client API</name>
-   <description>Server and Client APIs for invoking operations on the JON plugin container</description>
+   <description>Server and Client APIs for invoking operations on the RHQ plugin container</description>
 
    <dependencies>
 

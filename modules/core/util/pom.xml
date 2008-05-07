@@ -13,7 +13,7 @@
   <packaging>jar</packaging>
 
   <name>RHQ Utilities</name>
-  <description>generic utility classes for use by any JON module</description>
+  <description>generic utility classes for use by any RHQ module</description>
 
   <scm>
     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/core/util/</connection>
@@ -33,7 +33,7 @@
       <scope>compile</scope>
     </dependency>
 
-    <!-- Used by the (deprecated) legacy XML parser, which is used to parse JON license files. -->
+    <!-- Used by the (deprecated) legacy XML parser, which is used to parse RHQ license files. -->
     <dependency>
       <groupId>jdom</groupId>
       <artifactId>jdom</artifactId>

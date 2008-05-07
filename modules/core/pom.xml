@@ -13,7 +13,7 @@
   <packaging>pom</packaging>
 
   <name>RHQ Core Modules</name>
-  <description>parent POM for modules comprising the JON core (i.e. modules required by both the enterprise and embedded editions of JON)</description>
+  <description>parent POM for modules comprising the RHQ core (i.e. modules required by both the enterprise and embedded editions of RHQ)</description>
 
   <scm>
     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/core/</connection>

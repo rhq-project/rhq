@@ -13,7 +13,7 @@
   <packaging>pom</packaging>
 
   <name>RHQ Enterprise Modules</name>
-  <description>parent POM for modules comprising the JON enterprise edition</description>
+  <description>parent POM for modules comprising the RHQ enterprise edition</description>
 
   <scm>
     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/</connection>

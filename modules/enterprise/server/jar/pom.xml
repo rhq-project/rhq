@@ -94,7 +94,7 @@
          <version>1.1.4</version>
       </dependency>
 
-      <!-- required by JON server classes, as well as EJB3 Embedded -->
+      <!-- required by RHQ server classes, as well as EJB3 Embedded -->
       <dependency>
          <groupId>dom4j</groupId>
          <artifactId>dom4j</artifactId>
@@ -247,7 +247,7 @@
          <version>1.8.2</version>
       </dependency>
 
-      <!-- required by JON server classes, as well as EJB3 Embedded -->
+      <!-- required by RHQ server classes, as well as EJB3 Embedded -->
       <dependency>
          <groupId>oswego-concurrent</groupId>
          <artifactId>concurrent</artifactId>

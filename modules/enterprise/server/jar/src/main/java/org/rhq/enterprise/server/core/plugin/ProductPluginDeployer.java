@@ -48,7 +48,6 @@ import org.jboss.deployment.DeploymentInfo;
 import org.jboss.deployment.SubDeployerSupport;
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
-import org.rhq.core.clientapi.descriptor.plugin.Help;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
@@ -289,14 +288,11 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             plugin.setEnabled(true);
             plugin.setDescription(pluginDescriptor.getDescription());
 
-            StringBuilder helpBuilder = new StringBuilder();
-            for (Help help : pluginDescriptor.getHelp()) {
-                for (Object content : help.getContent()) {
-                    helpBuilder.append(content.toString());
-                }
+            if (pluginDescriptor.getHelp() != null && !pluginDescriptor.getHelp().getContent().isEmpty())
+            {
+                plugin.setHelp(String.valueOf(pluginDescriptor.getHelp().getContent().get(0)));
             }
 
-            plugin.setHelp(helpBuilder.toString());
             plugin.setVersion(pluginDescriptor.getVersion());
             plugin.setMD5(MD5Generator.getDigestString(deploymentInfo.url.openStream()));
 
@@ -310,7 +306,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
 
             return plugin.getName();
         } catch (Exception e) {
-            log.error("Unable to deploy ON plugin [" + pluginJar + "]", e);
+            log.error("Unable to deploy RHQ plugin [" + pluginJar + "]", e);
             return null;
         }
     }

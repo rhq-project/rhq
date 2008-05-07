@@ -326,11 +326,13 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
     //@Test
     public void testAggregatePluginConfigurationUpdateWorkflowSuccess() throws Exception {
-        testAggregatePluginConfigurationUpdateWorkflowHelper(false);
+        // TODO (joseph): Fix and then re-enable this test.
+        //testAggregatePluginConfigurationUpdateWorkflowHelper(false);
     }
 
     //@Test
     public void testAggregatePluginConfigurationUpdateWorkflowFailure() throws Exception {
+        // TODO (joseph): Fix and then re-enable this test.
         testAggregatePluginConfigurationUpdateWorkflowHelper(true);
     }
 

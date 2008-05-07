@@ -333,7 +333,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     //@Test
     public void testAggregatePluginConfigurationUpdateWorkflowFailure() throws Exception {
         // TODO (joseph): Fix and then re-enable this test.
-        testAggregatePluginConfigurationUpdateWorkflowHelper(true);
+        //testAggregatePluginConfigurationUpdateWorkflowHelper(true);
     }
 
     //@Test

@@ -23,7 +23,7 @@ h2. Parent Resource Types
 * [#displayResourceTypeName( ${parentResourceType} )]
 #end
 #elseif ( ${resourceType.category.name} != "PLATFORM" )
-[a. Managed Platforms]
+[Managed Platforms|a. Managed Platforms]
 #else
 _none_
 #end
@@ -36,8 +36,8 @@ h2. Child Resource Types
 * [#displayResourceTypeName( ${childResourceType} )]
 #end
 #elseif ( ${resourceType.category.name} == "PLATFORM" )
-[b. Managed Servers]
-[c. Managed Platform Services]
+[Managed Servers|b. Managed Servers]
+[Managed Platform Services|c. Managed Platform Services]
 #else
 _none_
 #end

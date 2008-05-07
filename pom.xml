@@ -31,7 +31,7 @@
     <rhq.groupId>org.rhq</rhq.groupId>
     <rhq.product.name>RHQ</rhq.product.name>
     <rhq.earName>rhq.ear</rhq.earName>
-    <!-- the below path is relative to {jon-trunk} -->
+    <!-- the below path is relative to {rhq-trunk} -->
     <rhq.defaultDevContainerPath>dev-container</rhq.defaultDevContainerPath>
     <!-- set the below prop to true to enable misc extra build output -->
     <rhq.debug>false</rhq.debug>
@@ -71,7 +71,7 @@
     <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
     <rhq.test.ds.type-mapping>PostgreSQL</rhq.test.ds.type-mapping>
 
-     <!-- default port numbers for JON server -->
+     <!-- default port numbers for RHQ server -->
     <rhq.server.http.port>7080</rhq.server.http.port>
     <rhq.server.https.port>7443</rhq.server.https.port>
 

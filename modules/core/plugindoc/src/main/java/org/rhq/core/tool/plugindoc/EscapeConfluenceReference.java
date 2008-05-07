@@ -30,8 +30,8 @@ import org.apache.velocity.app.event.implement.EscapeReference;
  * @author Ian Springer
  */
 public class EscapeConfluenceReference extends EscapeReference {
+    static final String MATCH_ATTRIBUTE = "eventhandler.escape.confluence.match";    
     private static final String CONFLUENCE_SPECIAL_CHARS = "{}[]|*_?-+^~#";
-    private static final String MATCH_ATTRIBUTE = "eventhandler.escape.confluence.match";
 
     protected String escape(Object obj) {
         StringBuilder escapedString = new StringBuilder();
@@ -44,6 +44,21 @@ public class EscapeConfluenceReference extends EscapeReference {
             escapedString.append(c);
         }
         return escapedString.toString();
+    }
+
+    /**
+     * Escape the provided text if it matches the configured regular expression.
+     */
+    public Object referenceInsert(String reference, Object value)
+    {
+        if(reference.contains("helpText"))
+        {
+            return value;
+        }
+        else
+        {
+            return super.referenceInsert(reference, value);
+        }
     }
 
     protected String getMatchAttribute() {

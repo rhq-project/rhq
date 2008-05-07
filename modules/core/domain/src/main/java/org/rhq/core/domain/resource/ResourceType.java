@@ -40,9 +40,11 @@ import javax.persistence.QueryHint;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.SqlResultSetMapping;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
@@ -307,6 +309,9 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     private Set<ProductVersion> productVersions;
+
+    @Transient
+    private transient String helpText;
 
     /* no-arg constructor required by EJB spec and Externalizable (Externalizable also requires it to be public) */
     public ResourceType() {
@@ -656,6 +661,15 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     public int compareTo(ResourceType that) {
         return this.name.compareTo(that.getName());
         // TODO: Order by category too?
+    }
+
+    @Nullable
+    public String getHelpText() {
+        return helpText;
+    }
+
+    public void setHelpText(@Nullable String helpText) {
+        this.helpText = helpText;
     }
 
     @Override

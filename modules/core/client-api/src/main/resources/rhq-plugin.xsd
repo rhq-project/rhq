@@ -102,7 +102,7 @@
                </xs:annotation>
             </xs:element>
 
-            <xs:element ref="rhq:help" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element ref="rhq:help" minOccurs="0" maxOccurs="1" />
          </xs:sequence>
          <xs:attribute name="name" use="required" type="xs:string"/>
          <xs:attribute name="displayName" type="xs:string"/>
@@ -490,6 +490,7 @@
          <xs:element ref="rhq:event" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element ref="rhq:content" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element name="resource-configuration" type="config:configuration" minOccurs="0"/>
+         <xs:element ref="rhq:help" minOccurs="0" maxOccurs="1" />
       </xs:sequence>
       <xs:attribute name="name" use="required" type="xs:string"/>
       <xs:attribute name="singleton" use="optional" type="xs:boolean" default="false">

@@ -103,6 +103,8 @@ public class PluginDocMojo extends AbstractMojo {
      */
     private String confluencePassword;
 
+    private String endpoint;
+
     public void execute() throws MojoExecutionException, MojoFailureException {
         File pluginXmlFile = new File(this.project.getBasedir(), PLUGIN_DESCRIPTOR_PATH);
         if (!pluginXmlFile.exists()) {
@@ -122,12 +124,16 @@ public class PluginDocMojo extends AbstractMojo {
         VelocityTemplateProcessor templateProcessor = new VelocityTemplateProcessor(TEMPLATE_RESOURCE_PATH);
         File outputDir = new File(this.project.getBasedir(), OUTPUT_DIR_PATH);
         outputDir.mkdirs();
+        if (this.confluenceUrl != null) {
+            log.debug("Using Confluence URL: " + this.confluenceUrl);
+            this.endpoint = this.confluenceUrl + "/rpc/xmlrpc";
+        }
         for (ResourceType resourceType : resourceTypes) {
-            log.info("Generating plugin doc for '" + resourceType.getName() + "' Resource type...");
+            log.info("Generating plugin doc for '" + resourceType.getName() + "' Resource type...");            
             templateProcessor.getContext().put("resourceType", resourceType);
             File outputFile = new File(outputDir, resourceType.getName() + ".wiki");
             templateProcessor.processTemplate(outputFile);
-            if (this.confluenceUrl != null) {
+            if (this.endpoint != null) {
                 publishPage(outputFile, resourceType);
             }
         }
@@ -182,7 +188,7 @@ public class PluginDocMojo extends AbstractMojo {
     }
 
     private void publishPage(File contentFile, ResourceType resourceType) throws MojoExecutionException {
-        String endpoint = this.confluenceUrl + "/rpc/xmlrpc";
+        log.info("Publishing plugin doc page for '" + resourceType.getName() + "' Resource type to Confluence...");
         String title = getPageTitle(resourceType);
         try {
             Confluence confluence = new Confluence(endpoint);

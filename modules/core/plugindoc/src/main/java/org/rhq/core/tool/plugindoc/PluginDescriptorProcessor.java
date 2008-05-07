@@ -21,6 +21,8 @@ package org.rhq.core.tool.plugindoc;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.ArrayList;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
@@ -318,6 +320,11 @@ public class PluginDescriptorProcessor {
                     resourceType.addSubCategory(SubCategoriesMetadataParser.getSubCategory(subCategoryDescriptor,
                         resourceType));
                 }
+            }
+
+            if (resourceDescriptor.getHelp() != null && !resourceDescriptor.getHelp().getContent().isEmpty())
+            {
+                resourceType.setHelpText(String.valueOf(resourceDescriptor.getHelp().getContent().get(0)));
             }
         } catch (InvalidPluginDescriptorException e) {
             // TODO: Should we be storing these for viewing in server? Breaking deployment? What?

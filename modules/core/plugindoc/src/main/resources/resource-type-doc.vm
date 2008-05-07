@@ -9,6 +9,13 @@ h2. Overview
 | *Singleton:* | #if ( ${resourceType.singleton} ) yes #else no #end |
 | *Plugin:* | ${resourceType.plugin} |
 
+#if ( ${resourceType.helpText} )
+{info:title=Required Managed Resource Configuration}
+${resourceType.helpText}
+{info}
+#end
+
+
 h2. Parent Resource Types
 
 #if ( !${resourceType.parentResourceTypes.isEmpty()} )

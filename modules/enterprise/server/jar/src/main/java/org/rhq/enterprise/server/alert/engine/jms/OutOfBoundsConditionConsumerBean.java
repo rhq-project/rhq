@@ -24,6 +24,7 @@ import java.util.Date;
 
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
+import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
@@ -86,6 +87,13 @@ public class OutOfBoundsConditionConsumerBean implements MessageListener {
                 log.error("for scheduleId: " + outOfBoundsMessage.getScheduleId());
                 log.error("Original @ " + df.format(new Date(outOfBoundsMessage.getTimestamp())) + " - "
                     + outOfBoundsMessage.getOobValue());
+            }
+            try {
+                log.error("JMS Message Info: messageId=" + message.getJMSMessageID() + ", redelivered="
+                    + message.getJMSRedelivered());
+            } catch (JMSException jmse) {
+                log.error("JMS Message Info: error reading information from message, exception was: "
+                    + jmse.getMessage());
             }
             if (oob != null) {
                 log.error("Duplicate OOB?: " + oob.toString());

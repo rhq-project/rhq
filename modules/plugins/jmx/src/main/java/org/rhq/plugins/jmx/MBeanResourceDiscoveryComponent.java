@@ -129,7 +129,7 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
                 DiscoveredResourceDetails service = new DiscoveredResourceDetails(resourceType, resourceKey, name, "",
                     description, null, null);
                 Configuration config = service.getPluginConfiguration();
-                config.put(new PropertySimple(PROPERTY_OBJECT_NAME, resourceKey));
+                config.put(new PropertySimple(PROPERTY_OBJECT_NAME, bean.getBeanName().toString()));
 
                 Map<String, String> mappedVariableValues = queryUtility.getVariableValues();
                 for (String key : mappedVariableValues.keySet()) {

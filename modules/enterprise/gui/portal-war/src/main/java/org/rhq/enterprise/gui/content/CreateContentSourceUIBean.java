@@ -31,6 +31,7 @@ import javax.faces.model.SelectItem;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.DownloadMode;
@@ -171,7 +172,7 @@ public class CreateContentSourceUIBean {
                     newContentSource.setConfiguration(defaultTemplate.createConfiguration());
                 }
                 else {
-                    newContentSource.setConfiguration(null);
+                    newContentSource.setConfiguration(new Configuration());
                 }
             }
 

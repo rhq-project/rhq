@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.alert.engine.jms;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
@@ -57,6 +58,7 @@ public class OutOfBoundsConditionConsumerBean implements MessageListener {
 
     public void onMessage(Message message) {
         OutOfBoundsConditionMessage outOfBoundsMessage = null;
+        MeasurementOutOfBounds oob = null;
         try {
             ObjectMessage objectMessage = (ObjectMessage) message;
             Object object = objectMessage.getObject();
@@ -66,8 +68,8 @@ public class OutOfBoundsConditionConsumerBean implements MessageListener {
             MeasurementSchedule schedule = new MeasurementSchedule();
             schedule.setId(outOfBoundsMessage.getScheduleId());
 
-            MeasurementOutOfBounds oob = new MeasurementOutOfBounds(schedule, outOfBoundsMessage.getTimestamp(),
-                outOfBoundsMessage.getOobValue());
+            oob = new MeasurementOutOfBounds(schedule, outOfBoundsMessage.getTimestamp(), outOfBoundsMessage
+                .getOobValue());
 
             // JBNADM-2772 (Make sure the txn doesn't get rolled back for constraint violations)
             entityManager.persist(oob);
@@ -82,8 +84,11 @@ public class OutOfBoundsConditionConsumerBean implements MessageListener {
                 DateFormat df = new SimpleDateFormat("HH:mm:ss.SSS");
 
                 log.error("for scheduleId: " + outOfBoundsMessage.getScheduleId());
-                log.error("Original @ " + df.format(outOfBoundsMessage.getTimestamp()) + " - "
+                log.error("Original @ " + df.format(new Date(outOfBoundsMessage.getTimestamp())) + " - "
                     + outOfBoundsMessage.getOobValue());
+            }
+            if (oob != null) {
+                log.error("Duplicate OOB?: " + oob.toString());
             }
         }
     }

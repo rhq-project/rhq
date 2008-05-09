@@ -1306,6 +1306,7 @@ public class AlertConditionCache {
 
         try {
             if (validCache == null) {
+                validCache = true;
                 Collection<Tuple<OutOfBoundsCacheElement, OutOfBoundsCacheElement>> oobCacheElements = outOfBoundsBaselineMap
                     .values();
 

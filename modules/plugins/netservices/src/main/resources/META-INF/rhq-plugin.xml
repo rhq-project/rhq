@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="NetworkServices"
+        displayName="Network Services"
+        package="org.rhq.plugins.netservices"
+        description="Monitoring of network-based services"
+        version="2.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <service name="HTTPService"
+             discovery="HTTPNetServiceDiscoveryComponent"
+             class="HTTPNetServiceComponent"
+             supportsManualAdd="true">
+
+        <plugin-configuration>
+            <c:simple-property name="url"/>
+            <c:simple-property name="user" required="false"/>
+            <c:simple-property name="password" required="false"/>
+            <c:simple-property name="realm" required="false"/>
+            <c:simple-property name="validateResponseCode" type="boolean" default="false"/>
+            <c:simple-property name="sslProtocol" default="none">
+                <c:property-options>
+                    <c:option value="none" default="true"/>
+                    <c:option value="SSL"/>
+                    <c:option value="TLS"/>
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="method" default="GET">
+                <c:property-options>
+                    <c:option value="HEAD"/>
+                    <c:option value="GET" default="true"/>
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="followRedirects" type="boolean" default="false"/>
+            <c:simple-property name="responsePattern" required="false"/>
+        </plugin-configuration>
+
+        <metric property="connectTime" units="milliseconds" displayType="summary"
+                description="The to connect to the service"/>
+        <metric property="readTime" units="milliseconds" displayType="summary"
+                description="The time to transfer the requested content"/>
+        <metric property="contentLength" units="bytes" displayType="summary"
+                description="The size of the returned content"/>
+        <metric property="contentAge" units="milliseconds" displayType="summary"
+                description="The declared age of the requested page"/>
+
+
+    </service>
+
+
+    <service name="PingService"
+             discovery="PingNetServiceDiscoveryComponent"
+             class="PingNetServiceComponent"
+             supportsManualAdd="true">
+
+        <plugin-configuration>
+            <c:simple-property name="address"/>
+        </plugin-configuration>
+
+        <metric property="ipAddress" displayType="summary" dataType="trait" description="The ip address of the host"/>
+        <metric property="hostName" displayType="summary" dataType="trait" description="The hostname of the host"/>
+        <metric property="responseTime" units="milliseconds" displayType="summary" description="Time to ping the address"/>
+
+    </service>
+
+
+</plugin>
+
+        

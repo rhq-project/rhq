@@ -308,9 +308,11 @@ public class AlertConditionCache {
                 /* 
                  * don't insert recovery alerts initially, they should only be added when the definition they're 
                  * recovering for triggers an alert; which is why this check is in the loadCaches() method instead
-                 * of at the top of body of the insertAlertDefinition() method.  
+                 * of at the top of body of the insertAlertDefinition() method
+                 * 
+                 * be defensive about this: don't assume that the upstream process didn't allow null into the mix
                  */
-                if (alertDefinition.getRecoveryId() != 0) {
+                if (alertDefinition.getRecoveryId() != null && alertDefinition.getRecoveryId() != 0) {
                     continue;
                 }
 
@@ -338,6 +340,12 @@ public class AlertConditionCache {
                 }
 
                 for (MeasurementBaselineComposite baseline : baselines) {
+                    // don't insert borked baselines: only when min/max is correctly non-null, non-NAN, non-INF
+                    if (isInvalidDouble(baseline.getMin()) || isInvalidDouble(baseline.getMax())) {
+                        continue; // process the next baseline
+                    }
+
+                    // safe auto-unboxing here, because min/max both guaranteed to be valid by this point
                     insertOutOfBoundsBaseline(baseline.getId(), baseline.getMin(), baseline.getMax(), baseline
                         .getScheduleId(), stats);
                 }
@@ -628,9 +636,9 @@ public class AlertConditionCache {
 
         waitForBaselineLatchToOpen(rwLock.writeLock());
 
-        try {
-            AlertConditionCacheStats stats = new AlertConditionCacheStats();
+        AlertConditionCacheStats stats = new AlertConditionCacheStats();
 
+        try {
             for (MeasurementBaselineComposite measurementBaseline : measurementBaselines) {
                 int baselineId = measurementBaseline.getId();
 
@@ -643,10 +651,9 @@ public class AlertConditionCache {
                         AlertCondition alertCondition = alertConditionManager.getAlertConditionById(alertConditionId);
 
                         Double threshold = alertCondition.getThreshold();
-
                         String optionStatus = cacheElement.getOption();
-                        Double newCalculatedValue = getCalculatedBaselineValue(measurementBaseline, optionStatus,
-                            threshold);
+                        Double newCalculatedValue = getCalculatedBaselineValue(alertConditionId, measurementBaseline,
+                            optionStatus, threshold);
 
                         cacheElement.setAlertConditionValue(newCalculatedValue);
 
@@ -654,38 +661,47 @@ public class AlertConditionCache {
                     }
                 }
 
+                // don't insert borked baselines: only when min/max is correctly non-null, non-NAN, non-INF
+                if (isInvalidDouble(measurementBaseline.getMin()) || isInvalidDouble(measurementBaseline.getMax())) {
+                    continue; // process the next baseline
+                }
+
+                // safe auto-unboxing here, because min/max both guaranteed to be valid by this point
+                double baselineMin = measurementBaseline.getMin();
+                double baselineMax = measurementBaseline.getMax();
+
                 Tuple<OutOfBoundsCacheElement, OutOfBoundsCacheElement> oobTuple = outOfBoundsBaselineMap
                     .get(baselineId);
                 if (oobTuple == null) {
-                    insertOutOfBoundsBaseline(measurementBaseline.getId(), measurementBaseline.getMin(),
-                        measurementBaseline.getMax(), measurementBaseline.getScheduleId(), stats);
+                    insertOutOfBoundsBaseline(measurementBaseline.getId(), baselineMin, baselineMax,
+                        measurementBaseline.getScheduleId(), stats);
                 } else {
-                    Double lowOOB = measurementBaseline.getMin() * MeasurementConstants.LOW_OOB_THRESHOLD;
-                    Double highOOB = measurementBaseline.getMax() * MeasurementConstants.HIGH_OOB_THRESHOLD;
+                    double lowOOB = baselineMin * MeasurementConstants.LOW_OOB_THRESHOLD;
+                    double highOOB = baselineMax * MeasurementConstants.HIGH_OOB_THRESHOLD;
 
                     // when dealing with negative numbers, the LOW_OOB_THRESHOLD will create a **larger** lowOOB than
                     // the highOOB...so, after multiplying by the thresholds, swap if necessary to correct the issue
-                    if (lowOOB.compareTo(highOOB) > 0) {
-                        Double temp = highOOB;
+                    if (lowOOB > highOOB) {
+                        double temp = highOOB;
                         highOOB = lowOOB;
                         lowOOB = temp;
                     }
 
+                    // auto-boxing is always safe
                     oobTuple.lefty.setAlertConditionValue(lowOOB);
                     oobTuple.righty.setAlertConditionValue(highOOB);
 
                     // stats is only used for *real* caches, not bookkeeping caches
                 }
-
-                // let's assume that something could go wrong by inserting
-                // CacheElement values directly, and reset our internal state
-                validCache = null;
             }
-
-            return stats;
         } finally {
+            // let's defensively assume that we've somehow messed 
+            // up the internal state and reset our valid switch
+            validCache = null;
+
             rwLock.writeLock().unlock();
         }
+        return stats;
     }
 
     public AlertConditionCacheStats updateConditions(AlertDefinition alertDefinition,
@@ -977,7 +993,7 @@ public class AlertConditionCache {
     private void insertAlertCondition(Subject subject, Resource resource, AlertCondition alertCondition,
         AlertConditionCacheStats stats) {
         MeasurementDefinition measurementDefinition = alertCondition.getMeasurementDefinition(); // will be null for some categories
-        Integer alertConditionId = alertCondition.getId();
+        int alertConditionId = alertCondition.getId(); // auto-unboxing is safe here because as the PK it's guaranteed to be non-null
 
         AlertConditionCategory alertConditionCategory = alertCondition.getCategory();
         AlertConditionOperator alertConditionOperator = getAlertConditionOperator(alertConditionCategory,
@@ -993,7 +1009,8 @@ public class AlertConditionCache {
                     .getId());
             int measurementScheduleId = measurementBaseline.getSchedule().getId();
             String optionStatus = alertCondition.getOption();
-            Double calculatedValue = getCalculatedBaselineValue(measurementBaseline, optionStatus, threshold);
+            Double calculatedValue = getCalculatedBaselineValue(alertConditionId, measurementBaseline, optionStatus,
+                threshold);
             if (calculatedValue == null) {
                 return;
             }
@@ -1002,6 +1019,7 @@ public class AlertConditionCache {
                 MeasurementBaselineCacheElement cacheElement = new MeasurementBaselineCacheElement(
                     alertConditionOperator, calculatedValue, alertConditionId, optionStatus);
 
+                // auto-boxing (of alertConditionId) is always safe
                 addTo("measurementDataCache", measurementDataCache, measurementScheduleId, cacheElement,
                     alertConditionId, stats);
                 addTo("measurementBaselineMap", measurementBaselineMap, measurementBaseline.getId(), cacheElement,
@@ -1035,20 +1053,26 @@ public class AlertConditionCache {
             Integer measurementScheduleId = getMeasurementScheduleId(resource.getId(), measurementDefinition.getId(),
                 true);
 
-            MeasurementDataTrait measurementData = null;
+            MeasurementDataTrait measurementTrait = null;
             if (measurementScheduleId != null) {
-                measurementData = measurementDataManager.getCurrentTraitForSchedule(measurementScheduleId);
+                // auto-unboxing safe because measurementScheduleId known to be non-null by this point
+                measurementTrait = measurementDataManager.getCurrentTraitForSchedule(measurementScheduleId);
             }
 
             try {
+                /* 
+                 * don't forget special defensive handling to allow for null trait calculation;
+                 * this might happen if a newly committed resource has some alert template applied to
+                 * it for some trait that it has not yet gotten from the agent
+                 */
                 StringCacheElement cacheElement = new StringCacheElement(alertConditionOperator,
-                    (measurementData == null) ? null : measurementData.getValue(), alertConditionId);
+                    (measurementTrait == null) ? null : measurementTrait.getValue(), alertConditionId);
 
                 addTo("measurementTraitCache", measurementTraitCache, measurementScheduleId, cacheElement,
                     alertConditionId, stats);
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create StringCacheElement with parameters: "
-                    + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, measurementData));
+                    + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, measurementTrait));
             }
             AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
         } else if (alertConditionCategory == AlertConditionCategory.AVAILABILITY) {
@@ -1078,7 +1102,7 @@ public class AlertConditionCache {
             OperationRequestStatus operationRequestStatus = OperationRequestStatus.valueOf(option.toUpperCase());
 
             String operationName = alertCondition.getName();
-            Integer resourceTypeId = resource.getResourceType().getId();
+            int resourceTypeId = resource.getResourceType().getId();
 
             OperationDefinition operationDefinition = null;
             try {
@@ -1095,6 +1119,7 @@ public class AlertConditionCache {
                 ResourceOperationCacheElement cacheElement = new ResourceOperationCacheElement(alertConditionOperator,
                     operationRequestStatus, alertConditionId);
 
+                // auto-boxing always safe
                 addToResourceOperationCache(resource.getId(), operationDefinition.getId(), cacheElement,
                     alertConditionId, stats);
             } catch (InvalidCacheElementException icee) {
@@ -1150,40 +1175,49 @@ public class AlertConditionCache {
         }
     }
 
-    private Double getCalculatedBaselineValue(MeasurementBaseline baseline, String optionStatus, double threshold) {
-        double percentage = threshold / 100;
-        double baselineValue = 0.0;
+    private Double getCalculatedBaselineValue(int alertConditionId, MeasurementBaseline baseline, String optionStatus,
+        Double threshold) {
+        return getCalculatedBaselineValue_helper(alertConditionId, baseline.getId(), baseline.getMin(), baseline
+            .getMean(), baseline.getMax(), optionStatus, threshold);
+    }
 
-        if (optionStatus.equals("min")) {
-            baselineValue = baseline.getMin();
+    private Double getCalculatedBaselineValue(int alertConditionId, MeasurementBaselineComposite composite,
+        String optionStatus, Double threshold) {
+        return getCalculatedBaselineValue_helper(alertConditionId, composite.getId(), composite.getMin(), composite
+            .getMean(), composite.getMax(), optionStatus, threshold);
+    }
+
+    // this is auto-unboxing heaven, so let's be overly defensive at every turn
+    private Double getCalculatedBaselineValue_helper(int conditionId, int baselineId, Double min, Double mean,
+        Double max, String optionStatus, Double threshold) {
+
+        if (isInvalidDouble(threshold)) {
+            log.error("Failed to calculate baseline for [conditionId=" + conditionId + ", baselineId=" + baselineId
+                + "]: threshold was null");
+        }
+
+        // auto-unboxing of threshold is safe here 
+        double percentage = threshold / 100.0;
+        Double baselineValue = 0.0;
+
+        if (optionStatus == null) {
+            log.error("Failed to calculate baseline for [conditionId=" + conditionId + ", baselineId=" + baselineId
+                + "]: optionStatus string was null");
+        } else if (optionStatus.equals("min")) {
+            baselineValue = min;
         } else if (optionStatus.equals("mean")) {
-            baselineValue = baseline.getMean();
+            baselineValue = mean;
         } else if (optionStatus.equals("max")) {
-            baselineValue = baseline.getMax();
+            baselineValue = max;
         } else {
-            log.error("Failed to create MeasurementBaselineCacheElement: unrecognized optionStatus string of '"
-                + optionStatus + "' for " + baseline);
+            log.error("Failed to calculate baseline for [conditionId=" + conditionId + ", baselineId=" + baselineId
+                + "]: unrecognized optionStatus string of '" + optionStatus + "'");
             return null;
         }
 
-        return percentage * baselineValue;
-    }
-
-    private Double getCalculatedBaselineValue(MeasurementBaselineComposite baseline, String optionStatus,
-        double threshold) {
-        double percentage = threshold / 100;
-        double baselineValue = 0.0;
-
-        if (optionStatus.equals("min")) {
-            baselineValue = baseline.getMin();
-        } else if (optionStatus.equals("mean")) {
-            baselineValue = baseline.getMean();
-        } else if (optionStatus.equals("max")) {
-            baselineValue = baseline.getMax();
-        } else {
-            log.error("Failed to create MeasurementBaselineCacheElement: unrecognized optionStatus string of '"
-                + optionStatus + "' for " + baseline);
-            return null;
+        if (isInvalidDouble(baselineValue)) {
+            log.error("Failed to calculate baseline for [conditionId=" + conditionId + ", baselineId=" + baselineId
+                + "]: optionStatus string was '" + optionStatus + "', but the corresponding baseline value was null");
         }
 
         return percentage * baselineValue;
@@ -1194,15 +1228,15 @@ public class AlertConditionCache {
         /*
          * First, do some calculations to compute the cache elements from the raw data
          */
-        Double lowOOB = baselineMin * MeasurementConstants.LOW_OOB_THRESHOLD;
-        Double highOOB = baselineMax * MeasurementConstants.HIGH_OOB_THRESHOLD;
+        double lowOOB = baselineMin * MeasurementConstants.LOW_OOB_THRESHOLD;
+        double highOOB = baselineMax * MeasurementConstants.HIGH_OOB_THRESHOLD;
 
         /*
          * when dealing with negative numbers, the LOW_OOB_THRESHOLD will create a **larger** lowOOB than the
          * highOOB...so, after multiplying by the thresholds, swap if necessary to correct the issue
          */
         if (lowOOB > highOOB) {
-            Double temp = highOOB;
+            double temp = highOOB;
 
             highOOB = lowOOB;
             lowOOB = temp;
@@ -1242,13 +1276,13 @@ public class AlertConditionCache {
         }
     }
 
-    private String getCacheElementErrorString(Integer conditionId, AlertConditionOperator operator, Object option,
+    private String getCacheElementErrorString(int conditionId, AlertConditionOperator operator, Object option,
         Object value) {
         return "id=" + conditionId + ", " + "operator=" + operator + ", "
             + ((option != null) ? ("option=" + option + ", ") : "") + "value=" + value;
     }
 
-    private Integer getMeasurementScheduleId(Integer resourceId, Integer measurementDefinitionId, boolean okay) {
+    private Integer getMeasurementScheduleId(int resourceId, int measurementDefinitionId, boolean okay) {
         try {
             MeasurementSchedule schedule = measurementScheduleManager.getMeasurementSchedule(subjectManager
                 .getOverlord(), measurementDefinitionId, resourceId, false);
@@ -1427,5 +1461,9 @@ public class AlertConditionCache {
                 log.debug("abstractCacheElement=" + inverseElement);
             }
         }
+    }
+
+    private boolean isInvalidDouble(Double d) {
+        return (d == null || d == Double.NaN || d == Double.POSITIVE_INFINITY || d == Double.NEGATIVE_INFINITY);
     }
 }

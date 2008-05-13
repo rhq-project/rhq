@@ -19,25 +19,17 @@
 
 package org.rhq.plugins.mysql;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.inventory.ProcessScanResult;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
-import org.rhq.core.system.ProcessInfo;
-import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.database.DatabaseQueryUtility;
 
-import java.util.Set;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author Greg Hinkle

@@ -27,65 +27,80 @@ import org.rhq.enterprise.server.resource.group.definition.framework.ExpressionE
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 
 public class ExpressionEvaluatorTest extends AbstractEJB3Test {
-    private static final String IS_COMMITTED_SQL = " res.inventoryStatus = org.rhq.core.domain.resource.InventoryStatus.COMMITTED";
-
     private String[][] successTestCases = {
+        { "resource.child.name = joseph",
+
+        "SELECT res.id FROM Resource res " + //
+            " JOIN res.childResources child " + //
+            "WHERE child.name = :arg1 " },
+
         { "resource.name = joseph",
 
-        "SELECT res.id FROM Resource res " + "WHERE res.name = :arg1 AND " + IS_COMMITTED_SQL },
+        "SELECT res.id FROM Resource res " + //
+            "WHERE res.name = :arg1" },
 
         { "resource.version = 1.0",
 
-        "SELECT res.id FROM Resource res " + "WHERE res.version = :arg1 AND " + IS_COMMITTED_SQL },
+        "SELECT res.id FROM Resource res " + //
+            "WHERE res.version = :arg1" },
 
         { "resource.type.plugin = harry",
 
-        "SELECT res.id FROM Resource res " + "WHERE res.resourceType.plugin = :arg1 AND " + IS_COMMITTED_SQL },
+        "SELECT res.id FROM Resource res " + //
+            "WHERE res.resourceType.plugin = :arg1" },
 
         { "resource.type.name = sally",
 
-        "SELECT res.id FROM Resource res " + "WHERE res.resourceType.name = :arg1 AND " + IS_COMMITTED_SQL },
+        "SELECT res.id FROM Resource res " + //
+            "WHERE res.resourceType.name = :arg1" },
 
+        { "resource.pluginConfiguration[partition] = cluster-1",
+
+        "SELECT res.id FROM Resource res " + //
+            "  JOIN res.pluginConfiguration pluginConf, PropertySimple simple " + //
+            " WHERE simple.name = :arg1 " + //
+            "   AND simple.stringValue = :arg2 " + //
+            "   AND simple.configuration = pluginConf " },
+
+        { "resource.resourceConfiguration[partition] = cluster-1",
+
+        "SELECT res.id FROM Resource res " + //
+            "  JOIN res.resourceConfiguration conf, PropertySimple simple " + //
+            " WHERE simple.name = :arg1 " + //
+            "   AND simple.stringValue = :arg2 " + //
+            "   AND simple.configuration = conf " },
+
+        { "groupBy resource.type.plugin; " + //
+            "groupBy resource.type.name",
+
+        "  SELECT res.resourceType.plugin, res.resourceType.name " + //
+            "    FROM Resource res " + //
+            "GROUP BY res.resourceType.plugin, res.resourceType.name",
+
+        "  SELECT res.id FROM Resource res " + //
+            "   WHERE res.resourceType.plugin = :arg1 " + //
+            "     AND res.resourceType.name = :arg2 " },
+
+        { "groupBy resource.resourceConfiguration[partition-name]",
+
+        "  SELECT simple.stringValue FROM Resource res " + //
+            "    JOIN res.resourceConfiguration conf, PropertySimple simple " + //
+            "   WHERE simple.name = :arg1 " + //
+            "     AND simple.configuration = conf " + //
+            "GROUP BY simple.stringValue ",
+
+        "SELECT res.id FROM Resource res " + //
+            "  JOIN res.resourceConfiguration conf, PropertySimple simple " + //
+            " WHERE simple.name = :arg1 " + //
+            "   AND simple.stringValue = :arg2 " + //
+            "   AND simple.configuration = conf " },
         {
-            "resource.pluginConfiguration[partition] = cluster-1",
-
-            "SELECT res.id FROM Resource res " + "  JOIN res.pluginConfiguration pluginConf, PropertySimple simple "
-                + " WHERE simple.name = :arg1 " + "   AND simple.stringValue = :arg2 AND " + IS_COMMITTED_SQL
-                + "   AND simple.configuration = pluginConf" },
-
-        {
-            "resource.resourceConfiguration[partition] = cluster-1",
-
-            "SELECT res.id FROM Resource res " + "  JOIN res.resourceConfiguration conf, PropertySimple simple "
-                + " WHERE simple.name = :arg1 " + "   AND simple.stringValue = :arg2 AND " + IS_COMMITTED_SQL
-                + "   AND simple.configuration = conf" },
-
-        {
-            "groupBy resource.type.plugin; " + "groupBy resource.type.name",
-
-            "  SELECT res.resourceType.plugin, res.resourceType.name " + " FROM Resource res WHERE "
-                + IS_COMMITTED_SQL + " GROUP BY res.resourceType.plugin, res.resourceType.name",
-
-            "  SELECT res.id FROM Resource res " + "   WHERE res.resourceType.plugin = :arg1 "
-                + "     AND res.resourceType.name = :arg2 AND " + IS_COMMITTED_SQL },
-
-        {
-            "groupBy resource.resourceConfiguration[partition-name]",
-
-            "  SELECT simple.stringValue FROM Resource res "
-                + "    JOIN res.resourceConfiguration conf, PropertySimple simple " + "   WHERE simple.name = :arg1 AND "
-                + IS_COMMITTED_SQL + " AND simple.configuration = conf " + " GROUP BY simple.stringValue ",
-
-            "SELECT res.id FROM Resource res " + "  JOIN res.resourceConfiguration conf, PropertySimple simple "
-                + " WHERE simple.name = :arg1 " + "   AND simple.stringValue = :arg2 AND "
-                + IS_COMMITTED_SQL + " AND simple.configuration = conf " },
-        {
-            "resource.type.name = Windows" + ";" + "resource.trait[Trait.osversion] = 5.1",
+            "resource.type.name = Windows;" + //
+                "resource.trait[Trait.osversion] = 5.1",
 
             "SELECT res.id FROM Resource res JOIN res.schedules sched JOIN sched.definition def, MeasurementDataTrait trait"
-                + " WHERE res.resourceType.name = :arg1 AND def.name = :arg2 AND trait.value = :arg3 AND trait.schedule = sched AND "
-                + IS_COMMITTED_SQL + " AND trait.id.timestamp = "
-                + " (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id) " } };
+                + " WHERE res.resourceType.name = :arg1 AND def.name = :arg2 AND trait.value = :arg3 AND trait.schedule = sched AND trait.id.timestamp ="
+                + " (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)" } };
 
     @Test(groups = "integration.session")
     public void testWellFormedExpressions() throws Exception {

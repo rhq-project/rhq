@@ -31,11 +31,16 @@ import java.util.Set;
 
 import javax.persistence.Query;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result> {
+
+    private final Log log = LogFactory.getLog(ExpressionEvaluator.class);
 
     private static final String INVALID_EXPRESSION_FORM_MSG = "Expression must be in the form of 'condition = value' or 'groupBy condition'";
 
@@ -46,7 +51,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     private enum JoinCondition {
         RESOURCE_CONFIGURATION(".resourceConfiguration", "conf"), // 
         PLUGIN_CONFIGURATION(".pluginConfiguration", "pluginConf"), //
-        SCHEDULES(".schedules", "sched");
+        SCHEDULES(".schedules", "sched"), //
+        RESOURCE_CHILD(".childResources", "child");
 
         String subexpression;
         String alias;
@@ -139,6 +145,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
      */
     public void setTestMode(boolean mode) {
         isTestMode = mode;
+        whereStatics.remove("res.inventoryStatus = org.rhq.core.domain.resource.InventoryStatus.COMMITTED");
     }
 
     /**
@@ -192,8 +199,17 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     }
 
     private enum ParseContext {
-        BEGIN(false), Pivot(false), Resource(false), ResourceParent(false), ResourceGrandParent(false), ResourceType(
-            false), Trait(true), Configuration(true), StringMatch(true), END(true);
+        BEGIN(false), //
+        Pivot(false), //
+        Resource(false), //
+        ResourceParent(false), //
+        ResourceGrandParent(false), //
+        ResourceChild(false), //
+        ResourceType(false), //
+        Trait(true), //
+        Configuration(true), //
+        StringMatch(true), //
+        END(true);
 
         private boolean canTerminateExpression;
 
@@ -326,11 +342,15 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 } else if (nextToken.equals("grandparent")) {
                     context = ParseContext.ResourceGrandParent;
                     deepestResourceContext = context;
+                } else if (nextToken.equals("child")) {
+                    context = ParseContext.ResourceChild;
+                    deepestResourceContext = context;
                 } else {
                     parseExpression_resourceContext(value, tokens, nextToken);
                 }
-            } else if ((context == ParseContext.ResourceParent) || (context == ParseContext.ResourceGrandParent)) {
-                // since a parent *is* a resource, support the exact same processing
+            } else if ((context == ParseContext.ResourceParent) || (context == ParseContext.ResourceGrandParent)
+                || (context == ParseContext.ResourceChild)) {
+                // since a parent or child *is* a resource, support the exact same processing
                 parseExpression_resourceContext(value, tokens, nextToken);
             } else if (context == ParseContext.ResourceType) {
                 if (nextToken.equals("plugin")) {
@@ -424,6 +444,10 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             return "res.parentResource";
         } else if (deepestResourceContext == ParseContext.ResourceGrandParent) {
             return "res.parentResource.parentResource";
+        } else if (deepestResourceContext == ParseContext.ResourceChild) {
+            // populate child stuff
+            joinConditions.add(JoinCondition.RESOURCE_CHILD);
+            return "child";
         } else {
             throw new IllegalStateException("Expression only supports filtering on two levels of resource ancestry");
         }
@@ -560,6 +584,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         }
 
         public ExpressionEvaluator.Result next() {
+            log.debug("SingleQueryIterator: '" + computedJPQLStatement + "'");
             List<Integer> results = getSingleResultList(computedJPQLStatement);
             firstTime = false;
 
@@ -615,6 +640,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 whereReplacements.put(bindArgumentName, groupByExpression[i++]);
             }
 
+            log.debug("MultipleQueryIterator: '" + computedJPQLGroupStatement + "'");
             List<Integer> results = getSingleResultList(computedJPQLGroupStatement);
 
             return new ExpressionEvaluator.Result(results, PrintUtils.getDelimitedString(groupByExpression, 0, ","));
@@ -686,12 +712,12 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     private String getQueryJoinConditions() {
         String result = "";
         for (JoinCondition joinCondition : joinConditions) {
-            result += " JOIN " + getResourceRelativeContextToken() + joinCondition.subexpression + " "
-                + joinCondition.alias;
+            result += " JOIN res" + joinCondition.subexpression + " " + joinCondition.alias;
             if (joinCondition == JoinCondition.SCHEDULES) {
                 result += " JOIN " + joinCondition.alias + ".definition " + METRIC_DEF_ALIAS;
                 result += ", MeasurementDataTrait " + TRAIT_ALIAS + " ";
-            } else {
+            } else if (joinCondition == JoinCondition.PLUGIN_CONFIGURATION
+                || joinCondition == JoinCondition.RESOURCE_CONFIGURATION) {
                 result += ", PropertySimple " + PROP_SIMPLE_ALIAS + " ";
             }
         }

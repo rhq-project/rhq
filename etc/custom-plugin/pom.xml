@@ -50,9 +50,9 @@
     <!-- TODO: This is a fix for the Javac bug requiring annotations to be
                available when compiling dependent classes; it is fixed in JDK 6. -->
     <dependency>
-      <groupId>jboss-embeddable-ejb3</groupId>
-      <artifactId>hibernate-all</artifactId>
-      <version>1.0.0.Alpha9</version>
+      <groupId>hibernate-annotations</groupId>
+      <artifactId>hibernate-annotations</artifactId>
+      <version>3.2.1.GA</version>
       <scope>provided</scope> <!-- provided by the agent/plugin-container -->
     </dependency>
 

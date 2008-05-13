@@ -42,7 +42,8 @@ public interface GroupDefinitionManagerLocal {
         throws GroupDefinitionAlreadyExistsException, GroupDefinitionCreateException;
 
     GroupDefinition updateGroupDefinition(Subject subject, GroupDefinition updated)
-        throws GroupDefinitionAlreadyExistsException, GroupDefinitionUpdateException, InvalidExpressionException;
+        throws GroupDefinitionAlreadyExistsException, GroupDefinitionUpdateException, InvalidExpressionException,
+        ResourceGroupUpdateException;
 
     void calculateGroupMembership(Subject subject, int groupDefinitionId) throws GroupDefinitionDeleteException,
         GroupDefinitionNotFoundException, InvalidExpressionException, ResourceGroupUpdateException;

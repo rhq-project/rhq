@@ -101,7 +101,8 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public GroupDefinition updateGroupDefinition(Subject subject, GroupDefinition groupDefinition)
-        throws GroupDefinitionAlreadyExistsException, GroupDefinitionUpdateException, InvalidExpressionException {
+        throws GroupDefinitionAlreadyExistsException, GroupDefinitionUpdateException, InvalidExpressionException,
+        ResourceGroupUpdateException {
         try {
             if (getById(groupDefinition.getId()).isRecursive() != groupDefinition.isRecursive()) {
                 throw new GroupDefinitionUpdateException("Can not change the "
@@ -111,7 +112,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             throw new GroupDefinitionUpdateException(gdnfe.getMessage());
         }
 
-        validateName(groupDefinition.getName(), groupDefinition.getId());
+        boolean nameChanged = validateName(groupDefinition.getName(), groupDefinition.getId());
 
         ExpressionEvaluator evaluator = new ExpressionEvaluator();
         for (String expression : groupDefinition.getExpressionAsList()) {
@@ -120,28 +121,52 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
         groupDefinition.setLastCalculationTime(System.currentTimeMillis());
 
+        if (nameChanged) {
+            String oldGroupDefinitionName = null;
+            GroupDefinition attachedGroupDefinition = null;
+            try {
+                attachedGroupDefinition = getById(groupDefinition.getId());
+                oldGroupDefinitionName = attachedGroupDefinition.getName();
+            } catch (GroupDefinitionNotFoundException gdnfe) {
+                throw new GroupDefinitionUpdateException(gdnfe.getMessage());
+            }
+
+            Subject overlord = subjectManager.getOverlord();
+            for (ResourceGroup dynaGroup : attachedGroupDefinition.getManagedResourceGroups()) {
+                String dynaGroupName = dynaGroup.getName();
+                String newDynaGroupName = updateDynaGroupName(oldGroupDefinitionName, groupDefinition.getName(),
+                    dynaGroupName);
+                dynaGroup.setName(newDynaGroupName);
+                resourceGroupManager.updateResourceGroup(overlord, dynaGroup);
+            }
+        }
+
         try {
             return entityManager.merge(groupDefinition);
         } catch (Exception e) {
             throw new GroupDefinitionUpdateException(e);
         }
+
     }
 
-    private void validateName(String groupDefinitionName, Integer id) throws GroupDefinitionAlreadyExistsException {
+    // return boolean indicating whether the name of this group definition is changing
+    private boolean validateName(String groupDefinitionName, Integer id) throws GroupDefinitionAlreadyExistsException {
         Query query = entityManager.createNamedQuery(GroupDefinition.QUERY_FIND_BY_NAME);
         query.setParameter("name", groupDefinitionName);
 
         try {
             GroupDefinition found = (GroupDefinition) query.getSingleResult();
             if ((id == null) // null == id means creating new def - so if query has results, it's a dup
-                || (found.getId() != id)) // null != id menas updating def - so if query has result, only dup if ids don't match
+                || (found.getId() != id)) // found != id means updating def - so if query has result, only dup if ids don't match
             {
                 throw new GroupDefinitionAlreadyExistsException("GroupDefinition with name " + groupDefinitionName
                     + " already exists");
             }
         } catch (NoResultException e) {
             // user is changing the name of the group, this is OK
+            return true;
         }
+        return false;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -222,8 +247,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             .getId(), groupByClause);
         int resourceGroupId = 0;
         if (resourceGroup == null) {
-            String newDynamicGroupName = "DynaGroup - " + groupDefinition.getName()
-                + (groupByClause.equals("") ? "" : (" ( " + groupByClause + " )"));
+            String newDynamicGroupName = getDynamicGroupName(groupDefinition.getName(), groupByClause);
 
             resourceGroup = new ResourceGroup(newDynamicGroupName);
             resourceGroupId = resourceGroupManager.createResourceGroup(overlord, resourceGroup);
@@ -345,5 +369,21 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
         List<Integer> results = query.getResultList();
         return results;
+    }
+
+    private String getDynamicGroupName(String groupDefinitionName, String groupByClause) {
+        String newDynamicGroupName = "DynaGroup - " + groupDefinitionName
+            + (groupByClause.equals("") ? "" : (" ( " + groupByClause + " )"));
+        return newDynamicGroupName;
+    }
+
+    private String updateDynaGroupName(String oldGroupDefinitionName, String updatedGroupDefinitionName,
+        String dynaGroupName) throws GroupDefinitionUpdateException {
+        String newGroupDefinitionName = updatedGroupDefinitionName;
+        int oldGroupNameIndexStart = 12; // length of 'DynaGroup - ' prefix
+        int oldGroupNameLength = oldGroupDefinitionName.length();
+        return dynaGroupName.substring(0, oldGroupNameIndexStart) + //
+            newGroupDefinitionName + //
+            dynaGroupName.substring(oldGroupNameIndexStart + oldGroupNameLength);
     }
 }

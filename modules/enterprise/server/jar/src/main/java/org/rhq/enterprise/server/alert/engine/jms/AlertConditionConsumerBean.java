@@ -81,14 +81,13 @@ public final class AlertConditionConsumerBean implements MessageListener {
         try {
             log.debug("Received message: " + conditionMessage);
 
-            Integer alertConditionId = conditionMessage.getAlertConditionId();
+            int alertConditionId = conditionMessage.getAlertConditionId();
             AlertCondition condition = alertConditionManager.getAlertConditionById(alertConditionId);
             if (condition == null) {
                 log.info("AlertCondition[id=" + alertConditionId
                     + "] has been removed after it was triggered; this message will be discarded");
                 return;
             }
-            definition = condition.getAlertDefinition();
 
             AlertSerializer.getSingleton().lock(definition.getId());
 
@@ -105,13 +104,12 @@ public final class AlertConditionConsumerBean implements MessageListener {
                 alertConditionLogManager.checkForCompletedAlertConditionSet(activeConditionMessage
                     .getAlertConditionId());
             } else if (conditionMessage instanceof InactiveAlertConditionMessage) {
-                AlertCondition alertCondition = entityManager.find(AlertCondition.class, alertConditionId);
-                AlertDefinition alertDefinition = alertCondition.getAlertDefinition();
+                definition = condition.getAlertDefinition();
 
-                AlertDampeningEvent event = new AlertDampeningEvent(alertDefinition, AlertDampeningEvent.Type.NEGATIVE);
+                AlertDampeningEvent event = new AlertDampeningEvent(definition, AlertDampeningEvent.Type.NEGATIVE);
                 entityManager.persist(event);
 
-                alertDampeningManager.processEventType(alertDefinition.getId(), AlertDampeningEvent.Type.NEGATIVE);
+                alertDampeningManager.processEventType(definition.getId(), AlertDampeningEvent.Type.NEGATIVE);
             } else {
                 log.error("Unsupported message type sent to consumer for processing: "
                     + message.getClass().getSimpleName());

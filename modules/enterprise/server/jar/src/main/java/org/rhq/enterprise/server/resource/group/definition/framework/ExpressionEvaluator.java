@@ -162,6 +162,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         }
 
         try {
+            isGroupBy = false; // this needs to be reset each time a new expression is added
             parseExpression(expression);
             expressionCount++;
         } catch (InvalidExpressionException iee) {
@@ -607,6 +608,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
         @SuppressWarnings("unchecked")
         public MultipleQueryIterator() {
+            log.debug("MultipleQueryIterator: '" + computedJPQLStatement + "'");
             this.uniqueTuples = getSingleResultList(computedJPQLStatement);
             this.index = 0;
         }

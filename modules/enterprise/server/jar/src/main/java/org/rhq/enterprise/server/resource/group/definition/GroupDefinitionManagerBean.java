@@ -167,7 +167,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         }
 
         Collection<Integer> doomedResourceGroupIds = new ArrayList<Integer>();
-        for (Integer managedGroupId : getManagedResourceGroupIdsForGroupDefinition(groupDefinition.getId())) {
+        for (Integer managedGroupId : getManagedResourceGroupIdsForGroupDefinition(groupDefinitionId)) {
             doomedResourceGroupIds.add(managedGroupId);
         }
 
@@ -184,7 +184,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             /*
              * do one group at a time, to help prevent xaction timeouts
              */
-            Integer nextResourceGroupId = calculateGroupMembership_helper(overlord, groupDefinition, result);
+            Integer nextResourceGroupId = calculateGroupMembership_helper(overlord, groupDefinitionId, result);
 
             /*
              * remove all ids returned from the helper.  by the time we're done looping over all
@@ -200,7 +200,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
          * group, remove each group in it's own transaction
          */
         for (Integer doomedGroupId : doomedResourceGroupIds) {
-            removeManagedResource_helper(overlord, groupDefinition, doomedGroupId);
+            removeManagedResource_helper(overlord, groupDefinitionId, doomedGroupId);
         }
 
         long endTime = System.currentTimeMillis();
@@ -210,9 +210,12 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public Integer calculateGroupMembership_helper(Subject overlord, GroupDefinition groupDefinition,
-        ExpressionEvaluator.Result result) throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException {
+    public Integer calculateGroupMembership_helper(Subject overlord, int groupDefinitionId,
+        ExpressionEvaluator.Result result) throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException,
+        GroupDefinitionNotFoundException {
         long startTime = System.currentTimeMillis();
+
+        GroupDefinition groupDefinition = getById(groupDefinitionId);
 
         String groupByClause = result.getGroupByClause();
         ResourceGroup resourceGroup = resourceGroupManager.findByGroupDefinitionAndGroupByClause(groupDefinition
@@ -300,13 +303,13 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void removeGroupDefinition(Subject subject, Integer groupDefinitionId)
         throws GroupDefinitionNotFoundException, GroupDefinitionDeleteException {
-        GroupDefinition groupDefinition = getById(groupDefinitionId);
         Collection<Integer> managedResourceIds = getManagedResourceGroupIdsForGroupDefinition(groupDefinitionId);
         Subject overlord = subjectManager.getOverlord();
         for (Integer managedGroupId : managedResourceIds) {
-            removeManagedResource_helper(overlord, groupDefinition, managedGroupId);
+            removeManagedResource_helper(overlord, groupDefinitionId, managedGroupId);
         }
 
+        GroupDefinition groupDefinition = getById(groupDefinitionId);
         try {
             entityManager.remove(groupDefinition);
         } catch (Exception e) {
@@ -317,18 +320,18 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void removeManagedResource_helper(Subject overlord, GroupDefinition groupDefinition, Integer doomedGroupId)
-        throws GroupDefinitionDeleteException {
+    public void removeManagedResource_helper(Subject overlord, int groupDefinitionId, Integer doomedGroupId)
+        throws GroupDefinitionDeleteException, GroupDefinitionNotFoundException {
+        GroupDefinition groupDefinition = getById(groupDefinitionId);
         ResourceGroup doomedGroup = entityManager.getReference(ResourceGroup.class, doomedGroupId);
         groupDefinition.removeResourceGroup(doomedGroup);
 
-        /*
-         * using the group manager's delete method ensures that auditing data,
-         * such as completed operations, is correctly removed
-         */
-        //resourceGroupManager.deleteResourceGroup( subjectManager.getOverlord(), doomedGroupId );
         try {
-            entityManager.remove(doomedGroup);
+            /*
+             * using the group manager's delete method ensures that auditing data,
+             * such as completed operations, is correctly removed
+             */
+            resourceGroupManager.deleteResourceGroup(subjectManager.getOverlord(), doomedGroupId);
         } catch (Exception e) {
             throw new GroupDefinitionDeleteException("Error removing managedGroup '" + doomedGroup.getName() + "' "
                 + "from groupDefinition '" + groupDefinition.getName() + "': ", e);

@@ -47,8 +47,8 @@ public interface GroupDefinitionManagerLocal {
     void calculateGroupMembership(Subject subject, int groupDefinitionId) throws GroupDefinitionDeleteException,
         GroupDefinitionNotFoundException, InvalidExpressionException, ResourceGroupUpdateException;
 
-    Integer calculateGroupMembership_helper(Subject subject, GroupDefinition groupDefinition,
-        ExpressionEvaluator.Result result) throws GroupDefinitionNotFoundException, ResourceGroupUpdateException;
+    Integer calculateGroupMembership_helper(Subject subject, int groupDefinitionId, ExpressionEvaluator.Result result)
+        throws GroupDefinitionNotFoundException, ResourceGroupUpdateException, GroupDefinitionNotFoundException;
 
     PageList<ResourceGroupComposite> getManagedResourceGroups(int groupDefinitionId, PageControl pc);
 
@@ -57,6 +57,6 @@ public interface GroupDefinitionManagerLocal {
     void removeGroupDefinition(Subject subject, Integer groupDefinitionId) throws GroupDefinitionNotFoundException,
         GroupDefinitionDeleteException;
 
-    void removeManagedResource_helper(Subject subject, GroupDefinition groupDefinition, Integer doomedGroupId)
-        throws GroupDefinitionDeleteException;
+    void removeManagedResource_helper(Subject subject, int groupDefinitionId, Integer doomedGroupId)
+        throws GroupDefinitionDeleteException, GroupDefinitionNotFoundException;
 }

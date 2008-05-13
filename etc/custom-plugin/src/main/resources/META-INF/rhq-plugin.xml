@@ -20,7 +20,7 @@
       -->
       <!--
       <plugin-configuration>
-         <simple-property name="hello" default="world" />
+         <c:simple-property name="hello" default="world" />
       </plugin-configuration>
       -->
 

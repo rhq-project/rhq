@@ -791,6 +791,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
     private void validateSubExpressionAgainstPreviouslySeen(String normalizedSubExpression, boolean grouped)
         throws InvalidExpressionException {
+        normalizedSubExpression = stripFunctionSuffix(normalizedSubExpression);
         if (grouped) {
             if (groupedSubExpressions.contains(normalizedSubExpression)) {
                 throw new InvalidExpressionException(
@@ -806,6 +807,17 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             }
             simpleSubExpressions.add(normalizedSubExpression);
         }
+    }
+
+    private final String[] functions = { "contains", "startswith", "endswith" };
+
+    private String stripFunctionSuffix(String expression) {
+        for (String function : functions) {
+            if (expression.endsWith(function)) {
+                return expression.substring(0, expression.length() - function.length());
+            }
+        }
+        return expression;
     }
 
     private static class PrintUtils {

@@ -119,8 +119,6 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             evaluator.addExpression(expression);
         }
 
-        groupDefinition.setLastCalculationTime(System.currentTimeMillis());
-
         if (nameChanged) {
             String oldGroupDefinitionName = null;
             GroupDefinition attachedGroupDefinition = null;
@@ -227,6 +225,10 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         for (Integer doomedGroupId : doomedResourceGroupIds) {
             removeManagedResource_helper(overlord, groupDefinitionId, doomedGroupId);
         }
+
+        // re-attach the group, because it was cleared from the session during the callout to the helper
+        groupDefinition = getById(groupDefinitionId);
+        groupDefinition.setLastCalculationTime(System.currentTimeMillis());
 
         long endTime = System.currentTimeMillis();
 

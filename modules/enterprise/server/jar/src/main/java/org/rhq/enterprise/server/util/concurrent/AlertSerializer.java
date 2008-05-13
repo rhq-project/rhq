@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.util.concurrent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -44,7 +45,7 @@ public class AlertSerializer {
         return singleton;
     }
 
-    public void lock(Integer alertDefinitionId) {
+    public void lock(int alertDefinitionId) {
         ReentrantReadWriteLock lock = null;
 
         String msg = "tid= " + Thread.currentThread().getId() + ": alertDefinitionId=" + alertDefinitionId;
@@ -68,7 +69,7 @@ public class AlertSerializer {
         log.debug(msg + ": acquired write lock");
     }
 
-    public void unlock(Integer alertDefinitionId) {
+    public void unlock(int alertDefinitionId) {
         ReentrantReadWriteLock lock = alertDefinitionLocks.get(alertDefinitionId);
 
         String msg = "tid= " + Thread.currentThread().getId() + ": alertDefinitionId=" + alertDefinitionId;

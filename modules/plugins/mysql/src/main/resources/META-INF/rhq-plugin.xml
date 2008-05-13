@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="MySql"
+        displayName="MySql Database"
+        package="org.rhq.plugins.mysql"
+        description="Management and monitoring of MySql versions 8.2 and higher"
+        version="2.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="Database" useClasses="true"/>   
+
+   <server name="MySql Server" discovery="MySqlDiscoveryComponent" class="MySqlComponent"
+           description="MySql Server"
+           supportsManualAdd="true">
+
+      <version match="8.0"/>
+
+      <!-- Properties are connection/lookup configurations. They are values that the
+         plugin components need to connect and interact with the resource. -->
+      <plugin-configuration>
+         <!-- Defaults:
+               type: string
+               required: true
+               activationPolicy: immediate
+         -->
+         <c:simple-property name="host" default="127.0.0.1" displayName="listen host" description="the hostname or IP address that the database is listening on"/>
+         <c:simple-property name="port" default="3306" displayName="listen port" description="the TCP port that the database is listening on">
+            <c:constraint>
+               <c:integer-constraint minimum="1" maximum="65535"/>
+            </c:constraint>
+         </c:simple-property>
+         <c:simple-property name="db" default="MySql" displayName="database name" description="the name of the database to connect to"/>
+
+         <c:simple-property name="driverClass" default="com.mysql.jdbc.Driver" displayName="JDBC driver class"
+                          description="the fully-qualified classname of the JDBC driver class" required="false"/>
+         <c:simple-property name="principal" default="MySql" displayName="role name" description="the database role to connect as"/>
+         <c:simple-property name="credentials" default="MySql" type="password" displayName="role password"
+                          description="the password for the database role being used to connect"/>
+      </plugin-configuration>
+
+      <process-scan name="windows" query="process|basename|match=^(?i)mysqld\.exe$,process|basename|nomatch|parent=^(?i)mysqld\.exe$" />
+      <process-scan name="unix" query="process|basename|match=^mysqld$,process|basename|nomatch|parent=^mysqld$" />
+
+      <operation name="listProcessStatistics" description="List statistics about the currently executing MySql backends">
+         <results>
+            <c:list-property name="processList">
+               <c:map-property name="process">
+                  <c:simple-property name="Id" type="integer"/>
+                  <c:simple-property name="User"/>
+                  <c:simple-property name="Host"/>
+                  <c:simple-property name="db"/>
+                  <c:simple-property name="Command"/>
+                  <c:simple-property name="Time"/>
+                  <c:simple-property name="State"/>
+                  <c:simple-property name="Info"/>
+               </c:map-property>
+            </c:list-property>
+         </results>
+      </operation>
+
+
+
+       <metric displayName="User Time" property="Process.aggregateCpu.user" measurementType="trendsup" units="milliseconds" displayType="summary"/>
+       <metric displayName="Kernel Time" property="Process.aggregateCpu.sys" measurementType="trendsup" units="milliseconds" displayType="summary"/>
+       <metric displayName="CPU Percentage" property="Process.aggregateCpu.percent" measurementType="dynamic" units="percentage" displayType="summary"/>
+       <metric displayName="Physical Memory" property="Process.aggregateMemory.resident" measurementType="dynamic" units="bytes" displayType="summary"/>
+       <metric displayName="Virtual Memory" property="Process.aggregateMemory.size" measurementType="dynamic" units="bytes" displayType="summary"/>
+       <metric displayName="Open File Descriptors" property="Process.aggregateFileDescriptor.total" measurementType="dynamic" displayType="summary"/>
+
+
+
+
+       <metric property="Aborted_clients" measurementType="trendsup" description="Connections that aborted because the client did not close the connection"/>
+
+       <metric property="Aborted_connects" measurementType="trendsup" description="Connections that were not succesfully created"/>
+
+       <metric property="Binlog_cache_disk_use" measurementType="trendsup" description="Transactions that used the binary log cache and overflowed to a file on disk"/>
+
+       <metric property="Binlog_cache_use" measurementType="trendsup" description="Transactions using the temporary binary log cache"/>
+
+       <metric property="Bytes_received" displayType="summary" measurementType="trendsup" units="bytes" description="Bytes received by the server"/>
+
+       <metric property="Bytes_sent" displayType="summary" measurementType="trendsup" units="bytes" description="Bytes sent by the server"/>
+
+
+       <metric property="Com_admin_commands" measurementType="trendsup" />
+       <metric property="Com_alter_db" measurementType="trendsup" />
+       <metric property="Com_alter_table" measurementType="trendsup" />
+       <metric property="Com_analyze" measurementType="trendsup" />
+       <metric property="Com_backup_table" measurementType="trendsup" />
+       <metric property="Com_begin" measurementType="trendsup" />
+       <metric property="Com_call_procedure" measurementType="trendsup" />
+       <metric property="Com_change_db" measurementType="trendsup" />
+       <metric property="Com_change_master" measurementType="trendsup" />
+       <metric property="Com_check" measurementType="trendsup" />
+       <metric property="Com_checksum" measurementType="trendsup" />
+       <metric property="Com_commit" measurementType="trendsup" />
+       <metric property="Com_create_db" measurementType="trendsup" />
+       <metric property="Com_create_function" measurementType="trendsup" />
+       <metric property="Com_create_index" measurementType="trendsup" />
+       <metric property="Com_create_table" measurementType="trendsup" />
+       <metric property="Com_create_user" measurementType="trendsup" />
+       <metric property="Com_dealloc_sql" measurementType="trendsup" />
+       <metric property="Com_delete" measurementType="trendsup" />
+       <metric property="Com_delete_multi" measurementType="trendsup" />
+       <metric property="Com_do" measurementType="trendsup" />
+       <metric property="Com_drop_db" measurementType="trendsup" />
+       <metric property="Com_drop_function" measurementType="trendsup" />
+       <metric property="Com_drop_index" measurementType="trendsup" />
+       <metric property="Com_drop_table" measurementType="trendsup" />
+       <metric property="Com_drop_user" measurementType="trendsup" />
+       <metric property="Com_execute_sql" measurementType="trendsup" />
+       <metric property="Com_flush" measurementType="trendsup" />
+       <metric property="Com_grant" measurementType="trendsup" />
+       <metric property="Com_ha_close" measurementType="trendsup" />
+       <metric property="Com_ha_open" measurementType="trendsup" />
+       <metric property="Com_ha_read" measurementType="trendsup" />
+       <metric property="Com_help" measurementType="trendsup" />
+       <metric property="Com_insert" measurementType="trendsup" />
+       <metric property="Com_insert_select" measurementType="trendsup" />
+       <metric property="Com_kill" measurementType="trendsup" />
+       <metric property="Com_load" measurementType="trendsup" />
+       <metric property="Com_load_master_data" measurementType="trendsup" />
+       <metric property="Com_load_master_table" measurementType="trendsup" />
+       <metric property="Com_lock_tables" measurementType="trendsup" />
+       <metric property="Com_optimize" measurementType="trendsup" />
+       <metric property="Com_preload_keys" measurementType="trendsup" />
+       <metric property="Com_prepare_sql" measurementType="trendsup" />
+       <metric property="Com_purge" measurementType="trendsup" />
+       <metric property="Com_purge_before_date" measurementType="trendsup" />
+       <metric property="Com_rename_table" measurementType="trendsup" />
+       <metric property="Com_repair" measurementType="trendsup" />
+       <metric property="Com_replace" measurementType="trendsup" />
+       <metric property="Com_replace_select" measurementType="trendsup" />
+       <metric property="Com_reset" measurementType="trendsup" />
+       <metric property="Com_restore_table" measurementType="trendsup" />
+       <metric property="Com_revoke" measurementType="trendsup" />
+       <metric property="Com_revoke_all" measurementType="trendsup" />
+       <metric property="Com_rollback" measurementType="trendsup" />
+       <metric property="Com_savepoint" measurementType="trendsup" />
+       <metric property="Com_select" measurementType="trendsup" />
+       <metric property="Com_set_option" measurementType="trendsup" />
+       <metric property="Com_show_binlog_events" measurementType="trendsup" />
+       <metric property="Com_show_binlogs" measurementType="trendsup" />
+       <metric property="Com_show_charsets" measurementType="trendsup" />
+       <metric property="Com_show_collations" measurementType="trendsup" />
+       <metric property="Com_show_column_types" measurementType="trendsup" />
+       <metric property="Com_show_create_db" measurementType="trendsup" />
+       <metric property="Com_show_create_table" measurementType="trendsup" />
+       <metric property="Com_show_databases" measurementType="trendsup" />
+       <metric property="Com_show_errors" measurementType="trendsup" />
+       <metric property="Com_show_fields" measurementType="trendsup" />
+       <metric property="Com_show_grants" measurementType="trendsup" />
+       <metric property="Com_show_innodb_status" measurementType="trendsup" />
+       <metric property="Com_show_keys" measurementType="trendsup" />
+       <metric property="Com_show_logs" measurementType="trendsup" />
+       <metric property="Com_show_master_status" measurementType="trendsup" />
+       <metric property="Com_show_ndb_status" measurementType="trendsup" />
+       <metric property="Com_show_new_master" measurementType="trendsup" />
+       <metric property="Com_show_open_tables" measurementType="trendsup" />
+       <metric property="Com_show_privileges" measurementType="trendsup" />
+       <metric property="Com_show_processlist" measurementType="trendsup" />
+       <metric property="Com_show_slave_hosts" measurementType="trendsup" />
+       <metric property="Com_show_slave_status" measurementType="trendsup" />
+       <metric property="Com_show_status" measurementType="trendsup" />
+       <metric property="Com_show_storage_engines" measurementType="trendsup" />
+       <metric property="Com_show_tables" measurementType="trendsup" />
+       <metric property="Com_show_triggers" measurementType="trendsup" />
+       <metric property="Com_show_variables" measurementType="trendsup" />
+       <metric property="Com_show_warnings" measurementType="trendsup" />
+       <metric property="Com_slave_start" measurementType="trendsup" />
+       <metric property="Com_slave_stop" measurementType="trendsup" />
+       <metric property="Com_stmt_close" measurementType="trendsup" />
+       <metric property="Com_stmt_execute" measurementType="trendsup" />
+       <metric property="Com_stmt_fetch" measurementType="trendsup" />
+       <metric property="Com_stmt_prepare" measurementType="trendsup" />
+       <metric property="Com_stmt_reset" measurementType="trendsup" />
+       <metric property="Com_stmt_send_long_data" measurementType="trendsup" />
+       <metric property="Com_truncate" measurementType="trendsup" />
+       <metric property="Com_unlock_tables" measurementType="trendsup" />
+       <metric property="Com_update" measurementType="trendsup" />
+       <metric property="Com_update_multi" measurementType="trendsup" />
+       <metric property="Com_xa_commit" measurementType="trendsup" />
+       <metric property="Com_xa_end" measurementType="trendsup" />
+       <metric property="Com_xa_prepare" measurementType="trendsup" />
+       <metric property="Com_xa_recover" measurementType="trendsup" />
+       <metric property="Com_xa_rollback" measurementType="trendsup" />
+       <metric property="Com_xa_start" measurementType="trendsup" />
+
+
+
+       <metric property="Compression" />
+
+       <metric property="Connections" displayType="summary" measurementType="trendsup" description="Connection attempts to MySql"/>
+
+       <metric property="Created_tmp_disk_tables" measurementType="trendsup" />
+       <metric property="Created_tmp_files" measurementType="trendsup" />
+       <metric property="Created_tmp_tables" measurementType="trendsup" />
+       <metric property="Delayed_errors" measurementType="trendsup" />
+       <metric property="Delayed_insert_threads" measurementType="trendsup" />
+       <metric property="Delayed_writes" measurementType="trendsup" />
+       <metric property="Flush_commands" measurementType="trendsup" />
+       <metric property="Handler_commit" measurementType="trendsup" />
+       <metric property="Handler_delete" measurementType="trendsup" />
+       <metric property="Handler_discover" measurementType="trendsup" />
+       <metric property="Handler_prepare" measurementType="trendsup" />
+       <metric property="Handler_read_first" measurementType="trendsup" />
+       <metric property="Handler_read_key" measurementType="trendsup" />
+       <metric property="Handler_read_next" measurementType="trendsup" />
+       <metric property="Handler_read_prev" measurementType="trendsup" />
+       <metric property="Handler_read_rnd" measurementType="trendsup" />
+       <metric property="Handler_read_rnd_next" measurementType="trendsup" />
+       <metric property="Handler_rollback" measurementType="trendsup" />
+       <metric property="Handler_savepoint" measurementType="trendsup" />
+       <metric property="Handler_savepoint_rollback" measurementType="trendsup" />
+       <metric property="Handler_update" measurementType="trendsup" />
+       <metric property="Handler_write" measurementType="trendsup" />
+       <metric property="Innodb_buffer_pool_pages_data" />
+       <metric property="Innodb_buffer_pool_pages_dirty" />
+       <metric property="Innodb_buffer_pool_pages_flushed" />
+       <metric property="Innodb_buffer_pool_pages_free" />
+       <metric property="Innodb_buffer_pool_pages_latched" />
+       <metric property="Innodb_buffer_pool_pages_misc" />
+       <metric property="Innodb_buffer_pool_pages_total" />
+       <metric property="Innodb_buffer_pool_read_ahead_rnd" />
+       <metric property="Innodb_buffer_pool_read_ahead_seq" measurementType="trendsup" />
+       <metric property="Innodb_buffer_pool_read_requests" measurementType="trendsup" />
+       <metric property="Innodb_buffer_pool_reads" measurementType="trendsup" />
+       <metric property="Innodb_buffer_pool_wait_free" measurementType="trendsup" />
+       <metric property="Innodb_buffer_pool_write_requests" measurementType="trendsup" />
+       <metric property="Innodb_data_fsyncs" measurementType="trendsup" />
+       <metric property="Innodb_data_pending_fsyncs" measurementType="trendsup" />
+       <metric property="Innodb_data_pending_reads" measurementType="trendsup" />
+       <metric property="Innodb_data_pending_writes" measurementType="trendsup" />
+       <metric property="Innodb_data_read" measurementType="trendsup" units="bytes"/>
+       <metric property="Innodb_data_reads" measurementType="trendsup" />
+       <metric property="Innodb_data_writes" measurementType="trendsup" />
+       <metric property="Innodb_data_written" measurementType="trendsup" units="bytes"/>
+       <metric property="Innodb_dblwr_pages_written" measurementType="trendsup" />
+       <metric property="Innodb_dblwr_writes" measurementType="trendsup" />
+       <metric property="Innodb_log_waits" measurementType="trendsup" />
+       <metric property="Innodb_log_write_requests" measurementType="trendsup" />
+       <metric property="Innodb_log_writes" measurementType="trendsup" />
+       <metric property="Innodb_os_log_fsyncs" measurementType="trendsup" />
+       <metric property="Innodb_os_log_pending_fsyncs" measurementType="trendsup" />
+       <metric property="Innodb_os_log_pending_writes" />
+       <metric property="Innodb_os_log_written" measurementType="trendsup" />
+       <metric property="Innodb_page_size" />
+       <metric property="Innodb_pages_created" measurementType="trendsup" />
+       <metric property="Innodb_pages_read" measurementType="trendsup" />
+       <metric property="Innodb_pages_written" measurementType="trendsup" />
+       <metric property="Innodb_row_lock_current_waits" />
+       <metric property="Innodb_row_lock_time" measurementType="trendsup" />
+       <metric property="Innodb_row_lock_time_avg" />
+       <metric property="Innodb_row_lock_time_max" />
+       <metric property="Innodb_row_lock_waits" measurementType="trendsup" />
+       <metric property="Innodb_rows_deleted" measurementType="trendsup" />
+       <metric property="Innodb_rows_inserted" measurementType="trendsup" />
+       <metric property="Innodb_rows_read" measurementType="trendsup" />
+       <metric property="Innodb_rows_updated" measurementType="trendsup" />
+
+       <metric property="Key_blocks_not_flushed" />
+       <metric property="Key_blocks_unused" />
+       <metric property="Key_blocks_used" />
+       <metric property="Key_read_requests" measurementType="trendsup" />
+       <metric property="Key_reads" measurementType="trendsup" />
+       <metric property="Key_write_requests" measurementType="trendsup" />
+       <metric property="Key_writes" measurementType="trendsup" />
+       <metric property="Last_query_cost" />
+
+       <metric property="Max_used_connections" displayType="summary"/>
+
+       <metric property="Ndb_cluster_node_id" measurementType="trendsup" />
+       <metric property="Ndb_config_from_host" measurementType="trendsup" />
+       <metric property="Ndb_config_from_port" measurementType="trendsup" />
+       <metric property="Ndb_number_of_data_nodes" measurementType="trendsup" />
+       <metric property="Not_flushed_delayed_rows" measurementType="trendsup" />
+
+       <metric property="Open_files" />
+       <metric property="Open_streams" />
+       <metric property="Open_tables" displayType="summary" />
+       <metric property="Opened_tables" measurementType="trendsup" />
+
+       <metric property="Prepared_stmt_count" measurementType="trendsup" />
+
+       <metric property="Qcache_free_blocks" />
+       <metric property="Qcache_free_memory" />
+       <metric property="Qcache_hits" />
+       <metric property="Qcache_inserts" measurementType="trendsup" />
+       <metric property="Qcache_lowmem_prunes" measurementType="trendsup" />
+       <metric property="Qcache_not_cached" measurementType="trendsup" />
+       <metric property="Qcache_queries_in_cache" measurementType="trendsup" />
+       <metric property="Qcache_total_blocks" measurementType="trendsup" />
+
+       <metric property="Questions" displayType="summary" measurementType="trendsup" />
+
+
+       <metric property="Rpl_status" />
+       <metric property="Select_full_join" />
+       <metric property="Select_full_range_join" />
+       <metric property="Select_range" />
+       <metric property="Select_range_check" />
+       <metric property="Select_scan" />
+       <metric property="Slave_open_temp_tables" />
+       <metric property="Slave_retried_transactions" />
+       <metric property="Slave_running" />
+       <metric property="Slow_launch_threads" />
+       <metric property="Slow_queries" />
+       <metric property="Sort_merge_passes" />
+       <metric property="Sort_range" />
+       <metric property="Sort_rows" />
+       <metric property="Sort_scan" />
+       <metric property="Ssl_accept_renegotiates" />
+       <metric property="Ssl_accepts" />
+       <metric property="Ssl_callback_cache_hits" />
+       <metric property="Ssl_cipher" />
+       <metric property="Ssl_cipher_list" />
+       <metric property="Ssl_client_connects" />
+       <metric property="Ssl_connect_renegotiates" />
+       <metric property="Ssl_ctx_verify_depth" />
+       <metric property="Ssl_ctx_verify_mode" />
+       <metric property="Ssl_default_timeout" />
+       <metric property="Ssl_finished_accepts" />
+       <metric property="Ssl_finished_connects" />
+       <metric property="Ssl_session_cache_hits" />
+       <metric property="Ssl_session_cache_misses" />
+       <metric property="Ssl_session_cache_mode" />
+       <metric property="Ssl_session_cache_overflows" />
+       <metric property="Ssl_session_cache_size" />
+       <metric property="Ssl_session_cache_timeouts" />
+       <metric property="Ssl_sessions_reused" />
+       <metric property="Ssl_used_session_cache_entries" />
+       <metric property="Ssl_verify_depth" />
+       <metric property="Ssl_verify_mode" />
+       <metric property="Ssl_version" />
+       <metric property="Table_locks_immediate" />
+       <metric property="Table_locks_waited" />
+       <metric property="Tc_log_max_pages_used" />
+       <metric property="Tc_log_page_size" />
+       <metric property="Tc_log_page_waits" />
+       <metric property="Threads_cached" />
+       <metric property="Threads_connected" />
+       <metric property="Threads_created" />
+       <metric property="Threads_running" />
+       <metric property="Uptime" measurementType="trendsup" />
+       <metric property="Uptime_since_flush_status" />
+
+
+      <service name="Database" class="MySqlDatabaseComponent" discovery="MySqlDatabaseDiscoveryComponent">
+         <plugin-configuration>
+            <c:simple-property name="databaseName" displayName="Database Name" readOnly="true" />
+         </plugin-configuration>
+
+         <operation name="resetStatistics" displayName="Reset Statistics" description="Resets the statistics in this database"/>
+          <operation name="invokeSql" description="Execute arbitrary SQL">
+              <parameters>
+                  <c:simple-property name="type" default="query">
+                      <c:property-options>
+                          <c:option value="query" name="query"/>
+                          <c:option value="update" name="update"/>
+
+                      </c:property-options>
+                  </c:simple-property>
+              </parameters>
+              <results>
+                  <c:simple-property name="result"/>
+                  <c:simple-property name="contents"/>
+              </results>
+          </operation>
+         
+
+         <metric displayName="Backends" property="numbackends" displayType="summary"/>
+         <metric displayName="Transactions Committed" property="xact_commit" measurementType="trendsup" displayType="summary"/>
+         <metric displayName="Transactions Rolled Back" property="xact_rollback" measurementType="trendsup" displayType="summary"/>
+         <metric displayName="Blocks Read" property="blks_read" measurementType="trendsup"/>
+         <metric displayName="Blocks Hit" property="blks_hit" measurementType="trendsup"/>
+         <metric displayName="Size" property="size" description="Size of the database" units="bytes" displayType="summary"/>
+
+
+
+         <service name="Table" class="MySqlTableComponent" discovery="MySqlTableDiscoveryComponent"
+                  description="Database table" createDeletePolicy="both" creationDataType="configuration">
+
+            <plugin-configuration>
+               <c:simple-property name="tableName" readOnly="true" />
+            </plugin-configuration>
+
+
+
+         </service>
+
+      </service>
+
+      <service name="User" discovery="MySqlUserDiscoveryComponent" class="MySqlUserComponent"
+               createDeletePolicy="both" creationDataType="configuration"
+               description="A User in the MySql System">
+         <plugin-configuration>
+            <c:simple-property name="userName" required="true"/>
+         </plugin-configuration>
+
+
+         
+      </service>      
+   </server>
+
+</plugin>

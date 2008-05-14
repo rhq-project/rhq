@@ -121,7 +121,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         log.info("Initializing...");
 
         // Determine discovery mode - we only enable discovery if we are inside the agent and the period is positive non-zero
-        if (configuration.isInsideAgent() && (configuration.getContentDiscoveryPeriod() > 0)) {
+        if ((configuration.getContentDiscoveryPeriod() > 0)) {
             this.scheduledDiscoveriesEnabled = true;
         } else {
             this.scheduledDiscoveriesEnabled = false;

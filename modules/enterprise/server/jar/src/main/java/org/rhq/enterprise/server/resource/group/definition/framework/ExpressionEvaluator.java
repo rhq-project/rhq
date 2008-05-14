@@ -412,9 +412,9 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 String argumentValue = (String) whereReplacements.get(lastArgumentName);
 
                 if (nextToken.equals("startswith")) {
-                    argumentValue = "%" + argumentValue.replaceAll("\\_", "\\\\_");
-                } else if (nextToken.equals("endswith")) {
                     argumentValue = argumentValue.replaceAll("\\_", "\\\\_") + "%";
+                } else if (nextToken.equals("endswith")) {
+                    argumentValue = "%" + argumentValue.replaceAll("\\_", "\\\\_");
                 } else if (nextToken.equals("contains")) {
                     argumentValue = "%" + argumentValue.replaceAll("\\_", "\\\\_") + "%";
                 } else {

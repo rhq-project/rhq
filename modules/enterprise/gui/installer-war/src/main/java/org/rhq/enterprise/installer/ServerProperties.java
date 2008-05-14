@@ -294,7 +294,7 @@ public class ServerProperties {
             InstallerI18NResourceKeys.PROP_EMBEDDED_RHQ_AGENT_RESET_CONFIGURATION,
             InstallerI18NResourceKeys.PROP_EMBEDDED_RHQ_AGENT_RESET_CONFIGURATION_HELP, false, false, true),
         new PropertyItem(PROP_EMAIL_SMTP_HOST, String.class, InstallerI18NResourceKeys.PROP_EMAIL_SMTP_HOST,
-            InstallerI18NResourceKeys.PROP_EMAIL_SMTP_HOST_HELP, false, false, true),
+            InstallerI18NResourceKeys.PROP_EMAIL_SMTP_HOST_HELP, false, false, false),
         new PropertyItem(PROP_EMAIL_SMTP_PORT, Integer.class, InstallerI18NResourceKeys.PROP_EMAIL_SMTP_PORT,
             InstallerI18NResourceKeys.PROP_EMAIL_SMTP_PORT_HELP, false, false, true),
         new PropertyItem(PROP_EMAIL_FROM_ADDRESS, String.class, InstallerI18NResourceKeys.PROP_EMAIL_FROM_ADDRESS,

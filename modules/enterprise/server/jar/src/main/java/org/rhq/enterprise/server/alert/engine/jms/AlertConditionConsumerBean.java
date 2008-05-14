@@ -88,6 +88,7 @@ public final class AlertConditionConsumerBean implements MessageListener {
                     + "] has been removed after it was triggered; this message will be discarded");
                 return;
             }
+            definition = condition.getAlertDefinition();
 
             AlertSerializer.getSingleton().lock(definition.getId());
 
@@ -104,7 +105,6 @@ public final class AlertConditionConsumerBean implements MessageListener {
                 alertConditionLogManager.checkForCompletedAlertConditionSet(activeConditionMessage
                     .getAlertConditionId());
             } else if (conditionMessage instanceof InactiveAlertConditionMessage) {
-                definition = condition.getAlertDefinition();
 
                 AlertDampeningEvent event = new AlertDampeningEvent(definition, AlertDampeningEvent.Type.NEGATIVE);
                 entityManager.persist(event);

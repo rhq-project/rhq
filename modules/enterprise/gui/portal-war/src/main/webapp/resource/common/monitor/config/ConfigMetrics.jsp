@@ -41,7 +41,7 @@
    <c:when test="${not empty groupId}">
       <html:hidden property="groupId" value="${groupId}"/>
    </c:when>
-   <c:when test="${not empty ResourceType && param.parent >0 }">
+   <c:when test="${not empty param.type && param.parent >0 }">
       <!-- autogroup-->
       <html:hidden property="type" value="${param.type}"/>
       <html:hidden property="parent" value="${param.parent}"/>
@@ -113,6 +113,15 @@
       <c:set var="tmpTabs" value=".tabs.resource.group.monitor.configVisibility"/>
       <tiles:insert beanName="tmpTabs">
          <tiles:put name="groupId" value="${groupId}"/>
+      </tiles:insert>
+   </c:when>
+   <c:when test="${not empty param.type && param.parent >0 }">
+   <%-- autogroup  --%>
+      <c:set var="tmpTabs" value=".tabs.resource.autogroup.monitor.configVisibility"/>
+      <tiles:insert beanName="tmpTabs">
+         <tiles:put name="ctype" value="${param.type}"/>
+         <tiles:put name="type" value="${param.type}"/>
+         <tiles:put name="parent" value="${param.parent}"/>
       </tiles:insert>
    </c:when>
    <c:otherwise>

@@ -128,7 +128,7 @@
                                     </c:when>
                                     <c:when test="${not empty parent}">
                                        <c:param name="parent" value="${parent}"/>
-                                       <c:param name="type" value="${autogroupResourceType}"/>
+                                       <c:param name="type" value="${type}"/>
 		                              </c:when>
                                     <c:otherwise>
                                        <c:param name="id" value="${id}"/>

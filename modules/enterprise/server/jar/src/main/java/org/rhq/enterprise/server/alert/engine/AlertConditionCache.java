@@ -1009,11 +1009,13 @@ public class AlertConditionCache {
                     .getId());
             int measurementScheduleId = measurementBaseline.getSchedule().getId();
             String optionStatus = alertCondition.getOption();
+
+            /* 
+             * yes, calculatedValue may be null, but that's OK because the match 
+             * method for MeasurementBaselineCacheElement handles nulls just fine
+             */
             Double calculatedValue = getCalculatedBaselineValue(alertConditionId, measurementBaseline, optionStatus,
                 threshold);
-            if (calculatedValue == null) {
-                return;
-            }
 
             try {
                 MeasurementBaselineCacheElement cacheElement = new MeasurementBaselineCacheElement(

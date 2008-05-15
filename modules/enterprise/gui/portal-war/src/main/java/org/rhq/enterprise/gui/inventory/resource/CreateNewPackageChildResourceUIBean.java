@@ -95,6 +95,24 @@ public class CreateNewPackageChildResourceUIBean {
     public String createResource() {
         Subject user = EnterpriseFacesContextUtility.getSubject();
 
+        FileItem fileItem = (FileItem) FacesContextUtility.getRequest().getAttribute("uploadForm:uploadFile");
+
+        // Validate
+        if (resourceName == null || resourceName.trim().equals("")) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Resource name must be specified");
+            return null;
+        }
+
+        if (packageName == null || packageName.trim().equals("")) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Package name must be specified");
+            return null;
+        }
+
+        if ((fileItem.getName() == null) || fileItem.getName().equals("")) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package file must be specified");
+            return null;
+        }
+
         ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
         ConfigurationDefinition pluginConfigurationDefinition = configurationManager
             .getPluginConfigurationDefinitionForResourceType(user, resourceType.getId());
@@ -106,7 +124,6 @@ public class CreateNewPackageChildResourceUIBean {
 
         InputStream packageContentStream;
         try {
-            FileItem fileItem = (FileItem) FacesContextUtility.getRequest().getAttribute("uploadForm:uploadFile");
             packageContentStream = fileItem.getInputStream();
         } catch (IOException e) {
             String errorMessages = ThrowableUtil.getAllMessages(e);

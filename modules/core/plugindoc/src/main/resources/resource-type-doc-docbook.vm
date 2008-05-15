@@ -1,0 +1,141 @@
+<section id="Connector_Service">
+	<title>#displayResourceTypeName( ${resourceType} )</title>
+
+    <section id="Overview">
+	    <title>Overview</title>
+
+	    <informaltable frame="all">
+		    <tgroup cols="2"><tbody>
+				    <row>
+					    <entry>
+						    <para><emphasis role="bold">Description: </emphasis></para>
+					    </entry>
+					    <entry>
+						    <para>$!{resourceType.description}</para>
+					    </entry>
+				    </row>
+				    <row>
+					    <entry>
+						    <para><emphasis role="bold">Singleton: </emphasis></para>
+					    </entry>
+					    <entry>
+						    <para>#if ( ${resourceType.singleton} ) yes #else no #end</para>
+					    </entry>
+				    </row>
+				    <row>
+					    <entry>
+						    <para><emphasis role="bold">Plugin: </emphasis></para>
+					    </entry>
+					    <entry>
+						    <para>${resourceType.plugin}</para>
+					    </entry>
+				    </row>
+			    </tbody>
+		    </tgroup>
+	    </informaltable>
+
+    </section>
+
+#if ( ${resourceType.helpText} )
+<note><para>${resourceType.helpText}</para></note>
+#end
+
+
+    <section id="Overview">
+	    <title>Parent Resource Types</title>
+
+#if ( !${resourceType.parentResourceTypes.isEmpty()} )
+        <itemizedlist>
+#foreach ( ${parentResourceType} in ${resourceType.parentResourceTypes} )
+            <listitem><para>#displayResourceTypeName( ${parentResourceType} )</para></listitem>
+#end
+        </itemizedlist>
+#elseif ( ${resourceType.category.name} != "PLATFORM" )
+        <itemizedlist>
+            <listitem><para>Managed Platforms</para></listitem>
+        </itemizedlist>
+#else
+<emphasis>none</emphasis>
+#end
+    </section>
+
+
+    <section id="Overview">
+	    <title>Child Resource Types</title>
+
+#if ( !${resourceType.childResourceTypes.isEmpty()} )
+#foreach( ${childResourceType} in ${resourceType.childResourceTypes} )
+* [#displayResourceTypeName( ${childResourceType} )]
+#end
+#elseif ( ${resourceType.category.name} == "PLATFORM" )
+[Managed Servers|b. Managed Servers]
+[Managed Platform Services|c. Managed Platform Services]
+#else
+_none_
+#end
+    </section>
+
+
+#if ( ${resourceType.category.name} == "SERVER" )
+h2. Autodiscovery Process Scans
+
+#if ( ${resourceType.processScans.isEmpty()} )
+_none_
+#else
+|| Name || Query ||
+#foreach( ${processScan} in ${resourceType.processScans} )
+| ${processScan.name} | ${processScan.query} |
+#end
+#end
+
+#end
+
+
+h2. Connection Properties
+
+#displayConfig( ${resourceType.pluginConfigurationDefinition} )
+
+
+h2. Metrics
+
+#if ( ${resourceType.metricDefinitions.isEmpty()} )
+_none_
+#else
+|| Name || Type || Description || Internal Name ||
+#foreach( ${metricDefinition} in ${resourceType.metricDefinitions} )
+| ${metricDefinition.displayName} | ${metricDefinition.dataType.toString().toLowerCase()} | $!{metricDefinition.description} | ${metricDefinition.name} |
+#end
+#end
+
+{note}
+The Internal Name is what must be used to reference Traits in Dynamic Group Definition expressions.
+{note}
+
+
+h2. Configuration Properties
+
+#displayConfig( ${resourceType.resourceConfigurationDefinition} )
+
+
+h2. Operations
+
+#if ( ${resourceType.operationDefinitions.isEmpty()} )
+_none_
+#else
+|| Name || Description ||
+#foreach( ${operationDefinition} in ${resourceType.operationDefinitions} )
+| ${operationDefinition.displayName} | $!{operationDefinition.description} |
+#end
+#end
+
+
+h2. Package Types
+
+#if ( ${resourceType.packageTypes.isEmpty()} )
+_none_
+#else
+|| Name || Category || Description ||
+#foreach( ${packageType} in ${resourceType.packageTypes} )
+| ${packageType.displayName} | ${packageType.category} | $!{artifactType.description} |
+#end
+#end

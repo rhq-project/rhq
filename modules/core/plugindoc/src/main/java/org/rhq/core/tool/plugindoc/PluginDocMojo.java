@@ -65,7 +65,8 @@ public class PluginDocMojo extends AbstractMojo {
     private static final String PLUGIN_DESCRIPTOR_PATH = "src/main/resources/META-INF/rhq-plugin.xml";
     private static final String OUTPUT_DIR_PATH = "target/plugindoc";
     private static final String PLUGIN_DESCRIPTOR_JAXB_CONTEXT_PATH = "org.rhq.core.clientapi.descriptor.plugin";
-    private static final String TEMPLATE_RESOURCE_PATH = "resource-type-doc.vm";
+    private static final String CONFLUENCE_TEMPLATE_RESOURCE_PATH = "resource-type-doc-confluence.vm";
+    private static final String DOCBOOK_TEMPLATE_RESOURCE_PATH = "resource-type-doc-docbook.vm";
 
     private final Log log = LogFactory.getLog(PluginDocMojo.class);
 
@@ -121,21 +122,29 @@ public class PluginDocMojo extends AbstractMojo {
             throw new MojoExecutionException("Failed to process plugin descriptor.", e);
         }
 
-        VelocityTemplateProcessor templateProcessor = new VelocityTemplateProcessor(TEMPLATE_RESOURCE_PATH);
         File outputDir = new File(this.project.getBasedir(), OUTPUT_DIR_PATH);
         outputDir.mkdirs();
+
+        VelocityTemplateProcessor confluenceTemplateProcessor = new VelocityTemplateProcessor(CONFLUENCE_TEMPLATE_RESOURCE_PATH);
+        VelocityTemplateProcessor docbookTemplateProcessor = new VelocityTemplateProcessor(DOCBOOK_TEMPLATE_RESOURCE_PATH);
+
         if (this.confluenceUrl != null) {
             log.debug("Using Confluence URL: " + this.confluenceUrl);
             this.endpoint = this.confluenceUrl + "/rpc/xmlrpc";
         }
         for (ResourceType resourceType : resourceTypes) {
             log.info("Generating plugin doc for '" + resourceType.getName() + "' Resource type...");            
-            templateProcessor.getContext().put("resourceType", resourceType);
-            File outputFile = new File(outputDir, resourceType.getName() + ".wiki");
-            templateProcessor.processTemplate(outputFile);
+
+            confluenceTemplateProcessor.getContext().put("resourceType", resourceType);            
+            File confluenceOutputFile = new File(outputDir, resourceType.getName() + ".wiki");
+            confluenceTemplateProcessor.processTemplate(confluenceOutputFile);
             if (this.endpoint != null) {
-                publishPage(outputFile, resourceType);
+                publishPage(confluenceOutputFile, resourceType);
             }
+
+            docbookTemplateProcessor.getContext().put("resourceType", resourceType);
+            File docbookOutputFile = new File(outputDir, resourceType.getName() + ".xml");
+            docbookTemplateProcessor.processTemplate(docbookOutputFile);
         }
     }
 

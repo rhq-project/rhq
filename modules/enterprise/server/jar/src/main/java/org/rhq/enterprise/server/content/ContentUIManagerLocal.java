@@ -222,14 +222,21 @@ public interface ContentUIManagerLocal {
     PageList<InstalledPackageHistory> getInstalledPackageHistory(int contentServiceRequestId, PageControl pc);
 
     /**
-     * Retrieves a specific history entry by its ID. This call will also load the list of installation steps and
-     * their results if they exist on the entry. One and only one history entry must exist for the ID; an error
+     * Retrieves a specific history entry by its ID. One and only one history entry must exist for the ID; an error
      * will be thrown if exactly one history entry is not found.
      *
      * @param historyId identifies the history entry
      * @return history entry
      */
-    InstalledPackageHistory getInstalledPackageHistoryWithSteps(int historyId);
+    InstalledPackageHistory getInstalledPackageHistory(int historyId);
+
+    /**
+     * Retrieves the individual steps executed during the specified package installation history.
+     *
+     * @param installedPackageHistoryId identifies the history entry
+     * @return list of steps; empty list if there were no steps reported
+     */
+    List<PackageInstallationStep> getPackageInstallationSteps(int installedPackageHistoryId);
 
     /**
      * Retrieves a specific step entry by its ID.

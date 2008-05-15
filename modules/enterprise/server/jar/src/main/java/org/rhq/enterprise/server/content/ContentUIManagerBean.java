@@ -337,11 +337,18 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         return new PageList<InstalledPackageHistory>(packages, (int) totalCount, pc);
     }
 
-    public InstalledPackageHistory getInstalledPackageHistoryWithSteps(int historyId) {
-        Query query = entityManager.createNamedQuery(InstalledPackageHistory.QUERY_FIND_BY_ID_WITH_STEPS);
+    public InstalledPackageHistory getInstalledPackageHistory(int historyId) {
+        Query query = entityManager.createNamedQuery(InstalledPackageHistory.QUERY_FIND_BY_ID);
         query.setParameter("id", historyId);
         InstalledPackageHistory history = (InstalledPackageHistory) query.getSingleResult();
         return history;
+    }
+
+    public List<PackageInstallationStep> getPackageInstallationSteps(int installedPackageHistoryId) {
+        Query query = entityManager.createNamedQuery(PackageInstallationStep.QUERY_FIND_BY_INSTALLED_PACKAGE_HISTORY_ID);
+        query.setParameter("installedPackageHistoryId", installedPackageHistoryId);
+        List<PackageInstallationStep> steps = query.getResultList();
+        return steps;
     }
 
     public PackageInstallationStep getPackageInstallationStep(int stepId) {

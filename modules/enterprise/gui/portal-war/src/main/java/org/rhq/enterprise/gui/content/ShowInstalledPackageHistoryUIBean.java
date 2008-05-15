@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import javax.servlet.http.HttpServletRequest;
 import javax.faces.component.UIData;
 import javax.faces.model.SelectItem;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageVersion;
@@ -45,10 +47,12 @@ public class ShowInstalledPackageHistoryUIBean {
 
     private PackageInstallationStep step;
 
+    private final Log log = LogFactory.getLog(this.getClass());
+
     public InstalledPackageHistory getHistory() {
         if (history == null) {
             ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
-            history = contentUIManager.getInstalledPackageHistoryWithSteps(getSelectedHistoryId());
+            history = contentUIManager.getInstalledPackageHistory(getSelectedHistoryId());
         }
 
         return history;
@@ -85,7 +89,15 @@ public class ShowInstalledPackageHistoryUIBean {
 
     public List<PackageInstallationStep> getInstallationSteps() {
         if (installationSteps == null) {
-            installationSteps = getHistory().getInstallationSteps();
+            InstalledPackageHistory history = getHistory();
+
+            if (history == null) {
+                log.error("Trying to load steps for null history");
+                return installationSteps;
+            }
+
+            ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
+            installationSteps = contentUIManager.getPackageInstallationSteps(history.getId()); 
         }
 
         return installationSteps;

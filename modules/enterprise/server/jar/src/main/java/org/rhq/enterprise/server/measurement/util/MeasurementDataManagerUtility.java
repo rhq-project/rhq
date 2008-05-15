@@ -396,12 +396,13 @@ public class MeasurementDataManagerUtility {
 
     public MeasurementAggregate getAggregateByScheduleIds(long beginTime, long endTime, int[] scheduleIds)
         throws MeasurementNotFoundException {
+
         Connection myConnection = null;
         PreparedStatement ps = null;
+        String condition = null;
 
         try {
-            String condition = "         AND d.schedule_id IN ( " + JDBCUtil.generateInBinds(scheduleIds.length)
-                + ")\n";
+            condition = "         AND d.schedule_id IN ( " + JDBCUtil.generateInBinds(scheduleIds.length) + ")\n";
 
             myConnection = getConnection();
             ps = getFullQuery(myConnection, beginTime, endTime, 1, "", condition, scheduleIds);
@@ -414,6 +415,7 @@ public class MeasurementDataManagerUtility {
 
             throw new MeasurementNotFoundException("Data not found");
         } catch (SQLException e) {
+            LOG.warn("Error condition :" + condition);
             throw new MeasurementNotFoundException(e);
         } finally {
             JDBCUtil.safeClose(myConnection, ps, null);

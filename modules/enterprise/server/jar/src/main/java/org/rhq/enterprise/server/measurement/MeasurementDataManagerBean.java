@@ -921,10 +921,14 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
      */
     private List<MetricDisplaySummary> getAggregateMetricDisplaySummaries(Subject subject, List<Resource> resources,
         int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws MeasurementException {
+
         List<MetricDisplaySummary> data = new ArrayList<MetricDisplaySummary>(measurementDefinitionIds.length);
 
         // nothing to do, as we have no resources in that group
         if (resources.isEmpty()) {
+            return data;
+        }
+        if (measurementDefinitionIds == null || measurementDefinitionIds.length == 0) {
             return data;
         }
 
@@ -983,7 +987,14 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
              * Get the aggregate data from the backend and check if it is empty or not. If it is empty (for all members
              * of the group), skip over this metric.
              */
-            MeasurementAggregate aggregate = dataUtil.getAggregateByScheduleIds(begin, end, scheduleIds);
+            MeasurementAggregate aggregate;
+            if (scheduleIds == null || scheduleIds.length == 0) {
+                aggregate = new MeasurementAggregate(null, null, null);
+                log.warn("No metric schedules found for def=[" + definition + "] and resources [" + resources
+                    + "], using empty aggregate");
+            } else {
+                aggregate = dataUtil.getAggregateByScheduleIds(begin, end, scheduleIds);
+            }
             if (aggregate.isEmpty()) {
                 if (log.isTraceEnabled()) {
                     log.trace("There was no measurement data available for schedules " + Arrays.toString(scheduleIds)

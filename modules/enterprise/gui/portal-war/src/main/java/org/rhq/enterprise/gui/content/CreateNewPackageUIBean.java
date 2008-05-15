@@ -165,7 +165,7 @@ public class CreateNewPackageUIBean {
         }
 
         if ((fileItem.getName() == null) || fileItem.getName().equals("")) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "An artifact file must be specified");
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package file must be specified");
             return null;
         }
 

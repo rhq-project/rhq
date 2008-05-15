@@ -108,8 +108,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private static final String AVAIL_THREAD_POOL_NAME = "InventoryManager.availability";
     private static final int AVAIL_THREAD_POOL_CORE_POOL_SIZE = 1;
 
+    private static final int COMPONENT_START_TIMEOUT = 20 * 1000; // 20 seconds
     private static final int COMPONENT_STOP_TIMEOUT = 5 * 1000; // 5 seconds
-
+    
     private final Log log = LogFactory.getLog(InventoryManager.class);
 
     private PluginContainerConfiguration configuration;
@@ -865,7 +866,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     public void activateResource(Resource resource, @NotNull
     ResourceContainer container, boolean newPluginConfig) throws InvalidPluginConfigurationException,
         PluginContainerException {
-        log.debug("Activating resource component for " + resource + "...");
+        log.debug("Activating Resource component for " + resource + "...");
 
         ResourceComponent component = container.getResourceComponent();
 
@@ -882,11 +883,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 component = PluginContainer.getInstance().getPluginComponentFactory().buildResourceComponent(
                     resource.getResourceType());
             } catch (Throwable e) {
-                throw new PluginContainerException("Could not build component for resource [" + resource + "]", e);
+                throw new PluginContainerException("Could not build component for Resource [" + resource + "]", e);
             }
             // give the container wrapper the component instance that is managing the resource
             container.setResourceComponent(component);
         }
+
+        // Wrap the component in a proxy that will provide locking and a timeout for the call to start().
+        component = container.createResourceComponentProxy(ResourceComponent.class,
+            FacetLockType.READ, COMPONENT_START_TIMEOUT, true, false);
 
         // tell the component what its parent is, if it has a parent
         ResourceComponent parentComponent = null;
@@ -1077,7 +1082,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 try {
                     ResourceComponent component = container.createResourceComponentProxy(ResourceComponent.class,
-                        FacetLockType.WRITE, COMPONENT_STOP_TIMEOUT, true, true);
+                        FacetLockType.READ, COMPONENT_STOP_TIMEOUT, true, true);
                     component.stop();
                     log.debug("Successfully deactivated resource with id [" + resource.getId() + "].");
                 } catch (Throwable t) {

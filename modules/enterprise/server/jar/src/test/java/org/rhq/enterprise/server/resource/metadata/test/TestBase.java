@@ -18,13 +18,16 @@
  */
 package org.rhq.enterprise.server.resource.metadata.test;
 
+import java.io.FileNotFoundException;
 import java.net.URL;
+
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
+
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.plugin.Plugin;
@@ -72,6 +75,8 @@ public class TestBase extends AbstractEJB3Test {
         ValidationEventCollector vec = new ValidationEventCollector();
         unmarshaller.setEventHandler(vec);
         unmarshaller.setSchema(pluginSchema);
+        if (descriptorUrl == null)
+            throw new FileNotFoundException("File " + descriptorFile + " not found");
         return (PluginDescriptor) unmarshaller.unmarshal(descriptorUrl.openStream());
     }
 

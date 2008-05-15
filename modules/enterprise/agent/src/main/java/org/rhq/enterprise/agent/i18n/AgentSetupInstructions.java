@@ -49,9 +49,9 @@ public interface AgentSetupInstructions {
     // SERVER ADDRESS
     String SETUP_INSTRUCTION_SERVERBINDADDR_PREF = AgentConfigurationConstants.SERVER_BIND_ADDRESS;
     String SETUP_INSTRUCTION_SERVERBINDADDR_DEFAULT = AgentConfigurationConstants.DEFAULT_SERVER_BIND_ADDRESS;
-    @I18NMessages( { @I18NMessage("RHQ Server IP Address") })
+    @I18NMessages( { @I18NMessage("RHQ Server Hostname or IP Address") })
     String SETUP_INSTRUCTION_SERVERBINDADDR_PROMPT = "PromptCommand.setup.instruction.serveruri.bindaddr.prompt";
-    @I18NMessages( { @I18NMessage("The IP address the RHQ Server will bind to in order to\\n\\\n"
+    @I18NMessages( { @I18NMessage("The hostname or IP address the RHQ Server will bind to in order to\\n\\\n"
         + "listen for incoming messages from agents.") })
     String SETUP_INSTRUCTION_SERVERBINDADDR_HELP = "PromptCommand.setup.instruction.serveruri.bindaddr.help";
 
@@ -353,9 +353,9 @@ public interface AgentSetupInstructions {
 
     // CONNECTOR ADDRESS
     String SETUP_INSTRUCTION_CONNECTORBINDADDR_PREF = ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS;
-    @I18NMessages( { @I18NMessage("Agent IP Address") })
+    @I18NMessages( { @I18NMessage("Agent Hostname or IP Address") })
     String SETUP_INSTRUCTION_CONNECTORBINDADDR_PROMPT = "PromptCommand.setup.instruction.connector.bindaddr.prompt";
-    @I18NMessages( { @I18NMessage("The IP address the agent will bind to in order to\\n\\\n"
+    @I18NMessages( { @I18NMessage("The hostname or IP address the agent will bind to in order to\\n\\\n"
         + "listen for incoming messages.") })
     String SETUP_INSTRUCTION_CONNECTORBINDADDR_HELP = "PromptCommand.setup.instruction.connector.bindaddr.help";
 

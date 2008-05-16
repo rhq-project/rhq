@@ -120,8 +120,8 @@ public class CreateResourceRunner implements Callable, Runnable {
                 status = CreateResourceStatus.FAILURE;
             }
 
-            // Ensure a resource key was returned from the plugin
-            if (resourceKey == null) {
+            // Ensure a resource key was returned from the plugin if the plugin reports the create was successful
+            if ((reportedStatus == CreateResourceStatus.SUCCESS) && (resourceKey == null)) {
                 log.warn("Plugin did not indicate the result of the request: " + requestId);
                 errorMessage = "Plugin did not indicate a resource key for this request.";
                 status = CreateResourceStatus.FAILURE;
@@ -130,7 +130,11 @@ public class CreateResourceRunner implements Callable, Runnable {
             Throwable throwable = report.getException();
             if (throwable != null) {
                 log.warn("Throwable was found in creation report for request: " + requestId);
-                errorMessage = ReportUtils.getErrorMessageFromThrowable(throwable);
+
+                // If we still don't have an error message, populate it from the exception
+                if (errorMessage == null) {
+                    errorMessage = ReportUtils.getErrorMessageFromThrowable(throwable);
+                }
                 status = CreateResourceStatus.FAILURE;
             }
         } catch (Throwable t) {

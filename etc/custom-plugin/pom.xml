@@ -14,27 +14,31 @@
   <name>Custom RHQ Agent Plugin Template</name>
   <description>a template for building a custom RHQ agent plugin</description>
 
+  <properties>        
+    <rhq.version>1.0.0.GA</rhq.version>
+  </properties>    
+  
   <dependencies>
 
     <!-- Below are the core modules that are required dependencies of all plugins -->
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-domain</artifactId>
-      <version>1.0.1-SNAPSHOT</version>
+      <version>${rhq.version}</version>
       <scope>provided</scope> <!-- provided by the agent/plugin-container -->
     </dependency>
 
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-plugin-api</artifactId>
-      <version>1.0.1-SNAPSHOT</version>
+      <version>${rhq.version}</version>
       <scope>provided</scope> <!-- provided by the agent/plugin-container -->
     </dependency>
 
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-native-system</artifactId>
-      <version>1.0.1-SNAPSHOT</version>
+      <version>${rhq.version}</version>
       <scope>provided</scope> <!-- provided by the agent/plugin-container -->
     </dependency>
 
@@ -56,6 +60,15 @@
       <scope>provided</scope> <!-- provided by the agent/plugin-container -->
     </dependency>
 
+    <!-- TODO: This is a fix for the Javac bug requiring annotations to be
+               available when compiling dependent classes; it is fixed in JDK 6. -->
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <version>2.1</version>
+      <scope>provided</scope> <!-- provided by the agent/plugin-container -->
+    </dependency>
+    
     <!-- uncomment the one of the three logging systems your plugin uses: log4j, commons-logging or i18nlog -->
     <!-- all three are provided to your plugin by the agent/plugin-container -->
     <!--
@@ -66,15 +79,13 @@
       <scope>provided</scope>
     </dependency>
     -->
-
-    <!--
+    
     <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
       <version>1.1</version>
       <scope>provided</scope>
     </dependency>
-    -->
 
     <!--
     <dependency>
@@ -145,4 +156,15 @@
     </plugins>
   </build>
 
+  <repositories>
+    <repository>
+      <id>jboss</id>
+      <name>JBoss Repository</name>
+      <url>http://repository.jboss.org/maven2/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  
 </project>

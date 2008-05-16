@@ -396,7 +396,8 @@
    </f:facet>
 
    <h:outputText value="#{item.newResourceKey}" rendered="#{item.newResourceKey ne null}"/>
-   <i><h:outputText value="Plugin has not specified a key yet" rendered="#{item.newResourceKey eq null}"/></i>
+   <i><h:outputText value="Plugin has not specified a key yet" rendered="#{item.newResourceKey eq null and item.status ne 'FAILURE'}"/></i>
+   <i><h:outputText value="No resource key specified for failed request" rendered="#{item.newResourceKey eq null and item.status eq 'FAILURE'}"/></i>
 </rich:column>
 
 <ui:remove><!-- Request Status --></ui:remove>
@@ -466,15 +467,6 @@
 </f:facet>
 
 </rich:dataTable>
-
-<h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell"
-             rendered="#{!empty DetermineChildResourceCreationTypeUIBean.failedCreateHistory}">
-   <h:outputText value="Retry failed create"/>
-   <h:selectOneMenu value="#{DetermineChildResourceCreationTypeUIBean.retryCreateItem}" converter="CreateResourceHistoryConverter">
-      <f:selectItems value="#{DetermineChildResourceCreationTypeUIBean.failedCreateHistory}"/>
-   </h:selectOneMenu>   
-   <h:commandButton action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" value="RETRY CREATE" styleClass="buttonmed"/>
-</h:panelGrid>
 
 </rich:panel>
 </h:form>

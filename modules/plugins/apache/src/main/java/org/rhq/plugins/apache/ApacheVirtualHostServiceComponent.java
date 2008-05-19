@@ -58,7 +58,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public static final String RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP;
 
     private static final String RESPONSE_TIME_METRIC = "ResponseTime";
-    private static final double RESPONSE_TIME_LOG_TIME_MULTIPLIER = 0.1;
+    /** Multiply by 1/1000 to convert logged response times, which are in microseconds, to milliseconds. */
+    private static final double RESPONSE_TIME_LOG_TIME_MULTIPLIER = 0.001;
 
     private ResourceContext<ApacheServerComponent> resourceContext;
     private URL url;

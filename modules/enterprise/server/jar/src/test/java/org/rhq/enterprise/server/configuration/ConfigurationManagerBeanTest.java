@@ -961,6 +961,10 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             return null;
         }
 
+        public void executeServiceScanDeferred() {
+            return;
+        }
+
         public Availability getAvailability(Resource resource) {
             return null;
         }

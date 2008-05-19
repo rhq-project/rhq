@@ -173,7 +173,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
 
             agentClient.getDiscoveryAgentService().updatePluginConfiguration(resource.getId(), configuration);
             try {
-                agentClient.getDiscoveryAgentService().executeServiceScanImmediately();
+                agentClient.getDiscoveryAgentService().executeServiceScanDeferred();
             } catch (Exception e) {
                 log.warn("Failed to execute service scan - cannot detect children of the newly connected resource ["
                     + resource + "]", e);
@@ -790,6 +790,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         }
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public int createAggregateConfigurationUpdate(AbstractAggregateConfigurationUpdate update) {
+        entityManager.persist(update);
+        return update.getId();
+    }
+
     public int scheduleAggregatePluginConfigurationUpdate(Subject whoami, int compatibleGroupId,
         Configuration pluginConfigurationUpdate) throws SchedulerException {
         ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, compatibleGroupId);
@@ -800,9 +806,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
                 "AggregatePluginConfigurationUpdate must have non-null pluginConfigurationUpdate");
         }
 
-        AggregatePluginConfigurationUpdate update = new AggregatePluginConfigurationUpdate(group,
+        /*
+         * we need to create and persist the aggregate in a new/separate transaction before the rest of the
+         * processing of this method; if we try to create and attach the PluginConfigurationUpdate children
+         * to the parent aggregate before the aggregate is actually persisted, we'll get StaleStateExceptions
+         * from Hibernate because of our use of flush/clear (we're trying to update the aggregate before it
+         * actually exists); this is also why we need to retrieve the aggregate and overlord fresh in the loop 
+         */
+        AggregatePluginConfigurationUpdate newAggregateUpdate = new AggregatePluginConfigurationUpdate(group,
             pluginConfigurationUpdate, whoami.getName());
-        entityManager.persist(update);
+        int updateId = configurationManager.createAggregateConfigurationUpdate(newAggregateUpdate);
 
         /* 
          * efficiently create all resource-level plugin configuration update objects by 
@@ -811,9 +824,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         int pageNumber = 0;
         int rowsProcessed = 0;
         int groupMemberCount = resourceGroupManager.getImplicitGroupMemberCount(group.getId());
-        Subject overlord = subjectManager.getOverlord();
+
         PageControl pc = new PageControl(pageNumber, 50, new OrderingField("res.id", PageOrdering.ASC));
         while (true) {
+            AggregatePluginConfigurationUpdate update = configurationManager
+                .getAggregatePluginConfigurationById(updateId);
+            Subject overlord = subjectManager.getOverlord();
             List<Resource> pagedImplicit = resourceManager.getImplicitResourcesByResourceGroup(overlord, group, pc);
             if (pagedImplicit.size() <= 0) {
                 break;
@@ -840,18 +856,20 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         }
 
         JobDataMap jobDataMap = new JobDataMap();
-        jobDataMap.putAsString(AbstractAggregateConfigurationUpdateJob.DATAMAP_INT_CONFIG_GROUP_UPDATE_ID, update
-            .getId());
+        jobDataMap.putAsString(AbstractAggregateConfigurationUpdateJob.DATAMAP_INT_CONFIG_GROUP_UPDATE_ID, updateId);
         jobDataMap.putAsString(AbstractAggregateConfigurationUpdateJob.DATAMAP_INT_SUBJECT_ID, whoami.getId());
 
-        // acquire quartz objects and schedule the aggregate update
+        /* 
+         * acquire quartz objects and schedule the aggregate update, but deferred the execution for 10 seconds
+         * because we need this transaction to complete so that the data is available when the quartz job triggers
+         */
         JobDetail jobDetail = AggregatePluginConfigurationUpdateJob.getJobDetail(group, whoami, jobDataMap);
-        Trigger trigger = QuartzUtil.getFireOnceImmediateTrigger(jobDetail);
+        Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, 10000);
         scheduler.scheduleJob(jobDetail, trigger);
 
-        log.debug("Scheduled " + update + " for immediate execution");
+        log.debug("Scheduled plugin configuration update against compatibleGroup[id=" + compatibleGroupId + "]");
 
-        return update.getId();
+        return updateId;
     }
 
     private ResourceGroup getCompatibleGroupIfAuthorized(Subject whoami, int compatibleGroupId) {

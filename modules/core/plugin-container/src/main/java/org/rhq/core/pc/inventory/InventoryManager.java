@@ -315,6 +315,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    public void executeServiceScanDeferred() {
+        inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serviceScanExecutor);
+    }
+
     public AvailabilityReport executeAvailabilityScanImmediately(boolean changedOnlyReport) {
         try {
             AvailabilityExecutor availExec = new AvailabilityExecutor(this);
@@ -648,7 +652,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    public ResourceComponent getResourceComponent(Resource resource) {
+    public ResourceComponent<?> getResourceComponent(Resource resource) {
         ResourceContainer resourceContainer = this.resourceContainers.get(resource.getUuid());
 
         if (resourceContainer == null) {
@@ -1081,7 +1085,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
 
                 try {
-                    ResourceComponent component = container.createResourceComponentProxy(ResourceComponent.class,
+                    ResourceComponent<?> component = container.createResourceComponentProxy(ResourceComponent.class,
                         FacetLockType.READ, COMPONENT_STOP_TIMEOUT, true, true);
                     component.stop();
                     log.debug("Successfully deactivated resource with id [" + resource.getId() + "].");
@@ -1222,7 +1226,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     platform.setInventoryStatus(InventoryStatus.COMMITTED);
                 }
 
-                ResourceComponent platformComponent;
+                ResourceComponent<?> platformComponent;
                 if (this.platform.getResourceType().equals(PluginMetadataManager.TEST_PLATFORM_TYPE)) {
                     platformComponent = createTestPlatformComponent();
                 } else {
@@ -1496,7 +1500,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return contentContext;
     }
 
-    private ResourceComponent createTestPlatformComponent() {
+    private ResourceComponent<?> createTestPlatformComponent() {
         return new ResourceComponent() {
             public AvailabilityType getAvailability() {
                 return AvailabilityType.UP;

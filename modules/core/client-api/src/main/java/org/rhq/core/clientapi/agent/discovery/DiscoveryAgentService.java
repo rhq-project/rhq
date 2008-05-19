@@ -19,6 +19,7 @@
 package org.rhq.core.clientapi.agent.discovery;
 
 import java.util.EnumSet;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.domain.configuration.Configuration;
@@ -87,6 +88,8 @@ public interface DiscoveryAgentService {
      * @throws PluginContainerException if the service scan fails
      */
     InventoryReport executeServiceScanImmediately() throws PluginContainerException;
+
+    void executeServiceScanDeferred();
 
     /**
      * Checks the availability of all resources and returns a report on their availability statuses. This method blocks

@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.PluginConfigurationUpdateResourceComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
+import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -340,6 +341,8 @@ public interface ConfigurationManagerLocal {
     PageList<Integer> getPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl);
 
     long getPluginConfigurationUpdateCountByParentId(int configurationUpdateId);
+
+    int createAggregateConfigurationUpdate(AbstractAggregateConfigurationUpdate update);
 
     int scheduleAggregatePluginConfigurationUpdate(Subject whoami, int compatibleGroupId,
         Configuration pluginConfigurationUpdate) throws SchedulerException;

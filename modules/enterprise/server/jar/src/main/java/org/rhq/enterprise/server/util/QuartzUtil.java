@@ -19,11 +19,16 @@
 package org.rhq.enterprise.server.util;
 
 import java.util.Date;
+
 import org.quartz.JobDetail;
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 
 public class QuartzUtil {
+    public static Trigger getFireOnceOffsetTrigger(JobDetail jobDetail, long millis) {
+        return getFireOnceTrigger(jobDetail, System.currentTimeMillis() + millis);
+    }
+
     public static Trigger getFireOnceImmediateTrigger(JobDetail jobDetail) {
         return getFireOnceTrigger(jobDetail, System.currentTimeMillis());
     }

@@ -181,6 +181,10 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
         return null;
     }
 
+    public void executeServiceScanDeferred() {
+        return;
+    }
+
     public Availability getAvailability(Resource resource) {
         return null;
     }

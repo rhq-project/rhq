@@ -116,5 +116,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-project/2.0.8/maven-project-2.0.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-plugin-api/2.0.8/maven-plugin-api-2.0.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/swizzle/swizzle-confluence/1.2.Alpha1/swizzle-confluence-1.2.Alpha1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jvnet/inflector/0.7.0/inflector-0.7.0.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

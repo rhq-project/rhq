@@ -38,7 +38,7 @@
       </p>
    </c:if>
 
-   <hr>
+   <hr style="width: 50%">
 
    <p align="center">
       <h:outputText value="#{bundle.introduceHelpDocs}"/>

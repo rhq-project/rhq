@@ -1125,11 +1125,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Set<ResourceType> platformTypes = pluginManager.getMetadataManager().getTypesForCategory(
             ResourceCategory.PLATFORM);
 
-        // this should only ever have 1 or at most 2 resources (always the java fallback platform, and the native platform if supported)
+        // This should only ever have 1 or, at most, 2 Resources
+        // (always the Java fallback platform, and the native platform if supported).
         Set<DiscoveredResourceDetails> allDiscoveredPlatforms = new HashSet<DiscoveredResourceDetails>(2);
 
         if ((platformTypes != null) && (platformTypes.size() > 0)) {
-            // go through all the platform types that are supported and see if they can detect our platform
+            // Go through all the platform types that are supported and see if they can detect our platform.
             for (ResourceType platformType : platformTypes) {
                 try {
                     ResourceDiscoveryComponent component = componentFactory.getDiscoveryComponent(platformType);
@@ -1151,43 +1152,41 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
             }
         } else {
-            // this is very strange - there are no platform types - we should never be missing the built-in platform plugins
-            log.error("Missing platform plugins - falling back to Java-only impl; this should only occur in tests");
+            // This is very strange - there are no platform types - we should never be missing the built-in platform plugin.
+            log.error("Missing platform plugin(s) - falling back to dummy platform impl; this should only occur in tests!");
+            // TODO: Set sysprop (e.g. rhq.test.mode=true) in integration tests,
+            //       and throw a runtime exception here if that sysprop is not set.
             return createTestPlatform();
         }
 
-        if ((allDiscoveredPlatforms.size() < 1) || (allDiscoveredPlatforms.size() > 2)) {
-            log.warn("Platform discovery found too little or too many platforms - "
-                + "some platform discovery components need to be fixed so they discover only what they should: "
-                + allDiscoveredPlatforms);
+        if (allDiscoveredPlatforms.isEmpty()) {
+            throw new IllegalStateException("Neither a native nor a Java platform was discovered - "
+                + "this should never happen. Known platform types are " + platformTypes + ".");
+        }
+
+        if (allDiscoveredPlatforms.size() > 2) {
+            log.warn("Platform discovery reported too many platforms - "
+                + "the platform discovery components for platform types " + platformTypes + " "
+                + "should be fixed so together they report no more than 2 platforms total. "
+                + "Reported platforms: " + allDiscoveredPlatforms + ".");
         }
 
         DiscoveredResourceDetails javaPlatform = null;
         DiscoveredResourceDetails nativePlatform = null;
-
-        for (DiscoveredResourceDetails discoveredResource : allDiscoveredPlatforms) {
-            // we know the Java resource type in the descriptor is named "Java"
-            if (discoveredResource.getResourceType().getName().equalsIgnoreCase("Java")) {
-                javaPlatform = discoveredResource;
+        for (DiscoveredResourceDetails discoveredPlatform : allDiscoveredPlatforms) {
+            // We know the Java resource type in the descriptor is named "Java".
+            if (discoveredPlatform.getResourceType().getName().equalsIgnoreCase("Java")) {
+                javaPlatform = discoveredPlatform;
             } else {
-                nativePlatform = discoveredResource;
+                nativePlatform = discoveredPlatform;
             }
         }
 
-        DiscoveredResourceDetails platformToUse;
+        // In most cases, we will have both (since we support most platforms natively),
+        // so use the native platform if we have it; if not, fall back to the Java platform.
+        DiscoveredResourceDetails platformToUse = (nativePlatform != null) ? nativePlatform : javaPlatform;
 
-        // in most cases, we will have both (since we support most platforms natively)
-        // so use the native platform if we have it; if not, fallback to the java platform
-        if (nativePlatform != null) {
-            platformToUse = nativePlatform;
-        } else if (javaPlatform != null) {
-            platformToUse = javaPlatform;
-        } else {
-            throw new IllegalStateException("Neither a native or java platform was discovered - "
-                + "this should never happen. Discovered resources are: " + allDiscoveredPlatforms);
-        }
-
-        // build our actual platform resource now that we've discovered it
+        // Build our actual platform resource now that we've discovered it.
         Resource platform = createNewResource(platformToUse);
         platform.setAgent(this.agent);
 

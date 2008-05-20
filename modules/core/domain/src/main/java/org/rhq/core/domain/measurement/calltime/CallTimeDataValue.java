@@ -24,6 +24,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.text.DateFormat;
 import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -35,6 +36,7 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -44,35 +46,37 @@ import org.jetbrains.annotations.Nullable;
  */
 @Entity
 @NamedQueries( {
-// NOTE: This query only includes data chunks that are fully within the specified time interval, because it would
-//       not be possible to extrapolate the stats only for the overlapping portion of partially overlapping chunks.
-@NamedQuery(name = CallTimeDataValue.QUERY_FIND_COMPOSITES_FOR_RESOURCE, query = "SELECT new org.rhq.core.domain.measurement.calltime.CallTimeDataComposite("
-    + "key.callDestination, "
-    + "MIN(value.minimum), "
-    + "MAX(value.maximum), "
-    + "SUM(value.total), "
-    + "SUM(value.count), "
-    + "SUM(value.total) / SUM(value.count)) "
-    + "FROM CallTimeDataValue value "
-    + "JOIN value.key key "
-    + "WHERE key.schedule.id = :scheduleId "
-    + "AND value.count != 0 "
-    + "AND value.minimum != -1 "
-    + "AND value.beginTime >= :beginTime "
-    + "AND value.endTime <= :endTime "
-    + "GROUP BY key.callDestination ") })
+    // NOTE: This query only includes data chunks that are fully within the specified time interval, because it would
+    //       not be possible to extrapolate the stats only for the overlapping portion of partially overlapping chunks.
+    @NamedQuery(name = CallTimeDataValue.QUERY_FIND_COMPOSITES_FOR_RESOURCE, query = "SELECT new org.rhq.core.domain.measurement.calltime.CallTimeDataComposite("
+        + "key.callDestination, "
+        + "MIN(value.minimum), "
+        + "MAX(value.maximum), "
+        + "SUM(value.total), "
+        + "SUM(value.count), "
+        + "SUM(value.total) / SUM(value.count)) "
+        + "FROM CallTimeDataValue value "
+        + "JOIN value.key key "
+        + "WHERE key.schedule.id = :scheduleId "
+        + "AND value.count != 0 "
+        + "AND value.minimum != -1 "
+        + "AND value.beginTime >= :beginTime "
+        + "AND value.endTime <= :endTime "
+        + "GROUP BY key.callDestination "),
+    @NamedQuery(name = CallTimeDataValue.QUERY_DELETE_BY_RESOURCES, query = "DELETE CallTimeDataValue ctdv WHERE ctdv.key IN ( SELECT ctdk.id FROM CallTimeDataKey ctdk WHERE ctdk.schedule.resource IN ( :resources ) )") })
 @SequenceGenerator(name = "idGenerator", sequenceName = "RHQ_CALLTIME_DATA_VALUE_ID_SEQ")
 @Table(name = "RHQ_CALLTIME_DATA_VALUE")
 public class CallTimeDataValue implements Externalizable {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_COMPOSITES_FOR_RESOURCE = "CallTimeDataValue.findCompositesForResource";
+    public static final String QUERY_DELETE_BY_RESOURCES = "CallTimeDataValue.deleteByResources";
 
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "idGenerator")
     @Id
     private int id;
 
-    @JoinColumn(name = "KEY_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "KEY_ID", nullable = false)
     @ManyToOne
     private CallTimeDataKey key;
 

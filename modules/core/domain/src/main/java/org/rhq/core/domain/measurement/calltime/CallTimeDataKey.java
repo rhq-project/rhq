@@ -19,6 +19,7 @@
 package org.rhq.core.domain.measurement.calltime;
 
 import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -27,10 +28,14 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 
 /**
@@ -40,10 +45,13 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
  * @author Ian Springer
  */
 @Entity
+@NamedQueries( { @NamedQuery(name = CallTimeDataKey.QUERY_DELETE_BY_RESOURCES, query = "DELETE CallTimeDataKey ctdk WHERE ctdk.schedule IN ( SELECT ms FROM MeasurementSchedule ms WHERE ms.resource IN ( :resources ) )") })
 @SequenceGenerator(name = "idGenerator", sequenceName = "RHQ_CALLTIME_DATA_KEY_ID_SEQ")
 @Table(name = "RHQ_CALLTIME_DATA_KEY")
 public class CallTimeDataKey implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    public static final String QUERY_DELETE_BY_RESOURCES = "CallTimeDataKey.deleteByResources";
 
     public static final int DESTINATION_MAX_LENGTH = 4000;
 

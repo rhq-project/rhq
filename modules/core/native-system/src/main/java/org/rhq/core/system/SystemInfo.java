@@ -206,4 +206,7 @@ public interface SystemInfo {
     FileSystemInfo getFileSystem(String path);
 
     NetworkAdapterStats getNetworkAdapterStats(String interfaceName);
+
+    NetworkStats getNetworkStats(String addressName, int port);
+
 }

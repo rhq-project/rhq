@@ -187,8 +187,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent {
     }
 
     @Nullable
-    private static String getDataDirPath(@NotNull
-    ProcessInfo procInfo) {
+    protected static String getDataDirPath(@NotNull ProcessInfo procInfo) {
         String dataDirPath = null;
         String[] cmdLine = procInfo.getCommandLine();
         for (int i = 0; i < cmdLine.length; i++) {

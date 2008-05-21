@@ -23,6 +23,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.ResultSetMetaData;
 import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -241,8 +242,62 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
                 }
             }
             return null;
-        }
-        else
+        } else if ("invokeSql".equals(name)) {
+            Statement stmt = null;
+            ResultSet rs = null;
+            try {
+                stmt = getConnection().createStatement();
+                String sql = parameters.getSimple("sql").getStringValue();
+                OperationResult result = new OperationResult();
+
+                if (parameters.getSimple("type").getStringValue().equals("update")) {
+                    int updateCount = stmt.executeUpdate(sql);
+                    result.getComplexResults().put(new PropertySimple("result", "Query updated " + updateCount + " rows"));
+
+                } else {
+                    rs = stmt.executeQuery(parameters.getSimple("sql").getStringValue());
+
+                    ResultSetMetaData md = rs.getMetaData();
+                    StringBuilder buf = new StringBuilder();
+                    int rowCount = 0;
+
+                    buf.append("<table>");
+                    buf.append("<th>");
+                    for (int i = 1; i <= md.getColumnCount(); i++) {
+                        buf.append("<td>");
+                        buf.append(md.getColumnName(i) + " (" + md.getColumnTypeName(i) + ")");
+                        buf.append("</td>");
+                    }
+                    buf.append("</th>");
+
+
+                    while (rs.next()) {
+                        rowCount++;
+                        buf.append("<tr>");
+                        for (int i = 1; i <= md.getColumnCount(); i++) {
+                            buf.append("<td>");
+                            buf.append(rs.getString(i));
+                            buf.append("</td>");
+                        }
+                        buf.append("</tr>");
+                    }
+
+                    buf.append("</table>");
+                    result.getComplexResults().put(new PropertySimple("result", "Query returned " + rowCount + " rows"));
+                    result.getComplexResults().put(new PropertySimple("contents", buf.toString()));
+                }
+                return result;
+            } finally {
+                if (rs != null) {
+                    rs.close();
+                }
+
+                if (stmt != null) {
+                    stmt.close();
+                }
+            }
+        } else {
             throw new UnsupportedOperationException("Operation [" + name + "] is not supported yet.");
+        }
     }
 }

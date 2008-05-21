@@ -275,6 +275,10 @@ public class JavaSystemInfo implements SystemInfo {
         throw getUnsupportedException("Cannot get network stats");
     }
 
+    public NetworkStats getNetworkStats(String addressName, int port) {
+        throw getUnsupportedException("Cannot get network stats");
+    }
+
     /**
      * Constructor for {@link JavaSystemInfo} with package scope so only the {@link SystemInfoFactory} can instantiate
      * this object.

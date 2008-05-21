@@ -22,6 +22,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
+
 import org.hyperic.sigar.ProcCpu;
 import org.hyperic.sigar.ProcFd;
 import org.hyperic.sigar.ProcMem;
@@ -69,14 +72,17 @@ public class AggregateProcessInfo extends ProcessInfo {
             }
 
             if (pids != null) {
+                Set<Long> runningPids = new HashSet<Long>();
                 for (long pid : pids) {
+                    runningPids.add(pid);
                     try {
                         ProcState processProcState = sigar.getProcState(pid);
                         if (processProcState.getPpid() == super.pid) {
-                            ProcessStats ps = childProcessStats.get(Long.valueOf(pid));
+                            ProcessStats ps = childProcessStats.get(pid);
                             if (ps == null) {
                                 ps = new ProcessStats(pid);
-                                childProcessStats.put(Long.valueOf(pid), ps);
+                                ps.isRunning = true;
+                                childProcessStats.put(pid, ps);
                             }
 
                             ps.refresh(sigar);
@@ -84,6 +90,11 @@ public class AggregateProcessInfo extends ProcessInfo {
                     } catch (Exception e) {
                         // ignore this process, SIGAR can't get its procState for some reason (permissions? process died?)
                     }
+                }
+
+                for (ProcessStats ps : childProcessStats.values()) {
+                    if (!runningPids.contains(ps.childPid))
+                        ps.isRunning = false;
                 }
             }
 
@@ -119,9 +130,12 @@ public class AggregateProcessInfo extends ProcessInfo {
             // now get all the children's data
             for (ProcessStats ps : childProcessStats.values()) {
                 procTimes.add(ps.childProcTime);
-                procMems.add(ps.childProcMem);
-                procCpus.add(ps.childProcCpu);
-                procFds.add(ps.childProcFd);
+                // Only add running processes data
+                if (ps.isRunning) {
+                    procMems.add(ps.childProcMem);
+                    procCpus.add(ps.childProcCpu);
+                    procFds.add(ps.childProcFd);
+                }
             }
 
             // calculate the aggregate data now
@@ -199,6 +213,7 @@ public class AggregateProcessInfo extends ProcessInfo {
         private long sys;
         private long user;
         private long total;
+        private double percent;
 
         public long getSys() {
             return this.sys;
@@ -212,12 +227,17 @@ public class AggregateProcessInfo extends ProcessInfo {
             return this.total;
         }
 
+        public double getPercent() {
+            return percent;
+        }
+
         public AggregateProcCpu(List<ProcCpu> cpus) {
             for (ProcCpu cpu : cpus) {
                 if (cpu != null) {
                     sys += cpu.getSys();
                     user += cpu.getUser();
                     total += cpu.getTotal();
+                    percent += cpu.getPercent();
 
                     // TODO: this looks the same as ProcTime - what's the diff?
                     // TODO: what about percent and the others?
@@ -290,6 +310,7 @@ public class AggregateProcessInfo extends ProcessInfo {
 
     private static class ProcessStats {
         public long childPid;
+        public boolean isRunning;
         public ProcTime childProcTime;
         public ProcMem childProcMem;
         public ProcCpu childProcCpu;

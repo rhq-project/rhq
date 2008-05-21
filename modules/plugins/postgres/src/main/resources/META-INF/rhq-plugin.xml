@@ -60,11 +60,15 @@
             </c:list-property>
          </results>
       </operation>
+
+
       
-      <metric displayName="User Time" property="Process.inUserTime" measurementType="trendsup" units="milliseconds" displayType="summary"/>
-      <metric displayName="Kernel Time" property="Process.inKernelTime" measurementType="trendsup" units="milliseconds" displayType="summary"/>
-      <metric displayName="Physical Memory" property="Process.Memory.usedPhysical" measurementType="dynamic" units="bytes" displayType="summary"/>
-      <metric displayName="Virtual Memory" property="Process.Memory.usedSwap" measurementType="dynamic" units="bytes" displayType="summary"/>
+      <metric displayName="User Time" property="Process.aggregateCpu.user" measurementType="trendsup" units="milliseconds" displayType="summary"/>
+      <metric displayName="Kernel Time" property="Process.aggregateCpu.sys" measurementType="trendsup" units="milliseconds" displayType="summary"/>
+      <metric displayName="CPU Percentage" property="Process.aggregateCpu.percent" measurementType="dynamic" units="percentage" displayType="summary"/>
+      <metric displayName="Physical Memory" property="Process.aggregateMemory.resident" measurementType="dynamic" units="bytes" displayType="summary"/>
+      <metric displayName="Virtual Memory" property="Process.aggregateMemory.size" measurementType="dynamic" units="bytes" displayType="summary"/>
+      <metric displayName="Open File Descriptors" property="Process.aggregateFileDescriptor.total" measurementType="dynamic" displayType="summary"/>
 
       <resource-configuration>
 
@@ -299,6 +303,23 @@
          </plugin-configuration>
 
          <operation name="resetStatistics" displayName="Reset Statistics" description="Resets the statistics in this database"/>
+          <operation name="invokeSql" description="Execute arbitrary SQL">
+              <parameters>
+                  <c:simple-property name="sql"/>
+                  <c:simple-property name="type" default="query">
+                      <c:property-options>
+                          <c:option value="query" name="query"/>
+                          <c:option value="update" name="update"/>
+
+                      </c:property-options>
+                  </c:simple-property>
+              </parameters>
+              <results>
+                  <c:simple-property name="result"/>
+                  <c:simple-property name="contents"/>
+              </results>
+          </operation>
+         
 
          <metric displayName="Backends" property="numbackends" displayType="summary"/>
          <metric displayName="Transactions Committed" property="xact_commit" measurementType="trendsup" displayType="summary"/>

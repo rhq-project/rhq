@@ -31,6 +31,8 @@ import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
+import java.lang.reflect.Method;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -96,7 +98,8 @@ public class PostgresServerComponent implements DatabaseComponent, Configuration
         if (processInfo != null) {
             aggregateProcessInfo = processInfo.getAggregateProcessTree();
         } else {
-            log.debug("Unable to locate native process information. Process level statistics will be unavailable.");
+            findProcessInfo();
+            //log.debug("Unable to locate native process information. Process level statistics will be unavailable.");
         }
     }
 
@@ -245,7 +248,13 @@ public class PostgresServerComponent implements DatabaseComponent, Configuration
             aggregateProcessInfo.refresh();
             for (MeasurementScheduleRequest request : metrics) {
                 if (request.getName().startsWith("Process.")) {
-                    report.addData(new MeasurementDataNumeric(request, getProcessProperty(request.getName())));
+                    //report.addData(new MeasurementDataNumeric(request, getProcessProperty(request.getName())));
+
+                    Object val = lookupAttributeProperty(aggregateProcessInfo, request.getName().substring("Process.".length()));
+                    if (val != null && val instanceof Number) {
+//                        aggregateProcessInfo.getAggregateMemory().Cpu().getTotal()
+                        report.addData(new MeasurementDataNumeric(request, ((Number) val).doubleValue()));
+                    }
                 } else if (request.getName().equals("startTime")) {
                     /* db start time
                      * try { ResultSet rs = getConnection().createStatement().executeQuery("SELECT
@@ -267,6 +276,31 @@ public class PostgresServerComponent implements DatabaseComponent, Configuration
         } else {
             return getObjectProperty(aggregateProcessInfo, property);
         }
+    }
+
+    protected Object lookupAttributeProperty(Object value, String property) {
+        String[] ps = property.split("\\.", 2);
+
+        String searchProperty = ps[0];
+
+        // Try to use reflection
+        try {
+            PropertyDescriptor[] pds = Introspector.getBeanInfo(value.getClass()).getPropertyDescriptors();
+            for (PropertyDescriptor pd : pds) {
+                if (pd.getName().equals(searchProperty)) {
+                    value = pd.getReadMethod().invoke(value);
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Unable to read property from measurement attribute [" + searchProperty + "] not found on ["
+                    + this.resourceContext.getResourceKey() + "]");
+        }
+
+        if (ps.length > 1) {
+            value = lookupAttributeProperty(value, ps[1]);
+        }
+
+        return value;
     }
 
     public double getObjectProperty(Object object, String name) {
@@ -382,5 +416,25 @@ public class PostgresServerComponent implements DatabaseComponent, Configuration
         }
 
         return new PropertySimple(propDef.getName(), jonValue);
+    }
+
+
+    public void findProcessInfo() {
+
+        List<ProcessInfo> processes =
+            this.resourceContext.getSystemInformation().getProcesses(
+                "process|basename|match=^(?i)(postgres|postmaster)\\.exe$,process|basename|nomatch|parent=^(?i)(postgres|postmaster)\\.exe$");
+
+        processes.addAll(
+                this.resourceContext.getSystemInformation().getProcesses(
+                "process|basename|match=^(postgres|postmaster)$,process|basename|nomatch|parent=^(postgres|postmaster)$"));
+
+        for (ProcessInfo processInfo : processes) {
+            String pgDataPath = PostgresDiscoveryComponent.getDataDirPath(processInfo);
+            if (pgDataPath != null) {
+                this.aggregateProcessInfo = processInfo.getAggregateProcessTree();
+                break;
+            }
+        }
     }
 }

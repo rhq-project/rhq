@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +36,7 @@ import org.hyperic.sigar.OperatingSystem;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.hyperic.sigar.Swap;
+import org.hyperic.sigar.NetStat;
 
 import org.rhq.core.system.pquery.ProcessInfoQuery;
 
@@ -152,6 +154,21 @@ public class NativeSystemInfo implements SystemInfo {
             NetInterfaceStat interfaceStat = sigar.getNetInterfaceStat(interfaceName);
             return new NetworkAdapterStats(interfaceStat);
         } catch (SigarException e) {
+            throw new SystemInfoException(e);
+        } finally {
+            sigar.close();
+        }
+    }
+
+    public NetworkStats getNetworkStats(String addressName, int port) {
+        Sigar sigar = new Sigar();
+        try {
+            InetAddress address = InetAddress.getByName(addressName);
+            NetStat interfaceStat = sigar.getNetStat(address.getAddress(),  port);
+            return new NetworkStats(interfaceStat);
+        } catch (SigarException e) {
+            throw new SystemInfoException(e);
+        } catch (UnknownHostException e) {
             throw new SystemInfoException(e);
         } finally {
             sigar.close();

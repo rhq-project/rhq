@@ -327,7 +327,11 @@ public class ProcessInfo {
         boolean running = false;
 
         if (this.procState != null) {
-            running = this.procState.getState() == ProcState.RUN;
+            running = (
+                    this.procState.getState() == ProcState.RUN
+                    || this.procState.getState() == ProcState.SLEEP
+                    || this.procState.getState() == ProcState.IDLE);
+
         }
 
         return running;

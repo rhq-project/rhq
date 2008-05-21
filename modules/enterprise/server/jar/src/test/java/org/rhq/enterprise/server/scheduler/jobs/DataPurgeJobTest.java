@@ -3,6 +3,7 @@ package org.rhq.enterprise.server.scheduler.jobs;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,6 +71,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class DataPurgeJobTest extends AbstractEJB3Test {
     private Resource newResource;
 
+    private int agentId;
+    private int resourceTypeId;
+
     @BeforeMethod
     public void beforeMethod() throws Throwable {
         try {
@@ -115,6 +119,38 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         } finally {
             newResource = null; // so our tear-down method doesn't try to delete it again
         }
+        getTransactionManager().begin();
+        try {
+            EntityManager em = getEntityManager();
+            Agent agent = em.find(Agent.class, agentId);
+            em.remove(agent);
+
+            ResourceType rt = em.find(ResourceType.class, resourceTypeId);
+            Set<EventDefinition> evDs = rt.getEventDefinitions();
+            if (evDs != null) {
+                Iterator<EventDefinition> evdIter = evDs.iterator();
+                while (evdIter.hasNext()) {
+                    EventDefinition evd = evdIter.next();
+                    em.remove(evd);
+                    evdIter.remove();
+                }
+            }
+            Set<MeasurementDefinition> mDefs = rt.getMetricDefinitions();
+            if (mDefs != null) {
+                Iterator<MeasurementDefinition> mdIter = mDefs.iterator();
+                while (mdIter.hasNext()) {
+                    MeasurementDefinition def = mdIter.next();
+                    em.remove(def);
+                    mdIter.remove();
+                }
+            }
+            em.remove(rt);
+
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            getTransactionManager().rollback();
+            throw e;
+        }
     }
 
     private void addDataToBePurged() throws NotSupportedException, SystemException, Throwable {
@@ -125,10 +161,14 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             try {
                 // add alerts
                 AlertDefinition ad = newResource.getAlertDefinitions().iterator().next();
-                for (long timestamp = 0; timestamp < 1000; timestamp++) {
+                for (long timestamp = 0; timestamp < 200; timestamp++) {
                     Alert newAlert = createNewAlert(em, ad, timestamp);
                     assert newAlert.getCtime() == timestamp : "bad alert persisted:" + newAlert;
                     assert newAlert.getId() > 0 : "alert not persisted:" + newAlert;
+                    if (timestamp % 50 == 0) {
+                        em.flush();
+                        em.clear();
+                    }
                 }
                 em.flush();
                 em.clear();
@@ -139,6 +179,10 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                     assert newAvail.getStartTime().getTime() == timestamp : "bad avail persisted:" + newAvail;
                     assert newAvail.getEndTime().getTime() == (timestamp + 1) : "bad avail persisted:" + newAvail;
                     assert newAvail.getId() > 0 : "avail not persisted:" + newAvail;
+                    if (timestamp % 50 == 0) {
+                        em.flush();
+                        em.clear();
+                    }
                 }
                 em.flush();
                 em.clear();
@@ -417,9 +461,11 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 ResourceType resourceType = new ResourceType("plat" + now, "test", ResourceCategory.PLATFORM, null);
 
                 em.persist(resourceType);
+                resourceTypeId = resourceType.getId();
 
                 Agent agent = new Agent("testagent" + now, "testaddress" + now, 1, "", "testtoken" + now);
                 em.persist(agent);
+                agentId = agent.getId();
                 em.flush();
 
                 resource = new Resource("reskey" + now, "resname", resourceType);

@@ -66,8 +66,11 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
                     }
 
                     property = property.substring(property.indexOf(".") + 1);
-                    double value = ((Number) ObjectUtil.lookupAttributeProperty(cpu, property)).doubleValue();
-                    report.addData(new MeasurementDataNumeric(request, value));
+                    Long longValue = (Long)ObjectUtil.lookupAttributeProperty(cpu, property);
+                    // A value of -1 indicates SIGAR does not support the metric on the Agent platform.
+                    if (longValue != -1) {
+                        report.addData(new MeasurementDataNumeric(request, longValue.doubleValue()));
+                    }
                 } else if (property.startsWith("CpuPerc.")) {
                     if (cpuInfo == null) {
                         cpuPerc = cpuInformation.getCpuPercentage();

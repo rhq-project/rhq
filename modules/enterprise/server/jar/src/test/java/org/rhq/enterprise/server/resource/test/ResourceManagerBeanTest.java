@@ -23,6 +23,7 @@ import java.util.List;
 import javax.persistence.EntityManager;
 
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -35,17 +36,28 @@ import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.discovery.DiscoveryServerServiceImpl;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.resource.metadata.test.TestBase;
+import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Test for {@link ResourceManagerLocal} SLSB.
  */
 @Test
-public class ResourceManagerBeanTest extends AbstractEJB3Test {
+public class ResourceManagerBeanTest extends TestBase {
     private ResourceManagerLocal resourceManager;
     private Subject superuser;
     private Resource newResource;
+
+    TestServerCommunicationsService agentServiceContainer;
+
+    @BeforeClass
+    public void beforeClass() {
+        agentServiceContainer = prepareForTestAgents();
+        agentServiceContainer.measurementService = new MockAgentService();
+
+        prepareScheduler();
+    }
 
     @BeforeMethod
     public void beforeMethod() throws Exception {

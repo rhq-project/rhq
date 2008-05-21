@@ -20,7 +20,11 @@ package org.rhq.enterprise.server.resource.metadata.test;
 
 import java.io.FileNotFoundException;
 import java.net.URL;
+import java.util.List;
+import java.util.Set;
 
+import javax.persistence.NoResultException;
+import javax.persistence.Query;
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -28,8 +32,11 @@ import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
+import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
@@ -37,6 +44,8 @@ import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class TestBase extends AbstractEJB3Test {
+
+    protected static final String PLUGIN_NAME = "ResourceMetaDataManagerBeanTest";
     protected static ResourceMetadataManagerLocal metadataManager;
 
     protected void init() {
@@ -51,14 +60,23 @@ public class TestBase extends AbstractEJB3Test {
     }
 
     protected ResourceType getResourceType(String typeName) {
-        ResourceType type = (ResourceType) getEntityManager().createNamedQuery(
-            ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN).setParameter("name", typeName).setParameter("plugin",
-            "ResourceMetaDataManagerBeanTest").getSingleResult();
-        return type;
+        Query q1 = getEntityManager().createQuery("Select rt from ResourceType rt");
+        List<ResourceType> types = q1.getResultList();
+        String lookup = "==== Lookup: " + typeName + "Found:\n" + types;
+
+        Query q = getEntityManager().createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN);
+        q.setParameter("name", typeName).setParameter("plugin", PLUGIN_NAME);
+        try {
+            ResourceType type = (ResourceType) q.getSingleResult();
+            return type;
+        } catch (NoResultException nre) {
+            throw new NoResultException(lookup);
+        }
     }
 
     protected void registerPlugin(String pathToDescriptor) throws Exception {
-        Plugin testPlugin = new Plugin("ResourceMetaDataManagerBeanTest", "foo.jar", "123561RE1652EF165E");
+        Plugin testPlugin = new Plugin(PLUGIN_NAME, "foo.jar", "123561RE1652EF165E");
+        testPlugin.setDisplayName("TestBase" + pathToDescriptor);
         PluginDescriptor descriptor = loadPluginDescriptor(pathToDescriptor);
         metadataManager.registerPlugin(testPlugin, descriptor);
         getEntityManager().flush();
@@ -91,4 +109,32 @@ public class TestBase extends AbstractEJB3Test {
 
         return found;
     }
+
+    /**
+     * A dummy that needs to be set up before running ResourceManager.deleteResource()
+     */
+    public class MockAgentService implements MeasurementAgentService {
+
+        public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, String... measurementNames) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        public void scheduleCollection(Set<ResourceMeasurementScheduleRequest> resourceSchedules) {
+            // TODO Auto-generated method stub
+
+        }
+
+        public void unscheduleCollection(Set<Integer> resourceIds) {
+            // TODO Auto-generated method stub
+
+        }
+
+        public void updateCollection(Set<ResourceMeasurementScheduleRequest> resourceSchedules) {
+            // TODO Auto-generated method stub
+
+        }
+
+    }
+
 }

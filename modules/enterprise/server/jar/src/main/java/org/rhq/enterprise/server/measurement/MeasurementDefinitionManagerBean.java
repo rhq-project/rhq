@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.measurement;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -37,6 +38,7 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.enterprise.server.RHQConstants;
 
 /**
@@ -89,8 +91,24 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
         measurementDataManager.removeGatheredMetricsForSchedules(schedules);
 
         // remove the schedules 
-        for (MeasurementSchedule sched : schedules) {
+        Iterator<MeasurementSchedule> schedIter = schedules.iterator();
+        while (schedIter.hasNext()) {
+            MeasurementSchedule sched = schedIter.next();
+            if (sched.getBaseline() != null) {
+                entityManager.remove(sched.getBaseline());
+                sched.setBaseline(null);
+            }
+            if (sched.getOutOfBounds() != null) {
+                List<MeasurementOutOfBounds> oobs = sched.getOutOfBounds();
+                Iterator<MeasurementOutOfBounds> oobIter = oobs.iterator();
+                while (oobIter.hasNext()) {
+                    MeasurementOutOfBounds oob = oobIter.next();
+                    entityManager.remove(oob);
+                    oobIter.remove();
+                }
+            }
             entityManager.remove(sched);
+            schedIter.remove();
         }
 
         // finally remove the definition itself

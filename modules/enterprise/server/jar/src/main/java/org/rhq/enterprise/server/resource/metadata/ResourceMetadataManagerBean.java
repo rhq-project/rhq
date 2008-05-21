@@ -39,17 +39,21 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ProcessScan;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 
 /**
  * This class manages the metadata for resources. Plugins are registered against this bean so that their metadata can be
@@ -74,6 +78,12 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @EJB
     private ConfigurationMetadataManagerLocal configurationMetadataManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private ResourceManagerLocal resourceManager;
 
     /**
      * @param  name the name of a plugin
@@ -137,11 +147,39 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             .setParameter("plugin", pluginDescriptor.getName()).getResultList();
 
         if (existingTypes != null) {
+            Subject overlord = subjectManager.getOverlord();
             for (Iterator<ResourceType> iter = existingTypes.iterator(); iter.hasNext();) {
                 ResourceType existingType = iter.next();
                 if (pluginMetadataManager.getType(existingType.getName(), existingType.getPlugin()) == null) {
+                    if (entityManager.contains(existingType))
+                        entityManager.refresh(existingType);
                     // This type no longer exists
                     removeFromParents(existingType);
+                    // clean out the measurement stuff hanging on the type;
+                    List<Resource> resources = existingType.getResources();
+                    if (resources != null) {
+                        Iterator<Resource> resIter = resources.iterator();
+                        while (resIter.hasNext()) {
+                            Resource res = resIter.next();
+                            resourceManager.deleteResource(overlord, res.getId());
+                            resIter.remove();
+                        }
+                    }
+                    entityManager.flush();
+                    Set<MeasurementDefinition> definitions = existingType.getMetricDefinitions();
+                    if (definitions != null) {
+                        Iterator<MeasurementDefinition> defIter = definitions.iterator();
+                        while (defIter.hasNext()) {
+                            MeasurementDefinition def = defIter.next();
+                            if (entityManager.contains(def)) {
+                                entityManager.refresh(def);
+                                measurementDefinitionManager.removeMeasurementDefinition(def);
+                            }
+                            defIter.remove();
+                        }
+                    }
+                    entityManager.flush();
+                    // TODO clean out event definitions ?
                     entityManager.remove(existingType);
                     entityManager.flush();
                     iter.remove();
@@ -656,7 +694,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
-
     /**
      * updates both configuration definitions on PackageType
      */
@@ -679,7 +716,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 existingType.setDeploymentConfigurationDefinition(null);
             }
         }
-
 
         newConfigurationDefinition = newType.getPackageExtraPropertiesDefinition();
         if (newConfigurationDefinition != null) {

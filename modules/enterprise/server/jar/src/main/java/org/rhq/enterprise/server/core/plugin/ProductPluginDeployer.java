@@ -25,6 +25,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.Manifest;
+import java.util.jar.Attributes;
+
 import javax.management.ListenerNotFoundException;
 import javax.management.MBeanNotificationInfo;
 import javax.management.Notification;
@@ -42,6 +45,7 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.xml.sax.SAXException;
 import org.jboss.deployment.DeploymentException;
 import org.jboss.deployment.DeploymentInfo;
@@ -83,7 +87,12 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     private String pluginDir = PLUGIN_DIR;
     private String licenseFile = null;
     private LicenseManager licenseManager = null;
-    private List<DeploymentInfo> pluginsToBeRegistered = new ArrayList<DeploymentInfo>();
+    /** Map of plugin names to the corresponding plugins' JBAS deployment infos */
+    private Map<String, DeploymentInfo> pluginsToBeRegistered = new HashMap<String, DeploymentInfo>();
+    /** Map of plugin names to the corresponding plugins' JAXB plugin descriptors */
+    private Map<String, PluginDescriptor> pluginDescriptors = new HashMap<String, PluginDescriptor>();
+    /** Map of plugin names to the corresponding plugins' versions */
+    private Map<String, ComparableVersion> pluginVersions = new HashMap<String, ComparableVersion>();
     private boolean isStarted = false;
     private boolean isReady = false;
     private NotificationBroadcasterSupport broadcaster = new NotificationBroadcasterSupport();
@@ -199,41 +208,37 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
 
         // Do startup license checking
         this.licenseManager = LicenseManager.instance();
-        this.licenseManager.doStartupCheck(licenseFile);
+        this.licenseManager.doStartupCheck(this.licenseFile);
 
         // now that we have started, we are being told all EJBs are ready, so register
         // any plugins we've already been told about
         // note that we deploy the plugins in their proper deployment order based on dependencies
-        Map<String, PluginDescriptor> pluginDescriptors = new HashMap<String, PluginDescriptor>();
         Map<String, DeploymentInfo> pluginDeploymentInfos = new HashMap<String, DeploymentInfo>();
         PluginDependencyGraph dependencyGraph = new PluginDependencyGraph();
 
-        for (DeploymentInfo deploymentInfo : pluginsToBeRegistered) {
-            try {
-                PluginDescriptor descriptor = getPluginDescriptor(deploymentInfo);
-                pluginDescriptors.put(descriptor.getName(), descriptor);
-                pluginDeploymentInfos.put(descriptor.getName(), deploymentInfo);
+        for (String pluginName : this.pluginsToBeRegistered.keySet()) {
+            DeploymentInfo deploymentInfo = this.pluginsToBeRegistered.get(pluginName);
+            PluginDescriptor descriptor = this.pluginDescriptors.get(pluginName);
+            pluginDeploymentInfos.put(descriptor.getName(), deploymentInfo);
 
-                List<PluginDependencyGraph.PluginDependency> dependencies = new ArrayList<PluginDependencyGraph.PluginDependency>();
-                for (PluginDescriptor.Depends dependency : descriptor.getDepends()) {
-                    dependencies.add(new PluginDependencyGraph.PluginDependency(dependency.getPlugin(), dependency
-                        .isUseClasses()));
-                }
-
-                dependencyGraph.addPlugin(descriptor.getName(), dependencies);
-            } catch (JAXBException e) {
-                log.error("Unable to deploy ON plugin [" + deploymentInfo.url.getFile() + "]", e);
+            List<PluginDependencyGraph.PluginDependency> dependencies = new ArrayList<PluginDependencyGraph.PluginDependency>();
+            for (PluginDescriptor.Depends dependency : descriptor.getDepends()) {
+                dependencies.add(new PluginDependencyGraph.PluginDependency(dependency.getPlugin(), dependency
+                    .isUseClasses()));
             }
+
+            dependencyGraph.addPlugin(descriptor.getName(), dependencies);
         }
 
         StringBuffer error = new StringBuffer();
         if (dependencyGraph.isComplete(error)) {
-            List<String> orderedPlugins = dependencyGraph.getDeploymentOrder();
-            for (String nextPlugin : orderedPlugins) {
-                registerPluginJar(pluginDescriptors.get(nextPlugin), pluginDeploymentInfos.get(nextPlugin));
+            List<String> orderedPluginNames = dependencyGraph.getDeploymentOrder();
+            for (String pluginName : orderedPluginNames) {
+                registerPluginJar(this.pluginDescriptors.get(pluginName), pluginDeploymentInfos.get(pluginName));
             }
 
-            pluginsToBeRegistered.clear();
+            this.pluginsToBeRegistered.clear();
+            this.pluginDescriptors.clear();
 
             //generally means we are done deploying plugins at startup.
             //but we are not "done" since a plugin can be dropped into
@@ -258,7 +263,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             log.warn(dependencyGraph.toString());
         }
 
-        isReady = true;
+        this.isReady = true;
 
         return;
     }
@@ -276,8 +281,12 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         String pluginJar = deploymentInfo.url.getFile();
 
         try {
-            String pluginNameDisplayName = pluginDescriptor.getName() + " (" + pluginDescriptor.getDisplayName() + ")";
-            log.info("Deploying ON plugin " + pluginNameDisplayName);
+            String pluginName = pluginDescriptor.getName();
+            String pluginNameDisplayName = pluginName + " (" + pluginDescriptor.getDisplayName() + ")";
+            ComparableVersion comparableVersion = this.pluginVersions.get(pluginName);
+            String version = (comparableVersion != null) ? comparableVersion.toString() : null;
+            log.info("Deploying RHQ plugin " + pluginNameDisplayName + ", " +
+                    ((version != null) ? "version " + version : "undefined version") + "...");
             checkVersionCompatibility(pluginDescriptor.getAmpsVersion());
 
             // make sure the path is only the filename
@@ -293,7 +302,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
                 plugin.setHelp(String.valueOf(pluginDescriptor.getHelp().getContent().get(0)));
             }
 
-            plugin.setVersion(pluginDescriptor.getVersion());
+            plugin.setVersion(version);
             plugin.setMD5(MD5Generator.getDigestString(deploymentInfo.url.openStream()));
 
             // this manager is responsible for handling the munging of plugins that depend on other plugins
@@ -392,22 +401,22 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             return;
         }
 
-        String pluginFile = deploymentInfo.url.getFile();
-        log.debug("start: " + pluginFile);
+        String pluginJarFileName = deploymentInfo.url.getFile();
+        log.debug("start: " + pluginJarFileName);
 
-        //plugin metadata cannot be deployed until ejbs are ready
+        // plugin metadata cannot be deployed until EJBs are ready
         if (isReady) {
             try {
                 // note that hot deploying a plugin whose dependencies aren't yet deployed will fail
                 PluginDescriptor descriptor = getPluginDescriptor(deploymentInfo);
                 if (registerPluginJar(descriptor, deploymentInfo) == null) {
-                    throw new DeploymentException("Unable to hot deploy ON plugin [" + pluginFile + "]");
+                    throw new DeploymentException("Unable to hot deploy RHQ plugin [" + pluginJarFileName + "]");
                 }
             } catch (JAXBException e) {
-                throw new DeploymentException("Unable to hot deploy ON plugin [" + pluginFile + "]", e);
+                throw new DeploymentException("Unable to hot deploy RHQ plugin [" + pluginJarFileName + "]", e);
             }
         } else {
-            this.pluginsToBeRegistered.add(deploymentInfo);
+            preprocessPlugin(deploymentInfo);
         }
 
         return;
@@ -449,5 +458,48 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     private boolean isLicenseFile(DeploymentInfo di) {
         String name = LicenseManager.getLicenseFileName();
         return di.url.getFile().endsWith(name);
+    }
+
+    private void preprocessPlugin(DeploymentInfo deploymentInfo) throws DeploymentException {
+        String pluginJarFileName = deploymentInfo.url.getFile();
+        PluginDescriptor descriptor;
+        try {
+            descriptor = getPluginDescriptor(deploymentInfo);
+        }
+        catch (JAXBException e) {
+            throw new DeploymentException("Failed to parse plugin descriptor for plugin jar '" + pluginJarFileName + "'.", e);
+        }
+        Manifest manifest = deploymentInfo.getManifest();
+        String version = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+        if (version == null) {
+            log.warn("'" + Attributes.Name.IMPLEMENTATION_VERSION + "' attribute not found in MANIFEST.MF of plugin jar '" + pluginJarFileName + "'. Falling back to version defined in plugin descriptor...");
+            version = descriptor.getVersion();
+        }
+        ComparableVersion comparableVersion;
+        if (version != null) {
+            try {
+                comparableVersion = new ComparableVersion(version);
+            }
+            catch (RuntimeException e) {
+                throw new DeploymentException("Failed to parse version (" + version + ") for plugin jar '" + pluginJarFileName + ".", e);
+            }
+        } else {
+            log.warn("No version is defined for plugin jar '" + pluginJarFileName + "'. A version should be defined either via the MANIFEST.MF '" + Attributes.Name.IMPLEMENTATION_VERSION + "' attribute or via the plugin descriptor 'version' attribute.");
+            comparableVersion = null;
+        }
+        String pluginName = descriptor.getName();
+        ComparableVersion existingComparableVersion = this.pluginVersions.get(pluginName);
+        boolean newerThanExistingVersion = false;
+        if (existingComparableVersion != null) {
+            if (comparableVersion != null && comparableVersion.compareTo(existingComparableVersion) > 0) {
+                newerThanExistingVersion = true;
+                log.debug("Newer version of '" + pluginName + "' plugin found (version " + version + ") - older version (" + existingComparableVersion + ") will be ignored.");
+            }
+        }
+        if (existingComparableVersion == null || newerThanExistingVersion) {
+            this.pluginDescriptors.put(pluginName, descriptor);
+            this.pluginVersions.put(pluginName, comparableVersion);
+            this.pluginsToBeRegistered.put(pluginName, deploymentInfo);
+        }
     }
 }

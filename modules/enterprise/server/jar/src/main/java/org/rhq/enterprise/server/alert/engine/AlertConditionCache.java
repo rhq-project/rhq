@@ -602,7 +602,8 @@ public class AlertConditionCache {
                     int doomedBaselineId = doomedBaseline.getId();
                     int doomedScheduleId = doomedBaseline.getSchedule().getId();
 
-                    stats.deleted += measurementDataCache.remove(doomedScheduleId).size();
+                    if (measurementDataCache.containsKey(doomedScheduleId))
+                        stats.deleted += measurementDataCache.remove(doomedScheduleId).size();
 
                     /*
                      * Don't forget to remove the bookkeeping elements from bookkeeping maps; we don't need to remove

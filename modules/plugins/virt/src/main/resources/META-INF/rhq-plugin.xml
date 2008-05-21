@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="Virtualization"
+        displayName="Virtualization"
+        description="Support monitoring and managing virtual domains"
+        package="org.rhq.plugins.virt"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <server name="Virtual Host"
+            description="Virtual Domain Host"
+            discovery="VirtualizationDiscoveryComponent"
+            class="VirtualizationComponent">
+
+
+        <metric property="cpuPercentage" displayName="CPU Usage" units="percentage" displayType="summary"/>
+        <metric property="memoryUsage" displayName="Memory Usage" units="kilobytes" displayType="summary"/>
+        <metric property="cpuTime" displayName="CPU Time" measurementType="trendsup" units="nanoseconds"
+                displayType="summary"/>
+
+
+        <service name="Virtual Guest"
+                 description="Virtual Domain Guest"
+                 discovery="VirtualizationDiscoveryComponent"
+                 class="VirtualizationComponent"
+                 createDeletePolicy="both" creationDataType="configuration">
+
+
+            <operation name="create"
+                       description="Launch a defined domain. If the call succeed the domain moves from the defined to the running domains pools."/>
+            <operation name="reboot"
+                       description="Reboot a domain, the domain object is still usable there after but the domain OS is being stopped for a restart. Note that the guest OS may ignore the request."/>
+            <operation name="suspend"
+                       description="Suspends an active domain, the process is frozen without further access to CPU resources and I/O but the memory used by the domain at the hypervisor level will stay allocated. Use virDomainResume() to reactivate the domain. This function may requires priviledged access."/>
+            <operation name="resume"
+                       description="Resume an suspended domain, the process is restarted from the state where it was frozen by calling virSuspendDomain(). This function may requires priviledged access"/>
+            <operation name="save"
+                       description="This method will suspend a domain and save its memory contents to a file on disk. After the call, if successful, the domain is not listed as running anymore (this may be a problem). Use virDomainRestore() to restore a domain after saving.">
+                <parameters>
+                    <c:simple-property name="toPath" description="The path to which this domain will be saved"/>
+                </parameters>
+            </operation>
+            <operation name="restore" description="This method will restore a domain saved to disk by virDomainSave().">
+                <parameters>
+                    <c:simple-property name="fromPath" description="The path from which to restore this domain"/>
+                </parameters>
+            </operation>
+            <operation name="shutdown"
+                       description="Shutdown a domain, the domain object is still usable there after but the domain OS is being stopped. Note that the guest OS may ignore the request. TODO: should we add an option for reboot, knowing it may not be doable in the general case ?"/>
+
+            <metric property="cpuPercentage" displayName="CPU Usage" units="percentage" displayType="summary"/>
+            <metric property="memoryUsage" displayName="Memory Usage" units="kilobytes" displayType="summary"/>
+            <metric property="cpuTime" displayName="CPU Time" measurementType="trendsup" units="nanoseconds"
+                    displayType="summary"/>
+
+
+            <resource-configuration>
+
+                <c:simple-property name="type" type="string" readOnly="true" description="The type of virtual machine"
+                                   default="xen">
+                    <c:property-options>
+                        <c:option value="xen" name="xen"/>
+                        <c:option value="kvm" name="kvm"/>
+                        <c:option value="qemu" name="qemu"/>
+                        <c:option value="lxc" name="lxc"/>
+                        <c:option value="kqemu" name="kqemu"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="name" type="string" readOnly="true" description="The name of the domain"/>
+                <c:simple-property name="uuid" type="string" readOnly="true" required="false"
+                                   description="The universally unique identifier of the domain"/>
+
+                <c:simple-property name="vcpu" displayName="CPUs" type="integer" default="1"
+                                   description="How many virtual CPUs should be allocated for this machine?"/>
+                <c:simple-property name="memory" type="integer" units="kilobytes" default="512000"
+                                   description="The maximum memory available to this domain in kilobytes"/>
+                <c:simple-property name="currentMemory" type="integer" units="kilobytes" default="512000"
+                                   description="How much memory should be allocated for this machine in kilobytes"/>
+
+
+                <c:group name="Lifecycle Actions">
+                    <c:simple-property name="on_poweroff" displayName="On Power Off" type="string" default="destroy"
+                                       description="What should happen when the machine is powered off?">
+                        <c:property-options>
+                            <c:option value="destroy"/>
+                            <c:option value="restart"/>
+                            <c:option value="preserve"/>
+                            <c:option value="rename-restart"/>
+                        </c:property-options>
+                    </c:simple-property>
+                    <c:simple-property name="on_reboot" displayName="On Reboot" type="string" default="restart"
+                                       description="What should happen when the machine is rebooted?">
+                        <c:property-options>
+                            <c:option value="destroy"/>
+                            <c:option value="restart"/>
+                            <c:option value="preserve"/>
+                            <c:option value="rename-restart"/>
+                        </c:property-options>
+                    </c:simple-property>
+                    <c:simple-property name="on_crash" displayName="On Crash" type="string" default="restart"
+                                       description="What should happen when the machine crashes?">
+                        <c:property-options>
+                            <c:option value="destroy"/>
+                            <c:option value="restart"/>
+                            <c:option value="preserve"/>
+                            <c:option value="rename-restart"/>
+                        </c:property-options>
+                    </c:simple-property>
+                </c:group>
+
+
+                <c:group name="Networking">
+                    <c:list-property name="interfaces">
+                        <c:map-property name="interface">
+                            <c:simple-property name="type">
+                                <c:property-options>
+                                    <c:option value="network" name="network"/>
+                                    <c:option value="bridge" name="bridge"/>
+                                </c:property-options>
+                            </c:simple-property>
+                            <c:simple-property name="source"/>
+                            <c:simple-property name="target"/>
+                            <c:simple-property name="script"/>
+                            <c:simple-property name="macAddress" displayName="MAC Address"/>
+                        </c:map-property>
+                    </c:list-property>
+                </c:group>
+
+                <c:group name="Storage">
+                    <c:list-property name="disks">
+                        <c:map-property name="disk">
+                            <c:simple-property name="type" default="file">
+                                <c:property-options>
+                                    <c:option value="file" name="file"/>
+                                    <c:option value="block" name="block"/>
+                                </c:property-options>
+                            </c:simple-property>
+                            <c:simple-property name="driverName"/>
+                            <c:simple-property name="driverType" required="false"/>
+                            <c:simple-property name="sourceFile" required="false"/>
+                            <c:simple-property name="sourceDevice" required="false"/>
+                            <c:simple-property name="targetDevice"/>
+                        </c:map-property>
+                    </c:list-property>
+                </c:group>
+
+            </resource-configuration>
+
+
+            <service name="Virtual Network Interface"
+                     class="VirtualizationInterfaceComponent"
+                     discovery="VirtualizationInterfaceDiscoveryComponent">
+
+                <metric property="rx_bytes" displayName="Received Bytes" units="bytes" displayType="summary" measurementType="trendsup"/>
+                <metric property="rx_packets" displayName="Received Packets" measurementType="trendsup"/>
+                <metric property="rx_errs" displayName="Receive Errors" displayType="summary" measurementType="trendsup"/>
+                <metric property="rx_drop" displayName="Receive Packages Dropped" displayType="summary" measurementType="trendsup"/>
+                <metric property="tx_bytes" displayName="Sent Bytes" units="bytes" displayType="summary" measurementType="trendsup"/>
+                <metric property="tx_packets" displayName="Sent Packets" measurementType="trendsup"/>
+                <metric property="tx_errs" displayName="Send Errors" displayType="summary" measurementType="trendsup"/>
+                <metric property="tx_drop" displayName="Send Packets Dropped" displayType="summary" measurementType="trendsup"/>
+
+
+            </service>
+
+            <service name="Virtual Block Device"
+                    class="VirtualizationBlockDeviceComponent"
+                    discovery="VirtualizationBlockDeviceDiscoveryComponent">
+                <metric property="rd_req" displayName="Read Requests" displayType="summary" measurementType="trendsup"/>
+                <metric property="rd_bytes" displayName="Read Bytes" units="bytes" displayType="summary" measurementType="trendsup"/>
+                <metric property="wr_req" displayName="Write Requests" displayType="summary" measurementType="trendsup"/>
+                <metric property="wr_bytes" displayName="Write Bytes" units="bytes" displayType="summary" measurementType="trendsup"/>
+                <metric property="errs" displayName="Errors" displayType="summary" measurementType="trendsup"/>
+
+            </service>
+
+
+        </service>
+    </server>
+</plugin>

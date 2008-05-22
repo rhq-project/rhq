@@ -42,6 +42,7 @@ import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
  * {@link #getCurrentPluginFiles()}.
  *
  * @author John Mazzitelli
+ * @author Ian Springer
  */
 public class PluginUpdate {
     private static final Logger LOG = AgentI18NFactory.getLogger(PluginUpdate.class);
@@ -341,7 +342,7 @@ public class PluginUpdate {
                 String plugin_filename = current_plugin.getPath();
                 File plugin = new File(plugin_dir, plugin_filename);
                 if (plugin.exists()) {
-                    File plugin_backup = new File(plugin_dir, plugin_filename + ".UNKNOWN");
+                    File plugin_backup = new File(plugin_dir, plugin_filename + ".REJECTED");
                     LOG.info(AgentI18NResourceKeys.PLUGIN_NOT_ON_SERVER, plugin_filename, plugin_backup.getName());                                        
                     try {
                         plugin_backup.delete(); // in case an old backup is for some reason still here, get rid of it

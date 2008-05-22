@@ -192,10 +192,10 @@ public class Plugin implements Serializable {
     }
 
     /**
-     * Ensure that the path being set does not include any diretory names. The plugin path is the filename. See
+     * Ensure that the path being set does not include any directory names. The plugin path is the filename. See
      * {@link #getPath()}.
      *
-     * @param path the filename of the plugin; not including directory names
+     * @param path the filename of the plugin, not including directory names
      */
     public void setPath(String path) {
         this.path = path;

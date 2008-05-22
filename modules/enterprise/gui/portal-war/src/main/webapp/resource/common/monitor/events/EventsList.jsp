@@ -10,6 +10,17 @@
 
    <c:url var="sAction" value="/resource/common/events/Events.do">
       <c:param name="mode" value="events" />
+      <!-- Ensure (form) filter information is supplied via parameters by pagination generated requests -->
+      <c:if test="${not empty param.pSeverity}">
+        <c:param name="pSeverity" value="${param.pSeverity}"/>
+      </c:if>
+      <c:if test="${not empty param.pSource}">
+        <c:param name="pSource" value="${param.pSource}"/>
+      </c:if>                
+      <c:if test="${not empty param.pSearch}">
+        <c:param name="pSearch" value="${param.pSearch}"/>
+      </c:if>                
+      <!-- Ensure pagination information is supplied via parameters by pagination generated requests -->      
       <c:if test="${not empty param.ps}">
          <c:param name="ps" value="${param.ps}"/>
       </c:if>
@@ -22,6 +33,7 @@
       <c:if test="${not empty param.sc}">
          <c:param name="sc" value="${param.sc}"/>
       </c:if>
+      <!-- Ensure navigation information is supplied for all requests -->      
       <c:if test="${not empty param.id}">
          <c:param name="id" value="${param.id}"/>
       </c:if>
@@ -38,6 +50,17 @@
 
    <c:url var="timelineAction" value="/resource/common/events/Events.do">
       <c:param name="mode" value="editRange" />
+      <!-- Ensure (form) filter information is supplied via parameters by pagination generated requests -->
+      <c:if test="${not empty param.pSeverity}">
+        <c:param name="pSeverity" value="${param.pSeverity}"/>
+      </c:if>
+      <c:if test="${not empty param.pSource}">
+        <c:param name="pSource" value="${param.pSource}"/>
+      </c:if>                
+      <c:if test="${not empty param.pSearch}">
+        <c:param name="pSearch" value="${param.pSearch}"/>
+      </c:if>                
+      <!-- Ensure pagination information is supplied via parameters by pagination generated requests -->
       <c:if test="${not empty param.ps}">
          <c:param name="ps" value="${param.ps}"/>
       </c:if>
@@ -50,6 +73,7 @@
       <c:if test="${not empty param.sc}">
          <c:param name="sc" value="${param.sc}"/>
       </c:if>
+      <!-- Ensure navigation information is supplied for all requests -->
       <c:if test="${not empty param.id}">
          <c:param name="id" value="${param.id}"/>
       </c:if>
@@ -160,7 +184,7 @@
 		<td>
             Severity:
             <html:select property="sevFilter" onchange="this.form.submit(); return true;">
-     			<html:option value=""/>
+     			<html:option value="ALL"/>
     			<html:option value="DEBUG"/>
     			<html:option value="INFO"/>
     			<html:option value="WARN"/>
@@ -199,6 +223,7 @@
 	<tr>
 		<%-- paging controls here they define their own <td>, so it is not needed here --%>
 		<c:set var="pageList" value="${EventsForm.events}" />
+		<c:set var="myAction" value="javascript:document.EventsForm.submit()" />
 		<tiles:insert definition=".controls.paging">
 			<tiles:put name="pageList" beanName="pageList"/>
 			<tiles:put name="postfix" value=""/>

@@ -224,8 +224,8 @@ public class EventManagerBean implements EventManagerLocal {
         return comp;
     }
 
-    public List<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin, long endDate,
-        EventSeverity severity, int eventId, String source, String searchString, PageControl pc) {
+    public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
+        long endDate, EventSeverity severity, int eventId, String source, String searchString, PageControl pc) {
 
         List<Resource> resources = resGrpMgr.getResourcesForAutoGroup(subject, parent, type);
         int[] resourceIds = new int[resources.size()];

@@ -20,7 +20,6 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.events;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -32,29 +31,17 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.event.EventSeverity;
-import org.rhq.core.domain.event.composite.EventComposite;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.legacy.ParamConstants;
-import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
-import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.event.EventManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Heiko W. Rupp
+ * @author Jay Shaughnessy
  *
  */
 public class ListEventsAction extends BaseAction {
 
-    EventManagerLocal eventManager;
-
-    Log log = LogFactory.getLog(EventsFormPrepareAction.class);
+    Log log = LogFactory.getLog(ListEventsAction.class);
 
     @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
@@ -62,99 +49,40 @@ public class ListEventsAction extends BaseAction {
 
         EventsForm eForm = (EventsForm) form;
 
-        eventManager = LookupUtil.getEventManager();
-
-        int eventId = WebUtility.getOptionalIntRequestParameter(request, "eventId", -1);
-        int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
-        int groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
-        int parent = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
-        int type = WebUtility.getOptionalIntRequestParameter(request, "type", -1);
-
-        WebUser user = SessionUtils.getWebUser(request.getSession());
-        Subject subject = user.getSubject();
-
-        // Get metric range defaults
-        Map pref = user.getMetricRangePreference(true);
-        long begin = (Long) pref.get(MonitorUtils.BEGIN);
-        long end = (Long) pref.get(MonitorUtils.END);
-        Integer lastN = (Integer) pref.get(MonitorUtils.LASTN);
-        eForm.setRn(lastN);
-        request.getSession().setAttribute("rn", lastN);
-        Integer unit = (Integer) pref.get(MonitorUtils.UNIT);
-        eForm.setRu(unit);
-        request.getSession().setAttribute("ru", unit);
-
-        PageControl pc = WebUtility.getPageControl(request);
-
-        EventSeverity severityFilter = getSeverityFromString(eForm.getSevFilter());
+        // Get the filters set on the form. If set these settings take precedence
+        String severityFilter = eForm.getSevFilter();
         String sourceFilter = eForm.getSourceFilter();
         String searchString = eForm.getSearchString();
 
-        Map<String, Integer> returnRequestParams = new HashMap<String, Integer>();
-
-        List<EventComposite> events;
-        if (resourceId > 0) {
-            events = eventManager.getEvents(subject, new int[] { resourceId }, begin, end, severityFilter, eventId,
-                sourceFilter, searchString, pc);
-            //            returnRequestParams.put(ParamConstants.RESOURCE_ID_PARAM, resourceId);
-        } else if (groupId > 0) {
-            events = eventManager.getEventsForCompGroup(subject, groupId, begin, end, severityFilter, eventId,
-                sourceFilter, searchString, pc);
-            //            returnRequestParams.put(ParamConstants.GROUP_ID_PARAM, groupId);
-
-        } else if (parent > 0 && type > 0) {
-            events = eventManager.getEventsForAutoGroup(subject, parent, type, begin, end, severityFilter, eventId,
-                sourceFilter, searchString, pc);
-            //            returnRequestParams.put(ParamConstants.RESOURCE_TYPE_ID_PARAM, type);
-            //            returnRequestParams.put("parent", parent);
-
-        } else {
-            log.warn("Invalid input combination - can not list events ");
-            return null;
+        // If the form does not provide filter values then check for filters passed as parameters. 
+        // Pagination bypasses the form settings so if navigating
+        // from pagination we maintain the filter information only via request parameter.
+        if (null == severityFilter) {
+            severityFilter = WebUtility.getOptionalRequestParameter(request, "pSeverity", null);
         }
-        for (EventComposite event : events) {
-            event.setEventDetail(htmlFormat(event.getEventDetail(), eForm.getSearchString()));
-            event.setSourceLocation(htmlFormat(event.getSourceLocation(), null));
+        if (null == sourceFilter) {
+            sourceFilter = WebUtility.getOptionalRequestParameter(request, "pSource", null);
+        }
+        if (null == searchString) {
+            searchString = WebUtility.getOptionalRequestParameter(request, "pSearch", null);
         }
 
-        eForm.setEvents((PageList<EventComposite>) events);
+        Map<String, String> returnRequestParams = new HashMap<String, String>();
 
-        ActionForward forward = checkSubmit(request, mapping, form, returnRequestParams);
+        // Ensure the filters are provided by supplying them as return request params 
+        if (null != severityFilter) {
+            returnRequestParams.put("pSeverity", severityFilter);
+        }
+        if (null != sourceFilter) {
+            returnRequestParams.put("pSource", sourceFilter);
+        }
+        if (null != searchString) {
+            returnRequestParams.put("pSearch", searchString);
+        }
+
+        // Navigate back to self (EventsFormPrepareAction) which will actually populate the events list
 
         return returnSuccess(request, mapping, returnRequestParams);
-    }
-
-    /**
-     * Try to parse the passed String an return an appropriate severity value
-     * @param sevFilter
-     * @return
-     */
-    private EventSeverity getSeverityFromString(String sevFilter) {
-
-        if (sevFilter == null || sevFilter.equals(""))
-            return null;
-        try {
-            EventSeverity sev = EventSeverity.valueOf(sevFilter);
-            return sev;
-        } catch (IllegalArgumentException iae) {
-            log.warn("Illegal EventSeverity passed: " + sevFilter);
-            return null;
-        }
-    }
-
-    /**
-     * Format the input so that CR becomes a html-break and
-     * a searchResult will be highlighted
-     * 
-     * TODO extend and put in a Util class together with the version from {@link OneEventDetailAction}
-     */
-    private String htmlFormat(String input, String searchResult) {
-        String output;
-        output = input.replaceAll("\\n", "<br/>\n");
-        if (searchResult != null && !searchResult.equals("")) {
-            output = output.replaceAll("(?i)(" + searchResult + ")", "<b>$1</b>");
-        }
-        return output;
     }
 
 }

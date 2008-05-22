@@ -90,8 +90,8 @@ public interface EventManagerLocal {
     public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
         long endDate, EventSeverity object, PageControl pc);
 
-    public List<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin, long endDate,
-        EventSeverity object, int eventId, String source, String searchString, PageControl pc);
+    public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
+        long endDate, EventSeverity object, int eventId, String source, String searchString, PageControl pc);
 
     /**
      * Retrieve the count of events for the given resource in the time between begin and end, nicely separated

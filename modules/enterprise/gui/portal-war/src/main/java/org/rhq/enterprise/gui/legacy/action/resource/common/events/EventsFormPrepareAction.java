@@ -47,7 +47,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Heiko W. Rupp
- *
+ * @author Jay Shaughnessy
  */
 public class EventsFormPrepareAction extends MetricsControlAction {
 
@@ -86,28 +86,50 @@ public class EventsFormPrepareAction extends MetricsControlAction {
 
         PageControl pc = WebUtility.getPageControl(request);
 
-        EventSeverity severityFilter = getSeverityFromString(eForm.getSevFilter());
+        // Get the filters set on the form. If set these settings take precedence
+        String severityFilter = eForm.getSevFilter();
         String sourceFilter = eForm.getSourceFilter();
         String searchString = eForm.getSearchString();
 
+        // If the form does not provide filter values then check for filters passed as parameters. 
+        // Pagination bypasses the form settings so if navigating
+        // from pagination we maintain the filter information only via request parameter.
+        if (null == severityFilter) {
+            severityFilter = WebUtility.getOptionalRequestParameter(request, "pSeverity", null);
+            eForm.setSevFilter(severityFilter);
+        }
+        if (null == sourceFilter) {
+            sourceFilter = WebUtility.getOptionalRequestParameter(request, "pSource", null);
+            eForm.setSourceFilter(sourceFilter);
+        }
+        if (null == searchString) {
+            searchString = WebUtility.getOptionalRequestParameter(request, "pSearch", null);
+            eForm.setSearchString(searchString);
+        }
+
+        // Perform the query and get the (filtered) events
+        EventSeverity eventSeverityFilter = getSeverityFromString(eForm.getSevFilter());
+
         List<EventComposite> events;
         if (resourceId > 0) {
-            events = eventManager.getEvents(subject, new int[] { resourceId }, begin, end, severityFilter, eventId,
-                sourceFilter, searchString, pc);
+            events = eventManager.getEvents(subject, new int[] { resourceId }, begin, end, eventSeverityFilter,
+                eventId, sourceFilter, searchString, pc);
         } else if (groupId > 0) {
-            events = eventManager.getEventsForCompGroup(subject, groupId, begin, end, severityFilter, eventId,
+            events = eventManager.getEventsForCompGroup(subject, groupId, begin, end, eventSeverityFilter, eventId,
                 sourceFilter, searchString, pc);
 
         } else if (parent > 0 && type > 0) {
-            events = eventManager.getEventsForAutoGroup(subject, parent, type, begin, end, severityFilter, eventId,
-                sourceFilter, searchString, pc);
+            events = eventManager.getEventsForAutoGroup(subject, parent, type, begin, end, eventSeverityFilter,
+                eventId, sourceFilter, searchString, pc);
         } else {
             log.warn("Invalid input combination - can not list events ");
             return null;
         }
+
+        // highlight filter info
         for (EventComposite event : events) {
             event.setEventDetail(htmlFormat(event.getEventDetail(), eForm.getSearchString()));
-            event.setSourceLocation(htmlFormat(event.getSourceLocation(), null));
+            event.setSourceLocation(htmlFormat(event.getSourceLocation(), eForm.getSourceFilter()));
         }
 
         eForm.setEvents((PageList<EventComposite>) events);
@@ -122,7 +144,7 @@ public class EventsFormPrepareAction extends MetricsControlAction {
      */
     private EventSeverity getSeverityFromString(String sevFilter) {
 
-        if (sevFilter == null || sevFilter.equals(""))
+        if (sevFilter == null || sevFilter.equals("") || (sevFilter.equals("ALL")))
             return null;
         try {
             EventSeverity sev = EventSeverity.valueOf(sevFilter);

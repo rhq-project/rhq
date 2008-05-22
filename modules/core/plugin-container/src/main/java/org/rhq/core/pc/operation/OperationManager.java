@@ -124,7 +124,7 @@ public class OperationManager extends AgentService implements OperationAgentServ
 
             // ensure the facet method timeout is comfortably longer than the operation timeout
             long facetMethodTimeout = operationTimeout + (10 * 1000L);
-            final OperationFacet operationComponent = getOperationFacet(resourceId, facetMethodTimeout);
+            final OperationFacet operationComponent = getOperationFacet(resourceId);
             final TimerTask timerTask = new TimerTask() {
                 // TIMER TASK THREAD - waits until the timeout time expires - if this is not canceled before the timeout hits,
                 // the operation invocation thread is interrupted and the server will be told the operation has timed out.
@@ -175,12 +175,11 @@ public class OperationManager extends AgentService implements OperationAgentServ
      *
      * @param  resourceId identifies the resource that is to have the operation invoked on it
      *
-     * @param timeout
      * @return the resource's operation facet component
      *
-     * @throws PluginContainerException
+     * @throws PluginContainerException on error
      */
-    protected OperationFacet getOperationFacet(int resourceId, long timeout) throws PluginContainerException {
+    protected OperationFacet getOperationFacet(int resourceId) throws PluginContainerException {
         return ComponentUtil.getComponent(resourceId, OperationFacet.class, FacetLockType.WRITE, this.facetMethodTimeout, false, false);
     }
 

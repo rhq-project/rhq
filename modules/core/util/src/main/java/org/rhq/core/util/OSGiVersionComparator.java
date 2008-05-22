@@ -25,42 +25,38 @@ import java.util.Comparator;
  * here:
  * http://help.eclipse.org/help31/index.jsp?topic=/org.eclipse.platform.doc.isv/reference/osgi/org/osgi/framework/Version.html
  *
- * @author  <a href="ccrouch@jboss.com">Charles Crouch</a>
+ * @author Charles Crouch
  *
  */
-public class OSGiVersionComparator implements Comparator {
+public class OSGiVersionComparator implements Comparator<String> {
     public OSGiVersionComparator() {
     }
 
-    public int compare(Object o1, Object o2) {
-        if ((o1 instanceof String) && (o2 instanceof String)) {
-            Version ver1 = new Version((String) o1);
-            Version ver2 = new Version((String) o2);
+    public int compare(String string1, String string2) {
+        Version ver1 = new Version(string1);
+        Version ver2 = new Version(string2);
 
-            int result = ver1.major - ver2.major;
+        int result = ver1.major - ver2.major;
+        if (result == 0) {
+            result = ver1.minor - ver2.minor;
             if (result == 0) {
-                result = ver1.minor - ver2.minor;
+                result = ver1.micro - ver2.micro;
                 if (result == 0) {
-                    result = ver1.micro - ver2.micro;
-                    if (result == 0) {
-                        result = ver1.qualifier.compareTo(ver2.qualifier);
-                    }
+                    result = ver1.qualifier.compareTo(ver2.qualifier);
                 }
             }
-
-            return result;
-        } else {
-            throw new ClassCastException("Arguments must both be Strings.");
         }
+
+        return result;
     }
 
     private class Version {
-        public int major;
-        public int minor;
-        public int micro;
-        public String qualifier = "";
+        int major;
+        int minor;
+        int micro;
+        String qualifier = "";
 
-        public Version(String version) {
+        Version(String version) {
             String[] parts = version.split("\\.");
 
             try {

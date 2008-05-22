@@ -104,11 +104,11 @@ public class ViewGroupConnectionPropertiesUIBean {
     }
 
     public String getNullConfigurationDefinitionMessage() {
-        return "Can not find calculate an effective plugin configuration definition for this group.";
+        return "Cannot calculate an effective plugin configuration definition for this group.";
     }
 
     public String getNullConfigurationMessage() {
-        return "Some resource in this group does not have its plugin configuration initialized, "
-            + "or this group contains mixed resource types when it should only contain one.";
+        return "Some Resource in this group does not have its plugin configuration initialized, "
+            + "or this group contains mixed Resource types when it should only contain one.";
     }
 }

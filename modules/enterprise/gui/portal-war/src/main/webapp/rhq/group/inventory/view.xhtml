@@ -288,7 +288,11 @@
 
 <!-- =================== GROUP CONNECTION PROPERTIES =================== -->
 <rich:panel styleClass="BlockContent"
-            rendered="#{resourceGroupMembersDataModel.rowCount > 0 and ResourceGroupUIBean.groupCategoryName == 'COMPATIBLE'}">
+            rendered="#{resourceGroupMembersDataModel.rowCount > 0 and
+                        ResourceGroupUIBean.groupCategoryName == 'COMPATIBLE' and
+                        !empty ViewGroupConnectionPropertiesUIBean.configurationDefinition.propertyDefinitions and
+                        !empty ViewGroupConnectionPropertiesUIBean.configuration.map}">
+
 
    <f:facet name="header" styleClass="BlockTitle">
       Group Connection Properties

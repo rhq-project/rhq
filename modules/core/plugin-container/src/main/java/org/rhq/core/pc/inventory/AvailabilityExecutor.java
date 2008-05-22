@@ -135,7 +135,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                     FacetLockType.NONE, GET_AVAILABILITY_TIMEOUT, true, false);
             } catch (PluginContainerException e) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Could not create resource component proxy for " + resource + " due to " + e.toString());
+                    log.debug("Could not create resource component proxy for " + resource + " due to " + e);
                 }
             }
         }

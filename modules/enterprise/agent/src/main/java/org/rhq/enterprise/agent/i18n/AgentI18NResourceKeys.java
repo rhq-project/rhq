@@ -94,7 +94,13 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("The plugin [{0}] is current and does not need to be updated.")
     String PLUGIN_ALREADY_AT_LATEST = "PluginUpdate.already-at-latest";
 
-    @I18NMessage("The plugin [{0}] does not yet exist - will retreive the latest version.")
+    @I18NMessage("The plugin [{0}] does not exist on the Server - renaming it to [{1}] so it will not get deployed by the Plugin Container.")
+    String PLUGIN_NOT_ON_SERVER = "PluginUpdate.plugin-not-on-server";
+
+    @I18NMessage("Failed to rename illegitimate plugin [{0}] to [{1}].")
+    String PLUGIN_RENAME_FAILED = "PluginUpdate.plugin-rename-failed";
+
+    @I18NMessage("The plugin [{0}] does not yet exist - will retrieve the latest version.")
     String NEED_MISSING_PLUGIN = "PluginUpdate.need-missing-plugin";
 
     @I18NMessage("The plugin [{0}] exists but is old and will be retrieved and updated to the latest version. Current MD5 is [{1}] and the latest MD5 is [{2}]")

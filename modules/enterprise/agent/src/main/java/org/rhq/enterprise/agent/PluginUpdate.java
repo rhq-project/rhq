@@ -37,7 +37,7 @@ import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 
 /**
  * This object's job is to update any and all plugin jars that need to be updated. If this object determines that a
- * more-recent plugin jar exists, this will retrieve it and overwrite the current plugin jar with that latest plugin
+ * more recent plugin jar exists, this will retrieve it and overwrite the current plugin jar with that latest plugin
  * jar. This object can also be used if you just want to get information on the current set of plugins - see
  * {@link #getCurrentPluginFiles()}.
  *
@@ -140,10 +140,12 @@ public class PluginUpdate {
 
             // find out what the latest plugins are available to us
             List<Plugin> latest_plugins = coreServerService.getLatestPlugins();
+            Map<String, Plugin> latest_plugins_map = new HashMap<String, Plugin>(latest_plugins.size());
 
             // determine if we need to upgrade any of our current plugins to the latest versions
             for (Plugin latest_plugin : latest_plugins) {
                 String plugin_filename = latest_plugin.getPath();
+                latest_plugins_map.put(plugin_filename, latest_plugin);
                 Plugin current_plugin = current_plugins.get(plugin_filename);
 
                 if (current_plugin == null) {
@@ -162,6 +164,8 @@ public class PluginUpdate {
                     }
                 }
             }
+
+            deleteIllegitimatePlugins(current_plugins, latest_plugins_map);
 
             // let's go ahead and download all the plugins that we need
             Exception last_error = null;
@@ -238,7 +242,7 @@ public class PluginUpdate {
         // now let's download the latest plugin
         File new_plugin = new File(plugin_dir, new_plugin_filename);
         FileOutputStream new_plugin_outstream = null;
-        InputStream server_plugin_instream = null;
+        InputStream server_plugin_instream;
 
         try {
             new_plugin_outstream = new FileOutputStream(new_plugin, false);
@@ -327,5 +331,31 @@ public class PluginUpdate {
         }
 
         return;
+    }
+
+    private void deleteIllegitimatePlugins(Map<String, Plugin> current_plugins,
+                                           Map<String, Plugin> latest_plugins_map) {
+        for (Plugin current_plugin : current_plugins.values()) {
+            if (!latest_plugins_map.containsKey(current_plugin.getPath())) {
+                File plugin_dir = this.config.getPluginDirectory();
+                String plugin_filename = current_plugin.getPath();
+                File plugin = new File(plugin_dir, plugin_filename);
+                if (plugin.exists()) {
+                    File plugin_backup = new File(plugin_dir, plugin_filename + ".UNKNOWN");
+                    LOG.info(AgentI18NResourceKeys.PLUGIN_NOT_ON_SERVER, plugin_filename, plugin_backup.getName());                                        
+                    try {
+                        plugin_backup.delete(); // in case an old backup is for some reason still here, get rid of it
+                        boolean renamed = plugin.renameTo(plugin_backup);
+                        // note that we don't fail if we can't backup the plugin, but we will log it
+                        if (!renamed) {
+                            LOG.error(AgentI18NResourceKeys.PLUGIN_RENAME_FAILED, plugin_filename, plugin_backup.getName());
+                        }
+                    }
+                    catch (RuntimeException e) {
+                        LOG.error(e, AgentI18NResourceKeys.PLUGIN_RENAME_FAILED, plugin_filename, plugin_backup.getName());
+                    }
+                }
+            }
+        }
     }
 }

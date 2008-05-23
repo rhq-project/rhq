@@ -32,7 +32,6 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
-import org.rhq.enterprise.gui.util.WebUtility;
 
 /**
  * @author Heiko W. Rupp
@@ -49,27 +48,15 @@ public class ListEventsAction extends BaseAction {
 
         EventsForm eForm = (EventsForm) form;
 
-        // Get the filters set on the form. If set these settings take precedence
+        // Get the filters set on the form and supply them as return request parameters. Pagination
+        // operates solely on request parameters and therefore so must EventsFormPrepareAction.
         String severityFilter = eForm.getSevFilter();
         String sourceFilter = eForm.getSourceFilter();
         String searchString = eForm.getSearchString();
 
-        // If the form does not provide filter values then check for filters passed as parameters. 
-        // Pagination bypasses the form settings so if navigating
-        // from pagination we maintain the filter information only via request parameter.
-        if (null == severityFilter) {
-            severityFilter = WebUtility.getOptionalRequestParameter(request, "pSeverity", null);
-        }
-        if (null == sourceFilter) {
-            sourceFilter = WebUtility.getOptionalRequestParameter(request, "pSource", null);
-        }
-        if (null == searchString) {
-            searchString = WebUtility.getOptionalRequestParameter(request, "pSearch", null);
-        }
-
         Map<String, String> returnRequestParams = new HashMap<String, String>();
 
-        // Ensure the filters are provided by supplying them as return request params 
+        // The parameters must be named differently than the properties to avoid conflict.
         if (null != severityFilter) {
             returnRequestParams.put("pSeverity", severityFilter);
         }
@@ -81,7 +68,6 @@ public class ListEventsAction extends BaseAction {
         }
 
         // Navigate back to self (EventsFormPrepareAction) which will actually populate the events list
-
         return returnSuccess(request, mapping, returnRequestParams);
     }
 

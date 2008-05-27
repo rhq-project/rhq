@@ -31,6 +31,9 @@ import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
@@ -107,11 +110,13 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
     private void processCommand(String pcName, String[] args, PrintWriter out) {
         String pluginName = null;
         String resourceTypeName = null;
+        boolean verbose = false;
 
-        String sopts = "-p:r:f";
+        String sopts = "-p:r:fv";
         LongOpt[] lopts = { new LongOpt("plugin", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
             new LongOpt("resourceType", LongOpt.REQUIRED_ARGUMENT, null, 'r'),
-            new LongOpt("full", LongOpt.NO_ARGUMENT, null, 'f') };
+            new LongOpt("full", LongOpt.NO_ARGUMENT, null, 'f'),
+            new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v')};
 
         Getopt getopt = new Getopt("discovery", args, sopts, lopts);
         int code;
@@ -142,6 +147,11 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
                 out.println("Full discovery run in " + (System.currentTimeMillis() - start) + "ms");
                 return;
             }
+
+            case 'v': {
+                verbose = true;
+                break;
+            }
             }
         }
 
@@ -151,7 +161,7 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         }
 
         try {
-            discovery(pcName, out, pluginName, resourceTypeName);
+            discovery(pcName, out, pluginName, resourceTypeName, verbose);
         } catch (Exception e) {
             out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_ERROR, ThrowableUtil.getAllMessages(e)));
             return;
@@ -160,7 +170,7 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         return;
     }
 
-    private void discovery(String pcName, PrintWriter out, String pluginName, String resourceTypeName) throws Exception {
+    private void discovery(String pcName, PrintWriter out, String pluginName, String resourceTypeName, boolean verbose) throws Exception {
         PluginContainer pc = PluginContainer.getInstance();
         PluginMetadataManager metadataManager = pc.getPluginManager().getMetadataManager();
         Set<ResourceType> typesToDiscover = new HashSet<ResourceType>();
@@ -213,7 +223,7 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
                 && (typeToDiscover.getParentResourceTypes().size() == 0)) {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_DISCOVERING_RESOURCE_TYPE, typeToDiscover
                     .getPlugin(), typeToDiscover.getName()));
-                discoveryForSingleResourceType(pcName, out, typeToDiscover);
+                discoveryForSingleResourceType(pcName, out, typeToDiscover, verbose);
                 out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_DISCOVERING_RESOURCE_TYPE_DONE, typeToDiscover
                     .getPlugin(), typeToDiscover.getName()));
                 out.println();
@@ -223,7 +233,8 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         return;
     }
 
-    private void discoveryForSingleResourceType(String pcName, PrintWriter out, ResourceType resourceType)
+    private void discoveryForSingleResourceType(String pcName, PrintWriter out, ResourceType resourceType,
+                                                boolean verbose)
         throws Exception {
         // perform auto-discovery PIQL queries now to see if we can auto-detect resources that are running now
         List<ProcessScanResult> scanResults = new ArrayList<ProcessScanResult>();
@@ -251,9 +262,9 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         }
 
         PluginComponentFactory componentFactory = PluginContainer.getInstance().getPluginComponentFactory();
-        InventoryManager im = PluginContainer.getInstance().getInventoryManager();
+        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
         ResourceDiscoveryComponent discoveryComponent = componentFactory.getDiscoveryComponent(resourceType);
-        ResourceComponent platformComponent = im.getResourceComponent(im.getPlatform());
+        ResourceComponent platformComponent = inventoryManager.getResourceComponent(inventoryManager.getPlatform());
 
         ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, platformComponent, systemInfo,
             scanResults, Collections.EMPTY_LIST, pcName);
@@ -266,9 +277,28 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
                     .getResourceType().getPlugin(), discoveredResource.getResourceType().getName(), discoveredResource
                     .getResourceKey(), discoveredResource.getResourceName(), discoveredResource.getResourceVersion(),
                     discoveredResource.getResourceDescription()));
+                if (verbose) {
+                    printConfiguration(discoveredResource.getPluginConfiguration(), out);                    
+                }
             }
         }
 
         return;
+    }
+
+    private static void printConfiguration(Configuration config, PrintWriter out) {
+        for (Property property : config.getMap().values()) {
+            StringBuilder builder = new StringBuilder();
+            builder.append("    ");
+            builder.append(property.getName());
+            builder.append("=");
+            if (property instanceof PropertySimple) {
+                String value = ((PropertySimple)property).getStringValue();
+                builder.append((value != null) ? "\"" + value + "\"" : value);
+            } else {
+                builder.append(property);
+            }
+            out.println(builder);
+        }
     }
 }

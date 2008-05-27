@@ -1295,13 +1295,14 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("discovery")
     String DISCOVERY = "PromptCommand.discovery";
 
-    @I18NMessage("discovery [--plugin=<plugin name>] [--resourceType=<type name>] [--full]")
+    @I18NMessage("discovery [--plugin=<plugin name>] [--resourceType=<type name>] [--verbose]\\n\\\n"
+        + "        discovery --full")
     String DISCOVERY_SYNTAX = "PromptCommand.discovery.syntax";
 
     @I18NMessage("Asks a plugin to run a server scan discovery")
     String DISCOVERY_HELP = "PromptCommand.discovery.help";
 
-    @I18NMessage("Asks a plugin to run a server scan discovery. This is a way to determine\\n\\\n"
+    @I18NMessage("Asks a plugin to run a server discovery scan. This is a way to determine\\n\\\n"
         + "what servers a plugin can actually find.  Note that this will run a server\\n\\\n"
         + "scan, not a service scan (i.e. it will not try to discover child services\\n\\\n"
         + "for parent servers already in inventory) unless you use --full. Also note\\n\\\n"
@@ -1319,7 +1320,8 @@ public interface AgentI18NResourceKeys {
         + "\\                              types that a plugin supports will be\\n\\\n"
         + "\\                              discovered (and if no plugin was specified,\\n\\\n"
         + "\\                              then all resource types for all plugins will\\n\\\n"
-        + "\\                              be discovered).")
+        + "\\                              be discovered).\\n\\\n"
+        + "\\  -v, --verbose : Prints the plugin configuration of each discovered server.")
     String DISCOVERY_DETAILED_HELP = "PromptCommand.discovery.detailed-help";
 
     @I18NMessage("You must first start the plugin container before attempting discovery.")
@@ -1346,7 +1348,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("{0}.{1}: Process scan detected a server - scan=[{2}], process=[{3}]")
     String DISCOVERY_PROCESS_SCAN = "PromptCommand.discovery.process-scan";
 
-    @I18NMessage("{0}.{1}: key=[{2}] name=[{3}] version=[{4}] description=[{5}]")
+    @I18NMessage("{0}.{1}: key=[{2}], name=[{3}], version=[{4}], description=[{5}]")
     String DISCOVERY_COMPONENT_RESULT = "PromptCommand.discovery.component-result";
 
     @I18NMessage("inventory")

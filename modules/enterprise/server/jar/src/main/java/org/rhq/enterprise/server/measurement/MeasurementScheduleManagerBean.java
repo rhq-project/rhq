@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -644,6 +645,53 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         // TODO: we need to tell all agents to update their schedules.
         // we could have hundreds/thousands of agents, so we need to make sure we can do this within
         // the transaction timeout period or we do it one agent per tx in another method
+    }
+
+    /**
+     * Create {@link MeasurementSchedule}s for existing resources hanging on newType
+     * @param type The {@link ResourceType} for which we want to add schedules
+     * @param newDefinition The {@link MeasurementDefinition} where we derive the schedules from
+     */
+    public void createSchedulesAndSendToAgents(ResourceType type, MeasurementDefinition newDefinition) {
+        List<Resource> resources = type.getResources();
+        if (resources != null) {
+            Map<Agent, Set<ResourceMeasurementScheduleRequest>> arMap = new HashMap<Agent, Set<ResourceMeasurementScheduleRequest>>();
+            for (Resource res : resources) {
+                MeasurementSchedule sched = new MeasurementSchedule(newDefinition, res);
+                sched.setInterval(newDefinition.getDefaultInterval());
+                entityManager.persist(sched);
+
+                /* 
+                 * we have the schedule, now lets dispatch them per agent.
+                 * We need to make sure that we only do one round trip per agent.
+                 */
+                MeasurementScheduleRequest mReq = new MeasurementScheduleRequest(sched);
+                ResourceMeasurementScheduleRequest req = new ResourceMeasurementScheduleRequest(res.getId());
+                req.addMeasurementScheduleRequest(mReq);
+                Agent agent = res.getAgent();
+                if (arMap.containsKey(agent)) {
+                    Set<ResourceMeasurementScheduleRequest> tmp = arMap.get(agent);
+                    tmp.add(req);
+                } else {
+                    Set<ResourceMeasurementScheduleRequest> reqSet = new HashSet<ResourceMeasurementScheduleRequest>(1);
+                    reqSet.add(req);
+                    arMap.put(agent, reqSet);
+                }
+
+            }
+
+            // We've created all schedules and keyed them by agent, so lets "upload" them
+            // TODO what happens when the agent does not yet have the metrics from the plugin?
+            Set<Agent> agents = arMap.keySet();
+            Iterator<Agent> agentIter = agents.iterator();
+            while (agentIter.hasNext()) {
+                Agent agent = agentIter.next();
+                Set<ResourceMeasurementScheduleRequest> reqSet = arMap.get(agent);
+                AgentClient ac = agentManager.getAgentClient(agent);
+                ac.getMeasurementAgentService().updateCollection(reqSet);
+            }
+
+        }
     }
 
     /**

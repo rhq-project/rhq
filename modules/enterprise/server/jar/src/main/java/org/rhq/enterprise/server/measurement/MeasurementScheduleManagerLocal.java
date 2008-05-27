@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
@@ -314,4 +315,11 @@ public interface MeasurementScheduleManagerLocal {
      */
     public PageList<MeasurementScheduleComposite> getMeasurementSchedulesForAutoGroup(Subject subject, int parentId,
         int childType, PageControl pageControl);
+
+    /**
+     * Create {@link MeasurementSchedule}s for existing resources hanging on newType
+     * @param type The {@link ResourceType} for which we want to add schedules
+     * @param newDefinition The {@link MeasurementDefinition} where we derive the schedules from
+     */
+    public void createSchedulesAndSendToAgents(ResourceType type, MeasurementDefinition newDefinition);
 }

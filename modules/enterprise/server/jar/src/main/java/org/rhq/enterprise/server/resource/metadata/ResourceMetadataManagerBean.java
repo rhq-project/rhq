@@ -53,6 +53,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 
 /**
@@ -75,6 +76,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @EJB
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
+
+    @EJB
+    private MeasurementScheduleManagerLocal scheduleManager;
 
     @EJB
     private ConfigurationMetadataManagerLocal configurationMetadataManager;
@@ -433,6 +437,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 for (MeasurementDefinition newDefinition : newType.getMetricDefinitions()) {
                     existingType.addMetricDefinition(newDefinition);
                     entityManager.persist(newDefinition);
+
+                    // TODO add schedules for them ?
                 }
             } else {
                 // Update existing or add new metrics
@@ -452,6 +458,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                         // Its new, create it
                         existingType.addMetricDefinition(newDefinition);
                         entityManager.persist(newDefinition);
+
+                        // Now create schedules for already existing resources for 
+                        scheduleManager.createSchedulesAndSendToAgents(existingType, newDefinition);
                     }
                 }
 

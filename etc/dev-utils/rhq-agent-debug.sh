@@ -205,7 +205,7 @@ debug_msg "RHQ_AGENT_CMDLINE_OPTS: $RHQ_AGENT_CMDLINE_OPTS"
 # ----------------------------------------------------------------------
 
 if [ "x$RHQ_AGENT_DEBUG" != "x" ]; then
-   _LOG_CONFIG=-Dlog4j.configuration="log4j-debug.xml -Dlog4j.debug=true -Dsigar.nativeLogging=true -Di18nlog.dump-stack-traces=true"
+   _LOG_CONFIG=-Dlog4j.configuration="log4j-debug.xml -Dsigar.nativeLogging=true -Di18nlog.dump-stack-traces=true"
 else
    _LOG_CONFIG=-Dlog4j.configuration="log4j.xml"
 fi

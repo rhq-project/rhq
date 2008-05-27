@@ -163,7 +163,7 @@ rem Execute the VM which starts the agent
 rem ----------------------------------------------------------------------
 
 if defined RHQ_AGENT_DEBUG (
-   set _LOG_CONFIG=-Dlog4j.configuration=log4j-debug.xml -Dlog4j.debug=true -Dsigar.nativeLogging=true -Di18nlog.dump-stack-traces=true
+   set _LOG_CONFIG=-Dlog4j.configuration=log4j-debug.xml -Dsigar.nativeLogging=true -Di18nlog.dump-stack-traces=true
 ) else (
    set _LOG_CONFIG=-Dlog4j.configuration=log4j.xml
 )

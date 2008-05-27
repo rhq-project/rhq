@@ -680,8 +680,13 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
             }
 
-            // We've created all schedules and keyed them by agent, so lets "upload" them
-            // TODO what happens when the agent does not yet have the metrics from the plugin?
+            /*
+             * We've created all schedules and keyed them by agent, so lets "upload" them
+             * to the agents.
+             * What happens when the agent does not yet have the metrics from the plugin? -
+             * There is no harm done, as the agent accepts the new schedules, only the plugin
+             * does not yet know what to do if gathering the passed (new) metrics is requested.  
+             */
             Set<Agent> agents = arMap.keySet();
             Iterator<Agent> agentIter = agents.iterator();
             while (agentIter.hasNext()) {
@@ -695,15 +700,15 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     /**
-     * (Re-)Enables all collection schedules in the given measurement definition IDs and sets their collection
-     * intervals. This only enables the "templates", it does not enable actual schedules unless updateExistingSchedules
-     * is set to true.
-     *
-     * @param subject                  a valid subject that has Permission.MANAGE_SETTINGS
-     * @param measurementDefinitionIds The primary keys for the definitions
-     * @param collectionInterval       the new interval in millisconds for collection
-     * @param updateExistingSchedules  If true, then existing schedules for this definition will also be updated.
-     */
+    * (Re-)Enables all collection schedules in the given measurement definition IDs and sets their collection
+    * intervals. This only enables the "templates", it does not enable actual schedules unless updateExistingSchedules
+    * is set to true.
+    *
+    * @param subject                  a valid subject that has Permission.MANAGE_SETTINGS
+    * @param measurementDefinitionIds The primary keys for the definitions
+    * @param collectionInterval       the new interval in millisconds for collection
+    * @param updateExistingSchedules  If true, then existing schedules for this definition will also be updated.
+    */
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void updateDefaultCollectionIntervalForMeasurementDefinitions(Subject subject,
         int[] measurementDefinitionIds, long collectionInterval, boolean updateExistingSchedules) {

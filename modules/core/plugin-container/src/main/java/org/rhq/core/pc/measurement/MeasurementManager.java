@@ -30,16 +30,20 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
@@ -133,10 +137,12 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             this.measurementCollectorRunner = new MeasurementCollectorRunner(this);
 
             // Schedule the measurement sender to send measurement reports periodically.
-            this.senderThreadPool.scheduleAtFixedRate(measurementSenderRunner, collectionInitialDelaySecs, 30, TimeUnit.SECONDS);
+            this.senderThreadPool.scheduleAtFixedRate(measurementSenderRunner, collectionInitialDelaySecs, 30,
+                TimeUnit.SECONDS);
             // Schedule the measurement collector to collect metrics periodically, whenever there are one or more
             // metrics due to be collected.
-            this.collectorThreadPool.schedule(new MeasurementCollectionRequestor(), collectionInitialDelaySecs, TimeUnit.SECONDS);
+            this.collectorThreadPool.schedule(new MeasurementCollectionRequestor(), collectionInitialDelaySecs,
+                TimeUnit.SECONDS);
 
             // Load persistent measurement schedules from the InventoryManager and reconstitute them.
             Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
@@ -259,16 +265,24 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         this.configuration = configuration;
     }
 
-
+    /**
+     * This remoted method allows the server to schedule a bunch of resources with one call.
+     * 
+     * This method will update the set of {@link MeasurementSchedule}s in the agent.
+     * 
+     * Use {@link #scheduleCollection(Set)} if you want to replace the existing ones.
+     *
+     * @param scheduleRequests
+     */
     public synchronized void updateCollection(Set<ResourceMeasurementScheduleRequest> scheduleRequests) {
         InventoryManager im = PluginContainer.getInstance().getInventoryManager();
 
         for (ResourceMeasurementScheduleRequest resourceRequest : scheduleRequests) {
             ResourceContainer resourceContainer = im.getResourceContainer(resourceRequest.getResourceId());
             if (resourceContainer != null) {
-                resourceContainer.updateMeasurementSchedule(resourceRequest.getMeasurementSchedules());   // this is where we want to update rather than overwrite, right?
+                resourceContainer.updateMeasurementSchedule(resourceRequest.getMeasurementSchedules()); // this is where we want to update rather than overwrite, right?
 
-//                resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
+                //                resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
                 scheduleCollection(resourceRequest.getResourceId(), resourceRequest.getMeasurementSchedules());
             } else {
                 // This will happen when the server sends down schedules to an agent with a cleaned inventory
@@ -285,8 +299,13 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         clearDuplicateSchedules();
 
     }
+
     /**
-     * This remoted method allows the server to schedule a bunch of resources with one call
+     * This remoted method allows the server to schedule a bunch of resources with one call.
+     * 
+     * BE CAREFUL, as this will replace all existing schedules with the passed set.
+     * 
+     * Use {@link #updateCollection(Set)} if you want to schedule additional {@link MeasurementSchedule}s
      *
      * @param scheduleRequests
      */
@@ -296,7 +315,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         for (ResourceMeasurementScheduleRequest resourceRequest : scheduleRequests) {
             ResourceContainer resourceContainer = im.getResourceContainer(resourceRequest.getResourceId());
             if (resourceContainer != null) {
-//                resourceContainer.updateMeasurementSchedule(resourceRequest.getMeasurementSchedules());   // this is where we want to update rather than overwrite, right?
+                //                resourceContainer.updateMeasurementSchedule(resourceRequest.getMeasurementSchedules());   // this is where we want to update rather than overwrite, right?
 
                 resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
                 scheduleCollection(resourceRequest.getResourceId(), resourceRequest.getMeasurementSchedules());
@@ -367,7 +386,8 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         MeasurementFacet measurementFacet;
 
         try {
-            measurementFacet = ComponentUtil.getComponent(resourceId, MeasurementFacet.class, FacetLockType.READ, FACET_METHOD_TIMEOUT, true, true);
+            measurementFacet = ComponentUtil.getComponent(resourceId, MeasurementFacet.class, FacetLockType.READ,
+                FACET_METHOD_TIMEOUT, true, true);
         } catch (Exception e) {
             LOG.warn("Cannot get measurement facet for resource [" + resourceId + "]. Cause: " + e);
             return null;

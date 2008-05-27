@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.prefs.Preferences;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -33,8 +34,11 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+
 import mazz.i18n.Msg;
+
 import org.w3c.dom.Document;
+
 import org.rhq.enterprise.agent.AgentConfiguration;
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
@@ -133,8 +137,20 @@ public class ConfigPromptCommand implements AgentPromptCommand {
         ByteArrayOutputStream unformatted = new ByteArrayOutputStream();
         preferences.exportSubtree(unformatted);
 
+        /*
+         * Filter out the <!DOCTYPE ... > as parsing the xml later
+         * would trigger a lookup over the net to http://java.sun.com,
+         * which can make this method fail if the external server is not
+         * reachable. See RHQ-520
+         */
+        String prefs = unformatted.toString();
+        int start = prefs.indexOf("<!DOCTYPE");
+        int end = prefs.indexOf(">", start);
+        String filteredPrefs = prefs.substring(0, start);
+        filteredPrefs += prefs.substring(end + 1);
+
         // now format the XML
-        ByteArrayInputStream bais = new ByteArrayInputStream(unformatted.toByteArray());
+        ByteArrayInputStream bais = new ByteArrayInputStream(filteredPrefs.getBytes());
         DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         Document doc = docBuilder.parse(bais);
         Source source = new DOMSource(doc);

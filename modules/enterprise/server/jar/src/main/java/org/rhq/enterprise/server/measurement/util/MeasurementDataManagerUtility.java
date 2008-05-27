@@ -642,6 +642,10 @@ public class MeasurementDataManagerUtility {
         return ((now - RAW_PURGE) < beginTime);
     }
 
+    public static boolean isRawTable(String tableName) {
+        return ((null != tableName) && (tableName.startsWith(TABLE_PREFIX)));
+    }
+
     private Connection getConnection() throws SQLException {
         if (this.connection != null) {
             return connection;

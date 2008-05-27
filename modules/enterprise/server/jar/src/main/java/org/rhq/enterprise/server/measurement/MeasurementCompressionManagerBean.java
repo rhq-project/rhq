@@ -184,13 +184,13 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         // information is found, the last value from the table to compress from
         // is used.  (This will only occur on the first compression run).
         long start = getMaxTimestamp(toTable);
-        if (start == 0) {
+        if (start == 0L) {
             // No compressed data found, start from scratch.
             start = getMinTimestamp(fromTable);
 
             // No measurement data found. (Probably a new installation)
-            if (start == 0) {
-                return 0;
+            if (start == 0L) {
+                return 0L;
             }
         } else {
             // Start at next interval
@@ -222,13 +222,13 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
             // already compressed table, we'll take the MIN and
             // MAX from the already calculated min and max columns.
             String minMax;
-            if (MeasurementDataManagerUtility.isRawTimePeriod(begin)) {
+            if (MeasurementDataManagerUtility.isRawTable(fromTable)) {
                 minMax = "AVG(value), MIN(value), MAX(value) ";
             } else {
                 minMax = "AVG(value), MIN(minvalue), MAX(maxvalue) ";
             }
 
-            // TODO GH: Why does this do each schedule seperately?
+            // TODO GH: Why does this do each schedule separately?
             insStmt = conn.prepareStatement("INSERT INTO " + toTable + " (SELECT ?, ft.schedule_id, " + minMax
                 + "  FROM " + fromTable + " ft " + "  WHERE ft.time_stamp >= ? AND ft.time_stamp < ? "
                 + "  GROUP BY ft.schedule_id)");

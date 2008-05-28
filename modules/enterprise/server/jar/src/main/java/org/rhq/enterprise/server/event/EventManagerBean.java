@@ -52,6 +52,7 @@ import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.event.Event;
+import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.event.composite.EventComposite;
@@ -648,6 +649,12 @@ public class EventManagerBean implements EventManagerLocal {
                 log.debug("ackEvent: Event with id " + eventId + " not found");
         }
         return comp;
+    }
+
+    public void deleteEventSourcesForDefinition(EventDefinition def) {
+        Query q = entityManager.createNamedQuery(EventSource.DELETE_BY_EVENT_DEFINITION);
+        q.setParameter("definition", def);
+        q.executeUpdate();
     }
 
     private boolean isFilled(String in) {

@@ -313,6 +313,43 @@ public class PluginHandling3Test extends TestBase {
             throw new Exception(savedThrowable);
     }
 
+    @Test
+    private void testCreateDeleteEvent() throws Exception {
+
+        System.out.println("= testCreateDeleteEvent");
+        getTransactionManager().begin();
+        try {
+            registerPlugin("./test/metadata/event1-1.xml");
+            ResourceType platform = getResourceType("events");
+            assert platform != null;
+            Set<EventDefinition> eDefs = platform.getEventDefinitions();
+            assert eDefs != null;
+            assert eDefs.size() == 1;
+
+            System.out.println("==> Done with v1");
+
+            registerPlugin("./test/metadata/event1-2.xml");
+            platform = getResourceType("events");
+            eDefs = platform.getEventDefinitions();
+            assert eDefs != null;
+            assert eDefs.size() == 2 : "Did not find 2 EventDefinitions, but " + eDefs.size();
+
+            System.out.println("==> Done with v2");
+
+            registerPlugin("./test/metadata/event1-1.xml");
+            platform = getResourceType("events");
+            eDefs = platform.getEventDefinitions();
+            assert eDefs != null;
+            assert eDefs.size() == 1 : "Did not find 1 EventDefinition, but " + eDefs.size();
+
+            System.out.println("==> Done with v1");
+
+        } finally {
+            getTransactionManager().rollback();
+        }
+
+    }
+
     private void getPluginId(EntityManager entityManager) {
         Plugin existingPlugin = null;
         try {

@@ -42,6 +42,7 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.plugin.Plugin;
@@ -52,6 +53,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
+import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -88,6 +90,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @EJB
     private ResourceManagerLocal resourceManager;
+
+    @EJB
+    private EventManagerLocal eventManager;
 
     /**
      * @param  name the name of a plugin
@@ -291,7 +296,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             // not safe to delete the old sub categories yet, because we haven't yet deleted all of the old
             // child types which may still be referencing these sub categories
 
-            // TODO GH: Update the rest of these related resources
+            // Update the rest of these related resources
             updatePluginConfiguration(resourceType, existingType);
             entityManager.flush();
 
@@ -304,6 +309,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             updateOperationDefinitions(resourceType, existingType);
 
             updateProcessScans(resourceType, existingType);
+
+            updateEventDefinitions(resourceType, existingType);
 
             // TODO Update the type itself
             existingType.setDescription(resourceType.getDescription());
@@ -323,6 +330,47 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         } catch (NonUniqueResultException nure) {
             log.debug("Found more than one existing type for " + resourceType.toString());
             throw new RuntimeException(nure);
+        }
+    }
+
+    /** Update the &lt;event> tags */
+    private void updateEventDefinitions(ResourceType newType, ResourceType existingType) {
+
+        Set<EventDefinition> newEventDefs = newType.getEventDefinitions();
+        Set<EventDefinition> existingEventDefs = existingType.getEventDefinitions();
+
+        Set<EventDefinition> toDelete = missingInFirstSet(newEventDefs, existingEventDefs);
+        Set<EventDefinition> newOnes = missingInFirstSet(existingEventDefs, newEventDefs);
+
+        existingEventDefs.retainAll(newEventDefs);
+        existingEventDefs.removeAll(toDelete);
+
+        // Persist new definitions
+        for (EventDefinition eDef : newOnes) {
+            EventDefinition e2 = new EventDefinition(existingType, eDef.getName());
+            e2.setDescription(eDef.getDescription());
+            e2.setDisplayName(eDef.getDisplayName());
+            entityManager.persist(e2);
+            existingType.addEventDefinition(e2);
+        }
+
+        // update existing ones
+        for (EventDefinition eDef : existingEventDefs) {
+            for (EventDefinition nDef : newEventDefs) {
+                if (eDef.equals(nDef)) {
+                    eDef.setDescription(nDef.getDescription());
+                    eDef.setDisplayName(nDef.getDisplayName());
+                }
+            }
+        }
+
+        // and finally remove deleted ones. First flush the EM to be on the save side
+        // for a bulk delete.
+        entityManager.flush();
+        for (EventDefinition eDef : toDelete) {
+            // remove EventSources and events on it.
+            eventManager.deleteEventSourcesForDefinition(eDef);
+            entityManager.remove(eDef);
         }
     }
 
@@ -801,8 +849,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     /**
-     * Return a new Set with elements both in first and second passed collection.
-     *
+     * Return a new Set with elements that are in the first and second passed collection.
+     * If one set is null, an empty Set will be returned.
      * @param  <T>    Type of set
      * @param  first  First set
      * @param  second Second set

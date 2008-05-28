@@ -20,8 +20,10 @@ package org.rhq.enterprise.server.resource.metadata.test;
 
 import java.util.List;
 import java.util.Set;
+
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceSubCategory;
@@ -377,19 +379,45 @@ public class ResourceMetaDataManagerBeanTest extends TestBase {
     //javax.persistence.EntityNotFoundException: Unable to find org.jboss.on.domain.resource.ResourceSubCategory with id 527082
     // when calling  assert children.size() == 2;
     // this test case needs to be deconstructed down to its simplest form
-    //@Test
+    //    @Test
     public void testNestedSubCategoryUpdateWithServices() throws Exception {
         getTransactionManager().begin();
         try {
             registerPlugin("./test/metadata/nested-subcat-services-v1_0.xml");
-            registerPlugin("./test/metadata/nested-subcat-services-v2_0.xml");
 
             ResourceType server1 = getResourceType("testServer1");
             Set<ResourceType> children = server1.getChildResourceTypes();
-            assert children.size() == 2;
+            assert children.size() == 3;
+            List<ResourceSubCategory> subCategories = server1.getSubCategories();
+            assert subCategories != null;
+            assert subCategories.size() == 1; // subcat with name "parent"
+            // TODO check for 2 children of this subcategory
 
-            ResourceType services = getResourceType("testService2");
-            assert services.getSubCategory().getName().equals("applications2");
+            registerPlugin("./test/metadata/nested-subcat-services-v2_0.xml");
+
+            server1 = getResourceType("testServer1");
+            children = server1.getChildResourceTypes();
+            assert children.size() == 2 : "Expected 2 children, but got " + children.size();
+            subCategories = server1.getSubCategories(); // "testServer1"
+            assert subCategories != null;
+            assert subCategories.size() == 1; // Subcat with name "parent"
+            // TODO check for 1 subcat of this
+            ResourceSubCategory sub2 = subCategories.get(0);
+            assert sub2 != null;
+            assert sub2.getName().equals("applications2") : "Name was not 'applications2', but " + sub2.getName();
+
+            // Now the services within <server name="testServer1"/> ...
+            ResourceType service2 = getResourceType("testService2");
+            assert service2 != null;
+            assert service2.getParentResourceTypes().iterator().next().equals(server1);
+            subCategories = service2.getSubCategories();
+            assert subCategories == null;
+
+            ResourceSubCategory subCategory = service2.getSubCategory(); // the subcategory attribute
+            // TODO the subCategory is currently not persisted to the DB, so can not be found
+            subCategory = getEntityManager().find(ResourceSubCategory.class, subCategory.getId());
+            String name = subCategory.getName();
+            assert name.equals("applications2") : "Expected 'applictions2', but got " + name;
 
             ResourceType apps = getResourceType("testApp1");
             assert apps.getSubCategory().getName().equals("applications2");
@@ -398,7 +426,6 @@ public class ResourceMetaDataManagerBeanTest extends TestBase {
         }
     }
 
-    //TODO this should be moved to its own test class
     @Test
     public void testRemoveService() throws Exception {
         getTransactionManager().begin();
@@ -415,7 +442,7 @@ public class ResourceMetaDataManagerBeanTest extends TestBase {
         }
     }
 
-    //@Test
+    @Test
     public void testSimpleSubCategoryCreate() throws Exception {
         getTransactionManager().begin();
         try {
@@ -447,7 +474,7 @@ public class ResourceMetaDataManagerBeanTest extends TestBase {
         }
     }
 
-    //@Test
+    @Test
     public void testSimpleSubCategoryUpdate() throws Exception {
         getTransactionManager().begin();
         try {
@@ -471,18 +498,30 @@ public class ResourceMetaDataManagerBeanTest extends TestBase {
             ResourceType server2 = getResourceType("testServer2");
 
             assert server2.getSubCategories() != null;
-            // TODO somehow we lose both the old services subcat
-            // and also the new service2 subcat we tried to add
-            // maybe we could rework the example to this check in
 
             assert server2.getSubCategories().size() == 2 : "Unexpected number of subcategories ["
                 + server2.getSubCategories().size() + "]";
-            subCat = server2.getSubCategories().get(0);
-            assert subCat.getName().equals("services2");
-            subCat = server2.getSubCategories().get(1);
-            assert subCat.getName().equals("resource");
+            int found = 0;
+            ResourceSubCategory resourceSubCat = null;
+            for (int i = 0; i <= 1; i++) {
+                ResourceSubCategory subCategory = server2.getSubCategories().get(i);
+                String name = subCategory.getName();
+                if ("services2".equals(name) || "resource".equals(name))
+                    found++;
+                if ("resource".equals(name))
+                    resourceSubCat = subCategory;
+            }
+            assert found == 2;
+            assert resourceSubCat != null;
 
-            List<ResourceSubCategory> childSubCats = subCat.getChildSubCategories();
+            // commented out, as they might be in different order, so this will fail even
+            // if both subCts are there, but in different order than expected.
+            //            subCat = server2.getSubCategories().get(0);
+            //            assert subCat.getName().equals("services2") : "Expected 'services2', but got " + subCat.getName();
+            //            subCat = server2.getSubCategories().get(1);
+            //            assert subCat.getName().equals("resource") : "Expected 'resource', but got " + subCat.getName();
+
+            List<ResourceSubCategory> childSubCats = resourceSubCat.getChildSubCategories();
             assert childSubCats.size() == 2;
             subCat = childSubCats.get(1);
             assert subCat.getName().equals("destinations");

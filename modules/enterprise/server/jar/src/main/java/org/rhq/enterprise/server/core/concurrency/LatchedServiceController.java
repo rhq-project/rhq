@@ -14,7 +14,7 @@ public class LatchedServiceController {
 
     private final Collection<? extends LatchedService> latchedServices;
     private final CountDownLatch serviceStartupLatch;
-    private CountDownLatch serviceCompletionLatch;
+    private final CountDownLatch serviceCompletionLatch;
 
     public LatchedServiceController(Collection<? extends LatchedService> services) {
         this.serviceStartupLatch = new CountDownLatch(1);

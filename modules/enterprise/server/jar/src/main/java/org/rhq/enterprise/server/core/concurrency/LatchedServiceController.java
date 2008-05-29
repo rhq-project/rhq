@@ -8,11 +8,9 @@ import java.util.concurrent.CountDownLatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.enterprise.server.core.plugin.ProductPluginDeployer;
-
 public class LatchedServiceController {
 
-    private final Log log = LogFactory.getLog(ProductPluginDeployer.class.getName());
+    private final Log log = LogFactory.getLog(LatchedServiceController.class);
 
     private final Collection<? extends LatchedService> latchedServices;
     private final CountDownLatch serviceStartupLatch;

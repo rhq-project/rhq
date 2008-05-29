@@ -25,8 +25,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.jar.Manifest;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.MBeanNotificationInfo;
@@ -43,19 +44,24 @@ import javax.xml.bind.ValidationEvent;
 import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.xml.sax.SAXException;
+
 import org.jboss.deployment.DeploymentException;
 import org.jboss.deployment.DeploymentInfo;
 import org.jboss.deployment.SubDeployerSupport;
+
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.util.MD5Generator;
+import org.rhq.enterprise.server.core.concurrency.LatchedServiceController;
+import org.rhq.enterprise.server.core.concurrency.LatchedServiceException;
 import org.rhq.enterprise.server.license.LicenseManager;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -96,7 +102,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     private boolean isStarted = false;
     private boolean isReady = false;
     private NotificationBroadcasterSupport broadcaster = new NotificationBroadcasterSupport();
-    private long notifSequence = 0;
+    private AtomicLong notifSequence = new AtomicLong(0);
 
     private static String NOTIF_TYPE(String type) {
         return PRODUCT + ".plugin." + type;
@@ -232,10 +238,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
 
         StringBuffer error = new StringBuffer();
         if (dependencyGraph.isComplete(error)) {
-            List<String> orderedPluginNames = dependencyGraph.getDeploymentOrder();
-            for (String pluginName : orderedPluginNames) {
-                registerPluginJar(this.pluginDescriptors.get(pluginName), pluginDeploymentInfos.get(pluginName));
-            }
+            deployDependencyGraph(pluginDeploymentInfos, dependencyGraph);
 
             this.pluginsToBeRegistered.clear();
             this.pluginDescriptors.clear();
@@ -268,6 +271,68 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         return;
     }
 
+    class LatchedPluginDeploymentService extends LatchedServiceController.LatchedService {
+
+        private final DeploymentInfo pluginDeploymentInfo;
+        private final PluginDescriptor pluginDescriptor;
+
+        public LatchedPluginDeploymentService(String pluginName, DeploymentInfo deploymentInfo,
+            PluginDescriptor descriptor) {
+            super(pluginName);
+            this.pluginDeploymentInfo = deploymentInfo;
+            this.pluginDescriptor = descriptor;
+        }
+
+        @Override
+        public void executeService() throws LatchedServiceException {
+            try {
+                registerPluginJar(pluginDescriptor, pluginDeploymentInfo);
+            } catch (Throwable t) {
+                throw new LatchedServiceException(t);
+            }
+        }
+
+    }
+
+    private void deployDependencyGraph(Map<String, DeploymentInfo> pluginDeploymentInfos,
+        PluginDependencyGraph dependencyGraph) {
+
+        Map<String, LatchedPluginDeploymentService> latchedDependencyMap = new HashMap<String, LatchedPluginDeploymentService>();
+        for (String name : dependencyGraph.getPlugins()) {
+            LatchedPluginDeploymentService nextService = getServiceIfExists(name, pluginDeploymentInfos,
+                latchedDependencyMap);
+            for (String nextDependency : dependencyGraph.getPluginDependencies(name)) {
+                LatchedPluginDeploymentService dependency = getServiceIfExists(nextDependency, pluginDeploymentInfos,
+                    latchedDependencyMap);
+                nextService.addDependency(dependency);
+            }
+        }
+
+        long startDeployTime = System.currentTimeMillis();
+        LatchedServiceController controller = new LatchedServiceController(latchedDependencyMap.values());
+        controller.executeServices();
+        long endDeployTime = System.currentTimeMillis();
+
+        log.info("PluginDependencyGraph deploy time was " + (endDeployTime - startDeployTime) + " millis");
+    }
+
+    private LatchedPluginDeploymentService getServiceIfExists(String name,
+        Map<String, DeploymentInfo> pluginDeploymentInfos, Map<String, LatchedPluginDeploymentService> latchedServiceMap) {
+
+        LatchedPluginDeploymentService result = latchedServiceMap.get(name);
+
+        if (result == null) {
+            DeploymentInfo deploymentInfo = pluginDeploymentInfos.get(name);
+            PluginDescriptor descriptor = this.pluginDescriptors.get(name);
+
+            result = new LatchedPluginDeploymentService(name, deploymentInfo, descriptor);
+
+            latchedServiceMap.put(name, result);
+        }
+
+        return result;
+    }
+
     /**
      * This is the mechanism to kick off the registration of a new plugin. You must ensure you call this at the
      * appropriate time such that the plugin getting registered already has its dependencies registered.
@@ -285,8 +350,8 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             String pluginNameDisplayName = pluginName + " (" + pluginDescriptor.getDisplayName() + ")";
             ComparableVersion comparableVersion = this.pluginVersions.get(pluginName);
             String version = (comparableVersion != null) ? comparableVersion.toString() : null;
-            log.info("Deploying RHQ plugin " + pluginNameDisplayName + ", " +
-                    ((version != null) ? "version " + version : "undefined version") + "...");
+            log.info("Deploying RHQ plugin " + pluginNameDisplayName + ", "
+                + ((version != null) ? "version " + version : "undefined version") + "...");
             checkVersionCompatibility(pluginDescriptor.getAmpsVersion());
 
             // make sure the path is only the filename
@@ -297,8 +362,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             plugin.setEnabled(true);
             plugin.setDescription(pluginDescriptor.getDescription());
 
-            if (pluginDescriptor.getHelp() != null && !pluginDescriptor.getHelp().getContent().isEmpty())
-            {
+            if (pluginDescriptor.getHelp() != null && !pluginDescriptor.getHelp().getContent().isEmpty()) {
                 plugin.setHelp(String.valueOf(pluginDescriptor.getHelp().getContent().get(0)));
             }
 
@@ -448,7 +512,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         String action = type.substring(type.lastIndexOf(".") + 1);
         String msg = "Plugin " + name + " " + action;
 
-        Notification notif = new Notification(type, this, ++this.notifSequence, msg);
+        Notification notif = new Notification(type, this, this.notifSequence.incrementAndGet(), msg);
 
         log.debug(msg);
 
@@ -465,26 +529,31 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         PluginDescriptor descriptor;
         try {
             descriptor = getPluginDescriptor(deploymentInfo);
-        }
-        catch (JAXBException e) {
-            throw new DeploymentException("Failed to parse plugin descriptor for plugin jar '" + pluginJarFileName + "'.", e);
+        } catch (JAXBException e) {
+            throw new DeploymentException("Failed to parse plugin descriptor for plugin jar '" + pluginJarFileName
+                + "'.", e);
         }
         Manifest manifest = deploymentInfo.getManifest();
         String version = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
         if (version == null) {
-            log.warn("'" + Attributes.Name.IMPLEMENTATION_VERSION + "' attribute not found in MANIFEST.MF of plugin jar '" + pluginJarFileName + "'. Falling back to version defined in plugin descriptor...");
+            log.warn("'" + Attributes.Name.IMPLEMENTATION_VERSION
+                + "' attribute not found in MANIFEST.MF of plugin jar '" + pluginJarFileName
+                + "'. Falling back to version defined in plugin descriptor...");
             version = descriptor.getVersion();
         }
         ComparableVersion comparableVersion;
         if (version != null) {
             try {
                 comparableVersion = new ComparableVersion(version);
-            }
-            catch (RuntimeException e) {
-                throw new DeploymentException("Failed to parse version (" + version + ") for plugin jar '" + pluginJarFileName + ".", e);
+            } catch (RuntimeException e) {
+                throw new DeploymentException("Failed to parse version (" + version + ") for plugin jar '"
+                    + pluginJarFileName + ".", e);
             }
         } else {
-            log.warn("No version is defined for plugin jar '" + pluginJarFileName + "'. A version should be defined either via the MANIFEST.MF '" + Attributes.Name.IMPLEMENTATION_VERSION + "' attribute or via the plugin descriptor 'version' attribute.");
+            log.warn("No version is defined for plugin jar '" + pluginJarFileName
+                + "'. A version should be defined either via the MANIFEST.MF '"
+                + Attributes.Name.IMPLEMENTATION_VERSION
+                + "' attribute or via the plugin descriptor 'version' attribute.");
             comparableVersion = null;
         }
         String pluginName = descriptor.getName();
@@ -493,7 +562,8 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         if (existingComparableVersion != null) {
             if (comparableVersion != null && comparableVersion.compareTo(existingComparableVersion) > 0) {
                 newerThanExistingVersion = true;
-                log.debug("Newer version of '" + pluginName + "' plugin found (version " + version + ") - older version (" + existingComparableVersion + ") will be ignored.");
+                log.debug("Newer version of '" + pluginName + "' plugin found (version " + version
+                    + ") - older version (" + existingComparableVersion + ") will be ignored.");
             }
         }
         if (existingComparableVersion == null || newerThanExistingVersion) {

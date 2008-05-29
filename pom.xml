@@ -198,9 +198,6 @@
         <version>${postgresql.version}</version>
       </dependency>
 
-      <!-- NOTE: Sadly, dependencyManagement is not used by Maven for Maven plugins or extensions
-                 (see http://jira.codehaus.org/browse/MNG-2172). -->
-
     </dependencies>
 
   </dependencyManagement>
@@ -220,6 +217,13 @@
       <version>1.0.9</version>
     </dependency>
 
+    <!-- for the JAXB annotations -->
+    <dependency>
+       <groupId>javax.xml.bind</groupId>
+       <artifactId>jaxb-api</artifactId>
+       <scope>provided</scope>
+    </dependency>
+    
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
@@ -235,17 +239,12 @@
       <classifier>jdk15</classifier>
     </dependency>
 
+    <!-- for the Nullable/NotNull annotations -->
     <dependency>
       <groupId>org.jetbrains</groupId>
       <artifactId>annotations</artifactId>
       <version>7.0.2</version>
-      <scope>provided</scope> <!-- (not required at runtime) -->
-    </dependency>
-
-    <!-- TODO: Why is this here? (ips, 02/01/08) -->
-    <dependency>
-       <groupId>javax.xml.bind</groupId>
-       <artifactId>jaxb-api</artifactId>
+      <scope>provided</scope>
     </dependency>
 
   </dependencies>

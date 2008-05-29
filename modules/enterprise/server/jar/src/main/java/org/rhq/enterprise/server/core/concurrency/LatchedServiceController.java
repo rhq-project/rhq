@@ -2,7 +2,9 @@ package org.rhq.enterprise.server.core.concurrency;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.logging.Log;
@@ -26,7 +28,9 @@ public class LatchedServiceController {
         }
     }
 
-    public void executeServices() {
+    public void executeServices() throws LatchedServiceCircularityException {
+        checkForCircularDependencies();
+
         // start all latched services, but they'll block
         for (LatchedService service : latchedServices) {
             new Thread(service).start();
@@ -43,6 +47,43 @@ public class LatchedServiceController {
         }
 
         log.debug("All services have begun");
+    }
+
+    private void checkForCircularDependencies() throws LatchedServiceException {
+        Set<LatchedService> visited = new HashSet<LatchedService>();
+        List<LatchedService> currentPath = new ArrayList<LatchedService>();
+        for (LatchedService nextService : latchedServices) {
+            if (visited.contains(nextService)) {
+                // have already visited this service from a different path
+                continue;
+            }
+            visit(nextService, visited, currentPath);
+        }
+    }
+
+    private void visit(LatchedService current, Set<LatchedService> visited, List<LatchedService> currentPath)
+        throws LatchedServiceException {
+        visited.add(current);
+
+        if (currentPath.contains(current)) {
+            int firstOccurrence = currentPath.indexOf(current);
+            StringBuilder circularMessage = new StringBuilder(current.getServiceName());
+            for (int i = firstOccurrence + 1; i < currentPath.size(); i++) {
+                circularMessage.append(" -> ");
+                circularMessage.append(currentPath.get(i).getServiceName());
+            }
+            circularMessage.append(" -> ");
+            circularMessage.append(current.getServiceName());
+
+            throw new LatchedServiceCircularityException("Circular dependency detected in latched services: "
+                + circularMessage + "; " + "will not attempt to start any of them");
+        }
+
+        currentPath.add(current);
+        for (LatchedService dependency : current.dependencies) {
+            visit(dependency, visited, currentPath);
+        }
+        currentPath.remove(current);
     }
 
     public static abstract class LatchedService implements Runnable {
@@ -162,5 +203,45 @@ public class LatchedServiceController {
         }
 
         public abstract void executeService() throws LatchedServiceException;
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder(getServiceName() + ":");
+            boolean first = true;
+            for (LatchedService dep : dependencies) {
+                if (!first) {
+                    builder.append(", ");
+                } else {
+                    first = false;
+                }
+                builder.append(dep.getServiceName());
+            }
+            return builder.toString();
+        }
+
+        @Override
+        public final int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((serviceName == null) ? 0 : serviceName.hashCode());
+            return result;
+        }
+
+        @Override
+        public final boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            final LatchedService other = (LatchedService) obj;
+            if (serviceName == null) {
+                if (other.serviceName != null)
+                    return false;
+            } else if (!serviceName.equals(other.serviceName))
+                return false;
+            return true;
+        }
     }
 }

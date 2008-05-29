@@ -60,6 +60,7 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.util.MD5Generator;
+import org.rhq.enterprise.server.core.concurrency.LatchedServiceCircularityException;
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceController;
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceException;
 import org.rhq.enterprise.server.license.LicenseManager;
@@ -310,7 +311,11 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
 
         long startDeployTime = System.currentTimeMillis();
         LatchedServiceController controller = new LatchedServiceController(latchedDependencyMap.values());
-        controller.executeServices();
+        try {
+            controller.executeServices();
+        } catch (LatchedServiceCircularityException lsce) {
+            log.error(lsce.getMessage());
+        }
         long endDeployTime = System.currentTimeMillis();
 
         log.info("PluginDependencyGraph deploy time was " + (endDeployTime - startDeployTime) + " millis");

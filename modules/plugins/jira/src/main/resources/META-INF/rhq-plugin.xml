@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="Jira"
+        displayName="Jira Server"
+        package="org.rhq.plugins.jira"
+        description="Monitoring of an Atlassian Jira Server"
+        version="2.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+    <server name="Jira Server" discovery="JiraServerDiscoveryComponent" class="JiraServerComponent"
+            description="Jira Server"
+            supportsManualAdd="true">
+
+        <plugin-configuration>
+            <c:simple-property name="url" default="http://jira.rhq-project.org" description="Base path to jira (e.g. http://jira.rhq-project.org/jira )"/>
+            <c:simple-property name="user"/>
+            <c:simple-property name="password" type="password"/>
+        </plugin-configuration>
+
+        <!-- Expensive... this does the cache refresh... run once an hour -->
+        <metric property="projectCount" displayType="summary" defaultInterval="3600000"/>
+
+        <service name="Jira Project"
+                discovery="JiraProjectDiscoveryComponent"
+                class="JiraProjectComponent">
+            <plugin-configuration>
+                <c:simple-property name="projectKey"/>
+                <c:simple-property name="projectId"/>
+            </plugin-configuration>
+
+
+            <service name="Jira Filter"
+                    discovery="JiraFilterDiscoveryComponent"
+                    class="JiraFilterComponent">
+
+                <!-- expensive... don't turn them all on by default -->
+                <metric property="issueCount"/>
+
+            </service>
+        </service>
+
+    </server>
+
+</plugin>

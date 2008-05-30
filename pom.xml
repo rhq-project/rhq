@@ -491,6 +491,8 @@
      <properties>
         <!-- The below prop can be used by antrun scripts to check if the dev profile is enabled. -->
         <dev.profile.active>true</dev.profile.active>
+        <!--  snapshot builds do not generate a build number, only prod builds -->
+        <buildNumber>n/a</buildNumber>        
      </properties>
 
      <build>

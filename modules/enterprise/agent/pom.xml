@@ -139,6 +139,7 @@ Build-OS-Name=${os.name}
 Build-OS-Version=${os.version}
 Built-By=${user.name}
 Build-Machine=${build.hostname}
+Build-Number=${buildNumber}
 </echo>
 
               </tasks>

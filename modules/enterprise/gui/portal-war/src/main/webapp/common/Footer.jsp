@@ -38,7 +38,8 @@
       <div style="margin:5px">
          <p class="compact">
             <span class="DisplaySubhead"><fmt:message key="footer.aboutLink"/></span><br/>
-            <span class="DisplayLabel"><fmt:message key="footer.version"/> <fmt:message key="product.version"/></span>
+            <span class="DisplayLabel"><fmt:message key="footer.version"/>: <fmt:message key="product.version"/></span><br/>
+            <span class="DisplayLabel"><fmt:message key="footer.buildNumber"/>: <fmt:message key="product.buildNumber"/></span>            
          </p>
          <p class="compact">
             <fmt:message key="footer.shortCopyright"/> <fmt:message key="about.Copyright.Content"/>

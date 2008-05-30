@@ -652,9 +652,12 @@ public class EventManagerBean implements EventManagerLocal {
     }
 
     public void deleteEventSourcesForDefinition(EventDefinition def) {
-        Query q = entityManager.createNamedQuery(EventSource.DELETE_BY_EVENT_DEFINITION);
+        Query q = entityManager.createNamedQuery(EventSource.QUERY_BY_EVENT_DEFINITION);
         q.setParameter("definition", def);
-        q.executeUpdate();
+        List<EventSource> sources = q.getResultList();
+        for (EventSource source : sources) {
+            entityManager.remove(source);
+        }
     }
 
     private boolean isFilled(String in) {

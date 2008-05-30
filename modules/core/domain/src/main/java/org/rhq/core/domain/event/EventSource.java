@@ -53,7 +53,7 @@ import org.rhq.core.domain.resource.Resource;
 @Entity
 @NamedQueries( {
     @NamedQuery(name = EventSource.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM EventSource evs WHERE evs.resource IN (:resources)"),
-    @NamedQuery(name = EventSource.DELETE_BY_EVENT_DEFINITION, query = "DELETE FROM EventSource evs WHERE evs.eventDefinition = :definition") })
+    @NamedQuery(name = EventSource.QUERY_BY_EVENT_DEFINITION, query = "SELECT evs FROM EventSource evs WHERE evs.eventDefinition = :definition") })
 @Table(name = EventSource.TABLE_NAME)
 @SequenceGenerator(name = "idGenerator", sequenceName = EventSource.TABLE_NAME + "_ID_SEQ", allocationSize = 100)
 public class EventSource implements Externalizable {
@@ -61,7 +61,7 @@ public class EventSource implements Externalizable {
 
     public static final String TABLE_NAME = "RHQ_EVENT_SOURCE";
     public static final String QUERY_DELETE_BY_RESOURCES = "EventSource.deleteByResources";
-    public static final String DELETE_BY_EVENT_DEFINITION = "EventSource.deletebyEventDefinition";
+    public static final String QUERY_BY_EVENT_DEFINITION = "EventSource.deletebyEventDefinition";
 
     @Id
     @Column(name = "ID", nullable = false)

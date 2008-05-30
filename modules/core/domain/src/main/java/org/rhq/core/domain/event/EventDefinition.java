@@ -163,4 +163,8 @@ public class EventDefinition implements Externalizable {
         this.resourceType = (ResourceType) in.readObject();
         this.name = in.readUTF();
     }
+
+    public void setResourceTypeId(int resourceTypeId) {
+        this.resourceTypeId = resourceTypeId;
+    }
 }

@@ -3,7 +3,7 @@
         xmlns="urn:xmlns:rhq-plugin">
   
    <platform name="events">
-         <event name="hugo"/>
+         <event name="hugo" description="Two" displayName="HugoTwo"/>
          <event name="hans"/>
    </platform>
 </plugin>

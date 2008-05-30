@@ -337,13 +337,29 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     private void updateEventDefinitions(ResourceType newType, ResourceType existingType) {
 
         Set<EventDefinition> newEventDefs = newType.getEventDefinitions();
+        // Loop over the newEventDefs and set the resourceTypeId, so equals() will work
+        for (EventDefinition def : newEventDefs) {
+            def.setResourceTypeId(existingType.getId());
+        }
+
         Set<EventDefinition> existingEventDefs = existingType.getEventDefinitions();
+        for (EventDefinition def : existingEventDefs) {
+            entityManager.refresh(def);
+        }
 
         Set<EventDefinition> toDelete = missingInFirstSet(newEventDefs, existingEventDefs);
         Set<EventDefinition> newOnes = missingInFirstSet(existingEventDefs, newEventDefs);
+        Set<EventDefinition> toUpdate = intersection(newEventDefs, existingEventDefs);
 
-        existingEventDefs.retainAll(newEventDefs);
-        existingEventDefs.removeAll(toDelete);
+        // update existing ones
+        for (EventDefinition eDef : existingEventDefs) {
+            for (EventDefinition nDef : toUpdate) {
+                if (eDef.equals(nDef)) {
+                    eDef.setDescription(nDef.getDescription());
+                    eDef.setDisplayName(nDef.getDisplayName());
+                }
+            }
+        }
 
         // Persist new definitions
         for (EventDefinition eDef : newOnes) {
@@ -354,18 +370,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             existingType.addEventDefinition(e2);
         }
 
-        // update existing ones
-        for (EventDefinition eDef : existingEventDefs) {
-            for (EventDefinition nDef : newEventDefs) {
-                if (eDef.equals(nDef)) {
-                    eDef.setDescription(nDef.getDescription());
-                    eDef.setDisplayName(nDef.getDisplayName());
-                }
-            }
-        }
-
         // and finally remove deleted ones. First flush the EM to be on the save side
         // for a bulk delete.
+        existingEventDefs.removeAll(toDelete);
         entityManager.flush();
         for (EventDefinition eDef : toDelete) {
             // remove EventSources and events on it.
@@ -839,9 +846,20 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
             // else loop over the set and sort out the right items.
             for (T item : reference) {
-                if (!first.contains(item)) {
-                    result.add(item);
+                //                if (!first.contains(item)) {
+                //                    result.add(item);
+                //                }
+                boolean found = false;
+                Iterator<T> iter = first.iterator();
+                while (iter.hasNext()) {
+                    T f = iter.next();
+                    if (f.equals(item)) {
+                        found = true;
+                        break;
+                    }
                 }
+                if (!found)
+                    result.add(item);
             }
         }
 
@@ -861,7 +879,19 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         Set<T> result = new HashSet<T>();
         if ((first != null) && (second != null)) {
             result.addAll(first);
-            result.retainAll(second);
+            //            result.retainAll(second);
+            Iterator<T> iter = result.iterator();
+            boolean found;
+            while (iter.hasNext()) {
+                T item = iter.next();
+                found = false;
+                for (T s : second) {
+                    if (s.equals(item))
+                        found = true;
+                }
+                if (!found)
+                    iter.remove();
+            }
         }
 
         return result;

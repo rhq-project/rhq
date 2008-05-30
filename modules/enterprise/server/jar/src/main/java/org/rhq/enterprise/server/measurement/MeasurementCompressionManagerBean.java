@@ -54,6 +54,7 @@ import org.rhq.enterprise.server.util.TimingVoodoo;
  * continuously grows in a non-negligible manner should be compressed and/or purged in this job.
  *
  * @author Greg Hinkle
+ * @author jay shaughnessy
  */
 @Stateless
 public class MeasurementCompressionManagerBean implements MeasurementCompressionManagerLocal {
@@ -117,19 +118,32 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
             loadPurgeDefaults();
         }
 
-        // Round down to the nearest hour.
+        // current time rounded down to the start of this hour.
         long now = TimingVoodoo.roundDownTime(System.currentTimeMillis(), HOUR);
-        long last;
-
-        // TODO GH: Need to potentially go back through old tables if they didn't get their chance at compression
 
         // Compress hourly data
         long hourAgo = TimingVoodoo.roundDownTime(now - HOUR, HOUR);
-        String rawTable = MeasurementDataManagerUtility.getTable(hourAgo);
-        last = compressionManager.compressData(rawTable, TAB_DATA_1H, HOUR, now);
+        String deadTable = MeasurementDataManagerUtility.getDeadTable(hourAgo);
+        int deadTableIndex = MeasurementDataManagerUtility.getTableNameIndex(deadTable);
+        String[] rawTables = MeasurementDataManagerUtility.getAllRawTables(deadTableIndex + 1);
 
-        // Purge, ensuring we don't purge data not yet compressed.
-        compressionManager.truncateMeasurements(MeasurementDataManagerUtility.getDeadTable(last));
+        // compress uncompressed raw data in the non-dead tables. Go through all of the tables
+        // to handle missed compressions due to a downed server. Start with the oldest data first so that
+        // we build up the history correctly (because compression rolls forward in time.)
+        // NOTE : This is somewhat inefficient for a running server actively collecting raw data as
+        // NOTE : in general we'll only really need to process the "now" table. Although, 
+        // NOTE : compressionManager.compressData has an optimization to return quickly if there is no work.
+        for (String rawTable : rawTables) {
+            if (!rawTable.equals(deadTable)) {
+                compressionManager.compressData(rawTable, TAB_DATA_1H, HOUR, now);
+            }
+        }
+
+        // truncate the dead table. Note that we may truncate the same table repeatedly during a 12 hour cycle, this is OK, it's fast
+        compressionManager.truncateMeasurements(deadTable);
+
+        // begin time of last compression period
+        long last;
 
         // Compress 6 hour data
         last = compressionManager.compressData(TAB_DATA_1H, TAB_DATA_6H, SIX_HOUR, now);
@@ -180,10 +194,12 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(30 * 60 * 1000)
     public long compressData(String fromTable, String toTable, long interval, long now) throws SQLException {
+
         // First determine the window to operate on.  If no previous compression
         // information is found, the last value from the table to compress from
         // is used.  (This will only occur on the first compression run).
         long start = getMaxTimestamp(toTable);
+
         if (start == 0L) {
             // No compressed data found, start from scratch.
             start = getMinTimestamp(fromTable);
@@ -197,12 +213,28 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
             start = start + interval;
         }
 
-        // Rounding only necessary since if we are starting from scratch.
+        // If a server has been down for a long time (greater than our raw data store time) we 
+        // may find data older than our raw collection period. It is considered stale and ignored.
+        // Ensure a valid begin time by setting it no older than the valid collection period.
+        long rawTimeStart = TimingVoodoo.roundDownTime(MeasurementDataManagerUtility.getRawTimePeriodStart(now), HOUR);
+        // Rounding only necessary if we are starting from scratch.
         long begin = TimingVoodoo.roundDownTime(start, interval);
 
-        // Compress all the way up to now.
-        log.debug("Compressing from: " + fromTable + " to " + toTable);
+        if (begin < rawTimeStart) {
+            begin = rawTimeStart;
+        }
 
+        // If the from table does not contain data later than the begin time then just return
+        long fromTableMax = getMaxTimestamp(fromTable);
+        if (fromTableMax < begin) {
+            return begin;
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("Compressing from: " + fromTable + " to " + toTable);
+        }
+
+        // Compress all the way up to now.
         return compactData(fromTable, toTable, begin, now, interval);
     }
 
@@ -218,7 +250,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
             selStmt = conn.prepareStatement("SELECT count(DISTINCT schedule_id) FROM " + fromTable
                 + " WHERE time_stamp >= ? AND time_stamp < ?");
 
-            // One special case.. If we are compressing from an
+            // One special case. If we are compressing from an
             // already compressed table, we'll take the MIN and
             // MAX from the already calculated min and max columns.
             String minMax;
@@ -271,7 +303,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
                 log.info("Compressed from " + fromTable + " into " + rows + " rows in " + toTable + " in ("
                     + (watch.getElapsed() / SECOND) + " seconds)");
 
-                // Increment for next interation.
+                // Increment for next iteration.
                 begin = end;
             }
         } finally {

@@ -120,6 +120,23 @@ public class MeasurementDataManagerUtility {
         return tables;
     }
 
+    /** 
+     * The raw tables starting at the specified index. Can be useful for getting the tables in a necessary time order (like
+     * oldest data first.
+     * 
+     * @param startIndex >= 0. If >= TABLE_COUNT normalized via modulo. 
+     * @return Array of raw table names starting with the table with the specified index. 
+     */
+    public static String[] getAllRawTables(int startIndex) {
+        String[] tables = new String[TABLE_COUNT];
+
+        for (int i = 0; i < TABLE_COUNT; i++) {
+            tables[i] = TABLE_PREFIX + nf.format((i + startIndex) % TABLE_COUNT);
+        }
+
+        return tables;
+    }
+
     public static String[] getTables(long beginTime, long endTime) {
         List<String> tables = new ArrayList<String>();
 
@@ -160,6 +177,20 @@ public class MeasurementDataManagerUtility {
         long tableIndex = (table % TABLE_COUNT);
 
         return (int) tableIndex;
+    }
+
+    public static int getTableNameIndex(String tableName) {
+        String indexString = tableName.substring(TABLE_PREFIX.length());
+        int result;
+
+        try {
+            result = Integer.valueOf(indexString).intValue();
+        } catch (NumberFormatException e) {
+            LOG.error("Invalid raw table name: " + tableName + ", returning table index 0.");
+            result = 0;
+        }
+
+        return result;
     }
 
     /**
@@ -635,6 +666,11 @@ public class MeasurementDataManagerUtility {
         String[] ts = getTables(now - (1000L * 60 * 60 * 8), now);
         System.out.println(Arrays.toString(ts));
         System.out.println("NOW: " + getTable(now));
+    }
+
+    public static long getRawTimePeriodStart(long end) {
+        long now = System.currentTimeMillis();
+        return (end - RAW_PURGE);
     }
 
     public static boolean isRawTimePeriod(long beginTime) {

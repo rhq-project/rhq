@@ -61,7 +61,7 @@ public class StartupServlet extends HttpServlet {
         // The order here is important - make sure if you change this you know what you are doing.
         // I'm not even sure this is ok.  If we start the scheduler before the comm layer, what happens
         // if a stored job needs to send a message?  But if we start the comm layer before the scheduler,
-        // what happens if a message is recieved that needs a job scheduled for it? I think the former
+        // what happens if a message is received that needs a job scheduled for it? I think the former
         // is more likely to happen than the latter (that is, a scheduled job would more likely need
         // to send a message; as opposed to an incoming message causing a job to be scheduled), so
         // that explains the ordering of the comm layer and the scheduler.
@@ -228,7 +228,7 @@ public class StartupServlet extends HttpServlet {
             throw new ServletException("Cannot schedule data purge job", e);
         }
 
-        // Baseline caclulation Job
+        // Baseline calculation Job
         try {
             // Check the need to calculate baselines every 77 minutes
             scheduler.scheduleSimpleRepeatingJob(AutoBaselineCalculationJob.class, true, false, 11 * 60 * 1000L,
@@ -237,7 +237,7 @@ public class StartupServlet extends HttpServlet {
             throw new ServletException("Cannot schedule baseline calculation job", e);
         }
 
-        // content source sync jobs
+        // Content source sync jobs
         try {
             ContentSourcePluginServiceManagement mbean;
             MBeanServer mbs = MBeanServerLocator.locateJBoss();
@@ -292,7 +292,7 @@ public class StartupServlet extends HttpServlet {
             // if we got this far, the embedded agent is at least installed
             // now check to see if its enabled - if so start it; any startup exceptions now are thrown
             try {
-                if (Boolean.valueOf(enabled).booleanValue()) {
+                if (Boolean.valueOf(enabled)) {
                     log("The embedded Agent is installed and enabled - it will now be started...");
 
                     // We need to do the agent startup in a separate thread so we do not hang
@@ -338,7 +338,7 @@ public class StartupServlet extends HttpServlet {
      * @throws ServletException
      */
     private void startServerPluginContainer() throws ServletException {
-        log("Starting the server plugin container");
+        log("Starting the server plugin container...");
 
         try {
             ContentSourcePluginServiceManagement mbean;

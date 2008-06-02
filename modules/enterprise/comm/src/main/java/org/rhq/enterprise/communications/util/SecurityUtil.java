@@ -20,7 +20,9 @@ package org.rhq.enterprise.communications.util;
 
 import java.io.File;
 import java.util.Arrays;
+
 import mazz.i18n.Logger;
+
 import org.rhq.enterprise.communications.command.impl.start.StartCommand;
 import org.rhq.enterprise.communications.command.impl.start.StartCommandResponse;
 import org.rhq.enterprise.communications.command.impl.start.server.ProcessExec;
@@ -132,7 +134,7 @@ public class SecurityUtil {
                 keytool_results, Arrays.asList(keytool_cmd.getArguments()).toString()), keytool_results.getException());
         }
 
-        LOG.debug(CommI18NResourceKeys.KEYSTORE_CREATED);
+        LOG.debug(CommI18NResourceKeys.KEYSTORE_CREATED, keystore.getAbsolutePath());
 
         return;
     }

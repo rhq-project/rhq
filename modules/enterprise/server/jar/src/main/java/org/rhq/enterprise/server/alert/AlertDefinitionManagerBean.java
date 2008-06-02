@@ -29,8 +29,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
@@ -50,10 +48,8 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -72,11 +68,6 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
     private AuthorizationManagerLocal authorizationManager;
     @EJB
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
-    @EJB
-    @IgnoreDependency
-    private MeasurementBaselineManagerLocal measurementBaselineManager;
-    @EJB
-    private SubjectManagerLocal subjectManager;
 
     private boolean checkPermission(Subject subject, AlertDefinition alertDefinition) {
         /*

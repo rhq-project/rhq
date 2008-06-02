@@ -245,6 +245,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      */
     @SuppressWarnings("unchecked")
     public List<MeasurementSchedule> getSchedulesByIds(Collection<Integer> ids) {
+        if (ids == null || ids.isEmpty())
+            return new ArrayList<MeasurementSchedule>();
+
         Query q = entityManager.createNamedQuery("MeasurementSchedule.findByIds");
         q.setParameter("ids", ids);
         List<MeasurementSchedule> ret = q.getResultList();

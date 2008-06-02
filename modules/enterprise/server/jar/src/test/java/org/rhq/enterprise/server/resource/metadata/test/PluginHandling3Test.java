@@ -36,6 +36,10 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.event.EventSeverity;
@@ -44,6 +48,7 @@ import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -521,6 +526,70 @@ public class PluginHandling3Test extends TestBase {
         if (savedThrowable != null)
             throw new Exception(savedThrowable);
 
+    }
+
+    @Test
+    public void testAddRemoveOperationWithParams() throws Exception {
+        System.out.println("= testAddRemoveOperationWithParams");
+        getTransactionManager().begin();
+        try {
+            registerPlugin("./test/metadata/operation1-1.xml");
+            ResourceType platform = getResourceType("ops");
+            assert platform != null;
+            Set<OperationDefinition> opDefs = platform.getOperationDefinitions();
+            assert opDefs != null;
+            assert opDefs.size() == 1;
+            OperationDefinition def = opDefs.iterator().next();
+            assert def.getName().equals("sleep");
+            assert def.getParametersConfigurationDefinition() == null;
+
+            getEntityManager().flush();
+            System.out.println("==> Done with v1");
+
+            registerPlugin("./test/metadata/operation1-2.xml");
+            platform = getResourceType("ops");
+            assert platform != null;
+            opDefs = platform.getOperationDefinitions();
+            assert opDefs != null;
+            assert opDefs.size() == 2;
+
+            for (OperationDefinition odef : opDefs) {
+                if (odef.getName().equals("invokeSql")) {
+                    assert odef.getDescription().startsWith("Execute");
+                    ConfigurationDefinition conf = odef.getParametersConfigurationDefinition();
+                    assert conf != null;
+                    Map<String, PropertyDefinition> props = conf.getPropertyDefinitions();
+                    assert props.size() == 2;
+                    for (PropertyDefinition pd : props.values()) {
+                        PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
+                        if (pds.getName().equals("sleep")) {
+                            assert pds.getDescription() == null;
+                        }
+                        if (pds.getName().equals("invokeSql")) {
+                            List<PropertyDefinitionEnumeration> pde = pds.getEnumeratedValues();
+                            assert pde.size() == 2;
+                        }
+                    }
+
+                    conf = odef.getResultsConfigurationDefinition();
+                    assert conf != null;
+
+                }
+            }
+
+            getEntityManager().flush();
+            System.out.println("==> Done with v2");
+
+            registerPlugin("./test/metadata/operation1-1.xml");
+            platform = getResourceType("ops");
+            assert platform != null;
+            opDefs = platform.getOperationDefinitions();
+            assert opDefs != null;
+            assert opDefs.size() == 1;
+
+        } finally {
+            getTransactionManager().rollback();
+        }
     }
 
     private void getPluginId(EntityManager entityManager) {

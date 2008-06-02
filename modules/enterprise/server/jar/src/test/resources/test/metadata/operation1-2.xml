@@ -1,0 +1,26 @@
+<plugin name="ResourceMetaDataManagerBeanTest"
+   displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xmlns="urn:xmlns:rhq-plugin"
+   xmlns:c="urn:xmlns:rhq-configuration">
+
+   <platform name="ops">
+      <operation name="sleep" />
+      <operation name="invokeSql" description="Execute arbitrary SQL">
+         <parameters>
+            <c:simple-property name="sql" />
+            <c:simple-property name="type" default="query">
+               <c:property-options>
+                  <c:option value="query" name="query" />
+                  <c:option value="update" name="update" />
+
+               </c:property-options>
+            </c:simple-property>
+         </parameters>
+         <results>
+            <c:simple-property name="result" />
+            <c:simple-property name="contents" />
+         </results>
+      </operation>
+   </platform>
+</plugin>

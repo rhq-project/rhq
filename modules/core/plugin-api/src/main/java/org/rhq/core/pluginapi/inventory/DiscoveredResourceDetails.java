@@ -31,7 +31,7 @@ import org.rhq.core.system.ProcessInfo;
  *
  * <p>Note that any newly discovered resource must have a unique resource key as compared to other sibling resources.
  * That is to say, a parent resource's children must have unique resource keys (the children cannot share keys). A
- * correlary to this is that if a discovery component "re-discovers" a resource, the discovery component must ensure
+ * corollary to this is that if a discovery component "re-discovers" a resource, the discovery component must ensure
  * that it assigns the same key to that re-discovered resource (i.e. resource keys must be consistent and stable across
  * multiple discoveries of that same resource). As an example, if you discover a resource "foo" and assign it a resource
  * key of "fooKey"; then the next time that "foo" resource is discovered again, the discovery component must ensure that

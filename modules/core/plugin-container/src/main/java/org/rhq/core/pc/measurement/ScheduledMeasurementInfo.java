@@ -79,6 +79,7 @@ public class ScheduledMeasurementInfo extends MeasurementScheduleRequest impleme
         return (new Integer(getScheduleId())).compareTo(o.getScheduleId());
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -105,6 +106,7 @@ public class ScheduledMeasurementInfo extends MeasurementScheduleRequest impleme
         return true;
     }
 
+    @Override
     public int hashCode() {
         int result;
         result = resourceId;
@@ -115,6 +117,6 @@ public class ScheduledMeasurementInfo extends MeasurementScheduleRequest impleme
 
     @Override
     public String toString() {
-        return "ScheduledMeasurementInfo[res=" + resourceId + ", schedId=" + getScheduleId() + "]";
+        return "ScheduledMeasurementInfo[res=" + resourceId + ", name=" + getName() + ", sched=" + getScheduleId() + "]";
     }
 }

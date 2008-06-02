@@ -35,6 +35,16 @@ DB Upgrade:
     <schemaSpec version="2.0">
         <!-- Empty initial schema to avoid install failure on default latest schema version -->
     </schemaSpec>
+	
+    <schemaSpec version="2.1">
+        <!-- Keep the columnType VARCHAR2, but increase size;
+            (see note for RHQ_ALERT_CONDITION table in alert-schema.xml for more info) -->
+        <schema-alterColumn
+            table="RHQ_ALERT_CONDITION"
+            column="OPTION_STATUS" 
+            columnType="VARCHAR2"
+            precision="256" />
+    </schemaSpec>
 </dbupgrade>
 
 </target>

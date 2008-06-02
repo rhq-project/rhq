@@ -59,7 +59,8 @@
         <column name="NAME" required="false" size="100" type="VARCHAR2"/>
         <column name="COMPARATOR" required="false" size="2" type="VARCHAR2"/>
         <column name="THRESHOLD" required="false" type="DOUBLE"/>
-        <column name="OPTION_STATUS" required="false" size="25" type="VARCHAR2"/>
+        <!-- event-based conditions use OPTION_STATUS for the string match, so should be a decent length -->
+        <column name="OPTION_STATUS" required="false" size="256" type="VARCHAR2"/>
         <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
         <column name="TRIGGER_ID" required="false" type="INTEGER"/>
     </table>

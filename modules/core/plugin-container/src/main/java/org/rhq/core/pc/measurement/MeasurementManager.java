@@ -141,7 +141,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                 TimeUnit.SECONDS);
             // Schedule the measurement collector to collect metrics periodically, whenever there are one or more
             // metrics due to be collected.
-            this.collectorThreadPool.schedule(new MeasurementCollectionRequestor(), collectionInitialDelaySecs,
+            this.collectorThreadPool.schedule(new MeasurementCollectionRequester(), collectionInitialDelaySecs,
                 TimeUnit.SECONDS);
 
             // Load persistent measurement schedules from the InventoryManager and reconstitute them.
@@ -150,7 +150,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
     }
 
-    public class MeasurementCollectionRequestor implements Runnable {
+    private class MeasurementCollectionRequester implements Runnable {
         public void run() {
             try {
                 while (true) {
@@ -167,10 +167,12 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                         }
                     }
                 }
+            } catch (InterruptedException e) {
+                // Log nothing - if we got interrupted, it's probably because the PC is shutting down.
             } catch (Throwable e) {
-                LOG.error("Collection sender shutting down due to error", e);
+                LOG.error("Measurement collection shutting down due to error", e);
             } finally {
-                LOG.info("Shutting down measurement collection");
+                LOG.info("Shutting down measurement collection...");
             }
         }
     }

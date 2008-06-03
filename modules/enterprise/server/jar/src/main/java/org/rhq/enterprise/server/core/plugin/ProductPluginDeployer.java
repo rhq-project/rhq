@@ -350,6 +350,11 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     private String registerPluginJar(PluginDescriptor pluginDescriptor, DeploymentInfo deploymentInfo) {
         String pluginJar = deploymentInfo.url.getFile();
 
+        if (pluginDescriptor == null) {
+            log.error("Could not find a valid plugin descriptor -- is this a plugin archive at " + pluginJar + " ?");
+            return null;
+        }
+
         try {
             String pluginName = pluginDescriptor.getName();
             String pluginNameDisplayName = pluginName + " (" + pluginDescriptor.getDisplayName() + ")";

@@ -592,6 +592,55 @@ public class PluginHandling3Test extends TestBase {
         }
     }
 
+    @Test
+    public void testAddRemoveOperationWithParams2() throws Exception {
+        System.out.println("= testAddRemoveOperationWithParams2");
+        getTransactionManager().begin();
+        try {
+            registerPlugin("./test/metadata/operation2-1.xml");
+            ResourceType platform = getResourceType("ops");
+            assert platform != null;
+            Set<OperationDefinition> opDefs = platform.getOperationDefinitions();
+            assert opDefs != null;
+            assert opDefs.size() == 3 : "Did not find the expected 3 defs, but " + opDefs.size();
+
+            int found = 0;
+            for (OperationDefinition def : opDefs) {
+                if (containedIn(def.getName(), new String[] { "sleep", "wakeup", "getup" }))
+                    found++;
+            }
+            assert found == 3 : "Did not find all 3 expected operations";
+
+            System.out.println("==> Done with v1");
+            registerPlugin("./test/metadata/operation2-1.xml");
+            System.out.println("==> Done with v1 (2)");
+            registerPlugin("./test/metadata/operation2-2.xml");
+            platform = getResourceType("ops");
+            assert platform != null;
+            opDefs = platform.getOperationDefinitions();
+            assert opDefs != null;
+            assert opDefs.size() == 4 : "Did not find the expected 4 defs, but " + opDefs.size();
+            found = 0;
+            for (OperationDefinition def : opDefs) {
+                if (containedIn(def.getName(), new String[] { "wakeup", "getup", "eat", "goToWork" }))
+                    found++;
+            }
+            assert found == 4 : "Did not find all 4 expected operations";
+
+            System.out.println("==> Done with v2");
+
+            registerPlugin("./test/metadata/operation2-1.xml");
+            platform = getResourceType("ops");
+            assert platform != null;
+            opDefs = platform.getOperationDefinitions();
+            assert opDefs != null;
+            assert opDefs.size() == 3 : "Did not find the expected 3 defs, but " + opDefs.size();
+
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
     private void getPluginId(EntityManager entityManager) {
         Plugin existingPlugin = null;
         try {

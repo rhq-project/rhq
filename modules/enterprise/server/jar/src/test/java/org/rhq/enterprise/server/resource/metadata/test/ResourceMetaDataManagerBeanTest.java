@@ -547,7 +547,7 @@ public class ResourceMetaDataManagerBeanTest extends TestBase {
 
     }
 
-    @Test
+    //    @Test
     public void testAddIllegalSubcategory2() throws Exception {
         boolean noException = true;
         getTransactionManager().begin();

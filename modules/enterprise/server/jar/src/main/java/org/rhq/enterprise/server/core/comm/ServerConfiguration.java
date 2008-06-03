@@ -21,7 +21,9 @@ package org.rhq.enterprise.server.core.comm;
 import java.io.File;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+
 import mazz.i18n.Logger;
+
 import org.rhq.enterprise.communications.ServiceContainerConfiguration;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderConfiguration;
 import org.rhq.enterprise.communications.command.client.PersistentFifo;
@@ -573,8 +575,8 @@ public class ServerConfiguration {
      * @return keystore file password
      */
     public String getClientSenderSecurityKeystorePassword() {
-        String value = m_preferences
-            .get(ServerConfigurationConstants.CLIENT_SENDER_SECURITY_KEYSTORE_PASSWORD, "rhqpw");
+        String value = m_preferences.get(ServerConfigurationConstants.CLIENT_SENDER_SECURITY_KEYSTORE_PASSWORD,
+            "rhqpwd");
         return value;
     }
 
@@ -637,8 +639,7 @@ public class ServerConfiguration {
      * @return truststore file password
      */
     public String getClientSenderSecurityTruststorePassword() {
-        String value = m_preferences.get(ServerConfigurationConstants.CLIENT_SENDER_SECURITY_TRUSTSTORE_PASSWORD,
-            "rhqpw");
+        String value = m_preferences.get(ServerConfigurationConstants.CLIENT_SENDER_SECURITY_TRUSTSTORE_PASSWORD, null);
         return value;
     }
 

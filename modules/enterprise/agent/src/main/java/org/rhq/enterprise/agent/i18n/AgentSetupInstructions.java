@@ -22,6 +22,7 @@ import mazz.i18n.Msg;
 import mazz.i18n.annotation.I18NMessage;
 import mazz.i18n.annotation.I18NMessages;
 import mazz.i18n.annotation.I18NResourceBundle;
+
 import org.rhq.enterprise.agent.AgentConfigurationConstants;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 
@@ -472,7 +473,7 @@ public interface AgentSetupInstructions {
 
     // SERVER-SIDE KEYSTORE PASSWORD
     String SETUP_INSTRUCTION_SERVERKEYSTOREPASSWORD_PREF = ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_KEYSTORE_PASSWORD;
-    String SETUP_INSTRUCTION_SERVERKEYSTOREPASSWORD_DEFAULT = "rhq";
+    String SETUP_INSTRUCTION_SERVERKEYSTOREPASSWORD_DEFAULT = "rhqpwd";
     @I18NMessages( { @I18NMessage("Server-side Keystore Password") })
     String SETUP_INSTRUCTION_SERVERKEYSTOREPASSWORD_PROMPT = "PromptCommand.setup.instruction.server-keystore-pw.prompt";
     @I18NMessages( { @I18NMessage("The password to access the server-side keystore.") })
@@ -480,7 +481,7 @@ public interface AgentSetupInstructions {
 
     // SERVER-SIDE KEYSTORE KEY PASSWORD
     String SETUP_INSTRUCTION_SERVERKEYSTOREKEYPASSWORD_PREF = ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_KEYSTORE_KEY_PASSWORD;
-    String SETUP_INSTRUCTION_SERVERKEYSTOREKEYPASSWORD_DEFAULT = "rhq";
+    String SETUP_INSTRUCTION_SERVERKEYSTOREKEYPASSWORD_DEFAULT = "rhqpwd";
     @I18NMessages( { @I18NMessage("Server-side Keystore Key Password") })
     String SETUP_INSTRUCTION_SERVERKEYSTOREKEYPASSWORD_PROMPT = "PromptCommand.setup.instruction.server-keystore-key-pw.prompt";
     @I18NMessages( { @I18NMessage("The password to access the key in the server-side keystore.") })
@@ -523,7 +524,7 @@ public interface AgentSetupInstructions {
 
     // SERVER-SIDE TRUSTSTORE PASSWORD
     String SETUP_INSTRUCTION_SERVERTRUSTSTOREPASSWORD_PREF = ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_TRUSTSTORE_PASSWORD;
-    String SETUP_INSTRUCTION_SERVERTRUSTSTOREPASSWORD_DEFAULT = "rhq";
+    String SETUP_INSTRUCTION_SERVERTRUSTSTOREPASSWORD_DEFAULT = "";
     @I18NMessages( { @I18NMessage("Server-side Truststore Password") })
     String SETUP_INSTRUCTION_SERVERTRUSTSTOREPASSWORD_PROMPT = "PromptCommand.setup.instruction.server-truststore-pw.prompt";
     @I18NMessages( { @I18NMessage("The password used to access the server-side truststore.") })
@@ -567,7 +568,7 @@ public interface AgentSetupInstructions {
 
     // CLIENT-SIDE KEYSTORE PASSWORD
     String SETUP_INSTRUCTION_CLIENTKEYSTOREPASSWORD_PREF = AgentConfigurationConstants.CLIENT_SENDER_SECURITY_KEYSTORE_PASSWORD;
-    String SETUP_INSTRUCTION_CLIENTKEYSTOREPASSWORD_DEFAULT = "rhq";
+    String SETUP_INSTRUCTION_CLIENTKEYSTOREPASSWORD_DEFAULT = "rhqpwd";
     @I18NMessages( { @I18NMessage("Client-side Keystore Password") })
     String SETUP_INSTRUCTION_CLIENTKEYSTOREPASSWORD_PROMPT = "PromptCommand.setup.instruction.client-keystore-pw.prompt";
     @I18NMessages( { @I18NMessage("The password to access the client-side keystore.") })
@@ -575,7 +576,7 @@ public interface AgentSetupInstructions {
 
     // CLIENT-SIDE KEYSTORE KEY PASSWORD
     String SETUP_INSTRUCTION_CLIENTKEYSTOREKEYPASSWORD_PREF = AgentConfigurationConstants.CLIENT_SENDER_SECURITY_KEYSTORE_KEY_PASSWORD;
-    String SETUP_INSTRUCTION_CLIENTKEYSTOREKEYPASSWORD_DEFAULT = "rhq";
+    String SETUP_INSTRUCTION_CLIENTKEYSTOREKEYPASSWORD_DEFAULT = "rhqpwd";
     @I18NMessages( { @I18NMessage("Client-side Keystore Key Password") })
     String SETUP_INSTRUCTION_CLIENTKEYSTOREKEYPASSWORD_PROMPT = "PromptCommand.setup.instruction.client-keystore-key-pw.prompt";
     @I18NMessages( { @I18NMessage("The password to access the key in the client-side keystore.") })
@@ -618,7 +619,7 @@ public interface AgentSetupInstructions {
 
     // CLIENT-SIDE TRUSTSTORE PASSWORD
     String SETUP_INSTRUCTION_CLIENTTRUSTSTOREPASSWORD_PREF = AgentConfigurationConstants.CLIENT_SENDER_SECURITY_TRUSTSTORE_PASSWORD;
-    String SETUP_INSTRUCTION_CLIENTTRUSTSTOREPASSWORD_DEFAULT = "rhq";
+    String SETUP_INSTRUCTION_CLIENTTRUSTSTOREPASSWORD_DEFAULT = "";
     @I18NMessages( { @I18NMessage("Client-side Truststore Password") })
     String SETUP_INSTRUCTION_CLIENTTRUSTSTOREPASSWORD_PROMPT = "PromptCommand.setup.instruction.client-truststore-pw.prompt";
     @I18NMessages( { @I18NMessage("The password used to access the client-side truststore.") })

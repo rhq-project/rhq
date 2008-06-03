@@ -330,9 +330,9 @@
                </c:property-options>
             </c:simple-property>
             <c:simple-property name="rhq.communications.connector.security.keystore.password" 
-               type="password" activationPolicy="restart" required="false" default="rhqpassword" displayName="Incoming: Keystore Password"/>
+               type="password" activationPolicy="restart" required="false" default="rhqpwd" displayName="Incoming: Keystore Password"/>
             <c:simple-property name="rhq.communications.connector.security.keystore.key-password" 
-               type="password" activationPolicy="restart" required="false" default="rhqpassword" displayName="Incoming: Keystore Key Password" />
+               type="password" activationPolicy="restart" required="false" default="rhqpwd" displayName="Incoming: Keystore Key Password" />
             <c:simple-property name="rhq.communications.connector.security.keystore.alias" 
                type="string" activationPolicy="restart" required="false" default="rhq" displayName="Incoming: Keystore Alias " />
             <c:simple-property name="rhq.communications.connector.security.truststore.file" 
@@ -352,7 +352,7 @@
                </c:property-options>
             </c:simple-property>
             <c:simple-property name="rhq.communications.connector.security.truststore.password" 
-               type="password" activationPolicy="restart" required="false" default="rhqpassword" displayName="Incoming: Truststore Password"/>
+               type="password" activationPolicy="restart" required="false" default="" displayName="Incoming: Truststore Password"/>
             <c:simple-property name="rhq.communications.connector.security.client-auth-mode" 
                type="string" activationPolicy="restart" required="false" default="none" displayName="Incoming: Client Authentication Mode" 
                description="Determines if the agent should authenticate a RHQ Server before accepting incoming commands from it">
@@ -389,9 +389,9 @@
                </c:property-options>
             </c:simple-property>
             <c:simple-property name="rhq.agent.client.security.keystore.password" 
-               type="password" activationPolicy="restart" required="false" default="rhqpassword" displayName="Outgoing: Keystore Password"/>
+               type="password" activationPolicy="restart" required="false" default="rhqpwd" displayName="Outgoing: Keystore Password"/>
             <c:simple-property name="rhq.agent.client.security.keystore.key-password" 
-               type="password" activationPolicy="restart" required="false" default="rhqpassword" displayName="Outgoing: Keystore Key Password"/>
+               type="password" activationPolicy="restart" required="false" default="rhqpwd" displayName="Outgoing: Keystore Key Password"/>
             <c:simple-property name="rhq.agent.client.security.keystore.alias" 
                type="string" activationPolicy="restart" required="false" default="rhq" displayName="Outgoing: Keystore Alias"/>
             <c:simple-property name="rhq.agent.client.security.truststore.file" 
@@ -411,7 +411,7 @@
                </c:property-options>
             </c:simple-property>
             <c:simple-property name="rhq.agent.client.security.truststore.password" 
-               type="password" activationPolicy="restart" required="false" default="rhqpassword" displayName="Outgoing: Truststore Password"/>
+               type="password" activationPolicy="restart" required="false" default="" displayName="Outgoing: Truststore Password"/>
             <c:simple-property name="rhq.agent.client.security.server-auth-mode-enabled" 
                type="boolean" activationPolicy="restart" required="false" default="false" 
                displayName="Outgoing: Authenticate Server?" 

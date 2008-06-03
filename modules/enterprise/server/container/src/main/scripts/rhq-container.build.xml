@@ -335,14 +335,14 @@ rhq.communications.connector.security.secure-socket-protocol=TLS
 rhq.communications.connector.security.keystore.file=${jboss.server.data.dir}/keystore.dat
 rhq.communications.connector.security.keystore.algorithm=SunX509
 rhq.communications.connector.security.keystore.type=JKS
-rhq.communications.connector.security.keystore.password=rhqpw
-rhq.communications.connector.security.keystore.key-password=rhqpw
+rhq.communications.connector.security.keystore.password=rhqpwd
+rhq.communications.connector.security.keystore.key-password=rhqpwd
 rhq.communications.connector.security.keystore.alias=rhq
 rhq.communications.connector.security.truststore.file=${jboss.server.data.dir}/truststore.dat
 rhq.communications.connector.security.truststore.algorithm=SunX509
 rhq.communications.connector.security.truststore.type=JKS
-rhq.communications.connector.security.truststore.password=rhqpw
-rhq.communications.connector.security.client-auth-mode=need
+rhq.communications.connector.security.truststore.password=
+rhq.communications.connector.security.client-auth-mode=none
 
 # Client-side SSL Security Configuration (for outgoing messages to agents)
 rhq.server.client.security.secure-socket-protocol=TLS
@@ -355,8 +355,8 @@ rhq.server.client.security.keystore.alias=RHQ
 rhq.server.client.security.truststore.file=${jboss.server.data.dir}/truststore.dat
 rhq.server.client.security.truststore.algorithm=SunX509
 rhq.server.client.security.truststore.type=JKS
-rhq.server.client.security.truststore.password=rhqpw
-rhq.server.client.security.server-auth-mode-enabled=true
+rhq.server.client.security.truststore.password=
+rhq.server.client.security.server-auth-mode-enabled=false
 
 # Embedded RHQ Agent
 rhq.server.embedded-agent.enabled=false

@@ -24,8 +24,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+
 import mazz.i18n.Logger;
+
 import org.jboss.remoting.security.SSLSocketBuilder;
+
 import org.rhq.enterprise.communications.command.client.RemoteInputStream;
 import org.rhq.enterprise.communications.command.client.RemoteOutputStream;
 import org.rhq.enterprise.communications.command.impl.echo.server.EchoCommandService;
@@ -461,7 +464,7 @@ public class ServiceContainerConfiguration {
      */
     public String getConnectorSecurityKeystorePassword() {
         String value = m_preferences.get(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_KEYSTORE_PASSWORD,
-            "rhqpw");
+            "rhqpwd");
         return value;
     }
 
@@ -541,7 +544,7 @@ public class ServiceContainerConfiguration {
      */
     public String getConnectorSecurityTruststorePassword() {
         String value = m_preferences.get(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_TRUSTSTORE_PASSWORD,
-            "rhqpw");
+            null);
         return value;
     }
 

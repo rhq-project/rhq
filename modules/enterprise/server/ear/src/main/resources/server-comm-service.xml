@@ -94,11 +94,11 @@
             </java:property>
             <java:property>
                <java:key>rhq.communications.connector.security.keystore.password</java:key>
-               <java:value>${rhq.communications.connector.security.keystore.password:rhqpw}</java:value>
+               <java:value>${rhq.communications.connector.security.keystore.password:rhqpwd}</java:value>
             </java:property>
             <java:property>
                <java:key>rhq.communications.connector.security.keystore.key-password</java:key>
-               <java:value>${rhq.communications.connector.security.keystore.key-password:rhqpw}</java:value>
+               <java:value>${rhq.communications.connector.security.keystore.key-password:rhqpwd}</java:value>
             </java:property>
             <java:property>
                <java:key>rhq.communications.connector.security.keystore.alias</java:key>
@@ -118,11 +118,11 @@
             </java:property>
             <java:property>
                <java:key>rhq.communications.connector.security.truststore.password</java:key>
-               <java:value>${rhq.communications.connector.security.truststore.password:rhqpw}</java:value>
+               <java:value>${rhq.communications.connector.security.truststore.password}</java:value>
             </java:property>
             <java:property>
                <java:key>rhq.communications.connector.security.client-auth-mode</java:key>
-               <java:value>${rhq.communications.connector.security.client-auth-mode:need}</java:value>
+               <java:value>${rhq.communications.connector.security.client-auth-mode:none}</java:value>
             </java:property>
 
 
@@ -146,11 +146,11 @@
             </java:property>
             <java:property>
                <java:key>rhq.server.client.security.keystore.password</java:key>
-               <java:value>${rhq.server.client.security.keystore.password:rhqpw}</java:value>
+               <java:value>${rhq.server.client.security.keystore.password:rhqpwd}</java:value>
             </java:property>
             <java:property>
                <java:key>rhq.server.client.security.keystore.key-password</java:key>
-               <java:value>${rhq.server.client.security.keystore.key-password:rhqpw}</java:value>
+               <java:value>${rhq.server.client.security.keystore.key-password:rhqpwd}</java:value>
             </java:property>
             <java:property>
                <java:key>rhq.server.client.security.keystore.alias</java:key>
@@ -170,11 +170,11 @@
             </java:property>
             <java:property>
                <java:key>rhq.server.client.security.truststore.password</java:key>
-               <java:value>${rhq.server.client.security.truststore.password:rhqpw}</java:value>
+               <java:value>${rhq.server.client.security.truststore.password}</java:value>
             </java:property>
             <java:property>
                <java:key>rhq.server.client.security.server-auth-mode-enabled</java:key>
-               <java:value>${rhq.server.client.security.server-auth-mode-enabled:true}</java:value>
+               <java:value>${rhq.server.client.security.server-auth-mode-enabled:false}</java:value>
             </java:property>
          </java:properties> 
       </attribute> 

@@ -796,7 +796,8 @@ public class AgentConfiguration {
      * @return keystore file password
      */
     public String getClientSenderSecurityKeystorePassword() {
-        String value = m_preferences.get(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_KEYSTORE_PASSWORD, "rhqpw");
+        String value = m_preferences
+            .get(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_KEYSTORE_PASSWORD, "rhqpwd");
         return value;
     }
 
@@ -861,8 +862,7 @@ public class AgentConfiguration {
      * @return truststore file password
      */
     public String getClientSenderSecurityTruststorePassword() {
-        String value = m_preferences.get(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_TRUSTSTORE_PASSWORD,
-            "rhqpw");
+        String value = m_preferences.get(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_TRUSTSTORE_PASSWORD, null);
         return value;
     }
 

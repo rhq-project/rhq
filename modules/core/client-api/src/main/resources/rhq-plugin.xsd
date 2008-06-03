@@ -104,10 +104,37 @@
 
             <xs:element ref="rhq:help" minOccurs="0" maxOccurs="1" />
          </xs:sequence>
-         <xs:attribute name="name" use="required" type="xs:string"/>
-         <xs:attribute name="displayName" type="xs:string"/>
-         <xs:attribute name="description" type="xs:string"/>
-         <xs:attribute name="package" type="rhq:classNameType"/>
+         <xs:attribute name="name" use="required" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>
+                  Programmatic name of the plugin. This should be unique across all plugins deployed in the
+                  system.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute name="displayName" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>
+                  Formatted name displayed to the user. If this is omitted, the value "name" attribute will be used.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute name="description" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>
+                  Summary of what the plugin provides to be displayed to the user.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute name="package" type="rhq:classNameType">
+            <xs:annotation>
+               <xs:documentation>
+                  Package in which all resource discovery and component classes in this plugin reside. These component
+                  classes may use classes in other packages, however each resource discovery and component class
+                  must be in this package in order for the plugin descriptor to be able to instantiate them.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
          <xs:attribute name="version" type="xs:string">
             <xs:annotation>
                <xs:documentation>

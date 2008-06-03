@@ -547,24 +547,6 @@ public class ResourceMetaDataManagerBeanTest extends TestBase {
 
     }
 
-    //    @Test
-    public void testAddIllegalSubcategory2() throws Exception {
-        boolean noException = true;
-        getTransactionManager().begin();
-        try {
-            registerPlugin("./test/metadata/illegal-subcat-2.xml");
-            // We should not come here, but have bailed out with an exception
-        } catch (Throwable t) {
-            noException = false;
-            //            System.out.println(t.getMessage());
-        } finally {
-            getTransactionManager().rollback();
-        }
-        if (noException)
-            throw new Exception("MetadataManager did not throw an exception as expected.");
-
-    }
-
     private ResourceSubCategory assertSubCategory(List<ResourceSubCategory> subCats, Integer size, Integer index) {
         assert subCats != null;
         assert subCats.size() == size : "Unexpected number of Sub categories. Expected [" + size + "] got ["

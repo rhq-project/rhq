@@ -375,11 +375,7 @@ public class ResourceMetaDataManagerBeanTest extends TestBase {
         }
     }
 
-    // TODO this currently fails
-    //javax.persistence.EntityNotFoundException: Unable to find org.jboss.on.domain.resource.ResourceSubCategory with id 527082
-    // when calling  assert children.size() == 2;
-    // this test case needs to be deconstructed down to its simplest form
-    //    @Test
+    @Test
     public void testNestedSubCategoryUpdateWithServices() throws Exception {
         getTransactionManager().begin();
         try {
@@ -401,17 +397,22 @@ public class ResourceMetaDataManagerBeanTest extends TestBase {
             subCategories = server1.getSubCategories(); // "testServer1"
             assert subCategories != null;
             assert subCategories.size() == 1; // Subcat with name "parent"
-            // TODO check for 1 subcat of this
-            ResourceSubCategory sub2 = subCategories.get(0);
-            assert sub2 != null;
-            assert sub2.getName().equals("applications2") : "Name was not 'applications2', but " + sub2.getName();
+            ResourceSubCategory parent = subCategories.get(0);
+            assert parent != null;
+            assert parent.getName().equals("parent") : "Name was not 'parent', but " + parent.getName();
+            subCategories = parent.getChildSubCategories();
+            assert subCategories != null;
+            assert subCategories.size() == 1; // SubSubcat with name "applications2"
+            ResourceSubCategory app2 = subCategories.get(0);
+            assert app2 != null;
+            assert app2.getName().equals("applications2") : "Name was not 'applications2', but " + app2.getName();
 
             // Now the services within <server name="testServer1"/> ...
             ResourceType service2 = getResourceType("testService2");
             assert service2 != null;
             assert service2.getParentResourceTypes().iterator().next().equals(server1);
             subCategories = service2.getSubCategories();
-            assert subCategories == null;
+            assert subCategories.isEmpty() : "Expected subcategories to be empty, but was " + subCategories;
 
             ResourceSubCategory subCategory = service2.getSubCategory(); // the subcategory attribute
             // TODO the subCategory is currently not persisted to the DB, so can not be found
@@ -514,13 +515,6 @@ public class ResourceMetaDataManagerBeanTest extends TestBase {
             assert found == 2;
             assert resourceSubCat != null;
 
-            // commented out, as they might be in different order, so this will fail even
-            // if both subCts are there, but in different order than expected.
-            //            subCat = server2.getSubCategories().get(0);
-            //            assert subCat.getName().equals("services2") : "Expected 'services2', but got " + subCat.getName();
-            //            subCat = server2.getSubCategories().get(1);
-            //            assert subCat.getName().equals("resource") : "Expected 'resource', but got " + subCat.getName();
-
             List<ResourceSubCategory> childSubCats = resourceSubCat.getChildSubCategories();
             assert childSubCats.size() == 2;
             subCat = childSubCats.get(1);
@@ -528,6 +522,47 @@ public class ResourceMetaDataManagerBeanTest extends TestBase {
         } finally {
             getTransactionManager().rollback();
         }
+    }
+
+    /**
+     * Test if illegal subcategories will make the deployer bail out as
+     * expected.
+     * @throws Exception
+     */
+    @Test
+    public void testAddIllegalSubcategory1() throws Exception {
+        boolean noException = true;
+        getTransactionManager().begin();
+        try {
+            registerPlugin("./test/metadata/illegal-subcat-1.xml");
+            // We should not come here, but have bailed out with an exception
+        } catch (Throwable t) {
+            noException = false;
+            //            System.out.println(t.getMessage());
+        } finally {
+            getTransactionManager().rollback();
+        }
+        if (noException)
+            throw new Exception("MetadataManager did not throw an exception as expected.");
+
+    }
+
+    @Test
+    public void testAddIllegalSubcategory2() throws Exception {
+        boolean noException = true;
+        getTransactionManager().begin();
+        try {
+            registerPlugin("./test/metadata/illegal-subcat-2.xml");
+            // We should not come here, but have bailed out with an exception
+        } catch (Throwable t) {
+            noException = false;
+            //            System.out.println(t.getMessage());
+        } finally {
+            getTransactionManager().rollback();
+        }
+        if (noException)
+            throw new Exception("MetadataManager did not throw an exception as expected.");
+
     }
 
     private ResourceSubCategory assertSubCategory(List<ResourceSubCategory> subCats, Integer size, Integer index) {
@@ -563,46 +598,4 @@ public class ResourceMetaDataManagerBeanTest extends TestBase {
         assert subCat.getDescription().equals("The apps2.");
     }
 
-    //   @Test(groups = "integration.session")
-    //   public void testGetCompatibleGroupById() throws Exception
-    //   {
-    //      getTransactionManager().begin();
-    //      try
-    //      {
-    //         EntityManager em = getEntityManager();
-    //
-    //         /* bootstrap */
-    //         ResourceType type = new ResourceType("type", "plugin", ResourceCategory.PLATFORM, null);
-    //         Subject testSubject = SessionTestHelper.createNewSubject(em, "testSubject");
-    //         Role testRole = SessionTestHelper.createNewRoleForSubject(em, testSubject, "testRole");
-    //         CompatibleGroup compatGroup = new CompatibleGroup("testCompatGroup", type);
-    //         compatGroup.addRole(testRole);
-    //         em.persist(type);
-    //         em.persist(compatGroup);
-    //         em.flush();
-    //         testRole.addResourceGroup(compatGroup);
-    //         em.merge(testRole);
-    //         em.flush();
-    //
-    //         int id = compatGroup.getId();
-    //         try {
-    //            resourceGroupManager.getCompatibleGroupById(testSubject, id);
-    //         } catch (ResourceGroupNotFoundException e) {
-    //            assert (false) : "Could not find recently persisted compatible group by id";
-    //         } catch (PermissionException se) {
-    //            assert (false) : "Incorrect permissions when getting compatible group by id";
-    //         }
-    //
-    //      }
-    //      finally
-    //      {
-    //         getTransactionManager().rollback();
-    //      }
-    //   }
-
-    /*
-     * CGroup  getCompatibleGroupById(Subject user, int id) MGroup  getMixedGroupById(Subject user, int id) List<>
-     * getCompatibleGroupsByResourceType(Subject user, ResourceType type, PC) int     getCompatibleGroupCount(Subject
-     * user) int     getMixedGroupCount(Subject user)
-     */
 }

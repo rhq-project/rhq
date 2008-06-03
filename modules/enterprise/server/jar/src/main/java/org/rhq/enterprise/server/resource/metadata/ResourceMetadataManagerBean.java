@@ -312,25 +312,92 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
             updateEventDefinitions(resourceType, existingType);
 
-            // TODO Update the type itself
+            // Update the type itself
             existingType.setDescription(resourceType.getDescription());
             existingType.setCreateDeletePolicy(resourceType.getCreateDeletePolicy());
             existingType.setCreationDataType(resourceType.getCreationDataType());
             existingType.setSingleton(resourceType.isSingleton());
             existingType.setSupportsManualAdd(resourceType.isSupportsManualAdd());
+            existingType.setSubCategory(resourceType.getSubCategory());
 
             existingType = entityManager.merge(existingType);
             entityManager.flush();
         } catch (NoResultException nre) {
-            // If the type didn't exist then we'll persist here which will cascade through
-            // all child types as well as plugin and resource configs and their delegate types and
-            // metric and operation definitions and their dependent types
+            /*
+             * If the type didn't exist then we'll persist here which will cascade through
+             * all child types as well as plugin and resource configs and their delegate types and
+             * metric and operation definitions and their dependent types
+             * 
+             * But first do some validity checking
+             */
+
+            // Check if the subcategories as children of resourceType are valid
+            checkForValidSubcategories(resourceType.getSubCategories());
+
+            // check if our subcategory is valid according to our parent
+            // Should come out of the PluginMetadataManager
+            checkForValidSubcategory(resourceType);
+
             log.debug("Persisting new ResourceType: " + resourceType.toString());
             entityManager.persist(resourceType);
         } catch (NonUniqueResultException nure) {
             log.debug("Found more than one existing type for " + resourceType.toString());
             throw new RuntimeException(nure);
         }
+    }
+
+    private void checkForValidSubcategory(ResourceType resourceType) {
+
+        // recurse into child types
+        for (ResourceType childType : resourceType.getChildResourceTypes()) {
+            checkForValidSubcategory(childType);
+        }
+
+        // now check the type itself
+        Set<ResourceType> parents = resourceType.getParentResourceTypes();
+        ResourceSubCategory subCategory = resourceType.getSubCategory();
+        if (subCategory == null)
+            return;
+
+        List<ResourceSubCategory> categories = new ArrayList<ResourceSubCategory>();
+
+        for (ResourceType parent : parents) {
+            for (ResourceSubCategory cat : parent.getSubCategories()) {
+                categories.addAll(getAllSubcategories(cat));
+            }
+        }
+        if (!categories.contains(subCategory))
+            throw new RuntimeException("Subcategory [" + subCategory
+                + "] is not in parents list of subcategories for ResourceType " + resourceType.getName());
+
+    }
+
+    private void checkForValidSubcategories(List<ResourceSubCategory> subCategories) {
+        Set<String> subCatNames = new HashSet<String>();
+
+        for (ResourceSubCategory cat : subCategories) {
+            List<ResourceSubCategory> allSubcategories = getAllSubcategories(cat);
+            for (ResourceSubCategory cat2 : allSubcategories) {
+                if (subCatNames.contains(cat2.getName())) {
+                    throw new RuntimeException("Subcategory [" + cat.getName() + "] is duplicated");
+                }
+                subCatNames.add(cat2.getName());
+            }
+        }
+    }
+
+    private List<ResourceSubCategory> getAllSubcategories(ResourceSubCategory cat) {
+
+        List<ResourceSubCategory> result = new ArrayList<ResourceSubCategory>();
+
+        if (cat.getChildSubCategories() != null) {
+            for (ResourceSubCategory cat2 : cat.getChildSubCategories()) {
+                result.addAll(getAllSubcategories(cat2));
+            }
+        }
+
+        result.add(cat);
+        return result;
     }
 
     /** Update the &lt;event> tags */

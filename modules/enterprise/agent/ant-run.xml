@@ -142,11 +142,22 @@ ANT Script that provides ways to package the agent.
          </fileset>
       </copy>
 
-      <delete file="${basedir}/target/rhq-agent-${project.version}.zip" />
-      <zip destfile="${basedir}/target/rhq-agent-${project.version}.zip" >
-         <fileset dir="${basedir}/target">
+      <delete file="${basedir}/target/rhq-agent-${project.version}.zip" />     
+   	  <zip destfile="${basedir}/target/rhq-agent-${project.version}.zip" >
+  	  	 <!-- The zip task does not mantain file permissions, we have to make sure they are set here -->   	  	
+         <zipfileset dir="${basedir}/target">
             <include name="rhq-agent-${project.version}/**"/>
-         </fileset>
+         	<exclude name="rhq-agent-${project.version}/bin/*.sh"/>
+         	<exclude name="rhq-agent-${project.version}/lib/*.so"/>
+         	<exclude name="rhq-agent-${project.version}/lib/*.sl"/>         	
+         	<exclude name="rhq-agent-${project.version}/lib/*.dylib"/>         	
+         </zipfileset>
+         <zipfileset dir="${basedir}/target" filemode="755">
+         	<include name="rhq-agent-${project.version}/bin/*.sh"/>
+         	<include name="rhq-agent-${project.version}/lib/*.so"/>
+         	<include name="rhq-agent-${project.version}/lib/*.sl"/>
+            <include name="rhq-agent-${project.version}/lib/*.dylib"/>
+         </zipfileset>      	
       </zip>
       
       <mkdir dir="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}"/>

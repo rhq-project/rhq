@@ -10,7 +10,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-enterprise-server-container</artifactId>
-  <packaging>zip</packaging>
+  <packaging>pom</packaging>
 
   <name>RHQ Enterprise Server Container</name>
   <description>The full RHQ container build, including the JBossAS server and all config/deploy files</description>
@@ -122,14 +122,17 @@
     <plugins>
 
       <plugin>
-        <groupId>org.jboss.maven.plugins</groupId>
-        <artifactId>maven-zip-plugin</artifactId>
-        <version>1.0</version>
-        <extensions>true</extensions>  <!-- allows Maven to grok the zip packaging type -->
-        <configuration>
-           <includeSourceDirectory>true</includeSourceDirectory>
-        </configuration>
-      </plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>move-src</id>
+            <phase>process-resources</phase>          
+            <goals>
+              <goal>resources</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>       
 
       <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
@@ -210,6 +213,25 @@
 
         </executions>
       </plugin>
+
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptors>
+            <descriptor>src/main/scripts/rhq-container.assembly.xml</descriptor>
+          </descriptors>
+          <finalName>${project.build.finalName}</finalName>       
+        </configuration>
+        <executions>
+          <execution>
+            <id>assemble-server-container-zip</id>
+            <phase>package</phase>          
+            <goals>
+              <goal>attached</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>       
 
     </plugins>
   </build>

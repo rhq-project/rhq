@@ -122,7 +122,12 @@ java ${_JPDA_OPTS} -enableassertions -Djava.library.path=. -jar sigar-test.jar
       <!-- this is the one .zip file that we give to the SIGAR team --> 
       <!-- they unzip it and run the run.bat file --> 
       <zip zipfile="${target.dir}/sigar-test.zip">
-         <fileset dir="${target.dir}" />
+         <zipfileset dir="${target.dir}">
+         	<exclude name="${target.dir}/run.sh"/>
+         </zipfileset>
+        <zipfileset dir="${target.dir}" filemode="755">      
+        	<include name="${target.dir}/run.sh"/>
+        </zipfileset>      	
       </zip>
       
    </target>

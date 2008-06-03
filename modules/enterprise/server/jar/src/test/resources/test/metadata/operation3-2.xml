@@ -1,0 +1,19 @@
+<plugin name="ResourceMetaDataManagerBeanTest"
+   displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xmlns="urn:xmlns:rhq-plugin" xmlns:c="urn:xmlns:rhq-configuration">
+
+   <platform name="ops">
+      <operation name="wakeup">
+         <parameters>
+            <c:group name="testing">
+               <c:simple-property name="one" />
+               <c:simple-property name="two" />
+            </c:group>
+         </parameters>
+      </operation>
+      <operation name="getup" />
+      <operation name="eat" />
+      <operation name="goToWork" />
+   </platform>
+</plugin>

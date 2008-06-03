@@ -501,7 +501,13 @@
             </xs:complexType>
          </xs:element>
 
-         <xs:element name="plugin-configuration" type="config:configuration" minOccurs="0"/>
+         <xs:element name="plugin-configuration" type="config:configuration" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>
+                  Defines properties that are used by the resource component to connect to a specific resource.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
          <xs:element name="process-scan" type="rhq:processScan" minOccurs="0" maxOccurs="unbounded">
             <xs:annotation>
                <xs:documentation>
@@ -769,7 +775,7 @@
             </xs:annotation>
          </xs:element>
       </xs:sequence>
-      <xs:attribute name="name" type="xs:string"/>
+      <xs:attribute name="name" type="xs:string" use="required"/>
       <xs:attribute name="displayName" type="xs:string"/>
       <xs:attribute name="description" type="xs:string"/>
    </xs:complexType>

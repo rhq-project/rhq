@@ -35,6 +35,7 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 
 /**
  * A utility to test a set of plugins are valid.
@@ -168,7 +169,17 @@ public class PluginValidator {
                 String discoveryClass = mm.getDiscoveryClass(resourceType);
                 if (discoveryClass != null) {
                     try {
-                        Class.forName(discoveryClass, false, pluginEnvironment.getPluginClassLoader());
+                        Class discoveryClazz =
+                            Class.forName(discoveryClass, false, pluginEnvironment.getPluginClassLoader());
+
+                        if (discoveryClazz != null) {
+                            if (!ResourceDiscoveryComponent.class.isAssignableFrom(discoveryClazz)) {
+                                success = false;
+                                LOG.error("Discovery class [" + discoveryClass + "] for resource type ["
+                                    + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
+                                    + "] does not implement ResourceDiscoveryComponent.");
+                            }
+                        }
                     } catch (Exception e) {
                         success = false;
                         LOG.error("Cannot find discovery class [" + discoveryClass + "] for resource type ["

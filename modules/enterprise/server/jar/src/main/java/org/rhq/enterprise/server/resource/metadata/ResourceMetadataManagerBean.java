@@ -146,10 +146,13 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     @SuppressWarnings("unchecked")
     private void updateTypes(PluginDescriptor pluginDescriptor) {
         Set<ResourceType> updateTypes = pluginMetadataManager.loadPlugin(pluginDescriptor);
-        if (updateTypes != null) {
-            for (ResourceType resourceType : updateTypes) {
-                updateType(resourceType);
-            }
+        if (updateTypes == null) {
+            log.debug("updateTypes: nothing to do, as loading the plugin failed");
+            return;
+        }
+
+        for (ResourceType resourceType : updateTypes) {
+            updateType(resourceType);
         }
 
         List<ResourceType> existingTypes = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_PLUGIN)

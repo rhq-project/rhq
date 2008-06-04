@@ -691,6 +691,37 @@ public class PluginHandling3Test extends TestBase {
         }
     }
 
+    @Test
+    public void testAutoCreateChidlSubCategory() throws Exception {
+        System.out.println("= testAutoCreateChildSubCategory");
+        getTransactionManager().begin();
+        try {
+            registerPlugin("./test/metadata/autocreate-child-subcat-1.xml");
+            System.out.println("Done with v1");
+            registerPlugin("./test/metadata/autocreate-child-subcat-1.xml");
+            System.out.println("Done with v1 (2)");
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test
+    public void testDuplicateResorceType() throws Exception {
+        System.out.println("= testDuplicateResorceType");
+        getTransactionManager().begin();
+        try {
+            System.out.println(" A stack trace coming out of this is expected");
+            System.out.flush();
+            registerPlugin("./test/metadata/duplicateResourceType.xml");
+            getResourceType("ops");
+            assert false : "We should not have hit this line";
+        } catch (Exception e) {
+            ; // We expect an exception to come out of the ResourceMetadataManager
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
     private void getPluginId(EntityManager entityManager) {
         Plugin existingPlugin = null;
         try {

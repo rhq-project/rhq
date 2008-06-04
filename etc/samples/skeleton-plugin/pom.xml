@@ -6,13 +6,13 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.custom</groupId>
-  <artifactId>custom-plugin</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <groupId>org.rhq.sample.skeletonplugin</groupId>
+  <artifactId>skeleton-plugin</artifactId>
+  <version>1.0</version>
   <packaging>jar</packaging>
 
-  <name>Custom RHQ Agent Plugin Template</name>
-  <description>a template for building a custom RHQ agent plugin</description>
+  <name>Skeleton RHQ Plugin Template</name>
+  <description>A template for building a custom RHQ agent plugin</description>
 
   <properties>        
     <rhq.version>1.0.0.GA</rhq.version>
@@ -42,8 +42,8 @@
       <scope>provided</scope> <!-- provided by the agent/plugin-container -->
     </dependency>
 
-    <!-- TODO: This is a fix for the Javac bug requiring annotations to be
-               available when compiling dependent classes. It is fixed in JDK 6. -->
+    <!-- This is a fix for the Javac bug requiring annotations to be
+         available when compiling dependent classes. It is fixed in JDK 6. -->
     <dependency>
       <groupId>javax.persistence</groupId>
       <artifactId>persistence-api</artifactId>
@@ -51,8 +51,8 @@
       <scope>provided</scope> <!-- provided by the agent/plugin-container -->
     </dependency>
 
-    <!-- TODO: This is a fix for the Javac bug requiring annotations to be
-               available when compiling dependent classes; it is fixed in JDK 6. -->
+    <!-- This is a fix for the Javac bug requiring annotations to be
+         available when compiling dependent classes; it is fixed in JDK 6. -->
     <dependency>
       <groupId>hibernate-annotations</groupId>
       <artifactId>hibernate-annotations</artifactId>
@@ -60,8 +60,8 @@
       <scope>provided</scope> <!-- provided by the agent/plugin-container -->
     </dependency>
 
-    <!-- TODO: This is a fix for the Javac bug requiring annotations to be
-               available when compiling dependent classes; it is fixed in JDK 6. -->
+    <!-- This is a fix for the Javac bug requiring annotations to be
+         available when compiling dependent classes; it is fixed in JDK 6. -->
     <dependency>
       <groupId>javax.xml.bind</groupId>
       <artifactId>jaxb-api</artifactId>
@@ -69,8 +69,16 @@
       <scope>provided</scope> <!-- provided by the agent/plugin-container -->
     </dependency>
     
-    <!-- uncomment the one of the three logging systems your plugin uses: log4j, commons-logging or i18nlog -->
-    <!-- all three are provided to your plugin by the agent/plugin-container -->
+    <!-- Uncomment the one of the three logging systems your plugin uses: log4j, commons-logging or i18nlog
+         all three are provided to your plugin by the agent/plugin-container -->
+
+     <dependency>
+       <groupId>commons-logging</groupId>
+       <artifactId>commons-logging</artifactId>
+       <version>1.1</version>
+       <scope>provided</scope>
+     </dependency>
+
     <!--
     <dependency>
       <groupId>log4j</groupId>
@@ -79,13 +87,6 @@
       <scope>provided</scope>
     </dependency>
     -->
-    
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>1.1</version>
-      <scope>provided</scope>
-    </dependency>
 
     <!--
     <dependency>

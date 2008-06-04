@@ -109,7 +109,7 @@
                              interface if a resource-configuration element is supplied.
       -->
       <resource-configuration>
-         <simple-property name="port" type="integer" displayName="Port on which to listen" />
+         <c:simple-property name="port" type="integer" displayName="Port on which to listen" />
       </resource-configuration>
    </server>
 </plugin>

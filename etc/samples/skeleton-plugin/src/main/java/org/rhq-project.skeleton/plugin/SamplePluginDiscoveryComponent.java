@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.custom.plugin;
+package org.rhq-project.skeleton.plugin;
 
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +35,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  *
  * @author John Mazzitelli
  */
-public class CustomPluginDiscoveryComponent implements ResourceDiscoveryComponent {
+public class SamplePluginDiscoveryComponent implements ResourceDiscoveryComponent {
     private final Log log = LogFactory.getLog(CustomPluginDiscoveryComponent.class);
 
     /**

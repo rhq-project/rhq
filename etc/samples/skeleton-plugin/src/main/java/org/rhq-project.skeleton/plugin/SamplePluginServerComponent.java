@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq-project.skeleton.plugin;
+package org.rhq.sample.skeletonplugin;
 
 import java.io.InputStream;
 import java.util.List;
@@ -64,7 +64,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  */
 public class SamplePluginServerComponent implements ResourceComponent, MeasurementFacet, OperationFacet,
     ConfigurationFacet, ContentFacet, DeleteResourceFacet, CreateChildResourceFacet {
-    private final Log log = LogFactory.getLog(CustomPluginServerComponent.class);
+    private final Log log = LogFactory.getLog(SamplePluginServerComponent.class);
 
     /**
      * Represents the resource configuration of the custom product being managed.

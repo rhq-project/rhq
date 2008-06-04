@@ -14,7 +14,7 @@
 -->
 <plugin name="SkeletonPlugin"
         displayName="Skeleton Plugin"
-        package="org.rhq-project.skeleton.plugin"
+        package="org.rhq.sample.skeletonplugin"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">

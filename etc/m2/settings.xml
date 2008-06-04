@@ -51,8 +51,6 @@
             <!-- Tests that should be skipped (e.g. because they're long running), comma-separated (with no whitespace!) - 
                  some possible values: agent-comm,comm-client,native-system,postgres-plugin -->
             <rhq.testng.excludedGroups>agent-comm,comm-client,postgres-plugin,native-system</rhq.testng.excludedGroups>
-            <!-- only needed if you want to try compiling RHQ with JDK6 (didn't quite work last time ips tried it) -->
-            <java5.home>C:/opt/jdk-1.5.0_14/jre</java5.home>
             <!--<maven.test.skip>true</maven.test.skip>-->
             <!--<maven.test.failure.ignore>true</maven.test.failure.ignore>-->
             <!--<maven.test.error.ignore>true</maven.test.error.ignore>-->
@@ -107,11 +105,43 @@
             <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
             <rhq.test.ds.type-mapping>Oracle10g</rhq.test.ds.type-mapping>
             <rhq.test.ds.driver-class>oracle.jdbc.driver.OracleDriver</rhq.test.ds.driver-class>
-         </properties>
-         
-         
+         </properties>                 
       </profile>
       
+      <profile>
+         <!-- Enable this profile if you want to compile RHQ using JDK6 javac. -->
+         <id>jdk6</id>
+         <properties>
+            <!-- Set this to your a JRE5 installation dir (e.g. C:/opt/jdk-1.5.0_15/jre). -->
+            <java5.home>C:/opt/jdk-1.5.0_15/jre</java5.home>
+         </properties>
+         
+         <!--
+         <repositories>
+          <repository>
+            <id>central</id>
+            <name>Artifactory Proxy Repository</name>
+            <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>      
+            <snapshots>
+               <enabled>false</enabled>
+            </snapshots>
+          </repository>
+         </repositories>
+
+         <pluginRepositories>
+          <pluginRepository>
+            <id>central</id>
+            <name>Artifactory Proxy Repository</name>
+            <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>      
+            <snapshots>
+               <enabled>false</enabled>
+            </snapshots>
+          </pluginRepository>
+         </pluginRepositories>
+         -->
+
+   </profile>
+   
    </profiles>
 
    <!--**************************** PLUGIN GROUPS ****************************-->

@@ -349,23 +349,15 @@
 
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.0.2</version>
         <configuration>
           <optimize>false</optimize>
           <source>1.5</source>
           <target>1.5</target>
-          <!-- To build using JDK 6, set the java5.home property to your JDK 5 jre dir (i.e. C:/opt/jdk-1.5.0_11/jre) and uncomment the below block. -->
-          <!--
-          <compilerArguments>
-            <bootclasspath>${java5.home}/lib/rt.jar${path.separator}${java5.home}/lib/jsse.jar${path.separator}${java5.home}/lib/jce.jar</bootclasspath>
-          </compilerArguments>
-          -->
         </configuration>
       </plugin>
 
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.2</version>
         <configuration>
           <archive>
             <manifest>
@@ -381,7 +373,6 @@
         
       <plugin>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>1.0-alpha-3</version>
         <executions>
           <execution>
             <id>enforce-versions</id>
@@ -585,6 +576,55 @@
             <!-- See: http://maven.apache.org/plugins/maven-surefire-plugin/test-mojo.html#debugForkedProcess -->
             <maven.surefire.debug>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8797,server=y,suspend=y</maven.surefire.debug>
          </properties>
+      </profile>
+
+      <profile>
+         <id>jdk6</id>
+         
+         <!-- To build using JDK 6, enable this profile and set the java5.home property to a Java 5 jre dir (i.e. C:/opt/jdk-1.5.0_15/jre). --> 
+
+         <activation>
+            <property>
+               <name>jdk6</name>
+            </property>
+         </activation>
+         
+         <build>
+           <plugins>
+
+              <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                  <compilerArguments>
+                    <bootclasspath>${java5.home}/lib/rt.jar${path.separator}${java5.home}/lib/jsse.jar${path.separator}${java5.home}/lib/jce.jar</bootclasspath>
+                  </compilerArguments>          
+                </configuration>
+              </plugin>
+                
+              <plugin>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                  <execution>
+                    <id>enforce-versions</id>
+                    <goals>
+                      <!-- IMPORTANT: Use enforce goal, rather than enforce-once goal, otherwise reactor
+                                      builds will fail due to http://jira.codehaus.org/browse/MENFORCER-11 -->
+                      <goal>enforce</goal>
+                    </goals>
+                    <configuration>
+                      <rules>
+                        <requireJavaVersion>
+                          <version>[1.5,1.7)</version> <!-- 1.5.x/1.6.x -->
+                        </requireJavaVersion>
+                      </rules>
+                    </configuration>
+                  </execution>
+                </executions>
+              </plugin>
+                          
+            </plugins>  
+          </build>    
+          
       </profile>
       
   </profiles>

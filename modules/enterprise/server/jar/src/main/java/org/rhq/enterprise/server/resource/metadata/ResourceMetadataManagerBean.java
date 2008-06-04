@@ -318,7 +318,19 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             existingType.setCreationDataType(resourceType.getCreationDataType());
             existingType.setSingleton(resourceType.isSingleton());
             existingType.setSupportsManualAdd(resourceType.isSupportsManualAdd());
-            existingType.setSubCategory(resourceType.getSubCategory());
+
+            /*
+             * We need to be careful updating the subcategory. If it is not null and the same ("equals")
+             * to the new one, we need to copy over the attributes, as the existing will be kept and
+             * the new one not persisted. Otherwise, we can just use the new one. 
+             */
+            ResourceSubCategory exSC = existingType.getSubCategory();
+            ResourceSubCategory rsc = resourceType.getSubCategory();
+            if (exSC != null && exSC.equals(rsc)) {
+                exSC.setDescription(rsc.getDescription());
+                exSC.setDisplayName(rsc.getDisplayName());
+            } else
+                existingType.setSubCategory(resourceType.getSubCategory());
 
             existingType = entityManager.merge(existingType);
             entityManager.flush();
@@ -334,42 +346,13 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             // Check if the subcategories as children of resourceType are valid
             checkForValidSubcategories(resourceType.getSubCategories());
 
-            // check if our subcategory is valid according to our parent
-            // Should come out of the PluginMetadataManager
-            checkForValidSubcategory(resourceType);
-
-            log.debug("Persisting new ResourceType: " + resourceType.toString());
+            if (log.isDebugEnabled())
+                log.debug("Persisting new ResourceType: " + resourceType.toString());
             entityManager.persist(resourceType);
         } catch (NonUniqueResultException nure) {
             log.debug("Found more than one existing type for " + resourceType.toString());
             throw new RuntimeException(nure);
         }
-    }
-
-    private void checkForValidSubcategory(ResourceType resourceType) {
-
-        // recurse into child types
-        for (ResourceType childType : resourceType.getChildResourceTypes()) {
-            checkForValidSubcategory(childType);
-        }
-
-        // now check the type itself
-        Set<ResourceType> parents = resourceType.getParentResourceTypes();
-        ResourceSubCategory subCategory = resourceType.getSubCategory();
-        if (subCategory == null)
-            return;
-
-        List<ResourceSubCategory> categories = new ArrayList<ResourceSubCategory>();
-
-        for (ResourceType parent : parents) {
-            for (ResourceSubCategory cat : parent.getSubCategories()) {
-                categories.addAll(getAllSubcategories(cat));
-            }
-        }
-        if (!categories.contains(subCategory))
-            throw new RuntimeException("Subcategory [" + subCategory
-                + "] is not in parents list of subcategories for ResourceType " + resourceType.getName());
-
     }
 
     private void checkForValidSubcategories(List<ResourceSubCategory> subCategories) {

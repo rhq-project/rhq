@@ -23,8 +23,10 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -39,7 +41,8 @@ import org.rhq.core.domain.resource.ResourceType;
  * @author Greg Hinkle
  */
 public class PluginMetadataManager {
-    public static final ResourceType TEST_PLATFORM_TYPE = new ResourceType("Anonymous", "test", ResourceCategory.PLATFORM, null);
+    public static final ResourceType TEST_PLATFORM_TYPE = new ResourceType("Anonymous", "test",
+        ResourceCategory.PLATFORM, null);
 
     private Log log = LogFactory.getLog(PluginMetadataManager.class);
 
@@ -107,6 +110,10 @@ public class PluginMetadataManager {
 
             this.parsersByPlugin.put(pluginDescriptor.getName(), parser);
             for (ResourceType resourceType : parser.getAllTypes()) {
+                if (types.contains(resourceType)) {
+                    throw new InvalidPluginDescriptorException("Type [" + resourceType
+                        + "] is duplicate for this plugin. This is illegal.");
+                }
                 addType(resourceType);
             }
 

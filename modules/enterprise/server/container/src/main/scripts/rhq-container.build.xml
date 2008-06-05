@@ -99,21 +99,6 @@
     <available file="${jboss.home}/lib/jboss-system.jar" type="file" property="jboss.home.is.valid" />
     <fail unless="jboss.home.is.valid" message="${jboss.home} does not contain a valid JBoss 4.x installation - aborting..." />
 
-    <!-- Install the EJB3 package into the JBoss dist -->
-    <!-- JBoss 4.2 already includes EJB3
-    <property name="ejb3.zip" location="${settings.localRepository}/jboss/jboss-ejb/${jboss.ejb3.version}/jboss-ejb-${jboss.ejb3.version}.zip" />
-    <uptodate property="unzip-ejb3.not.required" srcfile="${ejb3.zip}" targetfile="${jboss.home}/server/default/deploy/ejb3.deployer" />
-    <antcall target="unzip-ejb3" />
-    -->
-
-    <!-- The only thing we need in the jboss/client dir is the main client jar, for the jboss plugin. -->
-    <!-- do not delete client jars! they're going to be needed
-    <delete>
-      <fileset dir="${jboss.home}/client">
-        <exclude name="jbossall-client.jar"/>
-      </fileset>
-    </delete>-->
-
     <echo>Installing safe ejb3 web invoker ...</echo>
      <delete>
       <fileset dir="${jboss.home}/server/default/deploy/jbossws.sar">
@@ -133,28 +118,6 @@
           toDir="${jboss.lib.dir}" failonerror="false" verbose="true" />
     <copy file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
           toDir="${jboss.lib.dir}" verbose="true" />
-
-
-<!--     <copy file="${jboss.home}/server/all/lib/jbossha.jar" toDir="${jboss.lib.dir}" verbose="true" failonerror="false" />
-     <copy file="${jboss.home}/server/all/lib/jgroups.jar" toDir="${jboss.lib.dir}" verbose="true" failonerror="false" />-->
-
-    <!-- make sure we actually need the following libs -->
-    <!-- for EJB3 clustering
-    <copy file="${jboss.home}/server/all/lib/jboss-cache.jar"
-          toDir="${jboss.lib.dir}" verbose="true" failonerror="false" />
-    -->
-    <!-- WHAT IS THIS FOR???
-    <copy file="${settings.localRepository}/commons-modeler/commons-modeler/1.1/commons-modeler-1.1.jar"
-          toDir="${jboss.lib.dir}" verbose="true" />
-    -->
-    <!-- JBoss 4.2 already includes Remoting 2.0.0.GA
-    <copy file="${settings.localRepository}/jboss/jboss-remoting/2.0.0.GA/jboss-remoting-2.0.0.GA.jar"
-          toDir="${jboss.lib.dir}" verbose="true" />
-    -->
-    <!-- The old 1.x stuff needed this I think - we're gonna use the JGroups that comes with JBoss 4.2
-    <copy file="${settings.localRepository}/jgroups/jgroups-all/2.2.9.1/jgroups-all-2.2.9.1.jar"
-          toDir="${jboss.lib.dir}" verbose="true" />
-    -->
 
     <!-- Generate SSL key for RHQ server - 128-bit key that expires in 20 years... -->
     <property name="jboss.conf.dir" location="${jboss.home}/server/default/conf" />
@@ -187,13 +150,7 @@
     <!-- Remove old web console, leave the JMX console (we will delete it later for releases) -->
     <delete dir="${jboss.deploy.dir}/management" />
 
-    <!-- NOTE: We do not delete jbossws.sar, because if it's not there, the EJB container logs annoying warnings during startup. -->
-    <!-- TODO: I do not know if this is still true with JBoss 4.2 -->
-    <!--
-    <delete dir="${jboss.deploy.dir}/jbossws.sar"/>
-    -->
-
-    <echo>Upgrading JSF jars ...</echo>
+    <echo>Upgrading JSF jars to v${jsf-impl.version} ...</echo>
     <property name="jsf-libs.dir" location="${jboss.deploy.dir}/jboss-web.deployer/jsf-libs" />
     <mkdir dir="${jsf-libs.dir}" />
     <delete>
@@ -237,10 +194,6 @@
     <echo>Deploying RT filter jar ...</echo>
     <copy file="${settings.localRepository}/org/rhq/rhq-rtfilter/${rhq.version}/rhq-rtfilter-${rhq.version}.jar"
           todir="${jboss.home}/server/default/lib" verbose="true" />
-
-    <!-- TODO... -->
-    <!-- NOTE: We have to use ant instead of antcall, because antcall doesn't work from within Maven 2. -->
-    <!-- <ant antfile="src/main/scripts/rhq-assembly.build.xml" target="instrument-jboss" /> -->
 
     <!-- Delete 'minimal' and 'all' config dirs... -->
     <delete dir="${jboss.home}/server/minimal" />

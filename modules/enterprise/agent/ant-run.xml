@@ -46,7 +46,6 @@ ANT Script that provides ways to package the agent.
          <include name="org/rhq/rhq-core-plugin-container/${project.version}/rhq-core-plugin-container-${project.version}.jar" />
          <include name="org/rhq/rhq-core-client-api/${project.version}/rhq-core-client-api-${project.version}.jar" />
 
-         <include name="javax/activation/activation/1.1/activation-1.1.jar"/>
          <include name="javax/xml/bind/jsr173_api/1.0/jsr173_api-1.0.jar"/>
       </fileset>
 
@@ -55,10 +54,13 @@ ANT Script that provides ways to package the agent.
    <path id="endorsed.classpath">
 
       <!-- The JAXB jars need to go in endorsed, since we use JAXB 2.1, which would cause conflicts with
-           JAXB 2.0, which is bundled with Java 6. -->
+           JAXB 2.0, which is bundled with Java 6, when running under Java 6. JAXB 2.1 depends on 
+           Activation 1.1, which we also need to include, in order to remain compatible with Java 5,
+           which bundles Activation 1.0. -->
       <fileset dir="${settings.localRepository}" id="endorsed.classpath.fileset">
          <include name="javax/xml/bind/jaxb-api/${jaxb-api.version}/jaxb-api-${jaxb-api.version}.jar"/>
          <include name="com/sun/xml/bind/jaxb-impl/${jaxb-impl.version}/jaxb-impl-${jaxb-impl.version}.jar"/>
+         <include name="javax/activation/activation/1.1/activation-1.1.jar"/>
       </fileset>
 
    </path>

@@ -46,14 +46,23 @@ ANT Script that provides ways to package the agent.
          <include name="org/rhq/rhq-core-plugin-container/${project.version}/rhq-core-plugin-container-${project.version}.jar" />
          <include name="org/rhq/rhq-core-client-api/${project.version}/rhq-core-client-api-${project.version}.jar" />
 
-         <include name="javax/xml/bind/jaxb-api/${jaxb-api.version}/jaxb-api-${jaxb-api.version}.jar"/>
          <include name="javax/activation/activation/1.1/activation-1.1.jar"/>
          <include name="javax/xml/bind/jsr173_api/1.0/jsr173_api-1.0.jar"/>
-         <include name="com/sun/xml/bind/jaxb-impl/${jaxb-impl.version}/jaxb-impl-${jaxb-impl.version}.jar"/>
       </fileset>
 
    </path>
 
+   <path id="endorsed.classpath">
+
+      <!-- The JAXB jars need to go in endorsed, since we use JAXB 2.1, which would cause conflicts with
+           JAXB 2.0, which is bundled with Java 6. -->
+      <fileset dir="${settings.localRepository}" id="endorsed.classpath.fileset">
+         <include name="javax/xml/bind/jaxb-api/${jaxb-api.version}/jaxb-api-${jaxb-api.version}.jar"/>
+         <include name="com/sun/xml/bind/jaxb-impl/${jaxb-impl.version}/jaxb-impl-${jaxb-impl.version}.jar"/>
+      </fileset>
+
+   </path>
+   
    <fileset dir="${settings.localRepository}" id="native.fileset">
       <include name="org/hyperic/sigar-dist/${sigar.version}/sigar-dist-${sigar.version}.zip" />
    </fileset>
@@ -79,13 +88,18 @@ ANT Script that provides ways to package the agent.
    <target name="package-dist">
       <echo>Running ant package-dist</echo>
       <property name="agent.distro.dir" location="${basedir}/target/rhq-agent-${project.version}"/>
-      <!-- Don't want to delete everytime <delete dir="${agent.distro.dir}" />-->
+      <!-- Don't want to delete every time <delete dir="${agent.distro.dir}" />-->
 
       <copy todir="${agent.distro.dir}/lib"
             flatten="true">
          <fileset refid="run.classpath.fileset" />
       </copy>
 
+      <copy todir="${agent.distro.dir}/lib/endorsed"
+            flatten="true">
+         <fileset refid="endorsed.classpath.fileset" />
+      </copy>
+      
       <unzip dest="${agent.distro.dir}/lib" overwrite="false">
          <fileset refid="native.fileset" />
          <patternset>

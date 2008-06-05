@@ -126,9 +126,11 @@ rem Prepare the VM command line options to be passed in
 rem ----------------------------------------------------------------------
 
 if not defined RHQ_AGENT_JAVA_OPTS (
-set RHQ_AGENT_JAVA_OPTS=-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true
+   set RHQ_AGENT_JAVA_OPTS=-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true
 )
 
+set RHQ_AGENT_JAVA_OPTS="-Djava.endorsed.dirs=%RHQ_AGENT_HOME%\lib\endorsed" %RHQ_AGENT_JAVA_OPTS%
+ 
 rem The RHQ Agent has a JNI library that it needs to find in order to
 rem do things like execute PIQL queries and access low-level operating
 rem system data. Here we add the java.library.path system property

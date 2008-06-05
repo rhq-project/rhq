@@ -170,6 +170,8 @@ if [ "x$RHQ_AGENT_JAVA_OPTS" = "x" ]; then
    RHQ_AGENT_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true"
 fi
 
+RHQ_AGENT_JAVA_OPTS="-Djava.endorsed.dirs=${RHQ_AGENT_HOME}/lib/endorsed ${RHQ_AGENT_JAVA_OPTS}"
+
 # The RHQ Agent has a JNI library that it needs to find in order to
 # do things like execute PIQL queries and access low-level operating
 # system data. Here we add the java.library.path system property

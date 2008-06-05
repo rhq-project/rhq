@@ -120,7 +120,7 @@
 
       <plugin>
         <groupId>org.rhq</groupId>
-        <artifactId>rhq-core-plugin-validator</artifactId>
+        <artifactId>rhq-plugin-validator</artifactId>
         <version>${rhq.version}</version>
       </plugin>
 

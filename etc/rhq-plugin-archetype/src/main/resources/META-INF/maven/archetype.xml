@@ -1,0 +1,6 @@
+<archetype>
+  <id>plugin-archetype</id>
+  <resources>
+    <resource>src/main/resources/META-INF/rhq-plugin.xml</resource>
+  </resources>
+</archetype>

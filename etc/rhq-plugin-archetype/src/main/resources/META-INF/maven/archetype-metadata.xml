@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<archetype-descriptor name="rhq-plugin-archetype">
+  <requiredProperties>
+    <requiredProperty key="rhq-plugin-name"/>
+  </requiredProperties>
+  <fileSets>
+    <fileSet filtered="true" packaged="false">
+      <directory>src/main/resources/META-INF</directory>
+      <includes>
+        <include>**/*.xml</include>
+      </includes>
+    </fileSet>
+    <fileSet filtered="true" packaged="true">
+      <directory>src/main/java</directory>
+      <includes>
+        <include>**/*.java</include>
+      </includes>
+    </fileSet>
+  </fileSets>
+</archetype-descriptor>

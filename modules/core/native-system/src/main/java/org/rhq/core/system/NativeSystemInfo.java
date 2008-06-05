@@ -240,7 +240,8 @@ public class NativeSystemInfo implements SystemInfo {
         Sigar sigar = new Sigar();
 
         try {
-            return sigar.getCpuList().length;
+            // NOTE: This will return the number of cores, not the number of sockets.
+            return sigar.getCpuPercList().length;
         } catch (Exception e) {
             throw new UnsupportedOperationException("Cannot get number of CPUs from native layer", e);
         } finally {

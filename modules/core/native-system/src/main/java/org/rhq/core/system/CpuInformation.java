@@ -18,15 +18,24 @@
  */
 package org.rhq.core.system;
 
+import java.util.Arrays;
+
 import org.hyperic.sigar.Cpu;
 import org.hyperic.sigar.CpuInfo;
 import org.hyperic.sigar.CpuPerc;
 import org.hyperic.sigar.Sigar;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Provides native information on a specific CPU.
+ *
+ * @author John Mazzitelli
+ * @author Ian Springer
  */
 public class CpuInformation {
+    private final Log log = LogFactory.getLog(this.getClass());
+
     private final int cpuIndex;
     private Cpu cpu;
     private CpuInfo cpuInfo;
@@ -56,13 +65,44 @@ public class CpuInformation {
     public void refresh() {
         Sigar sigar = new Sigar();
         try {
-            Cpu[] cpuList = sigar.getCpuList();
+            // This is supposed to return one CpuInfo per *socket*, but on some platforms, it will return one per *core*.
+            // In either case, all CpuInfo's in the list should be identical.
+            // NOTE: The results of getCpuInfoList() should be more consistent in SIGAR 1.5.1 and later
+            //       (see http://jira.hyperic.com/browse/SIGAR-71).
             CpuInfo[] cpuInfoList = sigar.getCpuInfoList();
-            CpuPerc[] cpuPercentageList = sigar.getCpuPercList();
+            if (cpuInfoList != null && cpuInfoList.length >= 1) {
+                // Since all CpuInfo's in the list should be identical, we can always just grab the first one in the list.
+                // We do *not* want to use this.cpuIndex as the index, because that is the *core* index, and this list
+                // may be a list of *sockets*.
+                this.cpuInfo = cpuInfoList[0];
+            }
+            else {
+                log.error("Sigar.getCpuInfoList() returned null or empty array: "
+                        + ((cpuInfoList != null) ? Arrays.asList(cpuInfoList) : cpuInfoList));
+                this.cpuInfo = null;
+            }
 
-            cpu = (cpuList != null) ? cpuList[this.cpuIndex] : null;
-            cpuInfo = (cpuInfoList != null) ? cpuInfoList[this.cpuIndex] : null;
-            cpuPercentage = (cpuPercentageList != null) ? cpuPercentageList[this.cpuIndex] : null;
+            // This should return one Cpu per *core*.
+            Cpu[] cpuList = sigar.getCpuList();
+            if (cpuList != null && this.cpuIndex < cpuList.length) {
+                this.cpu = cpuList[this.cpuIndex];
+            }
+            else {
+                log.error("Sigar.getCpuList() returned null or array with size smaller than or equal to this CPU's index ("
+                        + this.cpuIndex + "): " + ((cpuList != null) ? Arrays.asList(cpuList) : cpuList));
+                this.cpu = null;
+            }
+
+            // This should return one CpuPerc per *core*.
+            CpuPerc[] cpuPercentageList = sigar.getCpuPercList();
+            if (cpuPercentageList != null && this.cpuIndex < cpuPercentageList.length) {
+                this.cpuPercentage = cpuPercentageList[this.cpuIndex];
+            }
+            else {
+                log.error("Sigar.getCpuPercList() returned null or array with size smaller than or equal to this CPU's index ("
+                        + this.cpuIndex + "): " + ((cpuPercentageList != null) ? Arrays.asList(cpuPercentageList) : cpuPercentageList));
+                this.cpuPercentage = null;
+            }            
         } catch (Exception e) {
             throw new SystemInfoException("Cannot refresh the native CPU information", e);
         } finally {

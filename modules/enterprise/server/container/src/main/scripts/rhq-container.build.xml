@@ -100,7 +100,7 @@
     <fail unless="jboss.home.is.valid" message="${jboss.home} does not contain a valid JBoss 4.x installation - aborting..." />
 
     <echo>Installing safe ejb3 web invoker ...</echo>
-     <delete>
+    <delete>
       <fileset dir="${jboss.home}/server/default/deploy/jbossws.sar">
         <include name="safe-invoker*" />
       </fileset>
@@ -216,6 +216,21 @@
           verbose="true"
           failonerror="false"/>
 
+    <echo>Enabling server to run on Java 6 ...</echo>          
+    <move todir="${jboss.home}/lib/endorsed" verbose="true">
+       <fileset dir="${jboss.deploy.dir}/jbossws.sar">
+          <include name="jaxb-api.jar" />
+          <include name="jaxb-impl.jar" />
+          <include name="jboss-jaxrpc.jar" />
+          <include name="jboss-jaxws.jar" />
+          <include name="jboss-saaj.jar" />
+       </fileset>
+       <fileset dir="${jboss.home}/server/default/lib">
+          <include name="activation.jar" />
+       </fileset>       
+    </move>
+    <delete file="${jboss.home}/lib/endorsed/xalan.jar" verbose="true" />
+    
   </target>
   
   <target name="prepare-bin-dir">
@@ -348,19 +363,6 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
            dest="${basedir}/target" />
     <delete dir="${jboss.home}" />
     <move file="${basedir}/target/jboss-${jboss.version}" tofile="${jboss.home}" />
-  </target>
-
-  <target name="unzip-ejb3" unless="unzip-ejb3.not.required">
-    <property name="tmp-ejb.dir" location="${basedir}/target/tmp-ejb" />
-    <mkdir dir="${tmp-ejb.dir}" />
-    <unzip src="${settings.localRepository}/jboss/jboss-ejb/${jboss.ejb3.version}/jboss-ejb-${jboss.ejb3.version}.zip"
-           dest="${tmp-ejb.dir}" />
-    <ant antfile="${tmp-ejb.dir}/${jboss.ejb3.root-dir}/install.xml"
-         dir="${tmp-ejb.dir}/${jboss.ejb3.root-dir}" inheritAll="false" inheritRefs="false">
-       <property name="jboss.home" value="${jboss.home}" />
-       <property name="jboss.server.config" value="default" />
-    </ant>
-    <delete dir="${tmp-ejb.dir}" />
   </target>
 
   <target name="generate-rhq-ssl-key" unless="rhq.keystore.exists">

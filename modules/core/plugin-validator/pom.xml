@@ -2,25 +2,28 @@
 
    <modelVersion>4.0.0</modelVersion>
 
+   <!--
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
       <version>1.0.1-SNAPSHOT</version>
    </parent>
-
+   -->
+   
    <groupId>org.rhq</groupId>
    <artifactId>rhq-plugin-validator</artifactId>
+   <version>1.0.1-SNAPSHOT</version>
    <packaging>maven-plugin</packaging>
    <name>RHQ Plugin Validator Maven 2 Plugin</name>
 
    <dependencies>
-
+   
       <dependency>
-         <groupId>${rhq.groupId}</groupId>
+         <groupId>org.rhq</groupId>
          <artifactId>rhq-core-plugin-container</artifactId>
          <version>${project.version}</version>
       </dependency>
-
+      
       <dependency>
          <groupId>commons-logging</groupId>
          <artifactId>commons-logging</artifactId>
@@ -39,19 +42,50 @@
          <artifactId>maven-project</artifactId>
          <version>2.0.8</version>
       </dependency>
-
-      <dependency>
-         <groupId>org.apache.velocity</groupId>
-         <artifactId>velocity</artifactId>
-         <version>1.5</version>
-      </dependency>
-
-      <dependency>
-         <groupId>org.codehaus.swizzle</groupId>
-         <artifactId>swizzle-confluence</artifactId>
-         <version>1.2.Alpha1</version>
-      </dependency>
       
    </dependencies>
+   
+  <build>
+     
+    <plugins>
 
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <optimize>false</optimize>
+          <source>1.5</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>              
+            </manifest>
+            <manifestEntries>
+               <Build-Number>${buildNumber}</Build-Number>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+                          
+    </plugins>
+
+  </build>
+  
+  <repositories>
+    <repository>
+      <id>jboss</id>
+      <name>JBoss Repository</name>
+      <url>http://repository.jboss.org/maven2/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+   
 </project>

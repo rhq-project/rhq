@@ -25,8 +25,6 @@
 
     <!-- dependency versions -->
     <jboss.version>4.2.1.GAws201</jboss.version>
-    <jboss.ejb3.version>3.0.RC9</jboss.ejb3.version>
-    <jboss.ejb3.root-dir>jboss-EJB-3.0_RC9-FD</jboss.ejb3.root-dir> <!-- the distro zip's root directory -->
 
     <rhq.webappsReloadable>false</rhq.webappsReloadable>
   </properties>
@@ -36,13 +34,6 @@
     <!-- Internal Deps -->
 
     <!-- 3rd Party Deps -->
-
-    <!-- TODO: Why do we need this?? -->
-    <dependency>
-      <groupId>commons-modeler</groupId>
-      <artifactId>commons-modeler</artifactId>
-      <version>1.1</version>
-    </dependency>
 
    <dependency>
       <groupId>javax.faces</groupId>
@@ -69,14 +60,6 @@
       <version>1.0.2</version>
     </dependency>
 
-<!--
-    <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-ejb</artifactId>
-      <version>${jboss.ejb3.version}</version>
-      <type>zip</type>
-    </dependency>
--->
     <dependency>
       <groupId>jgroups</groupId>
       <artifactId>jgroups-all</artifactId>
@@ -152,17 +135,14 @@
                   <property name="dev.profile.active" value="${dev.profile.active}" />
                   <property name="developer" value="${developer}" />                  
                   <property name="rhq.earName" value="${rhq.earName}" />
-                  <property name="jboss.ejb3.root-dir" value="${jboss.ejb3.root-dir}" />
                   
                   <!-- dependency versions -->
                   <property name="rhq.version" value="${project.version}" />
                   <property name="jboss.version" value="${jboss.version}" />
-                  <property name="jboss.ejb3.version" value="${jboss.ejb3.version}" />
                   <property name="ojdbc14.version" value="${ojdbc14.version}" />
                   <property name="postgresql.version" value="${postgresql.version}" />
                   <property name="jsf-api.version" value="${jsf-api.version}" />
                   <property name="jsf-impl.version" value="${jsf-impl.version}" />
-                  <property name="el.version" value="${el.version}" />
 
                   <!-- dev/test DB settings (used to init rhq-server.properties if dev profile is active or developer prop is set) -->
                   <property name="rhq.test.ds.connection-url" value="${rhq.test.ds.connection-url}" />

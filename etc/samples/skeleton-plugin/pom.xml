@@ -118,6 +118,12 @@
         </configuration>
       </plugin>
 
+      <plugin>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-core-plugin-validator</artifactId>
+        <version>${rhq.version}</version>
+      </plugin>
+
       <!--
       If your plugin has third-party jar dependencies that are not already
       available when deployed in the plugin container, you can package these

@@ -17,6 +17,12 @@
    <name>RHQ Plugin Validator Maven 2 Plugin</name>
 
    <dependencies>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${rhq.version}</version>
+      </dependency>
    
       <dependency>
          <groupId>org.rhq</groupId>

@@ -52,6 +52,11 @@ import org.rhq.core.system.SystemInfo;
 public class ResourceDiscoveryContext<T extends ResourceComponent> {
     private final ResourceType resourceType;
     private final T parentComponent;
+
+    /**
+     * @since 1.0.1
+     */
+    private final ResourceContext parentResourceContext;
     private final SystemInfo systemInformation;
     private final List<ProcessScanResult> processScanResults;
     private final List<Configuration> pluginConfigurations;
@@ -68,22 +73,23 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
      * @param resourceType         the resource type of resources to be discovered which includes the default plugin
      *                             configuration
      * @param parentComponent      the parent component of the component that will be assigned this context
+     * @param parentResourceContext
      * @param systemInfo           information about the system on which the plugin and its plugin container are running
      * @param processScanResults   processes that were auto-discovered by the plugin container on behalf of the plugin
-     *                             via process scans (may be <code>null</code> or empty if nothing was auto-discovered)
+ *                             via process scans (may be <code>null</code> or empty if nothing was auto-discovered)
      * @param pluginConfigurations for resources that are already known to exist (more specifically, resources that a
-     *                             user told us exists), this contains plugin configurations that provide connection
-     *                             information to those existing managed resources. (may be <code>null</code> or empty
-     *                             if there are no other known resources)
+*                             user told us exists), this contains plugin configurations that provide connection
+*                             information to those existing managed resources. (may be <code>null</code> or empty
+*                             if there are no other known resources)
      * @param pluginContainerName  the name of the plugin container in which the discovery component is running. Components
-     *                             can be assured this name is unique across <b>all</b> plugin containers/agents running
-     *                             in the RHQ environment.
+*                             can be assured this name is unique across <b>all</b> plugin containers/agents running
      */
     @SuppressWarnings("unchecked")
-    public ResourceDiscoveryContext(ResourceType resourceType, T parentComponent, SystemInfo systemInfo,
-        List<ProcessScanResult> processScanResults, List<Configuration> pluginConfigurations, String pluginContainerName) {
+    public ResourceDiscoveryContext(ResourceType resourceType, T parentComponent, ResourceContext parentResourceContext, SystemInfo systemInfo,
+                                    List<ProcessScanResult> processScanResults, List<Configuration> pluginConfigurations, String pluginContainerName) {
         this.resourceType = resourceType;
         this.parentComponent = parentComponent;
+        this.parentResourceContext = parentResourceContext;
         this.systemInformation = systemInfo;
         this.processScanResults = (processScanResults != null) ? processScanResults : Collections.EMPTY_LIST;
         this.pluginConfigurations = (pluginConfigurations != null) ? pluginConfigurations : Collections.EMPTY_LIST;
@@ -110,6 +116,17 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
      */
     public T getParentResourceComponent() {
         return parentComponent;
+    }
+
+    /**
+     * Provides access to the parent's resource context. This can be useful to access the parent's current
+     * plugin configuration values for use in discovery of the children.
+     *
+     * @return the resource context for the parent
+     * @since 1.0.1
+     */
+    public ResourceContext getParentResourceContext() {
+        return parentResourceContext;
     }
 
     /**

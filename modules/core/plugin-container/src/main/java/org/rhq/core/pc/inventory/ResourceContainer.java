@@ -50,6 +50,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 
 /**
  * This object holds information relative to the running state of a {@link ResourceComponent} in the Plugin Container.
@@ -71,6 +72,7 @@ public class ResourceContainer implements Serializable {
     }
 
     private transient ResourceComponent resourceComponent;
+    private transient ResourceContext resourceContext;
     private transient ResourceComponentState resourceComponentState = ResourceComponentState.STOPPED;
     private transient ReentrantReadWriteLock facetAccessLock = new ReentrantReadWriteLock();
     private Resource resource;
@@ -139,6 +141,14 @@ public class ResourceContainer implements Serializable {
 
     public void setResourceComponent(ResourceComponent resourceComponent) {
         this.resourceComponent = resourceComponent;
+    }
+
+    public ResourceContext getResourceContext() {
+        return resourceContext;
+    }
+
+    public void setResourceContext(ResourceContext resourceContext) {
+        this.resourceContext = resourceContext;
     }
 
     public Set<MeasurementScheduleRequest> getMeasurementSchedule() {

@@ -180,7 +180,7 @@ public class ResourceContext<T extends ResourceComponent> {
                 ResourceDiscoveryContext context;
 
                 context = new ResourceDiscoveryContext(this.resourceType, this.parentResourceComponent,
-                    this.systemInformation, getNativeProcessesForType(), Collections.EMPTY_LIST,
+                        this, this.systemInformation, getNativeProcessesForType(), Collections.EMPTY_LIST,
                     getPluginContainerName());
 
                 details = this.resourceDiscoveryComponent.discoverResources(context);

@@ -29,7 +29,6 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -41,6 +40,7 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.system.SystemInfoFactory;
 
 /**
@@ -197,7 +197,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             log.debug("Running Runtime discovery on server: " + parent + " for children of type: "
                 + childResourceType);
             Set<Resource> childResources = executeComponentDiscovery(childResourceType, discoveryComponent,
-                parentComponent);
+                parentComponent, parentContainer.getResourceContext());
 
             // For each discovered resource, update it in the inventory manager and recursively discover its child resources
             Set<Resource> newResources = new HashSet<Resource>();
@@ -232,10 +232,10 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
     }
 
     private Set<Resource> executeComponentDiscovery(ResourceType resourceType, ResourceDiscoveryComponent component,
-        ResourceComponent parentComponent) {
+        ResourceComponent parentComponent, ResourceContext parentResourceContext) {
         try {
             ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, parentComponent,
-                SystemInfoFactory.createSystemInfo(), Collections.EMPTY_LIST, Collections.EMPTY_LIST,
+                    parentResourceContext, SystemInfoFactory.createSystemInfo(), Collections.EMPTY_LIST, Collections.EMPTY_LIST,
                 pluginContainerConfiguration.getContainerName());
             Set<DiscoveredResourceDetails> discoveredResources = component.discoverResources(context);
             Set<Resource> newResources = new HashSet<Resource>();

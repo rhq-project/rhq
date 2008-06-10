@@ -369,9 +369,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             List<Configuration> pluginConfigurations = new ArrayList<Configuration>(1);
             pluginConfigurations.add(pluginConfiguration);
-            ResourceComponent parentResourceComponent = getResourceContainer(parentResourceId).getResourceComponent();
+            ResourceContainer parentResourceContainer = getResourceContainer(parentResourceId);
+            ResourceComponent parentResourceComponent = parentResourceContainer.getResourceComponent();
             ResourceDiscoveryContext<ResourceComponent> resourceDiscoveryContext = new ResourceDiscoveryContext<ResourceComponent>(
-                resourceType, parentResourceComponent, SystemInfoFactory.createSystemInfo(),
+                resourceType, parentResourceComponent, parentResourceContainer.getResourceContext(), SystemInfoFactory.createSystemInfo(),
                 new ArrayList<ProcessScanResult>(0), pluginConfigurations, configuration.getContainerName());
 
             // Ask the plugin's discovery component to find the new resource, throwing exceptions if it cannot be found at all.
@@ -921,6 +922,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 getOperationContext(resource), // for operation manager access
                 getContentContext(resource)); // for content manager access
 
+            container.setResourceContext(context);
             ClassLoader startingClassLoader = Thread.currentThread().getContextClassLoader();
             try {
                 Thread.currentThread().setContextClassLoader(component.getClass().getClassLoader());
@@ -1134,7 +1136,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             for (ResourceType platformType : platformTypes) {
                 try {
                     ResourceDiscoveryComponent component = componentFactory.getDiscoveryComponent(platformType);
-                    ResourceDiscoveryContext context = new ResourceDiscoveryContext(platformType, null, systemInfo,
+                    ResourceDiscoveryContext context = new ResourceDiscoveryContext(platformType, null, null, systemInfo,
                         Collections.EMPTY_LIST, Collections.EMPTY_LIST, configuration.getContainerName());
                     Set<DiscoveredResourceDetails> discoveredResources = null;
 

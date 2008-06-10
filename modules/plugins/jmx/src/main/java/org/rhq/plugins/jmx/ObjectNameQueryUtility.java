@@ -18,6 +18,8 @@
  */
 package org.rhq.plugins.jmx;
 
+import org.rhq.core.domain.configuration.Configuration;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -56,6 +58,28 @@ public class ObjectNameQueryUtility {
     public ObjectNameQueryUtility(String objectNameQueryTemplate) {
         this.queryTemplate = objectNameQueryTemplate;
         buildMatchMap(queryTemplate);
+    }
+
+    /**
+     * Builds a mapped query utility object and finds the variables in the supplied object name query template.
+     * This version first translates the objectName template for defined values in provided configuration. This
+     * is explicitly built for hierarchical objectName models to find the children of parents.
+     *
+     * @param objectNameQueryTemplate string of form "a:b=%c%,d=e,f=%g%,h={myParentsH}"
+     * @param parentConfiguration the config holding the matched values for the object name key property variables
+     */
+    public ObjectNameQueryUtility(String objectNameQueryTemplate, Configuration parentConfiguration) {
+
+        Pattern p = Pattern.compile("\\{([^\\{\\}]*)\\}");
+        Matcher m = p.matcher(objectNameQueryTemplate);
+        while (m.find()) {
+            String objectNameKeyPropVariableName = m.group(1);
+            String value = parentConfiguration.getSimple(objectNameKeyPropVariableName).getStringValue();
+            objectNameQueryTemplate = objectNameQueryTemplate.replaceAll("\\{" + objectNameKeyPropVariableName + "\\}", value);
+        }
+
+        this.queryTemplate = objectNameQueryTemplate;
+        buildMatchMap(this.queryTemplate);
     }
 
     /**

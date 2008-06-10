@@ -22,6 +22,8 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import org.testng.annotations.Test;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 
 public class ObjectNameQueryUtilityTest {
     @Test
@@ -49,5 +51,12 @@ public class ObjectNameQueryUtilityTest {
         onqu.setMatchedKeyValues(testON.getKeyPropertyList());
         String formulatedMessageTemplate = "Type: {MyType}, Name: {MyName}, App: {MyApp}, Foo: {MyFoo}";
         assert onqu.formatMessage(formulatedMessageTemplate).equals("Type: A, Name: B, App: C, Foo: D");
+
+        Configuration c = new Configuration();
+        c.put(new PropertySimple("e","foo"));
+        c.put(new PropertySimple("g","bar"));
+        onqu = new ObjectNameQueryUtility("a:b=c,d={e},f={g}",c);
+        System.out.println("Template: " + onqu.getQueryTemplate());
+        assert onqu.getQueryTemplate().equals("a:b=c,d=foo,f=bar");
     }
 }

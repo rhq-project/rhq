@@ -70,11 +70,15 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
 
     private final Log log = LogFactory.getLog(this.getClass());
 
+    private ResourceDiscoveryContext<JMXComponent> discoveryContext;
+
     // ResourceDiscoveryComponent Implementation  --------------------------------------------
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
+        this.discoveryContext = context;
         return performDiscovery(context.getDefaultPluginConfiguration(), context.getParentResourceComponent(), context
             .getResourceType());
+
     }
 
     // Public  --------------------------------------------
@@ -95,7 +99,11 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
 
         log.debug("Discovering MBean resources with object name query template: " + objectNameQueryTemplate);
 
-        ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(objectNameQueryTemplate);
+        // Get the query template, replacing the parent key variables with the values from the parent configuration
+        ObjectNameQueryUtility queryUtility =
+                new ObjectNameQueryUtility(
+                        objectNameQueryTemplate,
+                        this.discoveryContext.getParentResourceContext().getPluginConfiguration());
 
         EmsConnection connection = parentResourceComponent.getEmsConnection();
 

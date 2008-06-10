@@ -320,7 +320,7 @@
              <xs:annotation>
                 <xs:documentation>
                    The name that is used to identify this event in the UI.
-                   If this attribute is not specified, the 'property' attribute
+                   If this attribute is not specified, the 'name' attribute
                    will be used as the display name.
                 </xs:documentation>
              </xs:annotation>

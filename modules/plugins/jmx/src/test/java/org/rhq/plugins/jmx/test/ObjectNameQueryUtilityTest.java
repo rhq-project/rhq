@@ -25,6 +25,9 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 public class ObjectNameQueryUtilityTest {
     @Test
     public void testObjectNameQueryUtility() throws MalformedObjectNameException {
@@ -59,4 +62,17 @@ public class ObjectNameQueryUtilityTest {
         System.out.println("Template: " + onqu.getQueryTemplate());
         assert onqu.getQueryTemplate().equals("a:b=c,d=foo,f=bar");
     }
+
+    @Test
+    public void testObjectNameQueryUtilityFiltering() throws MalformedObjectNameException {
+        ObjectNameQueryUtility onqu = null;
+
+        onqu = new ObjectNameQueryUtility("java.lang:type=MemoryPool,name=%foo%");
+        assert !onqu.isContainsExtraKeyProperties(Collections.singleton("type"));
+        assert !onqu.isContainsExtraKeyProperties(Collections.singleton("name"));
+        assert onqu.isContainsExtraKeyProperties(Collections.singleton("splat"));
+
+
+    }
+
 }

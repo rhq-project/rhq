@@ -22,6 +22,8 @@ import org.rhq.core.domain.configuration.Configuration;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,6 +49,8 @@ public class ObjectNameQueryUtility {
     private Map<String, String> variableProperties = new HashMap<String, String>();
 
     private Map<String, String> variableValues = new HashMap<String, String>();
+
+    private Set<String> nonVariableProperties = new HashSet<String>();
 
     private String translatedQuery;
 
@@ -171,6 +175,12 @@ public class ObjectNameQueryUtility {
             if (m2.find()) {
                 variableProperties.put(m2.group(1), m2.group(2));
             } else {
+                Pattern p3 = Pattern.compile("^([^=]*)=(.*)$");
+                Matcher m3 = p3.matcher(key);
+                if (m3.find()) {
+                    nonVariableProperties.add(m3.group(1));
+                }
+
                 onlyVar = false;
                 if (firstVar) {
                     firstVar = false;
@@ -191,5 +201,14 @@ public class ObjectNameQueryUtility {
         }
 
         this.translatedQuery = queryBuilder.toString();
+    }
+
+    public boolean isContainsExtraKeyProperties(Set<String> strings) {
+        for (String key : strings) {
+            if (!nonVariableProperties.contains(key) && !variableProperties.containsKey(key)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

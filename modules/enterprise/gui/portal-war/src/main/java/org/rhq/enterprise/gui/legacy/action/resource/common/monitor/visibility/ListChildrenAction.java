@@ -87,6 +87,8 @@ public class ListChildrenAction extends TilesAction {
                 resourceTypeId = WebUtility.getOptionalIntRequestParameter(request, AttrConstants.AUTOGROUP_TYPE_ATTR,
                     -1);
                 children = getAutoGroupChildren(subject, parentId, resourceTypeId);
+                if (children == null)
+                    children = new ArrayList();
                 displaySummary = new ArrayList<AutoGroupCompositeDisplaySummary>(children.size());
                 /* We have n children with each child representing exactly 1 resource.
                  * As we are in an autogroup, all children have the same type, so we can just feed them to the backend

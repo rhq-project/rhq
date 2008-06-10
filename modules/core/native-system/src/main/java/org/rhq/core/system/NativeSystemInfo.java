@@ -263,11 +263,14 @@ public class NativeSystemInfo implements SystemInfo {
 
     @Nullable
     public Swap getSwapInfo() {
-        Sigar sigar = new Sigar();        
+        Sigar sigar = new Sigar();
+        
         try {
             // TODO: Remove this check once http://jira.jboss.com/jira/browse/JBNADM-3400 is fixed.
-            if (isAtLeastOneCpuDisabled(sigar)) {
-                log.info("Aborting swap info collection because one or more CPUs is disabled.");
+            int enabledCpuCount = sigar.getCpuPercList().length;
+            int totalCpuCount = sigar.getCpuInfoList().length;
+            if (enabledCpuCount < totalCpuCount) {
+                log.info("Aborting swap info collection because one or more CPUs is disabled - " + enabledCpuCount + " out of " + totalCpuCount + " CPUs are enabled.");
                 return null;
             }
             return sigar.getSwap();
@@ -335,19 +338,15 @@ public class NativeSystemInfo implements SystemInfo {
         return fileSystem;
     }
 
-    /**
-     * Constructor for {@link NativeSystemInfo} with package scope so only the {@link SystemInfoFactory} can instantiate
-     * this object.
-     */
-    NativeSystemInfo() {
-    }
-
     public String getSystemArchitecture() {
         OperatingSystem op = OperatingSystem.getInstance();
         return op.getArch();
     }
 
-    private static boolean isAtLeastOneCpuDisabled(Sigar sigar) throws SigarException {
-        return sigar.getCpuPercList().length < sigar.getCpuInfoList().length;
+    /**
+     * Constructor for {@link NativeSystemInfo} with package scope so only the {@link SystemInfoFactory} can instantiate
+     * this object.
+     */
+    NativeSystemInfo() {
     }
 }

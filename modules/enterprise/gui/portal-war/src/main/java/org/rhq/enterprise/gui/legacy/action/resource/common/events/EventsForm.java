@@ -19,6 +19,10 @@
 
 package org.rhq.enterprise.gui.legacy.action.resource.common.events;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsControlForm;
@@ -69,4 +73,25 @@ public class EventsForm extends MetricsControlForm {
     public void setSearchString(String searchString) {
         this.searchString = searchString;
     }
+
+    @Override
+    public void reset(ActionMapping mapping, HttpServletRequest request) {
+        super.reset(mapping, request);
+        setDefaults();
+    }
+
+    @Override
+    protected void setDefaults() {
+        super.setDefaults();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder s = new StringBuilder(super.toString());
+        s.append(" sevFilter=").append(sevFilter);
+        s.append(" sourceFilter=").append(sourceFilter);
+        s.append(" searchString=").append(searchString);
+        return s.toString();
+    }
+
 }

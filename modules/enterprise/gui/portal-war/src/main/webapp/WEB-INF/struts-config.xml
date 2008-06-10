@@ -3183,12 +3183,10 @@
       </action>
 
       <action path="/resource/common/events/EventsFormPrepare"
+              type="org.rhq.enterprise.gui.legacy.action.resource.common.events.EventsFormPrepareAction"
               name="EventsForm"
-              scope="request"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.events.EventsFormPrepareAction">
+              scope="request">
          <set-property property="title" value="View+Events"/>
-    <!--      <forward name="success" path="/resource/common/events/Events.do?mode=events"/>  -->
-         <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" />
       </action>
 
       <action path="/resource/common/events/Events"
@@ -3196,6 +3194,7 @@
               name="EventsForm"
               scope="request"
               input="/resource/common/Events.do?mode=events">
+         <set-property property="workflow" value="monitor/events"/>              
          <forward name="success" path="/resource/common/Events.do?mode=events"/>
          <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" />
       </action>

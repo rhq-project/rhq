@@ -31,14 +31,15 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import org.rhq.enterprise.gui.legacy.action.BaseAction;
+import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsControlAction;
+import org.rhq.enterprise.gui.legacy.util.ActionUtils;
 
 /**
  * @author Heiko W. Rupp
  * @author Jay Shaughnessy
  *
  */
-public class ListEventsAction extends BaseAction {
+public class ListEventsAction extends MetricsControlAction {
 
     Log log = LogFactory.getLog(ListEventsAction.class);
 
@@ -49,7 +50,7 @@ public class ListEventsAction extends BaseAction {
         EventsForm eForm = (EventsForm) form;
 
         // Get the filters set on the form and supply them as return request parameters. Pagination
-        // operates solely on request parameters and therefore so must EventsFormPrepareAction.
+        // operates solely on request parameter and therefore so must EventsFormPrepareAction.
         String severityFilter = eForm.getSevFilter();
         String sourceFilter = eForm.getSourceFilter();
         String searchString = eForm.getSearchString();
@@ -67,8 +68,9 @@ public class ListEventsAction extends BaseAction {
             returnRequestParams.put("pSearch", searchString);
         }
 
-        // Navigate back to self (EventsFormPrepareAction) which will actually populate the events list
-        return returnSuccess(request, mapping, returnRequestParams);
+        ActionForward forward = super.execute(mapping, form, request, response);
+
+        return ActionUtils.changeForwardPath(forward, returnRequestParams);
     }
 
 }

@@ -38,7 +38,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsControlAction;
+import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsControlFormPrepareAction;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
@@ -49,7 +49,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Heiko W. Rupp
  * @author Jay Shaughnessy
  */
-public class EventsFormPrepareAction extends MetricsControlAction {
+public class EventsFormPrepareAction extends MetricsControlFormPrepareAction {
 
     EventManagerLocal eventManager;
 
@@ -60,7 +60,6 @@ public class EventsFormPrepareAction extends MetricsControlAction {
         HttpServletResponse response) throws Exception {
 
         EventsForm eForm = (EventsForm) form;
-        super.execute(mapping, form, request, response); // set the display time range
 
         eventManager = LookupUtil.getEventManager();
 
@@ -134,7 +133,7 @@ public class EventsFormPrepareAction extends MetricsControlAction {
 
         eForm.setEvents((PageList<EventComposite>) events);
 
-        return null; // mapping.findForward(RetCodeConstants.SUCCESS_URL);
+        return null;
     }
 
     /**

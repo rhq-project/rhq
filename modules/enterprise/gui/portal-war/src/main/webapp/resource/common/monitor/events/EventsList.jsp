@@ -124,8 +124,6 @@
 //-->
 </script>
 
-      </td> <%-- opened in MainLayout.jsp --%>
-
 <c:choose>
    <c:when test="${groupId>0}">
       <%-- comp group --%>

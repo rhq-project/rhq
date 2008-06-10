@@ -1,0 +1,593 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="Oracle"
+        displayName="Oracle Database"
+        package="org.rhq.plugins.oracle"
+        version="0.1"
+        ampsVersion="1.0"
+        description="Basic monitoring for Oracle RDBMS"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="Database" useClasses="true"/>
+
+   <server name="Oracle Server" discovery="OracleDiscoveryComponent" class="OracleServerComponent"
+           supportsManualAdd="true"
+           description="Oracle Server">
+
+      <!-- Properties are connection/lookup configurations. They are values that the
+      plugin components need to connect and interact with the resource. -->
+      <plugin-configuration>
+         <c:simple-property name="host" default="localhost" displayName="Listen host" description="the hostname or IP address that the database is listening on"/>
+         <c:simple-property name="port" default="1521" displayName="Listen port" description="the TCP port that the database is listening on"/>
+         <c:simple-property name="sid" default="XE" displayName="Database SID" description="the name of the database to connect to"/>
+
+         <c:simple-property name="driverClass" default="oracle.jdbc.driver.OracleDriver" displayName="JDBC driver class"
+                            description="the fully-qualified classname of the JDBC driver class" required="false"/>
+         <c:simple-property name="principal" default="sys" displayName="role name" description="the database role to connect as"/>
+         <c:simple-property name="credentials" default="manager" type="password" displayName="role password"
+                            description="the password for the database role being used to connect"/>
+      </plugin-configuration>
+      <process-scan name="JBoss4" query="process|basename|match=^ORACLE.*"/>
+
+
+      <metric property="totalSize" displayType="summary" units="bytes"/>
+      <metric property="logons cumulative" defaultOn="true"/>
+      <metric property="logons current" displayType="summary"/>
+      <metric property="opened cursors cumulative"/>
+      <metric property="opened cursors current" defaultOn="true"/>
+      <metric property="user commits" displayType="summary"/>
+      <metric property="user rollbacks" displayType="summary"/>
+      <metric property="user calls" defaultOn="true"/>
+      <metric property="recursive calls"/>
+      <metric property="recursive cpu usage"/>
+      <metric property="session logical reads"/>
+      <metric property="session stored procedure space"/>
+      <metric property="CPU used when call started" displayType="summary"/>
+      <metric property="CPU used by this session"/>
+      <metric property="DB time"/>
+      <metric property="cluster wait time"/>
+      <metric property="concurrency wait time"/>
+      <metric property="application wait time" defaultOn="true"/>
+      <metric property="user I/O wait time" defaultOn="true"/>
+      <metric property="session connect time"/>
+      <metric property="process last non-idle time"/>
+      <!--<metric property="session uga memory" displayType="summary" units="bytes"/>
+      <metric property="session uga memory max" units="bytes"/>-->
+      <metric property="messages sent"/>
+      <metric property="messages received"/>
+      <metric property="background timeouts"/>
+      <!--<metric property="session pga memory" displayType="summary" units="bytes"/>
+      <metric property="session pga memory max" units="bytes"/>-->
+      <metric property="enqueue timeouts"/>
+      <metric property="enqueue waits"/>
+      <metric property="enqueue deadlocks"/>
+      <metric property="enqueue requests"/>
+      <metric property="enqueue conversions"/>
+      <metric property="enqueue releases"/>
+      <metric property="global enqueue gets sync"/>
+      <metric property="global enqueue gets async"/>
+      <metric property="global enqueue get time"/>
+      <metric property="global enqueue releases"/>
+      <metric property="physical read total IO requests" defaultOn="true"/>
+      <metric property="physical read total multi block requests"/>
+      <metric property="physical read total bytes" defaultOn="true"/>
+      <metric property="physical write total IO requests" defaultOn="true"/>
+      <metric property="physical write total multi block requests"/>
+      <metric property="physical write total bytes" defaultOn="true"/>
+      <metric property="IPC CPU used by this session"/>
+      <metric property="gcs messages sent"/>
+      <metric property="ges messages sent"/>
+      <metric property="global enqueue CPU used by this session"/>
+      <metric property="db block gets" defaultOn="true"/>
+      <metric property="db block gets from cache" defaultOn="true"/>
+      <metric property="db block gets direct" defaultOn="true"/>
+      <metric property="consistent gets"/>
+      <metric property="consistent gets from cache"/>
+      <metric property="consistent gets - examination"/>
+      <metric property="consistent gets direct"/>
+      <metric property="physical reads" defaultOn="true"/>
+      <metric property="physical reads cache"/>
+      <metric property="physical reads direct"/>
+      <metric property="physical read IO requests" defaultOn="true"/>
+      <metric property="physical read bytes"/>
+      <metric property="db block changes" defaultOn="true"/>
+      <metric property="consistent changes" defaultOn="true"/>
+      <metric property="recovery blocks read"/>
+      <metric property="physical writes"/>
+      <metric property="physical writes direct"/>
+      <metric property="physical writes from cache"/>
+      <metric property="physical write IO requests"/>
+      <metric property="physical write bytes"/>
+      <metric property="physical writes non checkpoint"/>
+      <metric property="summed dirty queue length"/>
+      <metric property="DBWR checkpoint buffers written"/>
+      <metric property="DBWR thread checkpoint buffers written"/>
+      <metric property="DBWR tablespace checkpoint buffers written"/>
+      <metric property="DBWR parallel query checkpoint buffers written"/>
+      <metric property="DBWR object drop buffers written"/>
+      <metric property="DBWR transaction table writes"/>
+      <metric property="DBWR undo block writes"/>
+      <metric property="DBWR revisited being-written buffer"/>
+      <metric property="DBWR make free requests"/>
+      <metric property="DBWR lru scans"/>
+      <metric property="DBWR checkpoints"/>
+      <metric property="DBWR fusion writes"/>
+      <metric property="prefetch clients - keep"/>
+      <metric property="prefetch clients - recycle"/>
+      <metric property="prefetch clients - default"/>
+      <metric property="prefetch clients - 2k"/>
+      <metric property="prefetch clients - 4k"/>
+      <metric property="prefetch clients - 8k"/>
+      <metric property="prefetch clients - 16k"/>
+      <metric property="prefetch clients - 32k"/>
+      <metric property="change write time"/>
+      <metric property="redo synch writes"/>
+      <metric property="redo synch time"/>
+      <metric property="exchange deadlocks"/>
+      <metric property="free buffer requested"/>
+      <metric property="dirty buffers inspected"/>
+      <metric property="pinned buffers inspected"/>
+      <metric property="hot buffers moved to head of LRU"/>
+      <metric property="free buffer inspected"/>
+      <metric property="commit cleanout failures: write disabled"/>
+      <metric property="commit cleanout failures: block lost"/>
+      <metric property="commit cleanout failures: cannot pin"/>
+      <metric property="commit cleanout failures: hot backup in progress"/>
+      <metric property="commit cleanout failures: buffer being written"/>
+      <metric property="commit cleanout failures: callback failure "/>
+      <metric property="commit cleanouts"/>
+      <metric property="commit cleanouts successfully completed"/>
+      <metric property="recovery array reads"/>
+      <metric property="recovery array read time"/>
+      <metric property="CR blocks created"/>
+      <metric property="current blocks converted for CR"/>
+      <metric property="switch current to new buffer"/>
+      <metric property="write clones created in foreground"/>
+      <metric property="write clones created in background"/>
+      <metric property="write clones created for recovery"/>
+      <metric property="physical reads cache prefetch"/>
+      <metric property="physical reads prefetch warmup"/>
+      <metric property="prefetched blocks aged out before use"/>
+      <metric property="prefetch warmup blocks aged out before use"/>
+      <metric property="prefetch warmup blocks flushed out before use"/>
+      <metric property="physical reads retry corrupt"/>
+      <metric property="physical reads direct (lob)"/>
+      <metric property="physical reads direct temporary tablespace"/>
+      <metric property="physical writes direct (lob)"/>
+      <metric property="physical writes direct temporary tablespace"/>
+      <metric property="cold recycle reads"/>
+      <metric property="shared hash latch upgrades - no wait"/>
+      <metric property="shared hash latch upgrades - wait"/>
+      <metric property="physical reads for flashback new"/>
+      <metric property="calls to kcmgcs"/>
+      <metric property="calls to kcmgrs"/>
+      <metric property="calls to kcmgas"/>
+      <metric property="calls to get snapshot scn: kcmgss"/>
+      <metric property="redo blocks read for recovery"/>
+      <metric property="redo entries"/>
+      <metric property="redo size"/>
+      <metric property="redo buffer allocation retries"/>
+      <metric property="redo wastage"/>
+      <metric property="redo writer latching time"/>
+      <metric property="redo writes"/>
+      <metric property="redo blocks written"/>
+      <metric property="redo write time"/>
+      <metric property="redo log space requests"/>
+      <metric property="redo log space wait time"/>
+      <metric property="redo log switch interrupts"/>
+      <metric property="redo ordering marks"/>
+      <metric property="redo subscn max counts"/>
+      <metric property="gc cr blocks served"/>
+      <metric property="gc cr block build time"/>
+      <metric property="gc cr block flush time"/>
+      <metric property="gc cr block send time"/>
+      <metric property="gc current blocks served"/>
+      <metric property="gc current block pin time"/>
+      <metric property="gc current block flush time"/>
+      <metric property="gc current block send time"/>
+      <metric property="gc cr blocks received"/>
+      <metric property="gc cr block receive time"/>
+      <metric property="gc current blocks received"/>
+      <metric property="gc current block receive time"/>
+      <metric property="gc blocks lost"/>
+      <metric property="gc claim blocks lost"/>
+      <metric property="gc blocks corrupt"/>
+      <metric property="gc CPU used by this session"/>
+      <metric property="total number of slots"/>
+      <metric property="instance recovery database freeze count"/>
+      <metric property="background checkpoints started"/>
+      <metric property="background checkpoints completed"/>
+      <metric property="number of map operations"/>
+      <metric property="number of map misses"/>
+      <metric property="flashback log writes"/>
+      <metric property="serializable aborts"/>
+      <metric property="transaction lock foreground requests"/>
+      <metric property="transaction lock foreground wait time"/>
+      <metric property="transaction lock background gets"/>
+      <metric property="transaction lock background get time"/>
+      <metric property="undo change vector size"/>
+      <metric property="transaction tables consistent reads - undo records applied"/>
+      <metric property="transaction tables consistent read rollbacks"/>
+      <metric property="data blocks consistent reads - undo records applied"/>
+      <metric property="no work - consistent read gets"/>
+      <metric property="cleanouts only - consistent read gets"/>
+      <metric property="rollbacks only - consistent read gets"/>
+      <metric property="cleanouts and rollbacks - consistent read gets"/>
+      <metric property="RowCR attempts"/>
+      <metric property="RowCR hits"/>
+      <metric property="RowCR - row contention"/>
+      <metric property="RowCR - resume"/>
+      <metric property="rollback changes - undo records applied"/>
+      <metric property="transaction rollbacks"/>
+      <metric property="immediate (CURRENT) block cleanout applications"/>
+      <metric property="immediate (CR) block cleanout applications"/>
+      <metric property="deferred (CURRENT) block cleanout applications"/>
+      <metric property="commit txn count during cleanout"/>
+      <metric property="active txn count during cleanout"/>
+      <metric property="cleanout - number of ktugct calls"/>
+      <metric property="immediate CR cleanouts (index blocks)"/>
+      <metric property="deferred CUR cleanouts (index blocks)"/>
+      <metric property="Commit SCN cached"/>
+      <metric property="Cached Commit SCN referenced"/>
+      <metric property="auto extends on undo tablespace"/>
+      <metric property="drop segment calls in space pressure"/>
+      <metric property="total number of undo segments dropped"/>
+      <metric property="doubling up with imu segment"/>
+      <metric property="tune down retentions in space pressure"/>
+      <metric property="steps of tune down ret. in space pressure"/>
+      <metric property="space was found by tune down"/>
+      <metric property="space was not found by tune down"/>
+      <metric property="commit batch/immediate requested"/>
+      <metric property="commit batch requested"/>
+      <metric property="commit immediate requested"/>
+      <metric property="commit batch/immediate performed"/>
+      <metric property="commit batch performed"/>
+      <metric property="commit immediate performed"/>
+      <metric property="commit wait/nowait requested"/>
+      <metric property="commit nowait requested"/>
+      <metric property="commit wait requested"/>
+      <metric property="commit wait/nowait performed"/>
+      <metric property="commit nowait performed"/>
+      <metric property="commit wait performed"/>
+      <metric property="global undo segment hints helped"/>
+      <metric property="global undo segment hints were stale"/>
+      <metric property="local undo segment hints helped"/>
+      <metric property="local undo segment hints were stale"/>
+      <metric property="undo segment header was pinned"/>
+      <metric property="total number of times SMON posted"/>
+      <metric property="SMON posted for undo segment recovery"/>
+      <metric property="SMON posted for txn recovery for other instances"/>
+      <metric property="SMON posted for instance recovery"/>
+      <metric property="SMON posted for undo segment shrink"/>
+      <metric property="SMON posted for dropping temp segment"/>
+      <metric property="SMON posted for supplemental logging cleanup"/>
+      <metric property="IMU commits"/>
+      <metric property="IMU Flushes"/>
+      <metric property="IMU contention"/>
+      <metric property="IMU recursive-transaction flush"/>
+      <metric property="IMU undo retention flush"/>
+      <metric property="IMU ktichg flush"/>
+      <metric property="IMU bind flushes"/>
+      <metric property="IMU mbu flush"/>
+      <metric property="IMU pool not allocated"/>
+      <metric property="IMU CR rollbacks"/>
+      <metric property="IMU undo allocation size"/>
+      <metric property="IMU Redo allocation size"/>
+      <metric property="IMU- failed to get a private strand"/>
+      <metric property="Misses for writing mapping"/>
+      <metric property="table scans (short tables)"/>
+      <metric property="table scans (long tables)"/>
+      <metric property="table scans (rowid ranges)"/>
+      <metric property="table scans (cache partitions)"/>
+      <metric property="table scans (direct read)"/>
+      <metric property="table scan rows gotten"/>
+      <metric property="table scan blocks gotten"/>
+      <metric property="table fetch by rowid"/>
+      <metric property="table fetch continued row"/>
+      <metric property="cluster key scans"/>
+      <metric property="cluster key scan block gets"/>
+      <metric property="rows fetched via callback"/>
+      <metric property="queue update without cp update"/>
+      <metric property="leaf node splits"/>
+      <metric property="leaf node 90-10 splits"/>
+      <metric property="branch node splits"/>
+      <metric property="native hash arithmetic execute"/>
+      <metric property="native hash arithmetic fail"/>
+      <metric property="lob reads"/>
+      <metric property="lob writes"/>
+      <metric property="lob writes unaligned"/>
+      <metric property="index fast full scans (full)"/>
+      <metric property="index fast full scans (rowid ranges)"/>
+      <metric property="index fast full scans (direct read)"/>
+      <metric property="index fetch by key"/>
+      <metric property="index scans kdiixs1"/>
+      <metric property="queue splits"/>
+      <metric property="queue flush"/>
+      <metric property="queue position update"/>
+      <metric property="queue single row"/>
+      <metric property="queue ocp pages"/>
+      <metric property="queue qno pages"/>
+      <metric property="heap block compress"/>
+      <metric property="sql area purged"/>
+      <metric property="sql area aged"/>
+      <metric property="session cursor cache hits"/>
+      <metric property="session cursor cache count"/>
+      <metric property="java call heap total size"/>
+      <metric property="java call heap total size max"/>
+      <metric property="java call heap used size"/>
+      <metric property="java call heap used size max"/>
+      <metric property="java call heap live size"/>
+      <metric property="java call heap live size max"/>
+      <metric property="java call heap object count"/>
+      <metric property="java call heap object count max"/>
+      <metric property="java call heap live object count"/>
+      <metric property="java call heap live object count max"/>
+      <metric property="java call heap gc count"/>
+      <metric property="java call heap collected count"/>
+      <metric property="java call heap collected bytes"/>
+      <metric property="java session heap used size"/>
+      <metric property="java session heap used size max"/>
+      <metric property="java session heap live size"/>
+      <metric property="java session heap live size max"/>
+      <metric property="java session heap object count"/>
+      <metric property="java session heap object count max"/>
+      <metric property="java session heap live object count"/>
+      <metric property="java session heap live object count max"/>
+      <metric property="java session heap gc count"/>
+      <metric property="java session heap collected count"/>
+      <metric property="java session heap collected bytes"/>
+      <metric property="cursor authentications"/>
+      <metric property="queries parallelized"/>
+      <metric property="DML statements parallelized"/>
+      <metric property="DDL statements parallelized"/>
+      <metric property="DFO trees parallelized"/>
+      <metric property="Parallel operations not downgraded"/>
+      <metric property="Parallel operations downgraded to serial"/>
+      <metric property="Parallel operations downgraded 75 to 99 pct"/>
+      <metric property="Parallel operations downgraded 50 to 75 pct"/>
+      <metric property="Parallel operations downgraded 25 to 50 pct"/>
+      <metric property="Parallel operations downgraded 1 to 25 pct"/>
+      <metric property="PX local messages sent"/>
+      <metric property="PX local messages recv'd"/>
+      <metric property="PX remote messages sent"/>
+      <metric property="PX remote messages recv'd"/>
+      <metric property="buffer is pinned count"/>
+      <metric property="buffer is not pinned count"/>
+      <metric property="no buffer to keep pinned count"/>
+      <metric property="table lookup prefetch client count"/>
+      <metric property="workarea memory allocated" units="bytes"/>
+      <metric property="workarea executions - optimal"/>
+      <metric property="workarea executions - onepass"/>
+      <metric property="workarea executions - multipass"/>
+      <metric property="parse time cpu"/>
+      <metric property="parse time elapsed"/>
+      <metric property="parse count (total)"/>
+      <metric property="parse count (hard)"/>
+      <metric property="parse count (failures)"/>
+      <metric property="frame signature mismatch"/>
+      <metric property="execute count" defaultOn="true"/>
+      <metric property="bytes sent via SQL*Net to client"/>
+      <metric property="bytes received via SQL*Net from client"/>
+      <metric property="SQL*Net roundtrips to/from client"/>
+      <metric property="bytes sent via SQL*Net to dblink"/>
+      <metric property="bytes received via SQL*Net from dblink"/>
+      <metric property="SQL*Net roundtrips to/from dblink"/>
+      <metric property="sorts (memory)" defaultOn="true"/>
+      <metric property="sorts (disk)" defaultOn="true"/>
+      <metric property="sorts (rows)"/>
+      <metric property="OTC commit optimization attempts"/>
+      <metric property="OTC commit optimization hits"/>
+      <metric property="OTC commit optimization failure - setup"/>
+
+
+      <service name="Oracle Detailed Statistics"
+               discovery="org.rhq.plugins.database.CustomTableDiscoveryComponent"
+               class="org.rhq.plugins.database.CustomTableComponent">
+         
+         <plugin-configuration>
+            <c:simple-property name="table" default="V$SYSMETRIC"/>
+            <c:simple-property name="metricQuery" default="SELECT metric_name, value from V$SYSMETRIC"/>
+            <c:simple-property name="name" default="Oracle 10g Advanced Statistics"/>
+            <c:simple-property name="description" default="Detailed Oracle 10g Statistics"/>
+         </plugin-configuration>
+
+         <metric property="Buffer Cache Hit Ratio" units="percentage"/>
+         <metric property="Memory Sorts Ratio" units="percentage"/>
+         <metric property="Redo Allocation Hit Ratio" units="percentage"/>
+         <metric property="User Transaction Per Sec" displayType="summary"/>
+         <metric property="Physical Reads Per Sec" displayType="summary"/>
+         <metric property="Physical Reads Per Txn"/>
+         <metric property="Physical Writes Per Sec" displayType="summary"/>
+         <metric property="Physical Writes Per Txn"/>
+         <metric property="Physical Reads Direct Per Sec"/>
+         <metric property="Physical Reads Direct Per Txn"/>
+         <metric property="Physical Writes Direct Per Sec"/>
+         <metric property="Physical Writes Direct Per Txn"/>
+         <metric property="Physical Reads Direct Lobs Per Sec"/>
+         <metric property="Physical Reads Direct Lobs Per Txn"/>
+         <metric property="Physical Writes Direct Lobs Per Sec"/>
+         <metric property="Physical Writes Direct Lobs  Per Txn"/>
+         <metric property="Redo Generated Per Sec"/>
+         <metric property="Redo Generated Per Txn"/>
+         <metric property="Logons Per Sec"/>
+         <metric property="Logons Per Txn"/>
+         <metric property="Open Cursors Per Sec"/>
+         <metric property="Open Cursors Per Txn"/>
+         <metric property="User Commits Per Sec"/>
+         <metric property="User Commits Percentage"/>
+         <metric property="User Rollbacks Per Sec"/>
+         <metric property="User Rollbacks Percentage" units="percentage"/>
+         <metric property="User Calls Per Sec"/>
+         <metric property="User Calls Per Txn"/>
+         <metric property="Recursive Calls Per Sec"/>
+         <metric property="Recursive Calls Per Txn"/>
+         <metric property="Logical Reads Per Sec"/>
+         <metric property="Logical Reads Per Txn"/>
+         <metric property="DBWR Checkpoints Per Sec"/>
+         <metric property="Background Checkpoints Per Sec"/>
+         <metric property="Redo Writes Per Sec"/>
+         <metric property="Redo Writes Per Txn"/>
+         <metric property="Long Table Scans Per Sec"/>
+         <metric property="Long Table Scans Per Txn"/>
+         <metric property="Total Table Scans Per Sec"/>
+         <metric property="Total Table Scans Per Txn"/>
+         <metric property="Full Index Scans Per Sec"/>
+         <metric property="Full Index Scans Per Txn"/>
+         <metric property="Total Index Scans Per Sec"/>
+         <metric property="Total Index Scans Per Txn"/>
+         <metric property="Total Parse Count Per Sec"/>
+         <metric property="Total Parse Count Per Txn"/>
+         <metric property="Hard Parse Count Per Sec"/>
+         <metric property="Hard Parse Count Per Txn"/>
+         <metric property="Parse Failure Count Per Sec"/>
+         <metric property="Parse Failure Count Per Txn"/>
+         <metric property="Cursor Cache Hit Ratio" units="percentage"/>
+         <metric property="Disk Sort Per Sec"/>
+         <metric property="Disk Sort Per Txn"/>
+         <metric property="Rows Per Sort"/>
+         <metric property="Execute Without Parse Ratio" units="percentage"/>
+         <metric property="Soft Parse Ratio" units="percentage"/>
+         <metric property="User Calls Ratio" units="percentage"/>
+         <metric property="Host CPU Utilization (%)" units="percentage"/>
+         <metric property="Network Traffic Volume Per Sec"/>
+         <metric property="Enqueue Timeouts Per Sec"/>
+         <metric property="Enqueue Timeouts Per Txn"/>
+         <metric property="Enqueue Waits Per Sec"/>
+         <metric property="Enqueue Waits Per Txn"/>
+         <metric property="Enqueue Deadlocks Per Sec"/>
+         <metric property="Enqueue Deadlocks Per Txn"/>
+         <metric property="Enqueue Requests Per Sec"/>
+         <metric property="Enqueue Requests Per Txn"/>
+         <metric property="DB Block Gets Per Sec"/>
+         <metric property="DB Block Gets Per Txn"/>
+         <metric property="Consistent Read Gets Per Sec"/>
+         <metric property="Consistent Read Gets Per Txn"/>
+         <metric property="DB Block Changes Per Sec"/>
+         <metric property="DB Block Changes Per Txn"/>
+         <metric property="Consistent Read Changes Per Sec"/>
+         <metric property="Consistent Read Changes Per Txn"/>
+         <metric property="CPU Usage Per Sec"/>
+         <metric property="CPU Usage Per Txn"/>
+         <metric property="CR Blocks Created Per Sec"/>
+         <metric property="CR Blocks Created Per Txn"/>
+         <metric property="CR Undo Records Applied Per Sec"/>
+         <metric property="CR Undo Records Applied Per Txn"/>
+         <metric property="User Rollback UndoRec Applied Per Sec"/>
+         <metric property="User Rollback Undo Records Applied Per Txn"/>
+         <metric property="Leaf Node Splits Per Sec"/>
+         <metric property="Leaf Node Splits Per Txn"/>
+         <metric property="Branch Node Splits Per Sec"/>
+         <metric property="Branch Node Splits Per Txn"/>
+         <metric property="PX downgraded 25% or more Per Sec"/>
+         <metric property="PX downgraded 50% or more Per Sec"/>
+         <metric property="PX downgraded 75% or more Per Sec"/>
+         <metric property="PX downgraded Parallel Operation Per Sec"/>
+         <metric property="PX downgraded to serial Per Sec"/>
+         <metric property="Physical Read Total IO Requests Per Sec"/>
+         <metric property="Physical Read Total Bytes Per Sec"/>
+         <metric property="GC CR Block Received Per Second"/>
+         <metric property="GC CR Block Received Per Txn"/>
+         <metric property="GC Current Block Received Per Second"/>
+         <metric property="GC Current Block Received Per Txn"/>
+         <metric property="Global Cache Average CR Get Time"/>
+         <metric property="Global Cache Average Current Get Time"/>
+         <metric property="Physical Write Total IO Requests Per Sec"/>
+         <metric property="Global Cache Blocks Corrupted"/>
+         <metric property="Global Cache Blocks Lost"/>
+         <metric property="Current Logons Count"/>
+         <metric property="Current Open Cursors Count"/>
+         <metric property="User Limit %"/>
+         <metric property="SQL Service Response Time"/>
+         <metric property="Database Wait Time Ratio" units="percentage"/>
+         <metric property="Database CPU Time Ratio" units="percentage"/>
+         <metric property="Response Time Per Txn"/>
+         <metric property="Row Cache Hit Ratio" units="percentage"/>
+         <metric property="Row Cache Miss Ratio" units="percentage"/>
+         <metric property="Library Cache Hit Ratio" units="percentage"/>
+         <metric property="Library Cache Miss Ratio" units="percentage"/>
+         <metric property="Shared Pool Free %" units="percentage"/>
+         <metric property="PGA Cache Hit %" units="percentage"/>
+         <metric property="Process Limit %" units="percentage"/>
+         <metric property="Session Limit %" units="percentage"/>
+         <metric property="Executions Per Txn"/>
+         <metric property="Executions Per Sec"/>
+         <metric property="Txns Per Logon"/>
+         <metric property="Database Time Per Sec"/>
+         <metric property="Physical Write Total Bytes Per Sec"/>
+         <metric property="Physical Read IO Requests Per Sec"/>
+         <metric property="Physical Read Bytes Per Sec"/>
+         <metric property="Physical Write IO Requests Per Sec"/>
+         <metric property="Physical Write Bytes Per Sec"/>
+         <metric property="DB Block Changes Per User Call"/>
+         <metric property="DB Block Gets Per User Call"/>
+         <metric property="Executions Per User Call"/>
+         <metric property="Logical Reads Per User Call"/>
+         <metric property="Total Sorts Per User Call"/>
+         <metric property="Total Table Scans Per User Call"/>
+         <metric property="Current OS Load"/>
+         <metric property="Buffer Cache Hit Ratio" units="percentage"/>
+         <metric property="Memory Sorts Ratio" units="percentage"/>
+         <metric property="User Transaction Per Sec"/>
+         <metric property="Physical Reads Per Sec"/>
+         <metric property="Physical Reads Per Txn"/>
+         <metric property="Physical Writes Per Sec"/>
+         <metric property="Physical Writes Per Txn"/>
+         <metric property="Physical Reads Direct Per Sec"/>
+         <metric property="Physical Reads Direct Per Txn"/>
+         <metric property="Redo Generated Per Sec"/>
+         <metric property="Redo Generated Per Txn"/>
+         <metric property="Logons Per Sec"/>
+         <metric property="Logons Per Txn"/>
+         <metric property="User Calls Per Sec"/>
+         <metric property="User Calls Per Txn"/>
+         <metric property="Logical Reads Per Sec"/>
+         <metric property="Logical Reads Per Txn"/>
+         <metric property="Redo Writes Per Sec"/>
+         <metric property="Redo Writes Per Txn"/>
+         <metric property="Total Table Scans Per Sec"/>
+         <metric property="Total Table Scans Per Txn"/>
+         <metric property="Full Index Scans Per Sec"/>
+         <metric property="Full Index Scans Per Txn"/>
+         <metric property="Execute Without Parse Ratio" units="percentage"/>
+         <metric property="Soft Parse Ratio" units="percentage"/>
+         <metric property="Host CPU Utilization (%)" units="percentage"/>
+         <metric property="DB Block Gets Per Sec"/>
+         <metric property="DB Block Gets Per Txn"/>
+         <metric property="Consistent Read Gets Per Sec"/>
+         <metric property="Consistent Read Gets Per Txn"/>
+         <metric property="DB Block Changes Per Sec"/>
+         <metric property="DB Block Changes Per Txn"/>
+         <metric property="Consistent Read Changes Per Sec"/>
+         <metric property="Consistent Read Changes Per Txn"/>
+         <metric property="Database CPU Time Ratio" units="percentage"/>
+         <metric property="Library Cache Hit Ratio" units="percentage"/>
+         <metric property="Shared Pool Free %" units="percentage" displayType="summary"/>
+         <metric property="Executions Per Txn"/>
+         <metric property="Executions Per Sec"/>
+         <metric property="Txns Per Logon"/>
+         <metric property="Database Time Per Sec"/>
+
+      </service>
+
+
+      <service name="Oracle User"
+         discovery="org.rhq.plugins.database.CustomTableRowDiscoveryComponent"
+         class="org.rhq.plugins.database.OracleUserComponent">
+
+         <plugin-configuration>
+            <c:simple-property name="table" default="DBA_USERS"/>
+            <c:simple-property name="metricQuery" default="SELECT * FROM DBA_USERS"/>
+            <c:simple-property name="keyColumn" default="username"/>
+            <c:simple-property name="name" default="Oracle User - {key}"/>
+            <c:simple-property name="description" default="Oracle User"/>
+         </plugin-configuration>
+
+          <metric property="activeConnections" displayName="Active Connections" displayType="summary"/>
+
+      </service>
+
+   </server>
+
+</plugin>

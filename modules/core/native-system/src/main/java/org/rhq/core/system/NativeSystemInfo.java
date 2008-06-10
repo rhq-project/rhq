@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +36,8 @@ import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.hyperic.sigar.Swap;
 import org.hyperic.sigar.NetStat;
+import org.hyperic.sigar.Cpu;
+import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.system.pquery.ProcessInfoQuery;
 
@@ -261,10 +262,19 @@ public class NativeSystemInfo implements SystemInfo {
         }
     }
 
+    @Nullable
     public Swap getSwapInfo() {
         Sigar sigar = new Sigar();
 
         try {
+            Cpu[] cpus = sigar.getCpuList();
+            for (Cpu cpu : cpus) {
+                // TODO: Remove the below check once http://jira.hyperic.com/browse/SIGAR-112 has been fixed.
+                if (cpu.getSys() == -1) {
+                    log.info("Aborting swap info collection because one or more CPUs is disabled.");
+                    return null;
+                }
+            }
             return sigar.getSwap();
         } catch (Exception e) {
             throw new UnsupportedOperationException("Cannot get swap info from native layer", e);

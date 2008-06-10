@@ -142,10 +142,11 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
                 if (platformSwapInfo == null) {
                     platformSwapInfo = info.getSwapInfo();
                 }
-
-                property = property.substring(property.indexOf(".") + 1);
-                double swapValue = ((Number) getObjectProperty(platformSwapInfo, property)).doubleValue();
-                report.addData(new MeasurementDataNumeric(request, swapValue));
+                if (platformSwapInfo != null) {
+                    property = property.substring(property.indexOf(".") + 1);
+                    double swapValue = ((Number) getObjectProperty(platformSwapInfo, property)).doubleValue();
+                    report.addData(new MeasurementDataNumeric(request, swapValue));
+                }
             } else if (property.startsWith("CpuPerc.")) {
 
                 double result = 0.0;

@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.Swap;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Interface of all native system info objects plus the "non-native" generic {@link JavaSystemInfo} object.
@@ -149,10 +150,11 @@ public interface SystemInfo {
     Mem getMemoryInfo();
 
     /**
-     * Returns information about the virtual, swap memory installed on the plaform.
+     * Returns information about the virtual, swap memory installed on the platform.
      *
-     * @return swap information
+     * @return swap information, or null if the swap info could not be determined
      */
+    @Nullable
     Swap getSwapInfo();
 
     /**

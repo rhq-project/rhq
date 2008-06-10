@@ -36,7 +36,6 @@ import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.hyperic.sigar.Swap;
 import org.hyperic.sigar.NetStat;
-import org.hyperic.sigar.Cpu;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.system.pquery.ProcessInfoQuery;
@@ -264,16 +263,12 @@ public class NativeSystemInfo implements SystemInfo {
 
     @Nullable
     public Swap getSwapInfo() {
-        Sigar sigar = new Sigar();
-
+        Sigar sigar = new Sigar();        
         try {
-            Cpu[] cpus = sigar.getCpuList();
-            for (Cpu cpu : cpus) {
-                // TODO: Remove the below check once http://jira.hyperic.com/browse/SIGAR-112 has been fixed.
-                if (cpu.getSys() == -1) {
-                    log.info("Aborting swap info collection because one or more CPUs is disabled.");
-                    return null;
-                }
+            // TODO: Remove this check once http://jira.jboss.com/jira/browse/JBNADM-3400 is fixed.
+            if (isAtLeastOneCpuDisabled(sigar)) {
+                log.info("Aborting swap info collection because one or more CPUs is disabled.");
+                return null;
             }
             return sigar.getSwap();
         } catch (Exception e) {
@@ -350,5 +345,9 @@ public class NativeSystemInfo implements SystemInfo {
     public String getSystemArchitecture() {
         OperatingSystem op = OperatingSystem.getInstance();
         return op.getArch();
+    }
+
+    private static boolean isAtLeastOneCpuDisabled(Sigar sigar) throws SigarException {
+        return sigar.getCpuPercList().length < sigar.getCpuInfoList().length;
     }
 }

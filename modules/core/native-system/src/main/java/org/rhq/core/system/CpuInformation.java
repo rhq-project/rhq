@@ -40,6 +40,7 @@ public class CpuInformation {
     private Cpu cpu;
     private CpuInfo cpuInfo;
     private CpuPerc cpuPercentage;
+    private boolean enabled;
 
     public CpuInformation(int index) {
         cpuIndex = index;
@@ -60,6 +61,10 @@ public class CpuInformation {
 
     public CpuPerc getCpuPercentage() {
         return cpuPercentage;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 
     public void refresh() {
@@ -88,7 +93,7 @@ public class CpuInformation {
                 this.cpu = cpuList[this.cpuIndex];
             }
             else {
-                log.error("Sigar.getCpuList() returned null or array with size smaller than or equal to this CPU's index ("
+                log.debug("Sigar.getCpuList() returned null or array with size smaller than or equal to this CPU's index ("
                         + this.cpuIndex + "): " + ((cpuList != null) ? Arrays.asList(cpuList) : cpuList));
                 this.cpu = null;
             }
@@ -99,7 +104,7 @@ public class CpuInformation {
                 this.cpuPercentage = cpuPercentageList[this.cpuIndex];
             }
             else {
-                log.error("Sigar.getCpuPercList() returned null or array with size smaller than or equal to this CPU's index ("
+                log.debug("Sigar.getCpuPercList() returned null or array with size smaller than or equal to this CPU's index ("
                         + this.cpuIndex + "): " + ((cpuPercentageList != null) ? Arrays.asList(cpuPercentageList) : cpuPercentageList));
                 this.cpuPercentage = null;
             }            
@@ -108,6 +113,8 @@ public class CpuInformation {
         } finally {
             sigar.close();
         }
+
+        this.enabled = ((this.cpuInfo != null) && (this.cpu != null) && (this.cpuPercentage != null));
 
         return;
     }

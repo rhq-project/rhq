@@ -46,7 +46,12 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
     }
 
     public AvailabilityType getAvailability() {
-        return AvailabilityType.UP;
+        if (this.cpuInformation != null) {
+            this.cpuInformation.refresh();
+            return (this.cpuInformation.isEnabled()) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        } else {
+            return AvailabilityType.UP;
+        }        
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {

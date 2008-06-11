@@ -73,8 +73,6 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
 
     public InstalledPackage getInstalledPackage(int id) {
         InstalledPackage installedPackage = entityManager.find(InstalledPackage.class, id);
-        installedPackage.getPackageVersion().getGeneralPackage().getPackageType()
-            .getDeploymentConfigurationDefinition().getPropertyDefinitions();
         return installedPackage;
     }
 

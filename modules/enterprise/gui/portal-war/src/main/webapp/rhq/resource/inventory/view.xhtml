@@ -304,40 +304,44 @@
              rendered="#{ResourceUIBean.permissions.createChildResources}" >
 
    <ui:remove><!-- column 1 --></ui:remove>
-   <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.manuallyAddableChildTypesCount > 0}">
-      <h:form id="manuallyAddResourceForm" onsubmit="addManuallyAddResourceTypeRequestParam(this)">
-         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-         <input type="hidden" name="type"/>
-         <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
-            <h:outputText style="font-weight: bold;" value="Manually Add:"/>
-            <h:selectOneMenu id="manuallyAddResourceTypeInput" value="#{ListChildResourcesUIBean.manuallyAddResourceTypeId}">
-               <f:selectItem itemLabel="Select Type" itemValue="" itemDisabled="true"/>
-               <f:selectItems value="#{ListChildResourcesUIBean.manuallyAddableChildServerTypes}"/>
-              <f:selectItems value="#{ListChildResourcesUIBean.manuallyAddableChildServiceTypes}"/>
-            </h:selectOneMenu>
-         	<h:commandButton action="#{ManuallyAddChildResourceUIBean.startWorkflow}" value="OK"
-                             styleClass="buttonmed" style="margin-left: 3px"/>
-         </h:panelGrid>
-      </h:form>
+   <h:panelGroup>
+      <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.manuallyAddableChildTypesCount > 0}">
+         <h:form id="manuallyAddResourceForm" onsubmit="addManuallyAddResourceTypeRequestParam(this)">
+            <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+            <input type="hidden" name="type"/>
+            <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
+               <h:outputText style="font-weight: bold;" value="Manually Add:"/>
+               <h:selectOneMenu id="manuallyAddResourceTypeInput" value="#{ListChildResourcesUIBean.manuallyAddResourceTypeId}">
+                  <f:selectItem itemLabel="Select Type" itemValue="" itemDisabled="true"/>
+                  <f:selectItems value="#{ListChildResourcesUIBean.manuallyAddableChildServerTypes}"/>
+                 <f:selectItems value="#{ListChildResourcesUIBean.manuallyAddableChildServiceTypes}"/>
+               </h:selectOneMenu>
+            	<h:commandButton action="#{ManuallyAddChildResourceUIBean.startWorkflow}" value="OK"
+                                styleClass="buttonmed" style="margin-left: 3px"/>
+            </h:panelGrid>
+         </h:form>
+      </h:panelGroup>
    </h:panelGroup>
 
    <ui:remove><!-- column 2 --></ui:remove>
-   <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.creatableChildTypesCount > 0}">
-      <h:form id="createNewResourceForm" onsubmit="addCreateNewResourceTypeRequestParam(this)">
-         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-         <input type="hidden" name="type"/>
-         <input type="hidden" name="mode" value="edit"/>
-         <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
-            <h:outputText style="font-weight: bold;" value="Create New:"/>
-            <h:selectOneMenu id="createNewResourceTypeInput" value="#{ListChildResourcesUIBean.createNewResourceTypeId}">
-               <f:selectItem itemLabel="Select Type" itemValue="" itemDisabled="true"/>
-               <f:selectItems value="#{ListChildResourcesUIBean.creatableChildServerTypes}"/>
-               <f:selectItems value="#{ListChildResourcesUIBean.creatableChildServiceTypes}"/>
-            </h:selectOneMenu>
-         	<h:commandButton id="createNewOKBtn" action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" value="OK"
-                             styleClass="buttonmed" style="margin-left: 3px"/>
-         </h:panelGrid>
-      </h:form>
+   <h:panelGroup>
+      <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.creatableChildTypesCount > 0}">
+         <h:form id="createNewResourceForm" onsubmit="addCreateNewResourceTypeRequestParam(this)">
+            <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+            <input type="hidden" name="type"/>
+            <input type="hidden" name="mode" value="edit"/>
+            <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
+               <h:outputText style="font-weight: bold;" value="Create New:"/>
+               <h:selectOneMenu id="createNewResourceTypeInput" value="#{ListChildResourcesUIBean.createNewResourceTypeId}">
+                  <f:selectItem itemLabel="Select Type" itemValue="" itemDisabled="true"/>
+                  <f:selectItems value="#{ListChildResourcesUIBean.creatableChildServerTypes}"/>
+                  <f:selectItems value="#{ListChildResourcesUIBean.creatableChildServiceTypes}"/>
+               </h:selectOneMenu>
+            	<h:commandButton id="createNewOKBtn" action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" value="OK"
+                                styleClass="buttonmed" style="margin-left: 3px"/>
+            </h:panelGrid>
+         </h:form>
+      </h:panelGroup>
    </h:panelGroup>
 
 </h:panelGrid>

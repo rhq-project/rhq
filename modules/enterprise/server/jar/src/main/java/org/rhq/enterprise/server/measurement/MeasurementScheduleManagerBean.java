@@ -972,6 +972,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                  * calling getSchedulesForResourceAndItsDescendants; this code path should only ever execute once per
                  * resource committed into inventory
                  */
+                // TODO: jshaughn - This fails for resource types without metric definitions                
                 if (created != 0) {
                     Subject overlord = LookupUtil.getSubjectManager().getOverlord();
                     try {

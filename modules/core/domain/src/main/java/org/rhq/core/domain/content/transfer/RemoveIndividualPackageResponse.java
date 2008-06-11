@@ -40,17 +40,18 @@ public class RemoveIndividualPackageResponse implements Serializable {
 
     // Constructors  --------------------------------------------
 
+    public RemoveIndividualPackageResponse(PackageDetailsKey key) {
+        this.key = key;
+    }
+
     public RemoveIndividualPackageResponse(PackageDetailsKey key, ContentResponseResult result) {
         if (key == null) {
             throw new IllegalArgumentException("key cannot be null");
         }
 
-        if (result == null) {
-            throw new IllegalArgumentException("result cannot be null");
-        }
+        setResult(result);
 
         this.key = key;
-        this.result = result;
     }
 
     // Public  --------------------------------------------
@@ -61,6 +62,14 @@ public class RemoveIndividualPackageResponse implements Serializable {
 
     public ContentResponseResult getResult() {
         return result;
+    }
+
+    public void setResult(ContentResponseResult result) {
+        if (result == null) {
+            throw new IllegalArgumentException("result cannot be null");
+        }
+
+        this.result = result;
     }
 
     public String getErrorMessage() {

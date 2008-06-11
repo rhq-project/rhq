@@ -43,12 +43,11 @@ public class DeployPackagesResponse implements Serializable {
 
     // Constructors  --------------------------------------------
 
-    public DeployPackagesResponse(ContentResponseResult overallRequestResult) {
-        if (overallRequestResult == null) {
-            throw new IllegalArgumentException("overallRequestResult cannot be null");
-        }
+    public DeployPackagesResponse() {
+    }
 
-        this.overallRequestResult = overallRequestResult;
+    public DeployPackagesResponse(ContentResponseResult overallRequestResult) {
+        setOverallRequestResult(overallRequestResult);
     }
 
     // Public  --------------------------------------------
@@ -63,6 +62,14 @@ public class DeployPackagesResponse implements Serializable {
 
     public ContentResponseResult getOverallRequestResult() {
         return overallRequestResult;
+    }
+
+    public void setOverallRequestResult(ContentResponseResult overallRequestResult) {
+        if (overallRequestResult == null) {
+            throw new IllegalArgumentException("overallRequestResult cannot be null");
+        }
+
+        this.overallRequestResult = overallRequestResult;
     }
 
     public String getOverallRequestErrorMessage() {

@@ -131,10 +131,12 @@ public class EventDefinition implements Externalizable {
 
         EventDefinition that = (EventDefinition) obj;
 
+        if ((resourceType != null) ? (!resourceType.equals(that.resourceType)) : (that.resourceType != null)) {
+            return false;
+        }
+
         if (!name.equals(that.name))
-            return false;
-        if (resourceTypeId != that.resourceTypeId)
-            return false;
+            return false;        
 
         return true;
     }
@@ -142,7 +144,7 @@ public class EventDefinition implements Externalizable {
     @Override
     public int hashCode() {
         int result;
-        result = resourceTypeId;
+        result = (resourceType != null) ? resourceType.hashCode() : 0;
         result = 31 * result + name.hashCode();
         return result;
     }

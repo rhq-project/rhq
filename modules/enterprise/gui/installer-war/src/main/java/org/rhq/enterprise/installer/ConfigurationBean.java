@@ -400,9 +400,11 @@ public class ConfigurationBean {
                 if (existingSchemaAnswer == null)
                     return StartPageResults.STAY; // user didn't tell us what to do, re-display the page with the question
 
-                if (existingSchemaAnswer.equals("overwrite"))
+                if (existingSchemaAnswer.equals("overwrite")) {
                     serverInfo.createNewDatabaseSchema(configurationAsProperties);
-                else
+                    // clean out existing JMS messages
+                    serverInfo.cleanJmsTables(configurationAsProperties);
+                } else
                     serverInfo.upgradeExistingDatabaseSchema(configurationAsProperties);
             } else {
                 serverInfo.createNewDatabaseSchema(configurationAsProperties);

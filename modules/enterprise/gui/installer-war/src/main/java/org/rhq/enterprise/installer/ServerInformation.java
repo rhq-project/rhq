@@ -36,18 +36,23 @@ import java.io.Reader;
 import java.io.Writer;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Map;
 import java.util.Properties;
+
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.helper.ProjectHelper2;
+
 import org.jboss.mx.util.MBeanServerLocator;
 import org.jboss.mx.util.ObjectNameFactory;
 import org.jboss.system.server.ServerConfig;
+
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.DbUtil;
@@ -697,5 +702,22 @@ public class ServerInformation {
                 logFileOutput.close();
             }
         }
+    }
+
+    /**
+     * Clean up messages in the JMS message table. It is safe to just delete all of them, as 
+     * we are alone on the RHQ server and thus noone else is expected to have messages in there. 
+     * @param props
+     */
+    public void cleanJmsTables(Properties props) {
+
+        try {
+            Connection conn = getDatabaseConnection(props);
+            Statement stm = conn.createStatement();
+            stm.executeUpdate("DELETE FROM JMS_MESSAGES");
+        } catch (SQLException e) {
+            LOG.info("Was not able to delete existing JMS messages: " + e.getMessage());
+        }
+
     }
 }

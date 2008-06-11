@@ -13,10 +13,19 @@
            discovery="OpenSSHDDiscoveryComponent"
            class="OpenSSHDComponent">
 
+      <plugin-configuration>
+         <c:group name="augeas" displayName="Augeas Settings">
+            <c:simple-property name="lenses-path" displayName="Augeas Lenses Path" default="/usr/local/share/augeas/lenses" 
+                               description="Full path to the augeas lenses directory."/>
+         </c:group>
+         <c:group name="sshd" displayName="SSHD Settings">
+            <c:simple-property name="config-directory" displayName="SSHD Configuration Path"
+                               default="/files/etc/ssh/sshd_config" description="Full path to the sshd configuration files."/>
+         </c:group>
+      </plugin-configuration>
+
       <process-scan query="process|basename|match=sshd,process|basename|nomatch|parent=sshd"
                     name="SSHD"/>
-
-      <!-- process|basename|match=sshd,process|basename|nomatch|parent=sshd -->
 
       <metric displayName="User Time" property="Process.aggregateCpu.user" measurementType="trendsup"
               units="milliseconds"/>
@@ -30,7 +39,6 @@
               units="bytes" displayType="summary"/>
       <metric displayName="Open File Descriptors" property="Process.aggregateFileDescriptor.total"
               measurementType="dynamic" displayType="summary"/>
-
 
       <metric property="NetworkStat.tcpInboundTotal" displayName="TCP Inbound Connections" displayType="summary"/>
       <metric property="NetworkStat.tcpOutboundTotal" displayName="TCP Outbound Connections" displayType="summary"/>
@@ -50,9 +58,7 @@
       <metric property="NetworkStat.tcpIdle" displayName="State IDLE"/>
       <metric property="NetworkStat.tcpBound" displayName="State BOUND"/>
 
-
       <resource-configuration>
-
 
          <c:group name="Settings">
 
@@ -250,26 +256,27 @@
              default is ``yes''."/>
 
             <c:simple-property name="ChrootDirectory"
-                               required="false" description="Specifies a path to chroot(2) to after authentication.  This
- path, and all its components, must be root-owned directories that
- are not writable by any other user or group.
+                               required="false" description="
+             Specifies a path to chroot(2) to after authentication.  This
+             path, and all its components, must be root-owned directories that
+             are not writable by any other user or group.
 
- The path may contain the following tokens that are expanded at
- runtime once the connecting user has been authenticated: %% is
- replaced by a literal '%', %h is replaced by the home directory
- of the user being authenticated, and %u is replaced by the user-
- name of that user.
+             The path may contain the following tokens that are expanded at
+             runtime once the connecting user has been authenticated: %% is
+             replaced by a literal '%', %h is replaced by the home directory
+             of the user being authenticated, and %u is replaced by the user-
+             name of that user.
 
- The ChrootDirectory must contain the necessary files and directo-
- ries to support the users' session.  For an interactive session
- this requires at least a shell, typically sh(1), and basic /dev
- nodes such as null(4), zero(4), stdin(4), stdout(4), stderr(4),
- arandom(4) and tty(4) devices.  For file transfer sessions using
- ``sftp'', no additional configuration of the environment is nec-
- essary if the in-process sftp server is used (see Subsystem for
- details).
+             The ChrootDirectory must contain the necessary files and directo-
+             ries to support the users' session.  For an interactive session
+             this requires at least a shell, typically sh(1), and basic /dev
+             nodes such as null(4), zero(4), stdin(4), stdout(4), stderr(4),
+             arandom(4) and tty(4) devices.  For file transfer sessions using
+             ``sftp'', no additional configuration of the environment is nec-
+             essary if the in-process sftp server is used (see Subsystem for
+             details).
 
- The default is not to chroot(2).">
+             The default is not to chroot(2).">
 
             </c:simple-property>
 
@@ -286,22 +293,22 @@
                 aes192-ctr,aes256-ctr"/>
 
             <c:simple-property name="ClientAliveCountMax" required="false" description="
- Sets the number of client alive messages (see below) which may be
- sent without sshd(8) receiving any messages back from the client.
- If this threshold is reached while client alive messages are be-
- ing sent, sshd will disconnect the client, terminating the ses-
- sion.  It is important to note that the use of client alive mes-
- sages is very different from TCPKeepAlive (below).  The client
- alive messages are sent through the encrypted channel and there-
- fore will not be spoofable.  The TCP keepalive option enabled by
- TCPKeepAlive is spoofable.  The client alive mechanism is valu-
- able when the client or server depend on knowing when a connec-
- tion has become inactive.
+             Sets the number of client alive messages (see below) which may be
+             sent without sshd(8) receiving any messages back from the client.
+             If this threshold is reached while client alive messages are be-
+             ing sent, sshd will disconnect the client, terminating the ses-
+             sion.  It is important to note that the use of client alive mes-
+             sages is very different from TCPKeepAlive (below).  The client
+             alive messages are sent through the encrypted channel and there-
+             fore will not be spoofable.  The TCP keepalive option enabled by
+             TCPKeepAlive is spoofable.  The client alive mechanism is valu-
+             able when the client or server depend on knowing when a connec-
+             tion has become inactive.
 
- The default value is 3.  If ClientAliveInterval (see below) is
- set to 15, and ClientAliveCountMax is left at the default, unre-
- sponsive SSH clients will be disconnected after approximately 45
- seconds.  This option applies to protocol version 2 only."/>
+             The default value is 3.  If ClientAliveInterval (see below) is
+             set to 15, and ClientAliveCountMax is left at the default, unre-
+             sponsive SSH clients will be disconnected after approximately 45
+             seconds.  This option applies to protocol version 2 only."/>
 
             <c:simple-property name="ClientAliveInterval" required="false" description="
              Sets a timeout interval in seconds after which if no data has
@@ -456,7 +463,7 @@
 
 
             <c:simple-property name="MACs" required="false" description="
-         Specifies the available MAC (message authentication code) algo-
+             Specifies the available MAC (message authentication code) algo-
              rithms.  The MAC algorithm is used in protocol version 2 for data
              integrity protection.  Multiple algorithms must be comma-separat-
              ed.  The default is:
@@ -465,20 +472,20 @@
                    hmac-ripemd160,hmac-sha1-96,hmac-md5-96"/>
 
             <c:simple-property name="Match" required="false" description="
-Introduces a conditional block.  If all of the criteria on the
-Match line are satisfied, the keywords on the following lines
-override those set in the global section of the config file, un-
-til either another Match line or the end of the file.  The argu-
-ments to Match are one or more criteria-pattern pairs.  The
-available criteria are User, Group, Host, and Address.  Only a
-subset of keywords may be used on the lines following a Match
-keyword.  Available keywords are AllowTcpForwarding, Banner,
-ChrootDirectory, ForceCommand, GatewayPorts,
-GSSAPIAuthentication, HostbasedAuthentication,
-KbdInteractiveAuthentication, KerberosAuthentication,
-PasswordAuthentication, PermitOpen, PermitRootLogin,
-RhostsRSAAuthentication, RSAAuthentication, X11DisplayOffset,
-X11Forwarding, and X11UseLocalHost."/>
+               Introduces a conditional block.  If all of the criteria on the
+               Match line are satisfied, the keywords on the following lines
+               override those set in the global section of the config file, un-
+               til either another Match line or the end of the file.  The argu-
+               ments to Match are one or more criteria-pattern pairs.  The
+               available criteria are User, Group, Host, and Address.  Only a
+               subset of keywords may be used on the lines following a Match
+               keyword.  Available keywords are AllowTcpForwarding, Banner,
+               ChrootDirectory, ForceCommand, GatewayPorts,
+               GSSAPIAuthentication, HostbasedAuthentication,
+               KbdInteractiveAuthentication, KerberosAuthentication,
+               PasswordAuthentication, PermitOpen, PermitRootLogin,
+               RhostsRSAAuthentication, RSAAuthentication, X11DisplayOffset,
+               X11Forwarding, and X11UseLocalHost."/>
 
             <c:simple-property name="MaxAuthTries" required="false" description="
              Specifies the maximum number of authentication attempts permitted
@@ -486,19 +493,18 @@ X11Forwarding, and X11UseLocalHost."/>
              value, additional failures are logged.  The default is 6."/>
 
             <c:simple-property name="MaxStartups" required="false" description="
- Specifies the maximum number of concurrent unauthenticated con-
- nections to the SSH daemon.  Additional connections will be
- dropped until authentication succeeds or the LoginGraceTime ex-
- pires for a connection.  The default is 10.
+             Specifies the maximum number of concurrent unauthenticated con-
+             nections to the SSH daemon.  Additional connections will be
+             dropped until authentication succeeds or the LoginGraceTime ex-
+             pires for a connection.  The default is 10.
 
- Alternatively, random early drop can be enabled by specifying the
- three colon separated values ``start:rate:full'' (e.g.
- '10:30:60').  sshd(8) will refuse connection attempts with a
- probability of ``rate/100'' (30%) if there are currently
- ``start'' (10) unauthenticated connections.  The probability in-
- creases linearly and all connection attempts are refused if the
- number of unauthenticated connections reaches ``full'' (60)."/>
-
+             Alternatively, random early drop can be enabled by specifying the
+             three colon separated values ``start:rate:full'' (e.g.
+             '10:30:60').  sshd(8) will refuse connection attempts with a
+             probability of ``rate/100'' (30%) if there are currently
+             ``start'' (10) unauthenticated connections.  The probability in-
+             creases linearly and all connection attempts are refused if the
+             number of unauthenticated connections reaches ``full'' (60)."/>
 
             <c:simple-property name="PermitEmptyPasswords" required="false" description="
              When password authentication is allowed, it specifies whether the
@@ -506,18 +512,18 @@ X11Forwarding, and X11UseLocalHost."/>
              default is ``no''."/>
 
             <c:simple-property name="PermitOpen" required="false" description="
- Specifies the destinations to which TCP port forwarding is per-
- mitted.  The forwarding specification must be one of the follow-
- ing forms:
+             Specifies the destinations to which TCP port forwarding is per-
+             mitted.  The forwarding specification must be one of the follow-
+             ing forms:
 
-       PermitOpen host:port
-       PermitOpen IPv4_addr:port
-       PermitOpen [IPv6_addr]:port
+                   PermitOpen host:port
+                   PermitOpen IPv4_addr:port
+                   PermitOpen [IPv6_addr]:port
 
- Multiple forwards may be specified by separating them with
- whitespace.  An argument of ``any'' can be used to remove all re-
- strictions and permit any forwarding requests.  By default all
- port forwarding requests are permitted."/>
+             Multiple forwards may be specified by separating them with
+             whitespace.  An argument of ``any'' can be used to remove all re-
+             strictions and permit any forwarding requests.  By default all
+             port forwarding requests are permitted."/>
 
 
             <c:simple-property name="PermitTunnel" required="false" description="
@@ -572,19 +578,19 @@ X11Forwarding, and X11UseLocalHost."/>
              ``yes''."/>
 
             <c:simple-property name="Subsystem" required="false" description="
- Configures an external subsystem (e.g. file transfer daemon).
- Arguments should be a subsystem name and a command (with optional
- arguments) to execute upon subsystem request.
+             Configures an external subsystem (e.g. file transfer daemon).
+             Arguments should be a subsystem name and a command (with optional
+             arguments) to execute upon subsystem request.
 
- The command sftp-server(8) implements the ``sftp'' file transfer
- subsystem.
+             The command sftp-server(8) implements the ``sftp'' file transfer
+             subsystem.
 
- Alternately the name ``internal-sftp'' implements an in-process
- ``sftp'' server.  This may simplify configurations using
- ChrootDirectory to force a different filesystem root on clients.
+             Alternately the name ``internal-sftp'' implements an in-process
+             ``sftp'' server.  This may simplify configurations using
+             ChrootDirectory to force a different filesystem root on clients.
 
- By default no subsystems are defined.  Note that this option ap-
- plies to protocol version 2 only."/>
+             By default no subsystems are defined.  Note that this option ap-
+             plies to protocol version 2 only."/>
 
             <c:simple-property name="SyslogFacility" required="false" description="
              Gives the facility code that is used when logging messages from
@@ -593,7 +599,8 @@ X11Forwarding, and X11UseLocalHost."/>
              fault is AUTH."/>
 
 
-            <c:simple-property name="UseDNS" required="false" description="  Specifies whether sshd(8) should look up the remote host name and
+            <c:simple-property name="UseDNS" required="false" description="
+             Specifies whether sshd(8) should look up the remote host name and
              check that the resolved host name for the remote IP address maps
              back to the very same IP address.  The default is ``yes''."/>
 
@@ -615,25 +622,25 @@ X11Forwarding, and X11UseLocalHost."/>
              servers.  The default is 10."/>
 
             <c:simple-property name="X11Forwarding" required="false" description="
-Specifies whether X11 forwarding is permitted.
+            Specifies whether X11 forwarding is permitted.
 
-When X11 forwarding is enabled, there may be additional exposure
-to the server and to client displays if the sshd(8) proxy display
-is configured to listen on the wildcard address (see
-X11UseLocalhost below), though this is not the default.  Addi-
-tionally, the authentication spoofing and authentication data
-verification and substitution occur on the client side.  The se-
-curity risk of using X11 forwarding is that the client's X11 dis-
-play server may be exposed to attack when the SSH client requests
-forwarding (see the warnings for ForwardX11 in ssh_config(5)).  A
-system administrator may have a stance in which they want to pro-
-tect clients that may expose themselves to attack by unwittingly
-requesting X11 forwarding, which can warrant a ``no'' setting.
+            When X11 forwarding is enabled, there may be additional exposure
+            to the server and to client displays if the sshd(8) proxy display
+            is configured to listen on the wildcard address (see
+            X11UseLocalhost below), though this is not the default.  Addi-
+            tionally, the authentication spoofing and authentication data
+            verification and substitution occur on the client side.  The se-
+            curity risk of using X11 forwarding is that the client's X11 dis-
+            play server may be exposed to attack when the SSH client requests
+            forwarding (see the warnings for ForwardX11 in ssh_config(5)).  A
+            system administrator may have a stance in which they want to pro-
+            tect clients that may expose themselves to attack by unwittingly
+            requesting X11 forwarding, which can warrant a ``no'' setting.
 
-Disabling this does not prevent users from
-forwarding X11 traffic, as users can always install their own
-forwarders.  X11 forwarding is automatically disabled if UseLogin
-is enabled."/>
+            Disabling this does not prevent users from
+            forwarding X11 traffic, as users can always install their own
+            forwarders.  X11 forwarding is automatically disabled if UseLogin
+            is enabled."/>
 
             <c:simple-property name="X11UseLocalhost" required="false" description="
              Specifies whether sshd(8) should bind the X11 forwarding server
@@ -653,7 +660,6 @@ is enabled."/>
          </c:group>
 
       </resource-configuration>
-
 
    </server>
 </plugin>

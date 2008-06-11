@@ -19,6 +19,12 @@
 
 package org.rhq.plugins.sshd;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -45,13 +51,6 @@ import org.rhq.core.system.NetworkStats;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.augeas.Augeas;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-
 /**
  * @author Greg Hinkle
  */
@@ -59,7 +58,6 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
 
     private ResourceContext resourceContext;
     private AggregateProcessInfo processInfo;
-    private static final String SSHD_CONFIG_BASE = "/files/etc/ssh/sshd_config/";
 
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
@@ -68,7 +66,7 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
 
     public void stop() {
     }
-    
+
     public AvailabilityType getAvailability() {
         return processInfo.isRunning() ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
@@ -76,8 +74,7 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
     private void getSSHDProcess() {
 
         List<ProcessInfo> procs =
-                resourceContext.getSystemInformation().getProcesses(
-                        "process|basename|match=sshd,process|basename|nomatch|parent=sshd");
+            resourceContext.getSystemInformation().getProcesses("process|basename|match=sshd,process|basename|nomatch|parent=sshd");
 
         if (procs.size() == 1) {
             this.processInfo = procs.get(0).getAggregateProcessTree();
@@ -86,22 +83,48 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
 
     public Configuration loadResourceConfiguration() throws Exception {
 
-        ConfigurationDefinition def = resourceContext.getResourceType().getResourceConfigurationDefinition();
+        Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
 
-        Augeas aug = new Augeas("/tmp/augeas-sandbox/", "/usr/local/share/augeas/lenses");
+        // Gather data necessary to create the Augeas hook
+        PropertySimple lensesPathProperty = pluginConfiguration.getSimple("lenses-path");
 
-        List<String> matches = aug.match("/files/etc/ssh/sshd_config/*");
+        if (lensesPathProperty == null) {
+            throw new Exception("Lenses path not found in plugin configuration, cannot retrieve configuration");
+        }
+
+        String lensesPath = lensesPathProperty.getStringValue();
+        Augeas augeas = new Augeas(lensesPath);
+
+        // Find out where to look for sshd configuration files
+        PropertySimple sshdPathProperty = pluginConfiguration.getSimple("config-directory");
+
+        if (sshdPathProperty == null) {
+            throw new Exception("SSHD configuration path not found in plugin configuration, cannot retrive configuration");
+        }
+
+        String sshdPath = sshdPathProperty.getStringValue();
+
+        // Usage of this value expects it to end with a slash, so make sure it's here
+        if (!sshdPath.endsWith("/")) {
+            sshdPath += "/";
+        }
+
+        List<String> matches = augeas.match(sshdPath + "*");
         if (matches.size() == 0) {
             throw new Exception("Unable to load sshd_config data from augeas");
         }
 
-        Collection<PropertyDefinition> properties = def.getPropertyDefinitions().values();
+        ConfigurationDefinition resourceConfigurationDefinition =
+            resourceContext.getResourceType().getResourceConfigurationDefinition();
+        Collection<PropertyDefinition> properties = resourceConfigurationDefinition.getPropertyDefinitions().values();
+
         Configuration config = new Configuration();
         config.setNotes("Loaded from Augeas at " + new Date());
+
         for (PropertyDefinition p : properties) {
             if (p instanceof PropertyDefinitionSimple) {
                 PropertyDefinitionSimple property = (PropertyDefinitionSimple) p;
-                String value = aug.get(SSHD_CONFIG_BASE + property.getName());
+                String value = augeas.get(sshdPath + property.getName());
 
                 if (value == null)
                     continue;
@@ -113,17 +136,17 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
                 }
             } else if (p instanceof PropertyDefinitionList) {
                 // This very hackish bit of code is to suport the list-of-maps standard with a single simple definition in the map
-                PropertyDefinitionList listDef = ((PropertyDefinitionList)p);
+                PropertyDefinitionList listDef = ((PropertyDefinitionList) p);
                 PropertyDefinitionMap mapDef = ((PropertyDefinitionMap) listDef.getMemberDefinition());
                 PropertyDefinitionSimple simpleDef = (PropertyDefinitionSimple) mapDef.getPropertyDefinitions().values().iterator().next();
                 String name = simpleDef.getName();
 
                 List<String> allValues = new ArrayList<String>();
 
-                List<String> tests = aug.match(SSHD_CONFIG_BASE + "*");
+                List<String> tests = augeas.match(sshdPath + "*");
                 for (String test : tests) {
-                    if (test.matches(SSHD_CONFIG_BASE + name + ".*")) {
-                        String data = aug.get(test);
+                    if (test.matches(sshdPath + name + ".*")) {
+                        String data = augeas.get(test);
                         allValues.addAll(Arrays.asList(data.split(" ")));
                     }
                 }
@@ -139,7 +162,6 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
@@ -148,7 +170,7 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
         for (MeasurementScheduleRequest request : metrics) {
             if (request.getName().startsWith("NetworkStat.")) {
                 int val = stats.getByName(request.getName().substring("NetworkStat.".length()));
-                report.addData(new MeasurementDataNumeric(request, (double)val));
+                report.addData(new MeasurementDataNumeric(request, (double) val));
             } else if (request.getName().startsWith("Process.")) {
                 Double value = ObjectUtil.lookupDeepNumericAttributeProperty(processInfo, request.getName().substring("Process.".length()));
                 report.addData(new MeasurementDataNumeric(request, value));

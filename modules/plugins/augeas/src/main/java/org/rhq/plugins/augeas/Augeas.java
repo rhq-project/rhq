@@ -32,16 +32,9 @@ import java.util.ArrayList;
  */
 public class Augeas {
 
-
-    private String rootPath;
-    private String loadPath;
-
     protected LibAugeas.Augeas_T augeas_t;
 
-    public Augeas(String rootPath, String loadPath) {
-        this.rootPath = rootPath;
-        this.loadPath = loadPath;
-
+    public Augeas(String loadPath) {
         NativeLibrary.addSearchPath("augeas", "/usr/local/lib");
 
         this.augeas_t =

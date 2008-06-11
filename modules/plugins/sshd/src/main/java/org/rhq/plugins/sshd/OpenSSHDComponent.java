@@ -43,6 +43,7 @@ import org.rhq.core.pluginapi.util.ObjectUtil;
 import org.rhq.core.system.AggregateProcessInfo;
 import org.rhq.core.system.NetworkStats;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.plugins.augeas.Augeas;
 
 import java.util.ArrayList;
 import java.util.Arrays;

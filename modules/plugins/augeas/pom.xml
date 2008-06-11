@@ -1,0 +1,137 @@
+<?xml version="1.0"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-plugins-parent</artifactId>
+      <version>1.0.1-SNAPSHOT</version>
+   </parent>
+
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-augeas-plugin</artifactId>
+   <packaging>jar</packaging>
+
+   <name>RHQ Augeas Plugin</name>
+   <description>Provides base utilities for connecting to Augeas and using its features</description>
+
+   <dependencies>
+
+      <!-- Below are the core modules that are required dependencies of all plugins -->
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+         <!-- provided by the agent/plugin-container -->
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-plugin-api</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+         <!-- provided by the agent/plugin-container -->
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-native-system</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+         <!-- provided by the agent/plugin-container -->
+      </dependency>
+
+      <dependency>
+         <groupId>com.sun.jna</groupId>
+         <artifactId>jna</artifactId>
+         <version>3.0.1</version>
+      </dependency>
+
+
+      <dependency>
+         <groupId>log4j</groupId>
+         <artifactId>log4j</artifactId>
+         <version>1.2.14</version>
+         <scope>provided</scope>
+      </dependency>
+
+   </dependencies>
+
+   <build>
+      <plugins>
+
+         <plugin>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+               <source>1.5</source>
+               <target>1.5</target>
+            </configuration>
+         </plugin>
+
+         <!--
+         If your plugin has third-party jar dependencies that are not already
+         available when deployed in the plugin container, you can package these
+         jars in your plugin. They go in your plugin jar's "lib" directory.
+         Uncomment the maven plugin definition below and define one or more jar
+         files (aka "artifactItem" elements) that you want to include in your
+         plugin jar.
+         -->
+
+         <!--
+               <plugin>
+                 <artifactId>maven-dependency-plugin</artifactId>
+                 <executions>
+                   <execution>
+                     <id>copy-dependencies</id>
+                     <phase>process-resources</phase>
+                     <goals>
+                       <goal>copy</goal>
+                     </goals>
+                     <configuration>
+                       <artifactItems>
+
+                          <artifactItem>
+                            <groupId>your-third-party-dep-group</groupId>
+                            <artifactId>your-third-party-dep-artifact</artifactId>
+                            <version>your-third-party-dep-version</version>
+                          </artifactItem>
+
+                        </artifactItems>
+                        <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                     </configuration>
+                   </execution>
+                 </executions>
+               </plugin>
+         -->
+
+      </plugins>
+   </build>
+
+   <repositories>
+      <repository>
+         <id>jboss</id>
+         <name>JBoss Repository</name>
+         <url>http://repository.jboss.org/maven2/</url>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
+      </repository>
+   </repositories>
+
+   <pluginRepositories>
+      <pluginRepository>
+         <id>jboss</id>
+         <name>JBoss Plugin Repository</name>
+         <url>http://repository.jboss.org/maven2/</url>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
+      </pluginRepository>
+   </pluginRepositories>
+
+</project>

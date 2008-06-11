@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.plugins.sshd;
+package org.rhq.plugins.augeas;
 
 import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.Pointer;

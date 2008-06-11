@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
 
@@ -17,7 +18,8 @@
 
    <scm>
       <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/sshd/</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/sshd/</developerConnection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/sshd/
+      </developerConnection>
    </scm>
 
    <properties>
@@ -26,7 +28,6 @@
 
    <dependencies>
 
-      <!-- TODO: Get rid of this dep. -->
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-plugin-container</artifactId>
@@ -34,46 +35,53 @@
          <scope>provided</scope>
       </dependency>
 
-       <dependency>
-          <groupId>com.sun.jna</groupId>
-          <artifactId>jna</artifactId>
-          <version>3.0.1</version>
-       </dependency>
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-augeas-plugin</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>com.sun.jna</groupId>
+         <artifactId>jna</artifactId>
+         <version>3.0.1</version>
+      </dependency>
 
    </dependencies>
 
 
-    <build>
+   <build>
 
-       <plugins>
+      <plugins>
 
-          <plugin>
-             <artifactId>maven-dependency-plugin</artifactId>
-             <version>2.0</version>
-             <executions>
-                <execution>
-                   <id>copy-jna-jar</id>
-                   <phase>process-resources</phase>
-                   <goals>
-                      <goal>copy</goal>
-                   </goals>
-                   <configuration>
-                      <artifactItems>
+         <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.0</version>
+            <executions>
+               <execution>
+                  <id>copy-jna-jar</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
                         <artifactItem>
                            <groupId>com.sun.jna</groupId>
                            <artifactId>jna</artifactId>
                            <version>3.0.1</version>
                         </artifactItem>
-                      </artifactItems>
-                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
-                   </configuration>
-                </execution>
-             </executions>
-          </plugin>
+                     </artifactItems>
+                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
 
-       </plugins>
+      </plugins>
 
-    </build>
+   </build>
 
    <profiles>
       <profile>
@@ -94,36 +102,39 @@
                         <phase>pre-integration-test</phase>
                         <configuration>
                            <tasks>
-                              <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...</echo>
-                              <property name="settings.localRepository" location="${user.home}/.m2/repository" />
-                              <mkdir dir="target/itest" />
-                              <mkdir dir="target/itest/plugins" />
-                              <mkdir dir="target/itest/lib" />
+                              <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...
+                              </echo>
+                              <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
+                              <mkdir dir="target/itest"/>
+                              <mkdir dir="target/itest/plugins"/>
+                              <mkdir dir="target/itest/lib"/>
                               <copy toDir="target/itest/plugins" flatten="true">
                                  <fileset dir="${settings.localRepository}/">
-                                    <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
+                                    <include
+                                       name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar"/>
                                  </fileset>
                                  <fileset dir="${project.build.directory}">
-                                    <include name="${project.artifactId}-${project.version}.jar" />
+                                    <include name="${project.artifactId}-${project.version}.jar"/>
                                  </fileset>
                               </copy>
                               <unzip dest="target/itest/lib">
-                                 <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
+                                 <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}"
+                                          includes="*.zip"/>
                                  <patternset>
-                                    <include name="**/lib/sigar.jar" />
-                                    <include name="**/lib/bcel*.jar" />
-                                    <include name="**/lib/*.so" />
-                                    <include name="**/lib/*.sl" />
-                                    <include name="**/lib/*.dll" />
-                                    <include name="**/lib/*.dylib" />
+                                    <include name="**/lib/sigar.jar"/>
+                                    <include name="**/lib/bcel*.jar"/>
+                                    <include name="**/lib/*.so"/>
+                                    <include name="**/lib/*.sl"/>
+                                    <include name="**/lib/*.dll"/>
+                                    <include name="**/lib/*.dylib"/>
                                  </patternset>
                               </unzip>
                               <move todir="target/itest/lib" flatten="true">
                                  <fileset dir="target/itest/lib">
-                                    <include name="**/lib/*" />
+                                    <include name="**/lib/*"/>
                                  </fileset>
                               </move>
-                              <delete dir="target/itest/lib/hyperic-sigar-${sigar.version}" />
+                              <delete dir="target/itest/lib/hyperic-sigar-${sigar.version}"/>
                            </tasks>
                         </configuration>
                         <goals>
@@ -177,49 +188,53 @@
          <properties>
             <rhq.rootDir>../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
+            <rhq.deploymentDir>
+               ${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins
+            </rhq.deploymentDir>
          </properties>
 
          <build>
             <plugins>
 
                <plugin>
-                 <artifactId>maven-antrun-plugin</artifactId>
-                 <version>1.1</version>
-                 <executions>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <version>1.1</version>
+                  <executions>
 
                      <execution>
                         <id>deploy</id>
-                        <phase>compile</phase>
+                        <!--<phase>compile</phase>-->
                         <configuration>
-                          <tasks>
-                            <mkdir dir="${rhq.deploymentDir}" />
-                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                            <echo>*** Updating ${deployment.file}...</echo>
-                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
-                          </tasks>
+                           <tasks>
+                              <mkdir dir="${rhq.deploymentDir}"/>
+                              <property name="deployment.file"
+                                        location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                              <echo>*** Updating ${deployment.file}...</echo>
+                              <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
+                           </tasks>
                         </configuration>
                         <goals>
-                          <goal>run</goal>
+                           <goal>run</goal>
                         </goals>
                      </execution>
 
                      <execution>
                         <id>undeploy</id>
-                        <phase>clean</phase>
+                        <!--<phase>clean</phase>-->
                         <configuration>
-                          <tasks>
-                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                            <echo>*** Deleting ${deployment.file}...</echo>
-                            <delete file="${deployment.file}" />
-                          </tasks>
+                           <tasks>
+                              <property name="deployment.file"
+                                        location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                              <echo>*** Deleting ${deployment.file}...</echo>
+                              <delete file="${deployment.file}"/>
+                           </tasks>
                         </configuration>
                         <goals>
-                          <goal>run</goal>
+                           <goal>run</goal>
                         </goals>
                      </execution>
 
-                   </executions>
+                  </executions>
                </plugin>
 
             </plugins>

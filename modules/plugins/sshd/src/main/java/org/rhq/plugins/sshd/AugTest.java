@@ -21,8 +21,8 @@ package org.rhq.plugins.sshd;
 
 import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.Pointer;
-
-import java.util.List;
+import org.rhq.plugins.augeas.Augeas;
+import org.rhq.plugins.augeas.LibAugeas;
 
 public class AugTest {
 
@@ -59,7 +59,7 @@ public class AugTest {
 
         for (int i = 0; i < matches; i++) {
             System.out.println("Found: " + refs[i].getString(0));
-            System.out.println("Value: " + LibAugeas.INSTANCE.aug_get(aug, refs[i].getString(0)));
+//            System.out.println("Value: " + LibAugeas.INSTANCE.aug_get(aug, refs[i].getString(0)));
         }
         
     }

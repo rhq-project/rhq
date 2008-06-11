@@ -403,8 +403,8 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     private PluginDescriptor getPluginDescriptor(DeploymentInfo di) throws JAXBException {
         URL descriptorURL = di.localCl.findResource(DEFAULT_PLUGIN_DESCRIPTOR_PATH);
         if (descriptorURL == null) {
-            log.warn("Could not load " + DEFAULT_PLUGIN_DESCRIPTOR_PATH + " from plugin jar file [" + di.url + "]");
-            return null;
+            throw new JAXBException("Could not load " + DEFAULT_PLUGIN_DESCRIPTOR_PATH + " from plugin jar file ["
+                + di.url + "]");
         }
 
         JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);

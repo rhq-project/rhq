@@ -46,7 +46,7 @@
 	<classpathentry kind="src" path="modules/plugins/apache/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/netservices/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/iis/src/main/java"/>
-	<classpathentry kind="src" path="etc/custom-plugin/src/main/java"/>
+	<classpathentry kind="src" path="etc/samples/skeleton-plugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/custom-serverplugin/src/main/java"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/comm/src/test/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/main/resources"/>

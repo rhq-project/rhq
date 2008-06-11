@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
+import javax.servlet.http.HttpServletRequest;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.CreateResourceHistory;
@@ -60,6 +61,18 @@ public class DetermineChildResourceCreationTypeUIBean {
     public String determineCreationType() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         ResourceType resourceType;
+
+        // When the drop down was removed, a link containing the ID as a request parameter was added. Handle
+        // that ID now to load the failed request if there was one. 
+        HttpServletRequest request = FacesContextUtility.getRequest();
+        String sRetryCreateItemId = request.getParameter("retryCreateItemId");
+
+        if (sRetryCreateItemId != null) {
+            ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
+            int retryCreateItemId = Integer.parseInt(sRetryCreateItemId);
+            retryCreateItem = resourceFactoryManager.getCreateHistoryItem(retryCreateItemId);
+        }
+
         if (this.retryCreateItem != null) {
             // This is a retry of an earlier failed create request.
             // Any data that should be prepopulated into the resulting workflow will be loaded. For instance, if the create
@@ -162,4 +175,5 @@ public class DetermineChildResourceCreationTypeUIBean {
     public void setRetryCreateItem(CreateResourceHistory retryCreateItem) {
         this.retryCreateItem = retryCreateItem;
     }
+
 }

@@ -455,6 +455,7 @@
       <h:outputText styleClass="headerText" value="Resubmit"/>
    </f:facet>
    <h:commandLink action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" rendered="#{item.status eq 'FAILURE'}">
+      <f:param name="retryCreateItemId" value="#{item.id}"/>
       <h:outputText value="Resubmit"/>
    </h:commandLink>
 </rich:column>

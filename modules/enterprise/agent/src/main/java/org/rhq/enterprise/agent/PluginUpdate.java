@@ -343,7 +343,7 @@ public class PluginUpdate {
                 File plugin = new File(plugin_dir, plugin_filename);
                 if (plugin.exists()) {
                     File plugin_backup = new File(plugin_dir, plugin_filename + ".REJECTED");
-                    LOG.info(AgentI18NResourceKeys.PLUGIN_NOT_ON_SERVER, plugin_filename, plugin_backup.getName());                                        
+                    LOG.warn(AgentI18NResourceKeys.PLUGIN_NOT_ON_SERVER, plugin_filename, plugin_backup.getName());
                     try {
                         plugin_backup.delete(); // in case an old backup is for some reason still here, get rid of it
                         boolean renamed = plugin.renameTo(plugin_backup);

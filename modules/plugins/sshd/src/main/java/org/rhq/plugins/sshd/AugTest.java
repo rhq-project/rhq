@@ -28,7 +28,7 @@ public class AugTest {
 
 
     public static void main(String[] args) {
-        Augeas aug = new Augeas("/tmp/augeas-sandbox/", "/usr/local/share/augeas/lenses");
+        Augeas aug = new Augeas("/usr/local/share/augeas/lenses");
 
 //        List<String> matches = aug.match("/files/etc/ssh/sshd_config/*");
 //        for (String match : matches) {

@@ -21,7 +21,7 @@
                                description="Path from which augeas should begin to search for configuration files. Example: /"/>
          </c:group>
          <c:group name="sshd" displayName="SSHD Settings">
-            <c:simple-property name="config-directory" displayName="SSHD Configuration Path"
+            <c:simple-property name="config-path" displayName="SSHD Configuration Path"
                                default="/files/etc/ssh/sshd_config" description="Augeas path to the sshd configuration files."/>
          </c:group>
       </plugin-configuration>
@@ -182,6 +182,7 @@
 
          <c:group name="Advanced">
 
+            <!--
             <c:list-property name="AcceptEnvList">
                <c:map-property name="ac">
                   <c:simple-property name="AcceptEnv" required="false" description="
@@ -198,7 +199,8 @@
              any environment variables."/>
                </c:map-property>
             </c:list-property>
-
+            -->
+            
             <c:simple-property name="AddressFamily" required="false" description="
              Specifies which address family should be used by sshd(8).  Valid
              arguments are ``any'', ``inet'' (use IPv4 only), or ``inet6''

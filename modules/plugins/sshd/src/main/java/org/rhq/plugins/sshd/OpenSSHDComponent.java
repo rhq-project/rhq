@@ -82,9 +82,25 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
-
         Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
+        ConfigurationDefinition resourceConfigurationDefinition =
+            resourceContext.getResourceType().getResourceConfigurationDefinition();
 
+        return loadResourceConfiguration(pluginConfiguration, resourceConfigurationDefinition);
+    }
+
+    /**
+     * Performs the actual loading of a SSHD resource configuration. This method makes no calls to the resource
+     * context or any of the instance variables populated by this component's startup to facilitate testing.
+     *
+     * @param pluginConfiguration             contains values on how to retrieve the configuration
+     * @param resourceConfigurationDefinition from the plugin descriptor, this describes the properties to retrieve
+     *
+     * @return values describing the configuration of the SSHD process
+     *
+     * @throws Exception if the augeas configuration is incorrect and the configuration cannot be loaded
+     */
+    public Configuration loadResourceConfiguration(Configuration pluginConfiguration, ConfigurationDefinition resourceConfigurationDefinition) throws Exception {
         // Gather data necessary to create the Augeas hook
         PropertySimple lensesPathProperty = pluginConfiguration.getSimple("lenses-path");
 
@@ -104,7 +120,7 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
         Augeas augeas = new Augeas(rootPath, lensesPath);
 
         // Find out where to look for sshd configuration files
-        PropertySimple sshdPathProperty = pluginConfiguration.getSimple("config-directory");
+        PropertySimple sshdPathProperty = pluginConfiguration.getSimple("config-path");
 
         if (sshdPathProperty == null) {
             throw new Exception("SSHD configuration path not found in plugin configuration, cannot retrive configuration");
@@ -122,8 +138,6 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
             throw new Exception("Unable to load sshd_config data from augeas");
         }
 
-        ConfigurationDefinition resourceConfigurationDefinition =
-            resourceContext.getResourceType().getResourceConfigurationDefinition();
         Collection<PropertyDefinition> properties = resourceConfigurationDefinition.getPropertyDefinitions().values();
 
         Configuration config = new Configuration();

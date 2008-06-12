@@ -45,6 +45,15 @@ DB Upgrade:
             columnType="VARCHAR2"
             precision="256" />
     </schemaSpec>
+	
+    <schemaSpec version="2.2">
+        <!-- RHQ-481 make resource names longer -->
+        <schema-alterColumn
+            table="RHQ_RESOURCE"
+            column="NAME" 
+            columnType="VARCHAR2"
+            precision="500" />
+    </schemaSpec>
 </dbupgrade>
 
 </target>

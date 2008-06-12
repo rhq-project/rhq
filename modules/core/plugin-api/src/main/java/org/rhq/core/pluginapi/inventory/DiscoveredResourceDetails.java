@@ -20,6 +20,7 @@ package org.rhq.core.pluginapi.inventory;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
@@ -41,7 +42,7 @@ import org.rhq.core.system.ProcessInfo;
  */
 public class DiscoveredResourceDetails {
     private static final int RESOURCE_KEY_MAX_LENGTH = 500;
-    private static final int RESOURCE_NAME_MAX_LENGTH = 100;
+    private static final int RESOURCE_NAME_MAX_LENGTH = 500;
     private static final int RESOURCE_VERSION_MAX_LENGTH = 50;
     private static final int RESOURCE_DESCRIPTION_MAX_LENGTH = 1000;
 
@@ -280,6 +281,7 @@ public class DiscoveredResourceDetails {
         this.pluginConfiguration = pluginConfiguration;
     }
 
+    @Override
     public String toString() {
         StringBuffer buf = new StringBuffer();
 
@@ -297,6 +299,7 @@ public class DiscoveredResourceDetails {
         return buf.toString();
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -319,6 +322,7 @@ public class DiscoveredResourceDetails {
         return true;
     }
 
+    @Override
     public int hashCode() {
         int result;
         result = resourceType.hashCode();

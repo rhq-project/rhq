@@ -4,7 +4,6 @@
         displayName="MySql Database"
         package="org.rhq.plugins.mysql"
         description="Management and monitoring of MySql versions 8.2 and higher"
-        version="2.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">

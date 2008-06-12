@@ -572,18 +572,17 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             version = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
         }
         ComparableVersion comparableVersion;
-        if (version != null) {
-            try {
-                comparableVersion = new ComparableVersion(version);
-            } catch (RuntimeException e) {
-                throw new DeploymentException("Failed to parse version (" + version + ") for plugin jar '"
-                    + pluginJarFileName + ".", e);
-            }
-        } else {
+        if (version == null) {
             throw new DeploymentException("No version is defined for plugin jar '" + pluginJarFileName
                 + "'. A version must be defined either via the MANIFEST.MF '"
                 + Attributes.Name.IMPLEMENTATION_VERSION
                 + "' attribute or via the plugin descriptor 'version' attribute.");
+        }
+        try {
+            comparableVersion = new ComparableVersion(version);
+        } catch (RuntimeException e) {
+            throw new DeploymentException("Failed to parse version (" + version + ") for plugin jar '"
+                + pluginJarFileName + "'.", e);
         }
         return comparableVersion;
     }

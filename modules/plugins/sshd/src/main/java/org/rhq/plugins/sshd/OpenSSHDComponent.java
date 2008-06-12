@@ -92,8 +92,16 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
             throw new Exception("Lenses path not found in plugin configuration, cannot retrieve configuration");
         }
 
+        PropertySimple rootPathProperty = pluginConfiguration.getSimple("root-path");
+
+        if (rootPathProperty == null) {
+            throw new Exception("Root path not found in plugin configuration, cannot retrieve configuration");
+        }
+
         String lensesPath = lensesPathProperty.getStringValue();
-        Augeas augeas = new Augeas(lensesPath);
+        String rootPath = rootPathProperty.getStringValue();
+
+        Augeas augeas = new Augeas(rootPath, lensesPath);
 
         // Find out where to look for sshd configuration files
         PropertySimple sshdPathProperty = pluginConfiguration.getSimple("config-directory");

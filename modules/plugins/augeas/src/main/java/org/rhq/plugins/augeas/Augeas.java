@@ -19,50 +19,58 @@
 
 package org.rhq.plugins.augeas;
 
-import com.sun.jna.ptr.PointerByReference;
-import com.sun.jna.Pointer;
-import com.sun.jna.NativeLibrary;
-
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import com.sun.jna.NativeLibrary;
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
- *
  * @author Greg Hinkle
+ * @author Jason Dobies
  */
 public class Augeas {
 
     protected LibAugeas.Augeas_T augeas_t;
 
-    public Augeas(String loadPath) {
+    private final Log log = LogFactory.getLog(this.getClass());
+
+    public Augeas() {
+        this("/", "/usr/local/share/augeas/lenses");
+    }
+
+    public Augeas(String rootPath, String loadPath) {
+        // Paths to search for the libaugeas.so files. I've seen Ubuntu installation instructions for augeas
+        // that encourage creating symbolic links in this directory, so this should be safe to rely on.
         NativeLibrary.addSearchPath("augeas", "/usr/local/lib");
 
-        this.augeas_t =
-            LibAugeas.INSTANCE.aug_init(
-                "/tmp/augeas-sandbox/",
-                "/usr/local/share/augeas/lenses",
-                LibAugeas.AugFlags.AUG_SAVE_BACKUP.getIndex());
-
+        this.augeas_t = LibAugeas.INSTANCE.aug_init(rootPath, loadPath, LibAugeas.AugFlags.AUG_SAVE_BACKUP.getIndex());
     }
 
     public void outputTree(String path) {
         outputTree(path, 0);
     }
-    private void outputTree(String path, int depth) {
-        for (int i = 0; i < depth; i++)
-            System.out.print("  ");
 
-        System.out.println(path + " = " + get(path));
+    public void outputTree(String path, int depth) {
+
+        StringBuffer depthIndent = new StringBuffer();
+        for (int i = 0; i < depth; i++)
+            depthIndent.append("  ");
+
+        log.info(depthIndent + path + " = " + get(path));
 
         for (String child : match(path + "/*")) {
-            outputTree(child, depth+1);
+            outputTree(child, depth + 1);
         }
     }
 
     public String get(String path) {
         PointerByReference ref = new PointerByReference();
-        int code = LibAugeas.INSTANCE.aug_get(augeas_t, path, ref);
-        if (ref != null) {
+        LibAugeas.INSTANCE.aug_get(augeas_t, path, ref);
+
+        if (ref.getValue() != null) {
             return ref.getValue().getString(0);
         } else {
             return null;
@@ -78,14 +86,10 @@ public class Augeas {
         List<String> matchPaths = new ArrayList<String>();
 
         for (int i = 0; i < matches; i++) {
-//            System.out.println("Found: " + refs[i].getString(0));
             matchPaths.add(refs[i].getString(0));
-//            System.out.println("Value: " + LibAugeas.INSTANCE.aug_get(augeas_t, refs[i].getString(0)));
         }
         return matchPaths;
     }
-
-
 
     public void save() {
         int result = LibAugeas.INSTANCE.aug_save(augeas_t);

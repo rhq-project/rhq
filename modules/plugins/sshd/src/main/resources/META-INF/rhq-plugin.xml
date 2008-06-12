@@ -16,11 +16,13 @@
       <plugin-configuration>
          <c:group name="augeas" displayName="Augeas Settings">
             <c:simple-property name="lenses-path" displayName="Augeas Lenses Path" default="/usr/local/share/augeas/lenses" 
-                               description="Full path to the augeas lenses directory."/>
+                               description="Full path to the augeas lenses directory. Example: /usr/local/share/augeas/lenses"/>
+            <c:simple-property name="root-path" displayName="Augeas Root Path" default="/"
+                               description="Path from which augeas should begin to search for configuration files. Example: /"/>
          </c:group>
          <c:group name="sshd" displayName="SSHD Settings">
             <c:simple-property name="config-directory" displayName="SSHD Configuration Path"
-                               default="/files/etc/ssh/sshd_config" description="Full path to the sshd configuration files."/>
+                               default="/files/etc/ssh/sshd_config" description="Augeas path to the sshd configuration files."/>
          </c:group>
       </plugin-configuration>
 

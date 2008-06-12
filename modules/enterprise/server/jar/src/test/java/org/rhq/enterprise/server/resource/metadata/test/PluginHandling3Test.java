@@ -692,7 +692,7 @@ public class PluginHandling3Test extends TestBase {
     }
 
     @Test
-    public void testAutoCreateChidlSubCategory() throws Exception {
+    public void testAutoCreateChildSubCategory() throws Exception {
         System.out.println("= testAutoCreateChildSubCategory");
         getTransactionManager().begin();
         try {
@@ -706,8 +706,8 @@ public class PluginHandling3Test extends TestBase {
     }
 
     @Test
-    public void testDuplicateResorceType() throws Exception {
-        System.out.println("= testDuplicateResorceType");
+    public void testDuplicateResourceType() throws Exception {
+        System.out.println("= testDuplicateResourceType");
         getTransactionManager().begin();
         try {
             System.out.println(" A stack trace coming out of this is expected");
@@ -717,6 +717,50 @@ public class PluginHandling3Test extends TestBase {
             assert false : "We should not have hit this line";
         } catch (Exception e) {
             ; // We expect an exception to come out of the ResourceMetadataManager
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    /*==================================== Resource Config Tests ======================================*/
+
+    @Test
+    public void testGroupDeleted() throws Exception {
+        System.out.println("= testGroupDeleted");
+        getTransactionManager().begin();
+        try {
+            registerPlugin("./test/metadata/resourceConfig/groupDeleted-v1.xml");
+            System.out.println("==> Done with v1");
+            registerPlugin("./test/metadata/resourceConfig/groupDeleted-v2.xml");
+            System.out.println("==> Done with v2");
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test
+    public void testGroupPropDeleted() throws Exception {
+        System.out.println("= testGroupPropDeleted");
+        getTransactionManager().begin();
+        try {
+            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v1.xml");
+            System.out.println("==> Done with v1");
+            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v2.xml");
+            System.out.println("==> Done with v2");
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test
+    public void testGroupPropMoved() throws Exception {
+        System.out.println("= testGroupPropMoved");
+        getTransactionManager().begin();
+        try {
+            registerPlugin("./test/metadata/resourceConfig/groupPropMoved-v1.xml");
+            System.out.println("==> Done with v1");
+            registerPlugin("./test/metadata/resourceConfig/groupPropMoved-v2.xml");
+            System.out.println("==> Done with v2");
         } finally {
             getTransactionManager().rollback();
         }

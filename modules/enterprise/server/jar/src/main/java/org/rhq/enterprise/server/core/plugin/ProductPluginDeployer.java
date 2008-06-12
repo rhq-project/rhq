@@ -543,13 +543,33 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             throw new DeploymentException("Failed to parse plugin descriptor for plugin jar '" + pluginJarFileName
                 + "'.", e);
         }
-        Manifest manifest = deploymentInfo.getManifest();
-        String version = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+        ComparableVersion version = getPluginVersion(deploymentInfo, descriptor);
+        String pluginName = descriptor.getName();
+        ComparableVersion existingVersion = this.pluginVersions.get(pluginName);
+        boolean newerThanExistingVersion = false;
+        if (existingVersion != null) {
+            if (version != null && version.compareTo(existingVersion) > 0) {
+                newerThanExistingVersion = true;
+                log.debug("Newer version of '" + pluginName + "' plugin found (version " + version
+                    + ") - older version (" + existingVersion + ") will be ignored.");
+            }
+        }
+        if (existingVersion == null || newerThanExistingVersion) {
+            this.pluginDescriptors.put(pluginName, descriptor);
+            this.pluginVersions.put(pluginName, version);
+            this.pluginsToBeRegistered.put(pluginName, deploymentInfo);
+        }
+    }
+
+    private ComparableVersion getPluginVersion(DeploymentInfo deploymentInfo, PluginDescriptor descriptor) throws DeploymentException {
+        String pluginJarFileName = deploymentInfo.url.getFile();
+        String version = descriptor.getVersion();
         if (version == null) {
-            log.warn("'" + Attributes.Name.IMPLEMENTATION_VERSION
-                + "' attribute not found in MANIFEST.MF of plugin jar '" + pluginJarFileName
-                + "'. Falling back to version defined in plugin descriptor...");
-            version = descriptor.getVersion();
+            log.debug("No version is specified in the plugin descriptor; falling back to '"
+                + Attributes.Name.IMPLEMENTATION_VERSION
+                + "' attribute from MANIFEST.MF of plugin jar (" + pluginJarFileName + ")...");
+            Manifest manifest = deploymentInfo.getManifest();
+            version = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
         }
         ComparableVersion comparableVersion;
         if (version != null) {
@@ -560,26 +580,11 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
                     + pluginJarFileName + ".", e);
             }
         } else {
-            log.warn("No version is defined for plugin jar '" + pluginJarFileName
-                + "'. A version should be defined either via the MANIFEST.MF '"
+            throw new DeploymentException("No version is defined for plugin jar '" + pluginJarFileName
+                + "'. A version must be defined either via the MANIFEST.MF '"
                 + Attributes.Name.IMPLEMENTATION_VERSION
                 + "' attribute or via the plugin descriptor 'version' attribute.");
-            comparableVersion = null;
         }
-        String pluginName = descriptor.getName();
-        ComparableVersion existingComparableVersion = this.pluginVersions.get(pluginName);
-        boolean newerThanExistingVersion = false;
-        if (existingComparableVersion != null) {
-            if (comparableVersion != null && comparableVersion.compareTo(existingComparableVersion) > 0) {
-                newerThanExistingVersion = true;
-                log.debug("Newer version of '" + pluginName + "' plugin found (version " + version
-                    + ") - older version (" + existingComparableVersion + ") will be ignored.");
-            }
-        }
-        if (existingComparableVersion == null || newerThanExistingVersion) {
-            this.pluginDescriptors.put(pluginName, descriptor);
-            this.pluginVersions.put(pluginName, comparableVersion);
-            this.pluginsToBeRegistered.put(pluginName, deploymentInfo);
-        }
+        return comparableVersion;
     }
 }

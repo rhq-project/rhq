@@ -4,7 +4,6 @@
         displayName="Jira Server"
         package="org.rhq.plugins.jira"
         description="Monitoring of an Atlassian Jira Server"
-        version="2.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">

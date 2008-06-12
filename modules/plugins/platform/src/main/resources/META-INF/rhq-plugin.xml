@@ -117,7 +117,6 @@
 <plugin name="Platforms"
         displayName="Operating System Platforms"
         package="org.rhq.plugins.platform"
-        version="2.0"
         description="Management and monitoring of operating system level functions"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"

@@ -4,7 +4,6 @@
         displayName="RHQ Agent"
         package="org.rhq.plugins.agent"
         description="Management and monitoring of the RHQ Agent"
-        version="2.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">

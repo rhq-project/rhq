@@ -19,19 +19,17 @@
 
 package org.rhq.plugins.sshd;
 
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ProcessScanResult;
-import org.rhq.core.system.ProcessInfo;
-
-import java.util.Set;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ProcessScanResult;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.system.ProcessInfo;
 
 /**
- *
  * @author Greg Hinkle
  */
 public class OpenSSHDDiscoveryComponent implements ResourceDiscoveryComponent {
@@ -39,19 +37,15 @@ public class OpenSSHDDiscoveryComponent implements ResourceDiscoveryComponent {
     public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException, Exception {
 
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
-         for (ProcessScanResult result : ((List <ProcessScanResult>)resourceDiscoveryContext.getAutoDiscoveredProcesses())) {
+        for (ProcessScanResult result : ((List<ProcessScanResult>) resourceDiscoveryContext.getAutoDiscoveredProcesses())) {
 
-            ProcessInfo info  = result.getProcessInfo();
+            ProcessInfo info = result.getProcessInfo();
 
-            DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-                resourceDiscoveryContext.getResourceType(),
-                    "sshd",
-                    "OpenSSH sshd",
-                    "1",
-                    "Open SSH Daemon " + info.getName(),
-                    null,
-                    null);
-            
+            // TODO: Add version extraction
+            DiscoveredResourceDetails detail =
+                new DiscoveredResourceDetails(resourceDiscoveryContext.getResourceType(), "sshd", "OpenSSH sshd", "1.0",
+                    "Open SSH Daemon " + info.getName(), null, null);
+
             details.add(detail);
         }
 

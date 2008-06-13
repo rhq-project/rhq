@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-plugins-parent</artifactId>
-      <version>1.0.1-SNAPSHOT</version>
+      <version>1.0.1.CR1</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
    <description>a plugin for monitoring RHQ agents</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/rhq-agent/</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/rhq-agent/</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_1_CR1/modules/plugins/rhq-agent</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_1_CR1/modules/plugins/rhq-agent</developerConnection>
    </scm>
 
    <properties>
@@ -179,12 +179,10 @@
                           <tasks>                             
                              <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />                             
                              <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
-                             <unjar src="${project.build.directory}/${project.build.finalName}.jar" 
-                                    dest="${project.build.outputDirectory}">
+                             <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
                                <patternset><include name="META-INF/**" /></patternset>
                              </unjar>
-                             <jar destfile="${deployment.file}" 
-                                  manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">                                
+                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">                                
                              </jar>
                           </tasks>
                         </configuration>

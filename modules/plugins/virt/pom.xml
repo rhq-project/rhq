@@ -227,6 +227,27 @@
                          </goals>
                       </execution>
 
+                     <execution>
+                        <id>deploy-jar-meta-inf</id>
+                        <phase>package</phase>
+                        <configuration>
+                          <tasks>                             
+                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />                             
+                             <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
+                             <unjar src="${project.build.directory}/${project.build.finalName}.jar" 
+                                    dest="${project.build.outputDirectory}">
+                               <patternset><include name="META-INF/**" /></patternset>
+                             </unjar>
+                             <jar destfile="${deployment.file}" 
+                                  manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">                                
+                             </jar>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+                      
                       <execution>
                          <id>undeploy</id>
                          <phase>clean</phase>

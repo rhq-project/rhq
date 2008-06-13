@@ -1,0 +1,48 @@
+<plugin name="Apt"
+        displayName="Apt"
+        description="Support for apt configuration"
+        package="org.rhq.plugins.apt"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="Augeas"/>
+
+   <server name="Apt Sources"
+            description="Package list for APT"
+            discovery="AptSourcesDiscoveryComponent"
+            class="AptSourcesComponent">
+
+      <plugin-configuration>
+         <c:group name="augeas" displayName="Augeas Settings">
+            <c:simple-property name="lenses-path" displayName="Augeas Lenses Path"
+                               default="/usr/local/share/augeas/lenses" required="true"
+                               description="Full path to the augeas lenses directory. Example: /usr/local/share/augeas/lenses"/>
+            <c:simple-property name="root-path" displayName="Augeas Root Path" default="/" required="true"
+                               description="Path from which augeas should begin to search for configuration files. Example: /"/>
+         </c:group>
+         <c:group name="apt" displayName="Apt Settings">
+            <c:simple-property name="apt-sources-path" displayName="Apt Sources File Path" required="true"
+                               default="/etc/apt/sources.list" description="Location of the apt sources file."/>
+            <c:simple-property name="augeas-apt-sources-path" displayName="Augeas Apt Sources Tree Path" required="true"
+                               default="/files/etc/apt/sources.list/*" description="Augeas tree location of the apt sources configuration values."/>
+         </c:group>
+      </plugin-configuration>
+
+      <resource-configuration>
+
+         <c:list-property name="aptEntries">
+            <c:map-property name="aptEntry">
+               <c:simple-property name="type" displayName="Type" type="string" required="true" activationPolicy="restart"
+                                  description="Type of packages found in the source, typically binaries v. source."/>                                         
+               <c:simple-property name="uri" displayName="URI" type="string" required="true" activationPolicy="restart"
+                                  description="Location of the repository."/>
+               <c:simple-property name="distribution" displayName="Distribution" type="string" required="true" activationPolicy="restart"/>
+            </c:map-property>
+         </c:list-property>
+      </resource-configuration>
+
+
+   </server>
+
+</plugin>

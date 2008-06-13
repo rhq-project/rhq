@@ -1,0 +1,47 @@
+<plugin name="Hosts"
+        displayName="Hosts Server"
+        description="Support for *nix hosts service"
+        package="org.rhq.plugins.hosts"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="Augeas"/>
+
+   <server name="Hosts"
+            description="The static table lookup for host names"
+            discovery="HostsDiscoveryComponent"
+            class="HostsComponent">
+
+      <plugin-configuration>
+         <c:group name="augeas" displayName="Augeas Settings">
+            <c:simple-property name="lenses-path" displayName="Augeas Lenses Path"
+                               default="/usr/local/share/augeas/lenses" required="true"
+                               description="Full path to the augeas lenses directory. Example: /usr/local/share/augeas/lenses"/>
+            <c:simple-property name="root-path" displayName="Augeas Root Path" default="/" required="true"
+                               description="Path from which augeas should begin to search for configuration files. Example: /"/>
+         </c:group>
+         <c:group name="hosts" displayName="Hosts Settings">
+            <c:simple-property name="hosts-path" displayName="Hosts File Path" required="true"
+                               default="/etc/hosts" description="Location of the hosts file."/>
+            <c:simple-property name="augeas-hosts-path" displayName="Augeas Hosts Tree Path" required="true"
+                               default="/files/etc/hosts/*" description="Augeas tree location of the hosts configuration values. Queries to augeas will append '/*' to the end of this value."/>
+         </c:group>
+      </plugin-configuration>
+
+      <resource-configuration>
+
+         <c:list-property name="hostEntries">
+            <c:map-property name="hostEntry">
+               <c:simple-property name="ip" displayName="IP Address" type="string" required="true" activationPolicy="immediate"
+                                  description="IP address of the host entry."/>
+               <c:simple-property name="canonical" displayName="Canonical Name" type="string" required="true" activationPolicy="immediate"
+                                  description="Canonical name to refer to the IP"/>
+            </c:map-property>
+         </c:list-property>
+      </resource-configuration>
+
+
+   </server>
+
+</plugin>

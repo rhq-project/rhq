@@ -109,7 +109,7 @@ public class HostsComponent implements ResourceComponent, ConfigurationFacet {
         // Request data from augeas
         List<String> matches = augeas.match(hostsTreeNode);
         if (matches.size() == 0) {
-            throw new Exception("Unable to load sshd_config data from augeas");
+            throw new Exception("Unable to load hosts data from augeas");
         }
 
         // Parse out the properties

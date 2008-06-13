@@ -733,6 +733,8 @@ public class PluginHandling3Test extends TestBase {
             System.out.println("==> Done with v1");
             registerPlugin("./test/metadata/resourceConfig/groupDeleted-v2.xml");
             System.out.println("==> Done with v2");
+            registerPlugin("./test/metadata/resourceConfig/groupDeleted-v1.xml");
+            System.out.println("==> Done with v1");
         } finally {
             getTransactionManager().rollback();
         }
@@ -747,6 +749,8 @@ public class PluginHandling3Test extends TestBase {
             System.out.println("==> Done with v1");
             registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v2.xml");
             System.out.println("==> Done with v2");
+            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v1.xml");
+            System.out.println("==> Done with v1");
         } finally {
             getTransactionManager().rollback();
         }
@@ -761,6 +765,8 @@ public class PluginHandling3Test extends TestBase {
             System.out.println("==> Done with v1");
             registerPlugin("./test/metadata/resourceConfig/groupPropMoved-v2.xml");
             System.out.println("==> Done with v2");
+            registerPlugin("./test/metadata/resourceConfig/groupPropMoved-v1.xml");
+            System.out.println("==> Done with v1");
         } finally {
             getTransactionManager().rollback();
         }

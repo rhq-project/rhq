@@ -36,7 +36,7 @@
                <c:simple-property name="ip" displayName="IP Address" type="string" required="true" activationPolicy="immediate"
                                   description="IP address of the host entry."/>
                <c:simple-property name="canonical" displayName="Canonical Name" type="string" required="true" activationPolicy="immediate"
-                                  description="Canonical name to refer to the IP"/>
+                                  description="Canonical name to refer to the IP."/>
             </c:map-property>
          </c:list-property>
       </resource-configuration>

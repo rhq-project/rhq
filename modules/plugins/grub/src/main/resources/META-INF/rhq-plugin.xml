@@ -1,0 +1,48 @@
+<plugin name="GRUB"
+        displayName="GRUB Boot Loader"
+        description="Supports configuration of the GRUB boot loader"
+        package="org.rhq.plugins.grub"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="Augeas"/>
+
+   <server name="GRUB"
+           description="The GRUB boot loader"
+           discovery="GrubDiscoveryComponent"
+           class="GrubComponent">
+
+      <plugin-configuration>
+         <c:group name="augeas" displayName="Augeas Settings">
+            <c:simple-property name="lenses-path" displayName="Augeas Lenses Path"
+                               default="/usr/local/share/augeas/lenses" required="true"
+                               description="Full path to the augeas lenses directory. Example: /usr/local/share/augeas/lenses"/>
+            <c:simple-property name="root-path" displayName="Augeas Root Path" default="/" required="true"
+                               description="Path from which augeas should begin to search for configuration files. Example: /"/>
+         </c:group>
+         <c:group name="grub" displayName="GRUB Settings">
+            <c:simple-property name="grub-conf-path" displayName="grub.conf File Path" required="true" readOnly="true"
+                               default="/etc/grub.conf" description="Location of the grub.conf file. Currently, there is only support for the GRUB file located at /etc/grub.conf (this cannot be edited)."/>
+            <c:simple-property name="augeas-grub-path" displayName="Augeas GRUB Tree Path" required="true"
+                               default="/files/etc/grub.conf/*" description="Augeas tree location of the grub.conf configuration values."/>
+         </c:group>
+      </plugin-configuration>
+
+      <resource-configuration>
+
+         <c:map-property name="generalProperties"/>
+
+         <c:list-property name="kernelEntries">
+            <c:map-property name="kernelEntry">
+               <c:simple-property name="title" displayName="Title" type="string" required="true" activationPolicy="restart"/>
+               <c:simple-property name="root" displayName="Root" type="string" required="true" activationPolicy="restart"/>
+               <c:simple-property name="kernel" displayName="Kernel" type="string" required="true" activationPolicy="restart"/>
+               <c:simple-property name="initrd" displayName="Initrd" type="string" required="true" activationPolicy="restart"/>
+            </c:map-property>
+         </c:list-property>
+      </resource-configuration>
+
+   </server>
+
+</plugin>

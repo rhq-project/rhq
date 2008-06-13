@@ -25,7 +25,7 @@
             <c:simple-property name="hosts-path" displayName="Hosts File Path" required="true"
                                default="/etc/hosts" description="Location of the hosts file."/>
             <c:simple-property name="augeas-hosts-path" displayName="Augeas Hosts Tree Path" required="true"
-                               default="/files/etc/hosts/*" description="Augeas tree location of the hosts configuration values. Queries to augeas will append '/*' to the end of this value."/>
+                               default="/files/etc/hosts/*" description="Augeas tree location of the hosts configuration values."/>
          </c:group>
       </plugin-configuration>
 

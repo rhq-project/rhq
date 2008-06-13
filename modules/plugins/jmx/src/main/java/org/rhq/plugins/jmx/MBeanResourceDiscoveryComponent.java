@@ -103,7 +103,7 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
         ObjectNameQueryUtility queryUtility =
                 new ObjectNameQueryUtility(
                         objectNameQueryTemplate,
-                        this.discoveryContext.getParentResourceContext().getPluginConfiguration());
+                        (this.discoveryContext != null)? this.discoveryContext.getParentResourceContext().getPluginConfiguration() : null);
 
         EmsConnection connection = parentResourceComponent.getEmsConnection();
 

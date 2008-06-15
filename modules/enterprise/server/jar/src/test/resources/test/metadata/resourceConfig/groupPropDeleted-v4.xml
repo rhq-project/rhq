@@ -1,0 +1,275 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        version="1"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <platform name="groupDeletedPlatform">
+        <resource-configuration>
+            <c:simple-property name="foobar" type="longString" description="blah blah blah"/>
+                <c:group name="advanced" displayName="Advanced">
+
+                    <c:simple-property name="application-managed-security"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="Application Managed Security"
+                                       required="false">
+                        <c:description>Specifying this element indicates that connections in the pool should be distinguished
+                            by application code supplied parameters, such as from getConnection(user, pw). This requires
+                        that you set a security domain which will populate a security-domain-and-application tag. If it is missing
+                        this resource will not be created or saved.</c:description>
+                    </c:simple-property>
+
+                    <c:simple-property name="security-domain"
+                                       type="string"
+                                       activationPolicy="immediate"
+                                       displayName="Security Domain/Security Domain and Application"
+                                       required="false">
+                        <c:description>Indicates Subjects from security domain are used to distinguish connections in
+                            this pool. If Application Managed Security is set to true, then this will create a security-domain
+                            tag. If it is set to false or unset, then this property will populate a security-domain-and-application
+                            tag.
+                        </c:description>
+                        <c:defaultValueDescription>If nothing is specified, the default will be to use a single pool of
+                            equivalent connections.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+
+                    <c:simple-property name="adapter-display-name"
+                                       type="string"
+                                       activationPolicy="immediate"
+                                       displayName="Adapter Display Name"
+                                       description="used to identify the RAR deployment matching the display-name in the ra.xml"
+                                       required="false">
+                    </c:simple-property>
+
+                    <!-- @TODO bring back when ui can do List of Simples
+                    <c:list-property name="depends"
+                                     displayName="Depends"
+                                     description="The depends element specifies the JMX ObjectName string of a service that
+                                        the connection manager services depend on. The connection manager service will
+                                        not be started until the dependent services have been started."
+                                     required="false">
+                        <c:simple-property name="dependObjectName"
+                                           type="string"
+                                           activationPolicy="immediate"
+                                           displayName="ObjectName"
+                                           required="false"/>
+                    </c:list-property>-->
+
+                    <c:simple-property name="depends"
+                                     displayName="Depends"
+                                     description="The depends element specifies the JMX ObjectName string of a service that
+                                        the connection manager services depend on. The connection manager service will
+                                        not be started until the dependent services have been started."
+                                     required="false"
+                                     type="string"
+                                     activationPolicy="immediate"
+                                     />
+
+                    <c:simple-property name="rar-name"
+                                        type="string"
+                                        activationPolicy="immediate"
+                                        displayName="Rar Name"
+                                        description="This is the name of the RAR file that contains the definition for the
+                                        resource we want to provide. For nested RAR files, the name would look like
+                                        myapplication.ear#my.rar."
+                                        required="true"/>
+
+                    <c:simple-property name="connection-definition"
+                                        type="string"
+                                        activationPolicy="immediate"
+                                        displayName="Connection Definition"
+                                        description="This is the connection factory interface class. It should match the
+                                        connectionfactory-interface in the ra.xml file."
+                                        required="true"/>
+
+                   <c:simple-property name="type-mapping"
+                                       type="string"
+                                       activationPolicy="immediate"
+                                       displayName="Type Mappings"
+                                       description="This element declares a default type mapping for this datasource. The
+                                       type mapping should match a type-mapping/name element from standardjbosscmp-jdbc.xml."
+                                       required="false"/>
+
+                    <c:simple-property name="use-java-context"
+                                       displayName="Use Java Context"
+                                       description="Indicates if the JNDI name should be prefixed with java:."
+                                       type="boolean"
+                                       required="false">
+                        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+
+                    <c:simple-property name="transaction-type"
+                                       type="string"
+                                       displayName="Transaction Type"
+                                       default="true"
+                                       description="Whether to use local or xa transactions. If nothing is specified, the default of local will be used."
+                                       required="false">
+                        <c:property-options>
+                            <c:option value="Local Transaction" default="true"/>
+                            <c:option value="XA Transaction"/>
+                        </c:property-options>
+                    </c:simple-property>
+
+                    <!--<c:simple-property name="local-transaction"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="Local Transaction"
+                                       required="false">
+                        <c:description>Whether on not to use local transactions.</c:description>
+                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+
+                    <c:simple-property name="xa-transaction"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="XA Transaction"
+                                       required="false">
+                        <c:description>Whether on not to use XA transactions.</c:description>
+                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>-->
+
+                    <c:simple-property name="no-tx-separate-pools"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="No Tx Separate Pools"
+                                       required="false">
+                        <c:description>The presence of this element indicates that two connection pools are required to
+                            isolate connections used with JTA transaction from those used without a JTA transaction.
+                            The pools are lazily constructed on first use. Its use case is for Oracle
+                            (and possibly other vendors) XA implementations that don't like using an XA connection with
+                            and without a JTA transaction.</c:description>
+                        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+
+                    <c:simple-property name="track-connection-by-tx"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="Track Connection By Transaction"
+                                       required="false">
+                        <c:description>Whether the connection should be locked into the transaction.</c:description>
+                    </c:simple-property>
+
+                    <c:simple-property name="isSameRM-override-value"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="isSameRM Override Value"
+                                       required="false">
+                        <c:description>Allows one to unconditionally set whether the
+                            javax.transaction.xa.XAResource.isSameRMXAResource returns true or false. The default is not
+                            to override the return value.
+                        </c:description>
+                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+
+                    <c:simple-property name="use-strict-min"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="Use Strict Minimum"
+                                       required="false">
+                        <c:description>Whether on not to use strict minumum.</c:description>
+                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+
+                    <c:simple-property name="prefill"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="Prefill"
+                                       description="Prefill the Pool with Connection objects, or lazy load objects in the pool" required="false">
+                        <c:description>Whether or not to use prefill.</c:description>
+                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+
+                    <c:simple-property name="blocking-timeout-millis"
+                                       displayName="Blocking Timeout in Milliseconds"
+                                       units="milliseconds"
+                                       activationPolicy="immediate"
+                                       type="integer"
+                                       required="false">
+                        <c:description>
+                            Indicates the maximum time in milliseconds to block while waiting for a connection before throwing
+                            an exception. Note that this blocks only while waiting for a permit for a connection, and will never
+                            throw an exception if creating a new connection takes an inordinately long time. If nothing is specified
+                            the default of 30000 milliseconds is used.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="0"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property name="idle-timeout-minutes"
+                                       type="integer"
+                                       activationPolicy="immediate"
+                                       displayName="Idle Timeout"
+                                       units="minutes"
+                                       required="false">
+                        <c:description>Maximum time in minutes a connection can be idle before it is closed.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="0"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <!-- XA ONLY-->
+                    <c:simple-property name="xa-resource-timeout"
+                                       type="integer"
+                                       activationPolicy="immediate"
+                                       displayName="XA Resource Timeout"
+                                       units="minutes"
+                                       required="false">
+                        <c:description>Maximum time in minutes an XA Resource can be idle before it is removed.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="0"/>
+                        </c:constraint>
+                    </c:simple-property>
+                    <!-- XA ONLY-->
+
+                    <c:simple-property name="new-connection-sql"
+                                       displayName="New Connection SQL"
+                                       type="string"
+                                       required="false"
+                                       description="Specify an SQL statement to execute whenever a connection is added to
+                                       the connection pool."/>
+
+                    <c:simple-property name="check-valid-connection-sql"
+                                       displayName="Check Valid Connection SQL"
+                                       type="string"
+                                       required="false"
+                                       description="Specify an SQL statement to check validity of a pool connection.
+                                       This may be called when managed connection is taken from pool for use."/>
+
+                    <c:list-property name="config-property"
+                                     displayName="Config Property"
+                                     description="Configuration Properties"
+                                     required="false">
+                        <c:map-property name="property-values">
+                            <c:simple-property name="config-property-name"
+                                               displayName="Name"
+                                               description="Name of the Configuration Property"
+                                               required="true"/>
+                            <c:simple-property name="config-property-type"
+                                               displayName="Type"
+                                               description="Type of the Configuration Property"
+                                               required="true"/>
+                            <c:simple-property name="config-property-value"
+                                               displayName="Value"
+                                               description="Value of the Configuration Property"
+                                               required="true"/>
+                        </c:map-property>
+                    </c:list-property>
+
+                </c:group>
+        </resource-configuration>
+    </platform>
+
+</plugin>
+   

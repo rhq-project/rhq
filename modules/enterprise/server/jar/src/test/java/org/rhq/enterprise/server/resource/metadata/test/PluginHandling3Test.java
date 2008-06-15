@@ -757,6 +757,22 @@ public class PluginHandling3Test extends TestBase {
     }
 
     @Test
+    public void testGroupPropDeletedExt() throws Exception {
+        System.out.println("= testGroupPropDeletedExt");
+        getTransactionManager().begin();
+        try {
+            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v3.xml");
+            System.out.println("==> Done with v1");
+            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v4.xml");
+            System.out.println("==> Done with v2");
+            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v3.xml");
+            System.out.println("==> Done with v1");
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test
     public void testGroupPropMoved() throws Exception {
         System.out.println("= testGroupPropMoved");
         getTransactionManager().begin();

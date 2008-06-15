@@ -19,6 +19,7 @@
 package org.rhq.core.domain.configuration.definition;
 
 import java.io.Serializable;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
@@ -39,6 +40,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlTransient;
+
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -84,7 +86,8 @@ public abstract class PropertyDefinition implements Serializable {
     private ActivationPolicy activationPolicy;
 
     @JoinColumn(name = "group_id")
-    @ManyToOne(cascade = CascadeType.ALL, optional = true)
+    //    @ManyToOne(cascade = CascadeType.ALL, optional = true)
+    @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH }, optional = true)
     private PropertyGroupDefinition propertyGroupDefinition;
 
     @Column(name = "order_index")

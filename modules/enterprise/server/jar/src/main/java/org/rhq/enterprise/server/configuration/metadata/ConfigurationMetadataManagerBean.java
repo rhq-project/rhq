@@ -67,7 +67,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             }
 
             // delete outdated properties
-            removeNolongerUsedProperties(newDefinition, existingDefinition, existingPropertyDefinitions);
+            removeNolongerUsedProperties(newDefinition, existingDefinition, existingPropertyDefinitions, null);
         } else {
             // TODO what if exisitingDefinitions is null?
             // we probably don't run in here, as the initial persisting is done
@@ -85,7 +85,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
         List<PropertyGroupDefinition> toPersist = missingInFirstList(existingGroups, newGroups);
         List<PropertyGroupDefinition> toDelete = missingInFirstList(newGroups, existingGroups);
-        List<PropertyGroupDefinition> toUpdate = intersection(newGroups, existingGroups);
+        List<PropertyGroupDefinition> toUpdate = intersection(existingGroups, newGroups);
 
         // delete groups no longer present
         for (PropertyGroupDefinition group : toDelete) {
@@ -123,7 +123,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
             // delete outdated properties of this group
             removeNolongerUsedProperties(newDefinition, existingDefinition, existingDefinition
-                .getPropertiesInGroup(groupName));
+                .getPropertiesInGroup(groupName), group);
         }
 
         entityManager.flush();
@@ -155,9 +155,11 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
      * @param newDefinition      new configuration to persist
      * @param existingDefinition existing persisted configuration
      * @param existingProperties list of existing properties
+     * @param groupDef TODO
      */
     private void removeNolongerUsedProperties(ConfigurationDefinition newDefinition,
-        ConfigurationDefinition existingDefinition, List<PropertyDefinition> existingProperties) {
+        ConfigurationDefinition existingDefinition, List<PropertyDefinition> existingProperties,
+        PropertyGroupDefinition groupDef) {
 
         List<PropertyDefinition> definitionsToDelete = new ArrayList<PropertyDefinition>();
         for (PropertyDefinition exDef : existingProperties) {
@@ -167,6 +169,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 definitionsToDelete.add(exDef);
             }
         }
+        //        System.out.println("Props to delete " + definitionsToDelete);
 
         for (PropertyDefinition def : definitionsToDelete) {
             existingDefinition.getPropertyDefinitions().remove(def.getName());

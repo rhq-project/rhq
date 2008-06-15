@@ -22,9 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
@@ -102,6 +104,8 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             entityManager.remove(group);
         }
 
+        entityManager.flush();
+
         // update existing groups that stay
         for (PropertyGroupDefinition group : toUpdate) {
             String groupName = group.getName();
@@ -122,6 +126,8 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 .getPropertiesInGroup(groupName));
         }
 
+        entityManager.flush();
+
         // persist new groups
         for (PropertyGroupDefinition group : toPersist) {
             /*
@@ -139,6 +145,8 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 exPDefs.put(def.getName(), def);
             }
         }
+
+        entityManager.flush();
     }
 
     /**
@@ -150,6 +158,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
      */
     private void removeNolongerUsedProperties(ConfigurationDefinition newDefinition,
         ConfigurationDefinition existingDefinition, List<PropertyDefinition> existingProperties) {
+
         List<PropertyDefinition> definitionsToDelete = new ArrayList<PropertyDefinition>();
         for (PropertyDefinition exDef : existingProperties) {
             PropertyDefinition nDef = newDefinition.get(exDef.getName());
@@ -164,6 +173,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             existingProperties.remove(def); // does not operate on original list!!
             entityManager.remove(def);
         }
+        entityManager.flush();
     }
 
     /**
@@ -173,6 +183,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
      * @param newProperty
      */
     private void updatePropertyDefinition(PropertyDefinition existingProperty, PropertyDefinition newProperty) {
+
         existingProperty.setDescription(newProperty.getDescription());
         existingProperty.setDisplayName(newProperty.getDisplayName());
         existingProperty.setActivationPolicy(newProperty.getActivationPolicy());

@@ -227,7 +227,9 @@
 
             <xs:attribute name="defaultValue" use="optional">
                <xs:annotation>
-                  <xs:documentation>the property's default value; this element should be defined for properties whose
+                  <xs:documentation>
+                  DEPRECATED - THIS ATTRIBUTE WILL GO AWAY IN A LATER VERSION OF RHQ!
+                  The property's default value; this element should be defined for properties whose
                      required attribute is "false" (i.e. for optional properties); conversely, this element should not
                      be defined for properties whose required attribute is "true" (i.e. for required properties); not
                      to be confused with the 'default' attribute, which specifies the initial value for a property

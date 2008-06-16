@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -30,9 +31,11 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
+
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.IndexColumn;
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.configuration.definition.constraint.Constraint;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 
@@ -71,8 +74,10 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
      * This property's default value. This field should have a non-null value for properties whose
      * {@link PropertyDefinition#required} field is <code>false</code> (i.e. for optional properties). Conversely, this
      * field should be null for properties whose {@link PropertyDefinition#required} field is <code>true</code> (i.e. for
-     * required properties). TODO Should go into the default template ?
+     * required properties). 
+     * @Deprecated Use the (default) template instead
      */
+    @Deprecated
     @Column(name = "DEFAULT_VALUE", length = 2000)
     private String defaultValue;
 
@@ -178,10 +183,12 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
         this.allowCustomEnumeratedValue = allowCustomEnumValue;
     }
 
+    @Deprecated
     public String getDefaultValue() {
         return defaultValue;
     }
 
+    @Deprecated
     public void setDefaultValue(String defaultValue) {
         this.defaultValue = defaultValue;
     }

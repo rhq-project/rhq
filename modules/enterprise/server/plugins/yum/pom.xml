@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.1.CR4</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
   <description>JBoss Operations Network Enterprise Server Yum Content Source Plugin</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/plugins/yum/</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/plugins/yum/</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_1_CR4/modules/enterprise/server/plugins/yum</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_1_CR4/modules/enterprise/server/plugins/yum</developerConnection>
   </scm>
 
   <properties>

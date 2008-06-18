@@ -904,12 +904,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
             parentComponent = getResourceComponent(resource.getParentResource());
         }
 
-        // start the resource but only if its parent component is running
+        // start the resource, but only if its parent component is running
         if ((resource.getParentResource() == null)
             || (getResourceContainer(resource.getParentResource()).getResourceComponentState() == ResourceComponentState.STARTED)) {
             PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
             ResourceDiscoveryComponent discoveryComponent;
             discoveryComponent = factory.getDiscoveryComponent(resource.getResourceType());
+
+            ConfigurationUtility.normalizeConfiguration(resource.getPluginConfiguration(), resource.getResourceType().getPluginConfigurationDefinition());
 
             ResourceContext context = new ResourceContext(resource, // the resource itself
                 parentComponent, // its parent component

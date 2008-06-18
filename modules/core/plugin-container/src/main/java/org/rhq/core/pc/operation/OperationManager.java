@@ -30,6 +30,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
@@ -64,7 +65,6 @@ public class OperationManager extends AgentService implements OperationAgentServ
     private PluginContainerConfiguration configuration;
     private Timer timer;
     private OperationThreadPoolGateway operationGateway;
-    private long facetMethodTimeout;
 
     public OperationManager() {
         super(OperationAgentService.class);
@@ -80,8 +80,6 @@ public class OperationManager extends AgentService implements OperationAgentServ
         ThreadPoolExecutor threadPool = new ThreadPoolExecutor(1, maxPoolSize, 1000, TimeUnit.MILLISECONDS,
             queue, threadFactory);
         operationGateway = new OperationThreadPoolGateway(threadPool);
-        // ensure the facet timeout is
-        facetMethodTimeout = (configuration.getOperationInvocationTimeout() + 10) * 1000L;
     }
 
     /**
@@ -119,12 +117,15 @@ public class OperationManager extends AgentService implements OperationAgentServ
             final OperationInvocation[] theJob = new OperationInvocation[1]; // need array so we can use it in the timer task
             final long invocationTime = System.currentTimeMillis();
 
+            OperationDefinition operationDefinition = getOperationDefinition(resourceId, operationName);
+            ConfigurationUtility.normalizeConfiguration(parameterConfig, operationDefinition.getParametersConfigurationDefinition());
+
             // create our timer task that will force the operation invocation to time out if it takes too long to complete
-            final long operationTimeout = getOperationTimeout(resourceId, operationName, parameterConfig);
+            final long operationTimeout = getOperationTimeout(resourceId, operationDefinition, parameterConfig);
 
             // ensure the facet method timeout is comfortably longer than the operation timeout
             long facetMethodTimeout = operationTimeout + (10 * 1000L);
-            final OperationFacet operationComponent = getOperationFacet(resourceId);
+            final OperationFacet operationComponent = getOperationFacet(resourceId, facetMethodTimeout);
             final TimerTask timerTask = new TimerTask() {
                 // TIMER TASK THREAD - waits until the timeout time expires - if this is not canceled before the timeout hits,
                 // the operation invocation thread is interrupted and the server will be told the operation has timed out.
@@ -136,9 +137,7 @@ public class OperationManager extends AgentService implements OperationAgentServ
                 }
             };
 
-            timer.schedule(timerTask, operationTimeout);
-
-            OperationDefinition operationDefinition = getOperationDefinition(resourceId, operationName);
+            timer.schedule(timerTask, operationTimeout);            
 
             theJob[0] = new OperationInvocation(resourceId, invocationTime, timerTask, parameterConfig, jobId,
                 operationName, operationComponent, operationServerService, operationGateway, operationDefinition);
@@ -179,8 +178,8 @@ public class OperationManager extends AgentService implements OperationAgentServ
      *
      * @throws PluginContainerException on error
      */
-    protected OperationFacet getOperationFacet(int resourceId) throws PluginContainerException {
-        return ComponentUtil.getComponent(resourceId, OperationFacet.class, FacetLockType.WRITE, this.facetMethodTimeout, false, false);
+    protected OperationFacet getOperationFacet(int resourceId, long facetMethodTimeout) throws PluginContainerException {
+        return ComponentUtil.getComponent(resourceId, OperationFacet.class, FacetLockType.WRITE, facetMethodTimeout, false, false);
     }
 
     /**
@@ -204,20 +203,20 @@ public class OperationManager extends AgentService implements OperationAgentServ
      *
      * @param  resourceId
      * @param  operationName
-     * @param  config
+     * @param  paramConfig
      *
      * @return the timeout to use
      *
      * @throws PluginContainerException if the timeout found was invalid
      */
-    private long getOperationTimeout(int resourceId, String operationName, Configuration config)
+    private long getOperationTimeout(int resourceId, OperationDefinition operationDefinition, Configuration paramConfig)
         throws PluginContainerException {
         // see if this particular invocation has overridden all timeout defaults with its own
-        if (config != null) {
-            PropertySimple timeoutProperty = config.getSimple(OperationDefinition.TIMEOUT_PARAM_NAME);
+        if (paramConfig != null) {
+            PropertySimple timeoutProperty = paramConfig.getSimple(OperationDefinition.TIMEOUT_PARAM_NAME);
             if (timeoutProperty != null) {
                 try {
-                    config.remove(timeoutProperty.getName()); // we have to remove it since resources are not expecting it
+                    paramConfig.remove(timeoutProperty.getName()); // we have to remove it since resources are not expecting it
                     return timeoutProperty.getLongValue().longValue() * 1000L;
                 } catch (Exception e) {
                     throw new PluginContainerException("The timeout specified in the configuration was invalid: "
@@ -227,7 +226,6 @@ public class OperationManager extends AgentService implements OperationAgentServ
         }
 
         // see if the operation metadata defines the timeout
-        OperationDefinition operationDefinition = getOperationDefinition(resourceId, operationName);
         if ((operationDefinition != null) && (operationDefinition.getTimeout() != null)) {
             return operationDefinition.getTimeout().longValue() * 1000L;
         }

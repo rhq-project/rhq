@@ -34,6 +34,13 @@
 
       <dependency>
          <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-client-api</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope> <!-- by ${rhq.earName} -->
+      </dependency>
+      
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-domain</artifactId>
          <version>${project.version}</version>
          <scope>provided</scope> <!-- by ${rhq.earName} (as ejb-jar) -->
@@ -45,7 +52,7 @@
          <version>${project.version}</version>
          <scope>provided</scope> <!-- by ${rhq.earName} -->
       </dependency>
-
+      
       <!-- 3rd Party Deps -->
 
       <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->

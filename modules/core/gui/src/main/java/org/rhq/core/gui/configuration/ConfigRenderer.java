@@ -47,6 +47,7 @@ import org.rhq.core.gui.RequestParameterNameConstants;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 
 /**
  * A renderer that renders a {@link ConfigUIComponent} component as XHTML.
@@ -113,6 +114,8 @@ public class ConfigRenderer extends Renderer {
                 FacesComponentUtility.addVerbatimText(messagePanel, config.getNullConfigurationMessage());
                 return;
             }
+
+            ConfigurationUtility.normalizeConfiguration(config.getConfiguration(), config.getConfigurationDefinition());
 
             FacesComponentUtility.addVerbatimText(config, JAVASCRIPT_INCLUDES);
             if (!config.isReadOnly()) {

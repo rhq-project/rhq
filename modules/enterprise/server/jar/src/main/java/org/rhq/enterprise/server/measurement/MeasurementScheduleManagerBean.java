@@ -696,7 +696,10 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 Agent agent = agentIter.next();
                 Set<ResourceMeasurementScheduleRequest> reqSet = arMap.get(agent);
                 AgentClient ac = agentManager.getAgentClient(agent);
-                ac.getMeasurementAgentService().updateCollection(reqSet);
+                // AgentClient will be null for downed agents or during Server upgrades
+                if (ac != null) {
+                    ac.getMeasurementAgentService().updateCollection(reqSet);
+                }
             }
 
         }

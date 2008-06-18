@@ -19,13 +19,17 @@
 package org.rhq.enterprise.gui.startup;
 
 import java.util.List;
+
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
+
 import org.quartz.SchedulerException;
+
 import org.jboss.mx.util.MBeanServerLocator;
+
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -66,13 +70,13 @@ public class StartupServlet extends HttpServlet {
         // to send a message; as opposed to an incoming message causing a job to be scheduled), so
         // that explains the ordering of the comm layer and the scheduler.
         startHibernateStatistics();
-        startPluginDeployer();
         startServerPluginContainer(); // before comm in case an agent wants to talk to it
         installJaasModules();
         startServerCommunicationServices();
         startScheduler();
         scheduleJobs();
         startAgentClients();
+        startPluginDeployer();
         startEmbeddedAgent();
         registerShutdownListener();
 

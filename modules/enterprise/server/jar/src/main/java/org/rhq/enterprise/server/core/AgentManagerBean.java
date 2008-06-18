@@ -85,14 +85,18 @@ public class AgentManagerBean implements AgentManagerLocal {
     }
 
     public AgentClient getAgentClient(Agent agent) {
-        AgentClient client;
+        AgentClient client = null;
 
-        ServerCommunicationsServiceMBean bootstrap = ServerCommunicationsServiceUtil.getService();
-        client = bootstrap.getKnownAgentClient(agent);
+        try {
+            ServerCommunicationsServiceMBean bootstrap = ServerCommunicationsServiceUtil.getService();
+            client = bootstrap.getKnownAgentClient(agent);
 
-        // We assume the caller is asking for a client so it can send the agent messages,
-        // so let's start the sender automatically for the caller so it doesn't need to remember to do it
-        client.startSending();
+            // We assume the caller is asking for a client so it can send the agent messages,
+            // so let's start the sender automatically for the caller so it doesn't need to remember to do it
+            client.startSending();
+        } catch (Throwable t) {
+            log.debug("Could not get agent client for " + agent);
+        }
 
         return client;
     }

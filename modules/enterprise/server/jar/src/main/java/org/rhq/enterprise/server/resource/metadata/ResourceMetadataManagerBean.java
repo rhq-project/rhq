@@ -567,7 +567,30 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                         existingType.addMetricDefinition(newDefinition);
                         entityManager.persist(newDefinition);
 
-                        // Now create schedules for already existing resources for 
+                        /*
+                         * you will always see an exception thrown during a server upgrade because 
+                         * no agents will be available yet; this method calls out to other SLSBs and
+                         * eventually needs to obtain the AgentClient facade that houses all of the
+                         * proxies to the remote POJO services on the agent-side; if the agent is down
+                         * for any reason (which is the natural state of things during an upgrade) this
+                         * method will fail; so, we will catch the exception so the rest of the plugin
+                         * update completes; however, we're not completely getting rid of the callout
+                         * because it'll benefit plugin developers who are making changes to their plugins
+                         * against a live/running JON system; ideally, though, we should shoot to get rid
+                         * of this method in the future in favor of guaranteeing that the agent will
+                         * always properly sync with the server upon starting; if it were to do that, this
+                         * logic could be removed completely, as the agent will always reach a steady,
+                         * consistent state with the server before entering the ready-state.
+                         */
+
+                        /* RHQ-592 - don't try to automate this
+                         * 
+                         * instead, make plugin developers execute 'plugins update' from their agents;
+                         * removal of this supports Server upgrade perfectly because new agents naturally
+                         * synchronize their schedules during their initial inventory merge; 
+                         */
+
+                        // Now create schedules for already existing resources
                         scheduleManager.createSchedulesAndSendToAgents(existingType, newDefinition);
                     }
                 }

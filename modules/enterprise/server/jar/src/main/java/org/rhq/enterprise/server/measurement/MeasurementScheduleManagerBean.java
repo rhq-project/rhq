@@ -696,9 +696,12 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 Agent agent = agentIter.next();
                 Set<ResourceMeasurementScheduleRequest> reqSet = arMap.get(agent);
                 AgentClient ac = agentManager.getAgentClient(agent);
-                // AgentClient will be null for downed agents or during Server upgrades
+                // AgentClient will not be null for downed agents or during Server upgrades, so first ping the 
+                // agent to see if it is alive before talking to it.
                 if (ac != null) {
-                    ac.getMeasurementAgentService().updateCollection(reqSet);
+                    boolean agentIsReachable = ac.ping(2000); // 2sec timeout
+                    if (agentIsReachable)
+                        ac.getMeasurementAgentService().updateCollection(reqSet);
                 }
             }
 

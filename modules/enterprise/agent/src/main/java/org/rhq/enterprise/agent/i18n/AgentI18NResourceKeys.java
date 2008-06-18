@@ -310,7 +310,7 @@ public interface AgentI18NResourceKeys {
         + "\\   -D<name>[=<value>]            Overrides an agent configuration preference and sets a system property\\n\\\n"
         + "\\   -h, --help                    Shows this help message (default)\\n\\\n"
         + "\\   -i, --input=<filename>        Specifies a script file to be used for input\\n\\\n"
-        + "\\   -l, --cleanconfig             Clears out any existing configuration so the agent starts with a clean slate\\n\\\n"
+        + "\\   -l, --cleanconfig             Clears out any existing configuration and data files so the agent starts with a totally clean slate\\n\\\n"
         + "\\   -n, --nostart                 If specified, the agent will not be automatically started\\n\\\n"
         + "\\   -o, --output=<filename>       Specifies a file to write all output (excluding log messages)\\n\\\n"
         + "\\   -p, --pref=<preferences name> Specifies the agent preferences name used to identify what configuration to use\\n\\\n"

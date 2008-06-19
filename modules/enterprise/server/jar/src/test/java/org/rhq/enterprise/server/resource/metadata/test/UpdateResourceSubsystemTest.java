@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.resource.metadata.test;
 import java.util.List;
 import java.util.Set;
 
-import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
@@ -29,12 +28,7 @@ import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
-public class ResourceMetaDataManagerBeanTest extends TestBase {
-    @BeforeSuite
-    @Override
-    protected void init() {
-        super.init();
-    }
+public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
     @Test
     public void testSingleSubCategoryCreate() throws Exception {
@@ -447,7 +441,7 @@ public class ResourceMetaDataManagerBeanTest extends TestBase {
     public void testSimpleSubCategoryCreate() throws Exception {
         getTransactionManager().begin();
         try {
-            Plugin testPlugin = new Plugin("ResourceMetaDataManagerBeanTest", "foo.jar", "123561RE1652EF165E");
+            Plugin testPlugin = new Plugin("UpdateResourceSubsystemTest", "foo.jar", "123561RE1652EF165E");
             PluginDescriptor descriptor = loadPluginDescriptor("./test/metadata/test-subcategories.xml");
             metadataManager.registerPlugin(testPlugin, descriptor);
 
@@ -479,14 +473,14 @@ public class ResourceMetaDataManagerBeanTest extends TestBase {
     public void testSimpleSubCategoryUpdate() throws Exception {
         getTransactionManager().begin();
         try {
-            Plugin testPlugin = new Plugin("ResourceMetaDataManagerBeanTest", "foo.jar", "123561RE1652EF165E");
+            Plugin testPlugin = new Plugin("UpdateResourceSubsystemTest", "foo.jar", "123561RE1652EF165E");
             PluginDescriptor descriptor = loadPluginDescriptor("./test/metadata/test-subcategories.xml");
             metadataManager.registerPlugin(testPlugin, descriptor);
 
             getEntityManager().flush();
 
             // pretend to be an updated plugin
-            testPlugin = new Plugin("ResourceMetaDataManagerBeanTest", "foo.jar", "222222222");
+            testPlugin = new Plugin("UpdateResourceSubsystemTest", "foo.jar", "222222222");
             descriptor = loadPluginDescriptor("./test/metadata/test-subcategories2.xml");
             metadataManager.registerPlugin(testPlugin, descriptor);
 
@@ -544,7 +538,20 @@ public class ResourceMetaDataManagerBeanTest extends TestBase {
         }
         if (noException)
             throw new Exception("MetadataManager did not throw an exception as expected.");
+    }
 
+    @Test
+    public void testAutoCreateChildSubCategory() throws Exception {
+        System.out.println("= testAutoCreateChildSubCategory");
+        getTransactionManager().begin();
+        try {
+            registerPlugin("./test/metadata/autocreate-child-subcat-1.xml");
+            System.out.println("Done with v1");
+            registerPlugin("./test/metadata/autocreate-child-subcat-1.xml");
+            System.out.println("Done with v1 (2)");
+        } finally {
+            getTransactionManager().rollback();
+        }
     }
 
     private ResourceSubCategory assertSubCategory(List<ResourceSubCategory> subCats, Integer size, Integer index) {

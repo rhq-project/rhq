@@ -1,279 +1,25 @@
-/*
- * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
 package org.rhq.enterprise.server.resource.metadata.test;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.testng.annotations.BeforeSuite;
+
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.configuration.definition.constraint.Constraint;
 import org.rhq.core.domain.configuration.definition.constraint.FloatRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
-import org.rhq.core.domain.content.PackageType;
-import org.rhq.core.domain.measurement.DisplayType;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.operation.OperationDefinition;
-import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.ResourceType;
 
-/**
- * Test the handling on Plugin updates / hotdeployments etc.
- *
- * @author Heiko W. Rupp
- */
-public class PluginHandlingTest extends TestBase {
-    @BeforeSuite
-    @Override
-    protected void init() {
-        super.init();
-    }
-
-    /**
-     * Simple test for the update of a plugin where a server has some metrics that get in the second version of the
-     * plugin added / changed / removed
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testUpdateMeasurementDefinitions() throws Exception {
-        getTransactionManager().begin();
-        try {
-            registerPlugin("./test/metadata/update-v1_0.xml");
-            ResourceType server1 = getResourceType("testServer1");
-            Set<MeasurementDefinition> definitions1 = server1.getMetricDefinitions();
-            assert definitions1.size() == 4 : "There should be 4 metrics for v1";
-            for (MeasurementDefinition def : definitions1) {
-                if (def.getDisplayName().equals("Three")) {
-                    assert def.getDisplayType() == DisplayType.DETAIL : "DisplayType for Three should be Detail in v1";
-                }
-
-                if (def.getDisplayName().equals("Five")) {
-                    // this is a trick(y) one, as we do not want to honor updates
-                    // of the default interval when a plugin was already deployed once and
-                    // we do a redeploy
-                    assert def.getDefaultInterval() == 10000 : "DefaultInterval should be 10000 for Five in v1";
-                }
-            }
-
-            // flush everything to disk
-            getEntityManager().flush();
-
-            // now hot deploy a new version of that plugin
-            registerPlugin("./test/metadata/update-v2_0.xml");
-            ResourceType server2 = getResourceType("testServer1");
-            Set<MeasurementDefinition> definitions2 = server2.getMetricDefinitions();
-            assert definitions2.size() == 4 : "There should be four metrics in v2";
-            boolean foundFour = false;
-            for (MeasurementDefinition def : definitions2) {
-                assert !(def.getDisplayName().equals("One")) : "One should be gone in v2";
-                if (def.getDisplayName().equals("Three")) {
-                    assert def.getDisplayType() == DisplayType.SUMMARY : "DisplayType for Three should be Summary in v2";
-                }
-
-                if (def.getDisplayName().equals("Four")) {
-                    foundFour = true;
-                }
-
-                if (def.getDisplayName().equals("Five")) {
-                    // this is a trick(y) one, as we do not want to honor updates
-                    // of the default interval when a plugin was already deployed once and
-                    // we do a redeploy
-                    assert def.getDefaultInterval() == 10000 : "DefaultInterval should still be 10000 for Five in v2";
-                }
-            }
-
-            assert foundFour == true : "Four should be there in v2, but wasn't";
-
-            // flush everything to disk
-            getEntityManager().flush();
-
-            // Now try the other way round
-            registerPlugin("./test/metadata/update-v1_0.xml");
-            ResourceType server3 = getResourceType("testServer1");
-            Set<MeasurementDefinition> definitions3 = server3.getMetricDefinitions();
-            assert definitions3.size() == 4 : "There should be 4 metrics for v3";
-            for (MeasurementDefinition def : definitions3) {
-                if (def.getDisplayName().equals("Three")) {
-                    assert def.getDisplayType() == DisplayType.DETAIL : "DisplayType for Three should be Detail in v3";
-                }
-
-                if (def.getDisplayName().equals("Five")) {
-                    // this is a trick(y) one, as we do not want to honor updates
-                    // of the default interval when a plugin was already deployed once and
-                    // we do a redeploy
-                    assert def.getDefaultInterval() == 10000 : "DefaultInterval should be 10000 for Five in v3";
-                }
-            }
-        } finally {
-            getTransactionManager().rollback();
-        }
-    }
-
-    /**
-     * Check updates of artifacts and operations
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testOperationAndArtifactUpdates() throws Exception {
-        getTransactionManager().begin();
-        try {
-            registerPlugin("./test/metadata/update3-v1_0.xml");
-            ResourceType platform1 = getResourceType("myPlatform3");
-            Set<PackageType> packageTypes = platform1.getPackageTypes();
-            assert packageTypes.size() == 3 : "Did not find the three expected package types in v1";
-            Set<OperationDefinition> ops = platform1.getOperationDefinitions();
-            assert ops.size() == 3 : "Did not find three expected operations in v1";
-
-            getEntityManager().flush();
-
-            /*
-             * Now deploy the changed version of the plugin
-             */
-            registerPlugin("./test/metadata/update3-v2_0.xml");
-
-            ResourceType platform2 = getResourceType("myPlatform3");
-            Set<PackageType> packageTypes2 = platform2.getPackageTypes();
-            assert packageTypes2.size() == 3 : "Did not find the expected three package types in v2";
-            Set<OperationDefinition> opDefs = platform2.getOperationDefinitions();
-            assert opDefs.size() == 3 : "Did not find the three expected operations in v2";
-            // now that the basics are tested, go for the details...
-
-            boolean ubuFound = false;
-            for (PackageType pt : packageTypes2) {
-                //            System.out.println(at.getName());
-                assert !(pt.getName().equals("rpm")) : "RPM should be gone in v2";
-                if (pt.getName().equals("ubu")) {
-                    ubuFound = true;
-                }
-            }
-
-            assert ubuFound == true : "Ubu should be in v2";
-
-            boolean startFound = false;
-            for (OperationDefinition opDef : opDefs) {
-                //            System.out.println(opDef.getName());
-                assert !(opDef.getName().equals("restart")) : "Restart should be gone in v2";
-                if (opDef.getName().equals("start")) {
-                    startFound = true;
-                }
-
-                if (opDef.getName().equals("status")) {
-                    assert opDef.getDescription().equals("Yadda!") : "Description for 'start' should be 'Yadda!', but was "
-                        + opDef.getDescription();
-                }
-            }
-
-            assert startFound == true : "Start should be in v2";
-            getEntityManager().flush();
-
-            /*
-             * Now try the other way round
-             */
-
-            registerPlugin("./test/metadata/update3-v1_0.xml");
-            ResourceType platform3 = getResourceType("myPlatform3");
-            Set<PackageType> packageTypes3 = platform3.getPackageTypes();
-            assert packageTypes3.size() == 3 : "Did not find the three package types in v3";
-            Set<OperationDefinition> ops3 = platform3.getOperationDefinitions();
-            assert ops3.size() == 3 : "Did not find three expected operations in v3";
-
-            // we should have rpm, deb, mpkg. ubu from v2 should be gone again.
-            boolean rpmFound = false;
-            for (PackageType pt : packageTypes3) {
-                System.out.println(pt.getName());
-                assert !(pt.getName().equals("ubu")) : "ubu should be gone in v3";
-                if (pt.getName().equals("rpm")) {
-                    rpmFound = true;
-                }
-            }
-
-            assert rpmFound == true : "rpm should be in v3";
-        } finally {
-            getTransactionManager().rollback();
-        }
-    }
-
-    /**
-     * See if deletion of a resource type just works
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testResourceTypeDeletion() throws Exception {
-        getTransactionManager().begin();
-        try {
-            registerPlugin("./test/metadata/update4-v1_0.xml");
-            ResourceType platform1 = getResourceType("myPlatform4");
-            Set<ResourceType> servers1 = platform1.getChildResourceTypes();
-            assert servers1.size() == 2 : "Expected to find 2 servers in v1";
-            int found = 0;
-            for (ResourceType server : servers1) {
-                if (server.getName().equals("testServer1")) {
-                    found++;
-                }
-
-                if (server.getName().equals("testServer2")) {
-                    found++;
-                }
-            }
-
-            assert found == 2 : "I did not find the expected servers in v1";
-
-            registerPlugin("./test/metadata/update4-v2_0.xml");
-            ResourceType platform2 = getResourceType("myPlatform4");
-            Set<ResourceType> servers2 = platform2.getChildResourceTypes();
-            assert servers2.size() == 1 : "Expected to find 1 servers in v2";
-            ResourceType server2 = servers2.iterator().next();
-            assert server2.getName().equals("testServer1");
-            Set<MeasurementDefinition> mdef = server2.getMetricDefinitions();
-            assert mdef.size() == 1 : "Expected one MeasurementDefinition in v2";
-
-            registerPlugin("./test/metadata/update4-v1_0.xml");
-            ResourceType platform3 = getResourceType("myPlatform4");
-            Set<ResourceType> servers3 = platform3.getChildResourceTypes();
-            assert servers3.size() == 2 : "Expected to find 2 servers in v1/2";
-            found = 0;
-            for (ResourceType server : servers3) {
-                if (server.getName().equals("testServer1")) {
-                    found++;
-                }
-
-                if (server.getName().equals("testServer2")) {
-                    found++;
-                }
-            }
-
-            assert found == 2 : "I did not find the expected servers in v1/2";
-        } finally {
-            getTransactionManager().rollback();
-        }
-    }
-
+public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
     /**
      * Test updating of plugin and resource configs
      *
@@ -360,70 +106,6 @@ public class PluginHandlingTest extends TestBase {
             System.out.println("-------- done with v2");
 
             // TODO check changing back
-        } finally {
-            getTransactionManager().rollback();
-        }
-    }
-
-    /**
-     * Tests the behaviour of the MetadataManager wrt <process-scan> entries.
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testProcessScans() throws Exception {
-        getTransactionManager().begin();
-        try {
-            ResourceType server1 = getServer1ForConfig5();
-
-            /*
-             * TODO check process scans as well
-             */
-            Set<ProcessScan> scans1 = server1.getProcessScans();
-            assert scans1.size() == 3 : "Expected to find 3 process scans in v1, but got " + scans1.size();
-            int found = 0;
-            for (ProcessScan ps : scans1) {
-                if (containedIn(ps.getName(), new String[] { "JBoss4", "JBoss5", "JBoss6" })) {
-                    found++;
-                }
-            }
-
-            assert found == 3 : "Expected to find 3 process scans in v1";
-            // TODO also check query
-
-            getEntityManager().flush();
-
-            /*
-             * check process scans in v2 as well
-             */
-            ResourceType server2 = getServer2ForConfig5();
-            Set<ProcessScan> scans2 = server2.getProcessScans();
-            assert scans2.size() == 3 : "Expected to find 3 process scans in v2, but got " + scans2.size();
-            found = 0;
-            for (ProcessScan ps : scans2) {
-                if (containedIn(ps.getName(), new String[] { "JBoss5", "JBoss6", "Hibernate" })) {
-                    found++;
-                }
-            }
-
-            assert found == 3 : "Expected to find 3 specific process scans in v2, but got " + found;
-
-            getEntityManager().flush();
-
-            /*
-             * Now return to first version of plugin
-             */
-            server1 = getServer1ForConfig5();
-            scans1 = server1.getProcessScans();
-            assert scans1.size() == 3 : "Expected to find 3 process scans in v1, but got " + scans1.size();
-            found = 0;
-            for (ProcessScan ps : scans1) {
-                if (containedIn(ps.getName(), new String[] { "JBoss4", "JBoss5", "JBoss6" })) {
-                    found++;
-                }
-            }
-
-            assert found == 3 : "Expected to find 3 specific process scans in v1 again, but got " + found;
         } finally {
             getTransactionManager().rollback();
         }
@@ -840,21 +522,284 @@ public class PluginHandlingTest extends TestBase {
         }
     }
 
-    private ResourceType getServer1ForConfig5() throws Exception {
-        registerPlugin("./test/metadata/update5-v1_0.xml");
-        ResourceType platform1 = getResourceType("myPlatform5");
-        Set<ResourceType> servers = platform1.getChildResourceTypes();
-        assert servers.size() == 1 : "Expected to find 1 server in v1, but got " + servers.size();
-        ResourceType server1 = servers.iterator().next();
-        return server1;
+    @Test
+    public void testMapProperty() throws Exception {
+        getTransactionManager().begin();
+        try {
+            { // extra block for variable scoping purposes
+                registerPlugin("./test/metadata/propertyMap-v1.xml");
+                ResourceType platform = getResourceType("myPlatform7");
+                ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
+                Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
+                assert propDefs.size() == 5 : "Expected to find 5 properties in v1, but got " + propDefs.size();
+                int found = 0;
+                for (PropertyDefinition def : propDefs.values()) {
+                    if (containedIn(def.getName(), new String[] { "map1", "map2", "map3", "map4", "map5" })) {
+                        found++;
+                    }
+
+                    assert def instanceof PropertyDefinitionMap : "Not all properties are maps in v1";
+
+                    if (def.getName().equals("map4")) {
+                        PropertyDefinitionMap map = (PropertyDefinitionMap) def;
+                        Map<String, PropertyDefinition> children = map.getPropertyDefinitions();
+                        assert children.size() == 1 : "Map4 should have 1 child";
+                        children = map.getPropertyDefinitions();
+                        map = (PropertyDefinitionMap) children.get("map4:2");
+                        assert map != null : "Child map4:2 not found";
+                        children = map.getPropertyDefinitions();
+                        map = (PropertyDefinitionMap) children.get("map4:2:3");
+                        assert map != null : "Child map4:2:3 not found";
+                        children = map.getPropertyDefinitions();
+                        PropertyDefinitionSimple simple = (PropertyDefinitionSimple) children.get("simple");
+                        assert simple != null : "Child simple not found";
+                    }
+
+                    if (def.getName().equals("map5")) {
+                        PropertyDefinitionMap map = (PropertyDefinitionMap) def;
+                        Map<String, PropertyDefinition> children = map.getPropertyDefinitions();
+                        assert children.size() == 1 : "Map4 should have 1 child";
+                        children = map.getPropertyDefinitions();
+                        PropertyDefinitionSimple simple = (PropertyDefinitionSimple) children.get("hugo");
+                        assert simple.getDescription().equals("foo");
+                    }
+                }
+
+                assert found == 5 : "Did not find the 5 desird maps in v1";
+            }
+
+            System.out.println("Done with v1");
+            getEntityManager().flush();
+
+            /*
+             * Now deploy v2
+             */
+            { // extra block for variable scoping purposes
+                registerPlugin("./test/metadata/propertyMap-v2.xml");
+                ResourceType platform = getResourceType("myPlatform7");
+                ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
+                Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
+                assert propDefs.size() == 5 : "Expected to find 5 properties in v2, but got " + propDefs.size();
+
+                int found = 0;
+                for (PropertyDefinition def : propDefs.values()) {
+                    if (containedIn(def.getName(), new String[] { "map1", "map2", "map3", "map4", "map5" })) {
+                        found++;
+                    }
+
+                    if (def.getName().equals("map1")) {
+                        assert def instanceof PropertyDefinitionSimple : "Map 1 should be a simle-property in v2";
+                    } else {
+                        assert def instanceof PropertyDefinitionMap : "Not all properties are maps in v2";
+                    }
+
+                    if (def.getName().equals("map3")) {
+                        assert def.isRequired() == false : "Map 3 should not be false in v2";
+                    }
+
+                    if (def.getName().equals("map4")) {
+                        PropertyDefinitionMap map = (PropertyDefinitionMap) def;
+                        Map<String, PropertyDefinition> children = map.getPropertyDefinitions();
+                        assert children.size() == 1 : "Map4 should have 1 child, but has " + children.size();
+                        children = map.getPropertyDefinitions();
+                        map = (PropertyDefinitionMap) children.get("map4:2+");
+                        assert map != null : "Child map4:2 not found";
+                        children = map.getPropertyDefinitions();
+                        assert children.size() == 1 : "Map4:2 should have 1 child, but has " + children.size();
+                        map = (PropertyDefinitionMap) children.get("map4:2:3");
+                        assert map != null : "Child map4:2:3 not found";
+                        children = map.getPropertyDefinitions();
+                        assert children.size() == 2 : "Map4:2:3 should have 1 child, but has " + children.size();
+                        PropertyDefinitionList list = (PropertyDefinitionList) children.get("list");
+                        assert list != null : "Child list not found";
+                        PropertyDefinitionSimple simple = (PropertyDefinitionSimple) children.get("simple2");
+                        assert simple != null : "Child simple2 not found";
+                    }
+
+                    if (def.getName().equals("map5")) {
+                        PropertyDefinitionMap map = (PropertyDefinitionMap) def;
+                        Map<String, PropertyDefinition> children = map.getPropertyDefinitions();
+                        assert children.size() == 1 : "Map5 should have 1 child";
+                        children = map.getPropertyDefinitions();
+                        PropertyDefinitionSimple simple = (PropertyDefinitionSimple) children.get("hugo");
+                        assert simple.getDescription().equals("bar") : "Map5:hugo should have 'bar' in v2";
+                    }
+                }
+
+                assert found == 5 : "Did not find the 5 desired properties in v2";
+            }
+        } finally {
+            getTransactionManager().rollback();
+        }
     }
 
-    private ResourceType getServer2ForConfig5() throws Exception {
-        registerPlugin("./test/metadata/update5-v2_0.xml");
-        ResourceType platform2 = getResourceType("myPlatform5");
-        Set<ResourceType> servers2 = platform2.getChildResourceTypes();
-        assert servers2.size() == 1 : "Expected to find 1 server in v2, but got " + servers2.size();
-        ResourceType server2 = servers2.iterator().next();
-        return server2;
+    /**
+     * This test checks what happens if a property of one type checks its type into another one upon redeploy.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testChangePropertyType() throws Exception {
+        getTransactionManager().begin();
+        try {
+            { // extra block for variable scoping purposes
+                registerPlugin("./test/metadata/propertyChanging-v1.xml");
+                ResourceType platform = getResourceType("myPlatform7");
+                ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
+                Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
+                for (PropertyDefinition def : propDefs.values()) {
+                    if (def.getName().equals("one")) {
+                        assert def instanceof PropertyDefinitionMap;
+                    } else if (def.getName().equals("two")) {
+                        assert def instanceof PropertyDefinitionMap;
+                    } else if (def.getName().equals("three")) {
+                        assert def instanceof PropertyDefinitionList;
+                    } else if (def.getName().equals("four")) {
+                        assert def instanceof PropertyDefinitionList;
+                    } else if (def.getName().equals("five")) {
+                        assert def instanceof PropertyDefinitionSimple;
+                    } else if (def.getName().equals("six")) {
+                        assert def instanceof PropertyDefinitionSimple;
+                    } else {
+                        assert true == false : "Unknwon definition : " + def.getName() + " in v1";
+                    }
+                }
+            }
+
+            getEntityManager().flush();
+            /*
+             * Now deploy v2
+             */
+
+            { // extra block for variable scoping purposes
+                registerPlugin("./test/metadata/propertyChanging-v2.xml");
+                ResourceType platform = getResourceType("myPlatform7");
+                ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
+                Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
+                for (PropertyDefinition def : propDefs.values()) {
+                    if (def.getName().equals("one")) {
+                        assert def instanceof PropertyDefinitionList : "Expected a list-property, but it was "
+                            + def.getClass().getCanonicalName();
+                    } else if (def.getName().equals("two")) {
+                        assert def instanceof PropertyDefinitionSimple : "Expected a simple-property, but it was "
+                            + def.getClass().getCanonicalName();
+                    } else if (def.getName().equals("three")) {
+                        assert def instanceof PropertyDefinitionMap : "Expected a map-property, but it was "
+                            + def.getClass().getCanonicalName();
+                    } else if (def.getName().equals("four")) {
+                        assert def instanceof PropertyDefinitionSimple : "Expected a simple-property, but it was "
+                            + def.getClass().getCanonicalName();
+                    } else if (def.getName().equals("five")) {
+                        assert def instanceof PropertyDefinitionMap : "Expected a map-property, but it was "
+                            + def.getClass().getCanonicalName();
+                    } else if (def.getName().equals("six")) {
+                        assert def instanceof PropertyDefinitionList : "Expected a list-property, but it was "
+                            + def.getClass().getCanonicalName();
+                    } else {
+                        assert true == false : "Unknwon definition : " + def.getName() + " in v2";
+                    }
+                }
+            }
+
+            getEntityManager().flush();
+
+            /*
+             * Now deploy v1 again
+             */{ // extra block for variable scoping purposes
+                registerPlugin("./test/metadata/propertyChanging-v1.xml");
+                ResourceType platform = getResourceType("myPlatform7");
+                ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
+                Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
+                for (PropertyDefinition def : propDefs.values()) {
+                    if (def.getName().equals("one")) {
+                        assert def instanceof PropertyDefinitionMap : "Expected a map-property, but it was "
+                            + def.getClass().getCanonicalName();
+                    } else if (def.getName().equals("two")) {
+                        assert def instanceof PropertyDefinitionMap : "Expected a map-property, but it was "
+                            + def.getClass().getCanonicalName();
+                    } else if (def.getName().equals("three")) {
+                        assert def instanceof PropertyDefinitionList : "Expected a list-property, but it was "
+                            + def.getClass().getCanonicalName();
+                    } else if (def.getName().equals("four")) {
+                        assert def instanceof PropertyDefinitionList : "Expected a list-property, but it was "
+                            + def.getClass().getCanonicalName();
+                    } else if (def.getName().equals("five")) {
+                        assert def instanceof PropertyDefinitionSimple : "Expected a simle-property, but it was "
+                            + def.getClass().getCanonicalName();
+                    } else if (def.getName().equals("six")) {
+                        assert def instanceof PropertyDefinitionSimple : "Expected a simple-property, but it was "
+                            + def.getClass().getCanonicalName();
+                    }
+                }
+            }
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    /*==================================== Resource Config Tests ======================================*/
+
+    @Test
+    public void testGroupDeleted() throws Exception {
+        System.out.println("= testGroupDeleted");
+        getTransactionManager().begin();
+        try {
+            registerPlugin("./test/metadata/resourceConfig/groupDeleted-v1.xml");
+            System.out.println("==> Done with v1");
+            registerPlugin("./test/metadata/resourceConfig/groupDeleted-v2.xml");
+            System.out.println("==> Done with v2");
+            registerPlugin("./test/metadata/resourceConfig/groupDeleted-v1.xml");
+            System.out.println("==> Done with v1");
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test
+    public void testGroupPropDeleted() throws Exception {
+        System.out.println("= testGroupPropDeleted");
+        getTransactionManager().begin();
+        try {
+            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v1.xml");
+            System.out.println("==> Done with v1");
+            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v2.xml");
+            System.out.println("==> Done with v2");
+            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v1.xml");
+            System.out.println("==> Done with v1");
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test
+    public void testGroupPropDeletedExt() throws Exception {
+        System.out.println("= testGroupPropDeletedExt");
+        getTransactionManager().begin();
+        try {
+            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v3.xml");
+            System.out.println("==> Done with v1");
+            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v4.xml");
+            System.out.println("==> Done with v2");
+            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v3.xml");
+            System.out.println("==> Done with v1");
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test
+    public void testGroupPropMoved() throws Exception {
+        System.out.println("= testGroupPropMoved");
+        getTransactionManager().begin();
+        try {
+            registerPlugin("./test/metadata/resourceConfig/groupPropMoved-v1.xml");
+            System.out.println("==> Done with v1");
+            registerPlugin("./test/metadata/resourceConfig/groupPropMoved-v2.xml");
+            System.out.println("==> Done with v2");
+            registerPlugin("./test/metadata/resourceConfig/groupPropMoved-v1.xml");
+            System.out.println("==> Done with v1");
+        } finally {
+            getTransactionManager().rollback();
+        }
     }
 }

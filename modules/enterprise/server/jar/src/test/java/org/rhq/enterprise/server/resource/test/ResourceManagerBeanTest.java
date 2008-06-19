@@ -36,7 +36,7 @@ import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.discovery.DiscoveryServerServiceImpl;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.metadata.test.TestBase;
+import org.rhq.enterprise.server.resource.metadata.test.UpdateSubsytemTestBase;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -44,13 +44,14 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * Test for {@link ResourceManagerLocal} SLSB.
  */
 @Test
-public class ResourceManagerBeanTest extends TestBase {
+public class ResourceManagerBeanTest extends UpdateSubsytemTestBase {
     private ResourceManagerLocal resourceManager;
     private Subject superuser;
     private Resource newResource;
 
     TestServerCommunicationsService agentServiceContainer;
 
+    @Override
     @BeforeClass
     public void beforeClass() {
         agentServiceContainer = prepareForTestAgents();

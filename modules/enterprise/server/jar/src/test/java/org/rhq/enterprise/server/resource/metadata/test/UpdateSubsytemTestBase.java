@@ -23,6 +23,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.Set;
 
+import javax.ejb.EJB;
+import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.xml.XMLConstants;
@@ -32,22 +34,39 @@ import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
+
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-public class TestBase extends AbstractEJB3Test {
+public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
-    protected static final String PLUGIN_NAME = "ResourceMetaDataManagerBeanTest";
+    @EJB
+    protected ResourceManagerLocal resMgr;
+
+    protected TestServerCommunicationsService agentServiceContainer;
+
+    protected int agentId;
+    protected int server2id;
+    protected int plugin1Id;
+
+    protected static final String PLUGIN_NAME = "UpdateResourceSubsystemTest";
     protected static ResourceMetadataManagerLocal metadataManager;
 
+    @BeforeSuite
     protected void init() {
         try {
             metadataManager = LookupUtil.getResourceMetadataManager();
@@ -59,6 +78,17 @@ public class TestBase extends AbstractEJB3Test {
         }
     }
 
+    @BeforeClass
+    public void beforeClass() {
+        System.out.println("======== PluginHandling3Test ===============");
+        agentServiceContainer = prepareForTestAgents();
+        agentServiceContainer.measurementService = new MockAgentService();
+
+        prepareScheduler();
+
+    }
+
+    @SuppressWarnings("unchecked")
     protected ResourceType getResourceType(String typeName) {
         Query q1 = getEntityManager().createQuery("Select rt from ResourceType rt");
         List<ResourceType> types = q1.getResultList();
@@ -76,7 +106,7 @@ public class TestBase extends AbstractEJB3Test {
 
     protected void registerPlugin(String pathToDescriptor) throws Exception {
         Plugin testPlugin = new Plugin(PLUGIN_NAME, "foo.jar", "123561RE1652EF165E");
-        testPlugin.setDisplayName("TestBase" + pathToDescriptor);
+        testPlugin.setDisplayName("UpdateSubsystemTestBase" + pathToDescriptor);
         PluginDescriptor descriptor = loadPluginDescriptor(pathToDescriptor);
         metadataManager.registerPlugin(testPlugin, descriptor);
         getEntityManager().flush();
@@ -108,6 +138,44 @@ public class TestBase extends AbstractEJB3Test {
         }
 
         return found;
+    }
+
+    protected ResourceType getServer1ForConfig5() throws Exception {
+        registerPlugin("./test/metadata/update5-v1_0.xml");
+        ResourceType platform1 = getResourceType("myPlatform5");
+        Set<ResourceType> servers = platform1.getChildResourceTypes();
+        assert servers.size() == 1 : "Expected to find 1 server in v1, but got " + servers.size();
+        ResourceType server1 = servers.iterator().next();
+        return server1;
+    }
+
+    protected ResourceType getServer2ForConfig5() throws Exception {
+        registerPlugin("./test/metadata/update5-v2_0.xml");
+        ResourceType platform2 = getResourceType("myPlatform5");
+        Set<ResourceType> servers2 = platform2.getChildResourceTypes();
+        assert servers2.size() == 1 : "Expected to find 1 server in v2, but got " + servers2.size();
+        ResourceType server2 = servers2.iterator().next();
+        return server2;
+    }
+
+    protected int getPluginId(EntityManager entityManager) {
+        Plugin existingPlugin = null;
+        try {
+            existingPlugin = (Plugin) entityManager.createNamedQuery("Plugin.findByName").setParameter("name",
+                PLUGIN_NAME).getSingleResult();
+            plugin1Id = existingPlugin.getId();
+            return plugin1Id;
+        } catch (NoResultException nre) {
+            throw nre;
+        }
+    }
+
+    protected void setUpAgent(EntityManager entityManager, Resource testResource) {
+        Agent agent = new Agent("-dummy agent-", "localhost", 12345, "http://localhost:12345/", "-dummy token-");
+        entityManager.persist(agent);
+        testResource.setAgent(agent);
+        agentServiceContainer.addStartedAgent(agent);
+        agentId = agent.getId();
     }
 
     /**

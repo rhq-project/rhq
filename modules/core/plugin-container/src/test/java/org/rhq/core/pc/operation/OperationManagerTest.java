@@ -32,6 +32,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.server.operation.OperationServerService;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -526,8 +527,10 @@ public class OperationManagerTest {
     }
 
     private class MockOperationManager extends OperationManager {
+
         @Override
-        protected OperationFacet getOperationFacet(int resourceId) {
+        protected OperationFacet getOperationFacet(int resourceId, long facetMethodTimeout)
+            throws PluginContainerException {
             return new MockOperationFacet();
         }
 

@@ -23,18 +23,21 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
-import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
-import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
 public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
+    @Override
+    protected String getSubsystemDirectory() {
+        return "resource";
+    }
+
     @Test
     public void testSingleSubCategoryCreate() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/one-subcat-v1_0.xml");
+            registerPlugin("one-subcat-v1_0.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -49,9 +52,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testSingleSubCategoryAddFromEmpty() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/no-subcat.xml");
+            registerPlugin("no-subcat.xml");
 
-            registerPlugin("./test/metadata/one-subcat-v1_0.xml");
+            registerPlugin("one-subcat-v1_0.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -66,9 +69,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testSingleSubCategoryAddSibling() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/one-subcat-v1_0.xml");
+            registerPlugin("one-subcat-v1_0.xml");
 
-            registerPlugin("./test/metadata/two-subcat.xml");
+            registerPlugin("two-subcat.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -86,9 +89,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testSingleSubCategoryReplace() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/one-subcat-v1_0.xml");
+            registerPlugin("one-subcat-v1_0.xml");
 
-            registerPlugin("./test/metadata/one-subcat-v2_0.xml");
+            registerPlugin("one-subcat-v2_0.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -103,9 +106,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testSingleSubCategoryRemoveOneFromTwo() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/two-subcat.xml");
+            registerPlugin("two-subcat.xml");
 
-            registerPlugin("./test/metadata/one-subcat-v2_0.xml");
+            registerPlugin("one-subcat-v2_0.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -120,9 +123,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testSingleSubCategoryUpdate() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/one-subcat-v1_0.xml");
+            registerPlugin("one-subcat-v1_0.xml");
 
-            registerPlugin("./test/metadata/one-subcat-v1_1.xml");
+            registerPlugin("one-subcat-v1_1.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -137,9 +140,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testSingleSubCategoryRemove() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/one-subcat-v1_0.xml");
+            registerPlugin("one-subcat-v1_0.xml");
 
-            registerPlugin("./test/metadata/no-subcat.xml");
+            registerPlugin("no-subcat.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -153,9 +156,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testNestedSubCategoryReplace() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/nested-subcat-v1_0.xml");
+            registerPlugin("nested-subcat-v1_0.xml");
 
-            registerPlugin("./test/metadata/nested-subcat-v2_0.xml");
+            registerPlugin("nested-subcat-v2_0.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -171,9 +174,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testNestedSubCategoryAddFromEmpty() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/no-subcat.xml");
+            registerPlugin("no-subcat.xml");
 
-            registerPlugin("./test/metadata/nested-subcat-v1_0.xml");
+            registerPlugin("nested-subcat-v1_0.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -189,9 +192,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testNestedSubCategoryRemoveOneFromTwo() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/nested-subcat-2children.xml");
+            registerPlugin("nested-subcat-2children.xml");
 
-            registerPlugin("./test/metadata/nested-subcat-v2_0.xml");
+            registerPlugin("nested-subcat-v2_0.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -207,9 +210,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testNestedSubCategoryAddSibling() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/nested-subcat-v2_0.xml");
+            registerPlugin("nested-subcat-v2_0.xml");
 
-            registerPlugin("./test/metadata/nested-subcat-2children.xml");
+            registerPlugin("nested-subcat-2children.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -225,9 +228,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testNestedSubCategoryRemoveChild() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/nested-subcat-grandchild.xml");
+            registerPlugin("nested-subcat-grandchild.xml");
 
-            registerPlugin("./test/metadata/nested-subcat-v2_0.xml");
+            registerPlugin("nested-subcat-v2_0.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -244,9 +247,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testNestedSubCategoryAddChild() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/nested-subcat-v2_0.xml");
+            registerPlugin("nested-subcat-v2_0.xml");
 
-            registerPlugin("./test/metadata/nested-subcat-grandchild.xml");
+            registerPlugin("nested-subcat-grandchild.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -263,9 +266,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testNestedSubCategoryUpdate() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/nested-subcat-v1_0.xml");
+            registerPlugin("nested-subcat-v1_0.xml");
 
-            registerPlugin("./test/metadata/nested-subcat-v1_1.xml");
+            registerPlugin("nested-subcat-v1_1.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -282,9 +285,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testNestedSubCategoryAdd() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/one-subcat-v3_0.xml");
+            registerPlugin("one-subcat-v3_0.xml");
 
-            registerPlugin("./test/metadata/nested-subcat-v1_1.xml");
+            registerPlugin("nested-subcat-v1_1.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -301,7 +304,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testNestedSubCategoryCreate() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/nested-subcat-v1_1.xml");
+            registerPlugin("nested-subcat-v1_1.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -318,9 +321,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testNestedSubCategoryRemoveAll() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/nested-subcat-v1_0.xml");
+            registerPlugin("nested-subcat-v1_0.xml");
 
-            registerPlugin("./test/metadata/no-subcat.xml");
+            registerPlugin("no-subcat.xml");
 
             ResourceType server1 = getResourceType("testServer1");
             assertSubCategory(server1.getSubCategories(), 0, null);
@@ -333,7 +336,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testNestedSubCategoryCreateWithServices() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/nested-subcat-services-v1_0.xml");
+            registerPlugin("nested-subcat-services-v1_0.xml");
 
             ResourceType server1 = getResourceType("testServer1");
             Set<ResourceType> children = server1.getChildResourceTypes();
@@ -353,7 +356,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testNestedSubCategoryCreateWithServices2() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/nested-subcat-services-v2_0.xml");
+            registerPlugin("nested-subcat-services-v2_0.xml");
 
             ResourceType server1 = getResourceType("testServer1");
             Set<ResourceType> children = server1.getChildResourceTypes();
@@ -373,7 +376,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testNestedSubCategoryUpdateWithServices() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/nested-subcat-services-v1_0.xml");
+            registerPlugin("nested-subcat-services-v1_0.xml");
 
             ResourceType server1 = getResourceType("testServer1");
             Set<ResourceType> children = server1.getChildResourceTypes();
@@ -383,7 +386,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
             assert subCategories.size() == 1; // subcat with name "parent"
             // TODO check for 2 children of this subcategory
 
-            registerPlugin("./test/metadata/nested-subcat-services-v2_0.xml");
+            registerPlugin("nested-subcat-services-v2_0.xml");
 
             server1 = getResourceType("testServer1");
             children = server1.getChildResourceTypes();
@@ -425,8 +428,8 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testRemoveService() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/services-v1_0.xml");
-            registerPlugin("./test/metadata/services-v2_0.xml");
+            registerPlugin("services-v1_0.xml");
+            registerPlugin("services-v2_0.xml");
 
             ResourceType server1 = getResourceType("testServer1");
             Set<ResourceType> children = server1.getChildResourceTypes();
@@ -441,11 +444,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testSimpleSubCategoryCreate() throws Exception {
         getTransactionManager().begin();
         try {
-            Plugin testPlugin = new Plugin("UpdateResourceSubsystemTest", "foo.jar", "123561RE1652EF165E");
-            PluginDescriptor descriptor = loadPluginDescriptor("./test/metadata/test-subcategories.xml");
-            metadataManager.registerPlugin(testPlugin, descriptor);
-
-            getEntityManager().flush();
+            registerPlugin("test-subcategories.xml");
 
             ResourceType server1 = getResourceType("testServer1");
 
@@ -473,16 +472,10 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     public void testSimpleSubCategoryUpdate() throws Exception {
         getTransactionManager().begin();
         try {
-            Plugin testPlugin = new Plugin("UpdateResourceSubsystemTest", "foo.jar", "123561RE1652EF165E");
-            PluginDescriptor descriptor = loadPluginDescriptor("./test/metadata/test-subcategories.xml");
-            metadataManager.registerPlugin(testPlugin, descriptor);
-
-            getEntityManager().flush();
+            registerPlugin("test-subcategories.xml");
 
             // pretend to be an updated plugin
-            testPlugin = new Plugin("UpdateResourceSubsystemTest", "foo.jar", "222222222");
-            descriptor = loadPluginDescriptor("./test/metadata/test-subcategories2.xml");
-            metadataManager.registerPlugin(testPlugin, descriptor);
+            registerPlugin("test-subcategories2.xml");
 
             // now test how the subcategories got updated
             ResourceType server1 = getResourceType("testServer1");
@@ -528,7 +521,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
         boolean noException = true;
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/illegal-subcat-1.xml");
+            registerPlugin("illegal-subcat-1.xml");
             // We should not come here, but have bailed out with an exception
         } catch (Throwable t) {
             noException = false;
@@ -545,9 +538,9 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
         System.out.println("= testAutoCreateChildSubCategory");
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/autocreate-child-subcat-1.xml");
+            registerPlugin("autocreate-child-subcat-1.xml");
             System.out.println("Done with v1");
-            registerPlugin("./test/metadata/autocreate-child-subcat-1.xml");
+            registerPlugin("autocreate-child-subcat-1.xml");
             System.out.println("Done with v1 (2)");
         } finally {
             getTransactionManager().rollback();

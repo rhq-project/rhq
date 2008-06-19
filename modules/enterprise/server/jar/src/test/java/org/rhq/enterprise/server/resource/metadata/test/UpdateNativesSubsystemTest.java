@@ -8,6 +8,12 @@ import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.ResourceType;
 
 public class UpdateNativesSubsystemTest extends UpdateSubsytemTestBase {
+
+    @Override
+    protected String getSubsystemDirectory() {
+        return "natives";
+    }
+
     /**
      * Tests the behaviour of the MetadataManager wrt <process-scan> entries.
      *
@@ -70,5 +76,23 @@ public class UpdateNativesSubsystemTest extends UpdateSubsytemTestBase {
         } finally {
             getTransactionManager().rollback();
         }
+    }
+
+    protected ResourceType getServer1ForConfig5() throws Exception {
+        registerPlugin("update5-v1_0.xml");
+        ResourceType platform1 = getResourceType("myPlatform5");
+        Set<ResourceType> servers = platform1.getChildResourceTypes();
+        assert servers.size() == 1 : "Expected to find 1 server in v1, but got " + servers.size();
+        ResourceType server1 = servers.iterator().next();
+        return server1;
+    }
+
+    protected ResourceType getServer2ForConfig5() throws Exception {
+        registerPlugin("update5-v2_0.xml");
+        ResourceType platform2 = getResourceType("myPlatform5");
+        Set<ResourceType> servers2 = platform2.getChildResourceTypes();
+        assert servers2.size() == 1 : "Expected to find 1 server in v2, but got " + servers2.size();
+        ResourceType server2 = servers2.iterator().next();
+        return server2;
     }
 }

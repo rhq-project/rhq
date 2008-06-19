@@ -64,6 +64,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     protected int plugin1Id;
 
     protected static final String PLUGIN_NAME = "ResourceMetaDataManagerBeanTest";
+    protected static final String COMMON_PATH_PREFIX = "./test/metadata/";
     protected static ResourceMetadataManagerLocal metadataManager;
 
     @BeforeSuite
@@ -80,7 +81,6 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
     @BeforeClass
     public void beforeClass() {
-        System.out.println("======== PluginHandling3Test ===============");
         agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.measurementService = new MockAgentService();
 
@@ -104,7 +104,12 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         }
     }
 
+    protected String getSubsystemDirectory() {
+        return ".";
+    }
+
     protected void registerPlugin(String pathToDescriptor) throws Exception {
+        pathToDescriptor = COMMON_PATH_PREFIX + getSubsystemDirectory() + "/" + pathToDescriptor;
         Plugin testPlugin = new Plugin(PLUGIN_NAME, "foo.jar", "123561RE1652EF165E");
         testPlugin.setDisplayName("ResourceMetaDataManagerBeanTest" + pathToDescriptor);
         PluginDescriptor descriptor = loadPluginDescriptor(pathToDescriptor);
@@ -138,24 +143,6 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         }
 
         return found;
-    }
-
-    protected ResourceType getServer1ForConfig5() throws Exception {
-        registerPlugin("./test/metadata/update5-v1_0.xml");
-        ResourceType platform1 = getResourceType("myPlatform5");
-        Set<ResourceType> servers = platform1.getChildResourceTypes();
-        assert servers.size() == 1 : "Expected to find 1 server in v1, but got " + servers.size();
-        ResourceType server1 = servers.iterator().next();
-        return server1;
-    }
-
-    protected ResourceType getServer2ForConfig5() throws Exception {
-        registerPlugin("./test/metadata/update5-v2_0.xml");
-        ResourceType platform2 = getResourceType("myPlatform5");
-        Set<ResourceType> servers2 = platform2.getChildResourceTypes();
-        assert servers2.size() == 1 : "Expected to find 1 server in v2, but got " + servers2.size();
-        ResourceType server2 = servers2.iterator().next();
-        return server2;
     }
 
     protected int getPluginId(EntityManager entityManager) {

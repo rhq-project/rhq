@@ -24,13 +24,19 @@ import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
+
+    @Override
+    protected String getSubsystemDirectory() {
+        return "events";
+    }
+
     @Test
     public void testCreateDeleteEvent() throws Exception {
 
         System.out.println("= testCreateDeleteEvent");
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/event1-1.xml");
+            registerPlugin("event1-1.xml");
             ResourceType platform = getResourceType("events");
             assert platform != null;
             Set<EventDefinition> eDefs = platform.getEventDefinitions();
@@ -42,7 +48,7 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
 
             System.out.println("==> Done with v1");
 
-            registerPlugin("./test/metadata/event1-2.xml");
+            registerPlugin("event1-2.xml");
             platform = getResourceType("events");
             eDefs = platform.getEventDefinitions();
             assert eDefs != null;
@@ -58,7 +64,7 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
 
             System.out.println("==> Done with v2");
 
-            registerPlugin("./test/metadata/event1-1.xml");
+            registerPlugin("event1-1.xml");
             platform = getResourceType("events");
             eDefs = platform.getEventDefinitions();
             assert eDefs != null;
@@ -83,7 +89,7 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
         System.out.println("= testNoOpChange");
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/event1-1.xml");
+            registerPlugin("event1-1.xml");
             ResourceType platform = getResourceType("events");
             assert platform != null;
             Set<EventDefinition> eDefs = platform.getEventDefinitions();
@@ -95,7 +101,7 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
 
             System.out.println("==> Done with v1");
 
-            registerPlugin("./test/metadata/event1-1.xml");
+            registerPlugin("event1-1.xml");
             platform = getResourceType("events");
             assert platform != null;
             eDefs = platform.getEventDefinitions();
@@ -124,7 +130,7 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
         getTransactionManager().begin();
         EntityManager entityManager = getEntityManager();
         try {
-            registerPlugin("./test/metadata/event1-2.xml");
+            registerPlugin("event1-2.xml");
             getPluginId(entityManager);
 
             platform = getResourceType("events");
@@ -181,7 +187,7 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
              * Now check that the event source + events are gone.
              */
 
-            registerPlugin("./test/metadata/event1-1.xml");
+            registerPlugin("event1-1.xml");
             platform = getResourceType("events");
 
             Set<EventDefinition> eDefs = platform.getEventDefinitions();

@@ -20,6 +20,12 @@ import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConst
 import org.rhq.core.domain.resource.ResourceType;
 
 public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
+
+    @Override
+    protected String getSubsystemDirectory() {
+        return "configuration";
+    }
+
     /**
      * Test updating of plugin and resource configs
      *
@@ -258,6 +264,24 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         }
     }
 
+    protected ResourceType getServer1ForConfig5() throws Exception {
+        registerPlugin("update5-v1_0.xml");
+        ResourceType platform1 = getResourceType("myPlatform5");
+        Set<ResourceType> servers = platform1.getChildResourceTypes();
+        assert servers.size() == 1 : "Expected to find 1 server in v1, but got " + servers.size();
+        ResourceType server1 = servers.iterator().next();
+        return server1;
+    }
+
+    protected ResourceType getServer2ForConfig5() throws Exception {
+        registerPlugin("update5-v2_0.xml");
+        ResourceType platform2 = getResourceType("myPlatform5");
+        Set<ResourceType> servers2 = platform2.getChildResourceTypes();
+        assert servers2.size() == 1 : "Expected to find 1 server in v2, but got " + servers2.size();
+        ResourceType server2 = servers2.iterator().next();
+        return server2;
+    }
+
     /**
      * Test for storing of back links from Constraint to PropertyDefinitionSimple. See JBNADM-1587
      *
@@ -267,7 +291,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
     public void testConstraint() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/constraint.xml");
+            registerPlugin("constraint.xml");
             ResourceType platform = getResourceType("constraintPlatform");
             ConfigurationDefinition config = platform.getResourceConfigurationDefinition();
             PropertyDefinitionSimple propDef = config.getPropertyDefinitionSimple("secureJnpPort");
@@ -289,7 +313,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
     public void testConstraint2() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/constraint.xml");
+            registerPlugin("constraint.xml");
             ResourceType platform = getResourceType("constraintPlatform");
             ConfigurationDefinition config = platform.getResourceConfigurationDefinition();
             Map<String, PropertyDefinition> propDefMap = config.getPropertyDefinitions();
@@ -312,7 +336,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
     public void testConstraintMinMax() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/constraintMinMax.xml");
+            registerPlugin("constraintMinMax.xml");
             ResourceType platform = getResourceType("constraintPlatform");
             ConfigurationDefinition config = platform.getResourceConfigurationDefinition();
             PropertyDefinitionSimple propDef = config.getPropertyDefinitionSimple("secureJnpPort");
@@ -340,7 +364,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         getTransactionManager().begin();
         try {
             { // extra block for variable scoping purposes
-                registerPlugin("./test/metadata/propertyList-v1.xml");
+                registerPlugin("propertyList-v1.xml");
                 ResourceType platform = getResourceType("myPlatform6");
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
                 Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
@@ -409,7 +433,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
             /*
              * Deploy v2 of the plugin
              */{ // extra block for variable scoping purposes
-                registerPlugin("./test/metadata/propertyList-v2.xml");
+                registerPlugin("propertyList-v2.xml");
                 ResourceType platform = getResourceType("myPlatform6");
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
                 Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
@@ -505,7 +529,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
     public void testListPropertyMinMax() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/propertyList-simple.xml");
+            registerPlugin("propertyList-simple.xml");
             ResourceType platform = getResourceType("myPlatform");
             ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
             Map<String, PropertyDefinition> properties = cd.getPropertyDefinitions();
@@ -527,7 +551,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         getTransactionManager().begin();
         try {
             { // extra block for variable scoping purposes
-                registerPlugin("./test/metadata/propertyMap-v1.xml");
+                registerPlugin("propertyMap-v1.xml");
                 ResourceType platform = getResourceType("myPlatform7");
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
                 Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
@@ -575,7 +599,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
              * Now deploy v2
              */
             { // extra block for variable scoping purposes
-                registerPlugin("./test/metadata/propertyMap-v2.xml");
+                registerPlugin("propertyMap-v2.xml");
                 ResourceType platform = getResourceType("myPlatform7");
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
                 Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
@@ -643,7 +667,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         getTransactionManager().begin();
         try {
             { // extra block for variable scoping purposes
-                registerPlugin("./test/metadata/propertyChanging-v1.xml");
+                registerPlugin("propertyChanging-v1.xml");
                 ResourceType platform = getResourceType("myPlatform7");
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
                 Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
@@ -672,7 +696,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
              */
 
             { // extra block for variable scoping purposes
-                registerPlugin("./test/metadata/propertyChanging-v2.xml");
+                registerPlugin("propertyChanging-v2.xml");
                 ResourceType platform = getResourceType("myPlatform7");
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
                 Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
@@ -706,7 +730,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
             /*
              * Now deploy v1 again
              */{ // extra block for variable scoping purposes
-                registerPlugin("./test/metadata/propertyChanging-v1.xml");
+                registerPlugin("propertyChanging-v1.xml");
                 ResourceType platform = getResourceType("myPlatform7");
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
                 Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
@@ -744,11 +768,11 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         System.out.println("= testGroupDeleted");
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/resourceConfig/groupDeleted-v1.xml");
+            registerPlugin("groupDeleted-v1.xml");
             System.out.println("==> Done with v1");
-            registerPlugin("./test/metadata/resourceConfig/groupDeleted-v2.xml");
+            registerPlugin("groupDeleted-v2.xml");
             System.out.println("==> Done with v2");
-            registerPlugin("./test/metadata/resourceConfig/groupDeleted-v1.xml");
+            registerPlugin("groupDeleted-v1.xml");
             System.out.println("==> Done with v1");
         } finally {
             getTransactionManager().rollback();
@@ -760,11 +784,11 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         System.out.println("= testGroupPropDeleted");
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v1.xml");
+            registerPlugin("groupPropDeleted-v1.xml");
             System.out.println("==> Done with v1");
-            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v2.xml");
+            registerPlugin("groupPropDeleted-v2.xml");
             System.out.println("==> Done with v2");
-            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v1.xml");
+            registerPlugin("groupPropDeleted-v1.xml");
             System.out.println("==> Done with v1");
         } finally {
             getTransactionManager().rollback();
@@ -776,11 +800,11 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         System.out.println("= testGroupPropDeletedExt");
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v3.xml");
+            registerPlugin("groupPropDeleted-v3.xml");
             System.out.println("==> Done with v1");
-            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v4.xml");
+            registerPlugin("groupPropDeleted-v4.xml");
             System.out.println("==> Done with v2");
-            registerPlugin("./test/metadata/resourceConfig/groupPropDeleted-v3.xml");
+            registerPlugin("groupPropDeleted-v3.xml");
             System.out.println("==> Done with v1");
         } finally {
             getTransactionManager().rollback();
@@ -792,11 +816,11 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         System.out.println("= testGroupPropMoved");
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/resourceConfig/groupPropMoved-v1.xml");
+            registerPlugin("groupPropMoved-v1.xml");
             System.out.println("==> Done with v1");
-            registerPlugin("./test/metadata/resourceConfig/groupPropMoved-v2.xml");
+            registerPlugin("groupPropMoved-v2.xml");
             System.out.println("==> Done with v2");
-            registerPlugin("./test/metadata/resourceConfig/groupPropMoved-v1.xml");
+            registerPlugin("groupPropMoved-v1.xml");
             System.out.println("==> Done with v1");
         } finally {
             getTransactionManager().rollback();

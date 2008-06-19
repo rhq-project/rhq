@@ -10,6 +10,12 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 
 public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
+
+    @Override
+    protected String getSubsystemDirectory() {
+        return "resource-type";
+    }
+
     /**
      * See if deletion of a resource type just works
      *
@@ -19,7 +25,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
     public void testResourceTypeDeletion() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/update4-v1_0.xml");
+            registerPlugin("update4-v1_0.xml");
             ResourceType platform1 = getResourceType("myPlatform4");
             Set<ResourceType> servers1 = platform1.getChildResourceTypes();
             assert servers1.size() == 2 : "Expected to find 2 servers in v1";
@@ -36,7 +42,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
 
             assert found == 2 : "I did not find the expected servers in v1";
 
-            registerPlugin("./test/metadata/update4-v2_0.xml");
+            registerPlugin("update4-v2_0.xml");
             ResourceType platform2 = getResourceType("myPlatform4");
             Set<ResourceType> servers2 = platform2.getChildResourceTypes();
             assert servers2.size() == 1 : "Expected to find 1 servers in v2";
@@ -45,7 +51,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
             Set<MeasurementDefinition> mdef = server2.getMetricDefinitions();
             assert mdef.size() == 1 : "Expected one MeasurementDefinition in v2";
 
-            registerPlugin("./test/metadata/update4-v1_0.xml");
+            registerPlugin("update4-v1_0.xml");
             ResourceType platform3 = getResourceType("myPlatform4");
             Set<ResourceType> servers3 = platform3.getChildResourceTypes();
             assert servers3.size() == 2 : "Expected to find 2 servers in v1/2";
@@ -71,7 +77,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
         System.out.println("testUpdatePlugin2 --- start");
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/update2-v1_0.xml");
+            registerPlugin("update2-v1_0.xml");
             ResourceType platform1 = getResourceType("myPlatform");
             assert platform1 != null : "I did not find myPlatform";
             Set<MeasurementDefinition> defs = platform1.getMetricDefinitions();
@@ -98,7 +104,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
             /*
              * The nested service got pulled out and put under platform
              */
-            registerPlugin("./test/metadata/update2-v2_0.xml");
+            registerPlugin("update2-v2_0.xml");
             ResourceType platform2 = getResourceType("myPlatform");
             assert platform2 != null : "I did not find myPlatform";
             Set<MeasurementDefinition> defs2 = platform2.getMetricDefinitions();
@@ -156,7 +162,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
         try {
             System.out.println(" A stack trace coming out of this is expected");
             System.out.flush();
-            registerPlugin("./test/metadata/duplicateResourceType.xml");
+            registerPlugin("duplicateResourceType.xml");
             getResourceType("ops");
             assert false : "We should not have hit this line";
         } catch (Exception e) {

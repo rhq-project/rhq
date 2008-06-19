@@ -15,6 +15,12 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 
 public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
+
+    @Override
+    protected String getSubsystemDirectory() {
+        return "operation";
+    }
+
     /**
      * Check updates of artifacts and operations
      *
@@ -24,7 +30,7 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
     public void testOperationAndArtifactUpdates() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/update3-v1_0.xml");
+            registerPlugin("update3-v1_0.xml");
             ResourceType platform1 = getResourceType("myPlatform3");
             Set<PackageType> packageTypes = platform1.getPackageTypes();
             assert packageTypes.size() == 3 : "Did not find the three expected package types in v1";
@@ -36,7 +42,7 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
             /*
              * Now deploy the changed version of the plugin
              */
-            registerPlugin("./test/metadata/update3-v2_0.xml");
+            registerPlugin("update3-v2_0.xml");
 
             ResourceType platform2 = getResourceType("myPlatform3");
             Set<PackageType> packageTypes2 = platform2.getPackageTypes();
@@ -77,7 +83,7 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
              * Now try the other way round
              */
 
-            registerPlugin("./test/metadata/update3-v1_0.xml");
+            registerPlugin("update3-v1_0.xml");
             ResourceType platform3 = getResourceType("myPlatform3");
             Set<PackageType> packageTypes3 = platform3.getPackageTypes();
             assert packageTypes3.size() == 3 : "Did not find the three package types in v3";
@@ -105,7 +111,7 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
         System.out.println("= testAddRemoveOperationWithParams");
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/operation1-1.xml");
+            registerPlugin("operation1-1.xml");
             ResourceType platform = getResourceType("ops");
             assert platform != null;
             Set<OperationDefinition> opDefs = platform.getOperationDefinitions();
@@ -118,7 +124,7 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
             getEntityManager().flush();
             System.out.println("==> Done with v1");
 
-            registerPlugin("./test/metadata/operation1-2.xml");
+            registerPlugin("operation1-2.xml");
             platform = getResourceType("ops");
             assert platform != null;
             opDefs = platform.getOperationDefinitions();
@@ -152,7 +158,7 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
             getEntityManager().flush();
             System.out.println("==> Done with v2");
 
-            registerPlugin("./test/metadata/operation1-1.xml");
+            registerPlugin("operation1-1.xml");
             platform = getResourceType("ops");
             assert platform != null;
             opDefs = platform.getOperationDefinitions();
@@ -169,7 +175,7 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
         System.out.println("= testAddRemoveOperationWithParams2");
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/operation2-1.xml");
+            registerPlugin("operation2-1.xml");
             ResourceType platform = getResourceType("ops");
             assert platform != null;
             Set<OperationDefinition> opDefs = platform.getOperationDefinitions();
@@ -184,9 +190,9 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
             assert found == 3 : "Did not find all 3 expected operations";
 
             System.out.println("==> Done with v1");
-            registerPlugin("./test/metadata/operation2-1.xml");
+            registerPlugin("operation2-1.xml");
             System.out.println("==> Done with v1 (2)");
-            registerPlugin("./test/metadata/operation2-2.xml");
+            registerPlugin("operation2-2.xml");
             platform = getResourceType("ops");
             assert platform != null;
             opDefs = platform.getOperationDefinitions();
@@ -201,7 +207,7 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
 
             System.out.println("==> Done with v2");
 
-            registerPlugin("./test/metadata/operation2-1.xml");
+            registerPlugin("operation2-1.xml");
             platform = getResourceType("ops");
             assert platform != null;
             opDefs = platform.getOperationDefinitions();
@@ -218,7 +224,7 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
         System.out.println("= testAddRemoveOperationWithGrouping");
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/operation3-1.xml");
+            registerPlugin("operation3-1.xml");
             ResourceType platform = getResourceType("ops");
             assert platform != null;
             Set<OperationDefinition> opDefs = platform.getOperationDefinitions();
@@ -234,10 +240,10 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
 
             System.out.println("==> Done with v1");
 
-            registerPlugin("./test/metadata/operation3-1.xml");
+            registerPlugin("operation3-1.xml");
             System.out.println("==> Done with v1 (2)");
 
-            registerPlugin("./test/metadata/operation3-2.xml");
+            registerPlugin("operation3-2.xml");
             platform = getResourceType("ops");
             assert platform != null;
             opDefs = platform.getOperationDefinitions();
@@ -251,7 +257,7 @@ public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
             assert found == 4 : "Did not find all 4 expected operations";
 
             System.out.println("==> Done with v2");
-            registerPlugin("./test/metadata/operation3-1.xml");
+            registerPlugin("operation3-1.xml");
             platform = getResourceType("ops");
             assert platform != null;
             opDefs = platform.getOperationDefinitions();

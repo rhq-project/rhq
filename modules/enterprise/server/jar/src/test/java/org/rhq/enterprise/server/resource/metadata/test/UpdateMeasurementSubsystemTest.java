@@ -23,6 +23,12 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
+
+    @Override
+    protected String getSubsystemDirectory() {
+        return "measurement";
+    }
+
     /**
      * Simple test for the update of a plugin where a server has some metrics that get in the second version of the
      * plugin added / changed / removed
@@ -33,7 +39,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
     public void testUpdateMeasurementDefinitions() throws Exception {
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/update-v1_0.xml");
+            registerPlugin("update-v1_0.xml");
             ResourceType server1 = getResourceType("testServer1");
             Set<MeasurementDefinition> definitions1 = server1.getMetricDefinitions();
             assert definitions1.size() == 4 : "There should be 4 metrics for v1";
@@ -54,7 +60,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
             getEntityManager().flush();
 
             // now hot deploy a new version of that plugin
-            registerPlugin("./test/metadata/update-v2_0.xml");
+            registerPlugin("update-v2_0.xml");
             ResourceType server2 = getResourceType("testServer1");
             Set<MeasurementDefinition> definitions2 = server2.getMetricDefinitions();
             assert definitions2.size() == 4 : "There should be four metrics in v2";
@@ -83,7 +89,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
             getEntityManager().flush();
 
             // Now try the other way round
-            registerPlugin("./test/metadata/update-v1_0.xml");
+            registerPlugin("update-v1_0.xml");
             ResourceType server3 = getResourceType("testServer1");
             Set<MeasurementDefinition> definitions3 = server3.getMetricDefinitions();
             assert definitions3.size() == 4 : "There should be 4 metrics for v3";
@@ -114,21 +120,21 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
         getTransactionManager().begin();
         try {
             { // extra block for variable scoping purposes
-                registerPlugin("./test/metadata/measurementDeletion-v1_0.xml");
+                registerPlugin("measurementDeletion-v1_0.xml");
                 ResourceType server = getResourceType("testServer1");
                 Set<MeasurementDefinition> def = server.getMetricDefinitions();
                 assert def.size() == 4;
             }
 
             { // extra block for variable scoping purposes
-                registerPlugin("./test/metadata/measurementDeletion-v2_0.xml");
+                registerPlugin("measurementDeletion-v2_0.xml");
                 ResourceType server = getResourceType("testServer1");
                 Set<MeasurementDefinition> def = server.getMetricDefinitions();
                 assert def.size() == 0;
             }
 
             { // extra block for variable scoping purposes
-                registerPlugin("./test/metadata/measurementDeletion-v1_0.xml");
+                registerPlugin("measurementDeletion-v1_0.xml");
                 ResourceType server = getResourceType("testServer1");
                 Set<MeasurementDefinition> def = server.getMetricDefinitions();
                 assert def.size() == 4;
@@ -149,7 +155,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
 
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/update6-1.xml");
+            registerPlugin("update6-1.xml");
             ResourceType server = getResourceType("testServer1");
 
             EntityManager entityManager = getEntityManager();
@@ -196,7 +202,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
             System.out.println("Done with v1");
 
             try {
-                registerPlugin("./test/metadata/update6-2.xml");
+                registerPlugin("update6-2.xml");
             } catch (Throwable t) {
                 System.err.println(t);
             }
@@ -259,7 +265,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
 
         getTransactionManager().begin();
         try {
-            registerPlugin("./test/metadata/update7-1.xml");
+            registerPlugin("update7-1.xml");
             ResourceType platform = getResourceType("myPlatform7");
 
             EntityManager entityManager = getEntityManager();
@@ -294,7 +300,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
             System.out.println("Done with v1");
 
             try {
-                registerPlugin("./test/metadata/update7-2.xml");
+                registerPlugin("update7-2.xml");
             } catch (Throwable t) {
                 System.err.println(t);
             }

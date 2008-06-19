@@ -1,0 +1,95 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+  
+   <platform name="myPlatform5">
+      <server name="testServer1">
+         <plugin-configuration>
+            <!--  group connection is gone -->
+            
+            <!--  control stays as is -->
+            <c:group name="control" displayName="Controls system">
+               <c:simple-property name="programScript"
+                  displayName="Program Script" type="file"
+                  description="the full path to the script or executable used to start this instance" />
+               <c:simple-property name="configurationSet"
+                  displayName="Configuration Set"
+                  description="the name of the server configuration, e.g. minimal, default, all"
+                  required="false" />
+               <c:simple-property name="bindingAddress"
+                  displayName="Binding Address"
+                  description="the host or IP address used by all JBoss services as the binding address"
+                  required="false" />
+            </c:group>
+            
+            <!-- tuning as one property less and rampDownTime is now required-->
+            <c:group name="tuning" displayName="Controls system">
+               <c:simple-property name="rampUpTime" type="file"
+                  description="the full path to the script or executable used to start this instance" />
+               <c:simple-property name="steadyTime"
+                  displayName="Configuration Set"
+                  description="the name of the server configuration, e.g. minimal, default, all"
+                  required="false" />
+               <c:simple-property name="rampDownTime"
+                  displayName="Binding Address"
+                  description="the host or IP address used by all JBoss services as the binding address"
+                  readOnly="false"
+                  summary="true"
+                  required="true" />
+            </c:group>
+            
+            <!-- group fun is new -->
+            <c:group name="fun" displayName="Just for fun">
+               <c:simple-property name="funRampUpTime" type="file"
+                  description="None given" />
+            </c:group>
+            
+         </plugin-configuration>
+
+      
+      <!--
+       -  Now Process scans  
+      -->
+      
+      <!--  JBoss4 is gone -->
+      
+      <!--  JBoss5 stays as is -->
+      <process-scan name="JBoss5" query="bar" />
+      
+      <!--  JBoss6 has a different query -->
+      <process-scan name="JBoss6" query="hello world" />
+      
+      <!--  Hibernate is new -->
+      <process-scan name="Hibernate" query="yada" />
+      
+         
+   <resource-configuration>
+      <!--  thread pool size is gone -->
+      
+      <!--  jnpPort stays as is, but options change -->
+      <c:simple-property name="jnpPort" type="integer" displayName="Port to access JMX" >
+         <c:property-options>
+            <c:option name="option2" value="2"/>
+            <c:option name="option3" value="changed"/>
+            <c:option name="newOption4" value="4"/>
+            <c:option name="newOption5" value="5"/>
+         </c:property-options>
+      </c:simple-property>         
+      
+      <!-- secureJnpPort changes type and constraints and default value-->
+      <c:simple-property name="secureJnpPort" type="integer" displayName="Port to access JMX over ssl">
+         <c:constraint>
+            <c:float-constraint maximum="10"/>
+            <c:float-constraint minimum="3.0"/>
+            <c:regex-constraint expression="bar"/>
+         </c:constraint>
+      </c:simple-property>
+      
+      <!-- memory size is new -->
+      <c:simple-property name="memorySize" type="integer" displayName="Size of some memory" />
+   </resource-configuration>
+      </server>
+   </platform>
+</plugin>
+   

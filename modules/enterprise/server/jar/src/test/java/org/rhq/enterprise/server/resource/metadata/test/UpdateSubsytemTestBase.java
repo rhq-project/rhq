@@ -63,7 +63,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     protected int server2id;
     protected int plugin1Id;
 
-    protected static final String PLUGIN_NAME = "UpdateResourceSubsystemTest";
+    protected static final String PLUGIN_NAME = "ResourceMetaDataManagerBeanTest";
     protected static ResourceMetadataManagerLocal metadataManager;
 
     @BeforeSuite
@@ -106,7 +106,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
     protected void registerPlugin(String pathToDescriptor) throws Exception {
         Plugin testPlugin = new Plugin(PLUGIN_NAME, "foo.jar", "123561RE1652EF165E");
-        testPlugin.setDisplayName("UpdateSubsystemTestBase" + pathToDescriptor);
+        testPlugin.setDisplayName("ResourceMetaDataManagerBeanTest" + pathToDescriptor);
         PluginDescriptor descriptor = loadPluginDescriptor(pathToDescriptor);
         metadataManager.registerPlugin(testPlugin, descriptor);
         getEntityManager().flush();

@@ -117,10 +117,10 @@
       <h:panelGrid columns="2" columnClasses="warningColor" rendered="#{configurationBean.databaseSchemaExist == true}">
          <h:outputText value="#{bundle.existingSchemaQuestion}" style="font-size: 80%"/>
          <h:selectOneMenu label="#{bundle.existingSchemaQuestion}" value="#{configurationBean.existingSchemaAnswer}">
-            <f:selectItem itemLabel="#{bundle.existingSchemaAnswerOverwrite}"
-                          itemValue="overwrite"/>
             <f:selectItem itemLabel="#{bundle.existingSchemaAnswerUpgrade}"
                           itemValue="upgrade"/>
+            <f:selectItem itemLabel="#{bundle.existingSchemaAnswerOverwrite}"
+                          itemValue="overwrite"/>
          </h:selectOneMenu>
       </h:panelGrid>
 

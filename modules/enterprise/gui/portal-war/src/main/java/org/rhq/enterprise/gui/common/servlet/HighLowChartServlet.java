@@ -21,10 +21,13 @@ package org.rhq.enterprise.gui.common.servlet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -126,13 +129,16 @@ public class HighLowChartServlet extends ChartServlet {
         {
             MeasurementSchedule schedule = scheduleManager.getMeasurementScheduleById(subject, scheduleId);
 
-            if (log.isDebugEnabled()) {
-                log.debug("Plotting a high-low chart data for metric " + schedule.getDefinition().getName()
-                    + " on resource " + schedule.getResource().getName() + "...");
+            if (schedule != null) {
+                if (log.isDebugEnabled())
+                    log.debug("Plotting a high-low chart data for metric " + schedule.getDefinition().getName()
+                        + " on resource " + schedule.getResource().getName() + "...");
+                dataPoints = dataManager.getMeasurementDataForResource(subject, schedule.getResource().getId(),
+                    new int[] { schedule.getDefinition().getId() }, beginTime, endTime, NUMBER_OF_DATA_POINTS).get(0);
+            } else {
+                log.debug("Passed scheduleId " + scheduleId + " has no schedule attached, ignoring");
+                return;
             }
-
-            dataPoints = dataManager.getMeasurementDataForResource(subject, schedule.getResource().getId(),
-                new int[] { schedule.getDefinition().getId() }, beginTime, endTime, NUMBER_OF_DATA_POINTS).get(0);
         }
 
         /*

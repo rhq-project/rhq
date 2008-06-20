@@ -260,11 +260,14 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * @param  subject a session id that must be valid
      * @param  id      The primary key of the Schedule
      *
-     * @return a MeasurementSchedule
+     * @return a MeasurementSchedule or null, if there is 
      */
     public MeasurementSchedule getMeasurementScheduleById(Subject subject, int id) {
         // TODO: AUTHZ CHECK (VIEW_RESOURCE)
         MeasurementSchedule schedule = entityManager.find(MeasurementSchedule.class, id);
+        if (schedule == null)
+            return null;
+
         schedule.getResource().getId();
         schedule.getDefinition().getId();
         return schedule;

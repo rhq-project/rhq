@@ -670,6 +670,9 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
         List<MetricDisplaySummary> summaries = new ArrayList<MetricDisplaySummary>();
         for (int scheduleId : scheduleIds) {
             MeasurementSchedule schedule = scheduleManager.getMeasurementScheduleById(subject, scheduleId);
+            if (schedule == null)
+                continue;
+
             MetricDisplaySummary summary = getMetricDisplaySummary(schedule, beginTime, endTime, narrowed);
             if (summary != null) {
                 summary.setResourceId(resourceId);

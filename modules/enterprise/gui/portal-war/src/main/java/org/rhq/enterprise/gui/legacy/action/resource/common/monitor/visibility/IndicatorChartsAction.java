@@ -565,8 +565,8 @@ public class IndicatorChartsAction extends DispatchAction {
                 if (tmp.getMetricKeys().length > 0)
                     MonitorUtils.formatSimpleMetrics(tmp, userLocale);
                 ret.add(tmp);
-            } else
-                log.error("We did not get a result back for " + sum);
+            } else if (log.isDebugEnabled())
+                log.debug("We did not get a result back for " + sum);
         }
 
         return ret;

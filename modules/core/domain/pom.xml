@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>1.0.1-SNAPSHOT</version>
+      <version>1.0.1.CR6</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
    <description>RHQ domain model classes (i.e. POJOs used by both server and agent)</description>
 
    <scm>
-     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/core/domain/</connection>
-     <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/core/domain/</developerConnection>
+     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_1_CR6/modules/core/domain</connection>
+     <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_0_1_CR6/modules/core/domain</developerConnection>
    </scm>
 
    <properties>

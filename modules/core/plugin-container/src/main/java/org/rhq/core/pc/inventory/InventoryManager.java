@@ -574,7 +574,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     public boolean handleReport(InventoryReport report) {
         try {
             if (configuration.isInsideAgent() && (report.getAddedRoots().size() > 0)) {
-                log.info("Sending inventory report to server");
+                log.info("Sending inventory report to Server...");
                 InventoryReportResponse response = configuration.getServerServices().getDiscoveryServerService()
                     .mergeInventoryReport(report);
                 syncIds(report, response);
@@ -860,7 +860,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      *
      * @param  resource        the resource that the component will manage
      * @param  container       the wrapper around the resource and its component
-     * @param  newPluginConfig if <code>true</code>, this will indicate that the resource's plugin configuration is
+     * @param  updatedPluginConfig if <code>true</code>, this will indicate that the resource's plugin configuration is
      *                         known to have changed since the last time the resource component was started
      *
      * @throws InvalidPluginConfigurationException when connecting to the managed resource fails due to an invalid
@@ -869,21 +869,25 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     @SuppressWarnings("unchecked")
     public void activateResource(Resource resource, @NotNull
-    ResourceContainer container, boolean newPluginConfig) throws InvalidPluginConfigurationException,
+    ResourceContainer container, boolean updatedPluginConfig) throws InvalidPluginConfigurationException,
         PluginContainerException {
-        log.debug("Activating Resource component for " + resource + "...");
-
         ResourceComponent component = container.getResourceComponent();
 
         // if the component already exists and is started, and the resource's plugin config has not changed, there is
         // nothing to do, so return immediately
         if ((component != null) && (container.getResourceComponentState() == ResourceComponentState.STARTED)
-            && !newPluginConfig) {
+            && !updatedPluginConfig) {
+            log.debug("Skipping activation of " + resource + " - its component is already started and its plugin "
+                + " config has not been updated since it was last started.");
             return;
         }
 
+        log.debug("Starting component for " + resource + "(current state = " + container.getResourceComponentState()
+                        + ", new plugin config = " + updatedPluginConfig + ")...");
+
         // if the component does not even exist yet, we need to instantiate it
         if (component == null) {
+            log.debug("Creating component for " + resource + "...");
             try {
                 component = PluginContainer.getInstance().getPluginComponentFactory().buildResourceComponent(
                     resource.getResourceType());
@@ -932,7 +936,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 container.setResourceComponentState(ResourceComponentState.STARTED);
                 resource.setConnected(true); // This tells the server-side that the resource has connected successfully.
             } catch (Throwable t) {
-                if (newPluginConfig || (t instanceof InvalidPluginConfigurationException)) {
+                if (updatedPluginConfig || (t instanceof InvalidPluginConfigurationException)) {
                     if (log.isDebugEnabled())
                         log.debug("Resource has a bad config, waiting for this to go away " + resource);
                     InventoryEventListener iel = new ResourceGotActivatedListener();
@@ -1251,8 +1255,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     public void synchronizeInventory(int resourceId, EnumSet<SynchronizationType> synchronizationTypes) {
-        log.info("Synchronizing server/agent inventories for resource subtree " + resourceId);
-        // Get the latest resource data rooted at the given id
+        log.info("Synchronizing Agent inventory with Server inventory for Resource " + resourceId + " and its descendants...");
+        // Get the latest resource data rooted at the given id.
 
         if (synchronizationTypes.contains(DiscoveryAgentService.SynchronizationType.STATUS)) {
             Map<Integer, InventoryStatus> statuses = configuration.getServerServices().getDiscoveryServerService()
@@ -1324,17 +1328,21 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     /**
-     * This merges in a resource tree from the server into the local inventory of the agent. It will insert new
-     * resources if needed and update their status as necessary handling change of status.
+     * This merges the statuses of a Resource tree from the Server into the local inventory of the Agent.
+     * It will update their status as necessary, handling change of status. It also starts any
+     * Resources that are not in the STARTED state. It should also create Resources that exist on the Server but not
+     * the Agent, but it currently does not.
      */
     private void mergeStatuses(Map<Integer, InventoryStatus> statuses) {
         for (Integer id : statuses.keySet()) {
             InventoryStatus statusFromServer = statuses.get(id);
             ResourceContainer container = getResourceContainer(id);
             if (container == null) {
-                // TODO GH: Insert new resource and start it up
+                log.error("Resource with id " + id + " exists on Server, but not on Agent. Due to a known " +
+                          "limitation, you will need to delete the Resource from the Server's inventory and " +
+                          "manually add it back to inventory via its parent Resource's Inventory tab.");
+                // TODO GH: Insert new Resource and start it up (see http://jira.rhq-project.org/browse/RHQ-614).
             } else {
-                // TODO GH: Plan out everything that we will synchronize
                 Resource localResource = container.getResource();
                 if ((container.getResourceComponentState() != ResourceComponentState.STARTED)
                     || (localResource.getInventoryStatus() != statusFromServer)) {
@@ -1342,17 +1350,18 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     switch (localResource.getInventoryStatus()) {
                     case COMMITTED: {
                         try {
-                            // committed components are started now
+                            // Committed components are started now.
                             boolean newPluginConfig = true;
                             activateResource(localResource, container, newPluginConfig);
                         } catch (InvalidPluginConfigurationException ipce) {
                             sendInvalidPluginConfigurationResourceError(localResource, ipce);
-                            log.warn("Cannot activate resource [" + localResource
-                                + "] from synchronized merge due to invalid plugin config");
+                            log.warn("Cannot start component for " + localResource
+                                    + " from synchronized merge due to invalid plugin config: "
+                                    + ipce.getLocalizedMessage());
                         } catch (Exception e) {
-                            log.warn("Failed to activate resource from synchronized merge [" + localResource + "]");
+                            log.error("Failed to start component for " + localResource + " from synchronized merge.",
+                                    e);
                         }
-
                         break;
                     }
 

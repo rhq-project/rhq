@@ -83,7 +83,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
     public InventoryReport call() {
         try {
-            log.info("Running runtime scan for Resource: " + resource);
+            log.info("Running runtime discovery scan for " + resource + "...");
 
             Agent reportAgent = inventoryManager.getAgent();
 
@@ -94,6 +94,9 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             runtimeDiscover(report);
 
             report.setEndTime(System.currentTimeMillis());
+
+            log.info("Scanned " + report.getAddedRoots().size() + " servers and found "
+                + (report.getResourceCount() - report.getAddedRoots().size()) + " total descendant Resources.");
 
             if (log.isDebugEnabled()) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream(10000);

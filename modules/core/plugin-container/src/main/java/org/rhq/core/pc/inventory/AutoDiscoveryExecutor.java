@@ -116,6 +116,7 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
             report.addError(new ExceptionPackage(Severity.Warning, e));
         }
 
+        log.info("Found " + report.getAddedRoots().size() + " servers.");
         return report;
     }
 

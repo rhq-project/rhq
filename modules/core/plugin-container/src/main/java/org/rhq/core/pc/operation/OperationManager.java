@@ -118,10 +118,12 @@ public class OperationManager extends AgentService implements OperationAgentServ
             final long invocationTime = System.currentTimeMillis();
 
             OperationDefinition operationDefinition = getOperationDefinition(resourceId, operationName);
-            ConfigurationUtility.normalizeConfiguration(parameterConfig, operationDefinition.getParametersConfigurationDefinition());
+            if (operationDefinition != null) {
+                ConfigurationUtility.normalizeConfiguration(parameterConfig, operationDefinition.getParametersConfigurationDefinition());
+            }
 
             // create our timer task that will force the operation invocation to time out if it takes too long to complete
-            final long operationTimeout = getOperationTimeout(resourceId, operationDefinition, parameterConfig);
+            final long operationTimeout = getOperationTimeout(operationDefinition, parameterConfig);
 
             // ensure the facet method timeout is comfortably longer than the operation timeout
             long facetMethodTimeout = operationTimeout + (10 * 1000L);
@@ -201,15 +203,13 @@ public class OperationManager extends AgentService implements OperationAgentServ
      * neither of those are set, the plugin container's default timeout is used. The timeouts are always specified in
      * seconds.
      *
-     * @param  resourceId
-     * @param  operationName
      * @param  paramConfig
      *
      * @return the timeout to use
      *
      * @throws PluginContainerException if the timeout found was invalid
      */
-    private long getOperationTimeout(int resourceId, OperationDefinition operationDefinition, Configuration paramConfig)
+    private long getOperationTimeout(OperationDefinition operationDefinition, Configuration paramConfig)
         throws PluginContainerException {
         // see if this particular invocation has overridden all timeout defaults with its own
         if (paramConfig != null) {

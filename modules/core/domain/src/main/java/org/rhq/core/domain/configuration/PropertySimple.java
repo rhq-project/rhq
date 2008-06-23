@@ -22,6 +22,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -29,6 +30,7 @@ import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +77,7 @@ public class PropertySimple extends Property implements Externalizable {
     String name, @Nullable
     Object value) {
         setName(name);
-        this.stringValue = (value == null) ? null : value.toString();
+        setValue(value);
     }
 
     /**
@@ -86,7 +88,16 @@ public class PropertySimple extends Property implements Externalizable {
      */
     public void setValue(@Nullable
     Object value) {
-        this.stringValue = (value == null) ? null : value.toString();
+        if (value == null) {
+            stringValue = null;
+            return;
+        }
+
+        String sVal = value.toString();
+        if (sVal.length() > MAX_VALUE_LENGTH)
+            stringValue = sVal.substring(0, MAX_VALUE_LENGTH);
+        else
+            stringValue = sVal;
     }
 
     /**

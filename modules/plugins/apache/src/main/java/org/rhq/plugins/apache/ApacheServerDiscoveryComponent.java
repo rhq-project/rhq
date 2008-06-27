@@ -37,6 +37,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
+import org.rhq.plugins.apache.util.OsProcessUtility;
 import org.rhq.plugins.www.snmp.SNMPClient;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
@@ -58,10 +59,24 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         // Process any PC-discovered OS processes...
         List<ProcessScanResult> processes = discoveryContext.getAutoDiscoveredProcesses();
         for (ProcessScanResult process : processes) {
-            String executablePath = process.getProcessInfo().getName();
+            //String executablePath = process.getProcessInfo().getName();
+            String executableName = getExecutableName(process);
+            File executablePath = OsProcessUtility.getProcExe(process.getProcessInfo().getPid(), executableName);
+            if (executablePath == null) {
+                log.error("Executable path could not be determined for Apache [" + process.getProcessInfo() + "].");
+                continue;
+            }
+            if (!executablePath.isAbsolute()) {
+                log.error("Executable path (" + executablePath + ") is not absolute for Apache [" +
+                        process.getProcessInfo() + "]." +
+                        "Please restart Apache specifying an absolute path for the executable.");
+                continue;
+            }
+            log.debug("Apache executable path: " + executablePath);
             ApacheBinaryInfo binaryInfo;
             try {
-                binaryInfo = ApacheBinaryInfo.getInfo(executablePath, discoveryContext.getSystemInformation());
+                binaryInfo = ApacheBinaryInfo.getInfo(executablePath.getPath(),
+                        discoveryContext.getSystemInformation());
             } catch (Exception e) {
                 log.error("'" + executablePath + "' is not a valid Apache executable (" + e + ").");
                 continue;
@@ -227,5 +242,22 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         }
 
         return root;
+    }
+
+    private static String getExecutableName(ProcessScanResult processScanResult) {
+        String query = processScanResult.getProcessScan().getQuery().toLowerCase();
+        String executableName;
+        if (query.contains("apache.exe")) {
+            executableName = "apache.exe";
+        } else if (query.contains("httpd.exe")) {
+            executableName = "httpd.exe";
+        } else if (query.contains("apache2")) {
+            executableName = "apache2";
+        } else if (query.contains("httpd")) {
+            executableName = "httpd";
+        } else {
+            executableName = null;
+        }
+        return executableName;
     }
 }

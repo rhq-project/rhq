@@ -208,9 +208,7 @@ public class IndicatorChartsAction extends DispatchAction {
             view += "." + viewName;
             break;
         case AUTOGROUP:
-            int type = WebUtility.getOptionalIntRequestParameter(request, "type", -1);
-            if (type == -1)
-                type = WebUtility.getRequiredIntRequestParameter(request, "ctype"); // TODO JBNADM-2630
+            int type = getChildTypeId(request);
             view = "ag=" + WebUtility.getRequiredRequestParameter(request, "parent") + ":" + type;
             view += "." + viewName;
             break;
@@ -317,8 +315,7 @@ public class IndicatorChartsAction extends DispatchAction {
                     break;
                 case AUTOGROUP:
                     int parent = WebUtility.getRequiredIntRequestParameter(request, "parent");
-                    int type = WebUtility
-                        .getRequiredIntRequestParameter(request, ParamConstants.RESOURCE_TYPE_ID_PARAM);
+                    int type = getChildTypeId(request);
                     metrics = getViewMetricsForAutogroup(request, parent, type, viewName);
                     break;
                 default:
@@ -412,7 +409,7 @@ public class IndicatorChartsAction extends DispatchAction {
 
             request.setAttribute(AttrConstants.CHART_DATA_KEYS, metrics); // for the big charts and DashCharts.jsp
         } else { // autogroup?
-            int type = WebUtility.getOptionalIntRequestParameter(request, "ctype", -1);
+            int type = getChildTypeId(request);
             int parent = WebUtility.getOptionalIntRequestParameter(request, "parent", 1);
             if (type > 0 && parent > 0) {
                 metrics = getViewMetricsForAutogroup(request, parent, type, viewName);
@@ -1014,5 +1011,12 @@ public class IndicatorChartsAction extends DispatchAction {
             log.debug("Mode could not be determined for " + summary);
             return MetricsDisplayMode.UNSET;
         }
+    }
+
+    private static int getChildTypeId(HttpServletRequest request) {
+        int type = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_TYPE_ID_PARAM, -1);
+        if (type == -1) // TODO JBNADM-2630
+            type = WebUtility.getRequiredIntRequestParameter(request, ParamConstants.CHILD_RESOURCE_TYPE_ID_PARAM);
+        return type;
     }
 }

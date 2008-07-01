@@ -19,9 +19,13 @@
 package org.rhq.enterprise.gui.operation.schedule.group;
 
 import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.configuration.Configuration;
@@ -85,7 +89,15 @@ public class ResourceGroupOperationScheduleUIBean extends OperationScheduleUIBea
 
     public String executeNow() throws Exception {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        String[] selectedItems = FacesContextUtility.getRequest().getParameterValues("selectedItems");
+        HttpServletRequest request = FacesContextUtility.getRequest();
+        String[] selectedItems = request.getParameterValues("selectedItems");
+        if (selectedItems == null || selectedItems.length == 0) {
+            selectedItems = request.getParameterValues("jobId");
+        }
+        if (selectedItems == null || selectedItems.length == 0) {
+            throw new IllegalStateException("No job selected to execute");
+        }
+
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
 
         for (String jobIdString : selectedItems) {

@@ -58,6 +58,9 @@
             <!-- If you don't want to use the default location of {trunk}/dev-container/
                  for your dev RHQ container, then set the below prop to the desired location. -->
             <!--<rhq.containerDir>C:/opt/rhq-server</rhq.containerDir>-->
+            <!-- Set the below prop to the absolute path of your RHQ trunk dir. 
+                (the JON plugin poms use ${rhq.rootDir}/dev-container as the dev container dir) -->                
+            <rhq.rootDir>C:/Projects/rhq-trunk</rhq.rootDir>
          </properties>
          
          <!--

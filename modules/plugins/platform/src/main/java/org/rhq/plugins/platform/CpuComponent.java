@@ -19,11 +19,14 @@
 package org.rhq.plugins.platform;
 
 import java.util.Set;
+
 import org.hyperic.sigar.Cpu;
 import org.hyperic.sigar.CpuInfo;
 import org.hyperic.sigar.CpuPerc;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -51,7 +54,7 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
             return (this.cpuInformation.isEnabled()) ? AvailabilityType.UP : AvailabilityType.DOWN;
         } else {
             return AvailabilityType.UP;
-        }        
+        }
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
@@ -71,7 +74,7 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
                     }
 
                     property = property.substring(property.indexOf(".") + 1);
-                    Long longValue = (Long)ObjectUtil.lookupAttributeProperty(cpu, property);
+                    Long longValue = (Long) ObjectUtil.lookupAttributeProperty(cpu, property);
                     // A value of -1 indicates SIGAR does not support the metric on the Agent platform.
                     if (longValue != -1) {
                         report.addData(new MeasurementDataNumeric(request, longValue.doubleValue()));
@@ -92,7 +95,21 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
                     property = property.substring(property.indexOf(".") + 1);
                     double value = ((Number) ObjectUtil.lookupAttributeProperty(cpuInfo, property)).doubleValue();
                     report.addData(new MeasurementDataNumeric(request, value));
+                } else if (property.startsWith("CpuTrait.")) {
+                    if (cpuInfo == null) {
+                        cpuInfo = cpuInformation.getCpuInfo();
+                    }
+                    property = property.substring(property.indexOf(".") + 1);
+                    Object o = ObjectUtil.lookupAttributeProperty(cpuInfo, property);
+                    String res;
+                    if ("model".equals(property) || "vendor".equals(property)) {
+                        res = (String) o;
+                    } else {
+                        res = String.valueOf(o);
+                    }
+                    report.addData(new MeasurementDataTrait(request, res));
                 }
+
             }
         }
     }

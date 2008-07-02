@@ -112,6 +112,26 @@
                units="percentage" 
                description="Percentage of all CPUs waiting on I/O"/>
 '>
+
+<!ENTITY cpuDetail '
+      <metric displayName="Vendor"
+              property="CpuTrait.vendor"
+              dataType="trait"
+              description="Vendor of this CPU"/>
+      <metric displayName="CPU Model"
+              property="CpuTrait.model"
+              dataType="trait"
+              displayType="summary"
+              description="Model of this CPU"/>
+      <metric displayName="CPU Speed"
+              property="CpuTrait.mhz"
+              dataType="trait"
+              description="Speed of this CPU in Mhz"/>
+      <metric displayName="Cache size"
+              property="CpuTrait.cacheSize"
+              dataType="trait"
+              description="Cache Size of this CPU"/>
+'>              
 ]>
 
 <plugin name="Platforms"
@@ -398,6 +418,8 @@
       <metric displayName="System Time" property="Cpu.sys" units="milliseconds" measurementType="trendsup" description="Time spent executing in system mode"/>
       <metric displayName="Idle Time" property="Cpu.idle" units="milliseconds" measurementType="trendsup" description="Time spent idle"/>
       <metric displayName="Wait Time" property="Cpu.wait" units="milliseconds" measurementType="trendsup" description="Time spent waiting on I/O"/>
+
+      &cpuDetail;
 
       <!-- TODO: see if SIGAR can give us this data
       <metric displayName="Interrupt Time" property="irqTime" units="milliseconds" measurementType="trendsup" description="Time spent servicing interrupts"/>

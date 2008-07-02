@@ -24,17 +24,61 @@
       <scm.module.path>modules/core/</scm.module.path>
    </properties>
 
-   <modules>
-      <module>util</module>
-      <module>native-system</module>
-      <module>comm-api</module>
-      <module>dbutils</module>
-      <module>domain</module>
-      <module>plugin-api</module>
-      <module>client-api</module>
-      <module>plugin-container</module>
-      <module>gui</module>
-      <module>plugindoc</module>
-   </modules>
+  <reporting>
+    <plugins>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>          
+          <doctitle>RHQ 1.0 Plugin API</doctitle>
+          <aggregate>true</aggregate>
+          <encoding>UTF-8</encoding>
+          <charset>UTF-8</charset>
+          <docencoding>UTF-8</docencoding>
+          <author>false</author>
+          <breakiterator>true</breakiterator>          
+          <links>
+             <link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
+          </links>                    
+        </configuration>        
+      </plugin>
+    </plugins>   
+  </reporting>
+     
+  <profiles>
 
+    <profile>
+      <id>default</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+       <modules>
+          <module>util</module>
+          <module>native-system</module>
+          <module>comm-api</module>
+          <module>dbutils</module>
+          <module>domain</module>
+          <module>plugin-api</module>
+          <module>client-api</module>
+          <module>plugin-container</module>
+          <module>gui</module>
+          <module>plugindoc</module>
+       </modules>
+    </profile>
+
+    <profile>
+      <id>javadoc</id>
+      <activation>
+        <property>
+          <name>javadoc</name>
+        </property>
+      </activation>
+      <modules>
+        <module>native-system</module>
+        <module>domain</module>
+        <module>plugin-api</module>
+      </modules>
+    </profile>
+
+  </profiles>
+   
 </project>

@@ -161,7 +161,7 @@
                 </tr>                
                 <c:forEach items="${nextScheduledGroup}" var="schedule">
                   <tr class="ListRow">                                        
-                    <td class="ListCell"><html:link page="/groupScheduleNotImplementedYet?id=${schedule.groupId}&jobId=${schedule.operationJobId}"><c:out value="${schedule.groupName}"/></html:link></td>
+                    <td class="ListCell"><html:link page="/rhq/group/operation/groupOperationScheduleDetails.xhtml?groupId=${schedule.groupId}&jobId=${schedule.operationJobId}&category=COMPATIBLE"><c:out value="${schedule.groupName}"/></html:link></td>
                     <td class="ListCell"><c:out value="${schedule.groupResourceTypeName}"/></td>
                     <td class="ListCell"><c:out value="${schedule.operationName}"/></td>
                     <td class="ListCell"><hq:dateFormatter value="${schedule.operationNextFireTime}"/></td>

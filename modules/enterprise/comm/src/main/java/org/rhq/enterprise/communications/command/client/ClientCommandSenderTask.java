@@ -26,13 +26,17 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
 import mazz.i18n.Logger;
+
 import org.jboss.remoting.CannotConnectException;
+
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.impl.generic.GenericCommandResponse;
+import org.rhq.enterprise.communications.command.impl.remotepojo.RemotePojoInvocationCommand;
 import org.rhq.enterprise.communications.i18n.CommI18NFactory;
 import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
 import org.rhq.enterprise.communications.util.NotPermittedException;
@@ -167,7 +171,23 @@ class ClientCommandSenderTask implements Callable<CommandResponse>, Runnable {
                 response = call();
             }
         } catch (Throwable t) {
-            LOG.error(t, CommI18NResourceKeys.SEND_FAILED, command, ThrowableUtil.getAllMessages(t));
+            // See if the failing command was a ping and th exception was a CanNotConnectException
+            boolean isPing = false;
+            if (command instanceof RemotePojoInvocationCommand) {
+                RemotePojoInvocationCommand rp = (RemotePojoInvocationCommand) command;
+                if (rp.getTargetInterfaceName().endsWith("Ping")) {
+                    if (t instanceof CannotConnectException) {
+                        isPing = true;
+                    }
+                }
+            }
+
+            if (isPing) {
+                String agent = m_sender.getRemoteCommunicator().toString();
+                LOG.info(CommI18NResourceKeys.AGENT_PING_FAILED, agent);
+            } else {
+                LOG.error(t, CommI18NResourceKeys.SEND_FAILED, command, ThrowableUtil.getAllMessages(t));
+            }
             response = new GenericCommandResponse(command, false, null, t);
 
             boolean retry = shouldCommandBeRetried(command, t);

@@ -163,6 +163,11 @@ public interface CommI18NResourceKeys {
         @I18NMessage(value = "Das Kommando [{0}] konnte nicht gesendet werden. Grund: {1}", locale = "de") })
     String SEND_FAILED = "ClientCommandSenderTask.send-failed";
 
+    @I18NMessages( {
+        @I18NMessage("Failed to ping the agent at [{0}], because we could not connect to it."),
+        @I18NMessage(locale = "de", value = "Ein Ping zum Agent unter [{0}] ist fehlgeschlagen, da der Agent nicht kontaktiert werden konnte") })
+    String AGENT_PING_FAILED = "ClientCommandSenderTask.agent-ping-failed";
+
     @I18NMessages( { @I18NMessage("The command that failed has its guaranteed-delivery flag set so it is being queued again") })
     String QUEUING_FAILED_COMMAND = "ClientCommandSenderTask.queuing-failed-command";
 

@@ -120,8 +120,7 @@
               description="Vendor of this CPU"/>
       <metric displayName="CPU Model"
               property="CpuTrait.model"
-              dataType="trait"
-              displayType="summary"
+              dataType="trait"              
               description="Model of this CPU"/>
       <metric displayName="CPU Speed"
               property="CpuTrait.mhz"

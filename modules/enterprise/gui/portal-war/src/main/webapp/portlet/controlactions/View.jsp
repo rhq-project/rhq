@@ -130,7 +130,7 @@
         </table>    
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <c:choose>    
-            <c:when test="${empty nextScheduledResource && empty nextScheduleGroup}">
+            <c:when test="${empty nextScheduledResource && empty nextScheduledGroup}">
               <tr class="ListRow">
                 <td class="ListCell"><fmt:message key="dash.home.no.operations.to.display"/></td>
               </tr>

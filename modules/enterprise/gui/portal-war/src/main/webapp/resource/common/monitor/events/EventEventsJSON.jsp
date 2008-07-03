@@ -9,7 +9,7 @@
 <%@ page import="org.rhq.enterprise.gui.util.WebUtility" %>
 <%@ page import="org.rhq.enterprise.server.event.EventManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
-<%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="java.text.SimpleDateFormat" %><%@ page import="java.util.regex.Pattern"%>
 <%@ page contentType="text/javascript" language="java" %>
 
 
@@ -85,7 +85,7 @@
             String link = "/resource/common/Events.do?mode=events&id=" + resourceId + "&eventId=" + event.getEventId();
 
             String detail = event.getEventDetail().replaceAll("\"","\\\\\"");
-            
+            detail =  Pattern.compile("\n",Pattern.MULTILINE).matcher(detail).replaceAll("<br />");
 
             %>
 

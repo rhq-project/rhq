@@ -316,7 +316,7 @@ public class SystemConfigForm extends BaseValidatorForm {
                 prop.setProperty(HQConstants.SNMPContextName, snmpContextName);
                 prop.setProperty(HQConstants.SNMPSecurityName, snmpSecurityName);
             } else {
-                snmpCommunity = prop.getProperty(HQConstants.SNMPCommunity);
+                prop.setProperty(HQConstants.SNMPCommunity, snmpCommunity);
 
                 if ("1".equals(snmpVersion)) {
                     prop.setProperty(HQConstants.SNMPEngineID, snmpEngineID);

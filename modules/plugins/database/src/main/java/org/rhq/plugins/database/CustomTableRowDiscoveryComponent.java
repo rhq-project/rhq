@@ -88,7 +88,7 @@ public class CustomTableRowDiscoveryComponent implements ResourceDiscoveryCompon
      * @return the formatted text with variables replaced
      */
     public static String formatMessage(String message, String key) {
-        message = message.replaceAll("\\{" + key + "\\}", key);
+        message = message.replaceAll("\\{key\\}", key);
         return message;
     }
 }

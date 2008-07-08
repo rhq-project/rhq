@@ -1,0 +1,217 @@
+<?xml version="1.0"?><project>
+  <parent>
+    <artifactId>rhq-plugins-parent</artifactId>
+    <groupId>org.rhq</groupId>
+    <version>1.1.0-SNAPSHOT</version>
+  </parent>
+  
+  <modelVersion>4.0.0</modelVersion>
+  
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-snmptrapd-plugin</artifactId>
+  <name>snmptrapd</name>
+  <version>1.1.0-SNAPSHOT</version>
+  <description>RHQ SnmpTrapd Plugin</description>
+  
+     <scm>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/snmptrapd/</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/snmptrapd/</developerConnection>
+   </scm>
+
+   <properties>
+      <scm.module.path>modules/plugins/snmptrapd/</scm.module.path>
+   </properties>
+  
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.5</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-plugin-validator</artifactId>
+        <version>${rhq.version}</version>
+      </plugin>
+      
+      <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.0</version>
+            <executions>
+               <execution>
+                  <id>copy-snmp4j-jar</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>org.snmp4j</groupId>
+                           <artifactId>snmp4j</artifactId>
+                           <version>1.9.1f</version>
+                        </artifactItem>
+                     </artifactItems>
+                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+      
+      
+    </plugins>
+  </build>
+  
+  <profiles>
+        <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <tasks>
+                            <mkdir dir="${rhq.deploymentDir}" />
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Updating ${deployment.file}...</echo>
+                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>deploy-jar-meta-inf</id>
+                        <phase>package</phase>
+                        <configuration>
+                          <tasks>                             
+                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />                             
+                             <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
+                             <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
+                               <patternset><include name="META-INF/**" /></patternset>
+                             </unjar>
+                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">                                
+                             </jar>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+                     
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Deleting ${deployment.file}...</echo>
+                            <delete file="${deployment.file}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                   </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+
+   </profiles>
+  
+  <repositories>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>jboss</id>
+      <name>JBoss Repository</name>
+      <url>http://repository.jboss.org/maven2/</url>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>jboss</id>
+      <name>JBoss Plugin Repository</name>
+      <url>http://repository.jboss.org/maven2/</url>
+    </pluginRepository>
+  </pluginRepositories>
+  <dependencies>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-domain</artifactId>
+      <version>${rhq.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-plugin-api</artifactId>
+      <version>${rhq.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-native-system</artifactId>
+      <version>${rhq.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.persistence</groupId>
+      <artifactId>persistence-api</artifactId>
+      <version>1.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>hibernate-annotations</groupId>
+      <artifactId>hibernate-annotations</artifactId>
+      <version>3.2.1.GA</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <version>2.1</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1</version>
+      <scope>provided</scope>
+    </dependency>
+          <dependency>
+         <groupId>org.snmp4j</groupId>
+         <artifactId>snmp4j</artifactId>
+         <version>1.8.2</version>
+      </dependency>
+  </dependencies>
+  <properties>
+    <rhq.version>1.0.0.GA</rhq.version>
+  </properties>
+</project>

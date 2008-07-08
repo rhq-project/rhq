@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<plugin name="snmptrapd"
+        displayName="Receiver for SNMP Traps"
+        description="Implementation of an SNMP Trapd that forwards incoming traps as events"
+        ampsVersion="2.0"
+        package="org.rhq.plugins.snmptrapd"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="SnmpTrapd"
+           discovery="SnmpTrapdDiscovery"
+           class="SnmpTrapdComponent">
+           
+      <plugin-configuration>
+         <c:simple-property name="port" description="The the port to listen on" required="true" default="1162"/>
+         <c:simple-property name="SNMP version" description="Version of the SNMP protocol">
+            <c:property-options>
+               <c:option value="1" default="true"/>
+               <c:option value="2c"/>
+               <c:option value="3"/>
+            </c:property-options>
+         </c:simple-property>
+         <c:simple-property name="community"/>
+      </plugin-configuration>
+      
+      <metric property="trap_count" displayType="summary" measurementType="trendsup"/>
+      
+      <event name="SnmpTrap" description="One single incoming trap"/>
+      
+   </server>
+</plugin>

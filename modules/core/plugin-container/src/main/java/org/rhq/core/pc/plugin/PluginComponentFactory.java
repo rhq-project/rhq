@@ -20,8 +20,10 @@ package org.rhq.core.pc.plugin;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -125,6 +127,9 @@ public class PluginComponentFactory implements ContainerService {
         } catch (ClassNotFoundException e) {
             throw new PluginContainerException("Could not find plugin class " + className
                 + "] from plugin environment [" + environment + "]", e);
+        } catch (NullPointerException npe) {
+            throw new PluginContainerException("Plugin class was 'null' in plugin environment [" + environment + "]",
+                npe);
         }
     }
 

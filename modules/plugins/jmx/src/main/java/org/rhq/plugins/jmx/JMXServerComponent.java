@@ -21,6 +21,7 @@ package org.rhq.plugins.jmx;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.ConnectionFactory;
@@ -30,7 +31,9 @@ import org.mc4j.ems.connection.local.LocalVirtualMachine;
 import org.mc4j.ems.connection.settings.ConnectionSettings;
 import org.mc4j.ems.connection.support.ConnectionProvider;
 import org.mc4j.ems.connection.support.metadata.ConnectionTypeDescriptor;
+import org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor;
 import org.mc4j.ems.connection.support.metadata.LocalVMTypeDescriptor;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
@@ -70,9 +73,20 @@ public class JMXServerComponent implements JMXComponent {
                     }
                 }
             } else if (JMXDiscoveryComponent.PARENT_TYPE.equals(connectionTypeDescriptorClass)) {
-                // We're embedded in another jmx server component so just use the parent's connection
+                // We're embedded in another jmx server component without jmxremoting set so just use the parent's connection
                 this.connection = ((JMXComponent) context.getParentResourceComponent()).getEmsConnection();
                 this.connectionProvider = this.connection.getConnectionProvider();
+            } else if (J2SE5ConnectionTypeDescriptor.class.getName().equals(connectionTypeDescriptorClass)) {
+                // We're embedded in a J2SE VM with jmxremote defined (e.g. for jconsole usage)
+                ConnectionSettings cs = new ConnectionSettings();
+                J2SE5ConnectionTypeDescriptor desc = new J2SE5ConnectionTypeDescriptor();
+                cs.setConnectionType(desc);
+                cs.setServerUrl(configuration.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY)
+                    .getStringValue());
+                ConnectionFactory cf = new ConnectionFactory();
+                this.connection = cf.connect(cs);
+                this.connectionProvider = this.connection.getConnectionProvider();
+
             } else {
                 // This can handle internal connections (within the same vm as the plugin container) as well as
                 // any remote connections

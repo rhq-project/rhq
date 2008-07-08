@@ -35,6 +35,7 @@ import org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor;
 import org.mc4j.ems.connection.support.metadata.LocalVMTypeDescriptor;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -78,11 +79,26 @@ public class JMXServerComponent implements JMXComponent {
                 this.connectionProvider = this.connection.getConnectionProvider();
             } else if (J2SE5ConnectionTypeDescriptor.class.getName().equals(connectionTypeDescriptorClass)) {
                 // We're embedded in a J2SE VM with jmxremote defined (e.g. for jconsole usage)
+                String principal = null;
+                String credentials = null;
+                PropertySimple o = configuration.getSimple(JMXComponent.PRINCIPAL_CONFIG_PROP);
+                if (o != null) {
+                    principal = o.getStringValue();
+                }
+                o = configuration.getSimple(JMXComponent.CREDENTIALS_CONFIG_PROP);
+                if (o != null) {
+                    credentials = o.getStringValue();
+                }
+
                 ConnectionSettings cs = new ConnectionSettings();
                 J2SE5ConnectionTypeDescriptor desc = new J2SE5ConnectionTypeDescriptor();
                 cs.setConnectionType(desc);
                 cs.setServerUrl(configuration.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY)
                     .getStringValue());
+                if (principal != null)
+                    cs.setPrincipal(principal);
+                if (credentials != null)
+                    cs.setCredentials(credentials);
                 ConnectionFactory cf = new ConnectionFactory();
                 this.connection = cf.connect(cs);
                 this.connectionProvider = this.connection.getConnectionProvider();

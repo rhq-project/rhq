@@ -74,12 +74,27 @@ public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryCom
                 configuration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
                     J2SE5ConnectionTypeDescriptor.class.getName()));
 
+                String principal = null;
+                String credentials = null;
+                PropertySimple o = configuration.getSimple(JMXComponent.PRINCIPAL_CONFIG_PROP);
+                if (o != null) {
+                    principal = o.getStringValue();
+                }
+                o = configuration.getSimple(JMXComponent.CREDENTIALS_CONFIG_PROP);
+                if (o != null) {
+                    credentials = o.getStringValue();
+                }
+
                 ConnectionSettings cs = new ConnectionSettings();
                 J2SE5ConnectionTypeDescriptor desc = new J2SE5ConnectionTypeDescriptor();
                 cs.setConnectionType(desc);
                 String url = desc.getDefaultServerUrl();
                 url = url.replace("8999", jmxRemotePort);
                 cs.setServerUrl(url);
+                if (principal != null)
+                    cs.setPrincipal(principal);
+                if (credentials != null)
+                    cs.setCredentials(credentials);
                 configuration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, url));
                 ConnectionFactory cf = new ConnectionFactory();
                 emsConnection = cf.connect(cs);

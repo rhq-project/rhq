@@ -19,6 +19,7 @@
 package org.rhq.plugins.jmx;
 
 import org.mc4j.ems.connection.EmsConnection;
+
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 
 /**
@@ -28,5 +29,10 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
  * @author Greg Hinkle
  */
 public interface JMXComponent<T extends ResourceComponent> extends ResourceComponent<T> {
+
+    public static final String PRINCIPAL_CONFIG_PROP = "principal";
+    public static final String CREDENTIALS_CONFIG_PROP = "credentials";
+
     EmsConnection getEmsConnection();
+
 }

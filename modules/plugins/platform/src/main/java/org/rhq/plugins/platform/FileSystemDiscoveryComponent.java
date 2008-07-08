@@ -25,6 +25,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.FileSystemInfo;
+import org.hyperic.sigar.FileSystem;
 
 /**
  * @author Greg Hinkle
@@ -35,16 +36,19 @@ public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<
         throws InvalidPluginConfigurationException, Exception {
         Set<DiscoveredResourceDetails> results = new HashSet<DiscoveredResourceDetails>();
         for (FileSystemInfo fs : resourceDiscoveryContext.getSystemInformation().getFileSystems()) {
+            int fsType = fs.getFileSystem().getType();
+            if (fsType != FileSystem.TYPE_LOCAL_DISK && fsType != FileSystem.TYPE_NETWORK)
+            {
+                continue;
+            }
             String hostname = resourceDiscoveryContext.getSystemInformation().getHostname();
             String name = ((hostname == null) ? "" : (hostname + " ")) + " File System ("
                 + fs.getFileSystem().getTypeName() + ") " + fs.getMountPoint();
             DiscoveredResourceDetails details = new DiscoveredResourceDetails(resourceDiscoveryContext
                 .getResourceType(), fs.getMountPoint(), name, null, fs.getFileSystem().getDevName() + ": "
                 + fs.getFileSystem().getDirName(), resourceDiscoveryContext.getDefaultPluginConfiguration(), null);
-
             results.add(details);
         }
-
         return results;
     }
 }

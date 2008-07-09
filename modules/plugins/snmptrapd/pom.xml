@@ -211,7 +211,4 @@
          <version>1.8.2</version>
       </dependency>
   </dependencies>
-  <properties>
-    <rhq.version>1.0.0.GA</rhq.version>
-  </properties>
 </project>

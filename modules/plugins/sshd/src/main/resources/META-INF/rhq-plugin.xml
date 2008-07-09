@@ -6,8 +6,6 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-   <depends plugin="Augeas"/>
-
    <server name="SSHD"
            description="OpenSSH Secure Shell Daemon"
            discovery="OpenSSHDDiscoveryComponent"

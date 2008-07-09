@@ -6,8 +6,6 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-   <depends plugin="Augeas"/>
-
    <server name="Hosts"
             description="The static table lookup for host names"
             discovery="HostsDiscoveryComponent"

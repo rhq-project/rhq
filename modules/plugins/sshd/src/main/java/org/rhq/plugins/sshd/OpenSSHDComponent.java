@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import net.augeas.Augeas;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -49,7 +50,6 @@ import org.rhq.core.pluginapi.util.ObjectUtil;
 import org.rhq.core.system.AggregateProcessInfo;
 import org.rhq.core.system.NetworkStats;
 import org.rhq.core.system.ProcessInfo;
-import org.rhq.plugins.augeas.Augeas;
 
 /**
  * @author Greg Hinkle

@@ -21,6 +21,7 @@ package org.rhq.plugins.grub;
 import java.io.File;
 import java.util.List;
 import java.util.Date;
+import net.augeas.Augeas;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -31,7 +32,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.plugins.augeas.Augeas;
 
 /**
  * @author Jason Dobies

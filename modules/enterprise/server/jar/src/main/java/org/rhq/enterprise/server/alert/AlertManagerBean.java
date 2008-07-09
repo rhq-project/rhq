@@ -730,8 +730,11 @@ public class AlertManagerBean implements AlertManagerLocal {
         log.debug("Sending SNMP trap with OID " + snmpNotification.getOid() + " to SNMP engine "
             + snmpNotification.getHost() + ":" + snmpNotification.getPort() + "...");
         String result;
+        List<Resource> lineage = resourceManager.getResourceLineage(alert.getAlertDefinition().getResource().getId());
+        String platformName = lineage.get(0).getName();
+        String conditions = prettyPrintAlertConditions(alert.getConditionLogs());
         try {
-            result = snmpTrapSender.sendSnmpTrap(alert, snmpNotification);
+            result = snmpTrapSender.sendSnmpTrap(alert, snmpNotification, platformName, conditions);
         } catch (Throwable t) {
             result = "failed - cause: " + t;
         }

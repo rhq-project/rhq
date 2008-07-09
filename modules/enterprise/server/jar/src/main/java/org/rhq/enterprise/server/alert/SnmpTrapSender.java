@@ -444,13 +444,32 @@ public class SnmpTrapSender implements PDUFactory {
         return request;
     }
 
-    public String sendSnmpTrap(Alert alert, SnmpNotification snmpNotification) {
+    /**
+     * This method sends the actual trap
+     * @param alert The alert to send
+     * @param snmpNotification the notification data (target agent)
+     * @param platformName the name of the platform the alert is on
+     * @param conditions a string that shows the alert conditions
+     * @return 'Error code' of the operation
+     */
+    public String sendSnmpTrap(Alert alert, SnmpNotification snmpNotification, String platformName, String conditions) {
         if (!this.snmpEnabled) {
             return "SNMP is not enabled.";
         }
 
+        // TODO add a request id and a timestamp
+
         this.address = createAddress(snmpNotification);
-        getVariableBindings(snmpNotification.getOid() + "={s}" + alert.getAlertDefinition().getName());
+        String baseOid = snmpNotification.getOid();
+        // bind the alert definitions name on the oid set in the alert 
+        getVariableBindings(baseOid + ".1" + "={s}" + alert.getAlertDefinition().getName());
+        // the resource the alert was defined on
+        getVariableBindings(baseOid + ".2" + "={s}" + alert.getAlertDefinition().getResource().getName());
+        // the platform this resource is on
+        getVariableBindings(baseOid + ".3" + "={s}" + platformName);
+        // the conditions of this alert
+        getVariableBindings(baseOid + ".4" + "={s}" + conditions);
+
         checkTrapVariables(this.vbs);
         try {
             PDU response = send();

@@ -24,6 +24,8 @@ public abstract class FileUtils {
      * If <code>dir</code> is not a directory, but rather a simple file, it will be deleted only if
      * <code>deleteIt</code> is <code>true</code>.
      * 
+     * Note - This method does not protect against symbolic links and will follow them on unix/linux.
+     * 
      * <p>If <code>dir</code> is <code>null</code>, this method does nothing.</p>
      * 
      * @param dir the directory to purge (may also be just a simple file)

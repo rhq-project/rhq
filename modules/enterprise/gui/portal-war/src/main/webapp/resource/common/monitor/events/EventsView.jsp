@@ -77,7 +77,7 @@ function onLoad() {
   var eventSource = new Timeline.DefaultEventSource();
 
    var theme = Timeline.ClassicTheme.create();
-    theme.event.bubble.width = 320;
+    theme.event.bubble.width = 650;
     theme.event.bubble.height = 320
 
   var bandInfos = [

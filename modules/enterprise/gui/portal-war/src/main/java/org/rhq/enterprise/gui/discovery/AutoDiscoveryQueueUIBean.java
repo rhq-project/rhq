@@ -100,6 +100,7 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
                     }
 
                     log.debug("AIQueue import: platform=" + platform + "| servers=" + servers);
+                    // TODO: Why do we update the platform's status even when it was already COMMITTED?? (ips, 07/10/08)
                     discoveryBoss.updateInventoryStatus(subject, platform, servers, InventoryStatus.COMMITTED);
                 }
             }

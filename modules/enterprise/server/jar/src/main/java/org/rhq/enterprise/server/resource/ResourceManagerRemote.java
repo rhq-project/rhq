@@ -74,8 +74,8 @@ public interface ResourceManagerRemote {
      *
      * @return a preloaded resource tree
      */
-    Resource getResourceTree(@WebParam(name = "rootResourceId")
-    int rootResourceId);
+    Resource getResourceTree(@WebParam(name = "rootResourceId") int rootResourceId,
+                             @WebParam(name = "includeDescendants") boolean includeDescendants);
 
     /**
      * Get a list of resources by the specified category.

@@ -23,13 +23,14 @@ import java.io.ObjectOutputStream;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.Callable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -44,7 +45,8 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.system.SystemInfoFactory;
 
 /**
- * @author <a href="mailto:ghinkle@jboss.com">Greg Hinkle</a>
+ * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryReport> {
     private Log log = LogFactory.getLog(RuntimeDiscoveryExecutor.class);
@@ -53,7 +55,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
     private PluginContainerConfiguration pluginContainerConfiguration;
 
     /**
-     * Optional agent to use when running the scan. If this is null, the platform's agent will be used.
+     * Resource to scan. If null, the entire platform will be scanned.
      */
     private Resource resource;
 
@@ -83,26 +85,25 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
     public InventoryReport call() {
         try {
-            log.info("Running runtime discovery scan for " + resource + "...");
+            String target = (resource != null) ? this.resource.toString() : "platform";
+            log.info("Running runtime discovery scan rooted at " + target + "...");
 
-            Agent reportAgent = inventoryManager.getAgent();
-
-            InventoryReport report = new InventoryReport(reportAgent);
+            InventoryReport report = new InventoryReport(inventoryManager.getAgent());
             report.setRuntimeReport(true);
             report.setStartTime(System.currentTimeMillis());
-
             runtimeDiscover(report);
-
             report.setEndTime(System.currentTimeMillis());
+            log.debug(String.format("Runtime discovery scan took %d ms.", (report.getEndTime() - report.getStartTime())));
 
             log.info("Scanned " + report.getAddedRoots().size() + " servers and found "
                 + (report.getResourceCount() - report.getAddedRoots().size()) + " total descendant Resources.");
 
-            if (log.isDebugEnabled()) {
+            // TODO GH: This is principally valuable only until we work out the last of the data transfer situations
+            if (log.isTraceEnabled()) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream(10000);
                 ObjectOutputStream oos = new ObjectOutputStream(baos);
                 oos.writeObject(report);
-                log.debug("Runtime report for " + report.getResourceCount() + " resources with a size of "
+                log.trace("Runtime report contains " + report.getResourceCount() + " Resources with a size of "
                     + baos.size() + " bytes");
             }
 
@@ -141,21 +142,21 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
      * @param  parentReported true if the resources parent is already in the inventory report and therefore will include
      *                        this resource and its descendants in the report under that root
      *
-     * @throws PluginContainerException
+     * @throws PluginContainerException on error
      */
     private void discoverForResource(Resource parent, InventoryReport report, boolean parentReported)
         throws PluginContainerException {
         // TODO GH: If resource.isRuntimeDiscoveryEnabled
         // TODO GH: If resoure.isInventoryStatusCommitted
 
-        ResourceContainer parentContainer = inventoryManager.getResourceContainer(parent);
+        ResourceContainer parentContainer = this.inventoryManager.getResourceContainer(parent);
         if (parentContainer == null) {
             log.debug("Parent ResourceComponent unavailable " + "to allow for runtime discovery " + parent.toString());
             return;
         }
 
         if (parentContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
-            log.debug("ResourceComponent for parent " + parent + " is not in the STARTED state, so we can't execute" +
+            log.trace("ResourceComponent for parent " + parent + " is not in the STARTED state, so we can't execute" +
                       "runtime discovery on it.");
             return;
         }
@@ -204,32 +205,40 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
             // For each discovered resource, update it in the inventory manager and recursively discover its child resources
             Set<Resource> newResources = new HashSet<Resource>();
+            Map<String, Resource> mergedResources = new HashMap<String, Resource>();
 
             for (Resource childResource : childResources) {
-                Resource matchedResource = inventoryManager.mergeResourceFromDiscovery(childResource, parent);
+                Resource mergedResource = this.inventoryManager.mergeResourceFromDiscovery(childResource, parent);
+                mergedResources.put(mergedResource.getUuid(), mergedResource);
                 boolean thisInReport = false;
-                if ((matchedResource.getId() == 0) && !parentReported) {
+                if ((mergedResource.getId() == 0) && !parentReported) {
                     report.addAddedRoot(parent);
                     thisInReport = true;
                     parentReported = true;
                 }
 
                 // If this is a new resource, add to list to be fired as resource add event
-                if (childResource.getUuid().equals(matchedResource.getUuid())) {
+                if (!childResource.getUuid().equals(mergedResource.getUuid())) {
                     newResources.add(childResource);
                 }
 
-                discoverForResource(matchedResource, report, thisInReport);
+                discoverForResource(mergedResource, report, thisInReport);
             }
 
-            // Once we have all the discovered resources for this type, remove all resources of this type
-            // under this server that were not rediscovered.
-            if (!pluginContainerConfiguration.isInsideAgent()) {
-                Set<Resource> removedResources = inventoryManager.removeStaleResources(parent, childResourceType,
-                    childResources);
+            this.inventoryManager.fireResourcesAdded(newResources);
 
-                inventoryManager.fireResourcesRemoved(removedResources);
-                inventoryManager.fireResourcesAdded(newResources);
+            Set<Resource> existingChildResources = new HashSet(parent.getChildResources()); // wrap in new HashSet to avoid CMEs
+            for (Resource existingChildResource : existingChildResources)
+            {
+                // NOTE: If inside Agent, only remove Resources w/ id == 0. Other Resources may still exist in the
+                //       the Server's inventory.
+                if (existingChildResource.getResourceType().equals(childResourceType) &&
+                        !mergedResources.containsKey(existingChildResource.getUuid()) &&
+                        (existingChildResource.getId() == 0 || !this.pluginContainerConfiguration.isInsideAgent()))
+                {                    
+                    log.info("Removing stale " + existingChildResource + "...");
+                    this.inventoryManager.removeResourceAndIndicateIfScanIsNeeded(existingChildResource);
+                }
             }
         }
     }

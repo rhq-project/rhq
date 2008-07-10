@@ -19,6 +19,8 @@
 package org.rhq.enterprise.server.discovery;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,8 +29,8 @@ import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.InventoryReport;
-import org.rhq.core.domain.discovery.InventoryReportResponse;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -50,12 +52,12 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     /**
      * @see DiscoveryServerService#mergeInventoryReport(InventoryReport)
      */
-    public InventoryReportResponse mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
+    public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
         long start = System.currentTimeMillis();
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
-        InventoryReportResponse response;
+        ResourceSyncInfo syncInfo;
         try {
-            response = discoveryBoss.mergeInventoryReport(report);
+            syncInfo = discoveryBoss.mergeInventoryReport(report);
         } catch (InvalidInventoryReportException e) {
             log.error("Received invalid inventory report from agent [" + report.getAgent() + "].", e);
             throw e;
@@ -64,9 +66,8 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
                 "Fatal error occurred during merging of inventory report from agent [" + report.getAgent() + "].", e);
             throw e;
         }
-        log.info("Performance: inventory merge of [" + response.getUuidToIntegerMapping().size() + "] resource in ("
-            + (System.currentTimeMillis() - start) + ")ms");
-        return response;
+        log.info("Performance: inventory merge (" + (System.currentTimeMillis() - start) + ")ms");
+        return syncInfo;
     }
 
     // TODO GH: Should this be on the measurement server service?
@@ -100,13 +101,19 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         }
     }
 
-    public Resource getResourceTree(int rootResourceId) {
+    public Set<Resource> getResources(Set<Integer> resourceIds, boolean includeDescendants) {
         long start = System.currentTimeMillis();
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        Resource resource = resourceManager.getResourceTree(rootResourceId);
-        log.debug("Performance: get resource tree [" + rootResourceId + "] timing ("
+        Set<Resource> resources = new HashSet();
+        for (Integer resourceId : resourceIds)
+        {
+            Resource resource = resourceManager.getResourceTree(resourceId, includeDescendants);    
+            resource = convertToPojoResource(resource, includeDescendants);
+            resources.add(resource);
+        }
+        log.debug("Performance: get Resources [" + resourceIds + "], recursive=" + includeDescendants + ", timing ("
             + (System.currentTimeMillis() - start) + ")ms");
-        return resource;
+        return resources;
     }
 
     public Map<Integer, InventoryStatus> getInventoryStatus(int rootResourceId, boolean descendents) {
@@ -137,4 +144,30 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
         return discoveryBoss.updateResourceVersion(resourceId, version);
     }
+
+    private static Resource convertToPojoResource(Resource resource, boolean includeDescendants)
+    {
+        Resource pojoResource = new Resource(resource.getId());
+        pojoResource.setUuid(resource.getUuid());
+        pojoResource.setResourceKey(resource.getResourceKey());
+        pojoResource.setResourceType(resource.getResourceType());
+        pojoResource.setMtime(resource.getMtime());
+        pojoResource.setInventoryStatus(resource.getInventoryStatus());
+        pojoResource.setPluginConfiguration(resource.getPluginConfiguration());
+        pojoResource.setName(resource.getName());
+        pojoResource.setDescription(resource.getDescription());
+        pojoResource.setLocation(resource.getLocation());
+        if (resource.getParentResource() != null)
+        {
+            pojoResource.setParentResource(convertToPojoResource(resource.getParentResource(), false));
+        }
+        if (includeDescendants)
+        {
+            for (Resource childResource : resource.getChildResources())
+            {
+                pojoResource.addChildResource(convertToPojoResource(childResource, true));
+            }
+        }
+        return pojoResource;
+    }    
 }

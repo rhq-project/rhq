@@ -159,16 +159,19 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                         current = resourceComponent.getAvailability();
                     } else {
                         this.inventoryManager.activateResource(resource, resourceContainer, false);
-                        current = resourceComponent.getAvailability();
+                        if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED)
+                        {
+                            current = resourceComponent.getAvailability();
+                        }
                     }
                 } catch (Throwable e) {
                     // TODO GH: Put errors in report
                     if (log.isDebugEnabled()) {
                         if (e instanceof TimeoutException)
                             // no need to log the stack trace for timeouts...
-                            log.debug("Failed to collect availability on resource " + resource, e);
-                        else
                             log.debug("Failed to collect availability on resource " + resource + " (call timed out)");
+                        else
+                            log.debug("Failed to collect availability on resource " + resource, e);
                     }
                 }
 

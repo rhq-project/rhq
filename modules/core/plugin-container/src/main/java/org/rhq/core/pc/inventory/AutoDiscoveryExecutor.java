@@ -98,15 +98,15 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                 || autoDiscoveryRequest.getScanTypes().contains(AutoDiscoveryScanType.Plugin)) {
                 pluginDiscovery(report);
             }
-
             report.setEndTime(System.currentTimeMillis());
+            log.debug(String.format("Server discovery scan took %d ms.", (report.getEndTime() - report.getStartTime())));
 
             // TODO GH: This is principally valuable only until we work out the last of the data transfer situations
-            if (log.isDebugEnabled()) {
+            if (log.isTraceEnabled()) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream(10000);
                 ObjectOutputStream oos = new ObjectOutputStream(baos);
                 oos.writeObject(report);
-                log.debug("Server Discovery report for " + report.getResourceCount() + " resources with a size of "
+                log.trace("Server Discovery report for " + report.getResourceCount() + " resources with a size of "
                     + baos.size() + " bytes");
             }
 

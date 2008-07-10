@@ -78,7 +78,7 @@ public class ResourceContainer implements Serializable {
     private Resource resource;
     private Availability availability;
     private Set<ResourcePackageDetails> installedPackages = new HashSet<ResourcePackageDetails>();
-    private Set<MeasurementScheduleRequest> measurementSchedule;
+    private Set<MeasurementScheduleRequest> measurementSchedule = new HashSet<MeasurementScheduleRequest>();
     private SynchronizationState synchronizationState = SynchronizationState.NEW;
     private transient Map<Integer, Object> proxyCache = new HashMap<Integer, Object>();
 

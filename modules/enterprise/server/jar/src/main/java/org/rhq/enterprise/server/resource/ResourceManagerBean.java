@@ -74,15 +74,7 @@ import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
 import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationScheduleEntity;
-import org.rhq.core.domain.resource.CreateResourceHistory;
-import org.rhq.core.domain.resource.DeleteResourceHistory;
-import org.rhq.core.domain.resource.InventoryStatus;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceError;
-import org.rhq.core.domain.resource.ResourceErrorType;
-import org.rhq.core.domain.resource.ResourceSubCategory;
-import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.*;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
@@ -233,9 +225,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             return deletedResourceIds;
         }
 
-        Resource resource = resourceManager.getResourceTree(resourceId);
+        Resource resource = resourceManager.getResourceTree(resourceId, true);
         if (resource == null) {
-            log.info("Delete resouce not possible, as resource with id [" + resourceId + "] was not found");
+            log.info("Delete resource not possible, as resource with id [" + resourceId + "] was not found");
             return deletedResourceIds; // Resource not found. TODO give a nice message to the user
         }
 
@@ -1582,18 +1574,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<Resource>(resources, (int) count, pageControl);
     }
 
-    public Resource getResourceTree(int rootResourceId) {
+    public Resource getResourceTree(int rootResourceId, boolean recursive) {
         Resource root = entityManager.find(Resource.class, rootResourceId);
-
         if (root != null) {
-            prefetchResource(root);
-
+            prefetchResource(root, recursive);
             // load the parent - note we only load the root resource's parent
-            if (root.getParentResource() != null) {
+            if (root.getParentResource() != null)
+            {
                 root.getParentResource().getId();
             }
         }
-
         return root;
     }
 
@@ -1603,7 +1593,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // do authz check
         getResourceById(user, resourceId);
 
-        // we passed auth check, now get the errors
+        // we passed authz check, now get the errors
         Query query = entityManager.createNamedQuery(ResourceError.QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPE);
         query.setParameter("resourceId", resourceId);
         query.setParameter("errorType", errorType);
@@ -1673,6 +1663,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return statuses;
     }
 
+    public Resource getPlatform(Agent agent) {
+        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_PLATFORM_BY_AGENT);
+        query.setParameter("category", ResourceCategory.PLATFORM);
+        query.setParameter("agent", agent);
+        Resource platform = (Resource) query.getSingleResult();
+        return platform;
+    }
+
     @SuppressWarnings("unchecked")
     private void getResourceStatuses(int parentResourceId, boolean descendents, Map<Integer, InventoryStatus> statuses) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_GET_STATUSES_BY_PARENT);
@@ -1685,14 +1683,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
     }
 
-    private void prefetchResource(Resource resource) {
+    private void prefetchResource(Resource resource, boolean recursive) {
         if (resource == null) {
             return; // Nothing to do on invalid input
         }
-
-        resource.getId(); //getPluginConfiguration().getNotes(); // Initialize the lazy plugin config
-        for (Resource child : resource.getChildResources()) {
-            prefetchResource(child);
+        resource.getId();
+        resource.getPluginConfiguration().getNotes(); // Initialize the lazy plugin config
+        // Init the lazy parent...
+        // Don't fetch the parent's children, otherwise we'll end up in infinite recursion.
+        prefetchResource(resource.getParentResource(), false);
+        if (recursive)
+        {            
+            // Recurse...
+            for (Resource child : resource.getChildResources()) {
+                prefetchResource(child, recursive);
+            }
         }
     }
 }

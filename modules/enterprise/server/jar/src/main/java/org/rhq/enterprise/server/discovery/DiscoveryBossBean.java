@@ -49,8 +49,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.InventoryReport;
-import org.rhq.core.domain.discovery.InventoryReportResponse;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ProductVersion;
@@ -104,7 +104,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
     @EJB
     private ProductVersionManagerLocal productVersionManager;
 
-    public InventoryReportResponse mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
+    public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
         validateInventoryReport(report);
         Agent agent = report.getAgent();
         long start = System.currentTimeMillis();
@@ -120,8 +120,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         log.info("Received inventory report from RHQ Agent [" + knownAgent + "]. Number of added roots: "
             + report.getAddedRoots().size());
 
-        InventoryReportResponse response = new InventoryReportResponse();
-
         Set<Resource> roots = report.getAddedRoots();
         log.debug(report);
 
@@ -136,10 +134,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
                 // This is a new resource that has a parent that already exists.
                 Resource parent = getExistingResource(root.getParentResource());
                 assert parent != null;
-                mergeResource(root, parent, response, knownAgent);
+                mergeResource(root, parent, knownAgent);
             } else {
                 // This is a root resource.
-                mergeResource(root, Resource.ROOT, response, knownAgent);
+                mergeResource(root, Resource.ROOT, knownAgent);
             }
 
             // do NOT delete this flush/clear - it greatly improves performance
@@ -152,10 +150,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             }
         }
 
-        log.info("Inventory merge complete for [" + response.getUuidToIntegerMapping().size() + "] Resources in ["
-            + (System.currentTimeMillis() - start) + "]ms");
+        // Prepare the ResourceSyncInfo tree which contains all the info the PC needs to sync itself up with us.
+        Resource platform = this.resourceManager.getPlatform(knownAgent);
+        ResourceSyncInfo syncInfo = this.entityManager.find(ResourceSyncInfo.class, platform.getId());
 
-        return response;
+        log.info("Inventory merge completed in (" + (System.currentTimeMillis() - start) + ")ms");
+
+        return syncInfo;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -406,7 +407,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
      *
      * @param  resource       the resource to be merged
      * @param  parentResource the inventoried resource that should be the parent of the resource to be merged
-     * @param  response       the response to the inventory report being processed
      * @param  agent          the agent that should be set on the resource being merged
      *
      * @throws InvalidInventoryReportException if a critical field in the resource is missing or invalid
@@ -414,7 +414,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
     private void mergeResource(@NotNull
     Resource resource, @Nullable
     Resource parentResource, @NotNull
-    InventoryReportResponse response, @NotNull
     Agent agent) throws InvalidInventoryReportException {
         long start = System.currentTimeMillis();
 
@@ -422,11 +421,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         Resource existingResource = getExistingResource(resource);
 
         if (existingResource != null) {
-            updatePreviouslyInventoriedResource(resource, existingResource, parentResource, response);
-            response.addIdMapping(resource.getUuid(), existingResource.getId());
+            updatePreviouslyInventoriedResource(resource, existingResource, parentResource);
         } else {
             presetAgent(resource, agent);
-            addResourceToInventory(resource, parentResource, response);
+            addResourceToInventory(resource, parentResource);
         }
 
         if (log.isDebugEnabled()) {
@@ -518,7 +516,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
     }
 
     private void updatePreviouslyInventoriedResource(Resource resource, Resource existingResource,
-        Resource parentResource, InventoryReportResponse response) throws InvalidInventoryReportException {
+                                                     Resource parentResource) throws InvalidInventoryReportException {
         assert (parentResource == null) || (parentResource.getId() != 0);
 
         // The below block is for Resources that were created via the RHQ GUI, whose descriptions will be null.
@@ -537,7 +535,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
 
         for (Resource childResource : resource.getChildResources()) {
             // It's important to specify the existing Resource, which is an attached entity bean, as the parent.
-            mergeResource(childResource, existingResource, response, existingResource.getAgent());
+            mergeResource(childResource, existingResource, existingResource.getAgent());
         }
         return;
     }
@@ -563,7 +561,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         return true;
     }
 
-    private void addResourceToInventory(Resource resource, Resource parentResource, InventoryReportResponse response) {
+    private void addResourceToInventory(Resource resource, Resource parentResource) {
         log.debug("New resource [" + resource + "] reported - adding to inventory with status 'NEW'...");
         initAutoDiscoveredResource(resource, parentResource);
         entityManager.persist(resource);
@@ -574,9 +572,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         // Add a product version entry for the new resource.
         addProductVersionsRecursively(resource);
 
-        // Get all the persisted ids from the descendants.
-
-        updateResponseRecursively(resource, response);
         if (parentResource != null) {
             groupManager.updateImplicitGroupMembership(subjectManager.getOverlord(), resource);
         }
@@ -601,13 +596,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
 
         for (Resource child : resource.getChildResources()) {
             addProductVersionsRecursively(child);
-        }
-    }
-
-    private void updateResponseRecursively(Resource resource, InventoryReportResponse response) {
-        response.addIdMapping(resource.getUuid(), resource.getId());
-        for (Resource child : resource.getChildResources()) {
-            updateResponseRecursively(child, response);
         }
     }
 

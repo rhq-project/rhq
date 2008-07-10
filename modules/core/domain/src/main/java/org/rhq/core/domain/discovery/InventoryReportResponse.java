@@ -23,12 +23,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * This report is sent in reponse to an InventoryReport being sent to the server. It tells the agent what the persistent
+ * This report is sent in response to an InventoryReport being sent to the server. It tells the agent what the persistent
  * resource ids are. TODO GH: This could also be used for a periodic sync when things get out of whack. (The collection,
  * transmission and persistence of inventory is not transactional between the server and agent)
  *
  * @author Greg Hinkle
  */
+@Deprecated
 public class InventoryReportResponse implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -48,4 +49,6 @@ public class InventoryReportResponse implements Serializable {
     public void addIdMapping(String uuid, Integer persistentId) {
         this.uuidToIntegerMapping.put(uuid, persistentId);
     }
+
+
 }

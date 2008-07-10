@@ -209,14 +209,13 @@ public class InventoryPromptCommand implements AgentPromptCommand {
                         }
                     }
 
-                    InventoryPrinter.outputInventory(exportWriter, !noRecurse, dumpXml, rc, 0,
-                        pc.getInventoryManager(), null);
+                    InventoryPrinter.outputInventory(exportWriter, !noRecurse, dumpXml, rc);
                 }
             } else {
                 try {
                     InventoryFile file = new InventoryFile(new File(inventoryBinaryFile));
                     file.loadInventory();
-                    InventoryPrinter.outputInventory(exportWriter, !noRecurse, dumpXml, null, 0, null, file);
+                    InventoryPrinter.outputInventory(exportWriter, !noRecurse, dumpXml, null);
                 } catch (PluginContainerException e) {
                     out.println(MSG.getMsg(AgentI18NResourceKeys.INVENTORY_BAD_INVENTORY_FILE, inventoryBinaryFile, e));
                 }

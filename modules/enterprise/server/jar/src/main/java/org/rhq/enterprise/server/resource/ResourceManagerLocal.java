@@ -27,12 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.resource.InventoryStatus;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceError;
-import org.rhq.core.domain.resource.ResourceErrorType;
-import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.*;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
@@ -251,7 +246,7 @@ public interface ResourceManagerLocal {
     /**
      * @see ResourceManagerRemote#getResourceTree(int)
      */
-    Resource getResourceTree(int rootResourceId);
+    Resource getResourceTree(int rootResourceId, boolean recursive);
 
     /**
      * Get a Resource Composite for Resources limited by the given parameters
@@ -327,4 +322,11 @@ public interface ResourceManagerLocal {
      * @param resourceId id of the resource
      */
     void clearResourceConfigError(int resourceId);
+
+    /**
+     * TODO
+     * @param agent
+     * @return
+     */
+    Resource getPlatform(Agent agent);      
 }

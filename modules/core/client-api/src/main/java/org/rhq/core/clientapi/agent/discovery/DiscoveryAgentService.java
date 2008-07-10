@@ -26,6 +26,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
@@ -33,7 +34,7 @@ import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
- * The interface to a JON agent's resource discovery subsystem.
+ * The interface to a RHQ Agent's Resource discovery subsystem.
  */
 public interface DiscoveryAgentService {
     public static enum SynchronizationType {
@@ -62,6 +63,15 @@ public interface DiscoveryAgentService {
      */
     @Asynchronous(guaranteedDelivery = true)
     void synchronizeInventory(int resourceId, EnumSet<SynchronizationType> synchronizationTypes);
+
+    /**
+     * Tells the PC to sync up its inventory using the provided sync info for a tree of Resources from the Server's
+     * inventory.
+     *
+     * @param syncInfo sync info for a tree of Resources from the Server's inventory
+     */
+    @Asynchronous(guaranteedDelivery = true)
+    void synchronizeInventory(ResourceSyncInfo syncInfo);
 
     /**
      * Access to the current inventory managed by the plugin container.
@@ -140,9 +150,9 @@ public interface DiscoveryAgentService {
         PluginContainerException;
 
     /**
-     * Shutsdown and removes a resource and its descendents from the managed inventory.
+     * Shuts down and removes a Resource and its descendents from the PC's inventory.
      *
-     * @param resourceId the id of the resource to remove
+     * @param resourceId the id of the Resource to remove
      */
     @Asynchronous(guaranteedDelivery = true)
     void removeResource(int resourceId);

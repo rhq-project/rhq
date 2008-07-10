@@ -290,7 +290,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                 // This will happen when the server sends down schedules to an agent with a cleaned inventory
                 // Its ok to skip these because the agent will request a reschedule once its been able to synchronize
                 // and add these to inventory
-                LOG.debug("Resource container was null, could not schedule collection for resource "
+                LOG.trace("Resource container was null - could not schedule collection for resource "
                     + resourceRequest.getResourceId());
             }
         }
@@ -376,7 +376,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         while (iter.hasNext()) {
             ScheduledMeasurementInfo info = iter.next();
             if (set.contains(info.getScheduleId())) {
-                LOG.debug("Found duplicate schedule - will remove it: " + info.toString());
+                LOG.debug("Found duplicate schedule - will remove it: " + info);
                 iter.remove();
             } else {
                 set.add(info.getScheduleId());

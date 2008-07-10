@@ -31,6 +31,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.InventoryReportResponse;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -53,7 +54,7 @@ public interface DiscoveryBossLocal {
      *
      * @throws InvalidInventoryReportException if the inventory report is invalid
      */
-    InventoryReportResponse mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException;
+    ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException;
 
     /**
      * Returns a map of platforms (the keys) and their servers (the values) that are in the auto-discovery queue but not

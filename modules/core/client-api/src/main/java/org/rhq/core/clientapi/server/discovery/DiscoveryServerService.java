@@ -19,14 +19,15 @@
 package org.rhq.core.clientapi.server.discovery;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.communications.command.annotation.Timeout;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.InventoryReport;
-import org.rhq.core.domain.discovery.InventoryReportResponse;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -55,7 +56,7 @@ public interface DiscoveryServerService {
      */
     @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_REPORT)
     @Timeout(1000L * 60 * 30)
-    InventoryReportResponse mergeInventoryReport(InventoryReport inventoryReport)
+    ResourceSyncInfo mergeInventoryReport(InventoryReport inventoryReport)
         throws InvalidInventoryReportException;
 
     /**
@@ -76,13 +77,13 @@ public interface DiscoveryServerService {
     boolean mergeAvailabilityReport(AvailabilityReport availabilityReport);
 
     /**
-     * Returns a resource tree rooted at the give resource id.
+     * Returns the Resources with the given id's, optionally including all descendant Resources.
      *
-     * @param  rootResourceId the id of the resource at the root of the retrieved tree
-     *
+     * @param resourceIds
+     * @param includeDescendants
      * @return a tree of resources with the latest data
      */
-    Resource getResourceTree(int rootResourceId);
+    Set<Resource> getResources(Set<Integer> resourceIds, boolean includeDescendants);
 
     /**
      * Indicates that an error occurred on a resource.

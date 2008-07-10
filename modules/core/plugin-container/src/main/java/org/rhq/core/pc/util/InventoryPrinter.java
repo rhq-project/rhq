@@ -19,11 +19,12 @@
 package org.rhq.core.pc.util;
 
 import java.io.PrintWriter;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
+
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -32,11 +33,16 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryFile;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 
+/**
+ * @author John Mazzitelli
+ * @author Ian Springer
+ */
 public class InventoryPrinter {
     public static void outputAllResourceTypes(PrintWriter exportWriter, boolean dumpXml, Set<ResourceType> rootTypes) {
         if (dumpXml) {
@@ -131,14 +137,19 @@ public class InventoryPrinter {
     }
 
     public static void outputInventory(PrintWriter exportWriter, boolean recurseChildren, boolean xml) {
-        outputInventory(exportWriter, recurseChildren, xml, null, 0, PluginContainer.getInstance()
-            .getInventoryManager(), null);
+        outputInventory(exportWriter, recurseChildren, xml, null);
+    }
+
+    public static void outputInventory(PrintWriter exportWriter, boolean recurseChildren, boolean xml,
+                                       ResourceContainer resourceContainer) {
+        outputInventory(exportWriter, recurseChildren, xml, resourceContainer, 0, PluginContainer.getInstance()
+            .getInventoryManager(), null, null);
         exportWriter.flush();
     }
 
-    public static void outputInventory(PrintWriter exportWriter, boolean recurseChildren, boolean dumpXml,
-        ResourceContainer resourceContainer, int descendantDepth, InventoryManager inventoryManager,
-        InventoryFile inventoryFile) {
+    private static void outputInventory(PrintWriter exportWriter, boolean recurseChildren, boolean dumpXml,
+                                        ResourceContainer resourceContainer, int descendantDepth, InventoryManager inventoryManager,
+                                        InventoryFile inventoryFile, InventoryPrinter.ResourceCounter resourceCounter) {
         StringBuffer indent = new StringBuffer();
         for (int i = 0; i < descendantDepth; i++) {
             indent.append("   ");
@@ -159,6 +170,10 @@ public class InventoryPrinter {
                 }
             }
 
+            if (resourceCounter == null) {
+                resourceCounter = new ResourceCounter();
+            }
+
             if (dumpXml) {
                 exportWriter.printf("<?xml version=\"1.0\"?>\n");
                 exportWriter.printf("<inventory>\n");
@@ -171,11 +186,11 @@ public class InventoryPrinter {
         }
 
         Resource resource = resourceContainer.getResource();
-
         if (resource == null) {
             exportWriter.printf("!!!RESOURCE IS NULL!!!");
             return;
         }
+        resourceCounter.tallyResource(resource);
 
         Availability avail = resourceContainer.getAvailability();
         AvailabilityType availType = null;
@@ -221,12 +236,19 @@ public class InventoryPrinter {
                 exportWriter.printf("%s   <children>\n", indent);
             }
         } else {
-            exportWriter.printf("%s+ %s (sync=%s, state=%s, avail=%s)\n", indent, resource,
-                    resourceContainer.getSynchronizationState(), resourceContainer.getResourceComponentState(), availString);
+            Set<MeasurementScheduleRequest> schedules = resourceContainer.getMeasurementSchedule();
+            int enabled = 0;
+            for (MeasurementScheduleRequest schedule : schedules)
+            {
+                enabled += (schedule.isEnabled()) ? 1 : 0;
+            }
+            exportWriter.printf("%s+ %s (sync=%s, state=%s, avail=%s, sched=%d/%d)\n", indent, resource,
+                    resourceContainer.getSynchronizationState(), resourceContainer.getResourceComponentState(),
+                    availString, enabled, schedules.size());
         }
 
         if (recurseChildren) {
-            Set<Resource> children = resource.getChildResources();
+            Set<Resource> children = new HashSet(resource.getChildResources()); // wrap in new HashSet to avoid CCMEs
             for (Resource child : children) {
                 ResourceContainer childContainer;
 
@@ -240,7 +262,7 @@ public class InventoryPrinter {
 
                 // recursively call ourselves
                 outputInventory(exportWriter, recurseChildren, dumpXml, childContainer, descendantDepth + 1,
-                    inventoryManager, inventoryFile);
+                    inventoryManager, inventoryFile, resourceCounter);
             }
         }
 
@@ -255,6 +277,10 @@ public class InventoryPrinter {
         if (descendantDepth == 0) {
             if (dumpXml) {
                 exportWriter.printf("</inventory>\n");
+            } else {
+                exportWriter.printf("\nTotal Resources: %d (%d Platforms, %d Servers, %d Services)\n",
+                        resourceCounter.getTotalCount(), resourceCounter.getPlatformCount(),
+                        resourceCounter.getServerCount(), resourceCounter.getServiceCount());
             }
         }
 
@@ -278,5 +304,45 @@ public class InventoryPrinter {
         }
 
         return null;
+    }
+
+    public static class ResourceCounter {
+        private int totalCount;
+        private int platformCount;
+        private int serverCount;
+        private int serviceCount;
+
+        public void tallyResource(Resource resource) {
+            if (resource == null) {
+                return;
+            }
+            totalCount++;
+            ResourceCategory category = resource.getResourceType().getCategory();
+            switch (category) {
+                case PLATFORM: platformCount++; break;
+                case SERVER: serverCount++; break;
+                case SERVICE: serviceCount++; break;
+            }
+        }
+
+        public int getTotalCount()
+        {
+            return totalCount;
+        }
+
+        public int getPlatformCount()
+        {
+            return platformCount;
+        }
+
+        public int getServerCount()
+        {
+            return serverCount;
+        }
+
+        public int getServiceCount()
+        {
+            return serviceCount;
+        }
     }
 }

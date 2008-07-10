@@ -434,7 +434,8 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "     AND avail.endTime IS NULL "
         + "GROUP BY res.id, res.name, res.resourceType.name, avail.availabilityType "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGES, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackages ip WHERE r.id = :id"),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGE_HIST, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackageHistory ip WHERE r.id = :id") })
+    @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGE_HIST, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackageHistory ip WHERE r.id = :id"),
+    @NamedQuery(name = Resource.QUERY_FIND_PLATFORM_BY_AGENT, query = "SELECT res FROM Resource res WHERE res.resourceType.category = :category AND res.agent = :agent") })
 @SequenceGenerator(name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
 @Table(name = "RHQ_RESOURCE")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -536,6 +537,8 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public static final String QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGES = "Resource.findByIdWithInstalledPackages";
     public static final String QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGE_HIST = "Resource.findByIdWithInstalledPackageHist";
+
+    public static final String QUERY_FIND_PLATFORM_BY_AGENT = "Resource.findPlatformByAgent";
 
     private static final long serialVersionUID = 1L;
 
@@ -824,6 +827,11 @@ public class Resource implements Comparable<Resource>, Externalizable {
      */
     public long getMtime() {
         return this.mtime;
+    }
+
+    public void setMtime(long mtime)
+    {
+        this.mtime = mtime;
     }
 
     /**

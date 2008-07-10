@@ -27,6 +27,8 @@ import org.snmp4j.TransportMapping;
 import org.snmp4j.smi.UdpAddress;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -63,16 +65,25 @@ public class SnmpTrapdComponent implements ResourceComponent, MeasurementFacet {
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)
      */
     public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
-        // TODO Auto-generated method stub
-        // TODO start teh even poller
+
+        Configuration conf = context.getPluginConfiguration();
+        PropertySimple ps = conf.getSimple("port");
+        Integer port = ps.getIntegerValue();
+        ps = conf.getSimple("community");
+        String community = ps.getStringValue();
+        ps = conf.getSimple("eventSeverityOid");
+        String severityOid = ps.getStringValue();
+
         eventContext = context.getEventContext();
-        snmpTrapEventPoller = new SnmpTrapEventPoller();
+        snmpTrapEventPoller = new SnmpTrapEventPoller(severityOid);
         eventContext.registerEventPoller(snmpTrapEventPoller, 60);
 
+        // TODO: check if the engine is already alive
         try {
-            UdpAddress targetAddress = new UdpAddress(1162);
+            UdpAddress targetAddress = new UdpAddress(port);
             TransportMapping transport = new DefaultUdpTransportMapping(targetAddress);
             Snmp snmp = new Snmp(transport);
+            // TODO set up the community here
             snmp.addCommandResponder(snmpTrapEventPoller);
             transport.listen();
         } catch (IOException e) {

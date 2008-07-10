@@ -13,15 +13,15 @@
            class="SnmpTrapdComponent">
            
       <plugin-configuration>
-         <c:simple-property name="port" description="The the port to listen on" required="true" default="1162"/>
-         <c:simple-property name="SNMP version" description="Version of the SNMP protocol">
-            <c:property-options>
-               <c:option value="1" default="true"/>
-               <c:option value="2c"/>
-               <c:option value="3"/>
-            </c:property-options>
-         </c:simple-property>
-         <c:simple-property name="community"/>
+         <c:simple-property name="port" 
+            description="The the port to listen on (Note: ports less than 1024 require root access on unixoids)" 
+            required="true" default="1162" type="integer"/>
+         <c:simple-property name="community" description="The community string for SNMP v1 and v2c" 
+            required="false"/>
+         <c:simple-property name="eventSeverityOid" 
+            required="false"
+            default="1.3.6.1.4.1.18016.2.1.5"
+            description="OID of a String that determines the severity of the generated event"/>
       </plugin-configuration>
       
       <metric property="trap_count" displayType="summary" measurementType="trendsup"/>

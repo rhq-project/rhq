@@ -20,6 +20,8 @@
 
    <properties>
       <scm.module.path>modules/plugins/snmptrapd/</scm.module.path>
+      <!-- next is needed for the plugin validator -->
+      <rhq.version>1.0.0.GA</rhq.version>
    </properties>
   
   <build>
@@ -58,6 +60,25 @@
                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                   </configuration>
                </execution>
+<!--
+               <execution>
+                  <id>copy-smi4j-jar</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>net.dev.java.snmp4j</groupId>
+                           <artifactId>smi4j</artifactId>
+                           <version>0.9.1</version>
+                        </artifactItem>
+                     </artifactItems>
+                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                  </configuration>
+               </execution>
+-->
             </executions>
          </plugin>
       
@@ -205,10 +226,17 @@
       <version>1.1</version>
       <scope>provided</scope>
     </dependency>
-          <dependency>
+    <dependency>
          <groupId>org.snmp4j</groupId>
          <artifactId>snmp4j</artifactId>
          <version>1.8.2</version>
       </dependency>
+<!--
+    <dependency>
+         <groupId>net.java.dev.smi4j</groupId>
+         <artifactId>smi4j</artifactId>
+         <version>0.9.1</version>
+      </dependency>
+-->
   </dependencies>
 </project>

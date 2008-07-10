@@ -47,12 +47,14 @@ import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 
 public class TestAgentClient implements AgentClient, ContentAgentService, ResourceFactoryAgentService,
@@ -223,5 +225,9 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
     public DeleteResourceResponse executeDeleteResourceImmediately(DeleteResourceRequest request)
         throws PluginContainerException {
         return null;
+    }
+
+    @Asynchronous(guaranteedDelivery = true)
+    public void synchronizeInventory(ResourceSyncInfo syncInfo) {
     }
 }

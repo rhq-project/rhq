@@ -1045,7 +1045,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         assert list != null;
         assert list.size() == 1 : "Should have returned a single point";
         int typeOrdinal = list.get(0).getValue();
-
+        
         if (UP.ordinal() == typeOrdinal) {
             return UP;
         }

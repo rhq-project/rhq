@@ -48,6 +48,7 @@ import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdat
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
+import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -55,6 +56,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -995,6 +997,10 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         }
 
         public void removeResource(int resourceId) {
+        }
+
+        @Asynchronous(guaranteedDelivery = true)
+        public void synchronizeInventory(ResourceSyncInfo syncInfo) {
         }
     }
 }

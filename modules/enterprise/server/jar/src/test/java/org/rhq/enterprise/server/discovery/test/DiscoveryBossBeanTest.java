@@ -30,7 +30,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.jboss.mx.util.MBeanServerLocator;
 import org.rhq.core.domain.discovery.InventoryReport;
-import org.rhq.core.domain.discovery.InventoryReportResponse;
+import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -92,11 +92,8 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
             inventoryReport.addAddedRoot(platform);
 
-            InventoryReportResponse response = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
-            assert response.getUuidToIntegerMapping().keySet().size() == 4 : "first keySet size was not 4: "
-                + response.getUuidToIntegerMapping().keySet().size();
-            assert response.getUuidToIntegerMapping().get(platform.getUuid()) > 0 : "first platform uuid was not positive: "
-                + response.getUuidToIntegerMapping().get(platform.getUuid());
+            ResourceSyncInfo syncInfo = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+            assert syncInfo != null;
         } finally {
             getTransactionManager().rollback();
         }
@@ -115,13 +112,10 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
             InventoryReport inventoryReport = new InventoryReport(agent);
             Resource platform = new Resource("alpha", "platform", platformType);
             inventoryReport.addAddedRoot(platform);
-            InventoryReportResponse response = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
-            assert response.getUuidToIntegerMapping().keySet().size() == 1 : "first keySet size was not 1: "
-                + response.getUuidToIntegerMapping().keySet().size();
-            Integer platformId = response.getUuidToIntegerMapping().get(platform.getUuid());
-            assert platformId > 0 : "first platform id (" + platformId + ") was not positive";
+            ResourceSyncInfo syncInfo = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+            assert syncInfo != null;
 
-            platform.setId(response.getUuidToIntegerMapping().get(platform.getUuid()));
+            platform.setId(syncInfo.getId());
 
             // Now submit the server and its children as an update report
             inventoryReport = new InventoryReport(agent);
@@ -134,12 +128,8 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
             inventoryReport.addAddedRoot(server);
 
-            response = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
-            System.out.println("Report response included updates: " + response.getUuidToIntegerMapping().entrySet());
-            assert response.getUuidToIntegerMapping().keySet().size() == 3 : "second keySet size was not 3: "
-                + response.getUuidToIntegerMapping().keySet().size();
-            Integer serverId = response.getUuidToIntegerMapping().get(server.getUuid());
-            assert serverId > 0 : "second server id (" + serverId + ") was not positive";
+            syncInfo = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+            assert syncInfo != null;
         } finally {
             getTransactionManager().rollback();
         }

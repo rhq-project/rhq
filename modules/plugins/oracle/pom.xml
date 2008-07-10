@@ -3,13 +3,12 @@
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
-      <groupId>org.jboss.on</groupId>
-      <!--  Bypass the jon-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
-      <artifactId>jon-parent</artifactId>
-      <version>2.0.1-SNAPSHOT</version>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-plugins-parent</artifactId>
+      <version>1.1.0-SNAPSHOT</version>
    </parent>
 
-   <groupId>org.jboss.on</groupId>
+   <groupId>org.rhq</groupId>
    <artifactId>rhq-oracle-plugin</artifactId>
    <packaging>jar</packaging>
 
@@ -17,12 +16,12 @@
    <description>A plugin for managing Oracle Database Servers</description>
 
    <scm>
-      <connection>scm:svn:http://svn.corp.jboss.com/repos/jon/trunk/jon/plugins/oracle/</connection>
-      <developerConnection>scm:svn:http://svn.corp.jboss.com/repos/jon/trunk/jon/plugins/oracle/</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/oracle/</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/oracle/</developerConnection>
    </scm>
 
    <properties>
-      <scm.module.path>jon/plugins/oracle/</scm.module.path>      
+      <scm.module.path>modules/plugins/oracle/</scm.module.path>      
    </properties>
 
    <dependencies>
@@ -44,7 +43,7 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-database-plugin</artifactId>
-         <version>${rhq.version}</version>
+         <version>${project.version}</version>
          <scope>provided</scope>       
       </dependency>       
     
@@ -78,18 +77,7 @@
          </plugin>
 
       </plugins>
-   </build>
-
-   <repositories>
-    <repository>
-      <id>jon-internal</id>
-      <name>JON Internal Repository</name>
-      <url>http://jon01.qa.atl2.redhat.com:8042/m2-repo/</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-   </repositories>
+   </build>
 
    <profiles>
       <profile>
@@ -117,8 +105,8 @@
                               <mkdir dir="target/itest/lib" />
                               <copy toDir="target/itest/plugins" flatten="true">
                                  <fileset dir="${settings.localRepository}/">
-                                    <include name="org/rhq/rhq-platform-plugin/${rhq.version}/rhq-platform-plugin-${rhq.version}.jar" />
-                                    <include name="org/rhq/rhq-database-plugin/${rhq.version}/rhq-database-plugin-${rhq.version}.jar" />
+                                    <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
+                                    <include name="org/rhq/rhq-database-plugin/${project.version}/rhq-database-plugin-${project.version}.jar" />
                                  </fileset>
                                  <fileset dir="${project.build.directory}">
                                     <include name="${project.artifactId}-${project.version}.jar" />

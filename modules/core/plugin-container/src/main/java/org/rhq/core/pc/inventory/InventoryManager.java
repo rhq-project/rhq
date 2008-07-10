@@ -253,7 +253,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Resource discoveredPlatform = discoverPlatform();
         if (this.platform == null) {
             this.platform = discoveredPlatform;
-            log.info("Detected new platform " + this.platform);
+            log.info("Detected new platform: " + this.platform);
             initResourceContainer(this.platform);
         } else {
             // If the platform's already in inventory, make sure its version is up-to-date.
@@ -706,9 +706,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         this.inventoryLock.writeLock().lock();
         try {
             log.debug("Removing " + resource + " from local inventory...");
-            boolean isTopLevelServer = (this.platform != null)
-                && (this.platform.equals(resource.getParentResource()))
-                && (resource.getResourceType().getCategory() != ResourceCategory.SERVICE);
 
             // this will deactivate the resource starting bottom-up - so this ends up as a no-op if we are being called
             // recursively, but we need to do this now to ensure everything is stopped prior to removing them from
@@ -738,15 +735,20 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // if we just so happened to have removed our top level platform, we need to re-discover it, can't go living without it
             // once we discover the platform, let's schedule an immediate server scan
             if ((this.platform == null) || (this.platform.getId() == resource.getId())) {
-                log.debug(resource.getId() + ": Platform discovery is needed.");
-                discoverPlatform();
+                log.debug("Platform [" + resource.getId() + "] was deleted - running platform scan now...");
+                this.platform = null;
+                executePlatformScan();
                 newPlatformWasDeletedRecently = true;
                 scanIsNeeded = true;
-            } else if (isTopLevelServer) {
-                log.debug(resource.getId() + ": Server discovery is needed.");
-
-                // if we got here, we just deleted a top level server (whose parent is the platform), let's request a scan
-                scanIsNeeded = true;
+            } else {
+                boolean isTopLevelServer = (this.platform != null)
+                && (this.platform.equals(resource.getParentResource()))
+                && (resource.getResourceType().getCategory() != ResourceCategory.SERVICE);
+                if (isTopLevelServer) {
+                    log.debug("Top-level server [" + resource.getId() + "] was deleted - server discovery is needed.");
+                    // if we got here, we just deleted a top level server (whose parent is the platform), let's request a scan
+                    scanIsNeeded = true;
+                }
             }
         } finally {
             this.inventoryLock.writeLock().unlock();

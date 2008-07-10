@@ -1579,8 +1579,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         if (root != null) {
             prefetchResource(root, recursive);
             // load the parent - note we only load the root resource's parent
-            if (root.getParentResource() != null)
-            {
+            if (root.getParentResource() != null) {
                 root.getParentResource().getId();
             }
         }
@@ -1692,8 +1691,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // Init the lazy parent...
         // Don't fetch the parent's children, otherwise we'll end up in infinite recursion.
         prefetchResource(resource.getParentResource(), false);
-        if (recursive)
-        {            
+        if (recursive) {
             // Recurse...
             for (Resource child : resource.getChildResources()) {
                 prefetchResource(child, recursive);

@@ -227,19 +227,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
             this.inventoryManager.fireResourcesAdded(newResources);
 
-            Set<Resource> existingChildResources = new HashSet(parent.getChildResources()); // wrap in new HashSet to avoid CMEs
-            for (Resource existingChildResource : existingChildResources)
-            {
-                // NOTE: If inside Agent, only remove Resources w/ id == 0. Other Resources may still exist in the
-                //       the Server's inventory.
-                if (existingChildResource.getResourceType().equals(childResourceType) &&
-                        !mergedResources.containsKey(existingChildResource.getUuid()) &&
-                        (existingChildResource.getId() == 0 || !this.pluginContainerConfiguration.isInsideAgent()))
-                {                    
-                    log.info("Removing stale " + existingChildResource + "...");
-                    this.inventoryManager.removeResourceAndIndicateIfScanIsNeeded(existingChildResource);
-                }
-            }
+            removeStaleResources(parent, childResourceType, mergedResources);
         }
     }
 
@@ -263,5 +251,19 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
         }
 
         return Collections.EMPTY_SET;
+    }
+
+    private void removeStaleResources(Resource parent, ResourceType childResourceType, Map<String, Resource> mergedResources) {
+        Set<Resource> existingChildResources = new HashSet(parent.getChildResources()); // wrap in new HashSet to avoid CMEs
+        for (Resource existingChildResource : existingChildResources) {
+            // NOTE: If inside Agent, only remove Resources w/ id == 0. Other Resources may still exist in the
+            //       the Server's inventory.
+            if (existingChildResource.getResourceType().equals(childResourceType) &&
+                    !mergedResources.containsKey(existingChildResource.getUuid()) &&
+                    (existingChildResource.getId() == 0 || !this.pluginContainerConfiguration.isInsideAgent())) {
+                log.info("Removing stale " + existingChildResource + "...");
+                this.inventoryManager.removeResourceAndIndicateIfScanIsNeeded(existingChildResource);
+            }
+        }
     }
 }

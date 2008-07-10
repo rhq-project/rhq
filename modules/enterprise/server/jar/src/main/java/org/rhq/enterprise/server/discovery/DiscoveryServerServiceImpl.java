@@ -105,14 +105,13 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         long start = System.currentTimeMillis();
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
         Set<Resource> resources = new HashSet();
-        for (Integer resourceId : resourceIds)
-        {
-            Resource resource = resourceManager.getResourceTree(resourceId, includeDescendants);    
+        for (Integer resourceId : resourceIds) {
+            Resource resource = resourceManager.getResourceTree(resourceId, includeDescendants);
             resource = convertToPojoResource(resource, includeDescendants);
             resources.add(resource);
         }
         log.debug("Performance: get Resources [" + resourceIds + "], recursive=" + includeDescendants + ", timing ("
-            + (System.currentTimeMillis() - start) + ")ms");
+                + (System.currentTimeMillis() - start) + ")ms");
         return resources;
     }
 
@@ -145,8 +144,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         return discoveryBoss.updateResourceVersion(resourceId, version);
     }
 
-    private static Resource convertToPojoResource(Resource resource, boolean includeDescendants)
-    {
+    private static Resource convertToPojoResource(Resource resource, boolean includeDescendants) {
         Resource pojoResource = new Resource(resource.getId());
         pojoResource.setUuid(resource.getUuid());
         pojoResource.setResourceKey(resource.getResourceKey());
@@ -157,17 +155,14 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         pojoResource.setName(resource.getName());
         pojoResource.setDescription(resource.getDescription());
         pojoResource.setLocation(resource.getLocation());
-        if (resource.getParentResource() != null)
-        {
+        if (resource.getParentResource() != null) {
             pojoResource.setParentResource(convertToPojoResource(resource.getParentResource(), false));
         }
-        if (includeDescendants)
-        {
-            for (Resource childResource : resource.getChildResources())
-            {
+        if (includeDescendants) {
+            for (Resource childResource : resource.getChildResources()) {
                 pojoResource.addChildResource(convertToPojoResource(childResource, true));
             }
         }
         return pojoResource;
-    }    
+    }
 }

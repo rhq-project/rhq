@@ -44,7 +44,7 @@ public class InventoryFile {
     /**
      * Constructor for {@link InventoryFile} that will read and write inventory data to the given file.
      *
-     * @param inventoryFile
+     * @param inventoryFile the path to the inventory.dat file
      */
     public InventoryFile(File inventoryFile) {
         this.inventoryFile = inventoryFile;
@@ -104,9 +104,8 @@ public class InventoryFile {
 
     private void connectTypes(Resource resource) {
         PluginMetadataManager metadataManager = PluginContainer.getInstance().getPluginManager().getMetadataManager();
-        ResourceType type = metadataManager.getType(resource.getResourceType().getName(), resource.getResourceType()
-            .getPlugin());
-        resource.setResourceType(type);
+        ResourceType fullResourceType = metadataManager.getType(resource.getResourceType());
+        resource.setResourceType(fullResourceType);
         for (Resource child : resource.getChildResources()) {
             connectTypes(child);
         }

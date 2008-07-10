@@ -155,6 +155,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     private Set<InventoryEventListener> inventoryEventListeners = new HashSet<InventoryEventListener>();
 
+    private PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
+
     public InventoryManager() {
         super(DiscoveryAgentService.class);
     }
@@ -223,8 +225,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return this.resourceContainers.get(resource.getUuid());
     }
 
+    @Nullable
     public ResourceContainer getResourceContainer(Integer resourceId) {
-        if ((resourceId == null) || (resourceId.intValue() == 0)) {
+        if ((resourceId == null) || (resourceId == 0)) {
             // i've already found one place where passing in 0 was very bad - I want to be very noisy in the log
             // when this happens but not throw an exception, for fear I might break something.
             // I'll just return null instead; hopefully, callers are checking for null appropriately
@@ -354,15 +357,17 @@ public class InventoryManager extends AgentService implements ContainerService, 
     public MergeResourceResponse manuallyAddResource(ResourceType resourceType, int parentResourceId,
         Configuration pluginConfiguration, int ownerSubjectId) throws InvalidPluginConfigurationClientException,
         PluginContainerException {
-        // TODO: This is hugely flawed. It assumes discovery components will only return the manually discovered resource, but
-        // never says this is required. It then proceeds to auto-import the first resource returned. For discoveries that
-        // are process based it works because this passes in a null process scan... also a bad idea.
+        // TODO (ghinkle): This is hugely flawed. It assumes discovery components will only return the manually discovered
+        // resource, but never says this is required. It then proceeds to auto-import the first resource returned. For
+        // discoveries that are process based it works because this passes in a null process scan... also a bad idea.
 
-        // Lookup the full, local resource type (the provided one is just the keys)
-        PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
-        resourceType = pluginManager.getMetadataManager().getType(resourceType.getName(), resourceType.getPlugin());
+        // Lookup the full, local Resource type (the provided one is just the keys).
+        ResourceType fullResourceType = this.pluginManager.getMetadataManager().getType(resourceType);
+        if (fullResourceType == null) {
+            throw new IllegalStateException("Server specified unknown Resource type: " + resourceType);
+        }
 
-        MergeResourceResponse mergeResourceResponse = null;
+        MergeResourceResponse mergeResourceResponse;
         Resource resource = null;
         boolean resourceAlreadyExisted = false;
         try {
@@ -1622,7 +1627,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
         // Replace the stripped-down ResourceType that came from the Server with the full ResourceType - it's
         // critical to do this before refreshing the state (i.e. calling start on the ResourceComponent).
-        resource.setResourceType(getFullResourceType(resource.getResourceType()));
+        ResourceType fullResourceType = this.pluginManager.getMetadataManager().getType(resource.getResourceType());
+        if (fullResourceType == null) {
+            log.error("Unable to merge Resource " + resource + " - its type is unknown - perhaps the '" +
+                    resource.getResourceType().getPlugin() +
+                    "' plugin jar was manually removed from the Server's rhq-plugins dir?");
+            return;
+        }
+        resource.setResourceType(fullResourceType);
         refreshResourceComponentState(resourceContainer, pluginConfigUpdated);
 
         // Recurse...
@@ -1643,9 +1655,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.warn("Resource key for " + targetResource + " changed from [" + targetResource.getResourceKey() +
                     "] to [" + sourceResource.getResourceKey() + "].");
         }
-        targetResource.setResourceKey(sourceResource.getResourceKey());
-        ResourceType fullResourceType = getFullResourceType(sourceResource.getResourceType());
-        targetResource.setResourceType(fullResourceType);
+        targetResource.setResourceKey(sourceResource.getResourceKey());        
+        targetResource.setResourceType(sourceResource.getResourceType());
         targetResource.setMtime(sourceResource.getMtime());
         targetResource.setInventoryStatus(sourceResource.getInventoryStatus());
         boolean pluginConfigUpdated = (!targetResource.getPluginConfiguration().equals(sourceResource.getPluginConfiguration()));
@@ -1678,13 +1689,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         finally {
             this.inventoryLock.writeLock().unlock();
         }
-    }
-
-    private static ResourceType getFullResourceType(ResourceType resourceType) {
-        PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
-        ResourceType fullResourceType = pluginManager.getMetadataManager().getType(resourceType.getName(),
-                resourceType.getPlugin());
-        return fullResourceType;
     }
 
     private void refreshResourceComponentState(ResourceContainer container, boolean pluginConfigUpdated) {

@@ -30,6 +30,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This is meant to provide an interface to the underlying metadata of a plugin. It will load, translate and cache the
@@ -80,12 +81,12 @@ public class PluginMetadataManager {
 
     public String getDiscoveryClass(ResourceType resourceType) {
         PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());
-        return parser.getDiscoveryComponentClass(resourceType);
+        return (parser != null) ? parser.getDiscoveryComponentClass(resourceType) : null;
     }
 
     public String getComponentClass(ResourceType resourceType) {
         PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());
-        return parser.getComponentClass(resourceType);
+        return (parser != null) ? parser.getComponentClass(resourceType) : null;
     }
 
     /**
@@ -139,6 +140,15 @@ public class PluginMetadataManager {
         return null;
     }
 
+    /**
+     * Returns the Resource type with the specified name and plugin, or null if no such Resource type exists.
+     *
+     * @param resourceTypeName the Resource type name
+     * @param pluginName the name of the plugin that defines the Resource type
+     *
+     * @return the Resource type with the specified name and plugin, or null if no such Resource type exists
+     */
+    @Nullable
     public ResourceType getType(String resourceTypeName, String pluginName) {
         ResourceType searchType = new ResourceType(resourceTypeName, pluginName, null, null);
         for (ResourceType t : types) {
@@ -146,8 +156,12 @@ public class PluginMetadataManager {
                 return t;
             }
         }
-
         return null;
+    }
+
+    @Nullable
+    public ResourceType getType(ResourceType resourceType) {
+        return getType(resourceType.getName(), resourceType.getPlugin());
     }
 
     public Set<ResourceType> getTypesForCategory(ResourceCategory category) {

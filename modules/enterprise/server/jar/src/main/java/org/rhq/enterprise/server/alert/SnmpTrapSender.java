@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.alert;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -434,6 +435,7 @@ public class SnmpTrapSender implements PDUFactory {
             }
         } else {
             if (pduType == PDU.V1TRAP) {
+                v1TrapPDU.setTimestamp(sysUpTime.toLong());
                 request = v1TrapPDU;
             } else {
                 request = new PDU();
@@ -450,9 +452,11 @@ public class SnmpTrapSender implements PDUFactory {
      * @param snmpNotification the notification data (target agent)
      * @param platformName the name of the platform the alert is on
      * @param conditions a string that shows the alert conditions
+     * @param bootTime TODO
      * @return 'Error code' of the operation
      */
-    public String sendSnmpTrap(Alert alert, SnmpNotification snmpNotification, String platformName, String conditions) {
+    public String sendSnmpTrap(Alert alert, SnmpNotification snmpNotification, String platformName, String conditions,
+        Date bootTime) {
         if (!this.snmpEnabled) {
             return "SNMP is not enabled.";
         }
@@ -469,7 +473,10 @@ public class SnmpTrapSender implements PDUFactory {
         getVariableBindings(baseOid + ".3" + "={s}" + platformName);
         // the conditions of this alert
         getVariableBindings(baseOid + ".4" + "={s}" + conditions);
+        // severity of the alert
+        getVariableBindings(baseOid + ".5" + "={s}" + alert.getAlertDefinition().getPriority().toString().toLowerCase());
 
+        setSysUpTimeFromBootTime(bootTime); // needs to be called before checkTrapVariables();
         checkTrapVariables(this.vbs);
         try {
             PDU response = send();
@@ -495,6 +502,22 @@ public class SnmpTrapSender implements PDUFactory {
             log.error(ex.getMessage());
             return "SNMPAction configured incorrectly: " + ex.getMessage();
         }
+    }
+
+    /**
+     * Calculate the time diff between system boot time and now and
+     * set the uptime variable from it.
+     * @param bootTime
+     */
+    private void setSysUpTimeFromBootTime(Date bootTime) {
+        long now = System.currentTimeMillis();
+        long delta;
+        if (bootTime != null) {
+            delta = now - bootTime.getTime();
+        } else
+            delta = 0;
+        setSysUpTime(new TimeTicks(delta / 1000)); // TT is 100th of a second TODO : fix this !!!
+
     }
 
     private boolean init() {

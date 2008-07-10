@@ -25,6 +25,8 @@ import java.lang.management.ManagementFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -40,6 +42,7 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
@@ -167,6 +170,26 @@ public class SystemManagerBean implements SystemManagerLocal {
                 }
             }
         }
+    }
+
+    public Date getBootTime() {
+        Date bootTime = null;
+        Query q = entityManager.createNamedQuery(SystemConfiguration.FIND_PROPERTY_BY_KEY);
+        q.setParameter("key", "LAST_BOOT_TIME");
+        List<SystemConfiguration> configs = q.getResultList();
+        if (configs.size() == 1) {
+            SystemConfiguration dateConf = configs.get(0);
+            String dateString = dateConf.getPropertyValue();
+            try {
+                bootTime = new SimpleDateFormat("yy-MM-dd hh:mm:ss").parse(dateString);
+            } catch (ParseException e) {
+                log.debug("Date was unparseable");
+            }
+        }
+        if (bootTime == null)
+            bootTime = new Date();
+
+        return bootTime;
     }
 
     /**

@@ -115,6 +115,8 @@ public class AlertManagerBean implements AlertManagerLocal {
     @IgnoreDependency
     private OperationManagerLocal operationManager;
 
+    private static Date bootTime = null;
+
     /**
      * Persist a detached alert.
      *
@@ -734,7 +736,9 @@ public class AlertManagerBean implements AlertManagerLocal {
         String platformName = lineage.get(0).getName();
         String conditions = prettyPrintAlertConditions(alert.getConditionLogs());
         try {
-            result = snmpTrapSender.sendSnmpTrap(alert, snmpNotification, platformName, conditions);
+            if (bootTime == null)
+                bootTime = systemManager.getBootTime();
+            result = snmpTrapSender.sendSnmpTrap(alert, snmpNotification, platformName, conditions, bootTime);
         } catch (Throwable t) {
             result = "failed - cause: " + t;
         }

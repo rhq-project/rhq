@@ -18,7 +18,10 @@
  */
 package org.rhq.enterprise.gui.startup;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
@@ -44,6 +47,7 @@ import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutContentRequestsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutOperationsJob;
 import org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -79,8 +83,22 @@ public class StartupServlet extends HttpServlet {
         startPluginDeployer();
         startEmbeddedAgent();
         registerShutdownListener();
+        registerBootTime();
 
         return;
+    }
+
+    /**
+     * Register the time when the server was booted
+     */
+    private void registerBootTime() {
+        // TODO Auto-generated method stub
+        SystemManagerLocal sysMan = LookupUtil.getSystemManager();
+        Properties conf = sysMan.getSystemConfiguration();
+        Date now = new Date();
+        String nowS = new SimpleDateFormat("yy-MM-dd hh:mm:ss").format(now);
+        conf.setProperty("LAST_BOOT_TIME", nowS);
+        sysMan.setSystemConfiguration(LookupUtil.getSubjectManager().getOverlord(), conf);
     }
 
     /**

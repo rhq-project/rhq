@@ -19,6 +19,7 @@
 package org.rhq.core.domain.common;
 
 import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -33,11 +34,14 @@ import javax.persistence.Table;
  * @author <a href="mailto:ghinkle@jboss.com">Greg Hinkle</a>
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = SystemConfiguration.QUERY_FIND_ALL, query = "SELECT c FROM SystemConfiguration AS c") })
+@NamedQueries( {
+    @NamedQuery(name = SystemConfiguration.QUERY_FIND_ALL, query = "SELECT c FROM SystemConfiguration AS c"),
+    @NamedQuery(name = SystemConfiguration.FIND_PROPERTY_BY_KEY, query = "SELECT c FROM SystemConfiguration AS c WHERE c.propertyKey = :key") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_SYSTEM_CONFIG_ID_SEQ")
 @Table(name = "RHQ_SYSTEM_CONFIG")
 public class SystemConfiguration implements Serializable {
     public static final String QUERY_FIND_ALL = "SystemConfiguration.findAll";
+    public static final String FIND_PROPERTY_BY_KEY = "SystemConfiguration.FIND_PROPERTY_BY_KEY";
 
     private static final long serialVersionUID = 1L;
 

@@ -19,6 +19,8 @@
 
 package org.rhq.plugins.snmptrapd;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -52,21 +54,21 @@ public class SnmpTrapEventPoller implements EventPoller, CommandResponder {
 
     public SnmpTrapEventPoller() {
         severityOid = null;
-        //        InputStream in = ClassLoader.getSystemResourceAsStream("MibTrans.properties");
+
+        // Load proprties, that translate from oid strings (1.2.2...) to their name in the mib
+        // Should be done through a mib parser
+        ClassLoader cl = getClass().getClassLoader();
+        InputStream in = cl.getResourceAsStream("MibTrans.properties");
         translation = new Properties();
-        //        try {
-        //            if (in != null)
-        //                translation.load(in);
-        //        } catch (IOException e) {
-        //            // TODO Auto-generated catch block
-        //            e.printStackTrace();
-        //        }
-        // TODO move the next to an external file (or better to a mib parser)
-        translation.put("1.3.6.1.4.1.18016.2.1.1", "rhq.alert.alertName");
-        translation.put("1.3.6.1.4.1.18016.2.1.2", "rhq.alert.resourceName");
-        translation.put("1.3.6.1.4.1.18016.2.1.3", "rhq.alert.platformName");
-        translation.put("1.3.6.1.4.1.18016.2.1.4", "rhq.alert.condition");
-        translation.put("1.3.6.1.4.1.18016.2.1.5", "rhq.alert.severity");
+        try {
+            if (in != null) {
+                translation.load(in);
+                in.close();
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     public SnmpTrapEventPoller(String severityOidString) {
@@ -129,7 +131,7 @@ public class SnmpTrapEventPoller implements EventPoller, CommandResponder {
                 }
 
                 payload.append(oids);
-                payload.append(" == ");
+                payload.append(": ");
                 payload.append(var.toString()); // TODO change depending on syntax !
                 payload.append("\n");
 

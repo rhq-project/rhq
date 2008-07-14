@@ -453,10 +453,11 @@ public class SnmpTrapSender implements PDUFactory {
      * @param platformName the name of the platform the alert is on
      * @param conditions a string that shows the alert conditions
      * @param bootTime TODO
+     * @param alertUrl TODO
      * @return 'Error code' of the operation
      */
     public String sendSnmpTrap(Alert alert, SnmpNotification snmpNotification, String platformName, String conditions,
-        Date bootTime) {
+        Date bootTime, String alertUrl) {
         if (!this.snmpEnabled) {
             return "SNMP is not enabled.";
         }
@@ -475,6 +476,8 @@ public class SnmpTrapSender implements PDUFactory {
         getVariableBindings(baseOid + ".4" + "={s}" + conditions);
         // severity of the alert
         getVariableBindings(baseOid + ".5" + "={s}" + alert.getAlertDefinition().getPriority().toString().toLowerCase());
+        // url of the alert detail
+        getVariableBindings(baseOid + ".6" + "={s}" + alertUrl);
 
         setSysUpTimeFromBootTime(bootTime); // needs to be called before checkTrapVariables();
         checkTrapVariables(this.vbs);

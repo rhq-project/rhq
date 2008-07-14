@@ -34,6 +34,7 @@ import org.snmp4j.PDU;
 import org.snmp4j.PDUv1;
 import org.snmp4j.ScopedPDU;
 import org.snmp4j.smi.OID;
+import org.snmp4j.smi.TimeTicks;
 import org.snmp4j.smi.Variable;
 import org.snmp4j.smi.VariableBinding;
 
@@ -104,11 +105,17 @@ public class SnmpTrapEventPoller implements EventPoller, CommandResponder {
         String sourceAddr = "snmp-agent";
         PDU pdu = arg0.getPDU();
         if (pdu != null) {
+            StringBuffer payload = new StringBuffer();
             //            System.out.println("=>PDU: " + pdu);
             // SNMP v1
             if (pdu instanceof PDUv1) {
                 PDUv1 v1pdu = (PDUv1) pdu;
                 sourceAddr = v1pdu.getAgentAddress().toString();
+                long timeTicks = v1pdu.getTimestamp();
+                payload.append("Traptype (generic, specific): ");
+                payload.append(v1pdu.getGenericTrap()).append(", ").append(v1pdu.getSpecificTrap()).append("\n");
+                payload.append("Timestamp: " + new TimeTicks(timeTicks).toString());
+                payload.append("\n");
             }
             // SNMP v3
             else if (pdu instanceof ScopedPDU) {
@@ -117,7 +124,7 @@ public class SnmpTrapEventPoller implements EventPoller, CommandResponder {
 
             SnmpTrapdComponent.trapCount++;
             EventSeverity severity = EventSeverity.INFO;
-            StringBuffer payload = new StringBuffer();
+
             Vector<VariableBinding> vbs = pdu.getVariableBindings();
             for (VariableBinding vb : vbs) {
                 OID oid = vb.getOid();

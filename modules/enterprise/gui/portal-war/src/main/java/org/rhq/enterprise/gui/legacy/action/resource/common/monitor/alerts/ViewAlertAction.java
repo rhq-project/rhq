@@ -42,7 +42,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
-import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.beans.AlertConditionBean;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
@@ -71,9 +71,14 @@ public class ViewAlertAction extends TilesAction {
 
         // properties
         Alert av = alertManager.getById(alertId);
+
+        if (av == null) {
+            throw new IllegalArgumentException("Alert with id " + alertId + " was not found");
+        }
+
         AlertDefinition adv = av.getAlertDefinition();
         request.setAttribute("alert", av);
-        request.setAttribute(Constants.ALERT_DEFINITION_ATTR, adv);
+        request.setAttribute(AttrConstants.ALERT_DEFINITION_ATTR, adv);
 
         // conditions
         Set<AlertConditionLog> condLogs = av.getConditionLogs();

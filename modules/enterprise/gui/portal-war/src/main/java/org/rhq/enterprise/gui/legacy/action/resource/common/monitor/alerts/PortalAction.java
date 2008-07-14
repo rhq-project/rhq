@@ -19,20 +19,25 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts;
 
 import java.util.Properties;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.Portal;
 import org.rhq.enterprise.gui.legacy.Portlet;
 import org.rhq.enterprise.gui.legacy.action.resource.ResourceController;
@@ -53,8 +58,8 @@ public class PortalAction extends ResourceController {
         log.trace("Building method map ...");
         Properties map = new Properties();
 
-        map.put(Constants.MODE_VIEW, "listAlerts");
-        map.put(Constants.MODE_LIST, "listAlerts");
+        map.put(ParamConstants.MODE_VIEW, "listAlerts");
+        map.put(ParamConstants.MODE_LIST, "listAlerts");
         map.put("viewAlert", "viewAlert");
 
         return map;
@@ -90,16 +95,20 @@ public class PortalAction extends ResourceController {
         setTitle(request, portal, "alert.current.platform.detail.Title");
         portal.setDialog(true);
         portal.addPortlet(new Portlet(".events.alert.view"), 1);
-        request.setAttribute(Constants.PORTAL_KEY, portal);
+        request.setAttribute(AttrConstants.PORTAL_KEY, portal);
 
         // Get alert definition name
         Integer alertId = new Integer(request.getParameter("a"));
 
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
         Alert alert = alertManager.getById(alertId);
-        AlertDefinition alertDefinition = alert.getAlertDefinition();
+        if (alert != null) {
+            AlertDefinition alertDefinition = alert.getAlertDefinition();
 
-        request.setAttribute(Constants.TITLE_PARAM2_ATTR, alertDefinition.getName());
+            request.setAttribute(AttrConstants.TITLE_PARAM2_ATTR, alertDefinition.getName());
+        } else {
+            request.setAttribute(AttrConstants.TITLE_PARAM2_ATTR, "! Alert not found !");
+        }
 
         return null;
     }
@@ -126,7 +135,7 @@ public class PortalAction extends ResourceController {
         setTitle(request, portal, "alerts.alert.platform.AlertList.Title");
         portal.setDialog(false);
         portal.addPortlet(new Portlet(".events.alert.list"), 1);
-        request.setAttribute(Constants.PORTAL_KEY, portal);
+        request.setAttribute(AttrConstants.PORTAL_KEY, portal);
 
         return null;
     }

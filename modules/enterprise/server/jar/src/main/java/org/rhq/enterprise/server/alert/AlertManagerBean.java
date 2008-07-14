@@ -249,6 +249,9 @@ public class AlertManagerBean implements AlertManagerLocal {
      */
     public Alert getById(int alertId) {
         Alert alert = entityManager.find(Alert.class, alertId);
+        if (alert == null)
+            return null;
+
         fetchCollectionFields(alert);
         return alert;
     }
@@ -735,10 +738,11 @@ public class AlertManagerBean implements AlertManagerLocal {
         List<Resource> lineage = resourceManager.getResourceLineage(alert.getAlertDefinition().getResource().getId());
         String platformName = lineage.get(0).getName();
         String conditions = prettyPrintAlertConditions(alert.getConditionLogs());
+        String alertUrl = prettyPrintAlertURL(alert);
         try {
             if (bootTime == null)
                 bootTime = systemManager.getBootTime();
-            result = snmpTrapSender.sendSnmpTrap(alert, snmpNotification, platformName, conditions, bootTime);
+            result = snmpTrapSender.sendSnmpTrap(alert, snmpNotification, platformName, conditions, bootTime, alertUrl);
         } catch (Throwable t) {
             result = "failed - cause: " + t;
         }

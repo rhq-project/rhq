@@ -97,6 +97,7 @@ public class CreateResourceRunner implements Callable, Runnable {
     public Object call() throws Exception {
         log.info("Creating resource through report: " + report);
 
+        String resourceName = null;
         String resourceKey = null;
         String errorMessage;
         CreateResourceStatus status;
@@ -107,6 +108,7 @@ public class CreateResourceRunner implements Callable, Runnable {
             report = facet.createResource(report);
 
             // Pull out the plugin populated parts of the report and add to the request
+            resourceName = report.getResourceName();
             resourceKey = report.getResourceKey();
             errorMessage = report.getErrorMessage();
             status = report.getStatus();
@@ -127,6 +129,13 @@ public class CreateResourceRunner implements Callable, Runnable {
                 status = CreateResourceStatus.FAILURE;
             }
 
+            // RHQ-666 - The plugin should provide a resource name if the create was successful
+            if ((reportedStatus == CreateResourceStatus.SUCCESS) && (resourceName == null)) {
+                log.warn("Plugin did not indicate a resource name for the request: " + requestId);
+                errorMessage = "Plugin did not indicate a resource name for this request.";
+                status = CreateResourceStatus.FAILURE;
+            }
+
             Throwable throwable = report.getException();
             if (throwable != null) {
                 log.warn("Throwable was found in creation report for request: " + requestId);
@@ -143,8 +152,8 @@ public class CreateResourceRunner implements Callable, Runnable {
         }
 
         // Send results back to the server
-        CreateResourceResponse response = new CreateResourceResponse(requestId, resourceKey, status, errorMessage,
-            configuration);
+        CreateResourceResponse response =
+            new CreateResourceResponse(requestId, resourceName, resourceKey, status, errorMessage, configuration);
 
         log.info("Sending create response to server: " + response);
         ResourceFactoryServerService serverService = resourceFactoryManager.getServerService();

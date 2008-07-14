@@ -6,7 +6,7 @@
     <table name="RHQ_CREATE_RES_HIST">
         <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
         <column name="PARENT_RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
-        <column name="CREATED_RESOURCE_NAME" type="VARCHAR2" size="100" required="true"/>
+        <column name="CREATED_RESOURCE_NAME" type="VARCHAR2" size="500" required="false"/>
         <column name="NEW_RESOURCE_KEY" type="VARCHAR2" required="false" size="500"/>
         <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
         <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>

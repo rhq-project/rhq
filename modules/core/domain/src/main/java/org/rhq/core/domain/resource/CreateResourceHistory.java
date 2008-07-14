@@ -95,7 +95,7 @@ public class CreateResourceHistory implements Serializable {
     /**
      * Resource instance created on the server onto which to hang these create requests.
      */
-    @Column(name = "CREATED_RESOURCE_NAME", nullable = false)
+    @Column(name = "CREATED_RESOURCE_NAME", nullable = true)
     private String createdResourceName;
 
     /**

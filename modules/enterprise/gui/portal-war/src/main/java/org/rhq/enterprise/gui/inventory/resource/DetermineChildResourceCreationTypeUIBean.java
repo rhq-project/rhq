@@ -85,7 +85,6 @@ public class DetermineChildResourceCreationTypeUIBean {
             case CONTENT: {
                 CreateNewPackageChildResourceUIBean createPackageBean = FacesContextUtility
                     .getManagedBean(CreateNewPackageChildResourceUIBean.class);
-                createPackageBean.setResourceName(this.retryCreateItem.getCreatedResourceName());
                 createPackageBean.setResourceType(this.retryCreateItem.getResourceType());
                 //               createPackageBean.setPackageName(this.retryCreateItem.getPackageName());
                 createPackageBean.setConfiguration(this.retryCreateItem.getConfiguration());

@@ -369,17 +369,6 @@
    <onc:paginationControl id="CreateResourceHistory"/>
 </f:facet>
 
-<ui:remove><!-- Resource Name --></ui:remove>
-<rich:column>
-   <f:facet name="header">
-      <onc:sortableColumnHeader sort="crh.createdResourceName">
-         <h:outputText styleClass="headerText" value="Created Resource Name"/>
-      </onc:sortableColumnHeader>
-   </f:facet>
-
-   <h:outputText value="#{item.createdResourceName}"/>
-</rich:column>
-
 <ui:remove><!-- Resource Type Name --></ui:remove>
 <rich:column>
    <f:facet name="header">

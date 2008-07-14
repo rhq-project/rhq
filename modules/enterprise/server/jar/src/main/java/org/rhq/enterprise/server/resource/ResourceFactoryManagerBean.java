@@ -144,7 +144,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
 
             // Submit the error as a failure response
             String errorMessage = ThrowableUtil.getAllMessages(e);
-            CreateResourceResponse response = new CreateResourceResponse(persistedHistory.getId(), null,
+            CreateResourceResponse response = new CreateResourceResponse(persistedHistory.getId(), null, null,
                 CreateResourceStatus.FAILURE, errorMessage, resourceConfiguration);
             resourceFactoryManager.completeCreateResource(response);
 
@@ -199,7 +199,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
 
             // Submit the error as a failure response
             String errorMessage = ThrowableUtil.getAllMessages(e);
-            CreateResourceResponse response = new CreateResourceResponse(persistedHistory.getId(), null,
+            CreateResourceResponse response = new CreateResourceResponse(persistedHistory.getId(), null, null,
                 CreateResourceStatus.FAILURE, errorMessage, null);
             resourceFactoryManager.completeCreateResource(response);
 
@@ -262,10 +262,18 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
             entityManager.merge(response.getResourceConfiguration());
         }
 
+        // RHQ-666 - The resource name will likely come from the plugin. If both the user indicated a name at
+        // creation time (which would be in the history item), use that to override what the plugin indicates
+        String newResourceName = response.getResourceName();
+
+        if (history.getCreatedResourceName() != null) {
+            newResourceName = history.getCreatedResourceName();
+        }
+
         // If the plugin reports it as successful, create the resource and mark it as committed
         if (response.getStatus() == CreateResourceStatus.SUCCESS) {
             resourceFactoryManager.createInventoryResource(history.getParentResource().getId(), history
-                .getResourceType().getId(), history.getCreatedResourceName(), response.getResourceKey());
+                .getResourceType().getId(), newResourceName, response.getResourceKey());
         }
     }
 

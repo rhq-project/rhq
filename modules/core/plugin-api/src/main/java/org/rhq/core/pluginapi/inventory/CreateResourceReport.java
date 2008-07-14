@@ -1,4 +1,4 @@
-/*
+ /*
  * RHQ Management Platform
  * Copyright (C) 2005-2008 Red Hat, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@ public class CreateResourceReport {
 
     // Data used by the plugin to create the resource ----------
 
-    private String resourceName;
+    private String userSpecifiedResourceName;
     private ResourceType resourceType;
     private Configuration pluginConfiguration;
     private Configuration resourceConfiguration;
@@ -42,6 +42,7 @@ public class CreateResourceReport {
 
     // Data set by the plugin after resource creation ----------
 
+    private String resourceName;
     private String resourceKey;
     private CreateResourceStatus status;
     private String errorMessage;
@@ -50,17 +51,21 @@ public class CreateResourceReport {
     // Constructors  --------------------------------------------
 
     /**
-     * TODO
+     * Creates a report with immutable information the plugin should not be able to change. The plugin will add the
+     * necessary details to this report to indicate the result of the creation.
      *
-     * @param resourceName
-     * @param resourceType
-     * @param pluginConfiguration
-     * @param resourceConfiguration
-     * @param resourcePackageDetails
+     * @param userSpecifiedResourceName resource name the user gave to the resource at creation time;
+     *                                  may be <code>null</code>
+     * @param resourceType              type of resource being created
+     * @param pluginConfiguration       user specified plugin configuration to connect to the resource;
+     *                                  may be <code>null</code>
+     * @param resourceConfiguration     any configuration values necessary for the resource; may be <code>null</code>
+     * @param packageDetails            information regarding the package to be deployed when creating the new
+     *                                  resource; may be <code>null</code> 
      */
-    public CreateResourceReport(String resourceName, ResourceType resourceType, Configuration pluginConfiguration,
+    public CreateResourceReport(String userSpecifiedResourceName, ResourceType resourceType, Configuration pluginConfiguration,
         Configuration resourceConfiguration, ResourcePackageDetails packageDetails) {
-        this.resourceName = resourceName;
+        this.userSpecifiedResourceName = userSpecifiedResourceName;
         this.resourceType = resourceType;
         this.pluginConfiguration = pluginConfiguration;
         this.resourceConfiguration = resourceConfiguration;
@@ -69,14 +74,18 @@ public class CreateResourceReport {
 
     // Public  --------------------------------------------
 
-    public String getResourceName() {
-        return resourceName;
+    public String getUserSpecifiedResourceName() {
+        return userSpecifiedResourceName;
+    }
+
+    public void setUserSpecifiedResourceName(String userSpecifiedResourceName) {
+        this.userSpecifiedResourceName = userSpecifiedResourceName;
     }
 
     public void setResourceName(String resourceName) {
         this.resourceName = resourceName;
     }
-
+    
     public void setResourceKey(String resourceKey) {
         this.resourceKey = resourceKey;
     }
@@ -107,6 +116,10 @@ public class CreateResourceReport {
 
     public ResourcePackageDetails getPackageDetails() {
         return packageDetails;
+    }
+
+    public String getResourceName() {
+        return resourceName;
     }
 
     public String getResourceKey() {

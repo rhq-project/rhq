@@ -31,6 +31,7 @@ public class CreateResourceResponse implements Serializable {
     // Attributes  --------------------------------------------
 
     private int requestId;
+    private String resourceName;
     private String resourceKey;
     private CreateResourceStatus status;
     private String errorMessage;
@@ -41,9 +42,11 @@ public class CreateResourceResponse implements Serializable {
     public CreateResourceResponse() {
     }
 
-    public CreateResourceResponse(int requestId, String resourceKey, CreateResourceStatus status, String errorMessage,
-        Configuration resourceConfiguration) {
+    public CreateResourceResponse(int requestId, String resourceName, String resourceKey,
+                                  CreateResourceStatus status, String errorMessage,
+                                  Configuration resourceConfiguration) {
         this.requestId = requestId;
+        this.resourceName = resourceName;
         this.resourceKey = resourceKey;
         this.status = status;
         this.errorMessage = errorMessage;
@@ -58,6 +61,14 @@ public class CreateResourceResponse implements Serializable {
 
     public void setRequestId(int requestId) {
         this.requestId = requestId;
+    }
+
+    public String getResourceName() {
+        return resourceName;
+    }
+
+    public void setResourceName(String resourceName) {
+        this.resourceName = resourceName;
     }
 
     public String getResourceKey() {

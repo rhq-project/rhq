@@ -566,13 +566,13 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
 
             switch (createReturnStatus) {
             case SUCCESS: {
-                response = new CreateResourceResponse(request.getRequestId(), "mockResourceKey",
+                response = new CreateResourceResponse(request.getRequestId(), "mockResourceName", "mockResourceKey",
                     CreateResourceStatus.SUCCESS, null, request.getResourceConfiguration());
                 break;
             }
 
             case FAILURE: {
-                response = new CreateResourceResponse(request.getRequestId(), null, CreateResourceStatus.FAILURE,
+                response = new CreateResourceResponse(request.getRequestId(), null, null, CreateResourceStatus.FAILURE,
                     "errorMessage", request.getResourceConfiguration());
                 break;
             }

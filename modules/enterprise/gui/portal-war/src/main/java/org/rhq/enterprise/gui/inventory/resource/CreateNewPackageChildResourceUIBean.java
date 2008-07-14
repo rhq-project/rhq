@@ -68,7 +68,6 @@ public class CreateNewPackageChildResourceUIBean {
     private ResourceType resourceType;
     private PackageType packageType;
 
-    private String resourceName;
     private String packageName;
     private String packageVersion;
 
@@ -98,11 +97,6 @@ public class CreateNewPackageChildResourceUIBean {
         FileItem fileItem = (FileItem) FacesContextUtility.getRequest().getAttribute("uploadForm:uploadFile");
 
         // Validate
-        if (resourceName == null || resourceName.trim().equals("")) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Resource name must be specified");
-            return null;
-        }
-
         if (packageName == null || packageName.trim().equals("")) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Package name must be specified");
             return null;
@@ -144,7 +138,9 @@ public class CreateNewPackageChildResourceUIBean {
 
         try {
             ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
-            resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), getResourceName(),
+
+            // RHQ-666 - Changed to not request the resource name from the user; simply pass null
+            resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
                 pluginConfiguration, packageName, packageVersion, selectedArchitectureId, deployTimeConfiguration,
                 packageContentStream);
         } catch (Exception e) {
@@ -265,14 +261,6 @@ public class CreateNewPackageChildResourceUIBean {
 
     public void setResourceType(ResourceType resourceType) {
         this.resourceType = resourceType;
-    }
-
-    public String getResourceName() {
-        return this.resourceName;
-    }
-
-    public void setResourceName(String resourceName) {
-        this.resourceName = resourceName;
     }
 
     public String getPackageName() {

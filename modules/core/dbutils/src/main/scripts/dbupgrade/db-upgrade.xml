@@ -54,6 +54,17 @@ DB Upgrade:
             columnType="VARCHAR2"
             precision="500" />
     </schemaSpec>
+
+    <schemaSpec version="2.3">
+        <!-- RHQ-666 - Don't require resource name at creation time -->
+        <schema-alterColumn
+            table="RHQ_CREATE_RES_HIST"
+            column="CREATED_RESOURCE_NAME"
+            columnType="VARCHAR2"
+            precision="500"
+           />
+    </schemaSpec>
+
 </dbupgrade>
 
 </target>

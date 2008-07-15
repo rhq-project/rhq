@@ -74,7 +74,6 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
-import org.rhq.enterprise.server.alert.AlertDefinitionCreationException;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -957,7 +956,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
         try {
             try {
-                // GH: I know this seems odd, but its the only incantation that I could get hibernate to swallow
+                // GH: I know this seems odd, but its the only incantation that I could get Hibernate to swallow
                 Query insertQuery = entityManager
                     .createQuery("INSERT into MeasurementSchedule(enabled, interval, definition, resource) \n"
                         + "SELECT md.defaultOn, md.defaultInterval, md, res   \n"
@@ -973,28 +972,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 int created = insertQuery.executeUpdate();
                 log.debug("Batch created [" + created + "] default measurement schedules for resource [" + resourceId
                     + "]");
-
-                /*
-                 * if the resource currently has no measurement schedules, that means it's a new resource that was just
-                 * recently moved to the committed state; the agent is requesting the schedules for the first time, which
-                 * will consequently create them in the database; this is why we got the measurementScheduleCount BEFORE
-                 * calling getSchedulesForResourceAndItsDescendants; this code path should only ever execute once per
-                 * resource committed into inventory
-                 */
-                // TODO: jshaughn - This fails for resource types without metric definitions                
-                if (created != 0) {
-                    Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-                    try {
-                        LookupUtil.getAlertTemplateManager().updateAlertDefinitionsForResource(overlord, resourceId);
-                    } catch (AlertDefinitionCreationException adce) {
-                        /* should never happen because AlertDefinitionCreationException is only ever
-                         * thrown if updateAlertDefinitionsForResource isn't called as the overlord
-                         *
-                         * but we'll log it anyway, just in case, so it isn't just swallowed
-                         */
-                        log.error(adce);
-                    }
-                }
             } catch (Exception e) {
                 log.debug("Could not create schedule for resourceId = " + resourceId, e);
             }

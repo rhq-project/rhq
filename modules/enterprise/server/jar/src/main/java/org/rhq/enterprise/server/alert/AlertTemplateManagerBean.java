@@ -45,7 +45,6 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Joseph Marques
@@ -134,7 +133,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                      * definition is actual many objects: the definition, the condition set, the notification
                      * set, the alert dampening rules 
                      */
-                    if (definitionCount++ % 5 == 0) {
+                    if (++definitionCount % 5 == 0) {
                         entityManager.flush();
                         entityManager.clear();
                     }
@@ -154,12 +153,29 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
 
     public void updateAlertDefinitionsForResource(Subject user, Integer resourceId)
         throws AlertDefinitionCreationException, InvalidAlertDefinitionException {
-        if (authorizationManager.isOverlord(user) == false) {
-            throw new AlertDefinitionCreationException("Updating the alert definitions for a resource "
-                + "is an implicit system operation " + "and must only be performed by the overlord");
+
+        updateAlertDefinitionsForResource(user, resourceId, false);
+    }
+
+    public void updateAlertDefinitionsForResource(Subject user, int resourceId, boolean descendants)
+        throws AlertDefinitionCreationException, InvalidAlertDefinitionException {
+        if (0 == resourceId) {
+            throw new AlertDefinitionCreationException("Unexpected resourceId = 0");
         }
 
-        Resource resource = LookupUtil.getResourceManager().getResourceById(user, resourceId);
+        if (authorizationManager.isOverlord(user) == false) {
+            throw new AlertDefinitionCreationException(
+                "Updating the alert definitions for a resource is an implicit system operation and must only be performed by the overlord");
+        }
+
+        Resource resource = entityManager.find(Resource.class, resourceId);
+
+        if (descendants) {
+            for (Resource child : resource.getChildResources()) {
+                updateAlertDefinitionsForResource(user, child.getId(), descendants);
+            }
+        }
+
         ResourceType resourceType = resource.getResourceType();
 
         List<AlertDefinition> templates = getAlertTemplates(user, resourceType.getId(), PageControl
@@ -276,7 +292,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                  * definition is actual many objects: the definition, the condition set, the notification
                  * set, the alert dampening rules 
                  */
-                if (definitionCount++ % 5 == 0) {
+                if (++definitionCount % 5 == 0) {
                     entityManager.flush();
                     entityManager.clear();
                 }
@@ -296,7 +312,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                      * definition is actual many objects: the definition, the condition set, the notification
                      * set, the alert dampening rules 
                      */
-                    if (definitionCount++ % 5 == 0) {
+                    if (++definitionCount % 5 == 0) {
                         entityManager.flush();
                         entityManager.clear();
                     }

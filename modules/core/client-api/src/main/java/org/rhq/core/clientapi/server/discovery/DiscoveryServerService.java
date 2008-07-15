@@ -40,6 +40,7 @@ public interface DiscoveryServerService {
     String CONCURRENCY_LIMIT_INVENTORY_REPORT = "rhq.server.concurrency-limit.inventory-report";
     String CONCURRENCY_LIMIT_AVAILABILITY_REPORT = "rhq.server.concurrency-limit.availability-report";
     String CONCURRENCY_LIMIT_INVENTORY_SYNC = "rhq.server.concurrency-limit.inventory-sync";
+    String CONCURRENCY_LIMIT_ALERT_TEMPLATE = "rhq.server.concurrency-limit.alert-template";
 
     /**
      * Merge the platform/servers/services contained in the specified inventory report into the server's inventory. Note
@@ -56,8 +57,7 @@ public interface DiscoveryServerService {
      */
     @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_REPORT)
     @Timeout(1000L * 60 * 30)
-    ResourceSyncInfo mergeInventoryReport(InventoryReport inventoryReport)
-        throws InvalidInventoryReportException;
+    ResourceSyncInfo mergeInventoryReport(InventoryReport inventoryReport) throws InvalidInventoryReportException;
 
     /**
      * Merges a new availability report from the agent into the server. This updates the availability statuses of known
@@ -131,4 +131,14 @@ public interface DiscoveryServerService {
      * @return true if the Resource was updated, or false if the Resource was not in inventory
      */
     boolean updateResourceVersion(int resourceId, String version);
+
+    /**
+     * Applies alert templates as necessary to the specified Resource and, as specified, its descendants. This
+     * should only be requested for any particular resource one time, typically as it's committed to inventory.
+     *   
+     * @param  resourceId a {@link Resource} id
+     * @param  descendants    true if the resource's descendants should be included, or false if not
+     */
+    @LimitedConcurrency(CONCURRENCY_LIMIT_ALERT_TEMPLATE)
+    void applyAlertTemplate(int resourceId, boolean descendants);
 }

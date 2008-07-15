@@ -41,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
-import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService.SynchronizationType;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
@@ -232,11 +231,11 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         // This is done is a separate transaction to stop failures in the agent from rolling back the transaction
         discoveryBoss.updateInventoryStatus(user, status, platforms, servers);
 
-        // we always want to synchronize the inventory with the agent, but we only want to synchronize
-        // the schedules if we are committing the resources to inventory
-        EnumSet<SynchronizationType> syncTypes = EnumSet.of(DiscoveryAgentService.SynchronizationType.STATUS);
-        if (status == InventoryStatus.COMMITTED) {
-            syncTypes.add(SynchronizationType.MEASUREMENT_SCHEDULES);
+        // on status change we synchronize everything with the agent with the exception of alert templates, which are synced
+        // only at commit time.
+        EnumSet<SynchronizationType> syncTypes = EnumSet.allOf(SynchronizationType.class);
+        if (status != InventoryStatus.COMMITTED) {
+            syncTypes.remove(SynchronizationType.ALERT_TEMPLATES);
         }
 
         // synchronize the platforms, then the servers
@@ -245,7 +244,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             try {
                 agentClient.getDiscoveryAgentService().synchronizeInventory(platform.getId(), syncTypes);
             } catch (Exception e) {
-                log.warn("Couldn't schedule metrics with agent for platform [" + platform.getName() + "]", e);
+                log.warn("Could not perform commit synchronization with agent for platform [" + platform.getName()
+                    + "]", e);
             }
         }
 
@@ -256,7 +256,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
                 try {
                     agentClient.getDiscoveryAgentService().synchronizeInventory(server.getId(), syncTypes);
                 } catch (Exception e) {
-                    log.warn("Couldn't schedule metrics with agent for server [" + server.getName() + "]", e);
+                    log.warn("Could not perform commit synchronization with agent for server [" + server.getName()
+                        + "]", e);
                 }
             }
         }
@@ -516,7 +517,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
     }
 
     private void updatePreviouslyInventoriedResource(Resource resource, Resource existingResource,
-                                                     Resource parentResource) throws InvalidInventoryReportException {
+        Resource parentResource) throws InvalidInventoryReportException {
         assert (parentResource == null) || (parentResource.getId() != 0);
 
         // The below block is for Resources that were created via the RHQ GUI, whose descriptions will be null.

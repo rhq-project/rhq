@@ -38,7 +38,7 @@ import org.rhq.core.domain.resource.ResourceType;
  */
 public interface DiscoveryAgentService {
     public static enum SynchronizationType {
-        STATUS, CONFIGURATION, MEASUREMENT_SCHEDULES
+        STATUS, CONFIGURATION, MEASUREMENT_SCHEDULES, ALERT_TEMPLATES
     }
 
     /**

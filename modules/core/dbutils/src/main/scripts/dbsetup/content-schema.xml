@@ -73,6 +73,7 @@
         <column name="CATEGORY" size="50" type="VARCHAR2" required="false"/>
         <column name="DISCOVERY_INTERVAL" type="INTEGER" required="false"/>
         <column name="IS_CREATION_DATA" type="BOOLEAN" required="true"/>
+        <column name="SUPPORTS_ARCHITECTURE" type="BOOLEAN" required="true"/>
 
         <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" required="true"/>
         <column name="DEPLOYMENT_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF" required="false"/>

@@ -65,6 +65,22 @@ DB Upgrade:
            />
     </schemaSpec>
 
+   <!-- RHQ-669 - Add metadata to package type to indicate architecture support -->
+   <schemaSpec version="2.4">
+        <schema-addColumn
+            table="RHQ_PACKAGE_TYPE"
+            column="SUPPORTS_ARCHITECTURE"
+            columnType="BOOLEAN"
+           />
+
+        <schema-alterColumn
+           table="RHQ_PACKAGE_TYPE"
+           column="SUPPORTS_ARCHITECTURE"
+           nullable="FALSE"
+           />
+    </schemaSpec>
+   
+
 </dbupgrade>
 
 </target>

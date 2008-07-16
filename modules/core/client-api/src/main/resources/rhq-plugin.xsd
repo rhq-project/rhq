@@ -403,6 +403,14 @@
                </xs:documentation>
             </xs:annotation>
          </xs:attribute>
+         <xs:attribute name="supportsArchitecture" type="xs:boolean" use="optional" default="false">
+            <xs:annotation>
+               <xs:documentation>
+                  Indicates packages of this type may be of different architectures. If this is set to false, when
+                  creating new packages of this type, the architecture will be defaulted to "noarch".
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
       </xs:complexType>
    </xs:element>
    <xs:simpleType name="contentDescriptorCategory">

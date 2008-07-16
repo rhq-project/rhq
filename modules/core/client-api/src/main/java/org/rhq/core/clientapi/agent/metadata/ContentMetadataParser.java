@@ -53,6 +53,7 @@ public class ContentMetadataParser {
         type.setName(descriptor.getName());
         type.setDescription(descriptor.getDescription());
         type.setCategory(category);
+        type.setSupportsArchitecture(descriptor.isSupportsArchitecture());
 
         String displayName = descriptor.getDisplayName();
 

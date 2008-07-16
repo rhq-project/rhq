@@ -102,6 +102,9 @@ public class PackageType implements Serializable {
     @Column(name = "IS_CREATION_DATA", nullable = false)
     private boolean isCreationData;
 
+    @Column(name = "SUPPORTS_ARCHITECTURE", nullable = false)
+    private boolean supportsArchitecture;
+
     @JoinColumn(name = "DEPLOYMENT_CONFIG_DEF_ID", referencedColumnName = "ID", nullable = true)
     @OneToOne(fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
     private ConfigurationDefinition deploymentConfigurationDefinition;
@@ -207,6 +210,19 @@ public class PackageType implements Serializable {
 
     public void setCreationData(boolean creationData) {
         isCreationData = creationData;
+    }
+
+    /**
+     * Indicates if this package type will be of any specific architecture. If this is <code>true</code>, each package
+     * may be of a different architecture. If this is <code>false</code>, all packages will be of architecture
+     * "noarch". 
+     */
+    public boolean isSupportsArchitecture() {
+        return supportsArchitecture;
+    }
+
+    public void setSupportsArchitecture(boolean supportsArchitecture) {
+        this.supportsArchitecture = supportsArchitecture;
     }
 
     /**

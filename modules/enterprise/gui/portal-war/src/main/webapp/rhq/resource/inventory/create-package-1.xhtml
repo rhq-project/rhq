@@ -36,19 +36,23 @@
 
          <table>
             <tr>
-               <td align="right"><b>Package Name*</b></td>
+               <td align="right"><b>Package Name</b></td>
                <td align="left"><h:inputText value="#{CreateNewPackageChildResourceUIBean.packageName}"/></td>
             </tr>
+
+            <c:if test="#{CreateNewPackageChildResourceUIBean.packageType.supportsArchitecture}">
+               <tr>
+                  <td align="right"><b>Package Architecture<h:outputText value="#{CreateNewPackageChildResourceUIBean.packageType.supportsArchitecture}"/> </b></td>
+                  <td align="left">
+                     <h:selectOneMenu value="#{CreateNewPackageChildResourceUIBean.selectedArchitectureId}">
+                        <f:selectItems value="#{CreateNewPackageChildResourceUIBean.architectures}" />
+                     </h:selectOneMenu>
+                  </td>
+               </tr>
+            </c:if>
+            
             <tr>
-               <td align="right"><b>Package Architecture*</b></td>
-               <td align="left">
-                  <h:selectOneMenu value="#{CreateNewPackageChildResourceUIBean.selectedArchitectureId}">
-                     <f:selectItems value="#{CreateNewPackageChildResourceUIBean.architectures}" />
-                  </h:selectOneMenu>
-               </td>
-            </tr>
-            <tr>
-               <td align="right"><b>File*</b></td>
+               <td align="right"><b>File</b></td>
                <td align="left"><onc:upload id="uploadFile"/></td>
             </tr>
          </table>

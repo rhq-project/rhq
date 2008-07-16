@@ -62,7 +62,7 @@ public class CreateNewPackageChildResourceUIBean {
 
     private static final String OUTCOME_SUCCESS_OR_FAILURE = "successOrFailure";
     private static final String OUTCOME_SUCCESS = "success";
-
+             
     // Attributes  --------------------------------------------
 
     private ResourceType resourceType;
@@ -124,6 +124,14 @@ public class CreateNewPackageChildResourceUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to retrieve the input stream. Cause: "
                 + errorMessages);
             return OUTCOME_SUCCESS_OR_FAILURE;
+        }
+
+        // If the type does not support architectures, load the no architecture entity and use that
+        if (!packageType.isSupportsArchitecture()) {
+            ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
+            Architecture noArchitecture = contentUIManager.getNoArchitecture();
+
+            selectedArchitectureId = noArchitecture.getId();
         }
 
         // Collect data for create call

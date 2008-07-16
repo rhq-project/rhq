@@ -304,6 +304,14 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         return architectures;
     }
 
+    public Architecture getNoArchitecture() {
+        Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_BY_NAME);
+        q.setParameter("name", "noarch");
+        Architecture architecture = (Architecture)q.getSingleResult();
+
+        return architecture;
+    }
+
     public PackageVersion getPackageVersion(int packageVersionId) {
         Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_ID);
         q.setParameter("id", packageVersionId);

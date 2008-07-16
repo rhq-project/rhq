@@ -194,6 +194,13 @@ public interface ContentUIManagerLocal {
     List<Architecture> getArchitectures();
 
     /**
+     * Returns the entity associated with no architecture.
+     *
+     * @return no architecture entity       
+     */
+    Architecture getNoArchitecture();
+
+    /**
      * Retrieves a package version by its ID. One and only one package version must exist for the ID; an error
      * will be thrown if exactly one package version is not found.
      *

@@ -67,7 +67,8 @@ public class SystemInfoFactory {
             nativeLibraryLoadable = true;
         } catch (Throwable t) {
             nativeLibraryLoadable = false; // can't load the native libs if we don't even have the JNI classes
-            LOG.warn("Native library API not accessible on this platform", t);
+            LOG.warn("System info API not accessible on this platform (native shared library not found in java.library.path).");
+            LOG.trace("Stack trace...", t);
         }
 
         disabled = !nativeLibraryLoadable; // automatically disable native system info iff the native library is not loadable

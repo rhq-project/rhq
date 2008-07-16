@@ -35,11 +35,6 @@
          create the package."/></p>
 
          <table>
-            <tr>
-               <td align="right"><b>Package Name</b></td>
-               <td align="left"><h:inputText value="#{CreateNewPackageChildResourceUIBean.packageName}"/></td>
-            </tr>
-
             <c:if test="#{CreateNewPackageChildResourceUIBean.packageType.supportsArchitecture}">
                <tr>
                   <td align="right"><b>Package Architecture<h:outputText value="#{CreateNewPackageChildResourceUIBean.packageType.supportsArchitecture}"/> </b></td>

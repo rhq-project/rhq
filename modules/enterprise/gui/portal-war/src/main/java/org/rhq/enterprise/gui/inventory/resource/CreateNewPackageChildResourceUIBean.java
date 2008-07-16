@@ -25,6 +25,8 @@ import java.util.List;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
 import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -68,7 +70,6 @@ public class CreateNewPackageChildResourceUIBean {
     private ResourceType resourceType;
     private PackageType packageType;
 
-    private String packageName;
     private String packageVersion;
 
     private int selectedArchitectureId;
@@ -76,6 +77,8 @@ public class CreateNewPackageChildResourceUIBean {
     private CreateResourceHistory retryCreateItem;
     private ConfigurationDefinition configurationDefinition;
     private Configuration configuration;
+
+    private final Log log = LogFactory.getLog(this.getClass());
 
     public CreateNewPackageChildResourceUIBean() {
         this.resourceType = lookupResourceType();
@@ -97,11 +100,6 @@ public class CreateNewPackageChildResourceUIBean {
         FileItem fileItem = (FileItem) FacesContextUtility.getRequest().getAttribute("uploadForm:uploadFile");
 
         // Validate
-        if (packageName == null || packageName.trim().equals("")) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Package name must be specified");
-            return null;
-        }
-
         if ((fileItem.getName() == null) || fileItem.getName().equals("")) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package file must be specified");
             return null;
@@ -138,6 +136,7 @@ public class CreateNewPackageChildResourceUIBean {
         Resource parentResource = EnterpriseFacesContextUtility.getResource();
         Configuration deployTimeConfiguration = getConfiguration();
         ConfigurationMaskingUtility.unmaskConfiguration(deployTimeConfiguration, getConfigurationDefinition());
+        String packageName = fileItem.getName();
 
         // For JON 2.0 RC3, no longer request the package version on a package-backed create, simply
         // use the timestamp. The timestamp will also be used when creating new packages of this type, so
@@ -269,14 +268,6 @@ public class CreateNewPackageChildResourceUIBean {
 
     public void setResourceType(ResourceType resourceType) {
         this.resourceType = resourceType;
-    }
-
-    public String getPackageName() {
-        return packageName;
-    }
-
-    public void setPackageName(String packageName) {
-        this.packageName = packageName;
     }
 
     public String getPackageVersion() {

@@ -247,7 +247,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             return newResources;
         } catch (Throwable e) {
             // TODO GH: Add server/parent - up/down semantics so this won't happen just because a server is not up
-            log.warn("Failed to execute resource discovery", e);
+            log.warn("Failed to execute runtime discovery for Resources of type " + resourceType, e);
         }
 
         return Collections.EMPTY_SET;

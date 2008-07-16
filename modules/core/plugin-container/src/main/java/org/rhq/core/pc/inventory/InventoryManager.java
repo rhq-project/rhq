@@ -178,7 +178,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             executePlatformScan();
 
-            // Never run more than one discovery at a time?
+            // Never run more than one discovery at a time.
             inventoryThreadPoolExecutor = new ScheduledThreadPoolExecutor(1, new LoggingThreadFactory(
                 INVENTORY_THREAD_POOL_NAME, true));
 
@@ -196,7 +196,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     .getServiceDiscoveryInitialDelay(), configuration.getServiceDiscoveryPeriod(), TimeUnit.SECONDS);
             }
 
-            // do not run more than one availability check at a time
+            // Never run more than one availability check at a time.
             availabilityThreadPoolExecutor = new ScheduledThreadPoolExecutor(AVAIL_THREAD_POOL_CORE_POOL_SIZE,
                 new LoggingThreadFactory(AVAIL_THREAD_POOL_NAME, true));
             availabilityExecutor = new AvailabilityExecutor(this);
@@ -254,13 +254,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
     void executePlatformScan() {
         log.debug("Executing platform scan...");
         Resource discoveredPlatform = discoverPlatform();
-        if (this.platform == null) {
-            this.platform = discoveredPlatform;
-            log.info("Detected new platform: " + this.platform);
-            initResourceContainer(this.platform);
-        } else {
-            // If the platform's already in inventory, make sure its version is up-to-date.
-            updateResourceVersion(this.platform, discoveredPlatform.getVersion());
+        try {
+            mergeResourceFromDiscovery(discoveredPlatform, null);
+        }
+        catch (PluginContainerException e) {
+            throw new IllegalStateException(e);
         }
     }
 
@@ -673,6 +671,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    @Nullable
     public ResourceComponent<?> getResourceComponent(Resource resource) {
         ResourceContainer resourceContainer = this.resourceContainers.get(resource.getUuid());
 
@@ -782,40 +781,48 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     public Resource mergeResourceFromDiscovery(Resource resource, Resource parent) throws PluginContainerException {
+        // If the Resource is already in inventory, make sure its version is up-to-date, then simply return the
+        // existing Resource.
         Resource existingResource = findMatchingChildResource(resource, parent);
         if (existingResource != null) {
             updateResourceVersion(existingResource, resource.getVersion());
-            resource = existingResource;
-        } else {
-            log.debug("Detected new Resource [" + resource + "]");
+            return existingResource;
+        }
+
+        // Auto-generate id and auto-commit if embedded within JBossAS.
+        if (!this.configuration.isInsideAgent()) {
+            resource.setId(this.temporaryKeyIndex.decrementAndGet());
+            resource.setInventoryStatus(InventoryStatus.COMMITTED);
+        }
+
+        // Add the Resource to the Resource hierarchy.
+        if (parent != null) {
+            log.debug("Detected new Resource [" + resource + "] - adding to local inventory...");
             parent.addChildResource(resource);
+        } else {
+            log.info("Detected new platform [" + resource + "] - adding to local inventory...");
+            this.platform = resource;
         }
 
-        if ((!this.configuration.isInsideAgent()) && (resource.getId() == 0)) {
-            resource.setId(temporaryKeyIndex.decrementAndGet());
+        // Initialize a container for the Resource.
+        ResourceContainer resourceContainer = getResourceContainer(resource);
+        if (resourceContainer != null) {
+            // This should never happen...
+            log.warn("Resource container already existed for Resource that was supposed to be NEW: " + resource);
+        } else {
+            resourceContainer = initResourceContainer(resource);
         }
 
-        if (getResourceComponent(resource) == null) {
-            log.debug("Adding resource " + resource + " to local inventory...");
-            ResourceContainer resourceContainer = initResourceContainer(resource);
-
-            // The chunk below used to automatically set to committed resources that:
-            // - Were not children of the platform itself
-            // - The resource's parent is committed
-            // This was disabled to prevent activation before the resource IDs were properly synced with the plugin
-            // container. It is still needed for the embedded console.
-            // The following conditions, used in the if statement, provided this ability:
-            // || ((!parent.equals(this.platform)) && (parent.getInventoryStatus() == InventoryStatus.COMMITTED))) {
-            // jdobies, Apr 8, 2008 - RHQ-255
-
-            // Always commit everything for the embedded console
-            if (!this.configuration.isInsideAgent()) {
-                resource.setInventoryStatus(InventoryStatus.COMMITTED);
-                try {
-                    activateResource(resource, resourceContainer, true); // just start 'em up as we find 'em for the embedded side
-                } catch (InvalidPluginConfigurationException e) {
-                    sendInvalidPluginConfigurationResourceError(resource, e);
-                }
+        // Auto-activate if embedded within JBossAS (if within Agent, we need to wait until the Resource has been
+        // imported into the Server's inventory before activating it).
+        if (!this.configuration.isInsideAgent()) {
+            try {
+                activateResource(resource, resourceContainer, true); // just start 'em up as we find 'em for the embedded side
+            } catch (InvalidPluginConfigurationException e) {
+                log.error("Failed to activate " + resource + ": " + e.getLocalizedMessage());
+                // TODO: I don't think it makes any sense to call the below method w/in the embedded console.
+                // (ips, 07/16/08)
+                sendInvalidPluginConfigurationResourceError(resource, e);
             }
         }
 
@@ -827,8 +834,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (resourceContainer == null) {
             resourceContainer = new ResourceContainer(resource);
             if (!this.configuration.isInsideAgent()) {
-                // Auto-commit and sync if the PC is running within the embedded JBossAS console.
-                resource.setInventoryStatus(InventoryStatus.COMMITTED);
+                // Auto-sync if the PC is running within the embedded JBossAS console.
                 resourceContainer.setSynchronizationState(ResourceContainer.SynchronizationState.SYNCHRONIZED);
             }
             this.resourceContainers.put(resource.getUuid(), resourceContainer);
@@ -985,8 +991,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private Resource findMatchingChildResource(Resource resource, Resource parent) {
         if (parent == null) {
-            // resource must be a platform - see if it matches our local platform
-            if (matches(resource, this.platform)) {
+            // Resource must be a platform - see if it matches our local platform
+            if (this.platform != null && matches(resource, this.platform)) {
                 return this.platform;
             }
         } else {
@@ -999,11 +1005,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return null;
     }
 
-    private static boolean matches(Resource resource1, Resource resource2) {
-        return ((resource2.getId() != 0) && (resource2.getId() == resource1.getId()))
-            || (resource2.getUuid().equals(resource1.getUuid()))
-            || (resource2.getResourceType().equals(resource1.getResourceType()) && resource2.getResourceKey().equals(
-                resource1.getResourceKey()));
+    private static boolean matches(Resource newResource, Resource existingResource) {
+        return ((existingResource.getId() != 0) && (existingResource.getId() == newResource.getId()))
+            || (existingResource.getUuid().equals(newResource.getUuid()))
+            || (existingResource.getResourceType().equals(newResource.getResourceType()) && existingResource.getResourceKey().equals(
+                newResource.getResourceKey()));
     }
 
     /**
@@ -1101,7 +1107,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 try {
                     ResourceComponent<?> component = container.createResourceComponentProxy(ResourceComponent.class,
-                        FacetLockType.READ, COMPONENT_STOP_TIMEOUT, true, true);
+                        FacetLockType.WRITE, COMPONENT_STOP_TIMEOUT, true, true);
                     component.stop();
                     log.debug("Successfully deactivated resource with id [" + resource.getId() + "].");
                 } catch (Throwable t) {

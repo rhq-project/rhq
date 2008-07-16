@@ -81,7 +81,12 @@ public class EventManager implements ContainerService {
         this.pollerThreadPool.setMaximumPoolSize(POLLER_THREAD_POOL_MAX_SIZE);
         this.pollerThreads = new HashMap<PollerKey, Runnable>();
 
-        this.sigar = new Sigar();
+        try {
+            this.sigar = new Sigar();
+        }
+        catch (NoClassDefFoundError e) {
+            log.error("Failed to find Sigar class: " + e.getLocalizedMessage());
+        }
     }
 
     public void shutdown() {
@@ -91,7 +96,9 @@ public class EventManager implements ContainerService {
         if (this.pollerThreadPool != null) {
             this.pollerThreadPool.shutdownNow();
         }
-        this.sigar.close();
+        if (this.sigar != null) {
+            this.sigar.close();
+        }
     }
 
     public void setConfiguration(PluginContainerConfiguration config) {

@@ -81,12 +81,7 @@ public class EventManager implements ContainerService {
         this.pollerThreadPool.setMaximumPoolSize(POLLER_THREAD_POOL_MAX_SIZE);
         this.pollerThreads = new HashMap<PollerKey, Runnable>();
 
-        try {
-            this.sigar = new Sigar();
-        }
-        catch (NoClassDefFoundError e) {
-            log.error("Failed to find Sigar class: " + e.getLocalizedMessage());
-        }
+        this.sigar = new Sigar();
     }
 
     public void shutdown() {
@@ -219,7 +214,7 @@ public class EventManager implements ContainerService {
 
         @Override
         public String toString() {
-            return super.toString(); // TODO: Implement this method.
+            return "PollerKey[resourceId=" + this.resourceId + ", eventType=" + this.eventType + "]";
         }
     }
 }

@@ -65,15 +65,6 @@ public interface DiscoveryAgentService {
     void synchronizeInventory(int resourceId, EnumSet<SynchronizationType> synchronizationTypes);
 
     /**
-     * Tells the PC to sync up its inventory using the provided sync info for a tree of Resources from the Server's
-     * inventory.
-     *
-     * @param syncInfo sync info for a tree of Resources from the Server's inventory
-     */
-    @Asynchronous(guaranteedDelivery = true)
-    void synchronizeInventory(ResourceSyncInfo syncInfo);
-
-    /**
      * Access to the current inventory managed by the plugin container.
      *
      * @return the platform that is managed by this plugin container

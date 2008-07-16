@@ -228,9 +228,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
     @Nullable
     public ResourceContainer getResourceContainer(Integer resourceId) {
         if ((resourceId == null) || (resourceId == 0)) {
-            // i've already found one place where passing in 0 was very bad - I want to be very noisy in the log
+            // I've already found one place where passing in 0 was very bad - I want to be very noisy in the log
             // when this happens but not throw an exception, for fear I might break something.
-            // I'll just return null instead; hopefully, callers are checking for null appropriately
+            // I'll just return null instead; hopefully, callers are checking for null appropriately.
             log.warn("Cannot get a resource container for an invalid resource ID=" + resourceId);
             if (log.isDebugEnabled()) {
                 //noinspection ThrowableInstanceNeverThrown
@@ -607,11 +607,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return false;
         }
 
-        synchronizeInventory(syncInfo);
+        synchronizeInventory(report, syncInfo);
+
+
         return true;
     }
 
-    public void synchronizeInventory(ResourceSyncInfo syncInfo) {
+    private void synchronizeInventory(InventoryReport report, ResourceSyncInfo syncInfo) {
         log.info("Syncing local inventory with Server inventory...");
         long startTime = System.currentTimeMillis();
         Set<Resource> syncedResources = new LinkedHashSet();
@@ -622,10 +624,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
         mergeUnknownResources(unknownResourceIds);
         mergeModifiedResources(modifiedResourceIds);
         purgeObsoleteResources(allUuids);
+        syncSchedulesAndTemplatesForAutoImportedResources(report);
         log.debug(String.format("DONE syncing local inventory (%d)ms.", (System.currentTimeMillis() - startTime)));
         // If we synced any Resources, one or more Resource components were probably started,
-        // so run an avail scan to report on their availabilities immediately. Also kick off
-        // a service scan to scan those Resources for new child Resources.
+        // so run an avail check to report on their availabilities immediately. Also kick off
+        // a service scan to scan those Resources for new child Resources. Kick both tasks off
+        // asynchronously.
         if (!syncedResources.isEmpty() || !unknownResourceIds.isEmpty() || !modifiedResourceIds.isEmpty()) {
             performAvailabilityChecks(true);
             this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor, 5,
@@ -1271,9 +1275,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private void syncSchedulesRecursively(Resource resource) {
         if (resource.getInventoryStatus() == InventoryStatus.COMMITTED) {
-            if (ResourceCategory.PLATFORM == resource.getResourceType().getCategory()) {
-                // Get and schedule the latest measurement schedules rooted at the given id
-                // This should include disabled schedules to make sure that previously enabled schedules are shut off
+            if (resource.getResourceType().getCategory() == ResourceCategory.PLATFORM) {
+                // Get and schedule the latest measurement schedules rooted at the given id.
+                // This should include disabled schedules to make sure that previously enabled schedules are shut off.
                 Set<ResourceMeasurementScheduleRequest> scheduleRequests = configuration.getServerServices()
                     .getMeasurementServerService().getLatestSchedulesForResourceId(resource.getId(), false);
                 installSchedules(scheduleRequests);
@@ -1703,6 +1707,18 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.debug("Purged " + removedResources + " obsolete Resources.");
         } finally {
             this.inventoryLock.writeLock().unlock();
+        }
+    }
+
+    private void syncSchedulesAndTemplatesForAutoImportedResources(InventoryReport report) {
+        if (report.isRuntimeReport()) {
+            log.debug("Syncing metric schedules and alert templates for auto-imported Resources: " + report.getAddedRoots() + "...");
+            EnumSet<SynchronizationType> syncTypes = EnumSet.of(
+                    SynchronizationType.MEASUREMENT_SCHEDULES,
+                    SynchronizationType.ALERT_TEMPLATES);
+            for (Resource addedRoot : report.getAddedRoots()) {
+                synchronizeInventory(addedRoot.getId(), syncTypes);
+            }
         }
     }
 

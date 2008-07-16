@@ -5,7 +5,7 @@
 ##                                                                          ##
 ### ====================================================================== ###
 
-### $Id: run.sh 62338 2007-04-13 17:29:44Z dimitris@jboss.org $ ###
+### $Id: run.sh 75849 2008-07-15 18:43:17Z dimitris@jboss.org $ ###
 
 DIRNAME=`dirname $0`
 PROGNAME=`basename $0`
@@ -175,17 +175,8 @@ if [ -d "$JBOSS_NATIVE_DIR" ]; then
     fi
 fi
 
-#JPDA options. Uncomment and modify as appropriate to enable remote debugging .
-#JAVA_OPTS="-classic -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=n $JAVA_OPTS"
-
-# Setup JBoss sepecific properties
+# Setup JBoss specific properties
 JAVA_OPTS="-Dprogram.name=$PROGNAME $JAVA_OPTS"
-
-# Set path to JDK logging config file.
-JAVA_OPTS="$JAVA_OPTS -Djava.util.logging.config.file=${JBOSS_HOME}/server/default/conf/logging.properties"
-
-# JPDA options. Uncomment and modify as appropriate to enable remote debugging.
-#JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=n $JAVA_OPTS"
 
 # Setup the java endorsed dirs
 JBOSS_ENDORSED_DIRS="$JBOSS_HOME/lib/endorsed"
@@ -229,33 +220,28 @@ while true; do
          -classpath "$JBOSS_CLASSPATH" \
          org.jboss.Main "$@" &
       JBOSS_PID=$!
-      echo $JBOSS_PID > $JBOSS_HOME/.jboss_pid 
-      # Trap common signals and relay them to the background JBossAS process
+      # Trap common signals and relay them to the jboss process
       trap "kill -HUP  $JBOSS_PID" HUP
       trap "kill -TERM $JBOSS_PID" INT
       trap "kill -QUIT $JBOSS_PID" QUIT
       trap "kill -PIPE $JBOSS_PID" PIPE
       trap "kill -TERM $JBOSS_PID" TERM
-      # Wait until the background JBossAS process exits
-       WAIT_STATUS=0
-       while [ "$WAIT_STATUS" -ne 127 ]; do
-          JBOSS_STATUS=$WAIT_STATUS
-          wait $JBOSS_PID 2>/dev/null
-          WAIT_STATUS=$?
-          
-          if [ "$linux" = "true" ]; then
-	          # for solaris
-	          if [ "$WAIT_STATUS" -eq 0 ]; then
-	             WAIT_STATUS=127
-	          fi
-	          
-	          # for ubuntu
-	          if [ "$WAIT_STATUS" -eq 143 ]; then
-	             WAIT_STATUS=127
-	          fi
-          fi
-       done
-
+      # Wait until the background process exits
+      WAIT_STATUS=128
+      while [ "$WAIT_STATUS" -ge 128 ]; do
+         wait $JBOSS_PID 2>/dev/null
+         WAIT_STATUS=$?
+         if [ "${WAIT_STATUS}" -gt 128 ]; then
+            SIGNAL=`expr ${WAIT_STATUS} - 128`
+            SIGNAL_NAME=`kill -l ${SIGNAL}`
+            echo "*** JBossAS process (${JBOSS_PID}) received ${SIGNAL_NAME} signal ***" >&2
+         fi          
+      done
+      if [ "${WAIT_STATUS}" -lt 127 ]; then
+         JBOSS_STATUS=$WAIT_STATUS
+      else
+         JBOSS_STATUS=0
+      fi      
    fi
    # If restart doesn't work, check you are running JBossAS 4.0.4+
    #    http://jira.jboss.com/jira/browse/JBAS-2483

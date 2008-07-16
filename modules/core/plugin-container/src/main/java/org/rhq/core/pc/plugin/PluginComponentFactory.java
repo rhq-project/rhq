@@ -25,6 +25,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
@@ -56,6 +57,11 @@ public class PluginComponentFactory implements ContainerService {
      * @throws PluginContainerException if failed to create the discovery component instance
      */
     public ResourceDiscoveryComponent getDiscoveryComponent(ResourceType resourceType) throws PluginContainerException {
+        // This is an exception for PC unit tests which use a fake platform type.
+        if (resourceType.equals(PluginMetadataManager.TEST_PLATFORM_TYPE)) {
+            return null;
+        }
+
         ResourceDiscoveryComponent discoveryComponent = discoveryComponentsCache.get(resourceType);
 
         if (discoveryComponent == null) {

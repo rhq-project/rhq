@@ -38,7 +38,6 @@ import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.alert.AlertDefinitionCreationException;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
-import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -172,7 +171,6 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
 
     public void applyAlertTemplate(int resourceId, boolean descendants) {
         AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
-        AgentManagerLocal agentManager = LookupUtil.getAgentManager();
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
         long start = System.currentTimeMillis();

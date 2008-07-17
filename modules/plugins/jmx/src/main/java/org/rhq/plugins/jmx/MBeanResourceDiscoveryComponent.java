@@ -22,10 +22,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
@@ -95,64 +97,67 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
      */
     public Set<DiscoveredResourceDetails> performDiscovery(Configuration pluginConfiguration,
         JMXComponent parentResourceComponent, ResourceType resourceType) {
-        String objectNameQueryTemplate = pluginConfiguration.getSimple(PROPERTY_OBJECT_NAME).getStringValue();
 
-        log.debug("Discovering MBean resources with object name query template: " + objectNameQueryTemplate);
+        String objectNameQueryTemplateOrig = pluginConfiguration.getSimple(PROPERTY_OBJECT_NAME).getStringValue();
 
-        // Get the query template, replacing the parent key variables with the values from the parent configuration
-        ObjectNameQueryUtility queryUtility =
-                new ObjectNameQueryUtility(
-                        objectNameQueryTemplate,
-                        (this.discoveryContext != null)? this.discoveryContext.getParentResourceContext().getPluginConfiguration() : null);
+        log.debug("Discovering MBean resources with object name query template: " + objectNameQueryTemplateOrig);
 
         EmsConnection connection = parentResourceComponent.getEmsConnection();
 
-        List<EmsBean> beans = connection.queryBeans(queryUtility.getTranslatedQuery());
         Set<DiscoveredResourceDetails> services = new HashSet<DiscoveredResourceDetails>();
+        String templates[] = objectNameQueryTemplateOrig.split("\\|");
+        for (String objectNameQueryTemplate : templates) {
+            // Get the query template, replacing the parent key variables with the values from the parent configuration
+            ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(objectNameQueryTemplate,
+                (this.discoveryContext != null) ? this.discoveryContext.getParentResourceContext()
+                    .getPluginConfiguration() : null);
 
-        for (EmsBean bean : beans) {
-            if (queryUtility.setMatchedKeyValues(bean.getBeanName().getKeyProperties())) {
-                // Only use beans that have all the properties we've made variables of
+            List<EmsBean> beans = connection.queryBeans(queryUtility.getTranslatedQuery());
 
-                // Don't match beans that have unexpected properties
-                if (queryUtility.isContainsExtraKeyProperties(bean.getBeanName().getKeyProperties().keySet())) {
-                    continue;
+            for (EmsBean bean : beans) {
+                if (queryUtility.setMatchedKeyValues(bean.getBeanName().getKeyProperties())) {
+                    // Only use beans that have all the properties we've made variables of
+
+                    // Don't match beans that have unexpected properties
+                    if (queryUtility.isContainsExtraKeyProperties(bean.getBeanName().getKeyProperties().keySet())) {
+                        continue;
+                    }
+
+                    String resourceKey = bean.getBeanName().getCanonicalName(); // The detected object name
+
+                    String nameTemplate = (pluginConfiguration.getSimple(PROPERTY_NAME_TEMPLATE) != null) ? pluginConfiguration
+                        .getSimple(PROPERTY_NAME_TEMPLATE).getStringValue()
+                        : null;
+
+                    String descriptionTemplate = (pluginConfiguration.getSimple(PROPERTY_DESCRIPTION_TEMPLATE) != null) ? pluginConfiguration
+                        .getSimple(PROPERTY_DESCRIPTION_TEMPLATE).getStringValue()
+                        : null;
+
+                    String name = resourceKey;
+                    if (nameTemplate != null) {
+                        name = queryUtility.formatMessage(nameTemplate);
+                    }
+
+                    String description = null;
+                    if (descriptionTemplate != null) {
+                        description = queryUtility.formatMessage(descriptionTemplate);
+                    }
+
+                    DiscoveredResourceDetails service = new DiscoveredResourceDetails(resourceType, resourceKey, name,
+                        "", description, null, null);
+                    Configuration config = service.getPluginConfiguration();
+                    config.put(new PropertySimple(PROPERTY_OBJECT_NAME, bean.getBeanName().toString()));
+
+                    Map<String, String> mappedVariableValues = queryUtility.getVariableValues();
+                    for (String key : mappedVariableValues.keySet()) {
+                        config.put(new PropertySimple(key, mappedVariableValues.get(key)));
+                    }
+
+                    services.add(service);
+
+                    // Clear out the variables for the next bean detected
+                    queryUtility.resetVariables();
                 }
-
-                String resourceKey = bean.getBeanName().getCanonicalName(); // The detected object name
-
-                String nameTemplate = (pluginConfiguration.getSimple(PROPERTY_NAME_TEMPLATE) != null) ? pluginConfiguration
-                    .getSimple(PROPERTY_NAME_TEMPLATE).getStringValue()
-                    : null;
-
-                String descriptionTemplate = (pluginConfiguration.getSimple(PROPERTY_DESCRIPTION_TEMPLATE) != null) ? pluginConfiguration
-                    .getSimple(PROPERTY_DESCRIPTION_TEMPLATE).getStringValue()
-                    : null;
-
-                String name = resourceKey;
-                if (nameTemplate != null) {
-                    name = queryUtility.formatMessage(nameTemplate);
-                }
-
-                String description = null;
-                if (descriptionTemplate != null) {
-                    description = queryUtility.formatMessage(descriptionTemplate);
-                }
-
-                DiscoveredResourceDetails service = new DiscoveredResourceDetails(resourceType, resourceKey, name, "",
-                    description, null, null);
-                Configuration config = service.getPluginConfiguration();
-                config.put(new PropertySimple(PROPERTY_OBJECT_NAME, bean.getBeanName().toString()));
-
-                Map<String, String> mappedVariableValues = queryUtility.getVariableValues();
-                for (String key : mappedVariableValues.keySet()) {
-                    config.put(new PropertySimple(key, mappedVariableValues.get(key)));
-                }
-
-                services.add(service);
-
-                // Clear out the variables for the next bean detected
-                queryUtility.resetVariables();
             }
         }
 

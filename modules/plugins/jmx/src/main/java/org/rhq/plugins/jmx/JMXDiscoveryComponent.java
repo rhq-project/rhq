@@ -20,6 +20,7 @@ package org.rhq.plugins.jmx;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,6 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.domain.configuration.Configuration;
 
 /**
  * This product will discover JDK 5 agents running locally that have active JSR-160 connectors defined via system
@@ -43,19 +45,19 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
 
     public static final String CONNECTOR_ADDRESS_CONFIG_PROPERTY = "connectorAddress";
 
+    public static final String INSTALL_URI = "installURI";
+
     public static final String CONNECTION_TYPE = "type";
 
     public static final String PARENT_TYPE = "PARENT";
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
 
+        Set<DiscoveredResourceDetails> found = new HashSet<DiscoveredResourceDetails>();
+
         // TODO add back this standalone JVM discovery when it becomes useful.
         // Works only on JDK6 and maybe some 64 bit JDK5 See JBNADM-3332.
-        // For now just return empty set
-        return new HashSet<DiscoveredResourceDetails>();
-
-        //        
-        //        Set<DiscoveredResourceDetails> found = new HashSet<DiscoveredResourceDetails>();
+        //
         //        Map<Integer, LocalVirtualMachine> vms;
         //
         //        try {
@@ -97,23 +99,22 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
         //             *
         //             *found.add(localVM);*/
         //      }
-        //
-        //
-        //        if (context.getPluginConfigurations() != null) {
-        //            for (Configuration c : (List<Configuration>) context.getPluginConfigurations())
-        //            {
-        //                String resourceKey = c.getSimpleValue(CONNECTOR_ADDRESS_CONFIG_PROPERTY,null);
-        //                String connectionType = c.getSimpleValue(CONNECTION_TYPE, null);
-        //
-        //                DiscoveredResourceDetails s = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
-        //                    "Java VM", "?", connectionType + " [" + resourceKey + "]", null, null);
-        //
-        //                s.setPluginConfiguration(c);
-        //
-        //                found.add(s);
-        //            }
-        //        }
-        //
-        //        return found;
+
+
+        if (context.getPluginConfigurations() != null) {
+            for (Configuration c : (List<Configuration>) context.getPluginConfigurations()) {
+                String resourceKey = c.getSimpleValue(CONNECTOR_ADDRESS_CONFIG_PROPERTY, null);
+                String connectionType = c.getSimpleValue(CONNECTION_TYPE, null);
+
+                DiscoveredResourceDetails s = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
+                        "Java VM", "?", connectionType + " [" + resourceKey + "]", null, null);
+
+                s.setPluginConfiguration(c);
+
+                found.add(s);
+            }
+        }
+
+        return found;
     }
 }

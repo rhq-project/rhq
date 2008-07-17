@@ -108,13 +108,27 @@ public class JMXServerComponent implements JMXComponent {
                 // any remote connections
                 ConnectionSettings settings = new ConnectionSettings();
 
-                settings.setConnectionType((ConnectionTypeDescriptor) Class.forName(connectionTypeDescriptorClass)
-                    .newInstance());
-                settings.setServerUrl(configuration.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY)
-                    .getStringValue());
-                settings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR,
-                    context.getTemporaryDirectory().getAbsolutePath());
+                settings.initializeConnectionType(
+                        (ConnectionTypeDescriptor) Class.forName(connectionTypeDescriptorClass).newInstance());
+
+
+                settings.setConnectionType(
+                        (ConnectionTypeDescriptor) Class.forName(connectionTypeDescriptorClass).newInstance());
+                settings.setServerUrl(
+                        configuration.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY).getStringValue());
+                settings.getControlProperties().setProperty(
+                        ConnectionFactory.JAR_TEMP_DIR,
+                        context.getTemporaryDirectory().getAbsolutePath());
+
+                String installPath = configuration.getSimpleValue(JMXDiscoveryComponent.INSTALL_URI,null);
+                if (installPath != null) {
+                    settings.setLibraryURI(
+                        configuration.getSimple(JMXDiscoveryComponent.INSTALL_URI).getStringValue());
+                }
+
                 ConnectionFactory cf = new ConnectionFactory();
+                cf.discoverServerClasses(settings);
+
                 this.connectionProvider = cf.getConnectionProvider(settings);
                 this.connection = connectionProvider.connect();
             }

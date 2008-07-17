@@ -39,6 +39,7 @@
          </c:simple-property>
 
          <c:simple-property name="connectorAddress" required="true" type="string" description="The connection url in the form of a JMXServiceURL"/>
+          <c:simple-property name="installURI" required="false" type="string" description="The installation path for the selected server type which will be used to find client libraries (if appropriate)."/>
          <c:simple-property name="principal" required="false" description="The login principal/username"/>
          <c:simple-property name="credentials" required="false" description="The login credentials/password"/>
 
@@ -46,6 +47,12 @@
             <c:simple-property name="type" default="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"/>
             <c:simple-property name="connectorAddress" default="service:jmx:rmi:///jndi/rmi://localhost:8999/jmxrmi"/>
          </c:template>
+
+          <c:template name="JBoss AS" description="Connect to JBoss Application Server">
+             <c:simple-property name="type" default="org.mc4j.ems.connection.support.metadata.JBossConnectionTypeDescriptor"/>
+             <c:simple-property name="connectorAddress" default="jnp://127.0.0.1:1099"/>
+          </c:template>         
+
 
          <c:template name="Weblogic 9" description="Connect to the standard WebLogic 9 MBean Server">
             <c:simple-property name="type" default="org.mc4j.ems.connection.support.metadata.Weblogic9ConnectionTypeDescriptor"/>

@@ -68,10 +68,17 @@ public class GroupDefinitionExpressionBuilderManagerBean implements GroupDefinit
     }
 
     private List<String> getPropertyNames(ConfigurationDefinition definition) {
+        // the facet that this ConfigurationDefinition came from was null
+        if (definition == null) {
+            return Collections.emptyList();
+        }
+
+        // the facet that this ConfigurationDefinition came from was empty
         Map<String, PropertyDefinition> definitions = definition.getPropertyDefinitions();
         if (definitions == null) {
             return Collections.emptyList();
         }
+
         Set<String> uniqueNames = definitions.keySet();
         List<String> propertyNames = new ArrayList<String>(uniqueNames);
         Collections.sort(propertyNames);

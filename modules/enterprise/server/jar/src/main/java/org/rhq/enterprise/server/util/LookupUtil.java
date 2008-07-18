@@ -111,6 +111,8 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerBean;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerBean;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionExpressionBuilderManagerBean;
+import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionExpressionBuilderManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerBean;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerBean;
@@ -249,6 +251,10 @@ public final class LookupUtil {
 
     public static GroupDefinitionManagerLocal getGroupDefinitionManager() {
         return lookupLocal(GroupDefinitionManagerBean.class);
+    }
+
+    public static GroupDefinitionExpressionBuilderManagerLocal getGroupDefinitionExpressionBuilderManager() {
+        return lookupLocal(GroupDefinitionExpressionBuilderManagerBean.class);
     }
 
     public static MeasurementDefinitionManagerLocal getMeasurementDefinitionManager() {

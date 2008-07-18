@@ -36,6 +36,8 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.group.GroupDefinition;
@@ -47,7 +49,10 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -72,6 +77,18 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
     @EJB
     private ResourceManagerLocal resourceManager;
+
+    @EJB
+    @IgnoreDependency
+    private ResourceTypeManagerLocal resourceTypeManager;
+
+    @EJB
+    @IgnoreDependency
+    private MeasurementDefinitionManagerLocal measurementDefinitionManager;
+
+    @EJB
+    @IgnoreDependency
+    private ConfigurationManagerLocal configurationManager;
 
     @EJB
     private SubjectManagerLocal subjectManager;

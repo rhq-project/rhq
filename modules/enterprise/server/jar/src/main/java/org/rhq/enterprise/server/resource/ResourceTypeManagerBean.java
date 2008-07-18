@@ -418,4 +418,15 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
         }
         return compositeMap;
     }
+
+    @SuppressWarnings("unchecked")
+    public List<ResourceType> getResourceTypesByPlugin(String pluginName) {
+        final String queryName = ResourceType.QUERY_FIND_BY_PLUGIN;
+
+        Query query = entityManager.createNamedQuery(queryName);
+        query.setParameter("plugin", pluginName);
+
+        List<ResourceType> results = query.getResultList();
+        return results;
+    }
 }

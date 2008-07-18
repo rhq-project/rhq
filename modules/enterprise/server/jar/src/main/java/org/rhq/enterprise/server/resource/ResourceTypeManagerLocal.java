@@ -118,4 +118,6 @@ public interface ResourceTypeManagerLocal {
     Map<Integer, SortedSet<ResourceType>> getChildResourceTypesForResourceTypes(List<ResourceType> types);
 
     Map<Integer, ResourceTypeTemplateCountComposite> getTemplateCountCompositeMap();
+
+    List<ResourceType> getResourceTypesByPlugin(String pluginName);
 }

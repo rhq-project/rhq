@@ -101,6 +101,17 @@
       </navigation-case>
 
    </navigation-rule>
+   
+   <navigation-rule>
 
+      <from-view-id>/rhq/definition/group/library.xhtml</from-view-id>
+      
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/definition/group/library.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+   </navigation-rule>
 </faces-config>
       

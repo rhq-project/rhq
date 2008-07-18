@@ -365,6 +365,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
             downloadMode = type.getDefaultDownloadMode();
         }
 
+        // Store the content source
         ContentSource source = new ContentSource(name, type);
         source.setDescription(description);
         source.setConfiguration(configuration);
@@ -430,11 +431,26 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
     }
 
     private void validateContentSource(ContentSource cs) throws ContentSourceException {
-        if (cs.getName() == null || cs.getName().trim().equals("")) {
+
+        String name = cs.getName();
+        ContentSourceType type = cs.getContentSourceType();
+
+        if (name == null || name.trim().equals("")) {
             throw new ContentSourceException("ContentSource name attribute is required");
         }
 
-        // TODO: check if the name is already in use by some other content source in the system
+        // If a content source with this name and type combination exists, throw an error as it's a violation
+        // of the DB uniqueness constraints
+        Query q = entityManager.createNamedQuery(ContentSource.QUERY_FIND_BY_NAME_AND_TYPENAME);
+        q.setParameter("name", name);
+        q.setParameter("typeName", type.getName());
+
+        List existingMatchingContentSources = q.getResultList();
+        if (existingMatchingContentSources.size() > 0) {
+            throw new ContentSourceException("Content source with name [" + name + "] and of type [" +
+                type.getName() + "] already exists, please specify a different name.");
+        }
+
     }
 
     public boolean testContentSourceConnection(int contentSourceId) {

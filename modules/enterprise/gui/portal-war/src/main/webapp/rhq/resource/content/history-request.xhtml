@@ -67,6 +67,10 @@
 <rich:panel>
    <f:facet name="header"><h:outputText value="Package Audit Trail"/></f:facet>
 
+   <p>The following is a complete listing of all of the package operations that took place during this request.
+   By default, they are ordered from newest to oldest. In other words, for packages that are referenced more than
+   one time in this list, the most recent item indicates the current status of the package.</p>
+
    <ui:param name="packageHistoryDataModel" value="#{ShowContentServiceRequestUIBean.dataModel}"/>
    <rich:dataTable binding="#{ShowContentServiceRequestUIBean.dataTable}"
                    id="packageHistoryDataTable"

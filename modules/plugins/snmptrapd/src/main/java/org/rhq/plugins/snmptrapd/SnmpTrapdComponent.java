@@ -82,7 +82,7 @@ public class SnmpTrapdComponent implements ResourceComponent, MeasurementFacet {
         try {
             UdpAddress targetAddress = new UdpAddress(port);
             TransportMapping transport = new DefaultUdpTransportMapping(targetAddress);
-            Snmp snmp = new Snmp(transport);
+            snmp = new Snmp(transport);
             // TODO set up the community here
             snmp.addCommandResponder(snmpTrapEventPoller);
             transport.listen();
@@ -90,7 +90,6 @@ public class SnmpTrapdComponent implements ResourceComponent, MeasurementFacet {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -106,6 +105,7 @@ public class SnmpTrapdComponent implements ResourceComponent, MeasurementFacet {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
+            snmp = null;
         }
 
         eventContext.unregisterEventPoller(TRAP_TYPE);

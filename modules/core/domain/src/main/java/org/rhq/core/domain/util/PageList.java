@@ -31,6 +31,9 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 public class PageList<E> extends ArrayList<E> implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private int totalSize = 0;
     private boolean isUnbounded; // Is the total size of the list known?
     private PageControl pageControl;

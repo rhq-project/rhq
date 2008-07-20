@@ -137,6 +137,10 @@ public class UserAckDecorator extends ColumnDecorator implements Tag {
             buf.append(getStyleClass());
             buf.append("\"");
         }
+        // change cursor when hovering over the link
+        // onmouseout, onmouseover
+        buf.append(" style=\"cursor:pointer;\"");
+
         buf.append("\">");
         if (ackDone) {
             buf.append(obj.toString());

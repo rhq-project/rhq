@@ -20,9 +20,12 @@ package org.rhq.enterprise.server.resource.group.test;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.persistence.EntityManager;
+
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.resource.Resource;
@@ -86,7 +89,6 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
             List<Resource> updatedNodeOneSubtree = ResourceTreeHelper.getSubtree(nodeOne);
             assert (updatedNodeOneSubtree.containsAll(updatedImplicitResources) && updatedImplicitResources
                 .containsAll(updatedNodeOneSubtree)) : "Failed: simple implicit resources";
-        } catch (Exception e) {
         } finally {
             getTransactionManager().rollback();
         }
@@ -173,7 +175,6 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
 
             // removing the last resource should leave an empty list
             implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeLittleA, new ArrayList<Resource>());
-        } catch (Exception e) {
         } finally {
             getTransactionManager().rollback();
         }

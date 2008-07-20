@@ -266,6 +266,12 @@
          <from-action>#{ConfigHelperUIBean.addNewOpenMapMemberProperty}</from-action>
          <to-view-id>/rhq/resource/inventory/add-resource-config-simple.xhtml</to-view-id>
       </navigation-case>
+      
+      <navigation-case>
+         <from-outcome>cancel</from-outcome>
+         <to-view-id>/rhq/resource/inventory/view.xhtml?id=${param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
 
    </navigation-rule>
 

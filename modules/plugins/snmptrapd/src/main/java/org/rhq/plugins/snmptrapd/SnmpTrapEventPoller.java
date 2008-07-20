@@ -33,6 +33,8 @@ import org.snmp4j.CommandResponderEvent;
 import org.snmp4j.PDU;
 import org.snmp4j.PDUv1;
 import org.snmp4j.ScopedPDU;
+import org.snmp4j.smi.Address;
+import org.snmp4j.smi.IpAddress;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.TimeTicks;
 import org.snmp4j.smi.Variable;
@@ -100,17 +102,26 @@ public class SnmpTrapEventPoller implements EventPoller, CommandResponder {
     /**
      * Callback from the Snmp lib. Will be called on each incoming trap
      */
-    public void processPdu(CommandResponderEvent arg0) {
+    public void processPdu(CommandResponderEvent cre) {
 
-        String sourceAddr = "snmp-agent";
-        PDU pdu = arg0.getPDU();
+        PDU pdu = cre.getPDU();
+        String sourceAddr;
+        Address addr = cre.getPeerAddress();
+        if (addr instanceof IpAddress) {
+            sourceAddr = ((IpAddress) addr).getInetAddress().toString();
+            if (sourceAddr.startsWith("/"))
+                sourceAddr = sourceAddr.substring(1);
+        } else {
+            // Don't use addr.toString() as this would contain the port and generate too many
+            // EventSources
+            sourceAddr = "snmp-agent";
+        }
         if (pdu != null) {
             StringBuffer payload = new StringBuffer();
             //            System.out.println("=>PDU: " + pdu);
             // SNMP v1
             if (pdu instanceof PDUv1) {
                 PDUv1 v1pdu = (PDUv1) pdu;
-                sourceAddr = v1pdu.getAgentAddress().toString();
                 long timeTicks = v1pdu.getTimestamp();
                 payload.append("Traptype (generic, specific): ");
                 payload.append(v1pdu.getGenericTrap()).append(", ").append(v1pdu.getSpecificTrap()).append("\n");

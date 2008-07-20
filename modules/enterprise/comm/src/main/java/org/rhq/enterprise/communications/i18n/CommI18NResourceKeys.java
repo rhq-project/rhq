@@ -43,6 +43,9 @@ public interface CommI18NResourceKeys {
         @I18NMessage(value = "Das Keystore-Passwort darf nicht leer sein", locale = "de") })
     String KEYSTORE_PASSWORD_NULL = "SecurityUtil.keystore-password-null";
 
+    @I18NMessages( { @I18NMessage("Keystore password must be at least 6 characters long ") })
+    String KEYSTORE_PASSWORD_MIN_LENGTH = "SecurityUtil.keystore-password-min-length";
+
     @I18NMessages( {
         @I18NMessage("Key password is not specified; when creating the keystore [{0}], the key password will be the same as the keystore password"),
         @I18NMessage(value = "Das Passwort für den Schlüssel wurde beim Anlegen des Keystores [{0}] nicht angegeben, als Passwort für den Schlüssel wird das des Keystores verwendet", locale = "de") })

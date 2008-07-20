@@ -35,6 +35,7 @@ import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 import org.rhq.enterprise.agent.i18n.AgentSetupInstructions;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
+import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.communications.util.prefs.BooleanSetupValidityChecker;
 import org.rhq.enterprise.communications.util.prefs.DefaultSetupInstruction;
@@ -282,7 +283,7 @@ public class SetupPromptCommand implements AgentPromptCommand {
         instr.add(new SecurityEnabledSetupInstruction(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT,
             AgentSetupInstructions.SETUP_INSTRUCTION_SERVERKEYSTOREPASSWORD_PREF,
             AgentSetupInstructions.SETUP_INSTRUCTION_SERVERKEYSTOREPASSWORD_DEFAULT, new RegexSetupValidityChecker(
-                MIN_KEYSTORE_PASSWORD_LENGTH), SETUPMSG
+                MIN_KEYSTORE_PASSWORD_LENGTH, CommI18NResourceKeys.KEYSTORE_PASSWORD_MIN_LENGTH), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERKEYSTOREPASSWORD_PROMPT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERKEYSTOREPASSWORD_HELP), true));
 
@@ -349,7 +350,7 @@ public class SetupPromptCommand implements AgentPromptCommand {
         instr.add(new SecurityEnabledSetupInstruction(AgentConfigurationConstants.SERVER_TRANSPORT,
             AgentSetupInstructions.SETUP_INSTRUCTION_CLIENTKEYSTOREPASSWORD_PREF,
             AgentSetupInstructions.SETUP_INSTRUCTION_CLIENTKEYSTOREPASSWORD_DEFAULT, new RegexSetupValidityChecker(
-                MIN_KEYSTORE_PASSWORD_LENGTH), SETUPMSG
+                MIN_KEYSTORE_PASSWORD_LENGTH, CommI18NResourceKeys.KEYSTORE_PASSWORD_MIN_LENGTH), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_CLIENTKEYSTOREPASSWORD_PROMPT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_CLIENTKEYSTOREPASSWORD_HELP), true));
 

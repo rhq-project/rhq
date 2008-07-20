@@ -59,11 +59,12 @@
 
          <h:panelGrid id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
 
-            <h:commandButton style="margin-top: 10px;" value="CANCEL"
-                             action="cancel" styleClass="buttonmed"/>
-
             <h:commandButton style="margin-top: 10px;" value="CREATE"
                              action="#{CreateNewPackageChildResourceUIBean.createResource}" styleClass="buttonmed"/>
+
+            <h:commandButton style="margin-top: 10px;" value="CANCEL"
+                             immediate="true"
+                             action="cancel" styleClass="buttonmed"/>
 
          </h:panelGrid>
 

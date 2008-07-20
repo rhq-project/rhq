@@ -23,8 +23,11 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
+
 import mazz.i18n.Msg;
+
 import org.jboss.remoting.security.SSLSocketBuilder;
+
 import org.rhq.enterprise.agent.AgentConfiguration;
 import org.rhq.enterprise.agent.AgentConfigurationConstants;
 import org.rhq.enterprise.agent.AgentMain;
@@ -42,6 +45,7 @@ import org.rhq.enterprise.communications.util.prefs.LocalInetHostnameSetupInstru
 import org.rhq.enterprise.communications.util.prefs.LongSetupValidityChecker;
 import org.rhq.enterprise.communications.util.prefs.PromptIfEnabledSetupInstruction;
 import org.rhq.enterprise.communications.util.prefs.PromptInput;
+import org.rhq.enterprise.communications.util.prefs.RegexSetupValidityChecker;
 import org.rhq.enterprise.communications.util.prefs.RemotingLocatorUriParamsValidityChecker;
 import org.rhq.enterprise.communications.util.prefs.Setup;
 import org.rhq.enterprise.communications.util.prefs.SetupInstruction;
@@ -210,6 +214,8 @@ public class SetupPromptCommand implements AgentPromptCommand {
 
         instr.addAll(createBasicSetupInstructions());
 
+        final String MIN_KEYSTORE_PASSWORD_LENGTH = ".{6,}";
+
         // insert after the other connector setting instructions (requires knowledge of the basic instruction ordering!)
         instr.add(3, new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_CONNECTORTRANSPORT_PREF,
             AgentSetupInstructions.SETUP_INSTRUCTION_CONNECTORTRANSPORT_DEFAULT, null, SETUPMSG
@@ -275,7 +281,8 @@ public class SetupPromptCommand implements AgentPromptCommand {
 
         instr.add(new SecurityEnabledSetupInstruction(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT,
             AgentSetupInstructions.SETUP_INSTRUCTION_SERVERKEYSTOREPASSWORD_PREF,
-            AgentSetupInstructions.SETUP_INSTRUCTION_SERVERKEYSTOREPASSWORD_DEFAULT, null, SETUPMSG
+            AgentSetupInstructions.SETUP_INSTRUCTION_SERVERKEYSTOREPASSWORD_DEFAULT, new RegexSetupValidityChecker(
+                MIN_KEYSTORE_PASSWORD_LENGTH), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERKEYSTOREPASSWORD_PROMPT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERKEYSTOREPASSWORD_HELP), true));
 
@@ -341,7 +348,8 @@ public class SetupPromptCommand implements AgentPromptCommand {
 
         instr.add(new SecurityEnabledSetupInstruction(AgentConfigurationConstants.SERVER_TRANSPORT,
             AgentSetupInstructions.SETUP_INSTRUCTION_CLIENTKEYSTOREPASSWORD_PREF,
-            AgentSetupInstructions.SETUP_INSTRUCTION_CLIENTKEYSTOREPASSWORD_DEFAULT, null, SETUPMSG
+            AgentSetupInstructions.SETUP_INSTRUCTION_CLIENTKEYSTOREPASSWORD_DEFAULT, new RegexSetupValidityChecker(
+                MIN_KEYSTORE_PASSWORD_LENGTH), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_CLIENTKEYSTOREPASSWORD_PROMPT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_CLIENTKEYSTOREPASSWORD_HELP), true));
 

@@ -429,8 +429,9 @@ public class EventManagerBean implements EventManagerLocal {
     public PageList<EventComposite> getEvents(Subject subject, int[] resourceIds, long begin, long end,
         EventSeverity severity, int eventId, String source, String searchString, PageControl pc) {
 
-        if (pc == null)
+        if (pc == null) {
             pc = new PageControl();
+        }
 
         PageList<EventComposite> pl = new PageList<EventComposite>(pc);
         if (eventId > -1) {
@@ -572,7 +573,8 @@ public class EventManagerBean implements EventManagerLocal {
     private String addSortingToQuery(String query, PageControl pageControl) {
         StringBuilder queryWithSorting = new StringBuilder(query);
         if (!isFilled(pageControl.getPrimarySortColumn()) || "null".equals(pageControl.getPrimarySortColumn())) {
-            pageControl.setPrimarySort("ev.timestamp", PageOrdering.ASC);
+            // display newest events first if this is the first time visiting the page
+            pageControl.setPrimarySort("ev.timestamp", PageOrdering.DESC);
         }
         queryWithSorting.append(" ORDER BY ").append(pageControl.getPrimarySortColumn());
         if (pageControl.getPrimarySortOrder() != null) {

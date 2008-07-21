@@ -128,10 +128,19 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
         contentSourceManager = LookupUtil.getContentSourceManager();
         contentSourceMetadataManager = LookupUtil.getContentSourceMetadataManager();
         channelManager = LookupUtil.getChannelManagerLocal();
+
+        // This delete is temporary. There are content sources left over from previous runs of this test
+        // that need to be deleted and this is the simplest way of clearing everyone's environment without
+        // requesting a dbsetup.
+        cleanupPreviousTestRuns();
     }
 
     @AfterClass
     public void tearDownAfterClass() throws Exception {
+        // This delete is temporary. There are content sources left over from previous runs of this test
+        // that need to be deleted and this is the simplest way of clearing everyone's environment without
+        // requesting a dbsetup.
+        cleanupPreviousTestRuns();
     }
 
     @BeforeMethod
@@ -141,6 +150,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
         prepareScheduler();
         pluginService = prepareContentSourcePluginService();
         pluginService.startPluginContainer();
+
+        cleanupPreviousTestRuns();
     }
 
     @AfterMethod
@@ -775,8 +786,6 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
         ContentSourceType type = null;
         ContentSource contentSource = null;
 
-        TransactionManager tx = getTransactionManager();
-        tx.begin();
         try {
             type = new ContentSourceType("testConstraintViolationCST");
             Set<ContentSourceType> types = new HashSet<ContentSourceType>();
@@ -795,20 +804,13 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             try {
                 contentSourceManager.createContentSource(overlord, dup);
-                tx.commit();
                 assert false : "Should not have been able to create the same content source";
             } catch (Exception expected) {
-            } finally {
-                tx = null;
             }
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
-        } finally {
-            if (tx != null) {
-                tx.rollback();
-            }
-        }
+        } 
     }
 
     /**
@@ -1089,5 +1091,90 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
         } finally {
             em.close();
         }
+    }
+
+    /**
+     * This is a temporary method to undo the messiness of this test in the past. The test will be changed to
+     * clean up after itself, however this call will set the state to a clean one for environments that have
+     * run the previous incarnation.
+     *
+     * @throws Exception
+     */
+    private void cleanupPreviousTestRuns() throws Exception {
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+
+        try {
+            try {
+                Query query;
+                List results;
+
+                query = em.createNamedQuery(ContentSource.QUERY_FIND_BY_NAME_AND_TYPENAME);
+                query.setParameter("name", "testUpdateContentSource");
+                query.setParameter("typeName", "testUpdateContentSourceCST");
+                results = query.getResultList();
+
+                if (results.size() > 0) {
+                    ContentSource deleteMe = (ContentSource)results.get(0);
+                    em.remove(deleteMe);
+                }
+
+                query = em.createNamedQuery(ContentSource.QUERY_FIND_BY_NAME_AND_TYPENAME);
+                query.setParameter("name", "testUpdateContentSource2");
+                query.setParameter("typeName", "testUpdateContentSourceCST2");
+                results = query.getResultList();
+
+                if (results.size() > 0) {
+                    ContentSource deleteMe = (ContentSource)results.get(0);
+                    em.remove(deleteMe);
+                }
+
+                query = em.createNamedQuery(ContentSource.QUERY_FIND_BY_NAME_AND_TYPENAME);
+                query.setParameter("name", "testConstraintViolation");
+                query.setParameter("typeName", "testConstraintViolationCST");
+                results = query.getResultList();
+
+                if (results.size() > 0) {
+                    ContentSource deleteMe = (ContentSource)results.get(0);
+                    em.remove(deleteMe);
+                }
+
+                query = em.createNamedQuery(ContentSourceType.QUERY_FIND_BY_NAME);
+                query.setParameter("name", "testUpdateContentSourceCST");
+                results = query.getResultList();
+
+                if (results.size() > 0) {
+                    ContentSourceType deleteMe = (ContentSourceType)results.get(0);
+                    em.remove(deleteMe);
+                }
+                
+                query = em.createNamedQuery(ContentSourceType.QUERY_FIND_BY_NAME);
+                query.setParameter("name", "testUpdateContentSourceCST2");
+                results = query.getResultList();
+
+                if (results.size() > 0) {
+                    ContentSourceType deleteMe = (ContentSourceType)results.get(0);
+                    em.remove(deleteMe);
+                }
+
+                query = em.createNamedQuery(ContentSourceType.QUERY_FIND_BY_NAME);
+                query.setParameter("name", "testConstraintViolationCST");
+                results = query.getResultList();
+
+                if (results.size() > 0) {
+                    ContentSourceType deleteMe = (ContentSourceType)results.get(0);
+                    em.remove(deleteMe);
+                }
+
+                getTransactionManager().commit();
+            } catch (Exception e) {
+                e.printStackTrace();
+                getTransactionManager().rollback();
+                throw e;
+            }
+        } finally {
+            em.close();
+        }
+
     }
 }

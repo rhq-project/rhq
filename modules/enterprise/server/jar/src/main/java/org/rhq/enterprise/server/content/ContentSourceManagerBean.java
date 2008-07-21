@@ -408,7 +408,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ContentSource updateContentSource(Subject subject, ContentSource contentSource)
         throws ContentSourceException {
-        validateContentSource(contentSource);
 
         log.debug("User [" + subject + "] is updating content source [" + contentSource + "]");
         contentSource = entityManager.merge(contentSource);

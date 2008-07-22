@@ -72,6 +72,12 @@
          <redirect/>
       </navigation-case>
 
+      <navigation-case>
+         <from-outcome>showHistoryItem</from-outcome>
+         <to-view-id>/rhq/resource/content/audit-trail-item.xhtml?id=#{param.id}&amp;selectedHistoryId=#{param.selectedHistoryId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
    </navigation-rule>
 
    <navigation-rule>

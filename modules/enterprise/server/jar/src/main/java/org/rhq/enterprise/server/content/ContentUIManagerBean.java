@@ -380,4 +380,21 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
 
         return resultList.get(0);
     }
+
+    public PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, PageControl pc) {
+        pc.initDefaultOrderingField("iph.timestamp", PageOrdering.DESC);
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            InstalledPackageHistory.QUERY_FIND_BY_RESOURCE_ID, pc);
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager,
+            InstalledPackageHistory.QUERY_FIND_BY_RESOURCE_ID);
+
+        query.setParameter("resourceId", resourceId);
+        queryCount.setParameter("resourceId", resourceId);
+
+        long totalCount = (Long) queryCount.getSingleResult();
+        List<InstalledPackageHistory> packages = query.getResultList();
+
+        return new PageList<InstalledPackageHistory>(packages, (int) totalCount, pc);
+    }
 }

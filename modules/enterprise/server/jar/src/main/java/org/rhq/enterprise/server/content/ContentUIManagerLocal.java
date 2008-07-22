@@ -264,4 +264,13 @@ public interface ContentUIManagerLocal {
      *         otherwise
      */
     InstalledPackage getBackingPackageForResource(int resourceId);
+
+    /**
+     * Returns a pagable list of all package events that have taken place on the given resource.
+     *
+     * @param resourceId must refer to a valid resource in the database
+     * @param pc pagination controller
+     * @return pagable list of package change items; will not be <code>null</code> 
+     */
+    PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, PageControl pc);
 }

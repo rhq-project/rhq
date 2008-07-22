@@ -32,6 +32,18 @@
       <managed-bean-class>org.rhq.enterprise.gui.content.ShowInstalledPackageHistoryUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>      
    </managed-bean>
+   <managed-bean>
+      <managed-bean-name>AuditTrailUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.AuditTrailUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>      
+   </managed-bean>
+
+   <!-- /rhq/resource/content/audit-trail-item.xhtml -->
+   <managed-bean>
+      <managed-bean-name>AuditTrailItemUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.AuditTrailItemUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>      
+   </managed-bean>
 
    <!-- /rhq/resource/content/package_history.xhtml -->
    <managed-bean>

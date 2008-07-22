@@ -46,6 +46,7 @@ import org.rhq.enterprise.gui.content.ListPackagesUIBean;
 import org.rhq.enterprise.gui.content.ResourceChannelsUIBean;
 import org.rhq.enterprise.gui.content.ResourcePackageVersionsUIBean;
 import org.rhq.enterprise.gui.content.ShowContentServiceRequestUIBean;
+import org.rhq.enterprise.gui.content.AuditTrailUIBean;
 import org.rhq.enterprise.gui.definition.group.GroupDefinitionUIBean;
 import org.rhq.enterprise.gui.definition.group.ListGroupDefinitionsUIBean;
 import org.rhq.enterprise.gui.discovery.AutoDiscoveryQueueUIBean;
@@ -118,6 +119,8 @@ public enum PageControlView {
     PackagesToDeployList(DeployPackagesUIBean.class),
     /** */
     InstalledPackageHistoryList(ShowContentServiceRequestUIBean.class),
+    /** */
+    AuditTrailList(AuditTrailUIBean.class),
 
     /** */
     //AvailableResourcePackageVersionList(AvailableResourceChannelsUIBean.class),

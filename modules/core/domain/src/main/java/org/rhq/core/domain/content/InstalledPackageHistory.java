@@ -67,6 +67,8 @@ import org.rhq.core.domain.resource.Resource;
         + "WHERE iph.contentServiceRequest.id = :contentServiceRequestId"),
     @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_RESOURCE_ID_AND_PKG_ID, query = "SELECT iph FROM InstalledPackageHistory iph "
         + "WHERE iph.packageVersion.generalPackage.id = :packageId AND iph.resource.id = :resourceId"),
+    @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT iph FROM InstalledPackageHistory iph "
+        + "WHERE iph.resource.id = :resourceId"),
     @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_BY_ID, query = "SELECT iph FROM InstalledPackageHistory iph "
         + "WHERE iph.id = :id"),
     @NamedQuery(name = InstalledPackageHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM InstalledPackageHistory iph "
@@ -82,6 +84,7 @@ public class InstalledPackageHistory implements Serializable {
     public static final String QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID = "InstalledPackageHistory.findByCsrIdAndPkgVerId";
     public static final String QUERY_FIND_BY_CSR_ID = "InstalledPackageHistory.findByCsrId";
     public static final String QUERY_FIND_BY_RESOURCE_ID_AND_PKG_ID = "InstalledPackageHistory.findByResourceIdAndPkgId";
+    public static final String QUERY_FIND_BY_RESOURCE_ID = "InstalledPackageHistory.findByResourceId";
     public static final String QUERY_FIND_BY_ID = "InstalledPackageHistory.findById";
     public static final String QUERY_DELETE_BY_RESOURCES = "InstalledPackageHistory.deleteByResources";
 

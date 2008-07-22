@@ -228,6 +228,109 @@
 
 
 </rich:panel>
+
+<rich:panel>
+    <f:facet name="header"><h:outputText value="Full Package Audit Trail"/></f:facet>
+
+    <i><h:outputText value="There are no package related events on this resource"
+                     rendered="#{AuditTrailUIBean.dataModel.rowCount eq 0}"/></i>
+
+
+        <rich:dataTable rendered="#{AuditTrailUIBean.dataModel.rowCount gt 0}"
+                    binding="#{AuditTrailUIBean.dataTable}"
+                    id="auditTrailDataTable"
+                    rows="#{PageControl.AuditTrailList.pageSize}"
+                    value="#{AuditTrailUIBean.dataModel}"
+                    var="item"
+                    width="100%"
+                    columnsWidth="20%, 20%, 20%, 10%, 20%, 10%"
+                    headerClass="tableRowHeader"
+                    footerClass="on-pager-footer">
+
+        <f:facet name="PageControlView">
+            <onc:paginationControl id="AuditTrailList"/>
+        </f:facet>
+
+        <rich:column>
+           <f:facet name="header">
+              <onc:sortableColumnHeader sort="iph.packageVersion.displayName">
+                 <h:outputText styleClass="headerText" value="Package Name" />
+              </onc:sortableColumnHeader>
+           </f:facet>
+
+           <h:outputText value="#{item.packageVersion.displayName}" rendered="#{!empty item.packageVersion.displayName}"/>
+           <h:outputText value="#{item.packageVersion.generalPackage.name}" rendered="#{empty item.packageVersion.displayName}"/>
+        </rich:column>
+
+        <rich:column>
+           <f:facet name="header">
+              <onc:sortableColumnHeader sort="iph.packageVersion.displayVersion">
+                 <h:outputText styleClass="headerText" value="Version" />
+              </onc:sortableColumnHeader>
+           </f:facet>
+
+           <h:outputText value="#{item.packageVersion.displayVersion}"/>
+        </rich:column>
+
+        <rich:column>
+           <f:facet name="header">
+              <onc:sortableColumnHeader sort="iph.packageVersion.architecture">
+                 <h:outputText styleClass="headerText" value="Architecture" />
+              </onc:sortableColumnHeader>
+           </f:facet>
+
+           <h:outputText value="#{item.packageVersion.architecture.name}"/>
+        </rich:column>
+
+        <rich:column>
+           <f:facet name="header">
+              <onc:sortableColumnHeader sort="iph.status.displayName">
+                 <h:outputText styleClass="headerText" value="Status" />
+              </onc:sortableColumnHeader>
+           </f:facet>
+
+           <h:outputText value="#{item.status.displayName}"/>
+        </rich:column>
+
+        <rich:column>
+           <f:facet name="header">
+              <onc:sortableColumnHeader sort="iph.timestamp">
+                 <h:outputText styleClass="headerText" value="Timestamp" />
+              </onc:sortableColumnHeader>
+           </f:facet>
+
+           <h:outputText value="#{item.timestamp}"/>
+        </rich:column>
+
+        <rich:column>
+           <f:facet name="header">
+              <h:outputText styleClass="headerText" value="Details" />
+           </f:facet>
+
+           <h:commandLink style="margin-top: 10px;" value="VIEW"
+                          action="showHistoryItem">
+               <f:param name="selectedHistoryId" value="#{item.id}"/>
+           </h:commandLink>
+
+        </rich:column>
+
+        <f:facet name="footer">
+            <rich:columnGroup>
+                <rich:column colspan="6" width="100%">
+                    <ui:param name="paginationDataTableName" value="auditTrailDataTable"/>
+                    <ui:param name="paginationDataModel" value="#{AuditTrailUIBean.dataModel}"/>
+                    <ui:param name="paginationPageControl" value="#{PageControl.AuditTrailList}"/>
+                    <ui:include src="../include/pagination.xhtml"/>
+                </rich:column>
+            </rich:columnGroup>
+        </f:facet>
+
+
+    </rich:dataTable>
+
+
+</rich:panel>
+
 </h:form>
 
 </ui:define>

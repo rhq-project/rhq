@@ -18,6 +18,16 @@
  */
 package org.rhq.plugins.postgres;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.pluginapi.inventory.*;
+import org.rhq.core.system.ProcessInfo;
+import org.rhq.plugins.postgres.util.PostgresqlConfFile;
+
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -27,19 +37,6 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ProcessScanResult;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.system.ProcessInfo;
-import org.rhq.plugins.postgres.util.PostgresqlConfFile;
 
 /**
  * @author Greg Hinkle
@@ -73,46 +70,49 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent {
             String pgDataPath = getDataDirPath(procInfo);
             if (pgDataPath == null) {
                 log.error("Unable to obtain data directory for postgres process with pid " + procInfo.getPid()
-                    + " (tried checking both -D command line argument, as well as " + PGDATA_ENV_VAR
-                    + " environment variable).");
+                        + " (tried checking both -D command line argument, as well as " + PGDATA_ENV_VAR
+                        + " environment variable).");
                 continue;
             }
 
             File pgData = new File(pgDataPath);
-            if (!pgData.exists()) {
-                log.error("PostgreSQL data directory (" + pgData + ") does not exist.");
-                continue;
-            }
-
-            log.debug("PostgreSQL data directory: " + pgData);
-
             String configFilePath = getConfigFilePath(procInfo);
-            File postgresConfFile = (configFilePath != null) ? new File(configFilePath) : new File(pgData,
-                PostgresServerComponent.DEFAULT_CONFIG_FILE_NAME);
-            if (!postgresConfFile.exists()) {
-                log.error("PostgreSQL configuration file (" + postgresConfFile + ") does not exist.");
-                continue;
-            }
+            PostgresqlConfFile confFile = null;
 
-            log.debug("PostgreSQL configuration file: " + postgresConfFile);
+            if (!pgData.exists()) {
+                log.warn("PostgreSQL data directory (" + pgData + ") does not exist or cannot be read.");
+            } else {
 
-            PostgresqlConfFile confFile;
-            try {
-                confFile = new PostgresqlConfFile(postgresConfFile);
-            } catch (IOException e) {
-                log.error("Could not load PostgreSQL configuration file.", e);
-                continue;
+                log.debug("PostgreSQL data directory: " + pgData);
+
+                File postgresConfFile = (configFilePath != null) ? new File(configFilePath) : new File(pgData,
+                        PostgresServerComponent.DEFAULT_CONFIG_FILE_NAME);
+                if (!postgresConfFile.exists()) {
+                    log.error("PostgreSQL configuration file (" + postgresConfFile + ") does not exist.");
+                    continue;
+                }
+
+                log.debug("PostgreSQL configuration file: " + postgresConfFile);
+
+                try {
+                    confFile = new PostgresqlConfFile(postgresConfFile);
+                } catch (IOException e) {
+                    log.error("Could not load PostgreSQL configuration file.", e);
+                    continue;
+                }
             }
 
             Configuration pluginConfig = context.getDefaultPluginConfiguration();
 
             pluginConfig.put(new PropertySimple(PGDATA_DIR_CONFIGURATION_PROPERTY, pgData));
-            pluginConfig.put(new PropertySimple(CONFIG_FILE_CONFIGURATION_PROPERTY, postgresConfFile));
+            pluginConfig.put(new PropertySimple(CONFIG_FILE_CONFIGURATION_PROPERTY, configFilePath));
 
-            String port = confFile.getPort();
-            if (port != null) {
-                // Override the default (5432) from the descriptor.
-                pluginConfig.put(new PropertySimple(PORT_CONFIGURATION_PROPERTY, port));
+            if (confFile != null) {
+                String port = confFile.getPort();
+                if (port != null) {
+                    // Override the default (5432) from the descriptor.
+                    pluginConfig.put(new PropertySimple(PORT_CONFIGURATION_PROPERTY, port));
+                }
             }
 
             DiscoveredResourceDetails resourceDetails = createResourceDetails(context, pluginConfig, procInfo);
@@ -138,14 +138,14 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent {
     }
 
     protected static DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
-        Configuration pluginConfiguration, @Nullable
-        ProcessInfo processInfo) {
+                                                                     Configuration pluginConfiguration, @Nullable
+    ProcessInfo processInfo) {
         String key = buildUrl(pluginConfiguration);
         String db = pluginConfiguration.getSimple(DB_CONFIGURATION_PROPERTY).getStringValue();
         String name = "Postgres [" + db + "]";
         String version = getVersion(pluginConfiguration);
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version,
-            DEFAULT_RESOURCE_DESCRIPTION, pluginConfiguration, processInfo);
+                DEFAULT_RESOURCE_DESCRIPTION, pluginConfiguration, processInfo);
     }
 
     protected static String buildUrl(Configuration config) {
@@ -175,7 +175,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent {
             Class.forName(driverClass);
         } catch (ClassNotFoundException e) {
             throw new InvalidPluginConfigurationException("Specified JDBC driver class (" + driverClass
-                + ") not found.");
+                    + ") not found.");
         }
 
         String url = buildUrl(configuration);
@@ -223,7 +223,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent {
                     int equalsIndex = paramString.indexOf('=');
                     if (equalsIndex == -1) {
                         log.error("Invalid value '" + paramString + "' for -c option on postgres command line: "
-                            + Arrays.asList(cmdLine));
+                                + Arrays.asList(cmdLine));
                         continue;
                     }
 

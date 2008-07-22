@@ -18,6 +18,8 @@
  */
 package org.rhq.plugins.hudson;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -32,6 +34,9 @@ import java.util.Set;
  * @author Greg Hinkle
  */
 public class HudsonProjectDiscoveryComponent implements ResourceDiscoveryComponent<HudsonServerComponent> {
+
+    private static final Log LOG = LogFactory.getLog(HudsonJSONUtility.class);
+
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<HudsonServerComponent> discoveryContext)
             throws InvalidPluginConfigurationException, Exception {
 
@@ -73,8 +78,7 @@ public class HudsonProjectDiscoveryComponent implements ResourceDiscoveryCompone
 
 
         } catch (Exception e) {
-
-            e.printStackTrace();
+            LOG.warn(e);
             throw e;
         }
     }

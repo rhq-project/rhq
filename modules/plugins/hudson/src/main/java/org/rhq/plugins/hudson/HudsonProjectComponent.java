@@ -18,6 +18,8 @@
  */
 package org.rhq.plugins.hudson;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -35,7 +37,10 @@ import java.util.Set;
  */
 public class HudsonProjectComponent implements ResourceComponent<HudsonServerComponent>, MeasurementFacet {
 
-    ResourceContext<HudsonServerComponent> resourceContext;
+    private static final Log LOG = LogFactory.getLog(HudsonProjectComponent.class);
+
+    private ResourceContext<HudsonServerComponent> resourceContext;
+
 
     public void start(ResourceContext<HudsonServerComponent> hudsonServerComponentResourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = hudsonServerComponentResourceContext;
@@ -89,12 +94,12 @@ public class HudsonProjectComponent implements ResourceComponent<HudsonServerCom
                         report.addData(new MeasurementDataNumeric(request, lastBuild.getDouble("duration")));
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOG.warn(e);
                 }
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.warn(e);
         }
     }
 }

@@ -18,6 +18,8 @@
  */
 package org.rhq.plugins.hudson;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -29,15 +31,16 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+
 /**
  * @author Greg Hinkle
  */
 public class HudsonJSONUtility {
 
+    private static final Log LOG = LogFactory.getLog(HudsonJSONUtility.class);
 
     public static JSONObject getData(String path, int depth) {
 
-        long start = System.currentTimeMillis();
         URL url = null;
         try {
 
@@ -66,13 +69,11 @@ public class HudsonJSONUtility {
 
             return jsonObject;
         } catch (MalformedURLException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            LOG.warn(e);
         } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            LOG.warn(e);
         } catch (JSONException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        } finally {
-            System.out.println((System.currentTimeMillis() - start) + " " + path);
+            LOG.warn(e);
         }
         return null;
 
@@ -104,9 +105,9 @@ public class HudsonJSONUtility {
                 }
             }
         } catch (MalformedURLException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            LOG.warn(e);
         } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            LOG.warn(e);
         }
         return null;
     }

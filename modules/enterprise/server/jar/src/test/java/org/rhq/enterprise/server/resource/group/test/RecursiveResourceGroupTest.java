@@ -24,7 +24,6 @@ import java.util.List;
 import javax.persistence.EntityManager;
 
 import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
@@ -59,7 +58,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(groups = "integration.session")
+    //@Test(groups = "integration.session")
     public void testImplicitGroupMembershipFromInventoryUpdate() throws Exception {
         getTransactionManager().begin();
         try {
@@ -94,7 +93,7 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(groups = "integration.session")
+    //@Test(groups = "integration.session")
     public void testImplicitGroupMembershipFromComplexGroupUpdates() throws Exception {
         getTransactionManager().begin();
         try {

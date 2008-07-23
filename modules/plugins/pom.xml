@@ -97,11 +97,6 @@
       </activation>
       <!-- plugins that should only be built for production builds -->
       <modules>
-      	<!-- this module requires the Oracle JDBC jar to be in the local
-      	     mvn repo in order for the build to succeed e.g.
-      	     ~\.m2\repository\ojdbc14\ojdbc14\10.2.0.4.0\ojdbc14-10.2.0.4.0.jar
-      	 -->
-      	<module>oracle</module>
       </modules>
     </profile>
 

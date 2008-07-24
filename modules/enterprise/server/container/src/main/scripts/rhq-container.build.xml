@@ -75,10 +75,18 @@
           <not><equals arg1="${use-postgres}" arg2="true" /></not>
        </and>
     </condition>
+
+    <condition property="undeploy-web-services" value="true">
+       <not>
+          <equals arg1="${rhq.server.enable.web.services}" arg2="true" />
+       </not>
+    </condition>
   </target>
 
   <target name="prepare-container"
-          depends="prepare-jbossas-dir, prepare-bin-dir" />
+          depends="prepare-jbossas-dir, 
+                   prepare-bin-dir, 
+                   prepare-web-services" />
 
   <target name="prepare-jbossas-dir"
           depends="initialize"
@@ -100,7 +108,7 @@
     <fail unless="jboss.home.is.valid" message="${jboss.home} does not contain a valid JBoss 4.x installation - aborting..." />
 
     <echo>Installing safe ejb3 web invoker ...</echo>
-    <delete>
+    <delete failonerror="no">
       <fileset dir="${jboss.home}/server/default/deploy/jbossws.sar">
         <include name="safe-invoker*" />
       </fileset>
@@ -358,6 +366,11 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
 
   </target>
 
+  <target name="prepare-web-services" depends="initialize" if="undeploy-web-services">
+     <echo>Undeploying JBossWS...</echo>
+     <move file="${jboss.home}/server/default/deploy/jbossws.sar" toDir="${jboss.home}/server/default/deploy/jbossws.sar.rej" verbose="true"/>
+  </target>
+
   <target name="unzip-jboss" unless="jboss.uptodate">
     <unzip src="${settings.localRepository}/jboss/jboss/${jboss.version}/jboss-${jboss.version}.zip"
            dest="${basedir}/target" />
@@ -435,6 +448,7 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
                    copy-dev-resources,
                    deploy-postgres-ds,
                    deploy-oracle-ds,
+                   prepare-web-services,
                    undeploy-jmx-console,
                    undeploy-mail-service,
                    undeploy-alert-cache-service,

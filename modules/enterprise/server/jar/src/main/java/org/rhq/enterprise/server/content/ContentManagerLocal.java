@@ -51,11 +51,12 @@ public interface ContentManagerLocal {
      * PackageVersion</code> being installed, along with the deployment configuration values if any. This method will
      * take care of populating the rest of the values in each installed package object.
      *
-     * @param user       the user who is requesting the creation
-     * @param resourceId identifies the resource against which the package will be deployed
-     * @param packages   packages (with their deployment time configuration values) to deploy
+     * @param user         the user who is requesting the creation
+     * @param resourceId   identifies the resource against which the package will be deployed
+     * @param packages     packages (with their deployment time configuration values) to deploy
+     * @param requestNotes user-specified notes on what is contained in this request
      */
-    void deployPackages(Subject user, int resourceId, Set<ResourcePackageDetails> packages);
+    void deployPackages(Subject user, int resourceId, Set<ResourcePackageDetails> packages, String requestNotes);
 
     /**
      * Deletes the specified package from the resource.
@@ -63,8 +64,9 @@ public interface ContentManagerLocal {
      * @param user                the user who is requesting the delete
      * @param resourceId          identifies the resource from which the packages should be deleted
      * @param installedPackageIds identifies all of the packages to be deleted
+     * @param requestNotes        user-specified notes on what is contained in this request 
      */
-    void deletePackages(Subject user, int resourceId, Set<Integer> installedPackageIds);
+    void deletePackages(Subject user, int resourceId, Set<Integer> installedPackageIds, String requestNotes);
 
     /**
      * Deletes the specified package from the resource.
@@ -151,13 +153,14 @@ public interface ContentManagerLocal {
      * For internal use only - Adds a request entry to the database to track the deployment of a group of packages. This
      * will be performed in a new transaction.
      *
-     * @param  resourceId resource against which the package request was executed
-     * @param  username   user who made the request
-     * @param  packages   packages being deployed in the request
+     * @param  resourceId   resource against which the package request was executed
+     * @param  username     user who made the request
+     * @param  packages     packages being deployed in the request
+     * @param  requestNotes user-specified notes on what the request entails
      *
      * @return request entity after being persisted to the database (it's ID will be populated)
      */
-    ContentServiceRequest createDeployRequest(int resourceId, String username, Set<ResourcePackageDetails> packages);
+    ContentServiceRequest createDeployRequest(int resourceId, String username, Set<ResourcePackageDetails> packages, String requestNotes);
 
     /**
      * For internal use only - Adds a request entry to the database to track the deleting of currently installed
@@ -167,10 +170,11 @@ public interface ContentManagerLocal {
      * @param  username            user who made the request
      * @param  installedPackageIds identifies the installed packages that are to be deleted; ids in this list must be of
      *                             valid <code>InstalledPackage</code> objects on the resource
+     * @param  requestNotes        user-specified notes on what the request entails
      *
      * @return request entity after being persisted to the database (it's ID will be populated)
      */
-    ContentServiceRequest createRemoveRequest(int resourceId, String username, Set<Integer> installedPackageIds);
+    ContentServiceRequest createRemoveRequest(int resourceId, String username, Set<Integer> installedPackageIds, String requestNotes);
 
     /**
      * For internal use only - Adds a request entry to the database to track the request for a package's bits. This will

@@ -96,6 +96,9 @@ public class ContentServiceRequest implements Serializable {
     @Column(name = "ERROR_MESSAGE", nullable = true)
     private String errorMessage;
 
+    @Column(name = "NOTES", nullable = true)
+    private String notes;
+
     @Column(name = "SUBJECT_NAME", nullable = false)
     private String subjectName;
 
@@ -159,6 +162,14 @@ public class ContentServiceRequest implements Serializable {
 
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 
     public String getSubjectName() {

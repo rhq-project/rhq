@@ -326,11 +326,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 packages.add(details);
             }
 
-            deployPackages(user, rid, packages);
+            deployPackages(user, rid, packages, null);
         }
     }
 
-    public void deployPackages(Subject user, int resourceId, Set<ResourcePackageDetails> packages) {
+    public void deployPackages(Subject user, int resourceId, Set<ResourcePackageDetails> packages, String requestNotes) {
         if (packages == null) {
             throw new IllegalArgumentException("packages cannot be null");
         }
@@ -354,7 +354,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
         // This call will also create the audit trail entry.
         ContentServiceRequest persistedRequest = contentManager.createDeployRequest(resourceId, user.getName(),
-            packages);
+            packages, requestNotes);
 
         // Package into transfer object
         DeployPackagesRequest transferRequest = new DeployPackagesRequest(persistedRequest.getId(), resourceId,
@@ -378,12 +378,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ContentServiceRequest createDeployRequest(int resourceId, String username,
-        Set<ResourcePackageDetails> packages) {
+        Set<ResourcePackageDetails> packages, String notes) {
         Resource resource = entityManager.find(Resource.class, resourceId);
 
         ContentServiceRequest persistedRequest = new ContentServiceRequest(resource, username,
             ContentRequestType.DEPLOY);
         persistedRequest.setStatus(ContentRequestStatus.IN_PROGRESS);
+        persistedRequest.setNotes(notes);
 
         Date timestamp = new Date();
 
@@ -428,7 +429,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         Resource resource = persistedRequest.getResource();
 
         int resourceTypeId = persistedRequest.getResource().getResourceType().getId();
-        Subject user = subjectManager.findSubjectByName(persistedRequest.getSubjectName());
 
         // Update the persisted request
         persistedRequest.setErrorMessage(response.getOverallRequestErrorMessage());
@@ -540,12 +540,12 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     public void deletePackages(Subject user, Set<Integer> resourceIds, Set<Integer> installedPackageIds) {
         for (Integer rid : resourceIds) {
-            deletePackages(user, rid, installedPackageIds);
+            deletePackages(user, rid, installedPackageIds, null);
         }
     }
 
     @SuppressWarnings("unchecked")
-    public void deletePackages(Subject user, int resourceId, Set<Integer> installedPackageIds) {
+    public void deletePackages(Subject user, int resourceId, Set<Integer> installedPackageIds, String requestNotes) {
         if (installedPackageIds == null) {
             throw new IllegalArgumentException("installedPackages cannot be null");
         }
@@ -568,8 +568,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
         // This will also create the audit trail entry
-        ContentServiceRequest persistedRequest = contentManager.createRemoveRequest(resourceId, user.getName(),
-            installedPackageIds);
+        ContentServiceRequest persistedRequest =
+            contentManager.createRemoveRequest(resourceId, user.getName(), installedPackageIds, requestNotes);
 
         // Package into transfer object
         Query query = entityManager.createNamedQuery(InstalledPackage.QUERY_FIND_BY_SET_OF_IDS);
@@ -603,12 +603,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentServiceRequest createRemoveRequest(int resourceId, String username, Set<Integer> installedPackageIds) {
+    public ContentServiceRequest createRemoveRequest(int resourceId, String username, Set<Integer> installedPackageIds, String requestNotes) {
         Resource resource = entityManager.find(Resource.class, resourceId);
 
         ContentServiceRequest persistedRequest = new ContentServiceRequest(resource, username,
             ContentRequestType.DELETE);
         persistedRequest.setStatus(ContentRequestStatus.IN_PROGRESS);
+        persistedRequest.setNotes(requestNotes);
 
         Date timestamp = new Date();
 
@@ -1081,7 +1082,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         packageQuery.setParameter("name", packageName);
         packageQuery.setParameter("packageTypeId", packageTypeId);
 
-        Package existingPackage = null;
+        Package existingPackage;
 
         List existingPackageList = packageQuery.getResultList();
 

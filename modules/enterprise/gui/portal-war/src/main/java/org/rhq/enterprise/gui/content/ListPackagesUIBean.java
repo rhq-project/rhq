@@ -18,14 +18,9 @@
  */
 package org.rhq.enterprise.gui.content;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
-import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.content.PackageType;
@@ -35,13 +30,11 @@ import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -61,7 +54,6 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
     private SelectItem[] packageVersions;
     private String packageVersionFilter;
 
-    private ContentManagerLocal contentManager = LookupUtil.getContentManager();
     private ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
 
     // Constructors  --------------------------------------------
@@ -70,34 +62,6 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
     }
 
     // Public  --------------------------------------------
-
-    public String deleteSelectedInstalledPackages() {
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-        String[] selectedPackages = FacesContextUtility.getRequest().getParameterValues("selectedPackages");
-
-        // Load installed packages for call to EJB
-        Set<Integer> installedPackageIds = new HashSet<Integer>(selectedPackages.length);
-        for (String installedPackageIdString : selectedPackages) {
-            int deleteMeId = Integer.parseInt(installedPackageIdString);
-            installedPackageIds.add(deleteMeId);
-        }
-
-        // Execute the delete
-        try {
-            contentManager.deletePackages(subject, resource.getId(), installedPackageIds);
-        } catch (Exception e) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete packages. Cause: " + e);
-        }
-
-        // Sleep just enough to let "fast" operations complete before being redirected
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            // Let this thread be interrupted without user warning
-        }
-
-        return "successOrFailure";
-    }
 
     @Override
     public DataModel getDataModel() {

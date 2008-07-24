@@ -203,4 +203,11 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
+   <!-- /rhq/resource/content/confirm-delete.xhtml -->
+   <managed-bean>
+      <managed-bean-name>DeletePackagesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.DeletePackagesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
 </faces-config>

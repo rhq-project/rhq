@@ -142,6 +142,7 @@
         <column name="CTIME" type="LONG" required="true"/>
         <column name="MTIME" type="LONG" required="true"/>
         <column name="REQUEST_TYPE" type="VARCHAR2" required="true" size="20"/>
+        <column name="NOTES" type="VARCHAR2" required="false" size="512"/>
     </table>
 
     <table name="RHQ_INSTALLED_PACKAGE">

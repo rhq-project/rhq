@@ -37,13 +37,21 @@
          <redirect/>
       </navigation-case>
 
+<!--
       <navigation-case>
          <from-action>#{ListPackagesUIBean.deleteSelectedInstalledPackages}</from-action>
          <from-outcome>successOrFailure</from-outcome>
          <to-view-id>/rhq/resource/content/history.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
-      
+-->
+
+      <navigation-case>
+         <from-action>#{DeletePackagesUIBean.beginDeleteWorkflow}</from-action>
+         <from-outcome>beginDeleteWorkflow</from-outcome>
+         <to-view-id>/rhq/resource/content/confirm-delete.xhtml</to-view-id>
+      </navigation-case>
+
    </navigation-rule>
 
    <navigation-rule>
@@ -157,6 +165,23 @@
          <redirect/>
       </navigation-case>
       
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/confirm-delete.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>successOrFailure</from-outcome>
+         <to-view-id>/rhq/resource/content/history.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>cancel</from-outcome>
+         <to-view-id>/rhq/resource/content/deploy.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
    </navigation-rule>
 
    <!-- Content Source List -->

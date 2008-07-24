@@ -78,8 +78,17 @@ DB Upgrade:
            column="SUPPORTS_ARCHITECTURE"
            nullable="FALSE"
            />
-    </schemaSpec>
-   
+   </schemaSpec>
+
+   <!-- RHQ-176 - Add notes column to content requests -->
+   <schemaSpec version="2.5">
+        <schema-addColumn
+            table="RHQ_CONTENT_REQ"
+            column="NOTES"
+            columnType="VARCHAR2"
+            precision="512"/>
+   </schemaSpec>
+
 
 </dbupgrade>
 

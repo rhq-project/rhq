@@ -20,6 +20,8 @@
 
       <h:form>
 
+         <input type="hidden" name="id" value="${param.id}"/>
+
          <ui:remove><!-- Package selected for installation steps and they were returned from the plugin. --></ui:remove>
          <rich:panel rendered="#{!empty InstallationStepsUIBean.packageVersion and !empty InstallationStepsUIBean.deploySteps}">
 
@@ -165,9 +167,17 @@
 
          </rich:panel>
 
-         <input type="hidden" name="id" value="${param.id}"/>
+         <rich:panel>
+            <f:facet name="header"><h:outputText value="Packages Deployment Notes"/></f:facet>
+            <p>Notes specified below will be displayed when tracking the status of this request in order to help
+               further identify the purpose of this request. They are not sent to the plugin for use during the
+               installation. </p>
 
-          <rich:panel>
+            <h:inputTextarea value="#{DeployPackagesUIBean.notes}" rows="5" cols="80"/>
+
+         </rich:panel>
+
+         <rich:panel>
              <h:panelGrid id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
                 <h:commandButton style="margin-top: 10px;" value="CANCEL"
                                  action="cancel" styleClass="buttonmed"/>
@@ -176,7 +186,7 @@
                                  action="#{DeployPackagesUIBean.deployPackages}" styleClass="buttonmed"
                                  rendered="${ResourceUIBean.permissions.content}"/>
              </h:panelGrid>
-          </rich:panel>
+         </rich:panel>
 
       </h:form>
 

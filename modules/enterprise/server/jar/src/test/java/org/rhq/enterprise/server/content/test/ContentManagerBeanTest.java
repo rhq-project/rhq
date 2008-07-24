@@ -474,12 +474,14 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         this.contentAgentService.setThrowError(false);
         this.contentAgentService.setReturnIndividualResponses(true);
 
+        String notes = "Test package deployment";
+
         // Test  --------------------------------------------
 
         // Perform the deploy while locking the agent service. This allows us to check the state after the request
         // is sent to the agent but before the agent has replied.
         synchronized (responseLock) {
-            contentManager.deployPackages(overlord, resource1.getId(), installUs);
+            contentManager.deployPackages(overlord, resource1.getId(), installUs, notes);
 
             // Check to see if the request and installed package were created and have the right status
             getTransactionManager().begin();
@@ -501,6 +503,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                     + request.getStatus();
                 assert request.getInstalledPackageHistory().size() == 2 : "Incorrect number of installed packages attached to request. Expected: 2, Found: "
                     + request.getInstalledPackageHistory().size();
+                assert request.getNotes() != null : "Null notes found";
+                assert request.getNotes().equals(notes) : "Incorrect notes found: " + request.getNotes();
 
                 // Verify a history entry has been added for each package in the request
                 Set<InstalledPackageHistory> history = request.getInstalledPackageHistory();
@@ -659,12 +663,14 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         this.contentAgentService.setReturnIndividualResponses(true);
         this.contentAgentService.setDeployPackageSteps(stepResults);
 
+        String notes = "Test deploy notes";
+
         // Test  --------------------------------------------
 
         // Perform the deploy while locking the agent service. This allows us to check the state after the request
         // is sent to the agent but before the agent has replied.
         synchronized (responseLock) {
-            contentManager.deployPackages(overlord, resource1.getId(), installUs);
+            contentManager.deployPackages(overlord, resource1.getId(), installUs, notes);
 
             // Check to see if the request and installed package were created and have the right status
             getTransactionManager().begin();
@@ -686,6 +692,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                     + request.getStatus();
                 assert request.getInstalledPackageHistory().size() == 1 : "Incorrect number of installed packages attached to request. Expected: 1, Found: "
                     + request.getInstalledPackageHistory().size();
+                assert request.getNotes() != null : "Null notes found";
+                assert request.getNotes().equals(notes) : "Incorrect notes found: " + request.getNotes();
 
                 // Verify a history entry has been added for each package in the request
                 Set<InstalledPackageHistory> history = request.getInstalledPackageHistory();
@@ -814,8 +822,10 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         this.contentAgentService.setThrowError(false);
         this.contentAgentService.setReturnIndividualResponses(true);
 
+        String notes = "Test deploy notes";
+
         // Test  --------------------------------------------
-        contentManager.deployPackages(overlord, resource1.getId(), installUs);
+        contentManager.deployPackages(overlord, resource1.getId(), installUs, notes);
 
         // Verify  --------------------------------------------
 
@@ -837,6 +847,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             ContentServiceRequest request = (ContentServiceRequest) results.get(0);
             assert request.getStatus() == ContentRequestStatus.FAILURE : "Request status incorrect. Expected: IN_PROGRESS, Found: "
                 + request.getStatus();
+            assert request.getNotes() != null : "Null notes found";
+            assert request.getNotes().equals(notes) : "Incorrect notes found: " + request.getNotes();
 
             // Check for Package 1
             query = em.createNamedQuery(InstalledPackageHistory.QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID);
@@ -884,9 +896,11 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         this.contentAgentService.setThrowError(true);
         this.contentAgentService.setReturnIndividualResponses(false);
 
+        String notes = "Test deploy notes";
+
         // Test  --------------------------------------------
         try {
-            contentManager.deployPackages(overlord, resource1.getId(), installUs);
+            contentManager.deployPackages(overlord, resource1.getId(), installUs, notes);
             assert false : "No exception thrown from deploy call";
         } catch (Exception e) {
             // Expected
@@ -909,6 +923,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             ContentServiceRequest request = (ContentServiceRequest) results.get(0);
             assert request.getStatus() == ContentRequestStatus.FAILURE : "Request status incorrect. Expected: IN_PROGRESS, Found: "
                 + request.getStatus();
+            assert request.getNotes() != null : "Null notes found";
+            assert request.getNotes().equals(notes) : "Incorrect notes found: " + request.getNotes();
 
             // Check for Package 1
             query = em.createNamedQuery(InstalledPackageHistory.QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID);
@@ -956,8 +972,10 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         this.contentAgentService.setThrowError(false);
         this.contentAgentService.setReturnIndividualResponses(false);
 
+        String notes = "Test deploy notes";
+
         // Test  --------------------------------------------
-        contentManager.deployPackages(overlord, resource1.getId(), installUs);
+        contentManager.deployPackages(overlord, resource1.getId(), installUs, notes);
         
         // Give the agent service a second to make sure it finishes out its call
         Thread.sleep(1000);
@@ -979,6 +997,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             ContentServiceRequest request = (ContentServiceRequest) results.get(0);
             assert request.getStatus() == ContentRequestStatus.FAILURE: "Request status incorrect. Expected: FAILURE, Found: "
                 + request.getStatus();
+            assert request.getNotes() != null : "Null notes found";
+            assert request.getNotes().equals(notes) : "Incorrect notes found: " + request.getNotes();
 
             // Check for Package 1
             query = em.createNamedQuery(InstalledPackageHistory.QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID);
@@ -1116,12 +1136,14 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         this.contentAgentService.setThrowError(false);
         this.contentAgentService.setReturnIndividualResponses(true);
 
+        String notes = "Test delete notes";
+
         // Test  --------------------------------------------
 
         // Perform the deploy while locking the agent service. This allows us to check the state after the request
         // is sent to the agent but before the agent has replied.
         synchronized (responseLock) {
-            contentManager.deletePackages(overlord, resource1.getId(), deleteUs);
+            contentManager.deletePackages(overlord, resource1.getId(), deleteUs, notes);
 
             getTransactionManager().begin();
             EntityManager em = getEntityManager();
@@ -1138,6 +1160,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 ContentServiceRequest request = (ContentServiceRequest) results.get(0);
                 assert request.getStatus() == ContentRequestStatus.IN_PROGRESS : "Request status incorrect. Expected: IN_PROGRESS, Found: "
                     + request.getStatus();
+                assert request.getNotes() != null : "Null notes found";
+                assert request.getNotes().equals(notes) : "Incorrect notes found: " + request.getNotes();
 
                 // Verify a history entry has been added for each package in the request
                 Set<InstalledPackageHistory> history = request.getInstalledPackageHistory();
@@ -1232,12 +1256,14 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         this.contentAgentService.setThrowError(false);
         this.contentAgentService.setReturnIndividualResponses(false);
 
+        String notes = "Test delete notes";
+
         // Test  --------------------------------------------
 
         // Perform the deploy while locking the agent service. This allows us to check the state after the request
         // is sent to the agent but before the agent has replied.
         synchronized (responseLock) {
-            contentManager.deletePackages(overlord, resource1.getId(), deleteUs);
+            contentManager.deletePackages(overlord, resource1.getId(), deleteUs, notes);
 
             getTransactionManager().begin();
             EntityManager em = getEntityManager();
@@ -1254,6 +1280,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 ContentServiceRequest request = (ContentServiceRequest) results.get(0);
                 assert request.getStatus() == ContentRequestStatus.IN_PROGRESS : "Request status incorrect. Expected: IN_PROGRESS, Found: "
                     + request.getStatus();
+                assert request.getNotes() != null : "Null notes found";
+                assert request.getNotes().equals(notes) : "Incorrect notes found: " + request.getNotes();
 
                 // Verify a history entry has been added for each package in the request
                 Set<InstalledPackageHistory> history = request.getInstalledPackageHistory();

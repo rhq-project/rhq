@@ -42,7 +42,7 @@
                     value="#{ListInProgressContentRequestsUIBean.dataModel}"
                     var="item"
                     width="100%"
-                    columnsWidth="13%,13%,13%,12%,12%"
+                    columnsWidth="16%, 17%, 16%, 16%, 16%, 16%"
                     headerClass="tableRowHeader"
                     footerClass="on-pager-footer">
 
@@ -68,6 +68,16 @@
             </f:facet>
 
             <h:outputText value="#{item.createdDate}"/>
+        </rich:column>
+
+        <rich:column>
+            <f:facet name="header">
+                <onc:sortableColumnHeader sort="csr.notes">
+                    <h:outputText styleClass="headerText" value="Notes"/>
+                </onc:sortableColumnHeader>
+            </f:facet>
+
+            <h:outputText value="#{item.notes}"/>
         </rich:column>
 
         <rich:column>
@@ -114,7 +124,7 @@
 
         <f:facet name="footer">
             <rich:columnGroup>
-                <rich:column colspan="5" width="100%">
+                <rich:column colspan="6" width="100%">
                     <ui:param name="paginationDataTableName" value="contentInProgressRequestsDataTable"/>
                     <ui:param name="paginationDataModel" value="#{ListInProgressContentRequestsUIBean.dataModel}"/>
                     <ui:param name="paginationPageControl" value="#{PageControl.ContentInProgressRequestsList}"/>
@@ -142,7 +152,7 @@
                     value="#{ListCompletedContentRequestsUIBean.dataModel}"
                     var="item"
                     width="100%"
-                    columnsWidth="13%,13%,13%,12%,12%"
+                    columnsWidth="16%, 17%, 16%, 16%, 16%, 16%"
                     headerClass="tableRowHeader"
                     footerClass="on-pager-footer">
 
@@ -170,6 +180,16 @@
             <h:outputText value="#{item.createdDate}"/>
         </rich:column>
 
+        <rich:column>
+            <f:facet name="header">
+                <onc:sortableColumnHeader sort="csr.notes">
+                    <h:outputText styleClass="headerText" value="Notes"/>
+                </onc:sortableColumnHeader>
+            </f:facet>
+
+            <h:outputText value="#{item.notes}"/>
+        </rich:column>
+           
         <rich:column>
             <f:facet name="header">
                 <onc:sortableColumnHeader sort="csr.status">
@@ -214,7 +234,7 @@
 
         <f:facet name="footer">
             <rich:columnGroup>
-                <rich:column colspan="5" width="100%">
+                <rich:column colspan="6" width="100%">
                     <ui:param name="paginationDataTableName" value="contentCompletedRequestsDataTable"/>
                     <ui:param name="paginationDataModel" value="#{ListCompletedContentRequestsUIBean.dataModel}"/>
                     <ui:param name="paginationPageControl" value="#{PageControl.ContentCompletedRequestsList}"/>

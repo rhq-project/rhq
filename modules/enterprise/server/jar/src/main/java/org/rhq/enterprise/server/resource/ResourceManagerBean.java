@@ -74,10 +74,20 @@ import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
 import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationScheduleEntity;
-import org.rhq.core.domain.resource.*;
+import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.CreateResourceHistory;
+import org.rhq.core.domain.resource.DeleteResourceHistory;
+import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceError;
+import org.rhq.core.domain.resource.ResourceErrorType;
+import org.rhq.core.domain.resource.ResourceSubCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
+import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
@@ -86,7 +96,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
-import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -119,8 +128,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @EJB
     private AgentManagerLocal agentManager;
-    @EJB
-    private AlertTemplateManagerLocal alertTemplateManager;
     @EJB
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
     @EJB
@@ -725,6 +732,33 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return parent;
     }
 
+    @Nullable
+    private Integer getParentResourceId(int resourceId) {
+
+        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_PAREBT_ID);
+        query.setParameter("id", resourceId);
+
+        try {
+            return (Integer) query.getSingleResult();
+        } catch (NoResultException nre) {
+            // this is OK, no parent means this is a platform
+            return null;
+        }
+    }
+
+    public List<Integer> getResourceIdLineage(int resourceId) {
+        List<Integer> lineage = new ArrayList<Integer>();
+
+        Integer child = resourceId;
+        Integer parent = null;
+        while ((parent = getParentResourceId(child)) != null) {
+            lineage.add(parent);
+            child = parent;
+        }
+
+        return lineage;
+    }
+
     @NotNull
     public List<Resource> getResourceLineage(int resourceId) {
         List<Resource> resourceLineage = new ArrayList<Resource>();
@@ -1286,6 +1320,34 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         query.setParameter("groupId", resourceGroupId);
 
         List<Integer> results = query.getResultList();
+        return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<ResourceIdFlyWeight> getExplicitFlyWeightsByResourceGroup(int resourceGroupId) {
+        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_GROUP_ID);
+        query.setParameter("groupId", resourceGroupId);
+
+        List<ResourceIdFlyWeight> results = query.getResultList();
+        return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<ResourceIdFlyWeight> getFlyWeights(Integer[] resourceIds) {
+        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS);
+        query.setParameter("resourceIds", Arrays.asList(resourceIds));
+
+        List<ResourceIdFlyWeight> results = query.getResultList();
+        return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<ResourceIdFlyWeight> getChildrenFlyWeights(Integer parentResourceId, InventoryStatus status) {
+        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_FLY_WEIGHTS_BY_PARENT_RESOURCE_ID);
+        query.setParameter("parentId", parentResourceId);
+        query.setParameter("status", status);
+
+        List<ResourceIdFlyWeight> results = query.getResultList();
         return results;
     }
 

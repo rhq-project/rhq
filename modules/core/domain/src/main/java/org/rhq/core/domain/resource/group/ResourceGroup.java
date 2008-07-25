@@ -285,6 +285,10 @@ public class ResourceGroup extends Group {
         resource.addExplicitGroup(this);
     }
 
+    public void setExplicitResources(Set<Resource> resources) {
+        this.explicitResources = resources;
+    }
+
     @NotNull
     public Set<Resource> getExplicitResources() {
         if (this.explicitResources == null) {
@@ -305,6 +309,10 @@ public class ResourceGroup extends Group {
     Resource resource) {
         getImplicitResources().add(resource);
         resource.addImplicitGroup(this);
+    }
+
+    public void setImplicitResources(Set<Resource> resources) {
+        this.implicitResources = resources;
     }
 
     public GroupCategory getGroupCategory() {

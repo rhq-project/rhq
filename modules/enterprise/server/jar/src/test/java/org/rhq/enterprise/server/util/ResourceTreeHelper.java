@@ -23,7 +23,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
 import javax.persistence.EntityManager;
+
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -104,6 +107,8 @@ public class ResourceTreeHelper {
         // this object returns only root resources, which can be traversed to find the children
         List<Resource> roots = new ArrayList<Resource>();
         for (Resource potentialRoot : resources.values()) {
+            potentialRoot.setInventoryStatus(InventoryStatus.COMMITTED);
+            potentialRoot.setUuid(potentialRoot.getName());
             persist(entityManager, potentialRoot);
 
             // roots are those with no parent resource
@@ -112,13 +117,15 @@ public class ResourceTreeHelper {
             }
         }
 
+        entityManager.flush();
+
         return roots;
     }
 
     public static Resource findNode(List<Resource> roots, String name) {
         Resource node = null;
         for (Resource root : roots) {
-            node = findNodeHelper(root, name, "");
+            node = findNode(root, name);
             if (node != null) {
                 break;
             }
@@ -127,18 +134,18 @@ public class ResourceTreeHelper {
         return node;
     }
 
-    public static Resource findNode(Resource rootResource, String name) {
-        return findNodeHelper(rootResource, name, "");
-    }
+    //    public static Resource findNode(Resource rootResource, String name) {
+    //        return findNodeHelper(rootResource, name);
+    //    }
 
-    private static Resource findNodeHelper(Resource resource, String name, String prefix) {
-        if (name.equals(prefix + resource.getName())) {
+    public static Resource findNode(Resource resource, String name) {
+        if (name.equals(resource.getName())) {
             return resource;
         }
 
         Resource result = null;
         for (Resource child : resource.getChildResources()) {
-            result = findNodeHelper(child, name, resource.getName() + ".");
+            result = findNode(child, name);
             if (result != null) {
                 break;
             }
@@ -153,7 +160,7 @@ public class ResourceTreeHelper {
         List<Resource> toBeSearched = new LinkedList<Resource>();
         toBeSearched.add(resource);
         while (toBeSearched.size() > 0) {
-            Resource next = toBeSearched.get(0);
+            Resource next = toBeSearched.remove(0);
             subtree.add(next);
             toBeSearched.addAll(next.getChildResources());
         }
@@ -171,16 +178,25 @@ public class ResourceTreeHelper {
         }
     }
 
+    public static void printForest(List<Resource> resources) {
+        for (Resource root : resources) {
+            printTree(root);
+        }
+    }
+
     public static void printTree(Resource resource) {
         printTreeHelper(resource, 0, "");
     }
 
     private static void printTreeHelper(Resource resource, int level, String namePrefix) {
         for (int i = 0; i < level; i++) {
-            System.out.print('\t');
+            System.out.print("   ");
         }
 
-        System.out.println("<resource name=\"" + namePrefix + resource.getName() + "\" />");
+        System.out.println("<resource " + //
+            "id=\"" + resource.getId() + "\" " + //
+            "name=\"" + resource.getName() + "\" " + //
+            "path=\"" + namePrefix + resource.getName() + "\" />");
 
         for (Resource child : resource.getChildResources()) {
             printTreeHelper(child, level + 1, namePrefix + resource.getName() + ".");

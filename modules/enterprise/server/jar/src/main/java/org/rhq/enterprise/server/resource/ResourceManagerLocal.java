@@ -27,10 +27,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.resource.*;
+import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceError;
+import org.rhq.core.domain.resource.ResourceErrorType;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
+import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
@@ -130,6 +137,8 @@ public interface ResourceManagerLocal {
     @Nullable
     Resource getParentResource(int resourceId);
 
+    List<Integer> getResourceIdLineage(int resourceId);
+
     /**
      * Returns the lineage of the Resource with the specified id. The lineage is represented as a List of Resources,
      * with the first item being the root of the Resource's ancestry (or the Resource itself if it is a root Resource
@@ -205,7 +214,13 @@ public interface ResourceManagerLocal {
      */
     List<RecentlyAddedResourceComposite> getRecentlyAddedServers(Subject user, long ctime, int platformId);
 
+    List<ResourceIdFlyWeight> getExplicitFlyWeightsByResourceGroup(int resourceGroupId);
+
     List<Integer> getExplicitResourceIdsByResourceGroup(int resourceGroupId);
+
+    List<ResourceIdFlyWeight> getFlyWeights(Integer[] resourceIds);
+
+    List<ResourceIdFlyWeight> getChildrenFlyWeights(Integer parentResourceId, InventoryStatus status);
 
     /**
      * @throws ResourceGroupNotFoundException if the specified {@link ResourceGroup} does not exist
@@ -328,5 +343,5 @@ public interface ResourceManagerLocal {
      * @param agent
      * @return
      */
-    Resource getPlatform(Agent agent);      
+    Resource getPlatform(Agent agent);
 }

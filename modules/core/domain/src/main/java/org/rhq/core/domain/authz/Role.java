@@ -169,9 +169,9 @@ public class Role implements Serializable {
         }
     }
 
-    public void addPermission(Permission operation) {
+    public void addPermission(Permission permission) {
         // permission.setRole(this);
-        this.permissions.add(operation);
+        this.permissions.add(permission);
     }
 
     public boolean removePermission(Permission permission) {

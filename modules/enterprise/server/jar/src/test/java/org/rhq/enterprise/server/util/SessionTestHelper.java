@@ -22,19 +22,21 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Set;
+
 import javax.persistence.EntityManager;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.authz.Permission.Target;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.authz.Permission.Target;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.enterprise.server.auth.SessionManager;
 
 public class SessionTestHelper {
@@ -80,16 +82,25 @@ public class SessionTestHelper {
         em.persist(newSubject);
         em.flush();
 
-        SessionManager.getInstance().put(newSubject, 1000 * 60);
+        SessionManager.getInstance().put(newSubject, 1000 * 300);
 
         return newSubject;
     }
 
     public static Role createNewRoleForSubject(EntityManager em, Subject subject, String roleName) {
+        return createNewRoleForSubject(em, subject, roleName, new Permission[0]);
+    }
+
+    public static Role createNewRoleForSubject(EntityManager em, Subject subject, String roleName,
+        Permission... permissions) {
         roleName = preprocess(roleName);
 
         Role newRole = new Role(roleName);
         newRole.setFsystem(false);
+
+        for (Permission perm : permissions) {
+            newRole.addPermission(perm);
+        }
 
         subject.getRoles().add(newRole);
         newRole.getSubjects().add(subject);
@@ -103,8 +114,9 @@ public class SessionTestHelper {
 
     public static ResourceType createNewResourceType(EntityManager em) {
         ResourceType type = new ResourceType(preprocess("testType"), "testPlugin", ResourceCategory.PLATFORM, null);
-        ConfigurationDefinition resourceConfigDef = new ConfigurationDefinition("Fake def", "Resource config def for fake test resource");
-        resourceConfigDef.put(new PropertyDefinitionSimple("fake property","fake",false, PropertySimpleType.BOOLEAN));
+        ConfigurationDefinition resourceConfigDef = new ConfigurationDefinition("Fake def",
+            "Resource config def for fake test resource");
+        resourceConfigDef.put(new PropertyDefinitionSimple("fake property", "fake", false, PropertySimpleType.BOOLEAN));
         type.setResourceConfigurationDefinition(resourceConfigDef);
         em.persist(type);
         em.flush();

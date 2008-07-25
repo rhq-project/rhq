@@ -21,9 +21,12 @@ package org.rhq.enterprise.server.authz.test;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Set;
+
 import javax.persistence.EntityManager;
+
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -40,7 +43,7 @@ public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
     private AuthorizationManagerLocal authorizationManager;
 
     @BeforeSuite
-    @SuppressWarnings( { "UnusedDeclaration", "UNUSED_SYMBOL", "unused" })
+    @SuppressWarnings( { "unused" })
     private void init() {
         try {
             authorizationManager = LookupUtil.getAuthorizationManager();

@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.resource.group;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -43,6 +42,7 @@ import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.measurement.DataType;
@@ -51,6 +51,7 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -180,21 +181,18 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             }
         }
 
-        // prepare structures for remove*Helper
-        Collection<Resource> explicitResourcesToKeep = new ArrayList<Resource>(group.getExplicitResources());
-        Collection<Resource> implicitResourcesToKeep = new ArrayList<Resource>(group.getImplicitResources());
-        boolean isRecursive = group.isRecursive();
-
-        // now clean the group itself
-        Collection<Integer> groupResourceIds = resourceManager.getExplicitResourceIdsByResourceGroup(group.getId());
-        for (Integer resourceId : groupResourceIds) {
-            removeResourcesFromGroupHelper(explicitResourcesToKeep, implicitResourcesToKeep, isRecursive, resourceId);
+        for (Role doomedRoleRelationship : group.getRoles()) {
+            group.removeRole(doomedRoleRelationship);
+            entityManager.merge(doomedRoleRelationship);
         }
 
-        group.getImplicitResources().retainAll(implicitResourcesToKeep);
-        group.getExplicitResources().retainAll(explicitResourcesToKeep);
+        group = entityManager.merge(group);
 
-        group.getExplicitResources().clear();
+        // now clean the group itself
+        List<ResourceIdFlyWeight> flyWeights = resourceManager.getExplicitFlyWeightsByResourceGroup(group.getId());
+        for (ResourceIdFlyWeight fly : flyWeights) {
+            removeResourcesFromGroupHelper(group, fly);
+        }
 
         // break resource and plugin configuration update links in order to preserve individual change history
         Query q = null;
@@ -312,7 +310,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             return attachedGroup;
         }
 
-        Collection<Integer> explicitResourceIds = resourceManager.getExplicitResourceIdsByResourceGroup(groupId);
+        Set<Resource> explicitResources = new HashSet<Resource>(attachedGroup.getExplicitResources());
 
         // This is a convenience, because the logic already disallows duplicate items
         Set<Integer> uniqueResourceIds = new HashSet<Integer>();
@@ -321,16 +319,18 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         // list to hold the different types of errors
         List<Integer> alreadyMemberIds = new ArrayList<Integer>();
 
-        for (Integer resourceId : resourceIds) {
+        List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(uniqueResourceIds.toArray(new Integer[0]));
+
+        for (ResourceIdFlyWeight fly : flyWeights) {
             // if resource is already in the explicit list, no work needs to be done
-            if (explicitResourceIds.contains(resourceId)) {
+            if (explicitResources.contains(fly)) {
                 // record this id that already exists in group's explicit list
-                alreadyMemberIds.add(resourceId);
+                alreadyMemberIds.add(fly.getId());
                 continue;
             }
 
             // updates explicit and implicit stuff
-            addResourcesToGroupHelper(attachedGroup, resourceId);
+            addResourcesToGroupHelper(attachedGroup, fly);
         }
 
         ResourceGroup mergedResult = entityManager.merge(attachedGroup);
@@ -359,8 +359,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             return attachedGroup;
         }
 
-        Collection<Integer> explicitResourceIds = resourceManager.getExplicitResourceIdsByResourceGroup(groupId);
-
         // Proper operation insists that the passed group not contain dups
         Set<Integer> uniqueResourceIds = new HashSet<Integer>();
         uniqueResourceIds.addAll(Arrays.asList(resourceIds));
@@ -368,33 +366,28 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         // list to hold the different types of errors
         List<Integer> notValidMemberIds = new ArrayList<Integer>();
 
+        List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(uniqueResourceIds.toArray(new Integer[0]));
         // prepare structures for remove*Helper
-        Collection<Resource> explicitResourcesToKeep = new ArrayList<Resource>(attachedGroup.getExplicitResources());
-        Collection<Resource> implicitResourcesToKeep = new ArrayList<Resource>(attachedGroup.getImplicitResources());
-        boolean isRecursive = attachedGroup.isRecursive();
 
-        for (Integer resourceId : resourceIds) {
+        for (ResourceIdFlyWeight fly : flyWeights) {
             // no work needs to be done if the resource isn't in the explicit list
-            if (!explicitResourceIds.contains(resourceId)) {
+            if (!attachedGroup.getExplicitResources().contains(fly)) {
                 // record this id that doesn't belong to the group's explicit list
-                notValidMemberIds.add(resourceId);
+                notValidMemberIds.add(fly.getId());
                 continue;
             }
 
             // updates explicit and implicit stuff
-            removeResourcesFromGroupHelper(explicitResourcesToKeep, implicitResourcesToKeep, isRecursive, resourceId);
+            removeResourcesFromGroupHelper(attachedGroup, fly);
         }
-
-        attachedGroup.getImplicitResources().retainAll(implicitResourcesToKeep);
-        attachedGroup.getExplicitResources().retainAll(explicitResourcesToKeep);
-
-        ResourceGroup mergedResult = entityManager.merge(attachedGroup);
 
         if (notValidMemberIds.size() != 0) {
             throw new ResourceGroupUpdateException(
                 ((notValidMemberIds.size() != 0) ? ("The following resources are not members of the group["
                     + attachedGroup + "]: " + notValidMemberIds.toString()) : ""));
         }
+
+        ResourceGroup mergedResult = entityManager.merge(attachedGroup);
 
         long endTime = System.currentTimeMillis();
 
@@ -737,116 +730,81 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
      * This helper method simultaneously manages the explicit lists as well, so it is crucial to not make changes to the
      * explicit groups for a resource OR or explicit resources for a group outside of this method.
      */
-    private void addResourcesToGroupHelper(ResourceGroup group, Integer resourceId) {
+    private void addResourcesToGroupHelper(ResourceGroup group, ResourceIdFlyWeight fly) {
         // both groups get the resource added to the explicit list
-        Resource lightWeightReference = new Resource(resourceId);
-        group.addExplicitResource(lightWeightReference);
+        group.addExplicitResource(fly);
 
         // implicit list mirrors explicit, if the group is not recursive
         if (!group.isRecursive()) {
-            group.getImplicitResources().add(lightWeightReference);
+            group.addImplicitResource(fly);
             return;
         }
 
-        List<Integer> toBeSearched = new LinkedList<Integer>();
-        toBeSearched.add(resourceId);
+        List<ResourceIdFlyWeight> toBeSearched = new LinkedList<ResourceIdFlyWeight>();
+        toBeSearched.add(fly);
 
         // BFS the descendants of resource
         while (toBeSearched.size() > 0) {
-            Integer nextResourceId = toBeSearched.remove(0);
+            ResourceIdFlyWeight nextFly = toBeSearched.remove(0);
 
             // add to the collection we want to change
-            group.getImplicitResources().add(new Resource(nextResourceId));
+            group.addImplicitResource(nextFly);
 
             // and continue
-            toBeSearched.addAll(resourceManager.getChildrenResourceIds(nextResourceId, InventoryStatus.COMMITTED));
+            List<ResourceIdFlyWeight> children = resourceManager.getChildrenFlyWeights(nextFly.getId(),
+                InventoryStatus.COMMITTED);
+            toBeSearched.addAll(children);
         }
     }
 
-    /*
-     * This method deconstructs the implicit resource list based on an explicit resource passed to it.  If
-     * <code>group.isRecursive()</code> is true, all of <code>resource</code>'s descendants will be removed from the
-     * implicit list. Otherwise, only <code>resource</code> will be removed from the implicit list.
-     */
-    private void removeResourcesFromGroupHelper(Collection<Resource> explicitResources,
-        Collection<Resource> implicitResources, boolean isRecursive, Integer resourceId) {
-        // groups always get the resources remove from the explicit list
-        Resource lightWeightRemoverReference = new ResourceRemover(resourceId);
-        explicitResources.remove(lightWeightRemoverReference);
+    private void removeResourcesFromGroupHelper(ResourceGroup group, ResourceIdFlyWeight fly) {
 
-        // groups always get the resources removed from the explicit list
-        if (!isRecursive) {
-            implicitResources.remove(lightWeightRemoverReference);
+        // groups always get the resources remove from the explicit list
+        group.removeExplicitResource(fly);
+
+        // non-recursive groups always get the resources removed from the explicit list
+        if (!group.isRecursive()) {
+            group.removeImplicitResource(fly);
             return;
         }
 
-        //      Resource parent = resource;
-        //      // search linearly up the ancestry
-        //      while ((parent = parent.getParentResource()) != null)
-        //      {
-        //         /*
-        //          * if some ancestor is in the explicit group, the
-        //          * implicit list will contain the descendant subtree
-        //          * of resource - thus, no work has to be done here
-        //          */
-        //         if (explicitResources.contains(parent))
-        //         {
-        //            return;
-        //         }
-        //      }
+        /*
+         * if some ancestor is in the explicit group, the implicit list will contain 
+         * the descendant subtree of resource - thus, no work has to be done here
+         */
+        List<Integer> lineage = resourceManager.getResourceIdLineage(fly.getId());
+        for (Resource explicit : new HashSet<Resource>(group.getExplicitResources())) {
+            Integer explicitId = explicit.getId();
+            if (lineage.contains(explicitId)) {
+                return;
+            }
+        }
 
-        List<Integer> toBeSearched = new LinkedList<Integer>();
-        toBeSearched.add(resourceId);
+        List<ResourceIdFlyWeight> toBeSearched = new LinkedList<ResourceIdFlyWeight>();
 
-        // BFS the descendants of resource
+        // remove from the collection we want to change
+        group.removeImplicitResource(fly);
+
+        // BFS the descendants of resource - starting with the children 
+        toBeSearched.addAll(resourceManager.getChildrenFlyWeights(fly.getId(), InventoryStatus.COMMITTED));
+
         while (toBeSearched.size() > 0) {
-            Integer nextResourceId = toBeSearched.remove(0);
+            ResourceIdFlyWeight nextFly = toBeSearched.remove(0);
 
             /*
              * no need to remove the subtree from this relative root because we know it was also added explicitly to the
              * group
              */
-            lightWeightRemoverReference = new ResourceRemover(nextResourceId);
-            if (explicitResources.contains(lightWeightRemoverReference)) {
+            if (group.getExplicitResources().contains(nextFly)) {
                 continue;
             }
 
             // remove from the collection we want to change
-            implicitResources.remove(lightWeightRemoverReference);
+            group.removeImplicitResource(nextFly);
 
             // and continue
-            toBeSearched.addAll(resourceManager.getChildrenResourceIds(nextResourceId, InventoryStatus.COMMITTED));
+            toBeSearched.addAll(resourceManager.getChildrenFlyWeights(nextFly.getId(), InventoryStatus.COMMITTED));
         }
     }
 
-    private class ResourceRemover extends Resource {
-        public ResourceRemover(int id) {
-            super(id);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-
-            if ((o == null) || !(o instanceof Resource)) {
-                return false;
-            }
-
-            final Resource other = (Resource) o;
-
-            if (getId() != other.getId()) {
-                return false;
-            }
-
-            return true;
-        }
-
-        @Override
-        public int hashCode() {
-            return getId();
-        }
-
-    }
 }

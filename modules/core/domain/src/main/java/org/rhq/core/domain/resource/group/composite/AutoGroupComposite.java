@@ -20,6 +20,7 @@ package org.rhq.core.domain.resource.group.composite;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;

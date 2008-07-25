@@ -309,6 +309,19 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "   AND r.resourceType.name = :typeName"),
     @NamedQuery(name = Resource.QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN, query = "SELECT res.id "
         + "  FROM ResourceGroup rg, IN (rg.explicitResources) res " + " WHERE rg.id = :groupId "),
+    @NamedQuery(name = Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_GROUP_ID, query = "SELECT " //
+        + " new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
+        + "  FROM ResourceGroup rg JOIN rg.explicitResources res " //
+        + " WHERE rg.id = :groupId "),
+    @NamedQuery(name = Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS, query = "SELECT " //
+        + " new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
+        + "  FROM Resource res " //
+        + " WHERE res.id IN ( :resourceIds ) "),
+    @NamedQuery(name = Resource.QUERY_FIND_FLY_WEIGHTS_BY_PARENT_RESOURCE_ID, query = "SELECT " //
+        + " new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
+        + "  FROM Resource res " //
+        + " WHERE res.parentResource.id = :parentId " //
+        + " AND res.inventoryStatus = :status "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP, query = "SELECT res "
         + "  FROM ResourceGroup rg, IN (rg.roles) r, IN (r.subjects) s, IN (rg.explicitResources) res "
         + " WHERE rg = :group " + "   AND s = :subject"),
@@ -435,7 +448,8 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "GROUP BY res.id, res.name, res.resourceType.name, avail.availabilityType "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGES, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackages ip WHERE r.id = :id"),
     @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGE_HIST, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackageHistory ip WHERE r.id = :id"),
-    @NamedQuery(name = Resource.QUERY_FIND_PLATFORM_BY_AGENT, query = "SELECT res FROM Resource res WHERE res.resourceType.category = :category AND res.agent = :agent") })
+    @NamedQuery(name = Resource.QUERY_FIND_PLATFORM_BY_AGENT, query = "SELECT res FROM Resource res WHERE res.resourceType.category = :category AND res.agent = :agent"),
+    @NamedQuery(name = Resource.QUERY_FIND_PAREBT_ID, query = "SELECT res.parentResource.id FROM Resource AS res WHERE res.id = :id") })
 @SequenceGenerator(name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
 @Table(name = "RHQ_RESOURCE")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -500,6 +514,10 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public static final String QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN = "Resource.findExplicitIdsByResourceGroup_admin";
 
+    public static final String QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_GROUP_ID = "Resource.findExplicitFlyWeightsByResourceGroupId";
+    public static final String QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS = "Resource.findFlyWeights";
+    public static final String QUERY_FIND_FLY_WEIGHTS_BY_PARENT_RESOURCE_ID = "Resource.findFlyWeightsByResourceParentId";
+
     public static final String QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP = "Resource.findByExplicitResourceGroup";
     public static final String QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP_ADMIN = "Resource.findByExplicitResourceGroup_admin";
 
@@ -539,6 +557,8 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGE_HIST = "Resource.findByIdWithInstalledPackageHist";
 
     public static final String QUERY_FIND_PLATFORM_BY_AGENT = "Resource.findPlatformByAgent";
+
+    public static final String QUERY_FIND_PAREBT_ID = "Resource.findParentId";
 
     private static final long serialVersionUID = 1L;
 
@@ -829,8 +849,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return this.mtime;
     }
 
-    public void setMtime(long mtime)
-    {
+    public void setMtime(long mtime) {
         this.mtime = mtime;
     }
 

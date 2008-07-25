@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.configuration.metadata;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,7 +28,11 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
@@ -146,7 +151,77 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             }
         }
 
+        /*
+         * Now work on the templates.
+         * For now only do the default template
+         */
+        //        Map<String, ConfigurationTemplate> exTemp = existingDefinition.getTemplates();
+        //        Map<String, ConfigurationTemplate> newTemp = newDefinition.getTemplates();
+        ConfigurationTemplate existDT = existingDefinition.getDefaultTemplate();
+        ConfigurationTemplate newDT = newDefinition.getDefaultTemplate();
+        updateDefaultTemplate(existDT, newDT);
+
         entityManager.flush();
+    }
+
+    private void updateDefaultTemplate(ConfigurationTemplate existingDT, ConfigurationTemplate newDT) {
+
+        try {
+            Configuration existConf = existingDT.getConfiguration();
+            Configuration newConf = newDT.getConfiguration();
+            Collection<String> exNames = existConf.getNames();
+            Collection<String> newNames = newConf.getNames();
+            List<String> toRemove = new ArrayList<String>();
+            for (String name : exNames) {
+                Property prop = newConf.get(name);
+                if (prop instanceof PropertySimple) {
+                    PropertySimple ps = newConf.getSimple(name);
+                    if (ps != null) {
+                        Property eprop = existConf.get(name);
+                        if (eprop instanceof PropertySimple) {
+                            PropertySimple exps = existConf.getSimple(name);
+                            if (ps.getStringValue() != null) {
+                                exps.setStringValue(ps.getStringValue());
+                                //                                System.out.println("  updated " + name + " to value " + ps.getStringValue());
+                            }
+                        } else {
+                            if (eprop != null) {
+                                //                                System.out.println("Can't yet handle target prop: " + eprop);
+                            }
+                        }
+                    } else { // property not in new template -> deleted
+                        toRemove.add(name);
+                    }
+                } else {
+                    if (prop != null) {
+                        //                        System.out.println("Can't yet handle source prop: " + prop);
+                    }
+                }
+            }
+            for (String name : toRemove)
+                existConf.remove(name);
+
+            // now check for new names and add them
+            for (String name : newNames) {
+                if (!exNames.contains(name)) {
+                    Property prop = newConf.get(name);
+                    if (prop instanceof PropertySimple) {
+                        PropertySimple ps = newConf.getSimple(name);
+                        if (ps.getStringValue() != null) {
+                            // TODO add a new property
+                            //                            Collection<Property> properties = existConf.getProperties();
+                            //                            properties = new ArrayList<Property>(properties);
+                            //                            properties.add(ps);
+                            //                            existConf.setProperties(properties);
+                        }
+                    }
+                }
+            }
+            entityManager.flush();
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+
     }
 
     /**

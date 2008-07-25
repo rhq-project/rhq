@@ -6,7 +6,10 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
@@ -822,6 +825,34 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
             System.out.println("==> Done with v2");
             registerPlugin("groupPropMoved-v1.xml");
             System.out.println("==> Done with v1");
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    @Test
+    public void testUpdateDefaultTemplate() throws Exception {
+        System.out.println("=testUpdateDefaultTemplate");
+        getTransactionManager().begin();
+        try {
+            registerPlugin("updateDefaultTemplate1.xml");
+            ResourceType platform = getResourceType("myPlatform7");
+            ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
+            ConfigurationTemplate defaultTemplate = cd.getDefaultTemplate();
+            assert defaultTemplate != null;
+            Configuration config = defaultTemplate.getConfiguration();
+            PropertySimple ps = config.getSimple("six");
+            assert "foo".equals(ps.getStringValue()) : "Expected 'foo', but got " + ps.getStringValue();
+
+            registerPlugin("updateDefaultTemplate2.xml");
+            platform = getResourceType("myPlatform7");
+            cd = platform.getResourceConfigurationDefinition();
+            defaultTemplate = cd.getDefaultTemplate();
+            assert defaultTemplate != null;
+            config = defaultTemplate.getConfiguration();
+            ps = config.getSimple("six");
+            assert "bar".equals(ps.getStringValue()) : "Expected 'bar', but got " + ps.getStringValue();
+
         } finally {
             getTransactionManager().rollback();
         }

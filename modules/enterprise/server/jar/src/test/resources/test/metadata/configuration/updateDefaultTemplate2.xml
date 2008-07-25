@@ -1,0 +1,13 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+  
+   <platform name="myPlatform7">
+         
+      <resource-configuration>
+         <c:simple-property name="six" default="bar"/>
+      </resource-configuration>
+   </platform>
+</plugin>
+   

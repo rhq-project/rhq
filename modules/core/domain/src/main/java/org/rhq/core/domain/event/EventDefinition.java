@@ -126,7 +126,7 @@ public class EventDefinition implements Externalizable {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null || getClass() != obj.getClass())
+        if (obj == null || !(obj instanceof EventDefinition))
             return false;
 
         EventDefinition that = (EventDefinition) obj;
@@ -136,7 +136,7 @@ public class EventDefinition implements Externalizable {
         }
 
         if (!name.equals(that.name))
-            return false;        
+            return false;
 
         return true;
     }

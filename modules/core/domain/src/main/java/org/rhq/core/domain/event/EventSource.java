@@ -134,7 +134,7 @@ public class EventSource implements Externalizable {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null || getClass() != obj.getClass())
+        if (obj == null || !(obj instanceof EventSource))
             return false;
 
         EventSource that = (EventSource) obj;

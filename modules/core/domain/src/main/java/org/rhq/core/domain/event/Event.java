@@ -83,7 +83,6 @@ public class Event implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "idGenerator")
     private int id;
 
-    @SuppressWarnings( { "UnusedDeclaration" })
     @JoinColumn(name = "EVENT_SOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private EventSource source;
@@ -256,7 +255,7 @@ public class Event implements Serializable {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null || getClass() != obj.getClass())
+        if (obj == null || !(obj instanceof Event))
             return false;
 
         Event that = (Event) obj;

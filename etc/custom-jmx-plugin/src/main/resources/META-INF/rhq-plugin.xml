@@ -6,7 +6,8 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-   <depends plugin="JMX"/>
+   <depends plugin="JMX" useClasses="true"/>
+   <depends plugin="JBossAS"/>        
 
    <!--
       This service represents your custom MBean.
@@ -17,17 +18,15 @@
             description="A custom service representing a single custom MBean"
             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="org.rhq.plugins.jmx.MBeanResourceComponent">
-
    
       <!--
          Denotes that the custom MBean can be found in any custom JMX server
-         detected via EMS or it can be in any Tomcat or JBossAS resource.
+         detected via EMS or it can be in any JBossAS resource.
          You typically do not have to change these, unless you want to add
-         new types where your service can run inside.
+         new types inside which your service can run.
       -->
       <runs-inside>
-         <parent-resource-type name="JMX Server" plugin="JMX"/>
-         <parent-resource-type name="Tomcat Server" plugin="Tomcat"/>
+         <parent-resource-type name="JMX Server" plugin="JMX"/>         
          <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
       </runs-inside>
       
@@ -47,8 +46,9 @@
                  
       <!--
          Define any attributes your custom MBean exposes and that you want monitored via RHQ.
+         NOTE: The property attribute should start with a capital letter.
       -->
-      <metric property="mbeanAttributeName"
+      <metric property="MBeanAttributeName"
               displayName="Friendly Attribute Name"
               defaultOn="true"
               category="performance"

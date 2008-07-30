@@ -369,11 +369,12 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
 
   <!-- if user does not want to deploy web services we must temporarily move the rej dir
        back to the non-rej dir because other parts of the build expect the non-rej name -->
-  <target name="prepare-web-services-1" depends="initialize" if="undeploy-web-services">
+  <target name="prepare-web-services-1" depends="initialize">
      <move todir="${jboss.deploy.dir}/jbossws.sar"
            verbose="true" failonerror="false">
         <!-- failonerror is false because if the container is built clean 
-             the rej dir will not exist yet, so this error must be skipped -->
+             the rej dir will not exist yet, so this error must be skipped;
+             if undeploy-web-services has never been set, this will be a no-op -->
         <fileset dir="${jboss.deploy.dir}/jbossws.sar.rej" />
      </move>
   </target>

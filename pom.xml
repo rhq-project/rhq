@@ -75,7 +75,7 @@
     <rhq.server.http.port>7080</rhq.server.http.port>
     <rhq.server.https.port>7443</rhq.server.https.port>
     
-    <rhq.server.enable.web.services>false</rhq.server.enable.web.services>
+    <rhq.server.enable.ws>false</rhq.server.enable.ws>
 
     <!-- NOTE: The below line is a workaround for a Maven bug, where it does not expand settings.* properties
                used in the distributionManagement section of the POM. -->

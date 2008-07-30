@@ -21,11 +21,14 @@ package org.rhq.core.domain.resource;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Random;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
@@ -34,7 +37,11 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+
 import org.jetbrains.annotations.NotNull;
+
+import org.rhq.core.domain.cluster.AffinityGroup;
+import org.rhq.core.domain.cluster.Server;
 
 /**
  * A JON agent.
@@ -95,6 +102,14 @@ public class Agent implements Serializable {
     @Column(name = "LAST_AVAILABILITY_REPORT")
     @Temporal(TemporalType.TIMESTAMP)
     private Date lastAvailabilityReport;
+
+    @JoinColumn(name = "AFFINITY_GROUP_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne
+    private AffinityGroup affinityGroup;
+
+    @JoinColumn(name = "SERVER_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne
+    private Server server;
 
     /**
      * Creates a new instance of Agent
@@ -247,6 +262,42 @@ public class Agent implements Serializable {
      */
     public void setLastAvailabilityReport(Date lastAvailabilityReport) {
         this.lastAvailabilityReport = lastAvailabilityReport;
+    }
+
+    /**
+     * Returns the {@link AffinityGroup} this agent currently belongs to.
+     * 
+     * @return the {@link AffinityGroup} this agent currently belongs to
+     */
+    public AffinityGroup getAffinityGroup() {
+        return affinityGroup;
+    }
+
+    /**
+     * Sets the {@link AffinityGroup} this agent should belong to.
+     * 
+     * @param affinityGroup the {@link AffinityGroup} this agent should belong to
+     */
+    public void setAffinityGroup(AffinityGroup affinityGroup) {
+        this.affinityGroup = affinityGroup;
+    }
+
+    /**
+     * Returns the {@link Server} this agent is currently communicating to.
+     * 
+     * @return the {@link Server} this agent is currently communicating to
+     */
+    public Server getServer() {
+        return server;
+    }
+
+    /**
+     * Returns the {@link Server} this agent should communicate with. 
+     * 
+     * @param the {@link Server} this agent should communicate with
+     */
+    public void setServer(Server server) {
+        this.server = server;
     }
 
     @PrePersist

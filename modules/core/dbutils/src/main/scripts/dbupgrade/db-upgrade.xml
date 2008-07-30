@@ -61,8 +61,7 @@ DB Upgrade:
             table="RHQ_CREATE_RES_HIST"
             column="CREATED_RESOURCE_NAME"
             columnType="VARCHAR2"
-            precision="500"
-           />
+            precision="500" />
     </schemaSpec>
 
    <!-- RHQ-669 - Add metadata to package type to indicate architecture support -->
@@ -70,14 +69,12 @@ DB Upgrade:
         <schema-addColumn
             table="RHQ_PACKAGE_TYPE"
             column="SUPPORTS_ARCHITECTURE"
-            columnType="BOOLEAN"
-           />
+            columnType="BOOLEAN" />
 
         <schema-alterColumn
            table="RHQ_PACKAGE_TYPE"
            column="SUPPORTS_ARCHITECTURE"
-           nullable="FALSE"
-           />
+           nullable="FALSE" />
    </schemaSpec>
 
    <!-- RHQ-176 - Add notes column to content requests -->
@@ -86,9 +83,216 @@ DB Upgrade:
             table="RHQ_CONTENT_REQ"
             column="NOTES"
             columnType="VARCHAR2"
-            precision="512"/>
+            precision="512" />
    </schemaSpec>
 
+   <!-- rhq-488 - RHQ High Availability / Failover Support -->
+   <schemaSpec version="2.6">
+
+        <!-- RHQ_AFFINITY_GROUP -->
+        <schema-directSQL>
+             <statement desc="Creating table RHQ_AFFINITY_GROUP">
+                  CREATE TABLE RHQ_AFFINITY_GROUP ( ID INTEGER )
+             </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_AFFINITY_GROUP" column="ID" nullable="FALSE" />
+        <schema-createSequence name="RHQ_AFFINITY_GROUP_ID_SEQ" initial="10001"/>
+        <schema-directSQL>
+            <statement desc="Creating primary key for RHQ_AFFINITY_GROUP">
+                ALTER TABLE RHQ_AFFINITY_GROUP ADD PRIMARY KEY ( ID )
+            </statement>
+        </schema-directSQL>
+        <schema-addColumn   table="RHQ_AFFINITY_GROUP" column="NAME" columnType="VARCHAR2" precision="255"/>
+        <schema-alterColumn table="RHQ_AFFINITY_GROUP" column="NAME" nullable="FALSE"/>
+
+        <!-- RHQ_SERVER -->
+        <schema-directSQL>
+             <statement desc="Creating table RHQ_SERVER">
+                  CREATE TABLE RHQ_SERVER ( ID INTEGER )
+             </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_SERVER" column="ID" nullable="FALSE" />
+        <schema-createSequence name="RHQ_SERVER_ID_SEQ" initial="10001"/>
+        <schema-directSQL>
+            <statement desc="Creating primary key for RHQ_SERVER">
+                ALTER TABLE RHQ_SERVER ADD PRIMARY KEY ( ID )
+            </statement>
+        </schema-directSQL>
+        <schema-addColumn   table="RHQ_SERVER" column="NAME" columnType="VARCHAR2" precision="255"/>
+        <schema-alterColumn table="RHQ_SERVER" column="NAME" nullable="FALSE"/>
+        <schema-addColumn   table="RHQ_SERVER" column="ADDRESS" columnType="VARCHAR2" precision="255"/>
+        <schema-alterColumn table="RHQ_SERVER" column="ADDRESS" nullable="FALSE"/>
+        <schema-addColumn   table="RHQ_SERVER" column="PORT" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_SERVER" column="PORT" nullable="FALSE"/>
+        <schema-addColumn   table="RHQ_SERVER" column="CTIME" columnType="LONG" />
+        <schema-alterColumn table="RHQ_SERVER" column="CTIME" nullable="FALSE"/>
+        <schema-addColumn   table="RHQ_SERVER" column="AFFINITY_GROUP_ID" columnType="INTEGER" />
+        <schema-directSQL>
+             <statement desc="Creating RHQ_SERVER foreign key relation to RHQ_AFFINITY_GROUP">
+                  ALTER TABLE RHQ_SERVER 
+                  ADD CONSTRAINT RHQ_SERVER_AFFINITY_GROUP_ID_FKEY 
+                  FOREIGN KEY (AFFINITY_GROUP_ID)
+                  REFERENCES RHQ_AFFINITY_GROUP (ID)
+             </statement>
+        </schema-directSQL>
+
+        <!-- RHQ_AGENT modifications -->
+   	    <schema-addColumn   table="RHQ_AGENT" column="AFFINITY_GROUP_ID" columnType="INTEGER" />
+        <schema-directSQL>
+             <statement desc="Creating RHQ_AGENT foreign key relation to RHQ_AFFINITY_GROUP">
+                  ALTER TABLE RHQ_AGENT 
+                  ADD CONSTRAINT RHQ_AGENT_AFFINITY_GROUP_ID_FKEY 
+                  FOREIGN KEY (AFFINITY_GROUP_ID)
+                  REFERENCES RHQ_AFFINITY_GROUP (ID)
+             </statement>
+        </schema-directSQL>
+        <schema-addColumn   table="RHQ_AGENT" column="SERVER_ID" columnType="INTEGER" />
+        <schema-directSQL>
+             <statement desc="Creating RHQ_AGENT foreign key relation to RHQ_SERVER">
+                  ALTER TABLE RHQ_AGENT 
+                  ADD CONSTRAINT RHQ_AGENT_SERVER_ID_FKEY 
+                  FOREIGN KEY (SERVER_ID)
+                  REFERENCES RHQ_SERVER (ID)
+             </statement>
+        </schema-directSQL>
+
+        <!-- RHQ_PARTITION_EVENT -->
+        <schema-directSQL>
+             <statement desc="Creating table RHQ_PARTITION_EVENT">
+                  CREATE TABLE RHQ_PARTITION_EVENT ( ID INTEGER )
+             </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_PARTITION_EVENT" column="ID" nullable="FALSE" />
+        <schema-createSequence name="RHQ_PARTITION_EVENT_ID_SEQ" initial="10001"/>
+        <schema-directSQL>
+            <statement desc="Creating primary key for RHQ_PARTITION_EVENT">
+                ALTER TABLE RHQ_PARTITION_EVENT ADD PRIMARY KEY ( ID )
+            </statement>
+        </schema-directSQL>
+        <schema-addColumn   table="RHQ_PARTITION_EVENT" column="SUBJECT_NAME" columnType="VARCHAR2" precision="255"/>
+        <schema-alterColumn table="RHQ_PARTITION_EVENT" column="SUBJECT_NAME" nullable="FALSE"/>
+        <schema-addColumn   table="RHQ_PARTITION_EVENT" column="EVENT_TYPE" columnType="VARCHAR2" precision="50"/>
+        <schema-alterColumn table="RHQ_PARTITION_EVENT" column="EVENT_TYPE" nullable="FALSE"/>
+        <schema-addColumn   table="RHQ_PARTITION_EVENT" column="CTIME" columnType="LONG" />
+        <schema-alterColumn table="RHQ_PARTITION_EVENT" column="CTIME" nullable="FALSE"/>
+
+        <!-- RHQ_PARTITION_DETAILS -->
+        <schema-directSQL>
+             <statement desc="Creating table RHQ_PARTITION_DETAILS">
+                  CREATE TABLE RHQ_PARTITION_DETAILS ( ID INTEGER )
+             </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_PARTITION_DETAILS" column="ID" nullable="FALSE" />
+        <schema-createSequence name="RHQ_PARTITION_DETAILS_ID_SEQ" initial="10001"/>
+        <schema-directSQL>
+            <statement desc="Creating primary key for RHQ_PARTITION_DETAILS">
+                ALTER TABLE RHQ_PARTITION_DETAILS ADD PRIMARY KEY ( ID )
+            </statement>
+        </schema-directSQL>
+        <schema-addColumn   table="RHQ_PARTITION_DETAILS" column="PARTITION_EVENT_ID" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_PARTITION_DETAILS" column="PARTITION_EVENT_ID" nullable="FALSE"/>
+        <schema-directSQL>
+             <statement desc="Creating RHQ_PARTITION_DETAILS foreign key relation to RHQ_PARTITION_EVENT">
+                  ALTER TABLE RHQ_PARTITION_DETAILS 
+                  ADD CONSTRAINT RHQ_PARTITION_DETAILS_EVENT_ID_FKEY 
+                  FOREIGN KEY (PARTITION_EVENT_ID)
+                  REFERENCES RHQ_PARTITION_EVENT (ID)
+             </statement>
+        </schema-directSQL>
+        <schema-addColumn   table="RHQ_PARTITION_DETAILS" column="AGENT_ID" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_PARTITION_DETAILS" column="AGENT_ID" nullable="FALSE"/>
+        <schema-directSQL>
+             <statement desc="Creating RHQ_PARTITION_DETAILS foreign key relation to RHQ_AGENT">
+                  ALTER TABLE RHQ_PARTITION_DETAILS 
+                  ADD CONSTRAINT RHQ_PARTITION_DETAILS_AGENT_ID_FKEY 
+                  FOREIGN KEY (AGENT_ID)
+                  REFERENCES RHQ_AGENT (ID)
+             </statement>
+        </schema-directSQL>
+        <schema-addColumn   table="RHQ_PARTITION_DETAILS" column="SERVER_ID" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_PARTITION_DETAILS" column="SERVER_ID" nullable="FALSE"/>
+        <schema-directSQL>
+             <statement desc="Creating RHQ_PARTITION_DETAILS foreign key relation to RHQ_SERVER">
+                  ALTER TABLE RHQ_PARTITION_DETAILS 
+                  ADD CONSTRAINT RHQ_PARTITION_DETAILS_SERVER_ID_FKEY 
+                  FOREIGN KEY (SERVER_ID)
+                  REFERENCES RHQ_SERVER (ID)
+             </statement>
+        </schema-directSQL>
+
+        <!-- RHQ_FAILOVER_LIST -->
+        <schema-directSQL>
+             <statement desc="Creating table RHQ_FAILOVER_LIST">
+                  CREATE TABLE RHQ_FAILOVER_LIST ( ID INTEGER )
+             </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_FAILOVER_LIST" column="ID" nullable="FALSE" />
+        <schema-createSequence name="RHQ_FAILOVER_LIST_ID_SEQ" initial="10001"/>
+        <schema-directSQL>
+            <statement desc="Creating primary key for RHQ_FAILOVER_LIST">
+                ALTER TABLE RHQ_FAILOVER_LIST ADD PRIMARY KEY ( ID )
+            </statement>
+        </schema-directSQL>
+        <schema-addColumn   table="RHQ_FAILOVER_LIST" column="PARTITION_EVENT_ID" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_FAILOVER_LIST" column="PARTITION_EVENT_ID" nullable="FALSE"/>
+        <schema-directSQL>
+             <statement desc="Creating RHQ_FAILOVER_LIST foreign key relation to RHQ_PARTITION_EVENT">
+                  ALTER TABLE RHQ_FAILOVER_LIST 
+                  ADD CONSTRAINT RHQ_FAILOVER_LIST_EVENT_ID_FKEY 
+                  FOREIGN KEY (PARTITION_EVENT_ID)
+                  REFERENCES RHQ_PARTITION_EVENT (ID)
+             </statement>
+        </schema-directSQL>
+        <schema-addColumn   table="RHQ_FAILOVER_LIST" column="AGENT_ID" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_FAILOVER_LIST" column="AGENT_ID" nullable="FALSE"/>
+        <schema-directSQL>
+             <statement desc="Creating RHQ_FAILOVER_LIST foreign key relation to RHQ_AGENT">
+                  ALTER TABLE RHQ_FAILOVER_LIST 
+                  ADD CONSTRAINT RHQ_FAILOVER_LIST_AGENT_ID_FKEY 
+                  FOREIGN KEY (AGENT_ID)
+                  REFERENCES RHQ_AGENT (ID)
+             </statement>
+        </schema-directSQL>
+        <schema-addColumn   table="RHQ_FAILOVER_LIST" column="CTIME" columnType="LONG" />
+        <schema-alterColumn table="RHQ_FAILOVER_LIST" column="CTIME" nullable="FALSE"/>
+
+        <!-- RHQ_FAILOVER_DETAILS -->
+        <schema-directSQL>
+             <statement desc="Creating table RHQ_FAILOVER_DETAILS">
+                  CREATE TABLE RHQ_FAILOVER_DETAILS ( ID INTEGER )
+             </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_FAILOVER_DETAILS" column="ID" nullable="FALSE" />
+        <schema-createSequence name="RHQ_FAILOVER_DETAILS_ID_SEQ" initial="10001"/>
+        <schema-directSQL>
+            <statement desc="Creating primary key for RHQ_FAILOVER_DETAILS">
+                ALTER TABLE RHQ_FAILOVER_DETAILS ADD PRIMARY KEY ( ID )
+            </statement>
+        </schema-directSQL>
+        <schema-addColumn   table="RHQ_FAILOVER_DETAILS" column="FAILOVER_LIST_ID" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_FAILOVER_DETAILS" column="FAILOVER_LIST_ID" nullable="FALSE"/>
+        <schema-directSQL>
+             <statement desc="Creating RHQ_FAILOVER_DETAILS foreign key relation to FAILOVER_LIST_ID">
+                  ALTER TABLE RHQ_FAILOVER_DETAILS 
+                  ADD CONSTRAINT RHQ_FAILOVER_DETAILS_LIST_ID_FKEY 
+                  FOREIGN KEY (FAILOVER_LIST_ID)
+                  REFERENCES RHQ_FAILOVER_LIST (ID)
+             </statement>
+        </schema-directSQL>
+        <schema-addColumn   table="RHQ_FAILOVER_DETAILS" column="SERVER_ID" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_FAILOVER_DETAILS" column="SERVER_ID" nullable="FALSE"/>
+        <schema-directSQL>
+             <statement desc="Creating RHQ_FAILOVER_DETAILS foreign key relation to RHQ_SERVER">
+                  ALTER TABLE RHQ_FAILOVER_DETAILS 
+                  ADD CONSTRAINT RHQ_FAILOVER_DETAILS_SERVER_ID_FKEY 
+                  FOREIGN KEY (SERVER_ID)
+                  REFERENCES RHQ_SERVER (ID)
+             </statement>
+        </schema-directSQL>
+        <schema-addColumn   table="RHQ_FAILOVER_DETAILS" column="CTIME" columnType="LONG" />
+        <schema-alterColumn table="RHQ_FAILOVER_DETAILS" column="CTIME" nullable="FALSE"/>
+
+   </schemaSpec>
 
 </dbupgrade>
 

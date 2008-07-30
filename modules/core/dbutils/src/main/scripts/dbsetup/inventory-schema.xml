@@ -3,32 +3,6 @@
 <dbsetup name="inventory-schema.xml"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:xmlns:rhq-dbsetup-schema">
 
-    <!--  new agent -->
-    <table name="RHQ_AGENT">
-        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="NAME" required="true" size="255" type="VARCHAR2"/>
-        <column name="ADDRESS" required="true" size="255" type="VARCHAR2"/>
-        <column name="PORT" required="true" type="INTEGER"/>
-        <column name="AGENTTOKEN" required="true" size="100" type="VARCHAR2"/>
-        <column name="REMOTE_ENDPOINT" required="false" size="4000" type="VARCHAR2"/>
-        <column name="CTIME" required="true" type="LONG"/>
-        <column name="MTIME" required="true" type="LONG"/>
-        <column name="LAST_AVAILABILITY_REPORT" required="false" type="TIMESTAMP"/>
-
-        <index name="RHQ_AGENT_NAME_UNIQUE" unique="true">
-            <field ref="NAME"/>
-        </index>
-
-        <index name="RHQ_AGENT_ADDRESS_PORT" unique="true">
-            <field ref="ADDRESS"/>
-            <field ref="PORT"/>
-        </index>
-
-        <index name="RHQ_AGENT_TOKEN_UNIQUE" unique="true">
-            <field ref="AGENTTOKEN"/>
-        </index>
-    </table>
-
     <!-- NEW RESOURCE TYPES -->
     <table name="RHQ_RESOURCE_TYPE">
         <column name="ID" default="sequence-only" initial="10001"

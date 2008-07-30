@@ -1,0 +1,179 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.core.domain.cluster;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.PrePersist;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
+import org.rhq.core.domain.resource.Agent;
+
+/**
+ * An RHQ server node in the cluster
+ * 
+ * @author jmarques
+ *
+ */
+@Entity(name = "Server")
+@NamedQueries( { @NamedQuery(name = Server.QUERY_FIND_BY_NAME, query = "SELECT s FROM Server s WHERE s.name = :name") })
+@SequenceGenerator(name = "id", sequenceName = "RHQ_SERVER_ID_SEQ")
+@Table(name = "RHQ_SERVER")
+public class Server implements Serializable {
+
+    public static final long serialVersionUID = 1L;
+
+    public static final String QUERY_FIND_BY_NAME = "Server.findByName";
+
+    @Column(name = "ID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
+    @Id
+    private int id;
+
+    @Column(name = "NAME", nullable = false)
+    private String name;
+
+    @Column(name = "ADDRESS", nullable = false)
+    private String address;
+
+    @Column(name = "PORT", nullable = false)
+    private int port;
+
+    // the time this server node was installed into the infrastructure
+    @Column(name = "CTIME", nullable = false)
+    private long ctime;
+
+    @JoinColumn(name = "AFFINITY_GROUP_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne
+    private AffinityGroup affinityGroup;
+
+    @OneToMany(mappedBy = "server")
+    private List<Agent> agents = new ArrayList<Agent>();
+
+    // required for JPA
+    protected Server() {
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public long getCtime() {
+        return ctime;
+    }
+
+    public AffinityGroup getAffinityGroup() {
+        return affinityGroup;
+    }
+
+    public void setAffinityGroup(AffinityGroup affinityGroup) {
+        this.affinityGroup = affinityGroup;
+    }
+
+    public List<Agent> getAgents() {
+        return agents;
+    }
+
+    public void setAgents(List<Agent> agents) {
+        this.agents = agents;
+    }
+
+    @PrePersist
+    void onPersist() {
+        this.ctime = System.currentTimeMillis();
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (int) (ctime ^ (ctime >>> 32));
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj == null || !(obj instanceof Server)) {
+            return false;
+        }
+
+        final Server other = (Server) obj;
+
+        if (ctime != other.ctime) {
+            return false;
+        }
+
+        if (name == null) {
+            if (other.name != null) {
+                return false;
+            }
+        } else if (!name.equals(other.name)) {
+            return false;
+        }
+
+        return true;
+    }
+
+}

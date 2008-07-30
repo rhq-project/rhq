@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<dbsetup name="cluster-schema.xml">
+
+    <table name="RHQ_AFFINITY_GROUP">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" required="true" size="255" type="VARCHAR2"/>
+    </table>
+
+    <table name="RHQ_SERVER">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" required="true" size="255" type="VARCHAR2"/>
+        <column name="ADDRESS" required="true" size="255" type="VARCHAR2"/>
+        <column name="PORT" required="true" type="INTEGER"/>
+        <column name="CTIME" required="true" type="LONG"/>
+        <column name="AFFINITY_GROUP_ID" type="INTEGER" references="RHQ_AFFINITY_GROUP" required="false"/>
+    </table>
+    
+    <!--  new agent -->
+    <table name="RHQ_AGENT">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" required="true" size="255" type="VARCHAR2"/>
+        <column name="ADDRESS" required="true" size="255" type="VARCHAR2"/>
+        <column name="PORT" required="true" type="INTEGER"/>
+        <column name="AGENTTOKEN" required="true" size="100" type="VARCHAR2"/>
+        <column name="REMOTE_ENDPOINT" required="false" size="4000" type="VARCHAR2"/>
+        <column name="CTIME" required="true" type="LONG"/>
+        <column name="MTIME" required="true" type="LONG"/>
+        <column name="LAST_AVAILABILITY_REPORT" required="false" type="TIMESTAMP"/>
+        <column name="AFFINITY_GROUP_ID" type="INTEGER" references="RHQ_AFFINITY_GROUP" required="false"/>
+        <column name="SERVER_ID" type="INTEGER" references="RHQ_SERVER" required="false"/>
+
+        <index name="RHQ_AGENT_NAME_UNIQUE" unique="true">
+            <field ref="NAME"/>
+        </index>
+
+        <index name="RHQ_AGENT_ADDRESS_PORT" unique="true">
+            <field ref="ADDRESS"/>
+            <field ref="PORT"/>
+        </index>
+
+        <index name="RHQ_AGENT_TOKEN_UNIQUE" unique="true">
+            <field ref="AGENTTOKEN"/>
+        </index>
+    </table>
+    
+    <table name="RHQ_PARTITION_EVENT">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="SUBJECT_NAME" required="true" size="255" type="VARCHAR2"/>
+        <column name="CTIME" required="true" type="LONG"/>
+        <column name="EVENT_TYPE" required="true" size="50" type="VARCHAR2"/>
+    </table>
+    
+    <table name="RHQ_PARTITION_DETAILS">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="PARTITION_EVENT_ID" type="INTEGER" references="RHQ_PARTITION_EVENT" required="true"/>
+        <column name="AGENT_ID" type="INTEGER" references="RHQ_AGENT" required="true"/>
+        <column name="SERVER_ID" type="INTEGER" references="RHQ_SERVER" required="true"/>
+    </table>
+
+    <table name="RHQ_FAILOVER_LIST">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="PARTITION_EVENT_ID" type="INTEGER" references="RHQ_PARTITION_EVENT" required="true"/>
+        <column name="AGENT_ID" type="INTEGER" references="RHQ_AGENT" required="true"/>
+        <column name="CTIME" required="true" type="LONG"/>
+    </table>
+
+    <table name="RHQ_FAILOVER_DETAILS">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="FAILOVER_LIST_ID" type="INTEGER" references="RHQ_FAILOVER_LIST" required="true"/>
+        <column name="SERVER_ID" type="INTEGER" references="RHQ_SERVER" required="true"/>
+        <column name="CTIME" required="true" type="LONG"/>
+    </table>
+
+</dbsetup>

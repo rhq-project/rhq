@@ -84,9 +84,10 @@
   </target>
 
   <target name="prepare-container"
-          depends="prepare-jbossas-dir, 
+          depends="prepare-web-services-1,
+                   prepare-jbossas-dir, 
                    prepare-bin-dir, 
-                   prepare-web-services" />
+                   prepare-web-services-2" />
 
   <target name="prepare-jbossas-dir"
           depends="initialize"
@@ -108,13 +109,13 @@
     <fail unless="jboss.home.is.valid" message="${jboss.home} does not contain a valid JBoss 4.x installation - aborting..." />
 
     <echo>Installing safe ejb3 web invoker ...</echo>
-    <delete failonerror="no">
-      <fileset dir="${jboss.home}/server/default/deploy/jbossws.sar">
+    <delete verbose="true">
+      <fileset dir="${jboss.deploy.dir}/jbossws.sar">
         <include name="safe-invoker*" />
       </fileset>
     </delete>
     <copy file="${settings.localRepository}/org/rhq/safe-invoker/1.0.2/safe-invoker-1.0.2.jar"
-           toDir="${jboss.home}/server/default/deploy/jbossws.sar" verbose="true" />
+           toDir="${jboss.deploy.dir}/jbossws.sar" verbose="true" />
 
     <echo>Installing patched hibernate jar ...</echo>
     <copy file="${settings.localRepository}/hibernate/hibernate3/3.2.r14201-1/hibernate3-3.2.r14201-1.jar"
@@ -366,11 +367,26 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
 
   </target>
 
-  <target name="prepare-web-services" depends="initialize" if="undeploy-web-services">
-     <echo>Undeploying JBossWS...</echo>
-     <move file="${jboss.home}/server/default/deploy/jbossws.sar" toDir="${jboss.home}/server/default/deploy/jbossws.sar.rej" verbose="true"/>
+  <!-- if user does not want to deploy web services we must temporarily move the rej dir
+       back to the non-rej dir because other parts of the build expect the non-rej name -->
+  <target name="prepare-web-services-1" depends="initialize" if="undeploy-web-services">
+     <move todir="${jboss.deploy.dir}/jbossws.sar"
+           verbose="true" failonerror="false">
+        <!-- failonerror is false because if the container is built clean 
+             the rej dir will not exist yet, so this error must be skipped -->
+        <fileset dir="${jboss.deploy.dir}/jbossws.sar.rej" />
+     </move>
   </target>
 
+  <!-- if user does not want to deploy web services, we want to rename the non-rej dir
+       to the rej dir name so that the jboss deployer does not pick up this sar at all -->
+  <target name="prepare-web-services-2" depends="initialize" if="undeploy-web-services">
+     <move todir="${jboss.deploy.dir}/jbossws.sar.rej"
+           verbose="true">
+        <fileset dir="${jboss.deploy.dir}/jbossws.sar" />
+     </move>
+  </target>
+	
   <target name="unzip-jboss" unless="jboss.uptodate">
     <unzip src="${settings.localRepository}/jboss/jboss/${jboss.version}/jboss-${jboss.version}.zip"
            dest="${basedir}/target" />
@@ -443,19 +459,20 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
 
   <target name="prepare-release"
           depends="initialize,
+                   prepare-web-services-1,
                    fix-perms,
                    developer-release-message,
                    copy-dev-resources,
                    deploy-postgres-ds,
                    deploy-oracle-ds,
-                   prepare-web-services,
                    undeploy-jmx-console,
                    undeploy-mail-service,
                    undeploy-alert-cache-service,
                    undeploy-embedded-agent,
                    undeploy-jms,
                    undeploy-ear,
-                   undeploy-ds"
+                   undeploy-ds,
+                   prepare-web-services-2"
           description="If this is a release build, make sure it is properly prepared." />
 
   <target name="fix-perms">

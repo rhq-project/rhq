@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<plugin name="Hardware"
+        displayName="Hardware"
+        package="org.rhq.plugins.hardware"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <server name="Hardware Monitor"
+            discovery="HardwareDiscoveryComponent"
+            class="HardwareComponent">
+
+
+        <metric property="cpuAverageTemperature" units="celsius" displayName="Average CPU Temperature" displayType="summary"/>
+        <metric property="hddAverageTemperature" units="celsius" displayName="Average Hard Drive Temperature" displayType="summary"/>
+        <metric property="batteriesAverageTemperature" units="celsius" displayName="Average Battery Temperature" displayType="summary"/>
+        <metric property="gpusAverageTemperature" units="celsius" displayName="Average GPU Temperature" displayType="summary"/>
+        <metric property="fanAverageSpeed" displayName="Average Fan Speed" displayType="summary"/>
+
+        <metric property="smolt.System Memory" dataType="trait" displayType="summary" displayName="System Memory" defaultInterval="86400"/>
+        <metric property="smolt.System Swap" dataType="trait" displayType="summary" displayName="System Swap" defaultInterval="86400"/>
+        <metric property="smolt.Vendor" dataType="trait" displayType="summary" displayName="Vendor" defaultInterval="86400"/>
+        <metric property="smolt.System" dataType="trait" displayType="summary" displayName="System Model" defaultInterval="86400"/>
+        <metric property="smolt.Form factor" dataType="trait" displayType="summary" displayName="Form Factor" defaultInterval="86400"/>
+        <metric property="smolt.CPU Vendor" dataType="trait" displayType="summary" displayName="CPU Vendor" defaultInterval="86400"/>
+        <metric property="smolt.CPU Model" dataType="trait" displayType="summary" displayName="CPU Model" defaultInterval="86400"/>
+        <metric property="smolt.BogoMIPS" dataType="trait" displayType="summary" displayName="BogoMIPS" defaultInterval="86400"/>
+
+    </server>
+
+</plugin>

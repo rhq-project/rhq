@@ -258,11 +258,12 @@ rhq.server.database.password=${rhq.server.database.password}
 rhq.server.database.type-mapping=${rhq.server.database.type-mapping}
 
 # Container configuration
+# ********************************** NOTE ************************************
+# If the jboss.bind.address property is set to anything besides 0.0.0.0, 
+# uncomment the java.rmi.server.hostname property below and set it to the same
+# value - setting it to ${jboss.bind.address} will *not* work.
 jboss.bind.address=0.0.0.0
-
-# If the bind address is set to anything besides 0.0.0.0, uncomment this
-# property and set to the same value; using ${jboss.bind.address} will not work.
-#   java.rmi.server.hostname=0.0.0.0
+#java.rmi.server.hostname=0.0.0.0
 
 rhq.server.startup.web.http.port=${rhq.server.http.port}
 rhq.server.startup.web.https.port=${rhq.server.https.port}

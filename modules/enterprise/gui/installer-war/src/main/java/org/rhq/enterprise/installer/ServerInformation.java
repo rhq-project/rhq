@@ -156,9 +156,6 @@ public class ServerInformation {
         String jdbcUrl = props.getProperty(ServerProperties.PROP_DATABASE_CONNECTION_URL, "-unknown-");
         String userName = props.getProperty(ServerProperties.PROP_DATABASE_USERNAME, "-unknown-");
         String password = props.getProperty(ServerProperties.PROP_DATABASE_PASSWORD, "-unknown-");
-        File logfile = new File(getLogDirectory(), "rhq-installer-dbsetup.log");
-
-        logfile.delete(); // do not keep logs from previous dbsetup runs
 
         try {
             // extract the dbsetup files which are located in the dbutils jar
@@ -166,7 +163,7 @@ public class ServerInformation {
             String dbsetupDataXmlFile = extractDatabaseXmlFile("db-data-combined.xml", props);
 
             // first uninstall any old existing schema, then create the tables then insert the data
-            DBSetup dbsetup = new DBSetup(jdbcUrl, userName, password, logfile.getAbsolutePath());
+            DBSetup dbsetup = new DBSetup(jdbcUrl, userName, password);
             dbsetup.uninstall(dbsetupSchemaXmlFile);
             dbsetup.setup(dbsetupSchemaXmlFile);
             dbsetup.setup(dbsetupDataXmlFile, null, true, false);

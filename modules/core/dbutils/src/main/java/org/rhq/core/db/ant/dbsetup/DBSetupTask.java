@@ -45,7 +45,6 @@ public class DBSetupTask extends Task {
     private boolean dataOnly = false;
     private boolean uninstall = false;
     private boolean exportXml = false;
-    private String sqlFile = null;
     private ArrayList<Environment.Variable> sysProps = new ArrayList<Environment.Variable>();
 
     // These are used when "dataOnly" is true, to only setup a single table
@@ -89,21 +88,6 @@ public class DBSetupTask extends Task {
     }
 
     /**
-     * Sets the name of the SQL output file (which is used for debugging to trace JDBC calls). If <code>null</code>,
-     * empty or set to <code>NONE</code>, there will be no SQL debug output.
-     *
-     * @param sql_file
-     */
-    public void setSqlFile(String sql_file) {
-        if ((sql_file == null) || (sql_file.length() == 0) || sql_file.equals("NONE")
-            || (sql_file.startsWith("${") && sql_file.endsWith("}"))) {
-            return;
-        }
-
-        this.sqlFile = sql_file;
-    }
-
-    /**
      * Support subelements to set System properties e.g &lt;sysproperty key="foo" value="bar" /&gt; After the task has
      * completed, the system properties will be reverted to their old values (of if the system property didn't exist
      * before, it will be removed).
@@ -134,7 +118,7 @@ public class DBSetupTask extends Task {
         }
 
         try {
-            DBSetup dbs = new DBSetup(jdbcUrl, jdbcUser, jdbcPassword, sqlFile);
+            DBSetup dbs = new DBSetup(jdbcUrl, jdbcUser, jdbcPassword);
 
             if (uninstall) {
                 dbs.uninstall(xmlFile.getAbsolutePath());

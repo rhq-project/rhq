@@ -52,9 +52,6 @@ import org.rhq.core.db.DbUtil;
 import org.rhq.core.db.DbUtilsI18NFactory;
 import org.rhq.core.db.DbUtilsI18NResourceKeys;
 import org.rhq.core.db.TypeMap;
-import org.rhq.core.db.log.FileLoggerListener;
-import org.rhq.core.db.log.LoggerDriver;
-import org.rhq.core.db.log.StdOutLoggerListener;
 
 /**
  * Performs XML parsing of the database schema and data files and sets up the database accordingly. This has the ability
@@ -69,8 +66,6 @@ public class DBSetup {
     private String m_jdbcUrl;
     private String m_username;
     private String m_password;
-    private boolean m_jdbcLogEnabled;
-    private String m_jdbcLogFileName;
     private boolean m_consoleMode;
 
     private Connection m_connection;
@@ -83,14 +78,11 @@ public class DBSetup {
      * @param jdbc_url           the JDBC URL used to connect to the database
      * @param username           the user that will be logged into the database
      * @param password           user's credentials
-     * @param jdbc_log_file_name if not <code>null</code>, the JDBC logger log messages will be written here
      */
-    public DBSetup(String jdbc_url, String username, String password, String jdbc_log_file_name) {
+    public DBSetup(String jdbc_url, String username, String password) {
         m_jdbcUrl = jdbc_url;
         m_username = username;
         m_password = password;
-        m_jdbcLogFileName = jdbc_log_file_name;
-        m_jdbcLogEnabled = jdbc_log_file_name != null;
         m_consoleMode = false;
     }
 
@@ -101,23 +93,20 @@ public class DBSetup {
      * @param jdbc_url         the JDBC URL used to connect to the database
      * @param username         the user that will be logged into the database
      * @param password         user's credentials
-     * @param jdbc_log_enabled if <code>true</code> JDBC logging will be enabled and messages will be sent to the
-     *                         console
+     * @param consoleMode      indicates if messages should be emitted to the console
      */
-    public DBSetup(String jdbc_url, String username, String password, boolean jdbc_log_enabled) {
+    public DBSetup(String jdbc_url, String username, String password, boolean consoleMode) {
         m_jdbcUrl = jdbc_url;
         m_username = username;
         m_password = password;
-        m_jdbcLogFileName = null;
-        m_jdbcLogEnabled = jdbc_log_enabled;
-        m_consoleMode = true;
+        m_consoleMode = consoleMode;
     }
 
     /**
      * A console application that can be used to run the DBSetup from a command line. The arguments are as follows:
      *
      * <pre>
-     * DBSetup -op=setup|clear|uninstall|uninstallsetup [-log=none|all|sql]
+     * DBSetup -op=setup|clear|uninstall|uninstallsetup
      *         -jdbcurl=&lt;db-url> [-jdbcuser=&lt;username>] [-jdbcpassword=&lt;password>]
      *         -file=&lt;dbsetup-xml-file>
      * </pre>
@@ -135,13 +124,6 @@ public class DBSetup {
      *       <li>uninstallsetup: performs an uninstall first, and then a setup</li>
      *     </ul>
      *   </li>
-     *   <li>-log: enables JDBC logging so JDBC calls are logged to the console
-     *
-     *     <ul>
-     *       <li>all: logs all JDBC calls</li>
-     *       <li>sql: logs only JDBC calls that execute SQL</li>
-     *     </ul>
-     *   </li>
      *   <li>-jdbcurl: JDBC URL used to connect to the database</li>
      *   <li>-jdbcuser: username that is used to connect to the database</li>
      *   <li>-jdbcpassword: credentials of the user</li>
@@ -157,7 +139,6 @@ public class DBSetup {
         boolean do_uninstall = false;
         boolean do_uninstallsetup = false;
         String op_requested = "";
-        boolean jdbc_log_enabled = false;
         String jdbc_url = null;
         String jdbc_user = null;
         String jdbc_password = null;
@@ -173,19 +154,6 @@ public class DBSetup {
                         do_clear = op_requested.equals("clear");
                         do_uninstall = op_requested.equals("uninstall");
                         do_uninstallsetup = op_requested.equals("uninstallsetup");
-                    } else if (arg.startsWith("-log=")) {
-                        String log_arg = arg.substring(arg.indexOf('=') + 1);
-
-                        if (log_arg.equalsIgnoreCase("sql")) {
-                            jdbc_log_enabled = true;
-                            System.setProperty(LoggerDriver.PROP_LOGSQLONLY, "true");
-                        } else if (log_arg.equalsIgnoreCase("all")) {
-                            jdbc_log_enabled = true;
-                            System.setProperty(LoggerDriver.PROP_LOGSQLONLY, "false");
-                        } else if (!log_arg.equalsIgnoreCase("none")) {
-                            throw new IllegalArgumentException(MSG.getMsg(
-                                DbUtilsI18NResourceKeys.DBSETUP_CMDLINE_BAD_LOG, log_arg));
-                        }
                     } else if (arg.startsWith("-jdbcurl=")) {
                         jdbc_url = arg.substring(arg.indexOf('=') + 1);
                     } else if (arg.startsWith("-jdbcuser=")) {
@@ -237,10 +205,7 @@ public class DBSetup {
             return;
         }
 
-        System.out.println(MSG.getMsg(DbUtilsI18NResourceKeys.DBSETUP_CMDLINE_OPTIONS, op_requested, jdbc_log_enabled,
-            jdbc_url, jdbc_user, dbsetup_file));
-
-        DBSetup dbsetup = new DBSetup(jdbc_url, jdbc_user, jdbc_password, jdbc_log_enabled);
+        DBSetup dbsetup = new DBSetup(jdbc_url, jdbc_user, jdbc_password);
 
         try {
             boolean ok = true;
@@ -1012,12 +977,17 @@ public class DBSetup {
         Statement stmt;
 
         log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_DO_SQL, sql);
-
+        
         // Cache the original commit option
         boolean committing = this.getConnection().getAutoCommit();
         if (committing) {
             this.getConnection().setAutoCommit(false);
         }
+
+        // Currently, returnPreparedStatement is always false (this method is never called directly, just by the above
+        // overloaded method), so we can rely on this method to track performance.
+        // Aug 04, 2008
+        long start = System.currentTimeMillis();
 
         if (returnPreparedStatement) {
             stmt = this.getConnection().prepareStatement(sql);
@@ -1041,6 +1011,9 @@ public class DBSetup {
                 }
             }
         }
+
+        long duration = System.currentTimeMillis() - start;
+        log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_DURATION, duration);
 
         // Reset the commit option
         this.getConnection().setAutoCommit(committing);
@@ -1078,40 +1051,13 @@ public class DBSetup {
     }
 
     /**
-     * Creates a new connection to the database. If this object is configured to do logging, the {@link LoggerDriver}
-     * will be used to wrap wrapper loggers around the JDBC objects.
+     * Creates a new connection to the database.
      *
      * @return the connection
      *
      * @throws Exception if failed to connect or determine the type of database that was connected to
      */
     private Connection connect() throws Exception {
-        if (m_jdbcLogEnabled) {
-            // if we want to log SQL, we need to prefix the JDBC URL with our logger driver's URL
-            if (!m_jdbcUrl.startsWith(LoggerDriver.JDBC_URL_PREFIX)) {
-                m_jdbcUrl = LoggerDriver.JDBC_URL_PREFIX + m_jdbcUrl;
-            }
-
-            // if the VM hasn't been told how to configure the logger stuff, let's due it now
-            if (System.getProperty(LoggerDriver.PROP_LOGSQLONLY) == null) {
-                System.setProperty(LoggerDriver.PROP_LOGSQLONLY, "false");
-            }
-
-            // note that this is a way you can override the m_logFileName - set the VM's properties for log listener
-            // and log file, and we'll use those and not m_logFileName as the log file. But m_logFileEnabled still has to be
-            // true for logging to be enabled.
-            if (System.getProperty(LoggerDriver.PROP_LOGLISTENER) == null) {
-                if (m_jdbcLogFileName != null) {
-                    System.setProperty(LoggerDriver.PROP_LOGLISTENER, FileLoggerListener.class.getName());
-                    if (System.getProperty(FileLoggerListener.PROP_LOGFILE) == null) {
-                        System.setProperty(FileLoggerListener.PROP_LOGFILE, m_jdbcLogFileName);
-                    }
-                } else {
-                    System.setProperty(LoggerDriver.PROP_LOGLISTENER, StdOutLoggerListener.class.getName());
-                }
-            }
-        }
-
         m_connection = DbUtil.getConnection(m_jdbcUrl, m_username, m_password);
 
         try {

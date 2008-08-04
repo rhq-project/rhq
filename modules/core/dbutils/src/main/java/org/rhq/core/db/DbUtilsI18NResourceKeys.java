@@ -245,11 +245,11 @@ public interface DbUtilsI18NResourceKeys {
 
     @I18NMessages( {
         @I18NMessage("\\n\\\n{0}\\n\\\n"
-            + "DBSetup -op=export|setup|clear|uninstall|uninstallsetup [-log=none|all|sql]\\n\\\n"
+            + "DBSetup -op=export|setup|clear|uninstall|uninstallsetup \\n\\\n"
             + "        -jdbcurl=<db-url> [-jdbcuser=<username>] [-jdbcpassword=<password>]\\n\\\n"
             + "        -file=<dbsetup-xml-file>"),
         @I18NMessage(value = "\\n\\\n{0}\\n\\\n"
-            + "DBSetup -op=export|setup|clear|uninstall|uninstallsetup [-log=none|all|sql]\\n\\\n"
+            + "DBSetup -op=export|setup|clear|uninstall|uninstallsetup \\n\\\n"
             + "        -jdbcurl=<db-url> [-jdbcuser=<Benutzername>] [-jdbcpassword=<Passwort>]\\n\\\n"
             + "        -file=<dbsetup-xml-Datei>", locale = "de") })
     String DBSETUP_CMDLINE_USAGE = "DBSetup.cmdline.usage";
@@ -260,11 +260,6 @@ public interface DbUtilsI18NResourceKeys {
         @I18NMessage(value = "Die Operation ist [{0}] - sie muss eine der folgenden sein:\\n\\\n"
             + "''export'', ''setup'', ''clear'', ''uninstall'' oder ''uninstallsetup''", locale = "de") })
     String DBSETUP_CMDLINE_BAD_OP = "DBSetup.cmdline.bad-op";
-
-    @I18NMessages( {
-        @I18NMessage("The log argument is invalid [{0}] - it must be one of ''none'', ''all'' or ''sql''"),
-        @I18NMessage(value = "Das Argument für das Logging ist ungültig [{0}]. Es muss eines der folgenden sein: ''none'', ''all'' or ''sql''", locale = "de") })
-    String DBSETUP_CMDLINE_BAD_LOG = "DBSetup.cmdline.bad-log";
 
     @I18NMessages( { @I18NMessage("The path to the DBSetup XML file is invalid [{0}]"),
         @I18NMessage(value = "Der Pfad zur DBSetup-XML-Datei ist ungültig [{0}]", locale = "de") })
@@ -332,4 +327,6 @@ public interface DbUtilsI18NResourceKeys {
             + "\\n\\\nErzeugt am: {0,date,long} um {0,time,long}\\n\\\n", locale = "de") })
     String DBSETUP_EXPORT_WARNING_NOTICE = "DBSetup.export.warning-notice";
 
+    @I18NMessages({ @I18NMessage("Duration: {0} ms"), @I18NMessage(value = "Dauer: {0} ms", locale = "de") })
+    String DBSETUP_DURATION = "DBSetup.duration";
 }

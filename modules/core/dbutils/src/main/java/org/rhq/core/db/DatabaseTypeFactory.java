@@ -25,7 +25,6 @@ import java.util.Map;
 import javax.naming.Context;
 import javax.sql.DataSource;
 import mazz.i18n.Logger;
-import org.rhq.core.db.log.LoggerDriver;
 
 /**
  * A factory class that creates {@link DatabaseType} objects based on the database being connected to. This should be
@@ -49,7 +48,6 @@ public class DatabaseTypeFactory {
         DB_URL_DRIVER_MAP.put("jdbc:postgresql:", "org.postgresql.Driver");
         DB_URL_DRIVER_MAP.put("jdbc:oracle:thin:@", "oracle.jdbc.driver.OracleDriver");
         DB_URL_DRIVER_MAP.put("jdbc:oracle:oci8:", "oracle.jdbc.driver.OracleDriver");
-        DB_URL_DRIVER_MAP.put(LoggerDriver.JDBC_URL_PREFIX, LoggerDriver.class.getName()); // this always exists in our classloader
     }
 
     /**

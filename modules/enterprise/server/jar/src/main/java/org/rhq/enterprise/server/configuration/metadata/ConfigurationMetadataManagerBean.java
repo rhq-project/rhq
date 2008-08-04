@@ -153,18 +153,52 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
         /*
          * Now work on the templates.
-         * For now only do the default template
          */
-        //        Map<String, ConfigurationTemplate> exTemp = existingDefinition.getTemplates();
-        //        Map<String, ConfigurationTemplate> newTemp = newDefinition.getTemplates();
-        ConfigurationTemplate existDT = existingDefinition.getDefaultTemplate();
-        ConfigurationTemplate newDT = newDefinition.getDefaultTemplate();
-        updateDefaultTemplate(existDT, newDT);
+        Map<String, ConfigurationTemplate> existingTemplates = existingDefinition.getTemplates();
+        Map<String, ConfigurationTemplate> newTemplates = newDefinition.getTemplates();
+        List<String> toRemove = new ArrayList<String>();
+        for (String name : existingTemplates.keySet()) {
+            ConfigurationTemplate exTemplate = existingTemplates.get(name);
+            if (newTemplates.containsKey(name)) {
+                //                System.out.println("updating template with name " + name);
+                updateTemplate(exTemplate, newTemplates.get(name));
+            } else {
+                // template in newTemplates not there -> delete old stuff
+                //                System.out.println("Deleting template with name " + name);
+                entityManager.remove(exTemplate);
+                toRemove.add(name);
+            }
+        }
+        // Remove the deleted ones from the existing templates map
+        for (String name : toRemove) {
+            existingTemplates.remove(name);
+        }
+        entityManager.flush();
+
+        for (String name : newTemplates.keySet()) {
+            // add completely new templates
+            if (!existingTemplates.containsKey(name)) {
+
+                //                System.out.println("Persisting new template with name " + name);
+                ConfigurationTemplate newTemplate = newTemplates.get(name);
+
+                // we need to set a valid configurationDefinition, where we will live on.
+                newTemplate.setConfigurationDefinition(existingDefinition);
+
+                entityManager.persist(newTemplate);
+                existingTemplates.put(name, newTemplate);
+            }
+        }
 
         entityManager.flush();
     }
 
-    private void updateDefaultTemplate(ConfigurationTemplate existingDT, ConfigurationTemplate newDT) {
+    /**
+     * Updates a template 
+     * @param existingDT
+     * @param newDT
+     */
+    private void updateTemplate(ConfigurationTemplate existingDT, ConfigurationTemplate newDT) {
 
         try {
             Configuration existConf = existingDT.getConfiguration();

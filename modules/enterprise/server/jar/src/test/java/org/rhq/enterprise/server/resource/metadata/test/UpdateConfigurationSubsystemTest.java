@@ -34,7 +34,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
      *
      * @throws Exception
      */
-    @Test
+    //    @Test
     public void testUpdatePluginConfig() throws Exception {
         getTransactionManager().begin();
         try {
@@ -125,7 +125,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
      *
      * @throws Exception
      */
-    @Test
+    //    @Test
     public void testResourceConfiguration() throws Exception {
         getTransactionManager().begin();
         try {
@@ -290,7 +290,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
      *
      * @throws Exception
      */
-    @Test
+    //    @Test
     public void testConstraint() throws Exception {
         getTransactionManager().begin();
         try {
@@ -312,7 +312,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
      *
      * @throws Exception
      */
-    @Test
+    //    @Test
     public void testConstraint2() throws Exception {
         getTransactionManager().begin();
         try {
@@ -335,7 +335,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
      *
      * @throws Exception
      */
-    @Test
+    //    @Test
     public void testConstraintMinMax() throws Exception {
         getTransactionManager().begin();
         try {
@@ -362,7 +362,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         }
     }
 
-    @Test
+    //    @Test
     public void testListProperty() throws Exception {
         getTransactionManager().begin();
         try {
@@ -528,7 +528,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         }
     }
 
-    @Test
+    //    @Test
     public void testListPropertyMinMax() throws Exception {
         getTransactionManager().begin();
         try {
@@ -549,7 +549,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         }
     }
 
-    @Test
+    //    @Test
     public void testMapProperty() throws Exception {
         getTransactionManager().begin();
         try {
@@ -665,7 +665,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
      *
      * @throws Exception
      */
-    @Test
+    //    @Test
     public void testChangePropertyType() throws Exception {
         getTransactionManager().begin();
         try {
@@ -766,7 +766,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
 
     /*==================================== Resource Config Tests ======================================*/
 
-    @Test
+    //    @Test
     public void testGroupDeleted() throws Exception {
         System.out.println("= testGroupDeleted");
         getTransactionManager().begin();
@@ -782,7 +782,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         }
     }
 
-    @Test
+    //    @Test
     public void testGroupPropDeleted() throws Exception {
         System.out.println("= testGroupPropDeleted");
         getTransactionManager().begin();
@@ -798,7 +798,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         }
     }
 
-    @Test
+    //    @Test
     public void testGroupPropDeletedExt() throws Exception {
         System.out.println("= testGroupPropDeletedExt");
         getTransactionManager().begin();
@@ -814,7 +814,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         }
     }
 
-    @Test
+    //    @Test
     public void testGroupPropMoved() throws Exception {
         System.out.println("= testGroupPropMoved");
         getTransactionManager().begin();
@@ -830,7 +830,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         }
     }
 
-    @Test
+    //    @Test
     public void testUpdateDefaultTemplate() throws Exception {
         System.out.println("=testUpdateDefaultTemplate");
         getTransactionManager().begin();
@@ -857,4 +857,22 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
             getTransactionManager().rollback();
         }
     }
+
+    @Test
+    public void testAddDeleteTemplate() throws Exception {
+        System.out.println("=testAddDeleteTemplate");
+        getTransactionManager().begin();
+        try {
+            registerPlugin("addDeleteTemplate1.xml");
+            System.out.println("Done with v1");
+            registerPlugin("addDeleteTemplate2.xml");
+            System.out.println("Done with v2");
+            registerPlugin("addDeleteTemplate1.xml");
+            System.out.println("Done with v1(2)");
+
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
 }

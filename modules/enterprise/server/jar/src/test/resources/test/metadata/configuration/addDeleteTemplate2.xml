@@ -8,9 +8,7 @@
       <resource-configuration>
          <c:simple-property name="hello" default="world"/>
          <c:template name="additional" description="An additional template to be persisted etc.">
-            <c:simple-property name="second_one">
-               <c:description>Bart</c:description>
-            </c:simple-property>
+            <c:simple-property name="second_one" default="Bart"/>
          </c:template>
       </resource-configuration>
    </platform>

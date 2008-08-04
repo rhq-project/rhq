@@ -863,13 +863,57 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
         System.out.println("=testAddDeleteTemplate");
         getTransactionManager().begin();
         try {
+            ResourceType platform;
+            ConfigurationTemplate defaultTemplate;
+            ConfigurationDefinition cd;
+            Map<String, ConfigurationTemplate> templateMap;
+            ConfigurationTemplate template;
+            PropertySimple ps;
+
             registerPlugin("addDeleteTemplate1.xml");
+            platform = getResourceType("myPlatform7");
+            cd = platform.getResourceConfigurationDefinition();
+            defaultTemplate = cd.getDefaultTemplate();
+            assert defaultTemplate != null;
+            templateMap = cd.getTemplates();
+            assert templateMap.size() == 1 : "Expected only the 1 default template but got " + templateMap.size();
             System.out.println("Done with v1");
+
             registerPlugin("addDeleteTemplate2.xml");
+            platform = getResourceType("myPlatform7");
+            cd = platform.getResourceConfigurationDefinition();
+            defaultTemplate = cd.getDefaultTemplate();
+            templateMap = cd.getTemplates();
+            assert defaultTemplate != null;
+            assert templateMap.size() == 2 : "Expected 2 templates but got " + templateMap.size();
+            template = templateMap.get("additional");
+            assert template != null;
+            ps = template.getConfiguration().getSimple("second_one");
+            assert ps.getStringValue().equals("Bart") : "Expected 'Bart', but got " + ps.getStringValue();
+
             System.out.println("Done with v2");
+
             registerPlugin("addDeleteTemplate3.xml");
+            platform = getResourceType("myPlatform7");
+            cd = platform.getResourceConfigurationDefinition();
+            defaultTemplate = cd.getDefaultTemplate();
+            templateMap = cd.getTemplates();
+            assert defaultTemplate != null;
+            assert templateMap.size() == 2 : "Expected 2 templates but got " + templateMap.size();
+            template = templateMap.get("additional");
+            assert template != null;
+            ps = template.getConfiguration().getSimple("second_one");
+            assert ps.getStringValue().equals("Bart Simpson") : "Expected 'Bart Simpson', but got "
+                + ps.getStringValue();
             System.out.println("Done with v3");
+
             registerPlugin("addDeleteTemplate1.xml");
+            platform = getResourceType("myPlatform7");
+            cd = platform.getResourceConfigurationDefinition();
+            defaultTemplate = cd.getDefaultTemplate();
+            templateMap = cd.getTemplates();
+            assert defaultTemplate != null;
+            assert templateMap.size() == 1 : "Expected only the 1 default template but got " + templateMap.size();
             System.out.println("Done with v1(2)");
 
         } finally {

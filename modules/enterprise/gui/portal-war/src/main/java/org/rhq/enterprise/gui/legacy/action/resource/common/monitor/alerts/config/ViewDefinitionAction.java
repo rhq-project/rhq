@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.Alert
 import org.rhq.enterprise.gui.legacy.beans.AlertConditionBean;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.legacy.events.EventConstants;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * View an alert definition.
@@ -64,6 +65,12 @@ public class ViewDefinitionAction extends TilesAction {
 
         request.setAttribute("controlEnabled", true); // TODO: disable if this resource doesn't have any operations facet
 
+        int recoveryAlertDefId = alertDef.getRecoveryId();
+        if (recoveryAlertDefId != 0) {
+            String recoveryAlertName = getRecoveryAlertName(recoveryAlertDefId, subject);
+            request.setAttribute("recoveryAlertName", recoveryAlertName);
+        }
+
         if (alertDef.getOperationDefinition() != null) {
             request.setAttribute("controlAction", alertDef.getOperationDefinition().getDisplayName());
         }
@@ -72,5 +79,15 @@ public class ViewDefinitionAction extends TilesAction {
         AlertDefUtil.setAlertDampeningRequestAttributes(request, alertDef);
 
         return null;
+    }
+
+    private String getRecoveryAlertName(int alertDefinitionId, Subject user) {
+        try {
+            AlertDefinition alertDefinition = LookupUtil.getAlertDefinitionManager().getAlertDefinitionById(user,
+                alertDefinitionId);
+            return alertDefinition.getName();
+        } catch (Exception ex) {
+            return null;
+        }
     }
 }

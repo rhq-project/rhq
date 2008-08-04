@@ -88,8 +88,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent {
                 File postgresConfFile = (configFilePath != null) ? new File(configFilePath) : new File(pgData,
                         PostgresServerComponent.DEFAULT_CONFIG_FILE_NAME);
                 if (!postgresConfFile.exists()) {
-                    log.error("PostgreSQL configuration file (" + postgresConfFile + ") does not exist.");
-                    continue;
+                    log.warn("PostgreSQL configuration file (" + postgresConfFile + ") does not exist.");
                 }
 
                 log.debug("PostgreSQL configuration file: " + postgresConfFile);
@@ -97,8 +96,7 @@ public class PostgresDiscoveryComponent implements ResourceDiscoveryComponent {
                 try {
                     confFile = new PostgresqlConfFile(postgresConfFile);
                 } catch (IOException e) {
-                    log.error("Could not load PostgreSQL configuration file.", e);
-                    continue;
+                    log.warn("Could not load PostgreSQL configuration file.", e);
                 }
             }
 

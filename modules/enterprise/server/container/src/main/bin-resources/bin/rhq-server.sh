@@ -213,9 +213,9 @@ if [ "x$RHQ_SERVER_JAVA_OPTS" = "x" ]; then
    if [ "x$_CYGWIN" != "x" ]; then
       _LOG_DIR_PATH=`cygpath --windows --path "$_LOG_DIR_PATH"`
    fi
-   RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server -Xms256M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M -Djava.net.preferIPv4Stack=true -Djboss.server.log.dir=${_LOG_DIR_PATH}"
+   RHQ_SERVER_JAVA_OPTS="-Xms256M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M -Djava.net.preferIPv4Stack=true -Djboss.server.log.dir=${_LOG_DIR_PATH}"
 fi
-RHQ_SERVER_JAVA_OPTS="$RHQ_SERVER_JAVA_OPTS -Djboss.platform.mbeanserver"
+RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server $RHQ_SERVER_JAVA_OPTS -Djava.awt.headless=true -Djboss.platform.mbeanserver"
 debug_msg "RHQ_SERVER_JAVA_OPTS: $RHQ_SERVER_JAVA_OPTS"
 debug_msg "RHQ_SERVER_ADDITIONAL_JAVA_OPTS: $RHQ_SERVER_ADDITIONAL_JAVA_OPTS"
 

@@ -98,14 +98,10 @@
       </b>
     </td>
     <td class="BlockContent">
-      <c:choose>
-        <c:when test="${alertDef.willRecover}">
-          <fmt:message key="alert.config.props.CB.Content.ActionFilters.AlertDisabledUntilManuallyReenabled"/>
-        </c:when>
-        <c:otherwise>
-	      <fmt:message key="alert.config.props.CB.Content.ActionFilters.AlertAlwaysEnabled"/>
-	    </c:otherwise>
-      </c:choose>
+      <fmt:message key="alert.config.props.CB.Content.UntilRecovered"/>
+      <b>
+        : <c:out value="${alertDef.willRecover}" />
+      </b>
     </td>
   </tr>
   <tr>

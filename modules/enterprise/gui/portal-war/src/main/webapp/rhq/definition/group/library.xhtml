@@ -15,7 +15,7 @@
 
             <i><h:inputTextarea id="expression" readonly="true" value="#{GroupDefinitionExpressionBuilderLibraryUIBean.expression}" style="width: 100%"/></i>
 
-        <h:panelGrid columns="2" width="100%" cellspacing="3">
+        <h:panelGrid columns="2" cellspacing="3">
 
 
             <h:outputText value="Group By:"/>
@@ -24,7 +24,7 @@
                                   value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy}">
                 <f:selectItem itemLabel="Yes" itemValue="true"/>
 
-                <rich:toolTip>
+                <rich:toolTip showDelay="1000">
                     <span style="white-space:nowrap">
                         GroupBy will cause the system to pivot on the values from the entered expressions creating
                         a separate group for each value. E.g. GroupBy on the cluster name to create a group for each
@@ -39,7 +39,7 @@
                              onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
                              value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedResourceLevel}">
                <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.resourceLevels}"/>
-                <rich:toolTip >
+                <rich:toolTip showDelay="1000">
                      <span style="white-space:nowrap">
                          Choose the level of the resource you wish to select. <br/>
                          E.g. Select parent will find resources whose parent<br/>
@@ -47,13 +47,13 @@
                      </span>
                  </rich:toolTip>
              </h:selectOneMenu>
-           
+
            <h:outputText value="Expression Type: " />
            <h:selectOneMenu id="propertyType" name="propertyType" 
                             onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
                             value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType}">
               <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.propertyTypes}"/>
-               <rich:toolTip>
+               <rich:toolTip showDelay="1000">
                     <span style="white-space:nowrap">
                         The type of property this expression switches on:<br/>
                         <b>Resource:</b> A resource property such as its name or version<br/>
@@ -72,7 +72,7 @@
                             onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();" 
                             value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedPlugin}">
               <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.plugins}"/>
-               <rich:toolTip>
+               <rich:toolTip showDelay="1000">
                     <span style="white-space:nowrap">
                         The Plugin to search
                     </span>
@@ -85,7 +85,7 @@
                             onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
                             value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedResourceType}">
               <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.resourceTypes}"/>
-               <rich:toolTip>
+               <rich:toolTip showDelay="1000">
                     <span style="white-space:nowrap">
                         The type of resource
                     </span>
@@ -98,7 +98,7 @@
                    disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType == 'Resource Type'}"
                    value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedProperty}">
               <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.properties}"/>
-               <rich:toolTip>
+               <rich:toolTip showDelay="1000">
                     <span style="white-space:nowrap">
                         The name of the property to query. This is defined by the type of expression<br/>
                         as well as the resource Type.
@@ -122,7 +122,7 @@
                         onblur="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
                          onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
                          value="#{GroupDefinitionExpressionBuilderLibraryUIBean.enteredValue}">
-                <rich:toolTip>
+                <rich:toolTip showDelay="1000">
                      <span style="white-space:nowrap">
                          The string value for the expression to query
                      </span>

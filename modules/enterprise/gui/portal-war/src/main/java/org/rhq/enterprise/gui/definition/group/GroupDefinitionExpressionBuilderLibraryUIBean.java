@@ -319,6 +319,7 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
         String requestParamPlugin = FacesContextUtility.getOptionalRequestParameter("libraryForm:plugin", String.class, this.selectedPlugin);
         String requestParamResourceType = FacesContextUtility.getOptionalRequestParameter("libraryForm:resourceType", String.class, this.selectedResourceType);
 
+        this.selectedResourceLevel = FacesContextUtility.getOptionalRequestParameter("libraryForm:resourceLevel", String.class, "Resource");
         this.selectedProperty = FacesContextUtility.getOptionalRequestParameter("libraryForm:property");
         this.selectedGroupBy = FacesContextUtility.getOptionalRequestParameter("libraryForm:selectedGroupBy");
         this.groupby = Boolean.valueOf(this.selectedGroupBy);
@@ -459,7 +460,7 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
                 buf.append(this.selectedProperty);
                 break;
             case RESOURCE_TYPE:
-                buf.append("type.name");
+                buf.append("type.plugin");
                 break;
             case TRAIT:
                 buf.append("trait[" + this.selectedProperty + "]");
@@ -482,10 +483,10 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
                     buf.append(".contains");
                     break;
                 case STARTS_WITH:
-                    buf.append("startsWith");
+                    buf.append(".startsWith");
                     break;
                 case ENDS_WITH:
-                    buf.append("endsWith");
+                    buf.append(".endsWith");
                     break;
             }
 
@@ -498,10 +499,10 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
                     break;
                 case RESOURCE_TYPE:
                     String d = buf.toString();
-                    buf.append(this.selectedResourceType);
-                    buf.append("\n");
-                    buf.append(d.replaceAll("name", "plugin"));
                     buf.append(this.selectedPlugin);
+                    buf.append("\n");
+                    buf.append(d.replaceAll("plugin", "name"));
+                    buf.append(this.selectedResourceType);
                     break;
                 case TRAIT:
                 case PLUGIN_CONFIGURATION:
@@ -509,6 +510,10 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
                     buf.append(enteredValue);
                     break;
             }
+        } else if (PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE_TYPE) {
+            String d = buf.toString();
+            buf.append("\n");
+            buf.append(d.replaceAll("plugin", "name"));
         }
         return buf.toString();
     }

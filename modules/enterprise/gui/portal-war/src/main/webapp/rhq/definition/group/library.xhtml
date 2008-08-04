@@ -4,7 +4,8 @@
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax">
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
       
 <f:view>
         <h:form id="libraryForm">
@@ -16,21 +17,21 @@
 
         <h:panelGrid columns="2" width="100%" cellspacing="3">
 
-            
+
             <h:outputText value="Group By:"/>
             <h:selectManyCheckbox id="selectedGroupBy" name="selectedGroupBy"
-                          onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
-                          value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy}">
-                              <f:selectItem itemLabel="Yes" itemValue="true" />
-            </h:selectManyCheckbox>
+                                  onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
+                                  value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy}">
+                <f:selectItem itemLabel="Yes" itemValue="true"/>
 
-           
-           <h:outputText value="Expression Type: " />
-           <h:selectOneMenu id="propertyType" name="propertyType" 
-                            onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
-                            value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType}">
-              <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.propertyTypes}"/>
-           </h:selectOneMenu>
+                <rich:toolTip>
+                    <span style="white-space:nowrap">
+                        GroupBy will cause the system to pivot on the values from the entered expressions creating
+                        a separate group for each value. E.g. GroupBy on the cluster name to create a group for each
+                        cluster with all cluster members in it.
+                    </span>
+                </rich:toolTip>
+            </h:selectManyCheckbox>
 
 
             <h:outputText value="Resource: " />
@@ -38,16 +39,45 @@
                              onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
                              value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedResourceLevel}">
                <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.resourceLevels}"/>
+                <rich:toolTip >
+                     <span style="white-space:nowrap">
+                         Choose the level of the resource you wish to select. <br/>
+                         E.g. Select parent will find resources whose parent<br/>
+                         resource matches the rest of the expression.
+                     </span>
+                 </rich:toolTip>
+             </h:selectOneMenu>
+           
+           <h:outputText value="Expression Type: " />
+           <h:selectOneMenu id="propertyType" name="propertyType" 
+                            onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
+                            value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType}">
+              <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.propertyTypes}"/>
+               <rich:toolTip>
+                    <span style="white-space:nowrap">
+                        The type of property this expression switches on:<br/>
+                        <b>Resource:</b> A resource property such as its name or version<br/>
+                        <b>Resource Type:</b> Search for resources of a specific type<br/>
+                        <b>Traits:</b> Resources that have selected values for a monitored trait<br/>
+                        <b>Plugin Configuration:</b> Search by the plugin component configurations of the component<br/>
+                        <b>Resource Configuration:</b> Search by the configuration values of the managed resource
+                    </span>
+                </rich:toolTip>
             </h:selectOneMenu>
 
-           
+
            <h:outputText value="Defining Plugin: " />
            <h:selectOneMenu id="plugin" name="plugin"
                             disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.typeSelectionDisabled}"
                             onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();" 
                             value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedPlugin}">
               <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.plugins}"/>
-           </h:selectOneMenu>
+               <rich:toolTip>
+                    <span style="white-space:nowrap">
+                        The Plugin to search
+                    </span>
+                </rich:toolTip>
+            </h:selectOneMenu>
            
            <h:outputText value="Resource Type: " />
            <h:selectOneMenu id="resourceType" name="resourceType" 
@@ -55,29 +85,50 @@
                             onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
                             value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedResourceType}">
               <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.resourceTypes}"/>
-           </h:selectOneMenu>
+               <rich:toolTip>
+                    <span style="white-space:nowrap">
+                        The type of resource
+                    </span>
+                </rich:toolTip>
+            </h:selectOneMenu>
            
            <h:outputText value="Property Names: " />
            <h:selectOneMenu id="property" name="property"
                                onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
+                   disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType == 'Resource Type'}"
                    value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedProperty}">
               <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.properties}"/>
+               <rich:toolTip>
+                    <span style="white-space:nowrap">
+                        The name of the property to query. This is defined by the type of expression<br/>
+                        as well as the resource Type.
+                    </span>
+                </rich:toolTip>
+
            </h:selectOneMenu>
 
 
             <h:outputText value="Comparison Type: "/>
             <h:selectOneMenu id="comparison" name="comparison"
                                 onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
-                    disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy}"
+                    disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy || GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType == 'Resource Type'}"
                     value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedComparison}">
                <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.comparisonTypes}"/>
             </h:selectOneMenu>
 
             <h:outputText value="Value: " />
             <h:inputText id="value" name="value"
-                         disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy}"
+                         disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy || GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType == 'Resource Type'}"
+                        onblur="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
                          onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
-                         value="#{GroupDefinitionExpressionBuilderLibraryUIBean.enteredValue}"/>
+                         value="#{GroupDefinitionExpressionBuilderLibraryUIBean.enteredValue}">
+                <rich:toolTip>
+                     <span style="white-space:nowrap">
+                         The string value for the expression to query
+                     </span>
+                 </rich:toolTip>                
+            </h:inputText>
+
 
 
         </h:panelGrid>

@@ -87,7 +87,7 @@ unset JBOSS_CLASSPATH
 
 debug_msg ()
 {
-   if [ "x$RHQ_SERVER_DEBUG" != "x" ]; then
+   if [ -n "$RHQ_SERVER_DEBUG" ]; then
       echo $1
    fi
 }
@@ -98,9 +98,9 @@ debug_msg ()
 
 check_status ()
 {
-    if [ -f $PIDFILE ]; then
+    if [ -f "$PIDFILE" ]; then
         PID=`cat $PIDFILE`
-        if [ "x$PID" != "x" ] && kill -0 $PID 2>/dev/null ; then
+        if [ -n "$PID" ] && kill -0 $PID 2>/dev/null ; then
             STATUS="RHQ Server (pid $PID) is running"
             RUNNING=1
         else
@@ -119,7 +119,7 @@ check_status ()
 
 remove_pid_file ()
 {
-   if [ -f $PIDFILE ]; then
+   if [ -f "$PIDFILE" ]; then
       rm $PIDFILE
    fi
 }
@@ -144,10 +144,10 @@ esac
 # directly from the server installation's bin directory.
 # ----------------------------------------------------------------------
 
-if [ "x$RHQ_SERVER_HOME" = "x" ]; then
+if [ -z "$RHQ_SERVER_HOME" ]; then
    RHQ_SERVER_HOME=`dirname $0`/..
 else
-   if [ ! -d $RHQ_SERVER_HOME ]; then
+   if [ ! -d "$RHQ_SERVER_HOME" ]; then
       echo "ERROR! RHQ_SERVER_HOME is not pointing to a valid directory"
       echo "RHQ_SERVER_HOME: $RHQ_SERVER_HOME"
       exit 1
@@ -159,7 +159,7 @@ RHQ_SERVER_HOME=`pwd`
 
 debug_msg "RHQ_SERVER_HOME: $RHQ_SERVER_HOME"
 
-if [ ! -f ${RHQ_SERVER_HOME}/jbossas/bin/run.jar ]; then
+if [ ! -f "${RHQ_SERVER_HOME}/jbossas/bin/run.jar" ]; then
    echo "ERROR! RHQ_SERVER_HOME is not pointing to a valid RHQ Server"
    echo "Missing ${RHQ_SERVER_HOME}/jbossas/bin/run.jar"
    exit 1
@@ -169,8 +169,8 @@ fi
 # if we are on a Mac and JAVA_HOME is not set, then set it to /usr
 # as this is the default location.
 # ----------------------------------------------------------------------
-if [ "x$JAVA_HOME" = "x" ]; then
-   if [ "x$_DARWIN" != "x" ]; then
+if [ -z "$JAVA_HOME" ]; then
+   if [ -n "$_DARWIN" ]; then
      debug_msg "Running on Mac OS X, setting JAVA_HOME to /usr"
      JAVA_HOME=/usr
    fi
@@ -180,11 +180,11 @@ fi
 # Find the Java executable and verify we have a VM available
 # ----------------------------------------------------------------------
 
-if [ "x$RHQ_SERVER_JAVA_EXE_FILE_PATH" = "x" ]; then
-   if [ "x$RHQ_SERVER_JAVA_HOME" = "x" ]; then
+if [ -z "$RHQ_SERVER_JAVA_EXE_FILE_PATH" ]; then
+   if [ -z "$RHQ_SERVER_JAVA_HOME" ]; then
       RHQ_SERVER_JAVA_HOME=${RHQ_SERVER_HOME}/jre
       debug_msg "Using the embedded JRE"
-      if [ ! -d $RHQ_SERVER_JAVA_HOME ]; then
+      if [ ! -d "$RHQ_SERVER_JAVA_HOME" ]; then
          debug_msg "No embedded JRE found - will try to use JAVA_HOME: $JAVA_HOME"
          RHQ_SERVER_JAVA_HOME=$JAVA_HOME
       fi
@@ -194,7 +194,7 @@ if [ "x$RHQ_SERVER_JAVA_EXE_FILE_PATH" = "x" ]; then
 fi
 debug_msg "RHQ_SERVER_JAVA_EXE_FILE_PATH: $RHQ_SERVER_JAVA_EXE_FILE_PATH"
 
-if [ ! -f $RHQ_SERVER_JAVA_EXE_FILE_PATH ]; then
+if [ ! -f "$RHQ_SERVER_JAVA_EXE_FILE_PATH" ]; then
    echo There is no JVM available.
    echo Please set RHQ_SERVER_JAVA_HOME or RHQ_SERVER_JAVA_EXE_FILE_PATH appropriately.
    exit 1
@@ -208,9 +208,9 @@ export JAVA
 # Prepare the VM command line options to be passed in
 # ----------------------------------------------------------------------
 
-if [ "x$RHQ_SERVER_JAVA_OPTS" = "x" ]; then
+if [ -z "$RHQ_SERVER_JAVA_OPTS" ]; then
    _LOG_DIR_PATH=${RHQ_SERVER_HOME}/logs
-   if [ "x$_CYGWIN" != "x" ]; then
+   if [ -n "$_CYGWIN" ]; then
       _LOG_DIR_PATH=`cygpath --windows --path "$_LOG_DIR_PATH"`
    fi
    RHQ_SERVER_JAVA_OPTS="-Xms256M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M -Djava.net.preferIPv4Stack=true -Djboss.server.log.dir=${_LOG_DIR_PATH}"
@@ -227,12 +227,12 @@ export JAVA_OPTS
 # Prepare the command line arguments passed to the RHQ Server
 # ----------------------------------------------------------------------
 
-if [ "x$RHQ_SERVER_CMDLINE_OPTS" = "x" ]; then
+if [ -z "$RHQ_SERVER_CMDLINE_OPTS" ]; then
    
    _PROPS_FILE_PATH=${RHQ_SERVER_HOME}/bin/rhq-server.properties
    
    # convert paths if we are on Windows
-   if [ "x$_CYGWIN" != "x" ]; then
+   if [ -n "$_CYGWIN" ]; then
       _PROPS_FILE_PATH=`cygpath --windows --path "$_PROPS_FILE_PATH"`
    fi
 
@@ -246,7 +246,7 @@ debug_msg "RHQ_SERVER_CMDLINE_OPTS: $RHQ_SERVER_CMDLINE_OPTS"
 
 _JBOSS_RUN_SCRIPT=${RHQ_SERVER_HOME}/jbossas/bin/run.sh
 
-if [ ! -f $_JBOSS_RUN_SCRIPT ]; then
+if [ ! -f "$_JBOSS_RUN_SCRIPT" ]; then
    echo "ERROR! Cannot find the JBossAS run script"
    echo "Not found: $_JBOSS_RUN_SCRIPT"
    exit 1
@@ -296,7 +296,7 @@ case "$1" in
         
         # start the server, making sure its working directory is the JBossAS bin directory 
         cd ${RHQ_SERVER_HOME}/jbossas/bin
-        if [ "x$RHQ_SERVER_DEBUG" = "x" ]; then
+        if [ -z "$RHQ_SERVER_DEBUG" ]; then
            $_JBOSS_RUN_SCRIPT $RHQ_SERVER_CMDLINE_OPTS > /dev/null 2>&1 &
         else
            $_JBOSS_RUN_SCRIPT $RHQ_SERVER_CMDLINE_OPTS &
@@ -325,7 +325,7 @@ case "$1" in
 
         echo Stopping RHQ Server...
         
-        if [ "x$_SOLARIS" != "x" ]; then
+        if [ -n "$_SOLARIS" ]; then
         	kill -TERM `cat ${RHQ_SERVER_HOME}/jbossas/.jboss_pid`
         	sleep 3
         fi
@@ -335,7 +335,7 @@ case "$1" in
         while [ "$RUNNING" = "1"  ]; do
            kill -TERM $PID
            sleep 2
-           if [ "x$_SOLARIS" != "x" ]; then
+           if [ -n "$_SOLARIS" ]; then
                kill -9 $PID
                sleep 2
            fi

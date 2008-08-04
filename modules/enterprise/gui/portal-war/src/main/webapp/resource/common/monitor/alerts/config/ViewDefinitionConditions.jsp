@@ -71,6 +71,7 @@
     <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>
   <!-- Enablement option section -->
+ 
   <c:choose>
   <c:when test="${alertDef.recoveryId > 0}">
   <tr valign="top">
@@ -86,4 +87,28 @@
   </tr>
   </c:when>
   </c:choose>
+  
+  <tr>
+    <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
+  </tr>
+  <tr>
+    <td class="BlockLabel" valign="top">
+      <b>
+        <fmt:message key="alert.config.props.CB.Content.ActionFilters"/>
+      </b>
+    </td>
+    <td class="BlockContent">
+      <c:choose>
+        <c:when test="${alertDef.willRecover}">
+          <fmt:message key="alert.config.props.CB.Content.ActionFilters.AlertDisabledUntilManuallyReenabled"/>
+        </c:when>
+        <c:otherwise>
+	      <fmt:message key="alert.config.props.CB.Content.ActionFilters.AlertAlwaysEnabled"/>
+	    </c:otherwise>
+      </c:choose>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
+  </tr>
 </table>

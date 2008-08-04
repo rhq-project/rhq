@@ -8,16 +8,42 @@
       
 <f:view>
         <h:form id="libraryForm">
+
+            <h3><h:outputText value="DynaGroups Expression Builder"/></h3>
+
+
+            <i><h:inputTextarea id="expression" readonly="true" value="#{GroupDefinitionExpressionBuilderLibraryUIBean.expression}" style="width: 100%"/></i>
+
         <h:panelGrid columns="2" width="100%" cellspacing="3">
+
+            
+            <h:outputText value="Group By:"/>
+            <h:selectManyCheckbox id="selectedGroupBy" name="selectedGroupBy"
+                          onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
+                          value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy}">
+                              <f:selectItem itemLabel="Yes" itemValue="true" />
+            </h:selectManyCheckbox>
+
+           
            <h:outputText value="Expression Type: " />
            <h:selectOneMenu id="propertyType" name="propertyType" 
                             onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
                             value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType}">
               <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.propertyTypes}"/>
            </h:selectOneMenu>
+
+
+            <h:outputText value="Resource: " />
+            <h:selectOneMenu id="resourceLevel" name="resourceLevel"
+                             onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
+                             value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedResourceLevel}">
+               <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.resourceLevels}"/>
+            </h:selectOneMenu>
+
            
            <h:outputText value="Defining Plugin: " />
            <h:selectOneMenu id="plugin" name="plugin"
+                            disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.typeSelectionDisabled}"
                             onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();" 
                             value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedPlugin}">
               <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.plugins}"/>
@@ -25,18 +51,40 @@
            
            <h:outputText value="Resource Type: " />
            <h:selectOneMenu id="resourceType" name="resourceType" 
+                            disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.typeSelectionDisabled}"
                             onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
                             value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedResourceType}">
               <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.resourceTypes}"/>
            </h:selectOneMenu>
            
            <h:outputText value="Property Names: " />
-           <h:selectOneListbox id="property" name="property">
+           <h:selectOneMenu id="property" name="property"
+                               onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
+                   value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedProperty}">
               <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.properties}"/>
-           </h:selectOneListbox>
+           </h:selectOneMenu>
+
+
+            <h:outputText value="Comparison Type: "/>
+            <h:selectOneMenu id="comparison" name="comparison"
+                                onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
+                    disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy}"
+                    value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedComparison}">
+               <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.comparisonTypes}"/>
+            </h:selectOneMenu>
+
+            <h:outputText value="Value: " />
+            <h:inputText id="value" name="value"
+                         disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy}"
+                         onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
+                         value="#{GroupDefinitionExpressionBuilderLibraryUIBean.enteredValue}"/>
+
+
         </h:panelGrid>
-        
+
         <h:commandButton id="hiddenChangeSubmit" style="visibility: hidden;" action="#{GroupDefinitionExpressionBuilderLibraryUIBean.refreshData}" />
+
+        <h:commandButton id="Submit" value="Add Expression" onclick="opener.document.forms['groupDefinitionEditForm'].elements['groupDefinitionEditForm:textArea'].value += document.forms['libraryForm'].elements['libraryForm:expression'].value + '\n'; window.close();" />
         </h:form>
 </f:view>
 

@@ -14,7 +14,12 @@
             <html:link page="/resource/group/Inventory.do?mode=new">
                <fmt:message key="resource.hub.NewGroupLink"/>
                <html:img page="/images/title_arrow.gif" width="11" height="9" alt="" border="0"/>
-            </html:link>
+            </html:link><br/>
+
+             <html:link page="/rhq/definition/group/new.xhtml">
+                 New Group Definition
+                 <html:img page="/images/title_arrow.gif" width="11" height="9" alt="" border="0"/>                 
+             </html:link>
             <br>
          </td>
       </tr>

@@ -214,7 +214,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     private void removeFromParents(ResourceType typeToBeRemoved) {
-        Set<ResourceType> parents = typeToBeRemoved.getParentResourceTypes();
+        // Wrap in new HashSet to avoid ConcurrentModificationExceptions.
+        Set<ResourceType> parents = new HashSet<ResourceType>(typeToBeRemoved.getParentResourceTypes());
         for (ResourceType parent : parents) {
             parent.removeChildResourceType(typeToBeRemoved);
         }

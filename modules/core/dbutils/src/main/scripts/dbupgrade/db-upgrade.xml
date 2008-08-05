@@ -296,6 +296,11 @@ DB Upgrade:
 
    </schemaSpec>
 
+   <schemaSpec version="2.7">
+        <schema-addColumn   table="RHQ_AGENT" column="DIRTY" columnType="BOOLEAN" />
+        <schema-alterColumn table="RHQ_AGENT" column="DIRTY" nullable="FALSE"/>
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

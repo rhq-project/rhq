@@ -111,6 +111,9 @@ public class Agent implements Serializable {
     @ManyToOne
     private Server server;
 
+    @Column(name = "DIRTY", nullable = false)
+    private boolean dirty = false;
+
     /**
      * Creates a new instance of Agent
      */
@@ -292,12 +295,34 @@ public class Agent implements Serializable {
     }
 
     /**
-     * Returns the {@link Server} this agent should communicate with. 
+     * Sets the {@link Server} this agent should communicate with. 
      * 
      * @param the {@link Server} this agent should communicate with
      */
     public void setServer(Server server) {
         this.server = server;
+    }
+
+    /**
+     * Returns true if this agent needs its primary {@link Server} to reload 
+     * cache entries for resources it manages.
+     * 
+     * @return true if this agent needs its primary {@link Server} to reload 
+     * cache entries for resources it manages.
+     */
+    public boolean getDirty() {
+        return dirty;
+    }
+
+    /**
+     * Sets whether or not this agent needs its primary {@link Server} to reload 
+     * cache entries for resources it manages.
+     * 
+     * @param dirty whether or not this agent needs its primary {@link Server} to reload 
+     * cache entries for resources it manages.
+     */
+    public void setDirty(boolean dirty) {
+        this.dirty = dirty;
     }
 
     @PrePersist

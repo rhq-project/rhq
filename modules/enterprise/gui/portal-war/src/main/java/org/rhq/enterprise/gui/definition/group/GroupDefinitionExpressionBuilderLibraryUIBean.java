@@ -327,8 +327,10 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
         this.selectedComparison = FacesContextUtility.getOptionalRequestParameter("libraryForm:comparison");
 
         processPropertyTypeChange(requestParamPropertyType);
-        processPluginChange(requestParamPlugin);
         processResourceTypeChange(requestParamResourceType);
+        if (requestParamPlugin != null && !requestParamPlugin.equals(this.selectedPlugin)) {
+            processPluginChange(requestParamPlugin);
+        }
 
         this.typeSelectionDisabled = PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE;
 

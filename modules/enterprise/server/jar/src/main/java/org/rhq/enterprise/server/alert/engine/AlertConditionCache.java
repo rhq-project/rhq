@@ -1467,6 +1467,6 @@ public class AlertConditionCache {
     }
 
     private boolean isInvalidDouble(Double d) {
-        return (d == null || d == Double.NaN || d == Double.POSITIVE_INFINITY || d == Double.NEGATIVE_INFINITY);
+        return (d == null || Double.isNaN(d) || d == Double.POSITIVE_INFINITY || d == Double.NEGATIVE_INFINITY);
     }
 }

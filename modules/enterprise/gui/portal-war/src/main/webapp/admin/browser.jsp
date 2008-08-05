@@ -29,7 +29,7 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Greg's EJB3 Entity browser</title>
+        <title>EJB3 Entity browser</title>
     </head>
     <body>
 

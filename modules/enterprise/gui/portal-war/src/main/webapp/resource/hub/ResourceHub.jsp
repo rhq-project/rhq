@@ -275,7 +275,7 @@
 
          <display:column width="15%" property="availability" title="resource.common.monitor.visibility.AvailabilityTH"
                          styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" valign="middle"
-                         sortAttr="a.availabilityType" href="/admin/browser.jsp?entityClass=org.rhq.core.domain.resource.Resource&key=${resourceComposite.resource.id}">
+                         sortAttr="a.availabilityType">
             <display:availabilitydecorator/>
          </display:column>
 

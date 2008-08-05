@@ -20,18 +20,21 @@ package org.rhq.enterprise.gui.legacy.portlet.controlactions;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.core.domain.operation.composite.GroupOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -76,13 +79,15 @@ public class ViewAction extends TilesAction {
 
             if (lastCompleted) {
                 PageList<ResourceOperationLastCompletedComposite> rlist;
-                rlist = manager.getRecentlyCompletedResourceOperations(user.getSubject(), new PageControl(0,
-                    lastCompletedCount));
+                PageControl pageControl = new PageControl(0, lastCompletedCount);
+                pageControl.initDefaultOrderingField("ro.createdTime", PageOrdering.DESC);
+                rlist = manager.getRecentlyCompletedResourceOperations(user.getSubject(), pageControl);
                 context.putAttribute("lastCompletedResource", rlist);
 
                 PageList<GroupOperationLastCompletedComposite> glist;
-                glist = manager.getRecentlyCompletedGroupOperations(user.getSubject(), new PageControl(0,
-                    lastCompletedCount));
+                pageControl = new PageControl(0, lastCompletedCount);
+                pageControl.initDefaultOrderingField("go.createdTime", PageOrdering.DESC);
+                glist = manager.getRecentlyCompletedGroupOperations(user.getSubject(), pageControl);
                 context.putAttribute("lastCompletedGroup", glist);
             }
 

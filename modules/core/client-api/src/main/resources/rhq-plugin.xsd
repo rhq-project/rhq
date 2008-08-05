@@ -333,9 +333,9 @@
 
    <xs:element name="content">
       <xs:annotation>
-         <xs:documentation>Represents content related to a managed resource such as libraries, log files and non-file
-            content. This content can be inventoried and remotely accessed and updated. Content can have a custom
-            definition for attached metadata.
+         <xs:documentation>Represents a particular type of package that is present on resources of this type, such as
+            libraries, log files, and deployed applications. Each package discovered on these resources will be of
+            one of the defined package types (i.e. an instance of this element).
          </xs:documentation>
          <xs:appinfo>
             <jaxb:class name="ContentDescriptor"/>
@@ -346,7 +346,8 @@
             <xs:element name="configuration" type="config:configuration" minOccurs="0">
                <xs:annotation>
                   <xs:documentation>
-                     Describes properties relating to the content
+                     Describes properties that dictate how the package was deployed or installed. The user will be
+                     prompted for values for these properties when deploying a new package of this type.
                   </xs:documentation>
                </xs:annotation>
             </xs:element>
@@ -362,42 +363,43 @@
          <xs:attribute name="name" type="xs:string" use="required">
             <xs:annotation>
                <xs:documentation>
-                  The plugin-specific name that identifies the content.
+                  Name of this package type. This must be unique across all other package types defined for this
+                  resource type.
                </xs:documentation>
             </xs:annotation>
          </xs:attribute>
          <xs:attribute name="displayName" type="xs:string" use="optional">
             <xs:annotation>
                <xs:documentation>
-                  The user friendly name of the content that will be displayed in the UI.
+                  The user friendly name of the package type that will be displayed in the UI.
                </xs:documentation>
             </xs:annotation>
          </xs:attribute>
          <xs:attribute name="description" type="xs:string" use="optional">
             <xs:annotation>
                <xs:documentation>
-                  Description of the content that will be displayed in the UI.
+                  Description of the package type that will be displayed in the UI.
                </xs:documentation>
             </xs:annotation>
          </xs:attribute>
          <xs:attribute name="category" type="rhq:contentDescriptorCategory" use="required">
             <xs:annotation>
                <xs:documentation>
-                  Describes the contents of the content and how they act with respect to the resource.
+                  Describes the contents of the package type and how they act with respect to the resource.
                </xs:documentation>
             </xs:annotation>
          </xs:attribute>
          <xs:attribute name="discoveryInterval" type="xs:int" use="optional" default="43200000">
             <xs:annotation>
                <xs:documentation>
-                  Time interval, in milliseconds, between Discovery Scans being performed for content of this type.
+                  Time interval, in milliseconds, between discovery scans being performed for packages of this type.
                </xs:documentation>
             </xs:annotation>
          </xs:attribute> 
          <xs:attribute name="isCreationType" type="xs:boolean" use="optional" default="false">
             <xs:annotation>
                <xs:documentation>
-                  Indicates a piece of content of this type must be uploaded when creating the resource to which this content
+                  Indicates a package of this type must be uploaded when creating the resource to which this package
                   type belongs. This attribute is only honored when the resource's creationType attribute is set
                   to "content".
                </xs:documentation>

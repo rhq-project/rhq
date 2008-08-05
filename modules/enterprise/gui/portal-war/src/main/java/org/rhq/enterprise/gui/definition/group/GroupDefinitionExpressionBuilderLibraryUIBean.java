@@ -302,7 +302,7 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
     public boolean isTypeSelectionDisabled() {
         this.typeSelectionDisabled =
                 PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE ||
-                        (isGroupby() && PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE);
+                (isGroupby() && PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE_TYPE);
         return typeSelectionDisabled;
     }
 

@@ -24,6 +24,7 @@
         <column name="NAME" required="true" size="255" type="VARCHAR2"/>
         <column name="ADDRESS" required="true" size="255" type="VARCHAR2"/>
         <column name="PORT" required="true" type="INTEGER"/>
+        <column name="SECURE_PORT" required="true" type="INTEGER"/>
         <column name="AGENTTOKEN" required="true" size="100" type="VARCHAR2"/>
         <column name="REMOTE_ENDPOINT" required="false" size="4000" type="VARCHAR2"/>
         <column name="CTIME" required="true" type="LONG"/>

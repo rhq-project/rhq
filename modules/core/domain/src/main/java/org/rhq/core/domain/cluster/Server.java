@@ -68,6 +68,9 @@ public class Server implements Serializable {
     @Column(name = "PORT", nullable = false)
     private int port;
 
+    @Column(name = "SECURE_PORT", nullable = false)
+    private int securePort;
+
     // the time this server node was installed into the infrastructure
     @Column(name = "CTIME", nullable = false)
     private long ctime;
@@ -113,6 +116,14 @@ public class Server implements Serializable {
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    public int getSecurePort() {
+        return securePort;
+    }
+
+    public void setSecyrePort(int securePort) {
+        this.securePort = securePort;
     }
 
     public long getCtime() {

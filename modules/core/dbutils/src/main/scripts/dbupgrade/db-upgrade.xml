@@ -124,6 +124,8 @@ DB Upgrade:
         <schema-alterColumn table="RHQ_SERVER" column="ADDRESS" nullable="FALSE"/>
         <schema-addColumn   table="RHQ_SERVER" column="PORT" columnType="INTEGER" />
         <schema-alterColumn table="RHQ_SERVER" column="PORT" nullable="FALSE"/>
+        <schema-addColumn   table="RHQ_SERVER" column="SECURE_PORT" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_SERVER" column="SECURE_PORT" nullable="FALSE"/>
         <schema-addColumn   table="RHQ_SERVER" column="CTIME" columnType="LONG" />
         <schema-alterColumn table="RHQ_SERVER" column="CTIME" nullable="FALSE"/>
         <schema-addColumn   table="RHQ_SERVER" column="AFFINITY_GROUP_ID" columnType="INTEGER" />

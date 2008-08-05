@@ -19,6 +19,8 @@
 package org.rhq.core.domain.resource.composite;
 
 import java.util.Date;
+import java.io.Serializable;
+
 import org.rhq.core.domain.resource.Agent;
 
 /**
@@ -28,7 +30,10 @@ import org.rhq.core.domain.resource.Agent;
  *
  * @author John Mazzitelli
  */
-public class AgentLastAvailabilityReportComposite {
+public class AgentLastAvailabilityReportComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private final int agentId;
     private final String agentName;
     private final String remoteEndpoint;

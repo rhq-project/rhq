@@ -20,13 +20,18 @@ package org.rhq.core.domain.resource.composite;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 
+import java.io.Serializable;
+
 /**
  * Composite object meant to be used to by the favorites portlet display showing resource information about its health
  * (its availability and number of alerts it has triggered).
  *
  * @author John Mazzitelli
  */
-public class ResourceHealthComposite {
+public class ResourceHealthComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private final int id;
     private final String name;
     private final String typeName;

@@ -2,7 +2,11 @@ package org.rhq.core.domain.content.composite;
 
 import org.rhq.core.domain.content.Channel;
 
-public class ChannelComposite {
+import java.io.Serializable;
+
+public class ChannelComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private Channel channel;
     private long packageVersionCount;

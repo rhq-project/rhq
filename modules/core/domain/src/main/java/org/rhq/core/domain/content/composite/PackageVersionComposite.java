@@ -22,7 +22,11 @@ import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.configuration.Configuration;
 
-public class PackageVersionComposite {
+import java.io.Serializable;
+
+public class PackageVersionComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final PackageVersion packageVersion;
     private final Configuration extraProperties;

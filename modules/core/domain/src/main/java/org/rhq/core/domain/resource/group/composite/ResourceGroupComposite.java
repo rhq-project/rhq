@@ -19,6 +19,7 @@
 package org.rhq.core.domain.resource.group.composite;
 
 import java.util.Set;
+import java.io.Serializable;
 
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -31,7 +32,10 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class ResourceGroupComposite {
+public class ResourceGroupComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private Double availability;
     private ResourceGroup resourceGroup;
 

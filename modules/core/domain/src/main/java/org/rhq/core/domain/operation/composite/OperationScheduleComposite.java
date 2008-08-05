@@ -19,9 +19,14 @@
 package org.rhq.core.domain.operation.composite;
 
 import java.util.Date;
+import java.io.Serializable;
+
 import org.rhq.core.domain.operation.ScheduleJobId;
 
-public abstract class OperationScheduleComposite {
+public abstract class OperationScheduleComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private final ScheduleJobId operationJobId;
     private String operationName;
     private final long operationNextFireTime;

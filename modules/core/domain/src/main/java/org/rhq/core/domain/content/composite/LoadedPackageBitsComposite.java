@@ -22,6 +22,8 @@ import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageVersion;
 
+import java.io.Serializable;
+
 /**
  * Composite object built by a query that indicates if a package version's contents (its "bits") is loaded/available and
  * (if loaded) if the contents are stored in the database.
@@ -29,7 +31,10 @@ import org.rhq.core.domain.content.PackageVersion;
  * @author John Mazzitelli
  * @see    PackageBits#QUERY_PACKAGE_BITS_LOADED_STATUS_PACKAGE_VERSION_ID
  */
-public class LoadedPackageBitsComposite {
+public class LoadedPackageBitsComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private final int packageVersionId;
     private final String fileName;
     private final Integer packageBitsId;

@@ -21,7 +21,12 @@ package org.rhq.core.domain.operation.composite;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 
-public abstract class OperationLastCompletedComposite {
+import java.io.Serializable;
+
+public abstract class OperationLastCompletedComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private final int operationHistoryId;
     private final String operationName;
     private final long operationStartTime;

@@ -2,8 +2,12 @@ package org.rhq.core.domain.resource.composite;
 
 import org.rhq.core.domain.resource.ResourceType;
 
+import java.io.Serializable;
+
 // implement Comparable because these are to be put in a sorted set
-public class ResourceTypeTemplateCountComposite implements Comparable<ResourceTypeTemplateCountComposite> {
+public class ResourceTypeTemplateCountComposite implements Serializable, Comparable<ResourceTypeTemplateCountComposite> {
+
+    private static final long serialVersionUID = 1L;
 
     private final ResourceType type;
     private final long enabledMetricCount;

@@ -20,7 +20,12 @@ package org.rhq.core.domain.alert.composite;
 
 import org.rhq.core.domain.alert.Alert;
 
-public class AlertWithLatestConditionLog {
+import java.io.Serializable;
+
+public class AlertWithLatestConditionLog implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private final Alert alert;
     private final String conditionText;
     private final String conditionValue;

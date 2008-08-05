@@ -20,8 +20,12 @@ package org.rhq.core.domain.resource.composite;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.Serializable;
 
-public class RecentlyAddedResourceComposite {
+public class RecentlyAddedResourceComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private int id;
     private String name;
     private long ctime;

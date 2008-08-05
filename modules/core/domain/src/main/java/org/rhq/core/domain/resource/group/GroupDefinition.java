@@ -21,6 +21,7 @@ package org.rhq.core.domain.resource.group;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.io.Serializable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -51,7 +52,7 @@ import org.rhq.core.domain.util.StringUtils;
         + "    FROM ResourceGroup rg " + "   WHERE rg.groupDefinition.id = :groupDefinitionId ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_GROUP_DEF_ID_SEQ")
 @Table(name = "RHQ_GROUP_DEF")
-public class GroupDefinition {
+public class GroupDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_ALL = "GroupDefinition.findAll";

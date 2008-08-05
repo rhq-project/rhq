@@ -20,6 +20,8 @@ package org.rhq.core.domain.measurement.composite;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 
+import java.io.Serializable;
+
 /**
  * A composite object used to display metric collection schedules - represents one of the following:
  *
@@ -31,7 +33,10 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
  *
  * @author Ian Springer
  */
-public class MeasurementScheduleComposite {
+public class MeasurementScheduleComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private MeasurementDefinition measurementDefinition;
     private boolean collectionEnabled;
     private long collectionInterval;

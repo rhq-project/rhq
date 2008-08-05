@@ -2,7 +2,11 @@ package org.rhq.core.domain.configuration.composite;
 
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 
-public class PluginConfigurationUpdateResourceComposite {
+import java.io.Serializable;
+
+public class PluginConfigurationUpdateResourceComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final PluginConfigurationUpdate update;
     private final int resourceId;

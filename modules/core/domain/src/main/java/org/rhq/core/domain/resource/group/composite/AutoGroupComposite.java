@@ -20,6 +20,7 @@ package org.rhq.core.domain.resource.group.composite;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.Serializable;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceSubCategory;
@@ -31,7 +32,10 @@ import org.rhq.core.domain.resource.ResourceType;
  *
  * @author Greg Hinkle
  */
-public class AutoGroupComposite {
+public class AutoGroupComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private Double availability;
     private ResourceType resourceType;
     private ResourceSubCategory subcategory;

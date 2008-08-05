@@ -18,7 +18,12 @@
  */
 package org.rhq.core.domain.content.composite;
 
-public class PackageVersionFile {
+import java.io.Serializable;
+
+public class PackageVersionFile implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private final int packageVersionId;
     private final String fileName;
 

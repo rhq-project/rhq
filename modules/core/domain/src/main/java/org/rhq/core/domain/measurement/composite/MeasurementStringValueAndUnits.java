@@ -21,7 +21,12 @@ package org.rhq.core.domain.measurement.composite;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
 
-public class MeasurementStringValueAndUnits implements MeasurementValueAndUnits {
+import java.io.Serializable;
+
+public class MeasurementStringValueAndUnits implements MeasurementValueAndUnits, Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private final String value;
     private final MeasurementUnits units;
 

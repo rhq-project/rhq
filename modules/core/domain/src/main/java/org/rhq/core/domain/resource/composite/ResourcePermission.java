@@ -19,6 +19,7 @@
 package org.rhq.core.domain.resource.composite;
 
 import java.util.Set;
+import java.io.Serializable;
 
 import org.rhq.core.domain.authz.Permission;
 
@@ -26,7 +27,10 @@ import org.rhq.core.domain.authz.Permission;
  * @author Joseph Marques
  * @author Greg Hinkle
  */
-public class ResourcePermission {
+public class ResourcePermission implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private boolean measure;
 
     private boolean inventory;

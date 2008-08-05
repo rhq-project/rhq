@@ -20,13 +20,18 @@ package org.rhq.core.domain.resource.composite;
 
 import org.rhq.core.domain.measurement.Availability;
 
+import java.io.Serializable;
+
 /**
  * This object is meant as part of a query that returns all resources and their availabilities, so it needs to have a
  * very small footprint. We only need the resource IDs and the availabilities.
  *
  * @author John Mazzitelli
  */
-public class ResourceIdWithAvailabilityComposite {
+public class ResourceIdWithAvailabilityComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private final int resourceId;
     private final Availability availability;
 

@@ -19,6 +19,7 @@
 package org.rhq.core.domain.resource.composite;
 
 import java.util.Set;
+import java.io.Serializable;
 
 import javax.xml.bind.annotation.XmlElement;
 
@@ -33,9 +34,13 @@ import org.rhq.core.domain.resource.ResourceType;
  * @author Joseph Marques
  * @author Ian Springer
  */
-public class ResourceComposite {
+public class ResourceComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     @XmlElement
     private Resource resource;
+
 
     @XmlElement
     private ResourcePermission resourcePermission;

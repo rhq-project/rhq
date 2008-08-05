@@ -20,12 +20,17 @@ package org.rhq.core.domain.measurement.calltime;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+
 /**
  * The composite object returned by GUI-initiated call-time data queries.
  *
  * @author Ian Springer
  */
-public class CallTimeDataComposite {
+public class CallTimeDataComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     String callDestination;
     private double minimum;
     private double maximum;

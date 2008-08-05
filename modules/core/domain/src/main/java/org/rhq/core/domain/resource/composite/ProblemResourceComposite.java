@@ -20,13 +20,18 @@ package org.rhq.core.domain.resource.composite;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 
+import java.io.Serializable;
+
 /**
  * Information on a resource that is considered having a "problem" - it is either {@link AvailabilityType#DOWN down},
  * has one or more alerts, has one or more out-of-bound measurements or a combination of those three conditions.
  *
  * @author John Mazzitelli
  */
-public class ProblemResourceComposite {
+public class ProblemResourceComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private int resourceId;
     private String resourceName;
     private AvailabilityType availabilityType;

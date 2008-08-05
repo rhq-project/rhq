@@ -43,7 +43,9 @@ public enum MeasurementUnits {
     // Relative Time
     JIFFYS("j", Family.TIME, Scale.JIFFY), NANOSECONDS("ns", Family.TIME, Scale.NANO), MICROSECONDS("us", Family.TIME,
         Scale.MICRO), MILLISECONDS("ms", Family.TIME, Scale.MILLI), SECONDS("s", Family.TIME, Scale.SEC), MINUTES("m",
-        Family.TIME, Scale.MIN), HOURS("h", Family.TIME, Scale.HOUR), DAYS("d", Family.TIME, Scale.DAY);
+        Family.TIME, Scale.MIN), HOURS("h", Family.TIME, Scale.HOUR), DAYS("d", Family.TIME, Scale.DAY),
+
+    CELSIUS("C", Family.TEMPERATURE, Scale.ONE), KELVIN("K", Family.TEMPERATURE, Scale.ONE), FAHRENHEIGHT("F", Family.TEMPERATURE, Scale.ONE);    
 
     private String displayUnits;
     private Family family;
@@ -77,6 +79,8 @@ public enum MeasurementUnits {
             return BITS;
         } else if (family == Family.TIME) {
             return SECONDS;
+        } else if (family == Family.TEMPERATURE) {
+            return CELSIUS;
         } else if ((family == Family.ABSOLUTE) || (family == Family.DURATION) || (family == Family.RELATIVE)) {
             /*
              * Members of these families are their own base units
@@ -145,7 +149,7 @@ public enum MeasurementUnits {
     }
 
     public enum Family {
-        ABSOLUTE, BITS, BYTES, DURATION, RELATIVE, TIME;
+        ABSOLUTE, BITS, BYTES, DURATION, RELATIVE, TIME, TEMPERATURE;
     }
 
     public enum Scale {

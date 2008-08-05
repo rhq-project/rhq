@@ -19,13 +19,18 @@
 package org.rhq.core.domain.resource.composite;
 
 import java.util.Set;
+import java.io.Serializable;
+
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 
 // intended to be used for ResourceManager.getAvailableResourcesForResourceGroup
-public class ResourceMembershipComposite {
+public class ResourceMembershipComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private Resource resource;
     private ResourceFacets resourceFacets;
     private boolean explicit;

@@ -20,6 +20,7 @@
 package org.rhq.core.domain.event.composite;
 
 import java.util.Date;
+import java.io.Serializable;
 
 import org.rhq.core.domain.event.EventSeverity;
 
@@ -29,7 +30,9 @@ import org.rhq.core.domain.event.EventSeverity;
  * @author Heiko W. Rupp
  *
  */
-public class EventComposite {
+public class EventComposite implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     String eventDetail;
     int resourceId;

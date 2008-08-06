@@ -18,14 +18,15 @@
  */
 package org.rhq.enterprise.installer;
 
+import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Properties;
 
 import javax.faces.context.FacesContext;
+import javax.faces.model.SelectItem;
 
 import mazz.i18n.Msg;
 
@@ -35,8 +36,29 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.installer.i18n.InstallerI18NResourceKeys;
 
+/**
+ * 
+ * @author Jay Shaughnessy
+ */
 public class ConfigurationBean {
     private static final Log LOG = LogFactory.getLog(ConfigurationBean.class);
+
+    private static final Msg I18NMSG = new Msg(InstallerI18NResourceKeys.BUNDLE_BASE_NAME, FacesContext
+        .getCurrentInstance().getViewRoot().getLocale());
+
+    private enum ExistingSchemaOption {
+        OVERWRITE, KEEP
+    };
+
+    public static final List<SelectItem> EXISTING_SCHEMA_OPTIONS;
+
+    static {
+        EXISTING_SCHEMA_OPTIONS = new ArrayList<SelectItem>();
+        EXISTING_SCHEMA_OPTIONS.add(new SelectItem(ExistingSchemaOption.OVERWRITE.name(), I18NMSG
+            .getMsg(InstallerI18NResourceKeys.EXISTING_SCHEMA_OPTION_OVERWRITE)));
+        EXISTING_SCHEMA_OPTIONS.add(new SelectItem(ExistingSchemaOption.KEEP.name(), I18NMSG
+            .getMsg(InstallerI18NResourceKeys.EXISTING_SCHEMA_OPTION_KEEP)));
+    }
 
     private ServerInformation serverInfo;
     private Boolean showAdvancedSettings;
@@ -44,15 +66,50 @@ public class ConfigurationBean {
     private String lastError;
     private String lastTest;
     private String lastCreate;
-    private String existingSchemaAnswer;
+    private String existingSchemaOption;
     private String adminConnectionUrl;
     private String adminUsername;
     private String adminPassword;
-    private Msg i18nMsg;
+    private ServerInformation.Server haServer;
+    private String haServerName;
+    private String existingServerName;
 
     public ConfigurationBean() {
         serverInfo = new ServerInformation();
         showAdvancedSettings = Boolean.FALSE;
+        existingSchemaOption = ExistingSchemaOption.KEEP.name();
+        setHaServerName(getDefaultServerName());
+    }
+
+    private String getDefaultServerName() {
+        String defaultServerName = "";
+
+        try {
+            defaultServerName = InetAddress.getLocalHost().getCanonicalHostName();
+        } catch (Exception e) {
+            LOG.info("Could not determine default server name: ", e);
+        }
+
+        return defaultServerName;
+    }
+
+    /**
+     * Loads in the server's current configuration and returns all the settings.
+     *
+     * @return the requested server setting
+     */
+    public PropertyItemWithValue getConfigurationProperty(String propertyName) {
+        List<PropertyItemWithValue> allConfig = getConfiguration();
+        PropertyItemWithValue result = null;
+
+        for (PropertyItemWithValue item : allConfig) {
+            if (item.getItemDefinition().getPropertyName().equalsIgnoreCase(propertyName)) {
+                result = item;
+                break;
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -78,7 +135,7 @@ public class ConfigurationBean {
         List<PropertyItemWithValue> retConfig;
 
         if (showAdvancedSettings.booleanValue()) {
-            retConfig = new ArrayList<PropertyItemWithValue>(configuration);
+            retConfig = configuration;
         } else {
             retConfig = new ArrayList<PropertyItemWithValue>();
             for (PropertyItemWithValue item : configuration) {
@@ -104,7 +161,9 @@ public class ConfigurationBean {
         List<PropertyItemWithValue> allConfig = getConfiguration();
         List<PropertyItemWithValue> retConfig = new ArrayList<PropertyItemWithValue>();
         for (PropertyItemWithValue item : allConfig) {
-            if (!item.getItemDefinition().getPropertyName().startsWith(ServerProperties.PREFIX_PROP_DATABASE)) {
+            if (!(item.getItemDefinition().getPropertyName().startsWith(ServerProperties.PREFIX_PROP_DATABASE) || item
+                .getItemDefinition().isHidden())) {
+
                 retConfig.add(item);
             }
         }
@@ -123,7 +182,8 @@ public class ConfigurationBean {
         List<PropertyItemWithValue> allConfig = getConfiguration();
         List<PropertyItemWithValue> retConfig = new ArrayList<PropertyItemWithValue>();
         for (PropertyItemWithValue item : allConfig) {
-            if (item.getItemDefinition().getPropertyName().startsWith(ServerProperties.PREFIX_PROP_DATABASE)) {
+            if (item.getItemDefinition().getPropertyName().startsWith(ServerProperties.PREFIX_PROP_DATABASE)
+                && !item.getItemDefinition().isHidden()) {
                 retConfig.add(item);
             }
         }
@@ -347,17 +407,21 @@ public class ConfigurationBean {
         }
     }
 
-    public String getExistingSchemaAnswer() {
-        return this.existingSchemaAnswer;
+    public String getExistingSchemaOption() {
+        return this.existingSchemaOption;
     }
 
-    public void setExistingSchemaAnswer(String existingSchemaAnswer) {
-        this.existingSchemaAnswer = existingSchemaAnswer;
+    public void setExistingSchemaOption(String existingSchemaOption) {
+        this.existingSchemaOption = existingSchemaOption;
+    }
+
+    public boolean isKeepExistingSchema() {
+        return ExistingSchemaOption.KEEP.name().equals(existingSchemaOption);
     }
 
     public StartPageResults save() {
-        Properties configurationAsProperties = getConfigurationAsProperties(configuration);
 
+        Properties configurationAsProperties = getConfigurationAsProperties(configuration);
         testConnection(); // so our lastTest gets set and the user will be able to get the error in the UI
         if (lastTest == null || !lastTest.equals("OK")) {
             lastError = lastTest;
@@ -369,8 +433,8 @@ public class ConfigurationBean {
                 try {
                     Integer.parseInt(newValue.getValue());
                 } catch (Exception e) {
-                    lastError = getI18nMsg().getMsg(InstallerI18NResourceKeys.INVALID_NUMBER,
-                        newValue.getItemDefinition().getPropertyLabel(), newValue.getValue());
+                    lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.INVALID_NUMBER, newValue.getItemDefinition()
+                        .getPropertyLabel(), newValue.getValue());
                     return StartPageResults.ERROR;
                 }
             } else if (Boolean.class.isAssignableFrom(newValue.getItemDefinition().getPropertyType())) {
@@ -381,8 +445,8 @@ public class ConfigurationBean {
 
                     Boolean.parseBoolean(newValue.getValue());
                 } catch (Exception e) {
-                    lastError = getI18nMsg().getMsg(InstallerI18NResourceKeys.INVALID_BOOLEAN,
-                        newValue.getItemDefinition().getPropertyLabel(), newValue.getValue());
+                    lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.INVALID_BOOLEAN, newValue.getItemDefinition()
+                        .getPropertyLabel(), newValue.getValue());
                     return StartPageResults.ERROR;
                 }
             }
@@ -397,10 +461,10 @@ public class ConfigurationBean {
 
             // prepare the db schema
             if (serverInfo.isDatabaseSchemaExist(configurationAsProperties)) {
-                if (existingSchemaAnswer == null)
+                if (existingSchemaOption == null)
                     return StartPageResults.STAY; // user didn't tell us what to do, re-display the page with the question
 
-                if (existingSchemaAnswer.equals("overwrite")) {
+                if (existingSchemaOption.equals(ExistingSchemaOption.OVERWRITE.name())) {
                     serverInfo.createNewDatabaseSchema(configurationAsProperties);
                     // clean out existing JMS messages
                     serverInfo.cleanJmsTables(configurationAsProperties);
@@ -410,11 +474,14 @@ public class ConfigurationBean {
                 serverInfo.createNewDatabaseSchema(configurationAsProperties);
             }
 
+            // Ensure the install server info is stored in the DB
+            serverInfo.storeServer(configurationAsProperties, haServer);
+
             // now deploy RHQ Server fully
             serverInfo.moveDeploymentArtifacts(true);
         } catch (Exception e) {
             LOG.fatal("Failed to save properties and fully deploy - RHQ Server will not function properly", e);
-            lastError = getI18nMsg().getMsg(InstallerI18NResourceKeys.SAVE_FAILURE, ThrowableUtil.getAllMessages(e));
+            lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.SAVE_FAILURE, ThrowableUtil.getAllMessages(e));
 
             return StartPageResults.ERROR;
         }
@@ -442,15 +509,104 @@ public class ConfigurationBean {
         return null;
     }
 
-    private Msg getI18nMsg() {
-        if (i18nMsg == null) {
-            i18nMsg = new Msg(InstallerI18NResourceKeys.BUNDLE_BASE_NAME, getLocale());
+    public List<SelectItem> getExistingSchemaOptions() {
+        return EXISTING_SCHEMA_OPTIONS;
+    }
+
+    /** To set the server name use setServerName() */
+    public PropertyItemWithValue getServerConfiguration() {
+        PropertyItemWithValue serverConfig = getConfigurationProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME);
+
+        return serverConfig;
+    }
+
+    public boolean isExistingServers() {
+
+        if (!this.isKeepExistingSchema())
+            return false;
+
+        List<SelectItem> existingServerNames = getExistingServerNames();
+
+        return ((null != existingServerNames) && !existingServerNames.isEmpty());
+    }
+
+    public List<SelectItem> getExistingServerNames() {
+        List<SelectItem> result = new ArrayList<SelectItem>(0);
+
+        if (!isDatabaseSchemaExist())
+            return result;
+
+        try {
+            Properties configurationAsProperties = getConfigurationAsProperties(configuration);
+            for (String serverName : serverInfo.getServerNames(configurationAsProperties)) {
+                result.add(new SelectItem(serverName));
+            }
+            if (!result.isEmpty()) {
+                result.add(0, new SelectItem(I18NMSG.getMsg(InstallerI18NResourceKeys.EXISTING_SERVER_SELECT_ITEM)));
+            }
+        } catch (Exception e) {
+            // Should not be able to get here since we checked for schema above
+            LOG.warn("Unexpected Exception getting existing server info: ", e);
         }
 
-        return i18nMsg;
+        return result;
     }
 
-    private Locale getLocale() {
-        return FacesContext.getCurrentInstance().getViewRoot().getLocale();
+    public String getExistingServerName() {
+        return existingServerName;
     }
+
+    // If an existing server name is selected from the list set haServerName to the selection. Note, this function
+    // should not call getServerConfiguration.setValue()
+    public void setExistingServerName(String existingServerName) {
+        this.existingServerName = existingServerName;
+        setHaServerName(existingServerName);
+    }
+
+    public String getHaServerName() {
+        return haServerName;
+    }
+
+    public void setHaServerName(String serverName) {
+        // handle the case where the user selected the dummy entry in the existing servers drop down
+        if (I18NMSG.getMsg(InstallerI18NResourceKeys.EXISTING_SERVER_SELECT_ITEM).equals(serverName)) {
+            serverName = getDefaultServerName();
+        }
+
+        this.haServerName = serverName;
+
+        // update the server property so the server properties file is in sync
+        PropertyItemWithValue serverConfig = getConfigurationProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME);
+        serverConfig.setValue(serverName);
+
+        // populate the rest of the ha fields either from the db or with defaults 
+        if (isExistingServers()) {
+            Properties configurationAsProperties = getConfigurationAsProperties(configuration);
+            setHaServer(serverInfo.getServerDetail(configurationAsProperties, serverName));
+        }
+
+        if (null == getHaServer()) {
+            String endpointAddress = "";
+
+            try {
+                endpointAddress = InetAddress.getLocalHost().getHostAddress();
+            } catch (Exception e) {
+                LOG.info("Could not determine default server name: ", e);
+            }
+
+            setHaServer(new ServerInformation.Server(serverName, endpointAddress, 7080, 7443,
+                ServerInformation.Server.AFFINITY_GROUP_NONE));
+        } else {
+            getHaServer().setName(serverName);
+        }
+    }
+
+    public ServerInformation.Server getHaServer() {
+        return haServer;
+    }
+
+    public void setHaServer(ServerInformation.Server haServer) {
+        this.haServer = haServer;
+    }
+
 }

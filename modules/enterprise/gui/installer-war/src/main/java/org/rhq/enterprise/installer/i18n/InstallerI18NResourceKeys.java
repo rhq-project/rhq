@@ -99,13 +99,13 @@ public interface InstallerI18NResourceKeys {
         @I18NMessage(locale = "de", value = "Das gewünschte Datenbankschema existiert schon. Was wollen Sie machen?") })
     String EXISTING_SCHEMA_QUESTION = "existingSchemaQuestion";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Overwrite it (and lose existing data)"),
-        @I18NMessage(locale = "de", value = "Überschreiben (vorhandene Daten gehen verloren)") })
-    String EXISTING_SCHEMA_ANSWER_OVERWRITE = "existingSchemaAnswerOverwrite";
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Overwrite (lose existing data)"),
+        @I18NMessage(locale = "de", value = "HEIKO Überschreiben (vorhandene Daten gehen verloren)") })
+    String EXISTING_SCHEMA_OPTION_OVERWRITE = "existingSchemaAnswerOverwrite";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Keep and, if necessary, upgrade it"),
-        @I18NMessage(locale = "de", value = "Behalten und falls nötig aktualisieren.") })
-    String EXISTING_SCHEMA_ANSWER_UPGRADE = "existingSchemaAnswerUpgrade";
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Keep (maintain existing data)"),
+        @I18NMessage(locale = "de", value = "HEIKO ( )") })
+    String EXISTING_SCHEMA_OPTION_KEEP = "existingSchemaAnswerUpgrade";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "The {0} property value was an invalid number [{1}]"),
         @I18NMessage(locale = "de", value = "[{1}] ist ein ungültiger Zahlenwert für die Eigenschaft {0}") })
@@ -669,5 +669,42 @@ public interface InstallerI18NResourceKeys {
     // this is under the help doc root
     @I18NMessage("${product.help.config.props}")
     String HELP_DOC_RHQ_SERVER_PROP_PARENT_PAGE = "helpDocRHQServerPropParentPage";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Installation Settings"),
+        @I18NMessage(locale = "de", value = "HEIKO") })
+    String INSTALL_SETTINGS_NOTE = "installSettingsNote";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Select existing server:"),
+        @I18NMessage(locale = "de", value = "HEIKO") })
+    String EXISTING_SERVER_SELECT_ITEM = "existingServerSelectItem";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Or, type in desired server name:"),
+        @I18NMessage(locale = "de", value = "HEIKO") })
+    String NEW_SERVER_NOTE = "newServerNote";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Existing Servers:"),
+        @I18NMessage(locale = "de", value = "HEIKO") })
+    String EXISTING_SERVERS_LABEL = "existingServersLabel";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Name"), @I18NMessage(locale = "de", value = "HEIKO") })
+    String PROP_HIGH_AVAILABILITY_NAME = "propertyHighAvailabilityName";
+    @I18NMessage("-ServerName")
+    String PROP_HIGH_AVAILABILITY_NAME_HELP = "propertyHighAvailabilityNameHelp";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Endpoint Address"),
+        @I18NMessage(locale = "de", value = "HEIKO") })
+    String PROP_HIGH_AVAILABILITY_ENDPOINT_ADDRESS = "propertyHighAvailabilityEndpointAddress";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Endpoint Port"),
+        @I18NMessage(locale = "de", value = "HEIKO") })
+    String PROP_HIGH_AVAILABILITY_ENDPOINT_PORT = "propertyHighAvailabilityEndpointPort";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Endpoint Secure Port"),
+        @I18NMessage(locale = "de", value = "HEIKO") })
+    String PROP_HIGH_AVAILABILITY_ENDPOINT_SECURE_PORT = "propertyHighAvailabilityEndpointSecurePort";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Affinity Group Name"),
+        @I18NMessage(locale = "de", value = "HEIKO") })
+    String PROP_HIGH_AVAILABILITY_AFFINITY_GROUP = "propertyHighAvailabilityAffinityGroup";
 
 }

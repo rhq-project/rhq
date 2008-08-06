@@ -364,6 +364,9 @@ rhq.server.concurrency-limit.measurement-schedule-request=50
 
 # Content Local Filesystem Repository
 rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
+    	
+# High Availability (HA)
+rhq.server.high-availability.name=
 </echo>
 
   </target>

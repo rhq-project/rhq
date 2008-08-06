@@ -9,6 +9,8 @@
 
 <html>
 
+   <body>
+
    <f:subview id="header">
       <jsp:include page="/header.jsp" flush="true" />
    </f:subview>
@@ -116,14 +118,83 @@
 
       <h:panelGrid columns="2" columnClasses="warningColor" rendered="#{configurationBean.databaseSchemaExist == true}">
          <h:outputText value="#{bundle.existingSchemaQuestion}" style="font-size: 80%"/>
-         <h:selectOneMenu label="#{bundle.existingSchemaQuestion}" value="#{configurationBean.existingSchemaAnswer}">
-            <f:selectItem itemLabel="#{bundle.existingSchemaAnswerUpgrade}"
-                          itemValue="upgrade"/>
-            <f:selectItem itemLabel="#{bundle.existingSchemaAnswerOverwrite}"
-                          itemValue="overwrite"/>
+         <h:selectOneMenu onchange="submit()" label="#{bundle.existingSchemaQuestion}" value="#{configurationBean.existingSchemaOption}">
+                                       <f:selectItems value="#{configurationBean.existingSchemaOptions}" />
          </h:selectOneMenu>
       </h:panelGrid>
+ 
+      
+      <h3 align="center">
+         <h:outputText value="#{bundle.installSettingsNote}" />
+      </h3>
+      
+      <h:panelGrid columns="1">
+         <h:panelGrid columns="1" rendered="#{configurationBean.existingServers == true}" >
+         
+            <h:panelGrid columns="2" >
 
+               <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ExistingServers', 'propertyHelp')" >
+                  <h:outputText value="#{bundle.existingServersLabel}" />
+               </h:outputLink>
+               <h:selectOneMenu value="#{configurationBean.existingServerName}"
+                                onchange="{ document.getElementById('propForm:haservername').value = this.options[this.selectedIndex].value;
+                                            document.getElementById('propForm:haendpointaddress').value = '';
+                                            document.getElementById('propForm:haendpointport').value = '';
+                                            document.getElementById('propForm:haendpointsecureport').value = '';
+                                            if (document.getElementById('propForm:haaffinitygroup') != null) {
+                                               document.getElementById('propForm:haaffinitygroup').value = ''; }                                            
+                                            submit(); }" >
+                  <f:selectItems value="#{configurationBean.existingServerNames}" />
+               </h:selectOneMenu>       
+            
+            </h:panelGrid>
+
+            <h:outputText value="#{bundle.newServerNote}" />
+
+         </h:panelGrid>
+         
+         <h:panelGrid columns="2" rowClasses="evenRow,oddRow">
+
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.serverConfiguration.itemDefinition.help}', 'propertyHelp')" >
+               <h:outputText value="#{bundle.propertyHighAvailabilityName}" />
+            </h:outputLink>
+            <h:inputText id="haservername" size="#{configurationBean.serverConfiguration.itemDefinition.fieldSize}"
+                         value="#{configurationBean.haServerName}" >
+            </h:inputText>
+            
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerEndpointAddress', 'propertyHelp')" >
+               <h:outputText value="#{bundle.propertyHighAvailabilityEndpointAddress}" />
+            </h:outputLink>
+            <h:inputText id="haendpointaddress" size="#{configurationBean.serverConfiguration.itemDefinition.fieldSize}"
+                         value="#{configurationBean.haServer.endpointAddress}" >
+            </h:inputText>
+            
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerEndpointPort', 'propertyHelp')" >
+               <h:outputText value="#{bundle.propertyHighAvailabilityEndpointPort}" />
+            </h:outputLink>            
+            <h:inputText id="haendpointport" size="#{configurationBean.serverConfiguration.itemDefinition.fieldSize}"
+                      value="#{configurationBean.haServer.endpointPortString}" >
+            </h:inputText>
+            
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerEndpointSecurePort', 'propertyHelp')" >
+               <h:outputText value="#{bundle.propertyHighAvailabilityEndpointSecurePort}" />
+            </h:outputLink>
+            <h:inputText id="haendpointsecureport" size="#{configurationBean.serverConfiguration.itemDefinition.fieldSize}"
+                      value="#{configurationBean.haServer.endpointSecurePortString}" >
+            </h:inputText>
+
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerAffinityGroup', 'propertyHelp')" 
+                          rendered="#{configurationBean.showAdvancedSettings == true}" >
+               <h:outputText value="#{bundle.propertyHighAvailabilityAffinityGroup}" />
+            </h:outputLink>
+            <h:inputText id="haaffinitygroup" size="#{configurationBean.serverConfiguration.itemDefinition.fieldSize}"
+                         value="#{configurationBean.haServer.affinityGroup}"
+                         rendered="#{configurationBean.showAdvancedSettings == true}" >                         
+            </h:inputText>            
+
+         </h:panelGrid>
+      </h:panelGrid>
+      
       <h3 align="center">
          <h:outputText value="#{bundle.serverPropertiesNote}" />
       </h3>

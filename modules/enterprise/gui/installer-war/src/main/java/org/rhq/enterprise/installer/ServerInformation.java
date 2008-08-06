@@ -35,8 +35,12 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -84,6 +88,7 @@ public class ServerInformation {
     private static final String UNDEPLOYED_POSTGRES_JMS_FILENAME = "jms-postgres.rej";
     private static final String UNDEPLOYED_ORACLE_JMS_FILENAME = "jms-oracle.rej";
     private static final String SERVER_PROPERTIES_FILENAME = "rhq-server.properties";
+    private static final String AFFINITY_GROUP_NONE = "None";
 
     private MBeanServer mbeanServer = null;
     private File deployDirectory = null;
@@ -704,17 +709,428 @@ public class ServerInformation {
     /**
      * Clean up messages in the JMS message table. It is safe to just delete all of them, as 
      * we are alone on the RHQ server and thus noone else is expected to have messages in there. 
-     * @param props
+     * @param props 
      */
     public void cleanJmsTables(Properties props) {
 
+        Connection conn = null;
+        Statement stm = null;
+
         try {
-            Connection conn = getDatabaseConnection(props);
-            Statement stm = conn.createStatement();
+            conn = getDatabaseConnection(props);
+            stm = conn.createStatement();
             stm.executeUpdate("DELETE FROM JMS_MESSAGES");
         } catch (SQLException e) {
             LOG.info("Was not able to delete existing JMS messages: " + e.getMessage());
+        } finally {
+            try {
+                if (null != stm)
+                    stm.close();
+            } catch (Exception e) {
+                // best effort only
+            }
+            try {
+                if (null != conn)
+                    conn.close();
+            } catch (Exception e) {
+                // best effort only
+            }
+        }
+    }
+
+    public static class Server {
+        static public final String AFFINITY_GROUP_NONE = "none";
+
+        private String name;
+        private String endpointAddress;
+        private int endpointPort;
+        private int endpointSecurePort;
+        private String affinityGroup;
+
+        public Server(String name, String endpointAddress, int endpointPort, int endpointSecurePort,
+            String affinityGroup) {
+            super();
+            this.name = name;
+            this.endpointAddress = endpointAddress;
+            this.endpointPort = endpointPort;
+            this.endpointSecurePort = endpointSecurePort;
+            this.affinityGroup = affinityGroup;
         }
 
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            if ((null != name) && (!"".equals(name.trim())))
+                this.name = name;
+        }
+
+        public String getEndpointAddress() {
+            return endpointAddress;
+        }
+
+        public void setEndpointAddress(String endpointAddress) {
+            if ((null != endpointAddress) && (!"".equals(endpointAddress.trim())))
+                this.endpointAddress = endpointAddress;
+        }
+
+        public int getEndpointPort() {
+            return endpointPort;
+        }
+
+        public void setEndpointPort(int endpointPort) {
+            this.endpointPort = endpointPort;
+        }
+
+        public String getEndpointPortString() {
+            return (String.valueOf(this.endpointPort));
+        }
+
+        public void setEndpointPortString(String endpointPort) {
+            try {
+                this.endpointPort = Integer.valueOf(endpointPort).intValue();
+            } catch (NumberFormatException e) {
+                // no change
+            }
+        }
+
+        public int getEndpointSecurePort() {
+            return endpointSecurePort;
+        }
+
+        public void setEndpointSecurePort(int endpointSecurePort) {
+            this.endpointSecurePort = endpointSecurePort;
+        }
+
+        public String getEndpointSecurePortString() {
+            return (String.valueOf(this.endpointSecurePort));
+        }
+
+        public void setEndpointSecurePortString(String endpointSecurePort) {
+            try {
+                this.endpointSecurePort = Integer.valueOf(endpointSecurePort).intValue();
+            } catch (NumberFormatException e) {
+                // no change
+            }
+        }
+
+        public String getAffinityGroup() {
+            return affinityGroup;
+        }
+
+        public void setAffinityGroup(String affinityGroup) {
+            if ((null != affinityGroup) && (!"".equals(affinityGroup.trim())))
+                this.affinityGroup = affinityGroup;
+        }
+
+        @Override
+        public String toString() {
+
+            return "[name=" + name + " address=" + endpointAddress + " port=" + endpointPort + " secureport="
+                + endpointSecurePort + " affinitygroup=" + affinityGroup + "]";
+        }
     }
+
+    /**
+     * Get the list of existing servers from an existing RHQ schema.
+     *
+     * <p>The given set of properties provides settings that allow for a successful database connection. If <code>
+     * props</code> is <code>null</code>, it will use the server properties from {@link #getServerProperties()}.</p>
+     *
+     * <p>Do not call this method unless {@link #isDatabaseConnectionValid(Properties)} is <code>true</code>.</p>
+     *
+     * @param  props set of properties where the connection information is found
+     *
+     * @return List of server names registered in the database. Empty list if the table does not exist or there are no entries in the table.
+     *
+     * @throws Exception if failed to communicate with the database
+     */
+    public List<String> getServerNames(Properties props) throws Exception {
+        DatabaseType db = null;
+        Connection conn = null;
+        Statement stm = null;
+        ResultSet rs = null;
+        List<String> result = new ArrayList<String>();
+
+        try {
+            conn = getDatabaseConnection(props);
+            db = DatabaseTypeFactory.getDatabaseType(conn);
+
+            if (db.checkTableExists(conn, "rhq_server")) {
+
+                stm = conn.createStatement();
+                rs = stm.executeQuery("SELECT name FROM rhq_server");
+
+                while (rs.next()) {
+                    result.add(rs.getString(1));
+                }
+            }
+        } catch (SQLException e) {
+            LOG.info("Unable to fetch existing server info: " + e.getMessage());
+        } finally {
+            if (null != db) {
+                db.closeJDBCObjects(conn, stm, rs);
+            }
+        }
+
+        return result;
+    }
+
+    private int getAffinityGroupId(DatabaseType db, Connection conn, String affinityGroup) {
+        PreparedStatement stm = null;
+        ResultSet rs = null;
+        int result = -1;
+
+        if ((null == affinityGroup) || ServerInformation.Server.AFFINITY_GROUP_NONE.equals(affinityGroup))
+            return result;
+
+        try {
+            stm = conn.prepareStatement("SELECT id FROM rhq_affinity_group WHERE name = ?");
+            stm.setString(1, affinityGroup.trim());
+            rs = stm.executeQuery();
+
+            if (rs.next())
+                result = rs.getInt(1);
+
+        } catch (SQLException e) {
+            LOG.info("Unable to get affinity group id: " + e.getMessage());
+        } finally {
+            if (null != db) {
+                db.closeResultSet(rs);
+                db.closeStatement(stm);
+            }
+        }
+
+        return result;
+    }
+
+    private String getAffinityGroup(DatabaseType db, Connection conn, String serverName) {
+        PreparedStatement stm = null;
+        ResultSet rs = null;
+        String result = null;
+
+        if (null == serverName)
+            return result;
+
+        try {
+            stm = conn
+                .prepareStatement("SELECT ag.name FROM rhq_affinity_group ag JOIN rhq_server s ON ag.id = s.affinity_group_id WHERE s.name = ?");
+            stm.setString(1, serverName.trim());
+            rs = stm.executeQuery();
+
+            if (rs.next())
+                result = rs.getString(1);
+
+        } catch (SQLException e) {
+            LOG.info("Unable to get affinity group name for server: " + e.getMessage());
+        } finally {
+            if (null != db) {
+                db.closeResultSet(rs);
+                db.closeStatement(stm);
+            }
+        }
+
+        return result;
+    }
+
+    public String getAffinityGroupForServer(Properties props, String serverName) {
+
+        DatabaseType db = null;
+        Connection conn = null;
+        String result = null;
+
+        try {
+            conn = getDatabaseConnection(props);
+            db = DatabaseTypeFactory.getDatabaseType(conn);
+
+            result = getAffinityGroup(db, conn, serverName);
+
+        } catch (Exception e) {
+            LOG.info("Unable to get affinity group for server: " + e.getMessage());
+        } finally {
+            if (null != db) {
+                db.closeConnection(conn);
+            }
+        }
+
+        return result;
+    }
+
+    private void insertAffinityGroup(DatabaseType db, Connection conn, String affinityGroup) {
+        PreparedStatement stm = null;
+        ResultSet rs = null;
+
+        if (null == affinityGroup)
+            return;
+        affinityGroup = affinityGroup.trim();
+        if ("".equals(affinityGroup) || AFFINITY_GROUP_NONE.equalsIgnoreCase(affinityGroup))
+            return;
+
+        try {
+            stm = conn.prepareStatement("INSERT INTO rhq_affinity_group ( id, name ) VALUES ( ?, ? )");
+            stm.setInt(1, db.getNextSequenceValue(conn, "rhq_affinity_group", "id"));
+            stm.setString(2, affinityGroup);
+            stm.executeUpdate();
+
+        } catch (SQLException e) {
+            LOG.info("Unable to insert affinity group: " + e.getMessage());
+        } finally {
+            if (null != db) {
+                db.closeResultSet(rs);
+                db.closeStatement(stm);
+            }
+        }
+    }
+
+    private ServerInformation.Server getServer(DatabaseType db, Connection conn, String serverName) {
+        PreparedStatement stm = null;
+        ResultSet rs = null;
+        ServerInformation.Server result = null;
+
+        if (null == serverName)
+            return result;
+
+        try {
+            stm = conn
+                .prepareStatement("SELECT s.address, s.port, s.secure_port, ag.name FROM rhq_server s LEFT JOIN rhq_affinity_group ag ON ag.id = s.affinity_group_id WHERE s.name = ?");
+            stm.setString(1, serverName.trim());
+
+            rs = stm.executeQuery();
+
+            if (rs.next()) {
+                result = new ServerInformation.Server(serverName, rs.getString(1), rs.getInt(2), rs.getInt(3), rs
+                    .getString(4));
+            }
+
+        } catch (SQLException e) {
+            LOG.info("Unable to get affinity group name for server: " + e.getMessage());
+        } finally {
+            if (null != db) {
+                db.closeResultSet(rs);
+                db.closeStatement(stm);
+            }
+        }
+
+        return result;
+    }
+
+    public ServerInformation.Server getServerDetail(Properties props, String serverName) {
+
+        DatabaseType db = null;
+        Connection conn = null;
+        ServerInformation.Server result = null;
+
+        try {
+            conn = getDatabaseConnection(props);
+            db = DatabaseTypeFactory.getDatabaseType(conn);
+
+            result = getServer(db, conn, serverName);
+
+        } catch (Exception e) {
+            LOG.info("Unable to get server detail: " + e.getMessage());
+        } finally {
+            if (null != db) {
+                db.closeConnection(conn);
+            }
+        }
+
+        return result;
+    }
+
+    private void updateServerAffinityGroup(DatabaseType db, Connection conn, String serverName, int affinityGroupId) {
+        PreparedStatement stm = null;
+        ResultSet rs = null;
+
+        if ((affinityGroupId < 0) || (null == serverName))
+            return;
+
+        try {
+            stm = conn.prepareStatement("UPDATE rhq_server SET affinity_group_id = ? WHERE name = ?");
+            stm.setInt(1, affinityGroupId);
+            stm.setString(2, serverName);
+            stm.executeUpdate();
+
+        } catch (SQLException e) {
+            LOG.info("Unable to set server affinity group id: " + e.getMessage());
+        } finally {
+            if (null != db) {
+                db.closeResultSet(rs);
+                db.closeStatement(stm);
+            }
+        }
+    }
+
+    private void updateOrInsertServer(DatabaseType db, Connection conn, ServerInformation.Server server) {
+        PreparedStatement stm = null;
+        ResultSet rs = null;
+
+        if (null == server)
+            return;
+        if (null == server.name)
+            return;
+        if ("".equals(server.name.trim()))
+            return;
+
+        try {
+            stm = conn.prepareStatement("UPDATE rhq_server SET address=?, port=?, secure_port=? WHERE name=?");
+            stm.setString(1, server.endpointAddress);
+            stm.setInt(2, server.endpointPort);
+            stm.setInt(3, server.endpointSecurePort);
+            stm.setString(4, server.name);
+            if (0 == stm.executeUpdate()) {
+                stm.close();
+
+                stm = conn
+                    .prepareStatement("INSERT INTO rhq_server ( id, name, address, port, secure_port, ctime ) VALUES ( ?, ?, ?, ?, ?, ? )");
+                stm.setInt(1, db.getNextSequenceValue(conn, "rhq_server", "id"));
+                stm.setString(2, server.name);
+                stm.setString(3, server.endpointAddress);
+                stm.setInt(4, server.endpointPort);
+                stm.setInt(5, server.endpointSecurePort);
+                stm.setLong(6, System.currentTimeMillis());
+                stm.executeUpdate();
+            }
+
+            int affinityGroupId = getAffinityGroupId(db, conn, server.getAffinityGroup());
+
+            if (affinityGroupId < 0) {
+                insertAffinityGroup(db, conn, server.affinityGroup);
+                affinityGroupId = getAffinityGroupId(db, conn, server.affinityGroup);
+            }
+
+            if (affinityGroupId > 0) {
+                this.updateServerAffinityGroup(db, conn, server.name, affinityGroupId);
+            }
+
+        } catch (SQLException e) {
+            LOG.info("Unable to insert server: " + e.getMessage());
+        } finally {
+            if (null != db) {
+                db.closeResultSet(rs);
+                db.closeStatement(stm);
+            }
+        }
+    }
+
+    public void storeServer(Properties props, ServerInformation.Server server) throws Exception {
+
+        DatabaseType db = null;
+        Connection conn = null;
+
+        try {
+            conn = getDatabaseConnection(props);
+            db = DatabaseTypeFactory.getDatabaseType(conn);
+
+            updateOrInsertServer(db, conn, server);
+
+        } catch (SQLException e) {
+            LOG.info("Unable to create server entry: " + e.getMessage());
+        } finally {
+            if (null != db) {
+                db.closeConnection(conn);
+            }
+        }
+    }
+
 }

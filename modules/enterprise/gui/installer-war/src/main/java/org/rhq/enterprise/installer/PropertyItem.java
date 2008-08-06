@@ -56,13 +56,14 @@ public class PropertyItem {
     private boolean requiresRestart;
     private boolean secret;
     private boolean advanced;
+    private boolean hidden;
     private List<SelectItem> options;
     private String propertyLabelResourceBundleKey;
     private String helpResourceBundleKey;
     private Msg i18nMsg;
 
     public PropertyItem(String name, Class<?> type, String labelBundleKey, String helpBundleKey,
-        boolean requiresRestart, boolean secret, boolean advanced) {
+        boolean requiresRestart, boolean secret, boolean advanced, boolean hidden) {
         setPropertyName(name);
         setPropertyType(type);
         setPropertyLabelResourceBundleKey(labelBundleKey);
@@ -70,6 +71,7 @@ public class PropertyItem {
         setRequiresRestart(requiresRestart);
         setSecret(secret);
         setAdvanced(advanced);
+        setHidden(hidden);
 
         if (Number.class.isAssignableFrom(type)) {
             setFieldSize(6);
@@ -82,13 +84,20 @@ public class PropertyItem {
         }
     }
 
+    // for legacy support
+    public PropertyItem(String name, Class<?> type, String labelBundleKey, String helpBundleKey,
+        boolean requiresRestart, boolean secret, boolean advanced) {
+
+        this(name, type, labelBundleKey, helpBundleKey, requiresRestart, secret, advanced, false);
+    }
+
     /**
      * Use this constructor to define a property that is rendered with a drop down box of options
      * to choose from.
      */
     public PropertyItem(String name, Class<?> type, String labelBundleKey, String helpBundleKey,
         boolean requiresRestart, boolean secret, boolean advanced, List<SelectItem> options) {
-        this(name, type, labelBundleKey, helpBundleKey, requiresRestart, secret, advanced);
+        this(name, type, labelBundleKey, helpBundleKey, requiresRestart, secret, advanced, false);
         setOptions(options);
     }
 
@@ -146,6 +155,14 @@ public class PropertyItem {
 
     public void setAdvanced(boolean hidden) {
         this.advanced = hidden;
+    }
+
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    public void setHidden(boolean hidden) {
+        this.hidden = hidden;
     }
 
     public String getPropertyLabelResourceBundleKey() {

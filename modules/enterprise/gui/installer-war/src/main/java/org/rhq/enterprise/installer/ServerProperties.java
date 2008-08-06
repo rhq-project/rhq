@@ -123,6 +123,8 @@ public class ServerProperties {
     public static final String PROP_CONCURRENCY_LIMIT_MEAS_REPORT = "rhq.server.concurrency-limit.measurement-report";
     public static final String PROP_CONCURRENCY_LIMIT_MEASSCHED_REQ = "rhq.server.concurrency-limit.measurement-schedule-request";
 
+    public static final String PROP_HIGH_AVAILABILITY_NAME = "rhq.server.high-availability.name";
+
     public static final List<SelectItem> DATABASE_TYPES;
     static {
         DATABASE_TYPES = new ArrayList<SelectItem>();
@@ -363,7 +365,10 @@ public class ServerProperties {
             InstallerI18NResourceKeys.PROP_CONCURRENCY_LIMIT_MEAS_REPORT_HELP, false, false, true),
         new PropertyItem(PROP_CONCURRENCY_LIMIT_MEASSCHED_REQ, Integer.class,
             InstallerI18NResourceKeys.PROP_CONCURRENCY_LIMIT_MEASSCHED_REQ,
-            InstallerI18NResourceKeys.PROP_CONCURRENCY_LIMIT_MEASSCHED_REQ_HELP, false, false, true) };
+            InstallerI18NResourceKeys.PROP_CONCURRENCY_LIMIT_MEASSCHED_REQ_HELP, false, false, true),
+        new PropertyItem(PROP_HIGH_AVAILABILITY_NAME, String.class,
+            InstallerI18NResourceKeys.PROP_HIGH_AVAILABILITY_NAME,
+            InstallerI18NResourceKeys.PROP_HIGH_AVAILABILITY_NAME_HELP, false, false, false, true) };
 
     /**
      * Returns the list of all known property items the server supports, in an order that is appropriate for display.
@@ -375,7 +380,7 @@ public class ServerProperties {
     }
 
     /**
-     * Static convienence method that returns a valid server bind address as defined in the given properties. If not
+     * Static convenience method that returns a valid server bind address as defined in the given properties. If not
      * found in the props or it is "0.0.0.0", then <code>InetAddress.getLocalHost().getHostAddress()</code> is used.
      * Therefore, keep in mind that this might return a value that is different than the value actually specified in the
      * given properties.
@@ -400,7 +405,7 @@ public class ServerProperties {
     }
 
     /**
-     * Static convienence method that returns the HTTP port as defined in the given properties. If not found in the
+     * Static convenience method that returns the HTTP port as defined in the given properties. If not found in the
      * props, it defaults to 7080. Therefore, keep in mind that this might return a value that is not actually specified
      * in the given properties.
      *

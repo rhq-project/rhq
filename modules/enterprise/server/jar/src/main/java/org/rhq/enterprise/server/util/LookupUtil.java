@@ -54,6 +54,10 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerBean;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.cluster.ClusterIdentityManagerBean;
+import org.rhq.enterprise.server.cluster.ClusterIdentityManagerLocal;
+import org.rhq.enterprise.server.cluster.ClusterManagerBean;
+import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.common.EntityManagerFacade;
 import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
@@ -299,6 +303,14 @@ public final class LookupUtil {
 
     public static ChannelManagerLocal getChannelManagerLocal() {
         return lookupLocal(ChannelManagerBean.class);
+    }
+
+    public static ClusterManagerLocal getClusterManager() {
+        return lookupLocal(ClusterManagerBean.class);
+    }
+
+    public static ClusterIdentityManagerLocal getClusterIdentityManager() {
+        return lookupLocal(ClusterIdentityManagerBean.class);
     }
 
     public static ResourceMetadataManagerLocal getResourceMetadataManager() {

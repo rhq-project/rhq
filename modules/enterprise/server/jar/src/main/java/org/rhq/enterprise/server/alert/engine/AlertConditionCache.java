@@ -52,6 +52,7 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -66,12 +67,14 @@ import org.rhq.enterprise.server.alert.engine.model.AvailabilityCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.EventCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.InvalidCacheElementException;
 import org.rhq.enterprise.server.alert.engine.model.MeasurementBaselineCacheElement;
+import org.rhq.enterprise.server.alert.engine.model.MeasurementNumericCacheElement;
+import org.rhq.enterprise.server.alert.engine.model.MeasurementTraitCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.NumericDoubleCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.OutOfBoundsCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.ResourceOperationCacheElement;
-import org.rhq.enterprise.server.alert.engine.model.StringCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.UnsupportedAlertConditionOperatorException;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.cluster.ClusterIdentityManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementConstants;
@@ -88,7 +91,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Joseph Marques
  * @author John Mazzittelli
  */
-public class AlertConditionCache {
+public final class AlertConditionCache {
     private static final Log log = LogFactory.getLog(AlertConditionCache.class);
 
     /**
@@ -135,14 +138,14 @@ public class AlertConditionCache {
 
     /*
      * structure: 
-     *      map< measurementScheduleId, list < NumericDoubleCacheElement > >   (MeasurementDataNumeric cache)
-     *      map< measurementScheduleId, list < StringCacheElement > >          (MeasurementDataTrait   cache)
+     *      map< measurementScheduleId, list < NumericDoubleCacheElement > >    (MeasurementDataNumeric cache)
+     *      map< measurementScheduleId, list < MeasurementTraitCacheElement > > (MeasurementDataTrait   cache)
      *
      * algorithm: 
      *      Use the measurementScheduleId to find a list of cached conditions for measurement numerics.
      */
     private Map<Integer, List<NumericDoubleCacheElement>> measurementDataCache;
-    private Map<Integer, List<StringCacheElement>> measurementTraitCache;
+    private Map<Integer, List<MeasurementTraitCacheElement>> measurementTraitCache;
 
     /*
      * structure: 
@@ -244,10 +247,11 @@ public class AlertConditionCache {
     private OperationManagerLocal operationManager;
     private SubjectManagerLocal subjectManager;
     private CachedConditionProducerLocal cachedConditionProducer;
+    private ClusterIdentityManagerLocal clusterIdentityManager;
 
     private AlertConditionCache() {
         measurementDataCache = new HashMap<Integer, List<NumericDoubleCacheElement>>();
-        measurementTraitCache = new HashMap<Integer, List<StringCacheElement>>();
+        measurementTraitCache = new HashMap<Integer, List<MeasurementTraitCacheElement>>();
         measurementBaselineMap = new HashMap<Integer, List<MeasurementBaselineCacheElement>>();
         outOfBoundsBaselineMap = new HashMap<Integer, Tuple<OutOfBoundsCacheElement, OutOfBoundsCacheElement>>();
         resourceOperationCache = new HashMap<Integer, Map<Integer, List<ResourceOperationCacheElement>>>();
@@ -264,30 +268,35 @@ public class AlertConditionCache {
         operationManager = LookupUtil.getOperationManager();
         subjectManager = LookupUtil.getSubjectManager();
         cachedConditionProducer = LookupUtil.getCachedConditionProducerLocal();
+        clusterIdentityManager = LookupUtil.getClusterIdentityManager();
 
-        loadCaches();
+        loadCachesForAgentsOnThisServer();
     }
 
     public static AlertConditionCache getInstance() {
         return instance;
     }
 
+    private void loadCachesForAgentsOnThisServer() {
+        List<Agent> agents = LookupUtil.getAgentManager().getAllAgents();
+
+        // RHQ-668 - when the HA installer is finished, replace getAllAgents with commented lines
+        //    List<Agent> agents = clusterIdentityManager.getAgents();
+
+        for (Agent nextAgent : agents) {
+            loadCachesForAgent(nextAgent.getId());
+        }
+    }
+
     /**
-     * This method is used to do the initial loading from the backing store. It could also be used "refresh" the cache
-     * and make sure that it really does mirror what's persisted, even though it could be a rather expensive operation.
-     * This method will query the backing store for all conditions on all AlertDefinitions, and translate them
-     * on-the-fly to the cache's more efficient, internal representation of a condition. It is this translation, aside
-     * from having to dump the existing contents of the cache, that could make it undesirable to call during regular
-     * operation of the server. This problem gets even worse when we're talking about clustering the server-side of
-     * things, at which point all nodes in the server cluster need to stabilize with the new information before alerts
-     * processing can continue. Nonetheless, this method was made public / provided as part of this interface so as to
-     * enable us to squirrel away a special "refresh" button somewhere in the UI just in case this cache ever gets
-     * corrupted for some reason; the support person could simply tell the customer to press this magic button and,
-     * after a pause, it would bring things back to a stable, ready state.
+     * This method is used to do the initial loading from the database for a particular agent. In the high availability
+     * infrastructure each server instance in the cloud will only be responsible for monitoring a select number of 
+     * agents at any given point in time. When an agent makes a connection to this server instance, the caches for that
+     * agent will be loaded at that time. 
      *
-     * @return the number of conditions that re/loaded from the backing store
+     * @return the number of conditions that re/loaded
      */
-    public AlertConditionCacheStats loadCaches() {
+    public AlertConditionCacheStats loadCachesForAgent(int agentId) {
         rwLock.writeLock().lock();
 
         waitForBaselineLatchToOpen(rwLock.writeLock());
@@ -301,8 +310,8 @@ public class AlertConditionCache {
             AlertConditionCacheStats stats = new AlertConditionCacheStats();
 
             Subject overlord = subjectManager.getOverlord();
-            List<AlertDefinition> alertDefinitions = alertDefinitionManager
-                .getAllAlertDefinitionsWithConditions(overlord);
+            List<AlertDefinition> alertDefinitions = alertDefinitionManager.getAllAlertDefinitionsWithConditions(
+                agentId, overlord);
 
             for (AlertDefinition alertDefinition : alertDefinitions) {
                 /* 
@@ -333,7 +342,7 @@ public class AlertConditionCache {
 
             while (true) {
                 PageList<MeasurementBaselineComposite> baselines = measurementBaselineManager
-                    .getAllDynamicMeasurementBaselines(overlord, pc);
+                    .getAllDynamicMeasurementBaselines(agentId, overlord, pc);
 
                 if (baselines.size() <= 0) {
                     break; // didn't get any rows back, must not have any data or no more rows left to process
@@ -368,7 +377,7 @@ public class AlertConditionCache {
 
     /**
      * This will empty all internal caches. Be very careful calling this method as it will make all caches out of sync
-     * from the database data. You'll probably want to call {@link #loadCaches()} after making a call to this method.
+     * from the database data. You'll probably want to call {@link #loadCachesForAgent()} after making a call to this method.
      */
     public void clearCaches() {
         rwLock.writeLock().lock();
@@ -383,6 +392,7 @@ public class AlertConditionCache {
             resourceOperationCache.clear();
             availabilityCache.clear();
             inverseAlertConditionMap.clear();
+            AlertConditionCacheMonitor.getMBean().resetAllCacheElementCounts();
         } finally {
             rwLock.writeLock().unlock();
         }
@@ -435,7 +445,9 @@ public class AlertConditionCache {
             //       all goes away, especially if we use native bulk update and not
             //       bulk delete/insert (since baseline IDs remain intact and thus the cache
             //       doesn't break)
-            loadCaches();
+
+            // reload caches for all agents attached to this server
+            loadCachesForAgentsOnThisServer();
         } finally {
             rwLock.writeLock().unlock();
         }
@@ -457,12 +469,12 @@ public class AlertConditionCache {
                 int scheduleId = datum.getScheduleId();
 
                 if (datum instanceof MeasurementDataNumeric) {
-                    List<NumericDoubleCacheElement> cacheElements = lookupMeasurementDataCacheElements(scheduleId);
+                    List<? extends NumericDoubleCacheElement> cacheElements = lookupMeasurementDataCacheElements(scheduleId);
 
                     processCacheElements(cacheElements, ((MeasurementDataNumeric) datum).getValue(), datum
                         .getTimestamp(), stats);
                 } else if (datum instanceof MeasurementDataTrait) {
-                    List<StringCacheElement> cacheElements = lookupMeasurementTraitCacheElements(scheduleId);
+                    List<MeasurementTraitCacheElement> cacheElements = lookupMeasurementTraitCacheElements(scheduleId);
 
                     processCacheElements(cacheElements, ((MeasurementDataTrait) datum).getValue(),
                         datum.getTimestamp(), stats);
@@ -945,11 +957,11 @@ public class AlertConditionCache {
         }
     }
 
-    private List<NumericDoubleCacheElement> lookupMeasurementDataCacheElements(int scheduleId) {
+    private List<? extends NumericDoubleCacheElement> lookupMeasurementDataCacheElements(int scheduleId) {
         return measurementDataCache.get(scheduleId); // yup, might be null
     }
 
-    private List<StringCacheElement> lookupMeasurementTraitCacheElements(int scheduleId) {
+    private List<MeasurementTraitCacheElement> lookupMeasurementTraitCacheElements(int scheduleId) {
         return measurementTraitCache.get(scheduleId); // yup, might be null
     }
 
@@ -1031,7 +1043,7 @@ public class AlertConditionCache {
                 log.info("Failed to create NumericDoubleCacheElement with parameters: "
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, calculatedValue));
             }
-            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(2);
         } else if (alertConditionCategory == AlertConditionCategory.CHANGE) {
             Integer measurementScheduleId = getMeasurementScheduleId(resource.getId(), measurementDefinition.getId(),
                 true);
@@ -1042,8 +1054,9 @@ public class AlertConditionCache {
             }
 
             try {
-                NumericDoubleCacheElement cacheElement = new NumericDoubleCacheElement(alertConditionOperator,
-                    (measurementData == null) ? null : measurementData.getValue(), alertConditionId);
+                MeasurementNumericCacheElement cacheElement = new MeasurementNumericCacheElement(
+                    alertConditionOperator, (measurementData == null) ? null : measurementData.getValue(),
+                    alertConditionId);
 
                 addTo("measurementDataCache", measurementDataCache, measurementScheduleId, cacheElement,
                     alertConditionId, stats);
@@ -1051,7 +1064,7 @@ public class AlertConditionCache {
                 log.info("Failed to create NumericDoubleCacheElement with parameters: "
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, measurementData));
             }
-            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.TRAIT) {
             Integer measurementScheduleId = getMeasurementScheduleId(resource.getId(), measurementDefinition.getId(),
                 true);
@@ -1068,7 +1081,7 @@ public class AlertConditionCache {
                  * this might happen if a newly committed resource has some alert template applied to
                  * it for some trait that it has not yet gotten from the agent
                  */
-                StringCacheElement cacheElement = new StringCacheElement(alertConditionOperator,
+                MeasurementTraitCacheElement cacheElement = new MeasurementTraitCacheElement(alertConditionOperator,
                     (measurementTrait == null) ? null : measurementTrait.getValue(), alertConditionId);
 
                 addTo("measurementTraitCache", measurementTraitCache, measurementScheduleId, cacheElement,
@@ -1077,7 +1090,7 @@ public class AlertConditionCache {
                 log.info("Failed to create StringCacheElement with parameters: "
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, measurementTrait));
             }
-            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.AVAILABILITY) {
             /*
              * This is a hack, because we're not respecting the persist alertCondition option, we're instead overriding
@@ -1099,7 +1112,7 @@ public class AlertConditionCache {
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator,
                         alertConditionOperatorOption, AvailabilityType.UP));
             }
-            AlertConditionCacheMonitor.getMBean().incrementAvailabilityCacheElementCount(stats.created - stats.deleted);
+            AlertConditionCacheMonitor.getMBean().incrementAvailabilityCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.CONTROL) {
             String option = alertCondition.getOption();
             OperationRequestStatus operationRequestStatus = OperationRequestStatus.valueOf(option.toUpperCase());
@@ -1131,13 +1144,14 @@ public class AlertConditionCache {
                         + getCacheElementErrorString(alertConditionId, alertConditionOperator, null,
                             operationRequestStatus));
             }
-            AlertConditionCacheMonitor.getMBean().incrementOperationCacheElementCount(stats.created - stats.deleted);
+            AlertConditionCacheMonitor.getMBean().incrementOperationCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.THRESHOLD) {
             Double thresholdValue = alertCondition.getThreshold();
 
-            NumericDoubleCacheElement cacheElement = null;
+            MeasurementNumericCacheElement cacheElement = null;
             try {
-                cacheElement = new NumericDoubleCacheElement(alertConditionOperator, thresholdValue, alertConditionId);
+                cacheElement = new MeasurementNumericCacheElement(alertConditionOperator, thresholdValue,
+                    alertConditionId);
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create NumberDoubleCacheElement with parameters: "
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, thresholdValue));
@@ -1153,7 +1167,7 @@ public class AlertConditionCache {
                     log.error("Missing schedule prevents element from being cached: " + cacheElement);
                 }
             }
-            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.EVENT) {
             EventSeverity eventSeverity = EventSeverity.valueOf(alertCondition.getName());
             String eventDetails = alertCondition.getOption();
@@ -1174,7 +1188,7 @@ public class AlertConditionCache {
             }
 
             addTo("eventsCache", eventsCache, resource.getId(), cacheElement, alertConditionId, stats);
-            AlertConditionCacheMonitor.getMBean().incrementEventCacheElementCount(stats.created - stats.deleted);
+            AlertConditionCacheMonitor.getMBean().incrementEventCacheElementCount(1);
         }
     }
 
@@ -1276,6 +1290,12 @@ public class AlertConditionCache {
              */
             outOfBoundsBaselineMap.put(baselineId, new Tuple<OutOfBoundsCacheElement, OutOfBoundsCacheElement>(
                 lowCacheElement, highCacheElement));
+
+            /* 
+             * can't pass (stats.created-stats.deleted) to the monitor because this methods called in a loop, which
+             * means the first time this is called the count will increase by 2, next time by 4, etc
+             */
+            AlertConditionCacheMonitor.getMBean().incrementOOBCacheElementCount(2);
         }
     }
 
@@ -1333,6 +1353,23 @@ public class AlertConditionCache {
             // it's possible this might leave empty lists in the various other caches and maps - not a big deal
             inverseCacheElement.righty.remove(inverseCacheElement.lefty);
             stats.deleted++;
+
+            if (inverseCacheElement.lefty instanceof OutOfBoundsCacheElement) {
+                AlertConditionCacheMonitor.getMBean().incrementOOBCacheElementCount(-1);
+            } else if (inverseCacheElement.lefty instanceof AvailabilityCacheElement) {
+                AlertConditionCacheMonitor.getMBean().incrementAvailabilityCacheElementCount(-1);
+            } else if (inverseCacheElement.lefty instanceof EventCacheElement) {
+                AlertConditionCacheMonitor.getMBean().incrementEventCacheElementCount(-1);
+            } else if (inverseCacheElement.lefty instanceof ResourceOperationCacheElement) {
+                AlertConditionCacheMonitor.getMBean().incrementOperationCacheElementCount(-1);
+            } else if (inverseCacheElement.lefty instanceof MeasurementTraitCacheElement) {
+                AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(-1);
+            } else if (inverseCacheElement.lefty instanceof MeasurementNumericCacheElement) {
+                AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(-1);
+            } else {
+                log.info("AlertConditionCacheMonitor does not yet remove/reset cache counts for elements of type '"
+                    + inverseCacheElement.lefty.getClass() + "'");
+            }
         }
     }
 

@@ -20,6 +20,7 @@ package org.rhq.core.domain.test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -31,13 +32,12 @@ import javax.transaction.TransactionManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.content.ContentServiceRequest;
+import org.rhq.core.domain.content.Channel;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.Channel;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
@@ -87,11 +87,11 @@ public class QueriesTest extends AbstractEJB3Test {
         add(PackageVersion.QUERY_GET_PKG_BITS_LENGTH_BY_PKG_DETAILS_AND_RES_ID, new Object[] { "packageName", "foo",
             "packageTypeName", "bar", "resourceId", 1, "architectureName", "blah", "version", "ver" });
 
-        add(MeasurementBaseline.QUERY_FIND_BY_COMPUTE_TIME, new Object[] { "computeTime", 1L, "numericType",
+        add(MeasurementBaseline.QUERY_FIND_BY_COMPUTE_TIME, new Object[] { "computeTime", new Date(1L), "numericType",
             NumericType.DYNAMIC });
 
         add(MeasurementBaseline.QUERY_FIND_ALL_DYNAMIC_MEASUREMENT_BASELINES, new Object[] { "numericType",
-            NumericType.DYNAMIC });
+            NumericType.DYNAMIC, "agentId", 0 });
 
         add(MeasurementOutOfBounds.QUERY_COUNT_FOR_SCHEDULE_IDS_ADMIN, new Object[] { "scheduleIds",
             new ArrayList<Integer>(Arrays.asList(Integer.MAX_VALUE)), // an empty list caused a problem

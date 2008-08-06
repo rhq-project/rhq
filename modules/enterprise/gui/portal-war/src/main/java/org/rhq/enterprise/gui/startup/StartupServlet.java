@@ -33,8 +33,10 @@ import org.quartz.SchedulerException;
 
 import org.jboss.mx.util.MBeanServerLocator;
 
+import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
+import org.rhq.enterprise.server.cluster.ClusterIdentityManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
@@ -84,8 +86,21 @@ public class StartupServlet extends HttpServlet {
         startEmbeddedAgent();
         registerShutdownListener();
         registerBootTime();
+        createDefaultServerIfNecessary();
 
         return;
+    }
+
+    /**
+     * For developer builds that don't use the HA installer to write a localhost entry into the {@link Server}
+     * table, we will create a default one here.  Then, if the "rhq.server.name" property is missing, the
+     * {@link ClusterIdentityManagerLocal} will return this localhost entry.
+     * 
+     * If the installer was already run, then this method should be a no-op because a row would already exist
+     * in the {@link Server} table
+     */
+    private void createDefaultServerIfNecessary() {
+        LookupUtil.getClusterManager().createDefaultServerIfNecessary();
     }
 
     /**
@@ -253,8 +268,7 @@ public class StartupServlet extends HttpServlet {
         // Baseline calculation Job
         try {
             // Check the need to calculate baselines every 77 minutes
-            scheduler.scheduleSimpleRepeatingJob(AutoBaselineCalculationJob.class, true, false, 11 * 60 * 1000L,
-                77 * 60 * 1000L);
+            scheduler.scheduleSimpleRepeatingJob(AutoBaselineCalculationJob.class, true, false, 60000L, 60000L);
         } catch (Exception e) {
             throw new ServletException("Cannot schedule baseline calculation job", e);
         }

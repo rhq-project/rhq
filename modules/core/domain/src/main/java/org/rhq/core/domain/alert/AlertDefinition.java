@@ -55,9 +55,13 @@ import org.rhq.core.domain.resource.ResourceType;
 @NamedQueries( {
     @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL, query = "SELECT a " + "  FROM AlertDefinition a "
         + " WHERE a.deleted = false " + "       AND a.resource IS NOT NULL"),
-    @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL_WITH_CONDITIONS, query = "SELECT a "
-        + "  FROM AlertDefinition a " + "       LEFT JOIN FETCH a.conditions " + " WHERE a.deleted = false "
-        + "       AND a.enabled = true AND a.resource IS NOT NULL"),
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL_WITH_CONDITIONS, query = "SELECT a " //
+        + "  FROM AlertDefinition a " //
+        + "       LEFT JOIN FETCH a.conditions " // 
+        + " WHERE a.deleted = false " //
+        + "       AND a.enabled = true " //
+        + "       AND a.resource IS NOT NULL " //
+        + "       AND a.resource.agent.id = :agentId "),
     @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL_BY_RECOVERY_DEFINITION_ID, query = "SELECT a "
         + "  FROM AlertDefinition a " + "       LEFT JOIN FETCH a.conditions "
         + " WHERE a.deleted = false AND a.enabled = true " + "       AND a.recoveryId = :recoveryDefinitionId"),

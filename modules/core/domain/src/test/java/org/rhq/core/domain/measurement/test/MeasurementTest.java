@@ -23,6 +23,7 @@ package org.rhq.core.domain.measurement.test;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.transaction.HeuristicMixedException;
@@ -30,7 +31,9 @@ import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
+
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
@@ -249,7 +252,7 @@ public class MeasurementTest extends AbstractEJB3Test {
 
             Query q = em.createNamedQuery(MeasurementSchedule.FIND_SCHEDULES_WITH_BASLINES_TO_CALC);
             q.setParameter("measType", NumericType.DYNAMIC);
-            q.setParameter("ctime", now);
+            q.setParameter("ctime", new Date(now));
             List<MeasurementSchedule> schedules = q.getResultList();
 
             assert schedules.size() > 0 : "Should find at least one baseline";

@@ -35,6 +35,7 @@ import org.rhq.core.domain.util.PageList;
  *
  * @author Heiko W. Rupp
  * @author John Mazzitelli
+ * @author Joseph Marques
  */
 @Local
 public interface MeasurementBaselineManagerLocal {
@@ -42,25 +43,17 @@ public interface MeasurementBaselineManagerLocal {
      * Calculates baselines for all scheduled measurements. The measurement data that was collected between the given
      * start and end times is used to calculate the baselines.
      *
-     * <p>Callers are required to call {@link #calculateAutoBaselinesPostProcessing(long)} immediately after this method
-     * returns successfully.</p>
-     *
      * @param  startTime use measurement data that was collected at or after this time (epoch millis)
      * @param  endtime   use measurement data that was collected at or before this time (epoch millis)
      *
      * @return the time that all the baselines were computed; this value must be passed to
      *         {@link #calculateAutoBaselinesPostProcessing(long)}
-     *
-     * @see    #calculateAutoBaselinesPostProcessing(long)
      */
     long calculateAutoBaselines(long startTime, long endtime);
 
     int _calculateAutoBaselinesDELETE(long startTime, long endtime) throws Exception;
 
     int _calculateAutoBaselinesINSERT(long startTime, long endtime, long computeTime) throws Exception;
-
-    PageList<MeasurementBaselineComposite> _calculateAutoBaselinesLIST(long computeTime, PageControl pc)
-        throws Exception;
 
     /**
      * Calculate a baseline value for the given metric based on the specified date range, optionally setting the
@@ -119,5 +112,6 @@ public interface MeasurementBaselineManagerLocal {
      *
      * @return all baselines for all measurements whose values are dynamic in nature
      */
-    PageList<MeasurementBaselineComposite> getAllDynamicMeasurementBaselines(Subject subject, PageControl pc);
+    PageList<MeasurementBaselineComposite> getAllDynamicMeasurementBaselines(int agentId, Subject subject,
+        PageControl pc);
 }

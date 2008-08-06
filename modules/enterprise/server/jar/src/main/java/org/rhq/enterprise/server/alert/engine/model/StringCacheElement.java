@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 /*
  * If even one element in the Measurement cache were a Double, then they all need to be compared
  */
-public class StringCacheElement extends AbstractCacheElement<String> {
+public abstract class StringCacheElement extends AbstractCacheElement<String> {
     final Pattern pattern;
 
     public StringCacheElement(AlertConditionOperator operator, String value, int conditionTriggerId) {

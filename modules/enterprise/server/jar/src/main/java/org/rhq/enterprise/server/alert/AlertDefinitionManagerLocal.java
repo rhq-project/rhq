@@ -35,7 +35,7 @@ import org.rhq.core.domain.util.PageList;
  */
 @Local
 public interface AlertDefinitionManagerLocal {
-    List<AlertDefinition> getAllAlertDefinitionsWithConditions(Subject user);
+    List<AlertDefinition> getAllAlertDefinitionsWithConditions(int agentId, Subject user);
 
     PageList<AlertDefinition> getAlertDefinitions(Subject user, int resourceId, PageControl pageControl);
 

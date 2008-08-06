@@ -39,6 +39,7 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     public AtomicInteger eventCacheElementCount = new AtomicInteger();
     public AtomicInteger measurementCacheElementCount = new AtomicInteger();
     public AtomicInteger operationCacheElementCount = new AtomicInteger();
+    public AtomicInteger OOBCacheElementCount = new AtomicInteger();
     public AtomicInteger totalCacheElementCount = new AtomicInteger();
 
     public AtomicInteger availabilityCacheElementMatches = new AtomicInteger();
@@ -88,8 +89,46 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
         return operationCacheElementCount.get();
     }
 
+    public int getOOBCacheElementCount() {
+        return OOBCacheElementCount.get();
+    }
+
     public int getTotalCacheElementCount() {
         return totalCacheElementCount.get();
+    }
+
+    public void resetAvailabilityCacheElementCounts() {
+        int removed = availabilityCacheElementCount.getAndSet(0);
+        totalCacheElementCount.addAndGet(-removed);
+    }
+
+    public void resetEventCacheElementCounts() {
+        int removed = eventCacheElementCount.getAndSet(0);
+        totalCacheElementCount.addAndGet(-removed);
+    }
+
+    public void resetMeasurementCacheElementCounts() {
+        int removed = measurementCacheElementCount.getAndSet(0);
+        totalCacheElementCount.addAndGet(-removed);
+    }
+
+    public void resetOOBCacheElementCounts() {
+        int removed = OOBCacheElementCount.getAndSet(0);
+        totalCacheElementCount.addAndGet(-removed);
+    }
+
+    public void resetOperationCacheElementCounts() {
+        int removed = operationCacheElementCount.getAndSet(0);
+        totalCacheElementCount.addAndGet(-removed);
+    }
+
+    public synchronized void resetAllCacheElementCounts() {
+        availabilityCacheElementCount.set(0);
+        eventCacheElementCount.set(0);
+        measurementCacheElementCount.set(0);
+        operationCacheElementCount.set(0);
+        OOBCacheElementCount.set(0);
+        totalCacheElementCount.set(0);
     }
 
     public int getAvailabilityCacheElementMatches() {
@@ -129,6 +168,11 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
 
     public void incrementOperationCacheElementCount(int insertedCount) {
         operationCacheElementCount.addAndGet(insertedCount);
+        totalCacheElementCount.addAndGet(insertedCount);
+    }
+
+    public void incrementOOBCacheElementCount(int insertedCount) {
+        OOBCacheElementCount.addAndGet(insertedCount);
         totalCacheElementCount.addAndGet(insertedCount);
     }
 

@@ -60,7 +60,7 @@
       <column name="BL_MIN" type="DOUBLE" required="true"/>
       <column name="BL_MAX" type="DOUBLE" required="true"/>
       <column name="BL_MEAN" type="DOUBLE" required="true"/>
-      <column name="BL_COMPUTE_TIME" type="LONG" required="true"/>
+      <column name="BL_COMPUTE_TIME" type="TIMESTAMP" required="true"/>
       <column name="SCHEDULE_ID" type="INTEGER" required="true" references="RHQ_MEASUREMENT_SCHED(ID)"/>
       <index name="RHQ_MEAS_BASELINE_CTIME_IDX">
          <field ref="BL_COMPUTE_TIME"/>

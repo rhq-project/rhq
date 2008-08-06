@@ -4,6 +4,9 @@
 <%@ page import="org.rhq.enterprise.server.test.DiscoveryTestLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.MeasurementTestLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.ResourceGroupTestBeanLocal" %>
+<%@ page import="org.rhq.enterprise.server.test.SubjectRoleTestBeanLocal" %>
+<%@ page import="org.rhq.enterprise.server.cluster.ClusterIdentityManagerLocal" %>
+<%@ page import="org.rhq.enterprise.server.test.ResourceGroupTestBeanLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="javax.naming.NamingException" %>
 <%@ page import="org.rhq.core.domain.util.PersistenceUtility" %>
@@ -11,7 +14,6 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-<%@page import="org.rhq.enterprise.server.test.SubjectRoleTestBeanLocal"%>
 <html>
 <head><title>RHQ Test Control Page</title></head>
 <body>
@@ -26,12 +28,14 @@
    MeasurementTestLocal measurementTestBean;
    ResourceGroupTestBeanLocal resourceGroupTestBean;
    SubjectRoleTestBeanLocal subjectRoleTestBean;
+   ClusterIdentityManagerLocal clusterIdentityManager;
    
    coreTestBean = LookupUtil.getCoreTest();
    discoveryTestBean = LookupUtil.getDiscoveryTest();
    measurementTestBean = LookupUtil.getMeasurementTest();
    resourceGroupTestBean = LookupUtil.getResourceGroupTestBean();
    subjectRoleTestBean = LookupUtil.getSubjectRoleTestBean();
+   clusterIdentityManager = LookupUtil.getClusterIdentityManager();
 
    String result = null;
    String mode = pageContext.getRequest().getParameter("mode");
@@ -96,6 +100,11 @@
          String usersInRoleCount = pageContext.getRequest().getParameter("usersInRoleCount");
          subjectRoleTestBean.createRolesAndUsers(Integer.parseInt(roleCount), Integer.parseInt(usersInRoleCount));
       }
+      else if ("clusterGetIdentity".equals(mode))
+      {
+         String serverName = clusterIdentityManager.getIdentity();
+         pageContext.setAttribute("clusterIdentity", "(serverName = " + serverName + ")");
+      }
    }
    catch (Exception e)
    {
@@ -148,6 +157,13 @@ Add Lots of Users and Roles
       <a href="<c:out value="${url}"/>">Register test plugin metadata</a></li>
   <li><c:url var="url" value="/admin/TestControl.jsp?mode=removeTestPluginAndTypeInfo"/>
       <a href="<c:out value="${url}"/>">Remove test plugin metadata</a></li>
+</ul>
+
+<h2>Cluster</h2>
+
+<ul>
+  <li><c:url var="url" value="/admin/TestControl.jsp?mode=clusterGetIdentity"/>
+      <a href="<c:out value="${url}"/>">Get Identity</a> <c:out value="${clusterIdentity}"/></li>
 </ul>
 
 <h2>Inventory</h2>

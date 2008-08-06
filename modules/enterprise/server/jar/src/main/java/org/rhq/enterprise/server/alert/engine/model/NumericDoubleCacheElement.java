@@ -25,7 +25,7 @@ package org.rhq.enterprise.server.alert.engine.model;
 /*
  * If even one element in the Measurement cache were a Double, then they all need to be compared
  */
-public class NumericDoubleCacheElement extends AbstractCacheElement<Double> {
+public abstract class NumericDoubleCacheElement extends AbstractCacheElement<Double> {
     public NumericDoubleCacheElement(AlertConditionOperator operator, Double value, int conditionTriggerId) {
         super(operator, value, conditionTriggerId);
     }

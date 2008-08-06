@@ -45,13 +45,16 @@ import org.rhq.core.domain.resource.Agent;
  *
  */
 @Entity(name = "Server")
-@NamedQueries( { @NamedQuery(name = Server.QUERY_FIND_BY_NAME, query = "SELECT s FROM Server s WHERE s.name = :name") })
+@NamedQueries( //
+{ @NamedQuery(name = Server.QUERY_FIND_ALL, query = "SELECT s FROM Server s"),
+    @NamedQuery(name = Server.QUERY_FIND_BY_NAME, query = "SELECT s FROM Server s WHERE s.name = :name") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_SERVER_ID_SEQ")
 @Table(name = "RHQ_SERVER")
 public class Server implements Serializable {
 
     public static final long serialVersionUID = 1L;
 
+    public static final String QUERY_FIND_ALL = "Server.findAll";
     public static final String QUERY_FIND_BY_NAME = "Server.findByName";
 
     @Column(name = "ID", nullable = false)
@@ -83,7 +86,7 @@ public class Server implements Serializable {
     private List<Agent> agents = new ArrayList<Agent>();
 
     // required for JPA
-    protected Server() {
+    public Server() {
     }
 
     public int getId() {

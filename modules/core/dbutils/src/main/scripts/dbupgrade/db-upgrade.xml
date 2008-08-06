@@ -302,7 +302,7 @@ DB Upgrade:
    </schemaSpec>
 
    <schemaSpec version="2.8">
-        <schema-alterColumn table="RHQ_MEASUREMENT_BLINE" column="BL_COMPUTE_TIME" columnType="TIMESTAMP" nullable="FALSE"/>
+        <schema-alterColumn table="RHQ_MEASUREMENT_BLINE" column="BL_COMPUTE_TIME" columnType="TIMESTAMP" />
    </schemaSpec>
 
 </dbupgrade>

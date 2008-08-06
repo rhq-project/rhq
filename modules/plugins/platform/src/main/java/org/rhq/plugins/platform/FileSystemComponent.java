@@ -19,8 +19,10 @@
 package org.rhq.plugins.platform;
 
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -50,7 +52,9 @@ public class FileSystemComponent implements ResourceComponent<PlatformComponent>
     }
 
     public AvailabilityType getAvailability() {
-        if (getFileSystemInfo() != null) {
+        FileSystemInfo fileSystemInfo = getFileSystemInfo();
+        // fileSystemInfo can be != null even if the fs is unmounted.
+        if (fileSystemInfo != null && fileSystemInfo.getFileSystem() != null) {
             return AvailabilityType.UP;
         } else {
             return AvailabilityType.DOWN;

@@ -28,14 +28,15 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.FileSystemMap;
 import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.NetInterfaceStat;
+import org.hyperic.sigar.NetStat;
 import org.hyperic.sigar.OperatingSystem;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.hyperic.sigar.Swap;
-import org.hyperic.sigar.NetStat;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.system.pquery.ProcessInfoQuery;
@@ -164,7 +165,7 @@ public class NativeSystemInfo implements SystemInfo {
         Sigar sigar = new Sigar();
         try {
             InetAddress address = InetAddress.getByName(addressName);
-            NetStat interfaceStat = sigar.getNetStat(address.getAddress(),  port);
+            NetStat interfaceStat = sigar.getNetStat(address.getAddress(), port);
             return new NetworkStats(interfaceStat);
         } catch (SigarException e) {
             throw new SystemInfoException(e);
@@ -264,13 +265,14 @@ public class NativeSystemInfo implements SystemInfo {
     @Nullable
     public Swap getSwapInfo() {
         Sigar sigar = new Sigar();
-        
+
         try {
             // TODO: Remove this check once http://jira.jboss.com/jira/browse/JBNADM-3400 is fixed.
             int enabledCpuCount = sigar.getCpuPercList().length;
             int totalCpuCount = sigar.getCpuInfoList().length;
             if (enabledCpuCount < totalCpuCount) {
-                log.info("Aborting swap info collection because one or more CPUs is disabled - " + enabledCpuCount + " out of " + totalCpuCount + " CPUs are enabled.");
+                log.info("Aborting swap info collection because one or more CPUs is disabled - " + enabledCpuCount
+                    + " out of " + totalCpuCount + " CPUs are enabled.");
                 return null;
             }
             return sigar.getSwap();
@@ -327,7 +329,9 @@ public class NativeSystemInfo implements SystemInfo {
         Sigar sigar = new Sigar();
 
         try {
-            mountPoint = sigar.getFileSystemMap().getMountPoint(path).getDirName();
+            FileSystem mountPointForPath = sigar.getFileSystemMap().getMountPoint(path);
+            if (mountPointForPath != null)
+                mountPoint = mountPointForPath.getDirName();
         } catch (Throwable e) {
             log.warn("Cannot obtain native file system information for [" + path + "]", e); // ignore native error otherwise
         } finally {

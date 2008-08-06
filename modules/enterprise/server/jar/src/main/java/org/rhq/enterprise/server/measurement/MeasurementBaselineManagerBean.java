@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.measurement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -126,8 +127,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     public int _calculateAutoBaselinesDELETE(long startTime, long endTime) throws Exception {
         Query query = entityManager.createNamedQuery(MeasurementBaseline.QUERY_DELETE_EXISTING_AUTOBASELINES);
 
-        query.setParameter("startTime", startTime);
-        query.setParameter("endTime", endTime);
+        query.setParameter("startTime", new Date(startTime));
+        query.setParameter("endTime", new Date(endTime));
 
         int rowsModified = query.executeUpdate();
 
@@ -139,8 +140,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     public int _calculateAutoBaselinesINSERT(long startTime, long endTime, long computeTime) throws Exception {
         Query query = entityManager.createNamedQuery(MeasurementBaseline.QUERY_CALC_FIRST_AUTOBASELINE);
 
-        query.setParameter("startTime", startTime);
-        query.setParameter("endTime", endTime);
+        query.setParameter("startTime", new Date(startTime));
+        query.setParameter("endTime", new Date(endTime));
 
         int rowsModified = query.executeUpdate();
 

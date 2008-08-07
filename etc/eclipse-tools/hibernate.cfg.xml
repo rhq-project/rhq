@@ -72,6 +72,12 @@
         <mapping class="org.rhq.core.domain.operation.ResourceOperationHistory" />
         <mapping class="org.rhq.core.domain.operation.ResourceOperationScheduleEntity" />
         <mapping class="org.rhq.core.domain.plugin.Plugin" />
+        <mapping class="org.rhq.core.domain.cluster.AffinityGroup" />
+        <mapping class="org.rhq.core.domain.cluster.FailoverList" />
+        <mapping class="org.rhq.core.domain.cluster.FailoverListDetails" />
+        <mapping class="org.rhq.core.domain.cluster.PartitionEvent" />
+        <mapping class="org.rhq.core.domain.cluster.PartitionEventDetails" />
+        <mapping class="org.rhq.core.domain.cluster.Server" />
         <mapping class="org.rhq.core.domain.resource.Agent" />
         <mapping class="org.rhq.core.domain.resource.CreateResourceHistory" />
         <mapping class="org.rhq.core.domain.resource.DeleteResourceHistory" />

@@ -20,7 +20,6 @@ package org.rhq.core.domain.test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -87,7 +86,7 @@ public class QueriesTest extends AbstractEJB3Test {
         add(PackageVersion.QUERY_GET_PKG_BITS_LENGTH_BY_PKG_DETAILS_AND_RES_ID, new Object[] { "packageName", "foo",
             "packageTypeName", "bar", "resourceId", 1, "architectureName", "blah", "version", "ver" });
 
-        add(MeasurementBaseline.QUERY_FIND_BY_COMPUTE_TIME, new Object[] { "computeTime", new Date(1L), "numericType",
+        add(MeasurementBaseline.QUERY_FIND_BY_COMPUTE_TIME, new Object[] { "computeTime", 1L, "numericType",
             NumericType.DYNAMIC });
 
         add(MeasurementBaseline.QUERY_FIND_ALL_DYNAMIC_MEASUREMENT_BASELINES, new Object[] { "numericType",

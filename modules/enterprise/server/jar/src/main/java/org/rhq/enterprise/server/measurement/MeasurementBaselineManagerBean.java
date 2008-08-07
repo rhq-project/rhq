@@ -18,9 +18,10 @@
  */
 package org.rhq.enterprise.server.measurement;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -30,10 +31,14 @@ import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.db.DatabaseType;
+import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
@@ -63,6 +68,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class MeasurementBaselineManagerBean implements MeasurementBaselineManagerLocal {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
+
+    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
+    private DataSource dataSource;
 
     @EJB
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
@@ -125,10 +133,102 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     //@TransactionTimeout( 1000 * 60 * 60 )
     public int _calculateAutoBaselinesDELETE(long startTime, long endTime) throws Exception {
+        Connection conn = null;
+        PreparedStatement deleteQuery = null;
+
+        try {
+            // delete all existing baselines that we plan on re-calculating
+            // do everything via JDBC - our perf testing shows that we hit entity cache locking timeouts
+            // when the entity manager performs native queries under heavy load
+            conn = dataSource.getConnection();
+            DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+
+            if (dbType instanceof PostgresqlDatabaseType) {
+                deleteQuery = conn
+                    .prepareStatement(MeasurementBaseline.NATIVE_QUERY_DELETE_EXISTING_AUTOBASELINES_POSTGRES);
+                deleteQuery.setLong(1, startTime);
+                deleteQuery.setLong(2, endTime);
+                deleteQuery.setLong(3, startTime);
+            } else {
+                deleteQuery = conn
+                    .prepareStatement(MeasurementBaseline.NATIVE_QUERY_DELETE_EXISTING_AUTOBASELINES_ORACLE);
+                deleteQuery.setLong(1, startTime);
+                deleteQuery.setLong(2, endTime);
+                deleteQuery.setLong(3, startTime);
+            }
+
+            int deleted = deleteQuery.executeUpdate();
+            return deleted;
+        } finally {
+            if (deleteQuery != null) {
+                try {
+                    deleteQuery.close();
+                } catch (Exception e) {
+                }
+            }
+
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (Exception e) {
+                }
+            }
+        }
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    //@TransactionTimeout( 1000 * 60 * 60 )
+    public int _calculateAutoBaselinesINSERT(long startTime, long endTime, long computeTime) throws Exception {
+        Connection conn = null;
+        PreparedStatement insertQuery = null;
+
+        try {
+            // calculate the baselines for schedules that have no baseline yet (or were just deleted)
+            // do everything via JDBC - our perf testing shows that we hit entity cache locking timeouts
+            // when the entity manager performs native queries under heavy load
+            conn = dataSource.getConnection();
+            DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+
+            if (dbType instanceof PostgresqlDatabaseType) {
+                insertQuery = conn.prepareStatement(MeasurementBaseline.NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_POSTGRES);
+                insertQuery.setLong(1, computeTime);
+                insertQuery.setLong(2, startTime);
+                insertQuery.setLong(3, endTime);
+                insertQuery.setLong(4, startTime);
+            } else {
+                insertQuery = conn.prepareStatement(MeasurementBaseline.NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_ORACLE);
+                insertQuery.setLong(1, computeTime);
+                insertQuery.setLong(2, startTime);
+                insertQuery.setLong(3, endTime);
+                insertQuery.setLong(4, startTime);
+            }
+
+            int inserted = insertQuery.executeUpdate();
+            return inserted;
+        } finally {
+            if (insertQuery != null) {
+                try {
+                    insertQuery.close();
+                } catch (Exception e) {
+                }
+            }
+
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (Exception e) {
+                }
+            }
+        }
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    //@TransactionTimeout( 1000 * 60 * 60 )
+    private int _calculateAutoBaselinesDELETE_HQL(long startTime, long endTime) throws Exception {
         Query query = entityManager.createNamedQuery(MeasurementBaseline.QUERY_DELETE_EXISTING_AUTOBASELINES);
 
-        query.setParameter("startTime", new Date(startTime));
-        query.setParameter("endTime", new Date(endTime));
+        query.setParameter("startTime", startTime);
+        query.setParameter("endTime", endTime);
 
         int rowsModified = query.executeUpdate();
 
@@ -137,11 +237,12 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     //@TransactionTimeout( 1000 * 60 * 60 )
-    public int _calculateAutoBaselinesINSERT(long startTime, long endTime, long computeTime) throws Exception {
+    private int _calculateAutoBaselinesINSERT_HQL(long startTime, long endTime, long computeTime) throws Exception {
         Query query = entityManager.createNamedQuery(MeasurementBaseline.QUERY_CALC_FIRST_AUTOBASELINE);
 
-        query.setParameter("startTime", new Date(startTime));
-        query.setParameter("endTime", new Date(endTime));
+        //query.setParameter("computeTime", computeTime);
+        query.setParameter("startTime", startTime);
+        query.setParameter("endTime", endTime);
 
         int rowsModified = query.executeUpdate();
 

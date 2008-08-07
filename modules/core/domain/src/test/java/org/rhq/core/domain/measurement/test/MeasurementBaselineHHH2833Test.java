@@ -20,7 +20,9 @@ package org.rhq.core.domain.measurement.test;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.test.AbstractEJB3Test;
 
 /**
@@ -107,25 +109,37 @@ public class MeasurementBaselineHHH2833Test extends AbstractEJB3Test {
     }
 
     private String getSelectQueryThatSucceeds() {
-        return "      SELECT min(d.min) AS baselineMin, " + "           max(d.max) AS baselineMax, "
-            + "           avg(d.value) AS baselineMean, " + "           CURRENT_TIMESTAMP AS computeTime, "
-            + "           d.id.scheduleId AS scheduleId " + "      FROM MeasurementDataNumeric1H d "
-            + "           JOIN d.schedule s " + "           LEFT JOIN s.baseline b " + "     WHERE b.id IS NULL "
-            + "       AND d.id.timestamp BETWEEN :startTime AND :endTime " + "  GROUP BY d.id.scheduleId "
-            + "    HAVING d.id.scheduleId IN (SELECT d1.id.scheduleId "
-            + "                                 FROM MeasurementDataNumeric1H d1 "
+        return "      SELECT min(d.min) AS baselineMin, " //
+            + "           max(d.max) AS baselineMax, " //
+            + "           avg(d.value) AS baselineMean, " //
+            + "           CURRENT_TIMESTAMP AS computeTime, " //
+            + "           d.id.scheduleId AS scheduleId " //
+            + "      FROM MeasurementDataNumeric1H d " //
+            + "           JOIN d.schedule s " //
+            + "           LEFT JOIN s.baseline b " //
+            + "     WHERE b.id IS NULL " //
+            + "       AND d.id.timestamp BETWEEN :startTime AND :endTime " //
+            + "  GROUP BY d.id.scheduleId " //
+            + "    HAVING d.id.scheduleId IN (SELECT d1.id.scheduleId " //
+            + "                                 FROM MeasurementDataNumeric1H d1 " //
             + "                                WHERE d1.id.timestamp <= :startTime) ";
     }
 
     private String getSelectQueryThatFails() {
-        return "      SELECT min(d.min) AS baselineMin, " + "           max(d.max) AS baselineMax, "
-            + "           avg(d.value) AS baselineMean, " + "           CURRENT_TIMESTAMP AS computeTime, "
-            + "           d.id.scheduleId AS scheduleId " + "      FROM MeasurementDataNumeric1H d "
-            + "           JOIN d.schedule s " + "           LEFT JOIN s.baseline b " + "     WHERE b.id IS NULL "
-            + "       AND d.id.timestamp BETWEEN :startTime AND :endTime " + "  GROUP BY d.id.scheduleId "
-            + "    HAVING d.id.scheduleId IN (SELECT d1.id.scheduleId "
-            + "                                 FROM MeasurementDataNumeric1H d1 "
-            + "                                WHERE d1.id.timestamp <= :startTime "
+        return "      SELECT min(d.min) AS baselineMin, " //
+            + "           max(d.max) AS baselineMax, " //
+            + "           avg(d.value) AS baselineMean, " //
+            + "           CURRENT_TIMESTAMP AS computeTime, " //
+            + "           d.id.scheduleId AS scheduleId " //
+            + "      FROM MeasurementDataNumeric1H d " //
+            + "           JOIN d.schedule s " //
+            + "           LEFT JOIN s.baseline b " //
+            + "     WHERE b.id IS NULL " //
+            + "       AND d.id.timestamp BETWEEN :startTime AND :endTime " //
+            + "  GROUP BY d.id.scheduleId " //
+            + "    HAVING d.id.scheduleId IN (SELECT d1.id.scheduleId " //
+            + "                                 FROM MeasurementDataNumeric1H d1 " //
+            + "                                WHERE d1.id.timestamp <= :startTime " //
             + "                                  AND d1.id.scheduleId = d.id.scheduleId) "; // this AND causes problems
     }
 
@@ -136,12 +150,19 @@ public class MeasurementBaselineHHH2833Test extends AbstractEJB3Test {
 
     private String getDeleteQueryThatFails() {
         // only the SELECT clause is different - the FROM on down is the same as the getSelectQueryThatSucceeds query
-        return "DELETE MeasurementBaseline AS doomed WHERE doomed.scheduleId IN " + "( "
-            + "   SELECT d.id.scheduleId AS scheduleId " + "     FROM MeasurementDataNumeric1H d "
-            + "          JOIN d.schedule s " + "          LEFT JOIN s.baseline b " + "    WHERE b.id IS NOT NULL "
-            + "      AND d.id.timestamp BETWEEN :startTime AND :endTime " + "      AND b.userEntered = FALSE "
-            + " GROUP BY d.id.scheduleId " + "   HAVING d.id.scheduleId IN (SELECT d1.id.scheduleId "
-            + "                                FROM MeasurementDataNumeric1H d1 "
-            + "                               WHERE d1.id.timestamp <= :startTime) " + ") ";
+        return "DELETE MeasurementBaseline AS doomed WHERE doomed.scheduleId IN " //
+            + "( " //
+            + "   SELECT d.id.scheduleId AS scheduleId " //
+            + "     FROM MeasurementDataNumeric1H d " //
+            + "          JOIN d.schedule s " //
+            + "          LEFT JOIN s.baseline b " //
+            + "    WHERE b.id IS NOT NULL " //
+            + "      AND d.id.timestamp BETWEEN :startTime AND :endTime " //
+            + "      AND b.userEntered = FALSE " //
+            + " GROUP BY d.id.scheduleId " //
+            + "   HAVING d.id.scheduleId IN (SELECT d1.id.scheduleId " //
+            + "                                FROM MeasurementDataNumeric1H d1 "//
+            + "                               WHERE d1.id.timestamp <= :startTime) " //
+            + ") ";
     }
 }

@@ -89,6 +89,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
     private final Log log = LogFactory.getLog(MeasurementBaselineManagerBean.class);
 
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void calculateAutoBaselines() {
         SystemManagerLocal systemManager = LookupUtil.getSystemManager();
         Properties conf = systemManager.getSystemConfiguration();

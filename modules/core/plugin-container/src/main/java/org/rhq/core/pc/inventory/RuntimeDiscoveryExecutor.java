@@ -21,13 +21,15 @@ package org.rhq.core.pc.inventory;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -39,9 +41,9 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.system.SystemInfoFactory;
 
 /**
@@ -93,7 +95,8 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             report.setStartTime(System.currentTimeMillis());
             runtimeDiscover(report);
             report.setEndTime(System.currentTimeMillis());
-            log.debug(String.format("Runtime discovery scan took %d ms.", (report.getEndTime() - report.getStartTime())));
+            log.debug(String
+                .format("Runtime discovery scan took %d ms.", (report.getEndTime() - report.getStartTime())));
 
             log.info("Scanned " + report.getAddedRoots().size() + " servers and found "
                 + (report.getResourceCount() - report.getAddedRoots().size()) + " total descendant Resources.");
@@ -156,8 +159,8 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
         }
 
         if (parentContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
-            log.trace("ResourceComponent for parent " + parent + " is not in the STARTED state, so we can't execute" +
-                      "runtime discovery on it.");
+            log.trace("ResourceComponent for parent " + parent + " is not in the STARTED state, so we can't execute"
+                + "runtime discovery on it.");
             return;
         }
 
@@ -169,12 +172,13 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
         ResourceComponent parentComponent = parentContainer.getResourceComponent();
         if (parentComponent == null) {
-            log.debug("ResourceComponent for parent " + parent + " was null, so we can't execute runtime discovery on it.");
+            log.debug("ResourceComponent for parent " + parent
+                + " was null, so we can't execute runtime discovery on it.");
             return;
         }
 
-        AvailabilityType availability = (parentContainer.getAvailability() != null) ?
-                parentContainer.getAvailability().getAvailabilityType() : null;
+        AvailabilityType availability = (parentContainer.getAvailability() != null) ? parentContainer.getAvailability()
+            .getAvailabilityType() : null;
         if (availability != AvailabilityType.UP) {
             log.debug("Availability of " + parent + " is not UP, so we can't execute runtime discovery on it.");
             return;
@@ -198,8 +202,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             }
 
             // For this resource type, discover all resources of that type on this parent resource
-            log.debug("Running Runtime discovery on server: " + parent + " for children of type: "
-                + childResourceType);
+            log.debug("Running Runtime discovery on server: " + parent + " for children of type: " + childResourceType);
             Set<Resource> childResources = executeComponentDiscovery(childResourceType, discoveryComponent,
                 parentComponent, parentContainer.getResourceContext());
 
@@ -235,8 +238,8 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
         ResourceComponent parentComponent, ResourceContext parentResourceContext) {
         try {
             ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, parentComponent,
-                    parentResourceContext, SystemInfoFactory.createSystemInfo(), Collections.EMPTY_LIST, Collections.EMPTY_LIST,
-                pluginContainerConfiguration.getContainerName());
+                parentResourceContext, SystemInfoFactory.createSystemInfo(), Collections.EMPTY_LIST,
+                Collections.EMPTY_LIST, pluginContainerConfiguration.getContainerName());
             Set<DiscoveredResourceDetails> discoveredResources = component.discoverResources(context);
             Set<Resource> newResources = new HashSet<Resource>();
             if ((discoveredResources != null) && (discoveredResources.size() > 0)) {
@@ -253,14 +256,15 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
         return Collections.EMPTY_SET;
     }
 
-    private void removeStaleResources(Resource parent, ResourceType childResourceType, Map<String, Resource> mergedResources) {
+    private void removeStaleResources(Resource parent, ResourceType childResourceType,
+        Map<String, Resource> mergedResources) {
         Set<Resource> existingChildResources = new HashSet(parent.getChildResources()); // wrap in new HashSet to avoid CMEs
         for (Resource existingChildResource : existingChildResources) {
             // NOTE: If inside Agent, only remove Resources w/ id == 0. Other Resources may still exist in the
             //       the Server's inventory.
-            if (existingChildResource.getResourceType().equals(childResourceType) &&
-                    !mergedResources.containsKey(existingChildResource.getUuid()) &&
-                    (existingChildResource.getId() == 0 || !this.pluginContainerConfiguration.isInsideAgent())) {
+            if (existingChildResource.getResourceType().equals(childResourceType)
+                && !mergedResources.containsKey(existingChildResource.getUuid())
+                && (existingChildResource.getId() == 0 || !this.pluginContainerConfiguration.isInsideAgent())) {
                 log.info("Removing stale " + existingChildResource + "...");
                 this.inventoryManager.removeResourceAndIndicateIfScanIsNeeded(existingChildResource);
             }

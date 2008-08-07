@@ -40,6 +40,16 @@ import org.rhq.core.domain.util.PageList;
 @Local
 public interface MeasurementBaselineManagerLocal {
     /**
+     * This is the entry point which calls out to all other *calculateAutoBaselines* methods seen
+     * in this interface.  This is the method that should be called on a regular basis by some sort
+     * of job scheduler / timer to determine whether baselines even need to be calculated.  This is
+     * an inexpensive operation and can be run every minute if needed because it will only calculate
+     * baselines for the ones that need it (as configured by the system preferences for how frequently
+     * they should be recalculated, and how much data should be used in that recalculation).
+     */
+    void calculateAutoBaselines();
+
+    /**
      * Calculates baselines for all scheduled measurements. The measurement data that was collected between the given
      * start and end times is used to calculate the baselines.
      *

@@ -111,8 +111,8 @@ public class Agent implements Serializable {
     @ManyToOne
     private Server server;
 
-    @Column(name = "DIRTY", nullable = false)
-    private boolean dirty = false;
+    @Column(name = "STATUS", nullable = false)
+    private int status;
 
     /**
      * Creates a new instance of Agent
@@ -304,25 +304,50 @@ public class Agent implements Serializable {
     }
 
     /**
-     * Returns true if this agent needs its primary {@link Server} to reload 
-     * cache entries for resources it manages.
+     * Returns 0 if this agent is current.  Otherwise, returns a mask of {@link AgentStatus}
+     * elements corresponding to the updates that have occurred that are related to this agent.
      * 
-     * @return true if this agent needs its primary {@link Server} to reload 
-     * cache entries for resources it manages.
+     * @return 0 if this agent is current.  Otherwise, returns a mask of {@link AgentStatus}
+     * elements corresponding to the updates that have occurred that are related to this agent.
      */
-    public boolean getDirty() {
-        return dirty;
+    public int getStatus() {
+        return status;
     }
 
     /**
-     * Sets whether or not this agent needs its primary {@link Server} to reload 
-     * cache entries for resources it manages.
-     * 
-     * @param dirty whether or not this agent needs its primary {@link Server} to reload 
-     * cache entries for resources it manages.
+     * If this status was non-zero, some scheduled job would have had to come along to perform
+     * some work on behalf of this agent.  After that work is complete, the status can be reset
+     * (set to 0) signifying that no further work needs to be done on this agent (as long as the 
+     * status remains 0). 
      */
-    public void setDirty(boolean dirty) {
-        this.dirty = dirty;
+    public void clearStatus() {
+        status = 0;
+    }
+
+    /**
+     * If some subsystem makes a change to some data that this agent cares about (as summarized
+     * by the various {@link Status} elements), then that change should be added via this method.
+     * Periodically, a background job will come along, check the status, and possibly perform
+     * work on behalf of this agent based on the type of change.
+     */
+    public void addStatus(Status newStatus) {
+        this.status |= newStatus.mask;
+    }
+
+    public enum Status {
+
+        RESOURCE_HIERARCHY_UPDATED(1, "This agent's managed resource hierarchy has been updated"), //
+        BASELINES_CALCULATED(2, "This agent's baselines have been recalculated"), //
+        ALERT_DEFINITIONS_CHANGED(4, "This agent's alert definitions have changed");
+
+        public final int mask;
+        public final String message;
+
+        private Status(int mask, String message) {
+            this.mask = mask;
+            this.message = message;
+        }
+
     }
 
     @PrePersist

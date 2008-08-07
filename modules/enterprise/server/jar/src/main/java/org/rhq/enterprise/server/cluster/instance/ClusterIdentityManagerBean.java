@@ -1,4 +1,4 @@
-package org.rhq.enterprise.server.cluster;
+package org.rhq.enterprise.server.cluster.instance;
 
 import java.util.List;
 
@@ -10,6 +10,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
 
 @Stateless
 public class ClusterIdentityManagerBean implements ClusterIdentityManagerLocal {

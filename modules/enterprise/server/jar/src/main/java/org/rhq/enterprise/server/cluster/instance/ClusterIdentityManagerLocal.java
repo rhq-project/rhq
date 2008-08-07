@@ -1,4 +1,4 @@
-package org.rhq.enterprise.server.cluster;
+package org.rhq.enterprise.server.cluster.instance;
 
 import java.util.List;
 

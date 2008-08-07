@@ -74,7 +74,7 @@ import org.rhq.enterprise.server.alert.engine.model.OutOfBoundsCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.ResourceOperationCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.UnsupportedAlertConditionOperatorException;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.cluster.ClusterIdentityManagerLocal;
+import org.rhq.enterprise.server.cluster.instance.ClusterIdentityManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementConstants;

@@ -16,7 +16,7 @@ import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
 public class ClusterIdentityManagerBean implements ClusterIdentityManagerLocal {
     private final Log log = LogFactory.getLog(ClusterIdentityManagerBean.class);
 
-    private static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.name";
+    private static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
 
     @EJB
     ClusterManagerLocal clusterManager;

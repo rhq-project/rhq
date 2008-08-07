@@ -36,7 +36,7 @@ import org.jboss.mx.util.MBeanServerLocator;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
-import org.rhq.enterprise.server.cluster.ClusterIdentityManagerLocal;
+import org.rhq.enterprise.server.cluster.instance.ClusterIdentityManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;

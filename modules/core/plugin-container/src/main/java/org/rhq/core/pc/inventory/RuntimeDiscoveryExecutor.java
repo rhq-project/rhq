@@ -124,7 +124,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
         this.inventoryManager.executeAvailabilityScanImmediately(true);
         if (this.resource == null) {
             // Run a full scan for all resources in the inventory
-            Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
+            Resource platform = this.inventoryManager.getPlatform();
 
             // Discover platform services here
             discoverForResource(platform, report, false);

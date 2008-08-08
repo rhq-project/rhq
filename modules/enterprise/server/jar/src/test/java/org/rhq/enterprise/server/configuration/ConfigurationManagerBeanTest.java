@@ -38,6 +38,7 @@ import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
+import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -56,7 +57,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -140,17 +140,19 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         try {
             getTransactionManager().begin();
             EntityManager em = getEntityManager();
+
+            try {
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, newResource1);
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, newResource2);
+            } catch (Exception e) {
+                System.out.println(e);
+                throw e;
+            }
+
             try {
                 ResourceGroup group = em.find(ResourceGroup.class, compatibleGroup.getId());
-                Resource res1 = em.find(Resource.class, newResource1.getId());
-                Resource res2 = em.find(Resource.class, newResource2.getId());
                 Agent a = em.find(Agent.class, agent.getId());
 
-                res1.setAgent(null);
-                res2.setAgent(null);
-
-                group.removeExplicitResource(res1);
-                group.removeExplicitResource(res2);
                 em.remove(group);
                 em.remove(a);
 
@@ -165,14 +167,6 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                 throw e;
             } finally {
                 em.close();
-            }
-
-            try {
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, newResource1);
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, newResource2);
-            } catch (Exception e) {
-                System.out.println(e);
-                throw e;
             }
 
             getTransactionManager().begin();

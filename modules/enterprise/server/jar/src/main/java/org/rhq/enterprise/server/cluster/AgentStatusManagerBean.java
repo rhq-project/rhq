@@ -85,6 +85,10 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
     public void updateByResource(int resourceId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
         Agent agent = resource.getAgent();
+        if (agent == null) {
+            //TODO: jmarques - fix ResourceFactoryManagerBeanTest, see rev1202-1204 for examples of the proper fix
+            return; // some unit tests won't always have attached agents for all resources
+        }
 
         agent.addStatus(Agent.Status.RESOURCE_HIERARCHY_UPDATED);
 

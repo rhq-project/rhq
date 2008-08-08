@@ -87,26 +87,21 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     @AfterMethod
     public void afterMethod() throws Exception {
         try {
+            if (theResource != null) {
+                resourceManager.deleteSingleResourceInNewTransaction(overlord, theResource);
+                //resourceManager.deleteResource(overlord, theResource.getId());
+                theResource = null;
+            }
+
             if (theAgent != null) {
                 getTransactionManager().begin();
                 EntityManager em = getEntityManager();
-
-                if (theResource != null) {
-                    Resource r = em.find(Resource.class, theResource.getId());
-                    r.setAgent(null);
-                }
 
                 Agent a = em.find(Agent.class, theAgent.getId());
                 theAgent = null;
 
                 em.remove(a);
                 getTransactionManager().commit();
-            }
-
-            if (theResource != null) {
-                resourceManager.deleteSingleResourceInNewTransaction(overlord, theResource);
-                //resourceManager.deleteResource(overlord, theResource.getId());
-                theResource = null;
             }
 
             if (theResourceType != null) {
@@ -1045,7 +1040,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         assert list != null;
         assert list.size() == 1 : "Should have returned a single point";
         int typeOrdinal = list.get(0).getValue();
-        
+
         if (UP.ordinal() == typeOrdinal) {
             return UP;
         }

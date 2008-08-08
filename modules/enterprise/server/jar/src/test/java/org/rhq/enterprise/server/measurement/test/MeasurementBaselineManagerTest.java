@@ -34,6 +34,7 @@ import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -44,6 +45,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 @Test
 public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
+    private Agent agent;
     private ResourceType platformType;
     private Resource platform;
     private Resource platform2;
@@ -52,6 +54,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     private MeasurementSchedule measSched2;
     private EntityManager entityManager;
     private ResourceManagerLocal resourceManager;
+    private MeasurementBaselineManagerLocal baselineManager;
     private Subject overlord;
 
     // for the large inventory test
@@ -63,6 +66,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     public void beforeMethod() throws Exception {
         this.prepareScheduler();
         this.resourceManager = LookupUtil.getResourceManager();
+        this.baselineManager = LookupUtil.getMeasurementBaselineManager();
         this.overlord = LookupUtil.getSubjectManager().getOverlord();
     }
 
@@ -99,7 +103,6 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             commit();
 
             startingTime = System.currentTimeMillis();
-            MeasurementBaselineManagerLocal baselineManager = LookupUtil.getMeasurementBaselineManager();
             long computeTime = baselineManager.calculateAutoBaselines(500, 1000);
             assert computeTime > 0;
 
@@ -162,7 +165,6 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             commit();
 
-            MeasurementBaselineManagerLocal baselineManager = LookupUtil.getMeasurementBaselineManager();
             long computeTime = baselineManager.calculateAutoBaselines(500, 1000);
             assert computeTime > 0;
 
@@ -247,12 +249,19 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     }
 
     private void setupResources(EntityManager em) {
+        agent = new Agent("test-agent", "localhost", 1234, "", "randomToken");
+        em.persist(agent);
+
         platformType = new ResourceType("testplatAB", "p", ResourceCategory.PLATFORM, null);
         em.persist(platformType);
+
         platform = new Resource("platform1", "testAutoBaseline Platform One", platformType);
         em.persist(platform);
+        platform.setAgent(agent);
+
         platform2 = new Resource("platform2", "testAutoBaseline Platform Two", platformType);
         em.persist(platform2);
+        platform2.setAgent(agent);
 
         measDef = new MeasurementDefinition(platformType, "testAutoBaseline");
         measDef.setDefaultOn(true);
@@ -281,6 +290,10 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             resourceManager.deleteSingleResourceInNewTransaction(overlord, platform2);
 
             begin();
+
+            if ((doomed = entityManager.find(Agent.class, agent.getId())) != null) {
+                entityManager.remove(doomed);
+            }
 
             deleteMeasurementDataNumeric1H(measSched);
             deleteMeasurementDataNumeric1H(measSched2);
@@ -330,10 +343,14 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
         System.out.println("Populating test inventory with [" + resourceCount + "] resources.");
 
+        agent = new Agent("test-agent", "localhost", 1234, "", "randomToken");
+        em.persist(agent);
+
         for (int r = 0; r < resourceCount; r++) {
             Resource resource = new Resource(String.valueOf(r), "testAutoBaselineResource" + r, platformType);
             em.persist(resource);
             allResources.add(resource);
+            resource.setAgent(agent);
 
             for (MeasurementDefinition def : allDefs) {
                 MeasurementSchedule sched = new MeasurementSchedule(def, resource);
@@ -367,7 +384,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
                 deleteMeasurementDataNumeric1H(doomedSched);
                 if ((--dataCount % 1000) == 0) {
                     System.out.println(String.valueOf(dataCount) + " more test measurement data left to delete");
-                    commit();
+                    commitAndBegin();
                 }
             }
 
@@ -376,7 +393,9 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
                 resourceManager.deleteSingleResourceInNewTransaction(overlord, doomedRes);
             }
 
-            begin();
+            if ((doomed = entityManager.find(Agent.class, agent.getId())) != null) {
+                entityManager.remove(doomed);
+            }
 
             for (MeasurementDefinition doomedDef : allDefs) {
                 if ((doomed = entityManager.find(MeasurementDefinition.class, doomedDef.getId())) != null) {
@@ -391,7 +410,6 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
                 entityManager.remove(doomed);
             }
 
-            commitAndBegin();
         } catch (Exception e) {
             System.out.println("Cannot delete test resources, database still has test data in it");
             e.printStackTrace();

@@ -45,11 +45,10 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
-import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -66,8 +65,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
+
     @EJB
-    private AlertConditionCacheManagerLocal alertConditionCacheManager;
+    private AgentStatusManagerLocal agentStatusManager;
 
     private boolean checkPermission(Subject subject, AlertDefinition alertDefinition) {
         /*
@@ -434,10 +434,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
 
     private void notifyAlertConditionCacheManager(String methodName, AlertDefinition alertDefinition,
         AlertDefinitionEvent alertDefinitionEvent) {
-        AlertConditionCacheStats stats = alertConditionCacheManager.updateConditions(alertDefinition,
-            alertDefinitionEvent);
-
-        LOG.debug(methodName + ": " + stats.toString());
+        LOG.info("Invoking... " + methodName);
+        agentStatusManager.updateByAlertDefinition(alertDefinition.getId());
     }
 
     private void purgeInternals(int alertDefinitionId) {

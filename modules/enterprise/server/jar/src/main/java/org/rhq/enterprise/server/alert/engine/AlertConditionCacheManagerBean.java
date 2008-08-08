@@ -41,49 +41,35 @@ import org.rhq.core.domain.resource.Resource;
  */
 
 @Stateless
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class AlertConditionCacheManagerBean implements AlertConditionCacheManagerLocal {
     @SuppressWarnings("unused")
     private static final Log log = LogFactory.getLog(AlertConditionCacheManagerBean.class);
 
-    @TransactionAttribute(TransactionAttributeType.NEVER)
-    public void beforeBaselineCalculation() {
-        AlertConditionCache.getInstance().beforeBaselineCalculation();
-    }
-
-    @TransactionAttribute(TransactionAttributeType.NEVER)
-    public void afterBaselineCalculation() {
-        AlertConditionCache.getInstance().afterBaselineCalculation();
-    }
-
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public AlertConditionCacheStats checkConditions(MeasurementData... measurementData) {
         AlertConditionCacheStats stats;
         stats = AlertConditionCache.getInstance().checkConditions(measurementData);
         return stats;
     }
 
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public AlertConditionCacheStats checkConditions(OperationHistory operationHistory) {
         AlertConditionCacheStats stats;
         stats = AlertConditionCache.getInstance().checkConditions(operationHistory);
         return stats;
     }
 
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public AlertConditionCacheStats checkConditions(Availability... availabilities) {
         AlertConditionCacheStats stats;
         stats = AlertConditionCache.getInstance().checkConditions(availabilities);
         return stats;
     }
 
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public AlertConditionCacheStats checkConditions(EventSource source, Event... events) {
         AlertConditionCacheStats stats;
         stats = AlertConditionCache.getInstance().checkConditions(source, events);
         return stats;
     }
 
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public AlertConditionCacheStats updateConditions(Resource deletedResource) {
         AlertConditionCacheStats stats;
         stats = AlertConditionCache.getInstance().updateConditions(deletedResource);
@@ -91,14 +77,12 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
     }
 
     // this could potentially take really long, but we don't need to be in a transactional scope anyway
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public AlertConditionCacheStats updateConditions(List<MeasurementBaselineComposite> measurementBaselines) {
         AlertConditionCacheStats stats;
         stats = AlertConditionCache.getInstance().updateConditions(measurementBaselines);
         return stats;
     }
 
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public AlertConditionCacheStats updateConditions(AlertDefinition alertDefinition,
         AlertDefinitionEvent alertDefinitionEvent) {
         AlertConditionCacheStats stats;
@@ -106,27 +90,27 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
         return stats;
     }
 
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public boolean isCacheValid() {
         boolean valid;
         valid = AlertConditionCache.getInstance().isCacheValid();
         return valid;
     }
 
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public String[] getCacheNames() {
         String[] names;
         names = AlertConditionCache.getInstance().getCacheNames();
         return names;
     }
 
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public void printCache(String cacheName) {
         AlertConditionCache.getInstance().printCache(cacheName);
     }
 
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public void printAllCaches() {
         AlertConditionCache.getInstance().printAllCaches();
+    }
+
+    public void reload() {
+        AlertConditionCache.getInstance().reloadCachesForAgentsOnThisServer();
     }
 }

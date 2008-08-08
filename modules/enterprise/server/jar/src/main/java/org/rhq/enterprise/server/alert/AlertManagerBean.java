@@ -68,13 +68,12 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
-import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NFactory;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NResourceKeys;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
@@ -96,7 +95,7 @@ public class AlertManagerBean implements AlertManagerLocal {
     private final Log log = LogFactory.getLog(AlertManagerBean.class);
 
     @EJB
-    private AlertConditionCacheManagerLocal alertConditionCacheManager;
+    private AgentStatusManagerLocal agentStatusManager;
     @EJB
     @IgnoreDependency
     private AlertConditionLogManagerLocal alertConditionLogManager;
@@ -777,19 +776,11 @@ public class AlertManagerBean implements AlertManagerLocal {
             }
 
             /*
-             * an alert definition may have several recovery definitions; if ONE of the recovery definitions fires, 
-             * and thus re-enables the to-be-recovered alert definition, ALL recovery definitions (for that alert
-             * definition) must be removed from cache (including the one that just fired)
+             * there's no reason to update the cache directly anymore.  even though this direct type of update is safe 
+             * (because we know the AlertManager will only be executing on the same server instance that is processing
+             * these recovery alerts now) it's unnecessary because changes made via the AlertDefinitionManager will  
+             * update the cache indirectly via the status field on the owning agent and the periodic job that checks it. 
              */
-            List<AlertDefinition> relatedRecoveryDefinitions = alertDefinitionManager.getAllRecoveryDefinitionsById(
-                overlord, toBeRecoveredDefinition.getId());
-            for (AlertDefinition relatedRecoveryDefinition : relatedRecoveryDefinitions) {
-                /*
-                 * bypass the manager layer and reuse the AlertDefinitionEvent construct to update the cache;
-                 * we don't want to actually disable these definitions, just remove them from the cache
-                 */
-                alertConditionCacheManager.updateConditions(relatedRecoveryDefinition, AlertDefinitionEvent.DISABLED);
-            }
         } else if (firedDefinition.getWillRecover()) {
             log.debug("Disabling " + firedDefinition + " until recovered manually or by recovery definition");
 
@@ -801,19 +792,11 @@ public class AlertManagerBean implements AlertManagerLocal {
             alertDefinitionManager.disableAlertDefinitions(overlord, new Integer[] { firedDefinition.getId() });
 
             /*
-             * an alert definition may have several recovery definitions; if this to-be-recovered alert definition
-             * fires an alert, it will be disabled; at this point, all of its (enabled) recovery definitions must be
-             * added to the cache
+             * there's no reason to update the cache directly anymore.  even though this direct type of update is safe 
+             * (because we know the AlertManager will only be executing on the same server instance that is processing
+             * these recovery alerts now) it's unnecessary because changes made via the AlertDefinitionManager will  
+             * update the cache indirectly via the status field on the owning agent and the periodic job that checks it. 
              */
-            List<AlertDefinition> recoveryDefinitions = alertDefinitionManager.getAllRecoveryDefinitionsById(overlord,
-                firedDefinition.getId());
-            for (AlertDefinition recoveryDefinition : recoveryDefinitions) {
-                /* 
-                 * bypass the manager layer and reuse the AlertDefinitionEvent construct to update the cache; we don't
-                 * want to enable these definitions (cause they are already enabled), just add them them to the cache
-                 */
-                alertConditionCacheManager.updateConditions(recoveryDefinition, AlertDefinitionEvent.ENABLED);
-            }
         }
     }
 }

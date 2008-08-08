@@ -25,8 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.logging.Log;
@@ -74,7 +72,7 @@ import org.rhq.enterprise.server.alert.engine.model.OutOfBoundsCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.ResourceOperationCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.UnsupportedAlertConditionOperatorException;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.cluster.instance.ClusterIdentityManagerLocal;
+import org.rhq.enterprise.server.cluster.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementConstants;
@@ -108,13 +106,6 @@ public final class AlertConditionCache {
      * For concurrency control into the cache.
      */
     private ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
-
-    /**
-     * For locking out threads when baseline calculations are occurring. When this is not null, this latch must be open
-     * before any thread can access baseline related cache data. If null, there is no baseline calcs happening so
-     * threads are free to access baseline cache at will (but a RW lock must still be obtained).
-     */
-    private CountDownLatch baselineCalcLatch = null;
 
     private enum CacheName {
         MeasurementDataCache, //
@@ -247,7 +238,7 @@ public final class AlertConditionCache {
     private OperationManagerLocal operationManager;
     private SubjectManagerLocal subjectManager;
     private CachedConditionProducerLocal cachedConditionProducer;
-    private ClusterIdentityManagerLocal clusterIdentityManager;
+    private ServerManagerLocal serverManager;
 
     private AlertConditionCache() {
         measurementDataCache = new HashMap<Integer, List<NumericDoubleCacheElement>>();
@@ -268,20 +259,23 @@ public final class AlertConditionCache {
         operationManager = LookupUtil.getOperationManager();
         subjectManager = LookupUtil.getSubjectManager();
         cachedConditionProducer = LookupUtil.getCachedConditionProducerLocal();
-        clusterIdentityManager = LookupUtil.getClusterIdentityManager();
+        serverManager = LookupUtil.getServerManager();
 
-        loadCachesForAgentsOnThisServer();
+        reloadCachesForAgentsOnThisServer();
     }
 
     public static AlertConditionCache getInstance() {
         return instance;
     }
 
-    private void loadCachesForAgentsOnThisServer() {
+    public void reloadCachesForAgentsOnThisServer() {
+        // this load method assumes the cache is totally clean; let's make sure that is true
+        clearCaches();
+
         List<Agent> agents = LookupUtil.getAgentManager().getAllAgents();
 
         // RHQ-668 - when the HA installer is finished, replace getAllAgents with commented lines
-        //    List<Agent> agents = clusterIdentityManager.getAgents();
+        //    List<Agent> agents = serverManager.getAgents();
 
         for (Agent nextAgent : agents) {
             loadCachesForAgent(nextAgent.getId());
@@ -296,13 +290,8 @@ public final class AlertConditionCache {
      *
      * @return the number of conditions that re/loaded
      */
-    public AlertConditionCacheStats loadCachesForAgent(int agentId) {
+    private AlertConditionCacheStats loadCachesForAgent(int agentId) {
         rwLock.writeLock().lock();
-
-        waitForBaselineLatchToOpen(rwLock.writeLock());
-
-        // this load method assumes the cache is totally clean; let's make sure that is true
-        clearCaches();
 
         try {
             log.info("Loading Alert Condition Caches...");
@@ -382,8 +371,6 @@ public final class AlertConditionCache {
     public void clearCaches() {
         rwLock.writeLock().lock();
 
-        waitForBaselineLatchToOpen(rwLock.writeLock());
-
         try {
             measurementDataCache.clear();
             measurementTraitCache.clear();
@@ -398,69 +385,12 @@ public final class AlertConditionCache {
         }
     }
 
-    /**
-     * This method should be called when the baseline auto-calculation is about to do its thing. When this happens, this
-     * cache locks out all access of anything baseline related until {@link #afterBaselineCalculation()} is called.
-     */
-    public void beforeBaselineCalculation() {
-        rwLock.writeLock().lock();
-
-        try {
-            if (baselineCalcLatch != null) {
-                // hmmm, why are we being called? we were already called and the after method wasn't called yet.
-                // lets call after() now and restart a new latch
-                afterBaselineCalculation();
-            }
-
-            baselineCalcLatch = new CountDownLatch(1);
-        } finally {
-            rwLock.writeLock().unlock();
-        }
-    }
-
-    /**
-     * This method should be called after the baseline auto-calculation is finished. When this happens, all threads
-     * previously locked out waiting for the baseline related caches are free to access them normally.
-     *
-     * <p>This method will reload the cache fully from the database while all other threads are locked out. This ensures
-     * the cache can reload itself and get all the new baselines without other threads attempting to get cache
-     * information while it is still being loaded.
-     *
-     * <p>TODO: this before/afterBaselineCalculation stuff has to go - we need a better runtime baseline calculation
-     * algorithm that doesn't force us to reload the entire cache everytime we do it.
-     */
-    public void afterBaselineCalculation() {
-        rwLock.writeLock().lock();
-
-        try {
-            if (baselineCalcLatch != null) {
-                CountDownLatch latch = baselineCalcLatch;
-                baselineCalcLatch = null;
-                latch.countDown(); // release the hounds!
-            }
-
-            // TODO: I'm cheating here - i really dont't want to, but we have to load because
-            //       we need to also clear due to baseline calc getting all new baseline IDs.
-            //       we need to rewrite this whole baseline calc thing, so this all probably
-            //       all goes away, especially if we use native bulk update and not
-            //       bulk delete/insert (since baseline IDs remain intact and thus the cache
-            //       doesn't break)
-
-            // reload caches for all agents attached to this server
-            loadCachesForAgentsOnThisServer();
-        } finally {
-            rwLock.writeLock().unlock();
-        }
-    }
-
     public AlertConditionCacheStats checkConditions(MeasurementData... measurementData) {
         if ((measurementData == null) || (measurementData.length == 0)) {
             return new AlertConditionCacheStats();
         }
 
         rwLock.readLock().lock();
-
-        waitForBaselineLatchToOpen(rwLock.readLock());
 
         try {
             AlertConditionCacheStats stats = new AlertConditionCacheStats();
@@ -582,8 +512,6 @@ public final class AlertConditionCache {
     public AlertConditionCacheStats updateConditions(Resource deletedResource) {
         rwLock.writeLock().lock();
 
-        waitForBaselineLatchToOpen(rwLock.writeLock());
-
         try {
             AlertConditionCacheStats stats = new AlertConditionCacheStats();
 
@@ -646,8 +574,6 @@ public final class AlertConditionCache {
         }
 
         rwLock.writeLock().lock();
-
-        waitForBaselineLatchToOpen(rwLock.writeLock());
 
         AlertConditionCacheStats stats = new AlertConditionCacheStats();
 
@@ -721,8 +647,6 @@ public final class AlertConditionCache {
         AlertDefinitionEvent alertDefinitionEvent) {
         rwLock.writeLock().lock();
 
-        waitForBaselineLatchToOpen(rwLock.writeLock());
-
         try {
             AlertConditionCacheStats stats = new AlertConditionCacheStats();
 
@@ -742,28 +666,6 @@ public final class AlertConditionCache {
             return stats;
         } finally {
             rwLock.writeLock().unlock();
-        }
-    }
-
-    /**
-     * Call this method from a thread that already has a read or write lock acquired but needs to wait for baseline
-     * calculations to finish.
-     *
-     * @param lock the lock the calling thread currently owns
-     */
-    private void waitForBaselineLatchToOpen(Lock lock) {
-        while (baselineCalcLatch != null) {
-            CountDownLatch latch = baselineCalcLatch; // remember this, because once we unlock, baselineCalcLatch might go null on us
-
-            lock.unlock();
-
-            try {
-                latch.await();
-            } catch (InterruptedException e) {
-                throw new RuntimeException("Interrupted while waiting for baseline calcs to finish");
-            } finally {
-                lock.lock();
-            }
         }
     }
 
@@ -1376,8 +1278,6 @@ public final class AlertConditionCache {
     public boolean isCacheValid() {
         rwLock.readLock().lock();
 
-        waitForBaselineLatchToOpen(rwLock.readLock());
-
         try {
             if (validCache == null) {
                 validCache = true;
@@ -1419,8 +1319,6 @@ public final class AlertConditionCache {
     public void printCache(String cacheName) {
         rwLock.readLock().lock();
 
-        waitForBaselineLatchToOpen(rwLock.readLock());
-
         try {
             if (CacheName.MeasurementDataCache.name().equals(cacheName)) {
                 printListCache(CacheName.MeasurementDataCache.name(), measurementDataCache);
@@ -1444,8 +1342,6 @@ public final class AlertConditionCache {
 
     public void printAllCaches() {
         rwLock.readLock().lock();
-
-        waitForBaselineLatchToOpen(rwLock.readLock());
 
         try {
             if (log.isDebugEnabled()) {

@@ -8,11 +8,13 @@ import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
 
 @Local
-public interface ClusterIdentityManagerLocal {
+public interface ServerManagerLocal {
 
     String getIdentity();
 
     List<Agent> getAgents();
+
+    List<Agent> getAgentsWithStatus();
 
     Server getServer();
 }

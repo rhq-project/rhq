@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.measurement;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -52,10 +51,9 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
-import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -77,7 +75,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     private DataSource dataSource;
 
     @EJB
-    private AlertConditionCacheManagerLocal alertConditionCacheManager;
+    private AgentStatusManagerLocal agentStatusManager;
     @EJB
     private AuthorizationManagerLocal authorizationManager;
     @EJB
@@ -151,10 +149,6 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     // this is potentially really long, don't put this method in a transaction, each individual step will be its own tx
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public long calculateAutoBaselines(long startTime, long endTime) {
-        boolean calledAfter = false;
-
-        alertConditionCacheManager.beforeBaselineCalculation();
-
         try {
             log.info("Calculating auto baselines");
             long computeTime = System.currentTimeMillis();
@@ -175,21 +169,12 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
             MeasurementMonitor.getMBean().incrementBaselineCalculationTime(System.currentTimeMillis() - computeTime);
 
-            // done calculating and the database has new baselines all calculated, shiny and new
-            // this will reload the cache with all the things it needs
-            alertConditionCacheManager.afterBaselineCalculation();
-            calledAfter = true;
+            agentStatusManager.updateByAutoBaselineCalculationJob();
 
             return computeTime;
         } catch (Exception e) {
             log.error("Failed to auto-calculate baselines", e);
             throw new RuntimeException("Auto-calculation failure", e);
-        } finally {
-            if (!calledAfter) {
-                // if we haven't called after yet, an error probably happened;
-                // but we need to put the cache back in a good state so make sure we call this
-                alertConditionCacheManager.afterBaselineCalculation();
-            }
         }
     }
 
@@ -495,17 +480,13 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         if (save) {
             entityManager.merge(schedule); // merge will persist new baseline
 
-            List<MeasurementBaselineComposite> baselines = new ArrayList<MeasurementBaselineComposite>(1);
-            baselines.add(new MeasurementBaselineComposite(baseline));
-            notifyAlertConditionCacheManager("calculateBaseline", baselines);
+            notifyAlertConditionCacheManager("calculateBaseline", baseline);
         }
 
         return baseline;
     }
 
-    private void notifyAlertConditionCacheManager(String callingMethod, List<MeasurementBaselineComposite> baselines) {
-        AlertConditionCacheStats stats = alertConditionCacheManager.updateConditions(baselines);
-
-        log.debug(callingMethod + ": " + stats.toString());
+    private void notifyAlertConditionCacheManager(String callingMethod, MeasurementBaseline baseline) {
+        agentStatusManager.updateByMeasurementBaseline(baseline.getId());
     }
 }

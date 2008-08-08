@@ -56,8 +56,10 @@ import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.cluster.ClusterManagerBean;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
-import org.rhq.enterprise.server.cluster.instance.ClusterIdentityManagerBean;
-import org.rhq.enterprise.server.cluster.instance.ClusterIdentityManagerLocal;
+import org.rhq.enterprise.server.cluster.instance.CacheConsistencyManagerBean;
+import org.rhq.enterprise.server.cluster.instance.CacheConsistencyManagerLocal;
+import org.rhq.enterprise.server.cluster.instance.ServerManagerBean;
+import org.rhq.enterprise.server.cluster.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.common.EntityManagerFacade;
 import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
@@ -123,6 +125,8 @@ import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerBean;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerBean;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.scheduler.instance.ServerSchedulerBean;
+import org.rhq.enterprise.server.scheduler.instance.ServerSchedulerLocal;
 import org.rhq.enterprise.server.system.SystemManagerBean;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.test.AccessBean;
@@ -309,8 +313,12 @@ public final class LookupUtil {
         return lookupLocal(ClusterManagerBean.class);
     }
 
-    public static ClusterIdentityManagerLocal getClusterIdentityManager() {
-        return lookupLocal(ClusterIdentityManagerBean.class);
+    public static ServerManagerLocal getServerManager() {
+        return lookupLocal(ServerManagerBean.class);
+    }
+
+    public static CacheConsistencyManagerLocal getCacheConsistenyManager() {
+        return lookupLocal(CacheConsistencyManagerBean.class);
     }
 
     public static ResourceMetadataManagerLocal getResourceMetadataManager() {
@@ -343,6 +351,10 @@ public final class LookupUtil {
 
     public static SchedulerLocal getSchedulerBean() {
         return lookupLocal(SchedulerBean.class);
+    }
+
+    public static ServerSchedulerLocal getServerSchedulerBean() {
+        return lookupLocal(ServerSchedulerBean.class);
     }
 
     public static SubjectManagerLocal getSubjectManager() {

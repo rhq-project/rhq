@@ -5,7 +5,7 @@
 <%@ page import="org.rhq.enterprise.server.test.MeasurementTestLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.ResourceGroupTestBeanLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.SubjectRoleTestBeanLocal" %>
-<%@ page import="org.rhq.enterprise.server.cluster.instance.ClusterIdentityManagerLocal" %>
+<%@ page import="org.rhq.enterprise.server.cluster.instance.ServerManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.ResourceGroupTestBeanLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="javax.naming.NamingException" %>
@@ -28,14 +28,14 @@
    MeasurementTestLocal measurementTestBean;
    ResourceGroupTestBeanLocal resourceGroupTestBean;
    SubjectRoleTestBeanLocal subjectRoleTestBean;
-   ClusterIdentityManagerLocal clusterIdentityManager;
+   ServerManagerLocal serverManager;
    
    coreTestBean = LookupUtil.getCoreTest();
    discoveryTestBean = LookupUtil.getDiscoveryTest();
    measurementTestBean = LookupUtil.getMeasurementTest();
    resourceGroupTestBean = LookupUtil.getResourceGroupTestBean();
    subjectRoleTestBean = LookupUtil.getSubjectRoleTestBean();
-   clusterIdentityManager = LookupUtil.getClusterIdentityManager();
+   serverManager = LookupUtil.getServerManager();
 
    String result = null;
    String mode = pageContext.getRequest().getParameter("mode");
@@ -102,8 +102,8 @@
       }
       else if ("clusterGetIdentity".equals(mode))
       {
-         String serverName = clusterIdentityManager.getIdentity();
-         pageContext.setAttribute("clusterIdentity", "(serverName = " + serverName + ")");
+         String serverName = serverManager.getIdentity();
+         pageContext.setAttribute("serverName", "(serverName = " + serverName + ")");
       }
    }
    catch (Exception e)
@@ -163,7 +163,7 @@ Add Lots of Users and Roles
 
 <ul>
   <li><c:url var="url" value="/admin/TestControl.jsp?mode=clusterGetIdentity"/>
-      <a href="<c:out value="${url}"/>">Get Identity</a> <c:out value="${clusterIdentity}"/></li>
+      <a href="<c:out value="${url}"/>">Get Identity</a> <c:out value="${serverName}"/></li>
 </ul>
 
 <h2>Inventory</h2>

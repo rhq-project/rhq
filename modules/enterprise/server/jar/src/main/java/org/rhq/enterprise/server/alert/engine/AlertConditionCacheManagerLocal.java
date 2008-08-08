@@ -22,18 +22,13 @@ package org.rhq.enterprise.server.alert.engine;
  * @author Joseph Marques
  */
 
-import java.util.List;
-
 import javax.ejb.Local;
 
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
-import org.rhq.core.domain.measurement.composite.MeasurementBaselineComposite;
 import org.rhq.core.domain.operation.OperationHistory;
-import org.rhq.core.domain.resource.Resource;
 
 /**
  * This is the SLSB interface for interacting with the clustered cache that stores and computes whether AlertDefinition
@@ -42,18 +37,15 @@ import org.rhq.core.domain.resource.Resource;
  * on the recovery property, enablement actions, and enablement filtering options that were set on the AlertDefinition
  * this condition was triggered against - whether an alert should fire or not.
  */
+/*
+ * note for developers:
+ * 
+ * the updateConditions methods have been commented out because no one should updating the cache directly anymore;
+ * it's done solely through full-cache reloads (indirectly via the periodic job that comes along and checks the 
+ * status field on specific agents) until further notice.
+ */
 @Local
 public interface AlertConditionCacheManagerLocal {
-    /**
-     * Call this before baseline calculations are started.
-     */
-    void beforeBaselineCalculation();
-
-    /**
-     * Call this after baseline calculations are complete.
-     */
-    void afterBaselineCalculation();
-
     /**
      * A MeasurementReport is full of MeasurementData objects. Each of these could potentially match against one of the
      * cache's conditions. So, each must be checked against it, to see whether it fires against any of the conditions.
@@ -99,16 +91,14 @@ public interface AlertConditionCacheManagerLocal {
      *
      * @return the number of internal conditions that were updated
      */
-    AlertConditionCacheStats updateConditions(Resource deletedResource);
-
+    //AlertConditionCacheStats updateConditions(Resource deletedResource);
     /**
      * When baselines are recalculated, the cache will need to store new values so that the appropriate AlertDefinitions
      * that are based off of those baselines can fire in the appropriate instances.
      *
      * @return the number of internal conditions that were updated
      */
-    AlertConditionCacheStats updateConditions(List<MeasurementBaselineComposite> measurementBaselines);
-
+    //AlertConditionCacheStats updateConditions(List<MeasurementBaselineComposite> measurementBaselines);
     /**
      * This method will handle all event types in {@link AlertDefinitionEvent} When an AlertDefinition is removed via
      * the Web UI a flag is set to prevent it from being shown, but it is not actually deleted. This method will also
@@ -121,8 +111,7 @@ public interface AlertConditionCacheManagerLocal {
      *
      * @return the number of internal conditions that were updated
      */
-    AlertConditionCacheStats updateConditions(AlertDefinition alertDefinition, AlertDefinitionEvent alertDefinitionEvent);
-
+    //AlertConditionCacheStats updateConditions(AlertDefinition alertDefinition, AlertDefinitionEvent alertDefinitionEvent);
     String[] getCacheNames();
 
     void printCache(String cacheName);
@@ -130,4 +119,6 @@ public interface AlertConditionCacheManagerLocal {
     void printAllCaches();
 
     boolean isCacheValid();
+
+    void reload();
 }

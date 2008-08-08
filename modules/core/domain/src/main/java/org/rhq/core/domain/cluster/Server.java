@@ -24,6 +24,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -82,7 +83,7 @@ public class Server implements Serializable {
     @ManyToOne
     private AffinityGroup affinityGroup;
 
-    @OneToMany(mappedBy = "server")
+    @OneToMany(mappedBy = "server", fetch = FetchType.LAZY)
     private List<Agent> agents = new ArrayList<Agent>();
 
     // required for JPA

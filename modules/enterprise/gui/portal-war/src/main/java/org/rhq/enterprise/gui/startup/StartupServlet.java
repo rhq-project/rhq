@@ -36,19 +36,21 @@ import org.jboss.mx.util.MBeanServerLocator;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
-import org.rhq.enterprise.server.cluster.instance.ClusterIdentityManagerLocal;
+import org.rhq.enterprise.server.cluster.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.core.plugin.ProductPluginDeployerMBean;
 import org.rhq.enterprise.server.plugin.content.ContentSourcePluginServiceManagement;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.scheduler.instance.ServerSchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForSuspectedAgentsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutContentRequestsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutOperationsJob;
 import org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob;
+import org.rhq.enterprise.server.scheduler.jobs.instance.ReloadServerCacheIfNeededJob;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -94,7 +96,7 @@ public class StartupServlet extends HttpServlet {
     /**
      * For developer builds that don't use the HA installer to write a localhost entry into the {@link Server}
      * table, we will create a default one here.  Then, if the "rhq.server.name" property is missing, the
-     * {@link ClusterIdentityManagerLocal} will return this localhost entry.
+     * {@link ServerManagerLocal} will return this localhost entry.
      * 
      * If the installer was already run, then this method should be a no-op because a row would already exist
      * in the {@link Server} table
@@ -218,8 +220,20 @@ public class StartupServlet extends HttpServlet {
          */
 
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
+        ServerSchedulerLocal serverScheduler = LookupUtil.getServerSchedulerBean();
 
         // TODO [mazz]: make all of the intervals here configurable via something like SystemManagerBean
+
+        // periodic job that chack
+        try {
+            // do not check until we are up at least 1min, but check every 30secs thereafter
+            final long initialDelay = 1000L * 60;
+            final long interval = 1000L * 30;
+            serverScheduler.scheduleRepeatingJob("ReloadServerCache", "ServerJobs", ReloadServerCacheIfNeededJob.class,
+                true, false, initialDelay, interval);
+        } catch (Exception e) {
+            throw new ServletException("Cannot schedule quartz tester", e);
+        }
 
         // Suspected Agents Job
         try {

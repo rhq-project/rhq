@@ -24,6 +24,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -32,7 +33,6 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.rhq.core.domain.resource.Agent;
-
 
 /**
  * An object to logically group {@link Server}s and {@link Agent}s
@@ -58,10 +58,10 @@ public class AffinityGroup implements Serializable {
     @Column(name = "NAME", nullable = false)
     private String name;
 
-    @OneToMany(mappedBy = "affinityGroup")
+    @OneToMany(mappedBy = "affinityGroup", fetch = FetchType.LAZY)
     private List<Server> servers = new ArrayList<Server>();
 
-    @OneToMany(mappedBy = "affinityGroup")
+    @OneToMany(mappedBy = "affinityGroup", fetch = FetchType.LAZY)
     private List<Agent> agents = new ArrayList<Agent>();
 
     // required for JPA

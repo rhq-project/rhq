@@ -96,11 +96,11 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
-import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -129,7 +129,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @EJB
     private AgentManagerLocal agentManager;
     @EJB
-    private AlertConditionCacheManagerLocal alertConditionCacheManager;
+    private AgentStatusManagerLocal agentStatusManager;
     @EJB
     private AuthorizationManagerLocal authorizationManager;
     @EJB
@@ -569,7 +569,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             entityManager.flush();
         }
 
-        alertConditionCacheManager.updateConditions(resource);
+        agentStatusManager.updateByResource(resourceId);
     }
 
     /** 

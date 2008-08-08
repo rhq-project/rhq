@@ -10,28 +10,38 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
 
 @Stateless
-public class ClusterIdentityManagerBean implements ClusterIdentityManagerLocal {
-    private final Log log = LogFactory.getLog(ClusterIdentityManagerBean.class);
+public class ServerManagerBean implements ServerManagerLocal {
+    private final Log log = LogFactory.getLog(ServerManagerBean.class);
 
     private static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
 
     @EJB
     ClusterManagerLocal clusterManager;
 
+    @EJB
+    AgentStatusManagerLocal agentStatusManager;
+
     public String getIdentity() {
-        String clusterIdentity = System.getProperty(RHQ_SERVER_NAME_PROPERTY, "");
-        if (clusterIdentity.equals("")) {
+        String identity = System.getProperty(RHQ_SERVER_NAME_PROPERTY, "");
+        if (identity.equals("")) {
             return "localhost";
         }
-        return clusterIdentity;
+        return identity;
     }
 
     public List<Agent> getAgents() {
         String identity = getIdentity();
         List<Agent> results = clusterManager.getAgentsByServerName(identity);
+        return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Agent> getAgentsWithStatus() {
+        List<Agent> results = agentStatusManager.getAgentsWithStatusForServer(getIdentity());
         return results;
     }
 

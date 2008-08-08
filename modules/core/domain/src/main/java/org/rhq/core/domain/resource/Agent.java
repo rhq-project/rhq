@@ -19,7 +19,9 @@
 package org.rhq.core.domain.resource;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 import javax.persistence.Column;
@@ -59,7 +61,16 @@ import org.rhq.core.domain.cluster.Server;
         + "       ( "
         + "          a.id,a.name,a.remoteEndpoint,a.lastAvailabilityReport "
         + "       ) "
-        + "  FROM Agent a " + " WHERE a.lastAvailabilityReport < :dateThreshold ") })
+        + "  FROM Agent a " + " WHERE a.lastAvailabilityReport < :dateThreshold "),
+    @NamedQuery(name = Agent.QUERY_FIND_ALL_WITH_STATUS_BY_SERVER, query = "" //
+        + "SELECT a " //
+        + "  FROM Agent a " //
+        + " WHERE a.server.name = :serverName " //
+        + "   AND a.status <> 0 "), // 
+    @NamedQuery(name = Agent.QUERY_FIND_ALL_WITH_STATUS, query = "" //
+        + "SELECT a " //
+        + "  FROM Agent a " //
+        + " WHERE a.status <> 0 ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_AGENT_ID_SEQ")
 @Table(name = "RHQ_AGENT")
 public class Agent implements Serializable {
@@ -72,6 +83,10 @@ public class Agent implements Serializable {
     public static final String QUERY_COUNT_ALL = "Agent.countAll";
     public static final String QUERY_FIND_RESOURCE_IDS_FOR_AGENT = "Agent.findResourceIdsForAgent";
     public static final String QUERY_FIND_ALL_SUSPECT_AGENTS = "Agent.findAllSuspectAgents";
+
+    // HA queries
+    public static final String QUERY_FIND_ALL_WITH_STATUS_BY_SERVER = "Agent.findAllWithStatusByServer";
+    public static final String QUERY_FIND_ALL_WITH_STATUS = "Agent.findAllWithStatus";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
@@ -334,6 +349,10 @@ public class Agent implements Serializable {
         this.status |= newStatus.mask;
     }
 
+    public List<String> getStatusMessages() {
+        return Status.getMessages(status);
+    }
+
     public enum Status {
 
         RESOURCE_HIERARCHY_UPDATED(1, "This agent's managed resource hierarchy has been updated"), //
@@ -346,6 +365,16 @@ public class Agent implements Serializable {
         private Status(int mask, String message) {
             this.mask = mask;
             this.message = message;
+        }
+
+        public static List<String> getMessages(int mask) {
+            List<String> results = new ArrayList<String>();
+            for (Status next : Status.values()) {
+                if (next.mask == (next.mask & mask)) {
+                    results.add(next.message);
+                }
+            }
+            return results;
         }
 
     }

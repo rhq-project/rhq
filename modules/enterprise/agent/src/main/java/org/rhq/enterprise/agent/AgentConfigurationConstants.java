@@ -412,6 +412,13 @@ public interface AgentConfigurationConstants {
     String AGENT_SECURITY_TOKEN = PROPERTY_NAME_PREFIX + "security-token";
 
     /**
+     * When this configuration item is defined, it is the list of public endpoints to use to connect to the server
+     * cloud.  This list may be a single element in a single-server environment, or may be a list of elements in a
+     * high availability setup.
+     */
+    String AGENT_FAILOVER_LIST = PROPERTY_NAME_PREFIX + "failover-list";
+
+    /**
      * Flag, if set to <code>true</code>, will tell the agent it should not create and register any management services
      * (thus making the agent unable to manage or monitor itself).
      *

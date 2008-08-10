@@ -38,5 +38,7 @@ public interface ClusterManagerLocal {
 
     Server getServerByName(String serverName);
 
+    List<Server> getAllServers();
+
     int getServerCount();
 }

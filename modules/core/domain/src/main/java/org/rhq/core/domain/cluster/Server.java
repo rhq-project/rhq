@@ -37,6 +37,8 @@ import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.rhq.core.domain.cluster.composite.FailoverListComposite;
+import org.rhq.core.domain.cluster.composite.FailoverListComposite.ServerEntry;
 import org.rhq.core.domain.resource.Agent;
 
 /**
@@ -148,6 +150,10 @@ public class Server implements Serializable {
 
     public void setAgents(List<Agent> agents) {
         this.agents = agents;
+    }
+
+    public ServerEntry getServerEntry() {
+        return new FailoverListComposite.ServerEntry(address, port, securePort);
     }
 
     @PrePersist

@@ -493,6 +493,13 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("An error occurred during shutdown. Cause: {0}")
     String EXIT_SHUTDOWN_ERROR = "PromptCommand.exit.shutdown-error";
 
+    @I18NMessage("failover")
+    String FAILOVER = "PromptCommand.failover";
+
+    // Performs a variety of activities involving the server entries in the failover list
+    @I18NMessage("Lists, in order, the servers that this agent would failover to")
+    String FAILOVER_HELP = "PromptCommand.failover.help";
+
     @I18NMessage("quit")
     String QUIT = "PromptCommand.quit";
 

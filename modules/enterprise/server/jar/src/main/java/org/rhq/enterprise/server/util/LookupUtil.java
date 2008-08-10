@@ -56,6 +56,8 @@ import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.cluster.ClusterManagerBean;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
+import org.rhq.enterprise.server.cluster.FailoverListManagerBean;
+import org.rhq.enterprise.server.cluster.FailoverListManagerLocal;
 import org.rhq.enterprise.server.cluster.instance.CacheConsistencyManagerBean;
 import org.rhq.enterprise.server.cluster.instance.CacheConsistencyManagerLocal;
 import org.rhq.enterprise.server.cluster.instance.ServerManagerBean;
@@ -255,6 +257,10 @@ public final class LookupUtil {
 
     public static EventManagerLocal getEventManager() {
         return lookupLocal(EventManagerBean.class);
+    }
+
+    public static FailoverListManagerLocal getFailoverListManager() {
+        return lookupLocal(FailoverListManagerBean.class);
     }
 
     public static GroupDefinitionManagerLocal getGroupDefinitionManager() {

@@ -20,9 +20,12 @@ package org.rhq.core.clientapi.server.core;
 
 import java.io.Serializable;
 
+import org.rhq.core.domain.cluster.composite.FailoverListComposite;
+
 /**
  * These are the results of a successful agent registration. After the agent has been registered by the server, this
- * object will contain the identification information assigned to the agent by the server.
+ * object will contain the identification information assigned to the agent by the server.  It will also contain the
+ * list of servers this agent can fail over to an in high availability setup.
  *
  * @author John Mazzitelli
  */
@@ -30,6 +33,7 @@ public class AgentRegistrationResults implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String agentToken;
+    private FailoverListComposite failoverList;
 
     /**
      * The agent token that the agent must use in order to communicate with the server in the future.
@@ -50,8 +54,27 @@ public class AgentRegistrationResults implements Serializable {
     }
 
     /**
+     * The FailoverListComposite that the agent must use in order to communicate with the server in the future.
+     *
+     * @return the FailoverListComposite assigned to it by the server
+     */
+    public FailoverListComposite getFailoverList() {
+        return failoverList;
+    }
+
+    /**
+     * See {@link #getFailoverList()}.
+     *
+     * @param failoverList
+     */
+    public void setFailoverList(FailoverListComposite failoverList) {
+        this.failoverList = failoverList;
+    }
+
+    /**
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString() {
         return "AgentRegistrationResults: [agent-token=" + this.agentToken + "]";
     }

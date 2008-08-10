@@ -20,6 +20,7 @@ package org.rhq.enterprise.agent;
 
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -43,12 +44,16 @@ import java.util.concurrent.CountDownLatch;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.InvalidPreferencesFormatException;
 import java.util.prefs.Preferences;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+
 import mazz.i18n.Logger;
 import mazz.i18n.Msg;
+
 import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
+
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.core.AgentRegistrationException;
@@ -56,10 +61,11 @@ import org.rhq.core.clientapi.server.core.AgentRegistrationRequest;
 import org.rhq.core.clientapi.server.core.AgentRegistrationResults;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
+import org.rhq.core.clientapi.server.event.EventServerService;
 import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
 import org.rhq.core.clientapi.server.operation.OperationServerService;
-import org.rhq.core.clientapi.server.event.EventServerService;
+import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
@@ -78,6 +84,7 @@ import org.rhq.enterprise.agent.promptcmd.DownloadPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.DumpSpoolPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.ExecutePromptCommand;
 import org.rhq.enterprise.agent.promptcmd.ExitPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.FailoverPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.GetConfigPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.HelpPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.IdentifyPromptCommand;
@@ -841,11 +848,13 @@ public class AgentMain {
                                 // delete any old token so request is unauthenticated to get server to accept it
                                 agent_config.setAgentSecurityToken(null);
 
+                                FailoverListComposite failoverList = null;
                                 try {
                                     AgentRegistrationResults results = remote_pojo.registerAgent(request);
                                     m_registration = results;
                                     retry = false;
                                     token = results.getAgentToken();
+                                    failoverList = results.getFailoverList();
 
                                     LOG.info(AgentI18NResourceKeys.AGENT_REGISTRATION_RESULTS, results);
                                 } finally {
@@ -853,6 +862,7 @@ public class AgentMain {
                                     // Note that we don't retry even if storing the token fails since this kind
                                     // of failure is probably not recoverable even if we try again.
                                     agent_config.setAgentSecurityToken(token);
+                                    agent_config.setFailoverList(failoverList);
                                     LOG.debug(AgentI18NResourceKeys.NEW_SECURITY_TOKEN, token);
                                 }
                             }
@@ -1938,7 +1948,7 @@ public class AgentMain {
             new ExecutePromptCommand(), new DiscoveryPromptCommand(), new InventoryPromptCommand(),
             new AvailabilityPromptCommand(), new PiqlPromptCommand(), new IdentifyPromptCommand(),
             new LogPromptCommand(), new TimerPromptCommand(), new PingPromptCommand(), new DownloadPromptCommand(),
-            new DumpSpoolPromptCommand(), new SenderPromptCommand() };
+            new DumpSpoolPromptCommand(), new SenderPromptCommand(), new FailoverPromptCommand() };
 
         // hold the conflicts
         StringBuilder conflicts = new StringBuilder();

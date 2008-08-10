@@ -24,18 +24,23 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.server.core.AgentRegistrationException;
 import org.rhq.core.clientapi.server.core.AgentRegistrationRequest;
 import org.rhq.core.clientapi.server.core.AgentRegistrationResults;
 import org.rhq.core.clientapi.server.core.CoreServerService;
+import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.exception.WrappedRemotingException;
 import org.rhq.enterprise.communications.command.client.RemoteInputStream;
+import org.rhq.enterprise.server.cluster.FailoverListManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -49,6 +54,7 @@ public class CoreServerServiceImpl implements CoreServerService {
     private final Log log = LogFactory.getLog(CoreServerServiceImpl.class);
 
     private AgentManagerLocal agentManager;
+    private FailoverListManagerLocal failoverListManager;
 
     /**
      * @see CoreServerService#registerAgent(AgentRegistrationRequest)
@@ -143,14 +149,20 @@ public class CoreServerServiceImpl implements CoreServerService {
             }
         }
 
+        String agentToken = agentByName.getAgentToken();
+        FailoverListComposite failoverList = getFailManager().getForSingleAgent(agentToken);
+
         AgentRegistrationResults results = new AgentRegistrationResults();
-        results.setAgentToken(agentByName.getAgentToken());
+        results.setAgentToken(agentToken);
+        results.setFailoverList(failoverList);
+
         return results;
     }
 
     /**
      * @see CoreServerService#getLatestPlugins()
      */
+    @SuppressWarnings("unchecked")
     public List<Plugin> getLatestPlugins() {
         EntityManager em = null;
         List<Plugin> plugins = new ArrayList<Plugin>();
@@ -234,6 +246,14 @@ public class CoreServerServiceImpl implements CoreServerService {
         }
 
         return this.agentManager;
+    }
+
+    private FailoverListManagerLocal getFailManager() {
+        if (this.failoverListManager == null) {
+            this.failoverListManager = LookupUtil.getFailoverListManager();
+        }
+
+        return this.failoverListManager;
     }
 
     private void pingEndpoint(String endpoint) throws AgentRegistrationException {

@@ -80,6 +80,13 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public List<Server> getAllServers() {
+        Query query = entityManager.createNamedQuery(Server.QUERY_FIND_ALL);
+        List<Server> results = query.getResultList();
+        return results;
+    }
+
     public int getServerCount() {
         Query query = PersistenceUtility.createCountQuery(entityManager, Server.QUERY_FIND_ALL);
 

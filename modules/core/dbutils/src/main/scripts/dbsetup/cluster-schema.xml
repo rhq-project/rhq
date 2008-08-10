@@ -32,7 +32,7 @@
         <column name="LAST_AVAILABILITY_REPORT" required="false" type="TIMESTAMP"/>
         <column name="AFFINITY_GROUP_ID" type="INTEGER" references="RHQ_AFFINITY_GROUP" required="false"/>
         <column name="SERVER_ID" type="INTEGER" references="RHQ_SERVER" required="false"/>
-        <column name="STATUS" type="INTEGER" required="true" default="0" />
+        <column name="STATUS" type="INTEGER" required="false" default="0" />
 
         <index name="RHQ_AGENT_NAME_UNIQUE" unique="true">
             <field ref="NAME"/>

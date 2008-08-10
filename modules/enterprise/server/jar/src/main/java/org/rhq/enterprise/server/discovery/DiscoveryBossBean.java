@@ -114,8 +114,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
                 + "] sent an inventory report - that report will be ignored");
         }
 
-        agentManager.agentIsAlive(knownAgent); // we see something from the agent, so renew its alive counter.
-
         log.info("Received inventory report from RHQ Agent [" + knownAgent + "]. Number of added roots: "
             + report.getAddedRoots().size());
 

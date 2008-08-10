@@ -20,10 +20,13 @@ package org.rhq.enterprise.agent.promptcmd;
 
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
+
 import java.io.PrintWriter;
 import java.util.Date;
 import java.util.List;
+
 import mazz.i18n.Msg;
+
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.pc.PluginContainer;
@@ -87,7 +90,8 @@ public class AvailabilityPromptCommand implements AgentPromptCommand {
         boolean verbose = false;
 
         String sopts = "-cv";
-        LongOpt[] lopts = { new LongOpt("changed", LongOpt.NO_ARGUMENT, null, 'c') };
+        LongOpt[] lopts = { new LongOpt("changed", LongOpt.NO_ARGUMENT, null, 'c'),
+            new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v') };
 
         Getopt getopt = new Getopt(getPromptCommandString(), args, sopts, lopts);
         int code;

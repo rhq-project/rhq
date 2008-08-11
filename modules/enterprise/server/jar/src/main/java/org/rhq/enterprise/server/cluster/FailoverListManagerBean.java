@@ -16,7 +16,6 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     @EJB
     ClusterManagerLocal clusterManager;
 
-    @Override
     public FailoverListComposite getForSingleAgent(String agentRegistrationToken) {
         /* 
          * dummy implementation that return a simple FailoverList

@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.test;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -37,6 +36,7 @@ import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
+import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
 import org.rhq.core.domain.content.transfer.DeletePackagesRequest;
@@ -54,7 +54,6 @@ import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 
 public class TestAgentClient implements AgentClient, ContentAgentService, ResourceFactoryAgentService,
@@ -202,9 +201,6 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
     }
 
     public void removeResource(int resourceId) {
-    }
-
-    public void synchronizeInventory(int resourceId, EnumSet<SynchronizationType> synchronizationTypes) {
     }
 
     public void updatePluginConfiguration(int resourceId, Configuration newPluginConfiguration)

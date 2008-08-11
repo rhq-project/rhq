@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
-import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService.SynchronizationType;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -229,18 +228,15 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         // This is done is a separate transaction to stop failures in the agent from rolling back the transaction
         discoveryBoss.updateInventoryStatus(user, status, platforms, servers);
 
-        // on status change we synchronize everything with the agent with the exception of alert templates, which are synced
-        // only at commit time.
-        EnumSet<SynchronizationType> syncTypes = EnumSet.allOf(SynchronizationType.class);
-        if (status != InventoryStatus.COMMITTED) {
-            syncTypes.remove(SynchronizationType.ALERT_TEMPLATES);
-        }
-
-        // synchronize the platforms, then the servers
+        // on status change request an agent sync on the affected resources.  The agent will sync status and determine
+        // what other sync work needs to be performed. Synchronize the platforms, then the servers, omitting servers
+        // under synced platforms since they will have been handled already.        
         for (Resource platform : platforms) {
             AgentClient agentClient = agentManager.getAgentClient(platform.getAgent());
             try {
-                agentClient.getDiscoveryAgentService().synchronizeInventory(platform.getId(), syncTypes);
+                //agentClient.getDiscoveryAgentService().synchronizeInventory(platform.getId(), syncTypes);
+                agentClient.getDiscoveryAgentService().synchronizeInventory(
+                    entityManager.find(ResourceSyncInfo.class, platform.getId()));
             } catch (Exception e) {
                 log.warn("Could not perform commit synchronization with agent for platform [" + platform.getName()
                     + "]", e);
@@ -252,7 +248,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             if (!platforms.contains(server.getParentResource())) {
                 AgentClient agentClient = agentManager.getAgentClient(server.getAgent());
                 try {
-                    agentClient.getDiscoveryAgentService().synchronizeInventory(server.getId(), syncTypes);
+                    //agentClient.getDiscoveryAgentService().synchronizeInventory(server.getId(), syncTypes);
+                    agentClient.getDiscoveryAgentService().synchronizeInventory(
+                        entityManager.find(ResourceSyncInfo.class, server.getId()));
                 } catch (Exception e) {
                     log.warn("Could not perform commit synchronization with agent for server [" + server.getName()
                         + "]", e);

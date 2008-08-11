@@ -18,8 +18,6 @@
  */
 package org.rhq.core.clientapi.agent.discovery;
 
-import java.util.EnumSet;
-
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.domain.configuration.Configuration;
@@ -37,10 +35,6 @@ import org.rhq.core.domain.resource.ResourceType;
  * The interface to a RHQ Agent's Resource discovery subsystem.
  */
 public interface DiscoveryAgentService {
-    public static enum SynchronizationType {
-        STATUS, CONFIGURATION, MEASUREMENT_SCHEDULES, ALERT_TEMPLATES
-    }
-
     /**
      * This will update the plugin configuration for the resource with the given ID. This effectively will change the
      * way the resource component connects to/communicates with the resource, so it will require the resource component
@@ -57,12 +51,14 @@ public interface DiscoveryAgentService {
         throws InvalidPluginConfigurationClientException, PluginContainerException;
 
     /**
-     * Tells the agent to request an updated set of inventory data for the sub-tree rooted at the given resource id.
+     * Called to inform the agent of a status change for the resource represented by syncInfo. The agent processes the syncInfo for the resource and initiates a status update for its sub-tree.
      *
-     * @param resourceId the id at the root of the sub-tree to update
+     * @param syncInfo for the root of the tree to be updated.
      */
     @Asynchronous(guaranteedDelivery = true)
-    void synchronizeInventory(int resourceId, EnumSet<SynchronizationType> synchronizationTypes);
+    void synchronizeInventory(ResourceSyncInfo syncInfo);
+
+    //void synchronizeInventory(int resourceId, EnumSet<SynchronizationType> synchronizationTypes);
 
     /**
      * Access to the current inventory managed by the plugin container.

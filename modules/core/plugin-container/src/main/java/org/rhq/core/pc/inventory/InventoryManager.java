@@ -22,7 +22,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -103,6 +102,7 @@ import org.rhq.core.util.exception.WrappedRemotingException;
  *
  * @author Greg Hinkle
  * @author Ian Springer
+ * @author Jay Shaughnessy
  */
 public class InventoryManager extends AgentService implements ContainerService, DiscoveryAgentService {
     private static final String INVENTORY_THREAD_POOL_NAME = "InventoryManager.discovery";
@@ -183,6 +183,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 INVENTORY_THREAD_POOL_NAME, true));
 
             serverScanExecutor = new AutoDiscoveryExecutor(null, this, configuration);
+
             // After ten seconds, periodically run the autodiscovery scan
 
             if (configuration.isInsideAgent()) {
@@ -425,9 +426,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 .getDiscoveryServerService();
             mergeResourceResponse = discoveryServerService.addResource(resource, ownerSubjectId);
 
-            // Sync our local resource up with the one now in server inventory.
+            // Sync our local resource up with the one now in server inventory. Treat this like a newlyCommittedResource
             resource.setId(mergeResourceResponse.getResourceId());
-            synchronizeInventory(resource.getId(), EnumSet.allOf(SynchronizationType.class));
+            Set newResources = new LinkedHashSet<Resource>();
+            newResources.add(resource);
+            syncSchedulesAndTemplatesForAutoImportedResources(newResources);
+            performServiceScan(resource.getId());
         }
 
         // Catch any other RuntimeExceptions or Errors, so the server doesn't have to worry about deserializing or
@@ -558,7 +562,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         // Let's just flag our executor for the next time it runs to send a full report; this way
                         // if we've got 100 queued changed-only reports, let the server fully process them and only
                         // at the next time we run the avail scan will we send it a full report.  It might make the
-                        // server sync up alittle slower than we'd like, but it avoids a potential hammering of the
+                        // server sync up a little slower than we'd like, but it avoids a potential hammering of the
                         // server with tons of full reports when that would be unnecessary.
                         availabilityExecutor.sendFullReportNextTime();
                     }
@@ -604,23 +608,27 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return false;
         }
 
-        synchronizeInventory(report, syncInfo);
+        synchInventory(syncInfo);
 
         return true;
     }
 
-    private void synchronizeInventory(InventoryReport report, ResourceSyncInfo syncInfo) {
+    private void synchInventory(ResourceSyncInfo syncInfo) {
         log.info("Syncing local inventory with Server inventory...");
         long startTime = System.currentTimeMillis();
-        Set<Resource> syncedResources = new LinkedHashSet();
-        Set<Integer> unknownResourceIds = new LinkedHashSet();
-        Set<Integer> modifiedResourceIds = new LinkedHashSet();
-        Set<String> allUuids = new HashSet();
-        processSyncInfo(syncInfo, syncedResources, unknownResourceIds, modifiedResourceIds, allUuids);
+        Set<Resource> syncedResources = new LinkedHashSet<Resource>();
+        Set<Integer> unknownResourceIds = new LinkedHashSet<Integer>();
+        Set<Integer> modifiedResourceIds = new LinkedHashSet<Integer>();
+        Set<Resource> newlyCommittedResources = new LinkedHashSet<Resource>();
+        Set<String> allUuids = new HashSet<String>();
+        processSyncInfo(syncInfo, syncedResources, unknownResourceIds, modifiedResourceIds, newlyCommittedResources,
+            allUuids);
         mergeUnknownResources(unknownResourceIds);
         mergeModifiedResources(modifiedResourceIds);
         purgeObsoleteResources(allUuids);
-        syncSchedulesAndTemplatesForAutoImportedResources(report);
+        if (!newlyCommittedResources.isEmpty()) {
+            syncSchedulesAndTemplatesForAutoImportedResources(newlyCommittedResources);
+        }
         log.debug(String.format("DONE syncing local inventory (%d)ms.", (System.currentTimeMillis() - startTime)));
         // If we synced any Resources, one or more Resource components were probably started,
         // so run an avail check to report on their availabilities immediately. Also kick off
@@ -710,11 +718,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.debug("Removing " + resource + " from local inventory...");
 
             // this will deactivate the resource starting bottom-up - so this ends up as a no-op if we are being called
-            // recursively, but we need to do this now to ensure everything is stopped prior to removing them from
-            // inventory
+            // recursively, but we need to do this now to ensure everything is stopped prior to removing them from inventory
             deactivateResource(resource);
 
-            Set<Resource> children = new HashSet<Resource>(resource.getChildResources()); // put in new set to avoid concurrent mod exceptions
+            // put in new set to avoid concurrent mod exceptions
+            Set<Resource> children = new HashSet<Resource>(resource.getChildResources());
             for (Resource child : children) {
                 scanIsNeeded |= removeResourceAndIndicateIfScanIsNeeded(child);
             }
@@ -1226,47 +1234,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return platform;
     }
 
-    public void synchronizeInventory(int resourceId, EnumSet<SynchronizationType> synchronizationTypes) {
-        log.info("Synchronizing local inventory with Server inventory for Resource " + resourceId
+    public void synchronizeInventory(ResourceSyncInfo syncInfo) {
+        log.info("Synchronizing local inventory with Server inventory for Resource " + syncInfo.getId()
             + " and its descendants...");
+
         // Get the latest resource data rooted at the given id.
-
-        Resource resource = getResourceContainer(resourceId).getResource();
-        if (synchronizationTypes.contains(DiscoveryAgentService.SynchronizationType.STATUS)) {
-            syncInventoryStatusRecursively(resource);
-        }
-
-        if (synchronizationTypes.contains(DiscoveryAgentService.SynchronizationType.MEASUREMENT_SCHEDULES)) {
-            syncSchedulesRecursively(resource);
-        }
-
-        if (synchronizationTypes.contains(DiscoveryAgentService.SynchronizationType.ALERT_TEMPLATES)) {
-            syncAlertTemplatesRecursively(resource);
-        }
-    }
-
-    private void syncInventoryStatusRecursively(Resource rootResource) {
-        Map<Integer, InventoryStatus> statuses = configuration.getServerServices().getDiscoveryServerService()
-            .getInventoryStatus(rootResource.getId(), true);
-        inventoryLock.writeLock().lock();
-        try {
-            for (Integer resourceId : statuses.keySet()) {
-                ResourceContainer resourceContainer = getResourceContainer(resourceId);
-                if (resourceContainer != null) {
-                    InventoryStatus statusFromServer = statuses.get(resourceId);
-                    resourceContainer.getResource().setInventoryStatus(statusFromServer);
-                    refreshResourceComponentState(resourceContainer, false);
-                } else {
-                    log.debug("Resource with id " + resourceId + " exists on Server, but not on Agent. "
-                        + "It will be synced on the next inventory report");
-                }
-            }
-        } finally {
-            inventoryLock.writeLock().unlock();
-        }
-        // Scan for new child Resources...
-        performServiceScan(rootResource.getId()); // NOTE: This will block.
-        performAvailabilityChecks(true); // NOTE: And this will not.
+        synchInventory(syncInfo);
+        performServiceScan(syncInfo.getId()); // NOTE: This will block (the initial scan blocks).
     }
 
     private void syncSchedulesRecursively(Resource resource) {
@@ -1290,18 +1264,23 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    private void syncAlertTemplatesRecursively(Resource resource) {
-        if (resource.getInventoryStatus() == InventoryStatus.COMMITTED) {
-            if (ResourceCategory.PLATFORM == resource.getResourceType().getCategory()) {
+    private void syncSchedules(Set<Resource> resources) {
+
+        for (Resource resource : resources) {
+            if (resource.getInventoryStatus() == InventoryStatus.COMMITTED) {
+
+                Set<ResourceMeasurementScheduleRequest> scheduleRequests = configuration.getServerServices()
+                    .getMeasurementServerService().getLatestSchedulesForResourceId(resource.getId(), false);
+                installSchedules(scheduleRequests);
+            }
+        }
+    }
+
+    private void syncAlertTemplates(Set<Resource> resources) {
+        for (Resource resource : resources) {
+            if (resource.getInventoryStatus() == InventoryStatus.COMMITTED) {
                 configuration.getServerServices().getDiscoveryServerService().applyAlertTemplate(resource.getId(),
                     false);
-                for (Resource child : resource.getChildResources()) {
-                    configuration.getServerServices().getDiscoveryServerService().applyAlertTemplate(child.getId(),
-                        true);
-                }
-            } else {
-                configuration.getServerServices().getDiscoveryServerService()
-                    .applyAlertTemplate(resource.getId(), true);
             }
         }
     }
@@ -1526,7 +1505,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private void processSyncInfo(ResourceSyncInfo syncInfo, Set<Resource> syncedResources,
-        Set<Integer> unknownResourceIds, Set<Integer> modifiedResourceIds, Set<String> allUuids) {
+        Set<Integer> unknownResourceIds, Set<Integer> modifiedResourceIds, Set<Resource> newlyCommittedResources,
+        Set<String> allUuids) {
         long startTime = System.currentTimeMillis();
         boolean initialCall = allUuids.isEmpty();
         if (initialCall)
@@ -1538,6 +1518,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
             unknownResourceIds.add(syncInfo.getId());
         } else {
             Resource resource = container.getResource();
+
+            if (resource.getInventoryStatus() != InventoryStatus.COMMITTED
+                && syncInfo.getInventoryStatus() == InventoryStatus.COMMITTED) {
+                newlyCommittedResources.add(resource);
+            }
+
             if (resource.getId() == 0) {
                 // This must be a Resource we just reported to the server. Just update its id, mtime, and status.
                 resource.setId(syncInfo.getId());
@@ -1565,7 +1551,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             // Recurse...
             for (ResourceSyncInfo childSyncInfo : syncInfo.getChildSyncInfos()) {
-                processSyncInfo(childSyncInfo, syncedResources, unknownResourceIds, modifiedResourceIds, allUuids);
+                processSyncInfo(childSyncInfo, syncedResources, unknownResourceIds, modifiedResourceIds,
+                    newlyCommittedResources, allUuids);
             }
         }
         if (initialCall && log.isDebugEnabled()) {
@@ -1655,8 +1642,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         resource.setResourceType(fullResourceType);
         refreshResourceComponentState(resourceContainer, pluginConfigUpdated);
 
-        // Recurse...
-        Set<Resource> childResources = new HashSet(resource.getChildResources()); // wrap in new HashSet to avoid CMEs
+        // Recurse... wrap in new HashSet to avoid CMEs
+        Set<Resource> childResources = new HashSet<Resource>(resource.getChildResources());
         for (Resource childResource : childResources) {
             mergeResource(childResource);
         }
@@ -1709,16 +1696,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    private void syncSchedulesAndTemplatesForAutoImportedResources(InventoryReport report) {
-        if (report.isRuntimeReport()) {
-            log.debug("Syncing metric schedules and alert templates for auto-imported Resources: "
-                + report.getAddedRoots() + "...");
-            EnumSet<SynchronizationType> syncTypes = EnumSet.of(SynchronizationType.MEASUREMENT_SCHEDULES,
-                SynchronizationType.ALERT_TEMPLATES);
-            for (Resource addedRoot : report.getAddedRoots()) {
-                synchronizeInventory(addedRoot.getId(), syncTypes);
-            }
-        }
+    private void syncSchedulesAndTemplatesForAutoImportedResources(Set<Resource> importedResources) {
+        log.debug("Syncing metric schedules and alert templates for auto-imported Resources: " + importedResources);
+        syncSchedules(importedResources);
+        syncAlertTemplates(importedResources);
     }
 
     private void refreshResourceComponentState(ResourceContainer container, boolean pluginConfigUpdated) {

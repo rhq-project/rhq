@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.configuration;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -985,9 +984,6 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         public boolean stopPlatformScan(long jobId) {
             return false;
-        }
-
-        public void synchronizeInventory(int resourceId, EnumSet<SynchronizationType> synchronizationTypes) {
         }
 
         public void removeResource(int resourceId) {

@@ -191,10 +191,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
             serviceScanExecutor = new RuntimeDiscoveryExecutor(this, configuration);
-            if (configuration.isInsideAgent()) {
-                inventoryThreadPoolExecutor.scheduleWithFixedDelay(serviceScanExecutor, configuration
-                    .getServiceDiscoveryInitialDelay(), configuration.getServiceDiscoveryPeriod(), TimeUnit.SECONDS);
-            }
+            inventoryThreadPoolExecutor.scheduleWithFixedDelay(serviceScanExecutor, configuration
+                .getServiceDiscoveryInitialDelay(), configuration.getServiceDiscoveryPeriod(), TimeUnit.SECONDS);
 
             // Never run more than one availability check at a time.
             availabilityThreadPoolExecutor = new ScheduledThreadPoolExecutor(AVAIL_THREAD_POOL_CORE_POOL_SIZE,

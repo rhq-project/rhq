@@ -275,6 +275,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         for (int i = 0; i < tokens.length; i++) {
             tokens[i] = originalTokens.get(i).toLowerCase();
         }
+        System.out.println("TOKENS: " + Arrays.asList(tokens));
 
         /*
          * build the normalized expression outside of the parse, to keep the parse code as clean as possible;
@@ -780,28 +781,42 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         return result;
     }
 
-    private List<String> tokenizeCondition(String condition) {
-        List<String> originalTokens = new ArrayList<String>();
-        String[] outerTokens = condition.split(" ");
-        for (String topToken : outerTokens) {
-            int bracketIndex = topToken.indexOf('[');
-            String preBracket;
-            String bracketed;
-            if (bracketIndex != -1) {
-                preBracket = topToken.substring(0, bracketIndex);
-                bracketed = topToken.substring(bracketIndex);
+    public List<String> tokenizeCondition(String condition) {
+        List<String> results = new ArrayList<String>();
+
+        boolean insideBracket = false;
+        StringBuilder currentToken = new StringBuilder();
+
+        for (char c : condition.trim().toCharArray()) {
+            if (insideBracket) {
+                if (c == ']') {
+                    insideBracket = false;
+                }
+                // always add bracket-bounded chars
+                currentToken.append(c);
             } else {
-                preBracket = topToken;
-                bracketed = "";
+                if (c == '.' || c == ' ') {
+                    String token = currentToken.toString();
+                    if (token.length() > 0) {
+                        results.add(token);
+                    }
+                    currentToken = new StringBuilder();
+                } else {
+                    if (c == '[') {
+                        insideBracket = true;
+                    }
+                    currentToken.append(c);
+                }
             }
-            // If there's a '[', tokenize on dots only in the portion before the '['; this is necessary because
-            // config prop names and trait names can both potentially contain dots.
-            String[] innerTokens = preBracket.split("\\.");
-            if (bracketed != null)
-                innerTokens[innerTokens.length - 1] += bracketed;
-            originalTokens.addAll(Arrays.asList(innerTokens));
         }
-        return originalTokens;
+
+        // and if there's anything left in the buffer
+        String token = currentToken.toString();
+        if (token.length() > 0) {
+            results.add(token);
+        }
+
+        return results;
     }
 
     private String parseTraitName(List<String> originalTokens) throws InvalidExpressionException {

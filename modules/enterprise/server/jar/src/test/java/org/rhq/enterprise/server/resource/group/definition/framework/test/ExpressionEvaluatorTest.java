@@ -28,79 +28,93 @@ import org.rhq.enterprise.server.test.AbstractEJB3Test;
 
 public class ExpressionEvaluatorTest extends AbstractEJB3Test {
     private String[][] successTestCases = {
-        { "resource.child.name = joseph",
 
-        "SELECT res.id FROM Resource res " + //
-            " JOIN res.childResources child " + //
-            "WHERE child.name = :arg1 " },
+    { "resource.child.name = joseph",
 
-        { "resource.name = joseph",
+    "SELECT res.id FROM Resource res " + //
+        " JOIN res.childResources child " + //
+        "WHERE child.name = :arg1 " },
 
-        "SELECT res.id FROM Resource res " + //
-            "WHERE res.name = :arg1" },
+    { "resource.name = joseph",
 
-        { "resource.version = 1.0",
+    "SELECT res.id FROM Resource res " + //
+        "WHERE res.name = :arg1" },
 
-        "SELECT res.id FROM Resource res " + //
-            "WHERE res.version = :arg1" },
+    { "resource.version = 1.0",
 
-        { "resource.type.plugin = harry",
+    "SELECT res.id FROM Resource res " + //
+        "WHERE res.version = :arg1" },
 
-        "SELECT res.id FROM Resource res " + //
-            "WHERE res.resourceType.plugin = :arg1" },
+    { "resource.type.plugin = harry",
 
-        { "resource.type.name = sally",
+    "SELECT res.id FROM Resource res " + //
+        "WHERE res.resourceType.plugin = :arg1" },
 
-        "SELECT res.id FROM Resource res " + //
-            "WHERE res.resourceType.name = :arg1" },
+    { "resource.type.name = sally",
 
-        { "resource.pluginConfiguration[partition] = cluster-1",
+    "SELECT res.id FROM Resource res " + //
+        "WHERE res.resourceType.name = :arg1" },
 
-        "SELECT res.id FROM Resource res " + //
-            "  JOIN res.pluginConfiguration pluginConf, PropertySimple simple " + //
-            " WHERE simple.name = :arg1 " + //
-            "   AND simple.stringValue = :arg2 " + //
-            "   AND simple.configuration = pluginConf " },
+    { "resource.pluginConfiguration[partition] = cluster-1",
 
-        { "resource.resourceConfiguration[partition] = cluster-1",
+    "SELECT res.id FROM Resource res " + //
+        "  JOIN res.pluginConfiguration pluginConf, PropertySimple simple " + //
+        " WHERE simple.name = :arg1 " + //
+        "   AND simple.stringValue = :arg2 " + //
+        "   AND simple.configuration = pluginConf " },
 
-        "SELECT res.id FROM Resource res " + //
-            "  JOIN res.resourceConfiguration conf, PropertySimple simple " + //
-            " WHERE simple.name = :arg1 " + //
-            "   AND simple.stringValue = :arg2 " + //
-            "   AND simple.configuration = conf " },
+    { "resource.resourceConfiguration[partition] = cluster-1",
 
-        { "groupBy resource.type.plugin; " + //
-            "groupBy resource.type.name",
+    "SELECT res.id FROM Resource res " + //
+        "  JOIN res.resourceConfiguration conf, PropertySimple simple " + //
+        " WHERE simple.name = :arg1 " + //
+        "   AND simple.stringValue = :arg2 " + //
+        "   AND simple.configuration = conf " },
 
-        "  SELECT res.resourceType.plugin, res.resourceType.name " + //
-            "    FROM Resource res " + //
-            "GROUP BY res.resourceType.plugin, res.resourceType.name",
+    { "groupBy resource.type.plugin; " + //
+        "groupBy resource.type.name",
 
-        "  SELECT res.id FROM Resource res " + //
-            "   WHERE res.resourceType.plugin = :arg1 " + //
-            "     AND res.resourceType.name = :arg2 " },
+    "  SELECT res.resourceType.plugin, res.resourceType.name " + //
+        "    FROM Resource res " + //
+        "GROUP BY res.resourceType.plugin, res.resourceType.name",
 
-        { "groupBy resource.resourceConfiguration[partition-name]",
+    "  SELECT res.id FROM Resource res " + //
+        "   WHERE res.resourceType.plugin = :arg1 " + //
+        "     AND res.resourceType.name = :arg2 " },
 
-        "  SELECT simple.stringValue FROM Resource res " + //
-            "    JOIN res.resourceConfiguration conf, PropertySimple simple " + //
-            "   WHERE simple.name = :arg1 " + //
-            "     AND simple.configuration = conf " + //
-            "GROUP BY simple.stringValue ",
+    { "groupBy resource.resourceConfiguration[partition-name]",
 
-        "SELECT res.id FROM Resource res " + //
-            "  JOIN res.resourceConfiguration conf, PropertySimple simple " + //
-            " WHERE simple.name = :arg1 " + //
-            "   AND simple.stringValue = :arg2 " + //
-            "   AND simple.configuration = conf " },
-        {
-            "resource.type.name = Windows;" + //
-                "resource.trait[Trait.osversion] = 5.1",
+    "  SELECT simple.stringValue FROM Resource res " + //
+        "    JOIN res.resourceConfiguration conf, PropertySimple simple " + //
+        "   WHERE simple.name = :arg1 " + //
+        "     AND simple.configuration = conf " + //
+        "GROUP BY simple.stringValue ",
 
-            "SELECT res.id FROM Resource res JOIN res.schedules sched JOIN sched.definition def, MeasurementDataTrait trait"
-                + " WHERE res.resourceType.name = :arg1 AND def.name = :arg2 AND trait.value = :arg3 AND trait.schedule = sched AND trait.id.timestamp ="
-                + " (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)" } };
+    "  SELECT res.id FROM Resource res " + //
+        "  JOIN res.resourceConfiguration conf, PropertySimple simple " + //
+        " WHERE simple.name = :arg1 " + //
+        "   AND simple.stringValue = :arg2 " + //
+        "   AND simple.configuration = conf " },
+
+    { "resource.type.name = Windows;" + //
+        "resource.trait[Trait.osversion] = 5.1",
+
+    "   SELECT res.id " + //
+        " FROM Resource res JOIN res.schedules sched JOIN sched.definition def, MeasurementDataTrait trait" + //
+        " WHERE res.resourceType.name = :arg1 " + //
+        " AND def.name = :arg2 " + //
+        " AND trait.value = :arg3 " + //
+        " AND trait.id.timestamp = " + //
+        "     (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)" + //
+        " AND trait.schedule = sched" },
+
+    { "resource.pluginConfiguration[partition].contains = cluster-1",
+
+    "SELECT res.id FROM Resource res " + //
+        "  JOIN res.pluginConfiguration pluginConf, PropertySimple simple " + //
+        " WHERE simple.name = :arg1 " + //
+        "   AND simple.stringValue like :arg2 " + //
+        "   AND simple.configuration = pluginConf " } };
 
     @Test(groups = "integration.session")
     public void testWellFormedExpressions() throws Exception {
@@ -146,6 +160,45 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
             }
         } finally {
             getTransactionManager().rollback();
+        }
+    }
+
+    @Test(groups = "integration.session")
+    public void testTokenizer() {
+
+        String[] input = { "resource.child.name", "resource.pluginConfiguration[partition]",
+            "resource.pluginConfiguration[partition].contains", "resource.pluginConfiguration[partition.name].contains" };
+        String[][] expectedOutput = { { "resource", "child", "name" },
+            { "resource", "pluginConfiguration[partition]" },
+            { "resource", "pluginConfiguration[partition]", "contains" },
+            { "resource", "pluginConfiguration[partition.name]", "contains" } };
+
+        ExpressionEvaluator evaluator = new ExpressionEvaluator();
+        evaluator.setTestMode(true); // to prevent actual query from happening
+
+        for (int i = 0; i < input.length; i++) {
+            String nextInput = input[i];
+            String[] nextExpectedOutput = expectedOutput[i];
+
+            List<String> output = evaluator.tokenizeCondition(nextInput);
+            String[] outputArray = output.toArray(new String[0]);
+
+            if (nextExpectedOutput.length != outputArray.length) {
+                System.out.println("Expected (" + Arrays.asList(nextExpectedOutput) + "), Received (" + output + ")");
+                continue;
+            }
+
+            boolean failed = false;
+            for (int j = 0; j < nextExpectedOutput.length; j++) {
+                if (!nextExpectedOutput[j].equals(outputArray[j])) {
+                    System.out.println("Expected (" + Arrays.asList(nextExpectedOutput) + "), Received (" + output
+                        + ")");
+                    failed = true;
+                }
+            }
+            if (!failed) {
+                System.out.println("Successfully tokenized (" + nextInput + ")");
+            }
         }
     }
 

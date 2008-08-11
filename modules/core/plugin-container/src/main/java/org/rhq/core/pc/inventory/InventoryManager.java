@@ -256,8 +256,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Resource discoveredPlatform = discoverPlatform();
         try {
             mergeResourceFromDiscovery(discoveredPlatform, null);
-        }
-        catch (PluginContainerException e) {
+        } catch (PluginContainerException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -608,7 +607,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         synchronizeInventory(report, syncInfo);
-
 
         return true;
     }
@@ -1012,8 +1010,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private static boolean matches(Resource newResource, Resource existingResource) {
         return ((existingResource.getId() != 0) && (existingResource.getId() == newResource.getId()))
             || (existingResource.getUuid().equals(newResource.getUuid()))
-            || (existingResource.getResourceType().equals(newResource.getResourceType()) && existingResource.getResourceKey().equals(
-                newResource.getResourceKey()));
+            || (existingResource.getResourceType().equals(newResource.getResourceType()) && existingResource
+                .getResourceKey().equals(newResource.getResourceKey()));
     }
 
     /**
@@ -1297,12 +1295,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private void syncAlertTemplatesRecursively(Resource resource) {
         if (resource.getInventoryStatus() == InventoryStatus.COMMITTED) {
             if (ResourceCategory.PLATFORM == resource.getResourceType().getCategory()) {
-                configuration.getServerServices().getDiscoveryServerService().applyAlertTemplate(resource.getId(), false);
+                configuration.getServerServices().getDiscoveryServerService().applyAlertTemplate(resource.getId(),
+                    false);
                 for (Resource child : resource.getChildResources()) {
-                    configuration.getServerServices().getDiscoveryServerService().applyAlertTemplate(child.getId(), true);
+                    configuration.getServerServices().getDiscoveryServerService().applyAlertTemplate(child.getId(),
+                        true);
                 }
             } else {
-                configuration.getServerServices().getDiscoveryServerService().applyAlertTemplate(resource.getId(), true);
+                configuration.getServerServices().getDiscoveryServerService()
+                    .applyAlertTemplate(resource.getId(), true);
             }
         }
     }
@@ -1712,10 +1713,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private void syncSchedulesAndTemplatesForAutoImportedResources(InventoryReport report) {
         if (report.isRuntimeReport()) {
-            log.debug("Syncing metric schedules and alert templates for auto-imported Resources: " + report.getAddedRoots() + "...");
-            EnumSet<SynchronizationType> syncTypes = EnumSet.of(
-                    SynchronizationType.MEASUREMENT_SCHEDULES,
-                    SynchronizationType.ALERT_TEMPLATES);
+            log.debug("Syncing metric schedules and alert templates for auto-imported Resources: "
+                + report.getAddedRoots() + "...");
+            EnumSet<SynchronizationType> syncTypes = EnumSet.of(SynchronizationType.MEASUREMENT_SCHEDULES,
+                SynchronizationType.ALERT_TEMPLATES);
             for (Resource addedRoot : report.getAddedRoots()) {
                 synchronizeInventory(addedRoot.getId(), syncTypes);
             }

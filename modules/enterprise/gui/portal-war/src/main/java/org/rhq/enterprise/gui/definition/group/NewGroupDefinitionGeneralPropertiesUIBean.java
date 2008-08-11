@@ -99,12 +99,13 @@ public class NewGroupDefinitionGeneralPropertiesUIBean {
             return OUTCOME_FAILURE;
         }
 
-        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "General properties updated.");
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+            "Definition created successfully.  Add conditions below.");
         return OUTCOME_SUCCESS;
     }
 
     public String cancel() {
-        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "General properties not updated.");
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Definition creation cancelled.");
         return OUTCOME_CANCEL;
     }
 

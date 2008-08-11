@@ -89,8 +89,9 @@
       </navigation-case>
 
       <navigation-case>
+         <!-- if the creation of the definition succeeds, go immediately to the edit page to add expressions -->
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/definition/group/view.xhtml?groupDefinitionId=#{NewGroupDefinitionGeneralPropertiesUIBean.id}</to-view-id>
+         <to-view-id>/rhq/definition/group/edit-general.xhtml?groupDefinitionId=#{NewGroupDefinitionGeneralPropertiesUIBean.id}</to-view-id>
          <redirect/>
       </navigation-case>
       

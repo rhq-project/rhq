@@ -89,7 +89,10 @@
       <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell"
                    rendered="#{ResourceGroupUIBean.permissions.inventory}">
          <h:commandButton value="EDIT..." action="#{EditGroupGeneralPropertiesUIBean.begin}"
-                          title="Edit General Properties" styleClass="buttonmed" />
+                          title="Edit General Properties" styleClass="buttonmed"
+                          rendered="#{empty ResourceGroupUIBean.groupDefinition}" />
+         <h:outputText    value="*DynaGroup general properties are managed, and are thus uneditable directly"
+                          rendered="#{!empty ResourceGroupUIBean.groupDefinition}" />
       </h:panelGrid>
 
    </h:form>

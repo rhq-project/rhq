@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# chkconfig: 2345 93 25
+# description: Starts and stops the RHQ agent 
+#
+# processname: java
+# pidfile: /var/run/rhq-agent.pid
+
 # =============================================================================
 # RHQ Agent UNIX Boot Script
 #
@@ -18,12 +24,15 @@
 # of the RHQ Agent.
 
 # RHQ_AGENT_HOME=/path/to/agent/home
-# RHQ_AGENT_DEBUG=true
-# JAVA_HOME=/path/to/java/installation
-# RHQ_AGENT_JAVA_EXE_FILE_PATH=/path/directly/to/java/executable
-# RHQ_AGENT_JAVA_OPTS=VM options
-# RHQ_AGENT_ADDITIONAL_JAVA_OPTS=additional VM options
-RHQ_AGENT_CMDLINE_OPTS=--daemon
+# export RHQ_AGENT_DEBUG=true
+# export RHQ_AGENT_JAVA_HOME=/path/to/java/installation
+# export RHQ_AGENT_JAVA_EXE_FILE_PATH=/path/directly/to/java/executable
+# export RHQ_AGENT_JAVA_OPTS=VM options
+# export RHQ_AGENT_ADDITIONAL_JAVA_OPTS=additional VM options
+PIDFILEDIR=/var/run
+
+#
+export RHQ_AGENT_CMDLINE_OPTS=--daemon
 
 # Figure out where the RHQ Agent's home directory is and cd to it.
 # If RHQ_AGENT_HOME is not defined, we will assume we are running
@@ -50,7 +59,7 @@ if [ ! -f $RHQ_AGENT_START_SCRIPT ]; then
    exit 1
 fi
 
-PIDFILE=${RHQ_AGENT_START_SCRIPT_DIR}/.rhq-agent.pid
+PIDFILE=${PIDFILEDIR}/rhq-agent.pid
 
 # Sets STATUS, RUNNING and PID based on the status of the RHQ Agent
 check_status ()
@@ -145,6 +154,12 @@ case "$1" in
         echo $STATUS
         exit 0
         ;;
+        
+'restart')
+		$0 stop
+		$0 start
+		exit 0
+		;;        
 
 *)
         echo "Usage: $0 { start | stop | status }"

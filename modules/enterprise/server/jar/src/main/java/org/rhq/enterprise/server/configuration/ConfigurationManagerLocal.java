@@ -345,7 +345,7 @@ public interface ConfigurationManagerLocal {
     int createAggregateConfigurationUpdate(AbstractAggregateConfigurationUpdate update);
 
     int scheduleAggregatePluginConfigurationUpdate(Subject whoami, int compatibleGroupId,
-        Configuration pluginConfigurationUpdate) throws SchedulerException;
+        Configuration pluginConfigurationUpdate) throws SchedulerException, ConfigurationUpdateException;
 
     Configuration getAggregatePluginConfigurationForCompatibleGroup(ResourceGroup group);
 

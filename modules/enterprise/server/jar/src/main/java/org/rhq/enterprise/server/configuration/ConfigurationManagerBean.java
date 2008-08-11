@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.configuration;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -797,13 +798,27 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
     }
 
     public int scheduleAggregatePluginConfigurationUpdate(Subject whoami, int compatibleGroupId,
-        Configuration pluginConfigurationUpdate) throws SchedulerException {
+        Configuration pluginConfigurationUpdate) throws SchedulerException, ConfigurationUpdateException {
         ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, compatibleGroupId);
 
         ensureModifyPermission(whoami, group);
         if (pluginConfigurationUpdate == null) {
             throw new IllegalArgumentException(
                 "AggregatePluginConfigurationUpdate must have non-null pluginConfigurationUpdate");
+        }
+
+        Collection<PropertySimple> properties = pluginConfigurationUpdate.getSimpleProperties().values();
+
+        boolean hasOneOverride = false;
+        for (PropertySimple property : properties) {
+            if (property.getOverride()) {
+                hasOneOverride = true;
+                break;
+            }
+        }
+
+        if (!hasOneOverride) {
+            throw new ConfigurationUpdateException("Remember to select which properties you want to override");
         }
 
         /*

@@ -29,6 +29,7 @@ import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationUpdateException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class EditGroupConnectionPropertiesUIBean extends ViewGroupConnectionPropertiesUIBean {
@@ -60,6 +61,9 @@ public class EditGroupConnectionPropertiesUIBean extends ViewGroupConnectionProp
         } catch (SchedulerException se) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "There was an error scheduling the group connection property update");
+            return OUTCOME_FAILURE;
+        } catch (ConfigurationUpdateException cue) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, cue.getMessage());
             return OUTCOME_FAILURE;
         }
     }

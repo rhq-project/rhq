@@ -52,12 +52,10 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
         return servers.size();
     }
 
-    @Override
     public boolean hasNext() {
         return (servers != null && servers.size() > 0);
     }
 
-    @Override
     public ServerEntry next() {
         if (!hasNext()) {
             return null;
@@ -67,7 +65,6 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
         return servers.get(nextIndex);
     }
 
-    @Override
     public void remove() {
         throw new IllegalAccessError(getClass().getSimpleName() + " are immutable lists, removal is disallowed");
     }

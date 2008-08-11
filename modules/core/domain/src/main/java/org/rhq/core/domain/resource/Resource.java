@@ -80,7 +80,8 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
  */
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN, query = "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
+    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN, query = "" //
+        + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
         + "         res.id, res.name, avail.availabilityType, COUNT(DISTINCT alert.id), 0L"
         + "         ) "
@@ -92,21 +93,22 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "     AND res.inventoryStatus = 'COMMITTED' "
         + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) "
         + "          OR (alert.ctime >= :oldest)) " + "GROUP BY res.id, res.name, avail.availabilityType "),
-    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT, query = "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
+    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT, query = "" //
+        + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
         + "         res.id, res.name, avail.availabilityType, COUNT(DISTINCT alert.id), 0L"
         + "         ) "
-        + "    FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
+        + "    FROM Resource res "
         + "         LEFT JOIN res.availability avail "
         + "         LEFT JOIN res.alertDefinitions alertDef "
         + "         LEFT JOIN alertDef.alerts alert  "
         + "   WHERE avail.endTime IS NULL "
+        + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "     AND res.inventoryStatus = 'COMMITTED' "
         + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) "
-        + "          OR (alert.ctime >= :oldest)) "
-        + "     AND s = :subject "
-        + "GROUP BY res.id, res.name, avail.availabilityType "),
-    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT_ADMIN, query = "  SELECT COUNT( DISTINCT res.id ) "
+        + "          OR (alert.ctime >= :oldest)) " + "GROUP BY res.id, res.name, avail.availabilityType "),
+    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT_ADMIN, query = "" //
+        + "  SELECT COUNT( DISTINCT res.id ) "
         + "    FROM Resource res "
         + "         LEFT JOIN res.availability avail "
         + "         LEFT JOIN res.alertDefinitions alertDef "
@@ -115,14 +117,19 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "     AND res.inventoryStatus = 'COMMITTED' "
         + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) "
         + "          OR (alert.ctime >= :oldest)) "),
-    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT, query = "  SELECT COUNT( DISTINCT res.id ) "
-        + "    FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
-        + "         LEFT JOIN res.availability avail " + "         LEFT JOIN res.alertDefinitions alertDef "
-        + "         LEFT JOIN alertDef.alerts alert  " + "   WHERE avail.endTime IS NULL "
-        + "     AND res.inventoryStatus = 'COMMITTED' "
-        + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) "
-        + "          OR (alert.ctime >= :oldest)) " + "     AND s = :subject "),
-    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB_ADMIN, query = "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
+    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT, query = "" //
+        + "  SELECT COUNT( DISTINCT res.id ) "
+        + "    FROM Resource res " //
+        + "         LEFT JOIN res.availability avail " //
+        + "         LEFT JOIN res.alertDefinitions alertDef " //
+        + "         LEFT JOIN alertDef.alerts alert  " //
+        + "   WHERE avail.endTime IS NULL " //
+        + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "     AND res.inventoryStatus = 'COMMITTED' " //
+        + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) " //
+        + "          OR (alert.ctime >= :oldest)) "),
+    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB_ADMIN, query = "" //
+        + "   SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
         + "         res.id, res.name, avail.availabilityType, 0L, COUNT(DISTINCT oob.id)"
         + "         ) "
@@ -134,21 +141,22 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "     AND res.inventoryStatus = 'COMMITTED' "
         + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) "
         + "          OR (oob.occurred >= :oldest)) " + "GROUP BY res.id, res.name, avail.availabilityType "),
-    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB, query = "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
+    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB, query = "" //
+        + "   SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
         + "         res.id, res.name, avail.availabilityType, 0L, COUNT(DISTINCT oob.id)"
         + "         ) "
-        + "    FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
+        + "    FROM Resource res "
         + "         LEFT JOIN res.availability avail "
         + "         LEFT JOIN res.schedules schedule "
         + "         LEFT JOIN schedule.outOfBounds oob "
         + "   WHERE avail.endTime IS NULL "
+        + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "     AND res.inventoryStatus = 'COMMITTED' "
         + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) "
-        + "          OR (oob.occurred >= :oldest)) "
-        + "     AND s = :subject "
-        + "GROUP BY res.id, res.name, avail.availabilityType "),
-    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB_COUNT_ADMIN, query = "  SELECT COUNT( DISTINCT res.id ) "
+        + "          OR (oob.occurred >= :oldest)) " + "GROUP BY res.id, res.name, avail.availabilityType "),
+    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB_COUNT_ADMIN, query = "" //
+        + "   SELECT COUNT( DISTINCT res.id ) "
         + "    FROM Resource res "
         + "         LEFT JOIN res.availability avail "
         + "         LEFT JOIN res.schedules schedule "
@@ -157,294 +165,426 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "     AND res.inventoryStatus = 'COMMITTED' "
         + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) "
         + "          OR (oob.occurred >= :oldest)) "),
-    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB_COUNT, query = "  SELECT COUNT( DISTINCT res.id ) "
-        + "    FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
-        + "         LEFT JOIN res.availability avail " + "         LEFT JOIN res.schedules schedule "
-        + "         LEFT JOIN schedule.outOfBounds oob " + "   WHERE avail.endTime IS NULL "
-        + "     AND res.inventoryStatus = 'COMMITTED' "
-        + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) "
-        + "          OR (oob.occurred >= :oldest)) " + "     AND s = :subject "),
+    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB_COUNT, query = "" //
+        + "  SELECT COUNT( DISTINCT res.id ) "
+        + "    FROM Resource res " //
+        + "         LEFT JOIN res.availability avail " //
+        + "         LEFT JOIN res.schedules schedule " //
+        + "         LEFT JOIN schedule.outOfBounds oob " //
+        + "   WHERE avail.endTime IS NULL " //
+        + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "     AND res.inventoryStatus = 'COMMITTED' " //
+        + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) " //
+        + "          OR (oob.occurred >= :oldest)) "),
 
     /* the following three are for auto-group details */
-    @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_TYPE, query = "SELECT res, a.availabilityType "
-        + "  FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s LEFT OUTER JOIN res.availability a WITH a.endTime is null "
-        + " WHERE res.parentResource = :parent " + "   AND res.resourceType = :type "
-        + "   AND res.inventoryStatus = :inventoryStatus " + "   AND s = :subject ORDER BY res.name"),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_TYPE_ADMIN, query = "SELECT res, a.availabilityType "
-        + "  FROM Resource res LEFT OUTER JOIN res.availability a WITH a.endTime is null "
-        + " WHERE res.parentResource = :parent " + "   AND res.resourceType = :type "
-        + "   AND res.inventoryStatus = :inventoryStatus ORDER BY res.name"),
-    @NamedQuery(name = Resource.QUERY_FIND_FOR_AUTOGROUP, query = "SELECT res " + "  FROM Resource res "
-        + " WHERE res.parentResource.id = :parent " + "   AND res.resourceType.id = :type "
+    @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_TYPE, query = "" //
+        + "  SELECT res, a.availabilityType "
+        + "    FROM Resource res " //
+        + "    LEFT OUTER JOIN res.availability a WITH a.endTime is null "
+        + "   WHERE res.parentResource = :parent " //
+        + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "     AND res.resourceType = :type " //
+        + "     AND res.inventoryStatus = :inventoryStatus " //
+        + "ORDER BY res.name"),
+    @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_TYPE_ADMIN, query = "" //
+        + "  SELECT res, a.availabilityType " + "    FROM Resource res " //
+        + "    LEFT OUTER JOIN res.availability a WITH a.endTime is null " //
+        + "   WHERE res.parentResource = :parent " //
+        + "     AND res.resourceType = :type " //
+        + "     AND res.inventoryStatus = :inventoryStatus " //
+        + "ORDER BY res.name"),
+    @NamedQuery(name = Resource.QUERY_FIND_FOR_AUTOGROUP, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource res " //
+        + " WHERE res.parentResource.id = :parent " //
+        + "   AND res.resourceType.id = :type " //
         + "   AND res.inventoryStatus = :inventoryStatus "),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_INVENTORY_STATUS, query = "SELECT res "
-        + "  FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
-        + " WHERE res.parentResource = :parent " + "   AND res.inventoryStatus = :inventoryStatus "
-        + "   AND s = :subject "),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_INVENTORY_STATUS_ADMIN, query = "SELECT res "
-        + "  FROM Resource res " + " WHERE res.parentResource = :parent "
+    @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_INVENTORY_STATUS, query = "" //
+        + "SELECT res "
+        + "  FROM Resource res " //
+        + " WHERE res.parentResource = :parent " //
+        + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "   AND res.inventoryStatus = :inventoryStatus "),
-    @NamedQuery(name = Resource.QUERY_FIND_VALID_COMMITTED_RESOURCE_IDS_ADMIN, query = "SELECT res.id "
-        + "  FROM Resource res " + " WHERE res.inventoryStatus = 'COMMITTED' " + "   AND res.id IN ( :resourceIds ) "),
-    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_IDS_ADMIN, query = "SELECT res.id " + "  FROM Resource res "
-        + " WHERE res.parentResource.id = :parentResourceId "
+    @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_INVENTORY_STATUS_ADMIN, query = "" //
+        + "SELECT res " + "  FROM Resource res " //
+        + " WHERE res.parentResource = :parent " //
+        + "   AND res.inventoryStatus = :inventoryStatus "),
+    @NamedQuery(name = Resource.QUERY_FIND_VALID_COMMITTED_RESOURCE_IDS_ADMIN, query = "" //
+        + "SELECT res.id " + "  FROM Resource res " //
+        + " WHERE res.inventoryStatus = 'COMMITTED' " //
+        + "   AND res.id IN ( :resourceIds ) "),
+    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_IDS_ADMIN, query = "" //
+        + "SELECT res.id " //
+        + "  FROM Resource res " //
+        + " WHERE res.parentResource.id = :parentResourceId " //
         + "   AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null)"),
-    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN, query = "SELECT res "
-        + "  FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
-        + " WHERE res.parentResource = :parent " + "   AND s = :subject "),
-    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_ADMIN, query = "SELECT res " + "  FROM Resource res "
+    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN, query = "" //
+        + "SELECT res "
+        + "  FROM Resource res " //
+        + " WHERE res.parentResource = :parent " //
+        + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"),
+    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_ADMIN, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource res " //
         + " WHERE res.parentResource = :parent "),
-    @NamedQuery(name = Resource.QUERY_RECENTLY_ADDED_PLATFORMS, query = "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.itime) "
+    @NamedQuery(name = Resource.QUERY_RECENTLY_ADDED_PLATFORMS, query = "" //
+        + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.itime) "
         + "    FROM Resource res JOIN res.childResources child JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
         + "   WHERE (res.itime >= :oldestEpochTime OR ((child.itime >= :oldestEpochTime) AND (child.inventoryStatus = 'COMMITTED'))) "
         + "     AND res.resourceType.category = 'PLATFORM' "
         + "     AND res.inventoryStatus = 'COMMITTED' "
         + "     AND s = :subject " + "ORDER BY res.itime DESC "),
-    @NamedQuery(name = Resource.QUERY_RECENTLY_ADDED_PLATFORMS_ADMIN, query = "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.itime) "
+    @NamedQuery(name = Resource.QUERY_RECENTLY_ADDED_PLATFORMS_ADMIN, query = "" //
+        + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.itime) "
         + "    FROM Resource res JOIN res.childResources child "
         + "   WHERE ((res.itime >= :oldestEpochTime) OR ((child.itime >= :oldestEpochTime) AND (child.inventoryStatus = 'COMMITTED'))) "
         + "     AND res.resourceType.category = 'PLATFORM' "
         + "     AND res.inventoryStatus = 'COMMITTED' "
         + "ORDER BY res.itime DESC "),
-    @NamedQuery(name = Resource.QUERY_RECENTLY_ADDED_SERVERS, query = "  SELECT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.itime) "
+    @NamedQuery(name = Resource.QUERY_RECENTLY_ADDED_SERVERS, query = ""
+        + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.itime) "
         + "    FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
-        + "   WHERE res.itime >= :oldestEpochTime "
-        + "     AND res.resourceType.category = 'SERVER' "
-        + "     AND res.inventoryStatus = 'COMMITTED' "
-        + "     AND res.parentResource.id = :platformId "
+        + "   WHERE res.itime >= :oldestEpochTime " + "     AND res.resourceType.category = 'SERVER' "
+        + "     AND res.inventoryStatus = 'COMMITTED' " + "     AND res.parentResource.id = :platformId "
         + "     AND s = :subject " + "ORDER BY res.itime DESC "),
-    @NamedQuery(name = Resource.QUERY_RECENTLY_ADDED_SERVERS_ADMIN, query = "  SELECT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.itime) "
-        + "    FROM Resource res "
-        + "   WHERE res.itime >= :oldestEpochTime "
-        + "     AND res.resourceType.category = 'SERVER' "
-        + "     AND res.inventoryStatus = 'COMMITTED' "
+    @NamedQuery(name = Resource.QUERY_RECENTLY_ADDED_SERVERS_ADMIN, query = ""
+        + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite(res.id, res.name, res.itime) "
+        + "    FROM Resource res " + "   WHERE res.itime >= :oldestEpochTime "
+        + "     AND res.resourceType.category = 'SERVER' " + "     AND res.inventoryStatus = 'COMMITTED' "
         + "     AND res.parentResource.id = :platformId " + "ORDER BY res.itime DESC "),
-    @NamedQuery(name = Resource.QUERY_FIND_AVAILABILITY_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType) "
-        + "  FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN res.availability a "
-        + " WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
-        + "   AND res.id = :id " + "   AND s = :subject "),
-    @NamedQuery(name = Resource.QUERY_FIND_AVAILABILITY_BY_RESOURCE_ID_ADMIN, query = "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType) "
+    @NamedQuery(name = Resource.QUERY_FIND_AVAILABILITY_BY_RESOURCE_ID, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType) "
+        + "  FROM Resource res " //
+        + "  JOIN res.availability a " //
+        + " WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) " //
+        + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "   AND res.id = :id "),
+    @NamedQuery(name = Resource.QUERY_FIND_AVAILABILITY_BY_RESOURCE_ID_ADMIN, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType) "
         + "  FROM Resource res JOIN res.availability a "
         + " WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
         + "   AND res.id = :id "),
-    @NamedQuery(name = Resource.QUERY_FIND_AVAILABILITY_BY_RESOURCE_IDS, query = "SELECT res, a.availabilityType "
-        + "  FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s LEFT OUTER JOIN res.availability a "
-        + " WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
-        + "   AND res.id IN (:ids) " + "   AND s = :subject " + "ORDER BY res.name "),
-    @NamedQuery(name = Resource.QUERY_FIND_AVAILABILITY_BY_RESOURCE_IDS_ADMIN, query = "SELECT res, a.availabilityType "
-        + "  FROM Resource res LEFT OUTER JOIN res.availability a "
-        + " WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
-        + "   AND res.id IN (:ids) " + "ORDER BY res.name "),
-    @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUP_COMPOSITE, query = "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
-        + "    FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
+    @NamedQuery(name = Resource.QUERY_FIND_AVAILABILITY_BY_RESOURCE_IDS, query = "" //
+        + "SELECT res, a.availabilityType "
+        + "  FROM Resource res " //
+        + "  LEFT OUTER JOIN res.availability a " //
+        + " WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) " //
+        + "   AND res.id IN (:ids) " //
+        + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "ORDER BY res.name "),
+    @NamedQuery(name = Resource.QUERY_FIND_AVAILABILITY_BY_RESOURCE_IDS_ADMIN, query = "" //
+        + "SELECT res, a.availabilityType "
+        + "  FROM Resource res " //
+        + "  LEFT OUTER JOIN res.availability a " //
+        + " WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) " //
+        + "   AND res.id IN (:ids) " //
+        + "ORDER BY res.name "),
+    @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUP_COMPOSITE, query = ""
+        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
+        + "    FROM Resource res "
         + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory JOIN res.availability a "
         + "   WHERE res.id = :id "
+        + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "     AND (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
-        + "     AND s = :subject " + "GROUP BY rt "),
-    @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUPS_COMPOSITE, query = "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
-        + "    FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
+        + "GROUP BY rt "),
+    @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUPS_COMPOSITE, query = "" //
+        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
+        + "    FROM Resource res "
         + "    JOIN res.resourceType rt  JOIN res.availability a "
         + "   WHERE res.id IN ( :ids ) "
+        + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "     AND (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
-        + "     AND s = :subject " + "GROUP BY rt "),
-    @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUP_COMPOSITE_ADMIN, query = "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
+        + "GROUP BY rt "),
+    @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUP_COMPOSITE_ADMIN, query = "" //
+        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
         + "    FROM Resource res JOIN res.availability a JOIN res.resourceType rt LEFT JOIN rt.subCategory "
         + "   WHERE res.id = :id "
         + "     AND (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
         + "GROUP BY rt"),
-    @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUPS_COMPOSITE_ADMIN, query = "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
+    @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUPS_COMPOSITE_ADMIN, query = "" //
+        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
         + "    FROM Resource res JOIN res.availability a JOIN res.resourceType rt LEFT JOIN rt.subCategory "
         + "   WHERE res.id IN ( :ids ) "
         + "     AND (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
         + "GROUP BY rt"),
-    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES, query = "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
-        + "    FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
+    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES, query = ""
+        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
+        + "    FROM Resource res "
         + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory LEFT JOIN res.availability a WITH a.endTime is null "
-        + "   WHERE res.parentResource = :parent AND s = :subject  AND res.inventoryStatus = :inventoryStatus GROUP BY rt "),
-    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_ADMIN, query = "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
-        + "    FROM Resource res LEFT JOIN res.availability a WITH a.endTime is null JOIN res.resourceType rt LEFT JOIN rt.subCategory "
-        + "   WHERE res.parentResource = :parent AND res.inventoryStatus = :inventoryStatus GROUP BY rt"),
-    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_BY_CATEGORY_AND_INVENTORY_STATUS, query = "SELECT res "
-        + "  FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
-        + " WHERE res.parentResource = :parent " + "   AND res.resourceType.category = :category "
-        + "   AND res.inventoryStatus = :status " + "   AND s = :subject "),
-    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_BY_CATEGORY_AND_INVENTORY_STATUS_ADMIN, query = "SELECT res "
-        + "  FROM Resource res " + " WHERE res.parentResource = :parent " + "   AND res.inventoryStatus = :status "
+        + "   WHERE res.parentResource = :parent " //
+        + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "     AND res.inventoryStatus = :inventoryStatus " //
+        + "GROUP BY rt "),
+    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_ADMIN, query = "" //
+        + "   SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
+        + "     FROM Resource res " //
+        + "LEFT JOIN res.availability a WITH a.endTime is null " //
+        + "     JOIN res.resourceType rt LEFT JOIN rt.subCategory " //
+        + "    WHERE res.parentResource = :parent " //
+        + "      AND res.inventoryStatus = :inventoryStatus GROUP BY rt"),
+    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_BY_CATEGORY_AND_INVENTORY_STATUS, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource res " //
+        + " WHERE res.parentResource = :parent " //
+        + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "   AND res.resourceType.category = :category " + "   AND res.inventoryStatus = :status "),
+    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_BY_CATEGORY_AND_INVENTORY_STATUS_ADMIN, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource res " //
+        + " WHERE res.parentResource = :parent " //
+        + "   AND res.inventoryStatus = :status " //
         + "   AND res.resourceType.category = :category "),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_CATEGORY_AND_INVENTORY_STATUS, query = "SELECT res "
-        + "  FROM Resource res JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
-        + " WHERE res.resourceType.category = :category "
-        + "   AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) " + "   AND s = :subject "),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_CATEGORY_AND_INVENTORY_STATUS_ADMIN, query = "SELECT res "
-        + "  FROM Resource res " + " WHERE res.resourceType.category = :category "
+    @NamedQuery(name = Resource.QUERY_FIND_BY_CATEGORY_AND_INVENTORY_STATUS, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource res " //
+        + " WHERE res.resourceType.category = :category " //
+        + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "   AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "),
+    @NamedQuery(name = Resource.QUERY_FIND_BY_CATEGORY_AND_INVENTORY_STATUS_ADMIN, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource res " //
+        + " WHERE res.resourceType.category = :category " //
         + "   AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "),
 
     // Returns all platforms that is either of a given inventory status itself or
     // one of its top level servers have one of the inventory statuses (for auto-discovery queue).
     // Users will not be able to execute this unless they have global inventory perm,
     // so no need for an corresponding admin query.
-    @NamedQuery(name = Resource.QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS, query = "SELECT res "
-        + "FROM Resource res " + "WHERE " + "   (( " + "      res.id IN " + "      (SELECT res1.id "
-        + "         FROM Resource res1 " + "        WHERE res1.inventoryStatus IN (:inventoryStatuses) "
-        + "          AND res1.resourceType.category = 'PLATFORM' " + "          AND res1.parentResource IS NULL) "
-        + "    ) " + "    OR " + "    ( " + "      res.id IN " + "      (SELECT res2.parentResource.id "
-        + "         FROM Resource res2 " + "        WHERE res2.inventoryStatus IN (:inventoryStatuses) "
-        + "          AND res2.resourceType.category = 'SERVER' "
+    @NamedQuery(name = Resource.QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS, query = "" //
+        + "SELECT res "//
+        + "FROM Resource res " //
+        + "WHERE " //
+        + "   (( " //
+        + "      res.id IN " //
+        + "      (SELECT res1.id " //
+        + "         FROM Resource res1 " //
+        + "        WHERE res1.inventoryStatus IN (:inventoryStatuses) " //
+        + "          AND res1.resourceType.category = 'PLATFORM' " //
+        + "          AND res1.parentResource IS NULL) " //
+        + "    ) " //
+        + "    OR " //
+        + "    ( " //
+        + "      res.id IN " //
+        + "      (SELECT res2.parentResource.id " //
+        + "         FROM Resource res2 " //
+        + "        WHERE res2.inventoryStatus IN (:inventoryStatuses) " //
+        + "          AND res2.resourceType.category = 'SERVER' " //
         + "          AND res2.parentResource.resourceType.category = 'PLATFORM') " + "    )) "),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_TYPE, query = "SELECT res "
-        + "  FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
-        + " WHERE res.resourceType = :type " + "   AND s = :subject "),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_TYPE_ADMIN, query = "SELECT res " + "  FROM Resource res "
+    @NamedQuery(name = Resource.QUERY_FIND_BY_TYPE, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource res " //
+        + " WHERE res.resourceType = :type " //
+        + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject) "),
+    @NamedQuery(name = Resource.QUERY_FIND_BY_TYPE_ADMIN, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource res " //
         + " WHERE res.resourceType = :type "),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_TYPE_AND_IDS, query = "SELECT res "
-        + "  FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
-        + " WHERE res.resourceType = :type " + "   AND res.id IN ( :ids ) " + "   AND s = :subject "),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_TYPE_AND_IDS_ADMIN, query = "SELECT res " + "  FROM Resource res "
-        + " WHERE res.resourceType = :type " + "   AND res.id IN ( :ids ) "),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_KEY, hints = { @QueryHint(name = "cacheable", value = "true") }, query = "SELECT r "
-        + "  FROM Resource AS r "
-        + " WHERE (:parent = r.parentResource OR :parent IS NULL) "
-        + "   AND r.resourceKey = :key "
-        + "   AND r.resourceType.plugin = :plugin "
+    @NamedQuery(name = Resource.QUERY_FIND_BY_TYPE_AND_IDS, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource res " //
+        + " WHERE res.resourceType = :type " //
+        + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "   AND res.id IN ( :ids ) "),
+    @NamedQuery(name = Resource.QUERY_FIND_BY_TYPE_AND_IDS_ADMIN, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource res " //
+        + " WHERE res.resourceType = :type " //
+        + "   AND res.id IN ( :ids ) "),
+    @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_KEY, hints = { @QueryHint(name = "cacheable", value = "true") }, query = "" //
+        + "SELECT r " //
+        + "  FROM Resource AS r " //
+        + " WHERE (:parent = r.parentResource OR :parent IS NULL) " //
+        + "   AND r.resourceKey = :key " //
+        + "   AND r.resourceType.plugin = :plugin " //
         + "   AND r.resourceType.name = :typeName"),
-    @NamedQuery(name = Resource.QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN, query = "SELECT res.id "
-        + "  FROM ResourceGroup rg, IN (rg.explicitResources) res " + " WHERE rg.id = :groupId "),
-    @NamedQuery(name = Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_GROUP_ID, query = "SELECT " //
-        + " new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
+    @NamedQuery(name = Resource.QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN, query = "" //
+        + "SELECT res.id " //
+        + "  FROM ResourceGroup rg, IN (rg.explicitResources) res " //
+        + " WHERE rg.id = :groupId "),
+    @NamedQuery(name = Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_GROUP_ID, query = "" // 
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
         + "  FROM ResourceGroup rg JOIN rg.explicitResources res " //
         + " WHERE rg.id = :groupId "),
-    @NamedQuery(name = Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS, query = "SELECT " //
-        + " new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
+    @NamedQuery(name = Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
         + "  FROM Resource res " //
         + " WHERE res.id IN ( :resourceIds ) "),
-    @NamedQuery(name = Resource.QUERY_FIND_FLY_WEIGHTS_BY_PARENT_RESOURCE_ID, query = "SELECT " //
-        + " new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
+    @NamedQuery(name = Resource.QUERY_FIND_FLY_WEIGHTS_BY_PARENT_RESOURCE_ID, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
         + "  FROM Resource res " //
         + " WHERE res.parentResource.id = :parentId " //
         + " AND res.inventoryStatus = :status "),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP, query = "SELECT res "
-        + "  FROM ResourceGroup rg, IN (rg.roles) r, IN (r.subjects) s, IN (rg.explicitResources) res "
-        + " WHERE rg = :group " + "   AND s = :subject"),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP_ADMIN, query = "SELECT res "
+    @NamedQuery(name = Resource.QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP, query = "" //
+        + "SELECT DISTINCT res " //
+        + "  FROM ResourceGroup rg JOIN rg.roles r JOIN r.subjects s JOIN rg.explicitResources res " //
+        + " WHERE rg = :group " //
+        + "   AND s = :subject"),
+    @NamedQuery(name = Resource.QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP_ADMIN, query = "" //
+        + "SELECT res " //
         + "  FROM ResourceGroup rg, IN (rg.explicitResources) res " + " WHERE rg = :group "),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_IMPLICIT_RESOURCE_GROUP, query = "SELECT res "
-        + "  FROM ResourceGroup rg, IN (rg.roles) r, IN (r.subjects) s, IN (rg.implicitResources) res "
-        + " WHERE rg = :group " + "   AND s = :subject"),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_IMPLICIT_RESOURCE_GROUP_ADMIN, query = "SELECT res "
-        + "  FROM ResourceGroup rg, IN (rg.implicitResources) res " + " WHERE rg = :group "),
-    @NamedQuery(name = Resource.QUERY_FIND_EXPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP, query = "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType, "
-        + "1, "
+    @NamedQuery(name = Resource.QUERY_FIND_BY_IMPLICIT_RESOURCE_GROUP, query = "" //
+        + "SELECT DISTINCT res " //
+        + "  FROM ResourceGroup rg JOIN rg.roles r JOIN r.subjects s JOIN rg.implicitResources res " //
+        + " WHERE rg = :group " //
+        + "   AND s = :subject"),
+    @NamedQuery(name = Resource.QUERY_FIND_BY_IMPLICIT_RESOURCE_GROUP_ADMIN, query = "" //
+        + "SELECT res " //
+        + "  FROM ResourceGroup rg, IN (rg.implicitResources) res " //
+        + " WHERE rg = :group "),
+    @NamedQuery(name = Resource.QUERY_FIND_EXPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType, 1, " //
+        + "(SELECT count(iir) FROM rg.implicitResources iir WHERE iir = res)) " //
+        + "  FROM ResourceGroup rg JOIN rg.explicitResources res " //
+        + "  LEFT JOIN res.availability a WITH a.endTime is null " //
+        + " WHERE rg = :group " //
+        + "   AND rg.id IN (SELECT irg.id FROM ResourceGroup irg JOIN irg.roles r JOIN r.subjects s WHERE s = :subject) "),
+    @NamedQuery(name = Resource.QUERY_FIND_EXPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_ADMIN, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType, 1, " //
         + "(SELECT count(iir) FROM rg.implicitResources iir WHERE iir = res)) "
-        + "FROM ResourceGroup rg JOIN rg.explicitResources res LEFT JOIN res.availability a WITH a.endTime is null JOIN rg.roles r JOIN r.subjects s "
-        + "WHERE rg = :group " + "AND s = :subject "),
-    @NamedQuery(name = Resource.QUERY_FIND_EXPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_ADMIN, query = "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType, "
-        + "1, "
-        + "(SELECT count(iir) FROM rg.implicitResources iir WHERE iir = res)) "
-        + "FROM ResourceGroup rg JOIN rg.explicitResources res LEFT JOIN res.availability a WITH a.endTime is null "
-        + "WHERE rg = :group "),
-    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP, query = "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType, "
-        + "(SELECT count(ier) FROM rg.explicitResources ier WHERE ier = res), "
-        + "1) "
-        + "FROM ResourceGroup rg JOIN rg.implicitResources res LEFT JOIN res.availability a WITH a.endTime is null JOIN rg.roles r JOIN r.subjects s "
-        + "WHERE rg = :group " + "AND res.inventoryStatus = 'COMMITTED' " + "AND s = :subject "),
-    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT, query = "SELECT count(res) "
-        + "  FROM ResourceGroup rg JOIN rg.implicitResources res LEFT JOIN res.availability a WITH a.endTime is null JOIN rg.roles r JOIN r.subjects s "
-        + " WHERE rg = :group " + "   AND res.inventoryStatus = 'COMMITTED' " + "   AND s = :subject "),
-    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_ADMIN, query = "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType, "
-        + "(SELECT count(ier) FROM rg.explicitResources ier WHERE ier = res), "
-        + "1) "
-        + "FROM ResourceGroup rg JOIN rg.implicitResources res LEFT JOIN res.availability a WITH a.endTime is null "
-        + "WHERE rg = :group " + "AND res.inventoryStatus = 'COMMITTED' "),
-    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT_ADMIN, query = "SELECT count(res) "
-        + "  FROM ResourceGroup rg JOIN rg.implicitResources res LEFT JOIN res.availability a WITH a.endTime is null "
-        + " WHERE rg = :group " + "   AND res.inventoryStatus = 'COMMITTED' "),
-    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_COUNT_ADMIN, query = "SELECT count(res) "
-        + "  FROM ResourceGroup rg JOIN rg.implicitResources res WHERE rg.id = :resourceGroupId "),
-    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL, //
-    query = "SELECT res " //  
-        + "    FROM Resource AS res "
-        + "   WHERE res.id NOT IN "
-        + "       ( SELECT rc.resource.id "
-        + "           FROM ResourceChannel rc "
-        + "          WHERE rc.channel.id = :channelId ) "
-        + "     AND (:category = res.resourceType.category OR :category IS NULL) "
-        + "     AND (res.inventoryStatus = :inventoryStatus) "
+        + "  FROM ResourceGroup rg JOIN rg.explicitResources res " //
+        + "  LEFT JOIN res.availability a WITH a.endTime is null " //
+        + " WHERE rg = :group "),
+    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType, " //
+        + "(SELECT count(ier) FROM rg.explicitResources ier WHERE ier = res), 1) " //
+        + "  FROM ResourceGroup rg JOIN rg.implicitResources res " //
+        + "  LEFT JOIN res.availability a WITH a.endTime is null " //
+        + " WHERE rg = :group " //
+        + "   AND rg.id IN (SELECT irg.id FROM ResourceGroup irg JOIN irg.roles r JOIN r.subjects s WHERE s = :subject) "
+        + "   AND res.inventoryStatus = 'COMMITTED' "),
+    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_ADMIN, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType, " //
+        + "(SELECT count(ier) FROM rg.explicitResources ier WHERE ier = res), 1) "
+        + "  FROM ResourceGroup rg JOIN rg.implicitResources res " //
+        + "  LEFT JOIN res.availability a WITH a.endTime is null "
+        + " WHERE rg = :group "
+        + "   AND res.inventoryStatus = 'COMMITTED' "),
+    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT, query = "" //
+        + "SELECT count(DISTINCT res) " //
+        + "  FROM ResourceGroup rg JOIN rg.implicitResources res JOIN rg.roles r JOIN r.subjects s " //
+        + "  LEFT JOIN res.availability a WITH a.endTime is null " //
+        + " WHERE rg = :group " //
+        + "   AND res.inventoryStatus = 'COMMITTED' " //
+        + "   AND s = :subject "),
+    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT_ADMIN, query = "" //
+        + "SELECT count(res) " //
+        + "  FROM ResourceGroup rg JOIN rg.implicitResources res " //
+        + "  LEFT JOIN res.availability a WITH a.endTime is null " //
+        + " WHERE rg = :group " //
+        + "   AND res.inventoryStatus = 'COMMITTED' "),
+    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_COUNT_ADMIN, query = "" //
+        + "SELECT count(res) " //
+        + "  FROM ResourceGroup rg JOIN rg.implicitResources res " //
+        + " WHERE rg.id = :resourceGroupId "),
+    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL, query = "" //
+        + "  SELECT res " //  
+        + "    FROM Resource AS res " //
+        + "   WHERE res.id NOT IN " //
+        + "       ( SELECT rc.resource.id " //
+        + "           FROM ResourceChannel rc " //
+        + "          WHERE rc.channel.id = :channelId ) " //
+        + "     AND (:category = res.resourceType.category OR :category IS NULL) " //
+        + "     AND (res.inventoryStatus = :inventoryStatus) " //
         + "     AND (UPPER(res.name) LIKE :search OR :search is null) "),
-    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP, query = "SELECT res "
-        + "  FROM Resource AS res " + " WHERE res.id NOT IN " + "       ( SELECT ires.id "
-        + "           FROM Resource ires JOIN ires.explicitGroups AS irg " + "          WHERE irg.id = :groupId ) "
-        + "   AND (:type = res.resourceType OR :type IS NULL) "
-        + "   AND (:category = res.resourceType.category OR :category IS NULL) "
-        + "   AND (res.inventoryStatus = :inventoryStatus) "
+    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource AS res " //
+        + " WHERE res.id NOT IN " //
+        + "       ( SELECT ires.id " //
+        + "           FROM Resource ires JOIN ires.explicitGroups AS irg " //
+        + "          WHERE irg.id = :groupId ) " //
+        + "   AND (:type = res.resourceType OR :type IS NULL) " //
+        + "   AND (:category = res.resourceType.category OR :category IS NULL) " //
+        + "   AND (res.inventoryStatus = :inventoryStatus) " //
         + "   AND (UPPER(res.name) LIKE :search OR :search is null) "),
-    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP_WITH_EXCLUDES, query = "SELECT res "
-        + "  FROM Resource AS res " + " WHERE res.id NOT IN " + "       ( SELECT ires.id "
-        + "           FROM Resource ires JOIN ires.explicitGroups AS irg " + "          WHERE irg.id = :groupId ) "
-        + "   AND (:type = res.resourceType OR :type IS NULL) "
-        + "   AND (:category = res.resourceType.category OR :category IS NULL) "
-        + "   AND (res.inventoryStatus = :inventoryStatus) "
-        + "   AND (UPPER(res.name) LIKE :search OR :search is null) " + "   AND res.id NOT IN ( :excludeIds ) "),
-    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_DASHBOARD_PORTLET, query = "SELECT res "
-        + "  FROM Resource AS res " + " WHERE (:typeId = res.resourceType.id OR :typeId IS NULL) "
-        + "   AND (:category = res.resourceType.category OR :category IS NULL) "
+    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP_WITH_EXCLUDES, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource AS res " //
+        + " WHERE res.id NOT IN " //
+        + "       ( SELECT ires.id " //
+        + "           FROM Resource ires JOIN ires.explicitGroups AS irg " //
+        + "          WHERE irg.id = :groupId ) " //
+        + "   AND (:type = res.resourceType OR :type IS NULL) " //
+        + "   AND (:category = res.resourceType.category OR :category IS NULL) " //
+        + "   AND (res.inventoryStatus = :inventoryStatus) " //
+        + "   AND (UPPER(res.name) LIKE :search OR :search is null) " //
+        + "   AND res.id NOT IN ( :excludeIds ) "),
+    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_DASHBOARD_PORTLET, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource AS res " //
+        + " WHERE (:typeId = res.resourceType.id OR :typeId IS NULL) " //
+        + "   AND (:category = res.resourceType.category OR :category IS NULL) " //
         + "   AND (res.inventoryStatus = :inventoryStatus) "),
-    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_DASHBOARD_PORTLET_WITH_EXCLUDES, query = "SELECT res "
-        + "  FROM Resource AS res "
-        + " WHERE (:typeId = res.resourceType.id OR :typeId IS NULL) "
-        + "   AND (:category = res.resourceType.category OR :category IS NULL) "
-        + "   AND (res.inventoryStatus = :inventoryStatus) " + "   AND res.id NOT IN ( :excludeIds ) "),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_IDS, query = "SELECT res "
-        + "  FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
-        + " WHERE res.id IN ( :ids ) " + "   AND s = :subject"),
+    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_DASHBOARD_PORTLET_WITH_EXCLUDES, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource AS res " //
+        + " WHERE (:typeId = res.resourceType.id OR :typeId IS NULL) " //
+        + "   AND (:category = res.resourceType.category OR :category IS NULL) " //
+        + "   AND (res.inventoryStatus = :inventoryStatus) " //
+        + "   AND res.id NOT IN ( :excludeIds ) "),
+    @NamedQuery(name = Resource.QUERY_FIND_BY_IDS, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource res " //
+        + " WHERE res.id IN ( :ids ) " //
+        + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject) "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_IDS_ADMIN, query = "SELECT res FROM Resource res WHERE res.id IN ( :ids )"),
-    @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE, query = "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite(res, a.availabilityType, "
-        + " (SELECT count(p) FROM r.permissions p WHERE p = 8), " // we want MANAGE_MEASUREMENTS
-        + " (SELECT count(p) FROM r.permissions p WHERE p = 4), " // we want MODIFY_RESOURCE (4), not VIEW_RESOURCE (3)
-        + " (SELECT count(p) FROM r.permissions p WHERE p = 10), " // we want CONTROL, 10
-        + " (SELECT count(p) FROM r.permissions p WHERE p = 7), " // we want MANAGE_ALERTS, 7
-        + " (SELECT count(p) FROM r.permissions p WHERE p = 11), " // we want CONFIGURE, 11
-        + " (SELECT count(p) FROM r.permissions p WHERE p = 9), " // we want MANAGE_CONTENT, 9
-        + " (SELECT count(p) FROM r.permissions p WHERE p = 6), " // we want CREATE_CHILD_RESOURCES, 6
-        + " (SELECT count(p) FROM r.permissions p WHERE p = 5)) " // we want DELETE_RESOURCES, 5
-        + "FROM Resource res "
-        + "     JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s "
-        + "     LEFT JOIN res.availability a WITH a.endTime is null "
-        + "WHERE s = :subject "
-        + "  AND (:category = res.resourceType.category OR :category is null) "
-        + "  AND (:parentResource = res.parentResource OR :parentResource is null)"
-        + "  AND (:resourceType = res.resourceType OR :resourceType is null) "
-        + "  AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) "
+    @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite(res, a.availabilityType, " //
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 8), " // we want MANAGE_MEASUREMENTS
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 4), " // we want MODIFY_RESOURCE (4), not VIEW_RESOURCE (3)
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 10), " // we want CONTROL, 10
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 7), " // we want MANAGE_ALERTS, 7
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 11), " // we want CONFIGURE, 11
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 9), " // we want MANAGE_CONTENT, 9
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 6), " // we want CREATE_CHILD_RESOURCES, 6
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 5)) " // we want DELETE_RESOURCES, 5
+        + "FROM Resource res " //
+        + "     LEFT JOIN res.availability a WITH a.endTime is null " //
+        + "WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "  AND (:category = res.resourceType.category OR :category is null) " //
+        + "  AND (:parentResource = res.parentResource OR :parentResource is null)" //
+        + "  AND (:resourceType = res.resourceType OR :resourceType is null) " //
+        + "  AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
         + "  AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
-    @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_COUNT, query = "SELECT count(res) " + "  FROM Resource res "
-        + "       JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s " + " WHERE s = :subject "
-        + "   AND (:category = res.resourceType.category OR :category is null) "
-        + "   AND (:parentResource = res.parentResource OR :parentResource is null)"
-        + "   AND (:resourceType = res.resourceType OR :resourceType is null) "
-        + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) "
+    @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_COUNT, query = "SELECT count(res) " //
+        + "  FROM Resource res " //
+        + " WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "   AND (:category = res.resourceType.category OR :category is null) " //
+        + "   AND (:parentResource = res.parentResource OR :parentResource is null)" //
+        + "   AND (:resourceType = res.resourceType OR :resourceType is null) " //
+        + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
         + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
-    @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_ADMIN, query = "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite(res, a.availabilityType) "
-        + "  FROM Resource res "
-        + "       LEFT JOIN res.availability a WITH a.endTime is null "
-        + " WHERE (:category = res.resourceType.category OR :category is null) "
-        + "   AND (:parentResource = res.parentResource OR :parentResource is null)"
-        + "   AND (:resourceType = res.resourceType OR :resourceType is null) "
-        + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) "
+    @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_ADMIN, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite(res, a.availabilityType) " //
+        + "  FROM Resource res " //
+        + "       LEFT JOIN res.availability a WITH a.endTime is null " //
+        + " WHERE (:category = res.resourceType.category OR :category is null) " //
+        + "   AND (:parentResource = res.parentResource OR :parentResource is null)" //
+        + "   AND (:resourceType = res.resourceType OR :resourceType is null) " //
+        + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
         + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
-    @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_COUNT_ADMIN, query = "SELECT count(res) " + "  FROM Resource res "
-        + " WHERE (:category = res.resourceType.category OR :category is null) "
-        + "   AND (:parentResource = res.parentResource OR :parentResource is null)"
-        + "   AND (:resourceType = res.resourceType OR :resourceType is null) "
-        + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) "
+    @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_COUNT_ADMIN, query = "" //
+        + " SELECT count(res) " //
+        + "  FROM Resource res " //
+        + " WHERE (:category = res.resourceType.category OR :category is null) " //
+        + "   AND (:parentResource = res.parentResource OR :parentResource is null)" //
+        + "   AND (:resourceType = res.resourceType OR :resourceType is null) " //
+        + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
         + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
-    @NamedQuery(name = Resource.QUERY_GET_STATUSES_BY_PARENT, query = "SELECT r.id, r.inventoryStatus FROM Resource r WHERE r.parentResource.id = :parentResourceId"),
-    @NamedQuery(name = Resource.QUERY_GET_RESOURCE_HEALTH_BY_IDS, query = "  SELECT new org.rhq.core.domain.resource.composite.ResourceHealthComposite( "
-        + "          res.id, res.name, res.resourceType.name, avail.availabilityType, COUNT(alert)) "
-        + "    FROM Resource res "
-        + "         LEFT JOIN res.availability avail "
-        + "         LEFT JOIN res.alertDefinitions alertDef "
-        + "         LEFT JOIN alertDef.alerts alert "
-        + "   WHERE res.id IN (:resourceIds) "
-        + "     AND avail.endTime IS NULL "
+    @NamedQuery(name = Resource.QUERY_GET_STATUSES_BY_PARENT, query = "" //
+        + "SELECT r.id, r.inventoryStatus " //
+        + "  FROM Resource r " //
+        + " WHERE r.parentResource.id = :parentResourceId"),
+    @NamedQuery(name = Resource.QUERY_GET_RESOURCE_HEALTH_BY_IDS, query = "" //
+        + "  SELECT new org.rhq.core.domain.resource.composite.ResourceHealthComposite( " //
+        + "          res.id, res.name, res.resourceType.name, avail.availabilityType, COUNT(alert)) " //
+        + "    FROM Resource res " //
+        + "         LEFT JOIN res.availability avail " //
+        + "         LEFT JOIN res.alertDefinitions alertDef " //
+        + "         LEFT JOIN alertDef.alerts alert " //
+        + "   WHERE res.id IN (:resourceIds) " //
+        + "     AND avail.endTime IS NULL " //
         + "GROUP BY res.id, res.name, res.resourceType.name, avail.availabilityType "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGES, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackages ip WHERE r.id = :id"),
     @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGE_HIST, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackageHistory ip WHERE r.id = :id"),

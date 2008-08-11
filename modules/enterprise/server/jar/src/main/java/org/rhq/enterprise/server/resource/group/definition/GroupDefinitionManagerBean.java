@@ -36,8 +36,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.group.GroupDefinition;
@@ -49,10 +47,7 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -60,6 +55,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionCreateException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionDeleteException;
+import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionNotFoundException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionUpdateException;
 import org.rhq.enterprise.server.resource.group.definition.framework.ExpressionEvaluator;
@@ -79,18 +75,6 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     private ResourceManagerLocal resourceManager;
 
     @EJB
-    @IgnoreDependency
-    private ResourceTypeManagerLocal resourceTypeManager;
-
-    @EJB
-    @IgnoreDependency
-    private MeasurementDefinitionManagerLocal measurementDefinitionManager;
-
-    @EJB
-    @IgnoreDependency
-    private ConfigurationManagerLocal configurationManager;
-
-    @EJB
     private SubjectManagerLocal subjectManager;
 
     public GroupDefinition getById(int groupDefinitionId) throws GroupDefinitionNotFoundException {
@@ -105,7 +89,12 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public GroupDefinition createGroupDefinition(Subject subject, GroupDefinition newGroupDefinition)
         throws GroupDefinitionAlreadyExistsException, GroupDefinitionCreateException {
-        validateName(newGroupDefinition.getName(), null);
+
+        try {
+            validate(newGroupDefinition, null);
+        } catch (GroupDefinitionException gde) {
+            throw new GroupDefinitionCreateException(gde.getMessage());
+        }
 
         try {
             entityManager.persist(newGroupDefinition);
@@ -129,7 +118,12 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             throw new GroupDefinitionUpdateException(gdnfe.getMessage());
         }
 
-        boolean nameChanged = validateName(groupDefinition.getName(), groupDefinition.getId());
+        boolean nameChanged = false;
+        try {
+            validate(groupDefinition, groupDefinition.getId());
+        } catch (GroupDefinitionException gde) {
+            throw new GroupDefinitionUpdateException(gde.getMessage());
+        }
 
         ExpressionEvaluator evaluator = new ExpressionEvaluator();
         for (String expression : groupDefinition.getExpressionAsList()) {
@@ -165,17 +159,32 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     }
 
     // return boolean indicating whether the name of this group definition is changing
-    private boolean validateName(String groupDefinitionName, Integer id) throws GroupDefinitionAlreadyExistsException {
+    private boolean validate(GroupDefinition definition, Integer id) throws GroupDefinitionException,
+        GroupDefinitionAlreadyExistsException {
+        String name = (definition.getName() == null ? "" : definition.getName().trim());
+        String description = (definition.getDescription() == null ? "" : definition.getDescription().trim());
+
+        if (name.equals("")) {
+            throw new GroupDefinitionException("Name is a required property");
+        }
+
+        if (name.length() > 100) {
+            throw new GroupDefinitionException("Name is limited to 100 characters");
+        }
+
+        if (description.length() > 100) {
+            throw new GroupDefinitionException("Description is limited to 100 characters");
+        }
+
         Query query = entityManager.createNamedQuery(GroupDefinition.QUERY_FIND_BY_NAME);
-        query.setParameter("name", groupDefinitionName);
+        query.setParameter("name", name);
 
         try {
             GroupDefinition found = (GroupDefinition) query.getSingleResult();
             if ((id == null) // null == id means creating new def - so if query has results, it's a dup
                 || (found.getId() != id)) // found != id means updating def - so if query has result, only dup if ids don't match
             {
-                throw new GroupDefinitionAlreadyExistsException("GroupDefinition with name " + groupDefinitionName
-                    + " already exists");
+                throw new GroupDefinitionAlreadyExistsException("GroupDefinition with name " + name + " already exists");
             }
         } catch (NoResultException e) {
             // user is changing the name of the group, this is OK

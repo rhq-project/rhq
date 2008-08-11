@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.definition.group;
 
 import javax.faces.application.FacesMessage;
+import javax.servlet.http.HttpSession;
 
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -34,6 +35,11 @@ public class NewGroupDefinitionGeneralPropertiesUIBean {
     private static final String OUTCOME_FAILURE = "failure";
     private static final String OUTCOME_CANCEL = "cancel";
 
+    private static final String TEMPORARY_CREATE_MARKER = "temporaryGroupDef-Marker";
+    private static final String TEMPORARY_NAME_ATTRIBUTE = "temporaryGroupDefName";
+    private static final String TEMPORARY_DESCRIPTION_ATTRIBUTE = "temporaryGroupDefDescription";
+    private static final String TEMPORARY_RECURSIVE_ATTRIBUTE = "temporaryGroupDefRecursive";
+
     private String name;
     private String description;
     private boolean recursive;
@@ -43,6 +49,23 @@ public class NewGroupDefinitionGeneralPropertiesUIBean {
     private GroupDefinitionManagerLocal groupDefinitionManager = LookupUtil.getGroupDefinitionManager();
 
     public NewGroupDefinitionGeneralPropertiesUIBean() {
+        HttpSession session = FacesContextUtility.getRequest().getSession();
+
+        String marker = (String) session.getAttribute(TEMPORARY_CREATE_MARKER);
+        String previousName = (String) session.getAttribute(TEMPORARY_NAME_ATTRIBUTE);
+        String previousDescription = (String) session.getAttribute(TEMPORARY_DESCRIPTION_ATTRIBUTE);
+        String previousRecursive = (String) session.getAttribute(TEMPORARY_RECURSIVE_ATTRIBUTE);
+
+        if (marker != null) {
+            this.name = previousName;
+            this.description = previousDescription;
+            this.recursive = previousRecursive.equals("TRUE");
+        }
+
+        session.removeAttribute(TEMPORARY_CREATE_MARKER);
+        session.removeAttribute(TEMPORARY_NAME_ATTRIBUTE);
+        session.removeAttribute(TEMPORARY_DESCRIPTION_ATTRIBUTE);
+        session.removeAttribute(TEMPORARY_RECURSIVE_ATTRIBUTE);
     }
 
     public String begin() {
@@ -55,6 +78,13 @@ public class NewGroupDefinitionGeneralPropertiesUIBean {
 
             groupDefinition.setDescription(this.description);
             groupDefinition.setRecursive(this.recursive);
+
+            HttpSession session = FacesContextUtility.getRequest().getSession();
+
+            session.setAttribute(TEMPORARY_CREATE_MARKER, "marker");
+            session.setAttribute(TEMPORARY_NAME_ATTRIBUTE, name);
+            session.setAttribute(TEMPORARY_DESCRIPTION_ATTRIBUTE, description);
+            session.setAttribute(TEMPORARY_RECURSIVE_ATTRIBUTE, (recursive ? "TRUE" : "FALSE"));
 
             GroupDefinition newGroupdefinition = this.groupDefinitionManager.createGroupDefinition(
                 EnterpriseFacesContextUtility.getSubject(), groupDefinition);

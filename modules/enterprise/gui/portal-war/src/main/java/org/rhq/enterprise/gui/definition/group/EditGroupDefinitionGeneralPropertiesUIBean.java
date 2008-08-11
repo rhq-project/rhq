@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.definition.group;
 
 import javax.faces.application.FacesMessage;
+import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,7 +41,12 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
 
     private static final String OUTCOME_SUCCESS = "success";
     private static final String OUTCOME_FAILURE = "failure";
-    private static final String TEMPORARY_EXPRESSION_ATTRIBUTE_NAME = "temporaryGroupDefExpr";
+
+    private static final String TEMPORARY_EDIT_MARKER = "temporaryGroupDef-Marker";
+    private static final String TEMPORARY_EXPRESSION_ATTRIBUTE = "temporaryGroupDefExpr";
+    private static final String TEMPORARY_NAME_ATTRIBUTE = "temporaryGroupDefName";
+    private static final String TEMPORARY_DESCRIPTION_ATTRIBUTE = "temporaryGroupDefDescription";
+    private static final String TEMPORARY_RECURSIVE_ATTRIBUTE = "temporaryGroupDefRecursive";
 
     private String name;
     private String description;
@@ -59,19 +65,31 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
             return;
         }
 
-        this.name = groupDefinition.getName();
-        this.description = groupDefinition.getDescription();
-        this.recursive = groupDefinition.isRecursive();
+        HttpSession session = FacesContextUtility.getRequest().getSession();
 
-        String previousExpression = (String) FacesContextUtility.getRequest().getSession().getAttribute(
-            TEMPORARY_EXPRESSION_ATTRIBUTE_NAME);
-        FacesContextUtility.getRequest().getSession().removeAttribute(TEMPORARY_EXPRESSION_ATTRIBUTE_NAME);
-        if (previousExpression == null) {
+        String marker = (String) session.getAttribute(TEMPORARY_EDIT_MARKER);
+        String previousExpression = (String) session.getAttribute(TEMPORARY_EXPRESSION_ATTRIBUTE);
+        String previousName = (String) session.getAttribute(TEMPORARY_NAME_ATTRIBUTE);
+        String previousDescription = (String) session.getAttribute(TEMPORARY_DESCRIPTION_ATTRIBUTE);
+        String previousRecursive = (String) session.getAttribute(TEMPORARY_RECURSIVE_ATTRIBUTE);
+
+        if (marker == null) {
             this.expression = groupDefinition.getExpression();
+            this.name = groupDefinition.getName();
+            this.description = groupDefinition.getDescription();
+            this.recursive = groupDefinition.isRecursive();
         } else {
             this.expression = previousExpression;
+            this.name = previousName;
+            this.description = previousDescription;
+            this.recursive = previousRecursive.equals("TRUE");
         }
 
+        session.removeAttribute(TEMPORARY_EDIT_MARKER);
+        session.removeAttribute(TEMPORARY_EXPRESSION_ATTRIBUTE);
+        session.removeAttribute(TEMPORARY_NAME_ATTRIBUTE);
+        session.removeAttribute(TEMPORARY_DESCRIPTION_ATTRIBUTE);
+        session.removeAttribute(TEMPORARY_RECURSIVE_ATTRIBUTE);
     }
 
     public String begin() {
@@ -95,7 +113,14 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
             groupDefinition.setExpression(expression.replaceAll("\\r", "\n").replaceAll("\\f", "\n").replaceAll("\\n+",
                 "\n"));
 
-            FacesContextUtility.getRequest().getSession().setAttribute(TEMPORARY_EXPRESSION_ATTRIBUTE_NAME, expression);
+            HttpSession session = FacesContextUtility.getRequest().getSession();
+
+            session.setAttribute(TEMPORARY_EDIT_MARKER, "marker");
+            session.setAttribute(TEMPORARY_EXPRESSION_ATTRIBUTE, expression);
+            session.setAttribute(TEMPORARY_NAME_ATTRIBUTE, name);
+            session.setAttribute(TEMPORARY_DESCRIPTION_ATTRIBUTE, description);
+            session.setAttribute(TEMPORARY_RECURSIVE_ATTRIBUTE, (recursive ? "TRUE" : "FALSE"));
+
             this.groupDefinitionManager.updateGroupDefinition(EnterpriseFacesContextUtility.getSubject(),
                 groupDefinition);
 

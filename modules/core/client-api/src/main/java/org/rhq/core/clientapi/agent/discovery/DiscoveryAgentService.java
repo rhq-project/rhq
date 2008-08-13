@@ -68,7 +68,7 @@ public interface DiscoveryAgentService {
     Resource getPlatform();
 
     /**
-     * Executes an immediate plugin discovery scan of servers. This looks for servers not yet in inventory.
+     * Executes an immediate plugin discovery scan for top-level servers. This looks for servers not yet in inventory.
      *
      * @return the inventory report
      *
@@ -77,8 +77,8 @@ public interface DiscoveryAgentService {
     InventoryReport executeServerScanImmediately() throws PluginContainerException;
 
     /**
-     * Executes an immediate plugin discovery scan of services. This looks for child services of already existing
-     * resources.
+     * Executes an immediate plugin discovery scan for services and non-top-level servers. This looks for servers and
+     * services that are children of servers and services already in inventory.
      *
      * @return the inventory report
      *

@@ -55,8 +55,8 @@ public class MeasurementReport implements Externalizable {
     private long collectionTime;
 
     /**
-     * Adds the given piece of measurement data to this report. Items are added to this report's list of data in order.
-     * That is, the order in which you add multiple pieces of measurement data is the same order in which you get them
+     * Adds the given piece of numeric data to this report. Items are added to this report's list of numeric data in order.
+     * That is, the order in which you add multiple pieces of numeric data is the same order in which you get them
      * in the list via {@link #getNumericData()}.
      *
      * @param value the measurement data to be added
@@ -68,9 +68,9 @@ public class MeasurementReport implements Externalizable {
     }
 
     /**
-     * Adds the given piece of measurement data to this report. Items are added to this report's list of data in order.
-     * That is, the order in which you add multiple pieces of measurement data is the same order in which you get them
-     * in the list via {@link #getNumericData()}.
+     * Adds the given piece of trait data to this report. Items are added to this report's list of trait data in order.
+     * That is, the order in which you add multiple pieces of trait data is the same order in which you get them
+     * in the list via {@link #getTraitData()}.
      *
      * @param value the measurement data to be added
      */
@@ -81,7 +81,7 @@ public class MeasurementReport implements Externalizable {
     }
 
     /**
-     * Adds the given call-time data to this report. Items are added to this report's list of data in order. That is,
+     * Adds the given call-time data to this report. Items are added to this report's list of call-time data in order. That is,
      * the order in which you add multiple pieces of call-time data is the same order in which you get them in the list
      * via {@link #getCallTimeData()}.
      *
@@ -92,30 +92,41 @@ public class MeasurementReport implements Externalizable {
     }
 
     /**
-     * Returns the entire list of all measurement data (i.e. numeric metrics or traits) stored in this report. The data
-     * items are ordered in the list by the order in which they were
+     * Returns the set of all numeric data items in this report. The data items are ordered in the set in the same order
+     * in which they were {@link #addData(MeasurementDataNumeric) added}.
      *
-     * @return the list of all the measurement data in this report
+     * @return the list of all the numeric data items in this report
      */
     public Set<MeasurementDataNumeric> getNumericData() {
         return measurementNumericData;
     }
 
+    /**
+     * Returns the set of all trait data items in this report. The data items are ordered in the set in the same order
+     * in which they were {@link #addData(MeasurementDataTrait) added}.
+     *
+     * @return the list of all the trait data items in this report
+     */
     public Set<MeasurementDataTrait> getTraitData() {
         return measurementTraitData;
     }
 
     /**
-     * Returns the entire list of all call-time data stored in this report. The data items are ordered in the list by
-     * the order in which they were {@link #addData(CallTimeData) added}.
+     * Returns the entire list of all call-time data items in this report. The data items are ordered in the set in the
+     * same order in which they were {@link #addData(CallTimeData) added}.
      *
-     * @return the list of all the call-time data in this report
+     * @return the list of all the call-time data items in this report
      */
     @NotNull
     public Set<CallTimeData> getCallTimeData() {
         return callTimeData;
     }
 
+    /**
+     * Returns the total number of data items (numeric metrics, traits, or call-time datums) in this report.
+     *
+     * @return the total number of data items (numeric metrics, traits, or call-time datums) in this report
+     */
     public long getDataCount() {
         return this.measurementNumericData.size() + this.measurementTraitData.size() + this.callTimeData.size();
     }

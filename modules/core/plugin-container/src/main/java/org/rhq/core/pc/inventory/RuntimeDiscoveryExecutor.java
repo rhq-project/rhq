@@ -154,12 +154,12 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
         ResourceContainer parentContainer = this.inventoryManager.getResourceContainer(parent);
         if (parentContainer == null) {
-            log.debug("Parent ResourceComponent unavailable " + "to allow for runtime discovery " + parent.toString());
+            log.debug("Parent ResourceComponent unavailable " + "to allow for runtime discovery " + parent);
             return;
         }
 
         if (parentContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
-            log.trace("ResourceComponent for parent " + parent + " is not in the STARTED state, so we can't execute"
+            log.trace("ResourceComponent for parent " + parent + " is not in the STARTED state, so we can't execute "
                 + "runtime discovery on it.");
             return;
         }

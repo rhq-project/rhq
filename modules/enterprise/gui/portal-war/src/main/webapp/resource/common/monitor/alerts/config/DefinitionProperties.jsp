@@ -108,7 +108,7 @@
       <html:img page="/images/icon_required.gif" width="9" height="9" border="0"/>
       <fmt:message key="common.label.ReadOnly"/>
     </td>
-  	<td width="80%" class="BlockContent">
+  	<td width="80%" class="BlockContent" colspan="3">
   		<html:checkbox property="readOnly" />
   		<fmt:message key="alert.config.props.PB.ReadOnly"/>
   	</td>

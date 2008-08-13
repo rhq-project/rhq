@@ -51,6 +51,7 @@ import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -108,7 +109,7 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
 
     // provide no-ops for all agent services
 
-    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, String... measurementNames) {
+    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType, String... measurementNames) {
         return null;
     }
 
@@ -224,6 +225,6 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
     }
 
     @Asynchronous(guaranteedDelivery = true)
-    public void synchronizeInventory(ResourceSyncInfo syncInfo) {
+    public void synchronizeInventory(InventoryReport report, ResourceSyncInfo syncInfo) {
     }
 }

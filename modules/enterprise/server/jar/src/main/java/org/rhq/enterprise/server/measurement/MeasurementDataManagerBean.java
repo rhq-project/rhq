@@ -368,7 +368,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
         }
 
         AgentClient ac = agentClientManager.getAgentClient(agent);
-        Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId, names);
+        Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId, DataType.MEASUREMENT, names);
 
         return values;
     }

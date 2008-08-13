@@ -384,7 +384,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
     }
 
-    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, String... measurementName) {
+    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType, String... measurementName) {
         MeasurementFacet measurementFacet;
 
         try {
@@ -399,7 +399,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
 
         Set<MeasurementScheduleRequest> allMeasurements = new HashSet<MeasurementScheduleRequest>();
         for (String name : measurementName) {
-            MeasurementScheduleRequest request = new MeasurementScheduleRequest(1, name, 0, true, DataType.MEASUREMENT);
+            MeasurementScheduleRequest request = new MeasurementScheduleRequest(1, name, 0, true, dataType);
             allMeasurements.add(request);
         }
 
@@ -410,7 +410,10 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             return null;
         }
 
-        return new HashSet<MeasurementData>(report.getNumericData());
+        Set<MeasurementData> values = new HashSet<MeasurementData>();
+        values.addAll(report.getNumericData());
+        values.addAll(report.getTraitData());
+        return values;
     }
 
     public long getNextExpectedCollectionTime() {

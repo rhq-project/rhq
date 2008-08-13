@@ -21,6 +21,7 @@ package org.rhq.core.clientapi.agent.measurement;
 import java.util.Set;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.DataType;
 
 /**
  * The interface to a JON Agent's measurement (i.e. metric collection) subsystem.
@@ -39,7 +40,7 @@ public interface MeasurementAgentService {
      * fail if it cannot schedule an individual measurement. The only errors which should occur are protocol or
      * connection errors.
      *
-      * @param resourceSchedules list of schedules that are to be updated on the agent
+     * @param resourceSchedules list of schedules that are to be updated on the agent
      */
     void updateCollection(Set<ResourceMeasurementScheduleRequest> resourceSchedules);
 
@@ -55,16 +56,17 @@ public interface MeasurementAgentService {
 
     /**
      * This method is a way for the caller to ask for measurement collections to occur "now". In other words, you can
-     * obtain realtime, current values of the given measurements for the given resource, even if those measurements are
+     * obtain real-time, current values of the given measurements for the given resource, even if those measurements are
      * not even scheduled for collection.
      *
      * <p>Measurement data collected via this call will have its non-persistent "name" field set the name of the
      * measurement, but will not have scheduleIds set.</p>
      *
      * @param  resourceId       id of resource to collect from
-     * @param  measurementNames the name of the measurement metric
-     *
+     * @param  dataType         the data type of the of the metrics to be collected - either
+     *                          {@link DataType#MEASUREMENT} or {@link DataType#TRAIT}
+     * @param  measurementNames the names of the numeric metrics or traits to be collected
      * @return the set of collected measurements with their data values collected
      */
-    Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, String... measurementNames);
+    Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType, String... measurementNames);
 }

@@ -277,19 +277,20 @@ rhq.server.startup.unifiedinvoker.port=5446
 rhq.server.startup.aspectdeployer.bind-port=4873
 
 # Cluster configuration
-jboss.partition.name=RHQPartition
-jgroups.bind_addr=127.0.0.1
-jgroups.udp.mcast_addr=228.1.2.4
-jboss.hapartition.mcast_port=55566
-jboss.ejb3entitypartition.mcast_port=53333
-jboss.alertcachepartition.mcast_port=58899
-rhq.server.startup.partition.udpLoopback=false
-rhq.server.startup.hajndi.port=2100
-rhq.server.startup.hajndi.rmiport=2101
-rhq.server.startup.hajndi.autodiscoverygroupport=2102
-rhq.server.startup.hajrmpinvoker.rmiport=5447
-rhq.server.startup.hapooledinvoker.port=5448
-jgroups.udp.ip_ttl=2
+# The cluster service has been disabled in 1.1. It will be revisited when we look at cluster management support.
+#jboss.partition.name=RHQPartition
+#jgroups.bind_addr=127.0.0.1
+#jgroups.udp.mcast_addr=228.1.2.4
+#jboss.hapartition.mcast_port=55566
+#jboss.ejb3entitypartition.mcast_port=53333
+#jboss.alertcachepartition.mcast_port=58899
+#rhq.server.startup.partition.udpLoopback=false
+#rhq.server.startup.hajndi.port=2100
+#rhq.server.startup.hajndi.rmiport=2101
+#rhq.server.startup.hajndi.autodiscoverygroupport=2102
+#rhq.server.startup.hajrmpinvoker.rmiport=5447
+#rhq.server.startup.hapooledinvoker.port=5448
+#jgroups.udp.ip_ttl=2
 
 # Keystore for HTTPS thru Tomcat connector
 rhq.server.startup.keystore.filename=rhq.keystore
@@ -506,6 +507,12 @@ rhq.server.high-availability.name=
   <target name="undeploy-mail-service" unless="predeploy">
      <echo>Preparing for release - undeploying Mail Service...</echo>
      <move file="${jboss.deploy.dir}/mail-service.xml" tofile="${jboss.deploy.dir}/mail-service.xml.rej"/>
+  </target>
+
+  <!-- Removing cluster service in 1.1, potentially adding back later for cluster management support -->	
+  <target name="undeploy-cluster-service" unless="predeploy">
+     <echo>Preparing for release - undeploying Cluster Service...</echo>
+     <move file="${jboss.deploy.dir}/cluster-service.xml" tofile="${jboss.deploy.dir}/cluster-service.xml.rej"/>
   </target>
 
   <target name="undeploy-alert-cache-service" unless="predeploy">

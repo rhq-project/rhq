@@ -99,4 +99,4 @@
       <h:graphicImage url="/images/logo.png" alt="RHQ logo"/>
    </p>
    
-   <h1 align="center"><h:outputText value="#{bundle.welcomeTitle}" /></h1>
+   <h1 align="left"><h:outputText value="#{bundle.welcomeTitle}" /></h1>

@@ -88,7 +88,6 @@ public class ServerInformation {
     private static final String UNDEPLOYED_POSTGRES_JMS_FILENAME = "jms-postgres.rej";
     private static final String UNDEPLOYED_ORACLE_JMS_FILENAME = "jms-oracle.rej";
     private static final String SERVER_PROPERTIES_FILENAME = "rhq-server.properties";
-    private static final String AFFINITY_GROUP_NONE = "None";
 
     private MBeanServer mbeanServer = null;
     private File deployDirectory = null;
@@ -739,7 +738,9 @@ public class ServerInformation {
     }
 
     public static class Server {
-        static public final String AFFINITY_GROUP_NONE = "none";
+        static public final String DEFAULT_AFFINITY_GROUP = "";
+        static public final int DEFAULT_ENDPOINT_PORT = 7080;
+        static public final int DEFAULT_ENDPOINT_SECURE_PORT = 7443;
 
         private String name;
         private String endpointAddress;
@@ -860,7 +861,7 @@ public class ServerInformation {
             if (db.checkTableExists(conn, "rhq_server")) {
 
                 stm = conn.createStatement();
-                rs = stm.executeQuery("SELECT name FROM rhq_server");
+                rs = stm.executeQuery("SELECT name FROM rhq_server ORDER BY name asc");
 
                 while (rs.next()) {
                     result.add(rs.getString(1));
@@ -882,7 +883,7 @@ public class ServerInformation {
         ResultSet rs = null;
         int result = -1;
 
-        if ((null == affinityGroup) || ServerInformation.Server.AFFINITY_GROUP_NONE.equals(affinityGroup))
+        if ((null == affinityGroup) || ServerInformation.Server.DEFAULT_AFFINITY_GROUP.equals(affinityGroup))
             return result;
 
         try {
@@ -964,7 +965,7 @@ public class ServerInformation {
         if (null == affinityGroup)
             return;
         affinityGroup = affinityGroup.trim();
-        if ("".equals(affinityGroup) || AFFINITY_GROUP_NONE.equalsIgnoreCase(affinityGroup))
+        if ("".equals(affinityGroup))
             return;
 
         try {

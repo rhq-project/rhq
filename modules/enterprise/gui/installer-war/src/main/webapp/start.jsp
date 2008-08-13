@@ -15,12 +15,15 @@
       <jsp:include page="/header.jsp" flush="true" />
    </f:subview>
    
-   <p align="center">
+   <p align="left">
       <h:outputText value="#{bundle.setPropertiesInstructions}" />
    </p>
    
    <h:form>
-      <p align="center">
+      <p align="left">
+         <h5 align="left">
+            <h:outputText value="#{bundle.advancedSettingsInstructions}" />
+         </h5>
          <h:selectBooleanCheckbox onclick="submit()"
                                   id="showAdvancedSettings"
                                   value="#{configurationBean.showAdvancedSettings}" />
@@ -30,11 +33,11 @@
    </h:form>
    
    <h:form id="propForm">
-      <h3 align="center">
-         <h:outputText value="#{bundle.databasePropertiesNote}" />
-      </h3>
-
-      <h:panelGrid columns="2">
+      <br/>
+      <h4 align="left">
+         <h:outputText value="#{bundle.databaseSettingsInstructions}" />
+      </h4>
+      <h:panelGrid columns="1">
          <h:panelGrid columns="2"
                       rowClasses="evenRow,oddRow">
             <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[0].itemDefinition.help}', 'propertyHelp')">
@@ -85,9 +88,9 @@
                          value="#{configurationBean.databaseConfiguration[4].value}" />
          </h:panelGrid>
 
-         <h:panelGrid columns="1" border="1" width="250">
+         <h:panelGrid columns="2" border="1">
             <h:panelGrid columns="1">
-               <h:outputText value="#{bundle.testDatabaseNote}" style="font-size: 66%"/>
+               <h:outputText value="#{bundle.testDatabaseNote}" style="font-size: 100%"/>
                <h:panelGrid columns="2">
                   <h:commandButton id="testDatabaseButton"
                                    action="#{configurationBean.testConnection}"
@@ -102,7 +105,7 @@
             </h:panelGrid>
 
             <h:panelGrid columns="1">
-               <h:outputText value="#{bundle.createDatabaseNote}" style="font-size: 66%"/>
+               <h:outputText value="#{bundle.createDatabaseNote}" style="font-size: 100%"/>
                <h:panelGrid columns="2">
                   <h:commandButton id="createDatabaseButton" action="#{configurationBean.showCreateDatabasePage}" value="#{bundle.createDatabaseButton}" />
                   <h:panelGroup rendered="#{configurationBean.lastCreate != null && configurationBean.lastCreate != 'OK'}">
@@ -111,7 +114,7 @@
                   <h:panelGroup rendered="#{configurationBean.lastCreate != null && configurationBean.lastCreate == 'OK'}">
                      <h:graphicImage value="/images/ok.gif" alt="OK"/>
                   </h:panelGroup>
-               </h:panelGrid>
+               </h:panelGrid>               
             </h:panelGrid>
          </h:panelGrid>
       </h:panelGrid>
@@ -124,19 +127,22 @@
       </h:panelGrid>
  
       
-      <h3 align="center">
-         <h:outputText value="#{bundle.installSettingsNote}" />
-      </h3>
-      
+      <br/>
+      <h4 align="left">
+         <h:outputText value="#{bundle.installSettingsInstructions}" />
+      </h4>
       <h:panelGrid columns="1">
-         <h:panelGrid columns="1" rendered="#{configurationBean.existingServers == true}" >
+         <h:panelGrid columns="1" rendered="#{configurationBean.registeredServers == true}" >
          
+            <h:outputText value="#{bundle.installSettingsNote1}" />
+            <br/>
+            
             <h:panelGrid columns="2" >
 
-               <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ExistingServers', 'propertyHelp')" >
-                  <h:outputText value="#{bundle.existingServersLabel}" />
+               <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-RegisteredServers', 'propertyHelp')" >
+                  <h:outputText value="#{bundle.registeredServersLabel}" />
                </h:outputLink>
-               <h:selectOneMenu value="#{configurationBean.existingServerName}"
+               <h:selectOneMenu value="#{configurationBean.selectedRegisteredServerName}"
                                 onchange="{ document.getElementById('propForm:haservername').value = this.options[this.selectedIndex].value;
                                             document.getElementById('propForm:haendpointaddress').value = '';
                                             document.getElementById('propForm:haendpointport').value = '';
@@ -144,61 +150,73 @@
                                             if (document.getElementById('propForm:haaffinitygroup') != null) {
                                                document.getElementById('propForm:haaffinitygroup').value = ''; }                                            
                                             submit(); }" >
-                  <f:selectItems value="#{configurationBean.existingServerNames}" />
+                  <f:selectItems value="#{configurationBean.registeredServerNames}" />
                </h:selectOneMenu>       
             
             </h:panelGrid>
 
-            <h:outputText value="#{bundle.newServerNote}" />
+            <br/>
+            <h:outputText value="#{bundle.installSettingsNote2}" />
 
          </h:panelGrid>
          
-         <h:panelGrid columns="2" rowClasses="evenRow,oddRow">
 
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.serverConfiguration.itemDefinition.help}', 'propertyHelp')" >
+         <h:panelGrid columns="3" headerClass="evenRow" rowClasses="evenRow,oddRow">
+
+            <h:outputText value=" " />
+            <h:outputText value=" " />
+            <h:outputText value="#{bundle.requiresRestart}" style="font-weight:bold" />
+
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaServerName.itemDefinition.help}', 'propertyHelp')" >
                <h:outputText value="#{bundle.propertyHighAvailabilityName}" />
             </h:outputLink>
-            <h:inputText id="haservername" size="#{configurationBean.serverConfiguration.itemDefinition.fieldSize}"
+            <h:inputText id="haservername" size="#{configurationBean.propHaServerName.itemDefinition.fieldSize}"
                          value="#{configurationBean.haServerName}" >
             </h:inputText>
+            <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaServerName.itemDefinition.requiresRestart}" />            
+            <h:outputText value="#{bundle.noString}" rendered="#{!configurationBean.propHaServerName.itemDefinition.requiresRestart}" />                        
             
             <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerEndpointAddress', 'propertyHelp')" >
                <h:outputText value="#{bundle.propertyHighAvailabilityEndpointAddress}" />
             </h:outputLink>
-            <h:inputText id="haendpointaddress" size="#{configurationBean.serverConfiguration.itemDefinition.fieldSize}"
+            <h:inputText id="haendpointaddress" size="#{configurationBean.propHaServerName.itemDefinition.fieldSize}"
                          value="#{configurationBean.haServer.endpointAddress}" >
             </h:inputText>
+            <h:outputText value="#{bundle.noString}" />
             
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerEndpointPort', 'propertyHelp')" >
-               <h:outputText value="#{bundle.propertyHighAvailabilityEndpointPort}" />
-            </h:outputLink>            
-            <h:inputText id="haendpointport" size="#{configurationBean.serverConfiguration.itemDefinition.fieldSize}"
-                      value="#{configurationBean.haServer.endpointPortString}" >
-            </h:inputText>
-            
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerEndpointSecurePort', 'propertyHelp')" >
-               <h:outputText value="#{bundle.propertyHighAvailabilityEndpointSecurePort}" />
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaEndpointPort.itemDefinition.help}', 'propertyHelp')" >
+               <h:outputText value="#{bundle.propertyHttpPort}" />
             </h:outputLink>
-            <h:inputText id="haendpointsecureport" size="#{configurationBean.serverConfiguration.itemDefinition.fieldSize}"
-                      value="#{configurationBean.haServer.endpointSecurePortString}" >
+            <h:inputText id="haendpointport" size="#{configurationBean.propHaEndpointPort.itemDefinition.fieldSize}"
+                         value="#{configurationBean.haServer.endpointPortString}" >
             </h:inputText>
+            <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaEndpointPort.itemDefinition.requiresRestart}" />            
+
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaEndpointSecurePort.itemDefinition.help}', 'propertyHelp')" >
+               <h:outputText value="#{bundle.propertyHttpsPort}" />
+            </h:outputLink>
+            <h:inputText id="haendpointsecureport" size="#{configurationBean.propHaEndpointSecurePort.itemDefinition.fieldSize}"
+                         value="#{configurationBean.haServer.endpointSecurePortString}" >
+            </h:inputText>
+            <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaEndpointSecurePort.itemDefinition.requiresRestart}" />            
 
             <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerAffinityGroup', 'propertyHelp')" 
                           rendered="#{configurationBean.showAdvancedSettings == true}" >
                <h:outputText value="#{bundle.propertyHighAvailabilityAffinityGroup}" />
             </h:outputLink>
-            <h:inputText id="haaffinitygroup" size="#{configurationBean.serverConfiguration.itemDefinition.fieldSize}"
+            <h:inputText id="haaffinitygroup" size="#{configurationBean.propHaServerName.itemDefinition.fieldSize}"
                          value="#{configurationBean.haServer.affinityGroup}"
                          rendered="#{configurationBean.showAdvancedSettings == true}" >                         
-            </h:inputText>            
+            </h:inputText>           
+            <h:outputText value="#{bundle.noString}" rendered="#{configurationBean.showAdvancedSettings == true}" />            
 
          </h:panelGrid>
       </h:panelGrid>
       
-      <h3 align="center">
-         <h:outputText value="#{bundle.serverPropertiesNote}" />
-      </h3>
-
+      <br/>
+      <h4 align="left">
+      <h:outputText value="#{bundle.serverSettingsInstructions}" />
+      </h4>
       <h:dataTable value="#{configurationBean.nonDatabaseConfiguration}" var="prop"
                    headerClass="evenRow" rowClasses="oddRow,evenRow">
          <h:column>
@@ -238,10 +256,12 @@
                <h:outputText value="#{bundle.requiresRestart}" />
             </f:facet>
             <h:outputText value="#{bundle.yesString}" rendered="#{prop.itemDefinition.requiresRestart}" />
+            <h:outputText value="#{bundle.noString}"  rendered="#{!prop.itemDefinition.requiresRestart}" />            
          </h:column>
       </h:dataTable>
 
-      <p align="center">
+      <br/>
+      <p align="left">
          <h:commandButton id="save" action="#{configurationBean.save}" value="#{bundle.save}" />
       </p>
    </h:form>

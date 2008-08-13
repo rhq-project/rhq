@@ -99,19 +99,20 @@ public class ServerProperties {
 
     public static final String PROP_OPERATION_TIMEOUT = "rhq.server.operation-timeout";
 
-    public static final String PROP_CLUSTER_PARTITION_NAME = "jboss.partition.name";
-    public static final String PROP_CLUSTER_BIND_ADDRESS = "jgroups.bind_addr";
-    public static final String PROP_CLUSTER_UDP_GROUP = "jgroups.udp.mcast_addr";
-    public static final String PROP_CLUSTER_HAPARTITION_PORT = "jboss.hapartition.mcast_port";
-    public static final String PROP_CLUSTER_EJB3CACHE_PORT = "jboss.ejb3entitypartition.mcast_port";
-    public static final String PROP_CLUSTER_ALERTCACHE_PORT = "jboss.alertcachepartition.mcast_port";
-    public static final String PROP_CLUSTER_UDP_LOOPBACK = "rhq.server.startup.partition.udpLoopback";
-    public static final String PROP_CLUSTER_HAJNDI_PORT = "rhq.server.startup.hajndi.port";
-    public static final String PROP_CLUSTER_HAJNDI_RMIPORT = "rhq.server.startup.hajndi.rmiport";
-    public static final String PROP_CLUSTER_HAJNDI_AUTODISCOVERPORT = "rhq.server.startup.hajndi.autodiscoverygroupport";
-    public static final String PROP_CLUSTER_HAJRMPINVOKER_RMIPORT = "rhq.server.startup.hajrmpinvoker.rmiport";
-    public static final String PROP_CLUSTER_HAPOOLEDINVOKER_PORT = "rhq.server.startup.hapooledinvoker.port";
-    public static final String PROP_CLUSTER_JGROUPS_UDP_IP_TTL = "jgroups.udp.ip_ttl";
+    //    TODO (jshaughn) Revisit the need for the cluster service when looking at cluster management. For now it's disabled.
+    //    public static final String PROP_CLUSTER_PARTITION_NAME = "jboss.partition.name";
+    //    public static final String PROP_CLUSTER_BIND_ADDRESS = "jgroups.bind_addr";
+    //    public static final String PROP_CLUSTER_UDP_GROUP = "jgroups.udp.mcast_addr";
+    //    public static final String PROP_CLUSTER_HAPARTITION_PORT = "jboss.hapartition.mcast_port";
+    //    public static final String PROP_CLUSTER_EJB3CACHE_PORT = "jboss.ejb3entitypartition.mcast_port";
+    //    public static final String PROP_CLUSTER_ALERTCACHE_PORT = "jboss.alertcachepartition.mcast_port";
+    //    public static final String PROP_CLUSTER_UDP_LOOPBACK = "rhq.server.startup.partition.udpLoopback";
+    //    public static final String PROP_CLUSTER_HAJNDI_PORT = "rhq.server.startup.hajndi.port";
+    //    public static final String PROP_CLUSTER_HAJNDI_RMIPORT = "rhq.server.startup.hajndi.rmiport";
+    //    public static final String PROP_CLUSTER_HAJNDI_AUTODISCOVERPORT = "rhq.server.startup.hajndi.autodiscoverygroupport";
+    //    public static final String PROP_CLUSTER_HAJRMPINVOKER_RMIPORT = "rhq.server.startup.hajrmpinvoker.rmiport";
+    //    public static final String PROP_CLUSTER_HAPOOLEDINVOKER_PORT = "rhq.server.startup.hapooledinvoker.port";
+    //    public static final String PROP_CLUSTER_JGROUPS_UDP_IP_TTL = "jgroups.udp.ip_ttl";
 
     public static final String PROP_CONCURRENCY_LIMIT_WEBCONNS = "rhq.server.startup.web.max-connections";
     public static final String PROP_CONCURRENCY_LIMIT_GLOBAL = "rhq.communications.global-concurrency-limit";
@@ -159,9 +160,9 @@ public class ServerProperties {
         new PropertyItem(PROP_SERVER_BIND_ADDRESS, String.class, InstallerI18NResourceKeys.PROP_SERVER_BIND_ADDRESS,
             InstallerI18NResourceKeys.PROP_SERVER_BIND_ADDRESS_HELP, true, false, false),
         new PropertyItem(PROP_HTTP_PORT, Integer.class, InstallerI18NResourceKeys.PROP_HTTP_PORT,
-            InstallerI18NResourceKeys.PROP_HTTP_PORT_HELP, true, false, false),
+            InstallerI18NResourceKeys.PROP_HTTP_PORT_HELP, true, false, false, true),
         new PropertyItem(PROP_HTTPS_PORT, Integer.class, InstallerI18NResourceKeys.PROP_HTTPS_PORT,
-            InstallerI18NResourceKeys.PROP_HTTPS_PORT_HELP, true, false, false),
+            InstallerI18NResourceKeys.PROP_HTTPS_PORT_HELP, true, false, false, true),
         new PropertyItem(PROP_WEB_SERVICE_PORT, Integer.class, InstallerI18NResourceKeys.PROP_WEB_SERVICE_PORT,
             InstallerI18NResourceKeys.PROP_WEB_SERVICE_PORT_HELP, true, false, true),
         new PropertyItem(PROP_NAMING_SERVICE_PORT, Integer.class, InstallerI18NResourceKeys.PROP_NAMING_SERVICE_PORT,
@@ -303,42 +304,43 @@ public class ServerProperties {
             InstallerI18NResourceKeys.PROP_EMAIL_FROM_ADDRESS_HELP, false, false, false),
         new PropertyItem(PROP_OPERATION_TIMEOUT, Integer.class, InstallerI18NResourceKeys.PROP_OPERATION_TIMEOUT,
             InstallerI18NResourceKeys.PROP_OPERATION_TIMEOUT_HELP, false, false, true),
-        new PropertyItem(PROP_CLUSTER_PARTITION_NAME, String.class,
-            InstallerI18NResourceKeys.PROP_CLUSTER_PARTITION_NAME,
-            InstallerI18NResourceKeys.PROP_CLUSTER_PARTITION_NAME_HELP, true, false, true),
-        new PropertyItem(PROP_CLUSTER_BIND_ADDRESS, InetAddress.class,
-            InstallerI18NResourceKeys.PROP_CLUSTER_PARTITION_BIND_ADDRESS,
-            InstallerI18NResourceKeys.PROP_CLUSTER_PARTITION_BIND_ADDRESS_HELP, true, false, true),
-        new PropertyItem(PROP_CLUSTER_UDP_GROUP, String.class, InstallerI18NResourceKeys.PROP_CLUSTER_UDP_GROUP,
-            InstallerI18NResourceKeys.PROP_CLUSTER_UDP_GROUP_HELP, true, false, true),
-        new PropertyItem(PROP_CLUSTER_HAPARTITION_PORT, Integer.class,
-            InstallerI18NResourceKeys.PROP_CLUSTER_HAPARTITION_PORT,
-            InstallerI18NResourceKeys.PROP_CLUSTER_HAPARTITION_PORT_HELP, true, false, true),
-        new PropertyItem(PROP_CLUSTER_EJB3CACHE_PORT, Integer.class,
-            InstallerI18NResourceKeys.PROP_CLUSTER_EJB3CACHE_PORT,
-            InstallerI18NResourceKeys.PROP_CLUSTER_EJB3CACHE_PORT_HELP, true, false, true),
-        new PropertyItem(PROP_CLUSTER_ALERTCACHE_PORT, Integer.class,
-            InstallerI18NResourceKeys.PROP_CLUSTER_ALERTCACHE_PORT,
-            InstallerI18NResourceKeys.PROP_CLUSTER_ALERTCACHE_PORT_HELP, true, false, true),
-        new PropertyItem(PROP_CLUSTER_UDP_LOOPBACK, Boolean.class, InstallerI18NResourceKeys.PROP_CLUSTER_UDP_LOOPBACK,
-            InstallerI18NResourceKeys.PROP_CLUSTER_UDP_LOOPBACK_HELP, true, false, true),
-        new PropertyItem(PROP_CLUSTER_HAJNDI_PORT, Integer.class, InstallerI18NResourceKeys.PROP_CLUSTER_HAJNDI_PORT,
-            InstallerI18NResourceKeys.PROP_CLUSTER_HAJNDI_PORT_HELP, true, false, true),
-        new PropertyItem(PROP_CLUSTER_HAJNDI_RMIPORT, Integer.class,
-            InstallerI18NResourceKeys.PROP_CLUSTER_HAJNDI_RMIPORT,
-            InstallerI18NResourceKeys.PROP_CLUSTER_HAJNDI_RMIPORT_HELP, true, false, true),
-        new PropertyItem(PROP_CLUSTER_HAJNDI_AUTODISCOVERPORT, Integer.class,
-            InstallerI18NResourceKeys.PROP_CLUSTER_HAJNDI_AUTODISCOVERPORT,
-            InstallerI18NResourceKeys.PROP_CLUSTER_HAJNDI_AUTODISCOVERPORT_HELP, true, false, true),
-        new PropertyItem(PROP_CLUSTER_HAJRMPINVOKER_RMIPORT, Integer.class,
-            InstallerI18NResourceKeys.PROP_CLUSTER_HAJRMPINVOKER_RMIPORT,
-            InstallerI18NResourceKeys.PROP_CLUSTER_HAJRMPINVOKER_RMIPORT_HELP, true, false, true),
-        new PropertyItem(PROP_CLUSTER_HAPOOLEDINVOKER_PORT, Integer.class,
-            InstallerI18NResourceKeys.PROP_CLUSTER_HAPOOLEDINVOKER_PORT,
-            InstallerI18NResourceKeys.PROP_CLUSTER_HAPOOLEDINVOKER_PORT_HELP, true, false, true),
-        new PropertyItem(PROP_CLUSTER_JGROUPS_UDP_IP_TTL, Integer.class,
-            InstallerI18NResourceKeys.PROP_CLUSTER_JGROUPS_UDP_IP_TTL,
-            InstallerI18NResourceKeys.PROP_CLUSTER_JGROUPS_UDP_IP_TTL_HELP, true, false, true),
+        //            TODO (jshaughn) Revisit the need for the cluster service when looking at cluster management. For now it's disabled.        
+        //            new PropertyItem(PROP_CLUSTER_PARTITION_NAME, String.class,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_PARTITION_NAME,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_PARTITION_NAME_HELP, true, false, true),
+        //        new PropertyItem(PROP_CLUSTER_BIND_ADDRESS, InetAddress.class,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_PARTITION_BIND_ADDRESS,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_PARTITION_BIND_ADDRESS_HELP, true, false, true),
+        //        new PropertyItem(PROP_CLUSTER_UDP_GROUP, String.class, InstallerI18NResourceKeys.PROP_CLUSTER_UDP_GROUP,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_UDP_GROUP_HELP, true, false, true),
+        //        new PropertyItem(PROP_CLUSTER_HAPARTITION_PORT, Integer.class,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_HAPARTITION_PORT,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_HAPARTITION_PORT_HELP, true, false, true),
+        //        new PropertyItem(PROP_CLUSTER_EJB3CACHE_PORT, Integer.class,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_EJB3CACHE_PORT,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_EJB3CACHE_PORT_HELP, true, false, true),
+        //        new PropertyItem(PROP_CLUSTER_ALERTCACHE_PORT, Integer.class,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_ALERTCACHE_PORT,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_ALERTCACHE_PORT_HELP, true, false, true),
+        //        new PropertyItem(PROP_CLUSTER_UDP_LOOPBACK, Boolean.class, InstallerI18NResourceKeys.PROP_CLUSTER_UDP_LOOPBACK,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_UDP_LOOPBACK_HELP, true, false, true),
+        //        new PropertyItem(PROP_CLUSTER_HAJNDI_PORT, Integer.class, InstallerI18NResourceKeys.PROP_CLUSTER_HAJNDI_PORT,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_HAJNDI_PORT_HELP, true, false, true),
+        //        new PropertyItem(PROP_CLUSTER_HAJNDI_RMIPORT, Integer.class,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_HAJNDI_RMIPORT,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_HAJNDI_RMIPORT_HELP, true, false, true),
+        //        new PropertyItem(PROP_CLUSTER_HAJNDI_AUTODISCOVERPORT, Integer.class,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_HAJNDI_AUTODISCOVERPORT,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_HAJNDI_AUTODISCOVERPORT_HELP, true, false, true),
+        //        new PropertyItem(PROP_CLUSTER_HAJRMPINVOKER_RMIPORT, Integer.class,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_HAJRMPINVOKER_RMIPORT,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_HAJRMPINVOKER_RMIPORT_HELP, true, false, true),
+        //        new PropertyItem(PROP_CLUSTER_HAPOOLEDINVOKER_PORT, Integer.class,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_HAPOOLEDINVOKER_PORT,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_HAPOOLEDINVOKER_PORT_HELP, true, false, true),
+        //        new PropertyItem(PROP_CLUSTER_JGROUPS_UDP_IP_TTL, Integer.class,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_JGROUPS_UDP_IP_TTL,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_JGROUPS_UDP_IP_TTL_HELP, true, false, true),
         new PropertyItem(PROP_CONCURRENCY_LIMIT_WEBCONNS, Integer.class,
             InstallerI18NResourceKeys.PROP_CONCURRENCY_LIMIT_WEBCONNS,
             InstallerI18NResourceKeys.PROP_CONCURRENCY_LIMIT_WEBCONNS_HELP, true, false, true),

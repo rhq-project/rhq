@@ -72,12 +72,13 @@ public class ConfigurationBean {
     private String adminPassword;
     private ServerInformation.Server haServer;
     private String haServerName;
-    private String existingServerName;
+    private String selectedRegisteredServerName;
 
     public ConfigurationBean() {
         serverInfo = new ServerInformation();
         showAdvancedSettings = Boolean.FALSE;
         existingSchemaOption = ExistingSchemaOption.KEEP.name();
+        configuration = getConfiguration();
         setHaServerName(getDefaultServerName());
     }
 
@@ -403,6 +404,7 @@ public class ConfigurationBean {
             Properties configurationAsProperties = getConfigurationAsProperties(configuration);
             return serverInfo.isDatabaseSchemaExist(configurationAsProperties);
         } catch (Exception e) {
+            LOG.info("Could not determine database existence: " + e);
             return false;
         }
     }
@@ -425,6 +427,13 @@ public class ConfigurationBean {
         testConnection(); // so our lastTest gets set and the user will be able to get the error in the UI
         if (lastTest == null || !lastTest.equals("OK")) {
             lastError = lastTest;
+            return StartPageResults.ERROR;
+        }
+
+        // Ensure server info has been set
+        if ((null == haServer) || (null == haServer.getName()) || "".equals(haServer.getName().trim())) {
+            lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.INVALID_STRING, I18NMSG
+                .getMsg(InstallerI18NResourceKeys.PROP_HIGH_AVAILABILITY_NAME));
             return StartPageResults.ERROR;
         }
 
@@ -456,6 +465,12 @@ public class ConfigurationBean {
             // indicate that no errors occurred
             lastError = null;
 
+            // update server properties with the latest ha info to keep the form and server properties file up to date
+            getConfigurationProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME).setValue(getHaServer().getName());
+            getConfigurationProperty(ServerProperties.PROP_HTTP_PORT).setValue(getHaServer().getEndpointPortString());
+            getConfigurationProperty(ServerProperties.PROP_HTTPS_PORT).setValue(
+                getHaServer().getEndpointSecurePortString());
+
             // save the properties
             serverInfo.setServerProperties(configurationAsProperties);
 
@@ -474,7 +489,7 @@ public class ConfigurationBean {
                 serverInfo.createNewDatabaseSchema(configurationAsProperties);
             }
 
-            // Ensure the install server info is stored in the DB
+            // Ensure the install server info is up to date and stored in the DB
             serverInfo.storeServer(configurationAsProperties, haServer);
 
             // now deploy RHQ Server fully
@@ -514,23 +529,29 @@ public class ConfigurationBean {
     }
 
     /** To set the server name use setServerName() */
-    public PropertyItemWithValue getServerConfiguration() {
-        PropertyItemWithValue serverConfig = getConfigurationProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME);
-
-        return serverConfig;
+    public PropertyItemWithValue getPropHaServerName() {
+        return getConfigurationProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME);
     }
 
-    public boolean isExistingServers() {
+    public PropertyItemWithValue getPropHaEndpointPort() {
+        return getConfigurationProperty(ServerProperties.PROP_HTTP_PORT);
+    }
+
+    public PropertyItemWithValue getPropHaEndpointSecurePort() {
+        return getConfigurationProperty(ServerProperties.PROP_HTTPS_PORT);
+    }
+
+    public boolean isRegisteredServers() {
 
         if (!this.isKeepExistingSchema())
             return false;
 
-        List<SelectItem> existingServerNames = getExistingServerNames();
+        List<SelectItem> registeredServerNames = getRegisteredServerNames();
 
-        return ((null != existingServerNames) && !existingServerNames.isEmpty());
+        return ((null != registeredServerNames) && !registeredServerNames.isEmpty());
     }
 
-    public List<SelectItem> getExistingServerNames() {
+    public List<SelectItem> getRegisteredServerNames() {
         List<SelectItem> result = new ArrayList<SelectItem>(0);
 
         if (!isDatabaseSchemaExist())
@@ -542,25 +563,24 @@ public class ConfigurationBean {
                 result.add(new SelectItem(serverName));
             }
             if (!result.isEmpty()) {
-                result.add(0, new SelectItem(I18NMSG.getMsg(InstallerI18NResourceKeys.EXISTING_SERVER_SELECT_ITEM)));
+                result.add(0, new SelectItem(I18NMSG.getMsg(InstallerI18NResourceKeys.NEW_SERVER_SELECT_ITEM)));
             }
         } catch (Exception e) {
             // Should not be able to get here since we checked for schema above
-            LOG.warn("Unexpected Exception getting existing server info: ", e);
+            LOG.warn("Unexpected Exception getting registered server info: ", e);
         }
 
         return result;
     }
 
-    public String getExistingServerName() {
-        return existingServerName;
+    public String getSelectedRegisteredServerName() {
+        return selectedRegisteredServerName;
     }
 
     // If an existing server name is selected from the list set haServerName to the selection. Note, this function
     // should not call getServerConfiguration.setValue()
-    public void setExistingServerName(String existingServerName) {
-        this.existingServerName = existingServerName;
-        setHaServerName(existingServerName);
+    public void setSelectedRegisteredServerName(String selectedRegisteredServerName) {
+        this.selectedRegisteredServerName = selectedRegisteredServerName;
     }
 
     public String getHaServerName() {
@@ -568,23 +588,20 @@ public class ConfigurationBean {
     }
 
     public void setHaServerName(String serverName) {
-        // handle the case where the user selected the dummy entry in the existing servers drop down
-        if (I18NMSG.getMsg(InstallerI18NResourceKeys.EXISTING_SERVER_SELECT_ITEM).equals(serverName)) {
-            serverName = getDefaultServerName();
+        // handle the case where the user selected the dummy entry in the registered servers drop down
+        if (I18NMSG.getMsg(InstallerI18NResourceKeys.NEW_SERVER_SELECT_ITEM).equals(serverName)) {
+            serverName = this.getDefaultServerName();
         }
 
         this.haServerName = serverName;
 
-        // update the server property so the server properties file is in sync
-        PropertyItemWithValue serverConfig = getConfigurationProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME);
-        serverConfig.setValue(serverName);
-
-        // populate the rest of the ha fields either from the db or with defaults 
-        if (isExistingServers()) {
+        // try pulling info from the database for this server name 
+        if (isRegisteredServers()) {
             Properties configurationAsProperties = getConfigurationAsProperties(configuration);
             setHaServer(serverInfo.getServerDetail(configurationAsProperties, serverName));
         }
 
+        // if the server was not registered in the database then populate the ha server info with proper defaults
         if (null == getHaServer()) {
             String endpointAddress = "";
 
@@ -594,8 +611,24 @@ public class ConfigurationBean {
                 LOG.info("Could not determine default server name: ", e);
             }
 
-            setHaServer(new ServerInformation.Server(serverName, endpointAddress, 7080, 7443,
-                ServerInformation.Server.AFFINITY_GROUP_NONE));
+            setHaServer(new ServerInformation.Server(serverName, endpointAddress,
+                ServerInformation.Server.DEFAULT_ENDPOINT_PORT, ServerInformation.Server.DEFAULT_ENDPOINT_SECURE_PORT,
+                ServerInformation.Server.DEFAULT_AFFINITY_GROUP));
+
+            // override default port settings with current property values
+            try {
+                getHaServer().setEndpointPortString(
+                    getConfigurationProperty(ServerProperties.PROP_HTTP_PORT).getValue());
+            } catch (Exception e) {
+                LOG.debug("Could not determine default port: ", e);
+            }
+
+            try {
+                getHaServer().setEndpointSecurePortString(
+                    getConfigurationProperty(ServerProperties.PROP_HTTPS_PORT).getValue());
+            } catch (Exception e) {
+                LOG.debug("Could not determine default secure port: ", e);
+            }
         } else {
             getHaServer().setName(serverName);
         }

@@ -473,6 +473,7 @@ rhq.server.high-availability.name=
                    deploy-oracle-ds,
                    undeploy-jmx-console,
                    undeploy-mail-service,
+                   undeploy-cluster-service,
                    undeploy-alert-cache-service,
                    undeploy-embedded-agent,
                    undeploy-jms,
@@ -509,10 +510,14 @@ rhq.server.high-availability.name=
      <move file="${jboss.deploy.dir}/mail-service.xml" tofile="${jboss.deploy.dir}/mail-service.xml.rej"/>
   </target>
 
-  <!-- Removing cluster service in 1.1, potentially adding back later for cluster management support -->	
-  <target name="undeploy-cluster-service" unless="predeploy">
-     <echo>Preparing for release - undeploying Cluster Service...</echo>
-     <move file="${jboss.deploy.dir}/cluster-service.xml" tofile="${jboss.deploy.dir}/cluster-service.xml.rej"/>
+  <!-- Removing cluster service in 1.1, potentially adding back later for cluster management support
+       dev profile or not, we always want to execute this target so remove the 'unless' attribute; 
+       do not fail on error, because we don't want to fail if the file has already been renamed -->
+  <target name="undeploy-cluster-service">
+     <echo>Undeploying Cluster Service...</echo>
+     <move failonerror="false" 
+           file="${jboss.deploy.dir}/cluster-service.xml" 
+           tofile="${jboss.deploy.dir}/cluster-service.xml.rej"/>
   </target>
 
   <target name="undeploy-alert-cache-service" unless="predeploy">

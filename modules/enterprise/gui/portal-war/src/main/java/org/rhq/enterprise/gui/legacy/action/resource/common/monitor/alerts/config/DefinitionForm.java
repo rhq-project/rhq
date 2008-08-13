@@ -106,6 +106,7 @@ public final class DefinitionForm extends ResourceForm {
     private Collection<Map.Entry<String, String>> conditionExpressionNames;
 
     private boolean cascade;
+    private boolean readOnly;
 
     private static String[] controlActionStatuses = { OperationRequestStatus.INPROGRESS.name(),
         OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.FAILURE.name(),
@@ -745,5 +746,13 @@ public final class DefinitionForm extends ResourceForm {
 
     public void setCascade(boolean cascade) {
         this.cascade = cascade;
+    }
+
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
     }
 }

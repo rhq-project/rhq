@@ -163,6 +163,9 @@ public class AlertDefinition implements Serializable {
     @Column(name = "DELETED", nullable = false)
     private boolean deleted;
 
+    @Column(name = "READ_ONLY", nullable = false)
+    private boolean readOnly;
+
     @Column(name = "REQUIRED", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     private BooleanExpression conditionExpression;
@@ -414,6 +417,14 @@ public class AlertDefinition implements Serializable {
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public boolean isReadOnly() {
+        return this.readOnly;
+    }
+
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
     }
 
     public BooleanExpression getConditionExpression() {

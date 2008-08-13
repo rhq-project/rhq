@@ -24,6 +24,7 @@
         <column name="CONTROL_FILTERED" required="true" default="FALSE" type="BOOLEAN"/>
 
         <column name="DELETED" required="true" default="FALSE" type="BOOLEAN"/>
+        <column name="READ_ONLY" required="true" default="FALSE" type="BOOLEAN"/>
 
         <column name="DAMPENING_CATEGORY" type="SMALLINT" required="true"/>
         <column name="DAMPENING_VALUE" type="INTEGER"/>

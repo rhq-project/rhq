@@ -104,6 +104,16 @@
     </logic:messagesNotPresent>
   </tr>
   <tr>
+  	<td width="20%" class="BlockLabel">
+      <html:img page="/images/icon_required.gif" width="9" height="9" border="0"/>
+      <fmt:message key="common.label.ReadOnly"/>
+    </td>
+  	<td width="80%" class="BlockContent">
+  		<html:checkbox property="readOnly" />
+  		<fmt:message key="alert.config.props.PB.ReadOnly"/>
+  	</td>
+  </tr>
+  <tr>
     <td colspan="4" class="BlockContent"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>
   <tr>

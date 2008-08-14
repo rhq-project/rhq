@@ -26,14 +26,22 @@
   </tr>
   <tr valign="top">
     <td width="20%" class="BlockLabel"><fmt:message key="common.label.Description"/></td>
-    <td width="30%" class="BlockContent" rowspan="3"><c:out value="${alertDef.description}"/></td>
+    <td width="30%" class="BlockContent"><c:out value="${alertDef.description}"/></td>
     <td width="20%" class="BlockLabel"><fmt:message key="alert.config.props.PB.Active"/></td>
     <tiles:insert page="/resource/common/monitor/alerts/config/AlertDefinitionActive.jsp">
     <tiles:put name="alertDef" beanName="alertDef"/>
     </tiles:insert>
   </tr>
   <tr valign="top">
-    <td width="50%" colspan="2" class="BlockLabel">&nbsp;</td>    
+    <c:choose>
+    <c:when test="${alertDef.parentId > 0}">
+    <td width="20%" class="BlockLabel"><fmt:message key="common.label.ReadOnly"/></td>
+    <td width="30%" class="BlockContent" rowspan="2"><c:out value="${alertDef.readOnly}"/></td>
+    </c:when>
+    <c:otherwise>
+    <td width="50%" colspan="2" class="BlockLabel">&nbsp;</td>
+    </c:otherwise>
+    </c:choose>
     <td width="20%" class="BlockLabel"><fmt:message key="alert.config.props.PB.DateCreated"/></td>
     <td width="30%" class="BlockContent"><hq:dateFormatter time="false" value="${alertDef.ctime}"/></td>
   </tr>

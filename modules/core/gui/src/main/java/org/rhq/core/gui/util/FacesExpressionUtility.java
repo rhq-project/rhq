@@ -22,7 +22,9 @@ import javax.el.ELContext;
 import javax.el.ExpressionFactory;
 import javax.el.MethodExpression;
 import javax.el.ValueExpression;
+import javax.el.ELException;
 import javax.faces.context.FacesContext;
+import javax.faces.FacesException;
 
 /**
  * A set of utility methods for working with EL {@link javax.el.Expression}s within a JSF application.
@@ -37,7 +39,12 @@ public abstract class FacesExpressionUtility {
     }
 
     public static <T> T getValue(ValueExpression valueExpression, Class<T> expectedType) {
-        return (T) valueExpression.getValue(getELContext());
+        try {
+            return (T) valueExpression.getValue(getELContext());
+        }
+        catch (ELException e) {
+            throw new FacesException(e);
+        }
     }
 
     public static <T> T getValue(String expressionString, Class<T> expectedType) {

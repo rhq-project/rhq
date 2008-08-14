@@ -80,7 +80,7 @@ public interface InstallerI18NResourceKeys {
     String CREATE_DATABASE_BUTTON = "createDatabaseButton";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Confirm database settings"),
-        @I18NMessage(locale = "de", value = "HEIKO Überprüfen Sie, dass die Einstellungen gültig sind") })
+        @I18NMessage(locale = "de", value = "Überprüfen Sie, dass die Einstellungen für die Datenbank gültig sind") })
     String TEST_DATABASE_NOTE = "testDatabaseNote";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Test Connection"),
@@ -92,11 +92,11 @@ public interface InstallerI18NResourceKeys {
     String EXISTING_SCHEMA_QUESTION = "existingSchemaQuestion";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Overwrite (lose existing data)"),
-        @I18NMessage(locale = "de", value = "HEIKO Überschreiben (vorhandene Daten gehen verloren)") })
+        @I18NMessage(locale = "de", value = "Überschreiben (vorhandene Daten gehen verloren)") })
     String EXISTING_SCHEMA_OPTION_OVERWRITE = "existingSchemaAnswerOverwrite";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Keep (maintain existing data)"),
-        @I18NMessage(locale = "de", value = "HEIKO ( )") })
+        @I18NMessage(locale = "de", value = "Behalten (existierende Daten werden aktualisiert)") })
     String EXISTING_SCHEMA_OPTION_KEEP = "existingSchemaAnswerUpgrade";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "The {0} property value was an invalid number [{1}]"),
@@ -109,7 +109,7 @@ public interface InstallerI18NResourceKeys {
     String INVALID_BOOLEAN = "invalidBoolean";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "The {0} property value must be set."),
-        @I18NMessage(locale = "de", value = "HEIKO") })
+        @I18NMessage(locale = "de", value = "Die Eigenschaft {0} muss gesetzt werden.") })
     String INVALID_STRING = "invalidString";
 
     @I18NMessages( {
@@ -136,9 +136,10 @@ public interface InstallerI18NResourceKeys {
         @I18NMessage(locale = "en", value = "These are the configuration settings for this ${product.shortName} Server installation. \\n\\\n"
             + "You may customize some, all or none as required.  Click on the setting name for setting-specific help. Changes to settings marked as \"Restart Required\" \\n\\\n"
             + "will not take effect until after restarting the server. In this case restart the server immediately after successful installation."),
-        @I18NMessage(locale = "de", value = "HEIKO Diese Seite zeigt Ihnen die aktuellen Konfigurationseinstellungen \\n\\\n"
+        @I18NMessage(locale = "de", value = "Diese Seite zeigt Ihnen die Konfigurationseinstellungen \\n\\\n"
             + "für die Installation des ${product.shortName} Servers. Sie können keinen, einige oder alle\\n\\\n"
-            + "dieser Werte nach Ihren Anforderungen ändern. Bitte beachten sie, dass \\n\\\n"
+            + "dieser Werte nach Ihren Anforderungen ändern. Sie können auf den Namen einer Einstellung klicken, um direkt weitere Informationen zu erhalten.\\n\\\n"
+            + "Bitte beachten sie, dass \\n\\\n"
             + "einige dieser Änderungen erst nach einem Neustart des Servers aktiv werden. \\n\\\n"
             + "Wenn Sie diese Einstellungen ändern, müssen Sie den Server sofort neu starten, damit \\n\\\n"
             + "sie aufgegriffen werden.") })
@@ -146,12 +147,13 @@ public interface InstallerI18NResourceKeys {
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "Click this checkbox to see both standard and advanced configuration settings."),
-        @I18NMessage(locale = "de", value = "HEIKO") })
+        @I18NMessage(locale = "de", value = "Markieren Sie diese Checkbox, um die standardmäßigen und weiterführende Einstellungen anzuzeigen.") })
     String ADVANCED_SETTINGS_INSTRUCTIONS = "advancedSettingsInstructions";
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "Database Settings define the database configured for this installation. All are required. Use the \"Test Connection\" button to validate the settings."),
-        @I18NMessage(locale = "de", value = "HEIKO") })
+        @I18NMessage(locale = "de", value = "Die Datenbankeinstellungen definieren die Datenbank für diese Installation. Alle einstellungen werden benötigt.\\n\\\n"
+            + "Klicken Sie auf den \"Verbindung testen\" Button, um die Einstellungen zu validieren.") })
     String DATABASE_SETTINGS_INSTRUCTIONS = "databaseSettingsInstructions";
 
     @I18NMessages( {
@@ -693,14 +695,16 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("${product.help.config.props}")
     String HELP_DOC_RHQ_SERVER_PROP_PARENT_PAGE = "helpDocRHQServerPropParentPage";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "New Server"), @I18NMessage(locale = "de", value = "HEIKO") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "New Server"),
+        @I18NMessage(locale = "de", value = "Neuer Server") })
     String NEW_SERVER_SELECT_ITEM = "newServerSelectItem";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Registered Servers:"),
-        @I18NMessage(locale = "de", value = "HEIKO") })
+        @I18NMessage(locale = "de", value = "Registrierte Server:") })
     String REGISTERED_SERVERS_LABEL = "registeredServersLabel";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Name"), @I18NMessage(locale = "de", value = "HEIKO") })
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Name"),
+        @I18NMessage(locale = "de", value = "Servername") })
     String PROP_HIGH_AVAILABILITY_NAME = "propertyHighAvailabilityName";
     @I18NMessage("-ServerName")
     String PROP_HIGH_AVAILABILITY_NAME_HELP = "propertyHighAvailabilityNameHelp";

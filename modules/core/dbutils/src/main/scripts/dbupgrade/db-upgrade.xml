@@ -129,20 +129,12 @@ DB Upgrade:
         <schema-addColumn   table="RHQ_SERVER" column="CTIME" columnType="LONG" />
         <schema-alterColumn table="RHQ_SERVER" column="CTIME" nullable="FALSE"/>
         <schema-addColumn   table="RHQ_SERVER" column="AFFINITY_GROUP_ID" columnType="INTEGER" />
-        <schema-addColumn   table="RHQ_SERVER" column="MODE" columnType="VARCHAR2" precision="32"/>
-        <schema-alterColumn table="RHQ_SERVER" column="MODE" nullable="FALSE"/>
         <schema-directSQL>
              <statement desc="Creating RHQ_SERVER foreign key relation to RHQ_AFFINITY_GROUP">
                   ALTER TABLE RHQ_SERVER 
                   ADD CONSTRAINT RHQ_SERVER_AFFINITY_GROUP_ID_FKEY 
                   FOREIGN KEY (AFFINITY_GROUP_ID)
                   REFERENCES RHQ_AFFINITY_GROUP (ID)
-             </statement>
-        </schema-directSQL>
-        <schema-directSQL>
-             <statement desc="Creating RHQ_SERVER unique constraint on NAME">
-             	CREATE UNIQUE INDEX rhq_server_name_unique
-             	ON rhq_server (name);
              </statement>
         </schema-directSQL>
 
@@ -307,6 +299,19 @@ DB Upgrade:
    <schemaSpec version="2.7">
         <schema-addColumn   table="RHQ_AGENT" column="STATUS" columnType="INTEGER" />
         <schema-alterColumn table="RHQ_AGENT" column="STATUS" nullable="TRUE" default="0" />
+   </schemaSpec>
+
+   <schemaSpec version="2.8">
+        <schema-addColumn   table="RHQ_SERVER" column="MODE" columnType="VARCHAR2" precision="32"/>
+        <schema-alterColumn table="RHQ_SERVER" column="MODE" nullable="FALSE"/>
+
+        <schema-directSQL>
+            <statement desc="Creating RHQ_SERVER unique constraint on NAME">
+           	    CREATE UNIQUE INDEX rhq_server_name_unique
+         	    ON rhq_server (name);
+            </statement>
+        </schema-directSQL>
+
    </schemaSpec>
 
 </dbupgrade>

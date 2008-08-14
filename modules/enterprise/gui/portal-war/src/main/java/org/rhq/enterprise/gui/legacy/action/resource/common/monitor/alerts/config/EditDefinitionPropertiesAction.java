@@ -81,6 +81,7 @@ public class EditDefinitionPropertiesAction extends BaseAction {
         alertDef.setDescription(defForm.getDescription());
         alertDef.setPriority(AlertPriority.values()[defForm.getPriority()]);
         alertDef.setEnabled(defForm.isActive());
+        alertDef.setReadOnly(defForm.isReadOnly());
 
         try {
             if (isAlertTemplate) {

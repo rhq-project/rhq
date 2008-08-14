@@ -230,6 +230,7 @@ public class AlertDefinition implements Serializable {
         this.description = alertDef.description;
         this.priority = alertDef.priority;
         this.enabled = alertDef.enabled;
+        this.readOnly = alertDef.readOnly;
 
         /*
          * parentId, resource, resourceType need to be managed by the calling context

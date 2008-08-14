@@ -493,6 +493,7 @@ public final class DefinitionForm extends ResourceForm {
         this.setDescription(alertDef.getDescription());
         this.setActive(alertDef.getEnabled());
         this.setPriority(alertDef.getPriority().ordinal());
+        this.setReadOnly(alertDef.isReadOnly());
 
         // no point is getting this here, because it's edited on the conditions tiles
         //this.setConditionExpression( alertDef.getConditionExpression().name() );
@@ -509,6 +510,7 @@ public final class DefinitionForm extends ResourceForm {
         alertDef.setDescription(this.getDescription());
         alertDef.setEnabled(this.isActive());
         alertDef.setPriority(AlertPriority.values()[this.getPriority()]);
+        alertDef.setReadOnly(this.isReadOnly());
 
         // no point is setting this here, because it's edited on the conditions tiles
         //alertDef.setConditionExpression( BooleanExpression.valueOf( this.getConditionExpression() ) );

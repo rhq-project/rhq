@@ -45,8 +45,6 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
     private static final String LIST_INDEX_ATTRIBUTE = "listIndex";
     private static final String READ_ONLY_ATTRIBUTE = "readOnly";
 
-    private ConfigurationDefinition configurationDefinition;
-    private Configuration configuration;
     private Boolean readOnly;
     private String listName;
     private Integer listIndex;
@@ -67,31 +65,31 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
 
     @Nullable
     public Configuration getConfiguration() {
-        if (this.configuration == null) {
-            this.configuration = FacesComponentUtility.getExpressionAttribute(this, CONFIGURATION_ATTRIBUTE,
+        //noinspection UnnecessaryLocalVariable
+        Configuration config = FacesComponentUtility.getExpressionAttribute(this, CONFIGURATION_ATTRIBUTE,
                 Configuration.class);
-        }
-
-        return this.configuration;
+        return config;
     }
 
+    /*
     public void setConfiguration(Configuration configuration) {
         this.configuration = configuration;
     }
+    */
 
     @Nullable
     public ConfigurationDefinition getConfigurationDefinition() {
-        if (this.configurationDefinition == null) {
-            this.configurationDefinition = FacesComponentUtility.getExpressionAttribute(this,
+        //noinspection UnnecessaryLocalVariable
+        ConfigurationDefinition configDef = FacesComponentUtility.getExpressionAttribute(this,
                 CONFIGURATION_DEFINITION_ATTRIBUTE, ConfigurationDefinition.class);
-        }
-
-        return this.configurationDefinition;
+        return configDef;
     }
 
+    /*
     public void setConfigurationDefinition(ConfigurationDefinition configurationDefinition) {
         this.configurationDefinition = configurationDefinition;
     }
+    */
 
     public boolean isReadOnly() {
         if (this.readOnly == null) {
@@ -194,17 +192,15 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
     @Override
     public Object saveState(FacesContext facesContext) {
         if (this.stateValues == null) {
-            this.stateValues = new Object[8];
+            this.stateValues = new Object[6];
         }
 
         this.stateValues[0] = super.saveState(facesContext);
-        this.stateValues[1] = this.configurationDefinition;
-        this.stateValues[2] = this.configuration;
-        this.stateValues[3] = this.readOnly;
-        this.stateValues[4] = this.listName;
-        this.stateValues[5] = this.listIndex;
-        this.stateValues[6] = this.prevalidate;
-        this.stateValues[7] = this.aggregate;
+        this.stateValues[1] = this.readOnly;
+        this.stateValues[2] = this.listName;
+        this.stateValues[3] = this.listIndex;
+        this.stateValues[4] = this.prevalidate;
+        this.stateValues[5] = this.aggregate;
         return this.stateValues;
     }
 
@@ -212,13 +208,11 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
     public void restoreState(FacesContext facesContext, Object stateValues) {
         this.stateValues = (Object[]) stateValues;
         super.restoreState(facesContext, this.stateValues[0]);
-        this.configurationDefinition = (ConfigurationDefinition) this.stateValues[1];
-        this.configuration = (Configuration) this.stateValues[2];
-        this.readOnly = (Boolean) this.stateValues[3];
-        this.listName = (String) this.stateValues[4];
-        this.listIndex = (Integer) this.stateValues[5];
-        this.prevalidate = (Boolean) this.stateValues[6];
-        this.aggregate = (Boolean) this.stateValues[7];
+        this.readOnly = (Boolean) this.stateValues[1];
+        this.listName = (String) this.stateValues[2];
+        this.listIndex = (Integer) this.stateValues[3];
+        this.prevalidate = (Boolean) this.stateValues[4];
+        this.aggregate = (Boolean) this.stateValues[5];
     }
 
     /*

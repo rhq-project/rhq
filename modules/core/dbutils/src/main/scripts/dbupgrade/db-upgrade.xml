@@ -71,10 +71,17 @@ DB Upgrade:
             column="SUPPORTS_ARCHITECTURE"
             columnType="BOOLEAN" />
 
+        <schema-directSQL>
+            <statement desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
+                UPDATE RHQ_PACKAGE_TYPE SET SUPPORTS_ARCHITECTURE = FALSE
+            </statement>
+        </schema-directSQL>
+
         <schema-alterColumn
            table="RHQ_PACKAGE_TYPE"
            column="SUPPORTS_ARCHITECTURE"
            nullable="FALSE" />
+
    </schemaSpec>
 
    <!-- RHQ-176 - Add notes column to content requests -->

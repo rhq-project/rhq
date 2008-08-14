@@ -20,7 +20,7 @@
 
 if [ -f "rhq-agent-env.sh" ]; then
    echo "Loading script environment from rhq-agent-env.sh..."
-   . rhq-agent-env.sh
+   . ./rhq-agent-env.sh
 fi
 
 # ----------------------------------------------------------------------

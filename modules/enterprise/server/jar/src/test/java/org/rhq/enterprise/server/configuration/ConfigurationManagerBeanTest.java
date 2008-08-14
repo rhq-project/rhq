@@ -990,7 +990,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         }
 
         @Asynchronous(guaranteedDelivery = true)
-        public void synchronizeInventory(InventoryReport report, ResourceSyncInfo syncInfo) {
+        public void synchronizeInventory(ResourceSyncInfo syncInfo) {
         }
     }
 }

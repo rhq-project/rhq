@@ -208,6 +208,11 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
         throws InvalidPluginConfigurationClientException, PluginContainerException {
     }
 
+    @Asynchronous(guaranteedDelivery = true)
+    public void synchronizeInventory(ResourceSyncInfo syncInfo) {
+        return;
+    }
+
     public void createResource(CreateResourceRequest request) throws PluginContainerException {
     }
 
@@ -222,9 +227,5 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
     public DeleteResourceResponse executeDeleteResourceImmediately(DeleteResourceRequest request)
         throws PluginContainerException {
         return null;
-    }
-
-    @Asynchronous(guaranteedDelivery = true)
-    public void synchronizeInventory(InventoryReport report, ResourceSyncInfo syncInfo) {
     }
 }

@@ -1,0 +1,178 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="HA Servers"/>
+
+   <ui:define name="breadcrumbs">
+      <h:outputLink value="listHaServers.xhtml">
+         ${msg["ha.server.list.breadcrumb"]}
+      </h:outputLink>
+   </ui:define>
+
+   <ui:define name="body">
+   
+   <br/>
+   <h:messages showSummary="true"
+               showDetail="true"
+               infoClass="InfoBlock"
+               warnClass="WarnBlock"
+               errorClass="ErrorBlock"
+               fatalClass="FatalBlock"
+               globalOnly="true"
+               layout="table"
+               width="100%"/>
+
+
+      <h:form id="haServersListForm">
+         
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Channels"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+            <ui:param name="haServersDataModel" value="#{ListHaServersUIBean.dataModel}"/>
+            <rich:dataTable binding="#{ListHaServersUIBean.dataTable}"
+                            id="haServersDataTable"
+                            rows="#{PageControl.HaServersList.pageSize}"
+                            value="#{haServersDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 15%, 10%, 10%, 10%, 10%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer">
+
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="HaServersList" />
+               </f:facet>
+      
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedHaServers" />
+                  </f:facet>
+                  
+                  <onc:select name="selectedHaServers" value="#{item.id}" />
+               </rich:column>
+      
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.id">
+                        <h:outputText styleClass="headerText" value="ID" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputText value="#{item.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.name">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputLink value="haServer.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="id" value="#{item.id}"/>
+                     <h:outputText value="#{item.name}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.mode">
+                        <h:outputText styleClass="headerText" value="Mode" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{item.mode}"/>
+               </rich:column>
+                              
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.address">
+                        <h:outputText styleClass="headerText" value="Endpoint Address" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{item.address}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.port">
+                        <h:outputText styleClass="headerText" value="HTTP Port" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{item.port}"/>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.securePort">
+                        <h:outputText styleClass="headerText" value="Secure HTTPS Port" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{item.securePort}"/>
+               </rich:column>
+                
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.ctime">
+                        <h:outputText styleClass="headerText" value="Date Registered" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{item.ctime}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                  </h:outputText>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <!-- colspan 7:6 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 8 : 7}" width="100%">
+                        <onc:selectCommandButton action="#{ListHaServersUIBean.setSelectedHaServersModeNormal}"
+                                                 value="SET NORMAL" target="selectedHaServers" styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{ListHaServersUIBean.setSelectedHaServersModeMaintenance}"
+                                                 value="SET MAINTENANCE" target="selectedHaServers" styleClass="on-pager-button buttonsmall"/>                                                                                                                                                   
+                        <onc:selectCommandButton action="#{ListHaServersUIBean.removeSelectedHaServers}"
+                                                 value="REMOVE SELECTED" target="selectedHaServers" styleClass="on-pager-button buttonsmall"/>
+
+                        <ui:param name="paginationDataTableName" value="haServersDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{haServersDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.HaServersList}"/>
+                        <ui:include src="../resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+            
+         </rich:panel>
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

@@ -111,4 +111,28 @@
 </hq:authorization>
 <!--  /  -->
 
+<hq:authorization permission="MANAGE_SETTINGS">
+<!--  some empty space -->
+<br>
+<br>
+<!--  /  -->
+
+<tiles:insert definition=".header.tab">
+  <tiles:put name="tabKey" value="admin.home.Ha"/>
+</tiles:insert>
+
+<!--  HIGH AVAILABILITY -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+   <tr>
+      <td width="20%" class="BlockLabel"></td>
+      <td width="30%" class="BlockContent"><html:link page="/rhq/ha/listHaServers.xhtml"><fmt:message key="admin.home.Ha.ListHaServers"/></html:link></td>
+   </tr>
+   <tr>
+      <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
+   </tr>
+</table>
+</hq:authorization>
+<!--  /  -->
+
+
 <tiles:insert definition=".page.footer"/>

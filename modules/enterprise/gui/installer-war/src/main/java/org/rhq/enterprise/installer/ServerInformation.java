@@ -1082,8 +1082,9 @@ public class ServerInformation {
             if (0 == stm.executeUpdate()) {
                 stm.close();
 
+                // set all new servers to mode=NORMAL
                 stm = conn
-                    .prepareStatement("INSERT INTO rhq_server ( id, name, address, port, secure_port, ctime ) VALUES ( ?, ?, ?, ?, ?, ? )");
+                    .prepareStatement("INSERT INTO rhq_server ( id, name, address, port, secure_port, ctime, mode ) VALUES ( ?, ?, ?, ?, ?, ?, 'NORMAL' )");
                 stm.setInt(1, db.getNextSequenceValue(conn, "rhq_server", "id"));
                 stm.setString(2, server.name);
                 stm.setString(3, server.endpointAddress);

@@ -24,6 +24,7 @@ import org.rhq.enterprise.gui.alert.ListAlertDefinitionsUIBean;
 import org.rhq.enterprise.gui.alert.ListAlertHistoryUIBean;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.configuration.history.ListConfigurationUpdateUIBean;
+import org.rhq.enterprise.gui.content.AuditTrailUIBean;
 import org.rhq.enterprise.gui.content.AvailableResourceChannelsUIBean;
 import org.rhq.enterprise.gui.content.ChannelAssociationsUIBean;
 import org.rhq.enterprise.gui.content.ChannelContentSourcesUIBean;
@@ -46,10 +47,10 @@ import org.rhq.enterprise.gui.content.ListPackagesUIBean;
 import org.rhq.enterprise.gui.content.ResourceChannelsUIBean;
 import org.rhq.enterprise.gui.content.ResourcePackageVersionsUIBean;
 import org.rhq.enterprise.gui.content.ShowContentServiceRequestUIBean;
-import org.rhq.enterprise.gui.content.AuditTrailUIBean;
 import org.rhq.enterprise.gui.definition.group.GroupDefinitionUIBean;
 import org.rhq.enterprise.gui.definition.group.ListGroupDefinitionsUIBean;
 import org.rhq.enterprise.gui.discovery.AutoDiscoveryQueueUIBean;
+import org.rhq.enterprise.gui.ha.ListHaServersUIBean;
 import org.rhq.enterprise.gui.inventory.group.ListResourceGroupMembersUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyDetailsUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyHistoryUIBean;
@@ -178,7 +179,12 @@ public enum PageControlView {
     // Auto Discovery
 
     /** */
-    AutoDiscoveryPlatformList(AutoDiscoveryQueueUIBean.class);
+    AutoDiscoveryPlatformList(AutoDiscoveryQueueUIBean.class),
+
+    // High Availability (HA)
+
+    /** */
+    HaServersList(ListHaServersUIBean.class);
 
     private Class<? extends PagedDataTableUIBean> beanClass;
 
@@ -194,5 +200,4 @@ public enum PageControlView {
         PagedDataTableUIBean uiBean = FacesContextUtility.getBean(beanClass);
         return uiBean;
     }
-
 }

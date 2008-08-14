@@ -77,6 +77,9 @@ public class Server implements Serializable {
     @Column(name = "SECURE_PORT", nullable = false)
     private int securePort;
 
+    @Column(name = "MODE", nullable = false)
+    private String mode;
+
     // the time this server node was installed into the infrastructure
     @Column(name = "CTIME", nullable = false)
     private long ctime;
@@ -128,7 +131,7 @@ public class Server implements Serializable {
         return securePort;
     }
 
-    public void setSecyrePort(int securePort) {
+    public void setSecurePort(int securePort) {
         this.securePort = securePort;
     }
 
@@ -142,6 +145,30 @@ public class Server implements Serializable {
 
     public void setAffinityGroup(AffinityGroup affinityGroup) {
         this.affinityGroup = affinityGroup;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(Mode mode) {
+        this.mode = mode.name();
+    }
+
+    public enum Mode {
+
+        NORMAL("This server is a Normal Member of the HA server cloud"), MAINTENANCE(
+            "This server is a Maintenance Mode member of the HA server cloud");
+
+        public final String message;
+
+        private Mode(String message) {
+            this.message = message;
+        }
+
+        public String getMessage() {
+            return message;
+        }
     }
 
     public List<Agent> getAgents() {

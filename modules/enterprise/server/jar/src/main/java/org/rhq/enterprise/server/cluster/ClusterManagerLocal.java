@@ -24,6 +24,8 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 
 /**
  * @author Joseph Marques
@@ -40,5 +42,9 @@ public interface ClusterManagerLocal {
 
     List<Server> getAllServers();
 
+    PageList<Server> getAllServersAsPageList(PageControl pc);
+
     int getServerCount();
+
+    void updateServerMode(Integer[] serverIds, Server.Mode mode);
 }

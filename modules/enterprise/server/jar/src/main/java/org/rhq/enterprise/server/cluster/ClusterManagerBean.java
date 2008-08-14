@@ -32,6 +32,8 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 
@@ -56,7 +58,8 @@ public class ClusterManagerBean implements ClusterManagerLocal {
             server.setName("localhost");
             server.setAddress("localhost");
             server.setPort(7080);
-            server.setSecyrePort(7443);
+            server.setSecurePort(7443);
+            server.setMode(Server.Mode.NORMAL);
             entityManager.persist(server);
         }
     }
@@ -87,6 +90,19 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         return results;
     }
 
+    @SuppressWarnings("unchecked")
+    public PageList<Server> getAllServersAsPageList(PageControl pc) {
+        pc.initDefaultOrderingField("s.name");
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Server.QUERY_FIND_ALL, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Server.QUERY_FIND_ALL);
+
+        List<Server> results = query.getResultList();
+        long count = (Long) countQuery.getSingleResult();
+
+        return new PageList<Server>(results, (int) count, pc);
+    }
+
     public int getServerCount() {
         Query query = PersistenceUtility.createCountQuery(entityManager, Server.QUERY_FIND_ALL);
 
@@ -96,6 +112,20 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         } catch (NoResultException nre) {
             log.debug("Could not get count of cloud instances, returning 0...");
             return 0;
+        }
+    }
+
+    public void updateServerMode(Integer[] serverIds, Server.Mode mode) {
+
+        if (serverIds.length > 0) {
+            try {
+                for (Integer id : serverIds) {
+                    Server server = entityManager.find(Server.class, id);
+                    server.setMode(mode);
+                }
+            } catch (Exception e) {
+                log.debug("Failed to update HA server modes: " + e);
+            }
         }
     }
 

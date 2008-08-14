@@ -17,8 +17,14 @@
         <column name="SECURE_PORT" required="true" type="INTEGER"/>
         <column name="CTIME" required="true" type="LONG"/>
         <column name="AFFINITY_GROUP_ID" type="INTEGER" references="RHQ_AFFINITY_GROUP" required="false"/>
-    </table>
+        <column name="MODE" required="true" size="32" type="VARCHAR2"/>        
     
+        <!--  This index is for constraint, not performance -->    
+        <index name="RHQ_SERVER_NAME_UNIQUE" unique="true">
+            <field ref="NAME"/>
+        </index>
+    </table>
+
     <!--  new agent -->
     <table name="RHQ_AGENT">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>

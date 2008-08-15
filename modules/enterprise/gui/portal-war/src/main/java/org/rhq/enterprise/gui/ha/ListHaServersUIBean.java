@@ -60,7 +60,7 @@ public class ListHaServersUIBean extends PagedDataTableUIBean {
         return "success";
     }
 
-    public String setSelectedHaServersMode(Server.Mode mode) {
+    public String setSelectedHaServersMode(Server.OperationMode mode) {
         // Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selected = getSelectedHaServers();
         Integer[] ids = getIntegerArray(selected);
@@ -85,11 +85,11 @@ public class ListHaServersUIBean extends PagedDataTableUIBean {
     }
 
     public String setSelectedHaServersModeMaintenance() {
-        return setSelectedHaServersMode(Server.Mode.MAINTENANCE);
+        return setSelectedHaServersMode(Server.OperationMode.MAINTENANCE);
     }
 
     public String setSelectedHaServersModeNormal() {
-        return setSelectedHaServersMode(Server.Mode.NORMAL);
+        return setSelectedHaServersMode(Server.OperationMode.NORMAL);
     }
 
     @Override

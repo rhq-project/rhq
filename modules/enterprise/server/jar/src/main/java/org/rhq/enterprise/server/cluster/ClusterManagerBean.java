@@ -59,7 +59,7 @@ public class ClusterManagerBean implements ClusterManagerLocal {
             server.setAddress("localhost");
             server.setPort(7080);
             server.setSecurePort(7443);
-            server.setMode(Server.Mode.NORMAL);
+            server.setOperationMode(Server.OperationMode.NORMAL);
             entityManager.persist(server);
         }
     }
@@ -115,13 +115,13 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         }
     }
 
-    public void updateServerMode(Integer[] serverIds, Server.Mode mode) {
+    public void updateServerMode(Integer[] serverIds, Server.OperationMode mode) {
 
         if (serverIds.length > 0) {
             try {
                 for (Integer id : serverIds) {
                     Server server = entityManager.find(Server.class, id);
-                    server.setMode(mode);
+                    server.setOperationMode(mode);
                 }
             } catch (Exception e) {
                 log.debug("Failed to update HA server modes: " + e);

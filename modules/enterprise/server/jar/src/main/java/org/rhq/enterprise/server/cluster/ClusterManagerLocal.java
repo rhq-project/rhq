@@ -46,5 +46,5 @@ public interface ClusterManagerLocal {
 
     int getServerCount();
 
-    void updateServerMode(Integer[] serverIds, Server.Mode mode);
+    void updateServerMode(Integer[] serverIds, Server.OperationMode mode);
 }

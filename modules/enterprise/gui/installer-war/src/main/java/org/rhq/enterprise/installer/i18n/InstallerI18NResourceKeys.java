@@ -158,22 +158,22 @@ public interface InstallerI18NResourceKeys {
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "Installation Settings define the required server endpoint for this installation."),
-        @I18NMessage(locale = "de", value = "HEIKO") })
+        @I18NMessage(locale = "de", value = "Diese Einstellungen definieren den notwendigen Server-Endpunkt für diese Installation.") })
     String INSTALL_SETTINGS_INSTRUCTIONS = "installSettingsInstructions";
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "If performing an upgrade or re-installation then select from the list of registered servers: "),
-        @I18NMessage(locale = "de", value = "HEIKO") })
+        @I18NMessage(locale = "de", value = "Wählen Sie aus der Liste der registrierten Server, wenn Sie ein Upgrade oder eine Neuinstallation durchführen.") })
     String INSTALL_SETTINGS_NOTE_1 = "installSettingsNote1";
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "If installing a new server enter the server endpoint settings below:"),
-        @I18NMessage(locale = "de", value = "HEIKO") })
+        @I18NMessage(locale = "de", value = "Geben Sie den Serverendpunkt unten ein, wenn Sie eine Neuinstallation durchführen:") })
     String INSTALL_SETTINGS_NOTE_2 = "installSettingsNote2";
 
     @I18NMessages( {
         @I18NMessage(locale = "en", value = "Server Settings configure the server for this installation. All server settings are required."),
-        @I18NMessage(locale = "de", value = "HEIKO") })
+        @I18NMessage(locale = "de", value = "Diese Servereinstellungen konfigurieren den Server für diese Installation. Alle Einstellungen werden benötigt.") })
     String SERVER_SETTINGS_INSTRUCTIONS = "serverSettingsInstructions";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Install ${product.shortName} Server!"),
@@ -205,8 +205,8 @@ public interface InstallerI18NResourceKeys {
         @I18NMessage(locale = "en", value = "You have reached the ${product.shortName} Installer. Use this page \\n\\\n"
             + "to install and configure the ${product.shortName} Server. \\n\\\n"
             + "Once complete you will be able to log on and use ${product.shortName}."),
-        @I18NMessage(locale = "de", value = "HEIKO Willkommen beim Installationsprogramm von ${product.shortName}. Mit diesem können Sie \\n\\\n"
-            + "die Installation und Konfiguration von ${product.shortName} komplettieren. \\n\\\n"
+        @I18NMessage(locale = "de", value = "Willkommen beim Installationsprogramm von ${product.shortName}. Mit diesem können Sie \\n\\\n"
+            + "${product.shortName} installieren und konfigurieren. \\n\\\n"
             + "Nachdem dies geschehen ist, können Sie sich einloggen und mit ${product.shortName} arbeiten") })
     String WELCOME_MESSAGE = "welcomeMessage";
 
@@ -710,10 +710,10 @@ public interface InstallerI18NResourceKeys {
     String PROP_HIGH_AVAILABILITY_NAME_HELP = "propertyHighAvailabilityNameHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Server Endpoint Address"),
-        @I18NMessage(locale = "de", value = "HEIKO") })
+        @I18NMessage(locale = "de", value = "HA-Endpunkt-Adresse des Servers") })
     String PROP_HIGH_AVAILABILITY_ENDPOINT_ADDRESS = "propertyHighAvailabilityEndpointAddress";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Server Affinity Group Name"),
-        @I18NMessage(locale = "de", value = "HEIKO") })
+        @I18NMessage(locale = "de", value = "Name der zugehörigen Servergruppe") })
     String PROP_HIGH_AVAILABILITY_AFFINITY_GROUP = "propertyHighAvailabilityAffinityGroup";
 }

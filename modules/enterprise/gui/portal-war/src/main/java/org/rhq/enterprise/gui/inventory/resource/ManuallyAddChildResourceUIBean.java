@@ -20,10 +20,13 @@ package org.rhq.enterprise.gui.inventory.resource;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.domain.configuration.Configuration;
@@ -124,9 +127,9 @@ public class ManuallyAddChildResourceUIBean {
             return OUTCOME_BAD_TYPE;
         }
 
-        if (this.configurationDefinition == null)
-        {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "There are no connection properties defined for " + this.type);
+        if (this.configurationDefinition == null) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "There are no connection properties defined for " + this.type);
             return OUTCOME_BAD_TYPE;
         }
 
@@ -135,6 +138,7 @@ public class ManuallyAddChildResourceUIBean {
     }
 
     public String selectTemplate() {
+        lookupConfiguration();
         return OUTCOME_SUCCESS;
     }
 
@@ -211,6 +215,7 @@ public class ManuallyAddChildResourceUIBean {
             : new Configuration();
         if (pluginConfig != null) {
             ConfigurationMaskingUtility.maskConfiguration(pluginConfig, this.configurationDefinition);
+            configuration = pluginConfig;
         }
 
         return pluginConfig;

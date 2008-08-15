@@ -44,8 +44,7 @@ import org.rhq.core.domain.resource.Agent;
 /**
  * An RHQ server node in the cluster
  * 
- * @author jmarques
- *
+ * @author Joseph Marques
  */
 @Entity(name = "Server")
 @NamedQueries( //
@@ -77,8 +76,8 @@ public class Server implements Serializable {
     @Column(name = "SECURE_PORT", nullable = false)
     private int securePort;
 
-    @Column(name = "MODE", nullable = false)
-    private String mode;
+    @Column(name = "OPERATION_MODE", nullable = false)
+    private String operationMode;
 
     // the time this server node was installed into the infrastructure
     @Column(name = "CTIME", nullable = false)
@@ -147,22 +146,22 @@ public class Server implements Serializable {
         this.affinityGroup = affinityGroup;
     }
 
-    public String getMode() {
-        return mode;
+    public String getOperationMode() {
+        return operationMode;
     }
 
-    public void setMode(Mode mode) {
-        this.mode = mode.name();
+    public void setOperationMode(OperationMode operationMode) {
+        this.operationMode = operationMode.name();
     }
 
-    public enum Mode {
+    public enum OperationMode {
 
-        NORMAL("This server is a Normal Member of the HA server cloud"), MAINTENANCE(
-            "This server is a Maintenance Mode member of the HA server cloud");
+        NORMAL("This server is a Normal Member of the HA server cloud"),
+        MAINTENANCE("This server is a Maintenance Mode member of the HA server cloud");
 
         public final String message;
 
-        private Mode(String message) {
+        private OperationMode(String message) {
             this.message = message;
         }
 

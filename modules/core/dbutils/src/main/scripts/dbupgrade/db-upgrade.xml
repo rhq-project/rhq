@@ -309,8 +309,8 @@ DB Upgrade:
    </schemaSpec>
 
    <schemaSpec version="2.8">
-        <schema-addColumn   table="RHQ_SERVER" column="MODE" columnType="VARCHAR2" precision="32"/>
-        <schema-alterColumn table="RHQ_SERVER" column="MODE" nullable="FALSE"/>
+        <schema-addColumn   table="RHQ_SERVER" column="OPERATION_MODE" columnType="VARCHAR2" precision="32"/>
+        <schema-alterColumn table="RHQ_SERVER" column="OPERATION_MODE" nullable="FALSE"/>
 
         <schema-directSQL>
             <statement desc="Creating RHQ_SERVER unique constraint on NAME">

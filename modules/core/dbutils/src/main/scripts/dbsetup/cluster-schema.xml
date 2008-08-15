@@ -17,7 +17,7 @@
         <column name="SECURE_PORT" required="true" type="INTEGER"/>
         <column name="CTIME" required="true" type="LONG"/>
         <column name="AFFINITY_GROUP_ID" type="INTEGER" references="RHQ_AFFINITY_GROUP" required="false"/>
-        <column name="MODE" required="true" size="32" type="VARCHAR2"/>        
+        <column name="OPERATION_MODE" required="true" size="32" type="VARCHAR2"/>
     
         <!--  This index is for constraint, not performance -->    
         <index name="RHQ_SERVER_NAME_UNIQUE" unique="true">

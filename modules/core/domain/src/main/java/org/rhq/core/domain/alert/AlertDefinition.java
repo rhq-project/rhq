@@ -66,7 +66,8 @@ import org.rhq.core.domain.resource.ResourceType;
         + "  FROM AlertDefinition a " + "       LEFT JOIN FETCH a.conditions "
         + " WHERE a.deleted = false AND a.enabled = true " + "       AND a.recoveryId = :recoveryDefinitionId"),
     @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_ALERT_TEMPLATE_ID, query = "SELECT a.id "
-        + "  FROM AlertDefinition a " + " WHERE a.parentId = :alertTemplateId " + "       AND a.deleted = false"),
+        + "  FROM AlertDefinition a " + " WHERE a.parentId = :alertTemplateId " + "       AND a.deleted = false"
+        + "       AND a.readOnly=false"),
     @NamedQuery(name = AlertDefinition.QUERY_FIND_RESOURCE_IDS_WITH_NO_ACTIVE_TEMPLATE_DEFINITION, query = "SELECT res.id "
         + "  FROM Resource res "
         + " WHERE res.resourceType.id = :resourceTypeId "

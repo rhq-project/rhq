@@ -136,7 +136,7 @@
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="s.ctime">
-                        <h:outputText styleClass="headerText" value="Date Registered" />
+                        <h:outputText styleClass="headerText" value="Last Update Time" />
                      </onc:sortableColumnHeader>
                   </f:facet>
                
@@ -145,10 +145,26 @@
                   </h:outputText>
                </rich:column>
 
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Affinity Group" />
+                  </f:facet>
+               
+                  <h:outputText value="#{item.affinityGroup.name}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Agent Count" />
+                  </f:facet>
+               
+                  <h:outputText value="TODO"/>
+               </rich:column>
+
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 7:6 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 8 : 7}" width="100%">
+                     <rich:column colspan="#{param.debug ? 10 : 9}" width="100%">
                         <onc:selectCommandButton action="#{ListHaServersUIBean.setSelectedHaServersModeNormal}"
                                                  value="SET NORMAL" target="selectedHaServers" styleClass="on-pager-button buttonsmall"/>
                         <onc:selectCommandButton action="#{ListHaServersUIBean.setSelectedHaServersModeMaintenance}"

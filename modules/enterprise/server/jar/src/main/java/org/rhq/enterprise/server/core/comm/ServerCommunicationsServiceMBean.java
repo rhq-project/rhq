@@ -20,9 +20,12 @@ package org.rhq.enterprise.server.core.comm;
 
 import java.util.List;
 import java.util.Properties;
+
 import javax.management.ObjectName;
+
 import org.jboss.mx.util.ObjectNameFactory;
 import org.jboss.remoting.InvokerLocator;
+
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.communications.ServiceContainer;
 import org.rhq.enterprise.communications.ServiceContainerMetricsMBean;
@@ -126,6 +129,11 @@ public interface ServerCommunicationsServiceMBean extends ServiceContainerMetric
      * @throws Exception if failed to stop the server-side services
      */
     void stop() throws Exception;
+
+    /**
+     * @return true if communication services have been started. False if not initialized or stopped.
+     */
+    boolean isStarted();
 
     /**
      * Returns the service container that houses all the server-side communications services. Will return <code>

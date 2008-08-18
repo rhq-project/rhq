@@ -34,14 +34,18 @@ import java.util.Properties;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.InvalidPreferencesFormatException;
 import java.util.prefs.Preferences;
+
 import javax.management.MBeanRegistration;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
+
 import mazz.i18n.Logger;
+
 import org.jboss.remoting.InvokerLocator;
 import org.jboss.system.server.ServerConfig;
 import org.jboss.util.StringPropertyReplacer;
+
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
@@ -147,9 +151,11 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      * method exists (as opposed to "start()") because we do not want these communications services initialized until
      * after we are assured the EJBs are all deployed and we are ready to begin processing incoming agent messages.
      *
+     * Synchronized to ensure that the start operation completes atomically.
+     * 
      * @see ServerCommunicationsServiceMBean#startCommunicationServices()
      */
-    public void startCommunicationServices() throws Exception {
+    public synchronized void startCommunicationServices() throws Exception {
         if (m_container == null) {
             // do not rely on the configuration that has been persisted
             // we are forcing the configuration file to be reloaded
@@ -174,9 +180,11 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
     }
 
     /**
+     * Synchronized to ensure that the stop operation completes atomically.
+     * 
      * @see ServerCommunicationsServiceMBean#stop()
      */
-    public void stop() {
+    public synchronized void stop() {
         if (m_container != null) {
             m_container.shutdown();
             m_container = null;
@@ -192,6 +200,13 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         }
 
         return;
+    }
+
+    /**
+     * @see ServerCommunicationsServiceMBean#isStarted()
+     */
+    public boolean isStarted() {
+        return (m_container != null);
     }
 
     /**

@@ -39,4 +39,6 @@ public interface ServerManagerLocal {
     List<Agent> getAgentsWithStatus();
 
     Server getServer();
+
+    void changeHaServerModeIfNeeded();
 }

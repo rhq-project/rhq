@@ -23,7 +23,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 import org.jboss.remoting.InvokerLocator;
+
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
@@ -194,6 +196,10 @@ public class TestServerCommunicationsService implements TestServerCommunications
     }
 
     public void stop() throws Exception {
+    }
+
+    public boolean isStarted() {
+        return true;
     }
 
     private class MockServiceContainer extends ServiceContainer {

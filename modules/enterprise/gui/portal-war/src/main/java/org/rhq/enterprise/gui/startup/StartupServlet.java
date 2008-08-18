@@ -50,6 +50,7 @@ import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutContentRequestsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutOperationsJob;
 import org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob;
+import org.rhq.enterprise.server.scheduler.jobs.instance.ChangeHaServerModeIfNeededJob;
 import org.rhq.enterprise.server.scheduler.jobs.instance.ReloadServerCacheIfNeededJob;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -70,6 +71,10 @@ public class StartupServlet extends HttpServlet {
     public void init() throws ServletException {
         log("All business tier deployments are complete - finishing the startup");
 
+        // Before starting determine the operating mode of this server. It affects what we start
+        createDefaultServerIfNecessary(); // before comm to ensure a registered server
+        Server.OperationMode operationMode = getServerOperationMode();
+
         // The order here is important - make sure if you change this you know what you are doing.
         // I'm not even sure this is ok.  If we start the scheduler before the comm layer, what happens
         // if a stored job needs to send a message?  But if we start the comm layer before the scheduler,
@@ -80,7 +85,9 @@ public class StartupServlet extends HttpServlet {
         startHibernateStatistics();
         startServerPluginContainer(); // before comm in case an agent wants to talk to it
         installJaasModules();
-        startServerCommunicationServices();
+        if (!(Server.OperationMode.MAINTENANCE == operationMode)) {
+            startServerCommunicationServices();
+        }
         startScheduler();
         scheduleJobs();
         startAgentClients();
@@ -88,7 +95,6 @@ public class StartupServlet extends HttpServlet {
         startEmbeddedAgent();
         registerShutdownListener();
         registerBootTime();
-        createDefaultServerIfNecessary();
 
         return;
     }
@@ -103,6 +109,22 @@ public class StartupServlet extends HttpServlet {
      */
     private void createDefaultServerIfNecessary() {
         LookupUtil.getClusterManager().createDefaultServerIfNecessary();
+    }
+
+    /**
+     * @return the current operation mode for this server.  OperationMode.NORMAL if it can't be determined.
+     */
+    private Server.OperationMode getServerOperationMode() {
+
+        Server.OperationMode result = null;
+
+        try {
+            result = LookupUtil.getServerManager().getServer().getOperationMode();
+        } catch (Exception e) {
+            log("Could not determine server operation mode: " + e);
+        }
+
+        return (null == result) ? Server.OperationMode.NORMAL : result;
     }
 
     /**
@@ -224,7 +246,7 @@ public class StartupServlet extends HttpServlet {
 
         // TODO [mazz]: make all of the intervals here configurable via something like SystemManagerBean
 
-        // periodic job that chack
+        // periodic job that checks for server cache reload
         try {
             // do not check until we are up at least 1min, but check every 30secs thereafter
             final long initialDelay = 1000L * 60;
@@ -233,6 +255,17 @@ public class StartupServlet extends HttpServlet {
                 true, false, initialDelay, interval);
         } catch (Exception e) {
             throw new ServletException("Cannot schedule quartz tester", e);
+        }
+
+        // periodic job that checks for server mode change
+        try {
+            // do not check until we are up at least 1min, but check every 30secs thereafter
+            final long initialDelay = 1000L * 60;
+            final long interval = 1000L * 30;
+            serverScheduler.scheduleRepeatingJob("ChangeHaServerMode", "ServerJobs",
+                ChangeHaServerModeIfNeededJob.class, true, false, initialDelay, interval);
+        } catch (Exception e) {
+            throw new ServletException("Cannot schedule HA server mode job", e);
         }
 
         // Suspected Agents Job

@@ -889,7 +889,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         AgentClient agentClient = LookupUtil.getAgentManager().getAgentClient(resource.getAgent());
         Set<ResourceMeasurementScheduleRequest> resourceMeasurementScheduleRequests = new HashSet<ResourceMeasurementScheduleRequest>();
         resourceMeasurementScheduleRequests.add(resourceMeasurementScheduleRequest);
-        //        agentClient.getMeasurementAgentService().scheduleCollection(resourceMeasurementScheduleRequests);
         agentClient.getMeasurementAgentService().updateCollection(resourceMeasurementScheduleRequests);
     }
 

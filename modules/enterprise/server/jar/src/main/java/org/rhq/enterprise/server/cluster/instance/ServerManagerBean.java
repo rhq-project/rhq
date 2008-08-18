@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.servlet.ServletException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,6 +31,8 @@ import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
+import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
+import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 
 /**
  * @author Joseph Marques
@@ -73,4 +76,29 @@ public class ServerManagerBean implements ServerManagerLocal {
         return result;
     }
 
+    public void changeHaServerModeIfNeeded() {
+        Server server = getServer();
+
+        if (Server.OperationMode.NORMAL == server.getOperationMode()) {
+            try {
+                ServerCommunicationsServiceMBean service = ServerCommunicationsServiceUtil.getService();
+                if (!service.isStarted()) {
+                    ServerCommunicationsServiceUtil.getService().startCommunicationServices();
+                    log.info("Started the server-agent communications services due to Operation Mode change.");
+                }
+            } catch (Exception e) {
+                log.error("Unable to start the server-agent communications services: " + e);
+            }
+        } else if (Server.OperationMode.MAINTENANCE == server.getOperationMode()) {
+            try {
+                ServerCommunicationsServiceMBean service = ServerCommunicationsServiceUtil.getService();
+                if (service.isStarted()) {
+                    ServerCommunicationsServiceUtil.getService().stop();
+                    log.info("Stopped the server-agent communications services due to Operation Mode change.");
+                }
+            } catch (Exception e) {
+                log.error("Unable to stop the server-agent communications services: " + e);
+            }
+        }
+    }
 }

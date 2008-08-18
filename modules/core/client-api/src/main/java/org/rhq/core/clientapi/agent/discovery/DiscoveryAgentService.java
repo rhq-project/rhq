@@ -58,8 +58,6 @@ public interface DiscoveryAgentService {
     @Asynchronous(guaranteedDelivery = true)
     void synchronizeInventory(ResourceSyncInfo syncInfo);
 
-    //void synchronizeInventory(int resourceId, EnumSet<SynchronizationType> synchronizationTypes);
-
     /**
      * Access to the current inventory managed by the plugin container.
      *

@@ -64,6 +64,12 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
 
     public void updateByAlertDefinition(int alertDefinitionId) {
         AlertDefinition definition = entityManager.find(AlertDefinition.class, alertDefinitionId);
+        boolean isAlertTemplate = (null != definition.getResourceType());
+
+        // protect against template update, it has no resource and/or agent
+        if (isAlertTemplate)
+            return;
+
         Agent agent = definition.getResource().getAgent();
 
         agent.addStatus(Agent.Status.ALERT_DEFINITIONS_CHANGED);

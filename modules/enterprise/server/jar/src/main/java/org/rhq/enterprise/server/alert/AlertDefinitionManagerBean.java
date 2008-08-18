@@ -204,6 +204,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
 
     public int removeAlertDefinitions(Subject user, Integer[] alertDefinitionIds) {
         int modifiedCount = 0;
+        boolean isAlertTemplate = false;
+
         for (int alertDefId : alertDefinitionIds) {
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
 
@@ -212,8 +214,14 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
                 alertDefinition.setDeleted(true);
                 modifiedCount++;
 
-                notifyAlertConditionCacheManager("removeAlertDefinitions", alertDefinition,
-                    AlertDefinitionEvent.DELETED);
+                // There is no need to update the cache if this is removal of an alert template condition
+                // because it is not associated with any resource/agent.
+                isAlertTemplate = (null != alertDefinition.getResourceType());
+
+                if (!isAlertTemplate) {
+                    notifyAlertConditionCacheManager("removeAlertDefinitions", alertDefinition,
+                        AlertDefinitionEvent.DELETED);
+                }
             }
         }
 

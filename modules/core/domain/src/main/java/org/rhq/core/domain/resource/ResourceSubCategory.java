@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -37,6 +38,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -116,9 +118,9 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory> {
         for (ResourceType childResourceType : childResourceTypes) {
             if (this.equals(childResourceType.getSubCategory())) {
                 taggedResourceTypes.add(childResourceType);
-            } else {
-                findTaggedResourceTypes(childResourceType, taggedResourceTypes);
             }
+            // check children if there parents are tagged
+            findTaggedResourceTypes(childResourceType, taggedResourceTypes);
         }
     }
 

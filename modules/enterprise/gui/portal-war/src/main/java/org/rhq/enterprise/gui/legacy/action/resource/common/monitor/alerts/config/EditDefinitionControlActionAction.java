@@ -99,7 +99,7 @@ public class EditDefinitionControlActionAction extends BaseAction {
 
         try {
             if (isAlertTemplate) {
-                alertTemplateManager.updateAlertTemplate(subject, alertDefinition, operationsForm.isCascade(), false);
+                alertTemplateManager.updateAlertTemplate(subject, alertDefinition, false);
             } else {
                 alertDefinitionManager.updateAlertDefinition(subject, alertDefinition.getId(), alertDefinition, false);
             }

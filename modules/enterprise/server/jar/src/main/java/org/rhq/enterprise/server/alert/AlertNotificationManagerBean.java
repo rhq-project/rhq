@@ -112,7 +112,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         if (isAlertTemplate) {
             try {
-                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true, false);
+                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true);
             } catch (InvalidAlertDefinitionException iade) {
                 // can this ever really happen?  if it does, the logs will know about it
                 LOG.error("Can not update alert template, invalid definition: " + alertDefinition);
@@ -185,7 +185,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         if (isAlertTemplate) {
             try {
-                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true, false);
+                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true);
             } catch (InvalidAlertDefinitionException iade) {
                 // can this ever really happen?  if it does, the logs will know about it
                 LOG.error("Can not update alert template, invalid definition: " + alertDefinition);
@@ -279,7 +279,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         if (isAlertTemplate) {
             try {
-                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true, false);
+                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true);
             } catch (InvalidAlertDefinitionException iade) {
                 // can this ever really happen?  if it does, the logs will know about it
                 LOG.error("Can not update alert template, invalid definition: " + alertDefinition);
@@ -395,7 +395,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         if (isAlertTemplate) {
             try {
-                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true, false);
+                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true);
             } catch (InvalidAlertDefinitionException iade) {
                 // can this ever really happen?  if it does, the logs will know about it
                 LOG.error("Can not update alert template, invalid definition: " + alertDefinition);
@@ -422,7 +422,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         if (isAlertTemplate) {
             try {
-                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true, false);
+                alertTemplateManager.updateAlertTemplate(subjectManager.getOverlord(), alertDefinition, true);
             } catch (InvalidAlertDefinitionException iade) {
                 // can this ever really happen?  if it does, the logs will know about it
                 LOG.error("Can not update alert template, invalid definition: " + alertDefinition);

@@ -105,7 +105,7 @@ public final class DefinitionForm extends ResourceForm {
     private Collection<Map.Entry<String, Integer>> alertnames;
     private Collection<Map.Entry<String, String>> conditionExpressionNames;
 
-    private boolean cascade;
+    //    private boolean cascade;
     private boolean readOnly;
 
     private static String[] controlActionStatuses = { OperationRequestStatus.INPROGRESS.name(),
@@ -699,7 +699,7 @@ public final class DefinitionForm extends ResourceForm {
         addingCondition = false;
         deletedCondition = Constants.ALERT_CONDITION_NONE_DELETED;
         baselines = null;
-        cascade = false;
+        //        cascade = false;
     }
 
     public void setAvailabilityActions(List<OptionItem> availabilityActions) {
@@ -742,13 +742,13 @@ public final class DefinitionForm extends ResourceForm {
         return ((getType() != null) && (getType() != 0));
     }
 
-    public boolean isCascade() {
-        return cascade;
-    }
-
-    public void setCascade(boolean cascade) {
-        this.cascade = cascade;
-    }
+    //    public boolean isCascade() {
+    //        return cascade;
+    //    }
+    //
+    //    public void setCascade(boolean cascade) {
+    //        this.cascade = cascade;
+    //    }
 
     public boolean isReadOnly() {
         return readOnly;

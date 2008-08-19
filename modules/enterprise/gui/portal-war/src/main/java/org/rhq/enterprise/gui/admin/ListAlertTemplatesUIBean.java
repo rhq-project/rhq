@@ -65,7 +65,7 @@ public class ListAlertTemplatesUIBean extends PagedDataTableUIBean {
         Integer[] alertDefinitionIds = getIntegerArray(selectedAlertDefinitions);
 
         try {
-            alertTemplateManager.removeAlertTemplates(subject, alertDefinitionIds, true);
+            alertTemplateManager.removeAlertTemplates(subject, alertDefinitionIds);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + alertDefinitionIds.length
                 + " alert definitions.");
         } catch (Exception e) {

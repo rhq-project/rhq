@@ -84,7 +84,7 @@ public class EditDefinitionPropertiesAction extends BaseAction {
 
         try {
             if (isAlertTemplate) {
-                alertTemplateManager.updateAlertTemplate(subject, alertDef, defForm.isCascade(), false);
+                alertTemplateManager.updateAlertTemplate(subject, alertDef, false);
             } else {
                 // this will disallow updates if the alert definition has been deleted
                 alertDef.setReadOnly(defForm.isReadOnly());

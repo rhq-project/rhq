@@ -35,7 +35,7 @@ public interface AlertTemplateManagerLocal {
     PageList<AlertDefinition> getAlertTemplates(Subject user, int resourceTypeId, PageControl pageControl);
 
     // Create operation always cascades
-    int createAlertTemplate(Subject user, AlertDefinition alertDefinition, Integer resourceTypeId, boolean cascade)
+    int createAlertTemplate(Subject user, AlertDefinition alertDefinition, Integer resourceTypeId)
         throws InvalidAlertDefinitionException, ResourceTypeNotFoundException;
 
     // this is a system side-effect of template processing, and thus should only ever by called by the overlord user
@@ -50,12 +50,12 @@ public interface AlertTemplateManagerLocal {
     void updateAlertDefinitionsForResource(Subject user, AlertDefinition alertTemplate, Integer resourceId)
         throws AlertDefinitionCreationException, InvalidAlertDefinitionException;
 
-    void removeAlertTemplates(Subject user, Integer[] alertTemplateIds, boolean cascade);
+    void removeAlertTemplates(Subject user, Integer[] alertTemplateIds);
 
-    void enableAlertTemplates(Subject user, Integer[] alertTemplateIds, boolean cascade);
+    void enableAlertTemplates(Subject user, Integer[] alertTemplateIds);
 
-    void disableAlertTemplates(Subject user, Integer[] alertTemplateIds, boolean cascade);
+    void disableAlertTemplates(Subject user, Integer[] alertTemplateIds);
 
-    AlertDefinition updateAlertTemplate(Subject user, AlertDefinition alertDefinition, boolean cascade,
-        boolean purgeInternals) throws InvalidAlertDefinitionException;
+    AlertDefinition updateAlertTemplate(Subject user, AlertDefinition alertDefinition, boolean purgeInternals)
+        throws InvalidAlertDefinitionException;
 }

@@ -110,7 +110,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public int createAlertTemplate(Subject user, AlertDefinition alertTemplate, Integer resourceTypeId, boolean cascade)
+    public int createAlertTemplate(Subject user, AlertDefinition alertTemplate, Integer resourceTypeId)
         throws InvalidAlertDefinitionException, ResourceTypeNotFoundException {
         ResourceType type = resourceTypeManager.getResourceTypeById(user, resourceTypeId);
 
@@ -202,50 +202,50 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void removeAlertTemplates(Subject user, Integer[] alertTemplateIds, boolean cascade) {
+    public void removeAlertTemplates(Subject user, Integer[] alertTemplateIds) {
         for (Integer alertTemplateId : alertTemplateIds) {
             alertDefinitionManager.removeAlertDefinitions(user, new Integer[] { alertTemplateId });
 
-            if (cascade) {
-                // cascading is a system side effects, and so should be performed by the overlord
-                List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
-                alertDefinitionManager.removeAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
-                    .toArray(new Integer[0]));
-            }
+            //            if (cascade) {
+            // cascading is a system side effects, and so should be performed by the overlord
+            List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
+            alertDefinitionManager.removeAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
+                .toArray(new Integer[0]));
         }
+        //        }
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void enableAlertTemplates(Subject user, Integer[] alertTemplateIds, boolean cascade) {
+    public void enableAlertTemplates(Subject user, Integer[] alertTemplateIds) {
         for (Integer alertTemplateId : alertTemplateIds) {
             alertDefinitionManager.enableAlertDefinitions(user, new Integer[] { alertTemplateId });
 
-            if (cascade) {
-                // cascading is a system side effects, and so should be performed by the overlord
-                List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
-                alertDefinitionManager.enableAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
-                    .toArray(new Integer[0]));
-            }
+            //            if (cascade) {
+            // cascading is a system side effects, and so should be performed by the overlord
+            List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
+            alertDefinitionManager.enableAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
+                .toArray(new Integer[0]));
+            //            }
         }
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void disableAlertTemplates(Subject user, Integer[] alertTemplateIds, boolean cascade) {
+    public void disableAlertTemplates(Subject user, Integer[] alertTemplateIds) {
         for (Integer alertTemplateId : alertTemplateIds) {
             alertDefinitionManager.disableAlertDefinitions(user, new Integer[] { alertTemplateId });
 
-            if (cascade) {
-                // cascading is a system side effects, and so should be performed by the overlord
-                List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
-                alertDefinitionManager.disableAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
-                    .toArray(new Integer[0]));
-            }
+            //            if (cascade) {
+            // cascading is a system side effects, and so should be performed by the overlord
+            List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
+            alertDefinitionManager.disableAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
+                .toArray(new Integer[0]));
+            //            }
         }
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public AlertDefinition updateAlertTemplate(Subject user, AlertDefinition alertTemplate, boolean cascade,
-        boolean purgeInternals) throws InvalidAlertDefinitionException {
+    public AlertDefinition updateAlertTemplate(Subject user, AlertDefinition alertTemplate, boolean purgeInternals)
+        throws InvalidAlertDefinitionException {
         AlertDefinition updatedTemplate = null;
 
         try {

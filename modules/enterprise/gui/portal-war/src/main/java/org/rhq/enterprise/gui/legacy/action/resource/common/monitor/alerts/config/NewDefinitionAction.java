@@ -83,8 +83,7 @@ public class NewDefinitionAction extends BaseAction {
         try {
             if (isAlertTemplate) {
                 AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
-                alertDefinitionId = alertTemplateManager.createAlertTemplate(subject, alertDef, defForm.getType(),
-                    defForm.isCascade());
+                alertDefinitionId = alertTemplateManager.createAlertTemplate(subject, alertDef, defForm.getType());
             } else {
                 AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
                 alertDefinitionId = alertDefinitionManager.createAlertDefinition(subject, alertDef, defForm.getId());

@@ -80,7 +80,7 @@ public class EditDefinitionConditionsAction extends BaseAction {
 
         try {
             if (isAlertTemplate) {
-                LookupUtil.getAlertTemplateManager().updateAlertTemplate(subject, alertDef, defForm.isCascade(), true);
+                LookupUtil.getAlertTemplateManager().updateAlertTemplate(subject, alertDef, true);
             } else {
                 // this will disallow updates if the alert definition has been deleted
                 LookupUtil.getAlertDefinitionManager().updateAlertDefinition(subject, alertDef.getId(), alertDef, true);

@@ -81,13 +81,13 @@ public class EditDefinitionPropertiesAction extends BaseAction {
         alertDef.setDescription(defForm.getDescription());
         alertDef.setPriority(AlertPriority.values()[defForm.getPriority()]);
         alertDef.setEnabled(defForm.isActive());
-        alertDef.setReadOnly(defForm.isReadOnly());
 
         try {
             if (isAlertTemplate) {
                 alertTemplateManager.updateAlertTemplate(subject, alertDef, defForm.isCascade(), false);
             } else {
                 // this will disallow updates if the alert definition has been deleted
+                alertDef.setReadOnly(defForm.isReadOnly());
                 alertDefinitionManager.updateAlertDefinition(subject, alertDef.getId(), alertDef, false);
             }
         } catch (AlertDefinitionException iade) {

@@ -430,7 +430,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             resource.setId(mergeResourceResponse.getResourceId());
             Set newResources = new LinkedHashSet<Resource>();
             newResources.add(resource);
-            syncSchedulesAndTemplatesForAutoImportedResources(newResources);
+            syncSchedulesAndTemplatesForNewlyImportedResources(newResources);
             performServiceScan(resource.getId());
         }
 
@@ -626,9 +626,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         mergeUnknownResources(unknownResourceIds);
         mergeModifiedResources(modifiedResourceIds);
         purgeObsoleteResources(allUuids);
-        if (!newlyCommittedResources.isEmpty()) {
-            syncSchedulesAndTemplatesForAutoImportedResources(newlyCommittedResources);
-        }
+        syncSchedulesAndTemplatesForNewlyImportedResources(newlyCommittedResources);
         log.debug(String.format("DONE syncing local inventory (%d)ms.", (System.currentTimeMillis() - startTime)));
         // If we synced any Resources, one or more Resource components were probably started,
         // so run an avail check to report on their availabilities immediately. Also kick off
@@ -1696,10 +1694,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    private void syncSchedulesAndTemplatesForAutoImportedResources(Set<Resource> importedResources) {
-        log.debug("Syncing metric schedules and alert templates for auto-imported Resources: " + importedResources);
-        syncSchedules(importedResources);
-        syncAlertTemplates(importedResources);
+    private void syncSchedulesAndTemplatesForNewlyImportedResources(Set<Resource> resources) {
+        if (!resources.isEmpty()) {
+            log.debug("Syncing metric schedules and alert templates for newly imported Resources: " + resources);
+            syncSchedules(resources);
+            syncAlertTemplates(resources);
+        }
     }
 
     private void refreshResourceComponentState(ResourceContainer container, boolean pluginConfigUpdated) {

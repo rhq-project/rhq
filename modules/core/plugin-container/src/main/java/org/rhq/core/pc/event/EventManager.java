@@ -31,8 +31,8 @@ import org.hyperic.sigar.Sigar;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.event.Event;
-import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.event.EventDefinition;
+import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.event.transfer.EventReport;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.ContainerService;
@@ -70,14 +70,14 @@ public class EventManager implements ContainerService {
         // Schedule sender thread(s) to send Event reports to the Server periodically.
         EventSenderRunner senderRunner = new EventSenderRunner(this);
         this.senderThreadPool = new ScheduledThreadPoolExecutor(SENDER_THREAD_POOL_CORE_SIZE, new LoggingThreadFactory(
-                SENDER_THREAD_POOL_NAME, true));
-        this.senderThreadPool.scheduleAtFixedRate(senderRunner, SENDER_INITIAL_DELAY_SECS,
-                SENDER_PERIOD_SECS, TimeUnit.SECONDS);
+            SENDER_THREAD_POOL_NAME, true));
+        this.senderThreadPool.scheduleAtFixedRate(senderRunner, SENDER_INITIAL_DELAY_SECS, SENDER_PERIOD_SECS,
+            TimeUnit.SECONDS);
 
         // Set up a thread pool for polling threads. Polling threads will be added to the pool via calls to
         // registerEventPoller().
         this.pollerThreadPool = new ScheduledThreadPoolExecutor(POLLER_THREAD_POOL_CORE_SIZE, new LoggingThreadFactory(
-                POLLER_THREAD_POOL_NAME, true));
+            POLLER_THREAD_POOL_NAME, true));
         this.pollerThreadPool.setMaximumPoolSize(POLLER_THREAD_POOL_MAX_SIZE);
         this.pollerThreads = new HashMap<PollerKey, Runnable>();
 
@@ -100,7 +100,9 @@ public class EventManager implements ContainerService {
         this.pcConfig = config;
     }
 
-    void publishEvents(@NotNull Set<Event> events, @NotNull Resource resource) {
+    void publishEvents(@NotNull
+    Set<Event> events, @NotNull
+    Resource resource) {
         try {
             this.reportLock.readLock().lock();
             for (Event event : events) {
@@ -147,9 +149,8 @@ public class EventManager implements ContainerService {
 
     void registerEventPoller(EventPoller poller, int pollingInterval, Resource resource, String sourceLocation) {
         EventPollerRunner pollerRunner = new EventPollerRunner(poller, resource, this);
-        Runnable pollerFuture =
-                (Runnable) this.pollerThreadPool.scheduleAtFixedRate(pollerRunner, POLLER_INITIAL_DELAY_SECS,
-                        pollingInterval, TimeUnit.SECONDS);
+        Runnable pollerFuture = (Runnable) this.pollerThreadPool.scheduleAtFixedRate(pollerRunner,
+            POLLER_INITIAL_DELAY_SECS, pollingInterval, TimeUnit.SECONDS);
         PollerKey pollerKey = new PollerKey(resource.getId(), poller.getEventType(), sourceLocation);
         this.pollerThreads.put(pollerKey, pollerFuture);
     }
@@ -168,16 +169,15 @@ public class EventManager implements ContainerService {
 
     private EventSource createEventSource(Event event, Resource resource) {
         EventDefinition eventDefinition = EventUtility.getEventDefinition(event.getType(), resource.getResourceType());
-        if (eventDefinition == null)
-        {
-            throw new IllegalArgumentException("Unknown type - no EventDefinition found with name '" + event.getType() + "'.");
+        if (eventDefinition == null) {
+            throw new IllegalArgumentException("Unknown type - no EventDefinition found with name '" + event.getType()
+                + "'.");
         }
         //noinspection ConstantConditions
         return new EventSource(event.getSourceLocation(), eventDefinition, resource);
     }
 
-    class PollerKey
-    {
+    class PollerKey {
         int resourceId;
         String eventType;
         String sourceLocation;
@@ -190,13 +190,17 @@ public class EventManager implements ContainerService {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (obj == null || getClass() != obj.getClass()) return false;
+            if (this == obj)
+                return true;
+            if (obj == null || getClass() != obj.getClass())
+                return false;
 
             PollerKey that = (PollerKey) obj;
 
-            if (resourceId != that.resourceId) return false;
-            if (!eventType.equals(that.eventType)) return false;
+            if (resourceId != that.resourceId)
+                return false;
+            if (!eventType.equals(that.eventType))
+                return false;
             if (sourceLocation != null ? !sourceLocation.equals(that.sourceLocation) : that.sourceLocation != null)
                 return false;
 

@@ -80,8 +80,6 @@ public class EventManager implements ContainerService {
             POLLER_THREAD_POOL_NAME, true));
         this.pollerThreadPool.setMaximumPoolSize(POLLER_THREAD_POOL_MAX_SIZE);
         this.pollerThreads = new HashMap<PollerKey, Runnable>();
-
-        this.sigar = new Sigar();
     }
 
     public void shutdown() {
@@ -117,7 +115,10 @@ public class EventManager implements ContainerService {
     }
 
     Sigar getSigar() {
-        return sigar;
+        if (this.sigar == null) {
+            this.sigar = new Sigar();
+        }
+        return this.sigar;
     }
 
     /**

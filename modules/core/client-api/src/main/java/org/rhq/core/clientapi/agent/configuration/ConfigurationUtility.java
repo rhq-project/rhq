@@ -53,6 +53,10 @@ public abstract class ConfigurationUtility {
     public static void normalizeConfiguration(@NotNull
     Configuration configuration, @Nullable
     ConfigurationDefinition configurationDefinition) {
+        //noinspection ConstantConditions
+        if (configuration == null) {
+            throw new IllegalArgumentException("Configuration parameter is null.");
+        }
         if (configurationDefinition != null) {
             Map<String, PropertyDefinition> childPropertyDefinitions = configurationDefinition.getPropertyDefinitions();
             for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {

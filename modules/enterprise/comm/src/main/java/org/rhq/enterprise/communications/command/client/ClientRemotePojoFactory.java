@@ -22,9 +22,14 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+
 import mazz.i18n.Logger;
+
+import org.apache.commons.logging.LogFactory;
+
 import org.jboss.remoting.CannotConnectException;
 import org.jboss.remoting.invocation.NameBasedInvocation;
+
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.DisableSendThrottling;
 import org.rhq.core.communications.command.annotation.Timeout;
@@ -46,6 +51,16 @@ import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
  * @author John Mazzitelli
  */
 public class ClientRemotePojoFactory {
+
+    /**
+     * Settings describing whether this factory generates proxies that have guaranteed delivery by default. This
+     * is overridden by annotations on the service interface unless set to DISABLED, which forces a NO setting
+     * for all calls. DISABLED is required if the underlying environment can not support guaranteed delivery.
+     */
+    public enum GuaranteedDelivery {
+        YES, NO, DISABLED
+    }
+
     /**
      * Logger
      */
@@ -87,7 +102,7 @@ public class ClientRemotePojoFactory {
     /**
      * Flag to indicate if POJO calls are to be submitted with guaranteed delivery enabled.
      */
-    private boolean m_deliveryGuaranteed;
+    private GuaranteedDelivery m_deliveryGuaranteed;
 
     /**
      * Flag to indicate if POJO calls are to be send-throttleable, that is, they must pass the send-throttle before it
@@ -106,7 +121,7 @@ public class ClientRemotePojoFactory {
         m_asyncModeEnabled = false;
         m_asyncCallback = null;
         m_timeoutMillis = null;
-        m_deliveryGuaranteed = false;
+        m_deliveryGuaranteed = GuaranteedDelivery.NO;
         m_sendThrottled = true;
 
         return;
@@ -129,7 +144,7 @@ public class ClientRemotePojoFactory {
         boolean async_mode;
         CommandResponseCallback async_callback;
         Long timeout_millis;
-        boolean guaranteed_delivery;
+        GuaranteedDelivery guaranteed_delivery;
         boolean send_throttled;
         boolean ignore_annotations;
 
@@ -261,7 +276,7 @@ public class ClientRemotePojoFactory {
      */
     public boolean isDeliveryGuaranteed() {
         synchronized (this) {
-            return m_deliveryGuaranteed;
+            return (GuaranteedDelivery.YES == m_deliveryGuaranteed);
         }
     }
 
@@ -274,7 +289,7 @@ public class ClientRemotePojoFactory {
      *
      * @param guaranteed <code>true</code> if the remote POJO call should be made with guaranteed delivery
      */
-    public void setDeliveryGuaranteed(boolean guaranteed) {
+    public void setDeliveryGuaranteed(GuaranteedDelivery guaranteed) {
         synchronized (this) {
             m_deliveryGuaranteed = guaranteed;
         }
@@ -317,7 +332,7 @@ public class ClientRemotePojoFactory {
         private boolean m_proxyHandlerAsyncModeEnabled;
         private CommandResponseCallback m_proxyHandlerAsyncCallback;
         private Long m_proxyHandlerTimeout;
-        private boolean m_proxyHandlerDeliveryGuaranteed;
+        private GuaranteedDelivery m_proxyHandlerDeliveryGuaranteed;
         private boolean m_proxyHandlerSendThrottled;
 
         /**
@@ -341,7 +356,7 @@ public class ClientRemotePojoFactory {
          */
         public RemotePojoProxyHandler(String target_interface_name, boolean ignore_annotations,
             boolean async_mode_enabled, CommandResponseCallback async_callback, Long timeout_millis,
-            boolean delivery_guaranteed, boolean send_throttled) {
+            GuaranteedDelivery delivery_guaranteed, boolean send_throttled) {
             m_targetInterfaceName = target_interface_name;
             m_proxyHandlerIgnoreAnnotations = ignore_annotations;
             m_proxyHandlerAsyncModeEnabled = async_mode_enabled;
@@ -523,7 +538,8 @@ public class ClientRemotePojoFactory {
          *         otherwise
          */
         private boolean determineGuaranteedDelivery(Method method) {
-            boolean ret_delivery_guaranteed = m_proxyHandlerDeliveryGuaranteed;
+            boolean ret_delivery_guaranteed = (GuaranteedDelivery.YES == m_proxyHandlerDeliveryGuaranteed) ? true
+                : false;
 
             if (!m_proxyHandlerIgnoreAnnotations) {
                 Asynchronous annotation = method.getAnnotation(Asynchronous.class);
@@ -534,6 +550,13 @@ public class ClientRemotePojoFactory {
 
                 if (annotation != null) {
                     ret_delivery_guaranteed = annotation.guaranteedDelivery();
+
+                    if (ret_delivery_guaranteed && (GuaranteedDelivery.DISABLED == m_proxyHandlerDeliveryGuaranteed)) {
+                        ret_delivery_guaranteed = false;
+                        LogFactory.getLog(ClientRemotePojoFactory.class).error(
+                            "Illegal use of Guaranteed Delivery, Remove 'guaranteedDelivery=true' from method: "
+                                + method.getName());
+                    }
                 }
             }
 

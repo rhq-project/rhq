@@ -79,6 +79,9 @@ public class AgentClientImpl implements AgentClient {
         this.agent = agent;
         this.sender = sender;
         this.clientRemotePojoFactory = sender.getClientRemotePojoFactory();
+        // enforce the restriction (instituted in 1.1 due to multi-server HA concerns) 
+        // that no server->agent calls use guaranteedDelivery
+        this.clientRemotePojoFactory.setDeliveryGuaranteed(ClientRemotePojoFactory.GuaranteedDelivery.DISABLED);
     }
 
     public Agent getAgent() {

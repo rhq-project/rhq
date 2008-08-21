@@ -21,7 +21,9 @@ package org.rhq.enterprise.agent.promptcmd;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.Date;
+
 import mazz.i18n.Msg;
+
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
@@ -59,7 +61,7 @@ public class PingPromptCommand implements AgentPromptCommand, Serializable {
      */
     public boolean execute(final AgentMain agent, String[] args) {
         int numberOfTimes = getTestBlastCount(agent);
-        boolean guaranteed = false;
+        ClientRemotePojoFactory.GuaranteedDelivery guaranteed = ClientRemotePojoFactory.GuaranteedDelivery.NO;
 
         if (args.length > 1) {
             if ((args.length > 2) || !args[1].equals(MSG.getMsg(AgentI18NResourceKeys.PING_GUARANTEED))) {
@@ -71,7 +73,7 @@ public class PingPromptCommand implements AgentPromptCommand, Serializable {
                 agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.PING_GUARANTEED_FOR_ASYNC_ONLY));
             }
 
-            guaranteed = true;
+            guaranteed = ClientRemotePojoFactory.GuaranteedDelivery.YES;
         }
 
         ClientCommandSender sender = agent.getClientCommandSender();
@@ -92,10 +94,10 @@ public class PingPromptCommand implements AgentPromptCommand, Serializable {
 
                 for (int i = 0; i < numberOfTimes; i++) {
                     agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.PING_ASYNC_PING, i, guaranteed));
-                    ping
-                        .ping("PING", "Ack #" + i
-                            + ((guaranteed) ? (" (" + MSG.getMsg(AgentI18NResourceKeys.PING_GUARANTEED) + ")") : "")
-                            + ": ");
+                    ping.ping("PING", "Ack #"
+                        + i
+                        + ((ClientRemotePojoFactory.GuaranteedDelivery.YES == guaranteed) ? (" ("
+                            + MSG.getMsg(AgentI18NResourceKeys.PING_GUARANTEED) + ")") : "") + ": ");
                 }
             }
         } else {

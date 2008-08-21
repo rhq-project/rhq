@@ -19,7 +19,6 @@
 package org.rhq.core.clientapi.agent.discovery;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
-import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.InventoryReport;
@@ -55,7 +54,6 @@ public interface DiscoveryAgentService {
      *
      * @param syncInfo for the root of the tree to be updated.
      */
-    @Asynchronous(guaranteedDelivery = true)
     void synchronizeInventory(ResourceSyncInfo syncInfo);
 
     /**
@@ -139,7 +137,6 @@ public interface DiscoveryAgentService {
      *
      * @param resourceId the id of the Resource to remove
      */
-    @Asynchronous(guaranteedDelivery = true)
     void removeResource(int resourceId);
 
     // TODO GH: Everything below here is not used yet, nor implemented

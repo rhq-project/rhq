@@ -212,12 +212,16 @@ public class OperationInvocation implements Runnable {
                 // allow a plugin to return a null (aka void) result set
                 result = (opResult != null) ? opResult.getComplexResults() : null;
                 if (result != null) {
-                    if ((this.operationDefinition != null)
-                        && (this.operationDefinition.getResultsConfigurationDefinition() != null)) {
-                        // Normalize the result Configuration.
-                        ConfigurationUtility.normalizeConfiguration(result, operationDefinition
-                            .getResultsConfigurationDefinition());
-                        // TODO: Validate the result Configuration?
+                    if (this.operationDefinition != null) {
+                        if (this.operationDefinition.getResultsConfigurationDefinition() != null) {
+                            // Normalize the result Configuration.
+                            ConfigurationUtility.normalizeConfiguration(result, operationDefinition
+                                .getResultsConfigurationDefinition());
+                            // TODO: Validate the result Configuration?
+                        } else {
+                            log.error("Plugin error: Operation [" + this.operationDefinition.getName() + "] is defined as returning no results, but it returned non-null results: " + result);
+                            result = null; // Don't return results that the GUI won't be able to display anyway.
+                        }
                     }
                 }
             } else {

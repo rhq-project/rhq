@@ -422,8 +422,14 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
         }
 
         Object resultObject = operation.invoke(parameterValues);
-
-        OperationResult result = new OperationResult(String.valueOf(resultObject));
+        // TODO: Figure out what EMS actually returns to represent a void return type, so we can avoid doing
+        //       unnecessary extra checks. (ips, 08/21/08)
+        boolean hasVoidReturnType = (operation.getReturnType() == null ||
+                                     Void.class.getName().equals(operation.getReturnType()) ||
+                                     void.class.getName().equals(operation.getReturnType()));
+        //noinspection UnnecessaryLocalVariable
+        OperationResult result = (resultObject == null && hasVoidReturnType) ? null :
+                new OperationResult(String.valueOf(resultObject));
         return result;
     }
 }

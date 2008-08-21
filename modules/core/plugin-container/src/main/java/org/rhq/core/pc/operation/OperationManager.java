@@ -118,7 +118,7 @@ public class OperationManager extends AgentService implements OperationAgentServ
             final long invocationTime = System.currentTimeMillis();
 
             OperationDefinition operationDefinition = getOperationDefinition(resourceId, operationName);
-            if (operationDefinition != null && operationDefinition.getParametersConfigurationDefinition() != null) {
+            if (operationDefinition != null && operationDefinition.getParametersConfigurationDefinition() != null && parameterConfig != null) {
                 ConfigurationUtility.normalizeConfiguration(parameterConfig, operationDefinition.getParametersConfigurationDefinition());
             }
 

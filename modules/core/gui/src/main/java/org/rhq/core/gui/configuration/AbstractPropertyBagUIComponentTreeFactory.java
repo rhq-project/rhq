@@ -171,10 +171,12 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             FacesComponentUtility.NO_STYLE_CLASS);
         if (!this.propertyDefinitions.isEmpty() || (this.propertyMap instanceof PropertyMap)) {
             if (!this.propertyDefinitions.isEmpty()) {
+                String tableStyleClass = this.topLevel ? PROPERTIES_TABLE_STYLE_CLASS : NESTED_PROPERTIES_TABLE_STYLE_CLASS;
+                FacesComponentUtility.addVerbatimText(rootPanel, "\n\n<table class='" + tableStyleClass + "'>");
                 int rowCount = 0;
                 boolean alternateRowStyles = (rowStyleClass == null);
                 if (containsSimpleProperties()) {
-                    addSimplePropertiesTableHeader(rootPanel); // the Name/Unset/Value/Description header
+                    addSimplePropertiesTableHeaders(rootPanel); // the Name/Unset/Value/Description headers
                 }
 
                 // TODO: Display simple props before lists and maps, so the simple props immediately follow the
@@ -189,6 +191,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
                 // members. We refer to such a map as an "open map."
                 PropertyDefinitionMap propertyDefinitionMap = this.config.getConfigurationDefinition()
                     .getPropertyDefinitionMap(((PropertyMap) this.propertyMap).getName());
+                FacesComponentUtility.addVerbatimText(rootPanel, "\n\n<table class='" + OPENMAP_PROPERTIES_TABLE_STYLE_CLASS + "'>");
                 addOpenMapMemberPropertiesTableHeaders(rootPanel, propertyDefinitionMap);
                 for (Property property : this.propertyMap.getMap().values()) {
                     if (!(property instanceof PropertySimple)) {
@@ -220,12 +223,10 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         return rowStyleClass;
     }
 
-    private void addSimplePropertiesTableHeader(UIComponent parent) {
-        String tableStyleClass = this.topLevel ? PROPERTIES_TABLE_STYLE_CLASS : NESTED_PROPERTIES_TABLE_STYLE_CLASS;
+    private void addSimplePropertiesTableHeaders(UIComponent parent) {
         String headerCellStyleClass = this.topLevel ? PROPERTIES_TABLE_HEADER_CELL_STYLE_CLASS
             : NESTED_PROPERTIES_TABLE_HEADER_CELL_STYLE_CLASS;
 
-        FacesComponentUtility.addVerbatimText(parent, "\n\n<table class='" + tableStyleClass + "'>");
         FacesComponentUtility.addVerbatimText(parent, "\n\n<tr>");
 
         FacesComponentUtility.addVerbatimText(parent, "<th class='" + headerCellStyleClass + "'>");
@@ -266,11 +267,9 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     }
 
     private void addOpenMapMemberPropertiesTableHeaders(UIComponent parent, PropertyDefinitionMap propertyDefinitionMap) {
-        String tableStyleClass = OPENMAP_PROPERTIES_TABLE_STYLE_CLASS;
         String headerCellStyleClass = this.topLevel ? PROPERTIES_TABLE_HEADER_CELL_STYLE_CLASS
             : NESTED_PROPERTIES_TABLE_HEADER_CELL_STYLE_CLASS;
-
-        FacesComponentUtility.addVerbatimText(parent, "\n\n<table class='" + tableStyleClass + "'>");
+        
         FacesComponentUtility.addVerbatimText(parent, "\n\n<tr>");
 
         FacesComponentUtility.addVerbatimText(parent, "<th class='" + headerCellStyleClass + "'>");

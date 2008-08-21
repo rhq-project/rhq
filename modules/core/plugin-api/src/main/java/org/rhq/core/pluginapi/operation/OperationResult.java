@@ -24,7 +24,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 /**
  * An object that encapsulates the results of a single operation invocation. Since this class contains a
  * {@link #getComplexResults() Configuration object}, it can be used to store complex results. However, if an operation
- * needs to only return a single string result, use the convienence constructor
+ * needs to only return a single string result, use the convenience constructor
  * {@link OperationResult#OperationResult(String)} or the method {@link #setSimpleResult(String)} to pass in that simple
  * string value without the need to use the more complex {@link Configuration} API.
  *
@@ -98,5 +98,10 @@ public class OperationResult {
      */
     public Configuration getComplexResults() {
         return complexResults;
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + complexResults + "]";
     }
 }

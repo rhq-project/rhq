@@ -286,10 +286,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         Query queryCount;
 
         if (authorizationManager.isInventoryManager(subject)) {
-            queryCount = PersistenceUtility.createCountQuery(entityManager,
-                ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_admin);
+            queryCount = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_COUNT_admin);
         } else {
-            queryCount = PersistenceUtility.createCountQuery(entityManager, ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY);
+            queryCount = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_COUNT);
             queryCount.setParameter("subject", subject);
         }
 

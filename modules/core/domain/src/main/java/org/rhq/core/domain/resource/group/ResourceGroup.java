@@ -115,10 +115,10 @@ import org.rhq.core.domain.resource.ResourceType;
         + "      (type.category = :category AND :category is not null) "
         + "    OR "
         + "      (:resourceType is null AND :category is null) " + "     ) ) "),
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY, query = "SELECT rg "
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_COUNT, query = "SELECT COUNT(DISTINCT rg) "
         + "  FROM ResourceGroup AS rg JOIN rg.roles r JOIN r.subjects s " + " WHERE s = :subject "
         + "   AND rg.groupCategory = :category "),
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_admin, query = "SELECT rg "
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_COUNT_admin, query = "SELECT COUNT(rg) "
         + "  FROM ResourceGroup AS rg " + " WHERE rg.groupCategory = :category "),
 
     // finds all the groups that the given resource belongs to
@@ -187,8 +187,8 @@ public class ResourceGroup extends Group {
     public static final String QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_ADMIN = "ResourceGroup.findAllCompositeByCategory_Admin";
     public static final String QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT_ADMIN = "ResourceGroup.findAllCompositeByCategory_Count_Admin";
 
-    public static final String QUERY_FIND_ALL_BY_CATEGORY = "ResourceGroup.findAllByCategory";
-    public static final String QUERY_FIND_ALL_BY_CATEGORY_admin = "ResourceGroup.findAllByCategory_admin";
+    public static final String QUERY_FIND_ALL_BY_CATEGORY_COUNT = "ResourceGroup.findAllByCategory_Count";
+    public static final String QUERY_FIND_ALL_BY_CATEGORY_COUNT_admin = "ResourceGroup.findAllByCategory_Count_admin";
 
     public static final String QUERY_FIND_GROUP_IDS_BY_RESOURCE_ID = "ResourceGroup.findGroupIdsByResourceId";
     public static final String QUERY_FIND_BY_NAME = "ResourceGroup.findByName";

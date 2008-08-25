@@ -49,15 +49,17 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + " WHERE a.ctime >= :startDate " + "  AND ( :priority = a.alertDefinition.priority OR :priority IS NULL ) "),
     @NamedQuery(name = Alert.QUERY_DASHBOARD_ALL, query = "SELECT a "
         + "  FROM Alert AS a JOIN a.alertDefinition ad JOIN ad.resource res "
-        + "  JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s " + "  WHERE s.id = :subjectId "
-        + "   AND a.ctime >= :startDate " + "   AND ( :priority = a.alertDefinition.priority OR :priority IS NULL ) "),
+        + "  WHERE a.ctime >= :startDate "
+        + "   AND res.id IN ( SELECT ires FROM Resource ires JOIN ires.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s.id = :subjectId ) "
+        + "   AND ( :priority = a.alertDefinition.priority OR :priority IS NULL ) "),
     @NamedQuery(name = Alert.QUERY_DASHBOARD_BY_RESOURCE_IDS_ADMIN, query = "SELECT a " + "FROM Alert AS a "
         + "WHERE a.ctime >= :startDate " + "AND ( :priority = a.alertDefinition.priority OR :priority IS NULL ) "
         + "AND a.alertDefinition.resource.id IN ( :resourceIds )"),
     @NamedQuery(name = Alert.QUERY_DASHBOARD_BY_RESOURCE_IDS, query = "SELECT a "
         + "  FROM Alert AS a JOIN a.alertDefinition ad JOIN ad.resource res "
-        + "  JOIN res.implicitGroups g JOIN g.roles r JOIN r.subjects s " + " WHERE s.id = :subjectId "
-        + "   AND a.ctime >= :startDate " + "   AND ( :priority = a.alertDefinition.priority OR :priority IS NULL ) "
+        + " WHERE a.ctime >= :startDate "
+        + "   AND res.id IN ( SELECT ires FROM Resource ires JOIN ires.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s.id = :subjectId ) "
+        + "   AND ( :priority = a.alertDefinition.priority OR :priority IS NULL ) "
         + "   AND res.id IN ( :resourceIds )"),
     @NamedQuery(name = Alert.QUERY_FIND_BY_RESOURCE, //
     query = "SELECT a " // 

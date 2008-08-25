@@ -54,21 +54,20 @@ import org.rhq.core.domain.resource.ResourceType;
  * A {@link Group} that contains {@link Resource}s. It cannot contain other groups.
  *
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(DISTINCT res)) "
-        + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s JOIN r.resourceGroups rg "
-        + "LEFT JOIN rg.implicitResources res LEFT JOIN res.availability a "
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(DISTINCT res)) "
+        + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s "
+        + "LEFT JOIN g.implicitResources res LEFT JOIN res.availability a "
         + "LEFT JOIN g.resourceType type "
         + "WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
-        + "AND s = :subject "
-        + "AND g.groupCategory = :groupCategory "
-        + "AND "
+        + "AND s = :subject " + "AND g.groupCategory = :groupCategory " + "AND "
         + "(UPPER(g.name) LIKE :search "
-        + "OR UPPER(g.description) LIKE :search "
-        + "OR :search is null) "
+        + "OR UPPER(g.description) LIKE :search " + "OR :search is null) "
         + "AND ( type is null OR ( "
         + "      (type = :resourceType AND :resourceType is not null) "
         + "    OR "

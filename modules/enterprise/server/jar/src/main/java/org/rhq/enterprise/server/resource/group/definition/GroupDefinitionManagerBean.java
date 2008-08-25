@@ -120,7 +120,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
         boolean nameChanged = false;
         try {
-            validate(groupDefinition, groupDefinition.getId());
+            nameChanged = validate(groupDefinition, groupDefinition.getId());
         } catch (GroupDefinitionException gde) {
             throw new GroupDefinitionUpdateException(gde.getMessage());
         }

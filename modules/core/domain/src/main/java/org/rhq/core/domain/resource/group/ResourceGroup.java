@@ -77,7 +77,7 @@ import org.rhq.core.domain.resource.ResourceType;
         + "      (:resourceType is null AND :category is null ) "
         + "     ) ) "
         + "GROUP BY g,g.name,g.resourceType.name,g.description "),
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT, query = "SELECT count(g) "
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT, query = "SELECT count(DISTINCT g) "
         + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s " + "LEFT JOIN g.resourceType type "
         + "WHERE s = :subject " + "AND g.groupCategory = :groupCategory " + "AND " + "(UPPER(g.name) LIKE :search "
         + "OR UPPER(g.description) LIKE :search " + "OR :search is null) " + "AND ( type is null OR ( "

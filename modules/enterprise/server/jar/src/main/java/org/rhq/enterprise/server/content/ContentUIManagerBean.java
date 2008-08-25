@@ -263,6 +263,7 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         return pv;
     }
 
+    @SuppressWarnings("unchecked")
     public List<PackageVersionComposite> getPackageVersionComposites(Subject user, int[] packageVersionIds) {
         List<Integer> iPackageVersionIds = new ArrayList<Integer>(packageVersionIds.length);
         for (int i : packageVersionIds) {
@@ -276,8 +277,11 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         return results;
     }
 
+    @SuppressWarnings("unchecked")
     public PageList<PackageVersionComposite> getPackageVersionComposites(Subject user, int[] packageVersionIds,
         PageControl pageControl) {
+        pageControl.initDefaultOrderingField("pv.id");
+
         List<Integer> iPackageVersionIds = new ArrayList<Integer>(packageVersionIds.length);
         for (int i : packageVersionIds) {
             iPackageVersionIds.add(i);
@@ -307,7 +311,7 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
     public Architecture getNoArchitecture() {
         Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_BY_NAME);
         q.setParameter("name", "noarch");
-        Architecture architecture = (Architecture)q.getSingleResult();
+        Architecture architecture = (Architecture) q.getSingleResult();
 
         return architecture;
     }
@@ -326,6 +330,7 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         return csr;
     }
 
+    @SuppressWarnings("unchecked")
     public PageList<InstalledPackageHistory> getInstalledPackageHistory(int contentServiceRequestId, PageControl pc) {
         pc.initDefaultOrderingField("iph.timestamp", PageOrdering.DESC);
 
@@ -350,8 +355,10 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         return history;
     }
 
+    @SuppressWarnings("unchecked")
     public List<PackageInstallationStep> getPackageInstallationSteps(int installedPackageHistoryId) {
-        Query query = entityManager.createNamedQuery(PackageInstallationStep.QUERY_FIND_BY_INSTALLED_PACKAGE_HISTORY_ID);
+        Query query = entityManager
+            .createNamedQuery(PackageInstallationStep.QUERY_FIND_BY_INSTALLED_PACKAGE_HISTORY_ID);
         query.setParameter("installedPackageHistoryId", installedPackageHistoryId);
         List<PackageInstallationStep> steps = query.getResultList();
         return steps;
@@ -362,13 +369,14 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         return step;
     }
 
+    @SuppressWarnings("unchecked")
     public InstalledPackage getBackingPackageForResource(int resourceId) {
 
         // TODO: jdobies, Apr 30, 2008: Tighten up getBackingPackageForResource implementation
         // This implementation is not complete. This assumes there will only be one installed package against
         // the resource. The likely place this will break is if the resource defines more than one package type,
         // since this query does not take into account looking for the resource's backing package type specifically.
-        
+
         Query query = entityManager.createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_ID);
         query.setParameter("resourceId", resourceId);
 
@@ -381,6 +389,7 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         return resultList.get(0);
     }
 
+    @SuppressWarnings("unchecked")
     public PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, PageControl pc) {
         pc.initDefaultOrderingField("iph.timestamp", PageOrdering.DESC);
 

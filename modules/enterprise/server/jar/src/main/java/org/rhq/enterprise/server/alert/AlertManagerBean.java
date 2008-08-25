@@ -426,6 +426,13 @@ public class AlertManagerBean implements AlertManagerLocal {
 
     private void fetchCollectionFields(Alert alert) {
         alert.getConditionLogs().size();
+        for (AlertConditionLog log : alert.getConditionLogs()) {
+            // this is now lazy
+            //            if (log.getCondition() != null && log.getCondition().getMeasurementDefinition() != null) {
+            //                log.getCondition().getMeasurementDefinition().getId();
+            //            }
+            log.getCondition().getMeasurementDefinition().getId();
+        }
     }
 
     private void fetchCollectionFields(List<Alert> alerts) {

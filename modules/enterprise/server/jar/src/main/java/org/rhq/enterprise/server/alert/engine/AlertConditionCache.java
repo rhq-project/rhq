@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.alert.engine;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +34,14 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.composite.AbstractAlertConditionCategoryComposite;
+import org.rhq.core.domain.alert.composite.AlertConditionAvailabilityCategoryComposite;
+import org.rhq.core.domain.alert.composite.AlertConditionBaselineCategoryComposite;
+import org.rhq.core.domain.alert.composite.AlertConditionChangesCategoryComposite;
+import org.rhq.core.domain.alert.composite.AlertConditionControlCategoryComposite;
+import org.rhq.core.domain.alert.composite.AlertConditionEventCategoryComposite;
+import org.rhq.core.domain.alert.composite.AlertConditionScheduleCategoryComposite;
+import org.rhq.core.domain.alert.composite.AlertConditionTraitCategoryComposite;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
@@ -73,6 +82,7 @@ import org.rhq.enterprise.server.alert.engine.model.ResourceOperationCacheElemen
 import org.rhq.enterprise.server.alert.engine.model.UnsupportedAlertConditionOperatorException;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cluster.instance.ServerManagerLocal;
+import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementConstants;
@@ -239,6 +249,7 @@ public final class AlertConditionCache {
     private SubjectManagerLocal subjectManager;
     private CachedConditionProducerLocal cachedConditionProducer;
     private ServerManagerLocal serverManager;
+    private EntityManagerFacadeLocal entityManagerFacade;
 
     private AlertConditionCache() {
         measurementDataCache = new HashMap<Integer, List<NumericDoubleCacheElement>>();
@@ -260,6 +271,7 @@ public final class AlertConditionCache {
         subjectManager = LookupUtil.getSubjectManager();
         cachedConditionProducer = LookupUtil.getCachedConditionProducerLocal();
         serverManager = LookupUtil.getServerManager();
+        entityManagerFacade = LookupUtil.getEntityManagerFacade();
 
         reloadCachesForAgentsOnThisServer();
     }
@@ -296,30 +308,44 @@ public final class AlertConditionCache {
         try {
             log.info("Loading Alert Condition Caches...");
 
+            final int PAGE_SIZE = 500;
             AlertConditionCacheStats stats = new AlertConditionCacheStats();
 
             Subject overlord = subjectManager.getOverlord();
-            List<AlertDefinition> alertDefinitions = alertDefinitionManager.getAllAlertDefinitionsWithConditions(
-                agentId, overlord);
 
-            for (AlertDefinition alertDefinition : alertDefinitions) {
-                /* 
-                 * don't insert recovery alerts initially, they should only be added when the definition they're 
-                 * recovering for triggers an alert; which is why this check is in the loadCaches() method instead
-                 * of at the top of body of the insertAlertDefinition() method
-                 * 
-                 * be defensive about this: don't assume that the upstream process didn't allow null into the mix
-                 */
-                if (alertDefinition.getRecoveryId() != null && alertDefinition.getRecoveryId() != 0) {
-                    continue;
-                }
+            EnumSet<AlertConditionCategory> supportedCategories = EnumSet.of(AlertConditionCategory.BASELINE,
+                AlertConditionCategory.CHANGE, AlertConditionCategory.TRAIT, AlertConditionCategory.AVAILABILITY,
+                AlertConditionCategory.CONTROL, AlertConditionCategory.THRESHOLD, AlertConditionCategory.EVENT);
 
-                /*
-                 * deleted alertDefinitions should never come back from the alertDefinitionManager methods, so don't
-                 * check for that
-                 */
-                if (alertDefinition.getEnabled() == true) {
-                    insertAlertDefinition(overlord, alertDefinition, stats);
+            for (AlertConditionCategory nextCategory : supportedCategories) {
+                log.info("Loading Alert Condition Composites of type '" + nextCategory + "'");
+                // page thru all alert definitions
+                int rowsProcessed = 0;
+                PageControl pc = new PageControl();
+                pc.setPageNumber(0);
+                pc.setPageSize(PAGE_SIZE); // condition composites are small so we can grab alot; use the setter, constructor limits this to 100                
+
+                while (true) {
+                    PageList<? extends AbstractAlertConditionCategoryComposite> alertConditions = null;
+                    alertConditions = alertConditionManager.getAlertConditionComposites(overlord, nextCategory, pc);
+
+                    if (alertConditions.isEmpty()) {
+                        break; // didn't get any rows back, must not have any data or no more rows left to process
+                    }
+
+                    for (AbstractAlertConditionCategoryComposite nextComposite : alertConditions) {
+                        insertAlertConditionComposite(nextComposite, stats);
+                    }
+
+                    entityManagerFacade.flush();
+                    entityManagerFacade.clear();
+
+                    rowsProcessed += alertConditions.size();
+                    if (rowsProcessed >= alertConditions.getTotalSize()) {
+                        break; // we've processed all data, we can stop now
+                    }
+
+                    pc.setPageNumber(pc.getPageNumber() + 1);
                 }
             }
 
@@ -327,13 +353,13 @@ public final class AlertConditionCache {
             int rowsProcessed = 0;
             PageControl pc = new PageControl();
             pc.setPageNumber(0);
-            pc.setPageSize(1000); // baseline composites are small so we can grab alot; use the setter, constructor limits this to 100
+            pc.setPageSize(PAGE_SIZE); // baseline composites are small so we can grab alot; use the setter, constructor limits this to 100
 
             while (true) {
                 PageList<MeasurementBaselineComposite> baselines = measurementBaselineManager
                     .getAllDynamicMeasurementBaselines(agentId, overlord, pc);
 
-                if (baselines.size() <= 0) {
+                if (baselines.isEmpty()) {
                     break; // didn't get any rows back, must not have any data or no more rows left to process
                 }
 
@@ -347,6 +373,9 @@ public final class AlertConditionCache {
                     insertOutOfBoundsBaseline(baseline.getId(), baseline.getMin(), baseline.getMax(), baseline
                         .getScheduleId(), stats);
                 }
+
+                entityManagerFacade.flush();
+                entityManagerFacade.clear();
 
                 rowsProcessed += baselines.size();
                 if (rowsProcessed >= baselines.getTotalSize()) {
@@ -1092,6 +1121,170 @@ public final class AlertConditionCache {
             addTo("eventsCache", eventsCache, resource.getId(), cacheElement, alertConditionId, stats);
             AlertConditionCacheMonitor.getMBean().incrementEventCacheElementCount(1);
         }
+    }
+
+    private void insertAlertConditionComposite(AbstractAlertConditionCategoryComposite composite,
+        AlertConditionCacheStats stats) {
+
+        AlertCondition alertCondition = composite.getCondition();
+        int alertConditionId = alertCondition.getId(); // auto-unboxing is safe here because as the PK it's guaranteed to be non-null
+
+        AlertConditionCategory alertConditionCategory = alertCondition.getCategory();
+        AlertConditionOperator alertConditionOperator = getAlertConditionOperator(alertConditionCategory,
+            alertCondition.getComparator(), alertCondition.getOption());
+
+        if (alertConditionCategory == AlertConditionCategory.BASELINE) {
+            AlertConditionBaselineCategoryComposite baselineComposite = (AlertConditionBaselineCategoryComposite) composite;
+            // option status for baseline gets set to "mean", but it's rather useless since the UI
+            // current doesn't allow alerting off of other baseline properties such as "min" and "max"
+            Double threshold = alertCondition.getThreshold();
+            String optionStatus = alertCondition.getOption();
+
+            /* 
+             * yes, calculatedValue may be null, but that's OK because the match 
+             * method for MeasurementBaselineCacheElement handles nulls just fine
+             */
+            Double calculatedValue = getCalculatedBaselineMeanValue(alertConditionId,
+                baselineComposite.getBaselineId(), baselineComposite.getValue(), optionStatus, threshold);
+
+            try {
+                MeasurementBaselineCacheElement cacheElement = new MeasurementBaselineCacheElement(
+                    alertConditionOperator, calculatedValue, alertConditionId, optionStatus);
+
+                // auto-boxing (of alertConditionId) is always safe
+                addTo("measurementDataCache", measurementDataCache, baselineComposite.getScheduleId(), cacheElement,
+                    alertConditionId, stats);
+                addTo("measurementBaselineMap", measurementBaselineMap, baselineComposite.getBaselineId(),
+                    cacheElement, alertConditionId, stats);
+            } catch (InvalidCacheElementException icee) {
+                log.info("Failed to create NumericDoubleCacheElement with parameters: "
+                    + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, calculatedValue));
+            }
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
+        } else if (alertConditionCategory == AlertConditionCategory.CHANGE) {
+            AlertConditionChangesCategoryComposite changesComposite = (AlertConditionChangesCategoryComposite) composite;
+            int scheduleId = changesComposite.getScheduleId();
+
+            MeasurementDataNumeric numeric = measurementDataManager.getCurrentNumericForSchedule(scheduleId);
+
+            try {
+                MeasurementNumericCacheElement cacheElement = new MeasurementNumericCacheElement(
+                    alertConditionOperator, (numeric == null) ? null : numeric.getValue(), alertConditionId);
+
+                addTo("measurementDataCache", measurementDataCache, scheduleId, cacheElement, alertConditionId, stats);
+            } catch (InvalidCacheElementException icee) {
+                log.info("Failed to create NumericDoubleCacheElement with parameters: "
+                    + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, numeric));
+            }
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
+        } else if (alertConditionCategory == AlertConditionCategory.TRAIT) {
+            AlertConditionTraitCategoryComposite traitsComposite = (AlertConditionTraitCategoryComposite) composite;
+            String value = traitsComposite.getValue();
+
+            try {
+                /* 
+                 * don't forget special defensive handling to allow for null trait calculation;
+                 * this might happen if a newly committed resource has some alert template applied to
+                 * it for some trait that it has not yet gotten from the agent
+                 */
+                MeasurementTraitCacheElement cacheElement = new MeasurementTraitCacheElement(alertConditionOperator,
+                    value, alertConditionId);
+
+                addTo("measurementTraitCache", measurementTraitCache, traitsComposite.getScheduleId(), cacheElement,
+                    alertConditionId, stats);
+            } catch (InvalidCacheElementException icee) {
+                log.info("Failed to create StringCacheElement with parameters: "
+                    + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, value));
+            }
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
+        } else if (alertConditionCategory == AlertConditionCategory.AVAILABILITY) {
+            /*
+             * This is a hack, because we're not respecting the persist alertCondition option, we're instead overriding
+             * it with AvailabilityType.UP to satisfy the desired semantics.
+             *
+             * TODO: jmarques - should associate a specific operator with availability UI selections to make biz
+             * processing more consistent with the model
+             */
+            AlertConditionAvailabilityCategoryComposite availabilityComposite = (AlertConditionAvailabilityCategoryComposite) composite;
+
+            try {
+                AvailabilityCacheElement cacheElement = new AvailabilityCacheElement(alertConditionOperator,
+                    AvailabilityType.UP, availabilityComposite.getAvailabilityType(), alertConditionId);
+                addTo("availabilityCache", availabilityCache, availabilityComposite.getResourceId(), cacheElement,
+                    alertConditionId, stats);
+            } catch (InvalidCacheElementException icee) {
+                log.info("Failed to create AvailabilityCacheElement with parameters: "
+                    + getCacheElementErrorString(alertConditionId, alertConditionOperator, availabilityComposite
+                        .getAvailabilityType(), AvailabilityType.UP));
+            }
+            AlertConditionCacheMonitor.getMBean().incrementAvailabilityCacheElementCount(stats.created - stats.deleted);
+        } else if (alertConditionCategory == AlertConditionCategory.CONTROL) {
+            AlertConditionControlCategoryComposite controlComposite = (AlertConditionControlCategoryComposite) composite;
+            String option = alertCondition.getOption();
+            OperationRequestStatus operationRequestStatus = OperationRequestStatus.valueOf(option.toUpperCase());
+
+            try {
+                ResourceOperationCacheElement cacheElement = new ResourceOperationCacheElement(alertConditionOperator,
+                    operationRequestStatus, alertConditionId);
+
+                // auto-boxing always safe
+                addToResourceOperationCache(controlComposite.getResourceId(), controlComposite
+                    .getOperationDefinitionId(), cacheElement, alertConditionId, stats);
+            } catch (InvalidCacheElementException icee) {
+                log
+                    .info("Failed to create ResourceOperationCacheElement with parameters: "
+                        + getCacheElementErrorString(alertConditionId, alertConditionOperator, null,
+                            operationRequestStatus));
+            }
+            AlertConditionCacheMonitor.getMBean().incrementOperationCacheElementCount(stats.created - stats.deleted);
+        } else if (alertConditionCategory == AlertConditionCategory.THRESHOLD) {
+            AlertConditionScheduleCategoryComposite thresholdComposite = (AlertConditionScheduleCategoryComposite) composite;
+            Double thresholdValue = alertCondition.getThreshold();
+
+            MeasurementNumericCacheElement cacheElement = null;
+            try {
+                cacheElement = new MeasurementNumericCacheElement(alertConditionOperator, thresholdValue,
+                    alertConditionId);
+            } catch (InvalidCacheElementException icee) {
+                log.info("Failed to create NumberDoubleCacheElement with parameters: "
+                    + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, thresholdValue));
+            }
+
+            if (cacheElement != null) {
+                addTo("measurementDataCache", measurementDataCache, thresholdComposite.getScheduleId(), cacheElement,
+                    alertConditionId, stats);
+
+            }
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
+        } else if (alertConditionCategory == AlertConditionCategory.EVENT) {
+            AlertConditionEventCategoryComposite eventComposite = (AlertConditionEventCategoryComposite) composite;
+            EventSeverity eventSeverity = EventSeverity.valueOf(alertCondition.getName());
+            String eventDetails = alertCondition.getOption();
+
+            EventCacheElement cacheElement = null;
+            try {
+                if (eventDetails == null) {
+                    cacheElement = new EventCacheElement(alertConditionOperator, eventSeverity, alertConditionId);
+                } else {
+                    cacheElement = new EventCacheElement(alertConditionOperator, eventDetails, eventSeverity,
+                        alertConditionId);
+                }
+            } catch (InvalidCacheElementException icee) {
+                log
+                    .info("Failed to create EventCacheElement with parameters: "
+                        + getCacheElementErrorString(alertConditionId, alertConditionOperator, eventDetails,
+                            eventSeverity));
+            }
+
+            addTo("eventsCache", eventsCache, eventComposite.getResourceId(), cacheElement, alertConditionId, stats);
+            AlertConditionCacheMonitor.getMBean().incrementEventCacheElementCount(stats.created - stats.deleted);
+        }
+    }
+
+    private Double getCalculatedBaselineMeanValue(int alertConditionId, int baselineId, Double mean,
+        String optionStatus, Double threshold) {
+        return getCalculatedBaselineValue_helper(alertConditionId, baselineId, null, mean, null, optionStatus,
+            threshold);
     }
 
     private Double getCalculatedBaselineValue(int alertConditionId, MeasurementBaseline baseline, String optionStatus,

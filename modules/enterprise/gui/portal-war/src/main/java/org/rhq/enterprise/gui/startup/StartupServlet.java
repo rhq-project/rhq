@@ -75,6 +75,9 @@ public class StartupServlet extends HttpServlet {
         createDefaultServerIfNecessary(); // before comm to ensure a registered server
         Server.OperationMode operationMode = getServerOperationMode();
 
+        // this will initiate the cache load, before agents connect
+        LookupUtil.getAlertConditionCacheManager().getCacheNames();
+
         // The order here is important - make sure if you change this you know what you are doing.
         // I'm not even sure this is ok.  If we start the scheduler before the comm layer, what happens
         // if a stored job needs to send a message?  But if we start the comm layer before the scheduler,

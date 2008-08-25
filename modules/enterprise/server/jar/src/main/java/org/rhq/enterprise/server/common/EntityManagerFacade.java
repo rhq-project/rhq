@@ -17,4 +17,12 @@ public class EntityManagerFacade implements EntityManagerFacadeLocal {
         return entityManager.createQuery(queryStr);
     }
 
+    public void clear() {
+        entityManager.clear();
+    }
+
+    public void flush() {
+        entityManager.flush();
+    }
+
 }

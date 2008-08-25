@@ -21,6 +21,12 @@ package org.rhq.enterprise.server.alert;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.composite.AbstractAlertConditionCategoryComposite;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 
 /**
  * @author Joseph Marques
@@ -29,4 +35,10 @@ import org.rhq.core.domain.alert.AlertCondition;
 @Local
 public interface AlertConditionManagerLocal {
     public AlertCondition getAlertConditionById(int alertConditionId);
+
+    PageList<AlertDefinition> getAllAlertDefinitionsWithConditions(Subject user, PageControl pageControl);
+
+    PageList<? extends AbstractAlertConditionCategoryComposite> getAlertConditionComposites(Subject user,
+        AlertConditionCategory category, PageControl pageControl);
+
 }

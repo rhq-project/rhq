@@ -5,6 +5,7 @@
 <%@ page import="org.rhq.enterprise.server.test.MeasurementTestLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.ResourceGroupTestBeanLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.SubjectRoleTestBeanLocal" %>
+<%@ page import="org.rhq.enterprise.server.test.AlertTemplateTestLocal" %>
 <%@ page import="org.rhq.enterprise.server.cluster.instance.ServerManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.ResourceGroupTestBeanLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
@@ -29,6 +30,7 @@
    ResourceGroupTestBeanLocal resourceGroupTestBean;
    SubjectRoleTestBeanLocal subjectRoleTestBean;
    ServerManagerLocal serverManager;
+   AlertTemplateTestLocal alertTemplateTestBean;
    
    coreTestBean = LookupUtil.getCoreTest();
    discoveryTestBean = LookupUtil.getDiscoveryTest();
@@ -36,6 +38,7 @@
    resourceGroupTestBean = LookupUtil.getResourceGroupTestBean();
    subjectRoleTestBean = LookupUtil.getSubjectRoleTestBean();
    serverManager = LookupUtil.getServerManager();
+   alertTemplateTestBean = LookupUtil.getAlertTemplateTestBean();
 
    String result = null;
    String mode = pageContext.getRequest().getParameter("mode");
@@ -104,6 +107,12 @@
       {
          String serverName = serverManager.getIdentity();
          pageContext.setAttribute("serverName", "(serverName = " + serverName + ")");
+      }
+      else if ("cloneAlertTemplate".equals(mode))
+      {
+         String alertTemplateId = pageContext.getRequest().getParameter("alertTemplateId");
+         String numberOfClones = pageContext.getRequest().getParameter("numberOfClones");
+         alertTemplateTestBean.cloneAlertTemplate(Integer.parseInt(alertTemplateId), Integer.parseInt(numberOfClones));  
       }
    }
    catch (Exception e)
@@ -201,6 +210,19 @@ Send New Platform Inventory Report
       <a href="<c:out value="${url}"/>">Set RHQ Agent 'CurrentlyScheduleMetrics' to 100</a></li>
   <li><c:url var="url" value="/admin/TestControl.jsp?mode=setAgentCurrentlyScheduledMetrics&v=50"/>
       <a href="<c:out value="${url}"/>">Set RHQ Agent 'CurrentlyScheduleMetrics' to 50</a></li>
+</ul>
+
+<h2>Alerts</h2>
+
+<c:url var="url" value="/admin/TestControl.jsp?mode=cloneAlertTemplate"/>
+Template Cloning
+<form action="<c:out value="${url}"/>" method="get">
+   <input type="hidden" name="mode" value="cloneAlertTemplate"/>
+   Alert Template ID: <input type="text" name="alertTemplateId" size="5"/><br/>
+   Number of Clones: <input type="text" name="numberOfClones" size="5"/><br/>
+   <input type="submit" value="Send" name="Send"/>
+</form>
+      
 </ul>
 
 <h2>Utilities</h2>

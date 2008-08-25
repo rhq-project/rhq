@@ -125,6 +125,13 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         if (alertDefinition != null) {
             // avoid NPEs if the caller passed an invalid id
             alertDefinition.getConditions().size();
+            // this is now lazy
+            for (AlertCondition cond : alertDefinition.getConditions()) {
+                //                if (cond.getMeasurementDefinition() != null) {
+                //                    cond.getMeasurementDefinition().getId();
+                //                }
+                cond.getMeasurementDefinition().getId();
+            }
             // DO NOT LOAD ALL ALERTS FOR A DEFINITION... This would be all alerts that have been fired
             //alertDefinition.getAlerts().size();
             alertDefinition.getAlertNotifications().size();

@@ -6,4 +6,8 @@ import javax.persistence.Query;
 @Local
 public interface EntityManagerFacadeLocal {
     Query createQuery(String queryStr);
+
+    void clear();
+
+    void flush();
 }

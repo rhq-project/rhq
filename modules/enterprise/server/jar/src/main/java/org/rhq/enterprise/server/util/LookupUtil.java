@@ -133,6 +133,8 @@ import org.rhq.enterprise.server.system.SystemManagerBean;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.test.AccessBean;
 import org.rhq.enterprise.server.test.AccessLocal;
+import org.rhq.enterprise.server.test.AlertTemplateTestBean;
+import org.rhq.enterprise.server.test.AlertTemplateTestLocal;
 import org.rhq.enterprise.server.test.CoreTestBean;
 import org.rhq.enterprise.server.test.CoreTestLocal;
 import org.rhq.enterprise.server.test.DiscoveryTestBean;
@@ -217,6 +219,10 @@ public final class LookupUtil {
 
     public static AlertTemplateManagerLocal getAlertTemplateManager() {
         return lookupLocal(AlertTemplateManagerBean.class);
+    }
+
+    public static AlertTemplateTestLocal getAlertTemplateTestBean() {
+        return lookupLocal(AlertTemplateTestBean.class);
     }
 
     public static AuthorizationManagerLocal getAuthorizationManager() {

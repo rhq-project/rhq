@@ -27,6 +27,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -48,13 +49,164 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 @NamedQueries( {
     @NamedQuery(name = "AlertCondition.findByTriggerId", query = "SELECT a FROM AlertCondition AS a WHERE a.triggerId = :tid"),
     @NamedQuery(name = "AlertCondition.findAll", query = "SELECT a FROM AlertCondition AS a"),
-    @NamedQuery(name = AlertCondition.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertCondition ac WHERE ac.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))") })
+    @NamedQuery(name = AlertCondition.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertCondition ac WHERE ac.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))"),
+    @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_BASELINE, query = "" //
+        + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionBaselineCategoryComposite " //
+        + "       ( " //
+        + "         ac, " //
+        + "         ms.id, " //
+        + "         mb.id, " //
+        + "         mb.baselineMean " //
+        + "       ) " //
+        + "    FROM AlertCondition AS ac " //
+        + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms JOIN ms.baseline mb " //
+        + "   WHERE ad.recoveryId = 0 " //
+        + "     AND ad.enabled = TRUE " //
+        + "     AND ad.deleted = FALSE " //
+        + "     AND ms.definition = md " //
+        + "     AND ms.resource = ad.resource " //
+        + "     AND mb IS NOT NULL " //
+        + "     AND ac.category = 'BASELINE' " //
+        + "ORDER BY ac.id"), //
+    @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_CHANGE, query = "" //
+        + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionChangesCategoryComposite " //
+        + "       ( " //
+        + "         ac, " //
+        + "         ms.id " //
+        + "       ) " //
+        + "    FROM AlertCondition AS ac " //
+        + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms " //
+        + "   WHERE ad.recoveryId = 0 " //
+        + "     AND ad.enabled = TRUE " //
+        + "     AND ad.deleted = FALSE " //
+        + "     AND ms.definition = md " //
+        + "     AND ms.resource = ad.resource " //
+        + "     AND ac.category = 'CHANGE' " //
+        + "ORDER BY ac.id"), //
+    @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_TRAIT, query = "" //
+        + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionTraitCategoryComposite " //
+        + "       ( " //
+        + "         ac, " //
+        + "         ms.id, " //
+        + "         (" //
+        + "           SELECT md.value " //
+        + "             FROM MeasurementDataTrait md " //
+        + "            WHERE md.schedule = ms " //
+        + "              AND md.id.timestamp = " //
+        + "                ( " //
+        + "                  SELECT max(imd.id.timestamp) " //
+        + "                    FROM MeasurementDataTrait imd " //
+        + "                   WHERE ms.id = imd.schedule.id " //
+        + "                ) " //
+        + "         ) " //
+        + "       ) " //
+        + "    FROM AlertCondition AS ac " //
+        + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms " //
+        + "   WHERE ad.recoveryId = 0 " //
+        + "     AND ad.enabled = TRUE " //
+        + "     AND ad.deleted = FALSE " //
+        + "     AND ms.definition = md " //
+        + "     AND ms.resource = ad.resource " //
+        + "     AND ac.category = 'TRAIT' " //
+        + "ORDER BY ac.id"), //
+    @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_AVAILABILITY, query = "" //
+        + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionAvailabilityCategoryComposite " //
+        + "       ( " //
+        + "         ac, " //
+        + "         res.id, " //
+        + "         (" //
+        + "           SELECT a.availabilityType " //
+        + "             FROM Availability a " //
+        + "             JOIN a.resource ar " //
+        + "            WHERE ar = res " //
+        + "              AND a.endTime IS NULL " //
+        + "         ) " //
+        + "       ) " //
+        + "    FROM AlertCondition AS ac " //
+        + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ad.resource res " //
+        + "   WHERE ad.recoveryId = 0 " //
+        + "     AND ad.enabled = TRUE " //
+        + "     AND ad.deleted = FALSE " //
+        + "     AND ac.category = 'AVAILABILITY' " //
+        + "ORDER BY ac.id"), //
+    @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_CONTROL, query = "" //
+        + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionControlCategoryComposite " //
+        + "       ( " //
+        + "         ac, " //
+        + "         res.id, " //
+        + "         (" //
+        + "           SELECT op.id " //
+        + "             FROM OperationDefinition op " //
+        + "            WHERE op.resourceType = type " //
+        + "              AND op.name = ac.name " //
+        + "         ) " //
+        + "       ) " //
+        + "    FROM AlertCondition AS ac " //
+        + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ad.resource res " //
+        + "    JOIN res.resourceType type " //
+        + "   WHERE ad.recoveryId = 0 " //
+        + "     AND ad.enabled = TRUE " //
+        + "     AND ad.deleted = FALSE " //
+        + "     AND ac.category = 'CONTROL' " //
+        + "ORDER BY ac.id"), //
+    @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_THRESHOLD, query = "" //
+        + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionScheduleCategoryComposite " //
+        + "       ( " //
+        + "         ac, " //
+        + "         ms.id " //
+        + "       ) " //
+        + "    FROM AlertCondition AS ac " //
+        + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms " //
+        + "   WHERE ad.recoveryId = 0 " //
+        + "     AND ad.enabled = TRUE " //
+        + "     AND ad.deleted = FALSE " //
+        + "     AND ms.definition = md " //
+        + "     AND ms.resource = ad.resource " //
+        + "     AND ac.category = 'THRESHOLD' " //
+        + "ORDER BY ac.id"), //
+    @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_EVENT, query = "" //
+        + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionEventCategoryComposite " //
+        + "       ( " //
+        + "         ac, " //
+        + "         res.id " //
+        + "       ) " //
+        + "    FROM AlertCondition AS ac " //
+        + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ad.resource res " //
+        + "   WHERE ad.recoveryId = 0 " //
+        + "     AND ad.enabled = TRUE " //
+        + "     AND ad.deleted = FALSE " //
+        + "     AND ac.category = 'EVENT' " //
+        + "ORDER BY ac.id"), //
+    @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_COUNT_PARAMETERIZED, query = "" //
+        + "  SELECT count(ac.id) " //
+        + "    FROM AlertCondition AS ac " //
+        + "    JOIN ac.alertDefinition ad " //
+        + "   WHERE ad.recoveryId = 0 " //
+        + "     AND ad.enabled = TRUE " //
+        + "     AND ad.deleted = FALSE " //
+        + "     AND ac.category = :category " //
+        + "     AND ad.resource IS NOT NULL") })
 @SequenceGenerator(name = "RHQ_ALERT_CONDITION_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_ID_SEQ")
 @Table(name = "RHQ_ALERT_CONDITION")
 public class AlertCondition implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertCondition.deleteByResources";
+    public static final String QUERY_BY_CATEGORY_BASELINE = "AlertCondition.byCategoryBaseline";
+    public static final String QUERY_BY_CATEGORY_CHANGE = "AlertCondition.byCategoryChange";
+    public static final String QUERY_BY_CATEGORY_TRAIT = "AlertCondition.byCategoryTrait";
+    public static final String QUERY_BY_CATEGORY_AVAILABILITY = "AlertCondition.byCategoryAvailability";
+    public static final String QUERY_BY_CATEGORY_CONTROL = "AlertCondition.byCategoryControl";
+    public static final String QUERY_BY_CATEGORY_THRESHOLD = "AlertCondition.byCategoryThreshold";
+    public static final String QUERY_BY_CATEGORY_EVENT = "AlertCondition.byCategoryEvent";
+    public static final String QUERY_BY_CATEGORY_COUNT_PARAMETERIZED = "AlertCondition.byCategoryCount";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_ALERT_CONDITION_ID_SEQ")
@@ -67,7 +219,7 @@ public class AlertCondition implements Serializable {
     private AlertConditionCategory category;
 
     @JoinColumn(name = "MEASUREMENT_DEFINITION_ID", referencedColumnName = "ID")
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private MeasurementDefinition measurementDefinition;
 
     @Column(name = "NAME")
@@ -86,7 +238,7 @@ public class AlertCondition implements Serializable {
     private Integer triggerId;
 
     @JoinColumn(name = "ALERT_DEFINITION_ID", referencedColumnName = "ID")
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private AlertDefinition alertDefinition;
 
     @OneToMany(mappedBy = "condition", cascade = CascadeType.ALL)
@@ -277,7 +429,7 @@ public class AlertCondition implements Serializable {
     @Override
     public String toString() {
         return "org.rhq.core.domain.alert.AlertCondition" + "[ " + "id=" + id + ", " + "category=" + category + ", "
-            + "measurementDefinition=" + measurementDefinition + ", " + "name=" + name + ", " + "comparator='"
-            + comparator + "', " + "threshold=" + threshold + ", " + "option=" + option + ", " + alertDefinition + " ]";
+            + "name=" + name + ", " + "comparator='" + comparator + "', " + "threshold=" + threshold + ", " + "option="
+            + option + " ]";
     }
 }

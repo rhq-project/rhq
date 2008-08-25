@@ -127,10 +127,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
             alertDefinition.getConditions().size();
             // this is now lazy
             for (AlertCondition cond : alertDefinition.getConditions()) {
-                //                if (cond.getMeasurementDefinition() != null) {
-                //                    cond.getMeasurementDefinition().getId();
-                //                }
-                cond.getMeasurementDefinition().getId();
+                if (cond.getMeasurementDefinition() != null) {
+                    cond.getMeasurementDefinition().getId();
+                }
             }
             // DO NOT LOAD ALL ALERTS FOR A DEFINITION... This would be all alerts that have been fired
             //alertDefinition.getAlerts().size();

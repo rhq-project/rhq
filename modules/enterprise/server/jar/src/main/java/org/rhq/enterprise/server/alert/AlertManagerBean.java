@@ -428,10 +428,9 @@ public class AlertManagerBean implements AlertManagerLocal {
         alert.getConditionLogs().size();
         for (AlertConditionLog log : alert.getConditionLogs()) {
             // this is now lazy
-            //            if (log.getCondition() != null && log.getCondition().getMeasurementDefinition() != null) {
-            //                log.getCondition().getMeasurementDefinition().getId();
-            //            }
-            log.getCondition().getMeasurementDefinition().getId();
+            if (log.getCondition() != null && log.getCondition().getMeasurementDefinition() != null) {
+                log.getCondition().getMeasurementDefinition().getId();
+            }
         }
     }
 

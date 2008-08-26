@@ -37,7 +37,8 @@ public abstract class WWWUtils {
             connection.setRequestMethod("HEAD");
             connection.setConnectTimeout(3000);
             connection.connect();
-            // TODO: Check response status code?
+            // get the respone code to actually trigger sending the Request.
+            connection.getResponseCode();
         } catch (IOException e) {
             return false;
         }

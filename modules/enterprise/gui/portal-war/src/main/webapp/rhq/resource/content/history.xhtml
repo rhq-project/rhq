@@ -252,6 +252,10 @@
 <rich:panel>
     <f:facet name="header"><h:outputText value="Full Package Audit Trail"/></f:facet>
 
+    <p>The following is a complete listing of all of the package operations that have occurred on this resource.
+    By default, they are ordered from newest to oldest. In other words, for packages that are referenced more than
+    one time in this list, the most recent item indicates the current status of the package.</p>
+
     <i><h:outputText value="There are no package related events on this resource"
                      rendered="#{AuditTrailUIBean.dataModel.rowCount eq 0}"/></i>
 

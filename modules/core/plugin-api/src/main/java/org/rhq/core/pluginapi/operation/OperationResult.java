@@ -50,7 +50,7 @@ public class OperationResult {
     }
 
     /**
-     * Convienence constructor that builds a result that contains a single, simple result string. You can technically
+     * Convenience constructor that builds a result that contains a single, simple result string. You can technically
      * still use {@link #getComplexResults()} to obtain the {@link Configuration} object in order to populate it with
      * additional, complex results returned by the operation but, typically, callers that use this constructor only need
      * to store a single result string in the results.
@@ -76,7 +76,7 @@ public class OperationResult {
     }
 
     /**
-     * Use this method if an operation returned a simple string result. This is a convienence method that places the
+     * Use this method if an operation returned a simple string result. This is a convenience method that places the
      * given result string in the {@link #getComplexResults()} object under the name
      * {@link #SIMPLE_OPERATION_RESULT_NAME}.
      *
@@ -91,7 +91,7 @@ public class OperationResult {
      * operation invocation. The returned object is not a copy, so you can use this object to populate the complex
      * results.
      *
-     * <p>Note that this is the same object that will be populated by the convienence method
+     * <p>Note that this is the same object that will be populated by the convenience method
      * {@link #setSimpleResult(String)}.</p>
      *
      * @return the object that will contain the complex results

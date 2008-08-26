@@ -22,6 +22,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.List;
 
 /**
  * @author Ian Springer
@@ -87,9 +89,20 @@ public class ProcessExecutionUtility {
                 processExecution = new ProcessExecution(file.getPath());
                 processExecution.setArguments(new ArrayList<String>());
             } else {
-                processExecution = new ProcessExecution(prefix);
-                processExecution.setArguments(new ArrayList<String>());
-                processExecution.getArguments().add(file.getPath());
+                List<String> arguments = new ArrayList<String>();
+
+                StringTokenizer prefixTokenizer = new StringTokenizer(prefix);
+                String processName = prefixTokenizer.nextToken();
+
+                while (prefixTokenizer.hasMoreTokens()) {
+                    String prefixArgument = prefixTokenizer.nextToken();
+                    arguments.add(prefixArgument);
+                }
+
+                arguments.add(file.getPath());
+
+                processExecution = new ProcessExecution(processName);
+                processExecution.setArguments(arguments);
             }
         }
 

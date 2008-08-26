@@ -317,6 +317,9 @@ public class InventoryPrinter {
                 return;
             }
             totalCount++;
+            if (resource.getResourceType() == null) {
+                return;
+            }
             ResourceCategory category = resource.getResourceType().getCategory();
             switch (category) {
                 case PLATFORM: platformCount++; break;

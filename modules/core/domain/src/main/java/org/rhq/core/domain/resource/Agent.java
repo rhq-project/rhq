@@ -319,10 +319,10 @@ public class Agent implements Serializable {
     }
 
     /**
-     * Returns 0 if this agent is current.  Otherwise, returns a mask of {@link AgentStatus}
+     * Returns 0 if this agent is current.  Otherwise, returns a mask of {@link Agent.Status}
      * elements corresponding to the updates that have occurred that are related to this agent.
      * 
-     * @return 0 if this agent is current.  Otherwise, returns a mask of {@link AgentStatus}
+     * @return 0 if this agent is current.  Otherwise, returns a mask of {@link Agent.Status}
      * elements corresponding to the updates that have occurred that are related to this agent.
      */
     public int getStatus() {

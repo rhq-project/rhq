@@ -68,6 +68,10 @@ public class AffinityGroup implements Serializable {
     protected AffinityGroup() {
     }
 
+    public AffinityGroup(String name) {
+        this.name = name;
+    }
+
     public int getId() {
         return id;
     }

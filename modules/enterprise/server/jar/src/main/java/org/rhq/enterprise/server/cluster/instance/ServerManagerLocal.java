@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import org.rhq.core.domain.cluster.AffinityGroup;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
 
@@ -37,6 +38,10 @@ public interface ServerManagerLocal {
     List<Agent> getAgents();
 
     List<Agent> getAgentsWithStatus();
+
+    void deleteServer(Server server);
+
+    void deleteAffinityGroup(AffinityGroup affinityGroup);
 
     Server getServer();
 

@@ -22,13 +22,16 @@ import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.servlet.ServletException;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.cluster.AffinityGroup;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
@@ -43,6 +46,9 @@ public class ServerManagerBean implements ServerManagerLocal {
     private final Log log = LogFactory.getLog(ServerManagerBean.class);
 
     private static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
+
+    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+    private EntityManager entityManager;
 
     @EJB
     ClusterManagerLocal clusterManager;
@@ -101,4 +107,19 @@ public class ServerManagerBean implements ServerManagerLocal {
             }
         }
     }
+
+    public void deleteServer(Server server) {
+        server = entityManager.find(Server.class, server.getId());
+        entityManager.remove(server);
+
+        log.info("Removed server: " + server);
+    }
+
+    public void deleteAffinityGroup(AffinityGroup affinityGroup) {
+        affinityGroup = entityManager.find(AffinityGroup.class, affinityGroup.getId());
+        entityManager.remove(affinityGroup);
+
+        log.info("Removed affinityGroup: " + affinityGroup);
+    }
+
 }

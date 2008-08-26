@@ -65,6 +65,10 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
         return servers.get(nextIndex);
     }
 
+    public ServerEntry get(int index) {
+        return servers.get(index);
+    }
+
     public void remove() {
         throw new IllegalAccessError(getClass().getSimpleName() + " are immutable lists, removal is disallowed");
     }
@@ -101,6 +105,16 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
          * 'servers' is correctly immutable.
          */
         servers = Collections.unmodifiableList(entries);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("\nServerList:\n  ");
+        for (ServerEntry server : this.servers) {
+            sb.append(server.toString());
+            sb.append("\n  ");
+        }
+        return sb.toString();
     }
 
 }

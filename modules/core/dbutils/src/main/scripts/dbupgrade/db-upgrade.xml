@@ -318,7 +318,10 @@ DB Upgrade:
          	    ON rhq_server (name);
             </statement>
         </schema-directSQL>
+   </schemaSpec>
 
+   <schemaSpec version="2.9">
+      <schema-addColumn table="RHQ_FAILOVER_DETAILS" column="ORDINAL" columnType="INTEGER" />
    </schemaSpec>
 
 </dbupgrade>

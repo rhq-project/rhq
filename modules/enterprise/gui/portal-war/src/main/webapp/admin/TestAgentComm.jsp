@@ -109,7 +109,7 @@ The sendThrottled field determines if you want to throttle the messages that are
          ClientRemotePojoFactory pojoFactory = sender.getClientRemotePojoFactory();
          pojoFactory.setTimeout( timeout );
          pojoFactory.setAsynch( async, null );
-         pojoFactory.setDeliveryGuaranteed( guaranteed );
+         pojoFactory.setDeliveryGuaranteed( guaranteed ? ClientRemotePojoFactory.GuaranteedDelivery.YES : ClientRemotePojoFactory.GuaranteedDelivery.NO );
          pojoFactory.setSendThrottled( sendThrottled );
          Ping pojo = (Ping) pojoFactory.getRemotePojo( Ping.class );
       

@@ -32,6 +32,8 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceError;
+import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -164,14 +166,17 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                             current = resourceComponent.getAvailability();
                         }
                     }
-                } catch (Throwable e) {
-                    // TODO GH: Put errors in report
+                } catch (Throwable t) {
+                    ResourceError resourceError = new ResourceError(resource, ResourceErrorType.AVAILABILITY_CHECK, t,
+                        System.currentTimeMillis());
+                    this.inventoryManager.sendResourceErrorToServer(resourceError);
+                    // TODO GH: Put errors in report, rather than sending them to the Server separately.
                     if (log.isDebugEnabled()) {
-                        if (e instanceof TimeoutException)
+                        if (t instanceof TimeoutException)
                             // no need to log the stack trace for timeouts...
                             log.debug("Failed to collect availability on resource " + resource + " (call timed out)");
                         else
-                            log.debug("Failed to collect availability on resource " + resource, e);
+                            log.debug("Failed to collect availability on resource " + resource, t);
                     }
                 }
 

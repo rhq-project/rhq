@@ -176,6 +176,7 @@ public class ResourceError implements Serializable {
      */
     public void setDetailFromThrowable(@NotNull
     Throwable t) {
+        //noinspection ConstantConditions
         if (t == null) {
             throw new IllegalArgumentException("t == null");
         }

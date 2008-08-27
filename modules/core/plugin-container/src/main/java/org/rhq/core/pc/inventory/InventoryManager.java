@@ -828,7 +828,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.error("Failed to activate " + resource + ": " + e.getLocalizedMessage());
                 // TODO: I don't think it makes any sense to call the below method w/in the embedded console.
                 // (ips, 07/16/08)
-                sendInvalidPluginConfigurationResourceError(resource, e);
+                handleInvalidPluginConfigurationResourceError(resource, e);
             }
         }
 
@@ -977,22 +977,29 @@ public class InventoryManager extends AgentService implements ContainerService, 
      *
      * @param resource the resource that could not be connected to
      * @param t        the exception that indicates the problem with the plugin configuration
+     * @return         true if the error was sent successfully, or false otherwise
      */
-    private void sendInvalidPluginConfigurationResourceError(Resource resource, Throwable t) {
+    private boolean handleInvalidPluginConfigurationResourceError(Resource resource, Throwable t) {
         resource.setConnected(false); // invalid plugin configuration infers the resource component is disconnected
-
-        DiscoveryServerService serverService = configuration.getServerServices().getDiscoveryServerService();
-        if (serverService != null) {
-            // give the server-side an error message describing the connection failure that can be
-            // displayed on the resource's Inventory page.
-            ResourceError resourceError = new ResourceError(resource, ResourceErrorType.INVALID_PLUGIN_CONFIGURATION,
+        // Give the server-side an error message describing the connection failure that can be
+        // displayed on the resource's Inventory page.
+        ResourceError resourceError = new ResourceError(resource, ResourceErrorType.INVALID_PLUGIN_CONFIGURATION,
                 t, System.currentTimeMillis());
+        return sendResourceErrorToServer(resourceError);
+    }
+
+    boolean sendResourceErrorToServer(ResourceError resourceError) {
+        boolean errorSent = false;
+        DiscoveryServerService serverService = this.configuration.getServerServices().getDiscoveryServerService();
+        if (serverService != null) {
             try {
                 serverService.setResourceError(resourceError);
-            } catch (Exception e) {
-                log.warn("Cannot inform the server about a resource error [" + resourceError + "]. Cause: " + e);
+                errorSent = true;
+            } catch (RuntimeException e) {
+                log.warn("Cannot inform the Server about a Resource error [" + resourceError + "]. Cause: " + e);
             }
         }
+        return errorSent;
     }
 
     private Resource findMatchingChildResource(Resource resource, Resource parent) {
@@ -1712,7 +1719,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
                 activateResource(resource, container, pluginConfigUpdated);
             } catch (InvalidPluginConfigurationException ipce) {
-                sendInvalidPluginConfigurationResourceError(resource, ipce);
+                handleInvalidPluginConfigurationResourceError(resource, ipce);
                 log.warn("Cannot start component for " + resource
                     + " from synchronized merge due to invalid plugin config: " + ipce.getLocalizedMessage());
             } catch (Exception e) {

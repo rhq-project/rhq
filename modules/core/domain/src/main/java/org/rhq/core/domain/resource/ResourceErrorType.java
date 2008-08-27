@@ -26,7 +26,11 @@ package org.rhq.core.domain.resource;
  */
 public enum ResourceErrorType {
     /**
-     * A resource's plugin configuration was somehow invalid, causing the connection to the resource to fail.
+     * The Resource's plugin configuration was somehow invalid, causing the connection to the Resource to fail.
      */
-    INVALID_PLUGIN_CONFIGURATION
+    INVALID_PLUGIN_CONFIGURATION,
+    /**
+     * An exception was thrown by the Resource component's getAvailablity() method the last time it was called.
+     */
+    AVAILABILITY_CHECK
 }

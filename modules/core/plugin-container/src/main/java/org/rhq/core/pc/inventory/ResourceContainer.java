@@ -88,7 +88,7 @@ public class ResourceContainer implements Serializable {
 
     public Availability updateAvailability(AvailabilityType availabilityType) {
         Date now = new Date();
-        this.availability = new Availability(resource, now, availabilityType);
+        this.availability = new Availability(this.resource, now, availabilityType);
         return availability;
     }
 

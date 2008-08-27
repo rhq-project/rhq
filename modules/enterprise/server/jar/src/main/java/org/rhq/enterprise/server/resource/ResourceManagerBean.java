@@ -1665,13 +1665,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Resource resource = entityManager.find(Resource.class, resourceError.getResource().getId());
 
         if (resource == null) {
-            throw new ResourceNotFoundException("Resource error has been assigned an unknown resource: "
+            throw new ResourceNotFoundException("Resource error contains an unknown Resource id: "
                 + resourceError);
         }
 
-        if (resourceError.getErrorType() == ResourceErrorType.INVALID_PLUGIN_CONFIGURATION) {
-            // there should only ever be one invalid plugin configuration error per resource
-            // delete any currently existing ones before we add this new one
+        if (resourceError.getErrorType() == ResourceErrorType.INVALID_PLUGIN_CONFIGURATION ||
+            resourceError.getErrorType() == ResourceErrorType.AVAILABILITY_CHECK) {
+            // there should be at most one invalid plugin configuration error and one availability check error per
+            // resource, so delete any currently existing ones before we add this new one
             List<ResourceError> doomedErrors = resource.getResourceErrors(resourceError.getErrorType());
 
             // there should only ever be at most 1, but loop through the list just in case something got screwed up

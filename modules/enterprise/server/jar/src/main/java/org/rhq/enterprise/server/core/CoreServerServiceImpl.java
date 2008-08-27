@@ -150,7 +150,7 @@ public class CoreServerServiceImpl implements CoreServerService {
         }
 
         String agentToken = agentByName.getAgentToken();
-        FailoverListComposite failoverList = getFailManager().getForSingleAgent(agentToken);
+        FailoverListComposite failoverList = getFailoverList(agentToken);
 
         AgentRegistrationResults results = new AgentRegistrationResults();
         results.setAgentToken(agentToken);
@@ -248,7 +248,7 @@ public class CoreServerServiceImpl implements CoreServerService {
         return this.agentManager;
     }
 
-    private FailoverListManagerLocal getFailManager() {
+    private FailoverListManagerLocal getFailoverListManager() {
         if (this.failoverListManager == null) {
             this.failoverListManager = LookupUtil.getFailoverListManager();
         }
@@ -281,5 +281,9 @@ public class CoreServerServiceImpl implements CoreServerService {
         log.debug("A new agent has passed its endpoint verification test: " + endpoint);
 
         return;
+    }
+
+    public FailoverListComposite getFailoverList(String agentToken) {
+        return getFailoverListManager().getForSingleAgent(agentToken);
     }
 }

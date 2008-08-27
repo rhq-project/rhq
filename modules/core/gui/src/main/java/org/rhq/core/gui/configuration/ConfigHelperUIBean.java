@@ -18,6 +18,11 @@
  */
 package org.rhq.core.gui.configuration;
 
+import java.util.Iterator;
+
+import javax.faces.context.FacesContext;
+import javax.faces.application.FacesMessage;
+
 /**
  * A JSF managed bean that is used for the action methods for all buttons rendered for {@link ConfigUIComponent}s that
  * take the user to a new page. Note, none of the action methods actually do anything - their only purpose is so they
@@ -39,4 +44,17 @@ public class ConfigHelperUIBean {
     public String addNewOpenMapMemberProperty() {
         return PROCEED_OUTCOME;
     }
+
+    /**
+     * Returns true if the given component has any messages (warning, error, success or failure messages), false
+     * otherwise.
+     *
+     * @param clientId the client ID for the component being checked for messages
+     *
+     * @return true if there are messages, false otherwise
+     */
+     public boolean hasFacesMessage(String clientId) {
+         Iterator<FacesMessage> messagesIterator = FacesContext.getCurrentInstance().getMessages(clientId);
+         return messagesIterator.hasNext();
+     }
 }

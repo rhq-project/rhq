@@ -54,10 +54,23 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 @Local
 public interface ResourceManagerLocal {
     /**
+     * Create a new Resource.
+     *
+     * @param user the user creating the resource
+     * @param resource the resource to be created
      * @param parentId set to -1 to imply that this is a root resource, which has no parent
+     *
+     * @throws ResourceAlreadyExistsException if an equivalent resource already exists
      */
     void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException;
 
+    /**
+     * Update an existing Resource.
+     *
+     * @param user the user updating the resource
+     * @param resource the resource to be updated
+     * @return the updated (attached) resource
+     */
     Resource updateResource(Subject user, Resource resource);
 
     /**
@@ -67,8 +80,8 @@ public interface ResourceManagerLocal {
      * order (for example, if a given resource is actually a child of one of the other given resources, this method
      * ensures the deletion occurs properly).
      *
-     * @param  user        the user that deleted the resource
-     * @param  resourceIds the ID of the resource to delete
+     * @param  user        the user deleting the resource
+     * @param  resourceIds the ID of the resource to be deleted
      *
      * @return the list of all resources that were deleted - in effect, this will contain <code>resourceIds</code> and
      *         their childrens' IDs
@@ -80,8 +93,8 @@ public interface ResourceManagerLocal {
      * create its own transaction; each individual child resource as well as the top level resource identified with the
      * given ID will be deleted in its own transaction.
      *
-     * @param  user       the user that deleted the resource
-     * @param  resourceId the ID of the resource to delete
+     * @param  user       the user deleting the resource
+     * @param  resourceId the ID of the resource to be deleted
      *
      * @return the list of all resources that were deleted - in effect, this will contain <code>resourceId</code> and
      *         its children's IDs
@@ -94,8 +107,8 @@ public interface ResourceManagerLocal {
      * method, make sure you have a specific reason for it; check to see if calling
      * {@link #deleteResource(Subject, Integer)} would not be more appropriate.
      *
-     * @param user     the user that deleted the resource
-     * @param resource the actual resources to remove
+     * @param user     the user deleting the resources
+     * @param resources the resources to be deleted
      */
     void deleteResourcesInNewTransaction(Subject user, List<Resource> resources);
 
@@ -105,8 +118,8 @@ public interface ResourceManagerLocal {
      * method, make sure you have a specific reason for it; check to see if calling
      * {@link #deleteResource(Subject, Integer)} would not be more appropriate.
      *
-     * @param user     the user that deleted the resource
-     * @param resource the actual resource to remove
+     * @param user     the user deleting the resource
+     * @param resource the resource to be deleted
      */
     void deleteSingleResourceInNewTransaction(Subject user, Resource resource);
 
@@ -300,6 +313,7 @@ public interface ResourceManagerLocal {
     /**
      * Deletes the given resource error, effectively removing it from its resource's list of errors.
      *
+     * @param user the user deleting the resource error
      * @param resourceErrorId identifies the resource error to delete
      */
     void deleteResourceError(Subject user, int resourceErrorId);
@@ -339,9 +353,11 @@ public interface ResourceManagerLocal {
     void clearResourceConfigError(int resourceId);
 
     /**
-     * TODO
-     * @param agent
-     * @return
+     * Returns the platform Resource associated with the specified Agent.
+     *
+     * @param agent an Agent
+     * 
+     * @return the platform Resource associated with the specified Agent
      */
     Resource getPlatform(Agent agent);
 }

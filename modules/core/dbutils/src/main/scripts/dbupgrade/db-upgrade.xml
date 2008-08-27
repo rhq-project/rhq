@@ -305,6 +305,11 @@ DB Upgrade:
 
    <schemaSpec version="2.7">
         <schema-addColumn   table="RHQ_AGENT" column="STATUS" columnType="INTEGER" />
+        <schema-directSQL>
+             <statement desc="Updating existing agents with default STATUS flag">
+                 UPDATE RHQ_AGENT SET STATUS = 0
+             </statement>
+        </schema-directSQL>
         <schema-alterColumn table="RHQ_AGENT" column="STATUS" nullable="TRUE" default="0" />
    </schemaSpec>
 

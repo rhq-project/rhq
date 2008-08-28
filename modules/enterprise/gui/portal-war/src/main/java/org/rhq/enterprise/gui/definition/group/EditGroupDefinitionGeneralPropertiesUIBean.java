@@ -170,10 +170,19 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
             log.error("There was a problem adding one or more resource groups: ", rgue);
             return OUTCOME_FAILURE;
         } catch (Exception e) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "There was a problem calculating the results: "
-                + e.getMessage());
-            log.error("There was a problem calculating the results: ", e);
-            return OUTCOME_FAILURE;
+            Throwable t = e.getCause();
+            if (t instanceof ClassCastException) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "Probable syntax error: "
+                    + "this is likely due to comparing an integer property of resource (such as id) to a non-numeric, "
+                    + "or using a string function (startswith, endswith, or contains) on an integer property");
+                log.error("There was a problem calculating the results: ", t);
+                return OUTCOME_FAILURE;
+            } else {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                    "There was a problem calculating the results: " + e.getMessage());
+                log.error("There was a problem calculating the results: ", e);
+                return OUTCOME_FAILURE;
+            }
         }
 
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Group Definition's Resource Groups Calculated.");

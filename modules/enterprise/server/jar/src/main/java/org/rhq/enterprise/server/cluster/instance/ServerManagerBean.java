@@ -34,6 +34,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
+import org.rhq.enterprise.server.cluster.FailoverListManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 
@@ -52,6 +53,9 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     @EJB
     ClusterManagerLocal clusterManager;
+
+    @EJB
+    FailoverListManagerLocal failoverListManager;
 
     @EJB
     AgentStatusManagerLocal agentStatusManager;
@@ -110,6 +114,7 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     public void deleteServer(Server server) {
         server = entityManager.find(Server.class, server.getId());
+        failoverListManager.deleteServerListDetailsForServer(server);
         entityManager.remove(server);
 
         log.info("Removed server: " + server);

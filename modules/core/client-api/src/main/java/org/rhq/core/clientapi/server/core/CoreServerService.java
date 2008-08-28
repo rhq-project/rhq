@@ -21,6 +21,7 @@ package org.rhq.core.clientapi.server.core;
 import java.io.InputStream;
 import java.util.List;
 
+import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.domain.plugin.Plugin;
 
@@ -76,5 +77,5 @@ public interface CoreServerService {
      */
     void agentIsShuttingDown(String agentName);
 
-    FailoverListComposite getFailoverList(String agentToken);
+    FailoverListComposite getFailoverList(PartitionEventType eventType, String agentToken);
 }

@@ -28,6 +28,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -40,11 +42,20 @@ import javax.persistence.Table;
  *
  */
 @Entity(name = "FailoverListDetails")
+@NamedQueries( //
+{
+    @NamedQuery(name = FailoverListDetails.QUERY_DELETE_FOR_AGENT, query = "DELETE FROM FailoverListDetails fld WHERE fld.failoverList IN ( SELECT fl FROM FailoverList fl WHERE agent = :agent )"),
+    @NamedQuery(name = FailoverListDetails.QUERY_DELETE_FOR_SERVER, query = "DELETE FROM FailoverListDetails fld WHERE fld.server = :server"),
+    @NamedQuery(name = FailoverListDetails.QUERY_TRUNCATE, query = "DELETE FROM FailoverListDetails") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_FAILOVER_DETAILS_ID_SEQ")
 @Table(name = "RHQ_FAILOVER_DETAILS")
 public class FailoverListDetails implements Serializable {
 
     public static final long serialVersionUID = 1L;
+
+    public static final String QUERY_DELETE_FOR_AGENT = "FailoverListDetails.deleteForAgent";
+    public static final String QUERY_DELETE_FOR_SERVER = "FailoverListDetails.deleteForServer";
+    public static final String QUERY_TRUNCATE = "FailoverListDetails.truncate";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
@@ -67,6 +78,14 @@ public class FailoverListDetails implements Serializable {
 
     // required for JPA
     protected FailoverListDetails() {
+    }
+
+    public FailoverListDetails(FailoverList failoverList, int ordinal, Server server) {
+        super();
+        this.failoverList = failoverList;
+        this.ordinal = ordinal;
+        this.server = server;
+        this.serverId = server.getId();
     }
 
     public FailoverList getFailoverList() {

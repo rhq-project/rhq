@@ -28,6 +28,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -43,11 +45,18 @@ import org.rhq.core.domain.resource.Agent;
  *
  */
 @Entity(name = "FailoverList")
+@NamedQueries( //
+{
+    @NamedQuery(name = FailoverList.QUERY_DELETE_FOR_AGENT, query = "DELETE FROM FailoverList fl WHERE fl.agent = :agent"),
+    @NamedQuery(name = FailoverList.QUERY_TRUNCATE, query = "DELETE FROM FailoverList") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_FAILOVER_LIST_ID_SEQ")
 @Table(name = "RHQ_FAILOVER_LIST")
 public class FailoverList implements Serializable {
 
     public static final long serialVersionUID = 1L;
+
+    public static final String QUERY_DELETE_FOR_AGENT = "FailoverList.deleteForAgent";
+    public static final String QUERY_TRUNCATE = "FailoverList.truncate";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
@@ -70,6 +79,11 @@ public class FailoverList implements Serializable {
 
     // required for JPA
     protected FailoverList() {
+    }
+
+    public FailoverList(PartitionEvent event, Agent agent) {
+        this.partitionEvent = event;
+        this.agent = agent;
     }
 
     public PartitionEvent getPartitionEvent() {

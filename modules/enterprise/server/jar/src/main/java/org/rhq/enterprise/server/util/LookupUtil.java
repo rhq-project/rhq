@@ -58,6 +58,8 @@ import org.rhq.enterprise.server.cluster.ClusterManagerBean;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.cluster.FailoverListManagerBean;
 import org.rhq.enterprise.server.cluster.FailoverListManagerLocal;
+import org.rhq.enterprise.server.cluster.PartitionEventManagerBean;
+import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.cluster.instance.CacheConsistencyManagerBean;
 import org.rhq.enterprise.server.cluster.instance.CacheConsistencyManagerLocal;
 import org.rhq.enterprise.server.cluster.instance.ServerManagerBean;
@@ -147,7 +149,7 @@ import org.rhq.enterprise.server.test.SubjectRoleTestBean;
 import org.rhq.enterprise.server.test.SubjectRoleTestBeanLocal;
 
 /**
- * Methods that allow POJO objects to obtain references to EJB/JPA objects. These convienence methods attempt to
+ * Methods that allow POJO objects to obtain references to EJB/JPA objects. These convenience methods attempt to
  * minimize the amount of exception handling required by throwing runtime exceptions for the cases where there are no
  * easy recovery options.
  *
@@ -303,6 +305,10 @@ public final class LookupUtil {
 
     public static OperationManagerLocal getOperationManager() {
         return lookupLocal(OperationManagerBean.class);
+    }
+
+    public static PartitionEventManagerLocal getPartitionEventManager() {
+        return lookupLocal(PartitionEventManagerBean.class);
     }
 
     public static ConfigurationMetadataManagerLocal getConfigurationMetadataManager() {

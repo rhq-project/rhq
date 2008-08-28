@@ -40,6 +40,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.cluster.FailoverListManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
@@ -60,6 +61,10 @@ public class AgentManagerBean implements AgentManagerLocal {
 
     @EJB
     @IgnoreDependency
+    private FailoverListManagerLocal failoverListManager;
+
+    @EJB
+    @IgnoreDependency
     private AvailabilityManagerLocal availabilityManager;
 
     public void createAgent(Agent agent) {
@@ -70,6 +75,7 @@ public class AgentManagerBean implements AgentManagerLocal {
 
     public void deleteAgent(Agent agent) {
         agent = entityManager.find(Agent.class, agent.getId());
+        failoverListManager.deleteServerListsForAgent(agent);
         entityManager.remove(agent);
 
         ServerCommunicationsServiceMBean bootstrap = ServerCommunicationsServiceUtil.getService();

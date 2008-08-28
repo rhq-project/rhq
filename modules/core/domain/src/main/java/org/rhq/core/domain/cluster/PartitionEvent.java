@@ -30,6 +30,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -71,6 +72,11 @@ public class PartitionEvent implements Serializable {
     protected PartitionEvent() {
     }
 
+    public PartitionEvent(String subjectName, PartitionEventType eventType) {
+        this.subjectName = subjectName;
+        this.eventType = eventType;
+    }
+
     public int getId() {
         return id;
     }
@@ -109,6 +115,11 @@ public class PartitionEvent implements Serializable {
 
     public void setEventDetails(List<PartitionEventDetails> eventDetails) {
         this.eventDetails = eventDetails;
+    }
+
+    @PrePersist
+    void onPersist() {
+        this.ctime = System.currentTimeMillis();
     }
 
     @Override

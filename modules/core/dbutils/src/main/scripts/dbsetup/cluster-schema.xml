@@ -84,7 +84,6 @@
         <column name="FAILOVER_LIST_ID" type="INTEGER" references="RHQ_FAILOVER_LIST" required="true"/>
         <column name="SERVER_ID" type="INTEGER" references="RHQ_SERVER" required="true"/>
         <column name="ORDINAL" type = "INTEGER" required="true"/>
-        <column name="CTIME" required="true" type="LONG"/>
     </table>
 
 </dbsetup>

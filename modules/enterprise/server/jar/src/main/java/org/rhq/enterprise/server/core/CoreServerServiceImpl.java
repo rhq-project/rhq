@@ -35,12 +35,14 @@ import org.rhq.core.clientapi.server.core.AgentRegistrationException;
 import org.rhq.core.clientapi.server.core.AgentRegistrationRequest;
 import org.rhq.core.clientapi.server.core.AgentRegistrationResults;
 import org.rhq.core.clientapi.server.core.CoreServerService;
+import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.exception.WrappedRemotingException;
 import org.rhq.enterprise.communications.command.client.RemoteInputStream;
-import org.rhq.enterprise.server.cluster.FailoverListManagerLocal;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -54,7 +56,8 @@ public class CoreServerServiceImpl implements CoreServerService {
     private final Log log = LogFactory.getLog(CoreServerServiceImpl.class);
 
     private AgentManagerLocal agentManager;
-    private FailoverListManagerLocal failoverListManager;
+    private PartitionEventManagerLocal partitionEventManager;
+    private SubjectManagerLocal subjectManager;
 
     /**
      * @see CoreServerService#registerAgent(AgentRegistrationRequest)
@@ -150,7 +153,7 @@ public class CoreServerServiceImpl implements CoreServerService {
         }
 
         String agentToken = agentByName.getAgentToken();
-        FailoverListComposite failoverList = getFailoverList(agentToken);
+        FailoverListComposite failoverList = getFailoverList(PartitionEventType.AGENT_REGISTRATION, agentToken);
 
         AgentRegistrationResults results = new AgentRegistrationResults();
         results.setAgentToken(agentToken);
@@ -248,12 +251,20 @@ public class CoreServerServiceImpl implements CoreServerService {
         return this.agentManager;
     }
 
-    private FailoverListManagerLocal getFailoverListManager() {
-        if (this.failoverListManager == null) {
-            this.failoverListManager = LookupUtil.getFailoverListManager();
+    private PartitionEventManagerLocal getPartitionEventManager() {
+        if (this.partitionEventManager == null) {
+            this.partitionEventManager = LookupUtil.getPartitionEventManager();
         }
 
-        return this.failoverListManager;
+        return this.partitionEventManager;
+    }
+
+    private SubjectManagerLocal getSubjectManager() {
+        if (this.subjectManager == null) {
+            this.subjectManager = LookupUtil.getSubjectManager();
+        }
+
+        return this.subjectManager;
     }
 
     private void pingEndpoint(String endpoint) throws AgentRegistrationException {
@@ -283,7 +294,7 @@ public class CoreServerServiceImpl implements CoreServerService {
         return;
     }
 
-    public FailoverListComposite getFailoverList(String agentToken) {
-        return getFailoverListManager().getForSingleAgent(agentToken);
+    public FailoverListComposite getFailoverList(PartitionEventType eventType, String agentToken) {
+        return getPartitionEventManager().agentPartitionEvent(getSubjectManager().getOverlord(), agentToken, eventType);
     }
 }

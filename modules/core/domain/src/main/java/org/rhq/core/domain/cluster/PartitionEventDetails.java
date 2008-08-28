@@ -76,6 +76,14 @@ public class PartitionEventDetails implements Serializable {
     protected PartitionEventDetails() {
     }
 
+    public PartitionEventDetails(PartitionEvent partitionEvent, Agent agent, Server server) {
+        this.partitionEvent = partitionEvent;
+        this.agent = agent;
+        this.server = server;
+        this.agentId = agent.getId();
+        this.serverId = server.getId();
+    }
+
     public PartitionEvent getPartitionEvent() {
         return partitionEvent;
     }

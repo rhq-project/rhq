@@ -48,8 +48,10 @@ import org.rhq.core.domain.resource.Agent;
  */
 @Entity(name = "Server")
 @NamedQueries( //
-{ @NamedQuery(name = Server.QUERY_FIND_ALL, query = "SELECT s FROM Server s"),
-    @NamedQuery(name = Server.QUERY_FIND_BY_NAME, query = "SELECT s FROM Server s WHERE s.name = :name") })
+{
+    @NamedQuery(name = Server.QUERY_FIND_ALL, query = "SELECT s FROM Server s"),
+    @NamedQuery(name = Server.QUERY_FIND_BY_NAME, query = "SELECT s FROM Server s WHERE s.name = :name"),
+    @NamedQuery(name = Server.QUERY_FIND_BY_OPERATION_MODE, query = "SELECT s FROM Server s WHERE s.operationMode = :mode") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_SERVER_ID_SEQ")
 @Table(name = "RHQ_SERVER")
 public class Server implements Serializable {
@@ -58,6 +60,7 @@ public class Server implements Serializable {
 
     public static final String QUERY_FIND_ALL = "Server.findAll";
     public static final String QUERY_FIND_BY_NAME = "Server.findByName";
+    public static final String QUERY_FIND_BY_OPERATION_MODE = "Server.findByOperationMode";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")

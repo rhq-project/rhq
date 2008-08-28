@@ -31,8 +31,8 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 
 public class MeasurementConverter {
-
     private static final int MAX_PRECISION_DIGITS = 4;
+    private static final String NULL_OR_NAN_FORMATTED_VALUE = "--no data available--";
 
     private static Pattern numberOptionalUnitPattern;
     private static final String numberOptionalUnitPatternString = "([\\+\\-]?" + // number sign is optional but valid
@@ -270,7 +270,10 @@ public class MeasurementConverter {
     }
 
     public static String format(Double value, MeasurementUnits targetUnits, boolean bestFit,
-        Integer minimumFractionDigits, Integer maximumFractionDigits) {
+                                Integer minimumFractionDigits, Integer maximumFractionDigits) {
+        if (value == null || value.equals(Double.NaN)) {
+            return NULL_OR_NAN_FORMATTED_VALUE;
+        }
         if (bestFit) {
             MeasurementNumericValueAndUnits valueAndUnits = fit(value, targetUnits);
 
@@ -409,5 +412,4 @@ public class MeasurementConverter {
 
         return currentValueAndUnits;
     }
-
 }

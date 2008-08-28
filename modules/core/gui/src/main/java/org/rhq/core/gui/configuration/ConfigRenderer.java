@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.component.NamingContainer;
 import javax.faces.component.UIComponent;
@@ -61,7 +62,7 @@ public class ConfigRenderer extends Renderer {
     protected static final String UNGROUPED_PROPERTIES_STYLE_CLASS = "BlockContent";
     protected static final String REQUIRED_MARKER_TEXT_STYLE_CLASS = "required-marker-text";
     protected static final String GROUP_DESCRIPTION_PANEL_STYLE_CLASS = "group-description-panel";
-    protected static final String GROUP_DESCRIPTION_TEXT_PANEL_STYLE_CLASS = "group-description-text-panel";
+    protected static final String GROUP_DESCRIPTION_TEXT_PANEL_STYLE_CLASS = "group-description-text-panel";    
 
     private static final String JAVASCRIPT_INCLUDES = "\n<script type='text/javascript' src='/js/rhq.js'></script>\n\n";
 

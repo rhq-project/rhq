@@ -125,7 +125,6 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private static final String BUTTON_SMALL_STYLE_CLASS = "buttonsmall";
     private static final String ROW_ODD_STYLE_CLASS = "OddRow";
     private static final String ROW_EVEN_STYLE_CLASS = "EvenRow";
-    private static final String INPUT_ERROR_STYLE_CLASS = "inputerror";
 
     private static final String INPUT_TEXT_WIDTH_STYLE = "width:185px;";
     private static final String INPUT_TEXT_WIDTH_STYLE_WITH_UNITS = "width:165px;";
@@ -776,14 +775,6 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         FacesComponentUtility.setReadonly(input, isReadOnly);
 
         addValidatorsAndConverter(input, propertyDefinitionSimple);
-
-        String inputClientId = input.getClientId(FacesContextUtility.getFacesContext());
-
-        ValueExpression styleClassValueExpression = FacesExpressionUtility.createValueExpression(
-                "#{ConfigHelperUIBean.hasFacesMessage('" + inputClientId + "') ? '" + INPUT_ERROR_STYLE_CLASS +
-                "' : ''}", String.class);
-            
-        input.setValueExpression("styleClass", styleClassValueExpression);
 
         return input;
     }

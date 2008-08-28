@@ -20,6 +20,7 @@ package org.rhq.core.gui.validator;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.faces.component.StateHolder;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
@@ -28,6 +29,7 @@ import javax.faces.validator.LengthValidator;
 import javax.faces.validator.LongRangeValidator;
 import javax.faces.validator.Validator;
 import javax.faces.validator.ValidatorException;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -49,6 +51,8 @@ import org.rhq.core.gui.util.FacesComponentUtility;
  * @author Ian Springer
  */
 public class PropertySimpleValueValidator implements Validator, StateHolder {
+    private static final String INPUT_ERROR_STYLE_CLASS = "inputerror";
+
     private PropertyDefinitionSimple propertyDefinition;
     private boolean transientValue;
 
@@ -61,7 +65,7 @@ public class PropertySimpleValueValidator implements Validator, StateHolder {
         this.propertyDefinition = propertyDefinition;
     }
 
-    public void validate(FacesContext context, UIComponent component, Object value) throws ValidatorException {
+    public void validate(FacesContext facesContext, UIComponent component, Object value) throws ValidatorException {
         String stringValue = (String) value;
         if ((stringValue == null) || stringValue.equals(PropertySimpleValueConverter.NULL_INPUT_VALUE)) {
             // If the property is required, the standard JSF "required" attribute will catch the null value case.
@@ -75,6 +79,20 @@ public class PropertySimpleValueValidator implements Validator, StateHolder {
             return;
         }
 
+        List<Validator> subValidators = createSubValidators();
+
+        for (Validator subValidator : subValidators) {
+            try {
+                subValidator.validate(facesContext, component, value);
+            }
+            catch (ValidatorException e) {
+                component.getAttributes().put("styleClass", INPUT_ERROR_STYLE_CLASS);
+                throw e;
+            }
+        }
+    }
+
+    private List<Validator> createSubValidators() {
         List<Validator> subValidators = new ArrayList<Validator>();
         subValidators.add(new LengthValidator(PropertySimple.MAX_VALUE_LENGTH));
         if (this.propertyDefinition != null) {
@@ -106,10 +124,7 @@ public class PropertySimpleValueValidator implements Validator, StateHolder {
                 subValidators.add(createValidator(constraint));
             }
         }
-
-        for (Validator subValidator : subValidators) {
-            subValidator.validate(context, component, value);
-        }
+        return subValidators;
     }
 
     @NotNull

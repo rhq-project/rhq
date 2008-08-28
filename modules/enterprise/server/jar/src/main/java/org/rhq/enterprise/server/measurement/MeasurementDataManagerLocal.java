@@ -72,7 +72,7 @@ public interface MeasurementDataManagerLocal {
     MeasurementAggregate getAggregate(MeasurementSchedule sched, long start, long end) throws MeasurementException;
 
     /**
-     * Get live metics for a given MeasurementSchedule
+     * Get live metrics for a given MeasurementSchedule
      *
      * @param  sched MeasurementSchedule to obtain the data for
      *

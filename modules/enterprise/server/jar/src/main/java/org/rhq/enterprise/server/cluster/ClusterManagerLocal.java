@@ -40,6 +40,8 @@ public interface ClusterManagerLocal {
 
     Server getServerByName(String serverName);
 
+    List<Server> getServersByOperationMode(Server.OperationMode mode);
+
     List<Server> getAllServers();
 
     PageList<Server> getAllServersAsPageList(PageControl pc);
@@ -47,4 +49,5 @@ public interface ClusterManagerLocal {
     int getServerCount();
 
     void updateServerMode(Integer[] serverIds, Server.OperationMode mode);
+
 }

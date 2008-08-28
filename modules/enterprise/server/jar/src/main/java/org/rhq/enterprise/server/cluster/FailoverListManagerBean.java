@@ -9,15 +9,23 @@ import java.util.Map;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.cluster.AffinityGroup;
+import org.rhq.core.domain.cluster.FailoverList;
+import org.rhq.core.domain.cluster.FailoverListDetails;
+import org.rhq.core.domain.cluster.PartitionEvent;
+import org.rhq.core.domain.cluster.PartitionEventDetails;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite.ServerEntry;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 
 @Stateless
@@ -27,13 +35,16 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     /** The variation in load between most loaded and least loaded server that indicates balanced load. */
     private static final double ACCEPTABLE_DISPARITY = 0.10;
 
+    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+    private EntityManager entityManager;
+
     @EJB
     ClusterManagerLocal clusterManager;
 
     @EJB
     AgentManagerLocal agentManager;
 
-    public FailoverListComposite getForSingleAgent(String agentRegistrationToken) {
+    public FailoverListComposite getForSingleAgent(PartitionEvent event, String agentRegistrationToken) {
         /* 
          * dummy implementation that return a simple FailoverList
          * until the distribution algorithm is written 
@@ -50,17 +61,27 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         // agents we need to perform the whole she-bang for the single agent.
     }
 
-    // Currently assigns to all known agents. This seems right even though some "down" agents may be dead and never come back
-    // online. That is really a separate design decision and is subject to change. 
-    public Map<Agent, FailoverListComposite> getForAllAgents() {
-        List<Server> servers = clusterManager.getAllServers();
+    public Map<Agent, FailoverListComposite> refresh(PartitionEvent event) {
+        List<Server> servers = clusterManager.getServersByOperationMode(Server.OperationMode.NORMAL);
         List<Agent> agents = agentManager.getAllAgents();
 
-        return getForAgents(servers, agents);
+        // clear out the existing server lists because we're going to generate new ones for all agents        
+        clear();
+
+        return doRefresh(event, servers, agents);
     }
 
-    // This is primarily a testing entry point
-    public Map<Agent, FailoverListComposite> getForAgents(List<Server> servers, List<Agent> agents) {
+    public Map<Agent, FailoverListComposite> refresh(PartitionEvent event, List<Server> servers, List<Agent> agents) {
+
+        // clear out the existing server lists because we're going to generate new ones for all agents
+        for (Agent next : agents) {
+            deleteServerListsForAgent(next);
+        }
+
+        return doRefresh(event, servers, agents);
+    }
+
+    private Map<Agent, FailoverListComposite> doRefresh(PartitionEvent event, List<Server> servers, List<Agent> agents) {
         Map<Agent, FailoverListComposite> result = new HashMap<Agent, FailoverListComposite>(agents.size());
 
         // create a bucket for each server to which we will assign agents 
@@ -132,7 +153,10 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
             }
         }
 
-        // generate the result Map
+        // persist the new server lists
+        persist(event, agentServerListMap);
+
+        // generate the result Map and persist the new server lists
         for (Agent next : agentServerListMap.keySet()) {
             List<ServerEntry> serverEntries = new ArrayList<ServerEntry>(servers.size());
 
@@ -144,6 +168,28 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         }
 
         return result;
+    }
+
+    private void persist(PartitionEvent event, Map<Agent, List<ServerBucket>> agentServerListMap) {
+        FailoverList fl = null;
+        FailoverListDetails failoverListDetails = null;
+        PartitionEventDetails eventDetails = null;
+        List<ServerBucket> servers = null;
+
+        for (Agent next : agentServerListMap.keySet()) {
+            fl = new FailoverList(event, next);
+            entityManager.persist(fl);
+
+            servers = agentServerListMap.get(next);
+
+            for (int i = 0, size = servers.size(); (i < size); ++i) {
+                Server server = entityManager.find(Server.class, servers.get(i).server.getId());
+                failoverListDetails = new FailoverListDetails(fl, i, server);
+                entityManager.persist(failoverListDetails);
+                eventDetails = new PartitionEventDetails(event, next, server);
+                entityManager.persist(eventDetails);
+            }
+        }
     }
 
     /**
@@ -353,5 +399,27 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         sb.append("\n\n");
         System.out.println(sb.toString());
         log.info(sb.toString());
+    }
+
+    public void deleteServerListsForAgent(Agent agent) {
+        Query query = entityManager.createNamedQuery(FailoverListDetails.QUERY_DELETE_FOR_AGENT);
+        query.setParameter("agent", agent);
+        query.executeUpdate();
+        query = entityManager.createNamedQuery(FailoverList.QUERY_DELETE_FOR_AGENT);
+        query.setParameter("agent", agent);
+        query.executeUpdate();
+    }
+
+    public void deleteServerListDetailsForServer(Server server) {
+        Query query = entityManager.createNamedQuery(FailoverListDetails.QUERY_DELETE_FOR_SERVER);
+        query.setParameter("server", server);
+        query.executeUpdate();
+    }
+
+    private void clear() {
+        Query query = entityManager.createNamedQuery(FailoverListDetails.QUERY_TRUNCATE);
+        query.executeUpdate();
+        query = entityManager.createNamedQuery(FailoverList.QUERY_TRUNCATE);
+        query.executeUpdate();
     }
 }

@@ -84,6 +84,14 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
+    public List<Server> getServersByOperationMode(Server.OperationMode mode) {
+        Query query = entityManager.createNamedQuery(Server.QUERY_FIND_BY_OPERATION_MODE);
+        query.setParameter("mode", mode.name());
+        List<Server> results = query.getResultList();
+        return results;
+    }
+
+    @SuppressWarnings("unchecked")
     public List<Server> getAllServers() {
         Query query = entityManager.createNamedQuery(Server.QUERY_FIND_ALL);
         List<Server> results = query.getResultList();
@@ -128,5 +136,4 @@ public class ClusterManagerBean implements ClusterManagerLocal {
             }
         }
     }
-
 }

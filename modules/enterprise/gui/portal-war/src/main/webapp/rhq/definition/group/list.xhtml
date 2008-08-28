@@ -127,11 +127,14 @@
                      <!-- colspan 7:6 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 7 : 6}" width="100%">
                         <h:commandButton action="#{ListGroupDefinitionsUIBean.createNewGroupDefinition}"
-                                         value="NEW DEFINITION" styleClass="on-pager-button buttonsmall">
+                                         value="NEW DEFINITION" styleClass="on-pager-button buttonsmall"
+                                         rendered="${GlobalPermissionsUIBean.inventory}" >
                         </h:commandButton>
                         
                         <onc:selectCommandButton action="#{ListGroupDefinitionsUIBean.deleteSelectedGroupDefinitions}"
-                                                 value="DELETE SELECTED" target="selectedGroupDefinitions" styleClass="on-pager-button buttonsmall"/>
+                                                 target="selectedGroupDefinitions"
+                                                 value="DELETE SELECTED" styleClass="on-pager-button buttonsmall"
+                                                 rendered="${GlobalPermissionsUIBean.inventory}"/>
 
                         <ui:param name="paginationDataTableName" value="groupDefinitionsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{groupDefinitionsDataModel}"/>
@@ -144,6 +147,9 @@
             </rich:dataTable>
 
             </h:panelGrid>
+            
+            <h:outputText value="Note: you must have MANAGE_INVENTORY permission to create or delete group definitions" 
+                          rendered="${!GlobalPermissionsUIBean.inventory}" />
             
          </rich:panel>
       </h:form>

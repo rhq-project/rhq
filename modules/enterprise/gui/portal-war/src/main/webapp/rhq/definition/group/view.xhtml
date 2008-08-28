@@ -102,11 +102,16 @@
       <input type="hidden" name="groupDefinitionId" value="#{GroupDefinitionUIBean.groupDefinitionId}"/>
 
 	   <h:panelGroup layout="block" styleClass="BlockContent">
-          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
+          <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
              <h:commandButton value="EDIT..." action="#{EditGroupDefinitionGeneralPropertiesUIBean.begin}"
-                              title="Edit Properties and Conditions" styleClass="buttonmed" />
+                              title="Edit Properties and Conditions" styleClass="buttonmed" 
+                              rendered="${GlobalPermissionsUIBean.inventory}" />
              <h:commandButton value="CALCULATE GROUPS" action="#{EditGroupDefinitionGeneralPropertiesUIBean.createGroups}"
-                              title="Create Managed Resource Groups" styleClass="buttonmed" />
+                              title="Create Managed Resource Groups" styleClass="buttonmed" 
+                              rendered="${GlobalPermissionsUIBean.inventory}" />
+                              
+             <h:outputText value="Note: you must have MANAGE_INVENTORY permission to edit or calculate dynagroups for this group definition" 
+                           rendered="${!GlobalPermissionsUIBean.inventory}" />
           </h:panelGrid>
        </h:panelGroup>
 

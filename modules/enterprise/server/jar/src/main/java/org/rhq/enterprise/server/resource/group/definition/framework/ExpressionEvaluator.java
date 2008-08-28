@@ -254,7 +254,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
          * makes the rest of the parsing a bit simpler because some ParseContexts need the value immediately in order to
          * properly build up internal maps constructs to be used in generating the requisite JPQL statement
          */
-        int equalsIndex = expression.indexOf('=');
+        int equalsIndex = expression.lastIndexOf('=');
         if (equalsIndex == -1) {
             condition = expression;
         } else {

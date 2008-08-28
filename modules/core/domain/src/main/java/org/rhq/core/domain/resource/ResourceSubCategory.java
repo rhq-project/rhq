@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -42,7 +43,7 @@ import javax.persistence.Table;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Class representing a sub category, where a sub category is meant to group like resource types together
+ * Class representing a sub category, where a sub category is meant to group similar resource types together.
  */
 @Entity
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RESOURCE_SUBCAT_ID_SEQ")
@@ -103,23 +104,27 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory> {
         this.mtime = this.ctime = System.currentTimeMillis();
     }
 
+    /**
+     * Returns the resource types that belong to this subcategory; the Set of types is sorted by name.
+     *
+     * @return the resource types that belong to this subcategory; the Set of types is sorted by name
+     */
     // TODO enterprise may want to do this differently using a query
     @NotNull
-    public Collection<ResourceType> findTaggedResourceTypes() {
+    public Set<ResourceType> findTaggedResourceTypes() {
         ResourceType parentResourceType = findParentResourceType();
-        Collection<ResourceType> taggedResourceTypes = new ArrayList<ResourceType>();
+        Set<ResourceType> taggedResourceTypes = new TreeSet<ResourceType>();
         findTaggedResourceTypes(parentResourceType, taggedResourceTypes);
         return taggedResourceTypes;
     }
 
-    @NotNull
     private void findTaggedResourceTypes(ResourceType parentResourceType, Collection<ResourceType> taggedResourceTypes) {
         Set<ResourceType> childResourceTypes = parentResourceType.getChildResourceTypes();
         for (ResourceType childResourceType : childResourceTypes) {
             if (this.equals(childResourceType.getSubCategory())) {
                 taggedResourceTypes.add(childResourceType);
             }
-            // check children if there parents are tagged
+            // check children if their parents are tagged
             findTaggedResourceTypes(childResourceType, taggedResourceTypes);
         }
     }
@@ -140,7 +145,7 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory> {
     // TODO enterprise may want to do this differently using a query
     public boolean isCreatable() {
         for (ResourceType taggedResourceType : findTaggedResourceTypes()) {
-            // if any resourceType is createable then this subCategory is
+            // if any resourceType is creatable then this subCategory is
             if (taggedResourceType.isCreatable()) {
                 return true;
             }

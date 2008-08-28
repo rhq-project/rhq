@@ -315,6 +315,11 @@ DB Upgrade:
 
    <schemaSpec version="2.8">
         <schema-addColumn   table="RHQ_SERVER" column="OPERATION_MODE" columnType="VARCHAR2" precision="32"/>
+        <schema-directSQL>
+             <statement desc="Updating existing agents with default STATUS flag">
+                 UPDATE RHQ_SERVER SET OPERATION_MODE = 'NORMAL'
+             </statement>
+        </schema-directSQL>
         <schema-alterColumn table="RHQ_SERVER" column="OPERATION_MODE" nullable="FALSE"/>
 
         <schema-directSQL>

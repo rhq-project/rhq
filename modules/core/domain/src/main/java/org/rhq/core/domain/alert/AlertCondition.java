@@ -61,7 +61,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
         + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms JOIN ms.baseline mb " //
-        + "   WHERE ad.recoveryId = 0 " //
+        + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ms.definition = md " //
@@ -78,7 +78,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
         + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms " //
-        + "   WHERE ad.recoveryId = 0 " //
+        + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ms.definition = md " //
@@ -105,7 +105,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
         + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms " //
-        + "   WHERE ad.recoveryId = 0 " //
+        + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ms.definition = md " //
@@ -128,7 +128,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
         + "    JOIN ad.resource res " //
-        + "   WHERE ad.recoveryId = 0 " //
+        + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ac.category = 'AVAILABILITY' " //
@@ -149,7 +149,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "    JOIN ac.alertDefinition ad " //
         + "    JOIN ad.resource res " //
         + "    JOIN res.resourceType type " //
-        + "   WHERE ad.recoveryId = 0 " //
+        + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ac.category = 'CONTROL' " //
@@ -163,7 +163,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
         + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms " //
-        + "   WHERE ad.recoveryId = 0 " //
+        + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ms.definition = md " //
@@ -179,7 +179,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
         + "    JOIN ad.resource res " //
-        + "   WHERE ad.recoveryId = 0 " //
+        + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ac.category = 'EVENT' " //
@@ -188,7 +188,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "  SELECT count(ac.id) " //
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
-        + "   WHERE ad.recoveryId = 0 " //
+        + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ac.category = :category " //
@@ -207,6 +207,17 @@ public class AlertCondition implements Serializable {
     public static final String QUERY_BY_CATEGORY_THRESHOLD = "AlertCondition.byCategoryThreshold";
     public static final String QUERY_BY_CATEGORY_EVENT = "AlertCondition.byCategoryEvent";
     public static final String QUERY_BY_CATEGORY_COUNT_PARAMETERIZED = "AlertCondition.byCategoryCount";
+
+    public static final String RECOVERY_CONDITIONAL_EXPRESSION = "" //
+        + " ( ad.recoveryId = 0 " //
+        + " OR ( ad.recoveryId <> 0 " //
+        + "      AND EXISTS ( SELECT iad FROM AlertDefinition iad " //
+        + "                    WHERE iad.id = ad.recoveryId " //
+        + "                      AND iad.deleted = FALSE " //
+        + "                      AND iad.enabled = FALSE " //
+        + "                 ) " //
+        + "     ) " //
+        + "  ) ";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_ALERT_CONDITION_ID_SEQ")

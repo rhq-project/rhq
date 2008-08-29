@@ -24,6 +24,8 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -80,7 +82,8 @@ public class Server implements Serializable {
     private int securePort;
 
     @Column(name = "OPERATION_MODE", nullable = false)
-    private String operationMode;
+    @Enumerated(EnumType.STRING)
+    private OperationMode operationMode;
 
     // the time this server node was installed into the infrastructure
     @Column(name = "CTIME", nullable = false)
@@ -150,11 +153,11 @@ public class Server implements Serializable {
     }
 
     public OperationMode getOperationMode() {
-        return OperationMode.valueOf(operationMode);
+        return operationMode;
     }
 
     public void setOperationMode(OperationMode operationMode) {
-        this.operationMode = operationMode.name();
+        this.operationMode = operationMode;
     }
 
     public enum OperationMode {

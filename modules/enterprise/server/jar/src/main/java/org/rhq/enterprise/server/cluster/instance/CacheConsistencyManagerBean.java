@@ -45,12 +45,10 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
     AlertConditionCacheManagerLocal cacheManager;
 
     public void reloadServerCacheIfNeeded() {
-        String serverName = serverManager.getIdentity();
         List<Agent> agents = serverManager.getAgentsWithStatus();
 
         // do nothing if nothing to do
         if (agents.size() == 0) {
-            log.info("Cache for " + serverName + " is up to date");
             return;
         }
 
@@ -66,5 +64,8 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
 
         // finally, perform the reload
         cacheManager.reload();
+
+        String serverName = serverManager.getIdentity();
+        log.info("Cache for " + serverName + " is up to date");
     }
 }

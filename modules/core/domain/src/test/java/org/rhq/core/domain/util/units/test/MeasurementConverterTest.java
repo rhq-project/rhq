@@ -90,7 +90,7 @@ public class MeasurementConverterTest extends AbstractEJB3Test {
         MeasurementUnits expectedUnits) {
         incrementPrecisionScalingTestCount();
 
-        String[] results = MeasurementConverter.formatToSignifantPrecision(values, units, true);
+        String[] results = MeasurementConverter.formatToSignificantPrecision(values, units, true);
         for (int i = 0; i < results.length; i++) {
             String expected = expectedResults[i];
             String actual = results[i];

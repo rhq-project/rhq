@@ -34,13 +34,12 @@ public class MeasurementConverter {
     private static final int MAX_PRECISION_DIGITS = 4;
     private static final String NULL_OR_NAN_FORMATTED_VALUE = "--no data available--";
 
-    private static Pattern numberOptionalUnitPattern;
-    private static final String numberOptionalUnitPatternString = "([\\+\\-]?" + // number sign is optional but valid
+    private static final String NUMBER_OPTIONAL_UNIT_PATTERN_STRING = "([\\+\\-]?" + // number sign is optional but valid
         "[0-9\\.\\,]{1,})" + // followed by at least one magnitude identifier, capture number plus sign
         "([\\%a-z]*)"; // followed by an optional units identifier, capture entire suffix
-
+    private static final Pattern NUMBER_OPTIONAL_UNIT_PATTERN;
     static {
-        numberOptionalUnitPattern = Pattern.compile(numberOptionalUnitPatternString, Pattern.CASE_INSENSITIVE);
+        NUMBER_OPTIONAL_UNIT_PATTERN = Pattern.compile(NUMBER_OPTIONAL_UNIT_PATTERN_STRING, Pattern.CASE_INSENSITIVE);
     }
 
     private static NumberFormat getDefaultNumberFormat() {
@@ -55,11 +54,11 @@ public class MeasurementConverter {
     public static MeasurementNumericValueAndUnits parse(String input, MeasurementUnits targetUnits)
         throws MeasurementConversionException {
         input = input.replaceAll("\\s", ""); // our pattern assumes no whitespace 
-        Matcher matcher = numberOptionalUnitPattern.matcher(input);
+        Matcher matcher = NUMBER_OPTIONAL_UNIT_PATTERN.matcher(input);
 
-        if (matcher.matches() == false) {
+        if (!matcher.matches()) {
             throw new MeasurementConversionException("The passed input '" + input + "' could not be parsed correctly "
-                + "by the regular expression " + numberOptionalUnitPatternString);
+                + "by the regular expression " + NUMBER_OPTIONAL_UNIT_PATTERN_STRING);
         }
 
         String magnitude = matcher.group(1);
@@ -75,7 +74,7 @@ public class MeasurementConverter {
         } else {
             fromUnits = MeasurementUnits.getUsingDisplayUnits(units, targetUnits.getFamily());
 
-            if ((fromUnits == null) || (fromUnits.isComparableTo(targetUnits) == false)) {
+            if ((fromUnits == null) || (!fromUnits.isComparableTo(targetUnits))) {
                 throw new MeasurementConversionException("The units in '" + input + "' were not valid, " + "expected '"
                     + targetUnits.getFamily() + "' units " + "received '" + units + "' units");
             }
@@ -87,7 +86,7 @@ public class MeasurementConverter {
             }
 
             Number convertedMagnitude = DecimalFormat.getInstance().parse(magnitude);
-            Double scaledMagnitude = null;
+            Double scaledMagnitude;
 
             // apply relative scale if applicable, otherwise perform standard scaling
             if (MeasurementUnits.Family.RELATIVE == targetUnits.getFamily()) {
@@ -148,15 +147,18 @@ public class MeasurementConverter {
     }
 
     /**
-     * Given an array of double values determine the necessary precision such that when formatted they are distinct and reasonable to look at.  For example,
-     * for values { 1.45 1.46 1.47 1.48 1.49 } the desired precision is 2. Less precision loses significant digits, more precision provides no added benefit. 
-     * Max precision is bounded for presentation considerations.    
-     * @param values
-     * @param targetUnits
-     * @param bestFit For the family of units, use a normalized scale
-     * @return
+     * Formats the given array of double values: determines the necessary precision such that when formatted, they are
+     * distinct and reasonable to look at. For example, for values { 1.45 1.46 1.47 1.48 1.49 } the desired precision is
+     * 2 - less precision loses significant digits, and more precision provides no added benefit. Max precision is
+     * bounded for presentation considerations.
+     *
+     * @param values the values to be formatted
+     * @param targetUnits the target units for the values
+     * @param bestFit whether or not to use a normalized scale for the family of units
+     *
+     * @return the formatted values
      */
-    public static String[] formatToSignifantPrecision(double[] values, MeasurementUnits targetUnits, boolean bestFit) {
+    public static String[] formatToSignificantPrecision(double[] values, MeasurementUnits targetUnits, boolean bestFit) {
         if ((null == values) || (values.length == 0)) {
             return null;
         }
@@ -182,6 +184,7 @@ public class MeasurementConverter {
             }
 
             MeasurementNumericValueAndUnits fittedAverage = fit(average, targetUnits);
+            //noinspection UnnecessaryLocalVariable
             MeasurementUnits fittedUnits = fittedAverage.getUnits();
 
             /*
@@ -192,7 +195,7 @@ public class MeasurementConverter {
         }
 
         @SuppressWarnings("unused")
-        Set<String> existingStrings = null; // technically this *is* unused because  
+        Set<String> existingStrings; // technically this *is* unused because
         int precisionDigits = 0;
         boolean scaleWithMorePrecision = true;
         String[] results = new String[values.length];
@@ -245,7 +248,7 @@ public class MeasurementConverter {
                  */
                 boolean wasNewElement = existingStrings.add(formatted);
 
-                if ((wasNewElement == false) && (precisionDigits < MAX_PRECISION_DIGITS)) {
+                if ((!wasNewElement) && (precisionDigits < MAX_PRECISION_DIGITS)) {
                     scaleWithMorePrecision = true;
                     break;
                 }
@@ -266,12 +269,12 @@ public class MeasurementConverter {
     }
 
     public static String format(Double value, MeasurementUnits targetUnits, boolean bestFit) {
-        return format(value, targetUnits, bestFit, (Integer) null, (Integer) null);
+        return format(value, targetUnits, bestFit, null, null);
     }
 
     public static String format(Double value, MeasurementUnits targetUnits, boolean bestFit,
                                 Integer minimumFractionDigits, Integer maximumFractionDigits) {
-        if (value == null || value.equals(Double.NaN)) {
+        if (value == null || Double.isNaN(value)) {
             return NULL_OR_NAN_FORMATTED_VALUE;
         }
         if (bestFit) {
@@ -302,13 +305,13 @@ public class MeasurementConverter {
         throws MeasurementConversionException {
         MeasurementUnits targetUnits = targetSchedule.getDefinition().getUnits();
 
-        return scaleAndFormat(origin, targetUnits, bestFit, (Integer) null, (Integer) null);
+        return scaleAndFormat(origin, targetUnits, bestFit, null, null);
     }
 
     public static String scaleAndFormat(Double origin, MeasurementUnits targetUnits, boolean bestFit)
         throws MeasurementConversionException {
 
-        return scaleAndFormat(origin, targetUnits, bestFit, (Integer) null, (Integer) null);
+        return scaleAndFormat(origin, targetUnits, bestFit, null, null);
     }
 
     public static String scaleAndFormat(Double origin, MeasurementUnits targetUnits, boolean bestFit,
@@ -356,7 +359,7 @@ public class MeasurementConverter {
             origin = -origin;
         }
 
-        MeasurementNumericValueAndUnits currentValueAndUnits = null;
+        MeasurementNumericValueAndUnits currentValueAndUnits;
         MeasurementNumericValueAndUnits nextValueAndUnits = new MeasurementNumericValueAndUnits(origin, units);
 
         // first, make the value smaller if it's too big

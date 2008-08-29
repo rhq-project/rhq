@@ -10,6 +10,7 @@ import java.util.Map;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -23,6 +24,7 @@ import org.rhq.core.domain.cluster.PartitionEvent;
 import org.rhq.core.domain.cluster.PartitionEventDetails;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite;
+import org.rhq.core.domain.cluster.composite.FailoverListDetailsComposite;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite.ServerEntry;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.server.RHQConstants;
@@ -45,20 +47,55 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     AgentManagerLocal agentManager;
 
     public FailoverListComposite getForSingleAgent(PartitionEvent event, String agentRegistrationToken) {
-        /* 
-         * dummy implementation that return a simple FailoverList
-         * until the distribution algorithm is written 
-         */
-        List<Server> servers = clusterManager.getAllServers();
-        List<ServerEntry> serverEntries = new ArrayList<ServerEntry>();
-        for (Server next : servers) {
-            serverEntries.add(next.getServerEntry());
-        }
-        FailoverListComposite results = new FailoverListComposite(serverEntries);
-        return results;
+        // If a server list already exists then just return it
+        Agent agent = agentManager.getAgentByAgentToken(agentRegistrationToken);
 
-        // For existing agents I think what we can do here is return the server list we've previously generated. For new
-        // agents we need to perform the whole she-bang for the single agent.
+        if (null == agent) {
+            throw new IllegalArgumentException("No agent found for registration token: " + agentRegistrationToken);
+        }
+
+        FailoverListComposite result = null;
+        Query query = entityManager.createNamedQuery(FailoverList.QUERY_GET_VIA_AGENT);
+        query.setParameter("agent", agent);
+        try {
+            FailoverList serverList = (FailoverList) query.getSingleResult();
+
+            List<ServerEntry> serverEntries = new ArrayList<ServerEntry>();
+            for (FailoverListDetails next : serverList.getServerList()) {
+                serverEntries.add(next.getServer().getServerEntry());
+            }
+
+            result = new FailoverListComposite(serverEntries);
+
+        } catch (NoResultException e) {
+            result = generateServerList(event, agent);
+        }
+
+        return result;
+    }
+
+    private FailoverListComposite generateServerList(PartitionEvent event, Agent agent) {
+        List<Server> servers = clusterManager.getServersByOperationMode(Server.OperationMode.NORMAL);
+        List<Agent> agents = new ArrayList<Agent>(1);
+
+        agents.add(agent);
+
+        // get the current agent assignments for the servers
+        // TODO (jshaughn) Note that "load" in the query name is not true load but rather the count of agents assigned to
+        // each server (by server list ordinal).  This is fine until we decide to introduce relative load values for the
+        // agents.  Even at that this algorithm may be ok for adding new agents and defer to a full repartition to apply
+        // agent-specific load factors.
+        Query query = entityManager.createNamedQuery(FailoverListDetails.QUERY_GET_ASSIGNED_LOADS);
+        @SuppressWarnings("unchecked")
+        List<FailoverListDetailsComposite> existingLoads = query.getResultList();
+
+        for (FailoverListDetailsComposite next : existingLoads) {
+            System.out.println(next);
+        }
+
+        Map<Agent, FailoverListComposite> results = getForAgents(event, servers, agents, existingLoads);
+
+        return (results.get(agent));
     }
 
     public Map<Agent, FailoverListComposite> refresh(PartitionEvent event) {
@@ -68,7 +105,7 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         // clear out the existing server lists because we're going to generate new ones for all agents        
         clear();
 
-        return doRefresh(event, servers, agents);
+        return getForAgents(event, servers, agents, null);
     }
 
     public Map<Agent, FailoverListComposite> refresh(PartitionEvent event, List<Server> servers, List<Agent> agents) {
@@ -78,10 +115,11 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
             deleteServerListsForAgent(next);
         }
 
-        return doRefresh(event, servers, agents);
+        return getForAgents(event, servers, agents, null);
     }
 
-    private Map<Agent, FailoverListComposite> doRefresh(PartitionEvent event, List<Server> servers, List<Agent> agents) {
+    private Map<Agent, FailoverListComposite> getForAgents(PartitionEvent event, List<Server> servers,
+        List<Agent> agents, List<FailoverListDetailsComposite> existingLoads) {
         Map<Agent, FailoverListComposite> result = new HashMap<Agent, FailoverListComposite>(agents.size());
 
         // create a bucket for each server to which we will assign agents 
@@ -98,6 +136,9 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
 
         // assign server lists level by level: primary, then secondary, the tertiary, etc        
         for (int level = 0; (level < servers.size()); ++level) {
+
+            // Initialize the bucket loads for the next round
+            initBuckets(buckets, existingLoads, level);
 
             // assign a server for this level to each agent, balancing as we go
             for (Agent next : agents) {
@@ -145,12 +186,6 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
             if (balanceLoad(buckets, agentServerListMap)) {
                 this.logServerList("Forced Rebalance!", agentServerListMap);
             }
-
-            // Initialize the bucket loads for the next round
-            for (ServerBucket bucket : buckets) {
-                bucket.assignedLoad = 0.0;
-                bucket.assignedAgents.clear();
-            }
         }
 
         // persist the new server lists
@@ -168,6 +203,24 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         }
 
         return result;
+    }
+
+    private void initBuckets(List<ServerBucket> buckets, List<FailoverListDetailsComposite> existingLoads, int level) {
+        for (ServerBucket bucket : buckets) {
+            bucket.assignedLoad = 0.0;
+            bucket.assignedAgents.clear();
+
+            if (null != existingLoads) {
+                int serverId = bucket.server.getId();
+
+                for (FailoverListDetailsComposite existingLoad : existingLoads) {
+                    if ((existingLoad.ordinal == level) && (existingLoad.serverId == serverId)) {
+                        bucket.assignedLoad = (existingLoad.assignedAgentCount / bucket.computePower);
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     private void persist(PartitionEvent event, Map<Agent, List<ServerBucket>> agentServerListMap) {
@@ -402,16 +455,16 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     }
 
     public void deleteServerListsForAgent(Agent agent) {
-        Query query = entityManager.createNamedQuery(FailoverListDetails.QUERY_DELETE_FOR_AGENT);
-        query.setParameter("agent", agent);
-        query.executeUpdate();
-        query = entityManager.createNamedQuery(FailoverList.QUERY_DELETE_FOR_AGENT);
+        //Query query = entityManager.createNamedQuery(FailoverListDetails.QUERY_DELETE_FOR_AGENT);
+        //query.setParameter("agent", agent);
+        //query.executeUpdate();
+        Query query = entityManager.createNamedQuery(FailoverList.QUERY_DELETE_VIA_AGENT);
         query.setParameter("agent", agent);
         query.executeUpdate();
     }
 
     public void deleteServerListDetailsForServer(Server server) {
-        Query query = entityManager.createNamedQuery(FailoverListDetails.QUERY_DELETE_FOR_SERVER);
+        Query query = entityManager.createNamedQuery(FailoverListDetails.QUERY_DELETE_VIA_SERVER);
         query.setParameter("server", server);
         query.executeUpdate();
     }

@@ -33,6 +33,29 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
         public String toString() {
             return address + ":" + port + ":" + securePort;
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (!(obj instanceof ServerEntry))
+                return false;
+
+            ServerEntry se = (ServerEntry) obj;
+
+            return (this.address.equals(se.address) && (this.port == se.port) && (this.securePort == se.securePort));
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + port;
+            result = prime * result + securePort;
+            result = prime * result + ((address == null) ? 0 : address.hashCode());
+            return result;
+        }
+
     }
 
     public FailoverListComposite(List<ServerEntry> servers) {
@@ -115,6 +138,26 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
             sb.append("\n  ");
         }
         return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!(obj instanceof FailoverListComposite))
+            return false;
+
+        FailoverListComposite flc = (FailoverListComposite) obj;
+
+        return this.servers.equals(flc.servers);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((servers == null) ? 0 : servers.hashCode());
+        return result;
     }
 
 }

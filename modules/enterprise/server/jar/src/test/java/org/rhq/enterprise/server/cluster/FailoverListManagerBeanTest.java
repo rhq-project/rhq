@@ -57,6 +57,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
     private List<Agent> agents;
     private AffinityGroup ag;
     private PartitionEvent partitionEvent;
+    private List<Agent> newAgents;
 
     /**
      * Prepares things for the entire test class.
@@ -70,6 +71,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
 
         servers = new ArrayList<Server>();
         agents = new ArrayList<Agent>();
+        newAgents = new ArrayList<Agent>();
 
         prepareForTestAgents();
     }
@@ -84,6 +86,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
 
         servers.clear();
         agents.clear();
+        newAgents.clear();
     }
 
     @AfterMethod
@@ -103,6 +106,12 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
                 }
 
                 serverManager.deleteAffinityGroup(ag);
+
+                if (null != newAgents) {
+                    for (Agent agent : newAgents) {
+                        agentManager.deleteAgent(agent);
+                    }
+                }
 
             } catch (Exception e) {
                 System.out.println(e);
@@ -150,6 +159,31 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
 
             partitionEvent = new PartitionEvent("FLM-TEST", PartitionEventType.SYSTEM_INITIATED_PARTITION);
             em.persist(partitionEvent);
+
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            try {
+                System.out.println(e);
+                getTransactionManager().rollback();
+            } catch (Exception ignore) {
+            }
+
+            throw e;
+        } finally {
+            em.close();
+        }
+    }
+
+    private void setupNewAgents(int numNewAgents) throws Exception {
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+        try {
+            for (int i = 0; (i < numNewAgents); ++i) {
+
+                Agent agent = new Agent("Agent-flm-NEW" + i, "NEW-" + i, 1, "endpoint", "token-NEW-" + i);
+                em.persist(agent);
+                newAgents.add(agent);
+            }
 
             getTransactionManager().commit();
         } catch (Exception e) {
@@ -409,6 +443,74 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
         assert null != result;
         validateBalance(result, 3, 20);
+    }
+
+    public void testGetForSingleAgent_existing() throws Exception {
+        setupTest(2, 4);
+        Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
+        assert null != result;
+        for (Agent agent : result.keySet()) {
+            FailoverListComposite flc1 = result.get(agent);
+            FailoverListComposite flc2 = failoverListManager.getForSingleAgent(partitionEvent, agent.getAgentToken());
+            assert flc1.size() == flc2.size();
+            for (int i = 0, size = flc1.size(); (i < size); ++i) {
+                assert flc1.get(i).equals(flc2.get(i));
+            }
+        }
+    }
+
+    public void testGetForSingleAgent_new_1() throws Exception {
+        setupTest(2, 4);
+        Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
+        assert null != result;
+
+        setupNewAgents(3);
+        List<FailoverListComposite> serverLists = new ArrayList<FailoverListComposite>(3);
+        for (int i = 0; (i < 3); ++i) {
+            serverLists.add(failoverListManager.getForSingleAgent(partitionEvent, newAgents.get(i).getAgentToken()));
+            assert null != serverLists.get(i);
+            assert serverLists.get(i).size() == servers.size();
+        }
+        assert !serverLists.get(0).equals(serverLists.get(1));
+        assert serverLists.get(0).equals(serverLists.get(2));
+        assert !serverLists.get(1).equals(serverLists.get(2));
+
+    }
+
+    public void testGetForSingleAgent_new_2() throws Exception {
+        setupTest(3, 6);
+        Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
+        assert null != result;
+
+        setupNewAgents(3);
+        List<FailoverListComposite> serverLists = new ArrayList<FailoverListComposite>(3);
+        for (int i = 0; (i < 3); ++i) {
+            serverLists.add(failoverListManager.getForSingleAgent(partitionEvent, newAgents.get(i).getAgentToken()));
+            assert null != serverLists.get(i);
+            assert serverLists.get(i).size() == servers.size();
+        }
+        assert !serverLists.get(0).equals(serverLists.get(1));
+        assert !serverLists.get(0).equals(serverLists.get(2));
+        assert !serverLists.get(1).equals(serverLists.get(2));
+
+    }
+
+    public void testGetForSingleAgent_new_3() throws Exception {
+        setupTest(1, 0);
+        Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
+        assert null != result;
+
+        setupNewAgents(3);
+        List<FailoverListComposite> serverLists = new ArrayList<FailoverListComposite>(3);
+        for (int i = 0; (i < 3); ++i) {
+            serverLists.add(failoverListManager.getForSingleAgent(partitionEvent, newAgents.get(i).getAgentToken()));
+            assert null != serverLists.get(i);
+            assert serverLists.get(i).size() == servers.size();
+        }
+        assert serverLists.get(0).equals(serverLists.get(1));
+        assert serverLists.get(0).equals(serverLists.get(2));
+        assert serverLists.get(1).equals(serverLists.get(2));
+
     }
 
 }

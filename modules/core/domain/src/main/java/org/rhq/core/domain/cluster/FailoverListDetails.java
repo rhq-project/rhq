@@ -39,13 +39,15 @@ import javax.persistence.Table;
  * will contain the ordered references back to other {@link Server}s.
  * 
  * @author jmarques
+ * @author jshaughnessy
  *
  */
 @Entity(name = "FailoverListDetails")
 @NamedQueries( //
 {
-    @NamedQuery(name = FailoverListDetails.QUERY_DELETE_FOR_AGENT, query = "DELETE FROM FailoverListDetails fld WHERE fld.failoverList IN ( SELECT fl FROM FailoverList fl WHERE agent = :agent )"),
-    @NamedQuery(name = FailoverListDetails.QUERY_DELETE_FOR_SERVER, query = "DELETE FROM FailoverListDetails fld WHERE fld.server = :server"),
+    @NamedQuery(name = FailoverListDetails.QUERY_DELETE_VIA_AGENT, query = "DELETE FROM FailoverListDetails fld WHERE fld.failoverList IN ( SELECT fl FROM FailoverList fl WHERE agent = :agent )"),
+    @NamedQuery(name = FailoverListDetails.QUERY_DELETE_VIA_SERVER, query = "DELETE FROM FailoverListDetails fld WHERE fld.server = :server"),
+    @NamedQuery(name = FailoverListDetails.QUERY_GET_ASSIGNED_LOADS, query = "SELECT new org.rhq.core.domain.cluster.composite.FailoverListDetailsComposite(fld.ordinal, fld.serverId, COUNT(fld.serverId)) FROM FailoverListDetails fld GROUP BY fld.ordinal, fld.serverId ORDER BY fld.ordinal ASC"),
     @NamedQuery(name = FailoverListDetails.QUERY_TRUNCATE, query = "DELETE FROM FailoverListDetails") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_FAILOVER_DETAILS_ID_SEQ")
 @Table(name = "RHQ_FAILOVER_DETAILS")
@@ -53,8 +55,9 @@ public class FailoverListDetails implements Serializable {
 
     public static final long serialVersionUID = 1L;
 
-    public static final String QUERY_DELETE_FOR_AGENT = "FailoverListDetails.deleteForAgent";
-    public static final String QUERY_DELETE_FOR_SERVER = "FailoverListDetails.deleteForServer";
+    public static final String QUERY_DELETE_VIA_AGENT = "FailoverListDetails.deleteViaAgent";
+    public static final String QUERY_DELETE_VIA_SERVER = "FailoverListDetails.deleteViaServer";
+    public static final String QUERY_GET_ASSIGNED_LOADS = "FailoverListDetails.getAssignedLoads";
     public static final String QUERY_TRUNCATE = "FailoverListDetails.truncate";
 
     @Column(name = "ID", nullable = false)

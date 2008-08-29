@@ -19,7 +19,10 @@
 package org.rhq.core.domain.cluster;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -30,6 +33,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -47,7 +52,8 @@ import org.rhq.core.domain.resource.Agent;
 @Entity(name = "FailoverList")
 @NamedQueries( //
 {
-    @NamedQuery(name = FailoverList.QUERY_DELETE_FOR_AGENT, query = "DELETE FROM FailoverList fl WHERE fl.agent = :agent"),
+    @NamedQuery(name = FailoverList.QUERY_DELETE_VIA_AGENT, query = "DELETE FROM FailoverList fl WHERE fl.agent = :agent"),
+    @NamedQuery(name = FailoverList.QUERY_GET_VIA_AGENT, query = "SELECT fl FROM FailoverList fl WHERE fl.agent = :agent"),
     @NamedQuery(name = FailoverList.QUERY_TRUNCATE, query = "DELETE FROM FailoverList") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_FAILOVER_LIST_ID_SEQ")
 @Table(name = "RHQ_FAILOVER_LIST")
@@ -55,7 +61,8 @@ public class FailoverList implements Serializable {
 
     public static final long serialVersionUID = 1L;
 
-    public static final String QUERY_DELETE_FOR_AGENT = "FailoverList.deleteForAgent";
+    public static final String QUERY_DELETE_VIA_AGENT = "FailoverList.deletViaAgent";
+    public static final String QUERY_GET_VIA_AGENT = "FailoverList.getViaAgent";
     public static final String QUERY_TRUNCATE = "FailoverList.truncate";
 
     @Column(name = "ID", nullable = false)
@@ -76,6 +83,10 @@ public class FailoverList implements Serializable {
 
     @Column(name = "CTIME", nullable = false)
     private long ctime;
+
+    @OneToMany(mappedBy = "failoverList", cascade = CascadeType.ALL)
+    @OrderBy("ordinal ASC")
+    private List<FailoverListDetails> serverList = new ArrayList<FailoverListDetails>();
 
     // required for JPA
     protected FailoverList() {
@@ -112,6 +123,14 @@ public class FailoverList implements Serializable {
 
     public long getCtime() {
         return ctime;
+    }
+
+    public List<FailoverListDetails> getServerList() {
+        return serverList;
+    }
+
+    public void setServerList(List<FailoverListDetails> serverList) {
+        this.serverList = serverList;
     }
 
     @PrePersist

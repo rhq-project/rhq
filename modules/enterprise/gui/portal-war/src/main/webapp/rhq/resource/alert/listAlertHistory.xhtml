@@ -140,18 +140,38 @@
                
                   <h:outputText value="#{item.conditionText}" />
                </rich:column>
-                 
+               
+               <rich:column>
+                  <f:facet name="header">
+                  	<h:outputText styleClass="headerText" value="Recovery For Alert Id" />
+                  </f:facet>                  
+                  <h:outputLink value="/alerts/Config.do" rendered="#{item.alert.alertDefinition.recoveryId > 0 }">
+                     <f:param name="mode" value="viewRoles"/>
+                     <f:param name="id" value="#{Resource.id}"/>
+                     <f:param name="ad" value="#{item.alert.alertDefinition.recoveryId}"/>
+					 <h:outputText value="#{item.alert.alertDefinition.recoveryId}" />
+                  </h:outputLink>
+                  <h:outputText value="--" rendered="#{item.alert.alertDefinition.recoveryId == 0}"/>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                  	<h:outputText styleClass="headerText" value="Enabled by Recovery Alert" />
+                  </f:facet>
+                  <h:outputText value="#{item.alert.alertDefinition.willRecover}" />
+                  <h:outputText value="#{item.alert.alertDefinition.recoveryId}"/>
+               </rich:column>
+               
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Actual Value" />
                   </f:facet>
-               
                   <h:outputText value="#{item.conditionValue}" />
                </rich:column>
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="6" width="100%">
+                     <rich:column colspan="8" width="100%">
                         <onc:selectCommandButton action="#{ListAlertHistoryUIBean.deleteSelectedAlerts}"
                                                  value="DELETE SELECTED" target="selectedAlerts" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{ResourceUIBean.permissions.alert}" />

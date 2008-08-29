@@ -183,7 +183,7 @@ public class VerticalChart extends Chart {
         int width;
         int maxWidth = 0;
 
-        String[] formatted = MeasurementConverter.formatToSignifantPrecision(m_adRangeMarks, m_fmtUnits, true);
+        String[] formatted = MeasurementConverter.formatToSignificantPrecision(m_adRangeMarks, m_fmtUnits, true);
 
         for (int i = 0; i < formatted.length; i++) {
             width = this.m_metricsLabel.stringWidth(formatted[i]);
@@ -277,7 +277,7 @@ public class VerticalChart extends Chart {
         //////////////////////////////////////////////////////////
         // Draw the value (Y) axis cross lines and labels
 
-        String[] labels = MeasurementConverter.formatToSignifantPrecision(m_adRangeMarks, m_fmtUnits, true);
+        String[] labels = MeasurementConverter.formatToSignificantPrecision(m_adRangeMarks, m_fmtUnits, true);
         int[] lines = new int[this.m_adRangeMarks.length];
 
         for (int i = 0; i < lines.length; i++) {

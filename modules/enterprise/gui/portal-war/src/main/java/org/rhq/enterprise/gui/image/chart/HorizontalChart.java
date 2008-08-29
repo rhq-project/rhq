@@ -81,7 +81,7 @@ public class HorizontalChart extends Chart {
             return null;
         }
 
-        String[] result = MeasurementConverter.formatToSignifantPrecision(m_adRangeMarks, m_fmtUnits, true);
+        String[] result = MeasurementConverter.formatToSignificantPrecision(m_adRangeMarks, m_fmtUnits, true);
 
         return result;
     }

@@ -343,7 +343,7 @@ public class MonitorUtils {
             if (summary.getUnits().length() < 1) {
                 summary.setUnits(MeasurementUnits.NONE.name());
             }
-            String[] formattedValues = MeasurementConverter.formatToSignifantPrecision(summary.getMetricValueDoubles(),
+            String[] formattedValues = MeasurementConverter.formatToSignificantPrecision(summary.getMetricValueDoubles(),
                 MeasurementUnits.valueOf(summary.getUnits()), true);
             String[] metricKeys = summary.getMetricKeys();
             for (int i = 0; i < metricKeys.length; i++) {

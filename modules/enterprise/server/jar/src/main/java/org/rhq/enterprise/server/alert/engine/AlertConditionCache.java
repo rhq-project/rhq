@@ -1160,7 +1160,7 @@ public final class AlertConditionCache {
                 log.info("Failed to create NumericDoubleCacheElement with parameters: "
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, calculatedValue));
             }
-            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(2);
         } else if (alertConditionCategory == AlertConditionCategory.CHANGE) {
             AlertConditionChangesCategoryComposite changesComposite = (AlertConditionChangesCategoryComposite) composite;
             int scheduleId = changesComposite.getScheduleId();
@@ -1176,7 +1176,7 @@ public final class AlertConditionCache {
                 log.info("Failed to create NumericDoubleCacheElement with parameters: "
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, numeric));
             }
-            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.TRAIT) {
             AlertConditionTraitCategoryComposite traitsComposite = (AlertConditionTraitCategoryComposite) composite;
             String value = traitsComposite.getValue();
@@ -1196,7 +1196,7 @@ public final class AlertConditionCache {
                 log.info("Failed to create StringCacheElement with parameters: "
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, value));
             }
-            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.AVAILABILITY) {
             /*
              * This is a hack, because we're not respecting the persist alertCondition option, we're instead overriding
@@ -1217,7 +1217,7 @@ public final class AlertConditionCache {
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator, availabilityComposite
                         .getAvailabilityType(), AvailabilityType.UP));
             }
-            AlertConditionCacheMonitor.getMBean().incrementAvailabilityCacheElementCount(stats.created - stats.deleted);
+            AlertConditionCacheMonitor.getMBean().incrementAvailabilityCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.CONTROL) {
             AlertConditionControlCategoryComposite controlComposite = (AlertConditionControlCategoryComposite) composite;
             String option = alertCondition.getOption();
@@ -1236,7 +1236,7 @@ public final class AlertConditionCache {
                         + getCacheElementErrorString(alertConditionId, alertConditionOperator, null,
                             operationRequestStatus));
             }
-            AlertConditionCacheMonitor.getMBean().incrementOperationCacheElementCount(stats.created - stats.deleted);
+            AlertConditionCacheMonitor.getMBean().incrementOperationCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.THRESHOLD) {
             AlertConditionScheduleCategoryComposite thresholdComposite = (AlertConditionScheduleCategoryComposite) composite;
             Double thresholdValue = alertCondition.getThreshold();
@@ -1255,7 +1255,7 @@ public final class AlertConditionCache {
                     alertConditionId, stats);
 
             }
-            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(stats.created - stats.deleted);
+            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.EVENT) {
             AlertConditionEventCategoryComposite eventComposite = (AlertConditionEventCategoryComposite) composite;
             EventSeverity eventSeverity = EventSeverity.valueOf(alertCondition.getName());
@@ -1277,7 +1277,7 @@ public final class AlertConditionCache {
             }
 
             addTo("eventsCache", eventsCache, eventComposite.getResourceId(), cacheElement, alertConditionId, stats);
-            AlertConditionCacheMonitor.getMBean().incrementEventCacheElementCount(stats.created - stats.deleted);
+            AlertConditionCacheMonitor.getMBean().incrementEventCacheElementCount(1);
         }
     }
 

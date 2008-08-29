@@ -89,10 +89,6 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         @SuppressWarnings("unchecked")
         List<FailoverListDetailsComposite> existingLoads = query.getResultList();
 
-        for (FailoverListDetailsComposite next : existingLoads) {
-            System.out.println(next);
-        }
-
         Map<Agent, FailoverListComposite> results = getForAgents(event, servers, agents, existingLoads);
 
         return (results.get(agent));
@@ -175,7 +171,7 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
                 bestBucket.assignedAgents.add(next);
             }
 
-            logServerList("Level " + level, agentServerListMap);
+            // For debugging logServerList("Level " + level, agentServerListMap);
 
             // The first pass does a best-effort balancing as it goes but may need further balancing because:
             // - the assignment of primary servers tries to retain the current primary server of an existing agent.
@@ -184,7 +180,7 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
             //   end of assignments (due to, for example, constraints avoiding server duplication in a server list).
             // Now, if necessary for load balance, force some agents to new servers.
             if (balanceLoad(buckets, agentServerListMap)) {
-                this.logServerList("Forced Rebalance!", agentServerListMap);
+                // for debugging logServerList("Forced Rebalance!", agentServerListMap);
             }
         }
 

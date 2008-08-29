@@ -287,7 +287,9 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
 
     public void testGetForAllAgents1_1() throws Exception {
         setupTest(1, 1);
+        long start = System.currentTimeMillis();
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
+        System.out.println("Elapsed 1/0 = " + (System.currentTimeMillis() - start) + "ms");
         assert null != result;
         assert validateBalance(result, 1, 1);
     }
@@ -301,7 +303,9 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
 
     public void testGetForAllAgents1_5() throws Exception {
         setupTest(1, 5);
+        long start = System.currentTimeMillis();
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
+        System.out.println("Elapsed 1/5 = " + (System.currentTimeMillis() - start) + "ms");
         assert null != result;
         assert validateBalance(result, 1, 5);
     }
@@ -336,7 +340,9 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
 
     public void testGetForAllAgents2_10() throws Exception {
         setupTest(2, 10);
+        long start = System.currentTimeMillis();
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
+        System.out.println("Elapsed 2/10 = " + (System.currentTimeMillis() - start) + "ms");
         assert null != result;
         assert validateBalance(result, 2, 10);
     }
@@ -378,7 +384,9 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
 
     public void testGetForAllAgents5_25() throws Exception {
         setupTest(5, 25);
+        long start = System.currentTimeMillis();
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
+        System.out.println("Elapsed 2/10 = " + (System.currentTimeMillis() - start) + "ms");
         assert null != result;
         assert validateBalance(result, 5, 25);
     }
@@ -388,6 +396,20 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
         assert null != result;
         assert validateBalance(result, 5, 42);
+    }
+
+    public void testGetForAllAgents20_1000() throws Exception {
+        setupTest(20, 1000);
+        long start = System.currentTimeMillis();
+        Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
+        System.out.println("Elapsed 20/1000 = " + (System.currentTimeMillis() - start) + "ms");
+        assert null != result;
+        assert validateBalance(result, 20, 1000);
+
+        start = System.currentTimeMillis();
+        setupNewAgents(1);
+        failoverListManager.getForSingleAgent(partitionEvent, newAgents.get(0).getAgentToken());
+        System.out.println("Elapsed 1 NEW 20/1000 = " + (System.currentTimeMillis() - start) + "ms");
     }
 
     public void testGetForAllAgents2_10_affinity_1_10() throws Exception {

@@ -64,7 +64,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
-import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.engine.internal.Tuple;
 import org.rhq.enterprise.server.alert.engine.jms.CachedConditionProducerLocal;
 import org.rhq.enterprise.server.alert.engine.mbean.AlertConditionCacheMonitor;
@@ -81,7 +80,6 @@ import org.rhq.enterprise.server.alert.engine.model.OutOfBoundsCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.ResourceOperationCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.UnsupportedAlertConditionOperatorException;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.cluster.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
@@ -240,7 +238,6 @@ public final class AlertConditionCache {
      * The SLBSs used by the cache.
      */
     private AlertConditionManagerLocal alertConditionManager;
-    private AlertDefinitionManagerLocal alertDefinitionManager;
     private AvailabilityManagerLocal availabilityManager;
     private MeasurementBaselineManagerLocal measurementBaselineManager;
     private MeasurementDataManagerLocal measurementDataManager;
@@ -248,7 +245,6 @@ public final class AlertConditionCache {
     private OperationManagerLocal operationManager;
     private SubjectManagerLocal subjectManager;
     private CachedConditionProducerLocal cachedConditionProducer;
-    private ServerManagerLocal serverManager;
     private EntityManagerFacadeLocal entityManagerFacade;
 
     private AlertConditionCache() {
@@ -262,7 +258,6 @@ public final class AlertConditionCache {
         inverseAlertConditionMap = new HashMap<Integer, List<Tuple<AbstractCacheElement<?>, List<AbstractCacheElement<?>>>>>();
 
         alertConditionManager = LookupUtil.getAlertConditionManager();
-        alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
         availabilityManager = LookupUtil.getAvailabilityManager();
         measurementBaselineManager = LookupUtil.getMeasurementBaselineManager();
         measurementDataManager = LookupUtil.getMeasurementDataManager();
@@ -270,7 +265,6 @@ public final class AlertConditionCache {
         operationManager = LookupUtil.getOperationManager();
         subjectManager = LookupUtil.getSubjectManager();
         cachedConditionProducer = LookupUtil.getCachedConditionProducerLocal();
-        serverManager = LookupUtil.getServerManager();
         entityManagerFacade = LookupUtil.getEntityManagerFacade();
 
         reloadCachesForAgentsOnThisServer();
@@ -281,16 +275,25 @@ public final class AlertConditionCache {
     }
 
     public void reloadCachesForAgentsOnThisServer() {
-        // this load method assumes the cache is totally clean; let's make sure that is true
-        clearCaches();
+        rwLock.writeLock().lock();
 
-        List<Agent> agents = LookupUtil.getAgentManager().getAllAgents();
+        try {
+            // this load method assumes the cache is totally clean; let's make sure that is true
+            clearCaches();
 
-        // RHQ-668 - when the HA installer is finished, replace getAllAgents with commented lines
-        //    List<Agent> agents = serverManager.getAgents();
+            List<Agent> agents = LookupUtil.getAgentManager().getAllAgents();
 
-        for (Agent nextAgent : agents) {
-            loadCachesForAgent(nextAgent.getId());
+            // RHQ-668 - when the HA installer is finished, replace getAllAgents with commented lines
+            //    List<Agent> agents = serverManager.getAgents();
+
+            for (Agent nextAgent : agents) {
+                loadCachesForAgent(nextAgent.getId());
+            }
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
+        } finally {
+            rwLock.writeLock().unlock();
         }
     }
 
@@ -305,11 +308,11 @@ public final class AlertConditionCache {
     private AlertConditionCacheStats loadCachesForAgent(int agentId) {
         rwLock.writeLock().lock();
 
+        AlertConditionCacheStats stats = new AlertConditionCacheStats();
         try {
             log.info("Loading Alert Condition Caches...");
 
-            final int PAGE_SIZE = 500;
-            AlertConditionCacheStats stats = new AlertConditionCacheStats();
+            final int PAGE_SIZE = 250;
 
             Subject overlord = subjectManager.getOverlord();
 
@@ -386,11 +389,13 @@ public final class AlertConditionCache {
             }
 
             log.info("Loaded Alert Condition Caches..." + stats);
-
-            return stats;
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
         } finally {
             rwLock.writeLock().unlock();
         }
+        return stats;
     }
 
     /**
@@ -409,6 +414,9 @@ public final class AlertConditionCache {
             availabilityCache.clear();
             inverseAlertConditionMap.clear();
             AlertConditionCacheMonitor.getMBean().resetAllCacheElementCounts();
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
         } finally {
             rwLock.writeLock().unlock();
         }
@@ -421,9 +429,8 @@ public final class AlertConditionCache {
 
         rwLock.readLock().lock();
 
+        AlertConditionCacheStats stats = new AlertConditionCacheStats();
         try {
-            AlertConditionCacheStats stats = new AlertConditionCacheStats();
-
             for (MeasurementData datum : measurementData) {
                 int scheduleId = datum.getScheduleId();
 
@@ -446,18 +453,20 @@ public final class AlertConditionCache {
             AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementMeasurementProcessingTime(stats.getAge());
             log.debug("Check Measurements[size=" + measurementData.length + "] - " + stats);
-            return stats;
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
         } finally {
             rwLock.readLock().unlock();
         }
+        return stats;
     }
 
     public AlertConditionCacheStats checkConditions(OperationHistory operationHistory) {
         rwLock.readLock().lock();
 
+        AlertConditionCacheStats stats = new AlertConditionCacheStats();
         try {
-            AlertConditionCacheStats stats = new AlertConditionCacheStats();
-
             if (operationHistory instanceof ResourceOperationHistory) {
                 ResourceOperationHistory resourceOperationHistory = (ResourceOperationHistory) operationHistory;
 
@@ -477,10 +486,13 @@ public final class AlertConditionCache {
             AlertConditionCacheMonitor.getMBean().incrementOperationCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementOperationProcessingTime(stats.getAge());
             log.debug("Check OperationHistory[size=1] - " + stats);
-            return stats;
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
         } finally {
             rwLock.readLock().unlock();
         }
+        return stats;
     }
 
     public AlertConditionCacheStats checkConditions(EventSource source, Event... events) {
@@ -490,9 +502,8 @@ public final class AlertConditionCache {
 
         rwLock.readLock().lock();
 
+        AlertConditionCacheStats stats = new AlertConditionCacheStats();
         try {
-            AlertConditionCacheStats stats = new AlertConditionCacheStats();
-
             Resource resource = source.getResource();
             List<EventCacheElement> cacheElements = lookupEventCacheElements(resource.getId());
 
@@ -504,10 +515,13 @@ public final class AlertConditionCache {
             AlertConditionCacheMonitor.getMBean().incrementEventCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementEventProcessingTime(stats.getAge());
             log.debug("Check Events[size=" + events.length + "] - " + stats);
-            return stats;
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
         } finally {
             rwLock.readLock().unlock();
         }
+        return stats;
     }
 
     public AlertConditionCacheStats checkConditions(Availability... availabilities) {
@@ -517,9 +531,8 @@ public final class AlertConditionCache {
 
         rwLock.readLock().lock();
 
+        AlertConditionCacheStats stats = new AlertConditionCacheStats();
         try {
-            AlertConditionCacheStats stats = new AlertConditionCacheStats();
-
             for (Availability availability : availabilities) {
                 Resource resource = availability.getResource();
                 AvailabilityType availabilityType = availability.getAvailabilityType();
@@ -532,18 +545,20 @@ public final class AlertConditionCache {
             AlertConditionCacheMonitor.getMBean().incrementAvailabilityCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementAvailabilityProcessingTime(stats.getAge());
             log.debug("Check Availability[size=" + availabilities.length + "] - " + stats);
-            return stats;
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
         } finally {
             rwLock.readLock().unlock();
         }
+        return stats;
     }
 
     public AlertConditionCacheStats updateConditions(Resource deletedResource) {
         rwLock.writeLock().lock();
 
+        AlertConditionCacheStats stats = new AlertConditionCacheStats();
         try {
-            AlertConditionCacheStats stats = new AlertConditionCacheStats();
-
             int doomedResourceId = deletedResource.getId();
 
             /*
@@ -589,11 +604,13 @@ public final class AlertConditionCache {
                     outOfBoundsBaselineMap.remove(doomedBaselineId);
                 }
             }
-
-            return stats;
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
         } finally {
             rwLock.writeLock().unlock();
         }
+        return stats;
     }
 
     // this could potentially take really long
@@ -662,6 +679,9 @@ public final class AlertConditionCache {
                     // stats is only used for *real* caches, not bookkeeping caches
                 }
             }
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
         } finally {
             // let's defensively assume that we've somehow messed 
             // up the internal state and reset our valid switch
@@ -676,9 +696,8 @@ public final class AlertConditionCache {
         AlertDefinitionEvent alertDefinitionEvent) {
         rwLock.writeLock().lock();
 
+        AlertConditionCacheStats stats = new AlertConditionCacheStats();
         try {
-            AlertConditionCacheStats stats = new AlertConditionCacheStats();
-
             if ((alertDefinitionEvent == AlertDefinitionEvent.CREATED)
                 || (alertDefinitionEvent == AlertDefinitionEvent.ENABLED)) {
                 // for CREATED, this call expects the alertDefinition to be persisted and have valid ids for the nested alertConditions
@@ -691,11 +710,13 @@ public final class AlertConditionCache {
                 throw new AlertConditionCacheManagerException(getClass().getSimpleName() + " does not support "
                     + "updating conditions against " + alertDefinitionEvent.getClass().getSimpleName() + " types");
             }
-
-            return stats;
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
         } finally {
             rwLock.writeLock().unlock();
         }
+        return stats;
     }
 
     private <T extends AbstractCacheElement<S>, S> void processCacheElements(List<T> cacheElements, S providedValue,
@@ -1490,11 +1511,14 @@ public final class AlertConditionCache {
                     }
                 }
             }
-
-            return validCache;
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
         } finally {
             rwLock.readLock().unlock();
         }
+
+        return validCache;
     }
 
     public String[] getCacheNames() {
@@ -1528,6 +1552,9 @@ public final class AlertConditionCache {
             } else if (CacheName.Inverse.name().equals(cacheName)) {
                 printInverseCache();
             }
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
         } finally {
             rwLock.readLock().unlock();
         }
@@ -1547,6 +1574,9 @@ public final class AlertConditionCache {
                 printListCache(CacheName.AvailabilityCache.name(), availabilityCache);
                 printInverseCache();
             }
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
         } finally {
             rwLock.readLock().unlock();
         }

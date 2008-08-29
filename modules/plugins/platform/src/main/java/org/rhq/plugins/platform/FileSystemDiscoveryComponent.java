@@ -21,32 +21,44 @@ package org.rhq.plugins.platform;
 import java.util.HashSet;
 import java.util.Set;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.FileSystemInfo;
+import org.rhq.core.system.SystemInfo;
 import org.hyperic.sigar.FileSystem;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * @author Greg Hinkle
  */
 public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent> {
+    private final Log log = LogFactory.getLog(this.getClass());
+
     public Set<DiscoveredResourceDetails> discoverResources(
-        ResourceDiscoveryContext<PlatformComponent> resourceDiscoveryContext)
-        throws InvalidPluginConfigurationException, Exception {
+        ResourceDiscoveryContext<PlatformComponent> discoveryContext)
+        throws Exception {
         Set<DiscoveredResourceDetails> results = new HashSet<DiscoveredResourceDetails>();
-        for (FileSystemInfo fs : resourceDiscoveryContext.getSystemInformation().getFileSystems()) {
+
+        SystemInfo sysInfo = discoveryContext.getSystemInformation();
+        if (!sysInfo.isNative()) {
+            log.debug("Skipping " + discoveryContext.getResourceType().getName() +
+                    " discovery, since native system info is not available.");
+            return results;
+        }
+
+        for (FileSystemInfo fs : sysInfo.getFileSystems()) {
             int fsType = fs.getFileSystem().getType();
             if (fsType != FileSystem.TYPE_LOCAL_DISK && fsType != FileSystem.TYPE_NETWORK)
             {
                 continue;
             }
-            String hostname = resourceDiscoveryContext.getSystemInformation().getHostname();
+            String hostname = discoveryContext.getSystemInformation().getHostname();
             String name = ((hostname == null) ? "" : (hostname + " ")) + " File System ("
                 + fs.getFileSystem().getTypeName() + ") " + fs.getMountPoint();
-            DiscoveredResourceDetails details = new DiscoveredResourceDetails(resourceDiscoveryContext
+            DiscoveredResourceDetails details = new DiscoveredResourceDetails(discoveryContext
                 .getResourceType(), fs.getMountPoint(), name, null, fs.getFileSystem().getDevName() + ": "
-                + fs.getFileSystem().getDirName(), resourceDiscoveryContext.getDefaultPluginConfiguration(), null);
+                + fs.getFileSystem().getDirName(), discoveryContext.getDefaultPluginConfiguration(), null);
             results.add(details);
         }
         return results;

@@ -26,18 +26,29 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.NetworkAdapterInfo;
+import org.rhq.core.system.SystemInfo;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class NetworkAdapterDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent> {
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> context) {
+    private final Log log = LogFactory.getLog(this.getClass());
+
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext)
+            throws Exception {
         Set<DiscoveredResourceDetails> results = new HashSet<DiscoveredResourceDetails>();
-        for (NetworkAdapterInfo info : context.getSystemInformation().getAllNetworkAdapters()) {
-            Configuration configuration = context.getDefaultPluginConfiguration();
 
+        SystemInfo sysInfo = discoveryContext.getSystemInformation();
+        if (!sysInfo.isNative()) {
+            log.debug("Skipping " + discoveryContext.getResourceType().getName() +
+                    " discovery, since native system info is not available.");
+            return results;
+        }
+
+        for (NetworkAdapterInfo info : sysInfo.getAllNetworkAdapters()) {
+            Configuration configuration = discoveryContext.getDefaultPluginConfiguration();
             configuration.put(new PropertySimple("macAddress", info.getMacAddressString()));
-
-            DiscoveredResourceDetails found = new DiscoveredResourceDetails(context.getResourceType(), info.getName(),
-                info.getDisplayName(), null, info.getMacAddressString(), configuration, null);
-
+            DiscoveredResourceDetails found = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
+                    info.getName(), info.getDisplayName(), null, info.getMacAddressString(), configuration, null);
             results.add(found);
         }
 

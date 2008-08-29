@@ -25,6 +25,8 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.CpuInformation;
 import org.rhq.core.system.SystemInfo;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Discovers CPUs found on this platform.
@@ -33,25 +35,30 @@ import org.rhq.core.system.SystemInfo;
  * @author John Mazzitelli
  */
 public class CpuDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent> {
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> context) {
+    private final Log log = LogFactory.getLog(this.getClass());
+
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext) {
         Set<DiscoveredResourceDetails> results = new HashSet<DiscoveredResourceDetails>();
-        SystemInfo sysinfo = context.getSystemInformation();
 
-        if (sysinfo.isNative()) {
-            int numberOfCpus = sysinfo.getNumberOfCpus();
-            for (int i = 0; i < numberOfCpus; i++) {
-                CpuInformation cpuInfo = sysinfo.getCpu(i);
-                DiscoveredResourceDetails details = new DiscoveredResourceDetails(context.getResourceType(), // resourceType
-                    String.valueOf(i), // resourceKey
-                    "CPU " + i, // resourceName
-                    cpuInfo.getCpuInfo().getModel(), // resourceVersion
-                    cpuInfo.getCpuInfo().getVendor() + ' ' + cpuInfo.getCpuInfo().getModel(), // resourceDescription
-                    null, null);
-
-                results.add(details);
-            }
+        SystemInfo sysInfo = discoveryContext.getSystemInformation();
+        if (!sysInfo.isNative()) {
+            log.debug("Skipping " + discoveryContext.getResourceType().getName() +
+                    " discovery, since native system info is not available.");
+            return results;
         }
+        
+        int numberOfCpus = sysInfo.getNumberOfCpus();
+        for (int i = 0; i < numberOfCpus; i++) {
+            CpuInformation cpuInfo = sysInfo.getCpu(i);
+            DiscoveredResourceDetails details = new DiscoveredResourceDetails(discoveryContext.getResourceType(), // resourceType
+                String.valueOf(i), // resourceKey
+                "CPU " + i, // resourceName
+                cpuInfo.getCpuInfo().getModel(), // resourceVersion
+                cpuInfo.getCpuInfo().getVendor() + ' ' + cpuInfo.getCpuInfo().getModel(), // resourceDescription
+                null, null);
 
+            results.add(details);
+        }
         return results;
     }
 }

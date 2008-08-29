@@ -86,7 +86,7 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     @SuppressWarnings("unchecked")
     public List<Server> getServersByOperationMode(Server.OperationMode mode) {
         Query query = entityManager.createNamedQuery(Server.QUERY_FIND_BY_OPERATION_MODE);
-        query.setParameter("mode", mode.name());
+        query.setParameter("mode", mode);
         List<Server> results = query.getResultList();
         return results;
     }

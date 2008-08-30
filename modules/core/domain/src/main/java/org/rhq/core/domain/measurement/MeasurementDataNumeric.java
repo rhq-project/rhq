@@ -41,42 +41,27 @@ public class MeasurementDataNumeric extends MeasurementData implements Serializa
 
     public MeasurementDataNumeric(MeasurementScheduleRequest request, Double value) {
         super(request);
-        perMinuteCollection = request.isPerMinute();
-        numericType = request.getNumericType();
-        if (value == null) {
-            throw new NullPointerException("Collected measurement values may not be null. Received null with request: "
-                + request);
-        }
-
         this.value = value;
+        this.perMinuteCollection = request.isPerMinute();
+        this.numericType = request.getNumericType();
     }
 
     public MeasurementDataNumeric(long collectionTime, MeasurementScheduleRequest request, Double value) {
         super(collectionTime, request);
-        perMinuteCollection = request.isPerMinute();
-        if (value == null) {
-            throw new NullPointerException("Collected measurement values may not be null. Received null with request: "
-                + request);
-        }
-
         this.value = value;
+        this.perMinuteCollection = request.isPerMinute();
     }
 
     @Deprecated
     // Have to make this protected so that people only use the constructor taking a request (so the name can be set for live values)
     public MeasurementDataNumeric(MeasurementDataPK md, Double value) {
         super(md);
-        if (value == null) {
-            throw new NullPointerException("Collected measurement values may not be null. Received null with request: "
-                + md);
-        }
-
         this.value = value;
     }
 
     @Override
     public Double getValue() {
-        return value;
+        return this.value;
     }
 
     public void setValue(Double value) {
@@ -84,16 +69,16 @@ public class MeasurementDataNumeric extends MeasurementData implements Serializa
     }
 
     public boolean isPerMinuteCollection() {
-        return perMinuteCollection;
+        return this.perMinuteCollection;
     }
 
     public NumericType getNumericType() {
-        return numericType;
+        return this.numericType;
     }
 
     @Override
     public String toString() {
-        return "MeasurementDataNumeric[" + "value=[" + new DecimalFormat("0.00").format(value) + "], "
+        return "MeasurementDataNumeric[" + "value=[" + new DecimalFormat("0.00").format(this.value) + "], "
             + super.toString() + "]";
     }
 }

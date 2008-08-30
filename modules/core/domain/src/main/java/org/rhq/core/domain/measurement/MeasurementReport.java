@@ -148,7 +148,8 @@ public class MeasurementReport implements Externalizable {
         for (MeasurementDataNumeric datum : measurementNumericData) {
             out.writeInt(datum.getScheduleId());
             out.writeLong(datum.getTimestamp());
-            out.writeDouble(datum.getValue());
+            // We can serialize a null value as Double.NaN, since, semantically, both mean "no data available".
+            out.writeDouble((datum.getValue() != null) ? datum.getValue() : Double.NaN);
         }
 
         out.writeInt(measurementTraitData.size());

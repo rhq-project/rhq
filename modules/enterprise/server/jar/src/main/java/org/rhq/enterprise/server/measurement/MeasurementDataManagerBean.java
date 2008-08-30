@@ -214,7 +214,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
             dbType = DatabaseTypeFactory.getDatabaseType(conn);
 
             for (MeasurementDataNumeric aData : data) {
-                if (Double.isNaN(aData.getValue())) {
+                if (aData.getValue() == null || Double.isNaN(aData.getValue())) {
                     expectedCount--;
                     continue;
                 }

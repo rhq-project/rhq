@@ -66,7 +66,7 @@
                      <onc:allSelect target="selectedHaServers" />
                   </f:facet>
                   
-                  <onc:select name="selectedHaServers" value="#{item.id}" />
+                  <onc:select name="selectedHaServers" value="#{item.server.id}" />
                </rich:column>
       
                <rich:column rendered="#{param.debug}">
@@ -88,8 +88,8 @@
                
                   <h:outputLink value="haServer.xhtml">
                      <f:param name="mode" value="view"/>
-                     <f:param name="id" value="#{item.id}"/>
-                     <h:outputText value="#{item.name}" />
+                     <f:param name="id" value="#{item.server.id}"/>
+                     <h:outputText value="#{item.server.name}" />
                   </h:outputLink>
                </rich:column>
 
@@ -100,7 +100,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{item.operationMode}"/>
+                  <h:outputText value="#{item.server.operationMode}"/>
                </rich:column>
                               
                <rich:column>
@@ -110,7 +110,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{item.address}"/>
+                  <h:outputText value="#{item.server.address}"/>
                </rich:column>
 
                <rich:column>
@@ -120,7 +120,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{item.port}"/>
+                  <h:outputText value="#{item.server.port}"/>
                </rich:column>
                
                <rich:column>
@@ -130,7 +130,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{item.securePort}"/>
+                  <h:outputText value="#{item.server.securePort}"/>
                </rich:column>
                 
                <rich:column>
@@ -140,7 +140,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{item.ctime}">
+                  <h:outputText value="#{item.server.ctime}">
                      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                   </h:outputText>
                </rich:column>
@@ -150,7 +150,7 @@
                      <h:outputText styleClass="headerText" value="Affinity Group" />
                   </f:facet>
                
-                  <h:outputText value="#{item.affinityGroup.name}"/>
+                  <h:outputText value="#{item.server.affinityGroup.name}"/>
                </rich:column>
 
                <rich:column>
@@ -158,7 +158,7 @@
                      <h:outputText styleClass="headerText" value="Agent Count" />
                   </f:facet>
                
-                  <h:outputText value="TODO"/>
+                  <h:outputText value="#{item.agentCount}"/>
                </rich:column>
 
                <f:facet name="footer">

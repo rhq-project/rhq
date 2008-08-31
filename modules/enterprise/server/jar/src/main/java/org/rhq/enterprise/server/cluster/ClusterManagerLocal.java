@@ -22,7 +22,9 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cluster.Server;
+import org.rhq.core.domain.cluster.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -44,7 +46,7 @@ public interface ClusterManagerLocal {
 
     List<Server> getAllServers();
 
-    PageList<Server> getAllServersAsPageList(PageControl pc);
+    PageList<ServerWithAgentCountComposite> getServerComposites(Subject subject, PageControl pc);
 
     int getServerCount();
 

@@ -29,7 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * @author jmarques
+ * @author Joseph Marques
  */
 public class FailoverListComposite implements Iterator<FailoverListComposite.ServerEntry>, Serializable {
 

@@ -30,12 +30,16 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cluster.Server;
+import org.rhq.core.domain.cluster.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 
 /**
  * @author Joseph Marques
@@ -99,16 +103,16 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Server> getAllServersAsPageList(PageControl pc) {
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<ServerWithAgentCountComposite> getServerComposites(Subject subject, PageControl pc) {
         pc.initDefaultOrderingField("s.name");
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Server.QUERY_FIND_ALL, pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Server.QUERY_FIND_ALL);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Server.QUERY_FIND_ALL_COMPOSITES, pc);
 
-        List<Server> results = query.getResultList();
-        long count = (Long) countQuery.getSingleResult();
+        List<ServerWithAgentCountComposite> results = query.getResultList();
+        int count = getServerCount();
 
-        return new PageList<Server>(results, (int) count, pc);
+        return new PageList<ServerWithAgentCountComposite>(results, count, pc);
     }
 
     public int getServerCount() {

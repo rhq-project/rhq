@@ -21,7 +21,7 @@ package org.rhq.core.domain.cluster.composite;
 /**
  * For internal use in the calculation of the distribution of agents across the server cloud.
  * 
- * @author jshaughn
+ * @author Jay Shaughnessy
  */
 public class FailoverListDetailsComposite {
 

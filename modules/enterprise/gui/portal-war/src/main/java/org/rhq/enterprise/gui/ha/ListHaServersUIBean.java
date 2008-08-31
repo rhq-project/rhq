@@ -21,20 +21,23 @@ package org.rhq.enterprise.gui.ha;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cluster.Server;
+import org.rhq.core.domain.cluster.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ListHaServersUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ListHaServersUIBean";
 
-    private ClusterManagerLocal haManager = LookupUtil.getClusterManager();
+    private ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
 
     public ListHaServersUIBean() {
     }
@@ -67,7 +70,7 @@ public class ListHaServersUIBean extends PagedDataTableUIBean {
 
         if (ids.length > 0) {
             try {
-                haManager.updateServerMode(ids, mode);
+                clusterManager.updateServerMode(ids, mode);
 
                 // TODO jshaughn : is there a better way to get the refresh the data model. without this the changes
                 // were not reflected on screen.
@@ -101,17 +104,17 @@ public class ListHaServersUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
-    private class ListHaServersDataModel extends PagedListDataModel<Server> {
+    private class ListHaServersDataModel extends PagedListDataModel<ServerWithAgentCountComposite> {
         public ListHaServersDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public PageList<Server> fetchPage(PageControl pc) {
-            // Subject subject = EnterpriseFacesContextUtility.getSubject();
+        public PageList<ServerWithAgentCountComposite> fetchPage(PageControl pc) {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
 
-            PageList<Server> results = haManager.getAllServersAsPageList(pc);
+            PageList<ServerWithAgentCountComposite> results = clusterManager.getServerComposites(subject, pc);
             return results;
         }
     }

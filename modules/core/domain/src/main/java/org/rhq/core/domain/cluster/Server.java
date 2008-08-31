@@ -52,6 +52,13 @@ import org.rhq.core.domain.resource.Agent;
 @NamedQueries( //
 {
     @NamedQuery(name = Server.QUERY_FIND_ALL, query = "SELECT s FROM Server s"),
+    @NamedQuery(name = Server.QUERY_FIND_ALL_COMPOSITES, query = "" //
+        + "SELECT NEW org.rhq.core.domain.cluster.composite.ServerWithAgentCountComposite" //
+        + "     ( " //
+        + "       s, " //
+        + "       (SELECT COUNT(a) FROM Agent a WHERE a.server = s) " //
+        + "     ) " //
+        + "  FROM Server s"),
     @NamedQuery(name = Server.QUERY_FIND_BY_NAME, query = "SELECT s FROM Server s WHERE s.name = :name"),
     @NamedQuery(name = Server.QUERY_FIND_BY_OPERATION_MODE, query = "SELECT s FROM Server s WHERE s.operationMode = :mode") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_SERVER_ID_SEQ")
@@ -61,6 +68,7 @@ public class Server implements Serializable {
     public static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_ALL = "Server.findAll";
+    public static final String QUERY_FIND_ALL_COMPOSITES = "Server.findAllComposites";
     public static final String QUERY_FIND_BY_NAME = "Server.findByName";
     public static final String QUERY_FIND_BY_OPERATION_MODE = "Server.findByOperationMode";
 

@@ -17,5 +17,12 @@
       <managed-bean-class>org.rhq.enterprise.gui.ha.ListAgentsUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
-   
+
+   <!-- /rhq/ha/viewServer.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ViewServerUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.ha.ViewServerUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
 </faces-config>

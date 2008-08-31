@@ -40,6 +40,8 @@ public interface ClusterManagerLocal {
 
     List<Agent> getAgentsByServerName(String serverName);
 
+    Server getServerById(int serverId);
+
     Server getServerByName(String serverName);
 
     List<Server> getServersByOperationMode(Server.OperationMode mode);

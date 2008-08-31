@@ -14,20 +14,25 @@
 
 <ui:composition template="/rhq/layout/main.xhtml">
 
-   <ui:param name="pageTitle" value="HA Agents"/>
+   <ui:param name="pageTitle" value="Server Details"/>
+   <ui:param name="server" value="#{ViewServerUIBean.server}" />
 
    <ui:define name="breadcrumbs">
       <h:outputLink value="/Admin.do">
          ${msg["user.admin.page.title"]}
       </h:outputLink>
       &gt;
-      <h:outputLink value="listAgents.xhtml">
-         ${msg["ha.agent.list.breadcrumb"]}
+      <h:outputLink value="listServers.xhtml">
+         ${msg["ha.server.list.breadcrumb"]}
+      </h:outputLink>
+      &gt;
+      <h:outputLink value="viewServer.xhtml">
+         ${msg["ha.server.view.breadcrumb"]}
       </h:outputLink>
    </ui:define>
 
    <ui:define name="body">
-   
+
    <br/>
    <h:messages showSummary="true"
                showDetail="true"
@@ -39,32 +44,80 @@
                layout="table"
                width="100%"/>
 
+      <rich:panel>
+         <f:facet name="header">Server Details</f:facet>
+         <table>
+            <tr>
+               <td align="right"><b>Name:</b></td>
+               <td align="left">
+                  <h:inputText  rendered="${mode eq 'edit'}" value="#{server.name}" />
+                  <h:outputText rendered="${mode ne 'edit'}" value="#{server.name}" />
+               </td>
+            </tr>
+            <tr>
+               <td align="right"><b>Address:</b></td>
+               <td align="left">
+                  <h:inputTextarea rendered="${mode eq 'edit'}" value="#{server.address}"/>
+                  <h:outputText    rendered="${mode ne 'edit'}" value="#{server.address}"/>
+               </td>
+            </tr>
+            <tr>
+               <td align="right"><b>Port:</b></td>
+               <td align="left">
+                  <h:inputTextarea rendered="${mode eq 'edit'}" value="#{server.port}"/>
+                  <h:outputText    rendered="${mode ne 'edit'}" value="#{server.port}"/>
+               </td>
+            </tr>
+            <tr>
+               <td align="right"><b>Secure Port:</b></td>
+               <td align="left">
+                  <h:inputTextarea rendered="${mode eq 'edit'}" value="#{server.securePort}"/>
+                  <h:outputText    rendered="${mode ne 'edit'}" value="#{server.securePort}"/>
+               </td>
+            </tr>
+            <tr>
+               <td align="right"><b>Operation Mode:</b></td>
+               <td align="left">
+                  <h:inputTextarea rendered="${mode eq 'edit'}" value="#{server.operationMode}"/>
+                  <h:outputText    rendered="${mode ne 'edit'}" value="#{server.operationMode}"/>
+               </td>
+            </tr>
+            <tr>
+               <td align="right"><b>Affinity Group:</b></td>
+               <td align="left">
+                  <h:inputTextarea rendered="${mode eq 'edit'}" value="#{server.affinityGroup}"/>
+                  <h:outputText    rendered="${mode ne 'edit'}" value="#{server.affinityGroup}"/>
+               </td>
+            </tr>
+         </table>
+      </rich:panel>
 
-      <h:form id="AgentsListForm">
+      <h:form id="connectedAgentsForm">
+         <input type="hidden" name="serverId" value="${param.serverId}"/>
          
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Agents"/>
+               <h:outputText value="Connected Agents"/>
             </f:facet>
 
             <h:panelGrid columns="1" width="100%">
 
-            <ui:param name="agentsDataModel" value="#{ListAgentsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ListAgentsUIBean.dataTable}"
-                            id="agentsDataTable"
-                            rows="#{PageControl.AgentsList.pageSize}"
-                            value="#{agentsDataModel}"
+            <ui:param name="connectedAgentsDataModel" value="#{ViewServerUIBean.dataModel}"/>
+            <ui:param name="serverId" value="#{ViewServerUIBean.dataModel}"/>
+            <rich:dataTable binding="#{ViewServerUIBean.dataTable}"
+                            id="connectedAgentsDataTable"
+                            rows="#{PageControl.ServerView.pageSize}"
+                            value="#{connectedAgentsDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 15%, 10%, 10%, 10%, 10%"
+                            columnsWidth="1%, 15%, 10%, 10%, 10%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 
-
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="AgentsList" />
+                  <onc:paginationControl id="ServerView" />
                </f:facet>
-      
+
                <rich:column>
                   <f:facet name="header">
                      <onc:allSelect target="selectedAgents" />
@@ -72,7 +125,7 @@
                   
                   <onc:select name="selectedAgents" value="#{item.id}" />
                </rich:column>
-      
+
                <rich:column rendered="#{param.debug}">
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="a.id">
@@ -85,25 +138,11 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="a.server.name">
-                        <h:outputText styleClass="headerText" value="Primary Server" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-               
-                  <h:outputLink value="viewServer.xhtml">
-                     <f:param name="mode" value="view"/>
-                     <f:param name="serverId" value="#{item.server.id}"/>
-                     <h:outputText value="#{item.server.name}" />
-                  </h:outputLink>
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
                      <onc:sortableColumnHeader sort="a.address">
                         <h:outputText styleClass="headerText" value="Bind Address" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputText value="#{item.address}"/>
                </rich:column>
 
@@ -113,27 +152,27 @@
                         <h:outputText styleClass="headerText" value="Bind Port" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputText value="#{item.port}"/>
                </rich:column>
-               
+
                <rich:column rendered="#{param.debug}">
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="a.agentToken">
                         <h:outputText styleClass="headerText" value="Token" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputText value="#{item.agentToken}"/>
                </rich:column>
-                
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="a.lastAvailabilityReport">
                         <h:outputText styleClass="headerText" value="Last Availability Report" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputText value="#{item.lastAvailabilityReport}">
                      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                   </h:outputText>
@@ -143,7 +182,7 @@
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Affinity Group" />
                   </f:facet>
-               
+
                   <h:outputText value="#{item.affinityGroup.name}"/>
                </rich:column>
 
@@ -153,17 +192,17 @@
                         <h:outputText styleClass="headerText" value="Status" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputText value="#{item.status}"/>
                </rich:column>
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <!-- colspan 9:6 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 9 : 6}" width="100%">
-                        <ui:param name="paginationDataTableName" value="agentsDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{agentsDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.AgentsList}"/>
+                     <!-- colspan 8:5 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 8 : 5}" width="100%">
+                        <ui:param name="paginationDataTableName" value="connectedAgentsDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{connectedAgentsDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ServerView}"/>
                         <ui:include src="../resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>
@@ -172,7 +211,7 @@
             </rich:dataTable>
 
             </h:panelGrid>
-            
+
          </rich:panel>
       </h:form>
 

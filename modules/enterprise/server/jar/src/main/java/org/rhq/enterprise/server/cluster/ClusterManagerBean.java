@@ -74,6 +74,11 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         return agents;
     }
 
+    public Server getServerById(int serverId) {
+        Server server = entityManager.find(Server.class, serverId);
+        return server;
+    }
+
     public Server getServerByName(String serverName) {
         Query query = entityManager.createNamedQuery(Server.QUERY_FIND_BY_NAME);
         query.setParameter("name", serverName);

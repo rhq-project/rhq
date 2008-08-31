@@ -17,6 +17,10 @@
    <ui:param name="pageTitle" value="HA Servers"/>
 
    <ui:define name="breadcrumbs">
+      <h:outputLink value="/Admin.do">
+         ${msg["user.admin.page.title"]}
+      </h:outputLink>
+      &gt;
       <h:outputLink value="listServers.xhtml">
          ${msg["ha.server.list.breadcrumb"]}
       </h:outputLink>
@@ -86,9 +90,9 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputLink value="Server.xhtml">
+                  <h:outputLink value="viewServer.xhtml">
                      <f:param name="mode" value="view"/>
-                     <f:param name="id" value="#{item.server.id}"/>
+                     <f:param name="serverId" value="#{item.server.id}"/>
                      <h:outputText value="#{item.server.name}" />
                   </h:outputLink>
                </rich:column>

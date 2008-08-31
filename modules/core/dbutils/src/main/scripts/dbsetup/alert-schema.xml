@@ -115,7 +115,7 @@
         <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>
         <column name="NOTIFICATION_TYPE" required="true" size="20" type="VARCHAR2"/>
-        <column name="ALERT_DEFINITION_ID" required="true" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
+        <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
         <column name="ROLE_ID" type="INTEGER" references="RHQ_ROLE(ID)"/>
         <column name="SUBJECT_ID" type="INTEGER" references="RHQ_SUBJECT(ID)"/>
         <column name="EMAIL_ADDRESS" size="100" type="VARCHAR2"/>

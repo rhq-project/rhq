@@ -266,23 +266,16 @@ public class AlertDefinition implements Serializable {
         removeAllConditions();
         getConditions().addAll(copiedConditions);
 
-        boolean same = false;
-
-        same = alertNotifications.containsAll(alertDef.getAlertNotifications())
-            && alertDef.getAlertNotifications().containsAll(alertNotifications);
-
-        // copy notifications
-        if (!same) {
-            Set<AlertNotification> copiedNotifications = new HashSet<AlertNotification>();
-            for (AlertNotification oldNotification : alertDef.getAlertNotifications()) {
-                AlertNotification newNotification = oldNotification.copy();
-                newNotification.setAlertDefinition(this);
-                copiedNotifications.add(newNotification);
-            }
-
-            removeAllAlertNotifications();
-            getAlertNotifications().addAll(copiedNotifications);
+        Set<AlertNotification> copiedNotifications = new HashSet<AlertNotification>();
+        for (AlertNotification oldNotification : alertDef.getAlertNotifications()) {
+            AlertNotification newNotification = oldNotification.copy();
+            newNotification.setAlertDefinition(this);
+            copiedNotifications.add(newNotification);
         }
+
+        removeAllAlertNotifications();
+        getAlertNotifications().addAll(copiedNotifications);
+
         this.operationDefinition = alertDef.operationDefinition;
     }
 
@@ -482,6 +475,10 @@ public class AlertDefinition implements Serializable {
     }
 
     public void removeAllAlertNotifications() {
+        for (AlertNotification notification : this.alertNotifications) {
+            notification.setAlertDefinition(null);
+        }
+
         this.alertNotifications.clear();
     }
 

@@ -60,7 +60,7 @@ public abstract class AlertNotification implements Serializable {
     @SuppressWarnings( { "unused" })
     private int id;
 
-    @JoinColumn(name = "ALERT_DEFINITION_ID", nullable = false)
+    @JoinColumn(name = "ALERT_DEFINITION_ID")
     @ManyToOne
     @SuppressWarnings("unused")
     private AlertDefinition alertDefinition;

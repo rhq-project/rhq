@@ -73,6 +73,7 @@
          /WEB-INF/jsf-managed-beans/alert-beans.xml,
          /WEB-INF/jsf-managed-beans/content-beans.xml,
          /WEB-INF/jsf-managed-beans/autodiscovery-beans.xml,
+         /WEB-INF/jsf-managed-beans/cluster-beans.xml,
          /WEB-INF/jsf-managed-beans/configuration-beans.xml,
          /WEB-INF/jsf-managed-beans/global-beans.xml,
          /WEB-INF/jsf-managed-beans/inventory-beans.xml,

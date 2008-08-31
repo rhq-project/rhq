@@ -19,10 +19,16 @@
 package org.rhq.enterprise.server.core;
 
 import java.util.List;
+
 import javax.ejb.Local;
+
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.clientapi.server.core.CoreServerService;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 
 /**
@@ -82,6 +88,14 @@ public interface AgentManagerLocal {
      * @return list of all known agents in inventory
      */
     List<Agent> getAllAgents();
+
+    /**
+     * Returns a collection of paged agents, filtered by Server (if non-null).
+     *
+     * @param serverId the server to filter the agent list by.  pass null to view unfiltered results. 
+     * @return list of all known agents in inventory
+     */
+    PageList<Agent> getAgentsByServer(Subject subject, Integer serverId, PageControl pageControl);
 
     /**
      * Returns the total number of agents that are in inventory.

@@ -55,6 +55,7 @@ import org.rhq.core.domain.cluster.Server;
     @NamedQuery(name = Agent.QUERY_FIND_BY_AGENT_TOKEN, query = "SELECT a FROM Agent a WHERE a.agentToken = :agentToken"),
     @NamedQuery(name = Agent.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT r.agent FROM Resource r WHERE r.id = :resourceId"),
     @NamedQuery(name = Agent.QUERY_FIND_ALL, query = "SELECT a FROM Agent a"),
+    @NamedQuery(name = Agent.QUERY_FIND_BY_SERVER, query = "SELECT a FROM Agent a WHERE (a.server.id = :serverId OR :serverId IS NULL)"),
     @NamedQuery(name = Agent.QUERY_COUNT_ALL, query = "SELECT count(a.id) FROM Agent a"),
     @NamedQuery(name = Agent.QUERY_FIND_RESOURCE_IDS_FOR_AGENT, query = "SELECT r.id FROM Resource r WHERE r.agent.id = :agentId"),
     @NamedQuery(name = Agent.QUERY_FIND_ALL_SUSPECT_AGENTS, query = "SELECT new org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite "
@@ -80,6 +81,7 @@ public class Agent implements Serializable {
     public static final String QUERY_FIND_BY_AGENT_TOKEN = "Agent.findByAgentToken";
     public static final String QUERY_FIND_BY_RESOURCE_ID = "Agent.findByResourceId";
     public static final String QUERY_FIND_ALL = "Agent.findAll";
+    public static final String QUERY_FIND_BY_SERVER = "Agent.findByServer";
     public static final String QUERY_COUNT_ALL = "Agent.countAll";
     public static final String QUERY_FIND_RESOURCE_IDS_FOR_AGENT = "Agent.findResourceIdsForAgent";
     public static final String QUERY_FIND_ALL_SUSPECT_AGENTS = "Agent.findAllSuspectAgents";

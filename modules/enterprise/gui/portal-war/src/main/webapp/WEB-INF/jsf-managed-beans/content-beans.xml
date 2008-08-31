@@ -210,12 +210,4 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
-   <!-- /rhq/ha/listServers.xhtml -->
-   <managed-bean>
-      <managed-bean-name>ListServersUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.ha.ListServersUIBean</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
-   </managed-bean>
-
-
 </faces-config>

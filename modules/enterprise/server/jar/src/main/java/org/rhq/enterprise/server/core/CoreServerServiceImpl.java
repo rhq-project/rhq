@@ -36,6 +36,7 @@ import org.rhq.core.clientapi.server.core.AgentRegistrationRequest;
 import org.rhq.core.clientapi.server.core.AgentRegistrationResults;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.domain.cluster.PartitionEventType;
+import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
@@ -43,6 +44,7 @@ import org.rhq.core.util.exception.WrappedRemotingException;
 import org.rhq.enterprise.communications.command.client.RemoteInputStream;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
+import org.rhq.enterprise.server.cluster.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -57,6 +59,7 @@ public class CoreServerServiceImpl implements CoreServerService {
 
     private AgentManagerLocal agentManager;
     private PartitionEventManagerLocal partitionEventManager;
+    private ServerManagerLocal serverManager;
     private SubjectManagerLocal subjectManager;
 
     /**
@@ -117,11 +120,14 @@ public class CoreServerServiceImpl implements CoreServerService {
             }
         }
 
+        Server registeringServer = getServerManager().getServer();
+
         if (agentByName != null) {
             log.info("Got agent registration request for existing agent: " + agentByName.getName() + "["
                 + agentByName.getAddress() + ":" + agentByName.getPort() + "] - Will "
                 + (request.getRegenerateToken() ? "" : "not") + " regenerate a new token");
 
+            agentByName.setServer(registeringServer);
             agentByName.setAddress(request.getAddress());
             agentByName.setPort(request.getPort());
             agentByName.setRemoteEndpoint(request.getRemoteEndpoint());
@@ -145,6 +151,7 @@ public class CoreServerServiceImpl implements CoreServerService {
                 agentByName = new Agent(request.getName(), request.getAddress(), request.getPort(), request
                     .getRemoteEndpoint(), Agent.generateRandomToken(request.getName()));
 
+                agentByName.setServer(registeringServer);
                 agentManager.createAgent(agentByName);
             } catch (Exception e) {
                 log.warn("Failed to create agent in database", e);
@@ -265,6 +272,14 @@ public class CoreServerServiceImpl implements CoreServerService {
         }
 
         return this.subjectManager;
+    }
+
+    private ServerManagerLocal getServerManager() {
+        if (this.serverManager == null) {
+            this.serverManager = LookupUtil.getServerManager();
+        }
+
+        return this.serverManager;
     }
 
     private void pingEndpoint(String endpoint) throws AgentRegistrationException {

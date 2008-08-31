@@ -35,11 +35,17 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.annotation.IgnoreDependency;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.cluster.FailoverListManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
@@ -219,6 +225,23 @@ public class AgentManagerBean implements AgentManagerLocal {
     @SuppressWarnings("unchecked")
     public List<Agent> getAllAgents() {
         return entityManager.createNamedQuery(Agent.QUERY_FIND_ALL).getResultList();
+    }
+
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<Agent> getAgentsByServer(Subject subject, Integer serverId, PageControl pageControl) {
+        pageControl.initDefaultOrderingField("a.name");
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Agent.QUERY_FIND_BY_SERVER, pageControl);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Agent.QUERY_FIND_BY_SERVER);
+
+        query.setParameter("serverId", serverId);
+        countQuery.setParameter("serverId", serverId);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<Agent> results = query.getResultList();
+
+        return new PageList<Agent>(results, (int) count, pageControl);
     }
 
     public int getAgentCount() {

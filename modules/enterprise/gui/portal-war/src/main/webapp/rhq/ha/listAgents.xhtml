@@ -14,11 +14,11 @@
 
 <ui:composition template="/rhq/layout/main.xhtml">
 
-   <ui:param name="pageTitle" value="HA Servers"/>
+   <ui:param name="pageTitle" value="HA Agents"/>
 
    <ui:define name="breadcrumbs">
-      <h:outputLink value="listServers.xhtml">
-         ${msg["ha.server.list.breadcrumb"]}
+      <h:outputLink value="listAgents.xhtml">
+         ${msg["ha.agent.list.breadcrumb"]}
       </h:outputLink>
    </ui:define>
 
@@ -36,20 +36,20 @@
                width="100%"/>
 
 
-      <h:form id="serversListForm">
+      <h:form id="AgentsListForm">
          
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Servers"/>
+               <h:outputText value="Agents"/>
             </f:facet>
 
             <h:panelGrid columns="1" width="100%">
 
-            <ui:param name="serversDataModel" value="#{ListServersUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ListServersUIBean.dataTable}"
-                            id="serversDataTable"
-                            rows="#{PageControl.ServersList.pageSize}"
-                            value="#{serversDataModel}"
+            <ui:param name="agentsDataModel" value="#{ListAgentsUIBean.dataModel}"/>
+            <rich:dataTable binding="#{ListAgentsUIBean.dataTable}"
+                            id="agentsDataTable"
+                            rows="#{PageControl.AgentsList.pageSize}"
+                            value="#{agentsDataModel}"
                             var="item"
                             width="100%"
                             columnsWidth="1%, 15%, 10%, 10%, 10%, 10%"
@@ -58,31 +58,31 @@
 
 
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="ServersList" />
+                  <onc:paginationControl id="AgentsList" />
                </f:facet>
       
                <rich:column>
                   <f:facet name="header">
-                     <onc:allSelect target="selectedServers" />
+                     <onc:allSelect target="selectedAgents" />
                   </f:facet>
                   
-                  <onc:select name="selectedServers" value="#{item.server.id}" />
+                  <onc:select name="selectedAgents" value="#{item.id}" />
                </rich:column>
       
                <rich:column rendered="#{param.debug}">
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="s.id">
+                     <onc:sortableColumnHeader sort="a.id">
                         <h:outputText styleClass="headerText" value="ID" />
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputText value="#{item.server.id}"/>
+                  <h:outputText value="#{item.id}"/>
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="s.name">
-                        <h:outputText styleClass="headerText" value="Name" />
+                     <onc:sortableColumnHeader sort="a.server.name">
+                        <h:outputText styleClass="headerText" value="Primary Server" />
                      </onc:sortableColumnHeader>
                   </f:facet>
                
@@ -95,52 +95,42 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="s.operationMode">
-                        <h:outputText styleClass="headerText" value="Mode" />
+                     <onc:sortableColumnHeader sort="a.address">
+                        <h:outputText styleClass="headerText" value="Bind Address" />
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{item.server.operationMode}"/>
-               </rich:column>
-                              
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="s.address">
-                        <h:outputText styleClass="headerText" value="Endpoint Address" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-               
-                  <h:outputText value="#{item.server.address}"/>
+                  <h:outputText value="#{item.address}"/>
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="s.port">
-                        <h:outputText styleClass="headerText" value="HTTP Port" />
+                     <onc:sortableColumnHeader sort="a.port">
+                        <h:outputText styleClass="headerText" value="Bind Port" />
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{item.server.port}"/>
+                  <h:outputText value="#{item.port}"/>
                </rich:column>
                
-               <rich:column>
+               <rich:column rendered="#{param.debug}">
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="s.securePort">
-                        <h:outputText styleClass="headerText" value="Secure HTTPS Port" />
+                     <onc:sortableColumnHeader sort="a.agentToken">
+                        <h:outputText styleClass="headerText" value="Token" />
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{item.server.securePort}"/>
+                  <h:outputText value="#{item.agentToken}"/>
                </rich:column>
                 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="s.ctime">
-                        <h:outputText styleClass="headerText" value="Last Update Time" />
+                     <onc:sortableColumnHeader sort="a.lastAvailabilityReport">
+                        <h:outputText styleClass="headerText" value="Last Availability Report" />
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{item.server.ctime}">
+                  <h:outputText value="#{item.lastAvailabilityReport}">
                      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                   </h:outputText>
                </rich:column>
@@ -150,31 +140,26 @@
                      <h:outputText styleClass="headerText" value="Affinity Group" />
                   </f:facet>
                
-                  <h:outputText value="#{item.server.affinityGroup.name}"/>
+                  <h:outputText value="#{item.affinityGroup.name}"/>
                </rich:column>
 
-               <rich:column>
+               <rich:column rendered="#{param.debug}">
                   <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Agent Count" />
+                     <onc:sortableColumnHeader sort="a.status">
+                        <h:outputText styleClass="headerText" value="Status" />
+                     </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{item.agentCount}"/>
+                  <h:outputText value="#{item.status}"/>
                </rich:column>
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <!-- colspan 7:6 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 10 : 9}" width="100%">
-                        <onc:selectCommandButton action="#{ListServersUIBean.setSelectedServersModeNormal}"
-                                                 value="SET NORMAL" target="selectedServers" styleClass="on-pager-button buttonsmall"/>
-                        <onc:selectCommandButton action="#{ListServersUIBean.setSelectedServersModeMaintenance}"
-                                                 value="SET MAINTENANCE" target="selectedServers" styleClass="on-pager-button buttonsmall"/>                                                                                                                                                   
-                        <onc:selectCommandButton action="#{ListServersUIBean.removeSelectedServers}"
-                                                 value="REMOVE SELECTED" target="selectedServers" styleClass="on-pager-button buttonsmall"/>
-
-                        <ui:param name="paginationDataTableName" value="serversDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{serversDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.ServersList}"/>
+                     <!-- colspan 9:6 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 9 : 6}" width="100%">
+                        <ui:param name="paginationDataTableName" value="agentsDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{agentsDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.AgentsList}"/>
                         <ui:include src="../resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>

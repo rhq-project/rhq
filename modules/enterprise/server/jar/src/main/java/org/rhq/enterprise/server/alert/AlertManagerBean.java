@@ -73,7 +73,6 @@ import org.rhq.enterprise.server.alert.i18n.AlertI18NResourceKeys;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
@@ -94,8 +93,6 @@ public class AlertManagerBean implements AlertManagerLocal {
     @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(AlertManagerBean.class);
 
-    @EJB
-    private AgentStatusManagerLocal agentStatusManager;
     @EJB
     @IgnoreDependency
     private AlertConditionLogManagerLocal alertConditionLogManager;

@@ -71,6 +71,5 @@ public interface AlertManagerLocal {
     public int getAlertCountByMeasurementDefinitionAndResources(int measurementDefinitionId,
         Collection<Resource> resources, long beginDate, long endDate);
 
-    @SuppressWarnings("unchecked")
     public Map<Integer, Integer> getAlertCountForSchedules(long begin, long end, List<Integer> scheduleIds);
 }

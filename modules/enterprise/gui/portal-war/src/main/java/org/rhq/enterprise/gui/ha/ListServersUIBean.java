@@ -34,17 +34,17 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-public class ListHaServersUIBean extends PagedDataTableUIBean {
-    public static final String MANAGED_BEAN_NAME = "ListHaServersUIBean";
+public class ListServersUIBean extends PagedDataTableUIBean {
+    public static final String MANAGED_BEAN_NAME = "ListServersUIBean";
 
     private ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
 
-    public ListHaServersUIBean() {
+    public ListServersUIBean() {
     }
 
-    public String removeSelectedHaServers() {
+    public String removeSelectedServers() {
         // Subject subject = EnterpriseFacesContextUtility.getSubject();
-        String[] selected = getSelectedHaServers();
+        String[] selected = getSelectedServers();
         Integer[] ids = getIntegerArray(selected);
 
         if (ids.length > 0) {
@@ -54,18 +54,18 @@ public class ListHaServersUIBean extends PagedDataTableUIBean {
                 }
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Removed [" + ids.length
-                    + "] HA servers from the cloud.");
+                    + "] servers from the cloud.");
             } catch (Exception e) {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to remove selected HA servers.", e);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to remove selected servers.", e);
             }
         }
 
         return "success";
     }
 
-    public String setSelectedHaServersMode(Server.OperationMode mode) {
+    public String setSelectedServersMode(Server.OperationMode mode) {
         // Subject subject = EnterpriseFacesContextUtility.getSubject();
-        String[] selected = getSelectedHaServers();
+        String[] selected = getSelectedServers();
         Integer[] ids = getIntegerArray(selected);
 
         if (ids.length > 0) {
@@ -76,36 +76,35 @@ public class ListHaServersUIBean extends PagedDataTableUIBean {
                 // were not reflected on screen.
                 dataModel = null;
 
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Set [" + ids.length
-                    + "] HA servers to mode " + mode);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Set [" + ids.length + "] servers to mode "
+                    + mode);
             } catch (Exception e) {
-                FacesContextUtility
-                    .addMessage(FacesMessage.SEVERITY_ERROR, "Failed to set selected HA server modes", e);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to set selected server modes", e);
             }
         }
 
         return "success";
     }
 
-    public String setSelectedHaServersModeMaintenance() {
-        return setSelectedHaServersMode(Server.OperationMode.MAINTENANCE);
+    public String setSelectedServersModeMaintenance() {
+        return setSelectedServersMode(Server.OperationMode.MAINTENANCE);
     }
 
-    public String setSelectedHaServersModeNormal() {
-        return setSelectedHaServersMode(Server.OperationMode.NORMAL);
+    public String setSelectedServersModeNormal() {
+        return setSelectedServersMode(Server.OperationMode.NORMAL);
     }
 
     @Override
     public DataModel getDataModel() {
         if (null == dataModel) {
-            dataModel = new ListHaServersDataModel(PageControlView.HaServersList, MANAGED_BEAN_NAME);
+            dataModel = new ListServersDataModel(PageControlView.ServersList, MANAGED_BEAN_NAME);
         }
 
         return dataModel;
     }
 
-    private class ListHaServersDataModel extends PagedListDataModel<ServerWithAgentCountComposite> {
-        public ListHaServersDataModel(PageControlView view, String beanName) {
+    private class ListServersDataModel extends PagedListDataModel<ServerWithAgentCountComposite> {
+        public ListServersDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
@@ -119,8 +118,8 @@ public class ListHaServersUIBean extends PagedDataTableUIBean {
         }
     }
 
-    private String[] getSelectedHaServers() {
-        return FacesContextUtility.getRequest().getParameterValues("selectedHaServers");
+    private String[] getSelectedServers() {
+        return FacesContextUtility.getRequest().getParameterValues("selectedServers");
     }
 
     private Integer[] getIntegerArray(String[] input) {

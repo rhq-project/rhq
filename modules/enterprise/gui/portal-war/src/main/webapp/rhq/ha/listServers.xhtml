@@ -36,7 +36,7 @@
                width="100%"/>
 
 
-      <h:form id="haServersListForm">
+      <h:form id="serversListForm">
          
          <rich:panel>
             <f:facet name="header">
@@ -45,11 +45,11 @@
 
             <h:panelGrid columns="1" width="100%">
 
-            <ui:param name="haServersDataModel" value="#{ListHaServersUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ListHaServersUIBean.dataTable}"
-                            id="haServersDataTable"
-                            rows="#{PageControl.HaServersList.pageSize}"
-                            value="#{haServersDataModel}"
+            <ui:param name="serversDataModel" value="#{ListServersUIBean.dataModel}"/>
+            <rich:dataTable binding="#{ListServersUIBean.dataTable}"
+                            id="serversDataTable"
+                            rows="#{PageControl.ServersList.pageSize}"
+                            value="#{serversDataModel}"
                             var="item"
                             width="100%"
                             columnsWidth="1%, 15%, 10%, 10%, 10%, 10%"
@@ -58,15 +58,15 @@
 
 
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="HaServersList" />
+                  <onc:paginationControl id="ServersList" />
                </f:facet>
       
                <rich:column>
                   <f:facet name="header">
-                     <onc:allSelect target="selectedHaServers" />
+                     <onc:allSelect target="selectedServers" />
                   </f:facet>
                   
-                  <onc:select name="selectedHaServers" value="#{item.server.id}" />
+                  <onc:select name="selectedServers" value="#{item.server.id}" />
                </rich:column>
       
                <rich:column rendered="#{param.debug}">
@@ -86,7 +86,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputLink value="haServer.xhtml">
+                  <h:outputLink value="Server.xhtml">
                      <f:param name="mode" value="view"/>
                      <f:param name="id" value="#{item.server.id}"/>
                      <h:outputText value="#{item.server.name}" />
@@ -165,16 +165,16 @@
                   <rich:columnGroup>
                      <!-- colspan 7:6 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 10 : 9}" width="100%">
-                        <onc:selectCommandButton action="#{ListHaServersUIBean.setSelectedHaServersModeNormal}"
-                                                 value="SET NORMAL" target="selectedHaServers" styleClass="on-pager-button buttonsmall"/>
-                        <onc:selectCommandButton action="#{ListHaServersUIBean.setSelectedHaServersModeMaintenance}"
-                                                 value="SET MAINTENANCE" target="selectedHaServers" styleClass="on-pager-button buttonsmall"/>                                                                                                                                                   
-                        <onc:selectCommandButton action="#{ListHaServersUIBean.removeSelectedHaServers}"
-                                                 value="REMOVE SELECTED" target="selectedHaServers" styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{ListServersUIBean.setSelectedServersModeNormal}"
+                                                 value="SET NORMAL" target="selectedServers" styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{ListServersUIBean.setSelectedServersModeMaintenance}"
+                                                 value="SET MAINTENANCE" target="selectedServers" styleClass="on-pager-button buttonsmall"/>                                                                                                                                                   
+                        <onc:selectCommandButton action="#{ListServersUIBean.removeSelectedServers}"
+                                                 value="REMOVE SELECTED" target="selectedServers" styleClass="on-pager-button buttonsmall"/>
 
-                        <ui:param name="paginationDataTableName" value="haServersDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{haServersDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.HaServersList}"/>
+                        <ui:param name="paginationDataTableName" value="serversDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{serversDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ServersList}"/>
                         <ui:include src="../resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>

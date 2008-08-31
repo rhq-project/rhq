@@ -50,7 +50,8 @@ import org.rhq.enterprise.gui.content.ShowContentServiceRequestUIBean;
 import org.rhq.enterprise.gui.definition.group.GroupDefinitionUIBean;
 import org.rhq.enterprise.gui.definition.group.ListGroupDefinitionsUIBean;
 import org.rhq.enterprise.gui.discovery.AutoDiscoveryQueueUIBean;
-import org.rhq.enterprise.gui.ha.ListHaServersUIBean;
+import org.rhq.enterprise.gui.ha.ListAgentsUIBean;
+import org.rhq.enterprise.gui.ha.ListServersUIBean;
 import org.rhq.enterprise.gui.inventory.group.ListResourceGroupMembersUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyDetailsUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyHistoryUIBean;
@@ -184,7 +185,9 @@ public enum PageControlView {
     // High Availability (HA)
 
     /** */
-    HaServersList(ListHaServersUIBean.class);
+    ServersList(ListServersUIBean.class),
+    /** */
+    AgentsList(ListAgentsUIBean.class);
 
     private Class<? extends PagedDataTableUIBean> beanClass;
 

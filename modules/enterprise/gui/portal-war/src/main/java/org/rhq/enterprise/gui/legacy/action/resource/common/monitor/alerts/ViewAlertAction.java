@@ -132,9 +132,25 @@ public class ViewAlertAction extends TilesAction {
             request.setAttribute("controlAction", av.getTriggeredOperation());
         }
 
+        int recoveryAlertDefId = adv.getRecoveryId();
+        if (recoveryAlertDefId != 0) {
+            String recoveryAlertName = getRecoveryAlertName(recoveryAlertDefId, subject);
+            request.setAttribute("recoveryAlertName", recoveryAlertName);
+        }
+
         // enablement
         AlertDefUtil.setAlertDampeningRequestAttributes(request, adv);
 
         return null;
+    }
+
+    private String getRecoveryAlertName(int alertDefinitionId, Subject user) {
+        try {
+            AlertDefinition alertDefinition = LookupUtil.getAlertDefinitionManager().getAlertDefinitionById(user,
+                alertDefinitionId);
+            return alertDefinition.getName();
+        } catch (Exception ex) {
+            return null;
+        }
     }
 }

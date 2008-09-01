@@ -131,7 +131,7 @@
             <ui:param name="connectedAgentsDataModel" value="#{ViewServerUIBean.dataModel}"/>
             <rich:dataTable binding="#{ViewServerUIBean.dataTable}"
                             id="connectedAgentsDataTable"
-                            rows="#{PageControl.ServerView.pageSize}"
+                            rows="#{PageControl.ServerConnectedAgentsView.pageSize}"
                             value="#{connectedAgentsDataModel}"
                             var="item"
                             width="100%"
@@ -140,7 +140,7 @@
                             footerClass="on-pager-footer">
 
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="ServerView" />
+                  <onc:paginationControl id="ServerConnectedAgentsView" />
                </f:facet>
 
                <rich:column>
@@ -222,7 +222,10 @@
                      <h:outputText styleClass="headerText" value="Affinity Group" />
                   </f:facet>
 
-                  <h:outputText value="#{item.affinityGroup.name}"/>
+                  <h:outputLink value="viewAffinityGroup.xhtml">
+                     <f:param name="affinityGroupId" value="#{item.affinityGroup.id}"/>
+                     <h:outputText value="#{item.affinityGroup.name}"/>
+                  </h:outputLink>
                </rich:column>
 
                <rich:column rendered="#{param.debug}">
@@ -241,7 +244,7 @@
                      <rich:column colspan="#{param.debug ? 9 : 6}" width="100%">
                         <ui:param name="paginationDataTableName" value="connectedAgentsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{connectedAgentsDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.ServerView}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ServerConnectedAgentsView}"/>
                         <ui:include src="../resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>

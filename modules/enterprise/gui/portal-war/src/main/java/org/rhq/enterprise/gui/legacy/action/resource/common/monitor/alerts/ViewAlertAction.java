@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -140,7 +143,7 @@ public class ViewAlertAction extends TilesAction {
 
         // enablement
         AlertDefUtil.setAlertDampeningRequestAttributes(request, adv);
-
+        request.setAttribute("cTime", parseDate(av.getCtime()));
         return null;
     }
 
@@ -152,5 +155,11 @@ public class ViewAlertAction extends TilesAction {
         } catch (Exception ex) {
             return null;
         }
+    }
+
+    private String parseDate(Long dateLong) {
+        DateFormat formatter = new SimpleDateFormat("M/d/yy, h:mm:ss aa, zzz");
+        Date date = new Date(dateLong);
+        return formatter.format(date);
     }
 }

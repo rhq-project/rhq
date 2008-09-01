@@ -154,7 +154,10 @@
                      <h:outputText styleClass="headerText" value="Affinity Group" />
                   </f:facet>
                
-                  <h:outputText value="#{item.server.affinityGroup.name}"/>
+                  <h:outputLink value="viewAffinityGroup.xhtml">
+                     <f:param name="affinityGroupId" value="#{item.server.affinityGroup.id}"/>
+                     <h:outputText value="#{item.server.affinityGroup.name}"/>
+                  </h:outputLink>
                </rich:column>
 
                <rich:column>

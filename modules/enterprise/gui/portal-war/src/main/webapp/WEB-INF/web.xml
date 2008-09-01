@@ -88,6 +88,7 @@
          /WEB-INF/jsf-managed-beans-resource-group/operation-beans.xml,
 
          /WEB-INF/jsf-navigation/alert-navigation.xml,
+         /WEB-INF/jsf-navigation/cluster-navigation.xml,
          /WEB-INF/jsf-navigation/content-navigation.xml,
          /WEB-INF/jsf-navigation/autodiscovery-navigation.xml,
          /WEB-INF/jsf-navigation/configuration-navigation.xml,
@@ -281,11 +282,11 @@
       </init-param>
       <init-param>
          <param-name>debug</param-name>
-         <param-value>0</param-value>
+         <param-value>1</param-value>
       </init-param>
       <init-param>
          <param-name>detail</param-name>
-         <param-value>0</param-value>
+         <param-value>1</param-value>
       </init-param>
       <init-param>
          <param-name>validate</param-name>

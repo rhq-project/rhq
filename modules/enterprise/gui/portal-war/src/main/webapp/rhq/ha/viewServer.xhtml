@@ -15,7 +15,8 @@
 <ui:composition template="/rhq/layout/main.xhtml">
 
    <ui:param name="pageTitle" value="Server Details"/>
-   <ui:param name="server" value="#{ViewServerUIBean.server}" />
+   <ui:param name="serverDetails" value="#{ViewServerUIBean.server}" />
+   <ui:param name="mode" value="#{param.mode}" />
 
    <ui:define name="breadcrumbs">
       <h:outputLink value="/Admin.do">
@@ -23,11 +24,13 @@
       </h:outputLink>
       &gt;
       <h:outputLink value="listServers.xhtml">
-         ${msg["ha.server.list.breadcrumb"]}
+         ${msg["ha.serverDetails.list.breadcrumb"]}
       </h:outputLink>
       &gt;
       <h:outputLink value="viewServer.xhtml">
          ${msg["ha.server.view.breadcrumb"]}
+         <f:param name="mode" value="#{param.mode}"/>
+         <f:param name="serverId" value="#{param.serverId}"/>
       </h:outputLink>
    </ui:define>
 
@@ -44,68 +47,79 @@
                layout="table"
                width="100%"/>
 
-      <rich:panel>
-         <f:facet name="header">Server Details</f:facet>
-         <table>
-            <tr>
-               <td align="right"><b>Server Name:</b></td>
-               <td align="left">
-                  <h:inputText  rendered="${mode eq 'edit'}" value="#{server.name}" />
-                  <h:outputText rendered="${mode ne 'edit'}" value="#{server.name}" />
-               </td>
-            </tr>
-            <tr>
-               <td align="right"><b>Address:</b></td>
-               <td align="left">
-                  <h:inputTextarea rendered="${mode eq 'edit'}" value="#{server.address}"/>
-                  <h:outputText    rendered="${mode ne 'edit'}" value="#{server.address}"/>
-               </td>
-            </tr>
-            <tr>
-               <td align="right"><b>Port:</b></td>
-               <td align="left">
-                  <h:inputTextarea rendered="${mode eq 'edit'}" value="#{server.port}"/>
-                  <h:outputText    rendered="${mode ne 'edit'}" value="#{server.port}"/>
-               </td>
-            </tr>
-            <tr>
-               <td align="right"><b>Secure Port:</b></td>
-               <td align="left">
-                  <h:inputTextarea rendered="${mode eq 'edit'}" value="#{server.securePort}"/>
-                  <h:outputText    rendered="${mode ne 'edit'}" value="#{server.securePort}"/>
-               </td>
-            </tr>
-            <tr>
-               <td align="right"><b>Operation Mode:</b></td>
-               <td align="left">
-                  <h:inputTextarea rendered="${mode eq 'edit'}" value="#{server.operationMode}"/>
-                  <h:outputText    rendered="${mode ne 'edit'}" value="#{server.operationMode}"/>
-               </td>
-            </tr>
-            <tr>
-               <td align="right"><b>Affinity Group:</b></td>
-               <td align="left">
-                  <h:inputTextarea rendered="${mode eq 'edit'}" value="#{server.affinityGroup}"/>
-                  <h:outputText    rendered="${mode ne 'edit'}" value="#{server.affinityGroup}"/>
-               </td>
-            </tr>
-         </table>
-         
+      <h:form id="serverDetailsForm">
+         <input type="hidden" name="serverId" value="#{param.serverId}"/>
+         <input type="hidden" name="mode" value="#{param.mode}"/>
+
+         <rich:panel>
+            <f:facet name="header">Server Details</f:facet>
+            <table>
+               <tr>
+                  <td align="right"><b>Server Name:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{serverDetails.name}" />
+                     <h:inputText  rendered="#{mode eq 'edit'}" value="#{serverDetails.name}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Address:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{serverDetails.address}"/>
+                     <h:inputText  rendered="#{mode eq 'edit'}" value="#{serverDetails.address}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Port:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{serverDetails.port}"/>
+                     <h:inputText  rendered="#{mode eq 'edit'}" value="#{serverDetails.port}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Secure Port:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{serverDetails.securePort}"/>
+                     <h:inputText  rendered="#{mode eq 'edit'}" value="#{serverDetails.securePort}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Operation Mode:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{serverDetails.operationMode}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Affinity Group:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{serverDetails.affinityGroup}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Installation Date:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{serverDetails.ctime}">
+                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                     </h:outputText>
+                  </td>
+               </tr>
+            </table>
+         </rich:panel>
+
          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
-            <h:commandButton rendered="${mode ne 'edit'}"
+            <h:commandButton rendered="#{mode eq 'view'}"
                              value="EDIT" action="#{ViewServerUIBean.edit}"
                              alt="Edit" styleClass="buttonmed" id="editButton"/>
-            <h:commandButton rendered="${mode eq 'edit'}"
+            <h:commandButton rendered="#{mode eq 'edit'}"
                              value="SAVE" action="#{ViewServerUIBean.save}"
                              alt="Save" styleClass="buttonmed" id="saveButton"/>
-            <h:commandButton rendered="${mode eq 'edit'}"
-                             value="CANCEL" action="#{ViewServerUIBean.cancel}"
+            <h:commandButton rendered="#{mode eq 'edit'}"
+                             value="CANCEL" action="#{ViewServerUIBean.cancel}" immediate="true"
                              alt="Cancel" styleClass="buttonmed" id="cancelButton"/>
          </h:panelGrid>
-      </rich:panel>
+      </h:form>
 
-      <h:form id="connectedAgentsForm" rendered="${mode ne 'edit'}">
-         <input type="hidden" name="serverId" value="${param.serverId}"/>
+      <h:form id="connectedAgentsForm" rendered="#{mode eq 'view'}">
+         <input type="hidden" name="serverId" value="#{param.serverId}"/>
          
          <rich:panel>
             <f:facet name="header">
@@ -115,7 +129,6 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="connectedAgentsDataModel" value="#{ViewServerUIBean.dataModel}"/>
-            <ui:param name="serverId" value="#{ViewServerUIBean.dataModel}"/>
             <rich:dataTable binding="#{ViewServerUIBean.dataTable}"
                             id="connectedAgentsDataTable"
                             rows="#{PageControl.ServerView.pageSize}"

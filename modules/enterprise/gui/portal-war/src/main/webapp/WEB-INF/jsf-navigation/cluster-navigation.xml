@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+
+   <!-- Server View/Edit -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/viewServer.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/ha/viewServer.xhtml?mode=view&amp;serverId=#{param.serverId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>edit</from-outcome>
+         <to-view-id>/rhq/ha/viewServer.xhtml?mode=edit&amp;serverId=#{param.serverId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/viewServer.xhtml?mode=view&amp;serverId=#{param.serverId}</to-view-id>
+         <redirect/>
+      </navigation-case> 
+      
+   </navigation-rule>
+
+</faces-config>

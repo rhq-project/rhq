@@ -18,10 +18,14 @@
  */
 package org.rhq.enterprise.gui.ha;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cluster.Server;
+import org.rhq.core.domain.cluster.Server.OperationMode;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -29,7 +33,6 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -42,6 +45,8 @@ public class ViewServerUIBean extends PagedDataTableUIBean {
     private Server server;
 
     public ViewServerUIBean() {
+        int serverId = FacesContextUtility.getRequiredRequestParameter("serverId", Integer.class);
+        server = clusterManager.getServerById(serverId);
     }
 
     @Override
@@ -54,11 +59,36 @@ public class ViewServerUIBean extends PagedDataTableUIBean {
     }
 
     public Server getServer() {
-        if (server == null) {
-            int serverId = FacesContextUtility.getRequiredRequestParameter("serverId", Integer.class);
-            server = clusterManager.getServerById(serverId);
-        }
         return server;
+    }
+
+    public String edit() {
+        return "edit";
+    }
+
+    public String save() {
+        try {
+            clusterManager.updateServer(getSubject(), getServer());
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The server has been updated; "
+                + "changes to address/port/securePort require a restart to take affect.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + e.getMessage());
+            return "edit"; // stay in edit mode on failure
+        }
+
+        return "success";
+    }
+
+    public String cancel() {
+        return "success";
+    }
+
+    public Map<String, OperationMode> getOperationModes() {
+        Map<String, OperationMode> modes = new HashMap<String, OperationMode>();
+        for (OperationMode mode : OperationMode.values()) {
+            modes.put(mode.name(), mode);
+        }
+        return modes;
     }
 
     private class ViewServerDataModel extends PagedListDataModel<Agent> {
@@ -69,9 +99,8 @@ public class ViewServerUIBean extends PagedDataTableUIBean {
         @Override
         @SuppressWarnings("unchecked")
         public PageList<Agent> fetchPage(PageControl pc) {
-            Subject subject = EnterpriseFacesContextUtility.getSubject();
             int serverId = getServer().getId();
-            PageList<Agent> results = agentManager.getAgentsByServer(subject, serverId, pc);
+            PageList<Agent> results = agentManager.getAgentsByServer(getSubject(), serverId, pc);
             return results;
         }
     }

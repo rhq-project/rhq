@@ -133,7 +133,6 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     }
 
     public void updateServerMode(Integer[] serverIds, Server.OperationMode mode) {
-
         if (serverIds.length > 0) {
             try {
                 for (Integer id : serverIds) {
@@ -144,5 +143,10 @@ public class ClusterManagerBean implements ClusterManagerLocal {
                 log.debug("Failed to update HA server modes: " + e);
             }
         }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public Server updateServer(Subject subject, Server server) {
+        return entityManager.merge(server);
     }
 }

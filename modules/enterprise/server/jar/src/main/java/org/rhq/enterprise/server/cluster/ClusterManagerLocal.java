@@ -54,4 +54,6 @@ public interface ClusterManagerLocal {
 
     void updateServerMode(Integer[] serverIds, Server.OperationMode mode);
 
+    Server updateServer(Subject subject, Server server);
+
 }

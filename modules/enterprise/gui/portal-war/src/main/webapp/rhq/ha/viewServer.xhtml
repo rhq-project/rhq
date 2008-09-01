@@ -48,7 +48,7 @@
          <f:facet name="header">Server Details</f:facet>
          <table>
             <tr>
-               <td align="right"><b>Name:</b></td>
+               <td align="right"><b>Server Name:</b></td>
                <td align="left">
                   <h:inputText  rendered="${mode eq 'edit'}" value="#{server.name}" />
                   <h:outputText rendered="${mode ne 'edit'}" value="#{server.name}" />
@@ -90,9 +90,21 @@
                </td>
             </tr>
          </table>
+         
+         <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
+            <h:commandButton rendered="${mode ne 'edit'}"
+                             value="EDIT" action="#{ViewServerUIBean.edit}"
+                             alt="Edit" styleClass="buttonmed" id="editButton"/>
+            <h:commandButton rendered="${mode eq 'edit'}"
+                             value="SAVE" action="#{ViewServerUIBean.save}"
+                             alt="Save" styleClass="buttonmed" id="saveButton"/>
+            <h:commandButton rendered="${mode eq 'edit'}"
+                             value="CANCEL" action="#{ViewServerUIBean.cancel}"
+                             alt="Cancel" styleClass="buttonmed" id="cancelButton"/>
+         </h:panelGrid>
       </rich:panel>
 
-      <h:form id="connectedAgentsForm">
+      <h:form id="connectedAgentsForm" rendered="${mode ne 'edit'}">
          <input type="hidden" name="serverId" value="${param.serverId}"/>
          
          <rich:panel>
@@ -110,7 +122,7 @@
                             value="#{connectedAgentsDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 15%, 10%, 10%, 10%"
+                            columnsWidth="1%, 15%, 10%, 10%, 10%, 10%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 
@@ -134,6 +146,20 @@
                   </f:facet>
                   
                   <h:outputText value="#{item.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.name">
+                        <h:outputText styleClass="headerText" value="Agent Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputLink value="viewAgent.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="agentId" value="#{item.id}"/>
+                     <h:outputText value="#{item.server.name}" />
+                  </h:outputLink>
                </rich:column>
 
                <rich:column>
@@ -198,8 +224,8 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <!-- colspan 8:5 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 8 : 5}" width="100%">
+                     <!-- colspan 9:6 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 9 : 6}" width="100%">
                         <ui:param name="paginationDataTableName" value="connectedAgentsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{connectedAgentsDataModel}"/>
                         <ui:param name="paginationPageControl" value="#{PageControl.ServerView}"/>

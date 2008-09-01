@@ -54,6 +54,8 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerBean;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.cluster.AffinityGroupManagerBean;
+import org.rhq.enterprise.server.cluster.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.cluster.ClusterManagerBean;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.cluster.FailoverListManagerBean;
@@ -325,6 +327,10 @@ public final class LookupUtil {
 
     public static ChannelManagerLocal getChannelManagerLocal() {
         return lookupLocal(ChannelManagerBean.class);
+    }
+
+    public static AffinityGroupManagerLocal getAffinityGroupManager() {
+        return lookupLocal(AffinityGroupManagerBean.class);
     }
 
     public static ClusterManagerLocal getClusterManager() {

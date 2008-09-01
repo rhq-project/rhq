@@ -115,6 +115,16 @@ public interface AgentManagerLocal {
     Agent getAgentByName(String agentName);
 
     /**
+     * Given an agent id, this will look up and return the {@link Agent} with that id. If no agent with the given
+     * name exists, <code>null</code> is returned.
+     *
+     * @param  agentId
+     *
+     * @return the agent whose id matches the given id; <code>null</code> if there is no agent with the given id
+     */
+    Agent getAgentByID(int agentId);
+
+    /**
      * Given an agent token string, this will look up and return the {@link Agent} associated with that token. If the
      * given token is invalid, <code>null</code> is returned.
      *

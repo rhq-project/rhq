@@ -71,7 +71,11 @@ import org.rhq.core.domain.cluster.Server;
     @NamedQuery(name = Agent.QUERY_FIND_ALL_WITH_STATUS, query = "" //
         + "SELECT a " //
         + "  FROM Agent a " //
-        + " WHERE a.status <> 0 ") })
+        + " WHERE a.status <> 0 "), // 
+    @NamedQuery(name = Agent.QUERY_FIND_BY_AFFINITY_GROUP, query = "" //
+        + "SELECT a " //
+        + "  FROM Agent a " //
+        + " WHERE a.affinityGroup.id = :affinityGroupId ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_AGENT_ID_SEQ")
 @Table(name = "RHQ_AGENT")
 public class Agent implements Serializable {
@@ -85,6 +89,7 @@ public class Agent implements Serializable {
     public static final String QUERY_COUNT_ALL = "Agent.countAll";
     public static final String QUERY_FIND_RESOURCE_IDS_FOR_AGENT = "Agent.findResourceIdsForAgent";
     public static final String QUERY_FIND_ALL_SUSPECT_AGENTS = "Agent.findAllSuspectAgents";
+    public static final String QUERY_FIND_BY_AFFINITY_GROUP = "Agent.findByAffinityGroup";
 
     // HA queries
     public static final String QUERY_FIND_ALL_WITH_STATUS_BY_SERVER = "Agent.findAllWithStatusByServer";

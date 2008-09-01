@@ -18,14 +18,10 @@
  */
 package org.rhq.enterprise.gui.ha;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
 import org.rhq.core.domain.cluster.Server;
-import org.rhq.core.domain.cluster.Server.OperationMode;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -52,7 +48,7 @@ public class ViewServerUIBean extends PagedDataTableUIBean {
     @Override
     public DataModel getDataModel() {
         if (null == dataModel) {
-            dataModel = new ViewServerDataModel(PageControlView.ServerView, MANAGED_BEAN_NAME);
+            dataModel = new ViewServerDataModel(PageControlView.ServerConnectedAgentsView, MANAGED_BEAN_NAME);
         }
 
         return dataModel;
@@ -81,14 +77,6 @@ public class ViewServerUIBean extends PagedDataTableUIBean {
 
     public String cancel() {
         return "success";
-    }
-
-    public Map<String, OperationMode> getOperationModes() {
-        Map<String, OperationMode> modes = new HashMap<String, OperationMode>();
-        for (OperationMode mode : OperationMode.values()) {
-            modes.put(mode.name(), mode);
-        }
-        return modes;
     }
 
     private class ViewServerDataModel extends PagedListDataModel<Agent> {

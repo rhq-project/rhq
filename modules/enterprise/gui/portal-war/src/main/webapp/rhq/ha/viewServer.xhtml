@@ -24,7 +24,7 @@
       </h:outputLink>
       &gt;
       <h:outputLink value="listServers.xhtml">
-         ${msg["ha.serverDetails.list.breadcrumb"]}
+         ${msg["ha.server.list.breadcrumb"]}
       </h:outputLink>
       &gt;
       <h:outputLink value="viewServer.xhtml">
@@ -91,7 +91,7 @@
                <tr>
                   <td align="right"><b>Affinity Group:</b></td>
                   <td align="left">
-                     <h:outputText value="#{serverDetails.affinityGroup}"/>
+                     <h:outputText value="#{serverDetails.affinityGroup.name}"/>
                   </td>
                </tr>
                <tr>
@@ -223,6 +223,7 @@
                   </f:facet>
 
                   <h:outputLink value="viewAffinityGroup.xhtml">
+                     <f:param name="mode" value="view"/>
                      <f:param name="affinityGroupId" value="#{item.affinityGroup.id}"/>
                      <h:outputText value="#{item.affinityGroup.name}"/>
                   </h:outputLink>

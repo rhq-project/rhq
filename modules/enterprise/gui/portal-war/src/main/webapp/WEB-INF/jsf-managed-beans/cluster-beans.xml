@@ -24,5 +24,24 @@
       <managed-bean-class>org.rhq.enterprise.gui.ha.ViewServerUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
+   
+   <!-- /rhq/ha/viewAffinityGroup.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ViewAffinityGroupDetailsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.ha.ViewAffinityGroupDetailsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>ViewAffinityGroupAgentMembersUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.ha.ViewAffinityGroupAgentMembersUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>ViewAffinityGroupServerMembersUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.ha.ViewAffinityGroupServerMembersUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
 
 </faces-config>

@@ -155,6 +155,7 @@
                   </f:facet>
                
                   <h:outputLink value="viewAffinityGroup.xhtml">
+                     <f:param name="mode" value="view"/>
                      <f:param name="affinityGroupId" value="#{item.server.affinityGroup.id}"/>
                      <h:outputText value="#{item.server.affinityGroup.name}"/>
                   </h:outputLink>
@@ -170,7 +171,7 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <!-- colspan 7:6 for the debug 'id' column -->
+                     <!-- colspan 10:9 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 10 : 9}" width="100%">
                         <onc:selectCommandButton action="#{ListServersUIBean.setSelectedServersModeNormal}"
                                                  value="SET NORMAL" target="selectedServers" styleClass="on-pager-button buttonsmall"/>

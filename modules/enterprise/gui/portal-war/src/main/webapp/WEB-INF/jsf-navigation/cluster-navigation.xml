@@ -28,5 +28,30 @@
       </navigation-case> 
       
    </navigation-rule>
+   
+   <!-- AffinityGroup View/Edit -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/viewAffinityGroup.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/ha/viewAffinityGroup.xhtml?mode=view&amp;affinityGroupId=#{param.affinityGroupId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>edit</from-outcome>
+         <to-view-id>/rhq/ha/viewAffinityGroup.xhtml?mode=edit&amp;affinityGroupId=#{param.affinityGroupId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/viewAffinityGroup.xhtml?mode=view&amp;affinityGroupId=#{param.affinityGroupId}</to-view-id>
+         <redirect/>
+      </navigation-case> 
+      
+   </navigation-rule>
 
 </faces-config>

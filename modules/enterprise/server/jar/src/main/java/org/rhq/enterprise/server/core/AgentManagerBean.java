@@ -278,6 +278,11 @@ public class AgentManagerBean implements AgentManagerLocal {
         return agent;
     }
 
+    public Agent getAgentByID(int agentId) {
+        Agent agent = entityManager.find(Agent.class, agentId);
+        return agent;
+    }
+
     public Agent getAgentByAddressAndPort(String address, int port) {
         Agent agent;
         try {

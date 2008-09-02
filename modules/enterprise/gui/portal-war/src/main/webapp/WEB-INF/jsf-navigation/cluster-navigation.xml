@@ -26,7 +26,6 @@
          <to-view-id>/rhq/ha/viewServer.xhtml?mode=view&amp;serverId=#{param.serverId}</to-view-id>
          <redirect/>
       </navigation-case> 
-      
    </navigation-rule>
    
    <!-- AffinityGroup View/Edit -->
@@ -51,7 +50,24 @@
          <to-view-id>/rhq/ha/viewAffinityGroup.xhtml?mode=view&amp;affinityGroupId=#{param.affinityGroupId}</to-view-id>
          <redirect/>
       </navigation-case> 
-      
+   </navigation-rule>
+   
+   <!-- AffinityGroup List -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/listAffinityGroups.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/ha/listAffinityGroups.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/listAffinityGroups.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case> 
    </navigation-rule>
 
 </faces-config>

@@ -50,6 +50,7 @@ import org.rhq.enterprise.gui.content.ShowContentServiceRequestUIBean;
 import org.rhq.enterprise.gui.definition.group.GroupDefinitionUIBean;
 import org.rhq.enterprise.gui.definition.group.ListGroupDefinitionsUIBean;
 import org.rhq.enterprise.gui.discovery.AutoDiscoveryQueueUIBean;
+import org.rhq.enterprise.gui.ha.ListAffinityGroupsUIBean;
 import org.rhq.enterprise.gui.ha.ListAgentsUIBean;
 import org.rhq.enterprise.gui.ha.ListServersUIBean;
 import org.rhq.enterprise.gui.ha.ViewAffinityGroupAgentMembersUIBean;
@@ -193,6 +194,8 @@ public enum PageControlView {
     ServerConnectedAgentsView(ViewServerUIBean.class),
     /** */
     AgentsList(ListAgentsUIBean.class),
+    /** */
+    ListAffinityGroups(ListAffinityGroupsUIBean.class),
     /** */
     AffinityGroupAgentMembersView(ViewAffinityGroupAgentMembersUIBean.class),
     /** */

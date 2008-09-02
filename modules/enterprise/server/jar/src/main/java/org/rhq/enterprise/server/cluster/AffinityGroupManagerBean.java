@@ -18,10 +18,12 @@
  */
 package org.rhq.enterprise.server.cluster;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -32,6 +34,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cluster.AffinityGroup;
 import org.rhq.core.domain.cluster.Server;
+import org.rhq.core.domain.cluster.composite.AffinityGroupCountComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -45,7 +48,6 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 @Stateless
 public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
 
-    @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(AffinityGroupManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -96,6 +98,60 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public AffinityGroup update(Subject subject, AffinityGroup affinityGroup) {
         return entityManager.merge(affinityGroup);
+    }
+
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<AffinityGroupCountComposite> getComposites(Subject subject, PageControl pageControl) {
+        pageControl.initDefaultOrderingField("ag.name");
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, AffinityGroup.QUERY_FIND_ALL_COMPOSITES,
+            pageControl);
+
+        int count = getAffinityGroupCount();
+        List<AffinityGroupCountComposite> results = query.getResultList();
+
+        return new PageList<AffinityGroupCountComposite>(results, count, pageControl);
+    }
+
+    public int getAffinityGroupCount() {
+        Query query = PersistenceUtility.createCountQuery(entityManager, AffinityGroup.QUERY_FIND_ALL);
+
+        try {
+            long serverCount = (Long) query.getSingleResult();
+            return (int) serverCount;
+        } catch (NoResultException nre) {
+            log.debug("Could not get AffinityGroup count, returning 0...");
+            return 0;
+        }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public int create(Subject subject, AffinityGroup affinityGroup) {
+        entityManager.persist(affinityGroup);
+        return affinityGroup.getId();
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public int delete(Subject subject, Integer[] affinityGroupIds) {
+        Query updateAgentsQuery = entityManager.createNamedQuery(AffinityGroup.QUERY_UPDATE_REMOVE_AGENTS);
+        Query updateServersQuery = entityManager.createNamedQuery(AffinityGroup.QUERY_UPDATE_REMOVE_SERVERS);
+        Query removeQuery = entityManager.createNamedQuery(AffinityGroup.QUERY_DELETE_BY_IDS);
+
+        List<Integer> affinityGroups = Arrays.asList(affinityGroupIds);
+
+        updateAgentsQuery.setParameter("affinityGroupIds", affinityGroups);
+        updateServersQuery.setParameter("affinityGroupIds", affinityGroups);
+        removeQuery.setParameter("affinityGroupIds", affinityGroups);
+
+        int updatedAgents = updateAgentsQuery.executeUpdate();
+        int updatedServers = updateServersQuery.executeUpdate();
+        int removedAffinityGroups = removeQuery.executeUpdate();
+
+        log.debug("Removed " + removedAffinityGroups + " AffinityGroups: " + updatedAgents + " agents and "
+            + updatedServers + " were updated");
+
+        return removedAffinityGroups;
     }
 
 }

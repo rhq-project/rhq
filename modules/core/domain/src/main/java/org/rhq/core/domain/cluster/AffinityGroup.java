@@ -28,6 +28,8 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -40,15 +42,43 @@ import org.rhq.core.domain.resource.Agent;
  * repartitions the {@link Agent}s with tendencies to connect and
  * fail over to {@link Server}s in the same {@link AffinityGroup}.
  * 
- * @author jmarques
+ * @author Joseph Marques
  *
  */
 @Entity(name = "AffinityGroup")
+@NamedQueries //
+( { @NamedQuery(name = AffinityGroup.QUERY_FIND_ALL, query = "SELECT ag FROM AffinityGroup ag"),
+    @NamedQuery(name = AffinityGroup.QUERY_FIND_ALL_COMPOSITES, query = "" //
+        + "SELECT NEW org.rhq.core.domain.cluster.composite.AffinityGroupCountComposite " //
+        + "     ( " //
+        + "       ag, " //
+        + "       (SELECT COUNT(a) FROM Agent a WHERE a.affinityGroup = ag), " //
+        + "       (SELECT COUNT(s) FROM Server s WHERE s.affinityGroup = ag) " //
+        + "     ) " //
+        + "  FROM AffinityGroup ag "), //
+    @NamedQuery(name = AffinityGroup.QUERY_UPDATE_REMOVE_AGENTS, query = "" //
+        + "UPDATE Agent a " //
+        + "   SET a.affinityGroup = NULL " //
+        + " WHERE a.affinityGroup.id IN ( :affinityGroupIds ) "), //
+    @NamedQuery(name = AffinityGroup.QUERY_UPDATE_REMOVE_SERVERS, query = "" //
+        + "UPDATE Server s " //
+        + "   SET s.affinityGroup = NULL " //
+        + " WHERE s.affinityGroup.id IN ( :affinityGroupIds ) "), //
+    @NamedQuery(name = AffinityGroup.QUERY_DELETE_BY_IDS, query = "" //
+        + "DELETE FROM AffinityGroup ag " //
+        + " WHERE ag.id IN ( :affinityGroupIds ) ") // 
+})
 @SequenceGenerator(name = "id", sequenceName = "RHQ_AFFINITY_GROUP_ID_SEQ")
 @Table(name = "RHQ_AFFINITY_GROUP")
 public class AffinityGroup implements Serializable {
 
     public static final long serialVersionUID = 1L;
+
+    public static final String QUERY_FIND_ALL = "AffinityGroup.findAll";
+    public static final String QUERY_FIND_ALL_COMPOSITES = "AffinityGroup.findAllComposites";
+    public static final String QUERY_UPDATE_REMOVE_AGENTS = "AffinityGroup.updateRemoveAgents";
+    public static final String QUERY_UPDATE_REMOVE_SERVERS = "AffinityGroup.updateRemoveServers";
+    public static final String QUERY_DELETE_BY_IDS = "AffinityGroup.deleteByIds";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")

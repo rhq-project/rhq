@@ -23,6 +23,7 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cluster.AffinityGroup;
 import org.rhq.core.domain.cluster.Server;
+import org.rhq.core.domain.cluster.composite.AffinityGroupCountComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -39,4 +40,12 @@ public interface AffinityGroupManagerLocal {
     PageList<Agent> getAgentMembers(Subject subject, int affinityGroupId, PageControl pageControl);
 
     AffinityGroup update(Subject subject, AffinityGroup affinityGroup);
+
+    PageList<AffinityGroupCountComposite> getComposites(Subject subject, PageControl pageControl);
+
+    int getAffinityGroupCount();
+
+    int create(Subject subject, AffinityGroup affinityGroup);
+
+    int delete(Subject subject, Integer[] affinityGroupIds);
 }

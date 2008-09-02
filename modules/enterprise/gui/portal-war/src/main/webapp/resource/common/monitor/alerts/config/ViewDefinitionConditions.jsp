@@ -84,17 +84,6 @@
   <!-- Enablement option section -->
   <c:choose>
   <c:when test="${alertDef.recoveryId > 0}">
-  <tr valign="top">
-    <td class="BlockLabel">
-      <fmt:message key="alert.config.props.CB.Recovery"/>
-    </td>
-    <td width="80%" class="BlockContent">
-   	  <fmt:message key="alert.config.props.CB.RecoveryFor"/>
-   	  <html:link page="/alerts/Config.do?mode=viewRoles&id=${Resource.id}&ad=${alertDef.recoveryId}">
-   	  	<c:out value="${recoveryAlertName}" />
-   	  </html:link>
-  	</td>
-  </tr>
   
   <tr valign="top">
     <td class="BlockLabel">

@@ -29,14 +29,23 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAffinityGroupDetailsUIBean {
     public static final String MANAGED_BEAN_NAME = "ViewAffinityGroupDetailsUIBean";
+    private static final String CREATE_MODE = "create";
 
     private AffinityGroupManagerLocal affinityGroupManager = LookupUtil.getAffinityGroupManager();
     private AffinityGroup affinityGroup;
 
     public ViewAffinityGroupDetailsUIBean() {
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-        int affinityGroupId = FacesContextUtility.getRequiredRequestParameter("affinityGroupId", Integer.class);
-        affinityGroup = affinityGroupManager.getById(subject, affinityGroupId);
+        if (getMode().equals(CREATE_MODE)) {
+            affinityGroup = new AffinityGroup("");
+        } else {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            int affinityGroupId = FacesContextUtility.getRequiredRequestParameter("affinityGroupId", Integer.class);
+            affinityGroup = affinityGroupManager.getById(subject, affinityGroupId);
+        }
+    }
+
+    public String getMode() {
+        return FacesContextUtility.getRequiredRequestParameter("mode");
     }
 
     public AffinityGroup getAffinityGroup() {
@@ -54,10 +63,23 @@ public class ViewAffinityGroupDetailsUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The affinity group has been updated.");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + e.getMessage());
-            return "edit"; // stay in edit mode on failure
+            return "edit"; // stay in edit mode on edit failure
         }
 
         return "success";
+    }
+
+    public String createNew() {
+        try {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            affinityGroupManager.create(subject, getAffinityGroup());
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The affinity group has been created.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + e.getMessage());
+            return "createFailure"; // stay in create mode on create failure
+        }
+
+        return "createSuccess";
     }
 
     public String cancel() {

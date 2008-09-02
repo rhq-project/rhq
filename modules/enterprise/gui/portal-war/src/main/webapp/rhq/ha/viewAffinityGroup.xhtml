@@ -57,7 +57,7 @@
                   <td align="right"><b>Name:</b></td>
                   <td align="left">
                      <h:outputText rendered="#{mode eq 'view'}" value="#{affinityGroupDetails.name}" />
-                     <h:inputText  rendered="#{mode eq 'edit'}" value="#{affinityGroupDetails.name}" />
+                     <h:inputText  rendered="#{mode eq 'edit' or mode eq 'create'}" value="#{affinityGroupDetails.name}" />
                   </td>
                </tr>
             </table>
@@ -70,7 +70,10 @@
             <h:commandButton rendered="#{mode eq 'edit'}"
                              value="SAVE" action="#{ViewAffinityGroupDetailsUIBean.save}"
                              alt="Save" styleClass="buttonmed" id="saveButton"/>
-            <h:commandButton rendered="#{mode eq 'edit'}"
+            <h:commandButton rendered="#{mode eq 'create'}"
+                             value="CREATE" action="#{ViewAffinityGroupDetailsUIBean.createNew}" immediate="true"
+                             alt="Create" styleClass="buttonmed" id="createButton"/>
+            <h:commandButton rendered="#{mode eq 'edit' or mode eq 'create'}"
                              value="CANCEL" action="#{ViewAffinityGroupDetailsUIBean.cancel}" immediate="true"
                              alt="Cancel" styleClass="buttonmed" id="cancelButton"/>
          </h:panelGrid>

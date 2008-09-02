@@ -32,6 +32,18 @@
    <navigation-rule>
       <from-view-id>/rhq/ha/viewAffinityGroup.xhtml</from-view-id>
 
+      <navigation-case> 
+         <from-outcome>createSuccess</from-outcome>
+         <to-view-id>/rhq/ha/viewAffinityGroup.xhtml?mode=edit&amp;affinityGroupId=#{param.affinityGroupId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case>
+         <from-outcome>createFailure</from-outcome>
+         <to-view-id>/rhq/ha/viewAffinityGroup.xhtml?mode=create</to-view-id>
+         <redirect/>
+      </navigation-case>
+
       <navigation-case>
          <from-outcome>success</from-outcome>
          <to-view-id>/rhq/ha/viewAffinityGroup.xhtml?mode=view&amp;affinityGroupId=#{param.affinityGroupId}</to-view-id>
@@ -59,6 +71,12 @@
       <navigation-case>
          <from-outcome>success</from-outcome>
          <to-view-id>/rhq/ha/listAffinityGroups.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-outcome>create</from-outcome>
+         <to-view-id>/rhq/ha/viewAffinityGroup.xhtml?mode=create</to-view-id>
          <redirect/>
       </navigation-case>
 

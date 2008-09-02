@@ -61,6 +61,10 @@ public class ListAffinityGroupsUIBean extends PagedDataTableUIBean {
         return "success";
     }
 
+    public String createNewAffinityGroup() {
+        return "create";
+    }
+
     @Override
     public DataModel getDataModel() {
         if (null == dataModel) {

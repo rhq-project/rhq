@@ -45,10 +45,10 @@
    </managed-bean>
    
    <!-- /rhq/ha/listAffinityGroups.xhtml -->
-      <managed-bean>
+   <managed-bean>
       <managed-bean-name>ListAffinityGroupsUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.ha.ListAffinityGroupsUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
-
+   
 </faces-config>

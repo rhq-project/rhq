@@ -282,11 +282,11 @@
       </init-param>
       <init-param>
          <param-name>debug</param-name>
-         <param-value>1</param-value>
+         <param-value>0</param-value>
       </init-param>
       <init-param>
          <param-name>detail</param-name>
-         <param-value>1</param-value>
+         <param-value>0</param-value>
       </init-param>
       <init-param>
          <param-name>validate</param-name>

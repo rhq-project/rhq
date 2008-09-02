@@ -48,7 +48,7 @@
                width="100%"/>
 
       <h:form id="affinityGroupDetailsForm">
-         <input type="hidden" name="affinityGroupId" value="0"/>
+         <input type="hidden" name="affinityGroupId" value="#{param.affinityGroupId}" />
          <input type="hidden" name="mode" value="#{param.mode}"/>
 
          <rich:panel>
@@ -58,7 +58,7 @@
                   <td align="right"><b>Name:</b></td>
                   <td align="left">
                      <h:outputText rendered="#{mode eq 'view'}" value="#{affinityGroupDetails.name}" />
-                     <h:inputText  rendered="#{mode eq 'edit' or mode eq 'create'}" value="#{affinityGroupDetails.name}" />
+                     <h:inputText  rendered="#{mode eq 'edit' || mode eq 'create'}" value="#{affinityGroupDetails.name}" />
                   </td>
                </tr>
             </table>
@@ -72,9 +72,9 @@
                              value="SAVE" action="#{ViewAffinityGroupDetailsUIBean.save}"
                              alt="Save" styleClass="buttonmed" id="saveButton"/>
             <h:commandButton rendered="#{mode eq 'create'}"
-                             value="CREATE" action="#{ViewAffinityGroupDetailsUIBean.createNew}" immediate="true"
+                             value="CREATE" action="#{ViewAffinityGroupDetailsUIBean.createNew}"
                              alt="Create" styleClass="buttonmed" id="createButton"/>
-            <h:commandButton rendered="#{mode eq 'edit' or mode eq 'create'}"
+            <h:commandButton rendered="#{mode eq 'edit' || mode eq 'create'}"
                              value="CANCEL" action="#{ViewAffinityGroupDetailsUIBean.cancel}" immediate="true"
                              alt="Cancel" styleClass="buttonmed" id="cancelButton"/>
          </h:panelGrid>

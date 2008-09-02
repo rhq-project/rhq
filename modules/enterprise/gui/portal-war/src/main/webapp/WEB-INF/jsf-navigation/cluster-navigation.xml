@@ -34,7 +34,7 @@
 
       <navigation-case> 
          <from-outcome>createSuccess</from-outcome>
-         <to-view-id>/rhq/ha/viewAffinityGroup.xhtml?mode=edit&amp;affinityGroupId=#{param.affinityGroupId}</to-view-id>
+         <to-view-id>/rhq/ha/viewAffinityGroup.xhtml?mode=edit&amp;affinityGroupId=#{ViewAffinityGroupDetailsUIBean.affinityGroup.id}</to-view-id>
          <redirect/>
       </navigation-case>
       

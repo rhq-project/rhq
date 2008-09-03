@@ -34,9 +34,15 @@ import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.cluster.instance.CacheConsistencyManagerBean;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 
 /**
+ * There are various changes that can occur in the system that make the alertscondition cache stale.
+ * This session bean interfaces captures those various types of changes, and sets a bit-mask status 
+ * field on the agent managing the data that was changed.  This status field is later checked by the
+ * {@link CacheConsistencyManagerBean} to determine what data needs to be reloaded.
+ * 
  * @author Joseph Marques
  */
 

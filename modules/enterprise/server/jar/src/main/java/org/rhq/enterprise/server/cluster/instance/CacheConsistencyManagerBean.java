@@ -30,6 +30,10 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 
 /**
+ * Each server has partitioned alerts condition cache data.  This session bean exists
+ * to check whether or not the something has changed in the system that would require
+ * the cache to asynchronously reload itself.
+ * 
  * @author Joseph Marques
  */
 

@@ -42,6 +42,10 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 
 /**
+ * This class manages and reports information about the RHQ Server Cloud as a whole.
+ * It does not discern which server is which, and can be called from any server in 
+ * the cloud and will operate identically the same results.
+ * 
  * @author Joseph Marques
  */
 

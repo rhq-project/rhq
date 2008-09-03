@@ -39,6 +39,16 @@ import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 
 /**
+ * If you want to manipulate or report on the {@link Server} instance that
+ * some piece of code is currently executing on, use the {@link ServerManagerBean}.
+ * 
+ * This session bean determines the identity of the server it's running on by
+ * reading the <code>rhq.server.high-availability.name</code> property from the
+ * rhq-server.properties file.
+ * 
+ * The functionality provided here is useful when you need to execute something
+ * on every server in the cloud, such as partitioned services and data.
+ * 
  * @author Joseph Marques
  */
 

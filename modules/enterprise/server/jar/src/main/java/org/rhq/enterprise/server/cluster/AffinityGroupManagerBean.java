@@ -43,6 +43,8 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 
 /**
+ * Manages CRUD operations for {@link AffinityGroup}s
+ * 
  * @author Joseph Marques
  */
 @Stateless

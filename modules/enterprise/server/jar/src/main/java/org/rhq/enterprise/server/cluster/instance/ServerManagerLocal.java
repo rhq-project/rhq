@@ -43,7 +43,7 @@ public interface ServerManagerLocal {
 
     void deleteAffinityGroup(AffinityGroup affinityGroup);
 
-    Server getServer();
+    Server getServer() throws ServerNotFoundException;
 
     void changeHaServerModeIfNeeded();
 }

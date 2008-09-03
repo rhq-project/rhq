@@ -90,9 +90,13 @@ public class ServerManagerBean implements ServerManagerLocal {
         return results;
     }
 
-    public Server getServer() {
+    public Server getServer() throws ServerNotFoundException {
         String identity = getIdentity();
         Server result = clusterManager.getServerByName(identity);
+        if (result == null) {
+            throw new ServerNotFoundException("Could not find server; is the " + RHQ_SERVER_NAME_PROPERTY
+                + " property set in rhq-server.properties?");
+        }
         return result;
     }
 

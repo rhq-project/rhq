@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <plugin name="onewire"
         displayName="Get data from Devices on the OneWire(r) bus"
-        description="Implementation of an SNMP manager"
+        description="Implementation of a OneWire adapter plus devices"
         ampsVersion="2.0"
         package="org.rhq.plugins.onewire"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -9,7 +9,7 @@
         xmlns:c="urn:xmlns:rhq-configuration">
 
    <server name="OneWireAdapter"
-           description="A single OneWire (r) adapter hosting many devices"
+           description="A single OneWire(r) adapter hosting many devices"
            discovery="OneWireAdapterDiscovery"
            class="OneWireAdapterComponent">
            

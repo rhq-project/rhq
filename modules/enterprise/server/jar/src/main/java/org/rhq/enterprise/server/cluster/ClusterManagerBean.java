@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cluster.Server;
+import org.rhq.core.domain.cluster.FailoverListDetails;
 import org.rhq.core.domain.cluster.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
@@ -152,5 +153,21 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Server updateServer(Subject subject, Server server) {
         return entityManager.merge(server);
+    }
+
+    public PageList<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc) {
+        pc.initDefaultOrderingField("fld.ordinal");
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, FailoverListDetails.QUERY_GET_VIA_AGENT_ID_WITH_SERVERS, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, FailoverListDetails.QUERY_GET_VIA_AGENT_ID);
+
+        
+        query.setParameter("agentId", agentId);
+        countQuery.setParameter("agentId", agentId);
+
+        List<FailoverListDetails> list = query.getResultList();
+        long count = (Long) countQuery.getSingleResult();
+
+        return new PageList<FailoverListDetails>(list, (int) count, pc);
     }
 }

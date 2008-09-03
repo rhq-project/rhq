@@ -25,6 +25,13 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
    
+   <!-- /rhq/ha/viewAgent.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ViewAgentUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.ha.ViewAgentUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
    <!-- /rhq/ha/viewAffinityGroup.xhtml -->
    <managed-bean>
       <managed-bean-name>ViewAffinityGroupDetailsUIBean</managed-bean-name>

@@ -24,6 +24,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cluster.Server;
+import org.rhq.core.domain.cluster.FailoverListDetails;
 import org.rhq.core.domain.cluster.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
@@ -56,4 +57,5 @@ public interface ClusterManagerLocal {
 
     Server updateServer(Subject subject, Server server);
 
+    PageList<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc);
 }

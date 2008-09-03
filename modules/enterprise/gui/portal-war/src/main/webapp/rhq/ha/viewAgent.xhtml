@@ -1,0 +1,236 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="Agent Details"/>
+   <ui:param name="agentDetails" value="#{ViewAgentUIBean.agent}" />
+   <ui:param name="mode" value="#{param.mode}" />
+
+   <ui:define name="breadcrumbs">
+      <h:outputLink value="/Admin.do">
+         ${msg["user.admin.page.title"]}
+      </h:outputLink>
+      &gt;
+      <h:outputLink value="listServers.xhtml">
+         ${msg["ha.server.list.breadcrumb"]}
+      </h:outputLink>
+      &gt;
+      <h:outputLink value="viewServer.xhtml">
+         ${msg["ha.server.view.breadcrumb"]}
+         <f:param name="mode" value="#{param.mode}"/>
+         <f:param name="serverId" value="#{param.serverId}"/>
+      </h:outputLink>
+      &gt;
+      <h:outputLink value="viewAgent.xhtml">
+         ${msg["ha.agent.view.breadcrumb"]}
+         <f:param name="mode" value="#{param.mode}"/>
+         <f:param name="serverId" value="#{param.serverId}"/>
+         <f:param name="agentId" value="#{param.agentId}"/>
+      </h:outputLink>
+   </ui:define>
+
+   <ui:define name="body">
+
+   <br/>
+   <h:messages showSummary="true"
+               showDetail="true"
+               infoClass="InfoBlock"
+               warnClass="WarnBlock"
+               errorClass="ErrorBlock"
+               fatalClass="FatalBlock"
+               globalOnly="true"
+               layout="table"
+               width="100%"/>
+
+      <h:form id="agentDetailsForm">
+         <input type="hidden" name="serverId" value="#{param.serverId}"/>
+         <input type="hidden" name="mode" value="#{param.mode}"/>
+
+         <rich:panel>
+            <f:facet name="header">Agent Details</f:facet>
+            <table>
+               <tr>
+                  <td align="right"><b>Agent Name:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.name}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Address:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.address}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Port:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.port}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Last Availability Report Date:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.lastAvailabilityReport}">
+                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                     </h:outputText>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Affinity Group:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.affinityGroup}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Current Server:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.server.name}"/>
+                  </td>
+               </tr>
+            </table>
+         </rich:panel>
+
+      </h:form>
+
+
+
+      <h:form id="failoverListForm" rendered="#{mode eq 'view'}">
+         <input type="hidden" name="agentId" value="#{param.agentId}"/>
+         <input type="hidden" name="serverId" value="#{param.serverId}"/>
+
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Agent Failover List"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+            <ui:param name="failoverListDataModel" value="#{ViewAgentUIBean.dataModel}"/>
+            <rich:dataTable binding="#{ViewAgentUIBean.dataTable}"
+                            id="failoverListDataTable"
+                            rows="#{PageControl.AgentFailoverListView.pageSize}"
+                            value="#{failoverListDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="20%, 16%, 16%, 16%, 16%, 16%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="AgentFailoverListView" />
+               </f:facet>
+
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="fld.id">
+                        <h:outputText styleClass="headerText" value="ID" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="fld.server.name">
+                        <h:outputText styleClass="headerText" value="Server Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="viewServer.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="serverId" value="#{item.server.id}"/>
+                     <h:outputText value="#{item.server.name}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="fld.server.operationMode">
+                        <h:outputText styleClass="headerText" value="Mode" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.server.operationMode}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="fld.server.address">
+                        <h:outputText styleClass="headerText" value="Endpoint Address" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.server.address}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="fld.server.port">
+                        <h:outputText styleClass="headerText" value="HTTP Port" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.server.port}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="fld.server.securePort">
+                        <h:outputText styleClass="headerText" value="Secure HTTPS Port" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.server.securePort}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="fld.server.ctime">
+                        <h:outputText styleClass="headerText" value="Last Update Time" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.server.ctime}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                  </h:outputText>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="#{param.debug ? 7 : 6}" width="100%">
+                        <ui:param name="paginationDataTableName" value="failoverListDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{failoverListDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.AgentFailoverListView}"/>
+                        <ui:include src="../resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+
+         </rich:panel>
+      </h:form>
+
+
+
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

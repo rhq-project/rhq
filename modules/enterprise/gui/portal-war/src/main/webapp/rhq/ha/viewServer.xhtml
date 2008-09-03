@@ -171,6 +171,7 @@
                   <h:outputLink value="viewAgent.xhtml">
                      <f:param name="mode" value="view"/>
                      <f:param name="agentId" value="#{item.id}"/>
+                     <f:param name="serverId" value="#{param.serverId}"/>                     
                      <h:outputText value="#{item.server.name}" />
                   </h:outputLink>
                </rich:column>

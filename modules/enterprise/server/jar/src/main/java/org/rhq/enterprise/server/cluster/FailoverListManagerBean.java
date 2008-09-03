@@ -1,3 +1,21 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.enterprise.server.cluster;
 
 import java.util.ArrayList;
@@ -30,6 +48,19 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 
+/**
+ * This session beans acts as the single interface with which the distribution algorithm
+ * will interact.  The distribution algorithm runs as a result of various changes in the
+ * system including but not limited to: newly registering agents, currently connecting
+ * agents, cloud membership changes (server added/removed), and redistributions according 
+ * to agent load.  The result of the distribution algorithm is a single (or a set of)
+ * {@link FailoverList} objects that are sent down to the connected agents.  The agents
+ * then use these lists to determine which server to fail over to, if their primary server
+ * is unreachable and/or goes down.
+ * 
+ * @author Joseph Marques
+ * @author Jay Shaughnessy
+ */
 @Stateless
 public class FailoverListManagerBean implements FailoverListManagerLocal {
     private final Log log = LogFactory.getLog(FailoverListManagerBean.class);

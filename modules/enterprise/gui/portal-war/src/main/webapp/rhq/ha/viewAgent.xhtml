@@ -80,6 +80,12 @@
                   </td>
                </tr>
                <tr>
+                  <td align="right"><b>Token:</b></td>
+                  <td align="left">
+                     <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.agentToken}"/>
+                  </td>
+               </tr>
+               <tr>
                   <td align="right"><b>Last Availability Report Date:</b></td>
                   <td align="left">
                      <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.lastAvailabilityReport}">

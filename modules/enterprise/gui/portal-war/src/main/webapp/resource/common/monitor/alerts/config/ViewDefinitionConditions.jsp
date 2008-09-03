@@ -4,6 +4,7 @@
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-tiles" prefix="tiles" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <tiles:importAttribute name="showValues" ignore="true"/>
 
@@ -14,7 +15,8 @@
 
 <!-- Condition Content -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <c:if test="${not empty alertDefConditions}">
+  <!-- Display recovery time only applicable for alerts instances -->
+  <c:if test="${not empty cTime}">
   <tr valign="top">
     <td width="20%" class="BlockLabel">
     	<fmt:message key="alert.config.props.CB.AlertTime"/>

@@ -96,7 +96,11 @@
                <tr>
                   <td align="right"><b>Current Server:</b></td>
                   <td align="left">
-                     <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.server.name}"/>
+                     <h:outputLink rendered="#{mode eq 'view'}" value="viewServer.xhtml">
+                        <f:param name="mode" value="view"/>
+                        <f:param name="serverId" value="#{agentDetails.server.id}"/>
+                        <h:outputText value="#{agentDetails.server.name}" />
+                     </h:outputLink>
                   </td>
                </tr>
             </table>

@@ -143,13 +143,20 @@
                
                <rich:column>
                   <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Actual Value" />
+                  </f:facet>
+                  <h:outputText value="#{item.conditionValue}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
                   	<h:outputText styleClass="headerText" value="Recovery For Alert Id" />
-                  </f:facet>                  
+                  </f:facet>
                   <h:outputLink value="/alerts/Config.do" rendered="#{item.alert.alertDefinition.recoveryId > 0 }">
                      <f:param name="mode" value="viewRoles"/>
                      <f:param name="id" value="#{Resource.id}"/>
                      <f:param name="ad" value="#{item.alert.alertDefinition.recoveryId}"/>
-					 <h:outputText value="#{item.alert.alertDefinition.recoveryId}" />
+                     <h:outputText value="#{item.alert.alertDefinition.recoveryId}" />
                   </h:outputLink>
                   <h:outputText value="--" rendered="#{item.alert.alertDefinition.recoveryId == 0}"/>
                </rich:column>
@@ -159,13 +166,6 @@
                   	<h:outputText styleClass="headerText" value="Enabled by Recovery Alert" />
                   </f:facet>
                   <h:outputText value="#{item.alert.alertDefinition.willRecover}" />
-               </rich:column>
-               
-               <rich:column>
-                  <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Actual Value" />
-                  </f:facet>
-                  <h:outputText value="#{item.conditionValue}" />
                </rich:column>
 
                <f:facet name="footer">
@@ -189,8 +189,6 @@
             </rich:dataTable>
  
             </h:panelGrid>
-            
-            
 
          </rich:panel>
       </h:form>

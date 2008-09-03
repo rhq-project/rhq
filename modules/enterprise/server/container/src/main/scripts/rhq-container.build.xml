@@ -159,7 +159,7 @@
     <!-- Remove old web console, leave the JMX console (we will delete it later for releases) -->
     <delete dir="${jboss.deploy.dir}/management" />
 
-    <echo>Upgrading JSF jars to v${jsf-impl.version} ...</echo>
+    <echo>Upgrading JSF RI jars to v${jsf-impl.version} ...</echo>
     <property name="jsf-libs.dir" location="${jboss.deploy.dir}/jboss-web.deployer/jsf-libs" />
     <mkdir dir="${jsf-libs.dir}" />
     <delete>
@@ -173,6 +173,10 @@
     <copy file="${settings.localRepository}/javax/faces/jsf-impl/${jsf-impl.version}/jsf-impl-${jsf-impl.version}.jar"
           tofile="${jsf-libs.dir}/jsf-impl.jar" verbose="true" />
 
+    <echo>Upgrading jboss-faces.jar to v${jboss-faces.version} ...</echo>
+    <copy file="${settings.localRepository}/org/jboss/jboss-faces/${jboss-faces.version}/jboss-faces-${jboss-faces.version}.jar"
+          tofile="${jsf-libs.dir}/jboss-faces.jar" overwrite="true" verbose="true" />      
+          
     <echo>Preparing JMS backend ...</echo>
     <mkdir dir="${jboss.deploy.dir}/jms"/>
     <copy todir="${jboss.deploy.dir}/${jms.oracle.dir}">

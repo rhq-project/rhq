@@ -25,6 +25,7 @@
 
     <!-- dependency versions -->
     <jboss.version>4.2.1.GAws201</jboss.version>
+    <jboss-faces.version>4.2.3.GA</jboss-faces.version>
 
     <rhq.webappsReloadable>false</rhq.webappsReloadable>
   </properties>
@@ -33,19 +34,25 @@
 
     <!-- Internal Deps -->
 
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>safe-invoker</artifactId>
+      <version>1.0.2</version>
+    </dependency>
+    
     <!-- 3rd Party Deps -->
 
-   <dependency>
+    <dependency>
       <groupId>javax.faces</groupId>
       <artifactId>jsf-api</artifactId>
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-   </dependency>
+    </dependency>
 
-   <dependency>
+    <dependency>
       <groupId>javax.faces</groupId>
       <artifactId>jsf-impl</artifactId>
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-   </dependency>
+    </dependency>
 
     <dependency>
       <groupId>jboss</groupId>
@@ -55,11 +62,11 @@
     </dependency>
 
     <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>safe-invoker</artifactId>
-      <version>1.0.2</version>
+      <groupId>org.jboss</groupId>
+      <artifactId>jboss-faces</artifactId>
+      <version>4.2.3.GA</version>
     </dependency>
-
+    
     <dependency>
       <groupId>jgroups</groupId>
       <artifactId>jgroups-all</artifactId>
@@ -143,6 +150,7 @@
                   <property name="postgresql.version" value="${postgresql.version}" />
                   <property name="jsf-api.version" value="${jsf-api.version}" />
                   <property name="jsf-impl.version" value="${jsf-impl.version}" />
+                  <property name="jboss-faces.version" value="${jboss-faces.version}" />
 
                   <!-- dev/test DB settings (used to init rhq-server.properties if dev profile is active or developer prop is set) -->
                   <property name="rhq.test.ds.connection-url" value="${rhq.test.ds.connection-url}" />

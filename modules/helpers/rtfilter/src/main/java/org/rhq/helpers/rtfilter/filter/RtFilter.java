@@ -63,6 +63,7 @@ public class RtFilter implements Filter {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private boolean initialized = false;
+    private boolean fileDone = false;
     private long requestCount = 0;
     private boolean chopUrl = DEFAULT_CHOP_QUERY_STRING;
     private File logDirectory;
@@ -134,6 +135,12 @@ public class RtFilter implements Filter {
                             }
                         }
 
+                        // If the logfile was not yet created, lets do it now.
+                        // We only reach this point if the request was for a valid vhost.
+                        if (!fileDone) {
+                            openFile(req.getServerName());
+                        }
+
                         truncateLogFileIfMaxSizeExceeded();
 
                         // If we got this far, write the request info to the log.
@@ -147,11 +154,48 @@ public class RtFilter implements Filter {
     }
 
     /**
-     * Read initialization parameters, determine the logfile name and open a writer where we send results to. If
-     * initialization fails, no exceptions are thrown, as throwing any exception would cause the associated webapp to
+     * Open the logfile for the given serverName. If serverName is localhost, then no
+     * vhost portion is added to the logfile name. Otherwise the logfile name is
+     * prefix + vhost + "_" + contextRoot + "_rt.log"<br/>
+     * E.g. '/devel/jboss-4.0.3SP1/server/default/log/rt/snert.home.bsd.de_test_rt.log'.
+     * <br/>
+     * After opening the file we open a writer where we send results to. If
+     * opening fails, no exceptions are thrown, as throwing any exception would cause the associated webapp to
      * fail to deploy - not something we ever want to do. Instead, the filter will simply not try to process any
-     * requests (i.e. doFilter() will call the rest of the filter chain, and then just return).
-     *
+     * requests (i.e. doFilter() will call the rest of the filter chain, and then just return).  
+     * <p/> 
+     * This method will set the fileDone variable to true upon success.<br/>
+     * This method will set the initialized variable to false upon failure.<br/>
+     * @param serverName Name of the virtual host
+     */
+    private void openFile(String serverName) {
+
+        String vhost;
+        if ("localhost".equals(serverName) || "127.0.0.1".equals(serverName))
+            vhost = "";
+        else
+            vhost = serverName + "_";
+
+        String logFileName = this.logFilePrefix + vhost + this.contextName + "_rt.log";
+        this.logFile = new File(this.logDirectory, logFileName);
+        log.info("-- Filter openFile: Writing response-time log for webapp with context root '" + this.contextName
+            + "' to '" + this.logFile + "' (hashCode=" + hashCode() + ")...");
+        boolean append = true;
+        try {
+            openFileWriter(append);
+            fileDone = true;
+        } catch (Exception e) {
+            // reset the initialized flag in case of error
+            this.initialized = false;
+            log.warn(e.getMessage());
+        }
+
+    }
+
+    /**
+     * Read initialization parameters, and determine the context root.
+     * The logfile name will be determined later, as we don't know the vhost yet.
+     * 
      * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
      */
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -160,13 +204,14 @@ public class RtFilter implements Filter {
                 initializeParameters(filterConfig);
                 ServletContext servletContext = filterConfig.getServletContext();
                 this.contextName = ServletUtility.getContextRoot(servletContext);
-                String logFileName = this.logFilePrefix + this.contextName + "_rt.log";
-                this.logFile = new File(this.logDirectory, logFileName);
-                log.info("-- Filter init: Writing response-time log for webapp with context root '" + this.contextName
-                    + "' to '" + this.logFile + "' (hashCode=" + hashCode() + ")...");
-                boolean append = true;
-                openFileWriter(append);
+
+                /*
+                 * We don't open the file here, as we have no way to know the vhost this filter instance is for.
+                 * Instead we mark ourselves as initialized, and try to open the file in doFilter().
+                 */
+
                 this.initialized = true;
+                log.info("Initialized response-time filter for webapp with context root '" + this.contextName + "'.");
             }
         } catch (Exception e) {
             handleFatalError(e);

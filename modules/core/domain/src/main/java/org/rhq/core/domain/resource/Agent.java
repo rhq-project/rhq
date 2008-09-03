@@ -319,7 +319,7 @@ public class Agent implements Serializable {
     /**
      * Sets the {@link Server} this agent should communicate with. 
      * 
-     * @param the {@link Server} this agent should communicate with
+     * @param server the {@link Server} this agent should communicate with
      */
     public void setServer(Server server) {
         this.server = server;

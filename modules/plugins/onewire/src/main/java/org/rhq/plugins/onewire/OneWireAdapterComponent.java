@@ -36,6 +36,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 public class OneWireAdapterComponent implements ResourceComponent {
 
     private DSPortAdapter adapter = null;
+    String port;
 
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
@@ -49,8 +50,8 @@ public class OneWireAdapterComponent implements ResourceComponent {
             adapter.beginExclusive(true);
             found = adapter.adapterDetected();
             adapter.endExclusive();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (OneWireException e) {
+            reopenAdapter();
         }
 
         return found ? AvailabilityType.UP : AvailabilityType.DOWN;
@@ -62,7 +63,7 @@ public class OneWireAdapterComponent implements ResourceComponent {
     public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
         Configuration pluginConfig = context.getPluginConfiguration();
         String device = pluginConfig.getSimple("type").getStringValue();
-        String port = pluginConfig.getSimple("port").getStringValue();
+        port = pluginConfig.getSimple("port").getStringValue();
 
         if (adapter == null) {
             adapter = new PDKAdapterUSB();
@@ -87,4 +88,22 @@ public class OneWireAdapterComponent implements ResourceComponent {
     public DSPortAdapter getAdapter() {
         return adapter;
     }
+
+    public void reopenAdapter() {
+        if (adapter != null) {
+            try {
+                adapter.freePort();
+                Thread.sleep(500);
+                adapter = new PDKAdapterUSB();
+                adapter.selectPort(port);
+
+            } catch (OneWireException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                ; // Does not matter
+            }
+        }
+    }
+
 }

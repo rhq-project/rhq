@@ -64,11 +64,10 @@ public class OneWireAdapterDiscovery implements ResourceDiscoveryComponent<OneWi
         found = adapter.adapterDetected();
         adapter.endExclusive();
 
-        String key = getIdForAdapter(adapter);
-
         Set<DiscoveredResourceDetails> ret = new HashSet<DiscoveredResourceDetails>();
 
         if (found) {
+            String key = getIdForAdapter(adapter);
             String name = adapter.getAdapterName() + " on " + adapter.getPortName();
             log.info("Found " + name + "@[" + key + "]");
             String descr = "OneWire adapter (" + name + ") with key (" + key + ")";

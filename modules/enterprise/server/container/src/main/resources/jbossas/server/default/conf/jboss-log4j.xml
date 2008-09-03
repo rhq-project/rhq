@@ -193,6 +193,32 @@
    </category>
    -->
 
+   <!-- JSF RI (i.e. com.sun.faces.*) -->
+   <category name="javax.enterprise.resource.webcontainer.jsf.application">
+     <priority value="WARN" />     
+   </category>   
+   <category name="javax.enterprise.resource.webcontainer.jsf.config">
+     <priority value="WARN" />     
+   </category>
+   <category name="javax.enterprise.resource.webcontainer.jsf.context">
+     <priority value="WARN" />     
+   </category>
+   <category name="javax.enterprise.resource.webcontainer.jsf.lifecycle">
+     <priority value="WARN" />     
+   </category>
+   <category name="javax.enterprise.resource.webcontainer.jsf.managedbean">
+     <priority value="WARN" />     
+   </category>
+   <category name="javax.enterprise.resource.webcontainer.jsf.renderkit">
+     <priority value="WARN" />     
+   </category>
+   <category name="javax.enterprise.resource.webcontainer.jsf.taglib">
+     <priority value="WARN" />     
+   </category>
+   <category name="javax.enterprise.resource.webcontainer.jsf.timing">
+     <priority value="WARN" />     
+   </category>
+      
    <!-- ===================================================== -->
    <!-- Categories for the various 3rd-party libs used by RHQ -->
    <!-- ===================================================== -->

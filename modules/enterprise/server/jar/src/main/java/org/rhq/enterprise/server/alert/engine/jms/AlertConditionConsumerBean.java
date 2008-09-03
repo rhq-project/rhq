@@ -25,22 +25,15 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.AlertCondition;
-import org.rhq.core.domain.alert.AlertDampeningEvent;
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.alert.AlertConditionLogManagerLocal;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
-import org.rhq.enterprise.server.alert.AlertDampeningManagerLocal;
+import org.rhq.enterprise.server.alert.CachedConditionManagerLocal;
 import org.rhq.enterprise.server.alert.engine.jms.model.AbstractAlertConditionMessage;
-import org.rhq.enterprise.server.alert.engine.jms.model.ActiveAlertConditionMessage;
-import org.rhq.enterprise.server.alert.engine.jms.model.InactiveAlertConditionMessage;
 import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
 
 /**
@@ -58,14 +51,10 @@ public final class AlertConditionConsumerBean implements MessageListener {
     private final Log log = LogFactory.getLog(AlertConditionConsumerBean.class);
 
     @EJB
-    private AlertConditionLogManagerLocal alertConditionLogManager;
-    @EJB
-    private AlertDampeningManagerLocal alertDampeningManager;
-    @EJB
     private AlertConditionManagerLocal alertConditionManager;
 
-    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
-    private EntityManager entityManager;
+    @EJB
+    private CachedConditionManagerLocal cachedConditionManager;
 
     public void onMessage(Message message) {
         ObjectMessage objectMessage = (ObjectMessage) message;
@@ -92,28 +81,12 @@ public final class AlertConditionConsumerBean implements MessageListener {
 
             AlertSerializer.getSingleton().lock(definition.getId());
 
-            /*
-             * note that ctime is the time when the condition was known to be true, not the time we're persisting the
-             * condition log message
+            /* 
+             * must be executed in a new, nested transaction so that by it
+             * completes and unlocks, the next thread will see all of its results
              */
-            if (conditionMessage instanceof ActiveAlertConditionMessage) {
-                ActiveAlertConditionMessage activeConditionMessage = (ActiveAlertConditionMessage) conditionMessage;
-
-                alertConditionLogManager.updateUnmatchedLogByAlertConditionId(alertConditionId, activeConditionMessage
-                    .getTimestamp(), activeConditionMessage.getValue());
-
-                alertConditionLogManager.checkForCompletedAlertConditionSet(activeConditionMessage
-                    .getAlertConditionId());
-            } else if (conditionMessage instanceof InactiveAlertConditionMessage) {
-
-                AlertDampeningEvent event = new AlertDampeningEvent(definition, AlertDampeningEvent.Type.NEGATIVE);
-                entityManager.persist(event);
-
-                alertDampeningManager.processEventType(definition.getId(), AlertDampeningEvent.Type.NEGATIVE);
-            } else {
-                log.error("Unsupported message type sent to consumer for processing: "
-                    + message.getClass().getSimpleName());
-            }
+            cachedConditionManager.processCachedConditionMessage(conditionMessage, definition);
+            //processCachedConditionMessage(conditionMessage, definition);
         } catch (Exception e) {
             log.error("Error handling " + conditionMessage + " - " + e.toString());
         } finally {
@@ -122,4 +95,29 @@ public final class AlertConditionConsumerBean implements MessageListener {
             }
         }
     }
+
+    //    private void processCachedConditionMessage(AbstractAlertConditionMessage conditionMessage,
+    //        AlertDefinition definition) {
+    //        /*
+    //         * note that ctime is the time when the condition was known to be true, not the time we're persisting the
+    //         * condition log message
+    //         */
+    //        if (conditionMessage instanceof ActiveAlertConditionMessage) {
+    //            ActiveAlertConditionMessage activeConditionMessage = (ActiveAlertConditionMessage) conditionMessage;
+    //
+    //            alertConditionLogManager.updateUnmatchedLogByAlertConditionId(activeConditionMessage.getAlertConditionId(),
+    //                activeConditionMessage.getTimestamp(), activeConditionMessage.getValue());
+    //
+    //            alertConditionLogManager.checkForCompletedAlertConditionSet(activeConditionMessage.getAlertConditionId());
+    //        } else if (conditionMessage instanceof InactiveAlertConditionMessage) {
+    //
+    //            AlertDampeningEvent event = new AlertDampeningEvent(definition, AlertDampeningEvent.Type.NEGATIVE);
+    //            entityManager.persist(event);
+    //
+    //            alertDampeningManager.processEventType(definition.getId(), AlertDampeningEvent.Type.NEGATIVE);
+    //        } else {
+    //            log.error("Unsupported message type sent to consumer for processing: "
+    //                + conditionMessage.getClass().getSimpleName());
+    //        }
+    //    }
 }

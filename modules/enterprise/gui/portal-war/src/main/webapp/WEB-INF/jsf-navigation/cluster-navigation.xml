@@ -28,6 +28,18 @@
       </navigation-case> 
    </navigation-rule>
    
+   <!-- Agent View -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/viewAgent.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/viewAgent.xhtml?mode=view&amp;agentId=#{param.agentId}&amp;serverId=#{param.serverId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+
    <!-- AffinityGroup View/Edit -->
    <navigation-rule>
       <from-view-id>/rhq/ha/viewAffinityGroup.xhtml</from-view-id>

@@ -423,6 +423,19 @@ public class ConfigurationBean {
 
     public StartPageResults save() {
 
+        try {
+            // update server properties with the latest ha info to keep the form and server properties file up to date
+            getConfigurationProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME).setValue(getHaServer().getName());
+            getConfigurationProperty(ServerProperties.PROP_HTTP_PORT).setValue(getHaServer().getEndpointPortString());
+            getConfigurationProperty(ServerProperties.PROP_HTTPS_PORT).setValue(
+                getHaServer().getEndpointSecurePortString());
+        } catch (Exception e) {
+            LOG.fatal("Could not save the settings for some reason", e);
+            lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.SAVE_ERROR, ThrowableUtil.getAllMessages(e));
+
+            return StartPageResults.ERROR;
+        }
+
         Properties configurationAsProperties = getConfigurationAsProperties(configuration);
         testConnection(); // so our lastTest gets set and the user will be able to get the error in the UI
         if (lastTest == null || !lastTest.equals("OK")) {
@@ -465,12 +478,6 @@ public class ConfigurationBean {
             // indicate that no errors occurred
             lastError = null;
 
-            // update server properties with the latest ha info to keep the form and server properties file up to date
-            getConfigurationProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME).setValue(getHaServer().getName());
-            getConfigurationProperty(ServerProperties.PROP_HTTP_PORT).setValue(getHaServer().getEndpointPortString());
-            getConfigurationProperty(ServerProperties.PROP_HTTPS_PORT).setValue(
-                getHaServer().getEndpointSecurePortString());
-
             // save the properties
             serverInfo.setServerProperties(configurationAsProperties);
 
@@ -495,7 +502,7 @@ public class ConfigurationBean {
             // now deploy RHQ Server fully
             serverInfo.moveDeploymentArtifacts(true);
         } catch (Exception e) {
-            LOG.fatal("Failed to save properties and fully deploy - RHQ Server will not function properly", e);
+            LOG.fatal("Failed to updated properties and fully deploy - RHQ Server will not function properly", e);
             lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.SAVE_FAILURE, ThrowableUtil.getAllMessages(e));
 
             return StartPageResults.ERROR;

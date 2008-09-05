@@ -19,13 +19,11 @@
 package org.rhq.core.pc.measurement;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.measurement.MeasurementData;
-import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 
@@ -49,7 +47,7 @@ public class MeasurementSenderRunner implements Callable<MeasurementReport>, Run
         }
 
         filterUnchangedTraits(report);
-        perMinuteItizeData(report);
+        this.measurementManager.perMinuteItizeData(report);
 
         if (report.getDataCount() > 0) {
             LOG.info("Measurement collection for [" + report.getDataCount() + "] metrics took " +
@@ -60,25 +58,6 @@ public class MeasurementSenderRunner implements Callable<MeasurementReport>, Run
         }
         
         return report;
-    }
-
-    private void perMinuteItizeData(MeasurementReport report) {
-        Iterator<MeasurementDataNumeric> iter = report.getNumericData().iterator();
-        while (iter.hasNext()) {
-            MeasurementData d = iter.next();
-
-            MeasurementDataNumeric numeric = (MeasurementDataNumeric) d;
-            if (numeric.isPerMinuteCollection()) {
-                Double perMinuteValue = this.measurementManager.updatePerMinuteMetric(numeric);
-                if (perMinuteValue == null) {
-                    // This is the first collection, don't return the value yet
-                    iter.remove();
-                } else {
-                    // set the value to the transformed rate value
-                    numeric.setValue(perMinuteValue);
-                }
-            }
-        }
     }
 
     private void filterUnchangedTraits(MeasurementReport report) {

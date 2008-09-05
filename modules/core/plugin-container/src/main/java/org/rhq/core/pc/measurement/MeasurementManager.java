@@ -47,7 +47,9 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
@@ -230,20 +232,22 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
     }
 
-    public Double updatePerMinuteMetric(MeasurementDataNumeric numeric) {
-        CachedValue existing = this.perMinuteCache.get(numeric.getScheduleId());
-        Double value = null;
-        if (existing != null) {
-            long timeDifference = numeric.getTimestamp() - existing.timestamp;
-            value = (60000D / timeDifference) * (numeric.getValue() - existing.value);
-            if (((numeric.getNumericType() == NumericType.TRENDSUP) && (value < 0))
-                || ((numeric.getNumericType() == NumericType.TRENDSDOWN) && (value > 0))) {
-                value = null;
+    public void perMinuteItizeData(MeasurementReport report) {
+        Iterator<MeasurementDataNumeric> iter = report.getNumericData().iterator();
+        while (iter.hasNext()) {
+            MeasurementData d = iter.next();
+            MeasurementDataNumeric numeric = (MeasurementDataNumeric) d;
+            if (numeric.isPerMinuteCollection()) {
+                Double perMinuteValue = updatePerMinuteMetric(numeric);
+                if (perMinuteValue == null) {
+                    // This is the first collection, don't return the value yet
+                    iter.remove();
+                } else {
+                    // set the value to the transformed rate value
+                    numeric.setValue(perMinuteValue);
+                }
             }
         }
-
-        this.perMinuteCache.put(numeric.getScheduleId(), new CachedValue(numeric.getTimestamp(), numeric.getValue()));
-        return value;
     }
 
     public void shutdown() {
@@ -384,19 +388,21 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
     }
 
+    // TODO: This method signature is flawed, because it only takes metric names. TRENDSUP/TRENDSDOWN metrics have two
+    //       corresponding metric defs - one for the raw value and one for the derived per-minute value. There's no
+    //       way to tell which value the caller wants. For now, it assumes the caller wants the raw value.
+    //      (ips, 09/05/08)
     public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType, String... measurementName) {
         MeasurementFacet measurementFacet;
-
         try {
             measurementFacet = ComponentUtil.getComponent(resourceId, MeasurementFacet.class, FacetLockType.READ,
                 FACET_METHOD_TIMEOUT, true, true);
         } catch (Exception e) {
-            LOG.warn("Cannot get measurement facet for resource [" + resourceId + "]. Cause: " + e);
+            LOG.warn("Cannot get measurement facet for Resource [" + resourceId + "]. Cause: " + e);
             return null;
         }
 
         MeasurementReport report = new MeasurementReport();
-
         Set<MeasurementScheduleRequest> allMeasurements = new HashSet<MeasurementScheduleRequest>();
         for (String name : measurementName) {
             MeasurementScheduleRequest request = new MeasurementScheduleRequest(1, name, 0, true, dataType);
@@ -409,6 +415,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             LOG.error("Could not get measurement values", t);
             return null;
         }
+        perMinuteItizeData(report);
 
         Set<MeasurementData> values = new HashSet<MeasurementData>();
         values.addAll(report.getNumericData());
@@ -474,6 +481,21 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                 LOG.warn("Failure to report measurements to server", e);
             }
         }
+    }
+
+    private Double updatePerMinuteMetric(MeasurementDataNumeric numeric) {
+        CachedValue existing = this.perMinuteCache.get(numeric.getScheduleId());
+        Double value = null;
+        if (existing != null) {
+            long timeDifference = numeric.getTimestamp() - existing.timestamp;
+            value = (60000D / timeDifference) * (numeric.getValue() - existing.value);
+            if (((numeric.getNumericType() == NumericType.TRENDSUP) && (value < 0))
+                || ((numeric.getNumericType() == NumericType.TRENDSDOWN) && (value > 0))) {
+                value = null;
+            }
+        }
+        this.perMinuteCache.put(numeric.getScheduleId(), new CachedValue(numeric.getTimestamp(), numeric.getValue()));
+        return value;
     }
 
     // -- MBean monitoring methods

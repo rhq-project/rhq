@@ -2,8 +2,6 @@
 
 <!--===== a sample Maven 2 user settings file for the RHQ build =====-->
 
-<!-- $Id: settings.xml 9391 2008-02-13 02:34:03Z jmazzitelli $ -->
-
 <!-- See: http://maven.apache.org/settings.html -->
 
 <settings xmlns="http://maven.apache.org/POM/4.0.0"

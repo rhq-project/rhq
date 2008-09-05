@@ -530,6 +530,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
                 + existingResource.getResourceKey() + "' to '" + resource.getResourceKey() + "'.");
         }
 
+        // If the resource was marked as deleted, reactivate it again.
+        if (existingResource.getInventoryStatus() == InventoryStatus.DELETED)
+            existingResource.setInventoryStatus(InventoryStatus.COMMITTED);
+
         for (Resource childResource : resource.getChildResources()) {
             // It's important to specify the existing Resource, which is an attached entity bean, as the parent.
             mergeResource(childResource, existingResource, existingResource.getAgent());

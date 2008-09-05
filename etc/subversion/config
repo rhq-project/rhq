@@ -1,8 +1,6 @@
 ####################################
-### JON Subversion client config ###
+### RHQ Subversion client config ###
 ####################################
-
-### $Id: config 9371 2008-02-12 15:58:42Z jshaughn $ 
 
 ### This file configures various Subversion client behaviors.
 ### Copy it to one of the following locations, depending on your OS:

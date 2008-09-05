@@ -25,7 +25,7 @@ package org.rhq.core.domain.measurement;
                   This defines whether the measurement values that get collected
                   consistently increase over time or are dynamic and can "randomly"
                   be higher or lower than previous values. The system will by itself generate
-                  per minute metris for data with measurementType of 
+                  per minute metrics for data with measurementType of 
                   trendsup or trendsdown.
  * @author Heiko W. Rupp
  */

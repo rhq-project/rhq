@@ -52,13 +52,13 @@
             <!--<maven.test.skip>true</maven.test.skip>-->
             <!--<maven.test.failure.ignore>true</maven.test.failure.ignore>-->
             <!--<maven.test.error.ignore>true</maven.test.error.ignore>-->
-            <!--<surefire.useFile>false</surefire.useFile>-->
-            <!-- If you don't want to use the default location of {trunk}/dev-container/
-                 for your dev RHQ container, then set the below prop to the desired location. -->
-            <!--<rhq.containerDir>C:/opt/rhq-server</rhq.containerDir>-->
+            <!--<surefire.useFile>false</surefire.useFile>-->            
             <!-- Set the below prop to the absolute path of your RHQ trunk dir. 
                 (the JON plugin poms use ${rhq.rootDir}/dev-container as the dev container dir) -->                
             <rhq.rootDir>C:/Projects/rhq-trunk</rhq.rootDir>
+            <!-- If you don't want to use the default location of {trunk}/dev-container/
+                 for your dev RHQ container, then set the below prop to the desired location. -->
+            <!--<rhq.containerDir>C:/opt/rhq-server</rhq.containerDir>-->            
          </properties>
          
          <!--
@@ -115,36 +115,53 @@
          <properties>
             <!-- Set this to your a JRE5 installation dir (e.g. C:/opt/jdk-1.5.0_15/jre). -->
             <java5.home>C:/opt/jdk-1.5.0_15/jre</java5.home>
-         </properties>
-         
-         <!--
-         <repositories>
-          <repository>
-            <id>central</id>
-            <name>Artifactory Proxy Repository</name>
-            <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>      
-            <snapshots>
-               <enabled>false</enabled>
-            </snapshots>
-          </repository>
-         </repositories>
-
-         <pluginRepositories>
-          <pluginRepository>
-            <id>central</id>
-            <name>Artifactory Proxy Repository</name>
-            <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>      
-            <snapshots>
-               <enabled>false</enabled>
-            </snapshots>
-          </pluginRepository>
-         </pluginRepositories>
-         -->
-
-   </profile>
+         </properties>         
+      </profile>
    
+      <profile>
+         <id>EAP-4.3</id>
+         <properties>         
+            <!-- Set the below prop to the location to your dev JBAS 4.2/4.3 deploy location for the embedded console WAR. -->         
+            <embedded.asConfigDir>C:/opt/jboss-eap-4.3.0.GA_CP02/jboss-as/server/production</embedded.asConfigDir>            
+         </properties>                 
+      </profile>
+
+      <profile>
+         <id>JBAS-5.0</id>
+         <properties>   
+            <!-- Set the below prop to the location to your dev JBAS 5.0 deploy location for the embedded console WAR. -->                  
+            <embedded.asConfigDir>C:/opt/jboss-5.0.0.CR1/server/all</embedded.asConfigDir>            
+         </properties>                 
+      </profile>      
+      
    </profiles>
 
+   <!--**************************** REPOS ****************************-->
+   
+     <!--
+     <repositories>
+      <repository>
+        <id>central</id>
+        <name>Artifactory Proxy Repository</name>
+        <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>      
+        <snapshots>
+           <enabled>false</enabled>
+        </snapshots>
+      </repository>
+     </repositories>
+
+     <pluginRepositories>
+      <pluginRepository>
+        <id>central</id>
+        <name>Artifactory Proxy Repository</name>
+        <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>      
+        <snapshots>
+           <enabled>false</enabled>
+        </snapshots>
+      </pluginRepository>
+     </pluginRepositories>
+     -->
+         
    <!--**************************** PLUGIN GROUPS ****************************-->
    
    <!-- See: http://maven.apache.org/guides/introduction/introduction-to-plugin-prefix-mapping.html -->

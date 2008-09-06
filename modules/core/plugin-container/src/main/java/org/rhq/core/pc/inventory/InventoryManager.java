@@ -593,6 +593,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             DiscoveryServerService discoveryServerService = configuration.getServerServices()
                 .getDiscoveryServerService();
             syncInfo = discoveryServerService.mergeInventoryReport(report);
+            print(syncInfo, "");
             log.debug(String.format("Server DONE merging inventory report (%d)ms.",
                 (System.currentTimeMillis() - startTime)));
         } catch (InvalidInventoryReportException e) {
@@ -611,6 +612,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
         synchInventory(syncInfo);
 
         return true;
+    }
+
+    private void print(ResourceSyncInfo syncInfo, String indent) {
+        log.info("ResourceSyncInfo: " + indent + syncInfo.getUuid());
+        indent += '\t';
+        for (ResourceSyncInfo child : syncInfo.getChildSyncInfos()) {
+            print(child, indent);
+        }
     }
 
     private void synchInventory(ResourceSyncInfo syncInfo) {
@@ -983,8 +992,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         resource.setConnected(false); // invalid plugin configuration infers the resource component is disconnected
         // Give the server-side an error message describing the connection failure that can be
         // displayed on the resource's Inventory page.
-        ResourceError resourceError = new ResourceError(resource, ResourceErrorType.INVALID_PLUGIN_CONFIGURATION,
-                t, System.currentTimeMillis());
+        ResourceError resourceError = new ResourceError(resource, ResourceErrorType.INVALID_PLUGIN_CONFIGURATION, t,
+            System.currentTimeMillis());
         return sendResourceErrorToServer(resourceError);
     }
 
@@ -1573,6 +1582,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         log.debug("Merging " + modifiedResourceIds.size() + " modified Resources into local inventory...");
         Set<Resource> modifiedResources = configuration.getServerServices().getDiscoveryServerService().getResources(
             modifiedResourceIds, false);
+        syncSchedules(modifiedResources); // RHQ-792, mtime is the indicator that schedules should be sync'ed too
         for (Resource modifiedResource : modifiedResources) {
             mergeResource(modifiedResource);
         }

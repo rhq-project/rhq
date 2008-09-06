@@ -593,7 +593,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             DiscoveryServerService discoveryServerService = configuration.getServerServices()
                 .getDiscoveryServerService();
             syncInfo = discoveryServerService.mergeInventoryReport(report);
-            print(syncInfo, "");
             log.debug(String.format("Server DONE merging inventory report (%d)ms.",
                 (System.currentTimeMillis() - startTime)));
         } catch (InvalidInventoryReportException e) {
@@ -612,14 +611,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         synchInventory(syncInfo);
 
         return true;
-    }
-
-    private void print(ResourceSyncInfo syncInfo, String indent) {
-        log.info("ResourceSyncInfo: " + indent + syncInfo.getUuid());
-        indent += '\t';
-        for (ResourceSyncInfo child : syncInfo.getChildSyncInfos()) {
-            print(child, indent);
-        }
     }
 
     private void synchInventory(ResourceSyncInfo syncInfo) {

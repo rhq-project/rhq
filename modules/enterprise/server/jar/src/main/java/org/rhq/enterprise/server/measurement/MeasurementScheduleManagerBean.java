@@ -915,12 +915,12 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         try {
             AgentClient agentClient = LookupUtil.getAgentManager().getAgentClient(agent);
             if (agentClient.ping(2000) == false) {
-                log.info("Won't send MeasurementSchedules to offline Agent[id=" + agent.getId() + "]");
+                log.debug("Won't send MeasurementSchedules to offline Agent[id=" + agent.getId() + "]");
                 return;
             }
             agentClient.getMeasurementAgentService().updateCollection(resourceMeasurementScheduleRequest);
         } catch (Throwable t) {
-            log.info("Error updating MeasurementSchedules for Agent[id=" + agent.getId() + "]: " + t);
+            log.error("Error updating MeasurementSchedules for Agent[id=" + agent.getId() + "]: " + t);
         }
     }
 

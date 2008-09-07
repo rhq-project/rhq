@@ -579,6 +579,26 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "  AND (:resourceType = res.resourceType OR :resourceType is null) " //
         + "  AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
         + "  AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
+    @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_WITH_PARENT, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite(res, " //
+        + " (SELECT ires FROM Resource ires WHERE ires = res.parentResource), " //
+        + " a.availabilityType, " //
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 8), " // we want MANAGE_MEASUREMENTS
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 4), " // we want MODIFY_RESOURCE (4), not VIEW_RESOURCE (3)
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 10), " // we want CONTROL, 10
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 7), " // we want MANAGE_ALERTS, 7
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 11), " // we want CONFIGURE, 11
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 9), " // we want MANAGE_CONTENT, 9
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 6), " // we want CREATE_CHILD_RESOURCES, 6
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 5)) " // we want DELETE_RESOURCES, 5
+        + "FROM Resource res " //
+        + "     LEFT JOIN res.availability a WITH a.endTime is null " //
+        + "WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "  AND (:category = res.resourceType.category OR :category is null) " //
+        + "  AND (:parentResource = res.parentResource OR :parentResource is null)" //
+        + "  AND (:resourceType = res.resourceType OR :resourceType is null) " //
+        + "  AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
+        + "  AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_COUNT, query = "SELECT count(res) " //
         + "  FROM Resource res " //
         + " WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
@@ -589,6 +609,17 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_ADMIN, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite(res, a.availabilityType) " //
+        + "  FROM Resource res " //
+        + "       LEFT JOIN res.availability a WITH a.endTime is null " //
+        + " WHERE (:category = res.resourceType.category OR :category is null) " //
+        + "   AND (:parentResource = res.parentResource OR :parentResource is null)" //
+        + "   AND (:resourceType = res.resourceType OR :resourceType is null) " //
+        + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
+        + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
+    @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_WITH_PARENT_ADMIN, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite( res, " //
+        + "       (SELECT ires FROM Resource ires WHERE ires = res.parentResource), " //
+        + "       a.availabilityType ) " //
         + "  FROM Resource res " //
         + "       LEFT JOIN res.availability a WITH a.endTime is null " //
         + " WHERE (:category = res.resourceType.category OR :category is null) " //
@@ -723,8 +754,10 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_FIND_WITH_PARENT_BY_IDS_ADMIN = "Resource.findWithParentByIds_admin";
 
     public static final String QUERY_FIND_COMPOSITE = "Resource.findComposite";
+    public static final String QUERY_FIND_COMPOSITE_WITH_PARENT = "Resource.findCompositeWithParent";
     public static final String QUERY_FIND_COMPOSITE_COUNT = "Resource.findComposite_count";
     public static final String QUERY_FIND_COMPOSITE_ADMIN = "Resource.findComposite_admin";
+    public static final String QUERY_FIND_COMPOSITE_WITH_PARENT_ADMIN = "Resource.findCompositeWithParent_admin";
     public static final String QUERY_FIND_COMPOSITE_COUNT_ADMIN = "Resource.findComposite_count_admin";
 
     public static final String QUERY_GET_STATUSES_BY_PARENT = "Resource.getStatusesByParent";

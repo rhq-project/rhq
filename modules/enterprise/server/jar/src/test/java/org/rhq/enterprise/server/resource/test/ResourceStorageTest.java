@@ -20,11 +20,14 @@ package org.rhq.enterprise.server.resource.test;
 
 import java.util.List;
 import java.util.Map;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -63,7 +66,7 @@ public class ResourceStorageTest extends AbstractEJB3Test {
             createSession(subject);
             ResourceType t = em.getReference(ResourceType.class, new Integer(501064));
             PageList<ResourceComposite> resources = resourceManager.findResourceComposites(subject,
-                ResourceCategory.SERVER, t, null, "g", pc);
+                ResourceCategory.SERVER, t, null, "g", false, pc);
             System.out.println("Found resource composites: " + resources.size());
             for (ResourceComposite resourceComposite : resources) {
                 System.out.println("\t" + resourceComposite);

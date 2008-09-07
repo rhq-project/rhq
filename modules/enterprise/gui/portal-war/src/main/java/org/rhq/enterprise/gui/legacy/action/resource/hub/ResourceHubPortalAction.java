@@ -20,9 +20,11 @@ package org.rhq.enterprise.gui.legacy.action.resource.hub;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -31,6 +33,7 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.LabelValueBean;
 import org.apache.struts.util.MessageResources;
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -172,7 +175,7 @@ public class ResourceHubPortalAction extends BaseAction {
         }
 
         return resourceManager.findResourceComposites(subject, resourceCategory, resourceType, null, hubForm
-            .getKeywords(), pageControl);
+            .getKeywords(), true, pageControl);
     }
 
     protected void initResourceTypesPulldownMenu(HttpServletRequest request, ResourceHubForm hubForm, Subject subject,

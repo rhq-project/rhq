@@ -923,7 +923,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         type = entityManager.find(ResourceType.class, type.getId());
 
-        return findResourceComposites(user, category, type, parentResource, searchString, pageControl);
+        return findResourceComposites(user, category, type, parentResource, searchString, false, pageControl);
     }
 
     /**
@@ -942,20 +942,34 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
      */
     @SuppressWarnings("unchecked")
     public PageList<ResourceComposite> findResourceComposites(Subject user, ResourceCategory category,
-        ResourceType type, Resource parentResource, String searchString, PageControl pageControl) {
+        ResourceType type, Resource parentResource, String searchString, boolean attachParentResource,
+        PageControl pageControl) {
         pageControl.addDefaultOrderingField("res.name");
         pageControl.addDefaultOrderingField("res.id");
 
-        Query query;
-        Query queryCount;
+        String queryName;
+        String queryCountName;
+
         if (authorizationManager.isInventoryManager(user)) {
-            queryCount = PersistenceUtility.createCountQuery(entityManager, Resource.QUERY_FIND_COMPOSITE_COUNT_ADMIN);
-            query = PersistenceUtility.createQueryWithOrderBy(entityManager, Resource.QUERY_FIND_COMPOSITE_ADMIN,
-                pageControl);
+            if (attachParentResource) {
+                queryName = Resource.QUERY_FIND_COMPOSITE_WITH_PARENT_ADMIN;
+            } else {
+                queryName = Resource.QUERY_FIND_COMPOSITE_ADMIN;
+            }
+            queryCountName = Resource.QUERY_FIND_COMPOSITE_COUNT_ADMIN;
         } else {
-            queryCount = PersistenceUtility.createCountQuery(entityManager, Resource.QUERY_FIND_COMPOSITE_COUNT);
-            query = PersistenceUtility
-                .createQueryWithOrderBy(entityManager, Resource.QUERY_FIND_COMPOSITE, pageControl);
+            if (attachParentResource) {
+                queryName = Resource.QUERY_FIND_COMPOSITE_WITH_PARENT;
+            } else {
+                queryName = Resource.QUERY_FIND_COMPOSITE;
+            }
+            queryCountName = Resource.QUERY_FIND_COMPOSITE_COUNT;
+        }
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pageControl);
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryCountName);
+
+        if (authorizationManager.isInventoryManager(user) == false) {
             queryCount.setParameter("subject", user);
             query.setParameter("subject", user);
         }
@@ -1002,7 +1016,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
         }
 
-        return findResourceComposites(user, category, resourceType, parentResource, null, pageControl);
+        return findResourceComposites(user, category, resourceType, parentResource, null, false, pageControl);
     }
 
     @SuppressWarnings("unchecked")

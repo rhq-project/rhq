@@ -18,8 +18,8 @@
  */
 package org.rhq.core.domain.resource.composite;
 
-import java.util.Set;
 import java.io.Serializable;
+import java.util.Set;
 
 import javax.xml.bind.annotation.XmlElement;
 
@@ -41,6 +41,8 @@ public class ResourceComposite implements Serializable {
     @XmlElement
     private Resource resource;
 
+    @XmlElement
+    private Resource parent;
 
     @XmlElement
     private ResourcePermission resourcePermission;
@@ -57,7 +59,14 @@ public class ResourceComposite implements Serializable {
      * Provides full access permissions - used for admin queries.
      */
     public ResourceComposite(Resource resource, AvailabilityType availability) {
-        this(resource, availability, new ResourcePermission());
+        this(resource, null, availability, new ResourcePermission());
+    }
+
+    /**
+     * Provides full access permissions - used for admin queries.
+     */
+    public ResourceComposite(Resource resource, Resource parent, AvailabilityType availability) {
+        this(resource, parent, availability, new ResourcePermission());
     }
 
     /**
@@ -66,16 +75,29 @@ public class ResourceComposite implements Serializable {
     public ResourceComposite(Resource resource, AvailabilityType availability, Number measure, Number inventory,
         Number control, Number alert, Number configure, Number content, Number createChildResources,
         Number deleteResources) {
-        this(resource, availability, new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0, control
-            .intValue() > 0, alert.intValue() > 0, configure.intValue() > 0, content.intValue() > 0,
+        this(resource, null, availability, new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0,
+            control.intValue() > 0, alert.intValue() > 0, configure.intValue() > 0, content.intValue() > 0,
+            createChildResources.intValue() > 0, deleteResources.intValue() > 0));
+    }
+
+    /**
+     * Provides specified permissions - used for non-admin queries.
+     */
+    public ResourceComposite(Resource resource, Resource parent, AvailabilityType availability, Number measure,
+        Number inventory, Number control, Number alert, Number configure, Number content, Number createChildResources,
+        Number deleteResources) {
+        this(resource, parent, availability, new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0,
+            control.intValue() > 0, alert.intValue() > 0, configure.intValue() > 0, content.intValue() > 0,
             createChildResources.intValue() > 0, deleteResources.intValue() > 0));
     }
 
     /**
      * Private constructor that both public constructors delegate to.
      */
-    private ResourceComposite(Resource resource, AvailabilityType availability, ResourcePermission resourcePermission) {
+    private ResourceComposite(Resource resource, Resource parent, AvailabilityType availability,
+        ResourcePermission resourcePermission) {
         this.resource = resource;
+        this.parent = parent;
         this.availability = availability;
         this.resourcePermission = resourcePermission;
 
@@ -88,6 +110,10 @@ public class ResourceComposite implements Serializable {
 
     public Resource getResource() {
         return resource;
+    }
+
+    public Resource getParent() {
+        return parent;
     }
 
     public AvailabilityType getAvailability() {

@@ -262,9 +262,16 @@
             <display:resource-quicknav-decorator/>
          </display:column>
 
-         <display:column width="25%" property="resource.name" title="${entityTypeTH}"
+         <display:column width="20%" property="resource.name" title="${entityTypeTH}"
                          isLocalizedTitle="false" sortAttr="res.name"
                          href="/resource/common/monitor/Visibility.do?id=${resourceComposite.resource.id}&mode=currentHealth"/>
+
+         <c:if test="${ResourceHubForm.resourceCategory != PLATFORM}">
+            <display:column property="parent.name" title="resource.group.inventory.ParentTH" 
+                            width="20%" 
+                            sortAttr="res.parentResource.name"
+                            href="/resource/common/monitor/Visibility.do?id=${resourceComposite.parent.id}&mode=currentHealth" />
+         </c:if>
 
          <c:if test="${not empty resourceTypeTH}">
             <display:column width="25%" property="resource.resourceType.name"
@@ -273,7 +280,7 @@
 
          <display:column width="30%" property="resource.description" title="common.header.Description" sortAttr="res.description"/>
 
-         <display:column width="15%" property="availability" title="resource.common.monitor.visibility.AvailabilityTH"
+         <display:column width="5%" property="availability" title="resource.common.monitor.visibility.AvailabilityTH"
                          styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" valign="middle"
                          sortAttr="a.availabilityType">
             <display:availabilitydecorator/>

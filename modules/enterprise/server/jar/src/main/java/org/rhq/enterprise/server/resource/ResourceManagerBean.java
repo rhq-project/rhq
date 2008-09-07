@@ -1485,22 +1485,29 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @SuppressWarnings("unchecked")
+    // note: this method also eagerly loads the parent resource, so that more context info is displayed for each record
     public PageList<Resource> getAvailableResourcesForResourceGroup(Subject user, int groupId, ResourceType type,
         ResourceCategory category, String nameFilter, Integer[] excludeIds, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
         Query queryCount;
         Query query;
+
+        /*
+         * don't use WITH_PARENT form for the queryCount; after it runs through the PersistenceUtility
+         * you'll get the error "query specified join fetching, but the owner of the fetched association 
+         * was not present in the select list"
+         */
         if ((excludeIds != null) && (excludeIds.length != 0)) {
             queryCount = PersistenceUtility.createCountQuery(entityManager,
                 Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP_WITH_EXCLUDES);
             query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP_WITH_EXCLUDES, pageControl);
+                Resource.QUERY_GET_AVAILABLE_RESOURCES_WITH_PARENT_FOR_RESOURCE_GROUP_WITH_EXCLUDES, pageControl);
         } else {
             queryCount = PersistenceUtility.createCountQuery(entityManager,
                 Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP);
             query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP, pageControl);
+                Resource.QUERY_GET_AVAILABLE_RESOURCES_WITH_PARENT_FOR_RESOURCE_GROUP, pageControl);
         }
 
         if ((excludeIds != null) && (excludeIds.length != 0)) {
@@ -1605,23 +1612,44 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Resource> getResourceByIds(Subject subject, Integer[] resourceIds, PageControl pageControl) {
+    public PageList<Resource> getResourceByIds(Subject subject, Integer[] resourceIds, boolean attachParentResource,
+        PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
         if ((resourceIds == null) || (resourceIds.length == 0)) {
             return new PageList<Resource>(Collections.EMPTY_LIST, 0, pageControl);
         }
 
-        Query queryCount;
-        Query query;
+        String queryCountName;
+        String queryName;
 
+        /*
+         * don't use WITH_PARENT form for the queryCountName; after it runs through the PersistenceUtility
+         * you'll get the error "query specified join fetching, but the owner of the fetched association 
+         * was not present in the select list"
+         */
         if (authorizationManager.isInventoryManager(subject)) {
-            queryCount = PersistenceUtility.createCountQuery(entityManager, Resource.QUERY_FIND_BY_IDS_ADMIN);
-            query = PersistenceUtility.createQueryWithOrderBy(entityManager, Resource.QUERY_FIND_BY_IDS_ADMIN,
-                pageControl);
+            if (attachParentResource) {
+                queryName = Resource.QUERY_FIND_WITH_PARENT_BY_IDS_ADMIN;
+            } else {
+
+                queryName = Resource.QUERY_FIND_BY_IDS_ADMIN;
+            }
+            queryCountName = Resource.QUERY_FIND_BY_IDS_ADMIN;
         } else {
-            queryCount = PersistenceUtility.createCountQuery(entityManager, Resource.QUERY_FIND_BY_IDS);
-            query = PersistenceUtility.createQueryWithOrderBy(entityManager, Resource.QUERY_FIND_BY_IDS, pageControl);
+            if (attachParentResource) {
+                queryName = Resource.QUERY_FIND_WITH_PARENT_BY_IDS;
+            } else {
+
+                queryName = Resource.QUERY_FIND_BY_IDS;
+            }
+            queryCountName = Resource.QUERY_FIND_BY_IDS;
+        }
+
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryCountName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pageControl);
+
+        if (authorizationManager.isInventoryManager(subject) == false) {
             queryCount.setParameter("subject", subject);
             query.setParameter("subject", subject);
         }
@@ -1665,12 +1693,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Resource resource = entityManager.find(Resource.class, resourceError.getResource().getId());
 
         if (resource == null) {
-            throw new ResourceNotFoundException("Resource error contains an unknown Resource id: "
-                + resourceError);
+            throw new ResourceNotFoundException("Resource error contains an unknown Resource id: " + resourceError);
         }
 
-        if (resourceError.getErrorType() == ResourceErrorType.INVALID_PLUGIN_CONFIGURATION ||
-            resourceError.getErrorType() == ResourceErrorType.AVAILABILITY_CHECK) {
+        if (resourceError.getErrorType() == ResourceErrorType.INVALID_PLUGIN_CONFIGURATION
+            || resourceError.getErrorType() == ResourceErrorType.AVAILABILITY_CHECK) {
             // there should be at most one invalid plugin configuration error and one availability check error per
             // resource, so delete any currently existing ones before we add this new one
             List<ResourceError> doomedErrors = resource.getResourceErrors(resourceError.getErrorType());

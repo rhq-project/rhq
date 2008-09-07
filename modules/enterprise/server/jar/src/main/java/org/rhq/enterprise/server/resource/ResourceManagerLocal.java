@@ -269,7 +269,8 @@ public interface ResourceManagerLocal {
     PageList<Resource> getAvailableResourcesForDashboardPortlet(Subject user, Integer typeId,
         ResourceCategory category, Integer[] excludeIds, PageControl pageControl);
 
-    PageList<Resource> getResourceByIds(Subject subject, Integer[] resourceIds, PageControl pageControl);
+    PageList<Resource> getResourceByIds(Subject subject, Integer[] resourceIds, boolean attachParentResource,
+        PageControl pageControl);
 
     /**
      * @see ResourceManagerRemote#getResourceTree(int)

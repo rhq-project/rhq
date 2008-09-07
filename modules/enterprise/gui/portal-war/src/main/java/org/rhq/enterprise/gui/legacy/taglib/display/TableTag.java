@@ -486,8 +486,13 @@ public class TableTag extends TablePropertyTag {
                 } else if (tag.getProperty().equals("null")) {
                     value = ""; /* user doesn't want output, using c:set or something */
                 } else {
-                    value = this.lookup(pageContext, "smartRow", tag.getProperty(), null, true);
-                    value = applyDecorator(colDecorator, value);
+                    try {
+                        value = this.lookup(pageContext, "smartRow", tag.getProperty(), null, true);
+                        value = applyDecorator(colDecorator, value);
+                    } catch (Throwable t) {
+                        log.warn("Exception during processing of TableTag: " + t);
+                        value = null;
+                    }
                 }
             }
 

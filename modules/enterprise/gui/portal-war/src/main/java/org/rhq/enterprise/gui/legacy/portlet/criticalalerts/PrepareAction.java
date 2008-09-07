@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.legacy.portlet.criticalalerts;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -27,6 +28,7 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -70,7 +72,8 @@ public class PrepareAction extends TilesAction {
         PageControl pageControl = WebUtility.getPageControl(request);
 
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        PageList<Resource> resources = resourceManager.getResourceByIds(user.getSubject(), resourcesIds, pageControl);
+        PageList<Resource> resources = resourceManager.getResourceByIds(user.getSubject(), resourcesIds, false,
+            pageControl);
 
         request.setAttribute("criticalAlertsList", resources);
         request.setAttribute("criticalAlertsTotalSize", resources.getTotalSize());

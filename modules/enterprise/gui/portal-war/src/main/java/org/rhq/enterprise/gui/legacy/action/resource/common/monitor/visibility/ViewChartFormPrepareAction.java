@@ -52,20 +52,17 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.common.servlet.HighLowMetricValue;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.DefaultConstants;
-import org.rhq.enterprise.gui.legacy.KeyConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.beans.ChartDataBean;
 import org.rhq.enterprise.gui.legacy.beans.ChartedMetricBean;
 import org.rhq.enterprise.gui.legacy.beans.NumericMetricDataPoint;
 import org.rhq.enterprise.gui.legacy.exception.ParameterNotFoundException;
-import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.auth.SessionNotFoundException;
-import org.rhq.enterprise.server.auth.SessionTimeoutException;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
@@ -252,7 +249,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
                 resIds[i] = Integer.parseInt(r[i]);
             }
 
-            allResources = resMgr.getResourceByIds(subject, resIds, PageControl.getUnlimitedInstance());
+            allResources = resMgr.getResourceByIds(subject, resIds, false, PageControl.getUnlimitedInstance());
             resources.add(allResources);
 
             // now see which ones are checked
@@ -304,13 +301,12 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         return null;
     }
 
-    private ActionForward removeBadDashboardLink(HttpServletRequest request) throws Exception,
-        SessionNotFoundException {
+    private ActionForward removeBadDashboardLink(HttpServletRequest request) throws Exception, SessionNotFoundException {
         // This was probably a bad favorites chart
         String query = request.getQueryString();
         WebUser user = SessionUtils.getWebUser(request.getSession());
         ChartUtility chartUtility = new ChartUtility(user);
-        chartUtility.remove( query );
+        chartUtility.remove(query);
         return null;
     }
 

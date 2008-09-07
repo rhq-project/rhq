@@ -368,7 +368,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
         }
 
         AgentClient ac = agentClientManager.getAgentClient(agent);
-        Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId, DataType.MEASUREMENT, names);
+        Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId,
+            DataType.MEASUREMENT, names);
 
         return values;
     }
@@ -841,7 +842,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
     public Map<MeasurementDefinition, List<MetricDisplaySummary>> getMetricDisplaySummariesForMetricsCompare(
         Subject subject, Integer[] resourceIds, int[] definitionIds, long begin, long end) throws MeasurementException {
         // Getting all the Resource objects in one call, and caching here for the rest of this method
-        PageList<Resource> resources = resourceManager.getResourceByIds(subject, resourceIds, PageControl
+        PageList<Resource> resources = resourceManager.getResourceByIds(subject, resourceIds, false, PageControl
             .getUnlimitedInstance());
 
         // I want to only get the definition objects once for each ID, and cache here for the rest of this method

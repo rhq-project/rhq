@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.legacy.util;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
@@ -45,7 +46,7 @@ public class DashboardUtils {
         }
 
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        return resourceManager.getResourceByIds(user.getSubject(), resourceIds, pc);
+        return resourceManager.getResourceByIds(user.getSubject(), resourceIds, false, pc);
     }
 
     public static Integer[] preferencesAsResourceIds(String key, WebUser user) {

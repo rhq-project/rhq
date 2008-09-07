@@ -403,11 +403,14 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
           <display:column width="1%" property="id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"fromToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
             <display:checkboxdecorator name="availableResource" onclick="ToggleSelection(this, widgetProperties)" styleClass="availableListMember" />
           </display:column>
+          <display:column property="parentResource.name" title="resource.group.inventory.ParentTH" 
+                          width="30%" 
+                          sortAttr="res.parentResource.name" />
           <display:column property="name" title="resource.group.inventory.NameTH" 
-                          width="40%" 
+                          width="30%" 
                           sortAttr="res.name" />
           <display:column property="resourceType.name" title="resource.group.inventory.TypeTH" 
-                          width="59%" 
+                          width="39%" 
                           sortAttr="res.resourceType.name" >
           </display:column>
         </display:table>
@@ -454,11 +457,14 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
           <display:column width="1%" property="id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"toToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
             <display:checkboxdecorator name="pendingResource" onclick="ToggleSelection(this, widgetProperties)" styleClass="pendingListMember" />
           </display:column>
+          <display:column property="parentResource.name" title="resource.group.inventory.ParentTH" 
+                          width="30%" 
+                          sortAttr="res.parentResource.name" />
           <display:column property="name" title="resource.group.inventory.NameTH" 
-                          width="40%" 
+                          width="30%" 
                           sortAttr="res.name" />
           <display:column property="resourceType.name" title="resource.group.inventory.TypeTH" 
-                          width="59%" 
+                          width="39%" 
                           sortAttr="res.resourceType.name" >
              <%-- TODO GH: I don't see this doing anything at all? <display:resourcedecorator resource="${resource}" type="true" />--%>
           </display:column>

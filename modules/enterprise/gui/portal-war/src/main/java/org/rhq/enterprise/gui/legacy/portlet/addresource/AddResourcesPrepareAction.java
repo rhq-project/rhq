@@ -19,9 +19,11 @@
 package org.rhq.enterprise.gui.legacy.portlet.addresource;
 
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.Action;
@@ -29,6 +31,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.LabelValueBean;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -88,8 +91,8 @@ public class AddResourcesPrepareAction extends Action {
         // get the resources, so we can display name & description in the UI
         log.debug("get page of pending resources selected by user");
         Integer[] pendingResourceArray = StringUtility.getIntegerArray(pendingResourceList);
-        PageList<Resource> pendingResources = resourceManager
-            .getResourceByIds(subject, pendingResourceArray, pcPending);
+        PageList<Resource> pendingResources = resourceManager.getResourceByIds(subject, pendingResourceArray, false,
+            pcPending);
 
         // give 'em to the jsp page
         log.debug("put selected page of pending resources in request");

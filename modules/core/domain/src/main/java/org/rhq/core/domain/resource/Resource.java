@@ -510,6 +510,31 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "   AND (res.inventoryStatus = :inventoryStatus) " //
         + "   AND (UPPER(res.name) LIKE :search OR :search is null) " //
         + "   AND res.id NOT IN ( :excludeIds ) "),
+    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_WITH_PARENT_FOR_RESOURCE_GROUP, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource AS res " //
+        + "  LEFT JOIN FETCH res.parentResource " //
+        + " WHERE res.id NOT IN " //
+        + "       ( SELECT ires.id " //
+        + "           FROM Resource ires JOIN ires.explicitGroups AS irg " //
+        + "          WHERE irg.id = :groupId ) " //
+        + "   AND (:type = res.resourceType OR :type IS NULL) " //
+        + "   AND (:category = res.resourceType.category OR :category IS NULL) " //
+        + "   AND (res.inventoryStatus = :inventoryStatus) " //
+        + "   AND (UPPER(res.name) LIKE :search OR :search is null) "),
+    @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_WITH_PARENT_FOR_RESOURCE_GROUP_WITH_EXCLUDES, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource AS res " //
+        + "  LEFT JOIN FETCH res.parentResource " //
+        + " WHERE res.id NOT IN " //
+        + "       ( SELECT ires.id " //
+        + "           FROM Resource ires JOIN ires.explicitGroups AS irg " //
+        + "          WHERE irg.id = :groupId ) " //
+        + "   AND (:type = res.resourceType OR :type IS NULL) " //
+        + "   AND (:category = res.resourceType.category OR :category IS NULL) " //
+        + "   AND (res.inventoryStatus = :inventoryStatus) " //
+        + "   AND (UPPER(res.name) LIKE :search OR :search is null) " //
+        + "   AND res.id NOT IN ( :excludeIds ) "),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_DASHBOARD_PORTLET, query = "" //
         + "SELECT res " //
         + "  FROM Resource AS res " //
@@ -529,6 +554,13 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + " WHERE res.id IN ( :ids ) " //
         + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject) "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_IDS_ADMIN, query = "SELECT res FROM Resource res WHERE res.id IN ( :ids )"),
+    @NamedQuery(name = Resource.QUERY_FIND_WITH_PARENT_BY_IDS, query = "" //
+        + "SELECT res " //
+        + "  FROM Resource res " //
+        + "  LEFT JOIN FETCH res.parentResource " //
+        + " WHERE res.id IN ( :ids ) " //
+        + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject) "),
+    @NamedQuery(name = Resource.QUERY_FIND_WITH_PARENT_BY_IDS_ADMIN, query = "SELECT res FROM Resource res LEFT JOIN FETCH res.parentResource WHERE res.id IN ( :ids )"),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite(res, a.availabilityType, " //
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 8), " // we want MANAGE_MEASUREMENTS
@@ -678,11 +710,17 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP = "Resource.getAvailableResourcesForResourceGroup";
     public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP_WITH_EXCLUDES = "Resource.getAvailableResourcesForResourceGroupWithExcludes";
 
+    public static final String QUERY_GET_AVAILABLE_RESOURCES_WITH_PARENT_FOR_RESOURCE_GROUP = "Resource.getAvailableResourcesWithParentForResourceGroup";
+    public static final String QUERY_GET_AVAILABLE_RESOURCES_WITH_PARENT_FOR_RESOURCE_GROUP_WITH_EXCLUDES = "Resource.getAvailableResourcesWithParentForResourceGroupWithExcludes";
+
     public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_DASHBOARD_PORTLET = "Resource.getAvailableResourcesForDashboardPortlet";
     public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_DASHBOARD_PORTLET_WITH_EXCLUDES = "Resource.getAvailableResourcesForDashboardPortletWithExcludes";
 
     public static final String QUERY_FIND_BY_IDS = "Resource.findByIds";
     public static final String QUERY_FIND_BY_IDS_ADMIN = "Resource.findByIds_admin";
+
+    public static final String QUERY_FIND_WITH_PARENT_BY_IDS = "Resource.findWithParentByIds";
+    public static final String QUERY_FIND_WITH_PARENT_BY_IDS_ADMIN = "Resource.findWithParentByIds_admin";
 
     public static final String QUERY_FIND_COMPOSITE = "Resource.findComposite";
     public static final String QUERY_FIND_COMPOSITE_COUNT = "Resource.findComposite_count";

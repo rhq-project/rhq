@@ -20,8 +20,10 @@ package org.rhq.enterprise.gui.legacy.action.resource.group.inventory;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.Action;
@@ -29,6 +31,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.LabelValueBean;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -101,7 +104,9 @@ public class AddGroupResourcesFormPrepareAction extends Action {
         ResourceGroupManagerLocal resourceGroupManager = LookupUtil.getResourceGroupManager();
 
         log.trace("getting pending resources for group [" + groupId + "]");
-        PageList<Resource> pendingResources = resourceManager.getResourceByIds(user, pendingResourceIds, pcPending);
+        // pass true so that the parent is each resource is connected
+        PageList<Resource> pendingResources = resourceManager.getResourceByIds(user, pendingResourceIds, true,
+            pcPending);
 
         request.setAttribute(Constants.PENDING_RESOURCES_ATTR, pendingResources);
         request.setAttribute(Constants.NUM_PENDING_RESOURCES_ATTR, pendingResources.size());
@@ -135,7 +140,7 @@ public class AddGroupResourcesFormPrepareAction extends Action {
         return null;
     }
 
-    public ResourceCategory getResourceCategory(String categoryFilter) {
+    private ResourceCategory getResourceCategory(String categoryFilter) {
         if ((categoryFilter == null) || categoryFilter.equals(CATEGORY_ALL)) {
             return null;
         } else {
@@ -148,7 +153,7 @@ public class AddGroupResourcesFormPrepareAction extends Action {
      *
      * @return a list of group types from the list
      */
-    public static List buildResourceTypes() {
+    private static List<LabelValueBean> buildResourceTypes() {
         List<LabelValueBean> resourceCategoryTypes = new ArrayList<LabelValueBean>();
 
         resourceCategoryTypes.add(new LabelValueBean(CATEGORY_ALL, CATEGORY_ALL));

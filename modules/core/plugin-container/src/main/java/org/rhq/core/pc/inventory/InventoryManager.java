@@ -1685,7 +1685,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         this.inventoryLock.writeLock().lock();
         try {
             int removedResources = 0;
-            for (String uuid : this.resourceContainers.keySet()) {
+            /* 
+             * use a separate map for iterating, so that later calls to resourceContainers.remove(ResourceContainer) 
+             * can be called later without throwing ConcurrentModificationException
+             */
+            Map<String, ResourceContainer> mapForIterating = new HashMap<String, ResourceContainer>(
+                this.resourceContainers);
+            for (String uuid : mapForIterating.keySet()) {
                 if (!allUuids.contains(uuid)) {
                     ResourceContainer resourceContainer = this.resourceContainers.get(uuid);
                     Resource resource = resourceContainer.getResource();

@@ -217,6 +217,20 @@
       </h:outputLink>
    </rich:column>
 
+   <rich:column >
+      <f:facet name="header">
+         <onc:sortableColumnHeader sort="parent.name">
+            <h:outputText styleClass="headerText" value="Parent"/>
+         </onc:sortableColumnHeader>
+      </f:facet>
+
+      <h:outputLink value="/resource/common/monitor/Visibility.do">
+         <f:param name="id" value="#{resourcWithAvailability.parent.id}"/>
+         <f:param name="mode" value="currentHealth"/>
+         <h:outputText value="#{resourcWithAvailability.parent.name}"/>
+      </h:outputLink>
+   </rich:column>
+
    <rich:column>
       <f:facet name="header">
          <onc:sortableColumnHeader sort="res.resourceType.category">
@@ -262,7 +276,7 @@
 
    <f:facet name="footer">
       <rich:columnGroup>
-         <rich:column colspan="7" width="100%">
+         <rich:column colspan="8" width="100%">
          
             <h:commandButton action="#{ListResourceGroupMembersUIBean.addNewResources}"
                              value="ADD TO GROUP"

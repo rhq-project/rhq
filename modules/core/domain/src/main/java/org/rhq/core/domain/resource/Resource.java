@@ -446,17 +446,21 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "  LEFT JOIN res.availability a WITH a.endTime is null " //
         + " WHERE rg = :group "),
     @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP, query = "" //
-        + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType, " //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, " //
+        + " (SELECT parentRes FROM Resource parentRes WHERE parentRes = res.parentResource), " //
+        + " a.availabilityType, " //
         + "(SELECT count(ier) FROM rg.explicitResources ier WHERE ier = res), 1) " //
-        + "  FROM ResourceGroup rg JOIN rg.implicitResources res " //
+        + "  FROM ResourceGroup rg JOIN rg.implicitResources res LEFT JOIN res.parentResource parent " //
         + "  LEFT JOIN res.availability a WITH a.endTime is null " //
         + " WHERE rg = :group " //
         + "   AND rg.id IN (SELECT irg.id FROM ResourceGroup irg JOIN irg.roles r JOIN r.subjects s WHERE s = :subject) "
         + "   AND res.inventoryStatus = 'COMMITTED' "),
     @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_ADMIN, query = "" //
-        + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType, " //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, " //
+        + " (SELECT parentRes FROM Resource parentRes WHERE parentRes = res.parentResource), " //
+        + " a.availabilityType, " //
         + "(SELECT count(ier) FROM rg.explicitResources ier WHERE ier = res), 1) "
-        + "  FROM ResourceGroup rg JOIN rg.implicitResources res " //
+        + "  FROM ResourceGroup rg JOIN rg.implicitResources res LEFT JOIN res.parentResource parent " //
         + "  LEFT JOIN res.availability a WITH a.endTime is null "
         + " WHERE rg = :group "
         + "   AND res.inventoryStatus = 'COMMITTED' "),
@@ -513,7 +517,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_WITH_PARENT_FOR_RESOURCE_GROUP, query = "" //
         + "SELECT res " //
         + "  FROM Resource AS res " //
-        + "  LEFT JOIN FETCH res.parentResource " //
+        + "  LEFT JOIN FETCH res.parentResource parent " //
         + " WHERE res.id NOT IN " //
         + "       ( SELECT ires.id " //
         + "           FROM Resource ires JOIN ires.explicitGroups AS irg " //
@@ -525,7 +529,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_WITH_PARENT_FOR_RESOURCE_GROUP_WITH_EXCLUDES, query = "" //
         + "SELECT res " //
         + "  FROM Resource AS res " //
-        + "  LEFT JOIN FETCH res.parentResource " //
+        + "  LEFT JOIN FETCH res.parentResource parent " //
         + " WHERE res.id NOT IN " //
         + "       ( SELECT ires.id " //
         + "           FROM Resource ires JOIN ires.explicitGroups AS irg " //
@@ -557,10 +561,10 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_FIND_WITH_PARENT_BY_IDS, query = "" //
         + "SELECT res " //
         + "  FROM Resource res " //
-        + "  LEFT JOIN FETCH res.parentResource " //
+        + "  LEFT JOIN FETCH res.parentResource parent " //
         + " WHERE res.id IN ( :ids ) " //
         + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject) "),
-    @NamedQuery(name = Resource.QUERY_FIND_WITH_PARENT_BY_IDS_ADMIN, query = "SELECT res FROM Resource res LEFT JOIN FETCH res.parentResource WHERE res.id IN ( :ids )"),
+    @NamedQuery(name = Resource.QUERY_FIND_WITH_PARENT_BY_IDS_ADMIN, query = "SELECT res FROM Resource res LEFT JOIN FETCH res.parentResource parent WHERE res.id IN ( :ids )"),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite(res, a.availabilityType, " //
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 8), " // we want MANAGE_MEASUREMENTS
@@ -592,6 +596,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 6), " // we want CREATE_CHILD_RESOURCES, 6
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 5)) " // we want DELETE_RESOURCES, 5
         + "FROM Resource res " //
+        + "     LEFT JOIN res.parentResource res " //
         + "     LEFT JOIN res.availability a WITH a.endTime is null " //
         + "WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "  AND (:category = res.resourceType.category OR :category is null) " //
@@ -621,6 +626,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "       (SELECT ires FROM Resource ires WHERE ires = res.parentResource), " //
         + "       a.availabilityType ) " //
         + "  FROM Resource res " //
+        + "       LEFT JOIN res.parentResource parent " //
         + "       LEFT JOIN res.availability a WITH a.endTime is null " //
         + " WHERE (:category = res.resourceType.category OR :category is null) " //
         + "   AND (:parentResource = res.parentResource OR :parentResource is null)" //

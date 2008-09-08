@@ -22,6 +22,9 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 
 public class ResourceWithAvailability extends ResourceMembershipComposite {
+
+    private static final long serialVersionUID = 1L;
+
     private AvailabilityType availability;
 
     public ResourceWithAvailability(Resource resource, AvailabilityType availabilityType) {
@@ -31,7 +34,13 @@ public class ResourceWithAvailability extends ResourceMembershipComposite {
 
     public ResourceWithAvailability(Resource resource, AvailabilityType availabilityType, Number explicitCount,
         Number implicitCount) {
-        super(resource, explicitCount, implicitCount);
+        super(resource, null, explicitCount, implicitCount);
+        this.availability = availabilityType;
+    }
+
+    public ResourceWithAvailability(Resource resource, Resource parent, AvailabilityType availabilityType,
+        Number explicitCount, Number implicitCount) {
+        super(resource, parent, explicitCount, implicitCount);
         this.availability = availabilityType;
     }
 

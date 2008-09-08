@@ -24,6 +24,9 @@ import java.util.Collection;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
  * Tracks the result set for a paginated data lookup. Includes the data and the total rows that are available.
  *
@@ -33,6 +36,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class PageList<E> extends ArrayList<E> implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    private static final Log LOG = LogFactory.getLog(PageList.class);
 
     private int totalSize = 0;
     private boolean isUnbounded; // Is the total size of the list known?
@@ -58,7 +63,7 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
         this.totalSize = totalSize;
         if (collection.size() == 0 && totalSize > 0) {
             throw new IllegalArgumentException(
-                "Can not create a PageList passing an empty collection when the passed totalSize attribute was non-zero");
+                "PageList was passed an empty collection but the 'totalSize' attribute was " + totalSize);
         }
         this.isUnbounded = false;
         this.pageControl = pageControl;

@@ -18,8 +18,8 @@
  */
 package org.rhq.core.domain.resource.composite;
 
-import java.util.Set;
 import java.io.Serializable;
+import java.util.Set;
 
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -32,12 +32,18 @@ public class ResourceMembershipComposite implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Resource resource;
+    private Resource parent;
     private ResourceFacets resourceFacets;
     private boolean explicit;
     private boolean implicit;
 
     public ResourceMembershipComposite(Resource resource, Number explicitCount, Number implicitCount) {
+        this(resource, null, explicitCount, implicitCount);
+    }
+
+    public ResourceMembershipComposite(Resource resource, Resource parent, Number explicitCount, Number implicitCount) {
         this.resource = resource;
+        this.parent = parent;
         ResourceType resourceType = this.resource.getResourceType();
         this.resourceFacets = new ResourceFacets(!resourceType.getMetricDefinitions().isEmpty(), resourceType
             .getResourceConfigurationDefinition() != null, !resourceType.getOperationDefinitions().isEmpty(),
@@ -49,6 +55,10 @@ public class ResourceMembershipComposite implements Serializable {
 
     public Resource getResource() {
         return resource;
+    }
+
+    public Resource getParent() {
+        return parent;
     }
 
     public ResourceFacets getResourceFacets() {

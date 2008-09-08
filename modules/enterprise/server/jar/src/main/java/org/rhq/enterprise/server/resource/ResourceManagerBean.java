@@ -1426,6 +1426,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
+    // RHQ-796, queries not return the parent resource attached
     public PageList<ResourceWithAvailability> getImplicitResourceWithAvailabilityByResourceGroup(Subject subject,
         ResourceGroup group, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");

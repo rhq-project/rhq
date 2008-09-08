@@ -1054,7 +1054,7 @@ public class OperationManagerBean implements OperationManagerLocal {
                         history.setStatus(OperationRequestStatus.FAILURE);
                         notifyAlertConditionCacheManager("checkForTimedOutOperations", history);
 
-                        LOG.debug("Operation seems to have been orphaned - timing it out: " + history);
+                        LOG.info("Operation seems to have been orphaned - timing it out: " + history);
 
                         checkForCompletedGroupOperation(history);
                     }
@@ -1083,12 +1083,18 @@ public class OperationManagerBean implements OperationManagerLocal {
             List<GroupOperationHistory> groupHistories = query.getResultList();
             for (GroupOperationHistory groupHistory : groupHistories) {
                 boolean hadFailure = false;
+                long timeout = getOperationTimeout(groupHistory.getOperationDefinition(), groupHistory.getParameters());
+                if (groupHistory.getDuration() < timeout) {
+                    continue; // this group operation has not timed out yet
+                }
+
                 for (ResourceOperationHistory resourceHistory : groupHistory.getResourceOperationHistories()) {
                     if (resourceHistory.getStatus() != OperationRequestStatus.SUCCESS) {
                         hadFailure = true;
                         break;
                     }
                 }
+                groupHistory.setErrorMessage("One or more child resource operations timed out and/or did not complete");
                 groupHistory.setStatus(hadFailure ? OperationRequestStatus.FAILURE : OperationRequestStatus.SUCCESS);
             }
         } catch (Throwable t) {

@@ -81,7 +81,8 @@
                                     value="javascript:displayMessageModal('Error Message','#{item.errorMessage}')">
                          <h:outputText value="#{item.status}"/>
                       </h:outputLink>
-                      <h:outputText value="#{item.status}"/>
+                      <h:outputText rendered="#{item.status eq 'SUCCESS' or item.status eq 'INPROGRESS'}"
+                                    value="#{item.status}"/>
 	               </td>
 	            </tr>
 	         </table>

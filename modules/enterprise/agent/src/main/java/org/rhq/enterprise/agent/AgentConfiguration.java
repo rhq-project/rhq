@@ -142,7 +142,7 @@ public class AgentConfiguration {
     }
 
     /**
-     * Returns the JON Server's transport type (socket, http, etc).
+     * Returns the RHQ Server's transport type (socket, http, etc).
      *
      * @return the server transport type
      */
@@ -153,9 +153,9 @@ public class AgentConfiguration {
     }
 
     /**
-     * Returns the JON Server's bind address on which it is listening for incoming commands.
+     * Returns the RHQ Server's bind address on which it is listening for incoming commands.
      *
-     * @return the JON Server bind address
+     * @return the RHQ Server bind address
      */
     public String getServerBindAddress() {
         String address;
@@ -171,9 +171,9 @@ public class AgentConfiguration {
     }
 
     /**
-     * Returns the JON Server's bind port on which it is listening for incoming commands.
+     * Returns the RHQ Server's bind port on which it is listening for incoming commands.
      *
-     * @return the JON Server's bind port
+     * @return the RHQ Server's bind port
      */
     public int getServerBindPort() {
         int value = m_preferences.getInt(AgentConfigurationConstants.SERVER_BIND_PORT,
@@ -182,10 +182,10 @@ public class AgentConfiguration {
     }
 
     /**
-     * Returns the JON Server's transport parameters which are used to further customize the JON Server and its
+     * Returns the RHQ Server's transport parameters which are used to further customize the RHQ Server and its
      * transport subsystem.
      *
-     * @return the JON Server transport parameters
+     * @return the RHQ Server transport parameters
      */
     public String getServerTransportParams() {
         String value = m_preferences.get(AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS,
@@ -198,7 +198,7 @@ public class AgentConfiguration {
      * {@link #getServerTransport()}, {@link #getServerBindAddress()}, {@link #getServerBindPort()}, and
      * {@link #getServerTransportParams()}.
      *
-     * @return the locator URI that should be used to try to communicate with the JON Server.
+     * @return the locator URI that should be used to try to communicate with the RHQ Server.
      */
     public String getServerLocatorUri() {
         String transport = getServerTransport();
@@ -223,7 +223,7 @@ public class AgentConfiguration {
     }
 
     /**
-     * Returns the auto-detection flag that, if true, tells the agent to attempt to auto-detect the JON Server coming
+     * Returns the auto-detection flag that, if true, tells the agent to attempt to auto-detect the RHQ Server coming
      * online and going offline.
      *
      * @return <code>true</code> if the agent should listen for the server coming online and going offline; <code>
@@ -238,7 +238,7 @@ public class AgentConfiguration {
     }
 
     /**
-     * Returns <code>true</code> if the agent should register itself with the JON Server when the agent starts up. If
+     * Returns <code>true</code> if the agent should register itself with the RHQ Server when the agent starts up. If
      * <code>false</code>, the agent will not automatically attempt to register itself at startup - in which case the
      * agent will assume it is either already registered or it will get registered by some other mechanism.
      *
@@ -252,7 +252,7 @@ public class AgentConfiguration {
     }
 
     /**
-     * This defines how many milliseconds the agent should wait at startup for the JON Server to be detected. If the JON
+     * This defines how many milliseconds the agent should wait at startup for the RHQ Server to be detected. If the RHQ
      * Server has not started up in the given amount of time, the agent will continue initializing and expect the server
      * to come up later. If this is 0, the agent will not wait at all.
      *

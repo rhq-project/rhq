@@ -70,7 +70,7 @@
 
       <navigation-case>
          <from-outcome>addAgentToAffinityGroup</from-outcome>
-         <to-view-id>/rhq/ha/affinityGroupAgents.xhtml?affinityGroupId=#{param.affinityGroupId}</to-view-id>
+         <to-view-id>/rhq/ha/affinityGroupAgents.xhtml?affinityGroupId=#{param.affinityGroupId}&amp;mode=#{param.mode}</to-view-id>
          <redirect/>
       </navigation-case>
 

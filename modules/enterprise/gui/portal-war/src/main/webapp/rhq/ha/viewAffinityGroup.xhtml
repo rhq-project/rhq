@@ -98,21 +98,13 @@
                             value="#{agentsDataModel}"
                             var="agentItem"
                             width="100%"
-                            columnsWidth="1%, 15%, 10%, 10%, 10%"
+                            columnsWidth="15%, 10%, 10%, 10%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 
                <f:facet name="PageControlView">
                   <onc:paginationControl id="AffinityGroupAgentMembersView" />
                </f:facet>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:allSelect target="selectedAgents" />
-                  </f:facet>
-                  
-                  <onc:select name="selectedAgents" value="#{agentItem.id}" />
-               </rich:column>
 
                <rich:column rendered="#{param.debug}">
                   <f:facet name="header">
@@ -193,12 +185,10 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 8:5 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 8 : 5}" width="100%">
+                     <rich:column colspan="#{param.debug ? 7 : 4}" width="100%">
 
                         <h:commandButton action="#{ViewAffinityGroupAgentMembersUIBean.addAgentToAffinityGroup}"
-                                         value="ADD TO GROUP" styleClass="on-pager-button buttonsmall"/>
-                        <onc:selectCommandButton action="#{ChannelResourcesUIBean.deleteSelectedChannelResources}"
-                                                 value="REMOVE FROM GROUP" target="selectedChannelResources" styleClass="on-pager-button buttonsmall"/>
+                                         value="EDIT GROUP AGENTS" styleClass="on-pager-button buttonsmall"/>
 
                         <ui:param name="paginationDataTableName" value="agentsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{agentsDataModel}"/>

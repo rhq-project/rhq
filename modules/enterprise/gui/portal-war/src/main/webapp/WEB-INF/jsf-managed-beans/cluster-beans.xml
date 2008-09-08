@@ -57,5 +57,17 @@
       <managed-bean-class>org.rhq.enterprise.gui.ha.ListAffinityGroupsUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
-   
+
+   <managed-bean>
+      <managed-bean-name>AffinityGroupSubscribedAgentsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.ha.AffinityGroupSubscribedAgentsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>AffinityGroupUnsubscribedAgentsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.ha.AffinityGroupUnsubscribedAgentsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
 </faces-config>

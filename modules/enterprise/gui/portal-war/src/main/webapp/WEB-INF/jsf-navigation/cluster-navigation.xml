@@ -69,6 +69,12 @@
       </navigation-case>
 
       <navigation-case>
+         <from-outcome>addAgentToAffinityGroup</from-outcome>
+         <to-view-id>/rhq/ha/affinityGroupAgents.xhtml?affinityGroupId=#{param.affinityGroupId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
          <!-- sorting rule --> 
          <from-outcome>sort</from-outcome>
          <to-view-id>/rhq/ha/viewAffinityGroup.xhtml?mode=view&amp;affinityGroupId=#{param.affinityGroupId}</to-view-id>
@@ -98,6 +104,24 @@
          <to-view-id>/rhq/ha/listAffinityGroups.xhtml</to-view-id>
          <redirect/>
       </navigation-case> 
+   </navigation-rule>
+
+   <!-- Agent add/remove from group -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/affinityGroupAgents.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>successOrFailure</from-outcome>
+         <to-view-id>/rhq/ha/affinityGroupAgents.xhtml?affinityGroupId=#{param.affinityGroupId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/affinityGroupAgents.xhtml?affinityGroupId=#{param.affinityGroupId}</to-view-id>
+         <redirect/>
+      </navigation-case>
    </navigation-rule>
 
 </faces-config>

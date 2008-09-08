@@ -35,17 +35,29 @@ import org.rhq.core.domain.util.PageList;
 public interface AffinityGroupManagerLocal {
     AffinityGroup getById(Subject subject, int affinityGroupId);
 
-    PageList<Server> getServerMembers(Subject subject, int affinityGroupId, PageControl pageControl);
-
-    PageList<Agent> getAgentMembers(Subject subject, int affinityGroupId, PageControl pageControl);
-
-    AffinityGroup update(Subject subject, AffinityGroup affinityGroup);
-
-    PageList<AffinityGroupCountComposite> getComposites(Subject subject, PageControl pageControl);
-
-    int getAffinityGroupCount();
-
     int create(Subject subject, AffinityGroup affinityGroup);
 
     int delete(Subject subject, Integer[] affinityGroupIds);
+
+    AffinityGroup update(Subject subject, AffinityGroup affinityGroup);
+
+    void addAgentsToGroup(Subject subject, int affinityGroupId, Integer[] agentIds);
+
+    void removeAgentsFromGroup(Subject subject, Integer[] agentIds);
+
+    void addServersToGroup(Subject subject, int affinityGroupId, Integer[] serverIds);
+
+    void removeServersFromGroup(Subject subject, Integer[] serverIds);
+
+    int getAffinityGroupCount();
+
+    PageList<Server> getServerMembers(Subject subject, int affinityGroupId, PageControl pageControl);
+
+    PageList<Server> getServerNonMembers(Subject subject, int affinityGroupId, PageControl pageControl);
+
+    PageList<Agent> getAgentMembers(Subject subject, int affinityGroupId, PageControl pageControl);
+
+    PageList<Agent> getAgentNonMembers(Subject subject, int affinityGroupId, PageControl pageControl);
+
+    PageList<AffinityGroupCountComposite> getComposites(Subject subject, PageControl pageControl);
 }

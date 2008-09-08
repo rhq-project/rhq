@@ -64,6 +64,22 @@ import org.rhq.core.domain.resource.Agent;
         + "UPDATE Server s " //
         + "   SET s.affinityGroup = NULL " //
         + " WHERE s.affinityGroup.id IN ( :affinityGroupIds ) "), //
+    @NamedQuery(name = AffinityGroup.QUERY_UPDATE_ADD_AGENTS, query = "" //
+        + "UPDATE Agent a " //
+        + "   SET a.affinityGroup = :affinityGroup " //
+        + " WHERE a.id IN ( :agentIds ) "), //
+    @NamedQuery(name = AffinityGroup.QUERY_UPDATE_ADD_SERVERS, query = "" //
+        + "UPDATE Server s " //
+        + "   SET s.affinityGroup = :affinityGroup " //
+        + " WHERE s.id IN ( :serverIds ) "), //
+    @NamedQuery(name = AffinityGroup.QUERY_UPDATE_REMOVE_SPECIFIC_AGENTS, query = "" //
+        + "UPDATE Agent a " //
+        + "   SET a.affinityGroup = NULL " //
+        + " WHERE a.id IN ( :agentIds ) "), //
+    @NamedQuery(name = AffinityGroup.QUERY_UPDATE_REMOVE_SPECIFIC_SERVERS, query = "" //
+        + "UPDATE Server s " //
+        + "   SET s.affinityGroup = NULL " //
+        + " WHERE s.id IN ( :serverIds ) "), //
     @NamedQuery(name = AffinityGroup.QUERY_DELETE_BY_IDS, query = "" //
         + "DELETE FROM AffinityGroup ag " //
         + " WHERE ag.id IN ( :affinityGroupIds ) ") // 
@@ -78,6 +94,10 @@ public class AffinityGroup implements Serializable {
     public static final String QUERY_FIND_ALL_COMPOSITES = "AffinityGroup.findAllComposites";
     public static final String QUERY_UPDATE_REMOVE_AGENTS = "AffinityGroup.updateRemoveAgents";
     public static final String QUERY_UPDATE_REMOVE_SERVERS = "AffinityGroup.updateRemoveServers";
+    public static final String QUERY_UPDATE_ADD_AGENTS = "AffinityGroup.updateAddAgents";
+    public static final String QUERY_UPDATE_ADD_SERVERS = "AffinityGroup.updateAddServers";
+    public static final String QUERY_UPDATE_REMOVE_SPECIFIC_AGENTS = "AffinityGroup.updateRemoveSpecificAgents";
+    public static final String QUERY_UPDATE_REMOVE_SPECIFIC_SERVERS = "AffinityGroup.updateRemoveSpecificServers";
     public static final String QUERY_DELETE_BY_IDS = "AffinityGroup.deleteByIds";
 
     @Column(name = "ID", nullable = false)

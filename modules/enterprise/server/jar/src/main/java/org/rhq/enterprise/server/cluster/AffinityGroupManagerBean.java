@@ -81,6 +81,21 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<Agent> getAgentNonMembers(Subject subject, int affinityGroupId, PageControl pageControl) {
+        pageControl.initDefaultOrderingField("a.name");
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Agent.QUERY_FIND_WITHOUT_AFFINITY_GROUP,
+            pageControl);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Agent.QUERY_FIND_WITHOUT_AFFINITY_GROUP);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<Agent> results = query.getResultList();
+
+        return new PageList<Agent>(results, (int) count, pageControl);
+    }
+
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<Server> getServerMembers(Subject subject, int affinityGroupId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("s.name");
 
@@ -90,6 +105,21 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
 
         query.setParameter("affinityGroupId", affinityGroupId);
         countQuery.setParameter("affinityGroupId", affinityGroupId);
+
+        long count = (Long) countQuery.getSingleResult();
+        List<Server> results = query.getResultList();
+
+        return new PageList<Server>(results, (int) count, pageControl);
+    }
+
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<Server> getServerNonMembers(Subject subject, int affinityGroupId, PageControl pageControl) {
+        pageControl.initDefaultOrderingField("s.name");
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Server.QUERY_FIND_WITHOUT_AFFINITY_GROUP,
+            pageControl);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Server.QUERY_FIND_WITHOUT_AFFINITY_GROUP);
 
         long count = (Long) countQuery.getSingleResult();
         List<Server> results = query.getResultList();
@@ -156,4 +186,49 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
         return removedAffinityGroups;
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void addAgentsToGroup(Subject subject, int affinityGroupId, Integer[] agentIds) {
+        List<Integer> agentIdsList = Arrays.asList(agentIds);
+
+        AffinityGroup group = entityManager.find(AffinityGroup.class, affinityGroupId);
+
+        Query query = entityManager.createNamedQuery(AffinityGroup.QUERY_UPDATE_ADD_AGENTS);
+        query.setParameter("affinityGroup", group);
+        query.setParameter("agentIds", agentIdsList);
+
+        query.executeUpdate();
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void removeAgentsFromGroup(Subject subject, Integer[] agentIds) {
+        List<Integer> agentIdsList = Arrays.asList(agentIds);
+
+        Query query = entityManager.createNamedQuery(AffinityGroup.QUERY_UPDATE_REMOVE_SPECIFIC_AGENTS);
+        query.setParameter("agentIds", agentIdsList);
+
+        query.executeUpdate();
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void addServersToGroup(Subject subject, int affinityGroupId, Integer[] serverIds) {
+        List<Integer> serverIdsList = Arrays.asList(serverIds);
+
+        AffinityGroup group = entityManager.find(AffinityGroup.class, affinityGroupId);
+
+        Query query = entityManager.createNamedQuery(AffinityGroup.QUERY_UPDATE_ADD_SERVERS);
+        query.setParameter("affinityGroup", group);
+        query.setParameter("serverIds", serverIdsList);
+
+        query.executeUpdate();
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void removeServersFromGroup(Subject subject, Integer[] serverIds) {
+        List<Integer> serverIdsList = Arrays.asList(serverIds);
+
+        Query query = entityManager.createNamedQuery(AffinityGroup.QUERY_UPDATE_REMOVE_SPECIFIC_SERVERS);
+        query.setParameter("serverIds", serverIdsList);
+
+        query.executeUpdate();
+    }
 }

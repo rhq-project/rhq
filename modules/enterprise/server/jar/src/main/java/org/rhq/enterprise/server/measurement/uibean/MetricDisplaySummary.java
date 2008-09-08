@@ -19,9 +19,13 @@
 package org.rhq.enterprise.server.measurement.uibean;
 
 import java.util.Date;
+
 import org.rhq.core.domain.resource.Resource;
 
 public class MetricDisplaySummary extends BaseMetricDisplay implements java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private int alertCount = 0;
     private int oobCount = 0;
 
@@ -58,6 +62,7 @@ public class MetricDisplaySummary extends BaseMetricDisplay implements java.io.S
 
     private boolean isTrait = false;
     private Resource resource;
+    private Resource parent;
     protected int resourceId;
 
     public MetricDisplaySummary() {
@@ -160,6 +165,14 @@ public class MetricDisplaySummary extends BaseMetricDisplay implements java.io.S
         this.resource = resource;
     }
 
+    public Resource getParent() {
+        return parent;
+    }
+
+    public void setParent(Resource parent) {
+        this.parent = parent;
+    }
+    
     /**
      * @return the parentId
      */

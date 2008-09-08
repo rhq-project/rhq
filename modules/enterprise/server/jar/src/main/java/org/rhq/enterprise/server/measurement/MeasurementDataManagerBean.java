@@ -842,7 +842,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
     public Map<MeasurementDefinition, List<MetricDisplaySummary>> getMetricDisplaySummariesForMetricsCompare(
         Subject subject, Integer[] resourceIds, int[] definitionIds, long begin, long end) throws MeasurementException {
         // Getting all the Resource objects in one call, and caching here for the rest of this method
-        PageList<Resource> resources = resourceManager.getResourceByIds(subject, resourceIds, false, PageControl
+        PageList<Resource> resources = resourceManager.getResourceByIds(subject, resourceIds, true, PageControl
             .getUnlimitedInstance());
 
         // I want to only get the definition objects once for each ID, and cache here for the rest of this method
@@ -877,6 +877,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
                 }
 
                 summary.setResource(resource);
+                summary.setParent(resource.getParentResource());
                 summary.setUnits(definition.getUnits().getName());
                 summary.setDescription(definition.getDescription());
                 summary.setLabel(definition.getDisplayName());

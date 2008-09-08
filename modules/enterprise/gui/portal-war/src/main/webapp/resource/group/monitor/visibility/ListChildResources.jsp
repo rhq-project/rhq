@@ -59,9 +59,21 @@
             styleClass="ListCellCheckboxLeftLine" headerStyleClass="ListHeaderInactive">
             <display:imagelinkdecorator src="/images/icon_resource.gif" border="0"/>
          </display:column>
-         <display:column width="86%" property="resource.name" title="resource.service.monitor.visibility.MembersTab" 
+         <display:column width="43%" property="resource.name" title="resource.service.monitor.visibility.MembersTab" 
             styleClass="ListCell" headerStyleClass="ListHeaderInactive" 
             href="/resource/common/monitor/Visibility.do?mode=${mode}&id=${summary.resource.id}"/>
+            
+            
+            
+            
+            
+         <display:column width="43%" property="parent.name" title="resource.service.monitor.visibility.ParentTab" 
+            styleClass="ListCell" headerStyleClass="ListHeaderInactive" 
+            href="/resource/common/monitor/Visibility.do?mode=${mode}&id=${summary.parent.id}"/>
+            
+            
+            
+            
          <display:column width="7%" property="availability" 
             title="resource.common.monitor.visibility.AVAILTH" 
             styleClass="ListCellCheckboxLeftLine" headerStyleClass="ListHeaderInactive" align="center">

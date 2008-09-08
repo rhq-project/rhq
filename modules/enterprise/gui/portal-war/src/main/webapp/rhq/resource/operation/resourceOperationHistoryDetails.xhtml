@@ -46,7 +46,7 @@
 	         <f:facet name="header">Details</f:facet>
 	         <table>
 	            <tr>
-	               <td align="right" style="width: 100px;">Operation:</td>
+	               <td align="right" style="width: 150px;">Operation:</td>
 	               <td align="left">
                      <h:outputText value="#{item.operationDefinition.displayName}" />
 	               </td>
@@ -65,7 +65,6 @@
 	                  <h:outputText value="#{item.modifiedTime}" rendered="#{item.status ne 'INPROGRESS'}">
 	                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
 	                  </h:outputText>
-	                  <h:outputText value="(in progress)"  rendered="#{item.status eq 'INPROGRESS'}"/>
 	               </td>
 	            </tr>
 	            <tr>
@@ -82,7 +81,7 @@
                                     value="javascript:displayMessageModal('Error Message','#{item.errorMessage}')">
                          <h:outputText value="#{item.status}"/>
                       </h:outputLink>
-                      <h:outputText rendered="#{item.status eq 'SUCCESS'}" value="#{item.status}"/>
+                      <h:outputText value="#{item.status}"/>
 	               </td>
 	            </tr>
 	         </table>
@@ -105,7 +104,8 @@
                         readOnly="true"
                         nullConfigurationDefinitionMessage="#{ResourceOperationHistoryDetailsUIBean.results.nullConfigurationDefinitionMessage}"
                         nullConfigurationMessage="#{ResourceOperationHistoryDetailsUIBean.results.nullConfigurationMessage}"
-                        nullConfigurationStyle="InfoBlock"/>
+                        nullConfigurationStyle="InfoBlock"
+                        rendered="#{item.status ne 'INPROGRESS'}" />
 	      </rich:panel>
  
           <h:outputLink value="/rhq/resource/operation/resourceOperationHistory.xhtml">

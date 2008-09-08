@@ -1009,8 +1009,15 @@ public class AgentConfiguration {
      */
     public FailoverListComposite getFailoverList() {
         byte[] serializedList = m_preferences.getByteArray(AgentConfigurationConstants.AGENT_FAILOVER_LIST, null);
-        FailoverListComposite failoverList = (FailoverListComposite) StreamUtil.deserialize(serializedList);
-        return failoverList;
+        if (serializedList == null) {
+            return null;
+        }
+        try {
+            FailoverListComposite failoverList = (FailoverListComposite) StreamUtil.deserialize(serializedList);
+            return failoverList;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**
@@ -1045,11 +1052,11 @@ public class AgentConfiguration {
         if (failoverList == null) {
             return;
         }
-        byte[] failoverInfo = StreamUtil.serialize(failoverList);
-        m_preferences.putByteArray(AgentConfigurationConstants.AGENT_FAILOVER_LIST, failoverInfo);
         try {
+            byte[] failoverInfo = StreamUtil.serialize(failoverList);
+            m_preferences.putByteArray(AgentConfigurationConstants.AGENT_FAILOVER_LIST, failoverInfo);
             m_preferences.flush();
-        } catch (BackingStoreException e) {
+        } catch (Exception e) {
             LOG.warn(LOG.getMsgString(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES),
                 AgentConfigurationConstants.AGENT_FAILOVER_LIST, e);
         }

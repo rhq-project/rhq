@@ -270,8 +270,18 @@ function disableConditionalButtons() {
    var button;
    for (i=0; i<buttons.length; i++) {
       button = buttons.item(i);
-      if (button.getAttribute("target") != null) {
+      var selectTarget = button.getAttribute("target");
+      if (selectTarget != null) {
+         /*
+          * assume it should be disabled at first, and then run the button through
+          * the regular update mechanism to see if it should be re-enabled; if the
+          * page is being loaded for the first time, the updateButtons method will
+          * be a no-op, otherwise it will analyze which select items were enabled
+          * before the page refresh and re-enable button as appropriate according
+          * to their min/max processing rules.
+          */
          button.disabled = true;
+         updateButtons(selectTarget);
       }      
    }
 }

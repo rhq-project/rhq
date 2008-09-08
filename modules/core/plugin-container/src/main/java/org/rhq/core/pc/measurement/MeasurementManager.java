@@ -47,9 +47,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
@@ -415,7 +413,6 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             LOG.error("Could not get measurement values", t);
             return null;
         }
-        perMinuteItizeData(report);
 
         Set<MeasurementData> values = new HashSet<MeasurementData>();
         values.addAll(report.getNumericData());

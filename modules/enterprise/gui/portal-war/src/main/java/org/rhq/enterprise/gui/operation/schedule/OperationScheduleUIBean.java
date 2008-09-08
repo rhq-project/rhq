@@ -87,25 +87,25 @@ public abstract class OperationScheduleUIBean extends PagedDataTableUIBean {
     }
 
     public String schedule() {
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-        Integer operationId = FacesContextUtility.getRequiredRequestParameter("opId", Integer.class);
-
-        SimpleTrigger simpleTrigger = getTrigger().getQuartzSimpleTrigger();
-        OperationDefinitionParametersUIBean operationParametersUIBean = FacesContextUtility
-            .getBean(OperationDefinitionParametersUIBean.class);
-        Configuration configuration = operationParametersUIBean.getConfiguration();
-
-        OperationDefinitionUIBean operationDefUIBean;
-        if (this instanceof ResourceOperationScheduleUIBean) {
-            operationDefUIBean = FacesContextUtility.getBean(ResourceOperationDefinitionUIBean.class);
-        } else if (this instanceof ResourceGroupOperationScheduleUIBean) {
-            operationDefUIBean = FacesContextUtility.getBean(ResourceGroupOperationDefinitionUIBean.class);
-        } else {
-            throw new IllegalStateException("Unsupported class - this is a bug, please report it: "
-                + this.getClass().toString());
-        }
-
         try {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            Integer operationId = FacesContextUtility.getRequiredRequestParameter("opId", Integer.class);
+
+            SimpleTrigger simpleTrigger = getTrigger().getQuartzSimpleTrigger();
+            OperationDefinitionParametersUIBean operationParametersUIBean = FacesContextUtility
+                .getBean(OperationDefinitionParametersUIBean.class);
+            Configuration configuration = operationParametersUIBean.getConfiguration();
+
+            OperationDefinitionUIBean operationDefUIBean;
+            if (this instanceof ResourceOperationScheduleUIBean) {
+                operationDefUIBean = FacesContextUtility.getBean(ResourceOperationDefinitionUIBean.class);
+            } else if (this instanceof ResourceGroupOperationScheduleUIBean) {
+                operationDefUIBean = FacesContextUtility.getBean(ResourceGroupOperationDefinitionUIBean.class);
+            } else {
+                throw new IllegalStateException("Unsupported class - this is a bug, please report it: "
+                    + this.getClass().toString());
+            }
+
             // if the user selected a timeout, add it to our configuration
             String timeout = operationDefUIBean.getTimeout();
             if (!timeout.trim().equals("")) {

@@ -20,8 +20,8 @@
   <head>
       <base target="_top"/>
 
-      <script src="http://simile.mit.edu/timeline/api/timeline-api.js" type="text/javascript"></script>
-      <script src="http://simile.mit.edu/timeline/examples/examples.js" type="text/javascript"></script>
+      <script src="/js/timeline/api/timeline-api.js" type="text/javascript"></script>
+      <script src="/js/timeline/examples/examples.js" type="text/javascript"></script>
       <title>Simple jsp page</title>
 
       <style type="text/css">
@@ -79,6 +79,9 @@ function onLoad() {
    var theme = Timeline.ClassicTheme.create();
     theme.event.bubble.width = 650;
     theme.event.bubble.height = 320
+    theme.event.label.width = 200;
+    theme.event.label.lineColor = "black";
+    theme.event.highlightColors = ["red", "orange"];
 
   var bandInfos = [
     Timeline.createBandInfo({
@@ -102,6 +105,7 @@ function onLoad() {
         intervalUnit:   Timeline.DateTime.HOUR,
         intervalPixels: 100,
         magnify: 5,
+        overview: true,
         timeZone: timeZoneOffset,
         theme: theme
     }),
@@ -113,6 +117,7 @@ function onLoad() {
         trackGap:       0.2,
         intervalUnit:   Timeline.DateTime.DAY,
         intervalPixels: 300,
+        overview: true,
         timeZone: timeZoneOffset,
         theme: theme
     })
@@ -212,7 +217,7 @@ for (Availability avail : availabilities) {
 
   <div id="t1" style="height: 450px; border: 1px solid #aaa"></div>
 
-    <div>Events: <span id="event-count"></span></div>
+    <!-- not accurate with grouping <div>Events: <span id="event-count"></span></div>-->
     <div class="controls" id="controls"></div>
 
 

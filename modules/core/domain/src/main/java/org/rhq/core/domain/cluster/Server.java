@@ -94,15 +94,21 @@ public class Server implements Serializable {
     @Column(name = "ADDRESS", nullable = false)
     private String address;
 
-    @Column(name = "PORT", nullable = false)
-    private int port;
+    @Column(name = "BIND_PORT", nullable = false)
+    private int bindPort;
 
-    @Column(name = "SECURE_PORT", nullable = false)
-    private int securePort;
+    @Column(name = "TRANSPORT", nullable = false)
+    private String transport;
+
+    @Column(name = "TRANSPORT_PARAMS", nullable = false)
+    private String transportParams;
 
     @Column(name = "OPERATION_MODE", nullable = false)
     @Enumerated(EnumType.STRING)
     private OperationMode operationMode;
+
+    @Column(name = "COMPUTE_POWER", nullable = false)
+    private int computePower;
 
     // the time this server node was installed into the infrastructure
     @Column(name = "CTIME", nullable = false)
@@ -143,20 +149,36 @@ public class Server implements Serializable {
         this.address = address;
     }
 
-    public int getPort() {
-        return port;
+    public int getBindPort() {
+        return bindPort;
     }
 
-    public void setPort(int port) {
-        this.port = port;
+    public void setBindPort(int bindPort) {
+        this.bindPort = bindPort;
     }
 
-    public int getSecurePort() {
-        return securePort;
+    public String getTransport() {
+        return transport;
     }
 
-    public void setSecurePort(int securePort) {
-        this.securePort = securePort;
+    public void setTransport(String transport) {
+        this.transport = transport;
+    }
+
+    public String getTransportParams() {
+        return transportParams;
+    }
+
+    public void setTransportParams(String transportParams) {
+        this.transportParams = transportParams;
+    }
+
+    public int getComputePower() {
+        return computePower;
+    }
+
+    public void setComputePower(int computePower) {
+        this.computePower = computePower;
     }
 
     public long getCtime() {
@@ -208,7 +230,7 @@ public class Server implements Serializable {
     }
 
     public ServerEntry getServerEntry() {
-        return new FailoverListComposite.ServerEntry(address, port, securePort);
+        return new FailoverListComposite.ServerEntry(address, bindPort, transport, transportParams);
     }
 
     @PrePersist

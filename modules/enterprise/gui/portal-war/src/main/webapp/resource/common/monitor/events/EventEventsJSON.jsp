@@ -9,7 +9,7 @@
 <%@ page import="org.rhq.enterprise.gui.util.WebUtility" %>
 <%@ page import="org.rhq.enterprise.server.event.EventManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
-<%@ page import="java.text.SimpleDateFormat" %><%@ page import="java.util.regex.Pattern"%><%@ page import="java.util.*"%><%@ page import="org.rhq.core.domain.event.EventSeverity"%>
+<%@ page import="java.text.SimpleDateFormat" %><%@ page import="java.util.regex.Pattern"%><%@ page import="java.util.*"%><%@ page import="org.rhq.core.domain.event.EventSeverity"%><%@ page import="org.rhq.core.domain.util.PageOrdering"%>
 <%@ page contentType="text/javascript" language="java" %>
 
 
@@ -28,7 +28,7 @@
 
     PageList<EventComposite> list =
             eventManager.getEvents(subject, new int[] {resourceId} , begin, end, null, -1,
-                null, null, new PageControl(0,10000, new OrderingField()));
+                null, null, new PageControl(0,10000, new OrderingField("ev.timestamp", PageOrdering.ASC)));
 
     /* TODO GH: Add alert to screen
         if (list.getTotalSize() != list.size()) {
@@ -99,14 +99,16 @@
             EventComposite current = iter.next();
             do {
                 EventComposite next = null;
+
                 if (iter.hasNext())
                     next = iter.next();
+
                 if (current == null) {
 
                 } else if (next == null && current != null) {
                     groupedList.add(current);
                     current = null;
-                } else if ( current != null && current.getTimestamp().getTime() + 60*1000 < next.getTimestamp().getTime()) {
+                } else if (current.getTimestamp().getTime() + 60 * 1000 < next.getTimestamp().getTime()) {
                     groupedList.add(current);
                     if (iter.hasNext())
                         current = iter.next();
@@ -114,6 +116,7 @@
                         current = next;
                     comp = null;
                 } else {
+
                     if (comp == null) {
                         comp = new GroupedEventComposite(current,next);
                         current = comp;

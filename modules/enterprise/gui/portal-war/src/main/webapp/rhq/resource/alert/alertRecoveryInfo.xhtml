@@ -1,0 +1,14 @@
+<div xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core">
+
+<ui:component id="alertRecoveryInfo">
+	<h:form id="alertRecoveryForm">
+        <input type="hidden" name="id" value="${param.id}"/>
+		<input type="hidden" name="alertId" value="#{alertId}"/>	
+		<h:outputText value="#{ListAlertHistoryUIBean.recoveryInfo}" />
+	</h:form>
+</ui:component>
+</div>

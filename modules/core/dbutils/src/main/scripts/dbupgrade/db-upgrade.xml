@@ -370,13 +370,13 @@ DB Upgrade:
       </schema-directSQL>
       <schema-alterColumn table="RHQ_SERVER" column="TRANSPORT_PARAMS" nullable="FALSE"/>
    	
-      <schema-addColumn table="RHQ_SERVER" column="RELATIVE_POWER" columnType="INTEGER"/>
+      <schema-addColumn table="RHQ_SERVER" column="COMPUTE_POWER" columnType="INTEGER"/>
       <schema-directSQL>
-         <statement desc="Updating existing servers with default RELATIVE_POWER=1">
-            UPDATE RHQ_SERVER SET RELATIVE_POWER = 1
+         <statement desc="Updating existing servers with default COMPUTE_POWER=1">
+            UPDATE RHQ_SERVER SET COMPUTE_POWER = 1
          </statement>
       </schema-directSQL>
-      <schema-alterColumn table="RHQ_SERVER" column="RELATIVE_POWER" nullable="FALSE"/>
+      <schema-alterColumn table="RHQ_SERVER" column="COMPUTE_POWER" nullable="FALSE"/>
 
    </schemaSpec>
 

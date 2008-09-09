@@ -58,6 +58,9 @@ import org.rhq.enterprise.gui.ha.ViewAffinityGroupServerMembersUIBean;
 import org.rhq.enterprise.gui.ha.ViewServerUIBean;
 import org.rhq.enterprise.gui.ha.ViewAgentUIBean;
 import org.rhq.enterprise.gui.ha.AffinityGroupSubscribedAgentsUIBean;
+import org.rhq.enterprise.gui.ha.AffinityGroupUnsubscribedAgentsUIBean;
+import org.rhq.enterprise.gui.ha.AffinityGroupUnsubscribedServersUIBean;
+import org.rhq.enterprise.gui.ha.AffinityGroupSubscribedServersUIBean;
 import org.rhq.enterprise.gui.inventory.group.ListResourceGroupMembersUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyDetailsUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyHistoryUIBean;
@@ -201,8 +204,12 @@ public enum PageControlView {
     /** */
     AffinityGroupSubscribedAgents(AffinityGroupSubscribedAgentsUIBean.class),
     /** */
-    AffinityGroupUnsubscribedAgents(AffinityGroupSubscribedAgentsUIBean.class),
-    
+    AffinityGroupUnsubscribedAgents(AffinityGroupUnsubscribedAgentsUIBean.class),
+    /** */
+    AffinityGroupSubscribedServers(AffinityGroupSubscribedServersUIBean.class),
+    /** */
+    AffinityGroupUnsubscribedServers(AffinityGroupUnsubscribedServersUIBean.class),
+
     /** @deprecated */
     AffinityGroupAgentMembersView(ViewAffinityGroupAgentMembersUIBean.class),
     /** @deprecated */

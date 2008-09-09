@@ -42,7 +42,6 @@ public class AffinityGroupSubscribedAgentsUIBean extends PagedDataTableUIBean {
 
     public String unsubscribeAgents() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        String affinityGroupIdString = FacesContextUtility.getRequest().getParameter("affinityGroupId");
         String[] selectedAgentIdStrings = FacesContextUtility.getRequest().getParameterValues("selectedAgents");
 
         // Parse the agent IDs to ints
@@ -52,11 +51,9 @@ public class AffinityGroupSubscribedAgentsUIBean extends PagedDataTableUIBean {
         }
 
         // Update the group
-        int affinityGroupId = Integer.parseInt(affinityGroupIdString);
         affinityGroupManager.removeAgentsFromGroup(subject, selectedAgentIds);
 
         return "successOrFailure";
-
     }
 
     public DataModel getDataModel() {
@@ -77,7 +74,6 @@ public class AffinityGroupSubscribedAgentsUIBean extends PagedDataTableUIBean {
             int affinityGroupId = FacesContextUtility.getRequiredRequestParameter("affinityGroupId", Integer.class);
             PageList<Agent> results = affinityGroupManager.getAgentMembers(getSubject(), affinityGroupId, pc);
             return results;
-            
         }
     }
 }

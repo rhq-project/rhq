@@ -14,7 +14,7 @@
 
 <ui:composition template="/rhq/layout/main.xhtml">
 
-   <ui:param name="pageTitle" value="Affinity Group Details"/>
+   <ui:param name="pageTitle" value="Affinity Group Agents"/>
    <ui:param name="affinityGroupDetails" value="#{ViewAffinityGroupDetailsUIBean.affinityGroup}" />
    <ui:param name="mode" value="#{param.mode}" />
 
@@ -29,6 +29,12 @@
       &gt;
       <h:outputLink value="viewAffinityGroup.xhtml">
          ${msg["ha.affinity.group.view.breadcrumb"]}
+         <f:param name="affinityGroupId" value="#{param.affinityGroupId}"/>
+         <f:param name="mode" value="#{param.mode}"/>
+      </h:outputLink>
+      &gt;
+      <h:outputLink value="affinityGroupServers.xhtml">
+         ${msg["ha.affinity.group.servers"]}
          <f:param name="affinityGroupId" value="#{param.affinityGroupId}"/>
          <f:param name="mode" value="#{param.mode}"/>
       </h:outputLink>
@@ -47,165 +53,7 @@
                layout="table"
                width="100%"/>
 
-      <h:form id="affinityGroupDetailsForm">
-         <input type="hidden" name="affinityGroupId" value="#{param.affinityGroupId}" />
-         <input type="hidden" name="mode" value="#{param.mode}"/>
-
-         <rich:panel>
-            <f:facet name="header">Affinity Group Details</f:facet>
-            <table>
-               <tr>
-                  <td align="right"><b>Name:</b></td>
-                  <td align="left">
-                     <h:outputText rendered="#{mode eq 'view'}" value="#{affinityGroupDetails.name}" />
-                     <h:inputText  rendered="#{mode eq 'edit' || mode eq 'create'}" value="#{affinityGroupDetails.name}" />
-                  </td>
-               </tr>
-            </table>
-         </rich:panel>
-
-         <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
-            <h:commandButton rendered="#{mode eq 'view'}"
-                             value="EDIT" action="#{ViewAffinityGroupDetailsUIBean.edit}"
-                             alt="Edit" styleClass="buttonmed" id="editButton"/>
-            <h:commandButton rendered="#{mode eq 'edit'}"
-                             value="SAVE" action="#{ViewAffinityGroupDetailsUIBean.save}"
-                             alt="Save" styleClass="buttonmed" id="saveButton"/>
-            <h:commandButton rendered="#{mode eq 'create'}"
-                             value="CREATE" action="#{ViewAffinityGroupDetailsUIBean.createNew}"
-                             alt="Create" styleClass="buttonmed" id="createButton"/>
-            <h:commandButton rendered="#{mode eq 'edit' || mode eq 'create'}"
-                             value="CANCEL" action="#{ViewAffinityGroupDetailsUIBean.cancel}" immediate="true"
-                             alt="Cancel" styleClass="buttonmed" id="cancelButton"/>
-         </h:panelGrid>
-      </h:form>
-
-      <h:form id="agentsForm" rendered="#{mode eq 'view'}">
-         <input type="hidden" name="affinityGroupId" value="#{param.affinityGroupId}"/>
-         <input type="hidden" name="mode" value="#{param.mode}"/>
-         
-         <rich:panel>
-            <f:facet name="header">
-               <h:outputText value="Agent Members"/>
-            </f:facet>
-
-            <h:panelGrid columns="1" width="100%">
-
-            <ui:param name="agentsDataModel" value="#{ViewAffinityGroupAgentMembersUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ViewAffinityGroupAgentMembersUIBean.dataTable}"
-                            id="agentsDataTable"
-                            rows="#{PageControl.AffinityGroupAgentMembersView.pageSize}"
-                            value="#{agentsDataModel}"
-                            var="agentItem"
-                            width="100%"
-                            columnsWidth="15%, 10%, 10%, 10%"
-                            headerClass="tableRowHeader"
-                            footerClass="on-pager-footer">
-
-               <f:facet name="PageControlView">
-                  <onc:paginationControl id="AffinityGroupAgentMembersView" />
-               </f:facet>
-
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="a.id">
-                        <h:outputText styleClass="headerText" value="ID" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  
-                  <h:outputText value="#{agentItem.id}"/>
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="a.name">
-                        <h:outputText styleClass="headerText" value="Agent Name" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  
-                  <h:outputLink value="viewAgent.xhtml">
-                     <f:param name="mode" value="view"/>
-                     <f:param name="agentId" value="#{agentItem.id}"/>
-                     <h:outputText value="#{agentItem.server.name}" />
-                  </h:outputLink>
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="a.address">
-                        <h:outputText styleClass="headerText" value="Bind Address" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{agentItem.address}"/>
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="a.port">
-                        <h:outputText styleClass="headerText" value="Bind Port" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{agentItem.port}"/>
-               </rich:column>
-
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="a.agentToken">
-                        <h:outputText styleClass="headerText" value="Token" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{agentItem.agentToken}"/>
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="a.lastAvailabilityReport">
-                        <h:outputText styleClass="headerText" value="Last Availability Report" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{agentItem.lastAvailabilityReport}">
-                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                  </h:outputText>
-               </rich:column>
-
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="a.status">
-                        <h:outputText styleClass="headerText" value="Status" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{agentItem.status}"/>
-               </rich:column>
-
-               <f:facet name="footer">
-                  <rich:columnGroup>
-                     <!-- colspan 8:5 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 7 : 4}" width="100%">
-
-                        <h:commandButton action="#{ViewAffinityGroupAgentMembersUIBean.addAgentToAffinityGroup}"
-                                         value="EDIT GROUP AGENTS" styleClass="on-pager-button buttonsmall"/>
-
-                        <ui:param name="paginationDataTableName" value="agentsDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{agentsDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.AffinityGroupAgentMembersView}"/>
-                        <ui:include src="../resource/include/pagination.xhtml"/>
-                     </rich:column>
-                  </rich:columnGroup>
-               </f:facet>
-
-            </rich:dataTable>
-
-            </h:panelGrid>
-
-         </rich:panel>
-      </h:form>
-      
-      <h:form id="serversForm" rendered="#{mode eq 'view'}">
+      <h:form id="subscribedServersForm">
          <input type="hidden" name="affinityGroupId" value="#{param.affinityGroupId}"/>
          <input type="hidden" name="mode" value="#{param.mode}"/>
 
@@ -216,29 +64,36 @@
 
             <h:panelGrid columns="1" width="100%">
 
-            <ui:param name="serversDataModel" value="#{ViewAffinityGroupServerMembersUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ViewAffinityGroupServerMembersUIBean.dataTable}"
-                            id="serversDataTable"
-                            rows="#{PageControl.AffinityGroupServerMembersView.pageSize}"
-                            value="#{serversDataModel}"
+            <ui:param name="subscribedServersDataModel" value="#{AffinityGroupSubscribedServersUIBean.dataModel}"/>
+            <rich:dataTable binding="#{AffinityGroupSubscribedServersUIBean.dataTable}"
+                            id="subscribedServersDataTable"
+                            rows="#{PageControl.AffinityGroupSubscribedServers.pageSize}"
+                            value="#{subscribedServersDataModel}"
                             var="serverItem"
                             width="100%"
-                            columnsWidth="15%, 10%, 10%, 8%, 8%, 15%"
+                            columnsWidth="1%, 15%, 10%, 10%, 8%, 8%, 15%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 
-
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="AffinityGroupServerMembersView" />
+                  <onc:paginationControl id="AffinityGroupSubscribedServers" />
                </f:facet>
-      
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedServers" />
+                  </f:facet>
+
+                  <onc:select name="selectedServers" value="#{serverItem.id}" />
+               </rich:column>
+
                <rich:column rendered="#{param.debug}">
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="s.id">
                         <h:outputText styleClass="headerText" value="ID" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputText value="#{serverItem.id}"/>
                </rich:column>
 
@@ -248,7 +103,7 @@
                         <h:outputText styleClass="headerText" value="Name" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputLink value="viewServer.xhtml">
                      <f:param name="mode" value="view"/>
                      <f:param name="serverId" value="#{serverItem.id}"/>
@@ -262,17 +117,17 @@
                         <h:outputText styleClass="headerText" value="Mode" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputText value="#{serverItem.operationMode}"/>
                </rich:column>
-                              
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="s.address">
                         <h:outputText styleClass="headerText" value="Endpoint Address" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputText value="#{serverItem.address}"/>
                </rich:column>
 
@@ -282,27 +137,27 @@
                         <h:outputText styleClass="headerText" value="HTTP Port" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputText value="#{serverItem.port}"/>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="s.securePort">
                         <h:outputText styleClass="headerText" value="Secure HTTPS Port" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputText value="#{serverItem.securePort}"/>
                </rich:column>
-                
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="s.ctime">
                         <h:outputText styleClass="headerText" value="Last Update Time" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputText value="#{serverItem.ctime}">
                      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                   </h:outputText>
@@ -311,14 +166,14 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 8:7 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 7 : 6}" width="100%">
+                     <rich:column colspan="#{param.debug ? 8 : 7}" width="100%">
 
-                        <h:commandButton action="#{ViewAffinityGroupServerMembersUIBean.editServers}"
-                                         value="EDIT GROUP SERVERS" styleClass="on-pager-button buttonsmall"/>
+                        <h:commandButton action="#{AffinityGroupSubscribedServersUIBean.unsubscribeServers}"
+                                         value="REMOVE FROM GROUP" styleClass="on-pager-button buttonsmall"/>
 
-                        <ui:param name="paginationDataTableName" value="serversDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{serversDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.AffinityGroupServerMembersView}"/>
+                        <ui:param name="paginationDataTableName" value="subscribedServersDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{subscribedServersDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.AffinityGroupSubscribedServers}"/>
                         <ui:include src="../resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>
@@ -327,8 +182,143 @@
             </rich:dataTable>
 
             </h:panelGrid>
-            
+
          </rich:panel>
+
+      </h:form>
+
+      <h:form id="unsubscribedServersForm">
+         <input type="hidden" name="affinityGroupId" value="#{param.affinityGroupId}"/>
+         <input type="hidden" name="mode" value="#{param.mode}"/>
+
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Server Members"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+            <ui:param name="unsubscribedServersDataModel" value="#{AffinityGroupUnsubscribedServersUIBean.dataModel}"/>
+            <rich:dataTable binding="#{AffinityGroupUnsubscribedServersUIBean.dataTable}"
+                            id="unsubscribedServersDataTable"
+                            rows="#{PageControl.AffinityGroupUnsubscribedServers.pageSize}"
+                            value="#{unsubscribedServersDataModel}"
+                            var="serverItem"
+                            width="100%"
+                            columnsWidth="1%, 15%, 10%, 10%, 8%, 8%, 15%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="AffinityGroupUnsubscribedServers" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedServers" />
+                  </f:facet>
+
+                  <onc:select name="selectedServers" value="#{serverItem.id}" />
+               </rich:column>
+
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.id">
+                        <h:outputText styleClass="headerText" value="ID" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.name">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="viewServer.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="serverId" value="#{serverItem.id}"/>
+                     <h:outputText value="#{serverItem.name}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.operationMode">
+                        <h:outputText styleClass="headerText" value="Mode" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.operationMode}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.address">
+                        <h:outputText styleClass="headerText" value="Endpoint Address" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.address}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.port">
+                        <h:outputText styleClass="headerText" value="HTTP Port" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.port}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.securePort">
+                        <h:outputText styleClass="headerText" value="Secure HTTPS Port" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.securePort}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="s.ctime">
+                        <h:outputText styleClass="headerText" value="Last Update Time" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{serverItem.ctime}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                  </h:outputText>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <!-- colspan 8:7 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 8 : 7}" width="100%">
+
+                        <h:commandButton action="#{AffinityGroupUnsubscribedServersUIBean.subscribeServers}"
+                                         value="ADD TO GROUP" styleClass="on-pager-button buttonsmall"/>
+
+                        <ui:param name="paginationDataTableName" value="unsubscribedServersDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{unsubscribedServersDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.AffinityGroupUnsubscribedServers}"/>
+                        <ui:include src="../resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+
+         </rich:panel>
+
       </h:form>
 
    </ui:define>

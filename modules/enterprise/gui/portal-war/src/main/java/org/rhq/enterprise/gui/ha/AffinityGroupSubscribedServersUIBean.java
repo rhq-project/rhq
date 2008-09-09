@@ -20,62 +20,60 @@ package org.rhq.enterprise.gui.ha;
 
 import javax.faces.model.DataModel;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
-import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.cluster.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.cluster.AffinityGroup;
 import org.rhq.core.gui.util.FacesContextUtility;
 
 /**
  * @author Jason Dobies
  */
-public class AffinityGroupUnsubscribedAgentsUIBean extends PagedDataTableUIBean {
+public class AffinityGroupSubscribedServersUIBean extends PagedDataTableUIBean {
 
-    public static final String MANAGED_BEAN_NAME = "AffinityGroupUnsubscribedAgentsUIBean";
+    public static final String MANAGED_BEAN_NAME = "AffinityGroupSubscribedServersUIBean";
 
     private AffinityGroupManagerLocal affinityGroupManager = LookupUtil.getAffinityGroupManager();
 
-    public String subscribeAgents() {
+    public String unsubscribeServers() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        String affinityGroupIdString = FacesContextUtility.getRequest().getParameter("affinityGroupId");
-        String[] selectedAgentIdStrings = FacesContextUtility.getRequest().getParameterValues("selectedAgents");
+        String[] selectedServerIdStrings = FacesContextUtility.getRequest().getParameterValues("selectedServers");
 
-        // Parse the agent IDs to ints
-        Integer[] selectedAgentIds = new Integer[selectedAgentIdStrings.length];
-        for (int ii = 0; ii < selectedAgentIdStrings.length; ii++) {
-            selectedAgentIds[ii] = Integer.parseInt(selectedAgentIdStrings[ii]);
+        // Parse the server IDs to ints
+        Integer[] selectedServerIds = new Integer[selectedServerIdStrings.length];
+        for (int ii = 0; ii < selectedServerIdStrings.length; ii++) {
+            selectedServerIds[ii] = Integer.parseInt(selectedServerIdStrings[ii]);
         }
 
         // Update the group
-        int affinityGroupId = Integer.parseInt(affinityGroupIdString);
-        affinityGroupManager.addAgentsToGroup(subject, affinityGroupId, selectedAgentIds);
+        affinityGroupManager.removeServersFromGroup(subject, selectedServerIds);
 
         return "successOrFailure";
     }
 
     public DataModel getDataModel() {
-        if (null == dataModel) {
-            dataModel = new AffinityGroupUnsubscribedAgentsDataModel(PageControlView.AffinityGroupUnsubscribedAgents, MANAGED_BEAN_NAME);
+        if (dataModel == null) {
+            dataModel = new AffinityGroupSubscribedServersDataModel(PageControlView.AffinityGroupSubscribedServers, MANAGED_BEAN_NAME);
         }
 
         return dataModel;
     }
 
-    private class AffinityGroupUnsubscribedAgentsDataModel extends PagedListDataModel<Agent> {
+    private class AffinityGroupSubscribedServersDataModel extends PagedListDataModel<Server> {
 
-        private AffinityGroupUnsubscribedAgentsDataModel(PageControlView view, String beanName) {
+        private AffinityGroupSubscribedServersDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
-        public PageList<Agent> fetchPage(PageControl pc) {
+        public PageList<Server> fetchPage(PageControl pc) {
             int affinityGroupId = FacesContextUtility.getRequiredRequestParameter("affinityGroupId", Integer.class);
-            PageList<Agent> results = affinityGroupManager.getAgentNonMembers(getSubject(), affinityGroupId, pc);
+            PageList<Server> results = affinityGroupManager.getServerMembers(getSubject(), affinityGroupId, pc);
+
             return results;
         }
     }

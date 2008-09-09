@@ -35,6 +35,10 @@ public class ViewAffinityGroupServerMembersUIBean extends PagedDataTableUIBean {
 
     private AffinityGroupManagerLocal affinityGroupManager = LookupUtil.getAffinityGroupManager();
 
+    public String editServers() {
+        return "editServers";
+    }
+
     @Override
     public DataModel getDataModel() {
         if (null == dataModel) {

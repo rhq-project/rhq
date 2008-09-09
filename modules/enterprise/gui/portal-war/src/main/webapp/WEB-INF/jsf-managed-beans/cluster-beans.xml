@@ -58,6 +58,7 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
+   <!-- /rhq/ha/affinityGroupAgents.xhtml -->
    <managed-bean>
       <managed-bean-name>AffinityGroupSubscribedAgentsUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.ha.AffinityGroupSubscribedAgentsUIBean</managed-bean-class>
@@ -67,6 +68,19 @@
    <managed-bean>
       <managed-bean-name>AffinityGroupUnsubscribedAgentsUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.ha.AffinityGroupUnsubscribedAgentsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <!-- /rhq/ha/affinityGroupServers.xhtml -->
+   <managed-bean>
+      <managed-bean-name>AffinityGroupSubscribedServersUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.ha.AffinityGroupSubscribedServersUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>AffinityGroupUnsubscribedServersUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.ha.AffinityGroupUnsubscribedServersUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 

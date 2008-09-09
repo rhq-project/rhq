@@ -32,8 +32,8 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.cluster.FailoverListDetails;
+import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.cluster.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
@@ -66,8 +66,9 @@ public class ClusterManagerBean implements ClusterManagerLocal {
             Server server = new Server();
             server.setName("localhost");
             server.setAddress("localhost");
-            server.setPort(7080);
-            server.setSecurePort(7443);
+            server.setBindPort(7080);
+            server.setTransport("servlet");
+            server.setTransportParams("/jboss-remoting-servlet-invoker/ServerInvokerServlet");
             server.setOperationMode(Server.OperationMode.NORMAL);
             entityManager.persist(server);
         }
@@ -158,13 +159,15 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     public PageList<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc) {
         pc.initDefaultOrderingField("fld.ordinal");
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, FailoverListDetails.QUERY_GET_VIA_AGENT_ID_WITH_SERVERS, pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager, FailoverListDetails.QUERY_GET_VIA_AGENT_ID);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            FailoverListDetails.QUERY_GET_VIA_AGENT_ID_WITH_SERVERS, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
+            FailoverListDetails.QUERY_GET_VIA_AGENT_ID);
 
-        
         query.setParameter("agentId", agentId);
         countQuery.setParameter("agentId", agentId);
 
+        @SuppressWarnings("unchecked")
         List<FailoverListDetails> list = query.getResultList();
         long count = (Long) countQuery.getSingleResult();
 

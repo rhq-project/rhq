@@ -141,8 +141,10 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
                 server = new Server();
                 server.setName("Server-flm-" + i);
                 server.setAddress("" + i);
-                server.setPort(i);
-                server.setSecurePort(i);
+                server.setBindPort(i);
+                server.setTransport("servlet");
+                server.setTransportParams("/jboss-remoting-servlet-invoker/ServerInvokerServlet");
+                server.setComputePower(1);
                 server.setOperationMode(Server.OperationMode.NORMAL);
                 em.persist(server);
                 servers.add(server);

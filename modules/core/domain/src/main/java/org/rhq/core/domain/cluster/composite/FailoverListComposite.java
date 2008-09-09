@@ -41,18 +41,20 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
     public static class ServerEntry {
 
         public final String address;
-        public final int port;
-        public final int securePort;
+        public final int bindPort;
+        public final String transport;
+        public final String transportParams;
 
-        public ServerEntry(String address, int port, int securePort) {
+        public ServerEntry(String address, int bindPort, String transport, String transportParams) {
             this.address = address;
-            this.port = port;
-            this.securePort = securePort;
+            this.bindPort = bindPort;
+            this.transport = transport;
+            this.transportParams = transportParams;
         }
 
         @Override
         public String toString() {
-            return address + ":" + port + ":" + securePort;
+            return transport + ":" + address + ":" + bindPort + ":" + transportParams;
         }
 
         @Override
@@ -64,16 +66,18 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
 
             ServerEntry se = (ServerEntry) obj;
 
-            return (this.address.equals(se.address) && (this.port == se.port) && (this.securePort == se.securePort));
+            return (this.address.equals(se.address) && (this.bindPort == se.bindPort)
+                && this.transport.equals(se.transport) && this.transportParams.equals(se.transportParams));
         }
 
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + port;
-            result = prime * result + securePort;
+            result = prime * result + bindPort;
             result = prime * result + ((address == null) ? 0 : address.hashCode());
+            result = prime * result + ((transport == null) ? 0 : transport.hashCode());
+            result = prime * result + ((transportParams == null) ? 0 : transportParams.hashCode());
             return result;
         }
 
@@ -127,8 +131,9 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
         out.writeInt(size());
         for (ServerEntry entry : servers) {
             out.writeUTF(entry.address);
-            out.writeInt(entry.port);
-            out.writeInt(entry.securePort);
+            out.writeInt(entry.bindPort);
+            out.writeUTF(entry.transport);
+            out.writeUTF(entry.transportParams);
         }
     }
 
@@ -138,9 +143,10 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
         List<ServerEntry> entries = new ArrayList<ServerEntry>();
         for (int i = 0; i < size; i++) {
             String address = in.readUTF();
-            int port = in.readInt();
-            int securePort = in.readInt();
-            entries.add(new ServerEntry(address, port, securePort));
+            int bindPort = in.readInt();
+            String transport = in.readUTF();
+            String transportParams = in.readUTF();
+            entries.add(new ServerEntry(address, bindPort, transport, transportParams));
         }
 
         /*

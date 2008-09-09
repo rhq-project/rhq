@@ -73,7 +73,7 @@ DB Upgrade:
 
         <schema-directSQL>
             <statement desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
-                UPDATE RHQ_PACKAGE_TYPE SET SUPPORTS_ARCHITECTURE = FALSE
+                UPDATE RHQ_PACKAGE_TYPE SET SUPS_ARCHITECTURE = FALSE
             </statement>
         </schema-directSQL>
 
@@ -341,6 +341,45 @@ DB Upgrade:
    <schemaSpec version="2.11">
       <schema-alterColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_DEFINITION_ID" nullable="TRUE"/>
    </schemaSpec>
+	
+   <schemaSpec version="2.12">
+      <schema-deleteColumn table="RHQ_SERVER" column="PORT" />
+      <schema-deleteColumn table="RHQ_SERVER" column="SECURE_PORT" />
+      
+ 	  <schema-addColumn   table="RHQ_SERVER" column="BIND_PORT" columnType="INTEGER"/>
+      <schema-directSQL>
+         <statement desc="Updating existing servers with default BIND_PORT=7080">
+            UPDATE RHQ_SERVER SET BIND_PORT = 7080
+         </statement>
+      </schema-directSQL>   	
+      <schema-alterColumn table="RHQ_SERVER" column="BIND_PORT" nullable="FALSE"/>
+
+   	  <schema-addColumn    table="RHQ_SERVER" column="TRANSPORT" columnType="VARCHAR2" precision="32"/>
+      <schema-directSQL>
+         <statement desc="Updating existing servers with default TRANSPORT=servlet">
+             UPDATE RHQ_SERVER SET TRANSPORT = 'servlet'
+         </statement>
+      </schema-directSQL>
+      <schema-alterColumn table="RHQ_SERVER" column="TRANSPORT" nullable="FALSE"/>
+      
+      <schema-addColumn   table="RHQ_SERVER" column="TRANSPORT_PARAMS" columnType="VARCHAR2" precision="512"/>
+      <schema-directSQL>
+         <statement desc="Updating existing servers with default TRANSPORT_PARAMS=/jboss-remoting-servlet-invoker/ServerInvokerServlet">
+            UPDATE RHQ_SERVER SET TRANSPORT_PARAMS = '/jboss-remoting-servlet-invoker/ServerInvokerServlet'
+      </statement>
+      </schema-directSQL>
+      <schema-alterColumn table="RHQ_SERVER" column="TRANSPORT_PARAMS" nullable="FALSE"/>
+   	
+	  <schema-addColumn   table="RHQ_SERVER" column="RELATIVE_POWER" columnType="INTEGER"/>
+      <schema-directSQL>
+       <statement desc="Updating existing servers with default RELATIVE_POWER=1">
+          UPDATE RHQ_SERVER SET RELATIVE_POWER = 1
+       </statement>
+    </schema-directSQL>   	
+    <schema-alterColumn table="RHQ_SERVER" column="COMPUTE_POWER" nullable="FALSE"/>
+   	
+   </schemaSpec>
+	
 
 </dbupgrade>
 

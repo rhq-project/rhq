@@ -13,12 +13,11 @@
                 primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" required="true" size="255" type="VARCHAR2"/>
         <column name="ADDRESS" required="true" size="255" type="VARCHAR2"/>
-        <column name="BIND_PORT" required="true" type="INTEGER"/>
-        <column name="TRANSPORT" required="true" size="32" type="VARCHAR2"/>
-        <column name="TRANSPORT_PARAMS" required="true" size="512" type="VARCHAR2"/>
+        <column name="PORT" required="true" type="INTEGER"/>
+        <column name="SECURE_PORT" required="true" type="INTEGER"/>
         <column name="CTIME" required="true" type="LONG"/>
         <column name="AFFINITY_GROUP_ID" type="INTEGER" references="RHQ_AFFINITY_GROUP" required="false"/>
-        <column name="COMPUTE_POWER" required="true" type="INTEGER"/>
+        <column name="COMPUTE_POWER" required="true" type="INTEGER"/>        
         <column name="OPERATION_MODE" required="true" size="32" type="VARCHAR2"/>
     
         <!--  This index is for constraint, not performance -->    

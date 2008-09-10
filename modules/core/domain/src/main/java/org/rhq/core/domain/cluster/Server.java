@@ -93,14 +93,11 @@ public class Server implements Serializable {
     @Column(name = "ADDRESS", nullable = false)
     private String address;
 
-    @Column(name = "BIND_PORT", nullable = false)
-    private int bindPort;
+    @Column(name = "PORT", nullable = false)
+    private int port;
 
-    @Column(name = "TRANSPORT", nullable = false)
-    private String transport;
-
-    @Column(name = "TRANSPORT_PARAMS", nullable = false)
-    private String transportParams;
+    @Column(name = "SECURE_PORT", nullable = false)
+    private int securePort;
 
     @Column(name = "OPERATION_MODE", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -148,28 +145,20 @@ public class Server implements Serializable {
         this.address = address;
     }
 
-    public int getBindPort() {
-        return bindPort;
+    public int getPort() {
+        return port;
     }
 
-    public void setBindPort(int bindPort) {
-        this.bindPort = bindPort;
+    public void setPort(int port) {
+        this.port = port;
     }
 
-    public String getTransport() {
-        return transport;
+    public int getSecurePort() {
+        return securePort;
     }
 
-    public void setTransport(String transport) {
-        this.transport = transport;
-    }
-
-    public String getTransportParams() {
-        return transportParams;
-    }
-
-    public void setTransportParams(String transportParams) {
-        this.transportParams = transportParams;
+    public void setSecurePort(int securePort) {
+        this.securePort = securePort;
     }
 
     public int getComputePower() {
@@ -229,13 +218,13 @@ public class Server implements Serializable {
     }
 
     public ServerEntry getServerEntry() {
-        return new FailoverListComposite.ServerEntry(address, bindPort, transport, transportParams);
+        return new FailoverListComposite.ServerEntry(address, port, securePort);
     }
 
     @Override
     public String toString() {
-        return "Server[id=" + getId() + ",name=" + getName() + ",address=" + getAddress() + ",bindPort="
-            + getBindPort() + "]";
+        return "Server[id=" + getId() + ",name=" + getName() + ",address=" + getAddress() + ",port=" + getPort()
+            + ",securePort=" + getSecurePort() + "]";
     }
 
     @PrePersist

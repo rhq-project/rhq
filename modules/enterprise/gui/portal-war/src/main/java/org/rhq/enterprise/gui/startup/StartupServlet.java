@@ -126,10 +126,9 @@ public class StartupServlet extends HttpServlet {
                 address = "localhost";
             }
             server.setAddress(address);
-
-            server.setBindPort(7080);
-            server.setTransport("servlet");
-            server.setTransportParams("/jboss-remoting-servlet-invoker/ServerInvokerServlet");
+            server.setPort(7080);
+            server.setSecurePort(7443);
+            server.setComputePower(1);
             server.setOperationMode(Server.OperationMode.NORMAL);
             LookupUtil.getServerManager().create(server);
             log("Default server created: " + server);

@@ -1,6 +1,6 @@
 package org.rhq.enterprise.server.cluster;
 
-public class AffinityGroupCreationException extends Exception {
+public class AffinityGroupCreationException extends AffinityGroupException {
 
     private static final long serialVersionUID = 1L;
 

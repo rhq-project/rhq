@@ -128,7 +128,8 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public AffinityGroup update(Subject subject, AffinityGroup affinityGroup) {
+    public AffinityGroup update(Subject subject, AffinityGroup affinityGroup) throws AffinityGroupException {
+        validate(affinityGroup, true);
         return entityManager.merge(affinityGroup);
     }
 
@@ -159,16 +160,37 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public int create(Subject subject, AffinityGroup affinityGroup) throws AffinityGroupCreationException {
-        Query query = PersistenceUtility.createCountQuery(entityManager, AffinityGroup.QUERY_FIND_BY_NAME);
-        String name = affinityGroup.getName();
-        query.setParameter("name", name.toUpperCase());
-        long count = (Long) query.getSingleResult();
-        if (count > 0) {
-            throw new AffinityGroupCreationException("An affinity group with the name '" + name + "' already exists");
-        }
+    public int create(Subject subject, AffinityGroup affinityGroup) throws AffinityGroupException {
+        validate(affinityGroup, false);
         entityManager.persist(affinityGroup);
         return affinityGroup.getId();
+    }
+
+    private void validate(AffinityGroup affinityGroup, boolean alreadyExists) throws AffinityGroupException {
+        String name = (affinityGroup.getName() == null ? "" : affinityGroup.getName().trim());
+
+        if (name.equals("")) {
+            throw new AffinityGroupCreationException("Name is a required property");
+        }
+
+        if (name.length() > 100) {
+            throw new AffinityGroupCreationException("Name is limited to 100 characters");
+        }
+
+        Query query = entityManager.createNamedQuery(AffinityGroup.QUERY_FIND_BY_NAME);
+        query.setParameter("name", name.toUpperCase());
+
+        try {
+            AffinityGroup found = (AffinityGroup) query.getSingleResult();
+            if (alreadyExists == false) {
+                throw new AffinityGroupCreationException("AffinityGroup with name '" + name + "' already exists");
+            }
+            if (affinityGroup.getId() != found.getId()) {
+                throw new AffinityGroupUpdateException("AffinityGroup with name '" + name + "' already exists");
+            }
+        } catch (NoResultException e) {
+            // this is expected
+        }
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

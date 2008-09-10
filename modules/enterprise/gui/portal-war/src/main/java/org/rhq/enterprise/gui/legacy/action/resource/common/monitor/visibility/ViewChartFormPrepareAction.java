@@ -298,7 +298,18 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         _setupPageData(request, chartForm, allResources, subject);
         _setupBaselineExpectedRange(request, chartForm, allResources.get(0), subject);
 
+        _setupParentResources(request, subject);
+
         return null;
+    }
+
+    private void _setupParentResources(HttpServletRequest request, Subject subject) {
+        Resource[] resources = (Resource[]) request.getAttribute("resources");
+        for (int i = 0; i < resources.length; i++) {
+            Resource resource = resources[i];
+            Resource parent = resMgr.getParentResource(resource.getId());
+            resource.setParentResource(parent);
+        }
     }
 
     private ActionForward removeBadDashboardLink(HttpServletRequest request) throws Exception, SessionNotFoundException {

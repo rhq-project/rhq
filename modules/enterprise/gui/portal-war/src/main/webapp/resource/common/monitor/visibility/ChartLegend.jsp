@@ -10,10 +10,30 @@
       <b><fmt:message key="resource.common.monitor.visibility.chart.ResourceAndControlActionKeyLabel"/></b><br>
 
       <c:forEach var="resource" varStatus="resStatus" items="${checkedResources}">
+      <c:url var="resourceUrl" value="/resource/common/monitor/Visibility.do">
+         <c:param name="mode" value="currentHealth"/>
+         <c:param name="id" value="${resource.id}"/>
+      </c:url>
+      <c:url var="parentResourceUrl" value="/resource/common/monitor/Visibility.do">
+         <c:param name="mode" value="currentHealth"/>
+         <c:param name="id" value="${resource.parentResource.id}"/>
+      </c:url>
       <fmt:formatNumber var="imgidx" pattern="00" value="${resStatus.index + 1}"/>
       <p><b><fmt:message key="resource.common.monitor.visibility.chart.ResourceLabel"/></b>
       <html:img page="/images/icon_resource_${imgidx}.gif" width="11" height="11" border="0"/>
-      <c:out value="${resource.name}"/><br>
+      <html:link href="${parentResourceUrl}">
+         <c:out value="${resource.parentResource.name}"/>
+      </html:link> 
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      <html:img page="/images/hierarchy.gif" width="16" height="16" alt="" border="0"/>
+      <html:link href="${resourceUrl}">
+         <c:out value="${resource.name}"/>
+      </html:link> 
+      <br>
       <c:forEach var="event" varStatus="evStatus" items="${chartLegend[resStatus.index]}">
       <b>(<c:out value="${event.id}"/>)</b>
       <c:out value="${event.detail}"/> -

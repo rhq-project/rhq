@@ -105,6 +105,10 @@
          <c:param name="mode" value="currentHealth"/>
          <c:param name="id" value="${resource.id}"/>
       </c:url>
+      <c:url var="parentResourceUrl" value="/resource/common/monitor/Visibility.do">
+         <c:param name="mode" value="currentHealth"/>
+         <c:param name="id" value="${resource.parentResource.id}"/>
+      </c:url>
       <tr class="ListRow">
          <c:if test="${multiMetric}">
             <td class="ListCellCheckbox" valign="top">
@@ -153,6 +157,11 @@
                      "
                   </c:if>
                   class="<c:out value='${resCellClass}'/>" valign="top">
+               <html:link href="${parentResourceUrl}"> 
+                  <c:out value="${resource.parentResource.name}"/>
+               </html:link>
+               <br>
+               <html:img page="/images/hierarchy.gif" width="16" height="16" alt="" border="0"/>
                <html:link href="${resourceUrl}">
                   <c:out value="${resource.name}"/>
                </html:link>

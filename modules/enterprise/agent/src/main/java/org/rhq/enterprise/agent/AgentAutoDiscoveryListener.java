@@ -19,8 +19,11 @@
 package org.rhq.enterprise.agent;
 
 import java.net.MalformedURLException;
+
 import mazz.i18n.Logger;
+
 import org.jboss.remoting.InvokerLocator;
+
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
@@ -32,13 +35,13 @@ import org.rhq.enterprise.communications.command.impl.identify.IdentifyCommandRe
 import org.rhq.enterprise.communications.command.server.discovery.AutoDiscoveryListener;
 
 /**
- * This is the agent's listener that will get notified when new JON Servers come on and offline.
+ * This is the agent's listener that will get notified when new RHQ Servers come on and offline.
  *
  * <p>Because a remoting server's invoker locator representation may differ slightly on the client-side, this listener
- * performs some additional work to try to determine what the JON Server calls itself (as opposed to what the agent
- * calls the server). Otherwise, we may get a notification about the JON Server and not realize it because we will be
+ * performs some additional work to try to determine what the RHQ Server calls itself (as opposed to what the agent
+ * calls the server). Otherwise, we may get a notification about the RHQ Server and not realize it because we will be
  * looking for one invoker locator representation when the notification will have a slightly different one (this
- * illustrates a slight hole in the InvokerLocator.equals() implementation). If we cannot determine what the JON
+ * illustrates a slight hole in the InvokerLocator.equals() implementation). If we cannot determine what the RHQ
  * Server's true locator is, then when we compare the locator in the notification with the one we are looking for, they
  * may look like different locators when they are actually referring to the same server endpoint.</p>
  *
@@ -90,10 +93,10 @@ public class AgentAutoDiscoveryListener implements AutoDiscoveryListener {
     }
 
     /**
-     * If the auto-detected endpoint is the JON Server we are looking for, enable the agent to start sending messages to
+     * If the auto-detected endpoint is the RHQ Server we are looking for, enable the agent to start sending messages to
      * it.
      *
-     * <p>If this listener does not yet know what the JON Server calls itself, then we assume the new remote server
+     * <p>If this listener does not yet know what the RHQ Server calls itself, then we assume the new remote server
      * coming online is our server and so we attempt to directly send our server an {@link IdentifyCommand} to ask it
      * for its true invoker locator representation. If our server is online, then the identify command's response will
      * contain the server's true invoker locator and we will use it rather than the locator as configured in the
@@ -163,10 +166,10 @@ public class AgentAutoDiscoveryListener implements AutoDiscoveryListener {
     }
 
     /**
-     * Compares the given invoker locator with the JON Server locator that this object is listening for. If its the
+     * Compares the given invoker locator with the RHQ Server locator that this object is listening for. If its the
      * same, then <code>true</code> is returned; if they are not the same, <code>false</code> is returned.
      *
-     * @param  compare_me the locator to compare with the locator of the JON Server this object is listening for
+     * @param  compare_me the locator to compare with the locator of the RHQ Server this object is listening for
      *
      * @return <code>true</code> if the given invoker locator represents the same server endpoint that this object is
      *         listening for
@@ -178,7 +181,7 @@ public class AgentAutoDiscoveryListener implements AutoDiscoveryListener {
     }
 
     /**
-     * This returns the endpoint locator of the JON Server that our listener is listening for.
+     * This returns the endpoint locator of the RHQ Server that our listener is listening for.
      *
      * @return the endpoint locator of the server we are listening for
      *

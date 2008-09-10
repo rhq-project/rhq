@@ -436,12 +436,10 @@ public class ConfigurationBean {
             // update server properties with the latest ha info to keep the form and server properties file up to date
             getConfigurationProperty(configuration, ServerProperties.PROP_HIGH_AVAILABILITY_NAME).setValue(
                 getHaServer().getName());
-            getConfigurationProperty(configuration, ServerProperties.PROP_CONNECTOR_BIND_PORT).setValue(
-                getHaServer().getEndpointBindPortString());
-            getConfigurationProperty(configuration, ServerProperties.PROP_CONNECTOR_TRANSPORT).setValue(
-                getHaServer().getEndpointTransport());
-            getConfigurationProperty(configuration, ServerProperties.PROP_CONNECTOR_TRANSPORT_PARAMS).setValue(
-                getHaServer().getEndpointTransportParams());
+            getConfigurationProperty(configuration, ServerProperties.PROP_HTTP_PORT).setValue(
+                getHaServer().getEndpointPortString());
+            getConfigurationProperty(configuration, ServerProperties.PROP_HTTPS_PORT).setValue(
+                getHaServer().getEndpointSecurePortString());
         } catch (Exception e) {
             LOG.fatal("Could not save the settings for some reason", e);
             lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.SAVE_ERROR, ThrowableUtil.getAllMessages(e));
@@ -553,16 +551,12 @@ public class ConfigurationBean {
         return getConfigurationProperty(ServerProperties.PROP_HIGH_AVAILABILITY_NAME);
     }
 
-    public PropertyItemWithValue getPropHaEndpointBindPort() {
-        return getConfigurationProperty(ServerProperties.PROP_CONNECTOR_BIND_PORT);
+    public PropertyItemWithValue getPropHaEndpointPort() {
+        return getConfigurationProperty(ServerProperties.PROP_HTTP_PORT);
     }
 
-    public PropertyItemWithValue getPropHaEndpointTransport() {
-        return getConfigurationProperty(ServerProperties.PROP_CONNECTOR_TRANSPORT);
-    }
-
-    public PropertyItemWithValue getPropHaEndpointTransportParams() {
-        return getConfigurationProperty(ServerProperties.PROP_CONNECTOR_TRANSPORT_PARAMS);
+    public PropertyItemWithValue getPropHaEndpointSecurePort() {
+        return getConfigurationProperty(ServerProperties.PROP_HTTPS_PORT);
     }
 
     public boolean isRegisteredServers() {
@@ -623,7 +617,6 @@ public class ConfigurationBean {
         if (isRegisteredServers()) {
             Properties configurationAsProperties = getConfigurationAsProperties(configuration);
             setHaServer(serverInfo.getServerDetail(configurationAsProperties, serverName));
-            System.out.println("DB Fetch of server with name " + serverName + " = " + getHaServer());
         }
 
         // if the server was not registered in the database then populate the ha server info with proper defaults
@@ -637,38 +630,26 @@ public class ConfigurationBean {
             }
 
             setHaServer(new ServerInformation.Server(serverName, endpointAddress,
-                ServerInformation.Server.DEFAULT_ENDPOINT_BIND_PORT,
-                ServerInformation.Server.DEFAULT_ENDPOINT_TRANSPORT,
-                ServerInformation.Server.DEFAULT_ENDPOINT_TRANSPORT_PARAMS,
+                ServerInformation.Server.DEFAULT_ENDPOINT_PORT, ServerInformation.Server.DEFAULT_ENDPOINT_SECURE_PORT,
                 ServerInformation.Server.DEFAULT_AFFINITY_GROUP));
 
             // override default settings with current property values
             try {
-                getHaServer().setEndpointBindPortString(
-                    getConfigurationProperty(ServerProperties.PROP_CONNECTOR_BIND_PORT).getValue());
+                getHaServer().setEndpointPortString(
+                    getConfigurationProperty(ServerProperties.PROP_HTTP_PORT).getValue());
             } catch (Exception e) {
-                LOG.debug("Could not determine default bind port: ", e);
+                LOG.debug("Could not determine default port: ", e);
             }
 
             try {
-                getHaServer().setEndpointTransport(
-                    getConfigurationProperty(ServerProperties.PROP_CONNECTOR_TRANSPORT).getValue());
+                getHaServer().setEndpointSecurePortString(
+                    getConfigurationProperty(ServerProperties.PROP_HTTPS_PORT).getValue());
             } catch (Exception e) {
-                LOG.debug("Could not determine default transport: ", e);
+                LOG.debug("Could not determine default secure port: ", e);
             }
-
-            try {
-                getHaServer().setEndpointTransportParams(
-                    getConfigurationProperty(ServerProperties.PROP_CONNECTOR_TRANSPORT_PARAMS).getValue());
-            } catch (Exception e) {
-                LOG.debug("Could not determine default transport params: ", e);
-            }
-
         } else {
             getHaServer().setName(serverName);
         }
-
-        System.out.println("After set name with name " + serverName + " = " + getHaServer());
     }
 
     public ServerInformation.Server getHaServer() {

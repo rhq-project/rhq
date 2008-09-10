@@ -739,25 +739,22 @@ public class ServerInformation {
 
     public static class Server {
         static public final String DEFAULT_AFFINITY_GROUP = "";
-        static public final int DEFAULT_ENDPOINT_BIND_PORT = 7080;
-        static public final String DEFAULT_ENDPOINT_TRANSPORT = "servlet";
-        static public final String DEFAULT_ENDPOINT_TRANSPORT_PARAMS = "/jboss-remoting-servlet-invoker/ServerInvokerServlet";
+        static public final int DEFAULT_ENDPOINT_PORT = 7080;
+        static public final int DEFAULT_ENDPOINT_SECURE_PORT = 7443;
 
         private String name;
         private String endpointAddress;
-        private int endpointBindPort;
-        private String endpointTransport;
-        private String endpointTransportParams;
+        private int endpointPort;
+        private int endpointSecurePort;
         private String affinityGroup;
 
-        public Server(String name, String endpointAddress, int endpointBindPort, String endpointTransport,
-            String endpointTransportParams, String affinityGroup) {
+        public Server(String name, String endpointAddress, int endpointPort, int endpointSecurePort,
+            String affinityGroup) {
             super();
             this.name = name;
             this.endpointAddress = endpointAddress;
-            this.endpointBindPort = endpointBindPort;
-            this.endpointTransport = endpointTransport;
-            this.endpointTransportParams = endpointTransportParams;
+            this.endpointPort = endpointPort;
+            this.endpointSecurePort = endpointSecurePort;
             this.affinityGroup = affinityGroup;
         }
 
@@ -779,42 +776,44 @@ public class ServerInformation {
                 this.endpointAddress = endpointAddress;
         }
 
-        public int getEndpointBindPort() {
-            return endpointBindPort;
+        public int getEndpointPort() {
+            return endpointPort;
         }
 
-        public void setEndpointBindPort(int endpointBindPort) {
-            this.endpointBindPort = endpointBindPort;
+        public void setEndpointPort(int endpointPort) {
+            this.endpointPort = endpointPort;
         }
 
-        public String getEndpointBindPortString() {
-            return (String.valueOf(this.endpointBindPort));
+        public String getEndpointPortString() {
+            return (String.valueOf(this.endpointPort));
         }
 
-        public void setEndpointBindPortString(String endpointBindPort) {
+        public void setEndpointPortString(String endpointPort) {
             try {
-                this.endpointBindPort = Integer.valueOf(endpointBindPort).intValue();
+                this.endpointPort = Integer.valueOf(endpointPort).intValue();
             } catch (NumberFormatException e) {
                 // no change
             }
         }
 
-        public String getEndpointTransport() {
-            return endpointTransport;
+        public int getEndpointSecurePort() {
+            return endpointSecurePort;
         }
 
-        public void setEndpointTransport(String endpointTransport) {
-            if ((null != endpointTransport) && (!"".equals(endpointTransport.trim())))
-                this.endpointTransport = endpointTransport;
+        public void setEndpointSecurePort(int endpointSecurePort) {
+            this.endpointSecurePort = endpointSecurePort;
         }
 
-        public String getEndpointTransportParams() {
-            return endpointTransportParams;
+        public String getEndpointSecurePortString() {
+            return (String.valueOf(this.endpointSecurePort));
         }
 
-        public void setEndpointTransportParams(String endpointTransportParams) {
-            if ((null != endpointTransportParams) && (!"".equals(endpointTransportParams.trim())))
-                this.endpointTransportParams = endpointTransportParams;
+        public void setEndpointSecurePortString(String endpointSecurePort) {
+            try {
+                this.endpointSecurePort = Integer.valueOf(endpointSecurePort).intValue();
+            } catch (NumberFormatException e) {
+                // no change
+            }
         }
 
         public String getAffinityGroup() {
@@ -829,9 +828,8 @@ public class ServerInformation {
         @Override
         public String toString() {
 
-            return "[name=" + name + " endpointAddress=" + endpointAddress + " endpointport=" + endpointBindPort
-                + " endpointTransport=" + endpointTransport + " endpointTransportParams=" + endpointTransportParams
-                + " affinitygroup=" + affinityGroup + "]";
+            return "[name=" + name + " address=" + endpointAddress + " port=" + endpointPort + " secureport="
+                + endpointSecurePort + " affinitygroup=" + affinityGroup + "]";
         }
     }
 
@@ -996,14 +994,14 @@ public class ServerInformation {
 
         try {
             stm = conn
-                .prepareStatement("SELECT s.address, s.bind_port, s.transport, s.transport_params, ag.name FROM rhq_server s LEFT JOIN rhq_affinity_group ag ON ag.id = s.affinity_group_id WHERE s.name = ?");
+                .prepareStatement("SELECT s.address, s.port, s.secure_port, ag.name FROM rhq_server s LEFT JOIN rhq_affinity_group ag ON ag.id = s.affinity_group_id WHERE s.name = ?");
             stm.setString(1, serverName.trim());
 
             rs = stm.executeQuery();
 
             if (rs.next()) {
-                result = new ServerInformation.Server(serverName, rs.getString(1), rs.getInt(2), rs.getString(3), rs
-                    .getString(4), rs.getString(5));
+                result = new ServerInformation.Server(serverName, rs.getString(1), rs.getInt(2), rs.getInt(3), rs
+                    .getString(4));
             }
 
         } catch (SQLException e) {
@@ -1076,26 +1074,23 @@ public class ServerInformation {
             return;
 
         try {
-            stm = conn
-                .prepareStatement("UPDATE rhq_server SET address=?, bind_port=?, transport=?, transport_params=? WHERE name=?");
+            stm = conn.prepareStatement("UPDATE rhq_server SET address=?, port=?, secure_port=? WHERE name=?");
             stm.setString(1, server.endpointAddress);
-            stm.setInt(2, server.endpointBindPort);
-            stm.setString(3, server.endpointTransport);
-            stm.setString(4, server.endpointTransportParams);
-            stm.setString(5, server.name);
+            stm.setInt(2, server.endpointPort);
+            stm.setInt(3, server.endpointSecurePort);
+            stm.setString(4, server.name);
             if (0 == stm.executeUpdate()) {
                 stm.close();
 
                 // set all new servers to operation_mode=NORMAL
                 stm = conn
-                    .prepareStatement("INSERT INTO rhq_server ( id, name, address, bind_port, transport, transport_params, ctime, compute_power, operation_mode ) VALUES ( ?, ?, ?, ?, ?, ?, ?, 1, 'NORMAL' )");
+                    .prepareStatement("INSERT INTO rhq_server ( id, name, address, port, secure_port, ctime, operation_mode, compute_power ) VALUES ( ?, ?, ?, ?, ?, ?, 'NORMAL', 1 )");
                 stm.setInt(1, db.getNextSequenceValue(conn, "rhq_server", "id"));
                 stm.setString(2, server.name);
                 stm.setString(3, server.endpointAddress);
-                stm.setInt(4, server.endpointBindPort);
-                stm.setString(5, server.endpointTransport);
-                stm.setString(6, server.endpointTransportParams);
-                stm.setLong(7, System.currentTimeMillis());
+                stm.setInt(4, server.endpointPort);
+                stm.setInt(5, server.endpointSecurePort);
+                stm.setLong(6, System.currentTimeMillis());
                 stm.executeUpdate();
             }
 

@@ -145,12 +145,8 @@
                <h:selectOneMenu value="#{configurationBean.selectedRegisteredServerName}"
                                 onchange="{ document.getElementById('propForm:haservername').value = this.options[this.selectedIndex].value;
                                             document.getElementById('propForm:haendpointaddress').value = '';
-                                            if (document.getElementById('propForm:haendpointbindport') != null) {
-                                               document.getElementById('propForm:haendpointbindport').value = ''; }                                            
-                                            if (document.getElementById('propForm:haendpointtransport') != null) {
-                                               document.getElementById('propForm:haendpointtransport').value = ''; }                                            
-                                            if (document.getElementById('propForm:haendpointtransportparams') != null) {
-                                               document.getElementById('propForm:haendpointtransportparams').value = ''; }                                            
+                                            document.getElementById('propForm:haendpointport').value = '';
+                                            document.getElementById('propForm:haendpointsecureport').value = '';
                                             if (document.getElementById('propForm:haaffinitygroup') != null) {
                                                document.getElementById('propForm:haaffinitygroup').value = ''; }                                            
                                             submit(); }" >
@@ -180,43 +176,29 @@
             <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaServerName.itemDefinition.requiresRestart}" />            
             <h:outputText value="#{bundle.noString}" rendered="#{!configurationBean.propHaServerName.itemDefinition.requiresRestart}" />                        
             
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerEndpointAddress', 'propertyHelp')" >
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerPublicAddress', 'propertyHelp')" >
                <h:outputText value="#{bundle.propertyHighAvailabilityEndpointAddress}" />
             </h:outputLink>
             <h:inputText id="haendpointaddress" size="#{configurationBean.propHaServerName.itemDefinition.fieldSize}"
                          value="#{configurationBean.haServer.endpointAddress}" >
             </h:inputText>
             <h:outputText value="#{bundle.noString}" />
-
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaEndpointBindPort.itemDefinition.help}', 'propertyHelp')" 
-                          rendered="#{configurationBean.showAdvancedSettings == true}" >
-               <h:outputText value="#{bundle.propertyConnectorBindPort}" />
-            </h:outputLink>
-            <h:inputText id="haendpointbindport" size="#{configurationBean.propHaEndpointBindPort.itemDefinition.fieldSize}"
-                         value="#{configurationBean.haServer.endpointBindPortString}"
-                         rendered="#{configurationBean.showAdvancedSettings == true}" >                         
-            </h:inputText>           
-            <h:outputText value="#{bundle.noString}" rendered="#{configurationBean.showAdvancedSettings == true}" />            
             
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaEndpointTransport.itemDefinition.help}', 'propertyHelp')" 
-                          rendered="#{configurationBean.showAdvancedSettings == true}" >
-               <h:outputText value="#{bundle.propertyConnectorTransport}" />
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaEndpointPort.itemDefinition.help}', 'propertyHelp')" >
+               <h:outputText value="#{bundle.propertyHttpPort}" />
             </h:outputLink>
-            <h:inputText id="haendpointtransport" size="#{configurationBean.propHaEndpointTransport.itemDefinition.fieldSize}"
-                         value="#{configurationBean.haServer.endpointTransport}"
-                         rendered="#{configurationBean.showAdvancedSettings == true}" >                         
-            </h:inputText>           
-            <h:outputText value="#{bundle.noString}" rendered="#{configurationBean.showAdvancedSettings == true}" />            
+            <h:inputText id="haendpointport" size="#{configurationBean.propHaEndpointPort.itemDefinition.fieldSize}"
+                         value="#{configurationBean.haServer.endpointPortString}" >
+            </h:inputText>
+            <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaEndpointPort.itemDefinition.requiresRestart}" />            
 
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaEndpointTransportParams.itemDefinition.help}', 'propertyHelp')" 
-                          rendered="#{configurationBean.showAdvancedSettings == true}" >
-               <h:outputText value="#{bundle.propertyConnectorTransportParams}" />
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaEndpointSecurePort.itemDefinition.help}', 'propertyHelp')" >
+               <h:outputText value="#{bundle.propertyHttpsPort}" />
             </h:outputLink>
-            <h:inputText id="haendpointtransportparams" size="#{configurationBean.propHaEndpointTransportParams.itemDefinition.fieldSize}"
-                         value="#{configurationBean.haServer.endpointTransportParams}"
-                         rendered="#{configurationBean.showAdvancedSettings == true}" >                         
-            </h:inputText>           
-            <h:outputText value="#{bundle.noString}" rendered="#{configurationBean.showAdvancedSettings == true}" />            
+            <h:inputText id="haendpointsecureport" size="#{configurationBean.propHaEndpointSecurePort.itemDefinition.fieldSize}"
+                         value="#{configurationBean.haServer.endpointSecurePortString}" >
+            </h:inputText>
+            <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaEndpointSecurePort.itemDefinition.requiresRestart}" />            
 
             <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerAffinityGroup', 'propertyHelp')" 
                           rendered="#{configurationBean.showAdvancedSettings == true}" >

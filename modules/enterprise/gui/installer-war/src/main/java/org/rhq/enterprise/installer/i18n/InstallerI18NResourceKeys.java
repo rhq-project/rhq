@@ -709,7 +709,7 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("-ServerName")
     String PROP_HIGH_AVAILABILITY_NAME_HELP = "propertyHighAvailabilityNameHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Endpoint Address"),
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Server Public Address"),
         @I18NMessage(locale = "de", value = "HA-Endpunkt-Adresse des Servers") })
     String PROP_HIGH_AVAILABILITY_ENDPOINT_ADDRESS = "propertyHighAvailabilityEndpointAddress";
 

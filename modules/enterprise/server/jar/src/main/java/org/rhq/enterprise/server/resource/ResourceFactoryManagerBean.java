@@ -18,8 +18,21 @@
  */
 package org.rhq.enterprise.server.resource;
 
+import java.io.InputStream;
+import java.util.Calendar;
+import java.util.List;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.inventory.CreateResourceRequest;
 import org.rhq.core.clientapi.agent.inventory.CreateResourceResponse;
 import org.rhq.core.clientapi.agent.inventory.DeleteResourceRequest;
@@ -54,17 +67,6 @@ import org.rhq.enterprise.server.content.ContentManagerHelper;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import java.io.InputStream;
-import java.util.Calendar;
-import java.util.List;
 
 /**
  * Bean to handle interaction with the resource factory subsystem of the plugin container. !! Warning, the factory
@@ -217,10 +219,9 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
         Subject overLord = subjectManagerBean.getOverlord();
         // Check to see if the resource exists but marked as deleted
         Resource resource = resourceManagerBean.getResourceByParentAndKey(overLord, parentResource, resourceKey,
-                resourceType.getPlugin(), resourceType.getName());
+            resourceType.getPlugin(), resourceType.getName());
 
-        if (resource == null)
-        {
+        if (resource == null) {
             // Create the resource
             resource = new Resource(resourceKey, resourceName, resourceType);
             resource.setParentResource(parentResource);
@@ -229,12 +230,10 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
 
             // Persist the resource
             entityManager.persist(resource);
-        }
-        else
-        {
+        } else {
             resource.setInventoryStatus(InventoryStatus.COMMITTED);
             resource.setItime(Calendar.getInstance().getTimeInMillis());
-        }        
+        }
 
         return resource;
     }
@@ -248,7 +247,9 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
 
         // There is some inconsistency if we're completing a request that was not in the database
         if (history == null) {
-            log.error("Attempting to complete a request that was not found in the database: " + response.getRequestId());
+            log
+                .error("Attempting to complete a request that was not found in the database: "
+                    + response.getRequestId());
             return;
         }
 
@@ -271,10 +272,14 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
         }
 
         // If the plugin reports it as successful, create the resource and mark it as committed
-        if (response.getStatus() == CreateResourceStatus.SUCCESS) {
-            resourceFactoryManager.createInventoryResource(history.getParentResource().getId(), history
-                .getResourceType().getId(), newResourceName, response.getResourceKey());
-        }
+        // Currently commented out because of https://jira.jboss.org/jira/browse/JBNADM-3451
+        // basically: this prevented getting a version of the resource with correct pluginConfig
+        //    from autodiscovery back into the inventory
+        //
+        //        if (response.getStatus() == CreateResourceStatus.SUCCESS) {
+        //            resourceFactoryManager.createInventoryResource(history.getParentResource().getId(), history
+        //                .getResourceType().getId(), newResourceName, response.getResourceKey());
+        //        }
     }
 
     public void deleteResource(Subject user, int resourceId) {

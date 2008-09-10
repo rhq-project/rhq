@@ -119,34 +119,24 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="s.bindPort">
-                        <h:outputText styleClass="headerText" value="Endpoint Port" />
+                     <onc:sortableColumnHeader sort="s.port">
+                        <h:outputText styleClass="headerText" value="HTTP Port" />
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{item.server.bindPort}"/>
+                  <h:outputText value="#{item.server.port}"/>
                </rich:column>
                
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="s.transport">
-                        <h:outputText styleClass="headerText" value="Transport" />
+                     <onc:sortableColumnHeader sort="s.securePort">
+                        <h:outputText styleClass="headerText" value="Secure HTTPS Port" />
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{item.server.transport}"/>
+                  <h:outputText value="#{item.server.securePort}"/>
                </rich:column>
                 
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="s.transportParams">
-                        <h:outputText styleClass="headerText" value="Transport Params" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-               
-                  <h:outputText value="#{item.server.transportParams}"/>
-               </rich:column>
-
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="s.ctime">
@@ -181,8 +171,8 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <!-- colspan 11:10 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 11 : 10}" width="100%">
+                     <!-- colspan 10:9 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 10 : 9}" width="100%">
                         <onc:selectCommandButton action="#{ListServersUIBean.setSelectedServersModeNormal}"
                                                  value="SET NORMAL" target="selectedServers" styleClass="on-pager-button buttonsmall"/>
                         <onc:selectCommandButton action="#{ListServersUIBean.setSelectedServersModeMaintenance}"

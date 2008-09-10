@@ -55,10 +55,6 @@ ignore: 'ignore'
     <tiles:put name="formName"><c:out value="${formName}"/></tiles:put>
   </tiles:insert>
 
-  <tiles:insert definition=".events.config.conditions.addlink">
-    <tiles:put name="formName"><c:out value="${formName}"/></tiles:put>
-  </tiles:insert>
-
   <tr>
     <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>

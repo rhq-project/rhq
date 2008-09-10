@@ -653,6 +653,7 @@ public class EventManagerBean implements EventManagerLocal {
         return comp;
     }
 
+    @SuppressWarnings("unchecked")
     public void deleteEventSourcesForDefinition(EventDefinition def) {
         Query q = entityManager.createNamedQuery(EventSource.QUERY_BY_EVENT_DEFINITION);
         q.setParameter("definition", def);
@@ -660,6 +661,14 @@ public class EventManagerBean implements EventManagerLocal {
         for (EventSource source : sources) {
             entityManager.remove(source);
         }
+    }
+
+    public int getEventDefinitionCountForResourceType(int resourceTypeId) {
+        Query query = PersistenceUtility.createCountQuery(entityManager,
+            EventDefinition.QUERY_EVENT_DEFINITIONS_BY_RESOURCE_TYPE_ID);
+        query.setParameter("resourceTypeId", resourceTypeId);
+        long result = (Long) query.getSingleResult();
+        return (int) result;
     }
 
     private boolean isFilled(String in) {

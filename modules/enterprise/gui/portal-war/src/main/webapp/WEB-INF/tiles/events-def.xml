@@ -182,12 +182,13 @@
   <definition name=".events.config.conditions.condition.expression"
       path="/resource/common/monitor/alerts/config/DefinitionConditionExpression.jsp"/>
 
+<!-- 
   <definition name=".events.config.conditions.condition.deletelink"
       path="/resource/common/monitor/alerts/config/DefinitionConditionDeleteLink.jsp"/>
 
   <definition name=".events.config.conditions.addlink"
       path="/resource/common/monitor/alerts/config/DefinitionConditionAddLink.jsp"/>
-
+ -->
   <definition name=".events.config.conditions.enablement"
       path="/resource/common/monitor/alerts/config/DefinitionEnablement.jsp"/>
 

@@ -88,6 +88,22 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
         log.trace("defForm.numConditions=" + defForm.getNumConditions());
         request.setAttribute("numConditions", defForm.getNumConditions());
 
+        request.setAttribute("showMetrics", defForm.getMetrics().size() > 0);
+        request.setAttribute("showTraits", defForm.getTraits().size() > 0);
+        request.setAttribute("showProperties", false); // not-implemented yet
+        request.setAttribute("showAvailability", defForm.getAvailabilityOptions().length > 0);
+        request.setAttribute("showOperations", defForm.getControlActions().size() > 0);
+
+        ResourceType type = null;
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        if (defForm.isAlertTemplate()) {
+            type = LookupUtil.getResourceTypeManager().getResourceTypeById(overlord, defForm.getType());
+        } else {
+            type = LookupUtil.getResourceManager().getResourceById(overlord, defForm.getId()).getResourceType();
+        }
+        int eventDefinitionCount = LookupUtil.getEventManager().getEventDefinitionCountForResourceType(type.getId());
+        request.setAttribute("showEvents", eventDefinitionCount > 0);
+
         return null;
     }
 

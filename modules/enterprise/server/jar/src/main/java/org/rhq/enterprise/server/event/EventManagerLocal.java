@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Local;
-import javax.persistence.Query;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.event.Event;
@@ -175,4 +174,6 @@ public interface EventManagerLocal {
     public EventComposite ackEvent(Subject subject, int eventId);
 
     public void deleteEventSourcesForDefinition(EventDefinition def);
+
+    public int getEventDefinitionCountForResourceType(int resourceTypeId);
 }

@@ -31,6 +31,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -44,12 +46,18 @@ import org.rhq.core.domain.resource.ResourceType;
  * @author Ian Springer
  */
 @Entity
+@NamedQueries( { @NamedQuery(name = EventDefinition.QUERY_EVENT_DEFINITIONS_BY_RESOURCE_TYPE_ID, query = "" //
+    + "SELECT ed " //
+    + "  FROM EventDefinition ed " //
+    + " WHERE ed.resourceTypeId = :resourceTypeId ") })
 @Table(name = EventDefinition.TABLE_NAME)
 @SequenceGenerator(name = "idGenerator", sequenceName = EventDefinition.TABLE_NAME + "_ID_SEQ", allocationSize = 100)
 public class EventDefinition implements Externalizable {
     private static final long serialVersionUID = 1L;
 
     public static final String TABLE_NAME = "RHQ_EVENT_DEF";
+
+    public static final String QUERY_EVENT_DEFINITIONS_BY_RESOURCE_TYPE_ID = "EventDefinition.findByResourceTypeId";
 
     @Id
     @Column(name = "ID", nullable = false)

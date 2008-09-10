@@ -17,6 +17,9 @@
   <td width="20%" class="BlockLabel">
     <b><fmt:message key="alert.config.props.CB.IfCondition"/></b>
   </td>
+  
+<c:if test="${showMetrics}" > <!-- begin conditional metric display logic -->
+  
   <logic:messagesPresent property="condition[${i}].metricId"><td width="80%" class="ErrorField"></logic:messagesPresent>
   <logic:messagesNotPresent property="condition[${i}].metricId"><td width="80%" class="BlockContent"></logic:messagesNotPresent>
     <html:radio property="condition[${i}].trigger" value="onMeasurement"/>
@@ -106,6 +109,9 @@
 
 <tr>
   <td class="BlockLabel">&nbsp;</td>
+
+</c:if> <!-- end conditional metric display logic -->
+<c:if test="${showTraits}" > <!-- begin conditional traits display logic -->
   
   <logic:messagesPresent property="condition[${i}].traitStatus">
      <c:set var="traitStatusErrs" value="true"/>
@@ -139,9 +145,13 @@
   </td>
 </tr>
 
-<c:if test="${custPropsAvail}">
+
 <tr>
   <td class="BlockLabel">&nbsp;</td>
+  
+</c:if> <!-- end conditional traits display logic -->
+<c:if test="${showProperties}"> <!-- begin conditional customProperties display logic -->
+
   <logic:messagesPresent property="condition[${i}].customProperty">
   <c:set var="customPropertyErrs" value="true"/>
   </logic:messagesPresent>
@@ -162,10 +172,12 @@
     <fmt:message key="alert.config.props.CB.Content.Changes"/>
   </td>
 </tr>
-</c:if>
 
 <tr>
   <td class="BlockLabel">&nbsp;</td>
+  
+</c:if> <!-- end conditional customProperties display logic -->
+<c:if test="${showAvailability}"> <!-- begin conditional availabilityOptions display logic -->
   
   <logic:messagesPresent property="condition[${i}].availabilityStatus">
      <c:set var="availabilityStatusErrs" value="true"/>
@@ -196,6 +208,10 @@
 
 <tr>
   <td class="BlockLabel">&nbsp;</td>
+  
+</c:if> <!-- end conditional availabilityOptions display logic -->
+<c:if test="${showOperations}"> <!-- begin conditional controlActions display logic -->
+  
   <logic:messagesPresent property="condition[${i}].controlAction">
   	<c:set var="controlActionErrs" value="true"/>
   </logic:messagesPresent>
@@ -232,6 +248,10 @@
 
 <tr>
   <td class="BlockLabel">&nbsp;</td>
+  
+</c:if> <!-- end conditional controlActions display logic -->
+<c:if test="${showEvents}"> <!-- begin conditional events display logic -->
+  
   <logic:messagesPresent property="condition[${i}].eventSeverity">
   	<c:set var="eventSeverityErrs" value="true"/>
   </logic:messagesPresent>
@@ -264,10 +284,51 @@
   </td>
 </tr>
 
+</c:if> <!-- end conditional events display logic -->
+
+
 <c:if test="${numConditions != 1}">
-<tiles:insert definition=".events.config.conditions.condition.deletelink">
-  <tiles:put name="formName"><c:out value="${formName}"/></tiles:put>
-  <tiles:put name="i"><c:out value="${i}"/></tiles:put>
-</tiles:insert>
+
+
+<c:if test="${showEvents}"> <!-- begin conditional events display logic -->
+
+<tr>
+  <td class="BlockLabel">&nbsp;</td>
+
+</c:if> <!-- end conditional events display logic -->  
+
+  <td class="BlockContent">
+  
+    <html:link href="javascript:document.${formName}.submit()"
+               onclick="clickRemove('${formName}', '${i}');"
+               titleKey="alert.config.props.CB.Delete">
+      <fmt:message key="alert.config.props.CB.Delete"/>
+    </html:link>
+  </td>
+</tr>
+
+
 </c:if>
 </c:forEach>
+
+<c:if test="${numConditions == 1 && showEvents}"> <!-- begin conditional events display logic -->
+
+<tr>
+  <td class="BlockLabel">&nbsp;</td>
+
+</c:if> <!-- end conditional events display logic -->  
+
+<c:if test="${numConditions != 1}">
+<tr>
+  <td class="BlockLabel">&nbsp;</td>  
+</c:if>
+  <td class="BlockContent">
+    <html:hidden property="addingCondition" value="false"/>
+    <html:link href="javascript:document.${formName}.submit()"
+               onclick="clickAdd('${formName}');"
+               titleKey="alert.config.props.CB.Another">
+      <fmt:message key="alert.config.props.CB.Another"/>
+    </html:link>
+  </td>
+</tr>
+

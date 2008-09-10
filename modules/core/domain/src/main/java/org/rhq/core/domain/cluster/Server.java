@@ -68,8 +68,7 @@ import org.rhq.core.domain.resource.Agent;
     @NamedQuery(name = Server.QUERY_FIND_WITHOUT_AFFINITY_GROUP, query = "" //
         + "SELECT s " //
         + "  FROM Server s " //
-        + " WHERE s.affinityGroup IS NULL ") 
-    })
+        + " WHERE s.affinityGroup IS NULL ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_SERVER_ID_SEQ")
 @Table(name = "RHQ_SERVER")
 public class Server implements Serializable {
@@ -231,6 +230,12 @@ public class Server implements Serializable {
 
     public ServerEntry getServerEntry() {
         return new FailoverListComposite.ServerEntry(address, bindPort, transport, transportParams);
+    }
+
+    @Override
+    public String toString() {
+        return "Server[id=" + getId() + ",name=" + getName() + ",address=" + getAddress() + ",bindPort="
+            + getBindPort() + "]";
     }
 
     @PrePersist

@@ -33,6 +33,8 @@ import org.rhq.core.domain.resource.Agent;
 @Local
 public interface ServerManagerLocal {
 
+    int create(Server server);
+
     String getIdentity();
 
     List<Agent> getAgents();

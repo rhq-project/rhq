@@ -23,8 +23,8 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.cluster.FailoverListDetails;
+import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.cluster.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
@@ -36,8 +36,6 @@ import org.rhq.core.domain.util.PageList;
 
 @Local
 public interface ClusterManagerLocal {
-
-    void createDefaultServerIfNecessary();
 
     List<Agent> getAgentsByServerName(String serverName);
 

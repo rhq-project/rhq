@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.startup;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -111,7 +113,27 @@ public class StartupServlet extends HttpServlet {
      * in the {@link Server} table
      */
     private void createDefaultServerIfNecessary() {
-        LookupUtil.getClusterManager().createDefaultServerIfNecessary();
+        String identity = LookupUtil.getServerManager().getIdentity();
+        Server server = LookupUtil.getClusterManager().getServerByName(identity);
+        if (server == null) {
+            server = new Server();
+            server.setName(identity);
+
+            String address = "localhost";
+            try {
+                address = InetAddress.getLocalHost().getCanonicalHostName();
+            } catch (UnknownHostException e) {
+                address = "localhost";
+            }
+            server.setAddress(address);
+
+            server.setBindPort(7080);
+            server.setTransport("servlet");
+            server.setTransportParams("/jboss-remoting-servlet-invoker/ServerInvokerServlet");
+            server.setOperationMode(Server.OperationMode.NORMAL);
+            LookupUtil.getServerManager().create(server);
+            log("Default server created: " + server);
+        }
     }
 
     /**

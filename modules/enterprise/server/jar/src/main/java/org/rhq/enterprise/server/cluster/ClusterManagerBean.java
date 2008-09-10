@@ -60,20 +60,6 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     @EJB
     ClusterManagerLocal clusterManager;
 
-    public void createDefaultServerIfNecessary() {
-        int serverCount = clusterManager.getServerCount();
-        if (serverCount == 0) {
-            Server server = new Server();
-            server.setName("localhost");
-            server.setAddress("localhost");
-            server.setBindPort(7080);
-            server.setTransport("servlet");
-            server.setTransportParams("/jboss-remoting-servlet-invoker/ServerInvokerServlet");
-            server.setOperationMode(Server.OperationMode.NORMAL);
-            entityManager.persist(server);
-        }
-    }
-
     public List<Agent> getAgentsByServerName(String serverName) {
         Server server = clusterManager.getServerByName(serverName);
         List<Agent> agents = server.getAgents();

@@ -70,6 +70,11 @@ public class ServerManagerBean implements ServerManagerLocal {
     @EJB
     AgentStatusManagerLocal agentStatusManager;
 
+    public int create(Server server) {
+        entityManager.persist(server);
+        return server.getId();
+    }
+
     public String getIdentity() {
         String identity = System.getProperty(RHQ_SERVER_NAME_PROPERTY, "");
         if (identity.equals("")) {

@@ -120,5 +120,5 @@ public interface AlertConditionCacheManagerLocal {
 
     boolean isCacheValid();
 
-    void reload();
+    void reloadCachesForAgent(int agentId);
 }

@@ -110,7 +110,7 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
         AlertConditionCache.getInstance().printAllCaches();
     }
 
-    public void reload() {
-        AlertConditionCache.getInstance().reloadCachesForAgentsOnThisServer();
+    public void reloadCachesForAgent(int agentId) {
+        AlertConditionCache.getInstance().reloadCachesForAgent(agentId);
     }
 }

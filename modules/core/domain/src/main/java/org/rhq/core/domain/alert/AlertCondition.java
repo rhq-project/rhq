@@ -192,7 +192,11 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ac.category = :category " //
-        + "     AND ad.resource IS NOT NULL") })
+        + "     AND ad.resource IS NOT NULL"), //
+    @NamedQuery(name = AlertCondition.QUERY_FIND_IDS_BY_AGENT, query = "" //
+        + "  SELECT ac.id " //
+        + "    FROM AlertCondition ac " //
+        + "   WHERE ac.alertDefinition.resource.agent.id = :agentId ") })
 @SequenceGenerator(name = "RHQ_ALERT_CONDITION_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_ID_SEQ")
 @Table(name = "RHQ_ALERT_CONDITION")
 public class AlertCondition implements Serializable {
@@ -207,6 +211,7 @@ public class AlertCondition implements Serializable {
     public static final String QUERY_BY_CATEGORY_THRESHOLD = "AlertCondition.byCategoryThreshold";
     public static final String QUERY_BY_CATEGORY_EVENT = "AlertCondition.byCategoryEvent";
     public static final String QUERY_BY_CATEGORY_COUNT_PARAMETERIZED = "AlertCondition.byCategoryCount";
+    public static final String QUERY_FIND_IDS_BY_AGENT = "AlertCondition.idsByAgent";
 
     public static final String RECOVERY_CONDITIONAL_EXPRESSION = "" //
         + " ( ad.recoveryId = 0 " //

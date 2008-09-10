@@ -61,6 +61,21 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
+    public PageList<Integer> getAlertConditionIdsForAgent(int agentId, PageControl pageControl) {
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, AlertCondition.QUERY_FIND_IDS_BY_AGENT);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, AlertCondition.QUERY_FIND_IDS_BY_AGENT,
+            pageControl);
+
+        queryCount.setParameter("agentId", agentId);
+        query.setParameter("agentId", agentId);
+
+        long totalCount = (Long) queryCount.getSingleResult();
+        List<Integer> list = query.getResultList();
+
+        return new PageList<Integer>(list, (int) totalCount, pageControl);
+    }
+
+    @SuppressWarnings("unchecked")
     public PageList<AlertDefinition> getAllAlertDefinitionsWithConditions(Subject user, PageControl pageControl) {
         if (authorizationManager.isOverlord(user) == false) {
             throw new PermissionException("User [" + user.getName() + "] does not have permission to call "

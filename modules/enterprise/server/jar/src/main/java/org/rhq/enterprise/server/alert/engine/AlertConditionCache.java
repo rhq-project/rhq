@@ -101,6 +101,11 @@ public final class AlertConditionCache {
     private static final Log log = LogFactory.getLog(AlertConditionCache.class);
 
     /**
+     * the batch size of conditions into the cache at a time
+     */
+    final int PAGE_SIZE = 250;
+
+    /**
      * The actual cache - this is a singleton.
      */
     private static final AlertConditionCache instance = new AlertConditionCache();
@@ -267,34 +272,62 @@ public final class AlertConditionCache {
         cachedConditionProducer = LookupUtil.getCachedConditionProducerLocal();
         entityManagerFacade = LookupUtil.getEntityManagerFacade();
 
-        reloadCachesForAgentsOnThisServer();
+        List<Agent> agents = LookupUtil.getAgentManager().getAllAgents();
+
+        // RHQ-668 - when the HA installer is finished, replace getAllAgents with commented lines
+        //    List<Agent> agents = serverManager.getAgents();
+        for (Agent nextAgent : agents) {
+            reloadCachesForAgent(nextAgent.getId());
+        }
     }
 
     public static AlertConditionCache getInstance() {
         return instance;
     }
 
-    public void reloadCachesForAgentsOnThisServer() {
+    public void reloadCachesForAgent(int agentId) {
         rwLock.writeLock().lock();
 
         try {
-            // this load method assumes the cache is totally clean; let's make sure that is true
-            clearCaches();
-
-            List<Agent> agents = LookupUtil.getAgentManager().getAllAgents();
-
-            // RHQ-668 - when the HA installer is finished, replace getAllAgents with commented lines
-            //    List<Agent> agents = serverManager.getAgents();
-
-            for (Agent nextAgent : agents) {
-                loadCachesForAgent(nextAgent.getId());
-            }
+            AlertConditionCacheStats unloadStats = unloadCachesForAgent(agentId);
+            AlertConditionCacheStats reloadStats = loadCachesForAgent(agentId);
+            log.info("UnloadStats for agent[id=" + agentId + "]: " + unloadStats);
+            log.info("ReloadStats for agent[id=" + agentId + "]: " + reloadStats);
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error(t);
         } finally {
             rwLock.writeLock().unlock();
         }
+    }
+
+    private AlertConditionCacheStats unloadCachesForAgent(int agentId) {
+        int rowsProcessed = 0;
+        PageControl pc = new PageControl();
+        pc.setPageNumber(0);
+        pc.setPageSize(PAGE_SIZE); // condition composites are small so we can grab alot; use the setter, constructor limits this to 100
+
+        AlertConditionCacheStats stats = new AlertConditionCacheStats();
+        while (true) {
+            PageList<Integer> alertConditionIds = alertConditionManager.getAlertConditionIdsForAgent(agentId, pc);
+
+            if (alertConditionIds.isEmpty()) {
+                break; // didn't get any rows back, must not have any data or no more rows left to process
+            }
+
+            for (Integer alertConditionId : alertConditionIds) {
+                removeAlertCondition(alertConditionId, stats);
+            }
+
+            rowsProcessed += alertConditionIds.size();
+            if (rowsProcessed >= alertConditionIds.getTotalSize()) {
+                break; // we've processed all data, we can stop now
+            }
+
+            pc.setPageNumber(pc.getPageNumber() + 1);
+        }
+
+        return stats;
     }
 
     /**
@@ -310,9 +343,7 @@ public final class AlertConditionCache {
 
         AlertConditionCacheStats stats = new AlertConditionCacheStats();
         try {
-            log.info("Loading Alert Condition Caches...");
-
-            final int PAGE_SIZE = 250;
+            log.info("Loading Alert Condition Caches for agent[id=" + agentId + "]...");
 
             Subject overlord = subjectManager.getOverlord();
 
@@ -388,7 +419,7 @@ public final class AlertConditionCache {
                 pc.setPageNumber(pc.getPageNumber() + 1);
             }
 
-            log.info("Loaded Alert Condition Caches..." + stats);
+            log.info("Loaded Alert Condition Caches for agent[id=" + agentId + "]");
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error(t);
@@ -1440,27 +1471,27 @@ public final class AlertConditionCache {
     private void removeAlertDefinition(AlertDefinition alertDefinition, AlertConditionCacheStats stats) {
         for (AlertCondition alertCondition : alertDefinition.getConditions()) {
             try {
-                removeAlertCondition(alertCondition, stats);
+                removeAlertCondition(alertCondition.getId(), stats);
             } catch (RuntimeException re) {
                 log.error("Error removing alert definition from cache: " + re.getMessage());
             }
         }
     }
 
-    private void removeAlertCondition(AlertCondition alertCondition, AlertConditionCacheStats stats) {
+    private void removeAlertCondition(int alertConditionId, AlertConditionCacheStats stats) {
         /*
          * remove the map bound to the alertCondition id being removed from the cache; we no longer need bookkeeping
          * information about it after we're done using it
          */
         List<Tuple<AbstractCacheElement<?>, List<AbstractCacheElement<?>>>> inverseCacheElements = inverseAlertConditionMap
-            .remove(alertCondition.getId());
+            .remove(alertConditionId);
 
         /*
          * if we have no inverse data for this alertCondition, we have no work to do; this should never happen, but
          * let's not fail with NPE if it does for some reason
          */
         if (inverseCacheElements == null) {
-            log.error("There were no inverseCacheElements for " + alertCondition
+            log.error("There were no inverseCacheElements for " + alertConditionId
                 + ", but all alertConditions should be in the cache");
             return;
         }

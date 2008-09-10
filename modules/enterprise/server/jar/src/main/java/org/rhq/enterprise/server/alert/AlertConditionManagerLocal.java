@@ -34,7 +34,10 @@ import org.rhq.core.domain.util.PageList;
 
 @Local
 public interface AlertConditionManagerLocal {
-    public AlertCondition getAlertConditionById(int alertConditionId);
+
+    AlertCondition getAlertConditionById(int alertConditionId);
+
+    PageList<Integer> getAlertConditionIdsForAgent(int agentId, PageControl pageControl);
 
     PageList<AlertDefinition> getAllAlertDefinitionsWithConditions(Subject user, PageControl pageControl);
 

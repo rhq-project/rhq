@@ -66,6 +66,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     private Set<JoinCondition> joinConditions;
     private Map<String, String> whereConditions;
     private Map<String, Object> whereReplacements;
+    private Map<String, Class<?>> whereReplacementTypes;
     private Set<String> whereStatics;
     private List<String> groupByElements;
 
@@ -94,6 +95,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         joinConditions = new HashSet<JoinCondition>();
         whereConditions = new LinkedHashMap<String, String>();
         whereReplacements = new HashMap<String, Object>();
+        whereReplacementTypes = new HashMap<String, Class<?>>();
         whereStatics = new HashSet<String>();
         groupByElements = new ArrayList<String>();
 
@@ -231,6 +233,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     private ParseSubContext subcontext = null;
     private int parseIndex = 0;
     private boolean isGroupBy = false;
+    private Class<?> expressionType;
 
     private ParseContext deepestResourceContext = null;
 
@@ -275,7 +278,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         for (int i = 0; i < tokens.length; i++) {
             tokens[i] = originalTokens.get(i).toLowerCase();
         }
-        System.out.println("TOKENS: " + Arrays.asList(tokens));
+        log.debug("TOKENS: " + Arrays.asList(tokens));
 
         /*
          * build the normalized expression outside of the parse, to keep the parse code as clean as possible;
@@ -305,6 +308,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         parseIndex = 0;
 
         deepestResourceContext = null;
+        expressionType = String.class;
 
         for (; parseIndex < tokens.length; parseIndex++) {
             String nextToken = tokens[parseIndex];
@@ -409,6 +413,12 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 populatePredicateCollections(PROP_SIMPLE_ALIAS + ".stringValue", value);
                 whereStatics.add(PROP_SIMPLE_ALIAS + ".configuration = " + joinCondition.alias);
             } else if (context == ParseContext.StringMatch) {
+                if (expressionType != String.class) {
+                    throw new InvalidExpressionException(
+                        "Can not apply a string function to an expression that resolves to "
+                            + expressionType.getSimpleName());
+                }
+
                 String lastArgumentName = getLastArgumentName();
                 String argumentValue = (String) whereReplacements.get(lastArgumentName);
 
@@ -458,6 +468,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     private void parseExpression_resourceContext(String value, String[] tokens, String nextToken)
         throws InvalidExpressionException {
         if (nextToken.equals("id")) {
+            expressionType = Integer.class;
             populatePredicateCollections(getResourceRelativeContextToken() + ".id", value);
         } else if (nextToken.equals("name")) {
             populatePredicateCollections(getResourceRelativeContextToken() + ".name", value);
@@ -515,6 +526,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
             whereConditions.put(predicateName, argumentName);
             whereReplacements.put(argumentName, value);
+            whereReplacementTypes.put(argumentName, expressionType);
         }
 
         // always see if the user wants a portion of this, instead of an exact match
@@ -641,6 +653,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             for (String groupedElement : groupByElements) {
                 String bindArgumentName = whereConditions.get(groupedElement);
                 whereReplacements.put(bindArgumentName, groupByExpression[i++]);
+                whereReplacementTypes.put(bindArgumentName, String.class);
             }
 
             log.debug("MultipleQueryIterator: '" + computedJPQLGroupStatement + "'");
@@ -671,20 +684,21 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         for (Map.Entry<String, Object> replacement : whereReplacements.entrySet()) {
             String bindArgument = replacement.getKey();
             Object bindValue = replacement.getValue();
+            Class bindType = whereReplacementTypes.get(bindArgument);
 
-            /*
-             * bind as the most appropriate type; today only integers and strings are supported
-             * 
-             * note: this is only meant to be a short-term solution to work around JBNADM-3141;
-             *       the appropriate/proper solution would be to include type information into
-             *       the whereReplacements map during the parse, and then switch on the type to
-             *       cast the data to the appropriate type during the binding here
-             */
-            try {
-                query.setParameter(bindArgument, Integer.valueOf(bindValue.toString()));
-            } catch (NumberFormatException nfe) {
+            if (bindType.equals(Integer.class)) {
+                try {
+                    query.setParameter(bindArgument, Integer.valueOf(bindValue.toString()));
+                } catch (NumberFormatException nfe) {
+                    query.setParameter(bindArgument, bindValue);
+                }
+            } else if (bindType.equals(String.class)) {
                 query.setParameter(bindArgument, bindValue);
+            } else {
+                throw new IllegalArgumentException("Unknown bindType " + bindType + " for " + bindArgument
+                    + " having value " + bindValue);
             }
+
         }
 
         return query.getResultList();

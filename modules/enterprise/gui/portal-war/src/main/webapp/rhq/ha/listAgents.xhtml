@@ -55,7 +55,7 @@
                             value="#{agentsDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 15%, 15%, 10%, 10%, 10%, 10%"
+                            columnsWidth="15%, 15%, 10%, 10%, 10%, 10%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 
@@ -64,7 +64,7 @@
                   <onc:paginationControl id="AgentsList" />
                </f:facet>
       
-               <rich:column>
+               <rich:column rendered="false">
                   <f:facet name="header">
                      <onc:allSelect target="selectedAgents" />
                   </f:facet>
@@ -178,7 +178,7 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 9:6 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 10 : 7}" width="100%">
+                     <rich:column colspan="#{param.debug ? 9 : 6}" width="100%">
                         <ui:param name="paginationDataTableName" value="agentsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{agentsDataModel}"/>
                         <ui:param name="paginationPageControl" value="#{PageControl.AgentsList}"/>

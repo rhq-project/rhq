@@ -35,7 +35,7 @@ import org.rhq.core.domain.util.PageList;
 public interface AffinityGroupManagerLocal {
     AffinityGroup getById(Subject subject, int affinityGroupId);
 
-    int create(Subject subject, AffinityGroup affinityGroup);
+    int create(Subject subject, AffinityGroup affinityGroup) throws AffinityGroupCreationException;
 
     int delete(Subject subject, Integer[] affinityGroupIds);
 

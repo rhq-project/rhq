@@ -117,8 +117,8 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
     public PageList<Server> getServerNonMembers(Subject subject, int affinityGroupId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("s.name");
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Server.QUERY_FIND_WITHOUT_AFFINITY_GROUP,
-            pageControl);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            Server.QUERY_FIND_WITHOUT_AFFINITY_GROUP, pageControl);
         Query countQuery = PersistenceUtility.createCountQuery(entityManager, Server.QUERY_FIND_WITHOUT_AFFINITY_GROUP);
 
         long count = (Long) countQuery.getSingleResult();
@@ -159,7 +159,14 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public int create(Subject subject, AffinityGroup affinityGroup) {
+    public int create(Subject subject, AffinityGroup affinityGroup) throws AffinityGroupCreationException {
+        Query query = PersistenceUtility.createCountQuery(entityManager, AffinityGroup.QUERY_FIND_BY_NAME);
+        String name = affinityGroup.getName();
+        query.setParameter("name", name.toUpperCase());
+        long count = (Long) query.getSingleResult();
+        if (count > 0) {
+            throw new AffinityGroupCreationException("An affinity group with the name '" + name + "' already exists");
+        }
         entityManager.persist(affinityGroup);
         return affinityGroup.getId();
     }

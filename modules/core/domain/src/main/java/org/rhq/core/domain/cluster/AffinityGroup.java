@@ -48,6 +48,10 @@ import org.rhq.core.domain.resource.Agent;
 @Entity(name = "AffinityGroup")
 @NamedQueries //
 ( { @NamedQuery(name = AffinityGroup.QUERY_FIND_ALL, query = "SELECT ag FROM AffinityGroup ag"),
+    @NamedQuery(name = AffinityGroup.QUERY_FIND_BY_NAME, query = "" //
+        + "SELECT ag " //
+        + "  FROM AffinityGroup ag " //
+        + " WHERE UPPER(ag.name) = :name"), //
     @NamedQuery(name = AffinityGroup.QUERY_FIND_ALL_COMPOSITES, query = "" //
         + "SELECT NEW org.rhq.core.domain.cluster.composite.AffinityGroupCountComposite " //
         + "     ( " //
@@ -91,6 +95,7 @@ public class AffinityGroup implements Serializable {
     public static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_ALL = "AffinityGroup.findAll";
+    public static final String QUERY_FIND_BY_NAME = "AffinityGroup.findByName";
     public static final String QUERY_FIND_ALL_COMPOSITES = "AffinityGroup.findAllComposites";
     public static final String QUERY_UPDATE_REMOVE_AGENTS = "AffinityGroup.updateRemoveAgents";
     public static final String QUERY_UPDATE_REMOVE_SERVERS = "AffinityGroup.updateRemoveServers";

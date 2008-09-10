@@ -49,7 +49,7 @@ public class InventoryHierarchyTag extends TagSupport {
     private static final String BASE_RESOURCE_URL = "/rhq/resource/inventory/view.xhtml";
 
     //private static final String BASE_GROUP_URL = "/Resource.do?type=GROUP";
-    private static final String BASE_GROUP_URL = "/resource/group/monitor/Visibility.do?mode=currentHealth";
+    private static final String BASE_GROUP_URL = "/rhq/group/inventory/view.xhtml";
     private static final String BASE_AUTOGROUP_URL = "/resource/common/monitor/Visibility.do?mode=currentHealth";
     private static final String SEPARATOR = " &gt; ";
 
@@ -185,7 +185,7 @@ public class InventoryHierarchyTag extends TagSupport {
 
     private String buildGroupURL(ResourceGroup resourceGroup) {
         GroupCategory category = resourceGroup.getGroupCategory();
-        String url = BASE_GROUP_URL + "&category=" + category.name() + "&groupId=" + resourceGroup.getId();
+        String url = BASE_GROUP_URL + "?category=" + category.name() + "&groupId=" + resourceGroup.getId();
 
         // Session-encode the URL in case the client doesn't have cookies enabled.
         return encodeURL(url);

@@ -24,6 +24,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -42,25 +43,43 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlSeeAlso;
+
 import org.jetbrains.annotations.NotNull;
+
+import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.alert.notification.SubjectNotification;
 
 /**
  * @author Greg Hinkle
  */
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = Subject.QUERY_FIND_BY_IDS, query = "SELECT s FROM Subject AS s WHERE s.id IN ( :ids ) AND s.fsystem = FALSE AND s.factive = TRUE"),
-    @NamedQuery(name = Subject.QUERY_FIND_ALL, query = "SELECT s FROM Subject AS s WHERE s.fsystem = false"),
-    @NamedQuery(name = Subject.QUERY_FIND_BY_NAME, query = "SELECT s FROM Subject AS s WHERE s.name = :name"),
-    @NamedQuery(name = Subject.QUERY_GET_SUBJECTS_ASSIGNED_TO_ROLE, query = "SELECT s "
-        + "FROM Subject AS s INNER JOIN s.roles AS r " + "WHERE r.id = :id AND s.fsystem = FALSE AND s.factive = TRUE"),
+    @NamedQuery(name = Subject.QUERY_FIND_BY_IDS, query = "" //
+        + "SELECT s " //
+        + "  FROM Subject s " //
+        + " WHERE s.id IN ( :ids ) " //
+        + "   AND s.fsystem = FALSE " //
+        + "   AND s.factive = TRUE"),
+    @NamedQuery(name = Subject.QUERY_FIND_ALL, query = "" //
+        + "SELECT s " //
+        + "  FROM Subject s " //
+        + " WHERE s.fsystem = false"),
+    @NamedQuery(name = Subject.QUERY_FIND_BY_NAME, query = "" //
+        + "SELECT s " //
+        + "  FROM Subject s " //
+        + " WHERE s.name = :name"),
+    @NamedQuery(name = Subject.QUERY_GET_SUBJECTS_ASSIGNED_TO_ROLE, query = "" //
+        + "SELECT s " //
+        + "  FROM Subject s " //
+        + "  JOIN s.roles r " //
+        + " WHERE r.id = :id " //
+        + "   AND s.fsystem = FALSE " //
+        + "   AND s.factive = TRUE"),
 
     /* AuthorizationManager queries */
     @NamedQuery(name = Subject.QUERY_GET_GLOBAL_PERMISSIONS, hints = {
@@ -98,22 +117,49 @@ import org.rhq.core.domain.alert.notification.SubjectNotification;
     @NamedQuery(name = Subject.QUERY_GET_RESOURCES_BY_PERMISSION, query = "SELECT distinct res.id "
         + "FROM Subject s, IN (s.roles) r, IN (r.permissions) p, IN (r.resourceGroups) g, IN (g.implicitResources) res "
         + "WHERE s = :subject AND p = :permission"),
-    @NamedQuery(name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION_WITH_EXCLUDES, query = "SELECT s"
-        + "  FROM Subject s" + " WHERE s.id NOT IN" + "       ( " + "         SELECT sn.subject.id"
-        + "           FROM SubjectNotification sn" + "          WHERE sn.alertDefinition.id = :alertDefinitionId "
-        + "       ) " + "   AND s.id NOT IN ( :excludes )"),
-    @NamedQuery(name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION, query = "SELECT s"
-        + "  FROM Subject s" + " WHERE s.id NOT IN" + "       ( " + "         SELECT sn.subject.id"
-        + "           FROM SubjectNotification sn" + "          WHERE sn.alertDefinition.id = :alertDefinitionId "
-        + "       ) "),
-    @NamedQuery(name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ROLE_WITH_EXCLUDES, query = "SELECT DISTINCT s "
-        + "  FROM Subject AS s LEFT JOIN s.roles AS r " + " WHERE s.id NOT IN " + "      ( " + "        SELECT ss.id "
-        + "          FROM Role rr JOIN rr.subjects AS ss " + "          WHERE rr.id = :roleId" + "      ) "
-        + "  AND s.id NOT IN ( :excludes ) " + "  AND s.fsystem = FALSE " + "  AND s.factive = TRUE"),
-    @NamedQuery(name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ROLE, query = "SELECT DISTINCT s "
-        + "  FROM Subject AS s LEFT JOIN s.roles AS r " + " WHERE s.id NOT IN " + "       ( "
-        + "         SELECT ss.id " + "         FROM Role rr JOIN rr.subjects AS ss " + "         WHERE rr.id = :roleId"
-        + "       ) " + "   AND s.fsystem = FALSE " + "   AND s.factive = TRUE") })
+    @NamedQuery(name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION_WITH_EXCLUDES, query = "" //
+        + "SELECT s" + "  FROM Subject s" //
+        + " WHERE s.id NOT IN" //
+        + "       ( " //
+        + "         SELECT sn.subject.id" //
+        + "           FROM SubjectNotification sn" //
+        + "          WHERE sn.alertDefinition.id = :alertDefinitionId " //
+        + "       ) " //
+        + "   AND s.id NOT IN ( :excludes ) " //
+        + "   AND s.fsystem = FALSE " //
+        + "   AND s.factive = TRUE"),
+    @NamedQuery(name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION, query = "" //
+        + "SELECT s" //
+        + "  FROM Subject s" //
+        + " WHERE s.id NOT IN" //
+        + "       ( " //
+        + "         SELECT sn.subject.id" //
+        + "           FROM SubjectNotification sn" //
+        + "          WHERE sn.alertDefinition.id = :alertDefinitionId " //
+        + "       ) " //
+        + "   AND s.fsystem = FALSE" //
+        + "   AND s.factive = TRUE"), //
+    @NamedQuery(name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ROLE_WITH_EXCLUDES, query = "" //
+        + "SELECT DISTINCT s " + "  FROM Subject AS s LEFT JOIN s.roles AS r " //
+        + " WHERE s.id NOT IN " //
+        + "      ( " //
+        + "        SELECT ss.id " //
+        + "          FROM Role rr JOIN rr.subjects AS ss " //
+        + "          WHERE rr.id = :roleId" //
+        + "      ) " //
+        + "  AND s.id NOT IN ( :excludes ) " //
+        + "  AND s.fsystem = FALSE " //
+        + "  AND s.factive = TRUE"), //
+    @NamedQuery(name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ROLE, query = "" //
+        + "SELECT DISTINCT s " //
+        + "  FROM Subject AS s LEFT JOIN s.roles AS r " //
+        + " WHERE s.id NOT IN " //
+        + "       ( " //
+        + "         SELECT ss.id " //
+        + "         FROM Role rr JOIN rr.subjects AS ss " //
+        + "         WHERE rr.id = :roleId" + "       ) " //
+        + "   AND s.fsystem = FALSE " //
+        + "   AND s.factive = TRUE") })
 @SequenceGenerator(name = "RHQ_SUBJECT_ID_SEQ", sequenceName = "RHQ_SUBJECT_ID_SEQ")
 @Table(name = "RHQ_SUBJECT")
 /*@Cache(usage= CacheConcurrencyStrategy.TRANSACTIONAL)*/

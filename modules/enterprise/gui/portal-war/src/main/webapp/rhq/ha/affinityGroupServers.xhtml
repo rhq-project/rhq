@@ -323,6 +323,12 @@
 
       </h:form>
 
+      <h:outputLink value="viewAffinityGroup.xhtml">
+         <h:outputText value="Return to Affinity Group"/>
+         <f:param name="affinityGroupId" value="#{param.affinityGroupId}"/>
+         <f:param name="mode" value="#{param.mode}"/>
+      </h:outputLink>
+
    </ui:define>
 
 </ui:composition>

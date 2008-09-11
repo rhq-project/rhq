@@ -78,7 +78,9 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Event Type" />
+                     <onc:sortableColumnHeader sort="pe.eventType">
+                        <h:outputText styleClass="headerText" value="Event Type" />
+                     </onc:sortableColumnHeader>
                   </f:facet>
 
                   <h:outputLink value="viewPartitionEvent.xhtml">
@@ -90,7 +92,9 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="User Initiated" />
+                     <onc:sortableColumnHeader sort="pe.subjectName">
+                        <h:outputText styleClass="headerText" value="User Initiated" />
+                     </onc:sortableColumnHeader>
                   </f:facet>
 
                   <h:outputText value="#{item.subjectName}"/>

@@ -55,57 +55,51 @@ Firefox and other Gecko-based browsers to render the page in "Almost Standards" 
 
 <f:loadBundle basename="ApplicationResources" var="msg"/>
 
-<div style="position: absolute; top: 20; left: 15;">
-   <h:outputLink value="/Dashboard.do"><img src="/images/logo_header.gif" alt=""/></h:outputLink>
-</div>
-
-<!-- =================== TOP MENU =================== -->
-<div id="TopMenu">
-   <table cellpadding="0" cellspacing="0">
-      <tr>
-         <ui:remove><!--
-         <td class="menu_JBnetwork"><a href="http://network.jboss.com/">${msg["menu.top.a"]}</a></td>
-         <td class="menu_JBjems"><a href="http://www.jboss.com/">${msg["menu.top.b"]}</a></td>
-         <td class="menu_JBcom"><a href="http://www.jboss.org/">${msg["menu.top.c"]}</a></td>
-         <td class="menu_JBfed"><a href="http://www.redhat.com/">${msg["menu.top.d"]}</a></td>
-         --></ui:remove>
-         <td class="menu_JBfed"><a href="http://www.${msg['product.url.domain']}">${msg['product.url.domain']}</a></td>
-      </tr>
-   </table>
-</div>
-
 <!-- =================== PAGE HEADER =================== -->
+
 <div id="PageHeader">
 
-   <h1 class="appTitle">${product.fullName}</h1>
+    <table width="100%">
+        <tr valign="bottom">
+            <td align="left">
+                <h:outputLink value="http://www.${msg['product.url.domain']}">
+                    <img src="/images/logo_header.gif" title="${msg['product.fullName']}"/>
+                </h:outputLink>
+            </td>
+            <td align="right">
+               <div id="AppMenu">
+                  <h:outputLink value="/Start.do">${msg["header.start.link"]}</h:outputLink>
+                  |
+                  <h:outputLink value="/Dashboard.do">${msg["dash.home.PageTitle"]}</h:outputLink>
+                  |
+                  <h:outputLink value="/ResourceHub.do">${msg["resource.hub.ResourceHubPageTitle"]}</h:outputLink>
+                  |
+                  <h:outputLink value="/Admin.do">${msg["admin.admin.AdministrationTitle"]}</h:outputLink>
+                  |
+                  <h:outputLink
+                        onclick="window.open('${helpBaseURL}','help','width=940,height=730,scrollbars=yes,toolbar=yes,left=40,top=40,resizable=yes'); return false;">${msg["header.help.link"]}</h:outputLink>
+                  |
+                  <h:outputLink value="/Logout.do">${msg["header.logout.link"]}</h:outputLink>
+               </div>
+            </td>
+        </tr>
+    </table>
 
-   <div id="AppMenu">
-      <h:outputLink value="/Start.do">${msg["header.start.link"]}</h:outputLink>
-      |
-      <h:outputLink value="/Dashboard.do">${msg["dash.home.PageTitle"]}</h:outputLink>
-      |
-      <h:outputLink value="/ResourceHub.do">${msg["resource.hub.ResourceHubPageTitle"]}</h:outputLink>
-      |
-      <h:outputLink value="/Admin.do">${msg["admin.admin.AdministrationTitle"]}</h:outputLink>
-      |
-      <h:outputLink
-            onclick="window.open('${helpBaseURL}','help','width=940,height=730,scrollbars=yes,toolbar=yes,left=40,top=40,resizable=yes'); return false;">${msg["header.help.link"]}</h:outputLink>
-      |
-      <h:outputLink value="/Logout.do">${msg["header.logout.link"]}</h:outputLink>
-   </div>
-   <hr style="margin-top: 10px; background-color: #090909; color: #090909" size="1" noshade="noshade"/>
+    <hr style="margin-top: 6px; background-color: #090909; color: #090909" size="1" noshade="noshade"/>
 
+    <ui:remove>
     <!--
-   <c:if test="${not empty pageHelpURL}">
-      <a href=""
-         onclick="window.open(help,'help','width=800,height=650,scrollbars=yes,toolbar=yes,left=80,top=80,resizable=yes'); return false;"><img
-            src="/images/title_pagehelp.gif" alt="Page Help" align="right"/></a>
-   </c:if>
+       <c:if test="${not empty pageHelpURL}">
+          <a href=""
+             onclick="window.open(help,'help','width=800,height=650,scrollbars=yes,toolbar=yes,left=80,top=80,resizable=yes'); return false;"><img
+                src="/images/title_pagehelp.gif" alt="Page Help" align="right"/></a>
+       </c:if>
     -->
+    </ui:remove>
 
-   <div id="Breadcrumb">
-      <ui:insert name="breadcrumbs">Default Breadcrumbs</ui:insert>
-   </div>
+    <div id="Breadcrumb">
+        <ui:insert name="breadcrumbs">Default Breadcrumbs</ui:insert>
+    </div>
 
 </div>
 

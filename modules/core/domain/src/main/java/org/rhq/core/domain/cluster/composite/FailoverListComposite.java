@@ -105,13 +105,25 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
         if (!hasNext()) {
             return null;
         }
+
+        ServerEntry nextOne = servers.get(nextIndex);
+
         nextIndex++;
         nextIndex %= servers.size();
-        return servers.get(nextIndex);
+
+        return nextOne;
     }
 
     public ServerEntry get(int index) {
         return servers.get(index);
+    }
+
+    /**
+     * Call this method if you want the iterator to start over at the
+     * first, topmost, server in the failover list.
+     */
+    public void resetIndex() {
+        nextIndex = 0;
     }
 
     public void remove() {

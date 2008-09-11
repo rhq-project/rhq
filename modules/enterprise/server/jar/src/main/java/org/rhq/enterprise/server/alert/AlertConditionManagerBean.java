@@ -62,6 +62,8 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
 
     @SuppressWarnings("unchecked")
     public PageList<Integer> getAlertConditionIdsForAgent(int agentId, PageControl pageControl) {
+        pageControl.initDefaultOrderingField("ac.id");
+
         Query queryCount = PersistenceUtility.createCountQuery(entityManager, AlertCondition.QUERY_FIND_IDS_BY_AGENT);
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, AlertCondition.QUERY_FIND_IDS_BY_AGENT,
             pageControl);

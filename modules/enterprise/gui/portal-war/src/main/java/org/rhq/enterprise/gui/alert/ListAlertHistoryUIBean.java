@@ -284,4 +284,8 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
     private String[] getSelectedAlerts() {
         return FacesContextUtility.getRequest().getParameterValues("selectedAlerts");
     }
+
+    public String getRecoveryInfo() {
+        return "N/A";
+    }
 }

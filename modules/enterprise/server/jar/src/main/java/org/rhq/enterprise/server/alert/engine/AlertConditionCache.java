@@ -238,6 +238,7 @@ public final class AlertConditionCache {
      *      using the nested map anyway.
      */
     private Map<Integer, List<Tuple<AbstractCacheElement<?>, List<AbstractCacheElement<?>>>>> inverseAlertConditionMap;
+    private Map<Integer, List<Integer>> inverseAgentMap;
 
     /*
      * The SLBSs used by the cache.
@@ -261,6 +262,7 @@ public final class AlertConditionCache {
         availabilityCache = new HashMap<Integer, List<AvailabilityCacheElement>>();
         eventsCache = new HashMap<Integer, List<EventCacheElement>>();
         inverseAlertConditionMap = new HashMap<Integer, List<Tuple<AbstractCacheElement<?>, List<AbstractCacheElement<?>>>>>();
+        inverseAgentMap = new HashMap<Integer, List<Integer>>();
 
         alertConditionManager = LookupUtil.getAlertConditionManager();
         availabilityManager = LookupUtil.getAvailabilityManager();
@@ -302,29 +304,16 @@ public final class AlertConditionCache {
     }
 
     private AlertConditionCacheStats unloadCachesForAgent(int agentId) {
-        int rowsProcessed = 0;
-        PageControl pc = new PageControl();
-        pc.setPageNumber(0);
-        pc.setPageSize(PAGE_SIZE); // condition composites are small so we can grab alot; use the setter, constructor limits this to 100
-
         AlertConditionCacheStats stats = new AlertConditionCacheStats();
-        while (true) {
-            PageList<Integer> alertConditionIds = alertConditionManager.getAlertConditionIdsForAgent(agentId, pc);
 
-            if (alertConditionIds.isEmpty()) {
-                break; // didn't get any rows back, must not have any data or no more rows left to process
-            }
+        List<Integer> agentConditions = inverseAgentMap.get(agentId);
 
-            for (Integer alertConditionId : alertConditionIds) {
-                removeAlertCondition(alertConditionId, stats);
-            }
+        if (agentConditions == null) {
+            return stats;
+        }
 
-            rowsProcessed += alertConditionIds.size();
-            if (rowsProcessed >= alertConditionIds.getTotalSize()) {
-                break; // we've processed all data, we can stop now
-            }
-
-            pc.setPageNumber(pc.getPageNumber() + 1);
+        for (Integer alertConditionId : agentConditions) {
+            removeAlertCondition(alertConditionId, stats);
         }
 
         return stats;
@@ -368,7 +357,7 @@ public final class AlertConditionCache {
                     }
 
                     for (AbstractAlertConditionCategoryComposite nextComposite : alertConditions) {
-                        insertAlertConditionComposite(nextComposite, stats);
+                        insertAlertConditionComposite(agentId, nextComposite, stats);
                     }
 
                     entityManagerFacade.flush();
@@ -825,6 +814,11 @@ public final class AlertConditionCache {
 
     private <T extends AbstractCacheElement<?>> boolean addTo(String mapName, Map<Integer, List<T>> cache, Integer key,
         T cacheElement, Integer alertConditionId, AlertConditionCacheStats stats) {
+        return addTo(mapName, cache, key, cacheElement, alertConditionId, 0, stats);
+    }
+
+    private <T extends AbstractCacheElement<?>> boolean addTo(String mapName, Map<Integer, List<T>> cache, Integer key,
+        T cacheElement, Integer alertConditionId, Integer agentId, AlertConditionCacheStats stats) {
         List<T> cacheElements = cache.get(key);
 
         if (cacheElements == null) {
@@ -841,7 +835,7 @@ public final class AlertConditionCache {
         // make sure to add bookkeeping information to the inverse cache too
         if (alertConditionId != null) {
             // OOB baseline stuff passed null because it doesn't invert to any persisted alert condition
-            addToInverseAlertConditionMap(alertConditionId, cacheElement, cacheElements);
+            addToInverseAlertConditionMap(alertConditionId, agentId, cacheElement, cacheElements);
         }
 
         // and finally update stats and return whether it was success
@@ -855,7 +849,16 @@ public final class AlertConditionCache {
 
     @SuppressWarnings("unchecked")
     private <T extends AbstractCacheElement<?>> boolean addToInverseAlertConditionMap(Integer alertConditionId,
-        T inverseCacheElement, List<T> inverseList) {
+        Integer agentId, T inverseCacheElement, List<T> inverseList) {
+        List<Integer> agentConditions = inverseAgentMap.get(agentId);
+
+        if (agentConditions == null) {
+            agentConditions = new ArrayList<Integer>();
+            inverseAgentMap.put(agentId, agentConditions);
+        }
+
+        agentConditions.add(alertConditionId);
+
         List<Tuple<AbstractCacheElement<?>, List<AbstractCacheElement<?>>>> tuples = inverseAlertConditionMap
             .get(alertConditionId);
 
@@ -865,7 +868,9 @@ public final class AlertConditionCache {
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("Inserted inverse element: " + "key=" + alertConditionId + ", " + "value=" + inverseCacheElement);
+            log.debug("Inserted inverse agent element: " + "key=" + agentId + ", " + "value=" + alertConditionId);
+            log.debug("Inserted inverse condition element: " + "key=" + alertConditionId + ", " + "value="
+                + inverseCacheElement);
         }
 
         Tuple inverseTuple = new Tuple<T, List<T>>(inverseCacheElement, inverseList);
@@ -873,7 +878,8 @@ public final class AlertConditionCache {
     }
 
     private boolean addToResourceOperationCache(Integer resourceId, Integer operationDefinitionId,
-        ResourceOperationCacheElement cacheElement, Integer alertConditionId, AlertConditionCacheStats stats) {
+        ResourceOperationCacheElement cacheElement, Integer alertConditionId, Integer agentId,
+        AlertConditionCacheStats stats) {
         // resourceOperationCache = new HashMap< Integer, Map< Integer, List < ResourceOperationCacheElement > > >();
         Map<Integer, List<ResourceOperationCacheElement>> operationDefinitionMap = resourceOperationCache
             .get(resourceId);
@@ -884,7 +890,7 @@ public final class AlertConditionCache {
         }
 
         return addTo("operationDefinitionMap", operationDefinitionMap, operationDefinitionId, cacheElement,
-            alertConditionId, stats);
+            alertConditionId, agentId, stats);
     }
 
     // TODO: jmarques - update model to replace comparator strings with AlertConditionOperator enum
@@ -1120,7 +1126,7 @@ public final class AlertConditionCache {
 
                 // auto-boxing always safe
                 addToResourceOperationCache(resource.getId(), operationDefinition.getId(), cacheElement,
-                    alertConditionId, stats);
+                    alertConditionId, 0, stats);
             } catch (InvalidCacheElementException icee) {
                 log
                     .info("Failed to create ResourceOperationCacheElement with parameters: "
@@ -1175,7 +1181,7 @@ public final class AlertConditionCache {
         }
     }
 
-    private void insertAlertConditionComposite(AbstractAlertConditionCategoryComposite composite,
+    private void insertAlertConditionComposite(int agentId, AbstractAlertConditionCategoryComposite composite,
         AlertConditionCacheStats stats) {
 
         AlertCondition alertCondition = composite.getCondition();
@@ -1281,7 +1287,7 @@ public final class AlertConditionCache {
 
                 // auto-boxing always safe
                 addToResourceOperationCache(controlComposite.getResourceId(), controlComposite
-                    .getOperationDefinitionId(), cacheElement, alertConditionId, stats);
+                    .getOperationDefinitionId(), cacheElement, alertConditionId, agentId, stats);
             } catch (InvalidCacheElementException icee) {
                 log
                     .info("Failed to create ResourceOperationCacheElement with parameters: "

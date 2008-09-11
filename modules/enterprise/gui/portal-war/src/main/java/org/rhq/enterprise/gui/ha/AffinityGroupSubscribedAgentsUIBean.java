@@ -42,7 +42,7 @@ public class AffinityGroupSubscribedAgentsUIBean extends PagedDataTableUIBean {
 
     public String unsubscribeAgents() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        String[] selectedAgentIdStrings = FacesContextUtility.getRequest().getParameterValues("selectedAgents");
+        String[] selectedAgentIdStrings = FacesContextUtility.getRequest().getParameterValues("selectedAgentsToUnsubscribe");
 
         // Parse the agent IDs to ints
         Integer[] selectedAgentIds = new Integer[selectedAgentIdStrings.length];

@@ -43,7 +43,7 @@ public class AffinityGroupUnsubscribedServersUIBean extends PagedDataTableUIBean
     public String subscribeServers() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String affinityGroupIdString = FacesContextUtility.getRequest().getParameter("affinityGroupId");
-        String[] selectedServerIdStrings = FacesContextUtility.getRequest().getParameterValues("selectedServers");
+        String[] selectedServerIdStrings = FacesContextUtility.getRequest().getParameterValues("selectedServersToSubscribe");
 
         // Parse the server IDs to ints
         Integer[] selectedServerIds = new Integer[selectedServerIdStrings.length];

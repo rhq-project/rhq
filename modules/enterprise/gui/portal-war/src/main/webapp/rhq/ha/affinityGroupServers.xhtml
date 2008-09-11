@@ -81,10 +81,10 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:allSelect target="selectedServers" />
+                     <onc:allSelect target="selectedServersToUnsubscribe" />
                   </f:facet>
 
-                  <onc:select name="selectedServers" value="#{serverItem.id}" />
+                  <onc:select name="selectedServersToUnsubscribe" value="#{serverItem.id}" />
                </rich:column>
 
                <rich:column rendered="#{param.debug}">
@@ -168,8 +168,9 @@
                      <!-- colspan 8:7 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 8 : 7}" width="100%">
 
-                        <h:commandButton action="#{AffinityGroupSubscribedServersUIBean.unsubscribeServers}"
-                                         value="REMOVE FROM GROUP" styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{AffinityGroupSubscribedServersUIBean.unsubscribeServers}"
+                                         value="REMOVE FROM GROUP" styleClass="on-pager-button buttonsmall"
+                                         target="selectedServersToUnsubscribe"/>
 
                         <ui:param name="paginationDataTableName" value="subscribedServersDataTable"/>
                         <ui:param name="paginationDataModel" value="#{subscribedServersDataModel}"/>
@@ -215,10 +216,10 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:allSelect target="selectedServers" />
+                     <onc:allSelect target="selectedServersToSubscribe" />
                   </f:facet>
 
-                  <onc:select name="selectedServers" value="#{serverItem.id}" />
+                  <onc:select name="selectedServersToSubscribe" value="#{serverItem.id}" />
                </rich:column>
 
                <rich:column rendered="#{param.debug}">
@@ -302,8 +303,9 @@
                      <!-- colspan 8:7 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 8 : 7}" width="100%">
 
-                        <h:commandButton action="#{AffinityGroupUnsubscribedServersUIBean.subscribeServers}"
-                                         value="ADD TO GROUP" styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{AffinityGroupUnsubscribedServersUIBean.subscribeServers}"
+                                         value="ADD TO GROUP" styleClass="on-pager-button buttonsmall"
+                                         target="selectedServersToSubscribe"/>
 
                         <ui:param name="paginationDataTableName" value="unsubscribedServersDataTable"/>
                         <ui:param name="paginationDataModel" value="#{unsubscribedServersDataModel}"/>

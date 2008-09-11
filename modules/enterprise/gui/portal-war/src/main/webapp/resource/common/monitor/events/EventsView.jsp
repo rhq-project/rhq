@@ -217,7 +217,8 @@ for (Availability avail : availabilities) {
 
   <div id="t1" style="height: 450px; border: 1px solid #aaa"></div>
 
-    <!-- not accurate with grouping <div>Events: <span id="event-count"></span></div>-->
+    <!-- not accurate with grouping <div>Events: -->
+    <span id="event-count" style="display:none;"></span>
     <div class="controls" id="controls"></div>
 
 

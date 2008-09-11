@@ -23,16 +23,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
+
 import mazz.i18n.Logger;
+
 import org.jboss.remoting.InvocationRequest;
 import org.jboss.remoting.ServerInvocationHandler;
 import org.jboss.remoting.ServerInvoker;
 import org.jboss.remoting.callback.InvokerCallbackHandler;
 import org.jboss.remoting.stream.StreamInvocationHandler;
+
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.CommandType;
@@ -41,6 +45,7 @@ import org.rhq.enterprise.communications.command.impl.identify.IdentifyCommand;
 import org.rhq.enterprise.communications.i18n.CommI18NFactory;
 import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
 import org.rhq.enterprise.communications.util.NotPermittedException;
+import org.rhq.enterprise.communications.util.NotProcessedException;
 
 /**
  * Handles invoked {@link Command commands} from remote clients.
@@ -103,7 +108,7 @@ public class CommandProcessor implements StreamInvocationHandler {
     private AtomicLong m_numberSuccessfulCommands;
 
     /**
-     * The total number of commands that were received but were not successful processed.
+     * The total number of commands that were received but were not successfully processed.
      */
     private AtomicLong m_numberFailedCommands;
 
@@ -111,6 +116,11 @@ public class CommandProcessor implements StreamInvocationHandler {
      * The total number of commands that were not permitted to execute due to high concurrency.
      */
     private AtomicLong m_numberDroppedCommands;
+
+    /**
+     * The total number of commands that were not permitted to execute due to processing suspension.
+     */
+    private AtomicLong m_numberNotProcessedCommands;
 
     /**
      * Constructor for {@link CommandProcessor}.
@@ -124,6 +134,7 @@ public class CommandProcessor implements StreamInvocationHandler {
         m_averageExecutionTime = new AtomicLong(0L);
         m_numberFailedCommands = new AtomicLong(0L);
         m_numberDroppedCommands = new AtomicLong(0L);
+        m_numberNotProcessedCommands = new AtomicLong(0L);
     }
 
     /**
@@ -196,6 +207,18 @@ public class CommandProcessor implements StreamInvocationHandler {
      */
     public long getNumberDroppedCommands() {
         return m_numberDroppedCommands.get();
+    }
+
+    /**
+     * Returns the total number of commands that were received but were not processed.
+     * This normally occurs when blobal processing of commands has been suspended. This number will always
+     * be equal to or less than {@link #getNumberFailedCommands()} because a command not processed counts as a failed command
+     * also.
+     *
+     * @return count of commands not processed.
+     */
+    public long getNumberNotProcessedCommands() {
+        return m_numberNotProcessedCommands.get();
     }
 
     /**
@@ -380,6 +403,10 @@ public class CommandProcessor implements StreamInvocationHandler {
                 if (ret_response.getException() instanceof NotPermittedException) {
                     m_numberDroppedCommands.incrementAndGet();
                 }
+
+                if (ret_response.getException() instanceof NotProcessedException) {
+                    m_numberNotProcessedCommands.incrementAndGet();
+                }
             }
 
             notifyListenersOfProcessedCommand(cmd, ret_response);
@@ -401,10 +428,12 @@ public class CommandProcessor implements StreamInvocationHandler {
             }
 
             for (CommandListener listener : listeners) {
-                // notice that we bubble up NotPermittedException and abort the command, but any other exception we just log and move on
+                // notice that we bubble up NotPermittedException or NotProcessedException and abort the command, but any other exception we just log and move on
                 try {
                     listener.receivedCommand(command);
                 } catch (NotPermittedException npe) {
+                    throw npe;
+                } catch (NotProcessedException npe) {
                     throw npe;
                 } catch (Throwable t) {
                     LOG.warn(t, CommI18NResourceKeys.COMMAND_PROCESSOR_LISTENER_ERROR_RECEIVED, t);

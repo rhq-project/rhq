@@ -139,6 +139,10 @@ public class TestServerCommunicationsService implements TestServerCommunications
         return 0;
     }
 
+    public long getNumberNotProcessedCommandsReceived() {
+        return 0;
+    }
+
     public long getNumberFailedCommandsReceived() {
         return 0;
     }

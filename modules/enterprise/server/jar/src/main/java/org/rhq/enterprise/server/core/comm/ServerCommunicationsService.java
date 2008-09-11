@@ -49,6 +49,7 @@ import org.jboss.util.StringPropertyReplacer;
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
+import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
@@ -56,6 +57,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.communications.GlobalConcurrencyLimitCommandListener;
 import org.rhq.enterprise.communications.Ping;
 import org.rhq.enterprise.communications.ServiceContainer;
+import org.rhq.enterprise.communications.ServiceContainerConfiguration;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 import org.rhq.enterprise.communications.ServiceContainerMetricsMBean;
 import org.rhq.enterprise.communications.command.client.ClientCommandSender;
@@ -63,8 +65,10 @@ import org.rhq.enterprise.communications.command.client.ClientCommandSenderConfi
 import org.rhq.enterprise.communications.command.client.ClientRemotePojoFactory;
 import org.rhq.enterprise.communications.command.server.discovery.AutoDiscoveryListener;
 import org.rhq.enterprise.communications.util.ConcurrencyManager;
+import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.agentclient.impl.AgentClientImpl;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * This is an MBean service that can be used to bootstrap the {@link ServiceContainer}. The main purpose for the
@@ -571,6 +575,13 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
     }
 
     /*
+     * @see org.rhq.enterprise.communications.ServiceContainerMetricsMBean#getNumberNotProcessedCommandsReceived()
+     */
+    public long getNumberNotProcessedCommandsReceived() {
+        return getServiceContainerMetricsMBean().getNumberNotProcessedCommandsReceived();
+    }
+
+    /*
      * @see org.rhq.enterprise.communications.ServiceContainerMetricsMBean#getNumberFailedCommandsReceived()
      */
     public long getNumberFailedCommandsReceived() {
@@ -681,6 +692,39 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
                 preferences_node.put(key, value);
                 LOG.debug(ServerI18NResourceKeys.CONFIG_PREFERENCE_OVERRIDE, key, value);
             }
+        }
+
+        // finally, we need to set connector bind address and bind port if they are not set in the properties. Starting
+        // in 1.1 these fields will typically not be set initially and will need to be overridden here with the
+        // information defined in the server table for this server.
+        try {
+            Preferences preferences = config.getPreferences();
+            Server server = LookupUtil.getServerManager().getServer();
+            String bindAddress = preferences.get(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, "");
+            int bindPort = preferences.getInt(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, -1);
+
+            if ("".equals(bindAddress)) {
+                bindAddress = server.getAddress();
+                preferences_node.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, bindAddress);
+            }
+
+            if (-1 == bindPort) {
+                String transport = config.getPreferences().get(
+                    ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT,
+                    ServiceContainerConfigurationConstants.DEFAULT_CONNECTOR_TRANSPORT);
+                bindPort = (SecurityUtil.isTransportSecure(transport)) ? server.getSecurePort() : server.getPort();
+
+                preferences_node.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, String
+                    .valueOf(bindPort));
+            }
+        } catch (Exception e) {
+            LOG.error("Unable to set explicit connector address/port, using defaults: ", e);
+
+            ServiceContainerConfiguration scConfig = new ServiceContainerConfiguration(config.getPreferences());
+            preferences_node.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, scConfig
+                .getConnectorBindAddress());
+            preferences_node.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, String.valueOf(scConfig
+                .getConnectorBindPort()));
         }
 
         // let's make sure our configuration is upgraded to the latest schema

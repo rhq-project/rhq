@@ -75,7 +75,6 @@ public class StartupServlet extends HttpServlet {
 
         // Before starting determine the operating mode of this server. It affects what we start
         createDefaultServerIfNecessary(); // before comm to ensure a registered server
-        Server.OperationMode operationMode = getServerOperationMode();
 
         // this will initiate the cache load, before agents connect
         LookupUtil.getAlertConditionCacheManager().getCacheNames();
@@ -90,9 +89,7 @@ public class StartupServlet extends HttpServlet {
         startHibernateStatistics();
         startServerPluginContainer(); // before comm in case an agent wants to talk to it
         installJaasModules();
-        if (!(Server.OperationMode.MAINTENANCE == operationMode)) {
-            startServerCommunicationServices();
-        }
+        startServerCommunicationServices();
         startScheduler();
         scheduleJobs();
         startAgentClients();
@@ -106,7 +103,7 @@ public class StartupServlet extends HttpServlet {
 
     /**
      * For developer builds that don't use the HA installer to write a localhost entry into the {@link Server}
-     * table, we will create a default one here.  Then, if the "rhq.server.name" property is missing, the
+     * table, we will create a default one here.  Then, if the "rhq.high-availability.name" property is missing, the
      * {@link ServerManagerLocal} will return this localhost entry.
      * 
      * If the installer was already run, then this method should be a no-op because a row would already exist
@@ -133,22 +130,6 @@ public class StartupServlet extends HttpServlet {
             LookupUtil.getServerManager().create(server);
             log("Default server created: " + server);
         }
-    }
-
-    /**
-     * @return the current operation mode for this server.  OperationMode.NORMAL if it can't be determined.
-     */
-    private Server.OperationMode getServerOperationMode() {
-
-        Server.OperationMode result = null;
-
-        try {
-            result = LookupUtil.getServerManager().getServer().getOperationMode();
-        } catch (Exception e) {
-            log("Could not determine server operation mode: " + e);
-        }
-
-        return (null == result) ? Server.OperationMode.NORMAL : result;
     }
 
     /**
@@ -246,6 +227,8 @@ public class StartupServlet extends HttpServlet {
         log("Starting the server-agent communications services");
 
         try {
+            // Establish the server mode at startup, this can affect the comm layer behavior
+            LookupUtil.getServerManager().establishCurrentServerMode();
             ServerCommunicationsServiceUtil.getService().startCommunicationServices();
         } catch (Exception e) {
             throw new ServletException("Cannot start the server-side communications services", e);

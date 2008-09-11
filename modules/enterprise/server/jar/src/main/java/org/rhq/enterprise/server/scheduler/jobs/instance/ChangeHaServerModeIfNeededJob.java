@@ -9,7 +9,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ChangeHaServerModeIfNeededJob implements Job {
 
     public void execute(JobExecutionContext arg0) throws JobExecutionException {
-        LookupUtil.getServerManager().changeHaServerModeIfNeeded();
+        LookupUtil.getServerManager().establishCurrentServerMode();
     }
 
 }

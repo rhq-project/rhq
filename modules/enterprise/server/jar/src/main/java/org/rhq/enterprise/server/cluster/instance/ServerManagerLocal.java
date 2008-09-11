@@ -47,5 +47,5 @@ public interface ServerManagerLocal {
 
     Server getServer() throws ServerNotFoundException;
 
-    void changeHaServerModeIfNeeded();
+    void establishCurrentServerMode();
 }

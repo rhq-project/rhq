@@ -34,12 +34,14 @@ import org.rhq.enterprise.communications.util.NotProcessedException;
  */
 public class GlobalSuspendCommandListener implements CommandListener {
 
+    private final String name;
     private final String reason;
 
     /**
      * @param reason The reason command processing is being suspended. If provided will be supplied to {@link NotProcessedException}
      */
-    public GlobalSuspendCommandListener(String reason) {
+    public GlobalSuspendCommandListener(String name, String reason) {
+        this.name = name;
         this.reason = reason;
     }
 
@@ -61,4 +63,25 @@ public class GlobalSuspendCommandListener implements CommandListener {
     public void processedCommand(Command command, CommandResponse response) {
         // nothing to do
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!(obj instanceof GlobalSuspendCommandListener))
+            return false;
+
+        GlobalSuspendCommandListener listener = (GlobalSuspendCommandListener) obj;
+
+        return (this.name.equals(listener.name));
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        return result;
+    }
+
 }

@@ -19,7 +19,9 @@
 package org.rhq.enterprise.communications;
 
 import javax.management.ObjectName;
+
 import org.jboss.mx.util.ObjectNameFactory;
+
 import org.rhq.enterprise.communications.command.server.CommandProcessor;
 
 /**
@@ -55,9 +57,20 @@ public interface ServiceContainerMetricsMBean {
     long getNumberDroppedCommandsReceived();
 
     /**
-     * Returns the total number of commands that were received and processed succesfully.
+     * Returns the total number of commands that were received but were not processed, usually due to global suspension of
+     * command processing. This will always be equal to or less than {@link #getNumberFailedCommandsReceived()} because an
+     * unprocessed command is also considered a failed command.
      *
-     * @return count of commands succesfully processed
+     * @return count of dropped commands
+     *
+     * @see    CommandProcessor#getNumberNotProcessedCommands()
+     */
+    long getNumberNotProcessedCommandsReceived();
+
+    /**
+     * Returns the total number of commands that were received and processed successfully.
+     *
+     * @return count of commands successfully processed
      *
      * @see    CommandProcessor#getNumberSuccessfulCommands()
      */

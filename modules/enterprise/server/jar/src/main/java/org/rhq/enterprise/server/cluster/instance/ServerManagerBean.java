@@ -28,14 +28,16 @@ import javax.persistence.PersistenceContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.cluster.AffinityGroup;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.enterprise.communications.GlobalSuspendCommandListener;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.cluster.FailoverListManagerLocal;
-import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 
 /**
@@ -56,12 +58,15 @@ import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 public class ServerManagerBean implements ServerManagerLocal {
     private final Log log = LogFactory.getLog(ServerManagerBean.class);
 
-    private static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
+    static private final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
+
+    static private Server.OperationMode lastSetMode = null;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
     @EJB
+    @IgnoreDependency
     ClusterManagerLocal clusterManager;
 
     @EJB
@@ -105,30 +110,39 @@ public class ServerManagerBean implements ServerManagerLocal {
         return result;
     }
 
-    public void changeHaServerModeIfNeeded() {
-        Server server = getServer();
+    synchronized public void establishCurrentServerMode() {
+        Server.OperationMode currentMode = getServer().getOperationMode();
 
-        if (Server.OperationMode.NORMAL == server.getOperationMode()) {
-            try {
-                ServerCommunicationsServiceMBean service = ServerCommunicationsServiceUtil.getService();
-                if (!service.isStarted()) {
-                    ServerCommunicationsServiceUtil.getService().startCommunicationServices();
-                    log.info("Started the server-agent communications services due to Operation Mode change.");
+        // don't add or remove the same listener twice in a row
+        if (currentMode == lastSetMode)
+            return;
+
+        try {
+            if (Server.OperationMode.NORMAL == currentMode) {
+                if (lastSetMode == Server.OperationMode.MAINTENANCE) {
+                    ServerCommunicationsServiceUtil.getService().getServiceContainer().removeCommandListener(
+                        getMaintenanceModeListener());
                 }
-            } catch (Exception e) {
-                log.error("Unable to start the server-agent communications services: " + e);
+            } else if (Server.OperationMode.MAINTENANCE == currentMode) {
+                ServerCommunicationsServiceUtil.getService().getServiceContainer().addCommandListener(
+                    getMaintenanceModeListener());
+            } else {
+                return;
             }
-        } else if (Server.OperationMode.MAINTENANCE == server.getOperationMode()) {
-            try {
-                ServerCommunicationsServiceMBean service = ServerCommunicationsServiceUtil.getService();
-                if (service.isStarted()) {
-                    ServerCommunicationsServiceUtil.getService().stop();
-                    log.info("Stopped the server-agent communications services due to Operation Mode change.");
-                }
-            } catch (Exception e) {
-                log.error("Unable to stop the server-agent communications services: " + e);
-            }
+
+            lastSetMode = currentMode;
+            log.info("Notified communication layer of server operation mode " + currentMode);
+
+        } catch (Exception e) {
+            log.error("Unable to change HA Server Mode from " + lastSetMode + " to " + currentMode + ": " + e);
         }
+    }
+
+    // use this to ensure a listener of the same name. not using static singleton in case of class reload by different
+    // classloaders (in case an exception bubbles up to the slsb layer)
+    private GlobalSuspendCommandListener getMaintenanceModeListener() {
+        return new GlobalSuspendCommandListener(Server.OperationMode.MAINTENANCE.name(),
+            Server.OperationMode.MAINTENANCE.name());
     }
 
     public void deleteServer(Server server) {

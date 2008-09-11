@@ -30,6 +30,8 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cluster.FailoverListDetails;
@@ -41,6 +43,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.cluster.instance.ServerManagerLocal;
 
 /**
  * This class manages and reports information about the RHQ Server Cloud as a whole.
@@ -59,6 +62,10 @@ public class ClusterManagerBean implements ClusterManagerLocal {
 
     @EJB
     ClusterManagerLocal clusterManager;
+
+    @EJB
+    @IgnoreDependency
+    ServerManagerLocal serverManager;
 
     public List<Agent> getAgentsByServerName(String serverName) {
         Server server = clusterManager.getServerByName(serverName);
@@ -121,6 +128,18 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         } catch (NoResultException nre) {
             log.debug("Could not get count of cloud instances, returning 0...");
             return 0;
+        }
+    }
+
+    public void deleteServer(Integer[] serverIds) {
+        if (serverIds.length > 0) {
+            try {
+                for (Integer id : serverIds) {
+                    serverManager.deleteServer(getServerById(id));
+                }
+            } catch (Exception e) {
+                log.debug("Failed to delete HA servers: " + e);
+            }
         }
     }
 

@@ -50,6 +50,10 @@ public class ServiceContainerMetrics implements ServiceContainerMetricsMBean {
         return commandProcessor.getNumberDroppedCommands();
     }
 
+    public long getNumberNotProcessedCommandsReceived() {
+        return commandProcessor.getNumberNotProcessedCommands();
+    }
+
     public long getNumberTotalCommandsReceived() {
         // not truely atomic, but we aren't looking to provide exact, up-to-the-nanosecond, accuracy
         return getNumberSuccessfulCommandsReceived() + getNumberFailedCommandsReceived();

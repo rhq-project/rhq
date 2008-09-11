@@ -1648,6 +1648,13 @@ public final class AlertConditionCache {
     }
 
     private void printInverseCache() {
+        log.debug("Printing inverseAgentMap...");
+        for (Map.Entry<Integer, List<Integer>> inverseEntry : inverseAgentMap.entrySet()) {
+            log.debug("agentId=" + inverseEntry.getKey() + " has the following mappings: ");
+            List<Integer> conditions = inverseEntry.getValue();
+            log.debug("conditionIds=" + conditions);
+        }
+
         log.debug("Printing inverseAlertConditionMap...");
         for (Map.Entry<Integer, List<Tuple<AbstractCacheElement<?>, List<AbstractCacheElement<?>>>>> inverseEntry : inverseAlertConditionMap
             .entrySet()) {

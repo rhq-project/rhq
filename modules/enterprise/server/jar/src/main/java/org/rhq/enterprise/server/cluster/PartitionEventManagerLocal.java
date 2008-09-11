@@ -27,6 +27,8 @@ import org.rhq.core.domain.cluster.PartitionEvent;
 import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageControl;
 
 /**
  * 
@@ -52,4 +54,7 @@ public interface PartitionEventManagerLocal {
      */
     void deletePartitionEvent(PartitionEvent event);
 
+    PartitionEvent getPartitionEventWithDetails(Subject subject, int partitionEventId);
+
+    PageList<PartitionEvent> getPartitionEvents(Subject subject, PageControl pageControl);
 }

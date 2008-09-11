@@ -1,0 +1,121 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="Affinity Groups"/>
+
+   <ui:define name="breadcrumbs">
+      <h:outputLink value="/Admin.do">
+         ${msg["user.admin.page.title"]}
+      </h:outputLink>
+      &gt;
+      <h:outputLink value="listPartitionEvents.xhtml">
+         ${msg["ha.affinity.partitionevents.list.breadcrumb"]}
+      </h:outputLink>
+   </ui:define>
+
+   <ui:define name="body">
+
+   <br/>
+   <h:messages showSummary="true"
+               showDetail="true"
+               infoClass="InfoBlock"
+               warnClass="WarnBlock"
+               errorClass="ErrorBlock"
+               fatalClass="FatalBlock"
+               globalOnly="false"
+               layout="table"
+               width="100%"/>
+
+      <h:form id="partitionEventsForm">
+
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Partition Events"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+            <ui:param name="partitionEventsDataModel" value="#{ListPartitionEventsUIBean.dataModel}"/>
+            <rich:dataTable binding="#{ListPartitionEventsUIBean.dataTable}"
+                            id="partitionEventsDataTable"
+                            rows="#{PageControl.ListPartitionEventsView.pageSize}"
+                            value="#{partitionEventsDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="33%, 33%, 33%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ListPartitionEventsView" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pe.ctime">
+                        <h:outputText styleClass="headerText" value="Event Executed Time" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.ctime}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                  </h:outputText>
+
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Event Type" />
+                  </f:facet>
+
+                  <h:outputLink value="viewPartitionEvent.xhtml">
+                     <f:param name="eventId" value="#{item.id}"/>
+                     <h:outputText value="#{item.eventType}" />
+                  </h:outputLink>
+
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="User Initiated" />
+                  </f:facet>
+
+                  <h:outputText value="#{item.subjectName}"/>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="3" width="100%">
+                        <ui:param name="paginationDataTableName" value="partitionEventsDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{partitionEventsDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ListPartitionEventsView}"/>
+                        <ui:include src="../resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+
+         </rich:panel>
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

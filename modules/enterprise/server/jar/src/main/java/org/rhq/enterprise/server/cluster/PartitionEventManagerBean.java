@@ -19,11 +19,13 @@
 package org.rhq.enterprise.server.cluster;
 
 import java.util.Map;
+import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cluster.FailoverList;
@@ -32,7 +34,13 @@ import org.rhq.core.domain.cluster.PartitionEventDetails;
 import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 
 /**
@@ -101,4 +109,25 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
         entityManager.remove(event);
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PartitionEvent getPartitionEventWithDetails(Subject subject, int partitionEventId) {
+        Query query = entityManager.createNamedQuery(PartitionEvent.QUERY_FIND_BY_ID_WITH_DETAILS);
+        query.setParameter("id", partitionEventId);
+
+        PartitionEvent event = (PartitionEvent)query.getSingleResult();
+        return event;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<PartitionEvent> getPartitionEvents(Subject subject, PageControl pageControl) {
+        pageControl.initDefaultOrderingField("pe.ctime", PageOrdering.DESC);
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, PartitionEvent.QUERY_FIND_ALL, pageControl);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, PartitionEvent.QUERY_FIND_ALL);
+
+        List<PartitionEvent> results = query.getResultList();
+        long count = (Long) countQuery.getSingleResult();
+
+        return new PageList<PartitionEvent>(results, (int)count, pageControl);
+    }
 }

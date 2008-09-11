@@ -61,6 +61,7 @@ import org.rhq.enterprise.gui.ha.AffinityGroupSubscribedAgentsUIBean;
 import org.rhq.enterprise.gui.ha.AffinityGroupUnsubscribedAgentsUIBean;
 import org.rhq.enterprise.gui.ha.AffinityGroupUnsubscribedServersUIBean;
 import org.rhq.enterprise.gui.ha.AffinityGroupSubscribedServersUIBean;
+import org.rhq.enterprise.gui.ha.ListPartitionEventsUIBean;
 import org.rhq.enterprise.gui.inventory.group.ListResourceGroupMembersUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyDetailsUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyHistoryUIBean;
@@ -209,13 +210,14 @@ public enum PageControlView {
     AffinityGroupSubscribedServers(AffinityGroupSubscribedServersUIBean.class),
     /** */
     AffinityGroupUnsubscribedServers(AffinityGroupUnsubscribedServersUIBean.class),
-
-    /** @deprecated */
+    /** */
     AffinityGroupAgentMembersView(ViewAffinityGroupAgentMembersUIBean.class),
-    /** @deprecated */
+    /** */
     AffinityGroupServerMembersView(ViewAffinityGroupServerMembersUIBean.class),
     /** */
-    AgentFailoverListView(ViewAgentUIBean.class);
+    AgentFailoverListView(ViewAgentUIBean.class),
+    /** */
+    ListPartitionEventsView(ListPartitionEventsUIBean.class);
 
     private Class<? extends PagedDataTableUIBean> beanClass;
 

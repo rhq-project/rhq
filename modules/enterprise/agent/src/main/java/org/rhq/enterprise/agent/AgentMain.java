@@ -285,6 +285,15 @@ public class AgentMain {
     private FailoverListComposite m_serverFailoverList;
 
     /**
+     * Array that will always have size 1 whose value is the timestamp of the last time the agent
+     * successfully failed over to another server.
+     * This is an array because it is also locked when a failover is currently being attempted - thus
+     * allowing one failover attempt to happen at any one time regardless of the number of
+     * concurrent messages/failovers requested.
+     */
+    private long[] m_lastFailoverTime = new long[] { 0L };
+
+    /**
      * The main method that starts the whole thing.
      *
      * @param args
@@ -1289,66 +1298,71 @@ public class AgentMain {
      *             same communicator used by this agent's {@link #getClientCommandSender() sender}.
      *
      * @return <code>true</code> if the agent is now talking to a new server; <code>false</code> if,
-     *         for some reason, the agent was not able to switch to another server.
+     *         for some reason, the agent was not able to switch to another server. This will return
+     *         <code>null</code> if this method did not attempt to switch because another thread
+     *         has recently switched the server already.
      */
-    boolean failoverToNewServer(RemoteCommunicator comm) {
-        FailoverListComposite failoverList = getServerFailoverList();
-        if (failoverList.hasNext() == false) {
-            return false;
-        }
+    Boolean failoverToNewServer(RemoteCommunicator comm) {
+        synchronized (m_lastFailoverTime) {
 
-        AgentConfiguration config = getConfiguration();
-        String currentTransport = config.getServerTransport();
-        String currentTransportParams = config.getServerTransportParams();
+            // if we just recently (within the last 10s) switched, throw an exception to indicate this
+            if (System.currentTimeMillis() - m_lastFailoverTime[0] < 10000) {
+                return null;
+            }
 
-        ServerEntry nextServer = failoverList.next();
+            FailoverListComposite failoverList = getServerFailoverList();
+            if (failoverList.hasNext() == false) {
+                return Boolean.FALSE;
+            }
 
-        // our auto-discovery listener needs to be recreated since it needs the new server locator URL
-        // so get rid of the old one.
-        unprepareAutoDiscoveryListener();
+            AgentConfiguration config = getConfiguration();
+            String currentTransport = config.getServerTransport();
+            String currentTransportParams = config.getServerTransportParams();
 
-        try {
-            // set the new server locator information into config
-            config
-                .setServerLocatorUri(currentTransport, nextServer.address, (SecurityUtil
+            ServerEntry nextServer = failoverList.next();
+
+            // our auto-discovery listener needs to be recreated since it needs the new server locator URL
+            // so get rid of the old one.
+            unprepareAutoDiscoveryListener();
+
+            try {
+                // set the new server locator information into config
+                config.setServerLocatorUri(currentTransport, nextServer.address, (SecurityUtil
                     .isTransportSecure(currentTransport)) ? nextServer.securePort : nextServer.port,
                     currentTransportParams);
 
-            // tell the comm object about the new server (note the dependency on knowing its based on Jboss/Remoting!)
-            try {
-                ((JBossRemotingRemoteCommunicator) comm).setInvokerLocator(config.getServerLocatorUri());
-            } catch (Exception e) {
-                LOG.warn(AgentI18NResourceKeys.FAILOVER_FAILED, e);
-                return false;
+                // tell the comm object about the new server (note the dependency on knowing its based on Jboss/Remoting!)
+                try {
+                    ((JBossRemotingRemoteCommunicator) comm).setInvokerLocator(config.getServerLocatorUri());
+                } catch (Exception e) {
+                    LOG.warn(AgentI18NResourceKeys.FAILOVER_FAILED, e);
+                    return Boolean.FALSE;
+                }
+
+                // TODO: send the connect message to tell the server we want to talk to it
+                // this also verifies that the server is up.
+
+                LOG.info(AgentI18NResourceKeys.FAILED_OVER_TO_SERVER, config.getServerLocatorUri());
+
+            } finally {
+                // now that we switched, re-setup discovery
+                try {
+                    prepareAutoDiscoveryListener();
+                } catch (Exception e) {
+                    LOG.info(AgentI18NResourceKeys.FAILOVER_DISCOVERY_START_FAILURE, ThrowableUtil.getAllMessages(e));
+                }
             }
 
-            // TODO: send the connect message to tell the server we want to talk to it
-            // this also verifies that the server is up.
+            // we've successfully failed over; the design of the HA system calls for us to start
+            // over at the top of the failover list the next time we get a failure.
+            // TODO: uncomment below only when we've sent the "connect" message successfully
+            //       we should only reset the index when we know the new server is up
+            // failoverList.resetIndex();
 
-            LOG.info(AgentI18NResourceKeys.FAILED_OVER_TO_SERVER, config.getServerLocatorUri());
+            m_lastFailoverTime[0] = System.currentTimeMillis();
 
-        } finally {
-            // now that we switched, re-setup discovery
-            try {
-                prepareAutoDiscoveryListener();
-            } catch (Exception e) {
-                LOG.info(AgentI18NResourceKeys.FAILOVER_DISCOVERY_START_FAILURE, ThrowableUtil.getAllMessages(e));
-            }
+            return Boolean.TRUE;
         }
-
-        // we've successfully failed over; the design of the HA system calls for us to start
-        // over at the top of the failover list the next time we get a failure.
-        // TODO: uncomment below only when we've sent the "connect" message successfully
-        //       we should only reset the index when we know the new server is up
-        // failoverList.resetIndex();
-
-        return true;
-
-        // TODO: what happens if concurrent commands fail at the same time?
-        // We don't want to failover twice...should probably ignore calls to this method that occur
-        // within a short amount of time like (i.e. "we just switched servers 5 seconds ago, don't
-        // switch again. only switch if we haven't in the past 30s")
-        // TODO: switching invoker locator in the comm object is not thread safe, another reason why above is important
     }
 
     /**

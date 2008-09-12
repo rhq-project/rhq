@@ -26,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -66,6 +67,7 @@ import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
 import org.rhq.core.clientapi.server.operation.OperationServerService;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite;
+import org.rhq.core.domain.cluster.composite.FailoverListComposite.ServerEntry;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
@@ -74,6 +76,7 @@ import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 import org.rhq.enterprise.agent.promptcmd.AgentPromptCommand;
@@ -143,6 +146,8 @@ public class AgentMain {
     private static final String PROMPT_SHUTDOWN = MSG.getMsg(AgentI18NResourceKeys.PROMPT_STRING_SHUTDOWN) + "> ";
     private static final String PROMPT_STARTED = MSG.getMsg(AgentI18NResourceKeys.PROMPT_STRING_STARTED) + "> ";
     private static final String PROMPT_SENDING = MSG.getMsg(AgentI18NResourceKeys.PROMPT_STRING_SENDING) + "> ";
+
+    private static final String FILENAME_SERVER_FAILOVER_LIST = "failover-list.dat";
 
     /**
      * The command line arguments specified by the user.
@@ -274,6 +279,12 @@ public class AgentMain {
     private AgentManagement m_managementMBean;
 
     /**
+     * Contains an iteratable list of servers that this agent should use when it has to failover to
+     * other servers.
+     */
+    private FailoverListComposite m_serverFailoverList;
+
+    /**
      * The main method that starts the whole thing.
      *
      * @param args
@@ -351,6 +362,7 @@ public class AgentMain {
         m_agentPreferencesNodeName = AgentConfigurationConstants.DEFAULT_PREFERENCE_NODE;
         m_previouslyQueueCommands = null;
         m_registration = null;
+        m_serverFailoverList = null;
 
         if (args == null) {
             args = new String[0];
@@ -603,6 +615,48 @@ public class AgentMain {
      */
     public AgentManagement getAgentManagementMBean() {
         return m_managementMBean;
+    }
+
+    /**
+     * Returns an iteratable list of servers that can be used as backups when this agent needs to failover
+     * to another server.
+     * 
+     * @return list of servers (may be empty but will not be <code>null</code>)
+     */
+    public FailoverListComposite getServerFailoverList() {
+        if (m_serverFailoverList != null) {
+            return m_serverFailoverList;
+        }
+
+        // we don't have it yet - read our backed up version from the last time we were given the list
+
+        // as a safety measure, return a dummy, empty list if we aren't configured yet; but we really should not
+        // be calling this method until we are configured properly
+        if (m_configuration == null) {
+            return new FailoverListComposite(new ArrayList<ServerEntry>());
+        }
+
+        File dataDir = m_configuration.getDataDirectory();
+        File failoverListFile = new File(dataDir, FILENAME_SERVER_FAILOVER_LIST);
+
+        FailoverListComposite list;
+
+        if (!failoverListFile.exists()) {
+            // a non-existant file implies an empty list (i.e. no failover servers defined)
+            list = new FailoverListComposite(new ArrayList<ServerEntry>());
+        } else {
+            try {
+                byte[] bytes = StreamUtil.slurp(new FileInputStream(failoverListFile));
+                list = (FailoverListComposite) StreamUtil.deserialize(bytes);
+                LOG.debug(AgentI18NResourceKeys.FAILOVER_LIST_LOADED, failoverListFile, m_serverFailoverList.size());
+            } catch (Exception e) {
+                list = new FailoverListComposite(new ArrayList<ServerEntry>());
+                LOG.warn(e, AgentI18NResourceKeys.FAILOVER_LIST_CANNOT_BE_LOADED, failoverListFile, ThrowableUtil
+                    .getAllMessages(e));
+            }
+        }
+
+        return list;
     }
 
     /**
@@ -862,8 +916,31 @@ public class AgentMain {
                                     // Note that we don't retry even if storing the token fails since this kind
                                     // of failure is probably not recoverable even if we try again.
                                     agent_config.setAgentSecurityToken(token);
-                                    agent_config.setFailoverList(failoverList);
                                     LOG.debug(AgentI18NResourceKeys.NEW_SECURITY_TOKEN, token);
+
+                                    storeServerFailoverList(failoverList);
+                                    m_serverFailoverList = failoverList;
+
+                                    // switch away from the registration server and point this agent to the top of the list
+                                    // - this is our primary server that we should connect to
+                                    // note that if we are already pointing to the one at the head of the failover list,
+                                    // we don't have to failover to another server; the current one is the one we already want
+                                    if (failoverList.hasNext()) {
+                                        String currentAddress = agent_config.getServerBindAddress();
+                                        int currentPort = agent_config.getServerBindPort();
+                                        String currentTransport = agent_config.getServerTransport();
+                                        ServerEntry nextServer = failoverList.peek();
+
+                                        if (currentAddress.equals(nextServer.address)
+                                            && currentPort == (SecurityUtil.isTransportSecure(currentTransport) ? nextServer.securePort
+                                                : nextServer.port)) {
+                                            // we are already pointing to the primary server, so all we have to do is
+                                            // call next to move the index to the next in the list for when we have to failover in the future
+                                            nextServer = failoverList.next();
+                                        } else {
+                                            failoverToNewServer(sender.getRemoteCommunicator());
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1203,6 +1280,78 @@ public class AgentMain {
     }
 
     /**
+     * Switches the agent to talk to the next server in the failover list.
+     * 
+     * This is package-scoped so the failover callback can call this.
+     *  
+     * @param comm the communicator object whose endpoint needs to be switched to the next server
+     *             the caller must ensure the remote communicator provided to this method is the
+     *             same communicator used by this agent's {@link #getClientCommandSender() sender}.
+     *
+     * @return <code>true</code> if the agent is now talking to a new server; <code>false</code> if,
+     *         for some reason, the agent was not able to switch to another server.
+     */
+    boolean failoverToNewServer(RemoteCommunicator comm) {
+        FailoverListComposite failoverList = getServerFailoverList();
+        if (failoverList.hasNext() == false) {
+            return false;
+        }
+
+        AgentConfiguration config = getConfiguration();
+        String currentTransport = config.getServerTransport();
+        String currentTransportParams = config.getServerTransportParams();
+
+        ServerEntry nextServer = failoverList.next();
+
+        // our auto-discovery listener needs to be recreated since it needs the new server locator URL
+        // so get rid of the old one.
+        unprepareAutoDiscoveryListener();
+
+        try {
+            // set the new server locator information into config
+            config
+                .setServerLocatorUri(currentTransport, nextServer.address, (SecurityUtil
+                    .isTransportSecure(currentTransport)) ? nextServer.securePort : nextServer.port,
+                    currentTransportParams);
+
+            // tell the comm object about the new server (note the dependency on knowing its based on Jboss/Remoting!)
+            try {
+                ((JBossRemotingRemoteCommunicator) comm).setInvokerLocator(config.getServerLocatorUri());
+            } catch (Exception e) {
+                LOG.warn(AgentI18NResourceKeys.FAILOVER_FAILED, e);
+                return false;
+            }
+
+            // TODO: send the connect message to tell the server we want to talk to it
+            // this also verifies that the server is up.
+
+            LOG.info(AgentI18NResourceKeys.FAILED_OVER_TO_SERVER, config.getServerLocatorUri());
+
+        } finally {
+            // now that we switched, re-setup discovery
+            try {
+                prepareAutoDiscoveryListener();
+            } catch (Exception e) {
+                LOG.info(AgentI18NResourceKeys.FAILOVER_DISCOVERY_START_FAILURE, ThrowableUtil.getAllMessages(e));
+            }
+        }
+
+        // we've successfully failed over; the design of the HA system calls for us to start
+        // over at the top of the failover list the next time we get a failure.
+        // TODO: uncomment below only when we've sent the "connect" message successfully
+        //       we should only reset the index when we know the new server is up
+        // failoverList.resetIndex();
+
+        return true;
+
+        // TODO: what happens if concurrent commands fail at the same time?
+        // We don't want to failover twice...should probably ignore calls to this method that occur
+        // within a short amount of time like (i.e. "we just switched servers 5 seconds ago, don't
+        // switch again. only switch if we haven't in the past 30s")
+        // TODO: switching invoker locator in the comm object is not thread safe, another reason why above is important
+    }
+
+    /**
      * This will purge all files in the agent's data directory.
      */
     private void cleanDataDirectory() {
@@ -1295,17 +1444,7 @@ public class AgentMain {
         m_clientSender.addStateListener(commandListenerStateListener, true);
 
         // if we are configured to perform auto-detection of the server, create our listener now
-        if (m_configuration.isServerAutoDetectionEnabled()) {
-            ServiceContainerConfiguration comm_config = new ServiceContainerConfiguration(m_configuration
-                .getPreferences());
-            if (comm_config.isMulticastDetectorEnabled()) {
-                m_autoDiscoveryListener = new AgentAutoDiscoveryListener(this, createServerRemoteCommunicator());
-                m_commServices.addDiscoveryListener(m_autoDiscoveryListener);
-                LOG.debug(AgentI18NResourceKeys.SERVER_AUTO_DETECT_ENABLED, m_configuration.getServerLocatorUri());
-            } else {
-                LOG.warn(AgentI18NResourceKeys.WEIRD_AUTO_DETECT_CONFIG);
-            }
-        }
+        prepareAutoDiscoveryListener();
 
         // initialize and start the server-side services so we can process incoming commands
         m_commServices.start(m_configuration.getPreferences(), m_configuration.getClientCommandSenderConfiguration());
@@ -1325,6 +1464,40 @@ public class AgentMain {
         }
 
         return;
+    }
+
+    /**
+     * This will prepare the auto-discovery listener, if server auto-detection is enabled.
+     * 
+     * @throws Exception
+     */
+    private void prepareAutoDiscoveryListener() throws Exception {
+        if (m_configuration.isServerAutoDetectionEnabled()) {
+            ServiceContainerConfiguration comm_config = new ServiceContainerConfiguration(m_configuration
+                .getPreferences());
+            if (comm_config.isMulticastDetectorEnabled()) {
+                m_autoDiscoveryListener = new AgentAutoDiscoveryListener(this, createServerRemoteCommunicator(false));
+                m_commServices.addDiscoveryListener(m_autoDiscoveryListener);
+                LOG.debug(AgentI18NResourceKeys.SERVER_AUTO_DETECT_ENABLED, m_configuration.getServerLocatorUri());
+            } else {
+                LOG.warn(AgentI18NResourceKeys.WEIRD_AUTO_DETECT_CONFIG);
+            }
+        }
+        return;
+    }
+
+    /**
+     * If the auto-discovery listener has been created, this will "unprepare" that listener
+     * by deregistering it from the comm services.
+     */
+    private void unprepareAutoDiscoveryListener() {
+        if (m_autoDiscoveryListener != null) {
+            if (m_commServices != null) {
+                m_commServices.removeDiscoveryListener(m_autoDiscoveryListener);
+            }
+
+            m_autoDiscoveryListener = null;
+        }
     }
 
     /**
@@ -1380,13 +1553,7 @@ public class AgentMain {
      */
     private void shutdownCommServices() {
         // no need to still attempt to auto-detect the server, let's remove our listener if we were listening
-        if (m_autoDiscoveryListener != null) {
-            if (m_commServices != null) {
-                m_commServices.removeDiscoveryListener(m_autoDiscoveryListener);
-            }
-
-            m_autoDiscoveryListener = null;
-        }
+        unprepareAutoDiscoveryListener();
 
         // stop our client from sending messages
         if (m_clientSender != null) {
@@ -1503,7 +1670,7 @@ public class AgentMain {
      * @throws Exception if the configured server locator URI in malformed
      */
     private ClientCommandSender createClientCommandSender() throws Exception {
-        RemoteCommunicator remote_comm = createServerRemoteCommunicator();
+        RemoteCommunicator remote_comm = createServerRemoteCommunicator(true);
         ClientCommandSenderConfiguration config = m_configuration.getClientCommandSenderConfiguration();
 
         ClientCommandSender client_sender = new ClientCommandSender(remote_comm, config, m_previouslyQueueCommands);
@@ -1521,11 +1688,15 @@ public class AgentMain {
      * Returns the remote communicator that can be used to send messages to the server as configured in
      * {@link AgentConfiguration#getServerLocatorUri()}.
      *
+     * @param withFailover if <code>true</code>, the communicator will be configured to attempt to failover
+     *                     to another server when it can't send commands to the current server. if <code>false</code>,
+     *                     the communicator will not try to do any failover attempts
+     *
      * @return the remote communicator to use to communicate with the server
      *
      * @throws Exception if the configured server locator URI is malformed
      */
-    private RemoteCommunicator createServerRemoteCommunicator() throws Exception {
+    private RemoteCommunicator createServerRemoteCommunicator(boolean withFailover) throws Exception {
         String server_uri = m_configuration.getServerLocatorUri();
         Map<String, String> config = new HashMap<String, String>();
 
@@ -1574,8 +1745,52 @@ public class AgentMain {
         }
 
         RemoteCommunicator remote_comm = new JBossRemotingRemoteCommunicator(server_uri, config);
+        if (withFailover) {
+            remote_comm.setFailureCallback(new FailoverFailureCallback(this));
+        }
 
         return remote_comm;
+    }
+
+    /**
+     * Given a failover list, this will persist it so the agent can recover it if the agent itself fails.
+     * If this method fails to persist the list, an error is logged but otherwise this method
+     * returns normally.
+     * 
+     * @param failoverList the failover list to persist (may be <code>null</code>)
+     */
+    private void storeServerFailoverList(FailoverListComposite failoverList) {
+        // don't do anything if we aren't configured yet - this is just a safety measure, we really
+        // should never be calling this method until the agent has been fully configured
+        if (m_configuration == null) {
+            LOG.warn(AgentI18NResourceKeys.FAILOVER_LIST_CANNOT_BE_PERSISTED, "?", "configuration==null");
+            return;
+        }
+
+        File dataDir = m_configuration.getDataDirectory();
+        File failoverListFile = new File(dataDir, FILENAME_SERVER_FAILOVER_LIST);
+
+        if (failoverList == null) {
+            failoverListFile.delete();
+            if (!failoverListFile.exists()) {
+                LOG.debug(AgentI18NResourceKeys.FAILOVER_LIST_PERSISTED_EMPTY, failoverListFile);
+            } else {
+                LOG.warn(AgentI18NResourceKeys.FAILOVER_LIST_CANNOT_BE_DELETED, failoverListFile);
+            }
+        } else {
+            try {
+                byte[] failoverListBytes = StreamUtil.serialize(failoverList);
+                ByteArrayInputStream byteStream = new ByteArrayInputStream(failoverListBytes);
+                FileOutputStream fileStream = new FileOutputStream(failoverListFile);
+                StreamUtil.copy(byteStream, fileStream, true);
+                LOG.debug(AgentI18NResourceKeys.FAILOVER_LIST_PERSISTED, failoverListFile);
+            } catch (Exception e) {
+                LOG.warn(e, AgentI18NResourceKeys.FAILOVER_LIST_CANNOT_BE_PERSISTED, failoverListFile, ThrowableUtil
+                    .getAllMessages(e));
+            }
+        }
+
+        return;
     }
 
     /**

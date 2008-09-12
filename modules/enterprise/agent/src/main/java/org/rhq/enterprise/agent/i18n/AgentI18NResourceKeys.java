@@ -28,6 +28,36 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
+    @I18NMessage("The agent has triggered its failover mechanism and switched to server [{0}]")
+    String FAILED_OVER_TO_SERVER = "AgentMain.failed-over-to-server";
+
+    @I18NMessage("Failed to failover to another server. Cause: {0}")
+    String FAILOVER_FAILED = "AgentMain.failover-failed";
+
+    @I18NMessage("During failover attempt, the discovery features failed to start. Discovery may be disabled.")
+    String FAILOVER_DISCOVERY_START_FAILURE = "AgentMain.failover-discovery-start-failure";
+
+    @I18NMessage("Too many failover attempts have been made [{0}]. Exception that triggered the failover: [{1}]")
+    String TOO_MANY_FAILOVER_ATTEMPTS = "AgentMain.too-many-failover-attempts";
+
+    @I18NMessage("The server failover list has been loaded from [{0}] - there are [{1}] servers in the list")
+    String FAILOVER_LIST_LOADED = "AgentMain.failover-list-loaded";
+
+    @I18NMessage("The server failover list cannot be loaded from [{0}]. Cause: {1}")
+    String FAILOVER_LIST_CANNOT_BE_LOADED = "AgentMain.failover-list-cannot-be-loaded";
+
+    @I18NMessage("The server failover list is empty; but [{0}] cannot be deleted")
+    String FAILOVER_LIST_CANNOT_BE_DELETED = "AgentMain.failover-list-cannot-be-deleted";
+
+    @I18NMessage("The server failover list is empty; [{0}] has been deleted")
+    String FAILOVER_LIST_PERSISTED_EMPTY = "AgentMain.failover-list-persisted-empty";
+
+    @I18NMessage("The server failover list has been persisted to [{0}]")
+    String FAILOVER_LIST_PERSISTED = "AgentMain.failover-list-persisted";
+
+    @I18NMessage("The server failover list cannot be persisted to [{0}]. Cause: {1}")
+    String FAILOVER_LIST_CANNOT_BE_PERSISTED = "AgentMain.failover-list-cannot-be-persisted";
+
     @I18NMessage("(type it again to confirm) ")
     String PROMPT_CONFIRM = "AgentNativePromptInfo.prompt-confirm";
 

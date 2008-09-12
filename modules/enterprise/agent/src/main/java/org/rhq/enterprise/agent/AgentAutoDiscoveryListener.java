@@ -177,7 +177,9 @@ public class AgentAutoDiscoveryListener implements AutoDiscoveryListener {
     private boolean isServerToBeListenedFor(InvokerLocator compare_me) {
         InvokerLocator server_locator = getServerToBeListenedFor();
 
-        return server_locator.equals(compare_me);
+        // we just care about host and port - assume transport and transport params may be different between client and server
+        return server_locator.getHost().equals(compare_me.getHost())
+            && server_locator.getPort() == compare_me.getPort();
     }
 
     /**

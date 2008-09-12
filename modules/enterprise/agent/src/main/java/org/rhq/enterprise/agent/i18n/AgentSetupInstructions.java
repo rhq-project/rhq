@@ -43,8 +43,9 @@ public interface AgentSetupInstructions {
     String SETUP_INSTRUCTION_SERVERTRANSPORT_DEFAULT = AgentConfigurationConstants.DEFAULT_SERVER_TRANSPORT;
     @I18NMessages( { @I18NMessage("RHQ Server Transport Protocol") })
     String SETUP_INSTRUCTION_SERVERTRANSPORT_PROMPT = "PromptCommand.setup.instruction.serveruri.transport.prompt";
-    @I18NMessages( { @I18NMessage("The transport that the RHQ Server expects its messages to flow over.\\n\\\n"
-        + "Typical values are servlet, sslsocket") })
+    @I18NMessages( { @I18NMessage("The transport used to send messages to the RHQ Server.\\n\\\n"
+        + "Acceptable values are either servlet or sslservlet. If you want this agent to\\n\\\n"
+        + "talk to the server securely over an encrypted channel, use sslservlet.") })
     String SETUP_INSTRUCTION_SERVERTRANSPORT_HELP = "PromptCommand.setup.instruction.serveruri.transport.help";
 
     // SERVER ADDRESS

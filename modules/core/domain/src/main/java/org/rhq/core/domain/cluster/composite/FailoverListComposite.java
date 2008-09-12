@@ -114,6 +114,23 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
         return nextOne;
     }
 
+    /**
+     * Same as {@link #next()} except this doesn't move the iterator
+     * pointer forward.  Calling this method multiple times in a row
+     * results in the same server being returned, unless {@link #next()}.
+     * If you call {@link #peek()} and then {@link #next()}, both will
+     * return the same server.
+     * 
+     * @return the server entry that is next on the list to be returned (may be null)
+     */
+    public ServerEntry peek() {
+        if (!hasNext()) {
+            return null;
+        }
+        ServerEntry nextOne = servers.get(nextIndex);
+        return nextOne;
+    }
+
     public ServerEntry get(int index) {
         return servers.get(index);
     }
@@ -132,7 +149,7 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
 
     public void print(PrintWriter writer) {
         for (int i = 0; i < size(); i++) {
-            writer.println(servers.get(i) + (i == nextIndex ? " (active)" : ""));
+            writer.println(servers.get(i) + (i == nextIndex ? " (next)" : ""));
         }
     }
 

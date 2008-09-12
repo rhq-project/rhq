@@ -19,10 +19,13 @@
 package org.rhq.enterprise.communications.command.client;
 
 import mazz.i18n.Logger;
+
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.impl.identify.IdentifyCommand;
 import org.rhq.enterprise.communications.i18n.CommI18NFactory;
 import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
+import org.rhq.enterprise.communications.util.NotProcessedException;
 
 /**
  * An object that runs in a thread whose sole job is to poll the given remote server. When the server's status changes
@@ -101,7 +104,13 @@ class ServerPollingThread extends Thread {
                     // sender that it is OK to start sending messages, if it is not already sending
                     IdentifyCommand id_cmd = new IdentifyCommand();
                     m_clientSender.preprocessCommand(id_cmd);
-                    m_clientSender.send(id_cmd);
+                    CommandResponse response = m_clientSender.send(id_cmd);
+
+                    // there is a special case when we might get a response back but it should be considered "server down".
+                    // that is: when the server replies with a NotProcessedException response
+                    if (response.getException() instanceof NotProcessedException) {
+                        throw response.getException();
+                    }
 
                     if (m_clientSender.startSending()) {
                         LOG.info(CommI18NResourceKeys.SERVER_POLLING_THREAD_SERVER_ONLINE);

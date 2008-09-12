@@ -21,9 +21,11 @@ package org.rhq.enterprise.communications.command.client;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.jboss.remoting.Client;
 import org.jboss.remoting.InvokerLocator;
 import org.jboss.remoting.ServerInvoker;
+
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.impl.generic.GenericCommandResponse;
@@ -74,6 +76,11 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
      * the actual JBoss/Remoting client object that will be used to transport the commands to the server
      */
     private Client m_remotingClient;
+
+    /**
+     * Optionally-defined callback that will be called when a failure is detected when sending a message. 
+     */
+    private FailureCallback m_failureCallback;
 
     /**
      * Constructor for {@link JBossRemotingRemoteCommunicator} that initializes the client with no invoker locator
@@ -296,8 +303,8 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
 
         m_invokerLocator = locator;
 
-        m_clientConfiguration.clear();
         if (client_config != null) {
+            m_clientConfiguration.clear();
             m_clientConfiguration.putAll(client_config);
         }
 
@@ -332,6 +339,14 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         }
 
         return;
+    }
+
+    public FailureCallback getFailureCallback() {
+        return m_failureCallback;
+    }
+
+    public void setFailureCallback(FailureCallback callback) {
+        m_failureCallback = callback;
     }
 
     /**
@@ -379,21 +394,37 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
      * @see RemoteCommunicator#send(Command)
      */
     public CommandResponse send(Command command) throws Throwable {
-        Object ret_response;
+        Object ret_response = null;
+        boolean retry = false;
 
-        try {
-            ret_response = getRemotingClient().invoke(command, null);
-        } catch (ServerInvoker.InvalidStateException serverDown) {
-            // under rare condition, a bug in remoting 2.2 causes this when the server restarted
-            // try it one more time, this will get a new server thread on the server side (JBREM-745)
-            // once JBREM-745 is fixed, we can probably get rid of this catch block
-            ret_response = getRemotingClient().invoke(command, null);
-        }
+        do {
+            try {
+                try {
+                    ret_response = getRemotingClient().invoke(command, null);
+                } catch (ServerInvoker.InvalidStateException serverDown) {
+                    // under rare condition, a bug in remoting 2.2 causes this when the server restarted
+                    // try it one more time, this will get a new server thread on the server side (JBREM-745)
+                    // once JBREM-745 is fixed, we can probably get rid of this catch block
+                    ret_response = getRemotingClient().invoke(command, null);
+                }
 
-        // this is to support http(s) transport - those transports will return Exception objects when errors occur
-        if (ret_response instanceof Exception) {
-            throw (Exception) ret_response;
-        }
+                // this is to support http(s) transport - those transports will return Exception objects when errors occur
+                if (ret_response instanceof Exception) {
+                    throw (Exception) ret_response;
+                }
+
+                retry = invokeCallbackIfNeeded(command,
+                    (ret_response instanceof CommandResponse) ? (CommandResponse) ret_response : null, null);
+
+            } catch (Throwable t) {
+                retry = invokeCallbackIfNeeded(command,
+                    (ret_response instanceof CommandResponse) ? (CommandResponse) ret_response : null, t);
+
+                if (!retry) {
+                    throw t;
+                }
+            }
+        } while (retry);
 
         try {
             return (CommandResponse) ret_response;
@@ -407,6 +438,41 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
                 ret_response);
             return new GenericCommandResponse(command, false, ret_response, e);
         }
+    }
+
+    /**
+     * This will invoke the failure callback when necessary.  It is necessary to call the callback
+     * when the throwable is not <code>null</code> or the command response has a non-<code>null</code> exception.
+     * 
+     * This method will force a retry by returning <code>true</code>. If <code>false</code> is returned,
+     * the request need not be retried.
+     * 
+     * @param command the command that was sent (or attempted to be sent)
+     * @param response the response of the command (may be <code>null</code>)
+     * @param throwable the exception that was thrown when the command was sent (may be <code>null</code>)
+     * 
+     * @return <code>true</code> if the command should be retried, <code>false</code> otherwise
+     */
+    private boolean invokeCallbackIfNeeded(Command command, CommandResponse response, Throwable throwable) {
+
+        FailureCallback callback = getFailureCallback(); // get a local reference to avoid this being changed underneath us
+        boolean retry = false;
+
+        // only do something if there is a callback defined        
+        if (callback != null) {
+            // only do something if the command resulted in an exception
+            if (throwable != null || ((response != null) && (response.getException() != null))) {
+                // tell our callback that we detected a failure and see if it wants us to retry.
+                // the callback is free to reconfigure us, in case it wants to failover to another endpoint.
+                try {
+                    retry = callback.failureDetected(this, command, response, throwable);
+                } catch (Throwable t) {
+                    // tsk tsk - why did the callback itself fail? just keep going...
+                }
+            }
+        }
+
+        return retry;
     }
 
     /**

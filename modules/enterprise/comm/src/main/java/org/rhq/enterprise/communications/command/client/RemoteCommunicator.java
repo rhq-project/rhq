@@ -57,6 +57,9 @@ public interface RemoteCommunicator {
      * Sends the given command to the remote endpoint by utilizing a remoting framework supported by the specific
      * communicator implementation. This will transport the command to the remote endpoint. This is the method in which
      * subclasses make the command-specific client calls necessary to invoke the command on the remote endpoint.
+     * 
+     * If an error is detected by this method, and a {@link #setFailureCallback(FailureCallback) failure callback}
+     * is defined, this method will notify that callback of the problem and ask it if it should retry.
      *
      * @param  command encapsulates the command that is to be executed (must not be <code>null</code>)
      *
@@ -65,4 +68,21 @@ public interface RemoteCommunicator {
      * @throws Throwable on any error (either during the sending or execution of the command)
      */
     CommandResponse send(Command command) throws Throwable;
+
+    /**
+     * Returns the failure callback currently configured within this object.
+     * 
+     * @return the callback (may be <code>null</code>)
+     */
+    FailureCallback getFailureCallback();
+
+    /**
+     * Sets the given failure callback as the one that will be notified when this object sees a comm failure.
+     * You can pass in <code>null</code> if you don't need this object to notify anything when a failure is detected.
+     * The callback can be used to reconfigure this communicator and retry the failed message (useful to implement
+     * failover algorithms).
+     * 
+     * @param callback the object that listens to failures and may trigger retries (may be <code>null</code>)
+     */
+    void setFailureCallback(FailureCallback callback);
 }

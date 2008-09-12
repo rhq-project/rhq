@@ -20,6 +20,7 @@ package org.rhq.enterprise.communications.command.client;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.impl.generic.GenericCommandResponse;
@@ -128,5 +129,14 @@ public class DummyRemoteCommunicator implements RemoteCommunicator {
         m_sentSuccessful.incrementAndGet();
 
         return new GenericCommandResponse(command, true, null, null);
+    }
+
+    @Override
+    public FailureCallback getFailureCallback() {
+        return null;
+    }
+
+    @Override
+    public void setFailureCallback(FailureCallback callback) {
     }
 }

@@ -26,9 +26,7 @@ import java.util.prefs.Preferences;
 
 import mazz.i18n.Logger;
 
-import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.pc.PluginContainerConfiguration;
-import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 import org.rhq.enterprise.communications.ServiceContainerConfiguration;
@@ -220,6 +218,52 @@ public class AgentConfiguration {
         }
 
         return locator_uri;
+    }
+
+    /**
+     * Convienence method that sets the transport, bind address, bind port and transport parameters
+     * for a new server endpoint.  This should be used only when the agent needs to switch to a
+     * new server.
+     * 
+     * @param transport see {@link #getServerTransport()}
+     * @param bindAddress see {@link #getServerBindAddress()}
+     * @param bindPort see {@link #getServerBindPort()}
+     * @param transportParams see {@link #getServerTransportParams()}
+     */
+    public void setServerLocatorUri(String transport, String bindAddress, int bindPort, String transportParams) {
+        try {
+            m_preferences.put(AgentConfigurationConstants.SERVER_TRANSPORT, transport);
+            m_preferences.flush();
+        } catch (Exception e) {
+            LOG.warn(LOG.getMsgString(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES),
+                AgentConfigurationConstants.SERVER_TRANSPORT, e);
+        }
+
+        try {
+            m_preferences.put(AgentConfigurationConstants.SERVER_BIND_ADDRESS, bindAddress);
+            m_preferences.flush();
+        } catch (Exception e) {
+            LOG.warn(LOG.getMsgString(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES),
+                AgentConfigurationConstants.SERVER_BIND_ADDRESS, e);
+        }
+
+        try {
+            m_preferences.putInt(AgentConfigurationConstants.SERVER_BIND_PORT, bindPort);
+            m_preferences.flush();
+        } catch (Exception e) {
+            LOG.warn(LOG.getMsgString(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES),
+                AgentConfigurationConstants.SERVER_BIND_PORT, e);
+        }
+
+        try {
+            m_preferences.put(AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS, transportParams);
+            m_preferences.flush();
+        } catch (Exception e) {
+            LOG.warn(LOG.getMsgString(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES),
+                AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS, e);
+        }
+
+        return;
     }
 
     /**
@@ -1000,27 +1044,6 @@ public class AgentConfiguration {
     }
 
     /**
-     * Sets the agent's failover list that was last received from the server cloud.  The agent will use this
-     * list to decide which server to initially connect to.  If that connection ever fails, it will try the
-     * next server in the list until a live one is found on that endpoint.  This should never be null.
-     * 
-     * @return the agent's failover list; it should only ever be null if this agent has never connected to any
-     * server in the cloud, or if this agent was started cleanly
-     */
-    public FailoverListComposite getFailoverList() {
-        byte[] serializedList = m_preferences.getByteArray(AgentConfigurationConstants.AGENT_FAILOVER_LIST, null);
-        if (serializedList == null) {
-            return null;
-        }
-        try {
-            FailoverListComposite failoverList = (FailoverListComposite) StreamUtil.deserialize(serializedList);
-            return failoverList;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    /**
      * Sets the agent's security token that was received from the server during agent registration. This may be set to
      * <code>null</code> which removes the agent token; however, this does not mean the agent itself is no longer
      * registered with the server. The server will still maintain a registration for the agent.
@@ -1038,27 +1061,6 @@ public class AgentConfiguration {
             }
         } else {
             m_preferences.remove(AgentConfigurationConstants.AGENT_SECURITY_TOKEN);
-        }
-    }
-
-    /**
-     * Sets the agent's failover list that was last received from the server cloud.  The agent will use this
-     * list to decide which server to initially connect to.  If that connection ever fails, it will try the
-     * next server in the list until a live one is found on that endpoint.
-     * 
-     * @param failoverList
-     */
-    public void setFailoverList(FailoverListComposite failoverList) {
-        if (failoverList == null) {
-            return;
-        }
-        try {
-            byte[] failoverInfo = StreamUtil.serialize(failoverList);
-            m_preferences.putByteArray(AgentConfigurationConstants.AGENT_FAILOVER_LIST, failoverInfo);
-            m_preferences.flush();
-        } catch (Exception e) {
-            LOG.warn(LOG.getMsgString(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES),
-                AgentConfigurationConstants.AGENT_FAILOVER_LIST, e);
         }
     }
 

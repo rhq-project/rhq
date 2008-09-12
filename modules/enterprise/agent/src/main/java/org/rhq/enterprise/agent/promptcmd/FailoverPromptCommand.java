@@ -54,7 +54,7 @@ public class FailoverPromptCommand implements AgentPromptCommand {
             return true;
         }
 
-        FailoverListComposite failoverList = agent.getConfiguration().getFailoverList();
+        FailoverListComposite failoverList = agent.getServerFailoverList();
         if (failoverList != null) {
             failoverList.print(out);
         } else {

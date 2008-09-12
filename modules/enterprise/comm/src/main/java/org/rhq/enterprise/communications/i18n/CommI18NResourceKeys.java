@@ -926,4 +926,7 @@ public interface CommI18NResourceKeys {
         + "\\  all preferences back to their original values, enter \'!-\'.\\n\\\n"
         + "- If you need help for a particular preference, enter \'!?\'.\\n") })
     String SETUP_STANDARD_INTRO = "Setup.standard-intro";
+
+    @I18NMessages( { @I18NMessage("Transport must be one of the following: servlet, sslservlet") })
+    String NOT_SERVLET_TRANSPORT = "Setup.not-servlet-transport";
 }

@@ -216,6 +216,7 @@ public class SetupPromptCommand implements AgentPromptCommand {
         instr.addAll(createBasicSetupInstructions());
 
         final String MIN_KEYSTORE_PASSWORD_LENGTH = ".{6,}";
+        final String VALID_SERVER_TRANSPORTS_REGEX = "servlet|sslservlet";
 
         // insert after the other connector setting instructions (requires knowledge of the basic instruction ordering!)
         instr.add(3, new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_CONNECTORTRANSPORT_PREF,
@@ -232,7 +233,8 @@ public class SetupPromptCommand implements AgentPromptCommand {
 
         // the rest of the instructions should go after the basic setup instructions
         instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERTRANSPORT_PREF,
-            AgentSetupInstructions.SETUP_INSTRUCTION_SERVERTRANSPORT_DEFAULT, null, SETUPMSG
+            AgentSetupInstructions.SETUP_INSTRUCTION_SERVERTRANSPORT_DEFAULT, new RegexSetupValidityChecker(
+                VALID_SERVER_TRANSPORTS_REGEX, CommI18NResourceKeys.NOT_SERVLET_TRANSPORT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERTRANSPORT_PROMPT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_SERVERTRANSPORT_HELP)));
 

@@ -19,8 +19,10 @@
 package org.rhq.core.clientapi.server.core;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 import org.rhq.core.domain.cluster.composite.FailoverListComposite;
+import org.rhq.core.domain.cluster.composite.FailoverListComposite.ServerEntry;
 
 /**
  * These are the results of a successful agent registration. After the agent has been registered by the server, this
@@ -56,10 +58,10 @@ public class AgentRegistrationResults implements Serializable {
     /**
      * The FailoverListComposite that the agent must use in order to communicate with the server in the future.
      *
-     * @return the FailoverListComposite assigned to it by the server
+     * @return the FailoverListComposite assigned to it by the server (will not be <code>null</code> but may be empty)
      */
     public FailoverListComposite getFailoverList() {
-        return failoverList;
+        return failoverList != null ? failoverList : new FailoverListComposite(new ArrayList<ServerEntry>());
     }
 
     /**

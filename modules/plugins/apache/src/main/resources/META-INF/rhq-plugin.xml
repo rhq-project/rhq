@@ -133,6 +133,9 @@
             <c:simple-property name="output" type="longString" description="the control script's output (stdout and stderr interleaved)"/>
          </results>
       </operation>
+      
+       <metric displayName="Number of Concurrent Connections" property="applInboundAssociations"
+                 defaultOn="true" defaultInterval="300000" displayType="summary" units="none"/>  
 
       <!-- traits determined via "httpd -V" -->
 

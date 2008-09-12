@@ -117,7 +117,7 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
     /**
      * Same as {@link #next()} except this doesn't move the iterator
      * pointer forward.  Calling this method multiple times in a row
-     * results in the same server being returned, unless {@link #next()}.
+     * results in the same server being returned, unlike {@link #next()}.
      * If you call {@link #peek()} and then {@link #next()}, both will
      * return the same server.
      * 

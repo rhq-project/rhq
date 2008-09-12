@@ -178,7 +178,9 @@ public class CoreServerServiceImpl implements CoreServerService {
 
         agent.setServer(getServerManager().getServer());
 
-        // TODO (jshaughn) What else?
+        log.info("Agent [" + agentName + "] has connected to this server.");
+
+        // TODO (jshaughn) What else? alert cache loading?
     }
 
     /**

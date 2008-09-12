@@ -51,6 +51,7 @@ import org.rhq.enterprise.server.scheduler.jobs.CheckForSuspectedAgentsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutContentRequestsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutOperationsJob;
+import org.rhq.enterprise.server.scheduler.jobs.ClusterManagerJob;
 import org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob;
 import org.rhq.enterprise.server.scheduler.jobs.instance.ChangeHaServerModeIfNeededJob;
 import org.rhq.enterprise.server.scheduler.jobs.instance.ReloadServerCacheIfNeededJob;
@@ -273,6 +274,17 @@ public class StartupServlet extends HttpServlet {
                 ChangeHaServerModeIfNeededJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
             throw new ServletException("Cannot schedule HA server mode job", e);
+        }
+
+        // Cluster Manager Job
+        try {
+
+            // Long enough to allow the server instance jobs to start executing first.
+            final long initialDelay = 1000L * 60 * 2;
+            final long interval = 1000L * 30;
+            scheduler.scheduleSimpleRepeatingJob(ClusterManagerJob.class, true, false, initialDelay, interval);
+        } catch (Exception e) {
+            throw new ServletException("Cannot schedule cluster management job", e);
         }
 
         // Suspected Agents Job

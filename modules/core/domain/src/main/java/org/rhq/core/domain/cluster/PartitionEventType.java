@@ -25,20 +25,20 @@ public enum PartitionEventType {
 
     AGENT_REGISTRATION(false), //
     AGENT_JOIN(false), //
-    AGENT_LOAD_CHANGE(false), //
     AGENT_LEAVE(false), //
 
-    SERVER_JOIN(true), //
-    SERVER_LEAVE(true), //
-    SERVER_CORE_COUNT_CHANGE(true), //
+    SERVER_JOIN(true), // Server becomes available, either newly created or restarted in non-maintenance mode
+    SERVER_DOWN(true), // Server crashes, is shut down normally
+    SERVER_DELETION(true), //
+    SERVER_COMPUTE_POWER_CHANGE(true), //
 
     AFFINITY_GROUP_CHANGE(true), //
 
-    USER_INITIATED_PARTITION(true), //
-    SYSTEM_INITIATED_PARTITION(true), //
+    USER_INITIATED_PARTITION(true), // Admin requested via HAAC
+    SYSTEM_INITIATED_PARTITION(true), // Load imbalance (maybe should be an explicit type for each system initiated type)
 
-    MAINTENANCE_MODE_AGENT(false), //
-    MAINTENANCE_MODE_SERVER(true); //
+    MAINTENANCE_MODE_AGENT(false), // future
+    MAINTENANCE_MODE_SERVER(true); // 
 
     private final boolean cloudPartitionEvent;
 

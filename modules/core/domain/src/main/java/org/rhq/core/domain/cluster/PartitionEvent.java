@@ -29,12 +29,12 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 
 /**
  * An object to capture when the infrastructure used for high availability
@@ -46,9 +46,10 @@ import javax.persistence.NamedQuery;
  *
  */
 @Entity(name = "PartitionEvent")
-@NamedQueries //
-( { @NamedQuery(name = PartitionEvent.QUERY_FIND_ALL, query = "SELECT pe FROM PartitionEvent pe")
-    })
+@NamedQueries( { // 
+    @NamedQuery(name = PartitionEvent.QUERY_FIND_ALL, query = "SELECT pe FROM PartitionEvent pe"),
+    @NamedQuery(name = PartitionEvent.QUERY_FIND_VIA_EXECUTION_STATUS, query = "SELECT pe FROM PartitionEvent pe WHERE pe.executionStatus = :executionStatus") //
+})
 @SequenceGenerator(name = "id", sequenceName = "RHQ_PARTITION_EVENT_ID_SEQ")
 @Table(name = "RHQ_PARTITION_EVENT")
 public class PartitionEvent implements Serializable {
@@ -56,6 +57,7 @@ public class PartitionEvent implements Serializable {
     public static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_ALL = "PartitionEvent.findAll";
+    public static final String QUERY_FIND_VIA_EXECUTION_STATUS = "PartitionEvent.findRequested";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
@@ -72,6 +74,10 @@ public class PartitionEvent implements Serializable {
     @Enumerated(EnumType.STRING)
     private PartitionEventType eventType;
 
+    @Column(name = "EXECUTION_STATUS", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private PartitionEvent.ExecutionStatus executionStatus;
+
     @OneToMany(mappedBy = "partitionEvent")
     private List<PartitionEventDetails> eventDetails = new ArrayList<PartitionEventDetails>();
 
@@ -79,9 +85,11 @@ public class PartitionEvent implements Serializable {
     protected PartitionEvent() {
     }
 
-    public PartitionEvent(String subjectName, PartitionEventType eventType) {
+    public PartitionEvent(String subjectName, PartitionEventType eventType,
+        PartitionEvent.ExecutionStatus executionStatus) {
         this.subjectName = subjectName;
         this.eventType = eventType;
+        this.executionStatus = executionStatus;
     }
 
     public int getId() {
@@ -122,6 +130,32 @@ public class PartitionEvent implements Serializable {
 
     public void setEventDetails(List<PartitionEventDetails> eventDetails) {
         this.eventDetails = eventDetails;
+    }
+
+    public enum ExecutionStatus {
+
+        AUDIT("This parition event is executed only as an audit activity and did not affect server list generation"), //
+        COMPLETED("The request for this partition event has been completed by the cluster manager job"), //
+        IMMEDIATE("This partition event was executed at creation time."), //
+        REQUESTED("This partition event has been requested of the cluster manager job.");
+
+        public final String message;
+
+        private ExecutionStatus(String message) {
+            this.message = message;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+    }
+
+    public PartitionEvent.ExecutionStatus getExecutionStatus() {
+        return executionStatus;
+    }
+
+    public void setExecutionStatus(PartitionEvent.ExecutionStatus executionStatus) {
+        this.executionStatus = executionStatus;
     }
 
     @PrePersist

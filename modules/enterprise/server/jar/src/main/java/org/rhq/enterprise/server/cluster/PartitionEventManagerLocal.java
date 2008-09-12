@@ -24,12 +24,12 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cluster.PartitionEvent;
-import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.PartitionEventDetails;
+import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 
 /**
  * 
@@ -50,6 +50,27 @@ public interface PartitionEventManagerLocal {
     Map<Agent, FailoverListComposite> cloudPartitionEvent(Subject subject, PartitionEventType eventType);
 
     /**
+     * This call requests full repartitioning of the agent population by the recurring cluster manager job.  
+     * @param subject
+     * @param eventType
+     */
+    void cloudPartitionEventRequest(Subject subject, PartitionEventType eventType);
+
+    /**
+     * This call queries for and then processed all outstanding, requested partition events resulting from previous
+     * calls to {@link cloudPartitionEventRequest}.  
+     */
+    void processRequestedPartitionEvents();
+
+    /** This call performs no partitioning activity, it only audits that some event has taken place that could
+     * affect, or contribute to, a future partitioning. For example, SERVER_DOWN, AGENT_LOAD_CHANGE, etc.
+     * @param subject
+     * @param eventType Can be any event type although typically a type used here will not also be used in a
+     * server list generating call.
+     */
+    void auditPartitionEvent(Subject subject, PartitionEventType eventType);
+
+    /**
      * This is primarily a test entry point.
      * @param event
      */
@@ -59,5 +80,6 @@ public interface PartitionEventManagerLocal {
 
     PageList<PartitionEvent> getPartitionEvents(Subject subject, PageControl pageControl);
 
-    PageList<PartitionEventDetails> getPartitionEventDetails(Subject subject, int partitionEventId, PageControl pageControl);
+    PageList<PartitionEventDetails> getPartitionEventDetails(Subject subject, int partitionEventId,
+        PageControl pageControl);
 }

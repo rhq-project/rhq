@@ -191,8 +191,9 @@ public class Server implements Serializable {
 
     public enum OperationMode {
 
-        NORMAL("This server is a Normal Member of the HA server cloud"), MAINTENANCE(
-            "This server is a Maintenance Mode member of the HA server cloud");
+        DOWN("This server is down member of the HA server cloud"), //
+        MAINTENANCE("This server is a Maintenance Mode member of the HA server cloud"), //
+        NORMAL("This server is a Normal Member of the HA server cloud");
 
         public final String message;
 

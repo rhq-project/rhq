@@ -403,6 +403,17 @@ DB Upgrade:
 
 	   </schemaSpec>
 	
+   <schemaSpec version="2.14">
+      <schema-addColumn table="RHQ_PARTITION_EVENT" column="EXECUTION_STATUS" columnType="VARCHAR2" precision="32"/>
+      <schema-directSQL>
+         <statement desc="Updating existing partition events with default EXECUTION_STATUS=COMPLETED">
+               UPDATE RHQ_PARTITION_EVENT SET EXECUTION_STATUS = 'COMPLETED'
+         </statement>
+      </schema-directSQL>
+      <schema-alterColumn table="RHQ_PARTITION_EVENT" column="EXECUTION_STATUS" nullable="FALSE"/>
+
+      </schemaSpec>
+
 </dbupgrade>
 
 </target>

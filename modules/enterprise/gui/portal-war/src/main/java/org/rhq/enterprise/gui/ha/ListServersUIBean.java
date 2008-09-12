@@ -22,7 +22,6 @@ import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.cluster.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -33,15 +32,12 @@ import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
-import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ListServersUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ListServersUIBean";
 
     private ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
-
-    private PartitionEventManagerLocal partitionEventManager = LookupUtil.getPartitionEventManager();
 
     public ListServersUIBean() {
     }
@@ -54,7 +50,6 @@ public class ListServersUIBean extends PagedDataTableUIBean {
         if (ids.length > 0) {
             try {
                 clusterManager.deleteServer(ids);
-                partitionEventManager.cloudPartitionEvent(subject, PartitionEventType.SERVER_LEAVE);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Removed [" + ids.length
                     + "] servers from the cloud.");

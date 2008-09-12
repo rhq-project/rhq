@@ -61,6 +61,7 @@
         <column name="SUBJECT_NAME" required="true" size="255" type="VARCHAR2"/>
         <column name="CTIME" required="true" type="LONG"/>
         <column name="EVENT_TYPE" required="true" size="50" type="VARCHAR2"/>
+        <column name="EXECUTION_STATUS" required="true" size="32" type="VARCHAR2"/>
     </table>
     
     <table name="RHQ_PARTITION_DETAILS">

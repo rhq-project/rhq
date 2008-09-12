@@ -77,12 +77,12 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     @EJB
     AgentManagerLocal agentManager;
 
-    public FailoverListComposite getForSingleAgent(PartitionEvent event, String agentRegistrationToken) {
+    public FailoverListComposite getForSingleAgent(PartitionEvent event, String agentName) {
         // If a server list already exists then just return it
-        Agent agent = agentManager.getAgentByAgentToken(agentRegistrationToken);
+        Agent agent = agentManager.getAgentByName(agentName);
 
         if (null == agent) {
-            throw new IllegalArgumentException("No agent found for registration token: " + agentRegistrationToken);
+            throw new IllegalArgumentException("No agent found for registration name: " + agentName);
         }
 
         FailoverListComposite result = null;

@@ -157,7 +157,8 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
             ag = new AffinityGroup("AG-flm-1");
             em.persist(ag);
 
-            partitionEvent = new PartitionEvent("FLM-TEST", PartitionEventType.SYSTEM_INITIATED_PARTITION);
+            partitionEvent = new PartitionEvent("FLM-TEST", PartitionEventType.SYSTEM_INITIATED_PARTITION,
+                PartitionEvent.ExecutionStatus.IMMEDIATE);
             em.persist(partitionEvent);
 
             getTransactionManager().commit();
@@ -408,7 +409,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
 
         start = System.currentTimeMillis();
         setupNewAgents(1);
-        failoverListManager.getForSingleAgent(partitionEvent, newAgents.get(0).getAgentToken());
+        failoverListManager.getForSingleAgent(partitionEvent, newAgents.get(0).getName());
         System.out.println("Elapsed 1 NEW 20/1000 = " + (System.currentTimeMillis() - start) + "ms");
     }
 
@@ -473,7 +474,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert null != result;
         for (Agent agent : result.keySet()) {
             FailoverListComposite flc1 = result.get(agent);
-            FailoverListComposite flc2 = failoverListManager.getForSingleAgent(partitionEvent, agent.getAgentToken());
+            FailoverListComposite flc2 = failoverListManager.getForSingleAgent(partitionEvent, agent.getName());
             assert flc1.size() == flc2.size();
             for (int i = 0, size = flc1.size(); (i < size); ++i) {
                 assert flc1.get(i).equals(flc2.get(i));
@@ -489,7 +490,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         setupNewAgents(3);
         List<FailoverListComposite> serverLists = new ArrayList<FailoverListComposite>(3);
         for (int i = 0; (i < 3); ++i) {
-            serverLists.add(failoverListManager.getForSingleAgent(partitionEvent, newAgents.get(i).getAgentToken()));
+            serverLists.add(failoverListManager.getForSingleAgent(partitionEvent, newAgents.get(i).getName()));
             assert null != serverLists.get(i);
             assert serverLists.get(i).size() == servers.size();
         }
@@ -507,7 +508,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         setupNewAgents(3);
         List<FailoverListComposite> serverLists = new ArrayList<FailoverListComposite>(3);
         for (int i = 0; (i < 3); ++i) {
-            serverLists.add(failoverListManager.getForSingleAgent(partitionEvent, newAgents.get(i).getAgentToken()));
+            serverLists.add(failoverListManager.getForSingleAgent(partitionEvent, newAgents.get(i).getName()));
             assert null != serverLists.get(i);
             assert serverLists.get(i).size() == servers.size();
         }
@@ -525,7 +526,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         setupNewAgents(3);
         List<FailoverListComposite> serverLists = new ArrayList<FailoverListComposite>(3);
         for (int i = 0; (i < 3); ++i) {
-            serverLists.add(failoverListManager.getForSingleAgent(partitionEvent, newAgents.get(i).getAgentToken()));
+            serverLists.add(failoverListManager.getForSingleAgent(partitionEvent, newAgents.get(i).getName()));
             assert null != serverLists.get(i);
             assert serverLists.get(i).size() == servers.size();
         }

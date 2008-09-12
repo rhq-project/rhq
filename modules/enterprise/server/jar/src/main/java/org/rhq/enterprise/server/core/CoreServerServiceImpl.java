@@ -160,13 +160,25 @@ public class CoreServerServiceImpl implements CoreServerService {
         }
 
         String agentToken = agentByName.getAgentToken();
-        FailoverListComposite failoverList = getFailoverList(PartitionEventType.AGENT_REGISTRATION, agentToken);
+        FailoverListComposite failoverList = getFailoverList(agentByName.getName(),
+            PartitionEventType.AGENT_REGISTRATION);
 
         AgentRegistrationResults results = new AgentRegistrationResults();
         results.setAgentToken(agentToken);
         results.setFailoverList(failoverList);
 
         return results;
+    }
+
+    /**
+     * @see CoreServerService#connectAgent()
+     */
+    public void connectAgent(String agentName) {
+        Agent agent = getAgentManager().getAgentByName(agentName);
+
+        agent.setServer(getServerManager().getServer());
+
+        // TODO (jshaughn) What else?
     }
 
     /**
@@ -309,7 +321,12 @@ public class CoreServerServiceImpl implements CoreServerService {
         return;
     }
 
-    public FailoverListComposite getFailoverList(PartitionEventType eventType, String agentToken) {
-        return getPartitionEventManager().agentPartitionEvent(getSubjectManager().getOverlord(), agentToken, eventType);
+    public FailoverListComposite getFailoverList(String agentName) {
+        return getFailoverList(agentName, PartitionEventType.AGENT_JOIN);
     }
+
+    private FailoverListComposite getFailoverList(String agentName, PartitionEventType eventType) {
+        return getPartitionEventManager().agentPartitionEvent(getSubjectManager().getOverlord(), agentName, eventType);
+    }
+
 }

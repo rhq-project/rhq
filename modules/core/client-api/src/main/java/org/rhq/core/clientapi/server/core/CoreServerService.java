@@ -21,7 +21,6 @@ package org.rhq.core.clientapi.server.core;
 import java.io.InputStream;
 import java.util.List;
 
-import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.domain.plugin.Plugin;
 
@@ -41,6 +40,16 @@ public interface CoreServerService {
      */
     AgentRegistrationResults registerAgent(AgentRegistrationRequest agentRegistrationRequest)
         throws AgentRegistrationException;
+
+    /**
+     * Connect an agent with this server.  This is the server that will process all of this agent's
+     * activity. The agent must already be registered.
+     *
+     * @param  agentRegistrationRequest
+     *
+     * @throws AgentRegistrationException if the agent is not registered
+     */
+    void connectAgent(String agentName) throws AgentRegistrationException;
 
     /**
      * Get a list of the registered plugins managed in the server.
@@ -77,5 +86,10 @@ public interface CoreServerService {
      */
     void agentIsShuttingDown(String agentName);
 
-    FailoverListComposite getFailoverList(PartitionEventType eventType, String agentToken);
+    /**
+     * Returns the current server list for the agent. A new server will be generated if an existing server list does not exist.
+     * @param agentName the name of the agent requesting the server list
+     * @return The active server list for the agent
+     */
+    FailoverListComposite getFailoverList(String agentName);
 }

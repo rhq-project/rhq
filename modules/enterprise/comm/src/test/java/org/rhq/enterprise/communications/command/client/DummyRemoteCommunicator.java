@@ -131,12 +131,10 @@ public class DummyRemoteCommunicator implements RemoteCommunicator {
         return new GenericCommandResponse(command, true, null, null);
     }
 
-    @Override
     public FailureCallback getFailureCallback() {
         return null;
     }
 
-    @Override
     public void setFailureCallback(FailureCallback callback) {
     }
 }

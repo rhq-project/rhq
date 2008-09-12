@@ -54,7 +54,6 @@ public class FailoverFailureCallback implements FailureCallback {
         this.agent = agent;
     }
 
-    @Override
     public boolean failureDetected(RemoteCommunicator remoteCommunicator, Command command, CommandResponse response,
         Throwable throwable) {
 

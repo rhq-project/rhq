@@ -47,11 +47,7 @@ import javax.persistence.NamedQuery;
  */
 @Entity(name = "PartitionEvent")
 @NamedQueries //
-( { @NamedQuery(name = PartitionEvent.QUERY_FIND_ALL, query = "SELECT pe FROM PartitionEvent pe"),
-    @NamedQuery(name = PartitionEvent.QUERY_FIND_BY_ID_WITH_DETAILS, query = "" //
-        + "SELECT pe FROM PartitionEvent pe " //
-        + "JOIN FETCH pe.eventDetails " //
-        + "WHERE pe.id = :id ")
+( { @NamedQuery(name = PartitionEvent.QUERY_FIND_ALL, query = "SELECT pe FROM PartitionEvent pe")
     })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_PARTITION_EVENT_ID_SEQ")
 @Table(name = "RHQ_PARTITION_EVENT")
@@ -60,7 +56,6 @@ public class PartitionEvent implements Serializable {
     public static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_ALL = "PartitionEvent.findAll";
-    public static final String QUERY_FIND_BY_ID_WITH_DETAILS = "PartitionEvent.findByIdWithDetails";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")

@@ -25,6 +25,7 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cluster.PartitionEvent;
 import org.rhq.core.domain.cluster.PartitionEventType;
+import org.rhq.core.domain.cluster.PartitionEventDetails;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageList;
@@ -54,7 +55,9 @@ public interface PartitionEventManagerLocal {
      */
     void deletePartitionEvent(PartitionEvent event);
 
-    PartitionEvent getPartitionEventWithDetails(Subject subject, int partitionEventId);
+    PartitionEvent getPartitionEvent(Subject subject, int partitionEventId);
 
     PageList<PartitionEvent> getPartitionEvents(Subject subject, PageControl pageControl);
+
+    PageList<PartitionEventDetails> getPartitionEventDetails(Subject subject, int partitionEventId, PageControl pageControl);
 }

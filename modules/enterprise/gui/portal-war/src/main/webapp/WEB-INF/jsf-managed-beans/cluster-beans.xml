@@ -91,4 +91,11 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
+   <!-- /rhq/ha/viewPartitionEvent.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ViewPartitionEventUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.ha.ViewPartitionEventUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
 </faces-config>

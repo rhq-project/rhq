@@ -31,6 +31,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.NamedQueries;
+import org.hibernate.annotations.NamedQuery;
 import org.rhq.core.domain.resource.Agent;
 
 /**
@@ -43,11 +45,23 @@ import org.rhq.core.domain.resource.Agent;
  *
  */
 @Entity(name = "PartitionEventDetails")
+@NamedQueries ({
+    @NamedQuery(name = PartitionEventDetails.QUERY_FIND_BY_EVENT_ID, query = "" //
+        + "SELECT ped FROM PartitionEventDetails ped " //
+        + "JOIN FETCH ped.agent JOIN FETCH ped.server " //
+        + "WHERE ped.partitionEvent.id = :eventId "),
+    @NamedQuery(name = PartitionEventDetails.QUERY_COUNT_BY_EVENT_ID, query = "" //
+        + "SELECT ped FROM PartitionEventDetails ped " //
+        + "WHERE ped.partitionEvent.id = :eventId ")
+    })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_PARTITION_DETAILS_ID_SEQ")
 @Table(name = "RHQ_PARTITION_DETAILS")
 public class PartitionEventDetails implements Serializable {
 
     public static final long serialVersionUID = 1L;
+
+    public static final String QUERY_FIND_BY_EVENT_ID = "PartitionEventDetails.findByEventId";
+    public static final String QUERY_COUNT_BY_EVENT_ID = "PartitionEventDetails.countByEventId";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")

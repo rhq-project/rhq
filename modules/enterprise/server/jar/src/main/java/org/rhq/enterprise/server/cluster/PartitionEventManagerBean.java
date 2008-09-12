@@ -110,11 +110,8 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PartitionEvent getPartitionEventWithDetails(Subject subject, int partitionEventId) {
-        Query query = entityManager.createNamedQuery(PartitionEvent.QUERY_FIND_BY_ID_WITH_DETAILS);
-        query.setParameter("id", partitionEventId);
-
-        PartitionEvent event = (PartitionEvent)query.getSingleResult();
+    public PartitionEvent getPartitionEvent(Subject subject, int partitionEventId) {
+        PartitionEvent event = entityManager.find(PartitionEvent.class, partitionEventId);
         return event;
     }
 
@@ -129,5 +126,21 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
         long count = (Long) countQuery.getSingleResult();
 
         return new PageList<PartitionEvent>(results, (int)count, pageControl);
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<PartitionEventDetails> getPartitionEventDetails(Subject subject, int partitionEventId, PageControl pageControl) {
+        pageControl.initDefaultOrderingField("ped.id", PageOrdering.ASC);
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, PartitionEventDetails.QUERY_FIND_BY_EVENT_ID, pageControl);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, PartitionEventDetails.QUERY_COUNT_BY_EVENT_ID);
+
+        query.setParameter("eventId", partitionEventId);
+        countQuery.setParameter("eventId", partitionEventId);
+
+        List<PartitionEventDetails> detailsList = query.getResultList();
+        long count = (Long) countQuery.getSingleResult();
+
+        return new PageList<PartitionEventDetails>(detailsList, (int)count, pageControl);
     }
 }

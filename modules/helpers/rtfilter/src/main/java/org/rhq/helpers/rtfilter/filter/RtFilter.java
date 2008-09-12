@@ -386,7 +386,7 @@ public class RtFilter implements Filter {
         if (!this.logFile.exists()) {
             boolean success;
             try {
-                success = this.logFile.mkdirs() && this.logFile.createNewFile();
+                success = this.logFile.createNewFile();
             } catch (Exception e) {
                 throw new Exception("Response time log '" + this.logFile + "' could not be created - cause: " + e);
             }

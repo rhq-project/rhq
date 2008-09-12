@@ -82,8 +82,9 @@ public class ServletUtility {
                 ctxName = "__unknown";
             }
         }
-
-        if (ctxName.startsWith(SEPARATOR)) {
+        // Actually the context might always start with / even on Win* so on Unix this is / or /,
+        // but this does not harm
+        if (ctxName.startsWith(SEPARATOR) || ctxName.startsWith("/")) {
             ctxName = ctxName.substring(1);
         }
 

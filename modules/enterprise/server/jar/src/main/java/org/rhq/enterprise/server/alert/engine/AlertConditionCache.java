@@ -59,7 +59,6 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -273,14 +272,6 @@ public final class AlertConditionCache {
         subjectManager = LookupUtil.getSubjectManager();
         cachedConditionProducer = LookupUtil.getCachedConditionProducerLocal();
         entityManagerFacade = LookupUtil.getEntityManagerFacade();
-
-        List<Agent> agents = LookupUtil.getAgentManager().getAllAgents();
-
-        // RHQ-668 - when the HA installer is finished, replace getAllAgents with commented lines
-        //    List<Agent> agents = serverManager.getAgents();
-        for (Agent nextAgent : agents) {
-            reloadCachesForAgent(nextAgent.getId());
-        }
     }
 
     public static AlertConditionCache getInstance() {

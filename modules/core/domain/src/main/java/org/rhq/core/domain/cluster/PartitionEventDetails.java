@@ -66,10 +66,10 @@ public class PartitionEventDetails implements Serializable {
     @ManyToOne
     protected PartitionEvent partitionEvent;
 
-    @JoinColumn(name = "AGENT_NAME", nullable = false)
+    @Column(name = "AGENT_NAME", nullable = false)
     protected String agentName;
 
-    @JoinColumn(name = "SERVER_NAME", nullable = false)
+    @Column(name = "SERVER_NAME", nullable = false)
     protected String serverName;
 
     // required for JPA

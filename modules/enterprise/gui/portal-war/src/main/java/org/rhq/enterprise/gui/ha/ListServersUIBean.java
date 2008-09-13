@@ -49,13 +49,15 @@ public class ListServersUIBean extends PagedDataTableUIBean {
 
         if (ids.length > 0) {
             try {
-                clusterManager.deleteServer(ids);
+                clusterManager.deleteServers(ids);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Removed [" + ids.length
                     + "] servers from the cloud.");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to remove selected servers.", e);
             }
+        } else {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "No servers selected.");
         }
 
         return "success";
@@ -69,10 +71,6 @@ public class ListServersUIBean extends PagedDataTableUIBean {
         if (ids.length > 0) {
             try {
                 clusterManager.updateServerMode(ids, mode);
-
-                // TODO jshaughn : is there a better way to get the refresh the data model. without this the changes
-                // were not reflected on screen.
-                dataModel = null;
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Set [" + ids.length + "] servers to mode "
                     + mode);

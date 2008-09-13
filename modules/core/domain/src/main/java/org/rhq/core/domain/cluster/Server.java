@@ -68,7 +68,9 @@ import org.rhq.core.domain.resource.Agent;
     @NamedQuery(name = Server.QUERY_FIND_WITHOUT_AFFINITY_GROUP, query = "" //
         + "SELECT s " //
         + "  FROM Server s " //
-        + " WHERE s.affinityGroup IS NULL ") })
+        + " WHERE s.affinityGroup IS NULL "), //
+    @NamedQuery(name = Server.QUERY_DELETE_BY_ID, query = "" //
+        + "DELETE FROM Server s WHERE s.id = :serverId ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_SERVER_ID_SEQ")
 @Table(name = "RHQ_SERVER")
 public class Server implements Serializable {
@@ -81,6 +83,7 @@ public class Server implements Serializable {
     public static final String QUERY_FIND_BY_OPERATION_MODE = "Server.findByOperationMode";
     public static final String QUERY_FIND_BY_AFFINITY_GROUP = "Server.findByAffinityGroup";
     public static final String QUERY_FIND_WITHOUT_AFFINITY_GROUP = "Server.findWithoutAffinityGroup";
+    public static final String QUERY_DELETE_BY_ID = "Server.deleteById";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")

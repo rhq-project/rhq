@@ -37,7 +37,9 @@ import org.rhq.core.domain.util.PageList;
 @Local
 public interface ClusterManagerLocal {
 
-    void deleteServer(Integer[] serverIds);
+    void deleteServers(Integer[] serverIds) throws ClusterManagerException;
+
+    void deleteServer(Integer serverId) throws ClusterManagerException;
 
     List<Agent> getAgentsByServerName(String serverName);
 

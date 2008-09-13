@@ -37,7 +37,6 @@ import org.rhq.enterprise.communications.GlobalSuspendCommandListener;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
-import org.rhq.enterprise.server.cluster.FailoverListManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 
 /**
@@ -68,9 +67,6 @@ public class ServerManagerBean implements ServerManagerLocal {
     @EJB
     @IgnoreDependency
     ClusterManagerLocal clusterManager;
-
-    @EJB
-    FailoverListManagerLocal failoverListManager;
 
     @EJB
     AgentStatusManagerLocal agentStatusManager;
@@ -143,14 +139,6 @@ public class ServerManagerBean implements ServerManagerLocal {
     private GlobalSuspendCommandListener getMaintenanceModeListener() {
         return new GlobalSuspendCommandListener(Server.OperationMode.MAINTENANCE.name(),
             Server.OperationMode.MAINTENANCE.name());
-    }
-
-    public void deleteServer(Server server) {
-        server = entityManager.find(Server.class, server.getId());
-        failoverListManager.deleteServerListDetailsForServer(server);
-        entityManager.remove(server);
-
-        log.info("Removed server: " + server);
     }
 
     public void deleteAffinityGroup(AffinityGroup affinityGroup) {

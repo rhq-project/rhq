@@ -35,6 +35,8 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.cluster.AffinityGroup;
 import org.rhq.core.domain.cluster.FailoverList;
 import org.rhq.core.domain.cluster.FailoverListDetails;
@@ -72,6 +74,7 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     private EntityManager entityManager;
 
     @EJB
+    @IgnoreDependency
     ClusterManagerLocal clusterManager;
 
     @EJB
@@ -490,9 +493,9 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         query.executeUpdate();
     }
 
-    public void deleteServerListDetailsForServer(Server server) {
+    public void deleteServerListDetailsForServer(int serverId) {
         Query query = entityManager.createNamedQuery(FailoverListDetails.QUERY_DELETE_VIA_SERVER);
-        query.setParameter("server", server);
+        query.setParameter("serverId", serverId);
         query.executeUpdate();
     }
 

@@ -70,9 +70,6 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
     AgentManagerLocal agentManager;
 
     @EJB
-    PartitionEventManagerLocal partitionEventManager;
-
-    @EJB
     FailoverListManagerLocal failoverListManager;
 
     public FailoverListComposite agentPartitionEvent(Subject subject, String agentName, PartitionEventType eventType) {
@@ -105,6 +102,11 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
         entityManager.persist(partitionEvent);
 
         return failoverListManager.refresh(partitionEvent);
+    }
+
+    public void deletePartitionEvent(int partitionEventId) {
+        PartitionEvent doomedEvent = entityManager.find(PartitionEvent.class, partitionEventId);
+        entityManager.remove(doomedEvent); // cascade rules should take care of this
     }
 
     public void cloudPartitionEventRequest(Subject subject, PartitionEventType eventType) {
@@ -167,6 +169,7 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
         return event;
     }
 
+    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<PartitionEvent> getPartitionEvents(Subject subject, PageControl pageControl) {
         pageControl.initDefaultOrderingField("pe.ctime", PageOrdering.DESC);
@@ -182,6 +185,7 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
         return new PageList<PartitionEvent>(results, (int) count, pageControl);
     }
 
+    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<PartitionEventDetails> getPartitionEventDetails(Subject subject, int partitionEventId,
         PageControl pageControl) {
@@ -190,7 +194,7 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
             PartitionEventDetails.QUERY_FIND_BY_EVENT_ID, pageControl);
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-            PartitionEventDetails.QUERY_COUNT_BY_EVENT_ID);
+            PartitionEventDetails.QUERY_FIND_BY_EVENT_ID);
 
         query.setParameter("eventId", partitionEventId);
         countQuery.setParameter("eventId", partitionEventId);

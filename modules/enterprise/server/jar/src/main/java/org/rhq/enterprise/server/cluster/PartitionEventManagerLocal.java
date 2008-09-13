@@ -74,7 +74,7 @@ public interface PartitionEventManagerLocal {
      * This is primarily a test entry point.
      * @param event
      */
-    void deletePartitionEvent(PartitionEvent event);
+    void deletePartitionEvent(int partitionEventId);
 
     PartitionEvent getPartitionEvent(Subject subject, int partitionEventId);
 

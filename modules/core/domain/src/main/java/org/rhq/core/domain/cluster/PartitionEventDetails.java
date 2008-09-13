@@ -22,17 +22,16 @@ import java.io.Serializable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.NamedQueries;
-import org.hibernate.annotations.NamedQuery;
 import org.rhq.core.domain.resource.Agent;
 
 /**
@@ -45,15 +44,11 @@ import org.rhq.core.domain.resource.Agent;
  *
  */
 @Entity(name = "PartitionEventDetails")
-@NamedQueries ({
-    @NamedQuery(name = PartitionEventDetails.QUERY_FIND_BY_EVENT_ID, query = "" //
-        + "SELECT ped FROM PartitionEventDetails ped " //
-        + "JOIN FETCH ped.agent JOIN FETCH ped.server " //
-        + "WHERE ped.partitionEvent.id = :eventId "),
-    @NamedQuery(name = PartitionEventDetails.QUERY_COUNT_BY_EVENT_ID, query = "" //
-        + "SELECT ped FROM PartitionEventDetails ped " //
-        + "WHERE ped.partitionEvent.id = :eventId ")
-    })
+@NamedQueries //
+( { @NamedQuery(name = PartitionEventDetails.QUERY_FIND_BY_EVENT_ID, query = "" //
+    + "SELECT ped " //
+    + "  FROM PartitionEventDetails ped " //
+    + " WHERE ped.partitionEvent.id = :eventId ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_PARTITION_DETAILS_ID_SEQ")
 @Table(name = "RHQ_PARTITION_DETAILS")
 public class PartitionEventDetails implements Serializable {
@@ -61,7 +56,6 @@ public class PartitionEventDetails implements Serializable {
     public static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_BY_EVENT_ID = "PartitionEventDetails.findByEventId";
-    public static final String QUERY_COUNT_BY_EVENT_ID = "PartitionEventDetails.countByEventId";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
@@ -72,19 +66,11 @@ public class PartitionEventDetails implements Serializable {
     @ManyToOne
     protected PartitionEvent partitionEvent;
 
-    @JoinColumn(name = "AGENT_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
-    protected Agent agent;
+    @JoinColumn(name = "AGENT_NAME", nullable = false)
+    protected String agentName;
 
-    @Column(name = "AGENT_ID", insertable = false, updatable = false)
-    private int agentId;
-
-    @JoinColumn(name = "SERVER_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
-    protected Server server;
-
-    @Column(name = "SERVER_ID", insertable = false, updatable = false)
-    private int serverId;
+    @JoinColumn(name = "SERVER_NAME", nullable = false)
+    protected String serverName;
 
     // required for JPA
     protected PartitionEventDetails() {
@@ -92,10 +78,8 @@ public class PartitionEventDetails implements Serializable {
 
     public PartitionEventDetails(PartitionEvent partitionEvent, Agent agent, Server server) {
         this.partitionEvent = partitionEvent;
-        this.agent = agent;
-        this.server = server;
-        this.agentId = agent.getId();
-        this.serverId = server.getId();
+        this.agentName = agent.getName();
+        this.serverName = server.getName();
     }
 
     public PartitionEvent getPartitionEvent() {
@@ -114,29 +98,29 @@ public class PartitionEventDetails implements Serializable {
         this.id = id;
     }
 
-    public Agent getAgent() {
-        return agent;
+    public String getAgentName() {
+        return agentName;
     }
 
-    public void setAgent(Agent agent) {
-        this.agent = agent;
+    public void setAgentName(String agentName) {
+        this.agentName = agentName;
     }
 
-    public Server getServer() {
-        return server;
+    public String getServerName() {
+        return serverName;
     }
 
-    public void setServer(Server server) {
-        this.server = server;
+    public void setServerName(String serverName) {
+        this.serverName = serverName;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + agentId;
+        result = prime * result + ((agentName == null) ? 0 : agentName.hashCode());
         result = prime * result + ((partitionEvent == null) ? 0 : partitionEvent.hashCode());
-        result = prime * result + serverId;
+        result = prime * result + ((serverName == null) ? 0 : serverName.hashCode());
         return result;
     }
 
@@ -152,7 +136,19 @@ public class PartitionEventDetails implements Serializable {
 
         final PartitionEventDetails other = (PartitionEventDetails) obj;
 
-        if (agentId != other.agentId || serverId != other.serverId) {
+        if (agentName == null) {
+            if (other.agentName != null) {
+                return false;
+            }
+        } else if (!agentName.equals(other.agentName)) {
+            return false;
+        }
+
+        if (serverName == null) {
+            if (other.serverName != null) {
+                return false;
+            }
+        } else if (!serverName.equals(other.serverName)) {
             return false;
         }
 
@@ -166,4 +162,5 @@ public class PartitionEventDetails implements Serializable {
 
         return true;
     }
+
 }

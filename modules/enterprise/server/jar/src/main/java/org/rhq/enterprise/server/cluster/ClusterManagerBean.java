@@ -30,8 +30,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cluster.FailoverListDetails;
@@ -64,7 +62,12 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     ClusterManagerLocal clusterManager;
 
     @EJB
-    @IgnoreDependency
+    FailoverListManagerLocal failoverListManager;
+
+    @EJB
+    PartitionEventManagerLocal partitionEventManager;
+
+    @EJB
     ServerManagerLocal serverManager;
 
     public List<Agent> getAgentsByServerName(String serverName) {
@@ -131,15 +134,30 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         }
     }
 
-    public void deleteServer(Integer[] serverIds) {
-        if (serverIds.length > 0) {
-            try {
-                for (Integer id : serverIds) {
-                    serverManager.deleteServer(getServerById(id));
-                }
-            } catch (Exception e) {
-                log.debug("Failed to delete HA servers: " + e);
-            }
+    public void deleteServers(Integer[] serverIds) throws ClusterManagerException {
+        if (serverIds == null) {
+            return;
+        }
+
+        for (Integer nextServerId : serverIds) {
+            clusterManager.deleteServer(nextServerId);
+        }
+    }
+
+    public void deleteServer(Integer serverId) throws ClusterManagerException {
+        try {
+            failoverListManager.deleteServerListDetailsForServer(serverId);
+
+            Query deleteQuery = entityManager.createNamedQuery(Server.QUERY_DELETE_BY_ID);
+            deleteQuery.setParameter("serverId", serverId);
+            deleteQuery.executeUpdate();
+
+            entityManager.flush();
+            entityManager.clear();
+
+            log.info("Removed server[id=" + serverId + "]");
+        } catch (Exception e) {
+            throw new ClusterManagerException("Could not delete server[id=" + serverId + "]: " + e.getMessage(), e);
         }
     }
 

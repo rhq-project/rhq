@@ -68,8 +68,8 @@
         <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>
         <column name="PARTITION_EVENT_ID" type="INTEGER" references="RHQ_PARTITION_EVENT" required="true"/>
-        <column name="AGENT_ID" type="INTEGER" references="RHQ_AGENT" required="true"/>
-        <column name="SERVER_ID" type="INTEGER" references="RHQ_SERVER" required="true"/>
+        <column name="AGENT_NAME" type="VARCHAR2" size="255" required="true"/>
+        <column name="SERVER_NAME" type="VARCHAR2" size="255" required="true"/>
     </table>
 
     <table name="RHQ_FAILOVER_LIST">

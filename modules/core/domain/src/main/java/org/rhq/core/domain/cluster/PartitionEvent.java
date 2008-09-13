@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -46,10 +47,11 @@ import javax.persistence.Table;
  *
  */
 @Entity(name = "PartitionEvent")
-@NamedQueries( { // 
-    @NamedQuery(name = PartitionEvent.QUERY_FIND_ALL, query = "SELECT pe FROM PartitionEvent pe"),
-    @NamedQuery(name = PartitionEvent.QUERY_FIND_VIA_EXECUTION_STATUS, query = "SELECT pe FROM PartitionEvent pe WHERE pe.executionStatus = :executionStatus") //
-})
+@NamedQueries //
+( { @NamedQuery(name = PartitionEvent.QUERY_FIND_ALL, query = "SELECT pe FROM PartitionEvent pe"),
+    @NamedQuery(name = PartitionEvent.QUERY_FIND_VIA_EXECUTION_STATUS, query = "" //
+        + "SELECT pe FROM PartitionEvent pe " //
+        + " WHERE pe.executionStatus = :executionStatus") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_PARTITION_EVENT_ID_SEQ")
 @Table(name = "RHQ_PARTITION_EVENT")
 public class PartitionEvent implements Serializable {
@@ -78,7 +80,7 @@ public class PartitionEvent implements Serializable {
     @Enumerated(EnumType.STRING)
     private PartitionEvent.ExecutionStatus executionStatus;
 
-    @OneToMany(mappedBy = "partitionEvent")
+    @OneToMany(mappedBy = "partitionEvent", cascade = CascadeType.ALL)
     private List<PartitionEventDetails> eventDetails = new ArrayList<PartitionEventDetails>();
 
     // required for JPA

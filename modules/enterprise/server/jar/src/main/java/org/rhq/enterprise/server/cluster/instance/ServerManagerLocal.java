@@ -41,8 +41,6 @@ public interface ServerManagerLocal {
 
     List<Agent> getAgentsWithStatus();
 
-    void deleteServer(Server server);
-
     void deleteAffinityGroup(AffinityGroup affinityGroup);
 
     Server getServer() throws ServerNotFoundException;

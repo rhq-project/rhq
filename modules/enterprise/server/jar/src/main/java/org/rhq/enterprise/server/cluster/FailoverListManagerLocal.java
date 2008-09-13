@@ -48,9 +48,9 @@ public interface FailoverListManagerLocal {
      * For a server being deleted it is necessary to remove server lists details referencing the server. This may create a gap
      * in the server list ordinal values but that shouldn't matter, ordering is still preserved and we never access a specific
      * server by ordinal.
-     * @param agent
+     * @param server
      */
-    public void deleteServerListDetailsForServer(Server server);
+    public void deleteServerListDetailsForServer(int serverId);
 
     /**
      * Returns the existing server list for the specified agent, if it exists, otherwise a newly generated server list is returned.

@@ -28,6 +28,24 @@
       </navigation-case> 
    </navigation-rule>
    
+   <!-- Server List -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/listServers.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/ha/listServers.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/listServers.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case> 
+   </navigation-rule>
+   
    <!-- Agent View -->
    <navigation-rule>
       <from-view-id>/rhq/ha/viewAgent.xhtml</from-view-id>

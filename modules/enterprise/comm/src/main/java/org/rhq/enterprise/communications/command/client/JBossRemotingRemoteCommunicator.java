@@ -361,9 +361,6 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         return new HashMap<String, String>(m_clientConfiguration);
     }
 
-    /**
-     * @see RemoteCommunicator#connect()
-     */
     public void connect() throws Exception {
         if ((m_remotingClient != null) && !m_remotingClient.isConnected()) {
             m_remotingClient.connect();
@@ -372,9 +369,6 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         return;
     }
 
-    /**
-     * @see RemoteCommunicator#disconnect()
-     */
     public void disconnect() {
         if (m_remotingClient != null) {
             m_remotingClient.disconnect();
@@ -383,16 +377,35 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         return;
     }
 
-    /**
-     * @see RemoteCommunicator#isConnected()
-     */
     public boolean isConnected() {
         return (m_remotingClient != null) && m_remotingClient.isConnected();
     }
 
-    /**
-     * @see RemoteCommunicator#send(Command)
-     */
+    public CommandResponse sendWithoutFailureCallback(Command command) throws Throwable {
+        Object ret_response;
+
+        try {
+            ret_response = getRemotingClient().invoke(command, null);
+        } catch (ServerInvoker.InvalidStateException serverDown) {
+            // see comments in #send for why this is here
+            ret_response = getRemotingClient().invoke(command, null);
+        }
+
+        // this is to support http(s) transport - those transports will return Exception objects when errors occur
+        if (ret_response instanceof Exception) {
+            throw (Exception) ret_response;
+        }
+
+        try {
+            return (CommandResponse) ret_response;
+        } catch (Exception e) {
+            // see comments in #send for why this is here
+            CommI18NFactory.getLogger(JBossRemotingRemoteCommunicator.class).error(CommI18NResourceKeys.COMM_CCE,
+                ret_response);
+            return new GenericCommandResponse(command, false, ret_response, e);
+        }
+    }
+
     public CommandResponse send(Command command) throws Throwable {
         Object ret_response = null;
         boolean retry = false;
@@ -475,9 +488,6 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         return retry;
     }
 
-    /**
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         return "remoting endpoint [" + ((m_invokerLocator != null) ? m_invokerLocator.getLocatorURI() : "?") + ']';

@@ -28,6 +28,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import mazz.i18n.Logger;
 
 import org.rhq.core.util.stream.StreamUtil;
@@ -956,12 +957,9 @@ public class ClientCommandSender {
     /**
      * Preprocesses the given command if this sender was configured with one or more command preprocessors.
      *
-     * <p>This is package-scoped because this is used by {@link ServerPollingThread} to preprocess its poll
-     * commands.</p>
-     *
      * @param command the command to preprocess
      */
-    void preprocessCommand(Command command) {
+    public void preprocessCommand(Command command) {
         if (m_preprocessors != null) {
             for (int i = 0; i < m_preprocessors.length; i++) {
                 m_preprocessors[i].preprocess(command, this);

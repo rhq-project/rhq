@@ -70,6 +70,19 @@ public interface RemoteCommunicator {
     CommandResponse send(Command command) throws Throwable;
 
     /**
+     * This is the same as {@link #send(Command)} except, on error, this method will not attempt
+     * to call the failure callback, if one was set. This is useful when the caller wants to
+     * explicitly handle any failure that might occur without any interference with a failure callback.
+     * 
+     * @param command encapsulates the command that is to be executed (must not be <code>null</code>)
+     *
+     * @return the command response
+     * 
+     * @throws Throwable on any error (either during the sending or execution of the command)
+     */
+    CommandResponse sendWithoutFailureCallback(Command command) throws Throwable;
+
+    /**
      * Returns the failure callback currently configured within this object.
      * 
      * @return the callback (may be <code>null</code>)

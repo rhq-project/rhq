@@ -35,6 +35,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StreamTokenizer;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -52,6 +53,7 @@ import javax.management.ObjectName;
 import mazz.i18n.Logger;
 import mazz.i18n.Msg;
 
+import org.jboss.remoting.invocation.NameBasedInvocation;
 import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 
@@ -1296,23 +1298,18 @@ public class AgentMain {
      * @param comm the communicator object whose endpoint needs to be switched to the next server
      *             the caller must ensure the remote communicator provided to this method is the
      *             same communicator used by this agent's {@link #getClientCommandSender() sender}.
-     *
-     * @return <code>true</code> if the agent is now talking to a new server; <code>false</code> if,
-     *         for some reason, the agent was not able to switch to another server. This will return
-     *         <code>null</code> if this method did not attempt to switch because another thread
-     *         has recently switched the server already.
      */
-    Boolean failoverToNewServer(RemoteCommunicator comm) {
+    void failoverToNewServer(RemoteCommunicator comm) {
         synchronized (m_lastFailoverTime) {
 
-            // if we just recently (within the last 10s) switched, throw an exception to indicate this
+            // if we just recently (within the last 10s) switched, don't try to do anything and abort
             if (System.currentTimeMillis() - m_lastFailoverTime[0] < 10000) {
-                return null;
+                return;
             }
 
             FailoverListComposite failoverList = getServerFailoverList();
             if (failoverList.hasNext() == false) {
-                return Boolean.FALSE;
+                return;
             }
 
             AgentConfiguration config = getConfiguration();
@@ -1331,16 +1328,31 @@ public class AgentMain {
                     .isTransportSecure(currentTransport)) ? nextServer.securePort : nextServer.port,
                     currentTransportParams);
 
-                // tell the comm object about the new server (note the dependency on knowing its based on Jboss/Remoting!)
                 try {
+                    // tell the comm object about the new server (note the dependency on knowing its based on Jboss/Remoting!)
                     ((JBossRemotingRemoteCommunicator) comm).setInvokerLocator(config.getServerLocatorUri());
-                } catch (Exception e) {
-                    LOG.warn(AgentI18NResourceKeys.FAILOVER_FAILED, e);
-                    return Boolean.FALSE;
-                }
 
-                // TODO: send the connect message to tell the server we want to talk to it
-                // this also verifies that the server is up.
+                    // send the connect message to tell the server we want to talk to it
+                    // this also verifies that the server is up.
+                    String agentName = config.getAgentName();
+                    RemotePojoInvocationCommand connectCommand = new RemotePojoInvocationCommand();
+                    Method connectMethod = CoreServerService.class.getMethod("connectAgent", String.class);
+                    NameBasedInvocation inv = new NameBasedInvocation(connectMethod, new Object[] { agentName });
+                    connectCommand.setNameBasedInvocation(inv);
+                    connectCommand.setTargetInterfaceName(CoreServerService.class.getName());
+                    getClientCommandSender().preprocessCommand(connectCommand);
+                    CommandResponse connectResponse = comm.sendWithoutFailureCallback(connectCommand);
+                    if (!connectResponse.isSuccessful()) {
+                        if (connectResponse.getException() != null) {
+                            throw connectResponse.getException();
+                        } else {
+                            throw new Exception(connectMethod.toString() + " failed");
+                        }
+                    }
+                } catch (Throwable t) {
+                    LOG.warn(AgentI18NResourceKeys.FAILOVER_FAILED, t);
+                    return;
+                }
 
                 LOG.info(AgentI18NResourceKeys.FAILED_OVER_TO_SERVER, config.getServerLocatorUri());
 
@@ -1355,13 +1367,11 @@ public class AgentMain {
 
             // we've successfully failed over; the design of the HA system calls for us to start
             // over at the top of the failover list the next time we get a failure.
-            // TODO: uncomment below only when we've sent the "connect" message successfully
-            //       we should only reset the index when we know the new server is up
-            // failoverList.resetIndex();
+            failoverList.resetIndex();
 
             m_lastFailoverTime[0] = System.currentTimeMillis();
 
-            return Boolean.TRUE;
+            return;
         }
     }
 

@@ -131,6 +131,10 @@ public class DummyRemoteCommunicator implements RemoteCommunicator {
         return new GenericCommandResponse(command, true, null, null);
     }
 
+    public CommandResponse sendWithoutFailureCallback(Command command) throws Throwable {
+        return null;
+    }
+
     public FailureCallback getFailureCallback() {
         return null;
     }

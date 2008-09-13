@@ -103,8 +103,11 @@ public class FailoverFailureCallback implements FailureCallback {
             command.getConfiguration().setProperty(FAILOVER_ATTEMPTS, Integer.toString(failoverAttempts + 1));
         }
 
-        Boolean switched = this.agent.failoverToNewServer(remoteCommunicator);
-        return (switched == null || switched.booleanValue()); // retry only if we really were able to switch to a new server or its already been switched
+        // attempt to go to another server.  we always retry after this - we either successfully
+        // got a new server in which case the request should succeed now or the next server on the failure list
+        // is also down and our next request will trigger us again to try the next server in the list
+        this.agent.failoverToNewServer(remoteCommunicator);
+        return true;
     }
 
     /**

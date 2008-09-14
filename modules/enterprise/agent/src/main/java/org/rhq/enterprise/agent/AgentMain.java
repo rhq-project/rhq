@@ -948,6 +948,7 @@ public class AgentMain {
                                             // we are already pointing to the primary server, so all we have to do is
                                             // call next to move the index to the next in the list for when we have to failover in the future
                                             nextServer = failoverList.next();
+                                            sendConnectRequestToServer(sender.getRemoteCommunicator(), agent_config);
                                         } else {
                                             failoverToNewServer(sender.getRemoteCommunicator());
                                         }
@@ -968,10 +969,10 @@ public class AgentMain {
                     } catch (InterruptedException ie) {
                         LOG.debug(AgentI18NResourceKeys.AGENT_REGISTRATION_ABORTED);
                         retry = false;
-                    } catch (Exception e) {
+                    } catch (Throwable t) {
                         retry_interval = (retry_interval < 60000L) ? (retry_interval * 2) : 60000L;
-                        LOG.warn(e, AgentI18NResourceKeys.AGENT_REGISTRATION_FAILURE, retry, retry_interval,
-                            ThrowableUtil.getAllMessages(e));
+                        LOG.warn(t, AgentI18NResourceKeys.AGENT_REGISTRATION_FAILURE, retry, retry_interval,
+                            ThrowableUtil.getAllMessages(t));
                     }
                 }
 
@@ -1332,23 +1333,8 @@ public class AgentMain {
                     // tell the comm object about the new server (note the dependency on knowing its based on Jboss/Remoting!)
                     ((JBossRemotingRemoteCommunicator) comm).setInvokerLocator(config.getServerLocatorUri());
 
-                    // send the connect message to tell the server we want to talk to it
-                    // this also verifies that the server is up.
-                    String agentName = config.getAgentName();
-                    RemotePojoInvocationCommand connectCommand = new RemotePojoInvocationCommand();
-                    Method connectMethod = CoreServerService.class.getMethod("connectAgent", String.class);
-                    NameBasedInvocation inv = new NameBasedInvocation(connectMethod, new Object[] { agentName });
-                    connectCommand.setNameBasedInvocation(inv);
-                    connectCommand.setTargetInterfaceName(CoreServerService.class.getName());
-                    getClientCommandSender().preprocessCommand(connectCommand);
-                    CommandResponse connectResponse = comm.sendWithoutFailureCallback(connectCommand);
-                    if (!connectResponse.isSuccessful()) {
-                        if (connectResponse.getException() != null) {
-                            throw connectResponse.getException();
-                        } else {
-                            throw new Exception(connectMethod.toString() + " failed");
-                        }
-                    }
+                    // send the connect message to tell the server we want to talk to it (also verifies that server is up)
+                    sendConnectRequestToServer(comm, config);
                 } catch (Throwable t) {
                     LOG.warn(AgentI18NResourceKeys.FAILOVER_FAILED, t);
                     return;
@@ -1373,6 +1359,35 @@ public class AgentMain {
 
             return;
         }
+    }
+
+    /**
+     * This sends a direct "connect" request to the server pointed to by the given communicator.
+     * The purpose of this is very important - this request tells the server that this agent
+     * is making the server its primary server and will begin sending it messages.
+     *  
+     * @param comm the communicator used to send the message to the server
+     * @param config the agent configuration
+     * 
+     * @throws Throwable
+     */
+    private void sendConnectRequestToServer(RemoteCommunicator comm, AgentConfiguration config) throws Throwable {
+        String agentName = config.getAgentName();
+        RemotePojoInvocationCommand connectCommand = new RemotePojoInvocationCommand();
+        Method connectMethod = CoreServerService.class.getMethod("connectAgent", String.class);
+        NameBasedInvocation inv = new NameBasedInvocation(connectMethod, new Object[] { agentName });
+        connectCommand.setNameBasedInvocation(inv);
+        connectCommand.setTargetInterfaceName(CoreServerService.class.getName());
+        getClientCommandSender().preprocessCommand(connectCommand); // important that we are already registered by now!
+        CommandResponse connectResponse = comm.sendWithoutFailureCallback(connectCommand);
+        if (!connectResponse.isSuccessful()) {
+            if (connectResponse.getException() != null) {
+                throw connectResponse.getException();
+            } else {
+                throw new Exception(connectMethod.toString() + " failed");
+            }
+        }
+        return;
     }
 
     /**

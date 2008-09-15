@@ -179,8 +179,17 @@
         </plugin-configuration>
         -->
 
-        &COMMON_IIS_METRICS;
+        <operation name="start"
+                   displayName="Start"
+                   description="Starts IIS and, if necessary, dependent services">
+        </operation>
 
+        <operation name="stop"
+                   displayName="Stop"
+                   description="Shuts down IIS">
+        </operation>
+
+        &COMMON_IIS_METRICS;
 
         <!-- Server only -->
         <metric property="Total Connection Attempts (all instances)"
@@ -190,8 +199,6 @@
         <metric property="Service Uptime"
                 defaultOn="true"
                 units="seconds"/>
-
-
 
         <service name="VHost" description="IIS VHost"
                 discovery="IISVHostDiscoveryComponent"

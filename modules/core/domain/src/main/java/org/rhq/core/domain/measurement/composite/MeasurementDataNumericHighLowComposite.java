@@ -23,6 +23,8 @@ import java.io.Serializable;
 public class MeasurementDataNumericHighLowComposite implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private static final double THRESHOLD = 0.00001d;
+
     private long timestamp;
     private double value;
     private double highValue;
@@ -34,12 +36,12 @@ public class MeasurementDataNumericHighLowComposite implements Serializable {
 
     public MeasurementDataNumericHighLowComposite(long timestamp, double value, double highValue, double lowValue) {
         if (!Double.isNaN(value)) {
-            if (!(highValue >= value)) {
+            if (highValue < value && Math.abs(highValue - value) > THRESHOLD) {
                 throw new IllegalArgumentException("highValue (" + highValue
                     + ") is not greater than or equal to value (" + value + ").");
             }
 
-            if (!(lowValue <= value)) {
+            if (lowValue > value && Math.abs(lowValue - value) > THRESHOLD) {
                 throw new IllegalArgumentException("lowValue (" + lowValue + ") is not less than or equal to value ("
                     + value + ").");
             }

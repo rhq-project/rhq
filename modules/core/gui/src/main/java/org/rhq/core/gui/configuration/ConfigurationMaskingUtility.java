@@ -8,18 +8,18 @@ import java.util.Map;
 
 import org.jetbrains.annotations.NotNull;
 
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.AbstractPropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 
 /**
  * A class that provides static methods for masking and unmasking password properties within {@link Configuration}s,
@@ -47,6 +47,9 @@ public abstract class ConfigurationMaskingUtility {
     public static void maskConfiguration(@NotNull
     Configuration configuration, @NotNull
     ConfigurationDefinition configurationDefinition) {
+        if (configurationDefinition == null)
+            return;
+
         Map<String, PropertyDefinition> childPropertyDefinitions = configurationDefinition.getPropertyDefinitions();
         for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
             maskProperty(childPropertyDefinition, configuration);
@@ -62,6 +65,9 @@ public abstract class ConfigurationMaskingUtility {
     public static void unmaskConfiguration(@NotNull
     Configuration configuration, @NotNull
     ConfigurationDefinition configurationDefinition) {
+        if (configurationDefinition == null)
+            return;
+
         Map<String, PropertyDefinition> childPropertyDefinitions = configurationDefinition.getPropertyDefinitions();
         for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
             unmaskProperty(childPropertyDefinition, configuration);

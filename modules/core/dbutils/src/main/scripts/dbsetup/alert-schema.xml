@@ -73,9 +73,6 @@
         <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
         <column name="CTIME" required="true" type="LONG"/>
         <column name="TRIGGERED_OPERATION" required="false" type="VARCHAR2" size="255"/>
-        <column name="RECOVERY_ID" type="INTEGER" required="true"/>
-        <!-- required, but 0 effectively means null -->
-        <column name="WILL_RECOVER" required="true" default="false" type="BOOLEAN"/>
         <index name="RHQ_ALERT_IDX_TIME" unique="false">
             <field ref="CTIME"/>
         </index>

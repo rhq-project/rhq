@@ -5,15 +5,16 @@
 
 package org.rhq.plugins.iis.util;
 
-import org.rhq.core.domain.measurement.AvailabilityType;
-import org.hyperic.sigar.win32.Service;
-import org.hyperic.sigar.win32.Win32Exception;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.win32.Service;
+import org.hyperic.sigar.win32.Win32Exception;
 
-import java.util.List;
-import java.util.Collections;
-import java.util.ArrayList;
+import org.rhq.core.domain.measurement.AvailabilityType;
 
 /**
  * Support for starting and stopping windows services along with their dependencies and dependents.
@@ -38,7 +39,13 @@ public class Win32ServiceControlDelegate {
         this(serviceName, null, null, timeout);
     }
 
-    public Win32ServiceControlDelegate(String serviceName, List<String> dependencies, List<String> dependents, long timeout) throws Win32Exception {
+    public Win32ServiceControlDelegate(String serviceName, List<String> dependencies, List<String> dependents,
+        long timeout) throws Win32Exception {
+        log.debug("serviceName = " + serviceName);
+        log.debug("serviceDependencies = " + (dependencies == null ? "none" : dependencies));
+        log.debug("serviceDependents = " + (dependents == null ? "none" : dependents));
+        log.debug("serviceOperationTimeout = " + timeout + " ms");
+
         this.serviceName = serviceName;
         this.dependencies = dependencies;
         if (dependencies != null) {
@@ -59,8 +66,6 @@ public class Win32ServiceControlDelegate {
         return getAvailability(this.service);
     }
 
-
-
     public void start() throws Win32Exception {
         startServices(dependencies);
         service.start();
@@ -78,7 +83,6 @@ public class Win32ServiceControlDelegate {
         start();
     }
 
-
     protected void startServices(List<String> services) {
         if (services == null)
             return;
@@ -88,20 +92,19 @@ public class Win32ServiceControlDelegate {
             try {
                 Service relatedService = new Service(relatedServiceName);
                 int relatedServiceStatus = relatedService.getStatus();
-                if (relatedServiceStatus == Service.SERVICE_STOPPED || relatedServiceStatus == Service.SERVICE_STOP_PENDING) {
+                if (relatedServiceStatus == Service.SERVICE_STOPPED
+                    || relatedServiceStatus == Service.SERVICE_STOP_PENDING) {
                     log.debug("Starting Service [" + relatedServiceName + "]");
                     relatedService.start(this.timeout);
                     log.debug("Service started [" + relatedServiceName + "]");
                     relatedService.close();
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 log.warn("Unable to start [" + relatedServiceName + "] from the list [" + services
-                        + "]. Will continue with the rest. Cause:" + e);
+                    + "]. Will continue with the rest. Cause:" + e);
             }
         }
     }
-
 
     protected void stopServices(List<String> services) {
         if (services == null)
@@ -118,30 +121,26 @@ public class Win32ServiceControlDelegate {
                     log.debug("Service stopped [" + relatedServiceName + "]");
                     relatedService.close();
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 log.warn("Unable to stop [" + relatedServiceName + "] from the list [" + services
-                        + "]. Will continue with the rest. Cause:" + e);
+                    + "]. Will continue with the rest. Cause:" + e);
             }
         }
     }
 
-
-
-
     protected AvailabilityType getAvailability(Service service) {
         switch (service.getStatus()) {
-            case Service.SERVICE_START_PENDING:
-            case Service.SERVICE_STOP_PENDING:
-            case Service.SERVICE_RUNNING:
-                return AvailabilityType.UP;
+        case Service.SERVICE_START_PENDING:
+        case Service.SERVICE_STOP_PENDING:
+        case Service.SERVICE_RUNNING:
+            return AvailabilityType.UP;
 
-            case Service.SERVICE_STOPPED:
-            case Service.SERVICE_CONTINUE_PENDING:
-            case Service.SERVICE_PAUSE_PENDING:
-            case Service.SERVICE_PAUSED:
-            default:
-                return AvailabilityType.DOWN;
+        case Service.SERVICE_STOPPED:
+        case Service.SERVICE_CONTINUE_PENDING:
+        case Service.SERVICE_PAUSE_PENDING:
+        case Service.SERVICE_PAUSED:
+        default:
+            return AvailabilityType.DOWN;
 
         }
     }

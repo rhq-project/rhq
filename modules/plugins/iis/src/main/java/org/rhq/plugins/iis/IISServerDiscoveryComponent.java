@@ -37,7 +37,7 @@ public class IISServerDiscoveryComponent implements ResourceDiscoveryComponent {
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext)
         throws InvalidPluginConfigurationException, Exception {
 
-        if (discoveryContext.getSystemInformation().getOperatingSystemType() != OperatingSystemType.WINDOWS.WINDOWS)
+        if (discoveryContext.getSystemInformation().getOperatingSystemType() != OperatingSystemType.WINDOWS)
             return null;
 
         String path = null;

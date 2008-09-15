@@ -446,7 +446,29 @@ DB Upgrade:
       <schema-deleteColumn table="RHQ_PARTITION_DETAILS" column="AGENT_ID" />
       <schema-deleteColumn table="RHQ_PARTITION_DETAILS" column="SERVER_ID" />
    </schemaSpec>
-
+   
+	<!-- RHQ-720 - Add read_only column to alert definitions table -->
+	<schemaSpec version="2.16">
+		<schema-addColumn 
+			table="RHQ_ALERT_DEFINITION"
+			column="READ_ONLY"
+			columnType="BOOLEAN" />
+	</schemaSpec>
+	
+	<!-- RHQ-786 - Add RECOVERY_ID and WILL_RECOVER columns to alerts table -->
+	<!--
+	<schemaSpec version="2.17">
+		<schema-addColumn 
+			table="RHQ_ALERT"
+			column="WILL_RECOVER"
+			columnType="BOOLEAN" />
+		
+		<schema-addColumn 
+			table="RHQ_ALERT"
+			column="RECOVERY_ID"
+			columnType="INTEGER" />
+	</schemaSpec>
+    -->
 </dbupgrade>
 
 </target>

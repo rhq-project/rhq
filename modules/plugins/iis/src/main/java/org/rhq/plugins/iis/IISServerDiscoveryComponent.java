@@ -24,6 +24,7 @@ import org.rhq.core.system.OperatingSystemType;
 /**
  *
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class IISServerDiscoveryComponent implements ResourceDiscoveryComponent {
 

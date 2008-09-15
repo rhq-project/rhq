@@ -31,6 +31,7 @@ import org.rhq.plugins.iis.util.Win32ServiceControlDelegate;
 /**
  *
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class IISServerComponent implements ResourceComponent, MeasurementFacet, OperationFacet {
 

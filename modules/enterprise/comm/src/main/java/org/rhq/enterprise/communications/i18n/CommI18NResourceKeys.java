@@ -402,6 +402,9 @@ public interface CommI18NResourceKeys {
     @I18NMessages( { @I18NMessage("Failed to take a command/callback pair from the spool file for [{0}].") })
     String CLIENT_COMMAND_SENDER_COMMAND_STORE_TAKE_FAILURE = "ClientCommandSender.command-store-take-failure";
 
+    @I18NMessages( { @I18NMessage("Command sender is starting - queuing the startup command [{0}].") })
+    String CLIENT_COMMAND_SENDER_QUEUING_STARTUP_COMMAND = "ClientCommandSender.queuing-startup-cmd";
+
     @I18NMessages( { @I18NMessage("The endpoint does not know what type it is"),
         @I18NMessage(value = "Der Endpunkt weiss nicht, welchen Typs er ist", locale = "de") })
     String IDENTIFY_COMMAND_SERVICE_UNKNOWN_ENDPOINT = "IdentifyCommandService.unknown-endpoint";

@@ -120,7 +120,9 @@ import org.rhq.enterprise.communications.command.client.ClientCommandSender;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderConfiguration;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderStateListener;
 import org.rhq.enterprise.communications.command.client.ClientRemotePojoFactory;
+import org.rhq.enterprise.communications.command.client.CommandAndCallback;
 import org.rhq.enterprise.communications.command.client.CommandPreprocessor;
+import org.rhq.enterprise.communications.command.client.CommandResponseCallback;
 import org.rhq.enterprise.communications.command.client.JBossRemotingRemoteCommunicator;
 import org.rhq.enterprise.communications.command.client.RemoteCommunicator;
 import org.rhq.enterprise.communications.command.impl.remotepojo.RemotePojoInvocationCommand;
@@ -929,6 +931,9 @@ public class AgentMain {
                                     agent_config.setAgentSecurityToken(token);
                                     LOG.debug(AgentI18NResourceKeys.NEW_SECURITY_TOKEN, token);
 
+                                    // we are now registered and know our security token, let's prepare the startup commands 
+                                    addSenderStartupCommands(sender);
+
                                     storeServerFailoverList(failoverList);
                                     m_serverFailoverList = failoverList;
 
@@ -948,7 +953,7 @@ public class AgentMain {
                                             // we are already pointing to the primary server, so all we have to do is
                                             // call next to move the index to the next in the list for when we have to failover in the future
                                             nextServer = failoverList.next();
-                                            sendConnectRequestToServer(sender.getRemoteCommunicator(), agent_config);
+                                            sendConnectRequestToServer(sender.getRemoteCommunicator());
                                         } else {
                                             failoverToNewServer(sender.getRemoteCommunicator());
                                         }
@@ -1334,7 +1339,7 @@ public class AgentMain {
                     ((JBossRemotingRemoteCommunicator) comm).setInvokerLocator(config.getServerLocatorUri());
 
                     // send the connect message to tell the server we want to talk to it (also verifies that server is up)
-                    sendConnectRequestToServer(comm, config);
+                    sendConnectRequestToServer(comm);
                 } catch (Throwable t) {
                     LOG.warn(AgentI18NResourceKeys.FAILOVER_FAILED, t);
                     return;
@@ -1371,23 +1376,29 @@ public class AgentMain {
      * 
      * @throws Throwable
      */
-    private void sendConnectRequestToServer(RemoteCommunicator comm, AgentConfiguration config) throws Throwable {
-        String agentName = config.getAgentName();
-        RemotePojoInvocationCommand connectCommand = new RemotePojoInvocationCommand();
-        Method connectMethod = CoreServerService.class.getMethod("connectAgent", String.class);
-        NameBasedInvocation inv = new NameBasedInvocation(connectMethod, new Object[] { agentName });
-        connectCommand.setNameBasedInvocation(inv);
-        connectCommand.setTargetInterfaceName(CoreServerService.class.getName());
+    private void sendConnectRequestToServer(RemoteCommunicator comm) throws Throwable {
+        Command connectCommand = createConnectAgentCommand();
         getClientCommandSender().preprocessCommand(connectCommand); // important that we are already registered by now!
         CommandResponse connectResponse = comm.sendWithoutFailureCallback(connectCommand);
         if (!connectResponse.isSuccessful()) {
             if (connectResponse.getException() != null) {
                 throw connectResponse.getException();
             } else {
-                throw new Exception(connectMethod.toString() + " failed");
+                throw new Exception("FAILED: " + connectCommand);
             }
         }
         return;
+    }
+
+    private Command createConnectAgentCommand() throws Exception {
+        AgentConfiguration config = getConfiguration();
+        String agentName = config.getAgentName();
+        RemotePojoInvocationCommand connectCommand = new RemotePojoInvocationCommand();
+        Method connectMethod = CoreServerService.class.getMethod("connectAgent", String.class);
+        NameBasedInvocation inv = new NameBasedInvocation(connectMethod, new Object[] { agentName });
+        connectCommand.setNameBasedInvocation(inv);
+        connectCommand.setTargetInterfaceName(CoreServerService.class.getName());
+        return connectCommand;
     }
 
     /**
@@ -1720,7 +1731,42 @@ public class AgentMain {
             }
         }
 
+        addSenderStartupCommands(client_sender);
+
         return client_sender;
+    }
+
+    /**
+     * Given a sender object, this will add all startup commands to it that the agent will need.
+     * 
+     * @param client_sender the sender whose startup commands are to be setup
+     * 
+     * @throws Exception if failed to prepare the sender with the appropriate startup commands
+     */
+    private void addSenderStartupCommands(ClientCommandSender client_sender) throws Exception {
+        // empty out the current list of startup commands, we'll start from scratch
+        client_sender.clearStartupCommands();
+
+        // in order to send the connectAgent command, the agent needs to be registered
+        // we won't add this command if we know we aren't registered yet
+        if (getAgentSecurityToken() != null) {
+            Command connectAgentCommand = createConnectAgentCommand();
+            CommandResponseCallback callback = new CommandResponseCallback() {
+                private static final long serialVersionUID = 1L;
+
+                public void commandSent(CommandResponse response) {
+                    if (response.isSuccessful()) {
+                        LOG.info(AgentI18NResourceKeys.AUTO_CONNECT_AGENT_COMMAND_SENT);
+                    } else {
+                        LOG.info(AgentI18NResourceKeys.AUTO_CONNECT_AGENT_COMMAND_FAILED, response.getException());
+                    }
+                }
+            };
+            CommandAndCallback cnc = new CommandAndCallback(connectAgentCommand, callback);
+            client_sender.addStartupCommand(cnc);
+        }
+
+        return;
     }
 
     /**

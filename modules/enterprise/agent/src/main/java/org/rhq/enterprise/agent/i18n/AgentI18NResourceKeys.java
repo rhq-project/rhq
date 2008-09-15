@@ -1145,6 +1145,12 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Agent is not notifying the server that it is shutting down, as per its configuration")
     String TOLD_TO_NOT_NOTIFY_SERVER_OF_SHUTDOWN = "AgentMain.told-to-not-notify-server-of-shutdown";
 
+    @I18NMessage("Agent has successfully sent an automatic connect message to the server upon sender startup")
+    String AUTO_CONNECT_AGENT_COMMAND_SENT = "AgentMain.auto-connect-agent-cmd-sent";
+
+    @I18NMessage("Agent has failed to send the automatic connect message to the server. Cause: {0}")
+    String AUTO_CONNECT_AGENT_COMMAND_FAILED = "AgentMain.auto-connect-agent-cmd-failed";
+
     @I18NMessage("metrics")
     String METRICS = "PromptCommand.metrics";
 

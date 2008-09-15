@@ -50,15 +50,33 @@ public class JMXServerComponent implements JMXComponent {
     private EmsConnection connection;
     private ConnectionProvider connectionProvider;
 
+    ResourceContext context;
+
     public void start(ResourceContext context) throws Exception {
+        this.context = context;
         log.info("Starting connection to JMX Server " + context.getResourceKey());
 
+        try {
+            internalStart();
+        } catch (Exception e) {
+            log.warn("JMX Plugin connection failure", e);
+            // The new model is to always succeed in starting, but warn about the errors (we only do this the first request)
+            /*throw new Exception("Unable to connect to Java VM ["
+                + configuration.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY).getStringValue()
+                + "]", e);*/
+        }
+
+        if (connection == null) {
+            log.warn("Unable to connect to JMX Server " + context.getResourceKey());
+        }
+    }
+
+    protected void internalStart() throws Exception {
         Configuration configuration = context.getPluginConfiguration();
 
         String connectionTypeDescriptorClass = configuration.getSimple(JMXDiscoveryComponent.CONNECTION_TYPE)
             .getStringValue();
 
-        try {
             if (LocalVMTypeDescriptor.class.getName().equals(connectionTypeDescriptorClass)) {
                 String commandLine = configuration.getSimple(JMXDiscoveryComponent.COMMAND_LINE_CONFIG_PROPERTY)
                     .getStringValue();
@@ -134,16 +152,7 @@ public class JMXServerComponent implements JMXComponent {
             }
 
             this.connection.loadSynchronous(false);
-        } catch (Exception e) {
-            log.warn("JMX Plugin connection failure", e);
-            throw new Exception("Unable to connect to Java VM ["
-                + configuration.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY).getStringValue()
-                + "]", e);
-        }
 
-        if (connection == null) {
-            log.warn("Unable to connect to JMX Server " + context.getResourceKey());
-        }
     }
 
     public void stop() {
@@ -172,6 +181,14 @@ public class JMXServerComponent implements JMXComponent {
     }
 
     public AvailabilityType getAvailability() {
+        if (connectionProvider == null || !connectionProvider.isConnected()) {
+            try {
+                internalStart();
+            } catch (Exception e) {
+                log.debug("Still unable to reconnect resource: " + context.getResourceKey() + " due to error: " + e.getMessage());
+            }
+        }
+
         return ((connectionProvider != null) && connectionProvider.isConnected()) ? AvailabilityType.UP
             : AvailabilityType.DOWN;
     }

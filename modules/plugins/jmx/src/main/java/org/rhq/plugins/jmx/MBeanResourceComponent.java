@@ -116,6 +116,11 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
             }
 
             return AvailabilityType.DOWN;
+        } catch (Exception e) {
+            // Retry by connecting to a new parent connection (this bean might have been connected to an old provider that's been recreated
+            this.bean = null;
+            return (getEmsBean().isRegistered()) ? AvailabilityType.UP : AvailabilityType.DOWN;
+
         }
     }
 

@@ -29,6 +29,8 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.system.ProcessInfo;
 
 /**
  * This product will discover JDK 5 agents running locally that have active JSR-160 connectors defined via system
@@ -55,7 +57,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
 
         Set<DiscoveredResourceDetails> found = new HashSet<DiscoveredResourceDetails>();
 
-        // TODO add back this standalone JVM discovery when it becomes useful.
+        // This model of discovery is of questionable usefullness since if you restart your process you'll get a new resource
         // Works only on JDK6 and maybe some 64 bit JDK5 See JBNADM-3332.
         //
         //        Map<Integer, LocalVirtualMachine> vms;
@@ -101,6 +103,22 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
         //      }
 
 
+        try {
+            List<ProcessInfo> processes =
+                    context.getSystemInformation().getProcesses(
+                            "process|basename|match=^java.*");
+
+            for (ProcessInfo process : processes) {
+                DiscoveredResourceDetails details = discoverProcess(context, process);
+                if (details != null) {
+                    found.add(details);
+                }
+            }
+        } catch (Exception e) {
+            log.info("Unable to complete base jmx server discovery");
+        }
+
+
         if (context.getPluginConfigurations() != null) {
             for (Configuration c : (List<Configuration>) context.getPluginConfigurations()) {
                 String resourceKey = c.getSimpleValue(CONNECTOR_ADDRESS_CONFIG_PROPERTY, null);
@@ -116,5 +134,54 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
         }
 
         return found;
+    }
+
+    protected DiscoveredResourceDetails discoverProcess(ResourceDiscoveryContext context, ProcessInfo process) {
+        String portProp = "com.sun.management.jmxremote.port";
+
+        String port = null;
+        for (String argument : process.getCommandLine()) {
+            String cmdLineArg = "-D" + portProp + "=";
+            if (argument.startsWith(cmdLineArg)) {
+                port = argument.substring(cmdLineArg.length());
+                break;
+            }
+        }
+
+        if (port == null) {
+            port = process.getEnvironmentVariable(portProp);
+        }
+
+        DiscoveredResourceDetails details = null;
+        if (port != null) {
+
+            String name = null;
+            for (int i = 1; i < process.getCommandLine().length; i++) {
+                String arg = process.getCommandLine()[i];
+
+                if (!arg.startsWith("-")) {
+                    name = arg;
+                    break;
+                }
+            }
+
+            name += " (" + port + ")";
+
+            Configuration config = context.getDefaultPluginConfiguration();
+            config.put(new PropertySimple(CONNECTION_TYPE,"org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"));
+            config.put(new PropertySimple(CONNECTOR_ADDRESS_CONFIG_PROPERTY, "service:jmx:rmi:///jndi/rmi://localhost:" + port + "/jmxrmi"));
+//            config.put(new PropertySimple(INSTALL_URI, process.getCurrentWorkingDirectory()));
+
+            details = new DiscoveredResourceDetails(
+                    context.getResourceType(),
+                    port,
+                    name,
+                    null,
+                    "Standalone JVM Process",
+                    config,
+                    null);
+        }
+
+        return details;
     }
 }

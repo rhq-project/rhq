@@ -323,6 +323,10 @@ public class ProcessInfo {
         return this.procCredName;
     }
 
+    public String getCurrentWorkingDirectory() throws SystemInfoException {
+        return this.procExe.getCwd();
+    }
+
     public boolean isRunning() throws SystemInfoException {
         boolean running = false;
 

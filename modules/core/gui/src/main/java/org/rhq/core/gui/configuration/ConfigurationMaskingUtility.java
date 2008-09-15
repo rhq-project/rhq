@@ -39,7 +39,9 @@ public abstract class ConfigurationMaskingUtility {
     private static final String MASKED_PROPERTY_VALUE = "\u0002MASKED\u0003";
 
     /**
-     * Mask the values of all simple properties of type PASSWORD in the configuration.
+     * Mask the values of all simple properties of type PASSWORD in the configuration. The configuration does not
+     * need to be normalized; that is, properties defined by the configuration definition do not need to exist in the
+     * configuration.
      *
      * @param configuration the configuration to be masked
      * @param configurationDefinition the configuration definition corresponding to the specified configuration
@@ -57,7 +59,9 @@ public abstract class ConfigurationMaskingUtility {
     }
 
     /**
-     * Unmask the values of all masked simple properties of type PASSWORD in the configuration.
+     * Unmask the values of all masked simple properties of type PASSWORD in the configuration. The configuration does not
+     * need to be normalized; that is, properties defined by the configuration definition do not need to exist in the
+     * configuration.
      *
      * @param configuration the configuration to be unmasked
      * @param configurationDefinition the configuration definition corresponding to the specified configuration
@@ -75,17 +79,15 @@ public abstract class ConfigurationMaskingUtility {
     }
 
     private static void maskProperty(PropertyDefinition propertyDefinition, AbstractPropertyMap parentPropertyMap) {
+        if (parentPropertyMap.get(propertyDefinition.getName()) == null) {
+            // If the property doesn't even exist, there's nothing to mask.
+            return;
+        }
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
             PropertyDefinitionSimple propertyDefinitionSimple = (PropertyDefinitionSimple) propertyDefinition;
             if (propertyDefinitionSimple.getType() == PropertySimpleType.PASSWORD) {
                 // It's a password - squirrel away the unmasked value, then mask it.
                 PropertySimple propertySimple = parentPropertyMap.getSimple(propertyDefinition.getName());
-                if (propertySimple == null) {
-                    // This could theoretically happen in the case of handling a template, though it's very unlikely that a
-                    // template would supply a password.
-                    //throw new IllegalStateException("Property '" + propertyDefinitionSimple.getName() + "' is not present in the Configuration.");
-                    return;
-                }
                 if (propertySimple.getStringValue() == null) {
                     // Don't mask properties with null values (i.e. unset properties), otherwise they will appear to have a
                     // value when rendered in the GUI (see http://jira.jboss.com/jira/browse/JBNADM-2248).
@@ -128,17 +130,15 @@ public abstract class ConfigurationMaskingUtility {
     }
 
     private static void unmaskProperty(PropertyDefinition propertyDefinition, AbstractPropertyMap parentPropertyMap) {
+        if (parentPropertyMap.get(propertyDefinition.getName()) == null) {
+            // If the property doesn't even exist, there's nothing to unmask.
+            return;
+        }
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
             PropertyDefinitionSimple propertyDefinitionSimple = (PropertyDefinitionSimple) propertyDefinition;
             if (propertyDefinitionSimple.getType() == PropertySimpleType.PASSWORD) {
                 // It's a password - if it's masked, unmask it.
                 PropertySimple propertySimple = parentPropertyMap.getSimple(propertyDefinition.getName());
-                if (propertySimple == null) {
-                    // This could theoretically happen in the case of handling a template, though it's very unlikely that a
-                    // template would supply a password.
-                    //throw new IllegalStateException("Property '" + propertyDefinitionSimple.getName() + "' is not present in the Configuration.");
-                    return;
-                }
                 if (MASKED_PROPERTY_VALUE.equals(propertySimple.getStringValue())) {
                     if (MASKED_PROPERTY_VALUE.equals(propertySimple.getUnmaskedStringValue())) {
                         throw new IllegalStateException("Unmasked string value of property '"

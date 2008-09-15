@@ -24,8 +24,10 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -59,7 +61,7 @@ public class ResponseTimeConfiguration {
 
     @NotNull
     public List<Pattern> getExcludes() {
-        List<Pattern> excludes = new ArrayList();
+        List<Pattern> excludes = new ArrayList<Pattern>();
         PropertySimple excludesProp = this.pluginConfig.getSimple(RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP);
         if ((excludesProp != null) && (excludesProp.getStringValue() != null)) {
             StringTokenizer tokenizer = new StringTokenizer(excludesProp.getStringValue(), " ");
@@ -80,7 +82,7 @@ public class ResponseTimeConfiguration {
 
     @NotNull
     public List<RegexSubstitution> getTransforms() {
-        List<RegexSubstitution> transforms = new ArrayList();
+        List<RegexSubstitution> transforms = new ArrayList<RegexSubstitution>();
         PropertySimple transformsProp = this.pluginConfig.getSimple(RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP);
         if ((transformsProp != null) && (transformsProp.getStringValue() != null)) {
             StringTokenizer tokenizer = new StringTokenizer(transformsProp.getStringValue(), " ");

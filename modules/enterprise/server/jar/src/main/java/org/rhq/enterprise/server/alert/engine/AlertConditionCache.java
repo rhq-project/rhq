@@ -310,6 +310,9 @@ public final class AlertConditionCache {
             removeAlertCondition(alertConditionId, stats);
         }
 
+        // reverse mapping is no longer needed once we unload all of the elements
+        agentConditions.clear();
+
         return stats;
     }
 

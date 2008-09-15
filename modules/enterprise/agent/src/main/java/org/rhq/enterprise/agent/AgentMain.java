@@ -1751,6 +1751,7 @@ public class AgentMain {
         // we won't add this command if we know we aren't registered yet
         if (getAgentSecurityToken() != null) {
             Command connectAgentCommand = createConnectAgentCommand();
+            client_sender.preprocessCommand(connectAgentCommand);
             CommandResponseCallback callback = new CommandResponseCallback() {
                 private static final long serialVersionUID = 1L;
 

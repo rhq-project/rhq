@@ -10,6 +10,7 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
@@ -137,7 +138,6 @@
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Alert Condition" />
                   </f:facet>
-               
                   <h:outputText value="#{item.conditionText}" />
                </rich:column>
                
@@ -152,11 +152,8 @@
                <rich:column>
                   <f:facet name="header">
                   	<h:outputText styleClass="headerText" value="Recovery Info" />                  	
-                  </f:facet>                  
-                  
-                  <ui:include src="alertRecoveryInfo.xhtml">
-                  	<ui:param name="alertId" value="#{item.alert.id}" />
-                  </ui:include>				  
+                  </f:facet>
+                  <h:outputText value="#{onf:getAlertRecoveryInfo(item.alert.id)}" />
                </rich:column>
 
                <f:facet name="footer">

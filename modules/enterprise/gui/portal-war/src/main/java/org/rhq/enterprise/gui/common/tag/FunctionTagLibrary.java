@@ -31,6 +31,8 @@ import org.rhq.core.clientapi.util.units.ScaleConstants;
 import org.rhq.core.clientapi.util.units.UnitNumber;
 import org.rhq.core.clientapi.util.units.UnitsConstants;
 import org.rhq.core.clientapi.util.units.UnitsFormat;
+import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.Resource;
@@ -42,6 +44,8 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.StringConstants;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
+import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -165,5 +169,32 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         FormattedNumber fmtd = UnitsFormat.format(new UnitNumber(timestamp, unit, ScaleConstants.SCALE_MILLI),
             FacesContextUtility.getRequest().getLocale(), specs);
         return fmtd.toString();
+    }
+
+    /**
+     * Returns the alert recovery information
+     * 
+     * @param    alertId
+     * @return   Alert recovery information
+     * @author   Fady Matar     
+     */
+    public static String getAlertRecoveryInfo(int alertId) {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        AlertManagerLocal alertManager = LookupUtil.getAlertManager();
+        Alert alert = alertManager.getById(alertId);
+
+        if (alert.getRecoveryId() != 0) {
+            Integer recoveryAlertId = alert.getRecoveryId();
+            AlertDefinitionManagerLocal alertDefinitionManagerLocal = LookupUtil.getAlertDefinitionManager();
+            AlertDefinition recoveryAlertDefinition = alertDefinitionManagerLocal.getAlertDefinitionById(subject,
+                recoveryAlertId);
+            return "Triggered '" + recoveryAlertDefinition.getName() + "' to be re-enabled";
+        }
+
+        if (alert.getWillRecover()) {
+            return "This alert caused its alert definition to be disabled";
+        }
+
+        return "N/A";
     }
 }

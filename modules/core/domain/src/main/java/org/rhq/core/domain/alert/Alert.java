@@ -136,6 +136,17 @@ public class Alert implements Serializable {
     @Column(name = "TRIGGERED_OPERATION", nullable = true)
     private String triggeredOperation;
 
+    /*
+     * recoveryId and willRecover==true are mutually exclusive
+     *
+     * you are either a recovery alert, or an alert to be recovered
+     */
+    @Column(name = "RECOVERY_ID")
+    private Integer recoveryId;
+
+    @Column(name = "WILL_RECOVER", nullable = false)
+    private boolean willRecover;
+
     /**
      * Creates a new alert. (required by EJB3 spec, but not used)
      */
@@ -150,9 +161,11 @@ public class Alert implements Serializable {
      */
     public Alert(AlertDefinition alertDefinition, long ctime) {
         this.alertDefinition = alertDefinition;
+        this.recoveryId = alertDefinition.getRecoveryId();
+        this.willRecover = alertDefinition.getWillRecover();
         // Do not load the collection side from a one-to-many, This is very slow to load all existing alerts
         // and unnecessary for creating the link
-        // alertDefinition.addAlert(this);
+        // alertDefinition.addAlert(this);        
         this.ctime = ctime;
         if (alertDefinition.getOperationDefinition() != null) {
             setTriggeredOperation(alertDefinition.getOperationDefinition().getDisplayName());
@@ -199,6 +212,30 @@ public class Alert implements Serializable {
 
     public void setTriggeredOperation(String triggeredOperation) {
         this.triggeredOperation = triggeredOperation;
+    }
+
+    public boolean getWillRecover() {
+        return this.willRecover;
+    }
+
+    public void setWillRecover(boolean willRecover) {
+        if (willRecover && getRecoveryId() != 0) {
+            throw new IllegalStateException(
+                "An alert definition can either be a recovery definition or a definition to-be-recovered, but not both.");
+        }
+        this.willRecover = willRecover;
+    }
+
+    public Integer getRecoveryId() {
+        return this.recoveryId;
+    }
+
+    public void setRecoveryId(Integer actOnTriggerId) {
+        if (getWillRecover() && actOnTriggerId != 0) {
+            throw new IllegalStateException(
+                "An alert definition can either be a recovery definition or a definition to-be-recovered, but not both.");
+        }
+        this.recoveryId = actOnTriggerId;
     }
 
     @Override

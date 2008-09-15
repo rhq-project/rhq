@@ -400,8 +400,16 @@ DB Upgrade:
       </schema-directSQL>
       <schema-alterColumn table="RHQ_SERVER" column="SECURE_PORT" nullable="FALSE"/>
    </schemaSpec>
-
+	
+   <!-- RHQ-720 - Add read_only column to alert definitions table -->
    <schemaSpec version="2.14">
+        <schema-addColumn
+            table="RHQ_ALERT_DEFINITION"
+            column="READ_ONLY"
+            columnType="BOOLEAN" />
+   </schemaSpec>
+	
+   <schemaSpec version="2.15">
       <schema-addColumn table="RHQ_PARTITION_EVENT" column="EXECUTION_STATUS" columnType="VARCHAR2" precision="32"/>
       <schema-directSQL>
          <statement desc="Updating existing partition events with default EXECUTION_STATUS=COMPLETED">
@@ -446,6 +454,19 @@ DB Upgrade:
       <schema-deleteColumn table="RHQ_PARTITION_DETAILS" column="AGENT_ID" />
       <schema-deleteColumn table="RHQ_PARTITION_DETAILS" column="SERVER_ID" />
    </schemaSpec>
+	
+	<!-- RHQ-786 - Add read_only column to alert definitions table -->
+   <schemaSpec version="2.16">
+   	  <schema-addColumn
+   	        table="RHQ_ALERT"
+   	        column="RECOVERY_ID"
+   	        columnType="INTEGER" />
+   	  <schema-addColumn
+            table="RHQ_ALERT"
+            column="WILL_RECOVER"
+            columnType="BOOLEAN" />
+   </schemaSpec>
+   
 </dbupgrade>
 
 </target>

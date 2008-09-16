@@ -202,7 +202,7 @@ public class JMXPluginTest {
                     ResourceComponent serviceComponent = PluginContainer.getInstance().getInventoryManager()
                         .getResourceComponent(service);
 
-                    Object result = ((OperationFacet) serviceComponent).invokeOperation("findDeadlockedThreads", null);
+                    Object result = ((OperationFacet) serviceComponent).invokeOperation("findMonitorDeadlockedThreads", null);
                     System.out.println("Result of operation test was: " + result);
                 }
             }

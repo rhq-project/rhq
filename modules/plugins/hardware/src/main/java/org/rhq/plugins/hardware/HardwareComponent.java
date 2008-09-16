@@ -63,8 +63,7 @@ public class HardwareComponent implements ResourceComponent, MeasurementFacet {
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-
-
+        
         switch (type) {
             case ACPI_IBM:
                 updateACPIIBMValues();

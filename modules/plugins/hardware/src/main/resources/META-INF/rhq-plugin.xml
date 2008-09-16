@@ -28,4 +28,27 @@
 
     </server>
 
+    <server name="Smart Disk"
+            discovery="SmartDiskDiscoveryComponent"
+            class="SmartDiskComponent">
+        
+        <plugin-configuration>
+            <c:simple-property name="prefix" required="false"/>
+            <c:simple-property name="command" default="/usr/sbin/smartctl"/>
+        </plugin-configuration>
+
+        <metric property="Temperature_Celsius" units="celsius" displayType="summary"/>
+        <metric property="Raw_Read_Error_Rate" displayType="summary"/>
+        <metric property="Reallocated_Sector_Ct" displayType="summary"/>
+        <metric property="Power_On_Hours" units="hours" displayType="summary"/>
+        <metric property="Start_Stop_Count" defaultOn="true"/>
+        <metric property="Power_Cycle_Count" defaultOn="true"/>
+        <metric property="High_Fly_Writes" defaultOn="true"/>
+        <metric property="Load_Cycle_Count" defaultOn="true"/>
+        <metric property="Hardware_ECC_Recovered" defaultOn="true"/>
+        <metric property="Power-Off_Retract_Count" defaultOn="true"/>
+
+
+    </server>
+
 </plugin>

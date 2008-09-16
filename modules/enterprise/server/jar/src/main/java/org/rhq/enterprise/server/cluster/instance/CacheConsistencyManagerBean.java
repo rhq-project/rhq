@@ -36,7 +36,6 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
  * 
  * @author Joseph Marques
  */
-
 @Stateless
 public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal {
 

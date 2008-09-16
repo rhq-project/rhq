@@ -1,16 +1,28 @@
 /*
- * Taken from original JON code base
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.plugins.iis.util;
-
-
-import org.hyperic.sigar.win32.Win32Exception;
-import org.hyperic.sigar.win32.MetaBase;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.hyperic.sigar.win32.MetaBase;
+import org.hyperic.sigar.win32.Win32Exception;
 
 public class IISMetaBase {
     private static final String IIS_MKEY = "/LM/W3SVC";
@@ -23,7 +35,6 @@ public class IISMetaBase {
     String port;
     String path;
     boolean requireSSL = false;
-
 
     public String getId() {
         return id;
@@ -99,15 +110,13 @@ public class IISMetaBase {
                     int flags = srv.getIntValue(MD_SSL_ACCESS_PERM);
                     info.requireSSL = (flags & MD_ACCESS_SSL) != 0;
                     if (info.requireSSL) {
-                        bindings =
-                                srv.getMultiStringValue(MetaBase.MD_SECURE_BINDINGS);
+                        bindings = srv.getMultiStringValue(MetaBase.MD_SECURE_BINDINGS);
                     }
                 } catch (Win32Exception e) {
                 }
 
                 if (bindings == null) {
-                    bindings =
-                            srv.getMultiStringValue(MetaBase.MD_SERVER_BINDINGS);
+                    bindings = srv.getMultiStringValue(MetaBase.MD_SERVER_BINDINGS);
                 }
 
                 if (bindings.length == 0) {
@@ -132,19 +141,16 @@ public class IISMetaBase {
                 //if host header is defined, URLMetric
                 //will add Host: header with this value.
                 info.hostname = entry.substring(ix + 1);
-                if ((info.hostname != null) &&
-                        (info.hostname.length() == 0)) {
+                if ((info.hostname != null) && (info.hostname.length() == 0)) {
                     info.hostname = null;
                 }
 
-                if ((info.ip == null) ||
-                        (info.ip.length() == 0)) {
+                if ((info.ip == null) || (info.ip.length() == 0)) {
                     //not bound to a specific ip
                     info.ip = "localhost";
                 }
 
-                String name =
-                        srv.getStringValue(MetaBase.MD_SERVER_COMMENT);
+                String name = srv.getStringValue(MetaBase.MD_SERVER_COMMENT);
 
                 websites.put(name, info);
 
@@ -167,8 +173,6 @@ public class IISMetaBase {
 
         return websites;
     }
-
-
 
     public static void main(String[] args) throws Exception {
         Map websites = IISMetaBase.getWebSites();

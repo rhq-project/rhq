@@ -22,10 +22,13 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIInput;
 import javax.faces.model.SelectItem;
+
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -192,6 +195,7 @@ public class CreateNewConfigurationChildResourceUIBean extends AbstractResourceC
             : new Configuration();
         ConfigurationUtility.normalizeConfiguration(resourceConfig, getConfigurationDefinition());
         ConfigurationMaskingUtility.maskConfiguration(resourceConfig, getConfigurationDefinition());
+
         return resourceConfig;
     }
 

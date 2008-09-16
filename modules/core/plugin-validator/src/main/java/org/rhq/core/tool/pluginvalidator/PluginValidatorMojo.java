@@ -21,11 +21,13 @@ package org.rhq.core.tool.pluginvalidator;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
+
 import org.rhq.core.pc.plugin.PluginValidator;
 import org.rhq.core.pc.plugin.SimplePluginFinder;
 
@@ -44,7 +46,7 @@ public class PluginValidatorMojo extends AbstractMojo {
      * @required
      * @readonly
      */
-    @SuppressWarnings({"UnusedDeclaration"})
+    @SuppressWarnings( { "UnusedDeclaration" })
     private MavenProject project;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -53,7 +55,7 @@ public class PluginValidatorMojo extends AbstractMojo {
 
         // Determine where the plugin is
         String pluginJarName = project.getArtifactId() + "-" + project.getVersion() + ".jar";
-        String pluginDirectory = project.getBuild().getDirectory();
+        String pluginDirectory = project.getBasedir().getAbsolutePath();
 
         log.debug("Plugin JAR: " + pluginJarName);
         log.debug("Plugin Directory: " + pluginDirectory);

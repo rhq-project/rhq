@@ -33,7 +33,6 @@ import org.rhq.core.domain.util.PageList;
 /**
  * @author Joseph Marques
  */
-
 @Local
 public interface ClusterManagerLocal {
 

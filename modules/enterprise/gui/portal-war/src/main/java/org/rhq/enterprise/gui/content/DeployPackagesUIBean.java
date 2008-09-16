@@ -1,31 +1,51 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.enterprise.gui.content;
 
-import java.util.List;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
+
+import javax.faces.application.FacesMessage;
 import javax.faces.component.UIData;
 import javax.faces.model.DataModel;
-import javax.faces.application.FacesMessage;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.Package;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.domain.content.*;
-import org.rhq.core.domain.content.Package;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.server.content.ContentUIManagerLocal;
-import org.rhq.enterprise.server.content.ContentManagerLocal;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
-import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
+import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.content.ContentUIManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Bean responsible for the end of the deploy package workflow. This bean will provide the list of packages that
@@ -53,13 +73,14 @@ public class DeployPackagesUIBean extends PagedDataTableUIBean {
     public String deployPackages() {
 
         if (notes != null && notes.length() > 512) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Package notes must be 512 characters or less.");
+            FacesContextUtility
+                .addMessage(FacesMessage.SEVERITY_ERROR, "Package notes must be 512 characters or less.");
             return null;
         }
 
         HttpServletRequest request = FacesContextUtility.getRequest();
         HttpSession session = request.getSession();
-        int[] packageIds = (int[])session.getAttribute("selectedPackages");
+        int[] packageIds = (int[]) session.getAttribute("selectedPackages");
 
         // Going forward, we'll need to create this earlier and store the user entered configuration in these
         // objects.  jdobies, Mar 3, 2008
@@ -104,7 +125,7 @@ public class DeployPackagesUIBean extends PagedDataTableUIBean {
         if (notes == null) {
             HttpServletRequest request = FacesContextUtility.getRequest();
             HttpSession session = request.getSession();
-            int[] packageIds = (int[])session.getAttribute("selectedPackages");
+            int[] packageIds = (int[]) session.getAttribute("selectedPackages");
 
             ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
 
@@ -114,8 +135,8 @@ public class DeployPackagesUIBean extends PagedDataTableUIBean {
                 PackageVersion packageVersion = contentUIManager.getPackageVersion(pkgId);
                 Package generalPackage = packageVersion.getGeneralPackage();
 
-                String version = packageVersion.getDisplayVersion() != null ?
-                    packageVersion.getDisplayVersion() : packageVersion.getVersion();
+                String version = packageVersion.getDisplayVersion() != null ? packageVersion.getDisplayVersion()
+                    : packageVersion.getVersion();
 
                 String packageToAppend = generalPackage.getName() + " " + version;
 
@@ -131,8 +152,7 @@ public class DeployPackagesUIBean extends PagedDataTableUIBean {
                     // If we are at the last package, see if this one will fit, otherwise add ...
                     if (sb.toString().length() + packageToAppend.length() <= 511) {
                         sb.append(packageToAppend);
-                    }
-                    else {
+                    } else {
                         sb.append("...");
                     }
 
@@ -157,9 +177,9 @@ public class DeployPackagesUIBean extends PagedDataTableUIBean {
 
     public int[] getSelectedPackageIds() {
         if (selectedPackageIds == null) {
-            selectedPackageIds = (int[])FacesContextUtility.getRequest().getSession().getAttribute("selectedPackages");
+            selectedPackageIds = (int[]) FacesContextUtility.getRequest().getSession().getAttribute("selectedPackages");
         }
-        
+
         return selectedPackageIds;
     }
 
@@ -173,8 +193,8 @@ public class DeployPackagesUIBean extends PagedDataTableUIBean {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
 
             ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
-            PageList<PackageVersionComposite> results =
-                contentUIManager.getPackageVersionComposites(subject, getSelectedPackageIds(), pc);
+            PageList<PackageVersionComposite> results = contentUIManager.getPackageVersionComposites(subject,
+                getSelectedPackageIds(), pc);
 
             return results;
         }

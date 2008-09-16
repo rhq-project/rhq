@@ -1,3 +1,21 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.enterprise.gui.legacy.util;
 
 import java.text.SimpleDateFormat;
@@ -9,21 +27,19 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
-import org.rhq.enterprise.gui.legacy.NumberConstants;
-
-import org.rhq.enterprise.gui.legacy.Constants;
-import org.rhq.core.clientapi.util.units.DateFormatter.DateSpecifics;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.util.LabelValueBean;
 import org.apache.struts.util.MessageResources;
 
+import org.rhq.core.clientapi.util.units.DateFormatter.DateSpecifics;
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementValueAndUnits;
+import org.rhq.core.domain.measurement.util.MeasurementConverter;
+import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.NumberConstants;
+import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 
 public class MonitorUtils {
 
@@ -343,8 +359,8 @@ public class MonitorUtils {
             if (summary.getUnits().length() < 1) {
                 summary.setUnits(MeasurementUnits.NONE.name());
             }
-            String[] formattedValues = MeasurementConverter.formatToSignificantPrecision(summary.getMetricValueDoubles(),
-                MeasurementUnits.valueOf(summary.getUnits()), true);
+            String[] formattedValues = MeasurementConverter.formatToSignificantPrecision(summary
+                .getMetricValueDoubles(), MeasurementUnits.valueOf(summary.getUnits()), true);
             String[] metricKeys = summary.getMetricKeys();
             for (int i = 0; i < metricKeys.length; i++) {
                 summary.getMetric(metricKeys[i]).setValueFmt(formattedValues[i]);

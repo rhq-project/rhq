@@ -23,7 +23,6 @@ import javax.ejb.Local;
 /**
  * @author Joseph Marques
  */
-
 @Local
 public interface CacheConsistencyManagerLocal {
     void reloadServerCacheIfNeeded();

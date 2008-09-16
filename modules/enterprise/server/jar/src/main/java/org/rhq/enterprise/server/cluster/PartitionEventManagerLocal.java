@@ -32,8 +32,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 /**
- * 
- * 
  * @author Joseph Marques
  * @author Jay Shaughnessy
  */

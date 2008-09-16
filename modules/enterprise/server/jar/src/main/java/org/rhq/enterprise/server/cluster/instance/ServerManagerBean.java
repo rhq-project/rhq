@@ -51,7 +51,6 @@ import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
  * 
  * @author Joseph Marques
  */
-
 @Stateless
 public class ServerManagerBean implements ServerManagerLocal {
     private final Log log = LogFactory.getLog(ServerManagerBean.class);

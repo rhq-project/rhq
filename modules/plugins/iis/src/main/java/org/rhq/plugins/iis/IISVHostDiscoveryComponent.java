@@ -1,25 +1,38 @@
 /*
- * JBoss, a division of Red Hat.
- * Portions Copyright 2007, Red Hat Middleware, LLC. All rights reserved.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.plugins.iis;
 
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.plugins.iis.util.IISMetaBase;
-import org.hyperic.sigar.win32.Pdh;
-
-import java.util.Set;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.HashSet;
+import java.util.Set;
+
+import org.hyperic.sigar.win32.Pdh;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.iis.util.IISMetaBase;
 
 /**
  *
@@ -30,7 +43,9 @@ public class IISVHostDiscoveryComponent implements ResourceDiscoveryComponent<II
     private static final String PDH_WEB_SERVICE = "Web Service";
     private static final String PDH_TOTAL = "_Total";
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<IISServerComponent> resourceDiscoveryContext) throws InvalidPluginConfigurationException, Exception {
+    public Set<DiscoveredResourceDetails> discoverResources(
+        ResourceDiscoveryContext<IISServerComponent> resourceDiscoveryContext)
+        throws InvalidPluginConfigurationException, Exception {
 
         List<String> vhosts = new ArrayList<String>();
 
@@ -47,7 +62,6 @@ public class IISVHostDiscoveryComponent implements ResourceDiscoveryComponent<II
         Map<String, IISMetaBase> websites = IISMetaBase.getWebSites();
 
         for (String siteName : vhosts) {
-
 
             IISMetaBase info = websites.get(siteName);
 
@@ -69,17 +83,10 @@ public class IISVHostDiscoveryComponent implements ResourceDiscoveryComponent<II
             // into C:\Windows\System32\inetsrv).  Should try to get this
             // info from either metabase or the registry, though this will
             // cover most cases.
-            config.put(new PropertySimple("logDirectory",  "C:\\Windows\\System32\\LogFiles\\W3SVC" + info.getId()));
+            config.put(new PropertySimple("logDirectory", "C:\\Windows\\System32\\LogFiles\\W3SVC" + info.getId()));
 
-            DiscoveredResourceDetails details =
-                    new DiscoveredResourceDetails(
-                            resourceDiscoveryContext.getResourceType(),
-                            siteName,
-                            siteName + " VHost",
-                            "1.0",
-                            siteName + " Virtual Host",
-                            config,
-                            null);
+            DiscoveredResourceDetails details = new DiscoveredResourceDetails(resourceDiscoveryContext
+                .getResourceType(), siteName, siteName + " VHost", "1.0", siteName + " Virtual Host", config, null);
 
             hostDetails.add(details);
         }

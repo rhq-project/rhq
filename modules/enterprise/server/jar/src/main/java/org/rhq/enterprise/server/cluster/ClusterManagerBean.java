@@ -52,7 +52,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * 
  * @author Joseph Marques
  */
-
 @Stateless
 public class ClusterManagerBean implements ClusterManagerLocal {
     private final Log log = LogFactory.getLog(ClusterManagerBean.class);

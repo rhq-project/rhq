@@ -29,7 +29,6 @@ import org.rhq.core.domain.resource.Agent;
  * @author Joseph Marques
  * @author Jay Shaughnessy
  */
-
 @Local
 public interface ServerManagerLocal {
 

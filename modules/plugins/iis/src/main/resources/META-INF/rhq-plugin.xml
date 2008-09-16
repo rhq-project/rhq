@@ -204,16 +204,32 @@
                 discovery="IISVHostDiscoveryComponent"
                 class="IISVHostComponent">
             <plugin-configuration>
-                <c:simple-property name="siteName"/>
-                <c:simple-property name="hostname"/>
-                <c:simple-property name="port"/>
-                <c:simple-property name="ipAddress"/>
-                <c:simple-property name="docRoot"/>
-                <c:simple-property name="ssl" type="boolean"/>
-                <c:simple-property name="logDirectory"/>
+                <c:group name="General">
+                    <c:simple-property name="siteName"/>
+                    <c:simple-property name="hostname"/>
+                    <c:simple-property name="port"/>
+                    <c:simple-property name="ipAddress"/>
+                    <c:simple-property name="docRoot"/>
+                    <c:simple-property name="ssl" type="boolean"/>
+                    <c:simple-property name="logDirectory"/>
+                </c:group>
+                <c:group name="ResponseTime">
+                    <c:simple-property name="responseTimeLogFile" required="false"
+                                       description="the full path to the log file containing response-time stats for this webapp"/>
+                    <c:simple-property name="responseTimeUrlExcludes" required="false"
+                                       description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
+                    <c:simple-property name="responseTimeUrlTransforms" required="false"
+                                       description="a space-delimited list of Perl-style substitution expressions that should be applied to all URLs for which response-time stats are collected (e.g. |^/dept/finance/.*|/dept/finance/*|)"/>
+                </c:group>
             </plugin-configuration>
 
             &COMMON_IIS_METRICS;
+            
+            <!-- response-time metric - determined by parsing the RT logfile that's specified in the plugin config -->
+
+            <metric property="ResponseTime" displayName="HTTP Response Time"
+                 dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
+                 description="the minimum, maximum, and average response times for HTTP requests serviced by this virtual host"/>
 
         </service>
     </server>

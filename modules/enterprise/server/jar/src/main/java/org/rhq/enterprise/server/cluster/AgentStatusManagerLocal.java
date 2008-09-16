@@ -27,7 +27,6 @@ import org.rhq.core.domain.resource.Agent;
 /**
  * @author Joseph Marques
  */
-
 @Local
 public interface AgentStatusManagerLocal {
 

@@ -1,18 +1,29 @@
 /*
- * JBoss, a division of Red Hat.
- * Copyright 2008, Red Hat Middleware, LLC. All rights reserved.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.core.system;
-
-import org.hyperic.sigar.NetFlags;
-import org.hyperic.sigar.NetStat;
 
 import java.beans.BeanInfo;
 import java.beans.Introspector;
-import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
-import java.lang.reflect.InvocationTargetException;
+
+import org.hyperic.sigar.NetFlags;
+import org.hyperic.sigar.NetStat;
 
 /**
  * @author Greg Hinkle
@@ -22,7 +33,6 @@ public class NetworkStats {
     protected int[] tcpStates;
     protected int tcpInboundTotal, tcpOutboundTotal;
     protected int allInboundTotal, allOutboundTotal;
-
 
     public NetworkStats(NetStat interfaceStat) {
         refresh(interfaceStat);
@@ -46,7 +56,7 @@ public class NetworkStats {
                     return value;
                 }
             }
-            throw new RuntimeException("Couldn't find property " + propertyName + " on NetworkStats");            
+            throw new RuntimeException("Couldn't find property " + propertyName + " on NetworkStats");
         } catch (Exception e) {
             throw new RuntimeException("Couldn't read property " + propertyName + " from NetworkStats", e);
         }

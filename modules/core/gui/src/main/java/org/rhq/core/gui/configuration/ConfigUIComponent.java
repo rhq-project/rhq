@@ -19,9 +19,12 @@
 package org.rhq.core.gui.configuration;
 
 import java.util.UUID;
+
 import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
+
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.gui.util.FacesComponentIdFactory;
@@ -44,8 +47,10 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
     private static final String LIST_NAME_ATTRIBUTE = "listName";
     private static final String LIST_INDEX_ATTRIBUTE = "listIndex";
     private static final String READ_ONLY_ATTRIBUTE = "readOnly";
+    private static final String FULLY_EDITABLE_ATTRIBUTE = "fullyEditable";
 
     private Boolean readOnly;
+    private Boolean fullyEditable;
     private String listName;
     private Integer listIndex;
     private String nullConfigurationDefinitionMessage;
@@ -67,7 +72,7 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
     public Configuration getConfiguration() {
         //noinspection UnnecessaryLocalVariable
         Configuration config = FacesComponentUtility.getExpressionAttribute(this, CONFIGURATION_ATTRIBUTE,
-                Configuration.class);
+            Configuration.class);
         return config;
     }
 
@@ -81,7 +86,7 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
     public ConfigurationDefinition getConfigurationDefinition() {
         //noinspection UnnecessaryLocalVariable
         ConfigurationDefinition configDef = FacesComponentUtility.getExpressionAttribute(this,
-                CONFIGURATION_DEFINITION_ATTRIBUTE, ConfigurationDefinition.class);
+            CONFIGURATION_DEFINITION_ATTRIBUTE, ConfigurationDefinition.class);
         return configDef;
     }
 
@@ -95,12 +100,25 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
         if (this.readOnly == null) {
             this.readOnly = FacesComponentUtility.getExpressionAttribute(this, READ_ONLY_ATTRIBUTE, Boolean.class);
         }
-        
+
         return (this.readOnly != null) ? this.readOnly : false;
     }
 
     public void setReadOnly(boolean readOnly) {
         this.readOnly = readOnly;
+    }
+
+    public boolean isFullyEditable() {
+        if (this.fullyEditable == null) {
+            this.fullyEditable = FacesComponentUtility.getExpressionAttribute(this, FULLY_EDITABLE_ATTRIBUTE,
+                Boolean.class);
+        }
+
+        return (this.fullyEditable != null) ? this.fullyEditable : false;
+    }
+
+    public void setFullyEditable(boolean fullyEditable) {
+        this.fullyEditable = fullyEditable;
     }
 
     public String getListName() {
@@ -192,15 +210,16 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
     @Override
     public Object saveState(FacesContext facesContext) {
         if (this.stateValues == null) {
-            this.stateValues = new Object[6];
+            this.stateValues = new Object[7];
         }
 
         this.stateValues[0] = super.saveState(facesContext);
         this.stateValues[1] = this.readOnly;
-        this.stateValues[2] = this.listName;
-        this.stateValues[3] = this.listIndex;
-        this.stateValues[4] = this.prevalidate;
-        this.stateValues[5] = this.aggregate;
+        this.stateValues[2] = this.fullyEditable;
+        this.stateValues[3] = this.listName;
+        this.stateValues[4] = this.listIndex;
+        this.stateValues[5] = this.prevalidate;
+        this.stateValues[6] = this.aggregate;
         return this.stateValues;
     }
 
@@ -209,10 +228,11 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
         this.stateValues = (Object[]) stateValues;
         super.restoreState(facesContext, this.stateValues[0]);
         this.readOnly = (Boolean) this.stateValues[1];
-        this.listName = (String) this.stateValues[2];
-        this.listIndex = (Integer) this.stateValues[3];
-        this.prevalidate = (Boolean) this.stateValues[4];
-        this.aggregate = (Boolean) this.stateValues[5];
+        this.fullyEditable = (Boolean) this.stateValues[2];
+        this.listName = (String) this.stateValues[3];
+        this.listIndex = (Integer) this.stateValues[4];
+        this.prevalidate = (Boolean) this.stateValues[5];
+        this.aggregate = (Boolean) this.stateValues[6];
     }
 
     /*

@@ -1,22 +1,20 @@
 /*
- * JBoss, a division of Red Hat
- * Copyright 2006, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @authors tag.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
  *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
- * This software is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 package org.rhq.core.db;
 
@@ -244,12 +242,10 @@ public interface DbUtilsI18NResourceKeys {
     String DBSETUP_DO_SQL = "DBSetup.do-sql";
 
     @I18NMessages( {
-        @I18NMessage("\\n\\\n{0}\\n\\\n"
-            + "DBSetup -op=export|setup|clear|uninstall|uninstallsetup \\n\\\n"
+        @I18NMessage("\\n\\\n{0}\\n\\\n" + "DBSetup -op=export|setup|clear|uninstall|uninstallsetup \\n\\\n"
             + "        -jdbcurl=<db-url> [-jdbcuser=<username>] [-jdbcpassword=<password>]\\n\\\n"
             + "        -file=<dbsetup-xml-file>"),
-        @I18NMessage(value = "\\n\\\n{0}\\n\\\n"
-            + "DBSetup -op=export|setup|clear|uninstall|uninstallsetup \\n\\\n"
+        @I18NMessage(value = "\\n\\\n{0}\\n\\\n" + "DBSetup -op=export|setup|clear|uninstall|uninstallsetup \\n\\\n"
             + "        -jdbcurl=<db-url> [-jdbcuser=<Benutzername>] [-jdbcpassword=<Passwort>]\\n\\\n"
             + "        -file=<dbsetup-xml-Datei>", locale = "de") })
     String DBSETUP_CMDLINE_USAGE = "DBSetup.cmdline.usage";
@@ -327,6 +323,6 @@ public interface DbUtilsI18NResourceKeys {
             + "\\n\\\nErzeugt am: {0,date,long} um {0,time,long}\\n\\\n", locale = "de") })
     String DBSETUP_EXPORT_WARNING_NOTICE = "DBSetup.export.warning-notice";
 
-    @I18NMessages({ @I18NMessage("Duration: {0} ms"), @I18NMessage(value = "Dauer: {0} ms", locale = "de") })
+    @I18NMessages( { @I18NMessage("Duration: {0} ms"), @I18NMessage(value = "Dauer: {0} ms", locale = "de") })
     String DBSETUP_DURATION = "DBSetup.duration";
 }

@@ -62,6 +62,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
@@ -97,8 +98,10 @@ import org.rhq.core.util.exception.WrappedRemotingException;
 /**
  * Manages the process of both auto-detection of servers and runtime detection of services across all plugins. Manages
  * their scheduling and result sending as well as the general inventory model.
- *
- * <p>This is an agent service; its interface is made remotely accessible if this is deployed within the agent.</p>
+ * <p>
+ * This is an Agent service; its DiscoveryAgentService interface is made remotely accessible if it is deployed within
+ * the Agent.
+ * </p>
  *
  * @author Greg Hinkle
  * @author Ian Springer
@@ -1439,17 +1442,25 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private ContentContext getContentContext(Resource resource) {
-        if (resource.getResourceType().getPackageTypes() == null
-            || resource.getResourceType().getPackageTypes().isEmpty()) {
+        ResourceType resourceType = resource.getResourceType();
+        boolean hasPackageTypes = (resourceType.getPackageTypes() != null && !resourceType.getPackageTypes().isEmpty());
+        boolean hasContentBasedCreatableChildren = false;
+        for (ResourceType childResourceType : resourceType.getChildResourceTypes()) {
+            if (childResourceType.isCreatable() && childResourceType.getCreationDataType() == ResourceCreationDataType.CONTENT) {
+                hasContentBasedCreatableChildren = true;
+                break;
+            }
+        }
+        // Only give the ResourceComponent a ContentContext if its metadata says it actually needs one.
+        if (!hasPackageTypes && !hasContentBasedCreatableChildren) {
             return null;
         }
-
         if (resource.getId() == 0) {
-            log.warn("RESOURCE ID IS 0! Content features may not work - resource needs to be synced with server");
+            log.warn("RESOURCE ID IS 0! Content features may not work - Resource needs to be synced with server");
         }
-
-        ContentServices cm = PluginContainer.getInstance().getContentManager();
-        ContentContext contentContext = new ContentContextImpl(resource.getId(), cm);
+        ContentServices contentManager = PluginContainer.getInstance().getContentManager();
+        //noinspection UnnecessaryLocalVariable
+        ContentContext contentContext = new ContentContextImpl(resource.getId(), contentManager);
         return contentContext;
     }
 

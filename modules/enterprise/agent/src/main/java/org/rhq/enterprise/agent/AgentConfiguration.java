@@ -45,6 +45,39 @@ public class AgentConfiguration {
     private static final Logger LOG = AgentI18NFactory.getLogger(AgentConfiguration.class);
 
     /**
+     * This is a static utility method that builds a full remote endpoint string that combines
+     * the given transport, server bind address, server bind port and server transport params.
+     * This is used to get the {@link #getServerLocatorUri() full server URI} but can be used to
+     * any other caller if they happen to have those four pieces of data.
+     *
+     * @param transport
+     * @param bind_address
+     * @param bind_port
+     * @param transport_params
+     * 
+     * @return a locator URI that can be used to try to communicate with an endpoint
+     */
+    public static String buildServerLocatorUri(String transport, String bind_address, int bind_port,
+        String transport_params) {
+
+        transport_params = transport_params.trim(); // just for my sanity
+
+        String locator_uri = transport + "://" + bind_address + ":" + bind_port;
+
+        if (transport_params.length() > 0) {
+            // For some transports (e.g. servlet) the params will actually be the rest of the URL with optional query string.
+            // To denote that we don't want to start the query string immediately after host:port, the params can start with /
+            if (transport_params.startsWith("/")) {
+                locator_uri += transport_params;
+            } else {
+                locator_uri = "/?" + transport_params;
+            }
+        }
+
+        return locator_uri;
+    }
+
+    /**
      * The agent configuration properties this object wraps. This should be the agent preferences node.
      */
     private final Preferences m_preferences;
@@ -197,27 +230,16 @@ public class AgentConfiguration {
      * {@link #getServerTransportParams()}.
      *
      * @return the locator URI that should be used to try to communicate with the RHQ Server.
+     * 
+     * @see #buildServerLocatorUri(String, String, int, String)
      */
     public String getServerLocatorUri() {
         String transport = getServerTransport();
         String bind_address = getServerBindAddress();
         int bind_port = getServerBindPort();
-        String transport_params = getServerTransportParams().trim();
+        String transport_params = getServerTransportParams();
 
-        // build the locator URI from the configuration properties
-        String locator_uri = transport + "://" + bind_address + ":" + bind_port;
-
-        if (transport_params.length() > 0) {
-            // For some transports (e.g. servlet) the params will actually be the rest of the URL with optional query string.
-            // To denote that we don't want to start the query string immediately after host:port, the params can start with /
-            if (transport_params.startsWith("/")) {
-                locator_uri += transport_params;
-            } else {
-                locator_uri = "/?" + transport_params;
-            }
-        }
-
-        return locator_uri;
+        return buildServerLocatorUri(transport, bind_address, bind_port, transport_params);
     }
 
     /**
@@ -307,6 +329,18 @@ public class AgentConfiguration {
     public long getWaitForServerAtStartupMsecs() {
         long value = m_preferences.getLong(AgentConfigurationConstants.WAIT_FOR_SERVER_AT_STARTUP_MSECS,
             AgentConfigurationConstants.DEFAULT_WAIT_FOR_SERVER_AT_STARTUP_MSECS);
+        return value;
+    }
+
+    /**
+     * This defines how many milliseconds the agent should wait between each check that ensures it is connected
+     * to the primary server, as opposed to one of its failure servers.
+     *
+     * @return check interval time in milliseconds
+     */
+    public long getPrimaryServerSwitchoverCheckIntervalMsecs() {
+        long value = m_preferences.getLong(AgentConfigurationConstants.PRIMARY_SERVER_SWITCHOVER_CHECK_INTERVAL_MSECS,
+            AgentConfigurationConstants.DEFAULT_PRIMARY_SERVER_SWITCHOVER_CHECK_INTERVAL_MSECS);
         return value;
     }
 

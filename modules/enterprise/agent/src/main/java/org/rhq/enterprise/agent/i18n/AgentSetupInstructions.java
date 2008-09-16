@@ -727,6 +727,19 @@ public interface AgentSetupInstructions {
         + "If this is 0, the agent will not wait at all.") })
     String SETUP_INSTRUCTION_WAITFORSERVERATSTARTUPMSECS_HELP = "PromptCommand.setup.instruction.waitforservermsecs.help";
 
+    // PRIMARY SERVER SWITCHOVER CHECK INTERVAL MSECS
+    String SETUP_INSTRUCTION_PRIMARYSERVERSWITCHOVERCHECKINTERVAL_PREF = AgentConfigurationConstants.PRIMARY_SERVER_SWITCHOVER_CHECK_INTERVAL_MSECS;
+    String SETUP_INSTRUCTION_PRIMARYSERVERSWITCHOVERCHECKINTERVAL_DEFAULT = Long
+        .toString(AgentConfigurationConstants.DEFAULT_PRIMARY_SERVER_SWITCHOVER_CHECK_INTERVAL_MSECS);
+    @I18NMessages( { @I18NMessage("Primary Server Switchover Check Interval:") })
+    String SETUP_INSTRUCTION_PRIMARYSERVERSWITCHOVERCHECKINTERVAL_PROMPT = "PromptCommand.setup.instruction.primaryserverswitchovercheckinterval.prompt";
+    @I18NMessages( { @I18NMessage("The agent will periodically check to ensure that the server\\n\\\n"
+        + "it is connected to is its primary server (as opposed to one\\n\\\n"
+        + "of its failover servers). This preference defines how many\\n\\\n"
+        + "milliseconds the agent should wait in between these checks.\\n\\\n"
+        + "If 0, this check is never performed.\\n\\\n") })
+    String SETUP_INSTRUCTION_PRIMARYSERVERSWITCHOVERCHECKINTERVAL_HELP = "PromptCommand.setup.instruction.primaryserverswitchovercheckinterval.help";
+
     // DISABLE NATIVE SYSTEM
     String SETUP_INSTRUCTION_DISABLENATIVESYSTEM_PREF = AgentConfigurationConstants.DISABLE_NATIVE_SYSTEM;
     String SETUP_INSTRUCTION_DISABLENATIVESYSTEM_DEFAULT = Boolean

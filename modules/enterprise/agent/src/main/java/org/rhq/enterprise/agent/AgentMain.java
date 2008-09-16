@@ -298,6 +298,11 @@ public class AgentMain {
     private long[] m_lastFailoverTime = new long[] { 0L };
 
     /**
+     * Thread used to try to maintain connectivity to the primary server as much as possible.
+     */
+    private PrimaryServerSwitchoverThread m_primaryServerSwitchoverThread;
+
+    /**
      * The main method that starts the whole thing.
      *
      * @param args
@@ -376,6 +381,7 @@ public class AgentMain {
         m_previouslyQueueCommands = null;
         m_registration = null;
         m_serverFailoverList = null;
+        m_primaryServerSwitchoverThread = null;
 
         if (args == null) {
             args = new String[0];
@@ -457,6 +463,14 @@ public class AgentMain {
                     m_shutdownHook = new AgentShutdownHook(this);
                     Runtime.getRuntime().addShutdownHook(m_shutdownHook);
 
+                    // start the thread that tries to keep the agent pointed to its primary server
+                    m_primaryServerSwitchoverThread = new PrimaryServerSwitchoverThread(this);
+                    long check_interval = m_configuration.getPrimaryServerSwitchoverCheckIntervalMsecs();
+                    if (check_interval > 0) {
+                        m_primaryServerSwitchoverThread.setInterval(check_interval);
+                        m_primaryServerSwitchoverThread.start();
+                    }
+
                     // indicate that we have started
                     setStarted(true);
 
@@ -483,6 +497,11 @@ public class AgentMain {
         synchronized (m_started) {
             if (isStarted()) {
                 LOG.info(AgentI18NResourceKeys.SHUTTING_DOWN);
+
+                // stop the thread that tries to keep the agent pointed to its primary server
+                m_primaryServerSwitchoverThread.stopChecking();
+                m_primaryServerSwitchoverThread.interrupt();
+                m_primaryServerSwitchoverThread = null;
 
                 // remove our shutdown hook
                 if (m_shutdownHook != null) {
@@ -661,7 +680,7 @@ public class AgentMain {
             try {
                 byte[] bytes = StreamUtil.slurp(new FileInputStream(failoverListFile));
                 list = (FailoverListComposite) StreamUtil.deserialize(bytes);
-                LOG.debug(AgentI18NResourceKeys.FAILOVER_LIST_LOADED, failoverListFile, m_serverFailoverList.size());
+                LOG.debug(AgentI18NResourceKeys.FAILOVER_LIST_LOADED, failoverListFile, list.size());
             } catch (Exception e) {
                 list = new FailoverListComposite(new ArrayList<ServerEntry>());
                 LOG.warn(e, AgentI18NResourceKeys.FAILOVER_LIST_CANNOT_BE_LOADED, failoverListFile, ThrowableUtil
@@ -669,7 +688,22 @@ public class AgentMain {
             }
         }
 
+        m_serverFailoverList = list;
+
         return list;
+    }
+
+    /**
+     * Asks the agent to check and see if it is currently connected to its primary server (as opposed
+     * to one of its secondary failover servers). If it is not connected to its primary, this
+     * call will trigger the agent to attempt to switch over. This switchover will occur asynchronously,
+     * and may not have occurred by the time this method returns.
+     */
+    public void performPrimaryServerSwitchoverCheck() {
+        if (m_primaryServerSwitchoverThread != null) {
+            m_primaryServerSwitchoverThread.checkNow();
+        }
+        return;
     }
 
     /**
@@ -1526,7 +1560,8 @@ public class AgentMain {
             ServiceContainerConfiguration comm_config = new ServiceContainerConfiguration(m_configuration
                 .getPreferences());
             if (comm_config.isMulticastDetectorEnabled()) {
-                m_autoDiscoveryListener = new AgentAutoDiscoveryListener(this, createServerRemoteCommunicator(false));
+                m_autoDiscoveryListener = new AgentAutoDiscoveryListener(this, createServerRemoteCommunicator(null,
+                    false));
                 m_commServices.addDiscoveryListener(m_autoDiscoveryListener);
                 LOG.debug(AgentI18NResourceKeys.SERVER_AUTO_DETECT_ENABLED, m_configuration.getServerLocatorUri());
             } else {
@@ -1720,7 +1755,7 @@ public class AgentMain {
      * @throws Exception if the configured server locator URI in malformed
      */
     private ClientCommandSender createClientCommandSender() throws Exception {
-        RemoteCommunicator remote_comm = createServerRemoteCommunicator(true);
+        RemoteCommunicator remote_comm = createServerRemoteCommunicator(null, true);
         ClientCommandSenderConfiguration config = m_configuration.getClientCommandSenderConfiguration();
 
         ClientCommandSender client_sender = new ClientCommandSender(remote_comm, config, m_previouslyQueueCommands);
@@ -1771,9 +1806,31 @@ public class AgentMain {
     }
 
     /**
+     * Creates a raw remote communicator that can talk to the given endpoint.
+     * 
+     * This is package-scoped so the {@link PrimaryServerSwitchoverThread} can use this.
+     * 
+     * @param transport
+     * @param address
+     * @param port
+     * @param transportParams
+     * 
+     * @return the remote communicator
+     * 
+     * @throws Exception if the communicator could not be created
+     */
+    RemoteCommunicator createServerRemoteCommunicator(String transport, String address, int port, String transportParams)
+        throws Exception {
+
+        String uri = AgentConfiguration.buildServerLocatorUri(transport, address, port, transportParams);
+        return createServerRemoteCommunicator(uri, false);
+    }
+
+    /**
      * Returns the remote communicator that can be used to send messages to the server as configured in
      * {@link AgentConfiguration#getServerLocatorUri()}.
      *
+     * @param uri the locator URI; if <code>null</code>, the URI is determined by the agent's configuration
      * @param withFailover if <code>true</code>, the communicator will be configured to attempt to failover
      *                     to another server when it can't send commands to the current server. if <code>false</code>,
      *                     the communicator will not try to do any failover attempts
@@ -1782,11 +1839,15 @@ public class AgentMain {
      *
      * @throws Exception if the configured server locator URI is malformed
      */
-    private RemoteCommunicator createServerRemoteCommunicator(boolean withFailover) throws Exception {
-        String server_uri = m_configuration.getServerLocatorUri();
+    private RemoteCommunicator createServerRemoteCommunicator(String uri, boolean withFailover) throws Exception {
+
+        if (uri == null) {
+            uri = m_configuration.getServerLocatorUri();
+        }
+
         Map<String, String> config = new HashMap<String, String>();
 
-        if (SecurityUtil.isTransportSecure(server_uri)) {
+        if (SecurityUtil.isTransportSecure(uri)) {
             config.put(SSLSocketBuilder.REMOTING_KEY_STORE_FILE_PATH, m_configuration
                 .getClientSenderSecurityKeystoreFile());
             config.put(SSLSocketBuilder.REMOTING_KEY_STORE_ALGORITHM, m_configuration
@@ -1830,7 +1891,7 @@ public class AgentMain {
             config.put(HTTPSClientInvoker.IGNORE_HTTPS_HOST, "true");
         }
 
-        RemoteCommunicator remote_comm = new JBossRemotingRemoteCommunicator(server_uri, config);
+        RemoteCommunicator remote_comm = new JBossRemotingRemoteCommunicator(uri, config);
         if (withFailover) {
             remote_comm.setFailureCallback(new FailoverFailureCallback(this));
         }

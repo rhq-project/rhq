@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.agent.promptcmd;
 
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
+
 import java.io.PrintWriter;
 
 import mazz.i18n.Msg;
@@ -47,20 +50,7 @@ public class FailoverPromptCommand implements AgentPromptCommand {
      * @see AgentPromptCommand#execute(AgentMain, String[])
      */
     public boolean execute(AgentMain agent, String[] args) {
-        PrintWriter out = agent.getOut();
-
-        if (args.length > 1) {
-            out.println(MSG.getMsg(AgentI18NResourceKeys.HELP_SYNTAX_LABEL, getSyntax()));
-            return true;
-        }
-
-        FailoverListComposite failoverList = agent.getServerFailoverList();
-        if (failoverList != null) {
-            failoverList.print(out);
-        } else {
-            out.print("<null>");
-        }
-
+        processArguments(agent, args);
         return true;
     }
 
@@ -68,7 +58,7 @@ public class FailoverPromptCommand implements AgentPromptCommand {
      * @see AgentPromptCommand#getSyntax()
      */
     public String getSyntax() {
-        return getPromptCommandString();
+        return MSG.getMsg(AgentI18NResourceKeys.FAILOVER_SYNTAX);
     }
 
     /**
@@ -82,7 +72,68 @@ public class FailoverPromptCommand implements AgentPromptCommand {
      * @see AgentPromptCommand#getDetailedHelp()
      */
     public String getDetailedHelp() {
-        return getHelp();
+        return MSG.getMsg(AgentI18NResourceKeys.FAILOVER_DETAILED_HELP);
     }
 
+    private void processArguments(AgentMain agent, String[] args) {
+        PrintWriter out = agent.getOut();
+
+        if (args.length <= 1) {
+            out.println(MSG.getMsg(AgentI18NResourceKeys.HELP_SYNTAX_LABEL, getSyntax()));
+            return;
+        }
+
+        String sopts = "clr";
+        LongOpt[] lopts = { new LongOpt("check", LongOpt.NO_ARGUMENT, null, 'c'), // check if using primary server
+            new LongOpt("list", LongOpt.NO_ARGUMENT, null, 'l'), // show the failover list
+            new LongOpt("reset", LongOpt.NO_ARGUMENT, null, 'r') }; // reset the failover list iterator
+
+        Getopt getopt = new Getopt(getPromptCommandString(), args, sopts, lopts);
+        int code;
+
+        while ((code = getopt.getopt()) != -1) {
+            switch (code) {
+            case ':':
+            case '?':
+            case 1: {
+                out.println(MSG.getMsg(AgentI18NResourceKeys.HELP_SYNTAX_LABEL, getSyntax()));
+                break;
+            }
+
+            case 'c': {
+                out.println(MSG.getMsg(AgentI18NResourceKeys.FAILOVER_CHECK_NOW));
+                agent.performPrimaryServerSwitchoverCheck();
+                break;
+            }
+
+            case 'l': {
+                showFailoverList(agent, out);
+                break;
+            }
+
+            case 'r': {
+                agent.getServerFailoverList().resetIndex();
+                out.println(MSG.getMsg(AgentI18NResourceKeys.FAILOVER_RESET_DONE));
+                out.println();
+                showFailoverList(agent, out);
+                break;
+            }
+            }
+        }
+
+        if ((getopt.getOptind() + 1) < args.length) {
+            out.println(MSG.getMsg(AgentI18NResourceKeys.HELP_SYNTAX_LABEL, getSyntax()));
+        }
+
+        return;
+    }
+
+    private void showFailoverList(AgentMain agent, PrintWriter out) {
+        FailoverListComposite failoverList = agent.getServerFailoverList();
+        if (failoverList != null && failoverList.size() > 0) {
+            failoverList.print(out);
+        } else {
+            out.println("<>");
+        }
+    }
 }

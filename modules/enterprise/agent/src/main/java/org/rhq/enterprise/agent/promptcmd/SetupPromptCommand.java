@@ -489,6 +489,13 @@ public class SetupPromptCommand implements AgentPromptCommand {
             SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_WAITFORSERVERATSTARTUPMSECS_PROMPT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_WAITFORSERVERATSTARTUPMSECS_HELP)));
 
+        instr.add(new DefaultSetupInstruction(
+            AgentSetupInstructions.SETUP_INSTRUCTION_PRIMARYSERVERSWITCHOVERCHECKINTERVAL_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_PRIMARYSERVERSWITCHOVERCHECKINTERVAL_DEFAULT,
+            new LongSetupValidityChecker(0L, null), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PRIMARYSERVERSWITCHOVERCHECKINTERVAL_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PRIMARYSERVERSWITCHOVERCHECKINTERVAL_HELP)));
+
         instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_DISABLENATIVESYSTEM_PREF,
             AgentSetupInstructions.SETUP_INSTRUCTION_DISABLENATIVESYSTEM_DEFAULT, new BooleanSetupValidityChecker(),
             SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_DISABLENATIVESYSTEM_PROMPT), SETUPMSG

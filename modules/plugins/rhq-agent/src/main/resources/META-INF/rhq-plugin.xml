@@ -491,6 +491,11 @@
             <c:description>Settings that usually do not need to change under normal circumstances</c:description>
             <c:simple-property name="rhq.agent.data-directory" required="false" type="string" activationPolicy="restart" default="data" displayName="Data Directory" description="Location where the agent can persist data to the file system" />
             <c:simple-property name="rhq.agent.disable-native-system" required="false" type="boolean" activationPolicy="restart" default="false" displayName="Disable Native System" description="Disables the native system; agent will not use the native JNI libraries" />
+            <c:simple-property name="rhq.agent.primary-server-switchover-check-interval-msecs" required="false" type="integer" activationPolicy="restart" default="3600000" displayName="Primary Server Switchover Check Interval" description="The amount of milliseconds in between checking that the agent is connected to the primary server, as opposed to a failover server. The check is disabled if this is 0.">
+               <c:constraint>
+                  <c:integer-constraint minimum="0" />
+               </c:constraint>
+            </c:simple-property>
             <c:simple-property name="rhq.communications.remote-stream-max-idle-time-msecs" required="false" type="integer" activationPolicy="restart" default="300000" displayName="Remote Stream Idle Timeout" description="The maximum amount of milliseconds an agent-hosted remote stream is allowed to remain idle before it will be closed." />
             <c:simple-property name="rhq.agent.client.command-spool-file.name" required="false" type="string" activationPolicy="restart" default="command-spool.dat" displayName="Command Spool Filename" description="Defines the name of the command spool file.  This file must be located in the data directory (if one does not exist, it will be created)" />
             <c:simple-property name="rhq.agent.client.command-spool-file.params" required="false" type="string" activationPolicy="restart" default="10000000:75" displayName="Command Spool File Parameters" description="Defines the maximum size the spool file is allowed to be and how it is to be purged.  See the documentation on the format of this value.">

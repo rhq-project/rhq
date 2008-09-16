@@ -23,7 +23,7 @@ Embedded RHQ Agent Configuration
                file conforms to.  This is the schema for the rhq.agent
                preferences.
                -->
-               <entry key="rhq.agent.configuration-schema-version" value="1" />
+               <entry key="rhq.agent.configuration-schema-version" value="2" />
 
                <!--
                _______________________________________________________________
@@ -156,6 +156,20 @@ Embedded RHQ Agent Configuration
                serves to other agents.
                -->
                <entry key="rhq.agent.update-plugins-at-startup" value="false" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.primary-server-switchover-check-interval-msecs
+
+               The agent will periodically check to ensure that the server
+               it is connected to is its primary server (as opposed to one
+               of its failover servers). This preference defines how many
+               milliseconds the agent should wait in between these checks.
+               If this is 0, this check is never performed. You should never
+               set this to 0 unless your agent will never participate in
+               an RHQ HA environment.
+               -->
+               <entry key="rhq.agent.primary-server-switchover-check-interval-msecs" value="3600000" />
 
                <!--
                _______________________________________________________________

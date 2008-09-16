@@ -19,7 +19,9 @@
 package org.rhq.enterprise.agent;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.prefs.Preferences;
+
 import org.rhq.enterprise.communications.util.prefs.PreferencesUpgrade;
 import org.rhq.enterprise.communications.util.prefs.PreferencesUpgradeStep;
 
@@ -43,14 +45,30 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
      * Constructor for {@link AgentConfigurationUpgrade}.
      */
     public AgentConfigurationUpgrade() {
-        // we currently only support one version - there are no supported upgrades
-        super(new ArrayList<PreferencesUpgradeStep>());
+        super(getSteps());
     }
 
-    /**
-     * @see PreferencesUpgrade#getConfigurationSchemaVersionPreference()
-     */
     public String getConfigurationSchemaVersionPreference() {
         return AgentConfigurationConstants.CONFIG_SCHEMA_VERSION;
+    }
+
+    private static List<PreferencesUpgradeStep> getSteps() {
+        List<PreferencesUpgradeStep> list = new ArrayList<PreferencesUpgradeStep>();
+        list.add(new Step1to2()); // goes from v1 to v2
+        return list;
+    }
+
+    static class Step1to2 extends PreferencesUpgradeStep {
+
+        public int getSupportedConfigurationSchemaVersion() {
+            return 2;
+        }
+
+        public void upgrade(Preferences preferences) {
+            // add the switchover check interval - just set it to its hardcoded default
+            preferences.putLong(AgentConfigurationConstants.PRIMARY_SERVER_SWITCHOVER_CHECK_INTERVAL_MSECS,
+                AgentConfigurationConstants.DEFAULT_PRIMARY_SERVER_SWITCHOVER_CHECK_INTERVAL_MSECS);
+        }
+
     }
 }

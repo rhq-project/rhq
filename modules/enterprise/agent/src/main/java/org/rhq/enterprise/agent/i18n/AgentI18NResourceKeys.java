@@ -28,6 +28,24 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
+    @I18NMessage("The agent is not talking to its primary server [{0}:{1}] - it is talking to [{2}:{3}]")
+    String NOT_TALKING_TO_PRIMARY_SERVER = "PrimaryServerSwitchoverThread.not-talking-to-primary";
+
+    @I18NMessage("An exception occurred during the primary server switchover check. Cause: {0}")
+    String PRIMARY_SERVER_SWITCHOVER_EXCEPTION = "PrimaryServerSwitchoverThread.exception";
+
+    @I18NMessage("Primary server appears to be back online at [{0}:{1}] - attempting to switch back to it")
+    String PRIMARY_SERVER_UP = "PrimaryServerSwitchoverThread.primary-up";
+
+    @I18NMessage("Primary server at [{0}:{1}] is still down - cannot switch back to it yet")
+    String PRIMARY_SERVER_STILL_DOWN = "PrimaryServerSwitchoverThread.primary-still-down";
+
+    @I18NMessage("The primary server switchover thread has started.")
+    String PRIMARY_SERVER_SWITCHOVER_THREAD_STARTED = "PrimaryServerSwitchoverThread.started";
+
+    @I18NMessage("The primary server switchover thread has stopped.")
+    String PRIMARY_SERVER_SWITCHOVER_THREAD_STOPPED = "PrimaryServerSwitchoverThread.stopped";
+
     @I18NMessage("The agent has triggered its failover mechanism and switched to server [{0}]")
     String FAILED_OVER_TO_SERVER = "AgentMain.failed-over-to-server";
 
@@ -526,9 +544,32 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("failover")
     String FAILOVER = "PromptCommand.failover";
 
-    // Performs a variety of activities involving the server entries in the failover list
-    @I18NMessage("Lists, in order, the servers that this agent would failover to")
+    @I18NMessage("failover -c | -l | -r")
+    String FAILOVER_SYNTAX = "PromptCommand.failover.syntax";
+
+    @I18NMessage("Provides HA failover functionality")
     String FAILOVER_HELP = "PromptCommand.failover.help";
+
+    @I18NMessage("Provides HA failover functionality.\\n\\\n"
+        + "-c|--check: Checks to see if the agent is connected to its primary server,\\n\\\n"
+        + "\\            as opposed to one of its secondary failover servers. If not,\\n\\\n"
+        + "\\            will attempt to switchover to primary.\\n\\\n"
+        + "-l|--list:  Will show the server failover list.\\n\\\n"
+        + "-r|--reset: Will reset the failover list index such that the next server to\\n\\\n"
+        + "\\            be failed over to (when necessary) will be the first server\\n\\\n"
+        + "\\            in the failover list.")
+    String FAILOVER_DETAILED_HELP = "PromptCommand.failover.detailed-help";
+
+    @I18NMessage("The failover list index has been reset to the top. The next time\\n\\\n"
+        + "the agent needs to failover to a different server, it will try\\n\\\n"
+        + "the server at the front of the list.")
+    String FAILOVER_RESET_DONE = "PromptCommand.failover.reset-done";
+
+    @I18NMessage("The agent will perform its primary server switchover check now.\\n\\\n"
+        + "If it is not connected to its primary server, it will attempt\\n\\\n"
+        + "to switch over now.  Use the <identify> prompt command to see\\n\\\n"
+        + "which server the agent is connected to.")
+    String FAILOVER_CHECK_NOW = "PromptCommand.failover.check-now";
 
     @I18NMessage("quit")
     String QUIT = "PromptCommand.quit";

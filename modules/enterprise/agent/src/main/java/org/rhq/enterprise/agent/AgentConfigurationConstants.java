@@ -58,7 +58,7 @@ public interface AgentConfigurationConstants {
     /**
      * This is the current schema version that our agent configuration knows about.
      */
-    int CURRENT_CONFIG_SCHEMA_VERSION = 1;
+    int CURRENT_CONFIG_SCHEMA_VERSION = 2;
 
     /**
      * Flag to indicate if the agent's configuration has been setup.
@@ -144,6 +144,17 @@ public interface AgentConfigurationConstants {
      * If the wait-for-server wait time is not defined, this is the default.
      */
     long DEFAULT_WAIT_FOR_SERVER_AT_STARTUP_MSECS = 60000L;
+
+    /**
+     * The amount of milliseconds between checks that ensure the agent is pointing to the primary server.
+     */
+    String PRIMARY_SERVER_SWITCHOVER_CHECK_INTERVAL_MSECS = PROPERTY_NAME_PREFIX
+        + "primary-server-switchover-check-interval-msecs";
+
+    /**
+     * If the switchover-check-interval is not defined, this is the default.
+     */
+    long DEFAULT_PRIMARY_SERVER_SWITCHOVER_CHECK_INTERVAL_MSECS = 1000L * 60 * 60;
 
     /**
      * The flag that, if <code>true</code>, will tell the agent to attempt to update its plugins at startup.

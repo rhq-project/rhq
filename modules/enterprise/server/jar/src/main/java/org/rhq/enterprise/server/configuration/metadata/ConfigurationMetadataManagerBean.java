@@ -367,16 +367,18 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 List<PropertyDefinitionEnumeration> toDelete = missingInFirstList(newOptions, existingOptions);
                 List<PropertyDefinitionEnumeration> changed = intersection(existingOptions, newOptions);
 
+                // TODO GH: This still doesn't properly reorder options, but at least it doesn't leave any nulls
+                // and therefore doesn't blow up the renderer
+                // delete old ones (first so we don't leave index holes later)
+                for (PropertyDefinitionEnumeration pde : toDelete) {
+                    existingOptions.remove(pde);
+                    entityManager.remove(pde);
+                }
+
                 // save new ones
                 for (PropertyDefinitionEnumeration pde : toPersist) {
                     existingPDS.addEnumeratedValues(pde);
                     entityManager.persist(pde);
-                }
-
-                // delete old ones
-                for (PropertyDefinitionEnumeration pde : toDelete) {
-                    existingOptions.remove(pde);
-                    entityManager.remove(pde);
                 }
 
                 for (PropertyDefinitionEnumeration pde : changed) {
@@ -385,6 +387,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                             pde.setDefault(nPde.isDefault());
                             pde.setOrderIndex(nPde.getOrderIndex());
                             pde.setValue(nPde.getValue());
+                            entityManager.merge(pde);
                         }
                     }
                 }

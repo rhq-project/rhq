@@ -153,10 +153,10 @@ public class PropertyDefinitionEnumeration implements Serializable {
             return false;
         }
 
-        if ((propertyDefinitionSimple != null) ? (!propertyDefinitionSimple.equals(that.propertyDefinitionSimple))
+        /*if ((propertyDefinitionSimple != null) ? (!propertyDefinitionSimple.equals(that.propertyDefinitionSimple))
             : (that.propertyDefinitionSimple != null)) {
             return false;
-        }
+        }*/
 
         return true;
     }
@@ -165,7 +165,7 @@ public class PropertyDefinitionEnumeration implements Serializable {
     public int hashCode() {
         int result;
         result = ((name != null) ? name.hashCode() : 0);
-        result = (31 * result) + ((propertyDefinitionSimple != null) ? propertyDefinitionSimple.hashCode() : 0);
+//        result = (31 * result) + ((propertyDefinitionSimple != null) ? propertyDefinitionSimple.hashCode() : 0);
         return result;
     }
 

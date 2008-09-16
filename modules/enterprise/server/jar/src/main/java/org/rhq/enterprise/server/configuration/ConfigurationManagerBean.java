@@ -1006,7 +1006,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
     @SuppressWarnings("unchecked")
     public PageList<AggregatePluginConfigurationUpdate> getAggregatePluginConfigurationUpdatesByGroupId(int groupId,
         PageControl pc) {
-        pc.initDefaultOrderingField("modifiedTime");
+        pc.initDefaultOrderingField("modifiedTime", PageOrdering.DESC);
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
             AggregatePluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID, pc);

@@ -20,9 +20,9 @@ package org.rhq.enterprise.server.scheduler.jobs;
 
 import java.util.List;
 
-import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.StatefulJob;
 
 import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.Server;
@@ -30,7 +30,7 @@ import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-public class ClusterManagerJob implements Job {
+public class ClusterManagerJob implements StatefulJob {
 
     // A time sufficient to determine whether a server is down.  Can be based on the initial delay set for the server instance
     // job updating the server mtimes. See StartupServlet. 

@@ -55,7 +55,7 @@
     <jsf-api.version>1.2_06</jsf-api.version>
     <jsf-impl.version>1.2_06</jsf-impl.version>
     <ojdbc14.version>10.2.0.4.0</ojdbc14.version>
-    <ems.version>1.2.3</ems.version>
+    <ems.version>1.2.4</ems.version>
     <postgresql.version>8.3-603.jdbc3</postgresql.version>
     <richfaces.version>3.2.0.GA</richfaces.version>
     <sigar.version>1.5.0.3</sigar.version>

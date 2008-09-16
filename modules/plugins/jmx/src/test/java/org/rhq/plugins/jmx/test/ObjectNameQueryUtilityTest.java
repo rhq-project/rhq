@@ -18,15 +18,16 @@
  */
 package org.rhq.plugins.jmx.test;
 
+import java.util.Collections;
+
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+
 import org.testng.annotations.Test;
-import org.rhq.plugins.jmx.ObjectNameQueryUtility;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-
-import java.util.Arrays;
-import java.util.Collections;
+import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
 public class ObjectNameQueryUtilityTest {
     @Test
@@ -47,18 +48,28 @@ public class ObjectNameQueryUtilityTest {
         assert onqu.getVariableProperties().size() == 1;
         assert onqu.getVariableProperties().get("type").equals("foo");
 
+        onqu = new ObjectNameQueryUtility("jboss.esb.*:service=Queue,name=%name%");
+        assert onqu.getTranslatedQuery().equals("jboss.esb.*:service=Queue,*");
+        assert onqu.getVariableProperties().size() == 1;
+        assert onqu.getVariableProperties().get("name").equals("name");
+        ObjectName testON = new ObjectName(
+            "jboss.esb.quickstart.destination:service=Queue,name=quickstart_helloworld_Request_gw");
+        onqu.setMatchedKeyValues(testON.getKeyPropertyList());
+        String formulatedMessageTemplate = "Name of queue: {name}";
+        assert onqu.formatMessage(formulatedMessageTemplate).equals("Name of queue: quickstart_helloworld_Request_gw");
+
         onqu = new ObjectNameQueryUtility("java.lang:type=%MyType%,name=%MyName%,app=%MyApp%,foo=%MyFoo%");
         assert onqu.getTranslatedQuery().equals("java.lang:*");
         assert onqu.getVariableProperties().size() == 4;
-        ObjectName testON = new ObjectName("java.lang:type=A,name=B,app=C,foo=D");
+        testON = new ObjectName("java.lang:type=A,name=B,app=C,foo=D");
         onqu.setMatchedKeyValues(testON.getKeyPropertyList());
-        String formulatedMessageTemplate = "Type: {MyType}, Name: {MyName}, App: {MyApp}, Foo: {MyFoo}";
+        formulatedMessageTemplate = "Type: {MyType}, Name: {MyName}, App: {MyApp}, Foo: {MyFoo}";
         assert onqu.formatMessage(formulatedMessageTemplate).equals("Type: A, Name: B, App: C, Foo: D");
 
         Configuration c = new Configuration();
-        c.put(new PropertySimple("e","foo"));
-        c.put(new PropertySimple("g","bar"));
-        onqu = new ObjectNameQueryUtility("a:b=c,d={e},f={g}",c);
+        c.put(new PropertySimple("e", "foo"));
+        c.put(new PropertySimple("g", "bar"));
+        onqu = new ObjectNameQueryUtility("a:b=c,d={e},f={g}", c);
         System.out.println("Template: " + onqu.getQueryTemplate());
         assert onqu.getQueryTemplate().equals("a:b=c,d=foo,f=bar");
     }
@@ -71,7 +82,6 @@ public class ObjectNameQueryUtilityTest {
         assert !onqu.isContainsExtraKeyProperties(Collections.singleton("type"));
         assert !onqu.isContainsExtraKeyProperties(Collections.singleton("name"));
         assert onqu.isContainsExtraKeyProperties(Collections.singleton("splat"));
-
 
     }
 

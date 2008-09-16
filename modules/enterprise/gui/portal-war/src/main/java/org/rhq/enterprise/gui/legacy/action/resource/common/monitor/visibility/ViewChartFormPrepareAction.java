@@ -37,7 +37,6 @@ import org.apache.struts.tiles.ComponentContext;
 import org.rhq.core.clientapi.util.ArrayUtil;
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
@@ -63,8 +62,6 @@ import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.auth.SessionNotFoundException;
-import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
-import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityPoint;
 import org.rhq.enterprise.server.measurement.BaselineCreationException;
@@ -92,7 +89,6 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
     private final Log log = LogFactory.getLog(ViewChartFormPrepareAction.class);
 
     MeasurementDataManagerLocal dataManager;
-    EventManagerLocal eventManager;
     ResourceManagerLocal resMgr;
     ResourceGroupManagerLocal resGrpMgr;
     ResourceTypeManagerLocal resTypeMgr;
@@ -122,13 +118,10 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
             }
         }
 
-        AuthorizationManagerLocal authMgr = LookupUtil.getAuthorizationManager();
-
         dataManager = LookupUtil.getMeasurementDataManager();
         resMgr = LookupUtil.getResourceManager();
         resGrpMgr = LookupUtil.getResourceGroupManager();
         resTypeMgr = LookupUtil.getResourceTypeManager();
-        eventManager = LookupUtil.getEventManager();
 
         if (resource != null) {
             chartForm.setId(resource.getId());
@@ -457,7 +450,6 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         String[] chartKeys = new String[metricDefIds.length];
         List<List<List<NumericMetricDataPoint>>> chartDataPointsListList = new ArrayList<List<List<NumericMetricDataPoint>>>(
             metricDefIds.length);
-        List<List<Event>> eventPointsList = new ArrayList<List<Event>>();
         boolean displayAvailability = false;
         List<List<NumericMetricDataPoint>> availabilityChartDataPointsList = new ArrayList<List<NumericMetricDataPoint>>();
         List<Integer> metricDefIdList = new ArrayList<Integer>();
@@ -471,7 +463,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
 
             // Use current time concatenated with metric definition id for key.
             chartKeys[i] = String.valueOf(System.currentTimeMillis()) + metricDefId;
-            request.getSession().setAttribute(chartKeys[i], new ChartDataBean(chartDataPointsList, eventPointsList));
+            request.getSession().setAttribute(chartKeys[i], new ChartDataBean(chartDataPointsList));
             metricDefIdList.add(metricDefId);
             chartDataPointsListList.add(chartDataPointsList);
         }
@@ -533,14 +525,10 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
          * We need one List<Event> per graph that we are drawing -- they need to be paired with the
          * MetricDataPoints
          */
-        List<Event> controlEventPoints = eventManager.getEventsForResources(subject, resources, startDate, endDate);
-        eventPointsList.add(controlEventPoints);
 
         request.getSession().setAttribute(AttrConstants.CHART_DATA_KEYS, chartKeys);
         request.getSession().setAttribute(AttrConstants.CHART_DATA_KEYS_SIZE, chartKeys.length);
 
-        // This is for legend on the big charts
-        request.getSession().setAttribute("chartLegend", eventPointsList);
     }
 
     private static final class BaseMetricDisplayComparator implements Comparator {

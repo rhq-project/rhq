@@ -53,7 +53,6 @@ public class ViewChartForm extends MetricDisplayRangeForm {
     private boolean showAverage;
     private boolean showLowRange;
     private boolean showLow;
-    private boolean showEvents;
     private boolean showBaseline;
     private boolean saveChart;
     private boolean suppressBaselineSection;
@@ -117,10 +116,6 @@ public class ViewChartForm extends MetricDisplayRangeForm {
         sb.append("\t");
         sb.append("showLow=");
         sb.append(showLow);
-        sb.append("\n");
-        sb.append("\t");
-        sb.append("showEvents=");
-        sb.append(showEvents);
         sb.append("\n");
         sb.append("\t");
         sb.append("showBaseline=");
@@ -326,14 +321,6 @@ public class ViewChartForm extends MetricDisplayRangeForm {
 
     public void setShowLow(boolean showLow) {
         this.showLow = showLow;
-    }
-
-    public boolean getShowEvents() {
-        return showEvents;
-    }
-
-    public void setShowEvents(boolean showEvents) {
-        this.showEvents = showEvents;
     }
 
     public ImageButtonBean getRedraw() {
@@ -669,7 +656,6 @@ public class ViewChartForm extends MetricDisplayRangeForm {
         this.showAverage = true;
         this.showLowRange = true;
         this.showLow = true;
-        this.showEvents = true;
         this.showBaseline = true;
         this.redraw = new ImageButtonBean();
         this.prevRange = new ImageButtonBean();

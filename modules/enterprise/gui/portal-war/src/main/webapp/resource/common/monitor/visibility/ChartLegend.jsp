@@ -34,11 +34,6 @@
          <c:out value="${resource.name}"/>
       </html:link> 
       <br>
-      <c:forEach var="event" varStatus="evStatus" items="${chartLegend[resStatus.index]}">
-      <b>(<c:out value="${event.id}"/>)</b>
-      <c:out value="${event.detail}"/> -
-      <hq:dateFormatter value="${event.timestamp.time}"/><c:if test="${! evStatus.last}">,</c:if><br/>
-      </c:forEach></p>
       </c:forEach>
     </td>
   </tr>

@@ -126,7 +126,6 @@ public abstract class Chart extends WebImage {
     private String m_strTitle = EMPTY_STRING;
 
     private ArrayList<DataPointCollection> m_collDataPointColl = new ArrayList<DataPointCollection>(1);
-    private ArrayList<EventPointCollection> m_collEvtPointColl = new ArrayList<EventPointCollection>(1);
 
     private String m_strNoData = NO_DATA;
 
@@ -242,11 +241,6 @@ public abstract class Chart extends WebImage {
      * Shows a top legend.
      */
     public boolean showBottomLegend = true;
-
-    /**
-     * Shows events plotted on a chart.
-     */
-    public boolean showEvents = true;
 
     /**
      * Show full labels on the bottom x axis.
@@ -920,16 +914,8 @@ public abstract class Chart extends WebImage {
         return this.getDataPoints(0);
     }
 
-    public EventPointCollection getEventPoints() {
-        return this.getEventPoints(0);
-    }
-
     public DataPointCollection getDataPoints(int index) {
         return this.m_collDataPointColl.get(index);
-    }
-
-    public EventPointCollection getEventPoints(int index) {
-        return this.m_collEvtPointColl.get(index);
     }
 
     public int getDataSetCount() {
@@ -940,10 +926,6 @@ public abstract class Chart extends WebImage {
         return this.m_collDataPointColl.iterator();
     }
 
-    public Iterator<EventPointCollection> getEventSetIterator() {
-        return this.m_collEvtPointColl.iterator();
-    }
-
     public void setNumberDataSets(int number) {
         int delta = number - m_collDataPointColl.size();
 
@@ -951,7 +933,6 @@ public abstract class Chart extends WebImage {
             try {
                 for (int i = 0; i < delta; i++) {
                     m_collDataPointColl.add(this.getDataCollectionClass().newInstance());
-                    m_collEvtPointColl.add(new EventPointCollection());
                 }
             } catch (Exception e) {
                 System.out.println(e);
@@ -959,7 +940,6 @@ public abstract class Chart extends WebImage {
         } else if (delta < 0) {
             for (int i = delta; i < 0; i++) {
                 m_collDataPointColl.remove(m_collDataPointColl.size() - 1);
-                m_collEvtPointColl.remove(m_collEvtPointColl.size() - 1);
             }
         }
 

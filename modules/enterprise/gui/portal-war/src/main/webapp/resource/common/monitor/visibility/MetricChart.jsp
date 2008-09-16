@@ -52,7 +52,7 @@
             <c:param name="showLowRange" value="${ViewChartForm.showLowRange}"/>
             <c:param name="showLow" value="${ViewChartForm.showLow}"/>
             <c:param name="collectionType" value="${chartedMetrics[i].collectionType}"/>
-            <c:param name="showEvents" value="${ViewChartForm.showEvents}"/>
+            <c:param name="showEvents" value="false"/>
             <c:param name="showBaseline" value="${ViewChartForm.showBaseline}"/>
             <c:param name="baseline" value="${ViewChartForm.baselineRaw}"/>
             <c:param name="highRange" value="${ViewChartForm.highRangeRaw}"/>

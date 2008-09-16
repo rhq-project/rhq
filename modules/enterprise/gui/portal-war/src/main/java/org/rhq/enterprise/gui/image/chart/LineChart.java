@@ -25,8 +25,6 @@ import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.util.Iterator;
 
-import org.rhq.core.domain.event.Event;
-
 /**
  * LineChart draws a horizontal chart with a line that represents data point along the line. For a description of how to
  * use LineChart, see net.hyperic.chart.Chart.
@@ -36,7 +34,6 @@ import org.rhq.core.domain.event.Event;
 public class LineChart extends VerticalChart {
 
     private Color[] m_clrDataLines = VerticalChart.DEFAULT_COLORS;
-    private boolean m_showLineEvents;
 
     /**
      * Specified whether the data to be charted is cumulative data.
@@ -61,10 +58,7 @@ public class LineChart extends VerticalChart {
 
     @Override
     protected Rectangle draw(ChartGraphics g) {
-        m_showLineEvents = this.showEvents;
-        super.showEvents = false;
         Rectangle result = super.draw(g);
-        this.showEvents = m_showLineEvents;
 
         return result;
     }
@@ -106,28 +100,6 @@ public class LineChart extends VerticalChart {
 
             g.graphics.setColor(this.m_clrDataLines[line]);
             g.graphics.drawPolyline(aiX, aiY, cActualPts);
-
-            // Draw Events
-            if (m_showLineEvents == true) {
-                EventPointCollection collEvts = this.getEventPoints(line);
-                if (collEvts.size() > 0) {
-                    int[] evtDataPts = this.getDataPointEventIndexes(line);
-                    int[] x = this.getXPoints(g, rect);
-
-                    g.graphics.setColor(this.m_clrDataLines[line]);
-
-                    for (int i = 0; i < evtDataPts.length; i++) {
-                        if (evtDataPts[i] == -1) {
-                            continue;
-                        }
-
-                        Event evt = collEvts.get(i);
-                        int index = evtDataPts[i];
-
-                        g.drawEvent(evt.getId(), x[index], yDataPt[index]);
-                    }
-                }
-            }
         }
 
         // Reset the stroke as it was when we were called

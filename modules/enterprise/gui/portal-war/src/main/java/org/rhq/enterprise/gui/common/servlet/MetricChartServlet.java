@@ -28,11 +28,9 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.event.Event;
 import org.rhq.enterprise.gui.image.chart.Chart;
 import org.rhq.enterprise.gui.image.chart.ColumnChart;
 import org.rhq.enterprise.gui.image.chart.DataPointCollection;
-import org.rhq.enterprise.gui.image.chart.EventPointCollection;
 import org.rhq.enterprise.gui.image.chart.LineChart;
 import org.rhq.enterprise.gui.image.chart.VerticalChart;
 import org.rhq.enterprise.gui.image.data.IDataPoint;
@@ -77,7 +75,6 @@ public class MetricChartServlet extends VerticalChartServlet {
     // member data
     private Log log = LogFactory.getLog(MetricChartServlet.class.getName());
     private String chartDataKey;
-    private boolean showEvents;
     private boolean plotLineChart;
 
     public MetricChartServlet() {
@@ -109,8 +106,6 @@ public class MetricChartServlet extends VerticalChartServlet {
         plotLineChart = (dataPointsList.size() > 1);
 
         // chart flags
-        showEvents = parseBooleanParameter(request, SHOW_EVENTS_PARAM, getDefaultShowEvents());
-        _logParameters();
     }
 
     /**
@@ -142,7 +137,6 @@ public class MetricChartServlet extends VerticalChartServlet {
         super.initializeChart(chart);
 
         VerticalChart verticalChart = (VerticalChart) chart;
-        verticalChart.showEvents = showEvents;
         verticalChart.showRightLabels = false;
         verticalChart.rightLabelWidth = (int) (getImageWidth() * 0.1);
         verticalChart.xLabelsSkip = 5;
@@ -160,51 +154,27 @@ public class MetricChartServlet extends VerticalChartServlet {
 
         ChartDataBean dataBean = (ChartDataBean) request.getSession().getAttribute(chartDataKey);
         List<List<IDataPoint>> dataPointsList;
-        List<List<Event>> eventsPointsList;
         if (dataBean != null) {
             dataPointsList = dataBean.getDataPoints();
-            eventsPointsList = dataBean.getEventPoints();
         } else {
             dataPointsList = new ArrayList<List<IDataPoint>>();
-            eventsPointsList = new ArrayList<List<Event>>();
         }
 
         // make sure they're the same size
-        if (dataPointsList.size() == eventsPointsList.size()) {
-            if (log.isDebugEnabled()) {
-                log.debug("got " + dataPointsList.size() + " set(s) of data / event points.");
-            }
-        } else {
-            if (eventsPointsList.size() < dataPointsList.size()) {
-                if (log.isDebugEnabled())
-                    log.debug("Filling up eventsPointsList with empty List<Event>");
-                for (int i = eventsPointsList.size(); i < dataPointsList.size(); i++) {
-                    List<Event> dummy = new ArrayList<Event>();
-                    eventsPointsList.add(dummy);
-                }
-            } else {
-                throw new ServletException("Number of data point sets and number of event point sets must be the same.");
-            }
+        if (log.isDebugEnabled()) {
+            log.debug("got " + dataPointsList.size() + " set(s) of data points.");
         }
 
         veritcalChart.setNumberDataSets(dataPointsList.size());
         int i = 0;
         Iterator<List<IDataPoint>> it = dataPointsList.iterator();
-        Iterator<List<Event>> jt = eventsPointsList.iterator();
-        while (it.hasNext() && jt.hasNext()) {
+        while (it.hasNext()) {
             // data points
             List<IDataPoint> data = it.next();
             if (log.isTraceEnabled())
                 log.trace("plotting " + data.size() + " data points");
             DataPointCollection chartData = chart.getDataPoints(i);
             chartData.addAll(data);
-
-            // events
-            List<Event> events = jt.next();
-            if (log.isTraceEnabled())
-                log.trace("plotting " + events.size() + " event points");
-            EventPointCollection chartEvents = chart.getEventPoints(i);
-            chartEvents.addAll(events);
 
             // increment
             ++i;
@@ -289,9 +259,6 @@ public class MetricChartServlet extends VerticalChartServlet {
             sb.append(chartDataKey);
             sb.append("\n");
             sb.append("\t");
-            sb.append(SHOW_EVENTS_PARAM);
-            sb.append(": ");
-            sb.append(showEvents);
             log.debug(sb.toString());
         }
     }

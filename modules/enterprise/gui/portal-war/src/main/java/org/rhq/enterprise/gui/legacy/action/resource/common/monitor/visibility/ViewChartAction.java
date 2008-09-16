@@ -2,10 +2,10 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ArrayList;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -75,7 +75,6 @@ public class ViewChartAction extends MetricDisplayRangeAction {
             chartParams.put("showAverage", chartForm.getShowAverage());
             chartParams.put("showLowRange", chartForm.getShowLowRange());
             chartParams.put("showLow", chartForm.getShowLow());
-            chartParams.put("showEvents", chartForm.getShowEvents());
             chartParams.put("showBaseline", chartForm.getShowBaseline());
             chartParams.put("threshold", chartForm.getThreshold());
 
@@ -367,17 +366,16 @@ public class ViewChartAction extends MetricDisplayRangeAction {
         name = forHTMLTag(name);
         String chartname = name;
 
-        if (chartList != null ) {
+        if (chartList != null) {
             // make sure its not a duplicate chart
             int i = 2;
-            for( String chart : chartList )
-            {
+            for (String chart : chartList) {
                 // if this is a duplicate chart, skip this proces
                 if (chart.indexOf(chartname + url) > -1)
                     return;
 
                 // if this is a duplicate name...
-                if(chart.indexOf(chartname + ",") > -1) {
+                if (chart.indexOf(chartname + ",") > -1) {
                     // Hard-code name to be a number in parenthesis to differentiate
                     chartname = name + " (" + i + ")";
                     i++;
@@ -385,11 +383,9 @@ public class ViewChartAction extends MetricDisplayRangeAction {
             }
         }
 
-
         String newChart = chartname + "," + url;
 
-
-        chartUtility.saveNewChart( newChart, chartList );
+        chartUtility.saveNewChart(newChart, chartList);
 
         if (LogFactory.getLog("user.preferences").isTraceEnabled()) {
             LogFactory.getLog("user.preferences").trace(

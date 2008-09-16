@@ -25,7 +25,6 @@ import java.awt.Rectangle;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.enterprise.gui.image.data.IDataPoint;
@@ -334,30 +333,6 @@ public class VerticalChart extends Chart {
         lines = this.getXPoints(g, rect);
         g.drawYLines(lines, this.getXLabels(), false, xLabelsSkip);
 
-        //////////////////////////////////////////////////////////
-        // Draw Events
-
-        if (this.showEvents) {
-            if (this.getDataSetCount() == 1) {
-                EventPointCollection collEvts = this.getEventPoints();
-                if (collEvts.size() > 0) {
-                    int[] evtDataPts = getDataPointEventIndexes(0);
-
-                    g.graphics.setColor(DEFAULT_COLORS[0]);
-
-                    for (int i = 0; i < evtDataPts.length; i++) {
-                        if (evtDataPts[i] == -1) {
-                            continue;
-                        }
-
-                        Event evt = collEvts.get(i);
-                        g.drawEvent(evt.getId(), lines[evtDataPts[i]], y2 + ChartGraphics.HALF_EVENT_HEIGHT
-                            + this.lineWidth);
-                    }
-                }
-            }
-        }
-
         ////////////////////////////////////////////////////////////
         // Draw the Bottom Legend
 
@@ -428,38 +403,6 @@ public class VerticalChart extends Chart {
 
     protected void paint(ChartGraphics graph, Rectangle rect) {
         // Subclasses will take care of the painting
-    }
-
-    protected int[] getDataPointEventIndexes(int dataSetNumber) {
-        DataPointCollection datapts = this.getDataPoints(dataSetNumber);
-        EventPointCollection collEvts = this.getEventPoints(dataSetNumber);
-        Iterator<Event> iterEvts = collEvts.iterator();
-        int[] tmp = new int[collEvts.size()];
-        int cActual = 0;
-
-        for (int i = 0; iterEvts.hasNext() == true; i++) {
-            Event evt = iterEvts.next();
-
-            int index = this.findDataPointIndex(evt.getTimestamp().getTime(), datapts);
-
-            //            if(index == -1)
-            //                continue;
-
-            tmp[i] = index;
-            cActual++;
-        }
-
-        /*
-         * if(cActual == 0) return null;
-         */
-
-        // Compact the array and return it
-        int[] res = new int[cActual];
-        for (int i = 0; i < res.length; i++) {
-            res[i] = tmp[i];
-        }
-
-        return res;
     }
 
     protected Point getDataPoint(Rectangle rect, int datapoint) {

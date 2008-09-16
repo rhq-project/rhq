@@ -20,19 +20,15 @@ package org.rhq.enterprise.gui.legacy.beans;
 
 import java.util.List;
 
-import org.rhq.core.domain.event.Event;
-
 /**
  * Helper bean for passing chart data between action class and chart servlet.
  */
 public final class ChartDataBean {
 
     private List dataPoints;
-    private List<List<Event>> eventPoints;
 
-    public ChartDataBean(List dataPoints, List<List<Event>> eventPoints) {
+    public ChartDataBean(List dataPoints) {
         this.dataPoints = dataPoints;
-        this.eventPoints = eventPoints;
     }
 
     /**
@@ -42,10 +38,4 @@ public final class ChartDataBean {
         return dataPoints;
     }
 
-    /**
-     * Returns a <code>List</code> of <code>List</code> of {@link Event} objects.
-     */
-    public List<List<Event>> getEventPoints() {
-        return eventPoints;
-    }
 }

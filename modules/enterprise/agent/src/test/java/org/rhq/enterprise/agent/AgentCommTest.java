@@ -33,13 +33,16 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import org.jboss.remoting.CannotConnectException;
 import org.jboss.remoting.InvokerLocator;
 import org.jboss.remoting.security.SSLSocketBuilder;
+
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.exception.WrappedRemotingException;
 import org.rhq.enterprise.communications.ServiceContainerConfiguration;
@@ -67,6 +70,8 @@ import org.rhq.enterprise.communications.util.SecurityUtil;
  */
 @Test(groups = "agent-comm")
 public class AgentCommTest {
+    private static final boolean ENABLE_TESTS = true;
+
     private static final int LARGE_STRING_SIZE = 100000;
     private static final String LARGE_STRING;
     private static final byte[] LARGE_STRING_BYTES;
@@ -190,6 +195,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testCommandListenerAgentSenderStart() throws Exception {
         // make it so the server auto-detection features do not detect anything
         Properties props1 = new Properties();
@@ -262,6 +268,7 @@ public class AgentCommTest {
      *
      * @throws Throwable
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testRemotePojoExceptions() throws Throwable {
         Properties props2 = new Properties();
         props2.setProperty(ServiceContainerConfigurationConstants.REMOTE_POJOS, SimpleTestAnnotatedPojo.class.getName()
@@ -367,6 +374,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testClientCommandSenderStateListener() throws Exception {
         AgentMain agent1 = m_agent1Test.createAgent(true);
         m_agent2Test.createAgent(true);
@@ -430,6 +438,7 @@ public class AgentCommTest {
      *
      * @throws Throwable
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testRemotePojoInvocationFuture() throws Throwable {
         Properties props2 = new Properties();
         props2.setProperty(ServiceContainerConfigurationConstants.REMOTE_POJOS, SimpleTestAnnotatedPojo.class.getName()
@@ -519,6 +528,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testMultipleCommandPreprocessors() throws Exception {
         Properties props1 = new Properties();
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_COMMAND_PREPROCESSORS,
@@ -544,6 +554,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentStreamingDataToPojoWithPreprocessorAuthenticator() throws Exception {
         Properties props1 = new Properties();
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_COMMAND_PREPROCESSORS,
@@ -593,6 +604,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentStreamingDataToPojoWithPreprocessorAuthenticatorOverSSL() throws Exception {
         Properties props1 = new Properties();
         setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
@@ -667,6 +679,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentStreamingDataToPojoWithInvalidPreprocessorAuthenticator() throws Exception {
         Properties props1 = new Properties();
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_COMMAND_PREPROCESSORS,
@@ -723,6 +736,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentStreamingDataWithPreprocessorAuthenticator() throws Exception {
         Properties props1 = new Properties();
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_COMMAND_PREPROCESSORS,
@@ -776,6 +790,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testCommandPreprocessorAuthenticator() throws Exception {
         // agent1 has both preprocessor and authenticator so it can send and receive securely
         // agent2 only has the authenticator - no preprocessor so when it sends to agent1 it won't be authenticatable
@@ -815,6 +830,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testRemotePojoAnnotationsSendThrottled() throws Exception {
         Properties props1 = new Properties();
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SEND_THROTTLING, "5:7000");
@@ -874,6 +890,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testRemotePojoAnnotationsTimeout() throws Exception {
         Properties props2 = new Properties();
         props2.setProperty(ServiceContainerConfigurationConstants.REMOTE_POJOS, SimpleTestAnnotatedPojo.class.getName()
@@ -913,6 +930,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testRemotePojoAnnotationsGuaranteedDelivery() throws Exception {
         Properties props2 = new Properties();
         props2.setProperty(ServiceContainerConfigurationConstants.REMOTE_POJOS, SimpleTestAnnotatedPojo.class.getName()
@@ -993,6 +1011,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentStreamingDataTimeout() throws Exception {
         Properties props1 = new Properties();
         props1.setProperty(ServiceContainerConfigurationConstants.REMOTE_STREAM_MAX_IDLE_TIME, "1000");
@@ -1032,6 +1051,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentStreamingData() throws Exception {
         Properties props2 = new Properties();
         props2.setProperty(ServiceContainerConfigurationConstants.CMDSERVICES, SimpleTestStreamService.class.getName());
@@ -1073,6 +1093,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentStreamingDataToPojo() throws Exception {
         Properties props2 = new Properties();
         props2.setProperty(ServiceContainerConfigurationConstants.REMOTE_POJOS, SimpleTestStreamPojo.class.getName()
@@ -1111,6 +1132,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentStreamingDataToPojoMultipleStreams() throws Exception {
         Properties props2 = new Properties();
         props2.setProperty(ServiceContainerConfigurationConstants.REMOTE_POJOS, SimpleTestStreamPojo.class.getName()
@@ -1160,6 +1182,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentStreamingDataToPojoOverSSL() throws Exception {
         // set up the SSL configuration.
         // note a side test - see that the internal remote pojo service is created even with dynamic discovery turned off
@@ -1223,6 +1246,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentStreamingDataBigData() throws Exception {
         Properties props2 = new Properties();
         props2.setProperty(ServiceContainerConfigurationConstants.CMDSERVICES, SimpleTestStreamService.class.getName());
@@ -1262,6 +1286,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentStreamingDataVeryBigData() throws Exception {
         Properties props2 = new Properties();
         props2.setProperty(ServiceContainerConfigurationConstants.CMDSERVICES, SimpleTestStreamService.class.getName());
@@ -1305,6 +1330,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentStreamingDataToPojoBigData() throws Exception {
         Properties props2 = new Properties();
         props2.setProperty(ServiceContainerConfigurationConstants.REMOTE_POJOS, SimpleTestStreamPojo.class.getName()
@@ -1342,6 +1368,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentStreamingDataToPojoOverSSLBigData() throws Exception {
         // set up the SSL configuration.
         Properties props1 = new Properties();
@@ -1402,6 +1429,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentStartStop() throws Exception {
         AgentMain agent1 = m_agent1Test.createAgent(true);
         AgentMain agent2 = m_agent2Test.createAgent(true);
@@ -1423,6 +1451,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentConfigurationOverride() throws Exception {
         Properties props1 = new Properties();
         setServerLocatorUriProperties(props1, "socket", "127.0.0.1", 22345, null);
@@ -1457,6 +1486,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testSendMessage() throws Exception {
         AgentMain agent1 = m_agent1Test.createAgent(true);
         AgentMain agent2 = m_agent2Test.createAgent(true);
@@ -1482,6 +1512,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testMetrics() throws Exception {
         AgentMain agent1 = m_agent1Test.createAgent(true);
         AgentMain agent2 = m_agent2Test.createAgent(true);
@@ -1575,7 +1606,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
-    @Test(enabled = false)
+    @Test(enabled = ENABLE_TESTS)
     public void testAutoDiscoveryListeners() throws Exception {
         System.out.println("testAutoDiscoveryListeners - WHY DOES THIS PERIODICALLY FAIL?");
 
@@ -1641,6 +1672,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testAutoDiscovery() throws Exception {
         Properties props1 = new Properties();
         props1.setProperty(AgentConfigurationConstants.SERVER_AUTO_DETECTION, "true");
@@ -1700,6 +1732,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testServerPolling() throws Exception {
         Properties props1 = new Properties();
         props1.setProperty(AgentConfigurationConstants.SERVER_AUTO_DETECTION, "false");
@@ -1759,6 +1792,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testCreateKeystoreSecureAgent() throws Exception {
         Properties props1 = new Properties();
         setServerLocatorUriProperties(props1, "socket", "127.0.0.1", 22222, null);
@@ -1781,6 +1815,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testCreateKeystoreSecureServer() throws Exception {
         Properties props1 = new Properties();
         setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
@@ -1804,6 +1839,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testSendSecureMessageServerAuthFailure() throws Exception {
         Properties props1 = new Properties();
         setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
@@ -1865,6 +1901,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testSendSecureMessageClientAuthFailure() throws Exception {
         Properties props1 = new Properties();
         setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
@@ -1928,6 +1965,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testSendSecureMessageNoAuth() throws Exception {
         Properties props1 = new Properties();
         setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
@@ -1999,6 +2037,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testSendSecureMessageFullAuth() throws Exception {
         // each keystore is the other's truststore
         Properties props1 = new Properties();
@@ -2071,6 +2110,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testSendSecureMessageFullAuthWrongKeystorePassword() throws Exception {
         // each keystore is the other's truststore
         Properties props1 = new Properties();
@@ -2128,6 +2168,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testSendSecureMessageClientAuthWantWithTruststore() throws Exception {
         // each keystore is the other's truststore
         Properties props1 = new Properties();
@@ -2205,6 +2246,7 @@ public class AgentCommTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLE_TESTS)
     public void testSendSecureMessageNoAuthDifferentProtocol() throws Exception {
         Properties props1 = new Properties();
         setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);

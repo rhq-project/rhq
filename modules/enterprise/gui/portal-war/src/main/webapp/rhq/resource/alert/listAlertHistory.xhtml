@@ -153,7 +153,17 @@
                   <f:facet name="header">
                   	<h:outputText styleClass="headerText" value="Recovery Info" />                  	
                   </f:facet>
-                  <h:outputText value="#{onf:getAlertRecoveryInfo(item.alert.id)}" />
+                  <h:outputText value="This alert caused its alert definition to be disabled" rendered="#{onf:getAlertRecoveryInfo(item.alert.id) == 2}"/>
+                  <h:outputText value="N/A" rendered="#{onf:getAlertRecoveryInfo(item.alert.id) == 1}"/>
+                                    
+                  <h:outputText value="Triggered'" rendered="#{onf:getAlertRecoveryInfo(item.alert.id) != '1' and onf:getAlertRecoveryInfo(item.alert.id) != '2'}"/>
+                  <h:outputLink value="/alerts/Config.do" rendered="#{onf:getAlertRecoveryInfo(item.alert.id) != '1' and onf:getAlertRecoveryInfo(item.alert.id) != '2'}">
+                  	 <f:param name="mode" value="viewRoles"/>
+                     <f:param name="id" value="#{Resource.id}"/>
+                     <f:param name="ad" value="#{item.alert.recoveryId}"/>
+                     <h:outputText value="#{onf:getAlertRecoveryInfo(item.alert.id)}"/>
+                  </h:outputLink>
+                  <h:outputText value="' to be re-enabled" rendered="#{onf:getAlertRecoveryInfo(item.alert.id) != '1' and onf:getAlertRecoveryInfo(item.alert.id) != '2'}"/>				  
                </rich:column>
 
                <f:facet name="footer">

@@ -188,13 +188,13 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
             AlertDefinitionManagerLocal alertDefinitionManagerLocal = LookupUtil.getAlertDefinitionManager();
             AlertDefinition recoveryAlertDefinition = alertDefinitionManagerLocal.getAlertDefinitionById(subject,
                 recoveryAlertId);
-            return "Triggered '" + recoveryAlertDefinition.getName() + "' to be re-enabled";
+            return recoveryAlertDefinition.getName();
         }
 
         if (alert.getWillRecover()) {
-            return "This alert caused its alert definition to be disabled";
+            return "2";
         }
 
-        return "N/A";
+        return "1";
     }
 }

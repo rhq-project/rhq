@@ -113,7 +113,9 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
                     .getPluginConfiguration() : null);
 
             List<EmsBean> beans = connection.queryBeans(queryUtility.getTranslatedQuery());
-
+            if (log.isDebugEnabled()) {
+                log.debug("Found [" + beans.size() + "] mbeans for query [" + queryUtility.getTranslatedQuery() + "].");
+            }
             for (EmsBean bean : beans) {
                 if (queryUtility.setMatchedKeyValues(bean.getBeanName().getKeyProperties())) {
                     // Only use beans that have all the properties we've made variables of
@@ -159,6 +161,11 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
                     queryUtility.resetVariables();
                 }
             }
+
+            if (log.isDebugEnabled()) {
+                log.debug("[" + services.size() + "] services have been added");
+            }
+
         }
 
         return services;

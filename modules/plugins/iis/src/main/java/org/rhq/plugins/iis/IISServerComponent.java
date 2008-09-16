@@ -77,7 +77,6 @@ public class IISServerComponent implements ResourceComponent, MeasurementFacet, 
         }
     }
 
-    @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
         OperationResult result = null;

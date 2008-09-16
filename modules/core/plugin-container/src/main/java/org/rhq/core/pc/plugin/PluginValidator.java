@@ -36,6 +36,8 @@ import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 
 /**
  * A utility to test a set of plugins are valid.
@@ -156,7 +158,26 @@ public class PluginValidator {
                             success = false;
                             LOG.error("Component class [" + componentClass + "] for resource type ["
                                 + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
-                                + "] does not configuration.");
+                                + "] does not support configuration.");
+                        }
+                        boolean hasCreatableChild = false;
+                        for (ResourceType childResourceType : resourceType.getChildResourceTypes()) {
+                            if (childResourceType.isCreatable()) {
+                                hasCreatableChild = true;
+                                break;
+                            }
+                        }
+                        if (hasCreatableChild
+                                && !CreateChildResourceFacet.class.isAssignableFrom(componentClazz)) {
+                            LOG.error("Component class [" + componentClass + "] for resource type ["
+                                + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
+                                + "] does not support creation of child resources.");
+                        }
+                        if (resourceType.isDeletable()
+                                && !DeleteResourceFacet.class.isAssignableFrom(componentClazz)) {
+                            LOG.error("Component class [" + componentClass + "] for resource type ["
+                                + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
+                                + "] does not support deletion.");
                         }
                     } catch (Exception e) {
                         success = false;

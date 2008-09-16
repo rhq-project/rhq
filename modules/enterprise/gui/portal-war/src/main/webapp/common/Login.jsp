@@ -1,3 +1,4 @@
+<%@ page import="java.net.URL" %>
 <%@ page language="java" %>
 <%@ page errorPage="/common/Error.jsp" %>
 <% response.setStatus(401);%>
@@ -5,6 +6,20 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-html-el" prefix="html" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-logic-el" prefix="logic" %>
+
+<%-- An example of forcing secure login only
+<%
+
+    if (!request.isSecure())
+    {
+        String reqUrl = HttpUtils.getRequestURL(request).toString();
+        URL url = new URL(reqUrl);
+        URL redirectUrl = new URL("https", url.getHost(), 7443, url.getPath());
+        response.sendRedirect(redirectUrl.toExternalForm());
+    }
+
+%>
+--%>
 
 <html>
 <head>

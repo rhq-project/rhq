@@ -1517,22 +1517,24 @@ public class AgentCommTest {
         AgentMain agent1 = m_agent1Test.createAgent(true);
         AgentMain agent2 = m_agent2Test.createAgent(true);
 
+        Thread.sleep(2000); // let's wait for the senders to start and send the connectAgent messages (which will fail)
+
         ServiceContainerMetricsMBean server_metrics1 = m_agent1Test.getServerMetrics();
         ServiceContainerMetricsMBean server_metrics2 = m_agent2Test.getServerMetrics();
         ClientCommandSenderMetrics client_metrics1 = m_agent1Test.getClientMetrics();
         ClientCommandSenderMetrics client_metrics2 = m_agent2Test.getClientMetrics();
 
         assert client_metrics1.getNumberSuccessfulCommandsSent() == 0;
-        assert client_metrics1.getNumberFailedCommandsSent() == 0;
+        assert client_metrics1.getNumberFailedCommandsSent() == 1; // the connectAgent at sender startup
         assert client_metrics2.getNumberSuccessfulCommandsSent() == 0;
-        assert client_metrics2.getNumberFailedCommandsSent() == 0;
+        assert client_metrics2.getNumberFailedCommandsSent() == 1; // the connectAgent at sender startup
         assert client_metrics2.getAverageExecutionTimeSent() == 0;
         assert server_metrics1.getNumberSuccessfulCommandsReceived() == 0;
-        assert server_metrics1.getNumberFailedCommandsReceived() == 0;
-        assert server_metrics1.getNumberTotalCommandsReceived() == 0;
+        assert server_metrics1.getNumberFailedCommandsReceived() == 1;
+        assert server_metrics1.getNumberTotalCommandsReceived() == 1;
         assert server_metrics2.getNumberSuccessfulCommandsReceived() == 0;
-        assert server_metrics2.getNumberFailedCommandsReceived() == 0;
-        assert server_metrics2.getNumberTotalCommandsReceived() == 0;
+        assert server_metrics2.getNumberFailedCommandsReceived() == 1;
+        assert server_metrics2.getNumberTotalCommandsReceived() == 1;
         assert server_metrics2.getAverageExecutionTimeReceived() == 0;
 
         IdentifyCommand command = new IdentifyCommand();
@@ -1544,29 +1546,29 @@ public class AgentCommTest {
             .getServiceContainer().getConfiguration().getConnectorBindPort() : "Didn't get the identify of agent2 - what remoting server did we just communicate with??";
 
         assert client_metrics1.getNumberSuccessfulCommandsSent() == 1;
-        assert client_metrics1.getNumberFailedCommandsSent() == 0;
+        assert client_metrics1.getNumberFailedCommandsSent() == 1;
         assert client_metrics2.getNumberSuccessfulCommandsSent() == 0;
-        assert client_metrics2.getNumberFailedCommandsSent() == 0;
+        assert client_metrics2.getNumberFailedCommandsSent() == 1;
         assert server_metrics1.getNumberSuccessfulCommandsReceived() == 0;
-        assert server_metrics1.getNumberFailedCommandsReceived() == 0;
-        assert server_metrics1.getNumberTotalCommandsReceived() == 0;
+        assert server_metrics1.getNumberFailedCommandsReceived() == 1;
+        assert server_metrics1.getNumberTotalCommandsReceived() == 1;
         assert server_metrics2.getNumberSuccessfulCommandsReceived() == 1;
-        assert server_metrics2.getNumberFailedCommandsReceived() == 0;
-        assert server_metrics2.getNumberTotalCommandsReceived() == 1;
+        assert server_metrics2.getNumberFailedCommandsReceived() == 1;
+        assert server_metrics2.getNumberTotalCommandsReceived() == 2;
 
         response = (IdentifyCommandResponse) agent1.getClientCommandSender().sendSynch(command);
         assert response.isSuccessful() : "Failed to send command from agent1 to agent2";
 
         assert client_metrics1.getNumberSuccessfulCommandsSent() == 2;
-        assert client_metrics1.getNumberFailedCommandsSent() == 0;
+        assert client_metrics1.getNumberFailedCommandsSent() == 1;
         assert client_metrics2.getNumberSuccessfulCommandsSent() == 0;
-        assert client_metrics2.getNumberFailedCommandsSent() == 0;
+        assert client_metrics2.getNumberFailedCommandsSent() == 1;
         assert server_metrics1.getNumberSuccessfulCommandsReceived() == 0;
-        assert server_metrics1.getNumberFailedCommandsReceived() == 0;
-        assert server_metrics1.getNumberTotalCommandsReceived() == 0;
+        assert server_metrics1.getNumberFailedCommandsReceived() == 1;
+        assert server_metrics1.getNumberTotalCommandsReceived() == 1;
         assert server_metrics2.getNumberSuccessfulCommandsReceived() == 2;
-        assert server_metrics2.getNumberFailedCommandsReceived() == 0;
-        assert server_metrics2.getNumberTotalCommandsReceived() == 2;
+        assert server_metrics2.getNumberFailedCommandsReceived() == 1;
+        assert server_metrics2.getNumberTotalCommandsReceived() == 3;
 
         response = (IdentifyCommandResponse) agent2.getClientCommandSender().sendSynch(command);
         assert response.isSuccessful() : "Failed to send command from agent2 to agent1";
@@ -1574,29 +1576,29 @@ public class AgentCommTest {
             .getServiceContainer().getConfiguration().getConnectorBindPort() : "Didn't get the identity of agent1 - what remoting server did we just communicate with??";
 
         assert client_metrics1.getNumberSuccessfulCommandsSent() == 2;
-        assert client_metrics1.getNumberFailedCommandsSent() == 0;
+        assert client_metrics1.getNumberFailedCommandsSent() == 1;
         assert client_metrics2.getNumberSuccessfulCommandsSent() == 1;
-        assert client_metrics2.getNumberFailedCommandsSent() == 0;
+        assert client_metrics2.getNumberFailedCommandsSent() == 1;
         assert server_metrics1.getNumberSuccessfulCommandsReceived() == 1;
-        assert server_metrics1.getNumberFailedCommandsReceived() == 0;
-        assert server_metrics1.getNumberTotalCommandsReceived() == 1;
+        assert server_metrics1.getNumberFailedCommandsReceived() == 1;
+        assert server_metrics1.getNumberTotalCommandsReceived() == 2;
         assert server_metrics2.getNumberSuccessfulCommandsReceived() == 2;
-        assert server_metrics2.getNumberFailedCommandsReceived() == 0;
-        assert server_metrics2.getNumberTotalCommandsReceived() == 2;
+        assert server_metrics2.getNumberFailedCommandsReceived() == 1;
+        assert server_metrics2.getNumberTotalCommandsReceived() == 3;
 
         response = (IdentifyCommandResponse) agent2.getClientCommandSender().sendSynch(command);
         assert response.isSuccessful() : "Failed to send command from agent2 to agent1";
 
         assert client_metrics1.getNumberSuccessfulCommandsSent() == 2;
-        assert client_metrics1.getNumberFailedCommandsSent() == 0;
+        assert client_metrics1.getNumberFailedCommandsSent() == 1;
         assert client_metrics2.getNumberSuccessfulCommandsSent() == 2;
-        assert client_metrics2.getNumberFailedCommandsSent() == 0;
+        assert client_metrics2.getNumberFailedCommandsSent() == 1;
         assert server_metrics1.getNumberSuccessfulCommandsReceived() == 2;
-        assert server_metrics1.getNumberFailedCommandsReceived() == 0;
-        assert server_metrics1.getNumberTotalCommandsReceived() == 2;
+        assert server_metrics1.getNumberFailedCommandsReceived() == 1;
+        assert server_metrics1.getNumberTotalCommandsReceived() == 3;
         assert server_metrics2.getNumberSuccessfulCommandsReceived() == 2;
-        assert server_metrics2.getNumberFailedCommandsReceived() == 0;
-        assert server_metrics2.getNumberTotalCommandsReceived() == 2;
+        assert server_metrics2.getNumberFailedCommandsReceived() == 1;
+        assert server_metrics2.getNumberTotalCommandsReceived() == 3;
 
         return;
     }

@@ -148,7 +148,12 @@
             boolean grouped = (event instanceof GroupedEventComposite);
 
             color = eventColor(event.getSeverity());
+
             icon = "/images/icn_info_" + color + (grouped?"_multi":"") + ".png";
+
+            if (color == "yellow") {
+                color = "#F5EB0A";
+            }
 
             String link = "/resource/common/Events.do?mode=events&id=" + resourceId + "&eventId=" + event.getEventId();
 
@@ -157,7 +162,7 @@
                 StringBuilder buf = new StringBuilder();
                 for (EventComposite childEvent : ((GroupedEventComposite)event).events) {
                     buf.append("<a href='/resource/common/Events.do?mode=events&id=" + resourceId + "&eventId=" + childEvent.getEventId() + "'>");
-                    buf.append("<font size=\"-1\" color=\"" + eventColor(childEvent.getSeverity()) + "\">" + trimLength(childEvent.getEventDetail(),80) + "</font></a><br />");
+                    buf.append("<font size=\"-1\" color=\"" + color + "\">" + trimLength(childEvent.getEventDetail(),80) + "</font></a><br />");
                 }
                 detail = buf.toString();
             } else {

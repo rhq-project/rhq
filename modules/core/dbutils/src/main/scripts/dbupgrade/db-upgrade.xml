@@ -467,6 +467,18 @@ DB Upgrade:
             columnType="BOOLEAN" />
    </schemaSpec>
    
+   <schemaSpec version="2.18">
+      <schema-addColumn table="RHQ_PARTITION_EVENT" column="EVENT_DETAIL" columnType="VARCHAR2" precision="512"/>
+      
+      <schema-addColumn table="RHQ_SERVER" column="MTIME" columnType="LONG"/>
+      <schema-directSQL>
+         <statement desc="Updating existing servers with default MTIME=CTIME">
+            UPDATE RHQ_SERVER SET MTIME = CTIME
+         </statement>
+      </schema-directSQL>
+      <schema-alterColumn table="RHQ_SERVER" column="MTIME" nullable="FALSE"/>      
+   </schemaSpec>
+	
 </dbupgrade>
 
 </target>

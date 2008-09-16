@@ -43,10 +43,22 @@ public interface AffinityGroupManagerLocal {
 
     void addAgentsToGroup(Subject subject, int affinityGroupId, Integer[] agentIds);
 
+    /**
+     * This should only be called if the agent is currently assigned to an affinity group and that group
+     * is being removed, setting the agent to no affinity. Otherwise, unnecessary partition events can be generated. 
+     * @param subject
+     * @param agentIds
+     */
     void removeAgentsFromGroup(Subject subject, Integer[] agentIds);
 
     void addServersToGroup(Subject subject, int affinityGroupId, Integer[] serverIds);
 
+    /**
+     * This should only be called if the server is currently assigned to an affinity group and that group
+     * is being removed, setting the server to no affinity. Otherwise, unnecessary partition events can be generated.
+     * @param subject
+     * @param agentIds
+     */
     void removeServersFromGroup(Subject subject, Integer[] serverIds);
 
     int getAffinityGroupCount();

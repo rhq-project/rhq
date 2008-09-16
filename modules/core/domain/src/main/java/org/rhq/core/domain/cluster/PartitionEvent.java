@@ -48,10 +48,10 @@ import javax.persistence.Table;
  */
 @Entity(name = "PartitionEvent")
 @NamedQueries //
-( { @NamedQuery(name = PartitionEvent.QUERY_FIND_ALL, query = "SELECT pe FROM PartitionEvent pe"),
-    @NamedQuery(name = PartitionEvent.QUERY_FIND_VIA_EXECUTION_STATUS, query = "" //
-        + "SELECT pe FROM PartitionEvent pe " //
-        + " WHERE pe.executionStatus = :executionStatus") })
+( {
+    @NamedQuery(name = PartitionEvent.QUERY_FIND_ALL, query = "SELECT pe FROM PartitionEvent pe"),
+    @NamedQuery(name = PartitionEvent.QUERY_FIND_BY_EXECUTION_STATUS, query = "SELECT pe FROM PartitionEvent pe WHERE pe.executionStatus = :executionStatus") //
+})
 @SequenceGenerator(name = "id", sequenceName = "RHQ_PARTITION_EVENT_ID_SEQ")
 @Table(name = "RHQ_PARTITION_EVENT")
 public class PartitionEvent implements Serializable {
@@ -59,7 +59,7 @@ public class PartitionEvent implements Serializable {
     public static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_ALL = "PartitionEvent.findAll";
-    public static final String QUERY_FIND_VIA_EXECUTION_STATUS = "PartitionEvent.findRequested";
+    public static final String QUERY_FIND_BY_EXECUTION_STATUS = "PartitionEvent.findByExecutionStatus";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
@@ -76,12 +76,15 @@ public class PartitionEvent implements Serializable {
     @Enumerated(EnumType.STRING)
     private PartitionEventType eventType;
 
+    @Column(name = "EVENT_DETAIL", nullable = true)
+    private String eventDetail;
+
     @Column(name = "EXECUTION_STATUS", nullable = false)
     @Enumerated(EnumType.STRING)
     private PartitionEvent.ExecutionStatus executionStatus;
 
     @OneToMany(mappedBy = "partitionEvent", cascade = CascadeType.ALL)
-    private List<PartitionEventDetails> eventDetails = new ArrayList<PartitionEventDetails>();
+    private List<PartitionEventDetails> partitionDetails = new ArrayList<PartitionEventDetails>();
 
     // required for JPA
     protected PartitionEvent() {
@@ -89,8 +92,16 @@ public class PartitionEvent implements Serializable {
 
     public PartitionEvent(String subjectName, PartitionEventType eventType,
         PartitionEvent.ExecutionStatus executionStatus) {
+
+        this(subjectName, eventType, (String) null, executionStatus);
+    }
+
+    public PartitionEvent(String subjectName, PartitionEventType eventType, String eventDetail,
+        ExecutionStatus executionStatus) {
+        super();
         this.subjectName = subjectName;
         this.eventType = eventType;
+        this.eventDetail = eventDetail;
         this.executionStatus = executionStatus;
     }
 
@@ -126,12 +137,20 @@ public class PartitionEvent implements Serializable {
         this.eventType = eventType;
     }
 
-    public List<PartitionEventDetails> getEventDetails() {
-        return eventDetails;
+    public String getEventDetail() {
+        return eventDetail;
     }
 
-    public void setEventDetails(List<PartitionEventDetails> eventDetails) {
-        this.eventDetails = eventDetails;
+    public void setEventDetail(String eventDetail) {
+        this.eventDetail = eventDetail;
+    }
+
+    public List<PartitionEventDetails> getPartitionDetails() {
+        return partitionDetails;
+    }
+
+    public void setPartitionDetails(List<PartitionEventDetails> partitionDetails) {
+        this.partitionDetails = partitionDetails;
     }
 
     public enum ExecutionStatus {

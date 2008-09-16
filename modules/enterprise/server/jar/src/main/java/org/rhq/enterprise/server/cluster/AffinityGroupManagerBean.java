@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.cluster;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -33,6 +34,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cluster.AffinityGroup;
+import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.cluster.composite.AffinityGroupCountComposite;
 import org.rhq.core.domain.resource.Agent;
@@ -54,6 +56,9 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
+
+    @EJB
+    private PartitionEventManagerLocal partitionEventManager;
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public AffinityGroup getById(Subject subject, int affinityGroupId) {
@@ -212,6 +217,15 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
         log.debug("Removed " + removedAffinityGroups + " AffinityGroups: " + updatedAgents + " agents and "
             + updatedServers + " were updated");
 
+        for (Integer agId : affinityGroupIds) {
+            AffinityGroup ag = entityManager.find(AffinityGroup.class, agId);
+            partitionEventManager.auditPartitionEvent(subject, PartitionEventType.AFFINITY_GROUP_DELETE, ag.getName());
+
+        }
+        // Now, request a cloud repartitioning due to the affinity group changes
+        partitionEventManager.cloudPartitionEventRequest(subject, PartitionEventType.AFFINITY_GROUP_CHANGE,
+            PartitionEventType.AFFINITY_GROUP_DELETE.name());
+
         return removedAffinityGroups;
     }
 
@@ -226,6 +240,18 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
         query.setParameter("agentIds", agentIdsList);
 
         query.executeUpdate();
+
+        // Audit each changed affinity group assignment (is this too verbose?)
+        String auditString = group.getName() + " <-- ";
+        for (Integer agentId : agentIdsList) {
+            Agent agent = entityManager.find(Agent.class, agentId);
+            partitionEventManager.auditPartitionEvent(subject, PartitionEventType.AGENT_AFFINITY_GROUP_ASSIGN,
+                auditString + agent.getName());
+
+        }
+        // Now, request a cloud repartitioning due to the affinity group changes
+        partitionEventManager.cloudPartitionEventRequest(subject, PartitionEventType.AFFINITY_GROUP_CHANGE, group
+            .getName());
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -236,6 +262,17 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
         query.setParameter("agentIds", agentIdsList);
 
         query.executeUpdate();
+
+        // Audit each changed affinity group assignment (is this too verbose?)
+        for (Integer agentId : agentIdsList) {
+            Agent agent = entityManager.find(Agent.class, agentId);
+            partitionEventManager.auditPartitionEvent(subject, PartitionEventType.AGENT_AFFINITY_GROUP_REMOVE, agent
+                .getName());
+
+        }
+        // Now, request a cloud repartitioning due to the affinity group changes
+        partitionEventManager.cloudPartitionEventRequest(subject, PartitionEventType.AFFINITY_GROUP_CHANGE,
+            PartitionEventType.AGENT_AFFINITY_GROUP_REMOVE.name());
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -249,6 +286,18 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
         query.setParameter("serverIds", serverIdsList);
 
         query.executeUpdate();
+
+        // Audit each changed affinity group assignment (is this too verbose?)
+        String auditString = group.getName() + " <-- ";
+        for (Integer serverId : serverIdsList) {
+            Server server = entityManager.find(Server.class, serverId);
+            partitionEventManager.auditPartitionEvent(subject, PartitionEventType.SERVER_AFFINITY_GROUP_ASSIGN,
+                auditString + server.getName());
+
+        }
+        // Now, request a cloud repartitioning due to the affinity group changes
+        partitionEventManager.cloudPartitionEventRequest(subject, PartitionEventType.AFFINITY_GROUP_CHANGE, group
+            .getName());
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -259,5 +308,17 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
         query.setParameter("serverIds", serverIdsList);
 
         query.executeUpdate();
+
+        // Audit each changed affinity group assignment (is this too verbose?)
+        for (Integer serverId : serverIdsList) {
+            Server server = entityManager.find(Server.class, serverId);
+            partitionEventManager.auditPartitionEvent(subject, PartitionEventType.SERVER_AFFINITY_GROUP_REMOVE, server
+                .getName());
+
+        }
+        // Now, request a cloud repartitioning due to the affinity group changes
+        partitionEventManager.cloudPartitionEventRequest(subject, PartitionEventType.AFFINITY_GROUP_CHANGE,
+            PartitionEventType.AGENT_AFFINITY_GROUP_REMOVE.name());
+
     }
 }

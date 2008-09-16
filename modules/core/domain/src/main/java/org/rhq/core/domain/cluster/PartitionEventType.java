@@ -23,22 +23,26 @@ package org.rhq.core.domain.cluster;
  */
 public enum PartitionEventType {
 
-    AGENT_REGISTRATION(false), //
-    AGENT_JOIN(false), //
-    AGENT_LEAVE(false), //
+    AGENT_REGISTRATION(false), // Agent registers with server defined in setup, or previously connected server from server list. 
+    AGENT_CONNECT(false), // Agent connects to server on server list
+    AGENT_SHUTDOWN(false), // Agent notifies server of agent shutdown
+    AGENT_LEAVE(false), // TODO (jshaughn) Not currently used, may work this into the suspect job logic 
 
-    SERVER_JOIN(true), // Server becomes available, either newly created or restarted in non-maintenance mode
-    SERVER_DOWN(true), // Server crashes, is shut down normally
+    SERVER_JOIN(true), // Server becomes available, either newly created or started in non-maintenance mode
+    SERVER_DOWN(true), // Server crashes, is shutdown normally
     SERVER_DELETION(true), //
-    SERVER_COMPUTE_POWER_CHANGE(true), //
+    SERVER_COMPUTE_POWER_CHANGE(true), // Not yet implemented
+    OPERATION_MODE_CHANGE(true),
 
-    AFFINITY_GROUP_CHANGE(true), //
+    AGENT_AFFINITY_GROUP_ASSIGN(true), // An agent was assigned to an affinity group
+    AGENT_AFFINITY_GROUP_REMOVE(true), // An agent was set to have no affinity group
+    SERVER_AFFINITY_GROUP_ASSIGN(true), // A server was assigned to an affinity group
+    SERVER_AFFINITY_GROUP_REMOVE(true), // A server was set to have no affinity group
+    AFFINITY_GROUP_CHANGE(true), // Some affinity group change has happened (one or more of ASSIGN/REMOVE) 
+    AFFINITY_GROUP_DELETE(true), // An affinity group has been removed with, most likely associated agent/server removals 
 
-    USER_INITIATED_PARTITION(true), // Admin requested via HAAC
-    SYSTEM_INITIATED_PARTITION(true), // Load imbalance (maybe should be an explicit type for each system initiated type)
-
-    MAINTENANCE_MODE_AGENT(false), // future
-    MAINTENANCE_MODE_SERVER(true); // 
+    ADMIN_INITIATED_PARTITION(true), // Admin requested via HAAC
+    SYSTEM_INITIATED_PARTITION(true); // Load imbalance (maybe should be an explicit type for each system initiated type)
 
     private final boolean cloudPartitionEvent;
 

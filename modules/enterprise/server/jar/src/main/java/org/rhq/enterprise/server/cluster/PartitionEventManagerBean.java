@@ -85,23 +85,41 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
                 + agentName);
         }
 
-        PartitionEvent partitionEvent = new PartitionEvent(subject.getName(), eventType,
+        PartitionEvent partitionEvent = new PartitionEvent(subject.getName(), eventType, agentName,
             PartitionEvent.ExecutionStatus.IMMEDIATE);
         entityManager.persist(partitionEvent);
 
         return failoverListManager.getForSingleAgent(partitionEvent, agent.getName());
     }
 
-    public Map<Agent, FailoverListComposite> cloudPartitionEvent(Subject subject, PartitionEventType eventType) {
+    public Map<Agent, FailoverListComposite> cloudPartitionEvent(Subject subject, PartitionEventType eventType,
+        String eventDetail) {
         if (!eventType.isCloudPartitionEvent()) {
             throw new IllegalArgumentException("Invalid cloud partition event type: " + eventType);
         }
 
-        PartitionEvent partitionEvent = new PartitionEvent(subject.getName(), eventType,
+        PartitionEvent partitionEvent = new PartitionEvent(subject.getName(), eventType, eventDetail,
             PartitionEvent.ExecutionStatus.IMMEDIATE);
         entityManager.persist(partitionEvent);
 
         return failoverListManager.refresh(partitionEvent);
+    }
+
+    public void cloudPartitionEventRequest(Subject subject, PartitionEventType eventType, String eventDetail) {
+        if (!eventType.isCloudPartitionEvent()) {
+            throw new IllegalArgumentException("Invalid cloud partition event type: " + eventType);
+        }
+
+        PartitionEvent partitionEvent = new PartitionEvent(subject.getName(), eventType, eventDetail,
+            PartitionEvent.ExecutionStatus.REQUESTED);
+        entityManager.persist(partitionEvent);
+    }
+
+    public void auditPartitionEvent(Subject subject, PartitionEventType eventType, String eventDetail) {
+
+        PartitionEvent partitionEvent = new PartitionEvent(subject.getName(), eventType, eventDetail,
+            PartitionEvent.ExecutionStatus.AUDIT);
+        entityManager.persist(partitionEvent);
     }
 
     public void deletePartitionEvent(int partitionEventId) {
@@ -109,26 +127,9 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
         entityManager.remove(doomedEvent); // cascade rules should take care of this
     }
 
-    public void cloudPartitionEventRequest(Subject subject, PartitionEventType eventType) {
-        if (!eventType.isCloudPartitionEvent()) {
-            throw new IllegalArgumentException("Invalid cloud partition event type: " + eventType);
-        }
-
-        PartitionEvent partitionEvent = new PartitionEvent(subject.getName(), eventType,
-            PartitionEvent.ExecutionStatus.REQUESTED);
-        entityManager.persist(partitionEvent);
-    }
-
-    public void auditPartitionEvent(Subject subject, PartitionEventType eventType) {
-
-        PartitionEvent partitionEvent = new PartitionEvent(subject.getName(), eventType,
-            PartitionEvent.ExecutionStatus.AUDIT);
-        entityManager.persist(partitionEvent);
-    }
-
     public void deletePartitionEvent(PartitionEvent event) {
         event = entityManager.find(PartitionEvent.class, event.getId());
-        for (PartitionEventDetails next : event.getEventDetails()) {
+        for (PartitionEventDetails next : event.getPartitionDetails()) {
             entityManager.remove(next);
         }
         entityManager.remove(event);
@@ -136,8 +137,10 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
 
     public void processRequestedPartitionEvents() {
         boolean completedRequest = false;
-        Query query = entityManager.createQuery(PartitionEvent.QUERY_FIND_VIA_EXECUTION_STATUS);
-        query.setParameter(1, PartitionEvent.ExecutionStatus.REQUESTED);
+
+        Query query = entityManager.createNamedQuery(PartitionEvent.QUERY_FIND_BY_EXECUTION_STATUS);
+        query.setParameter("executionStatus", PartitionEvent.ExecutionStatus.REQUESTED);
+
         @SuppressWarnings("unchecked")
         List<PartitionEvent> requestedPartitionEvents = query.getResultList();
 
@@ -159,8 +162,6 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
 
             next.setExecutionStatus(PartitionEvent.ExecutionStatus.COMPLETED);
         }
-
-        // Notify agents of new server lists
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

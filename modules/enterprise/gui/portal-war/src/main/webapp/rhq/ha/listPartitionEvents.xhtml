@@ -55,7 +55,7 @@
                             value="#{partitionEventsDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="33%, 33%, 33%"
+                            columnsWidth="20%, 20%, 20% 20% 20%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 
@@ -66,7 +66,7 @@
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="pe.ctime">
-                        <h:outputText styleClass="headerText" value="Event Execution Time" />
+                        <h:outputText styleClass="headerText" value="Execution Time" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
@@ -79,7 +79,7 @@
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="pe.eventType">
-                        <h:outputText styleClass="headerText" value="Event Type" />
+                        <h:outputText styleClass="headerText" value="Type" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
@@ -92,17 +92,37 @@
 
                <rich:column>
                   <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pe.eventDetail">
+                        <h:outputText styleClass="headerText" value="Detail" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.eventDetail}" />                  
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
                      <onc:sortableColumnHeader sort="pe.subjectName">
-                        <h:outputText styleClass="headerText" value="User Initiated" />
+                        <h:outputText styleClass="headerText" value="Initiated By" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
                   <h:outputText value="#{item.subjectName}"/>
                </rich:column>
 
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pe.executionStatus">
+                        <h:outputText styleClass="headerText" value="Execution Status" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.executionStatus}" />
+               </rich:column>
+
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="3" width="100%">
+                     <rich:column colspan="5" width="100%">
                         <ui:param name="paginationDataTableName" value="partitionEventsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{partitionEventsDataModel}"/>
                         <ui:param name="paginationPageControl" value="#{PageControl.ListPartitionEventsView}"/>

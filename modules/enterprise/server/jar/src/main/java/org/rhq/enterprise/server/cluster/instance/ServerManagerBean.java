@@ -30,7 +30,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.annotation.IgnoreDependency;
 
-import org.rhq.core.domain.cluster.AffinityGroup;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.communications.GlobalSuspendCommandListener;
@@ -59,7 +58,7 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     static private final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
 
-    static private Server.OperationMode lastSetMode = null;
+    static private Server.OperationMode lastEstablishedServerMode = null;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -106,31 +105,35 @@ public class ServerManagerBean implements ServerManagerLocal {
         return result;
     }
 
-    synchronized public void establishCurrentServerMode() {
-        Server.OperationMode currentMode = getServer().getOperationMode();
+    public void establishCurrentServerMode() {
+        establishServerMode(getServer().getOperationMode());
+    }
+
+    synchronized public void establishServerMode(Server.OperationMode serverMode) {
 
         // don't add or remove the same listener twice in a row
-        if (currentMode == lastSetMode)
+        if (serverMode == lastEstablishedServerMode)
             return;
 
         try {
-            if (Server.OperationMode.NORMAL == currentMode) {
-                if (lastSetMode == Server.OperationMode.MAINTENANCE) {
+            if (Server.OperationMode.NORMAL == serverMode) {
+                if (Server.OperationMode.MAINTENANCE == lastEstablishedServerMode) {
                     ServerCommunicationsServiceUtil.getService().getServiceContainer().removeCommandListener(
                         getMaintenanceModeListener());
                 }
-            } else if (Server.OperationMode.MAINTENANCE == currentMode) {
+            } else if (Server.OperationMode.MAINTENANCE == serverMode) {
                 ServerCommunicationsServiceUtil.getService().getServiceContainer().addCommandListener(
                     getMaintenanceModeListener());
             } else {
                 return;
             }
 
-            lastSetMode = currentMode;
-            log.info("Notified communication layer of server operation mode " + currentMode);
+            lastEstablishedServerMode = serverMode;
+            log.info("Notified communication layer of server operation mode " + serverMode);
 
         } catch (Exception e) {
-            log.error("Unable to change HA Server Mode from " + lastSetMode + " to " + currentMode + ": " + e);
+            log.error("Unable to change HA Server Mode from " + lastEstablishedServerMode + " to " + serverMode + ": "
+                + e);
         }
     }
 
@@ -141,11 +144,9 @@ public class ServerManagerBean implements ServerManagerLocal {
             Server.OperationMode.MAINTENANCE.name());
     }
 
-    public void deleteAffinityGroup(AffinityGroup affinityGroup) {
-        affinityGroup = entityManager.find(AffinityGroup.class, affinityGroup.getId());
-        entityManager.remove(affinityGroup);
-
-        log.info("Removed affinityGroup: " + affinityGroup);
+    public void updateMtimeToCurrentTime(Server server) {
+        server = entityManager.find(Server.class, server.getId());
+        server.setMtime(System.currentTimeMillis());
     }
 
 }

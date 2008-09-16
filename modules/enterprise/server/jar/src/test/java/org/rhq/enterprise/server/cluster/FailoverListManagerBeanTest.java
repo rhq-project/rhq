@@ -33,6 +33,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cluster.AffinityGroup;
 import org.rhq.core.domain.cluster.PartitionEvent;
 import org.rhq.core.domain.cluster.PartitionEventType;
@@ -54,6 +55,8 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
     private AgentManagerLocal agentManager;
     private PartitionEventManagerLocal partitionEventManager;
     private ClusterManagerLocal clusterManager;
+    private AffinityGroupManagerLocal affinityGroupManager;
+    private Subject overlord;
 
     private List<Server> servers;
     private List<Agent> agents;
@@ -71,6 +74,8 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         failoverListManager = LookupUtil.getFailoverListManager();
         partitionEventManager = LookupUtil.getPartitionEventManager();
         clusterManager = LookupUtil.getClusterManager();
+        affinityGroupManager = LookupUtil.getAffinityGroupManager();
+        overlord = LookupUtil.getSubjectManager().getOverlord();
 
         servers = new ArrayList<Server>();
         agents = new ArrayList<Agent>();
@@ -108,7 +113,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
                     agentManager.deleteAgent(agent);
                 }
 
-                serverManager.deleteAffinityGroup(ag);
+                affinityGroupManager.delete(overlord, new Integer[] { ag.getId() });
 
                 if (null != newAgents) {
                     for (Agent agent : newAgents) {
@@ -160,7 +165,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
             ag = new AffinityGroup("AG-flm-1");
             em.persist(ag);
 
-            partitionEvent = new PartitionEvent("FLM-TEST", PartitionEventType.SYSTEM_INITIATED_PARTITION,
+            partitionEvent = new PartitionEvent("FLM-TEST", PartitionEventType.SYSTEM_INITIATED_PARTITION, "Test",
                 PartitionEvent.ExecutionStatus.IMMEDIATE);
             em.persist(partitionEvent);
 

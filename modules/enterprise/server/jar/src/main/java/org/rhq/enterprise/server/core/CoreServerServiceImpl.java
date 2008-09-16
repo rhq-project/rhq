@@ -42,6 +42,7 @@ import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.exception.WrappedRemotingException;
 import org.rhq.enterprise.communications.command.client.RemoteInputStream;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.cluster.instance.ServerManagerLocal;
@@ -58,6 +59,7 @@ public class CoreServerServiceImpl implements CoreServerService {
     private final Log log = LogFactory.getLog(CoreServerServiceImpl.class);
 
     private AgentManagerLocal agentManager;
+    private AlertConditionCacheManagerLocal alertConditionCacheManager;
     private PartitionEventManagerLocal partitionEventManager;
     private ServerManagerLocal serverManager;
     private SubjectManagerLocal subjectManager;
@@ -178,8 +180,12 @@ public class CoreServerServiceImpl implements CoreServerService {
 
         agent.setServer(getServerManager().getServer());
 
-        LookupUtil.getAlertConditionCacheManager().reloadCachesForAgent(agent.getId());
+        getAlertConditionCacheManager().reloadCachesForAgent(agent.getId());
 
+        getPartitionEventManager().auditPartitionEvent(getSubjectManager().getOverlord(),
+            PartitionEventType.AGENT_CONNECT, agentName);
+
+        // TODO: this may not be necessary due to the audit above. 
         log.info("Agent [" + agentName + "] has connected to this server.");
     }
 
@@ -259,7 +265,11 @@ public class CoreServerServiceImpl implements CoreServerService {
      */
     public void agentIsShuttingDown(String agentName) {
         log.debug("Agent [" + agentName + "] is sending a notification that it is going down!");
+
         getAgentManager().agentIsShuttingDown(agentName);
+
+        getPartitionEventManager().auditPartitionEvent(getSubjectManager().getOverlord(),
+            PartitionEventType.AGENT_SHUTDOWN, agentName);
 
         return;
     }
@@ -272,6 +282,14 @@ public class CoreServerServiceImpl implements CoreServerService {
         return this.agentManager;
     }
 
+    private AlertConditionCacheManagerLocal getAlertConditionCacheManager() {
+        if (this.alertConditionCacheManager == null) {
+            this.alertConditionCacheManager = LookupUtil.getAlertConditionCacheManager();
+        }
+
+        return this.alertConditionCacheManager;
+    }
+
     private PartitionEventManagerLocal getPartitionEventManager() {
         if (this.partitionEventManager == null) {
             this.partitionEventManager = LookupUtil.getPartitionEventManager();
@@ -280,20 +298,20 @@ public class CoreServerServiceImpl implements CoreServerService {
         return this.partitionEventManager;
     }
 
-    private SubjectManagerLocal getSubjectManager() {
-        if (this.subjectManager == null) {
-            this.subjectManager = LookupUtil.getSubjectManager();
-        }
-
-        return this.subjectManager;
-    }
-
     private ServerManagerLocal getServerManager() {
         if (this.serverManager == null) {
             this.serverManager = LookupUtil.getServerManager();
         }
 
         return this.serverManager;
+    }
+
+    private SubjectManagerLocal getSubjectManager() {
+        if (this.subjectManager == null) {
+            this.subjectManager = LookupUtil.getSubjectManager();
+        }
+
+        return this.subjectManager;
     }
 
     private void pingEndpoint(String endpoint) throws AgentRegistrationException {
@@ -324,7 +342,7 @@ public class CoreServerServiceImpl implements CoreServerService {
     }
 
     public FailoverListComposite getFailoverList(String agentName) {
-        return getFailoverList(agentName, PartitionEventType.AGENT_JOIN);
+        return getFailoverList(agentName, PartitionEventType.AGENT_CONNECT);
     }
 
     private FailoverListComposite getFailoverList(String agentName, PartitionEventType eventType) {

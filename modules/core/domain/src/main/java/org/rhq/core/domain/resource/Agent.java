@@ -56,6 +56,7 @@ import org.rhq.core.domain.cluster.Server;
     @NamedQuery(name = Agent.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT r.agent FROM Resource r WHERE r.id = :resourceId"),
     @NamedQuery(name = Agent.QUERY_FIND_ALL, query = "SELECT a FROM Agent a"),
     @NamedQuery(name = Agent.QUERY_FIND_BY_SERVER, query = "SELECT a FROM Agent a WHERE (a.server.id = :serverId OR :serverId IS NULL)"),
+    @NamedQuery(name = Agent.QUERY_REMOVE_SERVER_REFERENCE, query = "UPDATE Agent a SET a.server.id = NULL WHERE a.server.id = :serverId "),
     @NamedQuery(name = Agent.QUERY_COUNT_ALL, query = "SELECT count(a.id) FROM Agent a"),
     @NamedQuery(name = Agent.QUERY_FIND_RESOURCE_IDS_FOR_AGENT, query = "SELECT r.id FROM Resource r WHERE r.agent.id = :agentId"),
     @NamedQuery(name = Agent.QUERY_FIND_ALL_SUSPECT_AGENTS, query = "SELECT new org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite "
@@ -79,8 +80,8 @@ import org.rhq.core.domain.cluster.Server;
     @NamedQuery(name = Agent.QUERY_FIND_WITHOUT_AFFINITY_GROUP, query = "" //
         + "SELECT a " //
         + "  FROM Agent a " //
-        + " WHERE a.affinityGroup IS NULL")
-    })
+        + " WHERE a.affinityGroup IS NULL") //        
+})
 @SequenceGenerator(name = "id", sequenceName = "RHQ_AGENT_ID_SEQ")
 @Table(name = "RHQ_AGENT")
 public class Agent implements Serializable {
@@ -100,6 +101,7 @@ public class Agent implements Serializable {
     // HA queries
     public static final String QUERY_FIND_ALL_WITH_STATUS_BY_SERVER = "Agent.findAllWithStatusByServer";
     public static final String QUERY_FIND_ALL_WITH_STATUS = "Agent.findAllWithStatus";
+    public static final String QUERY_REMOVE_SERVER_REFERENCE = "Agent.removeServerReference";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")

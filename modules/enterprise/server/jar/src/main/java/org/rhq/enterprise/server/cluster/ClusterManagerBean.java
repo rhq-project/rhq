@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cluster.FailoverListDetails;
+import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.cluster.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.resource.Agent;
@@ -42,6 +43,7 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.cluster.instance.ServerManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * This class manages and reports information about the RHQ Server Cloud as a whole.
@@ -146,16 +148,36 @@ public class ClusterManagerBean implements ClusterManagerLocal {
 
     public void deleteServer(Integer serverId) throws ClusterManagerException {
         try {
+            Server server = entityManager.find(Server.class, serverId);
+
+            if (Server.OperationMode.NORMAL == server.getOperationMode()) {
+                throw new ClusterManagerException("Could not delete server " + server.getName()
+                    + ". Server must be down or in maintenance mode. Surrent operating mode is: "
+                    + server.getOperationMode().name());
+            }
+
+            // Delete any server list entries referencing this server
             failoverListManager.deleteServerListDetailsForServer(serverId);
 
-            Query deleteQuery = entityManager.createNamedQuery(Server.QUERY_DELETE_BY_ID);
-            deleteQuery.setParameter("serverId", serverId);
-            deleteQuery.executeUpdate();
+            // Delete any agent references to this server
+            Query query = entityManager.createNamedQuery(Agent.QUERY_REMOVE_SERVER_REFERENCE);
+            query.setParameter("serverId", serverId);
+            query.executeUpdate();
+
+            // Then, delete the server
+            query = entityManager.createNamedQuery(Server.QUERY_DELETE_BY_ID);
+            query.setParameter("serverId", serverId);
+            query.executeUpdate();
 
             entityManager.flush();
             entityManager.clear();
 
-            log.info("Removed server[id=" + serverId + "]");
+            log.info("Removed server " + server);
+
+            // Now, request a cloud repartitioning due to the server removal
+            partitionEventManager.cloudPartitionEventRequest(LookupUtil.getSubjectManager().getOverlord(),
+                PartitionEventType.SERVER_DELETION, server.getName());
+
         } catch (Exception e) {
             throw new ClusterManagerException("Could not delete server[id=" + serverId + "]: " + e.getMessage(), e);
         }
@@ -166,6 +188,22 @@ public class ClusterManagerBean implements ClusterManagerLocal {
             try {
                 for (Integer id : serverIds) {
                     Server server = entityManager.find(Server.class, id);
+
+                    // depending on the state change we may need to partition our agent load, otherwise audit the change
+                    // TODO (jshaughn) Note that we can't currently distinguish whether a MM server is up or down. So,
+                    // we have to assume it is up.  The resulting partition request will then incorporate the DOWN server.                    
+                    String audit = server.getOperationMode().name() + " --> " + mode;
+
+                    if (Server.OperationMode.NORMAL == mode) {
+
+                        if (Server.OperationMode.MAINTENANCE == server.getOperationMode()) {
+                            partitionEventManager.cloudPartitionEventRequest(LookupUtil.getSubjectManager()
+                                .getOverlord(), PartitionEventType.OPERATION_MODE_CHANGE, audit);
+                        } else {
+                            partitionEventManager.auditPartitionEvent(LookupUtil.getSubjectManager().getOverlord(),
+                                PartitionEventType.OPERATION_MODE_CHANGE, audit);
+                        }
+                    }
                     server.setOperationMode(mode);
                 }
             } catch (Exception e) {

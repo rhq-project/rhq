@@ -46,29 +46,36 @@ public interface PartitionEventManagerLocal {
      * This call performs a full repartitioning of the agent population at the time of the call.  
      * @param subject
      * @param eventType
+     * @param eventDetail Any useful information regarding the event generation. Should be suitable for display.
+     *        Typically a relevant server name.   
      */
-    Map<Agent, FailoverListComposite> cloudPartitionEvent(Subject subject, PartitionEventType eventType);
+    Map<Agent, FailoverListComposite> cloudPartitionEvent(Subject subject, PartitionEventType eventType,
+        String eventDetail);
 
     /**
      * This call requests full repartitioning of the agent population by the recurring cluster manager job.  
      * @param subject
      * @param eventType
+     * @param eventDetail Any useful information regarding the event generation. Should be suitable for display.
+     *        Typically a relevant server name.   
      */
-    void cloudPartitionEventRequest(Subject subject, PartitionEventType eventType);
+    void cloudPartitionEventRequest(Subject subject, PartitionEventType eventType, String eventDetail);
+
+    /** This call performs no partitioning activity, it only audits that some event has taken place that could
+     * affect, or contribute to, a future partitioning. For example, SERVER_DOWN, AGENT_LOAD_CHANGE, etc.
+     * @param subject
+     * @param eventType Can be any event type although typically a type used here will not also be used in a
+     * @param eventDetail Any useful information regarding the event generation. Should be suitable for display.
+     *        Typically s relevant server or agent name.  
+     * server list generating call.
+     */
+    void auditPartitionEvent(Subject subject, PartitionEventType eventType, String eventDetail);
 
     /**
      * This call queries for and then processed all outstanding, requested partition events resulting from previous
      * calls to {@link cloudPartitionEventRequest}.  
      */
     void processRequestedPartitionEvents();
-
-    /** This call performs no partitioning activity, it only audits that some event has taken place that could
-     * affect, or contribute to, a future partitioning. For example, SERVER_DOWN, AGENT_LOAD_CHANGE, etc.
-     * @param subject
-     * @param eventType Can be any event type although typically a type used here will not also be used in a
-     * server list generating call.
-     */
-    void auditPartitionEvent(Subject subject, PartitionEventType eventType);
 
     /**
      * This is primarily a test entry point.

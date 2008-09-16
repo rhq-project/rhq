@@ -20,26 +20,23 @@ public class ClusterManagerJob implements Job {
 
     public void execute(JobExecutionContext arg0) throws JobExecutionException {
 
-        // TODO remove, just return for now so we don't bust stuff
-        if (1 == 1)
-            return;
-
         ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
         PartitionEventManagerLocal partitionEventManager = LookupUtil.getPartitionEventManager();
-
-        long now = System.currentTimeMillis();
 
         // Look for downed server instances and update their mode prior to any partition request processing
         List<Server> servers = clusterManager.getAllServers();
 
+        long now = System.currentTimeMillis();
+
         for (Server server : servers) {
-            if ((now - server.getCtime()) > SERVER_DOWN_INTERVAL) {
-                // Don't set a MM server to DOWN even if it's not responding. That may be part of the
-                // maintenance. Also, we will want to bring that server back up in MM.  DOWN servers will come
-                // up as NORMAL.
-                if (Server.OperationMode.MAINTENANCE != server.getOperationMode()) {
+            // We're only looking for NORMNAL servers that may have gone down unexpectedly. A MM server can go up
+            // and down while still in MM.  DOWN servers will come up as NORMAL.
+            if (Server.OperationMode.NORMAL == server.getOperationMode()) {
+                long timeSinceServerHeartbeat = (now - server.getMtime());
+
+                if (timeSinceServerHeartbeat > SERVER_DOWN_INTERVAL) {
                     LookupUtil.getPartitionEventManager().auditPartitionEvent(
-                        LookupUtil.getSubjectManager().getOverlord(), PartitionEventType.SERVER_DOWN);
+                        LookupUtil.getSubjectManager().getOverlord(), PartitionEventType.SERVER_DOWN, server.getName());
                     clusterManager.updateServerMode(new Integer[] { server.getId() }, Server.OperationMode.DOWN);
                 }
             }
@@ -48,6 +45,5 @@ public class ClusterManagerJob implements Job {
         // Perform requested partition events. Note that we only need to execute one cloud partition
         // regardless of the number of pending requests, as the work would be duplicated.
         partitionEventManager.processRequestedPartitionEvents();
-
     }
 }

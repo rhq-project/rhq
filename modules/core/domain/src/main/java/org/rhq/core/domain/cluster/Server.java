@@ -113,6 +113,10 @@ public class Server implements Serializable {
     @Column(name = "CTIME", nullable = false)
     private long ctime;
 
+    // the time this server node was last updated
+    @Column(name = "MTIME", nullable = false)
+    private long mtime;
+
     @JoinColumn(name = "AFFINITY_GROUP_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
     private AffinityGroup affinityGroup;
@@ -176,6 +180,14 @@ public class Server implements Serializable {
         return ctime;
     }
 
+    public long getMtime() {
+        return mtime;
+    }
+
+    public void setMtime(long mtime) {
+        this.mtime = mtime;
+    }
+
     public AffinityGroup getAffinityGroup() {
         return affinityGroup;
     }
@@ -234,6 +246,7 @@ public class Server implements Serializable {
     @PrePersist
     void onPersist() {
         this.ctime = System.currentTimeMillis();
+        this.mtime = this.ctime;
     }
 
     @Override

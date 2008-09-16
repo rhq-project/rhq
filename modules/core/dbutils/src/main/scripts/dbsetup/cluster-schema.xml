@@ -1,5 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
 <dbsetup name="cluster-schema.xml">
 
     <table name="RHQ_AFFINITY_GROUP">
@@ -16,6 +14,7 @@
         <column name="PORT" required="true" type="INTEGER"/>
         <column name="SECURE_PORT" required="true" type="INTEGER"/>
         <column name="CTIME" required="true" type="LONG"/>
+        <column name="MTIME" required="true" type="LONG"/>
         <column name="AFFINITY_GROUP_ID" type="INTEGER" references="RHQ_AFFINITY_GROUP" required="false"/>
         <column name="COMPUTE_POWER" required="true" type="INTEGER"/>        
         <column name="OPERATION_MODE" required="true" size="32" type="VARCHAR2"/>
@@ -61,7 +60,8 @@
         <column name="SUBJECT_NAME" required="true" size="255" type="VARCHAR2"/>
         <column name="CTIME" required="true" type="LONG"/>
         <column name="EVENT_TYPE" required="true" size="50" type="VARCHAR2"/>
-        <column name="EXECUTION_STATUS" required="true" size="32" type="VARCHAR2"/>
+        <column name="EVENT_DETAIL" required="false" size="512" type="VARCHAR2"/>
+        <column name="EXECUTION_STATUS" required="true" size="32" type="VARCHAR2"/>        
     </table>
     
     <table name="RHQ_PARTITION_DETAILS">

@@ -35,6 +35,7 @@ import org.quartz.SchedulerException;
 
 import org.jboss.mx.util.MBeanServerLocator;
 
+import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
@@ -53,8 +54,8 @@ import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutContentRequestsJ
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutOperationsJob;
 import org.rhq.enterprise.server.scheduler.jobs.ClusterManagerJob;
 import org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob;
-import org.rhq.enterprise.server.scheduler.jobs.instance.ChangeHaServerModeIfNeededJob;
 import org.rhq.enterprise.server.scheduler.jobs.instance.ReloadServerCacheIfNeededJob;
+import org.rhq.enterprise.server.scheduler.jobs.instance.ServerManagerJob;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -74,8 +75,10 @@ public class StartupServlet extends HttpServlet {
     public void init() throws ServletException {
         log("All business tier deployments are complete - finishing the startup");
 
-        // Before starting determine the operating mode of this server. It affects what we start
-        createDefaultServerIfNecessary(); // before comm to ensure a registered server
+        // Before starting determine the operating mode of this server and
+        // take any necessary initialization action. Must happen before comm startup since listeners
+        // may be added.
+        initializeServer();
 
         // this will initiate the cache load, before agents connect
         LookupUtil.getAlertConditionCacheManager().getCacheNames();
@@ -100,6 +103,27 @@ public class StartupServlet extends HttpServlet {
         registerBootTime();
 
         return;
+    }
+
+    private void initializeServer() {
+        // Ensure that this server is registered in the database.
+        createDefaultServerIfNecessary();
+
+        ServerManagerLocal serverManager = LookupUtil.getServerManager();
+        Server server = serverManager.getServer();
+
+        // if this server is coming up in NORMAL operating mode then it is being added to the
+        // server cloud. Changing the number of servers in the cloud requires agent distribution work, even
+        // if this is a 1-Server cloud. Generate a request for a repartitioning of agent load, it will be executed
+        // on the first invocation of the cluster manager job.
+        if (Server.OperationMode.MAINTENANCE != server.getOperationMode()) {
+            server.setOperationMode(Server.OperationMode.NORMAL);
+            LookupUtil.getPartitionEventManager().cloudPartitionEventRequest(
+                LookupUtil.getSubjectManager().getOverlord(), PartitionEventType.SERVER_JOIN, server.getName());
+        }
+
+        // Establish the server mode at startup, this can affect the comm layer behavior
+        LookupUtil.getServerManager().establishServerMode(server.getOperationMode());
     }
 
     /**
@@ -228,8 +252,6 @@ public class StartupServlet extends HttpServlet {
         log("Starting the server-agent communications services");
 
         try {
-            // Establish the server mode at startup, this can affect the comm layer behavior
-            LookupUtil.getServerManager().establishCurrentServerMode();
             ServerCommunicationsServiceUtil.getService().startCommunicationServices();
         } catch (Exception e) {
             throw new ServletException("Cannot start the server-side communications services", e);
@@ -265,13 +287,16 @@ public class StartupServlet extends HttpServlet {
             throw new ServletException("Cannot schedule quartz tester", e);
         }
 
-        // periodic job that checks for server mode change
+        // periodic job that performs server management operations for the server
+        // - checks for server mode change
+        // - update mtime to indicate server up
+        // ? could cache reload be merged into this or is it best to keep that separate due to run time of that job? 
         try {
             // do not check until we are up at least 1min, but check every 30secs thereafter
             final long initialDelay = 1000L * 60;
             final long interval = 1000L * 30;
-            serverScheduler.scheduleRepeatingJob("ChangeHaServerMode", "ServerJobs",
-                ChangeHaServerModeIfNeededJob.class, true, false, initialDelay, interval);
+            serverScheduler.scheduleRepeatingJob("ServerHeartbeat", "ServerJobs", ServerManagerJob.class, true, false,
+                initialDelay, interval);
         } catch (Exception e) {
             throw new ServletException("Cannot schedule HA server mode job", e);
         }

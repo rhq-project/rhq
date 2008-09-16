@@ -20,9 +20,13 @@ package org.rhq.enterprise.gui.startup;
 
 import javax.management.Notification;
 import javax.management.NotificationListener;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.system.server.Server;
+
+import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -30,6 +34,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * that need to clean up.
  *
  * @author John Mazzitelli
+ * @author Jay Shaughnessy
  */
 public class ShutdownListener implements NotificationListener {
     /**
@@ -46,6 +51,13 @@ public class ShutdownListener implements NotificationListener {
     public void handleNotification(Notification notification, Object handback) {
         if (Server.STOP_NOTIFICATION_TYPE.equals(notification.getType())) {
             stopScheduler();
+
+            // Set the server operation mode to DOWN
+            org.rhq.core.domain.cluster.Server server = LookupUtil.getServerManager().getServer();
+            LookupUtil.getPartitionEventManager().auditPartitionEvent(LookupUtil.getSubjectManager().getOverlord(),
+                PartitionEventType.SERVER_DOWN, server.getName());
+            LookupUtil.getClusterManager().updateServerMode(new Integer[] { server.getId() },
+                org.rhq.core.domain.cluster.Server.OperationMode.DOWN);
         }
     }
 

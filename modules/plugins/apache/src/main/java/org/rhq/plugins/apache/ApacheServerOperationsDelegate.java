@@ -19,6 +19,7 @@
 package org.rhq.plugins.apache;
 
 import java.io.File;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.operation.OperationContext;
@@ -106,8 +107,16 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
         }
 
         ProcessExecutionResults processExecutionResults = this.systemInfo.executeProcess(processExecution);
-        if (processExecutionResults.getError() != null) {
-            throw new Exception(processExecutionResults.getError());
+        Integer exitCode = processExecutionResults.getExitCode();
+
+        // Do some more aggressive result code checking, as otherwise errors are not reported as such
+        // in the GUI -- see RHQ-627
+        // We might want to investigate this agin later.
+        if (processExecutionResults.getError() != null || (exitCode != null && exitCode != 0)) {
+            String msg = "Operation " + operation + " failed. Exit code: [" + exitCode + "]\n, Output : ["
+                + processExecutionResults.getCapturedOutput() + "]\n" + "Error: [" + processExecutionResults.getError()
+                + "]";
+            throw new Exception(msg);
         }
 
         return createOperationResult(processExecutionResults);

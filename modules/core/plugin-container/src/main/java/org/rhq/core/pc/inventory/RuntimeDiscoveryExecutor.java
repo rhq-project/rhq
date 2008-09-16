@@ -20,11 +20,7 @@ package org.rhq.core.pc.inventory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.logging.Log;
@@ -36,6 +32,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
@@ -246,7 +243,15 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             Set<DiscoveredResourceDetails> discoveredResources = component.discoverResources(context);
             Set<Resource> newResources = new HashSet<Resource>();
             if ((discoveredResources != null) && (discoveredResources.size() > 0)) {
+                IdentityHashMap<Configuration, DiscoveredResourceDetails> pluginConfigObjects = new IdentityHashMap<Configuration, DiscoveredResourceDetails>();
                 for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
+                    if (null != pluginConfigObjects.put(discoveredResource.getPluginConfiguration(), discoveredResource)) {
+                        throw new IllegalStateException("The plugin component " + component.getClass().getName() +
+                            " returned multiple resources that point to the same plugin configuration object on the " +
+                            "resource type [" + resourceType + "]. This is not allowed, please use " +
+                            "ResoureDiscoveryContext.getDefaultPluginConfiguration() " +
+                            "for each discovered resource.");
+                    }
                     newResources.add(InventoryManager.createNewResource(discoveredResource));
                 }
             }

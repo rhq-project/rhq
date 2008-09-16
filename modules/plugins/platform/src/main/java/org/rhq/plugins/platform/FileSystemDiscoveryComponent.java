@@ -51,9 +51,10 @@ public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<
         }
 
         String hostname = discoveryContext.getSystemInformation().getHostname();
-        Configuration defaultPluginConfiguration = discoveryContext.getDefaultPluginConfiguration();
 
         for (FileSystemInfo fs : sysInfo.getFileSystems()) {
+            Configuration defaultPluginConfiguration = discoveryContext.getDefaultPluginConfiguration();
+            
             int fsType = fs.getFileSystem().getType();
             if (fsType != FileSystem.TYPE_LOCAL_DISK && fsType != FileSystem.TYPE_NETWORK) {
                 continue;

@@ -53,21 +53,20 @@ public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<
         String hostname = discoveryContext.getSystemInformation().getHostname();
 
         for (FileSystemInfo fs : sysInfo.getFileSystems()) {
-            Configuration defaultPluginConfiguration = discoveryContext.getDefaultPluginConfiguration();
-            
             int fsType = fs.getFileSystem().getType();
             if (fsType != FileSystem.TYPE_LOCAL_DISK && fsType != FileSystem.TYPE_NETWORK) {
                 continue;
             }
+            Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
             try {
                 String name = ((hostname == null) ? "" : (hostname + " ")) + " File System ("
                     + fs.getFileSystem().getTypeName() + ") " + fs.getMountPoint();
                 DiscoveredResourceDetails details = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
                     fs.getMountPoint(), name, null, fs.getFileSystem().getDevName() + ": "
-                        + fs.getFileSystem().getDirName(), defaultPluginConfiguration, null);
+                        + fs.getFileSystem().getDirName(), pluginConfig, null);
                 results.add(details);
             } catch (Exception e) {
-                log.error("File system discovery failed : " + e.getMessage() + ", skipping.");
+                log.error("File system discovery failed: " + e + ", skipping.");
             }
         }
         return results;

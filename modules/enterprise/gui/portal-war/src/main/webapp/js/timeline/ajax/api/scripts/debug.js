@@ -59,7 +59,7 @@ SimileAjax.Debug.exception = function(e, msg) {
     } else {
         f = function(e2, msg2) {
             if (!SimileAjax.Debug.silent) {
-                alert("Caught exception: " + msg2 + "\n\nDetails: " + ("description" in e2 ? e2.description : e2));
+                alert("Caught exception: " + msg2 + "\n\nDetails: " + (e2));
             }
             throw(e2); // do not hide from browser's native debugging features
         };

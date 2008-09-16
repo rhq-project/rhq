@@ -199,7 +199,7 @@ if (typeof SimileAjax == "undefined") {
         }
 
         SimileAjax.parseURLParameters(url, SimileAjax.params, {bundle:Boolean});
-        if (SimileAjax.params.bundle) {
+        if (false) { //SimileAjax.params.bundle) {
             SimileAjax.includeJavascriptFiles(document, SimileAjax.urlPrefix, [ "simile-ajax-bundle.js" ]);
         } else {
             SimileAjax.includeJavascriptFiles(document, SimileAjax.urlPrefix + "scripts/", javascriptFiles);

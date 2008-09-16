@@ -499,9 +499,11 @@ public class AgentMain {
                 LOG.info(AgentI18NResourceKeys.SHUTTING_DOWN);
 
                 // stop the thread that tries to keep the agent pointed to its primary server
-                m_primaryServerSwitchoverThread.stopChecking();
-                m_primaryServerSwitchoverThread.interrupt();
-                m_primaryServerSwitchoverThread = null;
+                if (m_primaryServerSwitchoverThread != null) {
+                    m_primaryServerSwitchoverThread.stopChecking();
+                    m_primaryServerSwitchoverThread.interrupt();
+                    m_primaryServerSwitchoverThread = null;
+                }
 
                 // remove our shutdown hook
                 if (m_shutdownHook != null) {

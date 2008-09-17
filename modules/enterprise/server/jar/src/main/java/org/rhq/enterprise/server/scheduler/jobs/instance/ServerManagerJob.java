@@ -34,10 +34,15 @@ public class ServerManagerJob implements Job {
     public void execute(JobExecutionContext arg0) throws JobExecutionException {
         ServerManagerLocal serverManager = LookupUtil.getServerManager();
 
-        log.debug("ServerManagerJob is being executed by " + serverManager.getIdentity());
+        if (log.isDebugEnabled()) {
+            log.debug("ServerManagerJob is being executed by " + serverManager.getIdentity());
+        }
 
+        // register heart beat
+        serverManager.beat();
+
+        // Handles server mode state changes 
+        // note: this call should be fast. if not we need to break the heart beat into its own job
         serverManager.establishCurrentServerMode();
-        serverManager.beat(); // updates mtime and sets back to NORMAL (cause we're known up)
     }
-
 }

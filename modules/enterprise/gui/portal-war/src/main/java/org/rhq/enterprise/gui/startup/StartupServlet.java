@@ -35,7 +35,6 @@ import org.quartz.SchedulerException;
 
 import org.jboss.mx.util.MBeanServerLocator;
 
-import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
@@ -109,21 +108,9 @@ public class StartupServlet extends HttpServlet {
         // Ensure that this server is registered in the database.
         createDefaultServerIfNecessary();
 
-        ServerManagerLocal serverManager = LookupUtil.getServerManager();
-        Server server = serverManager.getServer();
-
-        // if this server is coming up in NORMAL operating mode then it is being added to the
-        // server cloud. Changing the number of servers in the cloud requires agent distribution work, even
-        // if this is a 1-Server cloud. Generate a request for a repartitioning of agent load, it will be executed
-        // on the first invocation of the cluster manager job.
-        if (Server.OperationMode.MAINTENANCE != server.getOperationMode()) {
-            server.setOperationMode(Server.OperationMode.NORMAL);
-            LookupUtil.getPartitionEventManager().cloudPartitionEventRequest(
-                LookupUtil.getSubjectManager().getOverlord(), PartitionEventType.SERVER_JOIN, server.getName());
-        }
-
-        // Establish the server mode at startup, this can affect the comm layer behavior
-        LookupUtil.getServerManager().establishServerMode(server.getOperationMode());
+        // Establish the current server mode for the server. This will move the server to NORMAL
+        // mode from DOWN if necessary.  This can also affect comm layer behavior.
+        LookupUtil.getServerManager().establishCurrentServerMode();
     }
 
     /**

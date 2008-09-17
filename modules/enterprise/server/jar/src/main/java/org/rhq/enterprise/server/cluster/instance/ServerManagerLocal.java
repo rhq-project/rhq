@@ -72,9 +72,15 @@ public interface ServerManagerLocal {
      */
     Server getServer() throws ServerNotFoundException;
 
+    /**
+     * Checks current server mode against previous serverMode and takes any state change actions necessary. Note that
+     * a server can not be DOWN after this call since the call itself is evidence of the server running. So, this
+     * can take care of a server starting up.
+     */
     void establishCurrentServerMode();
 
-    void establishServerMode(Server.OperationMode serverMode);
-
+    /**
+     * Updates server mtime to register active heart beat
+     */
     void beat();
 }

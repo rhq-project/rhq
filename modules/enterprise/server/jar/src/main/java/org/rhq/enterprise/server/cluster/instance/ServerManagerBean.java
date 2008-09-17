@@ -30,14 +30,15 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.annotation.IgnoreDependency;
 
+import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.Server;
-import org.rhq.core.domain.cluster.Server.OperationMode;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.communications.GlobalSuspendCommandListener;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * If you want to manipulate or report on the {@link Server} instance that
@@ -106,10 +107,8 @@ public class ServerManagerBean implements ServerManagerLocal {
     }
 
     public void establishCurrentServerMode() {
-        establishServerMode(getServer().getOperationMode());
-    }
-
-    synchronized public void establishServerMode(Server.OperationMode serverMode) {
+        Server server = getServer();
+        Server.OperationMode serverMode = server.getOperationMode();
 
         // don't add or remove the same listener twice in a row
         if (serverMode == lastEstablishedServerMode)
@@ -117,19 +116,40 @@ public class ServerManagerBean implements ServerManagerLocal {
 
         try {
             if (Server.OperationMode.NORMAL == serverMode) {
+
                 if (Server.OperationMode.MAINTENANCE == lastEstablishedServerMode) {
                     ServerCommunicationsServiceUtil.getService().getServiceContainer().removeCommandListener(
                         getMaintenanceModeListener());
+                    log.info("Notified communication layer of server operation mode " + serverMode);
                 }
+
             } else if (Server.OperationMode.MAINTENANCE == serverMode) {
+
                 ServerCommunicationsServiceUtil.getService().getServiceContainer().addCommandListener(
                     getMaintenanceModeListener());
-            } else {
-                return;
+                log.info("Notified communication layer of server operation mode " + serverMode);
+
+            } else if (Server.OperationMode.DOWN == serverMode) {
+
+                // The server can't be DOWN if this code is executing, it means the server must be coming
+                // up as of this call. So, update the mode to NORMAL and update mtime as an initial heart beat.
+                // This will prevent a running ClusterManagerJob from resetting to DOWN before the real
+                // ServerManagerJob starts updating the heart beat regularly.
+                serverMode = Server.OperationMode.NORMAL;
+                server.setOperationMode(serverMode);
+                server.setMtime(System.currentTimeMillis());
+            }
+
+            // If the server mode is NORMAL and the lastEstablishedServerMode is different (which it must be to 
+            // be in this code section) then this server is joining the cloud. Changing the number of servers in 
+            // the cloud requires agent distribution work, even if this is a 1-Server cloud. Generate a request for 
+            // a repartitioning of agent load, it will be executed on the next invocation of the cluster manager job.
+            if (Server.OperationMode.NORMAL == serverMode) {
+                LookupUtil.getPartitionEventManager().cloudPartitionEventRequest(
+                    LookupUtil.getSubjectManager().getOverlord(), PartitionEventType.SERVER_JOIN, server.getName());
             }
 
             lastEstablishedServerMode = serverMode;
-            log.info("Notified communication layer of server operation mode " + serverMode);
 
         } catch (Exception e) {
             log.error("Unable to change HA Server Mode from " + lastEstablishedServerMode + " to " + serverMode + ": "
@@ -147,7 +167,6 @@ public class ServerManagerBean implements ServerManagerLocal {
     public void beat() {
         Server server = getServer();
         server.setMtime(System.currentTimeMillis());
-        server.setOperationMode(OperationMode.NORMAL);
     }
 
 }

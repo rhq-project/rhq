@@ -31,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.domain.cluster.Server;
+import org.rhq.core.domain.cluster.Server.OperationMode;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.communications.GlobalSuspendCommandListener;
 import org.rhq.enterprise.server.RHQConstants;
@@ -143,9 +144,10 @@ public class ServerManagerBean implements ServerManagerLocal {
             Server.OperationMode.MAINTENANCE.name());
     }
 
-    public void updateMtimeToCurrentTime(Server server) {
-        server = entityManager.find(Server.class, server.getId());
+    public void beat() {
+        Server server = getServer();
         server.setMtime(System.currentTimeMillis());
+        server.setOperationMode(OperationMode.NORMAL);
     }
 
 }

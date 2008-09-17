@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.scheduler.jobs.instance;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -27,11 +29,15 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ServerManagerJob implements Job {
 
+    private final Log log = LogFactory.getLog(ServerManagerJob.class);
+
     public void execute(JobExecutionContext arg0) throws JobExecutionException {
         ServerManagerLocal serverManager = LookupUtil.getServerManager();
 
+        log.debug("ServerManagerJob is being executed by " + serverManager.getIdentity());
+
         serverManager.establishCurrentServerMode();
-        serverManager.updateMtimeToCurrentTime(serverManager.getServer());
+        serverManager.beat(); // updates mtime and sets back to NORMAL (cause we're known up)
     }
 
 }

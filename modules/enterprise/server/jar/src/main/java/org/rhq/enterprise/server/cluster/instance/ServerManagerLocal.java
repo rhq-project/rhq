@@ -76,5 +76,5 @@ public interface ServerManagerLocal {
 
     void establishServerMode(Server.OperationMode serverMode);
 
-    void updateMtimeToCurrentTime(Server server);
+    void beat();
 }

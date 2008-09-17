@@ -20,6 +20,8 @@ package org.rhq.enterprise.server.scheduler.jobs;
 
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.StatefulJob;
@@ -31,6 +33,8 @@ import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ClusterManagerJob implements StatefulJob {
+
+    private final Log log = LogFactory.getLog(ClusterManagerJob.class);
 
     // A time sufficient to determine whether a server is down.  Can be based on the initial delay set for the server instance
     // job updating the server mtimes. See StartupServlet. 
@@ -46,6 +50,7 @@ public class ClusterManagerJob implements StatefulJob {
 
         long now = System.currentTimeMillis();
 
+        log.debug("ClusterManagerJob running at " + System.currentTimeMillis());
         for (Server server : servers) {
             // We're only looking for NORMNAL servers that may have gone down unexpectedly. A MM server can go up
             // and down while still in MM.  DOWN servers will come up as NORMAL.

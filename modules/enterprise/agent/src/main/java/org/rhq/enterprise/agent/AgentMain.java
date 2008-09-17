@@ -2592,8 +2592,8 @@ public class AgentMain {
             // once we are registered once, we really don't need to be registered again
             // the user can always execute the "register" command prompt or clear the agent config
             // or just set this config preference back to true if they want to register
-            m_configuration.getPreferences().putBoolean(AgentConfigurationConstants.REGISTER_WITH_SERVER_AT_STARTUP,
-                false);
+            // 9/17/2008 - we now have to register every time we startup because its how we get the failover list too
+            //m_configuration.getPreferences().putBoolean(AgentConfigurationConstants.REGISTER_WITH_SERVER_AT_STARTUP, false);
             return false; // no need to keep listening
         }
 

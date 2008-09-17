@@ -42,13 +42,13 @@ public class ServerSchedulerBean implements ServerSchedulerLocal {
 
     public void scheduleRepeatingJob(String jobName, String groupName, Class<? extends Job> jobClass,
         boolean rescheduleIfExists, boolean isVolatile, long initialDelay, long interval) throws SchedulerException {
-        scheduler.scheduleRepeatingJob(jobName + "_" + serverManager.getIdentity(), groupName, null, jobClass,
-            rescheduleIfExists, isVolatile, initialDelay, interval);
+        scheduler.scheduleRepeatingJob(jobName + "_" + serverManager.getIdentity(), groupName + "_"
+            + serverManager.getIdentity(), null, jobClass, rescheduleIfExists, isVolatile, initialDelay, interval);
     }
 
     public void scheduleSimpleRepeatingJob(Class<? extends Job> jobClass, boolean rescheduleIfExists,
         boolean isVolatile, long initialDelay, long interval) throws SchedulerException {
-        scheduler.scheduleRepeatingJob(jobClass.getName() + "_" + serverManager.getIdentity(), jobClass.getName(),
-            null, jobClass, rescheduleIfExists, isVolatile, initialDelay, interval);
+        scheduler.scheduleRepeatingJob(jobClass.getName() + "_" + serverManager.getIdentity(), jobClass.getName() + "_"
+            + serverManager.getIdentity(), null, jobClass, rescheduleIfExists, isVolatile, initialDelay, interval);
     }
 }

@@ -281,8 +281,9 @@ public class StartupServlet extends HttpServlet {
             // do not check until we are up at least 1min, but check every 30secs thereafter
             final long initialDelay = 1000L * 60;
             final long interval = 1000L * 30;
+            // important to set volatile so that other servers don't execute this as part of quartz failover activity
             serverScheduler.scheduleRepeatingJob("ReloadServerCache", "ServerJobs", ReloadServerCacheIfNeededJob.class,
-                true, false, initialDelay, interval);
+                true, true, initialDelay, interval);
         } catch (Exception e) {
             throw new ServletException("Cannot schedule HA server cache reload", e);
         }
@@ -295,7 +296,8 @@ public class StartupServlet extends HttpServlet {
             // do not check until we are up 10secs, but check every 30secs thereafter
             final long initialDelay = 1000L * 10;
             final long interval = 1000L * 30;
-            serverScheduler.scheduleRepeatingJob("ServerHeartbeat", "ServerJobs", ServerManagerJob.class, true, false,
+            // important to set volatile so that other servers don't execute this as part of quartz failover activity
+            serverScheduler.scheduleRepeatingJob("ServerHeartbeat", "ServerJobs", ServerManagerJob.class, true, true,
                 initialDelay, interval);
         } catch (Exception e) {
             throw new ServletException("Cannot schedule HA server mode job", e);

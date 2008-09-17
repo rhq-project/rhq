@@ -95,6 +95,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             log.debug(String
                 .format("Runtime discovery scan took %d ms.", (report.getEndTime() - report.getStartTime())));
 
+            // TODO this is always zero for embedded because we don't populate the report
             log.info("Scanned " + report.getAddedRoots().size() + " servers and found "
                 + (report.getResourceCount() - report.getAddedRoots().size()) + " total descendant Resources.");
 
@@ -202,7 +203,8 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             }
 
             // For this resource type, discover all resources of that type on this parent resource
-            log.debug("Running Runtime discovery on server: " + parent + " for children of type: " + childResourceType);
+            log.debug("Running Runtime discovery on parent resource: " + parent + " looking for children of type: "
+                + childResourceType);
             Set<Resource> childResources = executeComponentDiscovery(childResourceType, discoveryComponent,
                 parentComponent, parentContainer.getResourceContext());
 

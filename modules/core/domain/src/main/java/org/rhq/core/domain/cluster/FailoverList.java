@@ -53,6 +53,7 @@ import org.rhq.core.domain.resource.Agent;
 @NamedQueries( //
 {
     @NamedQuery(name = FailoverList.QUERY_DELETE_VIA_AGENT, query = "DELETE FROM FailoverList fl WHERE fl.agent = :agent"),
+    @NamedQuery(name = FailoverList.QUERY_DELETE_VIA_PARTITION_EVENT, query = "DELETE FROM FailoverList fl WHERE fl.partitionEvent = :partitionEvent"),
     @NamedQuery(name = FailoverList.QUERY_GET_VIA_AGENT, query = "SELECT fl FROM FailoverList fl WHERE fl.agent = :agent"),
     @NamedQuery(name = FailoverList.QUERY_TRUNCATE, query = "DELETE FROM FailoverList") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_FAILOVER_LIST_ID_SEQ")
@@ -62,6 +63,7 @@ public class FailoverList implements Serializable {
     public static final long serialVersionUID = 1L;
 
     public static final String QUERY_DELETE_VIA_AGENT = "FailoverList.deletViaAgent";
+    public static final String QUERY_DELETE_VIA_PARTITION_EVENT = "FailoverList.deletViaPartitionEvent";
     public static final String QUERY_GET_VIA_AGENT = "FailoverList.getViaAgent";
     public static final String QUERY_TRUNCATE = "FailoverList.truncate";
 

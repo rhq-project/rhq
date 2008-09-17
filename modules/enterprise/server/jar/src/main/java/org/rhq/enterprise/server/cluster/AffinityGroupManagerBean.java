@@ -200,6 +200,13 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public int delete(Subject subject, Integer[] affinityGroupIds) {
+
+        // audit the ag removal
+        for (Integer agId : affinityGroupIds) {
+            AffinityGroup ag = entityManager.find(AffinityGroup.class, agId);
+            partitionEventManager.auditPartitionEvent(subject, PartitionEventType.AFFINITY_GROUP_DELETE, ag.getName());
+        }
+
         Query updateAgentsQuery = entityManager.createNamedQuery(AffinityGroup.QUERY_UPDATE_REMOVE_AGENTS);
         Query updateServersQuery = entityManager.createNamedQuery(AffinityGroup.QUERY_UPDATE_REMOVE_SERVERS);
         Query removeQuery = entityManager.createNamedQuery(AffinityGroup.QUERY_DELETE_BY_IDS);
@@ -217,12 +224,7 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
         log.debug("Removed " + removedAffinityGroups + " AffinityGroups: " + updatedAgents + " agents and "
             + updatedServers + " were updated");
 
-        for (Integer agId : affinityGroupIds) {
-            AffinityGroup ag = entityManager.find(AffinityGroup.class, agId);
-            partitionEventManager.auditPartitionEvent(subject, PartitionEventType.AFFINITY_GROUP_DELETE, ag.getName());
-
-        }
-        // Now, request a cloud repartitioning due to the affinity group changes
+        // Now, request a cloud repartitioning due to the successful affinity group changes
         partitionEventManager.cloudPartitionEventRequest(subject, PartitionEventType.AFFINITY_GROUP_CHANGE,
             PartitionEventType.AFFINITY_GROUP_DELETE.name());
 

@@ -27,6 +27,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -85,6 +86,9 @@ public class PartitionEvent implements Serializable {
 
     @OneToMany(mappedBy = "partitionEvent", cascade = CascadeType.ALL)
     private List<PartitionEventDetails> partitionDetails = new ArrayList<PartitionEventDetails>();
+
+    @OneToMany(mappedBy = "partitionEvent", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<FailoverList> serverLists = new ArrayList<FailoverList>();
 
     // required for JPA
     protected PartitionEvent() {
@@ -153,6 +157,14 @@ public class PartitionEvent implements Serializable {
         this.partitionDetails = partitionDetails;
     }
 
+    public List<FailoverList> getServerLists() {
+        return serverLists;
+    }
+
+    public void setServerLists(List<FailoverList> serverLists) {
+        this.serverLists = serverLists;
+    }
+
     public enum ExecutionStatus {
 
         AUDIT("This parition event is executed only as an audit activity and did not affect server list generation"), //
@@ -219,5 +231,4 @@ public class PartitionEvent implements Serializable {
 
         return true;
     }
-
 }

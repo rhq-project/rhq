@@ -116,7 +116,6 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
     }
 
     public void auditPartitionEvent(Subject subject, PartitionEventType eventType, String eventDetail) {
-
         PartitionEvent partitionEvent = new PartitionEvent(subject.getName(), eventType, eventDetail,
             PartitionEvent.ExecutionStatus.AUDIT);
         entityManager.persist(partitionEvent);
@@ -125,14 +124,6 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
     public void deletePartitionEvent(int partitionEventId) {
         PartitionEvent doomedEvent = entityManager.find(PartitionEvent.class, partitionEventId);
         entityManager.remove(doomedEvent); // cascade rules should take care of this
-    }
-
-    public void deletePartitionEvent(PartitionEvent event) {
-        event = entityManager.find(PartitionEvent.class, event.getId());
-        for (PartitionEventDetails next : event.getPartitionDetails()) {
-            entityManager.remove(next);
-        }
-        entityManager.remove(event);
     }
 
     public void processRequestedPartitionEvents() {

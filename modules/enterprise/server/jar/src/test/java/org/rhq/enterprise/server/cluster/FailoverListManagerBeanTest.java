@@ -106,6 +106,8 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
 
             try {
                 for (Server server : servers) {
+                    // must set to down to allow for a delete                    
+                    clusterManager.updateServerMode(new Integer[] { server.getId() }, Server.OperationMode.DOWN);
                     clusterManager.deleteServer(server.getId());
                 }
 

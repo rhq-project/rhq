@@ -151,7 +151,7 @@ public class ClusterManagerBean implements ClusterManagerLocal {
 
             if (Server.OperationMode.NORMAL == server.getOperationMode()) {
                 throw new ClusterManagerException("Could not delete server " + server.getName()
-                    + ". Server must be down or in maintenance mode. Surrent operating mode is: "
+                    + ". Server must be down or in maintenance mode. Current operating mode is: "
                     + server.getOperationMode().name());
             }
 

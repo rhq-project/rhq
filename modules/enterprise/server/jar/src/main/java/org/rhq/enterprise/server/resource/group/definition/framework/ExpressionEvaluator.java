@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -96,7 +97,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         whereConditions = new LinkedHashMap<String, String>();
         whereReplacements = new HashMap<String, Object>();
         whereReplacementTypes = new HashMap<String, Class<?>>();
-        whereStatics = new HashSet<String>();
+        whereStatics = new LinkedHashSet<String>();
         groupByElements = new ArrayList<String>();
 
         simpleSubExpressions = new ArrayList<String>();

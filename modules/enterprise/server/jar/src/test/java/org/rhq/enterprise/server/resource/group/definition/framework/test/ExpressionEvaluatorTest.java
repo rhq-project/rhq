@@ -104,9 +104,9 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         " WHERE res.resourceType.name = :arg1 " + //
         " AND def.name = :arg2 " + //
         " AND trait.value = :arg3 " + //
+        " AND trait.schedule = sched " + //
         " AND trait.id.timestamp = " + //
-        "     (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)" + //
-        " AND trait.schedule = sched" },
+        "     (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)" },
 
     { "resource.pluginConfiguration[partition].contains = cluster-1",
 

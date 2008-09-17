@@ -120,12 +120,12 @@ public class IISResponseTimeDelegate {
                     // weird, but I suppose it's possible possible
                     log.warn("Token '" + nextLiteral + "' was specified more than once");
                 } else {
-                    log.info("Required token found '" + nextLiteral + "' at position " + i);
+                    log.debug("Required token found '" + nextLiteral + "' at position " + i);
                     foundTokens.add(nextToken);
                     logTokenPositions.put(nextToken, i);
                 }
             } else {
-                log.info("Extra token found '" + nextLiteral + "' at position " + i);
+                log.debug("Extra token found '" + nextLiteral + "' at position " + i);
             }
         }
         if (!foundTokens.containsAll(EnumSet.allOf(LogFormatToken.class))) {
@@ -137,21 +137,21 @@ public class IISResponseTimeDelegate {
         File lastAccessedFile = getLastAccessedFile();
         if (lastAccessedFile == null) {
             // no files have been written to the logDirectory yet
-            log.info("No log files exist yet");
+            log.debug("No log files exist yet");
             return;
         }
-        log.info("Last accessed file = " + lastAccessedFile);
+        log.debug("Last accessed file = " + lastAccessedFile);
 
         if (previousFile == null) {
             // first time we found a file in the logDirectory
-            log.info("This is the first time we found a log file");
+            log.debug("This is the first time we found a log file");
             previousFile = lastAccessedFile;
             previousOffset = previousFile.length();
             logParser = new IISResponseTimeLogParser(previousFile);
         } else {
             // logs have been rotated
             if (!previousFile.equals(lastAccessedFile)) {
-                log.info("Log files have been rotated");
+                log.debug("Log files have been rotated");
                 // so reset the offset to the beginnnig of the file
                 previousOffset = previousFile.length();
                 logParser = new IISResponseTimeLogParser(previousFile);
@@ -159,14 +159,14 @@ public class IISResponseTimeDelegate {
         }
 
         if (logParser == null) {
-            log.info("Unexpected error, logParser was null");
+            log.error("Unexpected error, logParser was null");
             return;
         }
 
         try {
             logParser.parseLog(data);
         } catch (IOException ioe) {
-            log.info("Error parsing log data: " + ioe.getMessage(), ioe);
+            log.error("Error parsing log data: " + ioe.getMessage(), ioe);
         }
     }
 

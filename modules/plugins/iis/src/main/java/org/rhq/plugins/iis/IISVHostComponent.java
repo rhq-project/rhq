@@ -95,7 +95,7 @@ public class IISVHostComponent implements ResourceComponent<IISServerComponent>,
 
         for (MeasurementScheduleRequest request : metrics) {
             if (request.getDataType() == DataType.CALLTIME) {
-                log.info("Calltime MeasurementScheduleRequest: " + request);
+                log.debug("Calltime MeasurementScheduleRequest: " + request);
                 CallTimeData callTimeData = new CallTimeData(request);
                 this.responseTimeDelegate.parseLogs(callTimeData);
                 report.addData(callTimeData);

@@ -116,4 +116,10 @@ public class MeasurementScheduleRequest implements Serializable {
     public boolean isPerMinute() {
         return perMinute;
     }
+
+    public String toString() {
+        return "MeasurementScheduleRequest[scheduleId=" + scheduleId + ", name=" + name + ", interval=" + interval
+            + ", enabled=" + enabled + ", dataType=" + dataType + ", numericType=" + numericType + ", perMinute="
+            + perMinute + "]";
+    }
 }

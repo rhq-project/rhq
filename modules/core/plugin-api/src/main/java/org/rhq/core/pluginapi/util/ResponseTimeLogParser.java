@@ -29,10 +29,12 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 
 /**
@@ -49,16 +51,16 @@ import org.rhq.core.domain.measurement.calltime.CallTimeData;
 public class ResponseTimeLogParser {
     public static final int DEFAULT_TIME_MULTIPLIER = 1;
 
-    private final Log log = LogFactory.getLog(this.getClass());
+    protected final Log log = LogFactory.getLog(this.getClass());
 
     /**
      * The parser will multiply by this factor to convert the duration from the log into milliseconds.
      */
     private double timeMultiplier;
     private long startingOffset;
-    private File logFile;
-    private List<Pattern> excludes;
-    private List<RegexSubstitution> transforms;
+    protected File logFile;
+    protected List<Pattern> excludes;
+    protected List<RegexSubstitution> transforms;
 
     public ResponseTimeLogParser(File logFile) {
         this(logFile, DEFAULT_TIME_MULTIPLIER);
@@ -107,8 +109,8 @@ public class ResponseTimeLogParser {
                 String truncatedUrl = url.substring(0, Math.min(url.length(), 120));
                 if (url.length() > 120)
                     truncatedUrl += "...";
-                log.error("URL ('" + truncatedUrl + "') parsed from response-time log file does not begin with '/'. " +
-                        "Line being parsed is [" + currentLine + "].");
+                log.error("URL ('" + truncatedUrl + "') parsed from response-time log file does not begin with '/'. "
+                    + "Line being parsed is [" + currentLine + "].");
                 continue;
             }
 
@@ -136,7 +138,7 @@ public class ResponseTimeLogParser {
         this.startingOffset = this.logFile.length();
     }
 
-    private boolean isExcluded(String url) {
+    protected boolean isExcluded(String url) {
         boolean excluded = false;
         if (this.excludes != null) {
             for (Pattern exclude : this.excludes) {
@@ -151,7 +153,7 @@ public class ResponseTimeLogParser {
         return excluded;
     }
 
-    private String applyTransforms(String url) {
+    protected String applyTransforms(String url) {
         String transformedUrl = null;
         if (this.transforms != null) {
             for (RegexSubstitution transform : this.transforms) {
@@ -250,8 +252,8 @@ public class ResponseTimeLogParser {
         this.transforms = transforms;
     }
 
-    private class LogEntry {
-        LogEntry(@NotNull
+    public class LogEntry {
+        public LogEntry(@NotNull
         String url, long startTime, long duration, @Nullable
         Integer statusCode, @Nullable
         String ipAddress) {

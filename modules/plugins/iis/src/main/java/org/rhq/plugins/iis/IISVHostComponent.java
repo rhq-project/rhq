@@ -20,6 +20,8 @@ package org.rhq.plugins.iis;
 
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.win32.Pdh;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -34,7 +36,6 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 
 /**
- *
  * @author Greg Hinkle
  * @author Joseph Marques
  */
@@ -43,14 +44,15 @@ public class IISVHostComponent implements ResourceComponent<IISServerComponent>,
     private ResourceContext<IISServerComponent> resourceContext;
     private IISResponseTimeDelegate responseTimeDelegate;
 
+    private Log log = LogFactory.getLog(IISVHostComponent.class);
+
     public void start(ResourceContext<IISServerComponent> resourceContext) throws InvalidPluginConfigurationException,
         Exception {
         this.resourceContext = resourceContext;
 
-        String logDirectory = resourceContext.getPluginConfiguration().getSimpleValue("logDirectory", null);
+        String logDirectory = getLogDirectory();
 
         responseTimeDelegate = new IISResponseTimeDelegate(logDirectory);
-
     }
 
     public void stop() {
@@ -58,6 +60,10 @@ public class IISVHostComponent implements ResourceComponent<IISServerComponent>,
 
     public AvailabilityType getAvailability() {
         return AvailabilityType.UP;
+    }
+
+    public String getLogDirectory() {
+        return resourceContext.getPluginConfiguration().getSimpleValue("logDirectory", null);
     }
 
     public String getSiteName() {
@@ -71,6 +77,7 @@ public class IISVHostComponent implements ResourceComponent<IISServerComponent>,
 
         for (MeasurementScheduleRequest request : metrics) {
             if (request.getDataType() == DataType.CALLTIME) {
+                log.info("Calltime MeasurementScheduleRequest: " + request);
                 CallTimeData callTimeData = new CallTimeData(request);
                 this.responseTimeDelegate.parseLogs(callTimeData);
                 report.addData(callTimeData);

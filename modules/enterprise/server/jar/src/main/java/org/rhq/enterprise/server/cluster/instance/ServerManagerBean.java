@@ -20,8 +20,12 @@ package org.rhq.enterprise.server.cluster.instance;
 
 import java.util.List;
 
+import javax.annotation.Resource;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.Timeout;
+import javax.ejb.Timer;
+import javax.ejb.TimerService;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -61,6 +65,9 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     static private Server.OperationMode lastEstablishedServerMode = null;
 
+    @Resource
+    TimerService timerService;
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -70,6 +77,16 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     @EJB
     AgentStatusManagerLocal agentStatusManager;
+
+    public void scheduleServerHeartbeat() {
+        // start it now, and repeat every 30 seconds
+        timerService.createTimer(0, 30000, null);
+    }
+
+    @Timeout
+    public void handleHeartbeatTimer(Timer timer) {
+        beat();
+    }
 
     public int create(Server server) {
         entityManager.persist(server);
@@ -167,6 +184,10 @@ public class ServerManagerBean implements ServerManagerLocal {
     public void beat() {
         Server server = getServer();
         server.setMtime(System.currentTimeMillis());
+
+        // Handles server mode state changes 
+        // note: this call should be fast. if not we need to break the heart beat into its own job
+        establishCurrentServerMode();
     }
 
 }

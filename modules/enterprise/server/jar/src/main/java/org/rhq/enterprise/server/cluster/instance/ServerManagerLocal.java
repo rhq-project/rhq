@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.cluster.instance;
 import java.util.List;
 
 import javax.ejb.Local;
+import javax.ejb.Timer;
 
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
@@ -31,6 +32,10 @@ import org.rhq.core.domain.resource.Agent;
  */
 @Local
 public interface ServerManagerLocal {
+
+    void scheduleServerHeartbeat();
+
+    void handleHeartbeatTimer(Timer timer);
 
     /**
      * Persist the fully defined <server>. 

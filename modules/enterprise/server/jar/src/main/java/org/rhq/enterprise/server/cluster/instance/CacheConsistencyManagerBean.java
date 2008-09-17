@@ -20,8 +20,12 @@ package org.rhq.enterprise.server.cluster.instance;
 
 import java.util.List;
 
+import javax.annotation.Resource;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.Timeout;
+import javax.ejb.Timer;
+import javax.ejb.TimerService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,11 +45,24 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
 
     private final Log log = LogFactory.getLog(CacheConsistencyManagerBean.class);
 
+    @Resource
+    TimerService timerService;
+
     @EJB
     ServerManagerLocal serverManager;
 
     @EJB
     AlertConditionCacheManagerLocal cacheManager;
+
+    public void scheduleServerCacheReloader() {
+        // start it now, and repeat every 30 seconds
+        timerService.createTimer(0, 30000, null);
+    }
+
+    @Timeout
+    public void handleHeartbeatTimer(Timer timer) {
+        reloadServerCacheIfNeeded();
+    }
 
     public void reloadServerCacheIfNeeded() {
         List<Agent> agents = serverManager.getAgentsWithStatus();

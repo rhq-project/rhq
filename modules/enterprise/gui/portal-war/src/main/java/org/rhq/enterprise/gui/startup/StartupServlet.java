@@ -45,7 +45,6 @@ import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.core.plugin.ProductPluginDeployerMBean;
 import org.rhq.enterprise.server.plugin.content.ContentSourcePluginServiceManagement;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.scheduler.instance.ServerSchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForSuspectedAgentsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob;
@@ -53,8 +52,6 @@ import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutContentRequestsJ
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutOperationsJob;
 import org.rhq.enterprise.server.scheduler.jobs.ClusterManagerJob;
 import org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob;
-import org.rhq.enterprise.server.scheduler.jobs.instance.ReloadServerCacheIfNeededJob;
-import org.rhq.enterprise.server.scheduler.jobs.instance.ServerManagerJob;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -259,36 +256,11 @@ public class StartupServlet extends HttpServlet {
          */
 
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
-        ServerSchedulerLocal serverScheduler = LookupUtil.getServerSchedulerBean();
 
         // TODO [mazz]: make all of the intervals here configurable via something like SystemManagerBean
 
-        // periodic job that checks for server cache reload
-        try {
-            // do not check until we are up at least 1min, but check every 30secs thereafter
-            final long initialDelay = 1000L * 60;
-            final long interval = 1000L * 30;
-            // important to set volatile so that other servers don't execute this as part of quartz failover activity
-            serverScheduler.scheduleRepeatingJob("ReloadServerCache", "ServerJobs", ReloadServerCacheIfNeededJob.class,
-                true, true, initialDelay, interval);
-        } catch (Exception e) {
-            throw new ServletException("Cannot schedule HA server cache reload", e);
-        }
-
-        // periodic job that performs server management operations for the server
-        // - checks for server mode change
-        // - update mtime to indicate server up
-        // ? could cache reload be merged into this or is it best to keep that separate due to run time of that job? 
-        try {
-            // do not check until we are up 10secs, but check every 30secs thereafter
-            final long initialDelay = 1000L * 10;
-            final long interval = 1000L * 30;
-            // important to set volatile so that other servers don't execute this as part of quartz failover activity
-            serverScheduler.scheduleRepeatingJob("ServerHeartbeat", "ServerJobs", ServerManagerJob.class, true, true,
-                initialDelay, interval);
-        } catch (Exception e) {
-            throw new ServletException("Cannot schedule HA server mode job", e);
-        }
+        LookupUtil.getServerManager().scheduleServerHeartbeat();
+        LookupUtil.getCacheConsistenyManager().scheduleServerCacheReloader();
 
         // Cluster Manager Job
         try {

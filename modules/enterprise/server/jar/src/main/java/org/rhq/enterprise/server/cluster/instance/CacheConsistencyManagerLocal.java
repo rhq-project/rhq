@@ -19,11 +19,17 @@
 package org.rhq.enterprise.server.cluster.instance;
 
 import javax.ejb.Local;
+import javax.ejb.Timer;
 
 /**
  * @author Joseph Marques
  */
 @Local
 public interface CacheConsistencyManagerLocal {
+
+    void scheduleServerCacheReloader();
+
+    void handleHeartbeatTimer(Timer timer);
+
     void reloadServerCacheIfNeeded();
 }

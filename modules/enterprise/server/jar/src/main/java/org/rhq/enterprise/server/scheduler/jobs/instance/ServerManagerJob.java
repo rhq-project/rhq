@@ -41,8 +41,5 @@ public class ServerManagerJob implements Job {
         // register heart beat
         serverManager.beat();
 
-        // Handles server mode state changes 
-        // note: this call should be fast. if not we need to break the heart beat into its own job
-        serverManager.establishCurrentServerMode();
     }
 }

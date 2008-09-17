@@ -27,8 +27,9 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.TimeZone;
 
 import org.apache.commons.logging.Log;
@@ -36,17 +37,56 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
+import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
 
 public class IISResponseTimeDelegate {
 
-    // Default fields
-    // time c-ip cs-method cs-uri-stem sc-status time-taken
+    // date time c-ip cs-method cs-uri-stem sc-status time-taken
+    private enum LogFormatToken {
+        DATE("date"), //
+        TIME("time"), //
+        C_IP("c-ip"), //
+        CS_URI_STEM("cs-uri-stem"), //
+        SC_STATUS("sc-status"), //
+        TIME_TAKEN("time-taken");
+
+        private String tokenLiteral;
+
+        private LogFormatToken(String tokenLiteral) {
+            this.tokenLiteral = tokenLiteral;
+        }
+
+        public static LogFormatToken getViaTokenLiteral(String literal) {
+            for (LogFormatToken logToken : values()) {
+                // case-sensitive comparison
+                if (logToken.tokenLiteral.equals(literal)) {
+                    return logToken;
+                }
+            }
+            return null; // this is OK, user can be using extra tokens
+        }
+
+        public static String getRequiredTokenString() {
+            StringBuilder builder = new StringBuilder();
+            for (LogFormatToken nextToken : values()) {
+                if (builder.length() > 0) {
+                    builder.append(", ");
+                }
+                builder.append("'").append(nextToken.tokenLiteral).append("'");
+            }
+            return builder.toString();
+        }
+
+    }
 
     private File logDirectory;
     private File previousFile;
     private long previousOffset;
     private ResponseTimeLogParser logParser;
+    private boolean isAbsoluteTime;
+    private ResponseTimeConfiguration responseTimeConfiguration;
+    private Map<LogFormatToken, Integer> logTokenPositions;
 
     private Log log = LogFactory.getLog(IISResponseTimeDelegate.class);
 
@@ -57,11 +97,40 @@ public class IISResponseTimeDelegate {
         }
     }
 
-    public IISResponseTimeDelegate(String logDirectory) {
+    public IISResponseTimeDelegate(String logDirectory, String logFormat,
+        ResponseTimeConfiguration responseTimeConfiguration/*, boolean isAbsoluteTime*/) {
         if (logDirectory == null) {
             throw new IllegalArgumentException("logDirectory can not be null");
         }
         this.logDirectory = new File(logDirectory);
+
+        // IIS always logs in UTC, even if the "Use local time for file naming and rollover" option is selected
+        this.isAbsoluteTime = true;
+
+        this.responseTimeConfiguration = responseTimeConfiguration;
+
+        logTokenPositions = new HashMap<LogFormatToken, Integer>();
+        String[] logFormatTokens = logFormat.split(" ");
+        EnumSet<LogFormatToken> foundTokens = EnumSet.noneOf(LogFormatToken.class);
+        for (int i = 0; i < logFormatTokens.length; i++) {
+            String nextLiteral = logFormatTokens[i];
+            LogFormatToken nextToken = LogFormatToken.getViaTokenLiteral(nextLiteral);
+            if (nextToken != null) {
+                if (foundTokens.contains(nextToken)) {
+                    // weird, but I suppose it's possible possible
+                    log.warn("Token '" + nextLiteral + "' was specified more than once");
+                } else {
+                    log.info("Required token found '" + nextLiteral + "' at position " + i);
+                    foundTokens.add(nextToken);
+                    logTokenPositions.put(nextToken, i);
+                }
+            } else {
+                log.info("Extra token found '" + nextLiteral + "' at position " + i);
+            }
+        }
+        if (!foundTokens.containsAll(EnumSet.allOf(LogFormatToken.class))) {
+            log.error("Log format '" + logFormat + "' needs to include: " + LogFormatToken.getRequiredTokenString());
+        }
     }
 
     public void parseLogs(CallTimeData data) {
@@ -116,12 +185,12 @@ public class IISResponseTimeDelegate {
 
     private class IISResponseTimeLogParser extends ResponseTimeLogParser {
 
-        // IIS records log files in UTC, but we need to report values in local time
-        private int tzOffset = TimeZone.getDefault().getRawOffset();
         private DateFormat dateParser = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         public IISResponseTimeLogParser(File logFile) {
             super(logFile);
+            setExcludes(IISResponseTimeDelegate.this.responseTimeConfiguration.getExcludes());
+            setTransforms(IISResponseTimeDelegate.this.responseTimeConfiguration.getTransforms());
         }
 
         public synchronized void parseLog(CallTimeData callTimeData) throws IOException {
@@ -204,21 +273,31 @@ public class IISResponseTimeDelegate {
         protected LogEntry parseLine(String line) throws Exception {
             LogEntry logEntry;
             try {
-                StringTokenizer tokenizer = new StringTokenizer(line);
-                String date = tokenizer.nextToken();
-                String time = tokenizer.nextToken();
-                String ipAddress = tokenizer.nextToken();
-                String httpMethod = tokenizer.nextToken();
-                String url = tokenizer.nextToken();
-                int httpStatus = Integer.parseInt(tokenizer.nextToken());
-                long duration = Long.parseLong(tokenizer.nextToken());
+                String[] logEntryTokens = line.split(" ");
 
-                // get the local start time by subtracting the local offset from the UTC parsed time
-                long startTime = dateParser.parse(date.trim() + " " + time.trim()).getTime() - tzOffset;
+                String date = logEntryTokens[logTokenPositions.get(LogFormatToken.DATE)];
+                String time = logEntryTokens[logTokenPositions.get(LogFormatToken.TIME)];
+                String ipAddress = logEntryTokens[logTokenPositions.get(LogFormatToken.C_IP)];
+                String url = logEntryTokens[logTokenPositions.get(LogFormatToken.CS_URI_STEM)];
+
+                int httpStatus = Integer.parseInt(logEntryTokens[logTokenPositions.get(LogFormatToken.SC_STATUS)]);
+                long duration = Long.parseLong(logEntryTokens[logTokenPositions.get(LogFormatToken.TIME_TAKEN)]);
+
+                long startTime = dateParser.parse(date.trim() + " " + time.trim()).getTime();
+                if (isAbsoluteTime) {
+                    /* if we determine that IIS is recording log files in UTC, we need to 
+                     * translate values into agent-local times; get the local start time by 
+                     * adding the DST-based local offset from the UTC parsed time
+                     */
+                    int tzOffset = TimeZone.getDefault().getOffset(startTime);
+                    startTime += tzOffset;
+                }
 
                 logEntry = new LogEntry(url, startTime, duration, httpStatus, ipAddress);
             } catch (RuntimeException e) {
-                throw new Exception("Failed to parse response time log file line [" + line + "].", e);
+                //default fields: time c-ip cs-method cs-uri-stem sc-status (also need 'date' and 'time-taken')
+                throw new Exception("Failed to parse response time log file line [" + line + "]. "
+                    + "Expected field format is 'date time c-ip cs-method cs-uri-stem sc-status'", e);
             }
 
             return logEntry;

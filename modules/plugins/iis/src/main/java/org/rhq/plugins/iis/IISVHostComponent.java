@@ -34,6 +34,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 
 /**
  * @author Greg Hinkle
@@ -51,8 +52,12 @@ public class IISVHostComponent implements ResourceComponent<IISServerComponent>,
         this.resourceContext = resourceContext;
 
         String logDirectory = getLogDirectory();
+        //        String collectionTZ = getResponseTimeCollectionTimeZone();
+        String logFormat = getResponseTimeLogFormat();
+        ResponseTimeConfiguration responseTimeConfiguration = getResponseTimeConfiguration();
 
-        responseTimeDelegate = new IISResponseTimeDelegate(logDirectory);
+        responseTimeDelegate = new IISResponseTimeDelegate(logDirectory, logFormat, responseTimeConfiguration
+        /*,collectionTZ.equals("true")*/);
     }
 
     public void stop() {
@@ -62,12 +67,25 @@ public class IISVHostComponent implements ResourceComponent<IISServerComponent>,
         return AvailabilityType.UP;
     }
 
+    //    public String getResponseTimeCollectionTimeZone() {
+    //        return resourceContext.getPluginConfiguration().getSimpleValue("responseTimeCollectionTZ", "true");
+    //    }
+
+    public String getResponseTimeLogFormat() {
+        // date time c-ip cs-method cs-uri-stem sc-status time-taken
+        return resourceContext.getPluginConfiguration().getSimpleValue("responseTimeLogFormat", null);
+    }
+
     public String getLogDirectory() {
         return resourceContext.getPluginConfiguration().getSimpleValue("logDirectory", null);
     }
 
     public String getSiteName() {
         return this.resourceContext.getPluginConfiguration().getSimpleValue("siteName", null);
+    }
+
+    public ResponseTimeConfiguration getResponseTimeConfiguration() {
+        return new ResponseTimeConfiguration(resourceContext.getPluginConfiguration());
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {

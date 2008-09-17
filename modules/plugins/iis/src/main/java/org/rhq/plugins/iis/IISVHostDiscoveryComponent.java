@@ -69,7 +69,7 @@ public class IISVHostDiscoveryComponent implements ResourceDiscoveryComponent<II
                 continue;
             }
 
-            Configuration config = new Configuration();
+            Configuration config = resourceDiscoveryContext.getDefaultPluginConfiguration();
 
             config.put(new PropertySimple("siteName", siteName));
             config.put(new PropertySimple("port", info.getPort()));

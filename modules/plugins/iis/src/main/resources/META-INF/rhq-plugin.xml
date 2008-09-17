@@ -214,8 +214,14 @@
                     <c:simple-property name="logDirectory"/>
                 </c:group>
                 <c:group name="ResponseTime">
-                    <c:simple-property name="responseTimeLogFile" required="false"
-                                       description="the full path to the log file containing response-time stats for this webapp"/>
+                <!-- 
+                    <c:simple-property name="responseTimeCollectionTZ" type="boolean" default="true" displayName="UTC Timestamps" 
+                                       description="If true, assumes log entries are written in UTC.  If false, assumes log entries are written in server-local time.  This is a per-site, general option of the W3C Extended Log File Format.">
+                    </c:simple-property>
+                  -->
+                    <c:simple-property name="responseTimeLogFormat" type="string" displayName="Log Format" default="date time c-ip cs-method cs-uri-stem sc-status time-taken" 
+                                       description="The format log entries are written in.  This is a per-site, general option of the W3C Extended Log File Format. Format must contain the following tokens - 'date' ,'time' , 'c-ip', 'cs-uri-stem', 'sc-status', and 'time-taken' - but can include others.  Tokens must *not* have quotes around them, and should be space-delimited.">
+                    </c:simple-property>
                     <c:simple-property name="responseTimeUrlExcludes" required="false"
                                        description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
                     <c:simple-property name="responseTimeUrlTransforms" required="false"

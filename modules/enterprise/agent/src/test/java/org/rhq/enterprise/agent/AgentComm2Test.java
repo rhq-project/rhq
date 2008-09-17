@@ -290,8 +290,7 @@ public class AgentComm2Test extends AgentCommTestBase {
      *
      * @throws Exception
      */
-    @Test(enabled = false)
-    // WHY IS THIS FAILING?
+    @Test(enabled = ENABLE_TESTS)
     public void testSendSecureMessageFullAuth() throws Exception {
         // each keystore is the other's truststore
         Properties props1 = new Properties();
@@ -306,6 +305,9 @@ public class AgentComm2Test extends AgentCommTestBase {
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_CLIENT_AUTH_MODE,
             SSLSocketBuilder.CLIENT_AUTH_MODE_NEED);
 
+        // set this so the agent will not pre-send connectAgent because JBoss Remoting 2 doesn't seem to like bi-directional messaging within the same VM
+        props1.setProperty(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, "");
+
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
@@ -319,6 +321,10 @@ public class AgentComm2Test extends AgentCommTestBase {
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "true");
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_CLIENT_AUTH_MODE,
             SSLSocketBuilder.CLIENT_AUTH_MODE_NEED);
+
+        // set this so the agent will not pre-send connectAgent because JBoss Remoting 2 doesn't seem to like bi-directional messaging within the same VM
+        props2.setProperty(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, "");
+
         m_agent2Test.setConfigurationOverrides(props2);
 
         AgentMain agent1 = m_agent1Test.createAgent(true);
@@ -348,7 +354,7 @@ public class AgentComm2Test extends AgentCommTestBase {
         assert new InvokerLocator(response.getIdentification().getInvokerLocator()).getPort() == agent2
             .getServiceContainer().getConfiguration().getConnectorBindPort() : "Didn't get the identify of agent2 - what remoting server did we just communicate with??";
 
-        // JBoss Remoting 2.2.SP4 doesn't seem to like me doing bi-directional messaging within the same VM
+        // JBoss Remoting 2 doesn't seem to like me doing bi-directional messaging within the same VM
         //      cmdresponse = agent2.getClientCommandSender().sendSynch( command );
         //      assert cmdresponse.isSuccessful() : "Failed to send command from agent2 to agent1: " + cmdresponse;
         //      response = (IdentifyCommandResponse) cmdresponse;
@@ -422,8 +428,7 @@ public class AgentComm2Test extends AgentCommTestBase {
      *
      * @throws Exception
      */
-    @Test(enabled = false)
-    // WHY IS THIS FAILING?
+    @Test(enabled = ENABLE_TESTS)
     public void testSendSecureMessageClientAuthWantWithTruststore() throws Exception {
         // each keystore is the other's truststore
         Properties props1 = new Properties();
@@ -438,6 +443,9 @@ public class AgentComm2Test extends AgentCommTestBase {
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_CLIENT_AUTH_MODE,
             SSLSocketBuilder.CLIENT_AUTH_MODE_WANT);
 
+        // set this so the agent will not pre-send connectAgent because JBoss Remoting 2 doesn't seem to like bi-directional messaging within the same VM
+        props1.setProperty(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, "");
+
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
@@ -451,6 +459,10 @@ public class AgentComm2Test extends AgentCommTestBase {
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "true");
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_CLIENT_AUTH_MODE,
             SSLSocketBuilder.CLIENT_AUTH_MODE_WANT);
+
+        // set this so the agent will not pre-send connectAgent because JBoss Remoting 2 doesn't seem to like bi-directional messaging within the same VM
+        props2.setProperty(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, "");
+
         m_agent2Test.setConfigurationOverrides(props2);
 
         AgentMain agent1 = m_agent1Test.createAgent(true);

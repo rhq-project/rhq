@@ -1786,7 +1786,8 @@ public class AgentMain {
 
         // in order to send the connectAgent command, the agent needs to be registered
         // we won't add this command if we know we aren't registered yet
-        if (getAgentSecurityToken() != null) {
+        String agentSecurityToken = getAgentSecurityToken();
+        if (agentSecurityToken != null && agentSecurityToken.length() > 0) {
             Command connectAgentCommand = createConnectAgentCommand();
             client_sender.preprocessCommand(connectAgentCommand);
             CommandResponseCallback callback = new CommandResponseCallback() {

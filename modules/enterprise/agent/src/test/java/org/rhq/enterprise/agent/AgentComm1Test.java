@@ -97,8 +97,7 @@ public class AgentComm1Test extends AgentCommTestBase {
      *
      * @throws Exception
      */
-    @Test(enabled = false)
-    // WHY IS THIS FAILING?
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentStreamingDataToPojoWithPreprocessorAuthenticatorOverSSL() throws Exception {
         Properties props1 = new Properties();
         setServerLocatorUriProperties(props1, "sslsocket", "127.0.0.1", 22222, null);
@@ -117,6 +116,9 @@ public class AgentComm1Test extends AgentCommTestBase {
             SimpleCommandPreprocessor.class.getName());
         props1.setProperty(ServiceContainerConfigurationConstants.COMMAND_AUTHENTICATOR,
             SimpleCommandAuthenticator.class.getName());
+
+        // set this so the agent will not pre-send connectAgent because JBoss Remoting 2 doesn't seem to like bi-directional messaging within the same VM
+        props1.setProperty(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, "");
 
         m_agent1Test.setConfigurationOverrides(props1);
 
@@ -139,6 +141,9 @@ public class AgentComm1Test extends AgentCommTestBase {
             SimpleCommandAuthenticator.class.getName());
         props2.setProperty(ServiceContainerConfigurationConstants.REMOTE_POJOS, SimpleTestStreamPojo.class.getName()
             + ':' + ITestStreamPojo.class.getName());
+
+        // set this so the agent will not pre-send connectAgent because JBoss Remoting 2 doesn't seem to like bi-directional messaging within the same VM
+        props2.setProperty(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, "");
 
         m_agent2Test.setConfigurationOverrides(props2);
 

@@ -81,9 +81,9 @@ public class AgentCommTestBase {
             ServiceContainerConfiguration server_config1 = agent_config1.getServiceContainerPreferences();
 
             SecurityUtil.createKeyStore(server_config1.getConnectorSecurityKeystoreFile(), server_config1
-                .getConnectorSecurityKeystoreAlias(), "CN=JBoss ON Communications Server, OU=JBoss, O=jboss.com, C=US",
-                server_config1.getConnectorSecurityKeystorePassword(), server_config1
-                    .getConnectorSecurityKeystoreKeyPassword(), "DSA", 36500);
+                .getConnectorSecurityKeystoreAlias(), "CN=RHQ, OU=RedHat, O=redhat.com, C=US", server_config1
+                .getConnectorSecurityKeystorePassword(), server_config1.getConnectorSecurityKeystoreKeyPassword(),
+                "DSA", 36500);
         }
 
         File keystore_file2 = new File("target/testdata2/keystore.dat");
@@ -94,9 +94,9 @@ public class AgentCommTestBase {
             ServiceContainerConfiguration server_config2 = agent_config2.getServiceContainerPreferences();
 
             SecurityUtil.createKeyStore(server_config2.getConnectorSecurityKeystoreFile(), server_config2
-                .getConnectorSecurityKeystoreAlias(), "CN=JBoss ON Communications Server, OU=JBoss, O=jboss.com, C=US",
-                server_config2.getConnectorSecurityKeystorePassword(), server_config2
-                    .getConnectorSecurityKeystoreKeyPassword(), "DSA", 36500);
+                .getConnectorSecurityKeystoreAlias(), "CN=RHQ, OU=RedHat, O=redhat.com, C=US", server_config2
+                .getConnectorSecurityKeystorePassword(), server_config2.getConnectorSecurityKeystoreKeyPassword(),
+                "DSA", 36500);
         }
     }
 

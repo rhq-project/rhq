@@ -38,7 +38,7 @@ import org.rhq.enterprise.communications.command.server.discovery.AutoDiscoveryL
  */
 @Test(groups = "agent-comm")
 public class AgentComm4Test extends AgentCommTestBase {
-    private static final boolean ENABLE_TESTS = false;
+    private static final boolean ENABLE_TESTS = true;
 
     /**
      * Starts and immediately stops the agents - showing that you can have more than one agent running on the box at any

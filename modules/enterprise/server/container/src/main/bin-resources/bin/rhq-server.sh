@@ -101,7 +101,7 @@ check_status ()
     if [ -f "$PIDFILE" ]; then
         PID=`cat $PIDFILE`
         if [ -n "$PID" ] && kill -0 $PID 2>/dev/null ; then
-            STATUS="RHQ Server (pid $PID) is running"
+            STATUS="RHQ Server (pid $PID) is $1"
             RUNNING=1
         else
             STATUS="RHQ Server (pid $PID) is NOT running"
@@ -259,7 +259,7 @@ PIDFILE=${RHQ_SERVER_HOME}/bin/.rhq-server.pid
 # Execute the command that the user wants us to do
 # ----------------------------------------------------------------------
 
-check_status
+check_status "running"
 
 case "$1" in
 'console')
@@ -305,7 +305,7 @@ case "$1" in
         echo "$!" > $PIDFILE
         
         sleep 5
-        check_status
+        check_status "starting"
         echo $STATUS
 
         if [ "$RUNNING" = "1" ]; then
@@ -339,7 +339,7 @@ case "$1" in
                kill -9 $PID
                sleep 2
            fi
-           check_status
+           check_status "stopping..."
         done
 
         remove_pid_file

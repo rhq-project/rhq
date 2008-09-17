@@ -59,10 +59,10 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
@@ -195,8 +195,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
             serviceScanExecutor = new RuntimeDiscoveryExecutor(this, configuration);
-            inventoryThreadPoolExecutor.scheduleWithFixedDelay(serviceScanExecutor, configuration
-                .getServiceDiscoveryInitialDelay(), configuration.getServiceDiscoveryPeriod(), TimeUnit.SECONDS);
+            if (configuration.isInsideAgent()) {
+                inventoryThreadPoolExecutor.scheduleWithFixedDelay(serviceScanExecutor, configuration
+                    .getServiceDiscoveryInitialDelay(), configuration.getServiceDiscoveryPeriod(), TimeUnit.SECONDS);
+            }
 
             // Never run more than one availability check at a time.
             availabilityThreadPoolExecutor = new ScheduledThreadPoolExecutor(AVAIL_THREAD_POOL_CORE_POOL_SIZE,
@@ -1446,7 +1448,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         boolean hasPackageTypes = (resourceType.getPackageTypes() != null && !resourceType.getPackageTypes().isEmpty());
         boolean hasContentBasedCreatableChildren = false;
         for (ResourceType childResourceType : resourceType.getChildResourceTypes()) {
-            if (childResourceType.isCreatable() && childResourceType.getCreationDataType() == ResourceCreationDataType.CONTENT) {
+            if (childResourceType.isCreatable()
+                && childResourceType.getCreationDataType() == ResourceCreationDataType.CONTENT) {
                 hasContentBasedCreatableChildren = true;
                 break;
             }

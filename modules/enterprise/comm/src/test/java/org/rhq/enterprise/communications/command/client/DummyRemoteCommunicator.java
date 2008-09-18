@@ -141,4 +141,9 @@ public class DummyRemoteCommunicator implements RemoteCommunicator {
 
     public void setFailureCallback(FailureCallback callback) {
     }
+
+    public String getRemoteEndpoint() {
+        return "dummy://dummy";
+    }
+
 }

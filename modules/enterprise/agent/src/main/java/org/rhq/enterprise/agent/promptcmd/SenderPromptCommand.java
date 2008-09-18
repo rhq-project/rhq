@@ -19,7 +19,10 @@
 package org.rhq.enterprise.agent.promptcmd;
 
 import java.io.PrintWriter;
+
 import mazz.i18n.Msg;
+
+import org.rhq.enterprise.agent.AgentConfiguration;
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
@@ -79,8 +82,13 @@ public class SenderPromptCommand implements AgentPromptCommand {
                     } else {
                         out.println(MSG.getMsg(AgentI18NResourceKeys.SENDER_IS_NOT_SENDING));
                     }
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.SENDER_SERVER_ENDPOINT, sender.getRemoteCommunicator()
+                        .getRemoteEndpoint()));
                 } else {
                     out.println(MSG.getMsg(AgentI18NResourceKeys.SENDER_AGENT_NOT_STARTED));
+                    AgentConfiguration agent_config = agent.getConfiguration();
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.SENDER_SERVER_ENDPOINT_CONFIG, agent_config
+                        .getServerLocatorUri()));
                 }
             }
         } catch (Exception e) {

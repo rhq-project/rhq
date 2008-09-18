@@ -526,6 +526,12 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("The command sender has been stopped - it is NOT in sending mode.")
     String SENDER_IS_NOT_SENDING = "PromptCommand.sender.is-not-sending";
 
+    @I18NMessage("The sender is pointing to the server endpoint of [{0}]")
+    String SENDER_SERVER_ENDPOINT = "PromptCommand.sender.server-endpoint";
+
+    @I18NMessage("The configured server endpoint is [{0}]")
+    String SENDER_SERVER_ENDPOINT_CONFIG = "PromptCommand.sender.server-endpoint-config";
+
     @I18NMessage("Failed to perform sender command; stack trace follows:")
     String SENDER_FAILURE = "PromptCommand.sender.failure";
 

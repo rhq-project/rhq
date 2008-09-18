@@ -98,4 +98,11 @@ public interface RemoteCommunicator {
      * @param callback the object that listens to failures and may trigger retries (may be <code>null</code>)
      */
     void setFailureCallback(FailureCallback callback);
+
+    /**
+     * Returns a string representation of the remote endpoint this communicator is configured to talk to.
+     * 
+     * @return remote endpoint string
+     */
+    String getRemoteEndpoint();
 }

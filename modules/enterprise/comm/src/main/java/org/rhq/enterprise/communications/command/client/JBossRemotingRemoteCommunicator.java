@@ -349,6 +349,10 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         m_failureCallback = callback;
     }
 
+    public String getRemoteEndpoint() {
+        return (m_invokerLocator != null) ? m_invokerLocator.getLocatorURI() : "<null>";
+    }
+
     /**
      * Returns the map of name/value pairs of client configuration settings used when creating the client. The returned
      * map is a copy - changing its contents has no effect on the clients that already have been or will be created by

@@ -922,6 +922,7 @@ public class AgentMain {
             public void run() {
                 boolean retry = true;
                 long retry_interval = 1000L;
+                boolean got_registered = false;
 
                 while (retry) {
                     try {
@@ -955,6 +956,7 @@ public class AgentMain {
                                 try {
                                     AgentRegistrationResults results = remote_pojo.registerAgent(request);
                                     m_registration = results;
+                                    got_registered = true;
                                     retry = false;
                                     token = results.getAgentToken();
                                     failoverList = results.getFailoverList();
@@ -966,33 +968,33 @@ public class AgentMain {
                                     // of failure is probably not recoverable even if we try again.
                                     agent_config.setAgentSecurityToken(token);
                                     LOG.debug(AgentI18NResourceKeys.NEW_SECURITY_TOKEN, token);
+                                }
 
-                                    // we are now registered and know our security token, let's prepare the startup commands 
-                                    addSenderStartupCommands(sender);
+                                // we are now registered and know our security token, let's prepare the startup commands 
+                                addSenderStartupCommands(sender);
 
-                                    storeServerFailoverList(failoverList);
-                                    m_serverFailoverList = failoverList;
+                                storeServerFailoverList(failoverList);
+                                m_serverFailoverList = failoverList;
 
-                                    // switch away from the registration server and point this agent to the top of the list
-                                    // - this is our primary server that we should connect to
-                                    // note that if we are already pointing to the one at the head of the failover list,
-                                    // we don't have to failover to another server; the current one is the one we already want
-                                    if (failoverList.hasNext()) {
-                                        String currentAddress = agent_config.getServerBindAddress();
-                                        int currentPort = agent_config.getServerBindPort();
-                                        String currentTransport = agent_config.getServerTransport();
-                                        ServerEntry nextServer = failoverList.peek();
+                                // switch away from the registration server and point this agent to the top of the list
+                                // - this is our primary server that we should connect to
+                                // note that if we are already pointing to the one at the head of the failover list,
+                                // we don't have to failover to another server; the current one is the one we already want
+                                if (failoverList.hasNext()) {
+                                    String currentAddress = agent_config.getServerBindAddress();
+                                    int currentPort = agent_config.getServerBindPort();
+                                    String currentTransport = agent_config.getServerTransport();
+                                    ServerEntry nextServer = failoverList.peek();
 
-                                        if (currentAddress.equals(nextServer.address)
-                                            && currentPort == (SecurityUtil.isTransportSecure(currentTransport) ? nextServer.securePort
-                                                : nextServer.port)) {
-                                            // we are already pointing to the primary server, so all we have to do is
-                                            // call next to move the index to the next in the list for when we have to failover in the future
-                                            nextServer = failoverList.next();
-                                            sendConnectRequestToServer(sender.getRemoteCommunicator());
-                                        } else {
-                                            failoverToNewServer(sender.getRemoteCommunicator());
-                                        }
+                                    if (currentAddress.equals(nextServer.address)
+                                        && currentPort == (SecurityUtil.isTransportSecure(currentTransport) ? nextServer.securePort
+                                            : nextServer.port)) {
+                                        // we are already pointing to the primary server, so all we have to do is
+                                        // call next to move the index to the next in the list for when we have to failover in the future
+                                        nextServer = failoverList.next();
+                                        sendConnectRequestToServer(sender.getRemoteCommunicator());
+                                    } else {
+                                        failoverToNewServer(sender.getRemoteCommunicator());
                                     }
                                 }
                             }
@@ -1011,9 +1013,14 @@ public class AgentMain {
                         LOG.debug(AgentI18NResourceKeys.AGENT_REGISTRATION_ABORTED);
                         retry = false;
                     } catch (Throwable t) {
-                        retry_interval = (retry_interval < 60000L) ? (retry_interval * 2) : 60000L;
-                        LOG.warn(t, AgentI18NResourceKeys.AGENT_REGISTRATION_FAILURE, retry, retry_interval,
-                            ThrowableUtil.getAllMessages(t));
+                        if (!got_registered) {
+                            retry_interval = (retry_interval < 60000L) ? (retry_interval * 2) : 60000L;
+                            LOG.warn(t, AgentI18NResourceKeys.AGENT_REGISTRATION_FAILURE, retry, retry_interval,
+                                ThrowableUtil.getAllMessages(t));
+                        } else {
+                            LOG.warn(t, AgentI18NResourceKeys.AGENT_POSTREGISTRATION_FAILURE, m_registration,
+                                ThrowableUtil.getAllMessages(t));
+                        }
                     }
                 }
 

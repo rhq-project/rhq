@@ -187,6 +187,9 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Agent failed to register with the server. retry=[{0}], retry interval=[{1}]. Cause: {2}")
     String AGENT_REGISTRATION_FAILURE = "AgentMain.agent-registration-failure";
 
+    @I18NMessage("Agent registered with the server but failed its postprocessing. Registration=[{1}]. Cause: {2}")
+    String AGENT_POSTREGISTRATION_FAILURE = "AgentMain.agent-postregistration-failure";
+
     @I18NMessage("Aborting the server registration attempt.")
     String AGENT_REGISTRATION_ABORTED = "AgentMain.agent-registration-aborted";
 

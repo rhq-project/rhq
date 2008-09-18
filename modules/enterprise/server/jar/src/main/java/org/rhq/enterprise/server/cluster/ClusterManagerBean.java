@@ -190,8 +190,8 @@ public class ClusterManagerBean implements ClusterManagerLocal {
 
                     // depending on the state change we may need to partition our agent load, otherwise audit the change
                     // TODO (jshaughn) Note that we can't currently distinguish whether a MM server is up or down. So,
-                    // we have to assume it is up.  The resulting partition request will then incorporate the DOWN server.                    
-                    String audit = server.getOperationMode().name() + " --> " + mode;
+                    // we have to assume it is up.  The resulting partition request will then incorporate the DOWN server.
+                    String audit = server.getName() + ": " + server.getOperationMode().name() + " --> " + mode;
 
                     if (Server.OperationMode.NORMAL == mode) {
 

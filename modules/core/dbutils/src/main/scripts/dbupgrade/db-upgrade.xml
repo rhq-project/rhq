@@ -71,13 +71,13 @@ DB Upgrade:
             column="SUPPORTS_ARCHITECTURE"
             columnType="BOOLEAN" />
 
-        <schema-directSQL targetDBVendor="postgresql">
-            <statement desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
+        <schema-directSQL>
+            <statement targetDBVendor="postgresql" desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
                 UPDATE RHQ_PACKAGE_TYPE SET SUPPORTS_ARCHITECTURE = FALSE
             </statement>
         </schema-directSQL>
-        <schema-directSQL targetDBVendor="oracle">
-            <statement desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
+        <schema-directSQL>
+            <statement targetDBVendor="oracle" desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
                 UPDATE RHQ_PACKAGE_TYPE SET SUPPORTS_ARCHITECTURE = 0
             </statement>
         </schema-directSQL>

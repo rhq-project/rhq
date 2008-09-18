@@ -80,7 +80,7 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
 
         agent.addStatus(Agent.Status.ALERT_DEFINITIONS_CHANGED);
 
-        log.info("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
+        log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
             + "] for alertDefinition[id=" + alertDefinitionId + "]");
     }
 
@@ -90,7 +90,7 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
 
         agent.addStatus(Agent.Status.BASELINES_CALCULATED);
 
-        log.info("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
+        log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
             + "] for measurementBaseline[id=" + baselineId + "]");
     }
 
@@ -104,7 +104,7 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
 
         agent.addStatus(Agent.Status.RESOURCE_HIERARCHY_UPDATED);
 
-        log.info("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus() + "] for resource[id="
+        log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus() + "] for resource[id="
             + resourceId + "]");
     }
 
@@ -113,7 +113,7 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
         for (Agent agent : agents) {
             agent.addStatus(Agent.Status.BASELINES_CALCULATED);
 
-            log.info("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
+            log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
                 + "] for AutoBaselineCalculationJob");
         }
     }

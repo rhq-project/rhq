@@ -90,7 +90,11 @@
                <tr>
                   <td align="right"><b>Affinity Group:</b></td>
                   <td align="left">
-                     <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.affinityGroup}"/>
+                     <h:outputLink rendered="#{mode eq 'view'}" value="viewAffinityGroup.xhtml">
+                        <f:param name="mode" value="view"/>
+                        <f:param name="affinityGroupId" value="#{agentDetails.affinityGroup.id}"/>
+                        <h:outputText rendered="#{mode eq 'view'}" value="#{agentDetails.affinityGroup.name}"/>
+                     </h:outputLink>
                   </td>
                </tr>
                <tr>

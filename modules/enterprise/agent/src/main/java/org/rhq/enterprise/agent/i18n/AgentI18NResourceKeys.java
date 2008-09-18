@@ -576,7 +576,7 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("The agent will perform its primary server switchover check now.\\n\\\n"
         + "If it is not connected to its primary server, it will attempt\\n\\\n"
-        + "to switch over now.  Use the <identify> prompt command to see\\n\\\n"
+        + "to switch over now.  Use the <sender> prompt command to see\\n\\\n"
         + "which server the agent is connected to.")
     String FAILOVER_CHECK_NOW = "PromptCommand.failover.check-now";
 

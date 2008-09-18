@@ -137,7 +137,10 @@
                         <h:commandButton action="#{ListPartitionEventsUIBean.purgeAllEvents}"
                                          value="PURGE ALL" styleClass="on-pager-button buttonsmall"
                                          rendered="${GlobalPermissionsUIBean.inventory}" />
-                     
+                        <h:commandButton action="#{ListPartitionEventsUIBean.repartition}"
+                                         value="FORCE REPARTITION" styleClass="on-pager-button buttonsmall"
+                                         rendered="${GlobalPermissionsUIBean.inventory}" />
+
                         <ui:param name="paginationDataTableName" value="partitionEventsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{partitionEventsDataModel}"/>
                         <ui:param name="paginationPageControl" value="#{PageControl.ListPartitionEventsView}"/>

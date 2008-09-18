@@ -26,6 +26,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cluster.PartitionEvent;
+import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -82,6 +83,20 @@ public class ListPartitionEventsUIBean extends PagedDataTableUIBean {
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to purge events", e);
             log.error("Failed to purge events", e);
+        }
+
+        return "success";
+    }
+
+    public String repartition() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+
+        try {
+            partitionEventManager.cloudPartitionEventRequest(subject, PartitionEventType.ADMIN_INITIATED_PARTITION, "");
+        } catch (Exception e) {
+            FacesContextUtility
+                .addMessage(FacesMessage.SEVERITY_ERROR, "Forced repartition / redistribution failed", e);
+            log.error("Forced repartition / redistribution failed", e);
         }
 
         return "success";

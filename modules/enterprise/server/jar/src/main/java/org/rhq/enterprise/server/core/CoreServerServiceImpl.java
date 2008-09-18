@@ -179,6 +179,7 @@ public class CoreServerServiceImpl implements CoreServerService {
         Agent agent = getAgentManager().getAgentByName(agentName);
 
         agent.setServer(getServerManager().getServer());
+        getAgentManager().updateAgent(agent);
 
         getAlertConditionCacheManager().reloadCachesForAgent(agent.getId());
 

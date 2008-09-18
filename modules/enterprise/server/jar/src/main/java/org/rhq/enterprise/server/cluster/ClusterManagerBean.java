@@ -183,25 +183,43 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     }
 
     public void updateServerMode(Integer[] serverIds, Server.OperationMode mode) {
+        if (serverIds == null) {
+            return;
+        }
+
+        if (mode == null) {
+            throw new IllegalArgumentException("mode can not be null");
+        }
+
         if (serverIds.length > 0) {
             try {
                 for (Integer id : serverIds) {
                     Server server = entityManager.find(Server.class, id);
 
+                    if (server.getOperationMode() == mode) {
+                        // don't bother doing things that are no-ops, we don't want to create 
+                        // events that might instigate unnecessary cloud repartitions
+                        continue;
+                    }
                     // depending on the state change we may need to partition our agent load, otherwise audit the change
                     // TODO (jshaughn) Note that we can't currently distinguish whether a MM server is up or down. So,
                     // we have to assume it is up.  The resulting partition request will then incorporate the DOWN server.
                     String audit = server.getName() + ": " + server.getOperationMode().name() + " --> " + mode;
 
                     if (Server.OperationMode.NORMAL == mode) {
-
                         if (Server.OperationMode.MAINTENANCE == server.getOperationMode()) {
+                            // MAINTENANCE --> NORMAL, cloud event
                             partitionEventManager.cloudPartitionEventRequest(LookupUtil.getSubjectManager()
                                 .getOverlord(), PartitionEventType.OPERATION_MODE_CHANGE, audit);
                         } else {
+                            // DOWN --> NORMAL, audit
                             partitionEventManager.auditPartitionEvent(LookupUtil.getSubjectManager().getOverlord(),
                                 PartitionEventType.OPERATION_MODE_CHANGE, audit);
                         }
+                    } else {
+                        // if we're not changing *to* NORMAL, then we should at least audit what's happening
+                        partitionEventManager.auditPartitionEvent(LookupUtil.getSubjectManager().getOverlord(),
+                            PartitionEventType.OPERATION_MODE_CHANGE, audit);
                     }
                     server.setOperationMode(mode);
                 }

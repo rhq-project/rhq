@@ -40,7 +40,6 @@ import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.enterprise.server.cluster.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -51,7 +50,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Test
 public class FailoverListManagerBeanTest extends AbstractEJB3Test {
     private FailoverListManagerLocal failoverListManager;
-    private ServerManagerLocal serverManager;
     private AgentManagerLocal agentManager;
     private PartitionEventManagerLocal partitionEventManager;
     private ClusterManagerLocal clusterManager;
@@ -69,7 +67,6 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
      */
     @BeforeClass
     public void beforeClass() {
-        serverManager = LookupUtil.getServerManager();
         agentManager = LookupUtil.getAgentManager();
         failoverListManager = LookupUtil.getFailoverListManager();
         partitionEventManager = LookupUtil.getPartitionEventManager();
@@ -91,7 +88,6 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
 
     @BeforeMethod
     public void beforeMethod() throws Exception {
-
         servers.clear();
         agents.clear();
         newAgents.clear();
@@ -102,11 +98,11 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         try {
             getTransactionManager().begin();
 
-            partitionEventManager.deletePartitionEvent(partitionEvent.getId());
+            partitionEventManager.deletePartitionEvents(overlord, new Integer[] { partitionEvent.getId() });
 
             try {
                 for (Server server : servers) {
-                    // must set to down to allow for a delete                    
+                    // must set to down to allow for a delete
                     clusterManager.updateServerMode(new Integer[] { server.getId() }, Server.OperationMode.DOWN);
                     clusterManager.deleteServer(server.getId());
                 }

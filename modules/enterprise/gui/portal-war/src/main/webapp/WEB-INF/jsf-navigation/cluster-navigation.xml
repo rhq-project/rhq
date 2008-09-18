@@ -166,4 +166,22 @@
       </navigation-case>
    </navigation-rule>
 
+   <!-- List PartitionEvents -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/listPartitionEvents.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/ha/listPartitionEvents.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/listPartitionEvents.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+
 </faces-config>

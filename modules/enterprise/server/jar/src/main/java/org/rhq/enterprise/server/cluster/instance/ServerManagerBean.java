@@ -32,8 +32,6 @@ import javax.persistence.PersistenceContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
@@ -72,7 +70,6 @@ public class ServerManagerBean implements ServerManagerLocal {
     private EntityManager entityManager;
 
     @EJB
-    @IgnoreDependency
     ClusterManagerLocal clusterManager;
 
     @EJB

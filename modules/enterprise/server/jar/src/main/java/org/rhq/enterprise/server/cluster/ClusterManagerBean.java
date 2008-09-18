@@ -30,6 +30,8 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cluster.FailoverListDetails;
@@ -69,6 +71,7 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     PartitionEventManagerLocal partitionEventManager;
 
     @EJB
+    @IgnoreDependency
     ServerManagerLocal serverManager;
 
     public List<Agent> getAgentsByServerName(String serverName) {

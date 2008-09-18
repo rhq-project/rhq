@@ -55,13 +55,21 @@
                             value="#{partitionEventsDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="20%, 20%, 30% 15% 15%"
+                            columnsWidth="1%, 25%, 20%, 30% 10% 15%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 
                <f:facet name="PageControlView">
                   <onc:paginationControl id="ListPartitionEventsView" />
                </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedEvents" />
+                  </f:facet>
+
+                  <onc:select name="selectedEvents" value="#{item.id}" />
+               </rich:column>
 
                <rich:column>
                   <f:facet name="header">
@@ -122,7 +130,14 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="5" width="100%">
+                     <rich:column colspan="6" width="100%">
+                        <onc:selectCommandButton action="#{ListPartitionEventsUIBean.removeSelectedEvents}"
+                                                 value="REMOVE SELECTED" target="selectedEvents" styleClass="on-pager-button buttonsmall"
+                                                 rendered="${GlobalPermissionsUIBean.inventory}" />
+                        <h:commandButton action="#{ListPartitionEventsUIBean.purgeAllEvents}"
+                                         value="PURGE ALL" styleClass="on-pager-button buttonsmall"
+                                         rendered="${GlobalPermissionsUIBean.inventory}" />
+                     
                         <ui:param name="paginationDataTableName" value="partitionEventsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{partitionEventsDataModel}"/>
                         <ui:param name="paginationPageControl" value="#{PageControl.ListPartitionEventsView}"/>

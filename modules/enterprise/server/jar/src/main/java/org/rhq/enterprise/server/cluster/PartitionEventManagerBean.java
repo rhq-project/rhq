@@ -72,6 +72,7 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
     @EJB
     FailoverListManagerLocal failoverListManager;
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public FailoverListComposite agentPartitionEvent(Subject subject, String agentName, PartitionEventType eventType) {
         if (eventType.isCloudPartitionEvent() || (null == agentName)) {
             throw new IllegalArgumentException("Invalid agent partition event or no agent specified for event type: "
@@ -92,6 +93,7 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
         return failoverListManager.getForSingleAgent(partitionEvent, agent.getName());
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Map<Agent, FailoverListComposite> cloudPartitionEvent(Subject subject, PartitionEventType eventType,
         String eventDetail) {
         if (!eventType.isCloudPartitionEvent()) {
@@ -105,6 +107,7 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
         return failoverListManager.refresh(partitionEvent);
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void cloudPartitionEventRequest(Subject subject, PartitionEventType eventType, String eventDetail) {
         if (!eventType.isCloudPartitionEvent()) {
             throw new IllegalArgumentException("Invalid cloud partition event type: " + eventType);
@@ -115,15 +118,34 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
         entityManager.persist(partitionEvent);
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void auditPartitionEvent(Subject subject, PartitionEventType eventType, String eventDetail) {
         PartitionEvent partitionEvent = new PartitionEvent(subject.getName(), eventType, eventDetail,
             PartitionEvent.ExecutionStatus.AUDIT);
         entityManager.persist(partitionEvent);
     }
 
-    public void deletePartitionEvent(int partitionEventId) {
-        PartitionEvent doomedEvent = entityManager.find(PartitionEvent.class, partitionEventId);
-        entityManager.remove(doomedEvent); // cascade rules should take care of this
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void deletePartitionEvents(Subject subject, Integer[] partitionEventIds) {
+        for (int partitionEventId : partitionEventIds) {
+            PartitionEvent doomedEvent = entityManager.find(PartitionEvent.class, partitionEventId);
+            entityManager.remove(doomedEvent); // cascade rules should take care of this
+        }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public int purgeAllEvents(Subject subject) {
+        List<PartitionEvent> events = getPartitionEvents(subject, PageControl.getUnlimitedInstance());
+
+        int i = 0;
+        Integer[] eventIds = new Integer[events.size()];
+        for (PartitionEvent event : events) {
+            eventIds[i++] = event.getId();
+        }
+
+        deletePartitionEvents(subject, eventIds);
+
+        return eventIds.length;
     }
 
     public void processRequestedPartitionEvents() {

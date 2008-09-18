@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.cluster.instance;
 
+import java.util.Collection;
 import java.util.List;
 
 import javax.annotation.Resource;
@@ -54,9 +55,18 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
     @EJB
     AlertConditionCacheManagerLocal cacheManager;
 
+    @SuppressWarnings("unchecked")
     public void scheduleServerCacheReloader() {
+        /* each time the webapp is reloaded, it would create 
+         * duplicate events if we don't cancel the existing ones
+         */
+        Collection<Timer> timers = timerService.getTimers();
+        for (Timer existingTimer : timers) {
+            log.debug("Found timer: " + existingTimer.toString());
+            existingTimer.cancel();
+        }
         // start it now, and repeat every 30 seconds
-        timerService.createTimer(0, 30000, null);
+        timerService.createTimer(0, 30000, "CacheConsistencyManagerBean.reloadServerCacheIfNeeded");
     }
 
     @Timeout

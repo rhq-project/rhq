@@ -21,7 +21,6 @@ package org.rhq.core.clientapi.server.core;
 import java.io.InputStream;
 import java.util.List;
 
-import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.domain.plugin.Plugin;
 
 /**
@@ -85,11 +84,4 @@ public interface CoreServerService {
      * @param agentName the name of the agent that is shutting down
      */
     void agentIsShuttingDown(String agentName);
-
-    /**
-     * Returns the current server list for the agent. A new server will be generated if an existing server list does not exist.
-     * @param agentName the name of the agent requesting the server list
-     * @return The active server list for the agent
-     */
-    FailoverListComposite getFailoverList(String agentName);
 }

@@ -177,14 +177,15 @@ public class CoreServerServiceImpl implements CoreServerService {
      */
     public void connectAgent(String agentName) {
         Agent agent = getAgentManager().getAgentByName(agentName);
+        Server server = getServerManager().getServer();
 
-        agent.setServer(getServerManager().getServer());
+        agent.setServer(server);
         getAgentManager().updateAgent(agent);
 
         getAlertConditionCacheManager().reloadCachesForAgent(agent.getId());
 
         getPartitionEventManager().auditPartitionEvent(getSubjectManager().getOverlord(),
-            PartitionEventType.AGENT_CONNECT, agentName);
+            PartitionEventType.AGENT_CONNECT, agentName + " connected to " + server.getName());
 
         // TODO: this may not be necessary due to the audit above. 
         log.info("Agent [" + agentName + "] has connected to this server.");
@@ -340,10 +341,6 @@ public class CoreServerServiceImpl implements CoreServerService {
         log.debug("A new agent has passed its endpoint verification test: " + endpoint);
 
         return;
-    }
-
-    public FailoverListComposite getFailoverList(String agentName) {
-        return getFailoverList(agentName, PartitionEventType.AGENT_CONNECT);
     }
 
     private FailoverListComposite getFailoverList(String agentName, PartitionEventType eventType) {

@@ -269,6 +269,10 @@ rhq.server.database.type-mapping=${rhq.server.database.type-mapping}
 jboss.bind.address=0.0.0.0
 #java.rmi.server.hostname=0.0.0.0
 
+# High Availability (HA)
+rhq.server.high-availability.name=
+
+# General Properties
 rhq.server.startup.web.http.port=${rhq.server.http.port}
 rhq.server.startup.web.https.port=${rhq.server.https.port}
 rhq.server.startup.webservice.port=9093
@@ -370,9 +374,7 @@ rhq.server.concurrency-limit.measurement-schedule-request=50
 
 # Content Local Filesystem Repository
 rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
-    	
-# High Availability (HA)
-rhq.server.high-availability.name=
+
 </echo>
 
   </target>

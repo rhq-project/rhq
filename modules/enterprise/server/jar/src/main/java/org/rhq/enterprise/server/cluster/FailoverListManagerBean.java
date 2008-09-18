@@ -221,7 +221,7 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         // persist the new server lists
         persist(event, agentServerListMap);
 
-        // generate the result Map and persist the new server lists
+        // generate the result Map
         for (Agent next : agentServerListMap.keySet()) {
             List<ServerEntry> serverEntries = new ArrayList<ServerEntry>(servers.size());
 
@@ -269,8 +269,11 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
                 Server server = entityManager.find(Server.class, servers.get(i).server.getId());
                 failoverListDetails = new FailoverListDetails(fl, i, server);
                 entityManager.persist(failoverListDetails);
-                eventDetails = new PartitionEventDetails(event, next, server);
-                entityManager.persist(eventDetails);
+                // event details only shows the current primary server topology
+                if (0 == i) {
+                    eventDetails = new PartitionEventDetails(event, next, server);
+                    entityManager.persist(eventDetails);
+                }
             }
         }
     }

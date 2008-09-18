@@ -71,12 +71,15 @@
             <h:commandButton rendered="#{mode eq 'edit'}"
                              value="SAVE" action="#{ViewAffinityGroupDetailsUIBean.save}"
                              alt="Save" styleClass="buttonmed" id="saveButton"/>
+            <h:commandButton rendered="#{mode eq 'edit'}"
+                             value="CANCEL" action="#{ViewAffinityGroupDetailsUIBean.cancelEdit}" immediate="true"
+                             alt="Cancel" styleClass="buttonmed" id="cancelEditButton"/>
             <h:commandButton rendered="#{mode eq 'create'}"
                              value="CREATE" action="#{ViewAffinityGroupDetailsUIBean.createNew}"
                              alt="Create" styleClass="buttonmed" id="createButton"/>
-            <h:commandButton rendered="#{mode eq 'edit' || mode eq 'create'}"
-                             value="CANCEL" action="#{ViewAffinityGroupDetailsUIBean.cancel}" immediate="true"
-                             alt="Cancel" styleClass="buttonmed" id="cancelButton"/>
+            <h:commandButton rendered="#{mode eq 'create'}"
+                             value="CANCEL" action="#{ViewAffinityGroupDetailsUIBean.cancelCreate}" immediate="true"
+                             alt="Cancel" styleClass="buttonmed" id="cancelCreateButton"/>
          </h:panelGrid>
       </h:form>
 
@@ -330,10 +333,6 @@
             
          </rich:panel>
       </h:form>
-
-      <h:outputLink value="listAffinityGroups.xhtml">
-         Return to Affinity Groups List
-      </h:outputLink>
 
    </ui:define>
 

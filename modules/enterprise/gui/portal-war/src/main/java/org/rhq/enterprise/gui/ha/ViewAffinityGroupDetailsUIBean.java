@@ -82,8 +82,12 @@ public class ViewAffinityGroupDetailsUIBean {
         return "createSuccess";
     }
 
-    public String cancel() {
+    public String cancelEdit() {
         return "success";
+    }
+
+    public String cancelCreate() {
+        return "cancelCreate";
     }
 
 }

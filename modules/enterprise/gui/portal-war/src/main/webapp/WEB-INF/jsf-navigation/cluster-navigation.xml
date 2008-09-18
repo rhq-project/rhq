@@ -67,7 +67,13 @@
          <to-view-id>/rhq/ha/viewAffinityGroup.xhtml?mode=view&amp;affinityGroupId=#{ViewAffinityGroupDetailsUIBean.affinityGroup.id}</to-view-id>
          <redirect/>
       </navigation-case>
-      
+
+      <navigation-case>
+         <from-outcome>cancelCreate</from-outcome>
+         <to-view-id>/rhq/ha/listAffinityGroups.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+
       <navigation-case>
          <from-outcome>createFailure</from-outcome>
          <to-view-id>/rhq/ha/viewAffinityGroup.xhtml?mode=create</to-view-id>

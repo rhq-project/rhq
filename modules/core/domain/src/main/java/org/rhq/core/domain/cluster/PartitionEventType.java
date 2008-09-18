@@ -19,6 +19,7 @@
 package org.rhq.core.domain.cluster;
 
 /**
+ * @author Jay Shaughnessy
  * @author Joseph Marques
  */
 public enum PartitionEventType {
@@ -32,7 +33,7 @@ public enum PartitionEventType {
     SERVER_DOWN(true), // Server crashes, is shutdown normally
     SERVER_DELETION(true), //
     SERVER_COMPUTE_POWER_CHANGE(true), // Not yet implemented
-    OPERATION_MODE_CHANGE(true),
+    OPERATION_MODE_CHANGE(true), //
 
     AGENT_AFFINITY_GROUP_ASSIGN(true), // An agent was assigned to an affinity group
     AGENT_AFFINITY_GROUP_REMOVE(true), // An agent was set to have no affinity group

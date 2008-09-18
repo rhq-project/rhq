@@ -67,9 +67,21 @@
                   </td>
                </tr>
                <tr>
-                  <td align="right"><b>User <i>(if user initiated)</i>:</b></td>
+                  <td align="right"><b>Event Details:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{eventDetails.eventDetail}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Initiated By:</b></td>
                   <td align="left">
                      <h:outputText value="#{eventDetails.subjectName}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Execution Status:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{eventDetails.executionStatus}"/>
                   </td>
                </tr>
             </table>
@@ -83,7 +95,12 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="partitionEventDataModel" value="#{ViewPartitionEventUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ViewPartitionEventUIBean.dataTable}"
+
+            <h:outputText value="No agents were reassigned as a result of this partition event" 
+                          rendered="#{partitionEventDataModel.rowCount eq 0}"/>
+
+            <rich:dataTable rendered="#{partitionEventDataModel.rowCount gt 0}"
+                            binding="#{ViewPartitionEventUIBean.dataTable}"
                             id="partitionEventDataTable"
                             rows="#{PageControl.PartitionEventsDetailsView.pageSize}"
                             value="#{partitionEventDataModel}"

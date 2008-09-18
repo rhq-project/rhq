@@ -93,7 +93,7 @@ public class ClusterManagerBean implements ClusterManagerLocal {
             Server server = (Server) query.getSingleResult();
             return server;
         } catch (NoResultException nre) {
-            log.debug("Server[name=" + serverName + "] not found, returning null...");
+            log.info("Server[name=" + serverName + "] not found, returning null...");
             return null;
         }
     }

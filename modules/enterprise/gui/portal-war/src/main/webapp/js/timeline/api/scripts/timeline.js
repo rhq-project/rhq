@@ -329,7 +329,11 @@ Timeline._Impl.prototype._initialize = function() {
     var elmtCopyright = SimileAjax.Graphics.createTranslucentImage(Timeline.urlPrefix + (this.isHorizontal() ? "images/copyright-vertical.png" : "images/copyright.png"));
     elmtCopyright.className = "timeline-copyright";
     elmtCopyright.title = "Timeline (c) SIMILE - http://simile.mit.edu/timeline/";
-    SimileAjax.DOM.registerEvent(elmtCopyright, "click", function() { window.location = "http://simile.mit.edu/timeline/"; });
+    SimileAjax.DOM.registerEvent(elmtCopyright, "click", function() { 
+        window.open('http://simile.mit.edu/timeline/',
+                    'Timeline (c) SIMILE',
+                    'width=800,height=600,toolbar=yes,location=yes,status=yes,menubar=yes,scrollbars=yes,resizable=yes,left=0,top=100,screenX=0,screenY=100'); 
+    });
     containerDiv.appendChild(elmtCopyright);
     
     /*

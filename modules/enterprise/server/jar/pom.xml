@@ -84,7 +84,7 @@
       <dependency>
          <groupId>commons-httpclient</groupId>
          <artifactId>commons-httpclient</artifactId>
-         <version>2.0.2</version>
+         <version>3.0.1</version>
       </dependency>
 
       <!-- Required by a couple APL classes - TODO: Remove this once APL has been removed. -->

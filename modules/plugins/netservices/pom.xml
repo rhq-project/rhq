@@ -45,7 +45,7 @@
        <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>2.0.2</version>
+          <version>3.0.1</version>
        </dependency>
 
 
@@ -70,7 +70,7 @@
                             <artifactItem>
                                 <groupId>commons-httpclient</groupId>
                                 <artifactId>commons-httpclient</artifactId>
-                                <version>2.0.2</version>
+                                <version>3.0.1</version>
                             </artifactItem>
                           </artifactItems>
                           <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

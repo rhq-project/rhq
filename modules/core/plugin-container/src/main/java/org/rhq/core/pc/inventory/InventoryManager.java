@@ -743,6 +743,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     + "]");
             }
 
+            // Notify InventoryEventListeners a Resource has been removed.
             fireResourcesRemoved(Collections.singleton(resource));
 
             // if we just so happened to have removed our top level platform, we need to re-discover it, can't go living without it
@@ -807,11 +808,25 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         // Add the Resource to the Resource hierarchy.
+        // (log services at DEBUG, servers and platforms at INFO)
+        String logMessage = String.format("Detected new %s [%s] - adding to local inventory...",
+                resource.getResourceType().getCategory(), resource);
         if (parent != null) {
-            log.debug("Detected new Resource [" + resource + "] - adding to local inventory...");
+            switch (resource.getResourceType().getCategory()) {
+                case SERVICE:
+                    log.debug(logMessage);
+                    break;
+                case SERVER:
+                    log.info(logMessage);
+                    break;
+                case PLATFORM:
+                    throw new IllegalStateException("An attempt was made to add a platform Resource as a child of another Resource.");
+            }
             parent.addChildResource(resource);
         } else {
-            log.info("Detected new platform [" + resource + "] - adding to local inventory...");
+            if (resource.getResourceType().getCategory() != ResourceCategory.PLATFORM)
+                throw new IllegalStateException("An attempt was made to add a non-platform Resource as the root Resource.");
+            log.info(logMessage);
             this.platform = resource;
         }
 
@@ -836,6 +851,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 handleInvalidPluginConfigurationResourceError(resource, e);
             }
         }
+
+        // Notify InventoryEventListeners a Resource has been added.
+        fireResourcesAdded(Collections.singleton(resource));
 
         return resource;
     }

@@ -123,7 +123,7 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
     /**
      * Goes through server plugins running auto discovery
      *
-     * @param report
+     * @param report the inventory report to which to add the discovered servers
      */
     @SuppressWarnings("unchecked")
     private void pluginDiscovery(InventoryReport report) {
@@ -199,9 +199,8 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                     Resource platformResource = platformContainer.getResource();
 
                     // Need to keep track of which already discovered resources were not in the latest discovery
-                    // so they can be deleted in the embedded console
+                    // so they can be deleted in the embedded console.
                     Set<Resource> removalCandidates = new HashSet<Resource>(platformResource.getChildResources());
-                    Set<Resource> newResources = new HashSet<Resource>();
 
                     for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
                         Resource newResource = InventoryManager.createNewResource(discoveredResource);
@@ -211,13 +210,8 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                             platformResource);
 
                         // Once the resource has been merged, it will have the correct UUID if it was previously discovered
-                        // Now we can remove it from the set of existing UUIDs to indicate it should not be deleted
+                        // Now we can remove it from the set of existing UUIDs to indicate it should not be deleted.
                         removalCandidates.remove(inventoriedResource);
-
-                        if (inventoriedResource.getUuid().equals(newResource.getUuid())) {
-                            // The resource is new to the PC's local inventory.
-                            newResources.add(inventoriedResource);
-                        }
 
                         if (inventoriedResource.getInventoryStatus() == InventoryStatus.NEW) {
                             // The resource is new to the Server inventory.
@@ -231,15 +225,11 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                     // Remove all child resources from the platform that were not re-discovered when embedded
                     // With the event listener model, this might get moved to a better place
                     if (!configuration.isInsideAgent()) {
-                        // TODO GH : Jay, this doesn't work, its removing stuff it shouldn't
+                        // TODO GH : Jay, this doesn't work, it's removing stuff it shouldn't
                         for (Resource removeMe : removalCandidates) {
                             //inventoryManager.removeResource(removeMe);
                         }
                     }
-
-                    // Fire resource change events
-                    //inventoryManager.fireResourcesRemoved(removalCandidates);
-                    inventoryManager.fireResourcesAdded(newResources);
                 }
             } catch (Throwable e) {
                 report.getErrors().add(new ExceptionPackage(Severity.Severe, e));
@@ -262,7 +252,7 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
 
         TypeVariable<? extends Class<?>>[] types = componentParameterType.getTypeParameters();
 
-        if (types.length == 0) { // The component doesn't declare type and thefore doesn't care what its parent type is
+        if (types.length == 0) { // The component doesn't declare type and therefore doesn't care what its parent type is
             return true;
         }
 

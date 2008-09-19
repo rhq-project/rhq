@@ -209,7 +209,6 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                 parentComponent, parentContainer.getResourceContext());
 
             // For each discovered resource, update it in the inventory manager and recursively discover its child resources
-            Set<Resource> newResources = new HashSet<Resource>();
             Map<String, Resource> mergedResources = new HashMap<String, Resource>();
 
             for (Resource childResource : childResources) {
@@ -222,16 +221,8 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                     parentReported = true;
                 }
 
-                // If this is a new resource, add to list to be fired as resource add event
-                if (!childResource.getUuid().equals(mergedResource.getUuid())) {
-                    newResources.add(childResource);
-                }
-
                 discoverForResource(mergedResource, report, thisInReport);
             }
-
-            this.inventoryManager.fireResourcesAdded(newResources);
-
             removeStaleResources(parent, childResourceType, mergedResources);
         }
     }
@@ -266,6 +257,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
         return Collections.EMPTY_SET;
     }
 
+    // TODO: Move this to InventoryManager, so it can be used by AutoDiscoveryExecutor too.
     private void removeStaleResources(Resource parent, ResourceType childResourceType,
         Map<String, Resource> mergedResources) {
         Set<Resource> existingChildResources = new HashSet(parent.getChildResources()); // wrap in new HashSet to avoid CMEs

@@ -206,12 +206,12 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="fld.server.ctime">
+                     <onc:sortableColumnHeader sort="fld.server.mtime">
                         <h:outputText styleClass="headerText" value="Last Update Time" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.server.ctime}">
+                  <h:outputText value="#{item.server.mtime}">
                      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                   </h:outputText>
                </rich:column>

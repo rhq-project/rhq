@@ -76,6 +76,12 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("The server failover list cannot be persisted to [{0}]. Cause: {1}")
     String FAILOVER_LIST_CANNOT_BE_PERSISTED = "AgentMain.failover-list-cannot-be-persisted";
 
+    @I18NMessage("Downloaded an updated server failover list of size [{0}]")
+    String FAILOVER_LIST_DOWNLOADED = "AgentMain.failover-list-downloaded";
+
+    @I18NMessage("Failed to download an updated server failover list. Cause: {0}")
+    String FAILOVER_LIST_DOWNLOAD_FAILURE = "AgentMain.failover-list-download-failure";
+
     @I18NMessage("(type it again to confirm) ")
     String PROMPT_CONFIRM = "AgentNativePromptInfo.prompt-confirm";
 

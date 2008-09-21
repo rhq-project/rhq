@@ -681,7 +681,7 @@ public class AgentMain {
         } else {
             try {
                 byte[] bytes = StreamUtil.slurp(new FileInputStream(failoverListFile));
-                list = (FailoverListComposite) StreamUtil.deserialize(bytes);
+                list = FailoverListComposite.readAsText(new String(bytes));
                 LOG.debug(AgentI18NResourceKeys.FAILOVER_LIST_LOADED, failoverListFile, list.size());
             } catch (Exception e) {
                 list = new FailoverListComposite(new ArrayList<ServerEntry>());
@@ -693,6 +693,38 @@ public class AgentMain {
         m_serverFailoverList = list;
 
         return list;
+    }
+
+    /**
+     * Downloads a new server failover list from the server and returns the failover list
+     * that is now in effect.
+     * @return 
+     * 
+     * @return the server failover list that is now in effect
+     */
+    public FailoverListComposite downloadServerFailoverList() {
+        try {
+            ClientCommandSender sender = getClientCommandSender();
+            if (sender != null) {
+                String agent_name = this.getConfiguration().getAgentName();
+                ClientRemotePojoFactory factory = sender.getClientRemotePojoFactory();
+                CoreServerService pojo = factory.getRemotePojo(CoreServerService.class);
+                FailoverListComposite list = pojo.getFailoverList(agent_name);
+                if (list == null) {
+                    list = new FailoverListComposite(new ArrayList<ServerEntry>());
+                }
+                // if we do not yet have a list or the new list is different than our current one, store the new one
+                if (!list.equals(m_serverFailoverList)) {
+                    storeServerFailoverList(list);
+                    m_serverFailoverList = list;
+                    LOG.debug(AgentI18NResourceKeys.FAILOVER_LIST_DOWNLOADED, m_serverFailoverList.size());
+                }
+            }
+        } catch (Throwable t) {
+            LOG.warn(AgentI18NResourceKeys.FAILOVER_LIST_DOWNLOAD_FAILURE, t);
+        }
+
+        return getServerFailoverList();
     }
 
     /**
@@ -1936,7 +1968,7 @@ public class AgentMain {
             }
         } else {
             try {
-                byte[] failoverListBytes = StreamUtil.serialize(failoverList);
+                byte[] failoverListBytes = failoverList.writeAsText().getBytes();
                 ByteArrayInputStream byteStream = new ByteArrayInputStream(failoverListBytes);
                 FileOutputStream fileStream = new FileOutputStream(failoverListFile);
                 StreamUtil.copy(byteStream, fileStream, true);

@@ -86,9 +86,9 @@ public class PrimaryServerSwitchoverThread extends Thread {
                 // at the top of the failover list. If not the same, we ask the agent to switch to that server.
                 ClientCommandSender sender = this.agent.getClientCommandSender();
                 if (sender.isSending()) {
-                    FailoverListComposite failoverList = this.agent.getServerFailoverList();
+                    FailoverListComposite failoverList = this.agent.downloadServerFailoverList(); // ask the server for a new one
 
-                    // if the failover list doesn't have any servers, that skip our poll and wait some more
+                    // if the failover list doesn't have any servers, skip our poll and wait some more
                     if (failoverList.size() > 0) {
                         AgentConfiguration config = this.agent.getConfiguration();
                         String transport = config.getServerTransport();
@@ -96,7 +96,7 @@ public class PrimaryServerSwitchoverThread extends Thread {
                         String currentServerAddress = config.getServerBindAddress();
                         int currentServerPort = config.getServerBindPort();
 
-                        ServerEntry primary = failoverList.get(0); // get the top of the like, aka primary server
+                        ServerEntry primary = failoverList.get(0); // get the top of the list, aka primary server
                         String primaryAddress = primary.address;
                         int primaryPort = (SecurityUtil.isTransportSecure(transport)) ? primary.securePort
                             : primary.port;
@@ -171,7 +171,7 @@ public class PrimaryServerSwitchoverThread extends Thread {
      * 
      * @throws Throwable
      */
-    public boolean ping(RemoteCommunicator comm) {
+    private boolean ping(RemoteCommunicator comm) {
         boolean ok = true; // assume we can ping; on error, we'll set this to false
         IdentifyCommand id_cmd = new IdentifyCommand();
         this.agent.getClientCommandSender().preprocessCommand(id_cmd);

@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * @author Joseph Marques
@@ -53,6 +54,7 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
 
         @Override
         public String toString() {
+            // its very important that the format of this returned string looks like "address:port/securePort"
             return address + ":" + port + "/" + securePort;
         }
 
@@ -151,6 +153,46 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
         for (int i = 0; i < size(); i++) {
             writer.println(servers.get(i) + (i == nextIndex ? " (next)" : ""));
         }
+    }
+
+    /**
+     * Used to "serialize" this list in a human-readable form (useful for storing the list
+     * in a text file that humans can read and potentially edit).
+     * @return the list in a human readable format
+     */
+    public String writeAsText() {
+        StringBuilder text = new StringBuilder();
+        for (ServerEntry entry : servers) {
+            if (text.length() > 0) {
+                text.append("\n");
+            }
+            text.append(entry);
+        }
+        return text.toString();
+    }
+
+    /**
+     * Factory method that takes text generated from a previous instance's {@link #writeAsText()} string.
+     * 
+     * @param text the failover list, in text form
+     * 
+     * @return a new instance of FailoverListComposite whose servers are found in <code>text</code>
+     */
+    public static FailoverListComposite readAsText(String text) {
+        List<ServerEntry> servers = new ArrayList<ServerEntry>();
+
+        StringTokenizer rowTokenizer = new StringTokenizer(text, "\n");
+        while (rowTokenizer.hasMoreTokens()) {
+            try {
+                String row = rowTokenizer.nextToken();
+                String[] addressPorts = row.split(":");
+                String[] ports = addressPorts[1].split("/");
+                servers.add(new ServerEntry(addressPorts[0], Integer.parseInt(ports[0]), Integer.parseInt(ports[1])));
+            } catch (Exception e) {
+                // why isn't this line valid? just ignore the bad line and continue on
+            }
+        }
+        return new FailoverListComposite(servers);
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {

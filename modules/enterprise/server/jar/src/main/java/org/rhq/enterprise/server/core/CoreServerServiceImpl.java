@@ -276,6 +276,10 @@ public class CoreServerServiceImpl implements CoreServerService {
         return;
     }
 
+    public FailoverListComposite getFailoverList(String agentName) {
+        return getFailoverList(agentName, PartitionEventType.AGENT_CONNECT);
+    }
+
     private AgentManagerLocal getAgentManager() {
         if (this.agentManager == null) {
             this.agentManager = LookupUtil.getAgentManager();

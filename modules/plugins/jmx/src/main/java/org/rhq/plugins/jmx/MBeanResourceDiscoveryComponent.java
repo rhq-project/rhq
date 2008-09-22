@@ -79,11 +79,25 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
         this.discoveryContext = context;
         return performDiscovery(context.getDefaultPluginConfiguration(), context.getParentResourceComponent(), context
-            .getResourceType());
+            .getResourceType(), true);
 
     }
 
     // Public  --------------------------------------------
+    /**
+     * Performs the actual discovery through MBeans.
+     *
+     * @param  pluginConfiguration     plugin configuration for the resource type being discovered; used to grab values
+     *                                 that govern the MBean query and resource details generation
+     * @param  parentResourceComponent parent resource of the resource being discovered
+     * @param  resourceType            type of resource being discovered
+     * @return set describing the resources discovered; empty set if no resources are found
+     */
+    public Set<DiscoveredResourceDetails> performDiscovery(Configuration pluginConfiguration,
+        JMXComponent parentResourceComponent, ResourceType resourceType) {
+
+        return performDiscovery(pluginConfiguration, parentResourceComponent, resourceType, true);
+    }
 
     /**
      * Performs the actual discovery through MBeans.
@@ -92,11 +106,11 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
      *                                 that govern the MBean query and resource details generation
      * @param  parentResourceComponent parent resource of the resource being discovered
      * @param  resourceType            type of resource being discovered
-     *
+     * @param skipUnknownProps         Should we skip over MBeans that have unknown properties in their ObjectName
      * @return set describing the resources discovered; empty set if no resources are found
      */
     public Set<DiscoveredResourceDetails> performDiscovery(Configuration pluginConfiguration,
-        JMXComponent parentResourceComponent, ResourceType resourceType) {
+        JMXComponent parentResourceComponent, ResourceType resourceType, boolean skipUnknownProps) {
 
         String objectNameQueryTemplateOrig = pluginConfiguration.getSimple(PROPERTY_OBJECT_NAME).getStringValue();
 
@@ -121,7 +135,8 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
                     // Only use beans that have all the properties we've made variables of
 
                     // Don't match beans that have unexpected properties
-                    if (queryUtility.isContainsExtraKeyProperties(bean.getBeanName().getKeyProperties().keySet())) {
+                    if (skipUnknownProps
+                        && queryUtility.isContainsExtraKeyProperties(bean.getBeanName().getKeyProperties().keySet())) {
                         continue;
                     }
 

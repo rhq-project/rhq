@@ -316,7 +316,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
 
         if (agentToUpdate != null) {
             // do this now, before we might clear() the entity manager
-            agentToUpdate.setLastAvailabilityReport(new Date());
+            agentToUpdate.setLastAvailabilityReport(System.currentTimeMillis());
         }
 
         int numInserted = 0;

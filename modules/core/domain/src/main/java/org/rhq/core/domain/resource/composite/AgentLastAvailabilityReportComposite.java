@@ -18,7 +18,6 @@
  */
 package org.rhq.core.domain.resource.composite;
 
-import java.util.Date;
 import java.io.Serializable;
 
 import org.rhq.core.domain.resource.Agent;
@@ -37,9 +36,9 @@ public class AgentLastAvailabilityReportComposite implements Serializable {
     private final int agentId;
     private final String agentName;
     private final String remoteEndpoint;
-    private final Date lastAvailabilityReport;
+    private final Long lastAvailabilityReport;
 
-    public AgentLastAvailabilityReportComposite(int agentId, String agentName, String remoteEndpoint, Date lastReport) {
+    public AgentLastAvailabilityReportComposite(int agentId, String agentName, String remoteEndpoint, Long lastReport) {
         this.agentId = agentId;
         this.agentName = agentName;
         this.remoteEndpoint = remoteEndpoint;
@@ -58,7 +57,7 @@ public class AgentLastAvailabilityReportComposite implements Serializable {
         return remoteEndpoint;
     }
 
-    public Date getLastAvailabilityReport() {
+    public Long getLastAvailabilityReport() {
         return lastAvailabilityReport;
     }
 

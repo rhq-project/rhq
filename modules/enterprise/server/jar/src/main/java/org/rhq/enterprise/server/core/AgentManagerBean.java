@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.core;
 
-import java.util.Date;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -28,7 +27,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.persistence.TemporalType;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -174,15 +172,14 @@ public class AgentManagerBean implements AgentManagerLocal {
         long nowEpoch = System.currentTimeMillis();
 
         Query q = entityManager.createNamedQuery(Agent.QUERY_FIND_ALL_SUSPECT_AGENTS);
-        q.setParameter("dateThreshold", new Date(nowEpoch - maximumQuietTimeAllowed), TemporalType.TIMESTAMP);
+        q.setParameter("dateThreshold", nowEpoch - maximumQuietTimeAllowed);
         records = q.getResultList();
 
         ServerCommunicationsServiceMBean serverComm = null;
 
         for (AgentLastAvailabilityReportComposite record : records) {
-            Date lastReport = record.getLastAvailabilityReport();
-
-            long timeSinceLastReport = (nowEpoch - lastReport.getTime());
+            long lastReport = record.getLastAvailabilityReport();
+            long timeSinceLastReport = nowEpoch - lastReport;
 
             // Only show this message a few times so we do not flood the log with the same message if the agent is down a long time
             // we show it as soon as we detect it going down (within twice max quiet time allowed) or we show it

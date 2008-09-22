@@ -20,7 +20,6 @@ package org.rhq.core.domain.resource;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -37,8 +36,6 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -130,8 +127,7 @@ public class Agent implements Serializable {
     private long mtime = System.currentTimeMillis();
 
     @Column(name = "LAST_AVAILABILITY_REPORT")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date lastAvailabilityReport;
+    private long lastAvailabilityReport;
 
     @JoinColumn(name = "AFFINITY_GROUP_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
@@ -284,7 +280,7 @@ public class Agent implements Serializable {
      *
      * @return timestamp when the last availability report was received from this agent
      */
-    public Date getLastAvailabilityReport() {
+    public Long getLastAvailabilityReport() {
         return lastAvailabilityReport;
     }
 
@@ -293,7 +289,7 @@ public class Agent implements Serializable {
      *
      * @param lastAvailabilityReport when the last availability report was received from this agent
      */
-    public void setLastAvailabilityReport(Date lastAvailabilityReport) {
+    public void setLastAvailabilityReport(Long lastAvailabilityReport) {
         this.lastAvailabilityReport = lastAvailabilityReport;
     }
 

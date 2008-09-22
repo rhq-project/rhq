@@ -405,7 +405,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // let's pretend we haven't heard from the agent in a few minutes
             em = beginTx();
             Agent agent = em.find(Agent.class, theAgent.getId());
-            agent.setLastAvailabilityReport(new Date(System.currentTimeMillis() - (1000 * 60 * 6)));
+            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 6));
             commitAndClose(em);
             em = null;
 
@@ -467,7 +467,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // let's pretend we haven't heard from the agent in a few minutes
             em = beginTx();
             Agent agent = em.find(Agent.class, theAgent.getId());
-            agent.setLastAvailabilityReport(new Date(System.currentTimeMillis() - (1000 * 60 * 6)));
+            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 6));
             commitAndClose(em);
             em = null;
 
@@ -499,7 +499,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // let's again pretend we haven't heard from the agent in a few minutes
             em = beginTx();
             agent = em.find(Agent.class, theAgent.getId());
-            agent.setLastAvailabilityReport(new Date(System.currentTimeMillis() - (1000 * 60 * 6)));
+            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 6));
             commitAndClose(em);
             em = null;
 
@@ -863,7 +863,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             // the agent should have been updated, but no new rows in availability were added
             Agent agent = LookupUtil.getAgentManager().getAgentByName(theAgent.getName());
-            Date lastReport = agent.getLastAvailabilityReport();
+            Date lastReport = new Date(agent.getLastAvailabilityReport());
             assert lastReport != null;
             assert countAvailabilitiesInDB(null) == allAvailCount;
             avail = availabilityManager.getCurrentAvailabilityForResource(overlord, theResource.getId());
@@ -884,7 +884,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             // the agent should have been updated and a new row in availability was added (resource is now DOWN)
             agent = LookupUtil.getAgentManager().getAgentByName(theAgent.getName());
-            assert agent.getLastAvailabilityReport().after(lastReport);
+            assert new Date(agent.getLastAvailabilityReport()).after(lastReport);
             assert countAvailabilitiesInDB(null) == (allAvailCount + 1);
             assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == DOWN;
             Availability queriedAvail = availabilityManager.getCurrentAvailabilityForResource(overlord, theResource

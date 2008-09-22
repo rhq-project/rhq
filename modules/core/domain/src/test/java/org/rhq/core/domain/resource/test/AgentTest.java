@@ -20,10 +20,13 @@ package org.rhq.core.domain.resource.test;
 
 import java.util.Date;
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TemporalType;
+
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite;
 import org.rhq.core.domain.test.AbstractEJB3Test;
@@ -42,7 +45,7 @@ public class AgentTest extends AbstractEJB3Test {
 
             // get our baseline, in case you already have data in your DB
             Query q = em.createNamedQuery(Agent.QUERY_FIND_ALL_SUSPECT_AGENTS);
-            q.setParameter("dateThreshold", new Date(now - 2500), TemporalType.TIMESTAMP);
+            q.setParameter("dateThreshold", now - 2500);
             int baselineSize = q.getResultList().size();
 
             Agent agent1 = createAgent(em, 1, 1000);
@@ -58,7 +61,7 @@ public class AgentTest extends AbstractEJB3Test {
             assert em.find(Agent.class, agent4.getId()) != null;
 
             q = em.createNamedQuery(Agent.QUERY_FIND_ALL_SUSPECT_AGENTS);
-            q.setParameter("dateThreshold", new Date(now - 2500), TemporalType.TIMESTAMP);
+            q.setParameter("dateThreshold", now - 2500);
             reports = q.getResultList();
             assert reports.size() == 2 + baselineSize : reports;
 
@@ -66,13 +69,13 @@ public class AgentTest extends AbstractEJB3Test {
             assert reports.get(i).getAgentId() == agent3.getId();
             assert reports.get(i).getAgentName().equals(agent3.getName());
             assert reports.get(i).getRemoteEndpoint().equals(agent3.getRemoteEndpoint());
-            assert reports.get(i).getLastAvailabilityReport().getTime() == agent3.getLastAvailabilityReport().getTime();
+            assert reports.get(i).getLastAvailabilityReport() == agent3.getLastAvailabilityReport();
 
             i = reports.indexOf(new AgentLastAvailabilityReportComposite(agent4.getId(), null, null, null));
             assert reports.get(i).getAgentId() == agent4.getId();
             assert reports.get(i).getAgentName().equals(agent4.getName());
             assert reports.get(i).getRemoteEndpoint().equals(agent4.getRemoteEndpoint());
-            assert reports.get(i).getLastAvailabilityReport().getTime() == agent4.getLastAvailabilityReport().getTime();
+            assert reports.get(i).getLastAvailabilityReport() == agent4.getLastAvailabilityReport();
 
             assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent2.getId(), null, null, null));
             assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent1.getId(), null, null, null));
@@ -87,13 +90,13 @@ public class AgentTest extends AbstractEJB3Test {
             assert reports.get(i).getAgentId() == agent3.getId();
             assert reports.get(i).getAgentName().equals(agent3.getName());
             assert reports.get(i).getRemoteEndpoint().equals(agent3.getRemoteEndpoint());
-            assert reports.get(i).getLastAvailabilityReport().getTime() == agent3.getLastAvailabilityReport().getTime();
+            assert reports.get(i).getLastAvailabilityReport() == agent3.getLastAvailabilityReport();
 
             i = reports.indexOf(new AgentLastAvailabilityReportComposite(agent4.getId(), null, null, null));
             assert reports.get(i).getAgentId() == agent4.getId();
             assert reports.get(i).getAgentName().equals(agent4.getName());
             assert reports.get(i).getRemoteEndpoint().equals(agent4.getRemoteEndpoint());
-            assert reports.get(i).getLastAvailabilityReport().getTime() == agent4.getLastAvailabilityReport().getTime();
+            assert reports.get(i).getLastAvailabilityReport() == agent4.getLastAvailabilityReport();
 
             assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent2.getId(), null, null, null));
             assert -1 == reports.indexOf(new AgentLastAvailabilityReportComposite(agent1.getId(), null, null, null));
@@ -115,7 +118,7 @@ public class AgentTest extends AbstractEJB3Test {
     private Agent createAgent(EntityManager em, int num, long availDateOffsetFromNow) {
         Agent agent = new Agent("agent" + num, "address" + num, num, "remoteaddr" + num, "token" + num);
         if (availDateOffsetFromNow > 0) {
-            agent.setLastAvailabilityReport(new Date(now - availDateOffsetFromNow));
+            agent.setLastAvailabilityReport(now - availDateOffsetFromNow);
         } else {
             agent.setLastAvailabilityReport(null);
         }

@@ -72,12 +72,12 @@ DB Upgrade:
             columnType="BOOLEAN" />
 
         <schema-directSQL>
-            <statement targetDBVendor="postgresql" desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
+            <statement targetDBVendor="postgresql" 
+                       desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
                 UPDATE RHQ_PACKAGE_TYPE SET SUPPORTS_ARCHITECTURE = FALSE
             </statement>
-        </schema-directSQL>
-        <schema-directSQL>
-            <statement targetDBVendor="oracle" desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
+            <statement targetDBVendor="oracle" 
+                       desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
                 UPDATE RHQ_PACKAGE_TYPE SET SUPPORTS_ARCHITECTURE = 0
             </statement>
         </schema-directSQL>
@@ -459,31 +459,58 @@ DB Upgrade:
       <schema-deleteColumn table="RHQ_PARTITION_DETAILS" column="AGENT_ID" />
       <schema-deleteColumn table="RHQ_PARTITION_DETAILS" column="SERVER_ID" />
    </schemaSpec>
-	
-	<!-- RHQ-786 - Add read_only column to alert definitions table -->
+
+   <!-- RHQ-786 - Add read_only column to alert definitions table -->
    <schemaSpec version="2.17">
-   	  <schema-addColumn
-   	        table="RHQ_ALERT"
-   	        column="RECOVERY_ID"
-   	        columnType="INTEGER" />
-   	  <schema-addColumn
+      <schema-addColumn
+            table="RHQ_ALERT"
+            column="RECOVERY_ID"
+            columnType="INTEGER" />
+      <schema-addColumn
             table="RHQ_ALERT"
             column="WILL_RECOVER"
             columnType="BOOLEAN" />
    </schemaSpec>
-   
+
    <schemaSpec version="2.18">
       <schema-addColumn table="RHQ_PARTITION_EVENT" column="EVENT_DETAIL" columnType="VARCHAR2" precision="512"/>
-      
+
       <schema-addColumn table="RHQ_SERVER" column="MTIME" columnType="LONG"/>
       <schema-directSQL>
          <statement desc="Updating existing servers with default MTIME=CTIME">
             UPDATE RHQ_SERVER SET MTIME = CTIME
          </statement>
       </schema-directSQL>
-      <schema-alterColumn table="RHQ_SERVER" column="MTIME" nullable="FALSE"/>      
+      <schema-alterColumn table="RHQ_SERVER" column="MTIME" nullable="FALSE"/>
    </schemaSpec>
-	
+
+   <schemaSpec version="2.19">
+      <schema-addColumn table="RHQ_AGENT" column="LAST_AVAILABILITY_REPORT_LONG" columnType="LONG" />
+      <schema-directSQL>
+         <statement targetDBVendor="postgresql"
+                    desc="Converting RHQ_AGENT.LAST_AVAILABILITY_REPORT timestamp to long">
+            UPDATE RHQ_AGENT
+            SET LAST_AVAILABILITY_REPORT_LONG = EXTRACT ( EPOCH FROM LAST_AVAILABILITY_REPORT )
+            WHERE LAST_AVAILABILITY_REPORT IS NOT NULL
+         </statement>
+         <statement targetDBVendor="oracle"
+                    desc="Converting RHQ_AGENT.LAST_AVAILABILITY_REPORT timestamp to long">
+            UPDATE RHQ_AGENT
+            SET LAST_AVAILABILITY_REPORT_LONG = ( 86400 * 
+               ( TO_DATE( LAST_AVAILABILITY_REPORT,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            WHERE LAST_AVAILABILITY_REPORT IS NOT NULL
+         </statement>
+      </schema-directSQL>
+      <schema-deleteColumn table="RHQ_AGENT" column="LAST_AVAILABILITY_REPORT" />
+      <schema-directSQL>
+         <statement desc="Renaming new column to match old schema expectations">
+            ALTER TABLE RHQ_AGENT
+            RENAME COLUMN LAST_AVAILABILITY_REPORT_LONG
+            TO LAST_AVAILABILITY_REPORT
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

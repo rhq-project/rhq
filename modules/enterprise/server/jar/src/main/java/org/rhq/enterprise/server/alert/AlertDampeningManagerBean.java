@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.alert;
 
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -68,7 +67,7 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
     @SuppressWarnings("unchecked")
     private boolean shouldFireDurationCountAlert(int alertDefinitionId, int eventCountThreshold, long lastSeconds) {
 
-        Date oldestEventTime = new Date(System.currentTimeMillis() - (lastSeconds * 1000));
+        long oldestEventTime = System.currentTimeMillis() - (lastSeconds * 1000);
 
         Query query = entityManager.createNamedQuery(AlertDampeningEvent.QUERY_FIND_BY_TIME_AND_TYPES);
         query.setParameter("alertDefinitionId", alertDefinitionId);
@@ -223,7 +222,7 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
         return results;
     }
 
-    private void deleteAlertEventsOlderThan(Integer alertDefinitionId, Date olderThan) {
+    private void deleteAlertEventsOlderThan(Integer alertDefinitionId, long olderThan) {
         Query query = entityManager.createNamedQuery(AlertDampeningEvent.QUERY_DELETE_BY_TIMESTAMP);
         query.setParameter("alertDefinitionId", alertDefinitionId);
         query.setParameter("oldest", olderThan);

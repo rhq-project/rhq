@@ -20,7 +20,6 @@ package org.rhq.core.domain.alert;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -35,28 +34,39 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 
 @Entity
-@NamedQueries( {
-    @NamedQuery(name = AlertDampeningEvent.QUERY_FIND_LATEST_BY_ALERT_DEFINITION_ID, query = "SELECT ade "
-        + "FROM AlertDampeningEvent ade " + "WHERE ade.id = " + "( SELECT max(iade.id) FROM AlertDampeningEvent iade "
-        + "WHERE iade.alertDefinition.id = :alertDefinitionId )"),
+@NamedQueries( { @NamedQuery(name = AlertDampeningEvent.QUERY_FIND_LATEST_BY_ALERT_DEFINITION_ID, query = "" //
+    + "SELECT ade " //
+    + "  FROM AlertDampeningEvent ade " //
+    + " WHERE ade.id = " //
+    + "       ( SELECT max(iade.id) FROM AlertDampeningEvent iade " //
+    + "         WHERE iade.alertDefinition.id = :alertDefinitionId )"), //
     // do NOT change the ORDER BY clause of this query, the SLSB layer above it depends on the oldest event being first
-    @NamedQuery(name = AlertDampeningEvent.QUERY_FIND_BY_TIME_AND_TYPES, query = "SELECT ade "
-        + "FROM AlertDampeningEvent ade " + "WHERE ade.alertDefinition.id = :alertDefinitionId "
-        + "AND ade.eventType IN (:eventTypes) " + "AND ade.eventTime > :oldestEventTime "
-        + "ORDER BY ade.eventTime ASC"),
-    @NamedQuery(name = AlertDampeningEvent.QUERY_FIND_BY_ALERT_DEFINITION_ID, query = "  SELECT ade "
-        + "    FROM AlertDampeningEvent ade " + "   WHERE ade.alertDefinition.id = :alertDefinitionId "
-        + "    ORDER BY ade.eventTime DESC "),
-    @NamedQuery(name = AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, query = "DELETE AlertDampeningEvent ade WHERE ade.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))"),
+    @NamedQuery(name = AlertDampeningEvent.QUERY_FIND_BY_TIME_AND_TYPES, query = "" //
+        + "SELECT ade " //
+        + "  FROM AlertDampeningEvent ade " //
+        + " WHERE ade.alertDefinition.id = :alertDefinitionId " //
+        + "   AND ade.eventType IN (:eventTypes) " //
+        + "   AND ade.eventTime > :oldestEventTime " //
+        + " ORDER BY ade.eventTime ASC"), //
+    @NamedQuery(name = AlertDampeningEvent.QUERY_FIND_BY_ALERT_DEFINITION_ID, query = "" //
+        + "SELECT ade " //
+        + "  FROM AlertDampeningEvent ade " //
+        + " WHERE ade.alertDefinition.id = :alertDefinitionId " //
+        + " ORDER BY ade.eventTime DESC "), //
+    @NamedQuery(name = AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, query = "" //
+        + "DELETE AlertDampeningEvent ade " //
+        + " WHERE ade.alertDefinition IN " //
+        + "       ( SELECT ad FROM AlertDefinition ad " //
+        + "          WHERE ad.resource IN (:resources))"), //
     @NamedQuery(name = AlertDampeningEvent.QUERY_DELETE_BY_TIMESTAMP, // 
     query = "DELETE AlertDampeningEvent ade " //
         + "   WHERE ade.eventTime < :oldest " //
-        + "     AND ade.alertDefinition.id = :alertDefinitionId "),
-    @NamedQuery(name = AlertDampeningEvent.QUERY_DELETE_BY_ALERT_DEFINITION_ID, query = "DELETE AlertDampeningEvent ade WHERE ade.alertDefinition.id = :alertDefinitionId") })
+        + "     AND ade.alertDefinition.id = :alertDefinitionId "), //
+    @NamedQuery(name = AlertDampeningEvent.QUERY_DELETE_BY_ALERT_DEFINITION_ID, query = "" //
+        + "DELETE AlertDampeningEvent ade " //
+        + " WHERE ade.alertDefinition.id = :alertDefinitionId") })
 @SequenceGenerator(name = "RHQ_ALERT_DAMPEN_EVENT_ID_SEQ", sequenceName = "RHQ_ALERT_DAMPEN_EVENT_ID_SEQ")
 @Table(name = "RHQ_ALERT_DAMPEN_EVENT")
 public class AlertDampeningEvent implements Serializable {
@@ -88,8 +98,7 @@ public class AlertDampeningEvent implements Serializable {
     private Type eventType;
 
     @Column(name = "EVENT_TIMESTAMP")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date eventTime;
+    private long eventTime;
 
     protected AlertDampeningEvent() {
     } // JPA
@@ -97,7 +106,7 @@ public class AlertDampeningEvent implements Serializable {
     public AlertDampeningEvent(AlertDefinition alertDefinition, Type type) {
         this.eventType = type;
         this.alertDefinition = alertDefinition;
-        this.eventTime = new Date(System.currentTimeMillis());
+        this.eventTime = System.currentTimeMillis();
     }
 
     public int getId() {
@@ -116,32 +125,43 @@ public class AlertDampeningEvent implements Serializable {
         return eventType;
     }
 
-    public Date getEventTime() {
+    public Long getEventTime() {
         return eventTime;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (!(o instanceof AlertDampeningEvent))
-            return false;
+        }
 
-        AlertDampeningEvent event = (AlertDampeningEvent) o;
+        if (!(o instanceof AlertDampeningEvent)) {
+            return false;
+        }
 
-        if (eventTime != null ? !eventTime.equals(event.eventTime) : event.eventTime != null)
+        AlertDampeningEvent other = (AlertDampeningEvent) o;
+
+        if (eventTime != other.eventTime) {
             return false;
-        if (eventType != event.eventType)
+        }
+
+        if (eventType == null) {
+            if (other.eventType != null) {
+                return false;
+            }
+        } else if (!eventType.equals(other.eventType)) {
             return false;
+        }
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        int result;
-        result = (eventType != null ? eventType.hashCode() : 0);
-        result = 31 * result + (eventTime != null ? eventTime.hashCode() : 0);
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (int) (eventTime ^ (eventTime >>> 32));
+        result = prime * result + ((eventType == null) ? 0 : eventType.hashCode());
         return result;
     }
 

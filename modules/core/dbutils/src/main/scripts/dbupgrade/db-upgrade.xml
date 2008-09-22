@@ -503,10 +503,37 @@ DB Upgrade:
       </schema-directSQL>
       <schema-deleteColumn table="RHQ_AGENT" column="LAST_AVAILABILITY_REPORT" />
       <schema-directSQL>
-         <statement desc="Renaming new column to match old schema expectations">
+         <statement desc="Renaming new RHQ_AGENT column to match old schema expectations">
             ALTER TABLE RHQ_AGENT
             RENAME COLUMN LAST_AVAILABILITY_REPORT_LONG
             TO LAST_AVAILABILITY_REPORT
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
+   <schemaSpec version="2.20">
+      <schema-addColumn table="RHQ_ALERT_DAMPEN_EVENT" column="EVENT_TIMESTAMP_LONG" columnType="LONG" />
+      <schema-directSQL>
+         <statement targetDBVendor="postgresql"
+                    desc="Converting RHQ_ALERT_DAMPEN_EVENT.EVENT_TIMESTAMP timestamp to long">
+            UPDATE RHQ_ALERT_DAMPEN_EVENT
+            SET EVENT_TIMESTAMP_LONG = EXTRACT ( EPOCH FROM EVENT_TIMESTAMP )
+            WHERE EVENT_TIMESTAMP IS NOT NULL
+         </statement>
+         <statement targetDBVendor="oracle"
+                    desc="Converting RHQ_ALERT_DAMPEN_EVENT.EVENT_TIMESTAMP timestamp to long">
+            UPDATE RHQ_ALERT_DAMPEN_EVENT
+            SET EVENT_TIMESTAMP_LONG = ( 86400 * 
+               ( TO_DATE( EVENT_TIMESTAMP,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            WHERE EVENT_TIMESTAMP IS NOT NULL
+         </statement>
+      </schema-directSQL>
+      <schema-deleteColumn table="RHQ_ALERT_DAMPEN_EVENT" column="EVENT_TIMESTAMP" />
+      <schema-directSQL>
+         <statement desc="Renaming new RHQ_ALERT_DAMPEN_EVENT column to match old schema expectations">
+            ALTER TABLE RHQ_ALERT_DAMPEN_EVENT
+            RENAME COLUMN EVENT_TIMESTAMP_LONG
+            TO EVENT_TIMESTAMP
          </statement>
       </schema-directSQL>
    </schemaSpec>

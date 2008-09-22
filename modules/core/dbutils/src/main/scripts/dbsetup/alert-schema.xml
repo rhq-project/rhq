@@ -39,7 +39,7 @@
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
         <column name="EVENT_TYPE" required="true" type="SMALLINT"/>
-        <column name="EVENT_TIMESTAMP" required="true" type="TIMESTAMP"/>s
+        <column name="EVENT_TIMESTAMP" required="true" type="LONG"/>
 
         <index name="RHQ_DAMPENING_EVENT_TYPE_IDX">
             <field ref="EVENT_TYPE"/>

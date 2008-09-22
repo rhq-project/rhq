@@ -18,14 +18,13 @@
  */
 package org.rhq.core.pluginapi.event.log;
 
-import java.util.Date;
-import java.util.Calendar;
-import java.util.Set;
-import java.util.Iterator;
-import java.util.regex.Pattern;
-import java.io.StringReader;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.StringReader;
+import java.util.Calendar;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.testng.annotations.Test;
 
@@ -39,9 +38,10 @@ import org.rhq.core.domain.event.EventSeverity;
 public class Log4JLogEntryProcessorTest {
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");
     private static final StringBuilder TEST_LOG = new StringBuilder();
-    static
-    {
-        TEST_LOG.append("2007-12-09 15:32:49,909 DEBUG [com.example.FooBar] run: IdleRemover notifying pools, interval: 450000").append(LINE_SEPARATOR);
+    static {
+        TEST_LOG.append(
+            "2007-12-09 15:32:49,909 DEBUG [com.example.FooBar] run: IdleRemover notifying pools, interval: 450000")
+            .append(LINE_SEPARATOR);
         TEST_LOG.append("2008-02-09 02:10:11,909 INFO [com.example.FooBar] a multi-line entry").append(LINE_SEPARATOR);
         TEST_LOG.append("\tyada yada yada").append(LINE_SEPARATOR);
         TEST_LOG.append("\twocka wocka").append(LINE_SEPARATOR);
@@ -62,8 +62,8 @@ public class Log4JLogEntryProcessorTest {
         Calendar calendar = Calendar.getInstance();
         calendar.set(2007, 11, 9, 15, 32, 49);
         calendar.set(Calendar.MILLISECOND, 909);
-        Date expectedDate = calendar.getTime();
-        assert event1.getTimestamp().equals(expectedDate);
+        long expectedTimestamp = calendar.getTimeInMillis();
+        assert event1.getTimestamp() == expectedTimestamp;
         assert event1.getSeverity().equals(EventSeverity.DEBUG);
         assert event1.getDetail().equals("[com.example.FooBar] run: IdleRemover notifying pools, interval: 450000");
         Event event2 = eventIterator.next();
@@ -74,7 +74,7 @@ public class Log4JLogEntryProcessorTest {
         processor.setIncludesPattern(Pattern.compile("wocka wocka"));
         bufferedReader = new BufferedReader(new StringReader(TEST_LOG.toString()));
         events = processor.processLines(bufferedReader);
-        assert events != null && events.size() == 1;        
+        assert events != null && events.size() == 1;
         event1 = events.iterator().next();
         assert event1.getDetail().endsWith("\twocka wocka");
         System.out.println("SUCCESS!");

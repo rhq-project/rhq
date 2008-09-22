@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.resource.metadata.test;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -179,8 +178,8 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
                     // We got the definition that will vanish later, so attach some stuff to it
                     EventSource source = new EventSource("test location", def, testResource);
                     entityManager.persist(source);
-                    Event ev = new Event(def.getName(), source.getLocation(), new Date(), EventSeverity.INFO,
-                        "This is a test");
+                    Event ev = new Event(def.getName(), source.getLocation(), System.currentTimeMillis(),
+                        EventSeverity.INFO, "This is a test");
                     //                    entityManager.persist(ev);  // We can't do this, as Event.source does not get filled this way :(
                     Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>(1);
                     Set<Event> evSet = new HashSet<Event>(1);

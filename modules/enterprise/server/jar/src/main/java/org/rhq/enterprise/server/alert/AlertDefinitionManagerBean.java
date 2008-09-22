@@ -448,7 +448,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
 
     private void notifyAlertConditionCacheManager(String methodName, AlertDefinition alertDefinition,
         AlertDefinitionEvent alertDefinitionEvent) {
-        LOG.info("Invoking... " + methodName);
+        LOG.debug("Invoking... " + methodName);
         agentStatusManager.updateByAlertDefinition(alertDefinition.getId());
     }
 

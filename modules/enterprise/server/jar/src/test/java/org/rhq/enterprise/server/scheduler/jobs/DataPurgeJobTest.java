@@ -427,8 +427,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         Map<EventSource, Set<Event>> eventMap = new HashMap<EventSource, Set<Event>>();
         Set<Event> events = new HashSet<Event>();
         for (int i = 0; i < count; i++) {
-            events.add(new Event(ed.getName(), source.getLocation(), new Date(timestamp + i), EventSeverity.DEBUG,
-                "details"));
+            events.add(new Event(ed.getName(), source.getLocation(), timestamp + i, EventSeverity.DEBUG, "details"));
         }
         eventMap.put(source, events);
 

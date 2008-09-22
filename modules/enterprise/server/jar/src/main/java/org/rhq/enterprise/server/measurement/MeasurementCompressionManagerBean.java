@@ -93,6 +93,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
     /**
      * Get the server purge configuration, loaded on startup.
      */
+    @SuppressWarnings("deprecation")
     private void loadPurgeDefaults() {
         this.log.debug("Loading default purge intervals");
 

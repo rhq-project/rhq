@@ -525,8 +525,7 @@ public final class AlertConditionCache {
             List<EventCacheElement> cacheElements = lookupEventCacheElements(resource.getId());
 
             for (Event event : events) {
-                processCacheElements(cacheElements, event.getSeverity(), event.getTimestamp().getTime(), stats, event
-                    .getDetail());
+                processCacheElements(cacheElements, event.getSeverity(), event.getTimestamp(), stats, event.getDetail());
             }
 
             AlertConditionCacheMonitor.getMBean().incrementEventCacheElementMatches(stats.matched);

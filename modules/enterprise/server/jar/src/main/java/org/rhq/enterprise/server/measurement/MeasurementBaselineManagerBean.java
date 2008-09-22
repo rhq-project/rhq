@@ -488,5 +488,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
     private void notifyAlertConditionCacheManager(String callingMethod, MeasurementBaseline baseline) {
         agentStatusManager.updateByMeasurementBaseline(baseline.getId());
+
+        log.debug("Invoking... " + callingMethod);
     }
 }

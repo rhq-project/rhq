@@ -19,8 +19,8 @@
 
 package org.rhq.core.domain.event.composite;
 
-import java.util.Date;
 import java.io.Serializable;
+import java.util.Date;
 
 import org.rhq.core.domain.event.EventSeverity;
 
@@ -39,9 +39,9 @@ public class EventComposite implements Serializable {
     int eventId;
     String sourceLocation;
     EventSeverity severity;
-    Date timestamp;
+    long timestamp;
     String ackUser;
-    Date ackTime;
+    Long ackTime;
 
     public EventComposite() {
         eventDetail = "- UNDEF -";
@@ -65,7 +65,7 @@ public class EventComposite implements Serializable {
     }
 
     public EventComposite(String eventDetail, int resourceId, int eventId, String sourceLocation, String ackUser,
-        Date ackTime) {
+        Long ackTime) {
         super();
         this.eventDetail = eventDetail;
         this.resourceId = resourceId;
@@ -76,7 +76,7 @@ public class EventComposite implements Serializable {
     }
 
     public EventComposite(String eventDetail, int eventId, String sourceLocation, EventSeverity severity,
-        Date timestamp, int resourceId) {
+        long timestamp, int resourceId) {
         super();
         this.eventDetail = eventDetail;
         this.eventId = eventId;
@@ -87,7 +87,7 @@ public class EventComposite implements Serializable {
     }
 
     public EventComposite(String eventDetail, int eventId, String sourceLocation, EventSeverity severity,
-        Date timestamp, int resourceId, String ackUser, Date ackTime) {
+        long timestamp, int resourceId, String ackUser, Long ackTime) {
         super();
         this.eventDetail = eventDetail;
         this.eventId = eventId;
@@ -140,11 +140,11 @@ public class EventComposite implements Serializable {
     }
 
     public Date getTimestamp() {
-        return timestamp;
+        return new Date(timestamp);
     }
 
     public void setTimestamp(Date timestamp) {
-        this.timestamp = timestamp;
+        this.timestamp = timestamp.getTime();
     }
 
     public String getAckUser() {
@@ -156,11 +156,11 @@ public class EventComposite implements Serializable {
     }
 
     public Date getAckTime() {
-        return ackTime;
+        return (ackTime == null ? null : new Date(ackTime));
     }
 
     public void setAckTime(Date ackTime) {
-        this.ackTime = ackTime;
+        this.ackTime = ackTime.getTime();
     }
 
     public String getAckTimeUser() {

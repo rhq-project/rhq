@@ -105,6 +105,7 @@ public class MeasurementProblemManagerBean implements MeasurementProblemManagerL
         }
     }
 
+    @SuppressWarnings("unchecked")
     private PageList<ProblemResourceComposite> findProblemResourcesAlert(Subject subject, long oldestDate,
         PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
@@ -132,6 +133,7 @@ public class MeasurementProblemManagerBean implements MeasurementProblemManagerL
         return new PageList<ProblemResourceComposite>(results, (int) count, pageControl);
     }
 
+    @SuppressWarnings("unchecked")
     private PageList<ProblemResourceComposite> findProblemResourcesOOB(Subject subject, long oldestDate,
         PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");

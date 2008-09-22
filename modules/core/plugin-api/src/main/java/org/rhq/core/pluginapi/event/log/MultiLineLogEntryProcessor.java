@@ -29,9 +29,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.jetbrains.annotations.Nullable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
@@ -92,15 +92,13 @@ public abstract class MultiLineLogEntryProcessor implements LogEntryProcessor {
             // And then start building up a new entry...
             try {
                 currentEntry = processPrimaryLine(matcher);
-            }
-            catch (ParseException e) {
+            } catch (ParseException e) {
                 // NOTE: Do not throw an exception here, otherwise none of the remaining lines that were passed in to
                 //       processLines() will get processed.
                 log.warn("Failed to parse line [" + line + "].");
                 currentEntry = null;
             }
-        }
-        else {
+        } else {
             // If the line didn't match, assume it's an additional line (e.g. part of a stack trace).
             if (currentEntry != null) {
                 currentEntry.appendLineToDetail(line);
@@ -113,10 +111,10 @@ public abstract class MultiLineLogEntryProcessor implements LogEntryProcessor {
 
     private void addEventForCurrentEntry(Set<Event> events, LogEntry currentEntry) {
         if (currentEntry != null) {
-            if (currentEntry.getSeverity().isAtLeastAsSevereAs(this.minimumSeverity) &&
-                    (this.includesPattern == null ||
-                            this.includesPattern.matcher(currentEntry.getDetail()).find())) {
-                Event event = new Event(this.eventType, this.logFile.getPath(), currentEntry.getDate(), currentEntry.getSeverity(), currentEntry.getDetail());
+            if (currentEntry.getSeverity().isAtLeastAsSevereAs(this.minimumSeverity)
+                && (this.includesPattern == null || this.includesPattern.matcher(currentEntry.getDetail()).find())) {
+                Event event = new Event(this.eventType, this.logFile.getPath(), currentEntry.getDate().getTime(),
+                    currentEntry.getSeverity(), currentEntry.getDetail());
                 events.add(event);
             }
         }
@@ -132,9 +130,9 @@ public abstract class MultiLineLogEntryProcessor implements LogEntryProcessor {
         if (dateFormat != null) {
             try {
                 timestamp = dateFormat.parse(dateString);
-            }
-            catch (java.text.ParseException e) {
-                throw new ParseException("Unable to parse date [" + dateString + "] using date format [" + dateFormat + "].", e);
+            } catch (java.text.ParseException e) {
+                throw new ParseException("Unable to parse date [" + dateString + "] using date format [" + dateFormat
+                    + "].", e);
             }
             setDateIfNotSet(timestamp);
         }

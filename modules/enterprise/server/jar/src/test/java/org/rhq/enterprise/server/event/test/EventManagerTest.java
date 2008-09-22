@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.event.test;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -78,7 +77,7 @@ public class EventManagerTest extends AbstractEJB3Test {
             em.persist(eDef);
             em.flush(); // Needed - else the addEventData() further down will fail, as the Def is not yet in the db
 
-            Date now = new Date();
+            long now = System.currentTimeMillis();
             EventSource evSrc = new EventSource("ESource", eDef, resource);
             Event ev = new Event("EType", "ESource", now, EventSeverity.INFO, "This is a test");
             Set<Event> eventSet = new HashSet<Event>();
@@ -93,8 +92,8 @@ public class EventManagerTest extends AbstractEJB3Test {
 
             int resourceId = resource.getId();
             q = em.createNamedQuery(Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME);
-            Date t1 = new Date(now.getTime() - 1000L);
-            Date t2 = new Date(now.getTime() + 1000L);
+            long t1 = now - 1000L;
+            long t2 = now + 1000L;
             q.setParameter("resourceId", resourceId);
             q.setParameter("start", t1);
             q.setParameter("end", t2);
@@ -127,7 +126,7 @@ public class EventManagerTest extends AbstractEJB3Test {
             em.persist(eDef);
             em.flush(); // Needed - else the addEventData() further down will fail, as the Def is not yet in the db
 
-            Date now = new Date();
+            long now = System.currentTimeMillis();
             EventSource evSrc = new EventSource("ESource", eDef, resource);
             Event ev = new Event("EType", "ESource", now, EventSeverity.INFO, "This is a 2nd test");
             Set<Event> eventSet = new HashSet<Event>();
@@ -137,24 +136,22 @@ public class EventManagerTest extends AbstractEJB3Test {
             eventManager.addEventData(events);
 
             int resourceId = resource.getId();
-            Date t1 = new Date(now.getTime() - 1000L);
-            Date t2 = new Date(now.getTime() + 1000L);
+            long t1 = now - 1000L;
+            long t2 = now + 1000L;
 
-            int[] buckets = eventManager.getEventCounts(null, resourceId, t1.getTime(), t2.getTime(), 3);
+            int[] buckets = eventManager.getEventCounts(null, resourceId, t1, t2, 3);
             assert buckets != null : "Buckets should not be null, but were null";
             assert buckets.length == 3 : "Expected 3 buckets, but got " + buckets.length;
             assert buckets[0] == 0 : "Expected bucket 0 to have 0 entries, but had " + buckets[0];
             assert buckets[1] == 1 : "Expected bucket 1 to have 1 entry, but had " + buckets[1];
             assert buckets[2] == 0 : "Expected bucket 2 to have 0 entries, but had " + buckets[2];
 
-            List<EventComposite> res = eventManager.getEventsForResource(null, resourceId, t1.getTime(), t2.getTime(),
-                null, new PageControl());
+            List<EventComposite> res = eventManager.getEventsForResource(null, resourceId, t1, t2, null,
+                new PageControl());
             assert res.size() == 1 : "Expected 1 Event, got " + res.size();
-            res = eventManager.getEventsForResource(null, resourceId, t1.getTime(), t2.getTime(), EventSeverity.INFO,
-                null);
+            res = eventManager.getEventsForResource(null, resourceId, t1, t2, EventSeverity.INFO, null);
             assert res.size() == 1 : "Expected 1 Event, got " + res.size();
-            res = eventManager.getEventsForResource(null, resourceId, t1.getTime(), t2.getTime(), EventSeverity.WARN,
-                null);
+            res = eventManager.getEventsForResource(null, resourceId, t1, t2, EventSeverity.WARN, null);
             assert res.size() == 0 : "Expected 0 Events, got " + res.size();
 
         } finally {

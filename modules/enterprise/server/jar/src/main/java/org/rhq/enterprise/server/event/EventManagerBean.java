@@ -22,7 +22,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -160,7 +159,7 @@ public class EventManagerBean implements EventManagerLocal {
                     ps.setString(paramIndex++, eventSource.getEventDefinition().getResourceType().getPlugin());
                     ps.setInt(paramIndex++, eventSource.getResource().getId());
                     ps.setString(paramIndex++, eventSource.getLocation());
-                    ps.setTimestamp(paramIndex++, new java.sql.Timestamp(event.getTimestamp().getTime()));
+                    ps.setLong(paramIndex++, event.getTimestamp());
                     ps.setString(paramIndex++, event.getSeverity().toString());
                     ps.setString(paramIndex++, event.getDetail());
                     ps.addBatch();
@@ -189,7 +188,7 @@ public class EventManagerBean implements EventManagerLocal {
     @TransactionTimeout(30 * 60 * 1000)
     public int purgeEventData(Date deleteUpToTime) throws SQLException {
         Query q = entityManager.createQuery("DELETE FROM Event e WHERE e.timestamp < :cutOff");
-        q.setParameter("cutOff", deleteUpToTime);
+        q.setParameter("cutOff", deleteUpToTime.getTime());
         int deleted = q.executeUpdate();
         return deleted;
     }
@@ -205,8 +204,8 @@ public class EventManagerBean implements EventManagerLocal {
 
         Query q = entityManager.createNamedQuery(Event.FIND_EVENTS_FOR_RESOURCES_AND_TIME);
         q.setParameter("resources", resources);
-        q.setParameter("start", new Date(startDate));
-        q.setParameter("end", new Date(endDate));
+        q.setParameter("start", startDate);
+        q.setParameter("end", endDate);
         List<Event> ret = q.getResultList();
 
         return ret;
@@ -338,7 +337,7 @@ public class EventManagerBean implements EventManagerLocal {
         long timePerBucket = timeDiff / numBuckets;
 
         for (Event event : events) {
-            long evTime = event.getTimestamp().getTime();
+            long evTime = event.getTimestamp();
             evTime = evTime - begin;
             int bucket = (int) (evTime / timePerBucket);
             if (event.getSeverity().isMoreSevereThan(buckets[bucket]))
@@ -412,7 +411,7 @@ public class EventManagerBean implements EventManagerLocal {
             rs = stm.executeQuery();
             while (rs.next()) {
                 EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(2), rs.getString(3), EventSeverity
-                    .valueOf(rs.getString(4)), rs.getTimestamp(5), rs.getInt(6), rs.getString(7), rs.getTimestamp(8));
+                    .valueOf(rs.getString(4)), rs.getLong(5), rs.getInt(6), rs.getString(7), rs.getLong(8));
                 pl.add(ec);
             }
 
@@ -473,8 +472,8 @@ public class EventManagerBean implements EventManagerLocal {
             int i = 1;
             JDBCUtil.bindNTimes(stm, resourceIds, 1);
             i += resourceIds.length;
-            stm.setTimestamp(i++, new Timestamp(begin));
-            stm.setTimestamp(i++, new Timestamp(end));
+            stm.setLong(i++, begin);
+            stm.setLong(i++, end);
             if (severity != null)
                 stm.setString(i++, severity.toString());
             if (isFilled(searchString))
@@ -485,7 +484,7 @@ public class EventManagerBean implements EventManagerLocal {
             rs = stm.executeQuery();
             while (rs.next()) {
                 EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(2), rs.getString(3), EventSeverity
-                    .valueOf(rs.getString(4)), rs.getTimestamp(5), rs.getInt(6), rs.getString(7), rs.getTimestamp(8));
+                    .valueOf(rs.getString(4)), rs.getLong(5), rs.getInt(6), rs.getString(7), rs.getLong(8));
                 pl.add(ec);
             }
 
@@ -516,8 +515,8 @@ public class EventManagerBean implements EventManagerLocal {
             int i = 1;
             JDBCUtil.bindNTimes(stm, resourceIds, 1);
             i += resourceIds.length;
-            stm.setTimestamp(i++, new Timestamp(begin));
-            stm.setTimestamp(i++, new Timestamp(end));
+            stm.setLong(i++, begin);
+            stm.setLong(i++, end);
             if (severity != null)
                 stm.setString(i++, severity.toString());
             if (isFilled(searchString))
@@ -641,10 +640,10 @@ public class EventManagerBean implements EventManagerLocal {
         EventComposite comp = new EventComposite();
         try {
             Event e = entityManager.find(Event.class, eventId);
-            Date now = new Date();
+            long now = System.currentTimeMillis();
             e.setAckTime(now);
             e.setAckUser(subject.getName());
-            comp.setAckTime(now);
+            comp.setAckTime(new Date(now));
             comp.setAckUser(subject.getName());
         } catch (NoResultException nre) {
             if (log.isDebugEnabled())

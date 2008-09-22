@@ -18,7 +18,6 @@
  */
 package org.rhq.plugins.platform.win;
 
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -157,7 +156,7 @@ public class Win32EventLogDelegate implements EventPoller {
         if (!convertSeverity(event.getEventType()).isAtLeastAsSevereAs(minimumSeverity))
             return null;
 
-        Event convertedEvent = new Event(EVENT_TYPE, event.getLogName(), new Date(event.getTimeGenerated() * 1000),
+        Event convertedEvent = new Event(EVENT_TYPE, event.getLogName(), event.getTimeGenerated() * 1000,
             convertSeverity(event.getEventType()), event.getMessage());
         eventsFired++;
         return convertedEvent;

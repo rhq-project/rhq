@@ -538,6 +538,53 @@ DB Upgrade:
       </schema-directSQL>
    </schemaSpec>
 
+   <schemaSpec version="2.21">
+      <schema-addColumn table="RHQ_EVENT" column="TIMESTAMP_LONG" columnType="LONG" />
+      <schema-addColumn table="RHQ_EVENT" column="ACK_TIME_LONG" columnType="LONG" />
+      <schema-directSQL>
+         <statement targetDBVendor="postgresql"
+                    desc="Converting RHQ_EVENT.TIMESTAMP timestamp to long">
+            UPDATE RHQ_EVENT
+            SET TIMESTAMP_LONG = EXTRACT ( EPOCH FROM TIMESTAMP )
+            WHERE TIMESTAMP IS NOT NULL
+         </statement>
+         <statement targetDBVendor="postgresql"
+                    desc="Converting RHQ_EVENT.ACK_TIME timestamp to long">
+            UPDATE RHQ_EVENT
+            SET ACK_TIME_LONG = EXTRACT ( EPOCH FROM ACK_TIME )
+            WHERE ACK_TIME IS NOT NULL
+         </statement>
+         <statement targetDBVendor="oracle"
+                    desc="Converting RHQ_EVENT.EVENT_TIMESTAMP timestamp to long">
+            UPDATE RHQ_EVENT
+            SET ACK_TIME_LONG = ( 86400 * 
+               ( TO_DATE( ACK_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            WHERE ACK_TIME IS NOT NULL
+         </statement>
+         <statement targetDBVendor="oracle"
+                    desc="Converting RHQ_EVENT.EVENT_TIMESTAMP timestamp to long">
+            UPDATE RHQ_EVENT
+            SET ACK_TIME_LONG = ( 86400 * 
+               ( TO_DATE( ACK_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            WHERE ACK_TIME IS NOT NULL
+         </statement>
+      </schema-directSQL>
+      <schema-deleteColumn table="RHQ_EVENT" column="TIMESTAMP" />
+      <schema-deleteColumn table="RHQ_EVENT" column="ACK_TIME" />
+      <schema-directSQL>
+         <statement desc="Renaming first new RHQ_EVENT column to match old schema expectations">
+            ALTER TABLE RHQ_EVENT
+            RENAME COLUMN TIMESTAMP_LONG
+            TO TIMESTAMP
+         </statement>
+         <statement desc="Renaming second new RHQ_EVENT column to match old schema expectations">
+            ALTER TABLE RHQ_EVENT
+            RENAME COLUMN ACK_TIME_LONG
+            TO ACK_TIME
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

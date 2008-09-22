@@ -19,7 +19,6 @@
 package org.rhq.core.domain.event;
 
 import java.io.Serializable;
-import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -35,8 +34,6 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 
 import org.jetbrains.annotations.NotNull;
@@ -88,8 +85,7 @@ public class Event implements Serializable {
     private EventSource source;
 
     @Column(name = "TIMESTAMP", nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date timestamp;
+    private long timestamp;
 
     @Column(name = "SEVERITY", length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
@@ -99,8 +95,7 @@ public class Event implements Serializable {
     private String detail; // TODO lazify
 
     @Column(name = "ACK_TIME")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date ackTime;
+    private Long ackTime;
 
     @Column(name = "ACK_USER", length = 100)
     private String ackUser;
@@ -130,15 +125,13 @@ public class Event implements Serializable {
     public Event(@NotNull
     String type, @NotNull
     String sourceLocation, @NotNull
-    Date timestamp, @NotNull
+    long timestamp, @NotNull
     EventSeverity severity, @NotNull
     String detail) {
         if (type == null)
             throw new IllegalArgumentException("type parameter must not be null.");
         if (sourceLocation == null)
             throw new IllegalArgumentException("sourceLocation parameter must not be null.");
-        if (timestamp == null)
-            throw new IllegalArgumentException("timestamp parameter must not be null.");
         if (severity == null)
             throw new IllegalArgumentException("severity parameter must not be null.");
         if (detail == null)
@@ -174,7 +167,7 @@ public class Event implements Serializable {
     }
 
     @NotNull
-    public Date getTimestamp() {
+    public long getTimestamp() {
         return this.timestamp;
     }
 
@@ -196,7 +189,7 @@ public class Event implements Serializable {
      * @param ackTime the time this Event was acknowledged
      */
     public void setAckTime(@Nullable
-    Date ackTime) {
+    Long ackTime) {
         this.ackTime = ackTime;
     }
 
@@ -208,7 +201,7 @@ public class Event implements Serializable {
      * @return the time this Event was acknowledged, or null if the Event has not been acknowledged
      */
     @Nullable
-    public Date getAckTime() {
+    public Long getAckTime() {
         return ackTime;
     }
 
@@ -260,7 +253,7 @@ public class Event implements Serializable {
 
         Event that = (Event) obj;
 
-        if (!timestamp.equals(that.timestamp))
+        if (timestamp != that.timestamp)
             return false;
         if (severity != that.severity)
             return false;
@@ -272,7 +265,7 @@ public class Event implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = timestamp.hashCode();
+        int result = 31 + (int) (timestamp ^ (timestamp >>> 32));
         result = 31 * result + severity.hashCode();
         result = 31 * result + detail.hashCode();
         return result;

@@ -63,8 +63,8 @@ public class FailoverListCompositeTest {
         assert !list2.equals(list);
 
         // reverse X and Y - lists should not be equal because the order isn't the same
-        servers2.add(new FailoverListComposite.ServerEntry("addrY.com", 7777, 12345));
-        servers2.add(new FailoverListComposite.ServerEntry("addrX.com", 7, 1));
+        servers2.add(new FailoverListComposite.ServerEntry("addrY.com", 7, 1));
+        servers2.add(new FailoverListComposite.ServerEntry("addrX.com", 7777, 12345));
         list2 = new FailoverListComposite(servers2);
         assert !list.equals(list2);
         assert !list2.equals(list);

@@ -127,7 +127,7 @@ public class Agent implements Serializable {
     private long mtime = System.currentTimeMillis();
 
     @Column(name = "LAST_AVAILABILITY_REPORT")
-    private long lastAvailabilityReport;
+    private Long lastAvailabilityReport;
 
     @JoinColumn(name = "AFFINITY_GROUP_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne

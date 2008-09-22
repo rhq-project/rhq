@@ -24,8 +24,8 @@ import javax.management.NotificationListener;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.system.server.Server;
-
+import org.rhq.core.domain.cluster.Server;
+import org.rhq.core.domain.cluster.Server.OperationMode;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -48,13 +48,12 @@ public class ShutdownListener implements NotificationListener {
      * @see javax.management.NotificationListener#handleNotification(Notification, Object)
      */
     public void handleNotification(Notification notification, Object handback) {
-        if (Server.STOP_NOTIFICATION_TYPE.equals(notification.getType())) {
+        if (org.jboss.system.server.Server.STOP_NOTIFICATION_TYPE.equals(notification.getType())) {
             stopScheduler();
 
             // Set the server operation mode to DOWN
-            org.rhq.core.domain.cluster.Server server = LookupUtil.getServerManager().getServer();
-            LookupUtil.getClusterManager().updateServerMode(new Integer[] { server.getId() },
-                org.rhq.core.domain.cluster.Server.OperationMode.DOWN);
+            Server server = LookupUtil.getServerManager().getServer();
+            LookupUtil.getClusterManager().updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
         }
     }
 

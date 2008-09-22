@@ -1082,9 +1082,9 @@ public class ServerInformation {
             if (0 == stm.executeUpdate()) {
                 stm.close();
 
-                // set all new servers to operation_mode=NORMAL
+                // set all new servers to operation_mode=INSTALLED
                 stm = conn
-                    .prepareStatement("INSERT INTO rhq_server ( id, name, address, port, secure_port, ctime, operation_mode, compute_power ) VALUES ( ?, ?, ?, ?, ?, ?, 'NORMAL', 1 )");
+                    .prepareStatement("INSERT INTO rhq_server ( id, name, address, port, secure_port, ctime, operation_mode, compute_power ) VALUES ( ?, ?, ?, ?, ?, ?, 'INSTALLED', 1 )");
                 stm.setInt(1, db.getNextSequenceValue(conn, "rhq_server", "id"));
                 stm.setString(2, server.name);
                 stm.setString(3, server.endpointAddress);

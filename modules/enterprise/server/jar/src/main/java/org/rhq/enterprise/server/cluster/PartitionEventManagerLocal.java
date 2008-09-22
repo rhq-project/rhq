@@ -38,7 +38,8 @@ import org.rhq.core.domain.util.PageList;
 @Local
 public interface PartitionEventManagerLocal {
 
-    FailoverListComposite agentPartitionEvent(Subject subject, String agentToken, PartitionEventType eventType);
+    FailoverListComposite agentPartitionEvent(Subject subject, String agentToken, PartitionEventType eventType,
+        String eventDetail);
 
     /**
      * This call performs a full repartitioning of the agent population at the time of the call.  

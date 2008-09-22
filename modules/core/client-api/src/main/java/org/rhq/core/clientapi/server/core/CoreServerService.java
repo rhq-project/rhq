@@ -87,12 +87,13 @@ public interface CoreServerService {
     void agentIsShuttingDown(String agentName);
 
     /**
-     * Returns the current server list for the agent. A new server list will be generated if
-     * an existing server list does not exist.
+     * Returns the current server list for the agent. This will return null if no server list exists
+     * for the agent.
      * 
      * @param agentName the name of the agent requesting the server list
      * 
      * @return The active server list for the agent
+     * @throws IllegalArgumentException if the agentName does not match a registered agent.
      */
     FailoverListComposite getFailoverList(String agentName);
 }

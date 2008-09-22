@@ -53,13 +53,23 @@ public interface FailoverListManagerLocal {
     public void deleteServerListDetailsForServer(int serverId);
 
     /**
-     * Returns the existing server list for the specified agent, if it exists, otherwise a newly generated server list is returned.
+     * Returns the existing server list for the specified agent, if it exists.
+     * 
+     * @param agentName
+     * @return the existing server list. Null if for any reason the list is not found.
+     * @throws IllegalArgumentException if the agent is not registered
+     */
+    FailoverListComposite getExistingForSingleAgent(String agentName);
+
+    /** 
      * Note that load is balanced as best as possible without a full refresh. 
      * 
-     * @param agentRegistrationToken
-     * @return
+     * @param event the partition event prompting this get/create.
+     * @param agentName
+     * @return the existing server list for the specified agent, if it exists, otherwise a newly generated server list is returned.
+     * @throws IllegalArgumentException if the agent is not registered 
      */
-    FailoverListComposite getForSingleAgent(PartitionEvent event, String agentRegistrationToken);
+    FailoverListComposite getForSingleAgent(PartitionEvent event, String agentName);
 
     /**
      * <p>Performs a full repartition, re-balancing the agent load on available servers and generating new server lists

@@ -73,7 +73,8 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
     FailoverListManagerLocal failoverListManager;
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public FailoverListComposite agentPartitionEvent(Subject subject, String agentName, PartitionEventType eventType) {
+    public FailoverListComposite agentPartitionEvent(Subject subject, String agentName, PartitionEventType eventType,
+        String eventDetail) {
         if (eventType.isCloudPartitionEvent() || (null == agentName)) {
             throw new IllegalArgumentException("Invalid agent partition event or no agent specified for event type: "
                 + eventType);
@@ -86,7 +87,7 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
                 + agentName);
         }
 
-        PartitionEvent partitionEvent = new PartitionEvent(subject.getName(), eventType, agentName,
+        PartitionEvent partitionEvent = new PartitionEvent(subject.getName(), eventType, eventDetail,
             PartitionEvent.ExecutionStatus.IMMEDIATE);
         entityManager.persist(partitionEvent);
 

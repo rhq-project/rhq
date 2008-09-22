@@ -80,13 +80,17 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     @EJB
     AgentManagerLocal agentManager;
 
-    public FailoverListComposite getForSingleAgent(PartitionEvent event, String agentName) {
-        // If a server list already exists then just return it
+    public FailoverListComposite getExistingForSingleAgent(String agentName) {
         Agent agent = agentManager.getAgentByName(agentName);
 
         if (null == agent) {
             throw new IllegalArgumentException("No agent found for registration name: " + agentName);
         }
+
+        return doGetExistingForSingleAgent(agent);
+    }
+
+    private FailoverListComposite doGetExistingForSingleAgent(Agent agent) {
 
         FailoverListComposite result = null;
         Query query = entityManager.createNamedQuery(FailoverList.QUERY_GET_VIA_AGENT);
@@ -102,6 +106,23 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
             result = new FailoverListComposite(serverEntries);
 
         } catch (NoResultException e) {
+            result = null;
+        }
+
+        return result;
+    }
+
+    public FailoverListComposite getForSingleAgent(PartitionEvent event, String agentName) {
+        // If a server list already exists then just return it
+        Agent agent = agentManager.getAgentByName(agentName);
+
+        if (null == agent) {
+            throw new IllegalArgumentException("No agent found for registration name: " + agentName);
+        }
+
+        FailoverListComposite result = doGetExistingForSingleAgent(agent);
+
+        if (null == result) {
             result = generateServerList(event, agent);
         }
 

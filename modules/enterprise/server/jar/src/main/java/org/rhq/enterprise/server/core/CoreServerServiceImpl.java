@@ -44,6 +44,7 @@ import org.rhq.core.util.exception.WrappedRemotingException;
 import org.rhq.enterprise.communications.command.client.RemoteInputStream;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.cluster.FailoverListManagerLocal;
 import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.cluster.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
@@ -60,6 +61,7 @@ public class CoreServerServiceImpl implements CoreServerService {
 
     private AgentManagerLocal agentManager;
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
+    private FailoverListManagerLocal failoverListManager;
     private PartitionEventManagerLocal partitionEventManager;
     private ServerManagerLocal serverManager;
     private SubjectManagerLocal subjectManager;
@@ -161,12 +163,13 @@ public class CoreServerServiceImpl implements CoreServerService {
             }
         }
 
-        String agentToken = agentByName.getAgentToken();
-        FailoverListComposite failoverList = getFailoverList(agentByName.getName(),
-            PartitionEventType.AGENT_REGISTRATION);
+        // get existing or generate new server list for the registering agent
+        FailoverListComposite failoverList = getPartitionEventManager().agentPartitionEvent(
+            getSubjectManager().getOverlord(), agentByName.getName(), PartitionEventType.AGENT_REGISTRATION,
+            agentByName.getName() + " - " + registeringServer.getName());
 
         AgentRegistrationResults results = new AgentRegistrationResults();
-        results.setAgentToken(agentToken);
+        results.setAgentToken(agentByName.getAgentToken());
         results.setFailoverList(failoverList);
 
         return results;
@@ -185,7 +188,7 @@ public class CoreServerServiceImpl implements CoreServerService {
         getAlertConditionCacheManager().reloadCachesForAgent(agent.getId());
 
         getPartitionEventManager().auditPartitionEvent(getSubjectManager().getOverlord(),
-            PartitionEventType.AGENT_CONNECT, agentName + " connected to " + server.getName());
+            PartitionEventType.AGENT_CONNECT, agentName + " - " + server.getName());
 
         // TODO: this may not be necessary due to the audit above. 
         log.info("Agent [" + agentName + "] has connected to this server.");
@@ -277,7 +280,7 @@ public class CoreServerServiceImpl implements CoreServerService {
     }
 
     public FailoverListComposite getFailoverList(String agentName) {
-        return getFailoverList(agentName, PartitionEventType.AGENT_CONNECT);
+        return getFailoverListManager().getExistingForSingleAgent(agentName);
     }
 
     private AgentManagerLocal getAgentManager() {
@@ -294,6 +297,14 @@ public class CoreServerServiceImpl implements CoreServerService {
         }
 
         return this.alertConditionCacheManager;
+    }
+
+    private FailoverListManagerLocal getFailoverListManager() {
+        if (this.failoverListManager == null) {
+            this.failoverListManager = LookupUtil.getFailoverListManager();
+        }
+
+        return this.failoverListManager;
     }
 
     private PartitionEventManagerLocal getPartitionEventManager() {
@@ -345,10 +356,6 @@ public class CoreServerServiceImpl implements CoreServerService {
         log.debug("A new agent has passed its endpoint verification test: " + endpoint);
 
         return;
-    }
-
-    private FailoverListComposite getFailoverList(String agentName, PartitionEventType eventType) {
-        return getPartitionEventManager().agentPartitionEvent(getSubjectManager().getOverlord(), agentName, eventType);
     }
 
 }

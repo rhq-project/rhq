@@ -15,7 +15,7 @@ RHQ Agent Configuration - Default Template For Agent Spawn Utility
          <map />
          <node name="spawn"> <!-- TO BE OVERRIDDEN -->
             <map>
-               <entry key="rhq.agent.configuration-schema-version" value="1" />
+               <entry key="rhq.agent.configuration-schema-version" value="2" />
                <entry key="rhq.agent.configuration-setup-flag" value="true" />
                <entry key="rhq.agent.name" value="127.0.0.1"/> <!-- TO BE OVERRIDDEN -->
 
@@ -45,6 +45,7 @@ RHQ Agent Configuration - Default Template For Agent Spawn Utility
                <entry key="rhq.agent.client.queue-throttling" value="200:2000" />
                <entry key="rhq.agent.client.command-preprocessors" value="org.rhq.enterprise.agent.SecurityTokenCommandPreprocessor" />
                <entry key="rhq.agent.disable-native-system" value="false"/>
+               <entry key="rhq.agent.primary-server-switchover-check-interval-msecs" value="3600000" />
 
                <entry key="rhq.agent.plugins.directory" value="plugins"/> <!-- TO BE OVERRIDDEN -->
 

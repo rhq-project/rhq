@@ -29,7 +29,7 @@
    
    <!-- the "real" settings -->
    <entry key="rhq.agent.name"                                                       value="jboss-on" />
-   <entry key="rhq.agent.configuration-schema-version"                               value="1" />
+   <entry key="rhq.agent.configuration-schema-version"                               value="2" />
    <entry key="rhq.agent.configuration-setup-flag"                                   value="true" />
    <entry key="rhq.agent.server.transport"                                           value="socket" />
    <entry key="rhq.agent.server.bind-address"                                        value="127.0.0.1" />

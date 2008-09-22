@@ -132,7 +132,7 @@ public class StartupServlet extends HttpServlet {
             server.setPort(7080);
             server.setSecurePort(7443);
             server.setComputePower(1);
-            server.setOperationMode(Server.OperationMode.NORMAL);
+            server.setOperationMode(Server.OperationMode.INSTALLED);
             LookupUtil.getServerManager().create(server);
             log("Default server created: " + server);
         }

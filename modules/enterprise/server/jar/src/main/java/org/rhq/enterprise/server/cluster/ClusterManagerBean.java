@@ -99,9 +99,8 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public List<Server> getServersByOperationMode(Server.OperationMode mode) {
-        Query query = entityManager.createNamedQuery(Server.QUERY_FIND_BY_OPERATION_MODE);
-        query.setParameter("mode", mode);
+    public List<Server> getAllCloudServers() {
+        Query query = entityManager.createNamedQuery(Server.QUERY_FIND_ALL_CLOUD_MEMBERS);
         List<Server> results = query.getResultList();
         return results;
     }
@@ -200,27 +199,15 @@ public class ClusterManagerBean implements ClusterManagerLocal {
                     Server server = entityManager.find(Server.class, id);
 
                     if (server.getOperationMode() == mode) {
-                        // don't bother doing things that are no-ops, we don't want to create 
-                        // events that might instigate unnecessary cloud repartitions
+                        // ignore if there is no change
                         continue;
                     }
-                    // depending on the state change we may need to partition our agent load, otherwise audit the change
-                    // TODO (jshaughn) Note that we can't currently distinguish whether a MM server is up or down. So,
-                    // we have to assume it is up.  The resulting partition request will then incorporate the DOWN server.
-                    String audit = server.getName() + ": " + server.getOperationMode().name() + " --> " + mode;
 
-                    if (Server.OperationMode.NORMAL == mode) {
-                        if (Server.OperationMode.MAINTENANCE == server.getOperationMode()) {
-                            // MAINTENANCE --> NORMAL, cloud event
-                            partitionEventManager.cloudPartitionEventRequest(LookupUtil.getSubjectManager()
-                                .getOverlord(), PartitionEventType.OPERATION_MODE_CHANGE, audit);
-                        } else {
-                            // DOWN --> NORMAL, audit
-                            partitionEventManager.auditPartitionEvent(LookupUtil.getSubjectManager().getOverlord(),
-                                PartitionEventType.OPERATION_MODE_CHANGE, audit);
-                        }
-                    } else {
-                        // if we're not changing *to* NORMAL, then we should at least audit what's happening
+                    // Audit servers being set to DOWN since the state change can't be reported any other way. Servers
+                    // be set to any other mode will be handled when the cluster job established the current operating mode.
+                    if (Server.OperationMode.DOWN == mode) {
+                        String audit = server.getName() + ": " + server.getOperationMode().name() + " --> " + mode;
+
                         partitionEventManager.auditPartitionEvent(LookupUtil.getSubjectManager().getOverlord(),
                             PartitionEventType.OPERATION_MODE_CHANGE, audit);
                     }

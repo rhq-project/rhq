@@ -134,24 +134,36 @@ public class ServerManagerBean implements ServerManagerLocal {
         Server server = getServer();
         Server.OperationMode serverMode = server.getOperationMode();
 
-        // don't add or remove the same listener twice in a row
+        // no state change means no work
         if (serverMode == lastEstablishedServerMode)
             return;
 
         try {
-            if (Server.OperationMode.NORMAL == serverMode) {
+            if (Server.OperationMode.MAINTENANCE == serverMode) {
 
+                // If moving into Maintenance Mode from any other mode then stop processing agent commands
+
+                ServerCommunicationsServiceUtil.getService().getServiceContainer().removeCommandListener(
+                    getMaintenanceModeListener());
+                log.info("Notified communication layer of server operation mode " + serverMode);
+            } else if (Server.OperationMode.NORMAL == serverMode) {
+
+                // If moving into normal operating mode from Maintenance Mode then start processing agent commands                
                 if (Server.OperationMode.MAINTENANCE == lastEstablishedServerMode) {
                     ServerCommunicationsServiceUtil.getService().getServiceContainer().removeCommandListener(
                         getMaintenanceModeListener());
                     log.info("Notified communication layer of server operation mode " + serverMode);
                 }
+            } else if (Server.OperationMode.INSTALLED == serverMode) {
 
-            } else if (Server.OperationMode.MAINTENANCE == serverMode) {
-
-                ServerCommunicationsServiceUtil.getService().getServiceContainer().addCommandListener(
-                    getMaintenanceModeListener());
-                log.info("Notified communication layer of server operation mode " + serverMode);
+                // The server must have just been installed and must be coming for the first time
+                // up as of this call. So, update the mode to NORMAL and update mtime as an initial heart beat.
+                // This will prevent a running ClusterManagerJob from resetting to DOWN before the real
+                // ServerManagerJob starts updating the heart beat regularly.
+                lastEstablishedServerMode = serverMode;
+                serverMode = Server.OperationMode.NORMAL;
+                server.setOperationMode(serverMode);
+                server.setMtime(System.currentTimeMillis());
 
             } else if (Server.OperationMode.DOWN == serverMode) {
 
@@ -159,18 +171,29 @@ public class ServerManagerBean implements ServerManagerLocal {
                 // up as of this call. So, update the mode to NORMAL and update mtime as an initial heart beat.
                 // This will prevent a running ClusterManagerJob from resetting to DOWN before the real
                 // ServerManagerJob starts updating the heart beat regularly.
+                lastEstablishedServerMode = serverMode;
                 serverMode = Server.OperationMode.NORMAL;
                 server.setOperationMode(serverMode);
                 server.setMtime(System.currentTimeMillis());
             }
 
-            // If the server mode is NORMAL and the lastEstablishedServerMode is different (which it must be to 
-            // be in this code section) then this server is joining the cloud. Changing the number of servers in 
-            // the cloud requires agent distribution work, even if this is a 1-Server cloud. Generate a request for 
-            // a repartitioning of agent load, it will be executed on the next invocation of the cluster manager job.
-            if (Server.OperationMode.NORMAL == serverMode) {
+            // If this server just transitioned from INSTALLED to NORMAL operation mode then it 
+            // has just been added to the cloud. Changing the number of servers in the cloud requires agent 
+            // distribution work, even if this is a 1-Server cloud. Generate a request for a repartitioning
+            // of agent load, it will be executed on the next invocation of the cluster manager job.
+            // Otherwise, audit the operation mode change as a partition event of interest.
+            String audit = server.getName() + ": "
+                + ((null != lastEstablishedServerMode) ? lastEstablishedServerMode : Server.OperationMode.DOWN)
+                + " --> " + serverMode;
+
+            if ((Server.OperationMode.NORMAL == serverMode)
+                && (Server.OperationMode.INSTALLED == lastEstablishedServerMode)) {
+
                 LookupUtil.getPartitionEventManager().cloudPartitionEventRequest(
-                    LookupUtil.getSubjectManager().getOverlord(), PartitionEventType.SERVER_JOIN, server.getName());
+                    LookupUtil.getSubjectManager().getOverlord(), PartitionEventType.OPERATION_MODE_CHANGE, audit);
+            } else {
+                LookupUtil.getPartitionEventManager().auditPartitionEvent(LookupUtil.getSubjectManager().getOverlord(),
+                    PartitionEventType.OPERATION_MODE_CHANGE, audit);
             }
 
             lastEstablishedServerMode = serverMode;

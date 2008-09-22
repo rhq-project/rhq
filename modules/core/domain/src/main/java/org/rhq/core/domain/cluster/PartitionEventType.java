@@ -29,8 +29,6 @@ public enum PartitionEventType {
     AGENT_SHUTDOWN(false), // Agent notifies server of agent shutdown
     AGENT_LEAVE(false), // TODO (jshaughn) Not currently used, may work this into the suspect job logic 
 
-    SERVER_JOIN(true), // Server becomes available, either newly created or started in non-maintenance mode
-    SERVER_DOWN(true), // Server crashes, is shutdown normally
     SERVER_DELETION(true), //
     SERVER_COMPUTE_POWER_CHANGE(true), // Not yet implemented
     OPERATION_MODE_CHANGE(true), //

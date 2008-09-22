@@ -60,7 +60,7 @@ import org.rhq.core.domain.resource.Agent;
         + "     ) " //
         + "  FROM Server s"),
     @NamedQuery(name = Server.QUERY_FIND_BY_NAME, query = "SELECT s FROM Server s WHERE s.name = :name"),
-    @NamedQuery(name = Server.QUERY_FIND_BY_OPERATION_MODE, query = "SELECT s FROM Server s WHERE s.operationMode = :mode"),
+    @NamedQuery(name = Server.QUERY_FIND_ALL_CLOUD_MEMBERS, query = "SELECT s FROM Server s WHERE NOT s.operationMode = 'INSTALLED'"),
     @NamedQuery(name = Server.QUERY_FIND_BY_AFFINITY_GROUP, query = "" //
         + "SELECT s " //
         + "  FROM Server s " //
@@ -80,7 +80,7 @@ public class Server implements Serializable {
     public static final String QUERY_FIND_ALL = "Server.findAll";
     public static final String QUERY_FIND_ALL_COMPOSITES = "Server.findAllComposites";
     public static final String QUERY_FIND_BY_NAME = "Server.findByName";
-    public static final String QUERY_FIND_BY_OPERATION_MODE = "Server.findByOperationMode";
+    public static final String QUERY_FIND_ALL_CLOUD_MEMBERS = "Server.findAllCloudMembers";
     public static final String QUERY_FIND_BY_AFFINITY_GROUP = "Server.findByAffinityGroup";
     public static final String QUERY_FIND_WITHOUT_AFFINITY_GROUP = "Server.findWithoutAffinityGroup";
     public static final String QUERY_DELETE_BY_ID = "Server.deleteById";
@@ -207,6 +207,7 @@ public class Server implements Serializable {
     public enum OperationMode {
 
         DOWN("This server is down member of the HA server cloud"), //
+        INSTALLED("This server is newly installed but not yet fullyoperating"), //
         MAINTENANCE("This server is a Maintenance Mode member of the HA server cloud"), //
         NORMAL("This server is a Normal Member of the HA server cloud");
 

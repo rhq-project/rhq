@@ -26,7 +26,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.system.server.Server;
 
-import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -54,8 +53,6 @@ public class ShutdownListener implements NotificationListener {
 
             // Set the server operation mode to DOWN
             org.rhq.core.domain.cluster.Server server = LookupUtil.getServerManager().getServer();
-            LookupUtil.getPartitionEventManager().auditPartitionEvent(LookupUtil.getSubjectManager().getOverlord(),
-                PartitionEventType.SERVER_DOWN, server.getName());
             LookupUtil.getClusterManager().updateServerMode(new Integer[] { server.getId() },
                 org.rhq.core.domain.cluster.Server.OperationMode.DOWN);
         }

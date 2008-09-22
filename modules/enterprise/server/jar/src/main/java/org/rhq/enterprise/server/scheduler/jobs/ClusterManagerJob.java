@@ -26,7 +26,6 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.StatefulJob;
 
-import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
@@ -58,8 +57,6 @@ public class ClusterManagerJob implements StatefulJob {
                 long timeSinceServerHeartbeat = (now - server.getMtime());
 
                 if (timeSinceServerHeartbeat > SERVER_DOWN_INTERVAL) {
-                    LookupUtil.getPartitionEventManager().auditPartitionEvent(
-                        LookupUtil.getSubjectManager().getOverlord(), PartitionEventType.SERVER_DOWN, server.getName());
                     clusterManager.updateServerMode(new Integer[] { server.getId() }, Server.OperationMode.DOWN);
                 }
             }

@@ -109,7 +109,7 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     }
 
     private FailoverListComposite generateServerList(PartitionEvent event, Agent agent) {
-        List<Server> servers = clusterManager.getServersByOperationMode(Server.OperationMode.NORMAL);
+        List<Server> servers = clusterManager.getAllCloudServers();
         List<Agent> agents = new ArrayList<Agent>(1);
 
         agents.add(agent);
@@ -129,7 +129,7 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     }
 
     public Map<Agent, FailoverListComposite> refresh(PartitionEvent event) {
-        List<Server> servers = clusterManager.getServersByOperationMode(Server.OperationMode.NORMAL);
+        List<Server> servers = clusterManager.getAllCloudServers();
         List<Agent> agents = agentManager.getAllAgents();
 
         // clear out the existing server lists because we're going to generate new ones for all agents        
@@ -463,6 +463,7 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
         }
     }
 
+    @SuppressWarnings("unused")
     private void logServerList(String debugTitle, Map<Agent, List<ServerBucket>> agentServerListMap) {
 
         //if (!log.isInfoEnabled())

@@ -46,6 +46,10 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Tests the configuration manager.
+ * 
+ * NOTE: These tests only work if there are no servers registered in the db.  The tests will clean up themselves for
+ * NOTE: multiple runs but will fail (typically the getForSingleAgent tests) if run against a db that has been
+ * NOTE: used against an active server.  
  */
 @Test
 public class FailoverListManagerBeanTest extends AbstractEJB3Test {

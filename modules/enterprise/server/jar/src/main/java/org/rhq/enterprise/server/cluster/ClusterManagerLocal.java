@@ -46,8 +46,17 @@ public interface ClusterManagerLocal {
 
     Server getServerByName(String serverName);
 
-    List<Server> getServersByOperationMode(Server.OperationMode mode);
+    /**
+     * Return every server registered in the database considered part of the active cloud. This will exclude, for example,
+     * servers in INSTALLED mode or any other mode that should not be included when performing cloud operations such as partitioning.
+     * @return All servers available to the cloud.
+     */
+    List<Server> getAllCloudServers();
 
+    /**
+     * Return every server registered in the database.
+     * @return All servers, regardless of operation mode.
+     */
     List<Server> getAllServers();
 
     PageList<ServerWithAgentCountComposite> getServerComposites(Subject subject, PageControl pc);

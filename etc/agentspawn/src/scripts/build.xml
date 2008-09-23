@@ -113,7 +113,7 @@
       <forget>
          <exec executable="${perftest.agent.executable}">
             <arg line="start" />
-            <env key="_JAVAOPTS" value="${_javaopts} ${_sysprops} -Dperftest.agentdist=${perftest.agent.vm.dir}/${_index}/${perftest.agent.dist.zip.basedir} -Dperftest.spawndir=${perftest.agent.vm.dir}/spawn -Dperftest.spawncount=${perftest.agent.vm.spawncount} -Dperftest.startport=${_index} -Dperftest.startpause=${_sleep_millis} -Dperftest.cmdline=${_cmdlineopts} -Drhq.agent.server.bind-address=${rhq.agent.server.bind-address} -Drhq.agent.server.bind-port=${rhq.agent.server.bind-port}" />
+            <env key="_JAVAOPTS" value="${_javaopts} ${_sysprops} -Djava.util.prefs.userRoot=${user.home}/.java${_index} -Dperftest.agentdist=${perftest.agent.vm.dir}/${_index}/${perftest.agent.dist.zip.basedir} -Dperftest.spawndir=${perftest.agent.vm.dir}/spawn -Dperftest.spawncount=${perftest.agent.vm.spawncount} -Dperftest.startport=${_index} -Dperftest.startpause=${_sleep_millis} -Dperftest.cmdline=${_cmdlineopts} -Drhq.agent.server.bind-address=${rhq.agent.server.bind-address} -Drhq.agent.server.bind-port=${rhq.agent.server.bind-port}" />
             <env key="_JAR" value="${perftest.agent.vm.dir}/${_index}/${perftest.agent.spawn.jar.name}" />
             <env key="_PIDFILE" value="${perftest.agent.vm.dir}/${_index}/agentspawn.pid" />
             <env key="_OUT" value="${perftest.agent.vm.dir}/${_index}/agentspawn-output.txt" />

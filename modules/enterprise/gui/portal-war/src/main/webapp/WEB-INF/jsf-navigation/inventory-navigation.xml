@@ -24,7 +24,7 @@
       <!-- === ConnectionPropertiesUIBean ======================= -->
 
       <navigation-case>
-         <from-action>#{ConnectionPropertiesUIBean.edit}</from-action>
+         <from-action>#{ConnectionPropertiesViewUIBean.edit}</from-action>
          <to-view-id>/rhq/resource/inventory/edit-connection.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>

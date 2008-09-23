@@ -577,7 +577,7 @@
 
 <!-- =================== CONNECTION PROPERTIES =================== -->
 <rich:panel
-      rendered="#{!empty ConnectionPropertiesUIBean.configurationDefinition.propertyDefinitions and !empty ConnectionPropertiesUIBean.configuration.map}"
+      rendered="#{!empty ConnectionPropertiesViewUIBean.configurationDefinition.propertyDefinitions and !empty ConnectionPropertiesViewUIBean.configuration.map}"
       styleClass="BlockContent">
 
    <f:facet name="header" styleClass="BlockTitle">
@@ -588,16 +588,16 @@
 
       <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
-      <onc:config configurationDefinition="#{ConnectionPropertiesUIBean.configurationDefinition}"
-                  configuration="#{ConnectionPropertiesUIBean.configuration}"
+      <onc:config configurationDefinition="#{ConnectionPropertiesViewUIBean.configurationDefinition}"
+                  configuration="#{ConnectionPropertiesViewUIBean.configuration}"
                   readOnly="true"
-                  nullConfigurationDefinitionMessage="#{ConnectionPropertiesUIBean.nullConfigurationDefinitionMessage}"
-                  nullConfigurationMessage="#{ConnectionPropertiesUIBean.nullConfigurationMessage}"
+                  nullConfigurationDefinitionMessage="#{ConnectionPropertiesViewUIBean.nullConfigurationDefinitionMessage}"
+                  nullConfigurationMessage="#{ConnectionPropertiesViewUIBean.nullConfigurationMessage}"
                   prevalidate="true"/>
 
       <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell"
                    rendered="#{ResourceUIBean.permissions.inventory}">
-         <h:commandButton value="EDIT..." action="#{ConnectionPropertiesUIBean.edit}"
+         <h:commandButton value="EDIT..." action="#{ConnectionPropertiesViewUIBean.edit}"
                           title="Edit Connection Properties" styleClass="buttonmed"/>
       </h:panelGrid>
 

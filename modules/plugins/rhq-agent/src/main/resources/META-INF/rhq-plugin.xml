@@ -36,6 +36,11 @@
                  description="Shuts down the agent's comm layer and plugin container.  If the agent is in daemon mode, the entire VM will exit">
       </operation>
 
+      <operation name="getLatestFailoverList"
+                 displayName="Get Latest Failover List"
+                 description="Tells the agent to download an updated server failover list. This will also check to make sure the agent is pointing to its primary server as found in the new failover list and, if not, will attempt to switch to the primary server now.">
+      </operation>
+
       <operation name="updatePlugins"
                  displayName="Update All Plugins"
                  description="Tells the agent to update its plugins. This pulls new/updated plugins down from the RHQ Server">

@@ -99,6 +99,13 @@ public interface AgentManagementMBean {
     void shutdown();
 
     /**
+     * Tells the agent to download an updated server failover list. This will also check to make sure
+     * the agent is pointing to its primary server as found in the new failover list and, if not, will
+     * attempt to switch to the primary server now.
+     */
+    void getLatestFailoverList();
+
+    /**
      * This will tell the agent to update its plugins. If the JON Server is up and the agent has detected it, this will
      * immediately pull down the updated plugins. If the JON Server is down, this will schedule the agent to pull down
      * the plugins as soon as the JON Server comes back up.

@@ -19,7 +19,6 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
-import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -32,8 +31,6 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
@@ -103,8 +100,7 @@ public class InstalledPackage implements Serializable {
     private PackageVersion packageVersion;
 
     @Column(name = "INSTALLATION_TIME", nullable = true)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date installationDate;
+    private Long installationDate;
 
     @JoinColumn(name = "SUBJECT_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
@@ -151,11 +147,11 @@ public class InstalledPackage implements Serializable {
     /**
      * Timestamp the installation was performed, if it is known.
      */
-    public Date getInstallationDate() {
+    public Long getInstallationDate() {
         return installationDate;
     }
 
-    public void setInstallationDate(Date installationDate) {
+    public void setInstallationDate(Long installationDate) {
         this.installationDate = installationDate;
     }
 

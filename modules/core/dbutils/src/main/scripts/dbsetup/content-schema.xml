@@ -41,8 +41,8 @@
         <column name="DOWNLOAD_MODE" size="16" type="VARCHAR2" required="true"/>
         <column name="SYNC_SCHEDULE" size="64" type="VARCHAR2" required="false"/>
         <column name="LOAD_ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
-        <column name="CREATION_TIME" type="TIMESTAMP" required="true"/>
-        <column name="LAST_MODIFIED_TIME" type="TIMESTAMP" required="true"/>
+        <column name="CREATION_TIME" type="LONG" required="true"/>
+        <column name="LAST_MODIFIED_TIME" type="LONG" required="true"/>
 
         <column name="CONTENT_SOURCE_TYPE_ID" type="INTEGER" references="RHQ_CONTENT_SOURCE_TYPE" required="true"/>
         <column name="CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG" required="false"/>
@@ -57,8 +57,8 @@
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
-        <column name="CREATION_TIME" type="TIMESTAMP" required="true"/>
-        <column name="LAST_MODIFIED_TIME" type="TIMESTAMP" required="true"/>
+        <column name="CREATION_TIME" type="LONG" required="true"/>
+        <column name="LAST_MODIFIED_TIME" type="LONG" required="true"/>
 
         <index name="RHQ_CHANNEL_IDX" unique="true">
             <field ref="NAME"/>
@@ -115,7 +115,7 @@
         <column name="FILE_SIZE" type="LONG" required="false"/>
         <column name="FILE_MD5" size="32" type="VARCHAR2" required="false"/>
         <column name="FILE_SHA256" size="64" type="VARCHAR2" required="false"/>
-        <column name="FILE_CREATION_TIME" type="TIMESTAMP" required="false"/>
+        <column name="FILE_CREATION_TIME" type="LONG" required="false"/>
         <column name="LICENSE_NAME" size="255" type="VARCHAR2" required="false"/>
         <column name="LICENSE_VERSION" size="20" type="VARCHAR2" required="false"/>
         <column name="METADATA" type="BLOB" required="false"/>
@@ -147,7 +147,7 @@
 
     <table name="RHQ_INSTALLED_PACKAGE">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="INSTALLATION_TIME" type="TIMESTAMP" required="false"/>
+        <column name="INSTALLATION_TIME" type="LONG" required="false"/>
 
         <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE" required="true"/>
         <column name="PACKAGE_VERSION_ID" type="INTEGER" references="RHQ_PACKAGE_VERSION" required="true"/>
@@ -158,7 +158,7 @@
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="STATUS" type="VARCHAR2" size="24" required="true"/>
         <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
-        <column name="HISTORY_TIMESTAMP" type="TIMESTAMP" required="false"/>
+        <column name="HISTORY_TIMESTAMP" type="LONG" required="false"/>
 
         <column name="PACKAGE_VERSION_ID" type="INTEGER" references="RHQ_PACKAGE_VERSION" required="true"/>
         <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE" required="true"/>

@@ -19,7 +19,7 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
-import java.util.Date;
+
 import org.rhq.core.domain.configuration.Configuration;
 
 /**
@@ -93,7 +93,7 @@ public class PackageDetails implements Serializable {
     /**
      * Timestamp on when the package's file was created.
      */
-    private Date fileCreatedDate;
+    private Long fileCreatedDate;
 
     /**
      * Name of the license under which the package falls.
@@ -232,11 +232,11 @@ public class PackageDetails implements Serializable {
         this.SHA265 = SHA265;
     }
 
-    public Date getFileCreatedDate() {
+    public Long getFileCreatedDate() {
         return fileCreatedDate;
     }
 
-    public void setFileCreatedDate(Date fileCreatedDate) {
+    public void setFileCreatedDate(Long fileCreatedDate) {
         this.fileCreatedDate = fileCreatedDate;
     }
 

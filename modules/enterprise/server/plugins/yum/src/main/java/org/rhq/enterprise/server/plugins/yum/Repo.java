@@ -22,11 +22,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
+
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
+
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
 import org.rhq.core.domain.content.PackageDetails;
@@ -199,9 +200,9 @@ public class Repo {
      *
      * @return The package's file date.
      */
-    private Date filedate(Element p) {
+    private Long filedate(Element p) {
         String date = p.getChild("time", Repodata.yumns).getAttributeValue("file");
-        return new Date(Long.parseLong(date));
+        return Long.parseLong(date);
     }
 
     private String location(Element p) {

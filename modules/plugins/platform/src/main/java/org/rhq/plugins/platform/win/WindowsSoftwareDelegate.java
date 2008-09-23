@@ -93,7 +93,7 @@ public class WindowsSoftwareDelegate {
         return config;
     }
 
-    private static Date getDate(String dateString) {
+    private static Long getDate(String dateString) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 
         Date date = null;
@@ -110,7 +110,7 @@ public class WindowsSoftwareDelegate {
             }
         }
 
-        return date;
+        return (date == null ? null : date.getTime());
     }
 
     /**

@@ -20,7 +20,6 @@ package org.rhq.core.domain.content;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,8 +44,6 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 
 import org.rhq.core.domain.configuration.Configuration;
 
@@ -125,12 +122,10 @@ public class ContentSource implements Serializable {
     private Configuration configuration;
 
     @Column(name = "CREATION_TIME", nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date creationDate;
+    private long creationDate;
 
     @Column(name = "LAST_MODIFIED_TIME", nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date lastModifiedDate;
+    private long lastModifiedDate;
 
     @OneToMany(mappedBy = "contentSource", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @OrderBy("startTime DESC")
@@ -271,11 +266,11 @@ public class ContentSource implements Serializable {
     /**
      * Timestamp of when this content source was created.
      */
-    public Date getCreationDate() {
+    public long getCreationDate() {
         return creationDate;
     }
 
-    public void setCreationDate(Date creationDate) {
+    public void setCreationDate(long creationDate) {
         this.creationDate = creationDate;
     }
 
@@ -284,11 +279,11 @@ public class ContentSource implements Serializable {
      * is not necessarily the last time any other part of this content source object was changed (for example, this last
      * modified date does not necessarily correspond to the time when the description was modified).
      */
-    public Date getLastModifiedDate() {
+    public long getLastModifiedDate() {
         return lastModifiedDate;
     }
 
-    public void setLastModifiedDate(Date lastModifiedDate) {
+    public void setLastModifiedDate(long lastModifiedDate) {
         this.lastModifiedDate = lastModifiedDate;
     }
 
@@ -393,18 +388,12 @@ public class ContentSource implements Serializable {
 
     @PrePersist
     void onPersist() {
-        if (this.creationDate == null) {
-            this.creationDate = new Date();
-        }
-
-        if (this.lastModifiedDate == null) {
-            this.lastModifiedDate = this.creationDate;
-        }
+        this.lastModifiedDate = this.creationDate = System.currentTimeMillis();
     }
 
     @PreUpdate
     void onUpdate() {
-        this.lastModifiedDate = new Date();
+        this.lastModifiedDate = System.currentTimeMillis();
     }
 
     @Override

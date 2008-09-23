@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.content.test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -323,7 +322,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         package4.setClassification("Package X1 Category");
         package4.setDisplayName("Package X1 Display Name");
         package4.setDisplayVersion("Package X1 Display Version");
-        package4.setFileCreatedDate(new Date());
+        package4.setFileCreatedDate(System.currentTimeMillis());
         package4.setFileName("package4.tar.gz");
         package4.setFileSize(1000L);
         package4.setLicenseName("GPL");
@@ -564,7 +563,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 historyEntity = (InstalledPackageHistory) results.get(0);
                 assert historyEntity.getStatus() == InstalledPackageHistoryStatus.BEING_INSTALLED : "Incorrect status on second entity. Expected: BEING_INSTALLED, Found: "
                     + historyEntity.getStatus();
-                
+
             } finally {
                 responseLock.notifyAll();
 
@@ -976,7 +975,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
         // Test  --------------------------------------------
         contentManager.deployPackages(overlord, resource1.getId(), installUs, notes);
-        
+
         // Give the agent service a second to make sure it finishes out its call
         Thread.sleep(1000);
 
@@ -995,7 +994,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 + results.size();
 
             ContentServiceRequest request = (ContentServiceRequest) results.get(0);
-            assert request.getStatus() == ContentRequestStatus.FAILURE: "Request status incorrect. Expected: FAILURE, Found: "
+            assert request.getStatus() == ContentRequestStatus.FAILURE : "Request status incorrect. Expected: FAILURE, Found: "
                 + request.getStatus();
             assert request.getNotes() != null : "Null notes found";
             assert request.getNotes().equals(notes) : "Incorrect notes found: " + request.getNotes();
@@ -1062,7 +1061,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             originalRequestedPackage.setContentServiceRequest(request);
             originalRequestedPackage.setPackageVersion(packageVersion);
             originalRequestedPackage.setStatus(InstalledPackageHistoryStatus.BEING_INSTALLED);
-            originalRequestedPackage.setTimestamp(new Date());
+            originalRequestedPackage.setTimestamp(System.currentTimeMillis());
             originalRequestedPackage.setResource(resource1);
 
             request.addInstalledPackageHistory(originalRequestedPackage);
@@ -1094,13 +1093,13 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
             List<ContentServiceRequest> resultList = query.getResultList();
 
-            assert resultList.size() == 1 :
-                "Incorrect number of requests loaded. Expected: 1, Found: " + resultList.size();
+            assert resultList.size() == 1 : "Incorrect number of requests loaded. Expected: 1, Found: "
+                + resultList.size();
 
             request = (ContentServiceRequest) resultList.get(0);
 
-            assert request.getInstalledPackageHistory().size() == 3 :
-                "Incorrect number of being installed packages on request. Expected: 3, Found: " + resultList.size();
+            assert request.getInstalledPackageHistory().size() == 3 : "Incorrect number of being installed packages on request. Expected: 3, Found: "
+                + resultList.size();
 
             // Quick check for the status of each
             query = em.createNamedQuery(InstalledPackageHistory.QUERY_FIND_BY_CSR_ID);
@@ -1222,7 +1221,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             query.setParameter("packageVersionId", installedPackage1.getPackageVersion().getId());
 
             results = query.getResultList();
-            assert results.size() == 1: "Incorrect number of installed packages for package 1, version 2. Expected: 0, Found: "
+            assert results.size() == 1 : "Incorrect number of installed packages for package 1, version 2. Expected: 0, Found: "
                 + results.size();
 
             // Package 2, Version 1
@@ -1342,7 +1341,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             query.setParameter("packageVersionId", installedPackage1.getPackageVersion().getId());
 
             results = query.getResultList();
-            assert results.size() == 1: "Incorrect number of installed packages for package 1, version 2. Expected: 0, Found: "
+            assert results.size() == 1 : "Incorrect number of installed packages for package 1, version 2. Expected: 0, Found: "
                 + results.size();
 
             // Package 2, Version 1
@@ -1684,7 +1683,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                                 response.addPackageResponse(individualResponse);
                             }
                         }
-                        
+
                         ContentManagerBeanTest.this.contentManager.completeDeletePackageRequest(response);
                     }
                 }

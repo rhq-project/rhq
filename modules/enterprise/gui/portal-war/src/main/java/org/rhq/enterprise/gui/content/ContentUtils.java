@@ -18,11 +18,11 @@
  */
 package org.rhq.enterprise.gui.content;
 
-import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.content.Package;
-import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 
 /**
  * Utilities used by the UI for dealing with content related pages.
@@ -42,15 +42,14 @@ public class ContentUtils {
         Package pkg = packageVersion.getGeneralPackage();
         PackageType pkgType = pkg.getPackageType();
 
-        PackageDetailsKey key =
-            new PackageDetailsKey(pkg.getName(), packageVersion.getVersion(),
-                                  pkgType.getName(), packageVersion.getArchitecture().getName());
+        PackageDetailsKey key = new PackageDetailsKey(pkg.getName(), packageVersion.getVersion(), pkgType.getName(),
+            packageVersion.getArchitecture().getName());
 
         ResourcePackageDetails details = new ResourcePackageDetails(key);
         details.setClassification(pkg.getClassification());
         details.setDisplayName(packageVersion.getDisplayName());
         details.setDisplayVersion(packageVersion.getDisplayVersion());
-//        details.setExtraProperties(packageVersion.getExtraProperties());
+        //        details.setExtraProperties(packageVersion.getExtraProperties());
         details.setFileCreatedDate(packageVersion.getFileCreatedDate());
         details.setFileName(packageVersion.getFileName());
         details.setFileSize(packageVersion.getFileSize());

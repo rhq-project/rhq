@@ -23,10 +23,10 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
@@ -135,7 +135,7 @@ public class DiskSource implements ContentSourceAdapter {
             }
 
             packages.remove(existing);
-            if (p.getFileCreatedDate().after(existing.getFileCreatedDate())) {
+            if (p.getFileCreatedDate().longValue() > existing.getFileCreatedDate().longValue()) {
                 report.addUpdatedPackage(p);
             }
         }
@@ -154,7 +154,7 @@ public class DiskSource implements ContentSourceAdapter {
             "noarch", "Linux", "Platforms");
         ContentSourcePackageDetails pkg = new ContentSourcePackageDetails(key);
         pkg.setDisplayName(file.getName());
-        pkg.setFileCreatedDate(new Date(file.lastModified()));
+        pkg.setFileCreatedDate(file.lastModified());
         pkg.setFileSize(file.length());
         pkg.setLocation(file.getAbsolutePath());
         return pkg;

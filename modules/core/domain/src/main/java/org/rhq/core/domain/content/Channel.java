@@ -19,7 +19,6 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,8 +35,6 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 
 import org.rhq.core.domain.resource.Resource;
 
@@ -59,8 +56,7 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = Channel.QUERY_FIND_CHANNELS_BY_RESOURCE_ID, query = "SELECT c "
         + "FROM ResourceChannel rc JOIN rc.channel c WHERE rc.resource.id = :resourceId "),
 
-    @NamedQuery(name = Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query =
-        "SELECT new org.rhq.core.domain.content.composite.ChannelComposite( "
+    @NamedQuery(name = Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite( "
         + "c, "
         + "(SELECT COUNT(cpv.packageVersion) FROM ChannelPackageVersion cpv WHERE cpv.channel.id = c.id) "
         + ") "
@@ -70,8 +66,7 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = Channel.QUERY_FIND_CHANNEL_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( rc.channel ) "
         + "FROM ResourceChannel rc WHERE rc.resource.id = :resourceId "),
 
-    @NamedQuery(name = Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query =
-        "SELECT new org.rhq.core.domain.content.composite.ChannelComposite( "
+    @NamedQuery(name = Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.ChannelComposite( "
         + "c, "
         + "(SELECT COUNT(cpv.packageVersion) FROM ChannelPackageVersion cpv WHERE cpv.channel.id = c.id) "
         + ") "
@@ -113,12 +108,10 @@ public class Channel implements Serializable {
     private String description;
 
     @Column(name = "CREATION_TIME", nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date creationDate;
+    private long creationDate;
 
     @Column(name = "LAST_MODIFIED_TIME", nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date lastModifiedDate;
+    private long lastModifiedDate;
 
     @OneToMany(mappedBy = "channel", fetch = FetchType.LAZY)
     private Set<ResourceChannel> resourceChannels;
@@ -174,11 +167,11 @@ public class Channel implements Serializable {
     /**
      * Timestamp of when this channel was created.
      */
-    public Date getCreationDate() {
+    public long getCreationDate() {
         return creationDate;
     }
 
-    public void setCreationDate(Date creationDate) {
+    public void setCreationDate(long creationDate) {
         this.creationDate = creationDate;
     }
 
@@ -187,11 +180,11 @@ public class Channel implements Serializable {
      * necessarily the last time any other part of this channel object was changed (for example, this last modified date
      * does not necessarily correspond to the time when the description was modified).
      */
-    public Date getLastModifiedDate() {
+    public long getLastModifiedDate() {
         return lastModifiedDate;
     }
 
-    public void setLastModifiedDate(Date lastModifiedDate) {
+    public void setLastModifiedDate(long lastModifiedDate) {
         this.lastModifiedDate = lastModifiedDate;
     }
 
@@ -468,17 +461,11 @@ public class Channel implements Serializable {
 
     @PrePersist
     void onPersist() {
-        if (this.creationDate == null) {
-            this.creationDate = new Date();
-        }
-
-        if (this.lastModifiedDate == null) {
-            this.lastModifiedDate = this.creationDate;
-        }
+        this.lastModifiedDate = this.creationDate = System.currentTimeMillis();
     }
 
     @PreUpdate
     void onUpdate() {
-        this.lastModifiedDate = new Date();
+        this.lastModifiedDate = System.currentTimeMillis();
     }
 }

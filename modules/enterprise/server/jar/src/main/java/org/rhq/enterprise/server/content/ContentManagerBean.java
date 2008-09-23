@@ -23,12 +23,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -145,7 +144,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         // Timestamp to use for all audit trail entries from this report
-        Date timestamp = new Date();
+        long timestamp = System.currentTimeMillis();
 
         // Before we process the report, get a list of all installed packages on the resource.
         // InstalledPackage objects in this list that are not referenced in the report are to be removed.
@@ -386,7 +385,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         persistedRequest.setStatus(ContentRequestStatus.IN_PROGRESS);
         persistedRequest.setNotes(notes);
 
-        Date timestamp = new Date();
+        long timestamp = System.currentTimeMillis();
 
         for (ResourcePackageDetails packageDetails : packages) {
             // Load the package version for the relationship
@@ -443,15 +442,15 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         // Convert to a map so we can easily remove entries from it as they are closed by the individual
         // package responses.
-        Map<PackageVersion, InstalledPackageHistory> inProgressEntries =
-            new HashMap<PackageVersion, InstalledPackageHistory>(requestInProgressEntries.size());
+        Map<PackageVersion, InstalledPackageHistory> inProgressEntries = new HashMap<PackageVersion, InstalledPackageHistory>(
+            requestInProgressEntries.size());
 
         for (InstalledPackageHistory history : requestInProgressEntries) {
             inProgressEntries.put(history.getPackageVersion(), history);
         }
 
         // Handle each individual package
-        Date timestamp = new Date();
+        long timestamp = System.currentTimeMillis();
 
         for (DeployIndividualPackageResponse singleResponse : response.getPackageResponses()) {
             // Load the package version for the relationship
@@ -568,8 +567,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
         // This will also create the audit trail entry
-        ContentServiceRequest persistedRequest =
-            contentManager.createRemoveRequest(resourceId, user.getName(), installedPackageIds, requestNotes);
+        ContentServiceRequest persistedRequest = contentManager.createRemoveRequest(resourceId, user.getName(),
+            installedPackageIds, requestNotes);
 
         // Package into transfer object
         Query query = entityManager.createNamedQuery(InstalledPackage.QUERY_FIND_BY_SET_OF_IDS);
@@ -603,7 +602,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentServiceRequest createRemoveRequest(int resourceId, String username, Set<Integer> installedPackageIds, String requestNotes) {
+    public ContentServiceRequest createRemoveRequest(int resourceId, String username, Set<Integer> installedPackageIds,
+        String requestNotes) {
         Resource resource = entityManager.find(Resource.class, resourceId);
 
         ContentServiceRequest persistedRequest = new ContentServiceRequest(resource, username,
@@ -611,7 +611,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         persistedRequest.setStatus(ContentRequestStatus.IN_PROGRESS);
         persistedRequest.setNotes(requestNotes);
 
-        Date timestamp = new Date();
+        long timestamp = System.currentTimeMillis();
 
         for (Integer installedPackageId : installedPackageIds) {
             // Load the InstalledPackage to get its package version for the relationship
@@ -659,15 +659,15 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         // Convert to a map so we can easily remove entries from it as they are closed by the individual
         // package responses.
-        Map<PackageVersion, InstalledPackageHistory> inProgressEntries =
-            new HashMap<PackageVersion, InstalledPackageHistory>(requestInProgressEntries.size());
+        Map<PackageVersion, InstalledPackageHistory> inProgressEntries = new HashMap<PackageVersion, InstalledPackageHistory>(
+            requestInProgressEntries.size());
 
         for (InstalledPackageHistory history : requestInProgressEntries) {
             inProgressEntries.put(history.getPackageVersion(), history);
         }
 
         // Handle each individual package
-        Date timestamp = new Date();
+        long timestamp = System.currentTimeMillis();
 
         for (RemoveIndividualPackageResponse singleResponse : response.getPackageResponses()) {
             // Load the package version for the relationship
@@ -801,7 +801,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             ContentRequestType.DEPLOY);
         persistedRequest.setStatus(ContentRequestStatus.IN_PROGRESS);
 
-        Date timestamp = new Date();
+        long timestamp = System.currentTimeMillis();
 
         // Load the InstalledPackage to get its package version for the relationship
         InstalledPackage ip = entityManager.find(InstalledPackage.class, installedPackageId);
@@ -894,7 +894,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         InstalledPackageHistory completedHistory = new InstalledPackageHistory();
         completedHistory.setContentServiceRequest(persistedRequest);
         completedHistory.setResource(resource);
-        completedHistory.setTimestamp(new Date());
+        completedHistory.setTimestamp(System.currentTimeMillis());
         completedHistory.setPackageVersion(packageVersion);
 
         if (response.getStatus() == ContentRequestStatus.SUCCESS) {
@@ -924,7 +924,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         ResourceType resourceType = resource.getResourceType();
 
         // For each package requested, load the package version and convert to a transfer object
-        Date installationDate = new Date();
+        long installationDate = System.currentTimeMillis();
+
         for (PackageDetailsKey key : keys) {
             Query packageQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
             packageQuery.setParameter("packageName", key.getName());
@@ -978,7 +979,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         // This should only be called as the result of an exception during the user initiated action. As such,
         // every package history entity represents an in progress state. Add a new entry for each in the failed state.
-        Date timestamp = new Date();
+        long timestamp = System.currentTimeMillis();
+
         for (InstalledPackageHistory history : persistedRequest.getInstalledPackageHistory()) {
             InstalledPackageHistory failedEntry = new InstalledPackageHistory();
             failedEntry.setContentServiceRequest(persistedRequest);
@@ -1010,7 +1012,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 return;
             }
 
-            Date timestamp = new Date();
+            long timestamp = System.currentTimeMillis();
+
             for (ContentServiceRequest request : inProgressRequests) {
                 long duration = request.getDuration();
 

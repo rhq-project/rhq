@@ -19,7 +19,6 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,8 +35,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 
 import org.hibernate.annotations.NamedQueries;
 import org.hibernate.annotations.NamedQuery;
@@ -220,12 +217,10 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "            (SELECT pv1.id FROM PackageVersion pv1 "
         + "             WHERE pv1.id IN "
         + "                 (SELECT ip1.packageVersion.id FROM InstalledPackage ip1 WHERE ip1.resource.id = :resourceId)"
-        + "            )"
-        + "       )"
-    ),
+        + "            )" + "       )"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_ID, query = "SELECT pv FROM PackageVersion pv WHERE pv.id = :id")
 
-    })
+})
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_VERSION_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_VERSION")
 public class PackageVersion implements Serializable {
@@ -297,8 +292,7 @@ public class PackageVersion implements Serializable {
     private String sha256;
 
     @Column(name = "FILE_CREATION_TIME", nullable = true)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date fileCreatedDate;
+    private Long fileCreatedDate;
 
     @Column(name = "LICENSE_NAME", nullable = true)
     private String licenseName;
@@ -477,11 +471,11 @@ public class PackageVersion implements Serializable {
     /**
      * Timestamp indicating when the package's file was created.
      */
-    public Date getFileCreatedDate() {
+    public Long getFileCreatedDate() {
         return fileCreatedDate;
     }
 
-    public void setFileCreatedDate(Date fileCreatedDate) {
+    public void setFileCreatedDate(Long fileCreatedDate) {
         this.fileCreatedDate = fileCreatedDate;
     }
 

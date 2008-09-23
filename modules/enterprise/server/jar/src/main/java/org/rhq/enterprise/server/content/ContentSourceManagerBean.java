@@ -446,8 +446,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
 
         List existingMatchingContentSources = q.getResultList();
         if (existingMatchingContentSources.size() > 0) {
-            throw new ContentSourceException("Content source with name [" + name + "] and of type [" +
-                type.getName() + "] already exists, please specify a different name.");
+            throw new ContentSourceException("Content source with name [" + name + "] and of type [" + type.getName()
+                + "] already exists, please specify a different name.");
         }
 
     }
@@ -828,7 +828,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         // this method should be called only after a merge of a content source
         // added/updated/removed one or more packages.  When this happens, we need to change
         // the last modified time for all channels that get content from the changed content source
-        Date now = new Date();
+        long now = System.currentTimeMillis();
         ContentSource contentSource = entityManager.find(ContentSource.class, contentSourceId);
         Set<ChannelContentSource> ccss = contentSource.getChannelContentSources();
         for (ChannelContentSource ccs : ccss) {
@@ -1215,7 +1215,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         List<Channel> channels = q.getResultList();
 
         for (Channel channel : channels) {
-            md5Generator.add(Integer.toString(channel.getLastModifiedDate().hashCode()).getBytes());
+            long modifiedTimestamp = channel.getLastModifiedDate();
+            Date modifiedDate = new Date(modifiedTimestamp);
+            md5Generator.add(Integer.toString(modifiedDate.hashCode()).getBytes());
         }
 
         String digestString = md5Generator.getDigestString();

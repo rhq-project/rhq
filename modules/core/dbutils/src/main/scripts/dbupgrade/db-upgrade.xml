@@ -503,7 +503,7 @@ DB Upgrade:
       </schema-directSQL>
       <schema-deleteColumn table="RHQ_AGENT" column="LAST_AVAILABILITY_REPORT" />
       <schema-directSQL>
-         <statement desc="Renaming new RHQ_AGENT column to match old schema expectations">
+         <statement desc="Renaming new RHQ_AGENT.LAST_AVAILABILITY_REPORT column to match old schema expectations">
             ALTER TABLE RHQ_AGENT
             RENAME COLUMN LAST_AVAILABILITY_REPORT_LONG
             TO LAST_AVAILABILITY_REPORT
@@ -530,7 +530,7 @@ DB Upgrade:
       </schema-directSQL>
       <schema-deleteColumn table="RHQ_ALERT_DAMPEN_EVENT" column="EVENT_TIMESTAMP" />
       <schema-directSQL>
-         <statement desc="Renaming new RHQ_ALERT_DAMPEN_EVENT column to match old schema expectations">
+         <statement desc="Renaming new RHQ_ALERT_DAMPEN_EVENT.EVENT_TIMESTAMP column to match old schema expectations">
             ALTER TABLE RHQ_ALERT_DAMPEN_EVENT
             RENAME COLUMN EVENT_TIMESTAMP_LONG
             TO EVENT_TIMESTAMP
@@ -572,15 +572,187 @@ DB Upgrade:
       <schema-deleteColumn table="RHQ_EVENT" column="TIMESTAMP" />
       <schema-deleteColumn table="RHQ_EVENT" column="ACK_TIME" />
       <schema-directSQL>
-         <statement desc="Renaming first new RHQ_EVENT column to match old schema expectations">
+         <statement desc="Renaming new RHQ_EVENT.TIMESTAMP column to match old schema expectations">
             ALTER TABLE RHQ_EVENT
             RENAME COLUMN TIMESTAMP_LONG
             TO TIMESTAMP
          </statement>
-         <statement desc="Renaming second new RHQ_EVENT column to match old schema expectations">
+         <statement desc="Renaming new RHQ_EVENT.ACK_TIME column to match old schema expectations">
             ALTER TABLE RHQ_EVENT
             RENAME COLUMN ACK_TIME_LONG
             TO ACK_TIME
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
+   <schemaSpec version="2.22">
+      <!-- RHQ_CONTENT_SOURCE timestamp to long conversion -->
+      <schema-addColumn table="RHQ_CONTENT_SOURCE" column="CREATION_TIME_LONG" columnType="LONG" />
+      <schema-addColumn table="RHQ_CONTENT_SOURCE" column="LAST_MODIFIED_TIME_LONG" columnType="LONG" />
+      <schema-directSQL>
+         <statement targetDBVendor="postgresql"
+                    desc="Converting RHQ_CONTENT_SOURCE.CREATION_TIME timestamp to long">
+            UPDATE RHQ_CONTENT_SOURCE
+            SET CREATION_TIME_LONG = EXTRACT ( EPOCH FROM CREATION_TIME )
+            WHERE CREATION_TIME IS NOT NULL
+         </statement>
+         <statement targetDBVendor="postgresql"
+                    desc="Converting RHQ_CONTENT_SOURCE.LAST_MODIFIED_TIME timestamp to long">
+            UPDATE RHQ_CONTENT_SOURCE
+            SET LAST_MODIFIED_TIME_LONG = EXTRACT ( EPOCH FROM LAST_MODIFIED_TIME )
+            WHERE LAST_MODIFIED_TIME IS NOT NULL
+         </statement>
+         <statement targetDBVendor="oracle"
+                    desc="Converting RHQ_CONTENT_SOURCE.CREATION_TIME timestamp to long">
+            UPDATE RHQ_CONTENT_SOURCE
+            SET CREATION_TIME_LONG = ( 86400 * 
+               ( TO_DATE( CREATION_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            WHERE CREATION_TIME IS NOT NULL
+         </statement>
+         <statement targetDBVendor="oracle"
+                    desc="Converting RHQ_CONTENT_SOURCE.LAST_MODIFIED_TIME timestamp to long">
+            UPDATE RHQ_CONTENT_SOURCE
+            SET LAST_MODIFIED_TIME_LONG = ( 86400 * 
+               ( TO_DATE( LAST_MODIFIED_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            WHERE LAST_MODIFIED_TIME IS NOT NULL
+         </statement>
+      </schema-directSQL>
+      <schema-deleteColumn table="RHQ_CONTENT_SOURCE" column="CREATION_TIME" />
+      <schema-deleteColumn table="RHQ_CONTENT_SOURCE" column="LAST_MODIFIED_TIME" />
+      <schema-directSQL>
+         <statement desc="Renaming new RHQ_CONTENT_SOURCE.CREATION_TIME column to match old schema expectations">
+            ALTER TABLE RHQ_CONTENT_SOURCE
+            RENAME COLUMN CREATION_TIME_LONG
+            TO CREATION_TIME
+         </statement>
+         <statement desc="Renaming new RHQ_CONTENT_SOURCE.LAST_MODIFIED_TIME column to match old schema expectations">
+            ALTER TABLE RHQ_CONTENT_SOURCE
+            RENAME COLUMN LAST_MODIFIED_TIME_LONG
+            TO LAST_MODIFIED_TIME
+         </statement> 
+      </schema-directSQL>
+
+      <!-- RHQ_CHANNEL timestamp to long conversion -->
+      <schema-addColumn table="RHQ_CHANNEL" column="CREATION_TIME_LONG" columnType="LONG" />
+      <schema-addColumn table="RHQ_CHANNEL" column="LAST_MODIFIED_TIME_LONG" columnType="LONG" />
+      <schema-directSQL>
+         <statement targetDBVendor="postgresql"
+                    desc="Converting RHQ_CHANNEL.CREATION_TIME timestamp to long">
+            UPDATE RHQ_CHANNEL
+            SET CREATION_TIME_LONG = EXTRACT ( EPOCH FROM CREATION_TIME )
+            WHERE CREATION_TIME IS NOT NULL
+         </statement>
+         <statement targetDBVendor="postgresql"
+                    desc="Converting RHQ_CHANNEL.LAST_MODIFIED_TIME timestamp to long">
+            UPDATE RHQ_CHANNEL
+            SET LAST_MODIFIED_TIME_LONG = EXTRACT ( EPOCH FROM LAST_MODIFIED_TIME )
+            WHERE LAST_MODIFIED_TIME IS NOT NULL
+         </statement>
+         <statement targetDBVendor="oracle"
+                    desc="Converting RHQ_CHANNEL.CREATION_TIME timestamp to long">
+            UPDATE RHQ_CHANNEL
+            SET CREATION_TIME_LONG = ( 86400 * 
+               ( TO_DATE( CREATION_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            WHERE CREATION_TIME IS NOT NULL
+         </statement>
+         <statement targetDBVendor="oracle"
+                    desc="Converting RHQ_CHANNEL.LAST_MODIFIED_TIME timestamp to long">
+            UPDATE RHQ_CHANNEL
+            SET LAST_MODIFIED_TIME_LONG = ( 86400 * 
+               ( TO_DATE( LAST_MODIFIED_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            WHERE LAST_MODIFIED_TIME IS NOT NULL
+         </statement>
+      </schema-directSQL>
+      <schema-deleteColumn table="RHQ_CHANNEL" column="CREATION_TIME" />
+      <schema-deleteColumn table="RHQ_CHANNEL" column="LAST_MODIFIED_TIME" />
+      <schema-directSQL>
+         <statement desc="Renaming new RHQ_CHANNEL.CREATION_TIME column to match old schema expectations">
+            ALTER TABLE RHQ_CHANNEL
+            RENAME COLUMN CREATION_TIME_LONG
+            TO CREATION_TIME
+         </statement>
+         <statement desc="Renaming new RHQ_CHANNEL.LAST_MODIFIED_TIME column to match old schema expectations">
+            ALTER TABLE RHQ_CHANNEL
+            RENAME COLUMN LAST_MODIFIED_TIME_LONG
+            TO LAST_MODIFIED_TIME
+         </statement> 
+      </schema-directSQL>
+
+      <!-- RHQ_PACKAGE_VERSION timestamp to long conversion -->
+      <schema-addColumn table="RHQ_PACKAGE_VERSION" column="FILE_CREATION_TIME_LONG" columnType="LONG" />
+      <schema-directSQL>
+         <statement targetDBVendor="postgresql"
+                    desc="Converting RHQ_PACKAGE_VERSION.FILE_CREATION_TIME timestamp to long">
+            UPDATE RHQ_PACKAGE_VERSION
+            SET FILE_CREATION_TIME_LONG = EXTRACT ( EPOCH FROM FILE_CREATION_TIME )
+            WHERE FILE_CREATION_TIME IS NOT NULL
+         </statement>
+         <statement targetDBVendor="oracle"
+                    desc="Converting RHQ_PACKAGE_VERSION.FILE_CREATION_TIME timestamp to long">
+            UPDATE RHQ_PACKAGE_VERSION
+            SET FILE_CREATION_TIME_LONG = ( 86400 * 
+               ( TO_DATE( FILE_CREATION_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            WHERE FILE_CREATION_TIME IS NOT NULL
+         </statement>
+      </schema-directSQL>
+      <schema-deleteColumn table="RHQ_PACKAGE_VERSION" column="FILE_CREATION_TIME" />
+      <schema-directSQL>
+         <statement desc="Renaming new RHQ_PACKAGE_VERSION.FILE_CREATION_TIME column to match old schema expectations">
+            ALTER TABLE RHQ_PACKAGE_VERSION
+            RENAME COLUMN FILE_CREATION_TIME_LONG
+            TO FILE_CREATION_TIME
+         </statement>
+      </schema-directSQL>
+
+      <!-- RHQ_INSTALLED_PACKAGE timestamp to long conversion -->
+      <schema-addColumn table="RHQ_INSTALLED_PACKAGE" column="INSTALLATION_TIME_LONG" columnType="LONG" />
+      <schema-directSQL>
+         <statement targetDBVendor="postgresql"
+                    desc="Converting RHQ_INSTALLED_PACKAGE.INSTALLATION_TIME timestamp to long">
+            UPDATE RHQ_INSTALLED_PACKAGE
+            SET INSTALLATION_TIME_LONG = EXTRACT ( EPOCH FROM INSTALLATION_TIME )
+            WHERE INSTALLATION_TIME IS NOT NULL
+         </statement>
+         <statement targetDBVendor="oracle"
+                    desc="Converting RHQ_INSTALLED_PACKAGE.INSTALLATION_TIME timestamp to long">
+            UPDATE RHQ_INSTALLED_PACKAGE
+            SET INSTALLATION_TIME_LONG = ( 86400 * 
+               ( TO_DATE( INSTALLATION_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            WHERE INSTALLATION_TIME IS NOT NULL
+         </statement>
+      </schema-directSQL>
+      <schema-deleteColumn table="RHQ_INSTALLED_PACKAGE" column="INSTALLATION_TIME" />
+      <schema-directSQL>
+         <statement desc="Renaming new RHQ_INSTALLED_PACKAGE.INSTALLATION_TIME column to match old schema expectations">
+            ALTER TABLE RHQ_INSTALLED_PACKAGE
+            RENAME COLUMN INSTALLATION_TIME_LONG
+            TO INSTALLATION_TIME
+         </statement>
+      </schema-directSQL>
+
+      <!-- RHQ_INSTALLED_PKG_HIST timestamp to long conversion -->
+      <schema-addColumn table="RHQ_INSTALLED_PKG_HIST" column="HISTORY_TIMESTAMP_LONG" columnType="LONG" />
+      <schema-directSQL>
+         <statement targetDBVendor="postgresql"
+                    desc="Converting RHQ_INSTALLED_PKG_HIST.HISTORY_TIMESTAMP timestamp to long">
+            UPDATE RHQ_INSTALLED_PKG_HIST
+            SET HISTORY_TIMESTAMP_LONG = EXTRACT ( EPOCH FROM HISTORY_TIMESTAMP )
+            WHERE HISTORY_TIMESTAMP IS NOT NULL
+         </statement>
+         <statement targetDBVendor="oracle"
+                    desc="Converting RHQ_INSTALLED_PKG_HIST.HISTORY_TIMESTAMP timestamp to long">
+            UPDATE RHQ_INSTALLED_PKG_HIST
+            SET HISTORY_TIMESTAMP_LONG = ( 86400 * 
+               ( TO_DATE( HISTORY_TIMESTAMP,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            WHERE HISTORY_TIMESTAMP IS NOT NULL
+         </statement>
+      </schema-directSQL>
+      <schema-deleteColumn table="RHQ_INSTALLED_PKG_HIST" column="HISTORY_TIMESTAMP" />
+      <schema-directSQL>
+         <statement desc="Renaming new RHQ_INSTALLED_PKG_HIST.HISTORY_TIMESTAMP column to match old schema expectations">
+            ALTER TABLE RHQ_INSTALLED_PKG_HIST
+            RENAME COLUMN HISTORY_TIMESTAMP_LONG
+            TO HISTORY_TIMESTAMP
          </statement>
       </schema-directSQL>
    </schemaSpec>

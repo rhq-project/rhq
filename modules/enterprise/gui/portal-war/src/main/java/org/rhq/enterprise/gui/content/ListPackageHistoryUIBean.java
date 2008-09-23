@@ -117,7 +117,7 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
         results.add(new PackageTableDataValue("SHA256", current.getPackageVersion().getSHA256(), ((old != null) ? old
             .getPackageVersion().getSHA256() : null)));
         results.add(new PackageTableDataValue("Installation Date", dateToString(current.getInstallationDate()),
-            ((old != null) ? dateToString(old.getInstallationDate()) : null)));
+            dateToString(old.getInstallationDate())));
         results.add(new PackageTableDataValue("Owner", (current.getUser() != null) ? current.getUser().toString()
             : null, (old != null) ? ((old.getUser() != null) ? old.getUser().toString() : null) : null));
 
@@ -205,11 +205,11 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
      *
      * @return string representation of the date if the date is not null; empty string otherwise
      */
-    private String dateToString(Date date) {
+    private String dateToString(Long date) {
         if (date == null) {
             return "";
         } else {
-            return date.toString();
+            return new Date(date).toString();
         }
     }
 

@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.content;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -298,7 +297,7 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
             throw new Exception("There is no channel with an ID [" + channelId + "]");
         }
 
-        channel.setLastModifiedDate(new Date());
+        channel.setLastModifiedDate(System.currentTimeMillis());
 
         log.debug("User [" + subject + "] is adding content sources to channel [" + channel + "]");
 

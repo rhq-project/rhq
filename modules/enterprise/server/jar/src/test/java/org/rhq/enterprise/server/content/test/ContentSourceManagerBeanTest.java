@@ -18,19 +18,22 @@
  */
 package org.rhq.enterprise.server.content.test;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import javax.transaction.TransactionManager;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
@@ -375,7 +378,9 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             // MD5 is based on the hash code of last modified time
             channel = channelManager.getChannel(overlord, channelId);
-            String datehash = Integer.toString(channel.getLastModifiedDate().hashCode());
+            long modifiedTimestamp = channel.getLastModifiedDate();
+            Date modifiedDate = new Date(modifiedTimestamp);
+            String datehash = Integer.toString(modifiedDate.hashCode());
             assert metadataMd5.equals(MD5Generator.getDigestString(datehash)) : "-->" + metadataMd5;
 
             channelManager.unsubscribeResourceFromChannels(overlord, resource1.getId(), new int[] { channelId });
@@ -810,7 +815,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
-        } 
+        }
     }
 
     /**
@@ -1115,7 +1120,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
                 results = query.getResultList();
 
                 if (results.size() > 0) {
-                    ContentSource deleteMe = (ContentSource)results.get(0);
+                    ContentSource deleteMe = (ContentSource) results.get(0);
                     em.remove(deleteMe);
                 }
 
@@ -1125,7 +1130,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
                 results = query.getResultList();
 
                 if (results.size() > 0) {
-                    ContentSource deleteMe = (ContentSource)results.get(0);
+                    ContentSource deleteMe = (ContentSource) results.get(0);
                     em.remove(deleteMe);
                 }
 
@@ -1135,7 +1140,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
                 results = query.getResultList();
 
                 if (results.size() > 0) {
-                    ContentSource deleteMe = (ContentSource)results.get(0);
+                    ContentSource deleteMe = (ContentSource) results.get(0);
                     em.remove(deleteMe);
                 }
 
@@ -1144,16 +1149,16 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
                 results = query.getResultList();
 
                 if (results.size() > 0) {
-                    ContentSourceType deleteMe = (ContentSourceType)results.get(0);
+                    ContentSourceType deleteMe = (ContentSourceType) results.get(0);
                     em.remove(deleteMe);
                 }
-                
+
                 query = em.createNamedQuery(ContentSourceType.QUERY_FIND_BY_NAME);
                 query.setParameter("name", "testUpdateContentSourceCST2");
                 results = query.getResultList();
 
                 if (results.size() > 0) {
-                    ContentSourceType deleteMe = (ContentSourceType)results.get(0);
+                    ContentSourceType deleteMe = (ContentSourceType) results.get(0);
                     em.remove(deleteMe);
                 }
 
@@ -1162,7 +1167,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
                 results = query.getResultList();
 
                 if (results.size() > 0) {
-                    ContentSourceType deleteMe = (ContentSourceType)results.get(0);
+                    ContentSourceType deleteMe = (ContentSourceType) results.get(0);
                     em.remove(deleteMe);
                 }
 

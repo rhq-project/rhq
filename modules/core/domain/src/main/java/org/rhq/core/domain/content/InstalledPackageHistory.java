@@ -21,7 +21,6 @@ package org.rhq.core.domain.content;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
-import java.util.Date;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -39,8 +38,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 
 import org.hibernate.annotations.NamedQueries;
 import org.hibernate.annotations.NamedQuery;
@@ -110,8 +107,7 @@ public class InstalledPackageHistory implements Serializable {
     private String errorMessage;
 
     @Column(name = "HISTORY_TIMESTAMP", nullable = true)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date timestamp;
+    private Long timestamp;
 
     /**
      * Values that correspond to the deployment time properties that are defined by the {@link PackageType}. This may
@@ -162,11 +158,11 @@ public class InstalledPackageHistory implements Serializable {
         this.packageVersion = packageVersion;
     }
 
-    public Date getTimestamp() {
+    public Long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Date timestamp) {
+    public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
     }
 

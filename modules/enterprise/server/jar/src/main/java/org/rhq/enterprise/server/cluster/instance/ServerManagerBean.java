@@ -142,16 +142,18 @@ public class ServerManagerBean implements ServerManagerLocal {
             if (Server.OperationMode.MAINTENANCE == serverMode) {
 
                 // If moving into Maintenance Mode from any other mode then stop processing agent commands
-
-                ServerCommunicationsServiceUtil.getService().getServiceContainer().removeCommandListener(
+                ServerCommunicationsServiceUtil.getService().getServiceContainer().addCommandListener(
                     getMaintenanceModeListener());
+
                 log.info("Notified communication layer of server operation mode " + serverMode);
+
             } else if (Server.OperationMode.NORMAL == serverMode) {
 
                 // If moving into normal operating mode from Maintenance Mode then start processing agent commands                
                 if (Server.OperationMode.MAINTENANCE == lastEstablishedServerMode) {
                     ServerCommunicationsServiceUtil.getService().getServiceContainer().removeCommandListener(
                         getMaintenanceModeListener());
+
                     log.info("Notified communication layer of server operation mode " + serverMode);
                 }
             } else if (Server.OperationMode.INSTALLED == serverMode) {

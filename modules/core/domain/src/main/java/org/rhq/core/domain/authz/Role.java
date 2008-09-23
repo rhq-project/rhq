@@ -243,7 +243,13 @@ public class Role implements Serializable {
     }
 
     public int getMemberCount() {
-        return this.getSubjects().size();
+        int count = 0;
+        for (Subject member : getSubjects()) {
+            if (member.getFsystem() == false && member.getFactive() == true) {
+                count++;
+            }
+        }
+        return count;
     }
 
     @Override

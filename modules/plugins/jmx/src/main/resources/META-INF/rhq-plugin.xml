@@ -286,4 +286,11 @@
          </resource-configuration>
       </service>
    </server>
+
+   <help>
+       This plugin provides both base connectivity to arbitrary MBeanServers over several supported protocols as
+       well as service definitions for JMX Platform MBean services. It is often used as a base plugin to support
+       other JMX based services and is designed for extension.
+   </help>
+    
 </plugin>

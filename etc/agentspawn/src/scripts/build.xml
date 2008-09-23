@@ -141,8 +141,8 @@
     <target name="clean-single-vm" description="Deletes a single agent VM and its preferences.">
        <echo>Deleting the agent VM found here: ${perftest.agent.vm.dir}/${_index}</echo>
        <delete dir="${perftest.agent.vm.dir}/${_index}" />
-       <echo>Deleting all Java Preferences found here: ${user.home}/.java${_index}</echo>
-       <delete dir="${user.home}/.java${_index}" />
+       <echo>Deleting all Java Preferences found here: ${java.io.tmpdir}/.java${_index}</echo>
+       <delete dir="${java.io.tmpdir}/.java${_index}" />
     </target>
 
    <!-- ========== -->

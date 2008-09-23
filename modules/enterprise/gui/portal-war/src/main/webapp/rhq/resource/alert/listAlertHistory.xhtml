@@ -30,29 +30,33 @@
             </f:facet>
 
             <h:panelGrid columns="4" cellspacing="3">
-               <h:outputLabel for="dateFilter" value="Date Filter: " />
-               <h:inputText id="dateFilter" value="#{ListAlertHistoryUIBean.dateFilter}" />
-               <a4j:commandButton value="GO" reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
-                                  styleClass="buttonmed"/>
-               <h:outputText id="dateErrors" value="#{ListAlertHistoryUIBean.dateErrors}" />
-
                <h:outputLabel for="alertDefinitionFilter" value="Alert Definition Filter: " />
-               <h:selectOneMenu id="alertDefinitionFilter" value="#{ListAlertHistoryUIBean.alertDefinitionFilter}">
+               <h:selectOneMenu id="alertDefinitionFilter" value="#{ListAlertHistoryUIBean.alertDefinitionFilter}"
+                                style="width: 300px;">
                    <a4j:support event="onchange" reRender="alertHistoryDataTable, alertHistoryDataTableScroller"/>
-                      
+
                    <f:selectItems value="#{ListAlertHistoryUIBean.alertDefinitionSelectItems}"/>
                </h:selectOneMenu>
                <rich:spacer/>
                <rich:spacer/>
 
                <h:outputLabel for="alertPriorityFilter" value="Alert Priority Filter: " />
-               <h:selectOneMenu id="alertPriorityFilter" value="#{ListAlertHistoryUIBean.alertPriorityFilter}">
+               <h:selectOneMenu id="alertPriorityFilter" value="#{ListAlertHistoryUIBean.alertPriorityFilter}"
+                                style="width: 300px;">
                    <a4j:support event="onchange" reRender="alertHistoryDataTable, alertHistoryDataTableScroller"/>
-                      
+
                    <f:selectItems value="#{ListAlertHistoryUIBean.alertPrioritySelectItems}"/>
                </h:selectOneMenu>
                <rich:spacer/>
                <rich:spacer/>
+
+               <h:outputLabel for="dateFilter" value="Date Filter: " />
+               <h:inputText id="dateFilter" value="#{ListAlertHistoryUIBean.dateFilter}"
+                            onkeypress="return ignoreEnterKey();"
+                            style="width: 300px;" />
+               <a4j:commandButton value="GO" reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
+                                  styleClass="buttonmed"/>
+               <h:outputText id="dateErrors" value="#{ListAlertHistoryUIBean.dateErrors}" />
             </h:panelGrid>
 
             <br/>

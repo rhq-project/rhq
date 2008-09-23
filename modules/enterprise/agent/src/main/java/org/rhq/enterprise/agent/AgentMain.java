@@ -731,7 +731,8 @@ public class AgentMain {
      * Asks the agent to check and see if it is currently connected to its primary server (as opposed
      * to one of its secondary failover servers). If it is not connected to its primary, this
      * call will trigger the agent to attempt to switch over. This switchover will occur asynchronously,
-     * and may not have occurred by the time this method returns.
+     * and may not have occurred by the time this method returns. A side effect of this method is
+     * that the agent will also download a server failover list from its current server to make sure it is up-to-date.
      */
     public void performPrimaryServerSwitchoverCheck() {
         if (m_primaryServerSwitchoverThread != null) {

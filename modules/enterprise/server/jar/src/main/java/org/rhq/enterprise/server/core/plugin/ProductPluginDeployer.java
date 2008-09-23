@@ -223,6 +223,10 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         Map<String, DeploymentInfo> pluginDeploymentInfos = new HashMap<String, DeploymentInfo>();
         PluginDependencyGraph dependencyGraph = new PluginDependencyGraph();
 
+        boolean changed = false;
+
+        ResourceMetadataManagerLocal metadataManager = LookupUtil.getResourceMetadataManager();
+
         for (String pluginName : this.pluginsToBeRegistered.keySet()) {
             DeploymentInfo deploymentInfo = this.pluginsToBeRegistered.get(pluginName);
             PluginDescriptor descriptor = this.pluginDescriptors.get(pluginName);
@@ -235,36 +239,53 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             }
 
             dependencyGraph.addPlugin(descriptor.getName(), dependencies);
+
+
+            try {
+                String md5 = MD5Generator.getDigestString(deploymentInfo.url.openStream());
+                Plugin plugin = metadataManager.getPlugin(pluginName);
+                if (plugin == null || !plugin.getMd5().equals(md5)) {
+                    changed = true;
+                    log.debug("Plugin changed detected for plugin: " + pluginName);
+                }
+            } catch (Exception e) {
+                // Plugin has not yet been deployed
+                changed = true;
+            }
         }
 
         StringBuffer error = new StringBuffer();
-        if (dependencyGraph.isComplete(error)) {
-            deployDependencyGraph(pluginDeploymentInfos, dependencyGraph);
+        if (changed) {
+            if (dependencyGraph.isComplete(error)) {
+                deployDependencyGraph(pluginDeploymentInfos, dependencyGraph);
 
-            this.pluginsToBeRegistered.clear();
-            this.pluginDescriptors.clear();
+                this.pluginsToBeRegistered.clear();
+                this.pluginDescriptors.clear();
 
-            //generally means we are done deploying plugins at startup.
-            //but we are not "done" since a plugin can be dropped into
-            //the plugins directory at anytime.
-            pluginNotify("deployer", DEPLOYER_CLEARED);
+                //generally means we are done deploying plugins at startup.
+                //but we are not "done" since a plugin can be dropped into
+                //the plugins directory at anytime.
+                pluginNotify("deployer", DEPLOYER_CLEARED);
 
-            // Trigger vacuums on some tables as the initial deployment might have changed a lot of things
-            // there are probably more tables involved though
-            // First wait to give Hibernate a chance to close all transactions etc.
-            try {
-                Thread.sleep(2 * 1000);
-            } catch (InterruptedException e) {
-                ; // no problem
+                // Trigger vacuums on some tables as the initial deployment might have changed a lot of things
+                // there are probably more tables involved though
+                // First wait to give Hibernate a chance to close all transactions etc.
+                try {
+                    Thread.sleep(2 * 1000);
+                } catch (InterruptedException e) {
+                    ; // no problem
+                }
+
+                Subject superuser = LookupUtil.getSubjectManager().getOverlord();
+                SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+                systemManager.vacuum(superuser, new String[]{"RHQ_MEASUREMENT_DEF", "RHQ_CONFIG_DEF",
+                        "RHQ_RESOURCE_TYPE", "RHQ_RESOURCE_TYPE_PARENTS"});
+            } else {
+                log.warn(error.toString());
+                log.warn(dependencyGraph.toString());
             }
-
-            Subject superuser = LookupUtil.getSubjectManager().getOverlord();
-            SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-            systemManager.vacuum(superuser, new String[] { "RHQ_MEASUREMENT_DEF", "RHQ_CONFIG_DEF",
-                "RHQ_RESOURCE_TYPE", "RHQ_RESOURCE_TYPE_PARENTS" });
         } else {
-            log.warn(error.toString());
-            log.warn(dependencyGraph.toString());
+            log.info("All plugins up to date");
         }
 
         this.isReady = true;

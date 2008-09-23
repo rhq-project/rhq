@@ -120,7 +120,7 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
 
         long totalCount = (Long) queryCount.getSingleResult();
         List<? extends AbstractAlertConditionCategoryComposite> list = query.getResultList();
-        LOG.info("Found " + totalCount + " elements of type '" + category + "', list was size " + list.size());
+        LOG.debug("Found " + totalCount + " elements of type '" + category + "', list was size " + list.size());
 
         return new PageList<AbstractAlertConditionCategoryComposite>(list, (int) totalCount, pageControl);
     }

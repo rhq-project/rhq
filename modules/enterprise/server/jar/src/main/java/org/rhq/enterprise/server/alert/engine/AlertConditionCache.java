@@ -284,8 +284,8 @@ public final class AlertConditionCache {
         try {
             AlertConditionCacheStats unloadStats = unloadCachesForAgent(agentId);
             AlertConditionCacheStats reloadStats = loadCachesForAgent(agentId);
-            log.info("UnloadStats for agent[id=" + agentId + "]: " + unloadStats);
-            log.info("ReloadStats for agent[id=" + agentId + "]: " + reloadStats);
+            log.debug("UnloadStats for agent[id=" + agentId + "]: " + unloadStats);
+            log.debug("ReloadStats for agent[id=" + agentId + "]: " + reloadStats);
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error(t);
@@ -329,7 +329,7 @@ public final class AlertConditionCache {
 
         AlertConditionCacheStats stats = new AlertConditionCacheStats();
         try {
-            log.info("Loading Alert Condition Caches for agent[id=" + agentId + "]...");
+            log.debug("Loading Alert Condition Caches for agent[id=" + agentId + "]...");
 
             Subject overlord = subjectManager.getOverlord();
 
@@ -338,7 +338,7 @@ public final class AlertConditionCache {
                 AlertConditionCategory.CONTROL, AlertConditionCategory.THRESHOLD, AlertConditionCategory.EVENT);
 
             for (AlertConditionCategory nextCategory : supportedCategories) {
-                log.info("Loading Alert Condition Composites of type '" + nextCategory + "'");
+                log.debug("Loading Alert Condition Composites of type '" + nextCategory + "'");
                 // page thru all alert definitions
                 int rowsProcessed = 0;
                 PageControl pc = new PageControl();
@@ -405,7 +405,7 @@ public final class AlertConditionCache {
                 pc.setPageNumber(pc.getPageNumber() + 1);
             }
 
-            log.info("Loaded Alert Condition Caches for agent[id=" + agentId + "]");
+            log.debug("Loaded Alert Condition Caches for agent[id=" + agentId + "]");
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error(t);

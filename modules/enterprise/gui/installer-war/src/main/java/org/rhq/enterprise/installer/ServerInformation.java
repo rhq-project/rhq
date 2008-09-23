@@ -1084,13 +1084,15 @@ public class ServerInformation {
 
                 // set all new servers to operation_mode=INSTALLED
                 stm = conn
-                    .prepareStatement("INSERT INTO rhq_server ( id, name, address, port, secure_port, ctime, operation_mode, compute_power ) VALUES ( ?, ?, ?, ?, ?, ?, 'INSTALLED', 1 )");
+                    .prepareStatement("INSERT INTO rhq_server ( id, name, address, port, secure_port, ctime, mtime, operation_mode, compute_power ) VALUES ( ?, ?, ?, ?, ?, ?, ?, 'INSTALLED', 1 )");
                 stm.setInt(1, db.getNextSequenceValue(conn, "rhq_server", "id"));
                 stm.setString(2, server.name);
                 stm.setString(3, server.endpointAddress);
                 stm.setInt(4, server.endpointPort);
                 stm.setInt(5, server.endpointSecurePort);
-                stm.setLong(6, System.currentTimeMillis());
+                long now = System.currentTimeMillis();
+                stm.setLong(6, now);
+                stm.setLong(7, now);
                 stm.executeUpdate();
             }
 

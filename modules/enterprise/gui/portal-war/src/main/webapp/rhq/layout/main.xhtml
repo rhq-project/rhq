@@ -67,12 +67,21 @@ Firefox and other Gecko-based browsers to render the page in "Almost Standards" 
                 </h:outputLink>
             </td>
             <td align="right">
+               <script type="text/javascript" src="/js/popup.js"></script>
+               <div id="resMenu" class="headerresourcemenu">
+                  <a href="/ResourceHub.do?resourceCategory=PLATFORM">${msg["resource.hub.filter.platform"]}</a><br/>
+                  <a href="/ResourceHub.do?resourceCategory=SERVER">${msg["resource.hub.filter.server"]}</a><br/>
+                  <a href="/ResourceHub.do?resourceCategory=SERVICE">${msg["resource.hub.filter.service"]}</a><br/>
+                  <a href="/GroupHub.do?groupCategory=COMPATIBLE">${msg["resource.hub.filter.compatibleGroups"]}</a><br/>
+                  <a href="/GroupHub.do?groupCategory=MIXED">${msg["resource.hub.filter.mixedGroups"]}</a><br/>
+                  <a href="/rhq/definition/group/list.xhtml">${msg["resource.hub.filter.groupDefinitions"]}</a><br/>
+               </div>
                <div id="AppMenu">
                   <h:outputLink value="/Start.do">${msg["header.start.link"]}</h:outputLink>
                   |
                   <h:outputLink value="/Dashboard.do">${msg["dash.home.PageTitle"]}</h:outputLink>
                   |
-                  <h:outputLink value="/ResourceHub.do">${msg["resource.hub.ResourceHubPageTitle"]}</h:outputLink>
+                  <h:outputLink value="/ResourceHub.do" onmouseover="menuLayers.show('resMenu',event)" onmouseout="menuLayers.hide()">${msg["resource.hub.ResourceHubPageTitle"]}</h:outputLink>
                   |
                   <h:outputLink value="/Admin.do">${msg["admin.admin.AdministrationTitle"]}</h:outputLink>
                   |

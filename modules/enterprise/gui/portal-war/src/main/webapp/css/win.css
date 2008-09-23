@@ -1117,6 +1117,21 @@ div.menu {
    z-index: 500;
 }
 
+div.headerresourcemenu {
+   position: absolute;
+   visibility: hidden;
+   width: 12em;
+   left: 2;
+   top: 2;
+   font-size: 11px;
+   background-color: #f4f4f4;
+   color: #000;
+   border: 2px solid;
+   border-color: #f7faff #99a #99a #f7faff;
+   z-index: 500;
+   text-align: left;
+}
+
 div.menu table{
    width: 100%;
    border: 0px;

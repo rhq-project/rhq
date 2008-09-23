@@ -22,12 +22,21 @@
                 </html:link>
             </td>
             <td align="right">
+               <script type="text/javascript" src="/js/popup.js"></script>
+               <div id="resMenu" class="headerresourcemenu">
+                  <html:link page="/ResourceHub.do?resourceCategory=PLATFORM"><fmt:message key="resource.hub.filter.platform"/></html:link><br/>
+                  <html:link page="/ResourceHub.do?resourceCategory=SERVER"><fmt:message key="resource.hub.filter.server"/></html:link><br/>
+                  <html:link page="/ResourceHub.do?resourceCategory=SERVICE"><fmt:message key="resource.hub.filter.service"/></html:link><br/>
+                  <html:link page="/GroupHub.do?groupCategory=COMPATIBLE"><fmt:message key="resource.hub.filter.compatibleGroups"/></html:link><br/>
+                  <html:link page="/GroupHub.do?groupCategory=MIXED"><fmt:message key="resource.hub.filter.mixedGroups"/></html:link><br/>
+                  <html:link page="/rhq/definition/group/list.xhtml"><fmt:message key="resource.hub.filter.groupDefinitions"/></html:link><br/>
+               </div>
                <div id="AppMenu">
                     <html:link page="/Start.do"><fmt:message key="header.start.link"/></html:link>
                     |
                     <html:link page="/Dashboard.do"><fmt:message key="dash.home.PageTitle"/></html:link>
                     |
-                    <html:link page="/ResourceHub.do"><fmt:message key="resource.hub.ResourceHubPageTitle"/></html:link>
+                    <html:link page="/ResourceHub.do" onmouseover="menuLayers.show('resMenu',event)" onmouseout="menuLayers.hide()"><fmt:message key="resource.hub.ResourceHubPageTitle"/></html:link>
                     |
                     <html:link page="/Admin.do"><fmt:message key="admin.admin.AdministrationTitle"/></html:link>
                     |

@@ -23,16 +23,14 @@ import org.mc4j.ems.connection.EmsConnection;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 
 /**
- * Any server or service in an EMS based plugin would likely implement this inteface to allow access to the underlying
- * ems jmx system. Any EMS-based plugin should be able to use this for interoperable jmx support between plugins.
+ * Any server or service in an EMS-based plugin would likely implement this interface to allow access to the underlying
+ * EMS JMX system. Any EMS-based plugin should be able to use this for interoperable JMX support between plugins.
  *
  * @author Greg Hinkle
  */
 public interface JMXComponent<T extends ResourceComponent> extends ResourceComponent<T> {
-
     public static final String PRINCIPAL_CONFIG_PROP = "principal";
     public static final String CREDENTIALS_CONFIG_PROP = "credentials";
 
     EmsConnection getEmsConnection();
-
 }

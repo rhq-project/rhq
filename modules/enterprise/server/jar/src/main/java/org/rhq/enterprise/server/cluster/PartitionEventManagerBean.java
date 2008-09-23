@@ -36,6 +36,7 @@ import org.rhq.core.domain.cluster.FailoverList;
 import org.rhq.core.domain.cluster.PartitionEvent;
 import org.rhq.core.domain.cluster.PartitionEventDetails;
 import org.rhq.core.domain.cluster.PartitionEventType;
+import org.rhq.core.domain.cluster.PartitionEvent.ExecutionStatus;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
@@ -136,7 +137,7 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public int purgeAllEvents(Subject subject) {
-        List<PartitionEvent> events = getPartitionEvents(subject, PageControl.getUnlimitedInstance());
+        List<PartitionEvent> events = getPartitionEvents(subject, null, null, null, PageControl.getUnlimitedInstance());
 
         int i = 0;
         Integer[] eventIds = new Integer[events.size()];
@@ -186,12 +187,22 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<PartitionEvent> getPartitionEvents(Subject subject, PageControl pageControl) {
+    public PageList<PartitionEvent> getPartitionEvents(Subject subject, PartitionEventType type,
+        ExecutionStatus status, String details, PageControl pageControl) {
         pageControl.initDefaultOrderingField("pe.ctime", PageOrdering.DESC);
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, PartitionEvent.QUERY_FIND_ALL,
             pageControl);
         Query countQuery = PersistenceUtility.createCountQuery(entityManager, PartitionEvent.QUERY_FIND_ALL);
+
+        details = PersistenceUtility.formatSearchParameter(details);
+
+        query.setParameter("type", type);
+        countQuery.setParameter("type", type);
+        query.setParameter("status", status);
+        countQuery.setParameter("status", status);
+        query.setParameter("details", details);
+        countQuery.setParameter("details", details);
 
         @SuppressWarnings("unchecked")
         List<PartitionEvent> results = query.getResultList();

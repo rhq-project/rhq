@@ -44,13 +44,17 @@ import javax.persistence.Table;
  * for the change, the connection topology after the change takes place, and
  * the time it took place.
  * 
- * @author jmarques
- *
+ * @author Joseph Marques
  */
 @Entity(name = "PartitionEvent")
 @NamedQueries //
 ( {
-    @NamedQuery(name = PartitionEvent.QUERY_FIND_ALL, query = "SELECT pe FROM PartitionEvent pe"),
+    @NamedQuery(name = PartitionEvent.QUERY_FIND_ALL, query = "" //
+        + "SELECT pe " //
+        + "  FROM PartitionEvent pe" //
+        + " WHERE (:type = pe.eventType OR :type is null) " //
+        + "   AND (:status = pe.executionStatus OR :status is null)" //
+        + "   AND (UPPER(pe.eventDetail) LIKE :details OR :details is null) "),
     @NamedQuery(name = PartitionEvent.QUERY_FIND_BY_EXECUTION_STATUS, query = "SELECT pe FROM PartitionEvent pe WHERE pe.executionStatus = :executionStatus") //
 })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_PARTITION_EVENT_ID_SEQ")

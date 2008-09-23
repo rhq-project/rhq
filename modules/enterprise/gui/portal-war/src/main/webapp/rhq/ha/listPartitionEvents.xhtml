@@ -10,6 +10,7 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
 <ui:composition template="/rhq/layout/main.xhtml">
@@ -45,6 +46,38 @@
             <f:facet name="header">
                <h:outputText value="Partition Events"/>
             </f:facet>
+            
+            <h:panelGrid columns="4" cellspacing="3">
+               <h:outputLabel for="typeFilter" value="Type Filter: " />
+               <h:selectOneMenu id="typeFilter" value="#{ListPartitionEventsUIBean.typeFilter}"
+                                style="width: 300px;">
+                   <a4j:support event="onchange" reRender="partitionEventsDataTable, partitionEventsDataTableScroller"/>
+
+                   <f:selectItems value="#{ListPartitionEventsUIBean.typeSelectItems}"/>
+               </h:selectOneMenu>
+               <rich:spacer/>
+               <rich:spacer/>
+
+               <h:outputLabel for="executionStatusFilter" value="Execution Status Filter: " />
+               <h:selectOneMenu id="executionStatusFilter" value="#{ListPartitionEventsUIBean.executionStatusFilter}"
+                                style="width: 300px;">
+                   <a4j:support event="onchange" reRender="partitionEventsDataTable, partitionEventsDataTableScroller"/>
+
+                   <f:selectItems value="#{ListPartitionEventsUIBean.executionStatusSelectItems}"/>
+               </h:selectOneMenu>
+               <rich:spacer/>
+               <rich:spacer/>
+
+               <h:outputLabel for="detailsFilter" value="Details Filter: " />
+               <h:inputText id="detailsFilter" value="#{ListPartitionEventsUIBean.detailsFilter}" 
+                            onkeypress="return ignoreEnterKey();"
+                            style="width: 300px;"/>
+               <a4j:commandButton value="GO" reRender="partitionEventsDataTable, partitionEventsDataTableScroller"
+                                  styleClass="buttonmed"/>
+               <rich:spacer/>
+            </h:panelGrid>
+
+            <br/>
 
             <h:panelGrid columns="1" width="100%">
 

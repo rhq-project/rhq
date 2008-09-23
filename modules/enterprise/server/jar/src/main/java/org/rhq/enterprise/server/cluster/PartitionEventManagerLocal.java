@@ -26,6 +26,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cluster.PartitionEvent;
 import org.rhq.core.domain.cluster.PartitionEventDetails;
 import org.rhq.core.domain.cluster.PartitionEventType;
+import org.rhq.core.domain.cluster.PartitionEvent.ExecutionStatus;
 import org.rhq.core.domain.cluster.composite.FailoverListComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
@@ -86,7 +87,8 @@ public interface PartitionEventManagerLocal {
 
     PartitionEvent getPartitionEvent(Subject subject, int partitionEventId);
 
-    PageList<PartitionEvent> getPartitionEvents(Subject subject, PageControl pageControl);
+    PageList<PartitionEvent> getPartitionEvents(Subject subject, PartitionEventType type, ExecutionStatus status,
+        String details, PageControl pageControl);
 
     PageList<PartitionEventDetails> getPartitionEventDetails(Subject subject, int partitionEventId,
         PageControl pageControl);

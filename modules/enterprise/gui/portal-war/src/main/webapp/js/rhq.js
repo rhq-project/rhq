@@ -439,3 +439,7 @@ function clickRadio(radioName, valueToClick)
       }
    }
 }
+
+function ignoreEnterKey() {
+   return !( window.event && window.event.keyCode == 13 ); 
+}

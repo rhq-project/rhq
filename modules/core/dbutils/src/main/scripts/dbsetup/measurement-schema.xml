@@ -41,7 +41,7 @@
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
 
       <column name="ENABLED" type="BOOLEAN" default="false"/>
-      <column name="MTIME" type="TIMESTAMP" />
+      <column name="MTIME" type="LONG" />
       <column name="DEFINITION" type="INTEGER" references="RHQ_MEASUREMENT_DEF(ID)"/>
       <column name="VERSION" type="INTEGER" />
       <column name="COLL_INTERVAL" type="LONG" />

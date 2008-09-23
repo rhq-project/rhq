@@ -757,6 +757,33 @@ DB Upgrade:
       </schema-directSQL>
    </schemaSpec>
 
+   <schemaSpec version="2.23">
+      <schema-addColumn table="RHQ_MEASUREMENT_SCHED" column="MTIME_LONG" columnType="LONG" />
+      <schema-directSQL>
+         <statement targetDBVendor="postgresql"
+                    desc="Converting RHQ_MEASUREMENT_SCHED.MTIME timestamp to long">
+            UPDATE RHQ_MEASUREMENT_SCHED
+            SET MTIME_LONG = EXTRACT ( EPOCH FROM MTIME )
+            WHERE MTIME IS NOT NULL
+         </statement>
+         <statement targetDBVendor="oracle"
+                    desc="Converting RHQ_MEASUREMENT_SCHED.MTIME timestamp to long">
+            UPDATE RHQ_MEASUREMENT_SCHED
+            SET MTIME_LONG = ( 86400 * 
+               ( TO_DATE( MTIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            WHERE MTIME IS NOT NULL
+         </statement>
+      </schema-directSQL>
+      <schema-deleteColumn table="RHQ_MEASUREMENT_SCHED" column="MTIME" />
+      <schema-directSQL>
+         <statement desc="Renaming new RHQ_MEASUREMENT_SCHED.MTIME column to match old schema expectations">
+            ALTER TABLE RHQ_MEASUREMENT_SCHED
+            RENAME COLUMN MTIME_LONG
+            TO MTIME
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

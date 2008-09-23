@@ -20,7 +20,6 @@ package org.rhq.core.domain.measurement;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -41,8 +40,6 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 
 import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
@@ -177,12 +174,13 @@ public class MeasurementSchedule implements Serializable {
     /**
      * Time the schedule itself was last modified
      */
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date mtime;
+    @Column(name = "MTIME")
+    private long mtime;
 
     /**
      * Is this metric schedule enabled
      */
+    @Column(name = "ENABLED")
     private boolean enabled;
 
     public MeasurementSchedule() {
@@ -240,7 +238,7 @@ public class MeasurementSchedule implements Serializable {
     /**
      * @return the mtime
      */
-    public Date getMtime() {
+    public long getMtime() {
         return mtime;
     }
 
@@ -249,9 +247,9 @@ public class MeasurementSchedule implements Serializable {
      */
     @PrePersist
     @PreUpdate
-    @SuppressWarnings( { "UnusedDeclaration", "UNUSED_SYMBOL", "unused" })
+    @SuppressWarnings( { "unused" })
     private void setMtime() {
-        this.mtime = new Date();
+        this.mtime = System.currentTimeMillis();
     }
 
     /**

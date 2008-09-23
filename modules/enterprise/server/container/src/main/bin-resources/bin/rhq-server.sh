@@ -289,7 +289,7 @@ case "$1" in
            exit 0
         fi
 
-        echo Starting RHQ Server...
+        echo Trying to start the RHQ Server...
 
         LAUNCH_JBOSS_IN_BACKGROUND=true
         export LAUNCH_JBOSS_IN_BACKGROUND
@@ -323,7 +323,7 @@ case "$1" in
            exit 0
         fi
 
-        echo Stopping RHQ Server...
+        echo Trying to stop the RHQ Server...
         
         if [ -n "$_SOLARIS" ]; then
         	kill -TERM `cat ${RHQ_SERVER_HOME}/jbossas/.jboss_pid`

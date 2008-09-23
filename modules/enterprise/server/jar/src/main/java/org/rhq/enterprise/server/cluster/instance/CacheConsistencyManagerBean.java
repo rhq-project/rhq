@@ -84,17 +84,17 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
 
         // otherwise print informational messages for poor-man's verification purposes
         for (Agent nextAgent : agents) {
-            log.info("Agent[id=" + nextAgent.getId() + ", name=" + nextAgent.getName() + ", status="
+            log.debug("Agent[id=" + nextAgent.getId() + ", name=" + nextAgent.getName() + ", status="
                 + nextAgent.getStatus() + "] is stale ");
             List<String> statusMessages = nextAgent.getStatusMessages();
             for (String nextMessage : statusMessages) {
-                log.info(nextMessage);
+                log.debug(nextMessage);
             }
             nextAgent.clearStatus();
             cacheManager.reloadCachesForAgent(nextAgent.getId());
         }
 
         String serverName = serverManager.getIdentity();
-        log.info("Cache for " + serverName + " is up to date");
+        log.debug("Cache for " + serverName + " is up to date");
     }
 }

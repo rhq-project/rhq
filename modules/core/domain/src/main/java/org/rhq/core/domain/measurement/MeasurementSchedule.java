@@ -175,7 +175,7 @@ public class MeasurementSchedule implements Serializable {
      * Time the schedule itself was last modified
      */
     @Column(name = "MTIME")
-    private long mtime;
+    private Long mtime;
 
     /**
      * Is this metric schedule enabled
@@ -238,7 +238,7 @@ public class MeasurementSchedule implements Serializable {
     /**
      * @return the mtime
      */
-    public long getMtime() {
+    public Long getMtime() {
         return mtime;
     }
 

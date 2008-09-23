@@ -43,6 +43,9 @@
     
     <java5.home>${java.home}</java5.home>
 
+    <!-- this is overridden by the prod profile -->
+    <buildNumber>n/a</buildNumber>        
+    
     <!-- dependency versions -->
     <concurrent.version>1.3.4-jboss</concurrent.version>
     <getopt.version>1.0.13</getopt.version>
@@ -398,8 +401,7 @@
       </plugin>
 
       <plugin>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>2.0-beta-7</version>
+        <artifactId>maven-release-plugin</artifactId>        
         <configuration>
           <autoVersionSubmodules>true</autoVersionSubmodules>
           <updateDependencies>false</updateDependencies>
@@ -407,8 +409,7 @@
       </plugin>
 
       <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.4.1</version>
+        <artifactId>maven-surefire-plugin</artifactId>        
         <configuration>
           <trimStackTrace>false</trimStackTrace>
         </configuration>
@@ -484,8 +485,6 @@
      <properties>
         <!-- The below prop can be used by antrun scripts to check if the dev profile is enabled. -->
         <dev.profile.active>true</dev.profile.active>
-        <!--  snapshot builds do not generate a build number, only prod builds -->
-        <buildNumber>n/a</buildNumber>        
      </properties>
 
      <build>
@@ -536,8 +535,7 @@
             <plugins>
               <plugin>
                  <groupId>org.codehaus.mojo</groupId>
-                 <artifactId>buildnumber-maven-plugin</artifactId>
-                 <version>1.0-beta-1-jboss-1</version>
+                 <artifactId>buildnumber-maven-plugin</artifactId>                 
                  <executions>
                    <execution>
                      <phase>validate</phase>        

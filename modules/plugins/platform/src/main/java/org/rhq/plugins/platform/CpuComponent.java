@@ -80,7 +80,7 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
                         report.addData(new MeasurementDataNumeric(request, longValue.doubleValue()));
                     }
                 } else if (property.startsWith("CpuPerc.")) {
-                    if (cpuInfo == null) {
+                    if (cpuPerc == null) {
                         cpuPerc = cpuInformation.getCpuPercentage();
                     }
 

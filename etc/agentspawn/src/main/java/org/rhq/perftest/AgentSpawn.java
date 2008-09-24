@@ -22,7 +22,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -83,9 +85,11 @@ public class AgentSpawn {
     private static final String PROP_CMDLINE = "perftest.cmdline";
     private static final String PROP_PLUGINSDIR = "perftest.plugins";
     private static final String PROP_STARTPAUSE = "perftest.startpause";
+    private static final String PROP_PIDFILE = "perftest.pidfile";
 
     public static void main(String[] args) throws Exception {
         System.out.println("==AGENT SPAWN PERFTEST UTILITY==");
+        System.out.println("Pid File/Pid: (" + PROP_PIDFILE + ")=" + generatePidFile());
         System.out.println("Agent Distribution (" + PROP_AGENTDIST + ")=" + getAgentDistribution());
         System.out.println("Configuration File (" + PROP_CONFIGFILE + ")=" + getConfigurationFile());
         System.out.println("Preferences Node Name (" + PROP_PREF + ")=" + getTemplatePreferencesNodeName());
@@ -505,6 +509,32 @@ public class AgentSpawn {
     }
 
     /**
+     * If this AgentSpawn process was told to generate a pid file, it does it now and returns
+     * a string with the name of the pid file and the PID.
+     * 
+     * @return string identifying the pid file and the pid of the process
+     */
+    private static String generatePidFile() {
+        String pidfile = System.getProperty(PROP_PIDFILE);
+        if (pidfile == null) {
+            return "<not generated/unknown pid>";
+        }
+
+        // here we assume the MBean name has the pid in it - cross your fingers
+        try {
+            String name = ManagementFactory.getRuntimeMXBean().getName();
+            int endIndex = name.indexOf("@");
+            int pid = Integer.parseInt(name.substring(0, endIndex));
+            FileOutputStream fos = new FileOutputStream(new File(pidfile));
+            fos.write(Integer.toString(pid).getBytes());
+            fos.close();
+            return pidfile + " (" + pid + ")";
+        } catch (Throwable t) {
+            return "<cannot determine pid: " + t + ">";
+        }
+    }
+
+    /**
      * Note that the command line arguments should be separated by a comma.
      *
      * @param  agentId
@@ -673,11 +703,11 @@ public class AgentSpawn {
         File[] jarFiles = lib.listFiles();
         ArrayList<URL> classpathUrls = new ArrayList<URL>(jarFiles.length + 1);
 
-        classpathUrls.add(dist.toURL()); // allows the agent to find resources in here, like log4j.xml
+        classpathUrls.add(dist.toURI().toURL()); // allows the agent to find resources in here, like log4j.xml
 
         for (File jarFile : jarFiles) {
             if (!isJNIJar(jarFile)) {
-                classpathUrls.add(jarFile.toURL());
+                classpathUrls.add(jarFile.toURI().toURL());
             }
         }
 
@@ -704,7 +734,7 @@ public class AgentSpawn {
 
         for (File jarFile : jarFiles) {
             if (isJNIJar(jarFile)) {
-                classpathUrls.add(jarFile.toURL());
+                classpathUrls.add(jarFile.toURI().toURL());
             }
         }
 
@@ -741,7 +771,7 @@ public class AgentSpawn {
     private static void addDirectories(File dir, ArrayList<URL> list) throws Exception {
         if (dir.isDirectory()) {
             // add the given directory to the list and add all its subdirectories to the list
-            list.add(dir.toURL());
+            list.add(dir.toURI().toURL());
 
             for (File dirEntry : dir.listFiles()) {
                 addDirectories(dirEntry, list);

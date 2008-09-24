@@ -86,20 +86,4 @@
 
   </modules>
 
-  <profiles>
-
-    <profile>
-      <id>prod</id>
-      <activation>
-        <property>
-          <name>prod</name>
-        </property>
-      </activation>
-      <!-- plugins that should only be built for production builds -->
-      <modules>
-      </modules>
-    </profile>
-
-  </profiles>
-
 </project>

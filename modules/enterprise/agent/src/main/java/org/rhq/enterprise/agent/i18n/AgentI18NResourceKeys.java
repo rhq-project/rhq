@@ -28,16 +28,16 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
-    @I18NMessage("The agent is not talking to its primary server [{0}:{1}] - it is talking to [{2}:{3}]")
+    @I18NMessage("The agent is not talking to its primary server [{0}:{1,number,#}] - it is talking to [{2}:{3,number,#}]")
     String NOT_TALKING_TO_PRIMARY_SERVER = "PrimaryServerSwitchoverThread.not-talking-to-primary";
 
     @I18NMessage("An exception occurred during the primary server switchover check. Cause: {0}")
     String PRIMARY_SERVER_SWITCHOVER_EXCEPTION = "PrimaryServerSwitchoverThread.exception";
 
-    @I18NMessage("Primary server appears to be back online at [{0}:{1}] - attempting to switch back to it")
+    @I18NMessage("Primary server appears to be back online at [{0}:{1,number,#}] - attempting to switch back to it")
     String PRIMARY_SERVER_UP = "PrimaryServerSwitchoverThread.primary-up";
 
-    @I18NMessage("Primary server at [{0}:{1}] is still down - cannot switch back to it yet")
+    @I18NMessage("Primary server at [{0}:{1,number,#}] is still down - cannot switch back to it yet")
     String PRIMARY_SERVER_STILL_DOWN = "PrimaryServerSwitchoverThread.primary-still-down";
 
     @I18NMessage("The primary server switchover thread has started.")

@@ -102,7 +102,7 @@ public class PrimaryServerSwitchoverThread extends Thread {
                             : primary.port;
 
                         if (!primaryAddress.equals(currentServerAddress) || primaryPort != currentServerPort) {
-                            LOG.debug(AgentI18NResourceKeys.NOT_TALKING_TO_PRIMARY_SERVER, primaryAddress, primaryPort,
+                            LOG.info(AgentI18NResourceKeys.NOT_TALKING_TO_PRIMARY_SERVER, primaryAddress, primaryPort,
                                 currentServerAddress, currentServerPort);
                             // create our own comm so we ping in an isolated client - don't reuse the sender's comm for this
                             RemoteCommunicator comm = this.agent.createServerRemoteCommunicator(transport,
@@ -112,7 +112,7 @@ public class PrimaryServerSwitchoverThread extends Thread {
                                 failoverList.resetIndex(); // so the failover method call starts at the top
                                 this.agent.failoverToNewServer(sender.getRemoteCommunicator()); // note that we make sure we pass in the sender's comm
                             } else {
-                                LOG.debug(AgentI18NResourceKeys.PRIMARY_SERVER_STILL_DOWN, primaryAddress, primaryPort);
+                                LOG.info(AgentI18NResourceKeys.PRIMARY_SERVER_STILL_DOWN, primaryAddress, primaryPort);
                             }
                         }
                     }

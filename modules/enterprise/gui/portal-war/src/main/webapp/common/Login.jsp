@@ -54,40 +54,21 @@
 
 <body>
 
+<div id="PageHeader">
 
-<div style="position: absolute; top: 20px; left: 15px;"><html:link page="/Dashboard.do"><html:img page="/images/logo_header.gif" border="0"/></html:link></div>
-
-<div id="TopMenu">
-    <table cellpadding="0" cellspacing="0">
-
-    <tr>
-      <%--
-        <td class="menu_JBnetwork"><a href="http://network.jboss.com"><fmt:message key="menu.top.a"/></a></td>
-        <td class="menu_JBjems"><a href="http://www.jboss.com/"><fmt:message key="menu.top.b"/></a></td>
-        <td class="menu_JBcom"><a href="http://www.jboss.org/"><fmt:message key="menu.top.c"/></a></td>
-        <td class="menu_JBfed"><a href="http://www.redhat.com/"><fmt:message key="menu.top.d"/></a></td>
-      --%>
-        <td class="menu_JBfed"><a href="http://<fmt:message key="product.url.domain"/>"><fmt:message key="product.url.domain"/></a></td>
-    </tr>
+    <table width="100%">
+        <tr valign="bottom">
+            <td align="left">
+                <fmt:message var="urlDomain" key="product.url.domain"/>
+                <fmt:message var="productName" key="product.fullName"/>
+                <html:link page="http://${urlDomain}">
+                    <html:img page="/images/logo_header.gif" title="${productName}"/>
+                </html:link>
+            </td>
+        </tr>
     </table>
 
 </div>
-
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
 
 <div id="LoginSupport">
 
@@ -128,7 +109,6 @@
 	</logic:messagesPresent>
 	
 	</html:form>
-
 
 </div>
 

@@ -1692,6 +1692,11 @@ body {
    text-decoration: underline
 }
 
+/* LOGIN PAGE ------------------------------------------*/
+#LoginSupport {
+   margin-top: 190px;
+}
+
 /* OVERLOADING -----------------------------------------*/
 .ListTitle, .BlockTitle {
    color: black;

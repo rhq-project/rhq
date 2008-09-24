@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project name="agentspawn" default="help">
-   
+
    <taskdef resource="net/sf/antcontrib/antcontrib.properties">
       <classpath>
          <pathelement location="${basedir}/ant-contrib-1.0b3.jar"/>
@@ -69,12 +69,12 @@
       <foreach param="_index"
                list="${perftest.agent.vm.startports}"
                target="run-single-agent" />
-      
+
       <echo>All agent VMs should have been started.</echo>
       <echo>Will pause for 60 seconds to make sure.</echo>
       <sleep seconds="60" />
    </target>
-   
+
    <!-- ========== -->
    <target name="run-single-agent" >
       <propertycopy property="_javaopts"
@@ -107,9 +107,9 @@
 
       <echo>Pausing for ${_sleep_millis}ms before starting agent [${_index}]</echo>
       <sleep milliseconds="${_sleep_millis}"/>
-      
+
       <echo>Starting agent [${_index}] with Java options [${_javaopts} ${_sysprops}] and cmdline opts [${_cmdlineopts}]</echo>
-      
+
       <forget>
          <exec executable="${perftest.agent.executable}">
             <arg line="start" />
@@ -119,7 +119,7 @@
             <env key="_OUT" value="${perftest.agent.vm.dir}/${_index}/agentspawn-output.txt" />
          </exec>
       </forget>
-      
+
    </target>
 
     <!-- ========== -->
@@ -146,17 +146,14 @@
     </target>
 
    <!-- ========== -->
-   <target name="stop" description="Stops all the agent VMs (not available on Windows).">
-      <fail if="iswindows" message="Stopping agent VMs with this script is not supported on Windows"/>
-
+   <target name="stop" description="Stops all the agent VMs.">
       <echo>Stopping all agent VMs...</echo>
       <foreach param="_index"
                list="${perftest.agent.vm.startports}"
                target="stop-single-agent" />
-      
       <echo>All agent VMs should have been stopped.</echo>
    </target>
-   
+
    <!-- ========== -->
    <target name="stop-single-agent">
       <loadfile property="_pid"
@@ -169,10 +166,23 @@
 
       <echo>Stopping agent VM [${_index}] with pid [${_pid}]</echo>
 
-      <exec executable="kill">
-         <arg value="-TERM" />
-         <arg value="${_pid}" />
-      </exec>
+      <if>
+         <os family="windows"/>
+         <then>
+            <exec executable="taskkill.exe">
+               <arg value="/F" />
+               <arg value="/PID" />
+               <arg value="${_pid}" />
+            </exec>
+         </then>
+         <else>
+            <exec executable="kill">
+               <arg value="-TERM" />
+               <arg value="${_pid}" />
+            </exec>
+         </else>
+      </if>
+
    </target>
 
 </project>

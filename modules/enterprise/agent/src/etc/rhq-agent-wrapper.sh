@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # chkconfig: 2345 93 25
-# description: Starts and stops the RHQ agent 
+# description: Starts and stops the RHQ agent
 #
 # processname: java
 # pidfile: /var/run/rhq-agent.pid
@@ -31,7 +31,7 @@
 # export RHQ_AGENT_ADDITIONAL_JAVA_OPTS=additional VM options
 PIDFILEDIR=/var/run
 
-#
+# The --daemon argument is required, but you can add additional arguments as appropriate
 export RHQ_AGENT_CMDLINE_OPTS=--daemon
 
 # Figure out where the RHQ Agent's home directory is and cd to it.
@@ -154,15 +154,15 @@ case "$1" in
         echo $STATUS
         exit 0
         ;;
-        
+
 'restart')
 		$0 stop
 		$0 start
 		exit 0
-		;;        
+		;;
 
 *)
-        echo "Usage: $0 { start | stop | status }"
+        echo "Usage: $0 { start | stop | restart | status }"
         exit 1
         ;;
 esac

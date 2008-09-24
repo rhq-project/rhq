@@ -117,18 +117,26 @@
       <metric displayName="Vendor"
               property="CpuTrait.vendor"
               dataType="trait"
+              defaultOn="true"
+              defaultInterval="3600000"
               description="Vendor of this CPU"/>
       <metric displayName="CPU Model"
               property="CpuTrait.model"
-              dataType="trait"              
+              dataType="trait"
+              defaultOn="true"
+              defaultInterval="3600000"
               description="Model of this CPU"/>
       <metric displayName="CPU Speed"
               property="CpuTrait.mhz"
               dataType="trait"
+              defaultOn="true"
+              defaultInterval="3600000"
               description="Speed of this CPU in Mhz"/>
       <metric displayName="Cache size"
               property="CpuTrait.cacheSize"
               dataType="trait"
+              defaultOn="true"
+              defaultInterval="3600000"
               description="Cache Size of this CPU"/>
 '>              
 ]>

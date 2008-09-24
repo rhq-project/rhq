@@ -75,7 +75,7 @@ public class PrimaryServerSwitchoverThread extends Thread {
 
     @Override
     public void run() {
-        LOG.debug(AgentI18NResourceKeys.PRIMARY_SERVER_SWITCHOVER_THREAD_STARTED);
+        LOG.info(AgentI18NResourceKeys.PRIMARY_SERVER_SWITCHOVER_THREAD_STARTED);
 
         while (!toldToStop) {
             try {
@@ -129,7 +129,7 @@ public class PrimaryServerSwitchoverThread extends Thread {
             }
         }
 
-        LOG.debug(AgentI18NResourceKeys.PRIMARY_SERVER_SWITCHOVER_THREAD_STOPPED);
+        LOG.info(AgentI18NResourceKeys.PRIMARY_SERVER_SWITCHOVER_THREAD_STOPPED);
         return;
     }
 

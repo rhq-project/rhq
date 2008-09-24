@@ -148,6 +148,9 @@ public class PrimaryServerSwitchoverThread extends Thread {
      */
     public void stopChecking() {
         toldToStop = true;
+        synchronized (this) {
+            notify();
+        }
     }
 
     /**

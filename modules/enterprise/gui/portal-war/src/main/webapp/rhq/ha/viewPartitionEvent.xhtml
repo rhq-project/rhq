@@ -46,6 +46,8 @@
                width="100%"/>
 
       <h:form id="partitionEventForm">
+         <input type="hidden" name="eventId" value="#{param.eventId}"/>
+      
          <ui:param name="eventDetails" value="#{ViewPartitionEventUIBean.partitionEvent}" />
          <rich:panel>
             <f:facet name="header">

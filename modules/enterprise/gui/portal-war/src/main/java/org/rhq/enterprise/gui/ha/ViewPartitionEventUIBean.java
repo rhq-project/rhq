@@ -19,18 +19,18 @@
 package org.rhq.enterprise.gui.ha;
 
 import javax.faces.model.DataModel;
+
+import org.rhq.core.domain.cluster.PartitionEvent;
+import org.rhq.core.domain.cluster.PartitionEventDetails;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
-import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
+import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.core.domain.cluster.PartitionEvent;
-import org.rhq.core.domain.cluster.PartitionEventDetails;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.gui.util.FacesContextUtility;
 
 /**
  * @author Jason Dobies
@@ -45,10 +45,8 @@ public class ViewPartitionEventUIBean extends PagedDataTableUIBean {
 
     public PartitionEvent getPartitionEvent() {
         if (partitionEvent == null) {
-            Subject subject = EnterpriseFacesContextUtility.getSubject();
-            String sEventId = FacesContextUtility.getRequest().getParameter("eventId");
-            int eventId = Integer.parseInt(sEventId);
-            partitionEvent = partitionManager.getPartitionEvent(subject, eventId);
+            int eventId = FacesContextUtility.getRequiredRequestParameter("eventId", Integer.class);
+            partitionEvent = partitionManager.getPartitionEvent(getSubject(), eventId);
         }
 
         return partitionEvent;
@@ -56,7 +54,8 @@ public class ViewPartitionEventUIBean extends PagedDataTableUIBean {
 
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new PartitionEventDetailsDataModel(PageControlView.PartitionEventsDetailsView, MANAGED_BEAN_NAME);
+            dataModel = new PartitionEventDetailsDataModel(PageControlView.PartitionEventsDetailsView,
+                MANAGED_BEAN_NAME);
         }
 
         return dataModel;
@@ -71,8 +70,8 @@ public class ViewPartitionEventUIBean extends PagedDataTableUIBean {
         public PageList<PartitionEventDetails> fetchPage(PageControl pc) {
             EnterpriseFacesContextUtility.getSubject();
 
-            PageList<PartitionEventDetails> eventDetailsPageList =
-                partitionManager.getPartitionEventDetails(getSubject(), getPartitionEvent().getId(), pc);
+            PageList<PartitionEventDetails> eventDetailsPageList = partitionManager.getPartitionEventDetails(
+                getSubject(), getPartitionEvent().getId(), pc);
 
             return eventDetailsPageList;
         }

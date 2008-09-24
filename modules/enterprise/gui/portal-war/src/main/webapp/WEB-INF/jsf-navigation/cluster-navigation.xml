@@ -190,4 +190,22 @@
       </navigation-case>
    </navigation-rule>
 
+   <!-- View PartitionEventDetails -->
+   <navigation-rule>
+      <from-view-id>/rhq/ha/viewPartitionEvent.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/ha/viewPartitionEvent.xhtml?eventId=#{param.eventId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- sorting rule -->
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/ha/viewPartitionEvent.xhtml?eventId=#{param.eventId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+   
 </faces-config>

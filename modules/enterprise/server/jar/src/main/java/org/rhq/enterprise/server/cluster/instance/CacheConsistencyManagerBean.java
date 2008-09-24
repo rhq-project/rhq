@@ -83,6 +83,7 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
         }
 
         // otherwise print informational messages for poor-man's verification purposes
+        long startTime = System.currentTimeMillis();
         for (Agent nextAgent : agents) {
             log.debug("Agent[id=" + nextAgent.getId() + ", name=" + nextAgent.getName() + ", status="
                 + nextAgent.getStatus() + "] is stale ");
@@ -93,8 +94,9 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
             nextAgent.clearStatus();
             cacheManager.reloadCachesForAgent(nextAgent.getId());
         }
+        long endTime = System.currentTimeMillis();
 
         String serverName = serverManager.getIdentity();
-        log.debug("Cache for " + serverName + " is up to date");
+        log.info("Took [" + (endTime - startTime) + "]ms to reload cache for " + serverName);
     }
 }

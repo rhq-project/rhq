@@ -147,7 +147,7 @@ public class AgentSpawn {
             URL[] allJars = new URL[jars.length + endorsedJars.length];
             System.arraycopy(endorsedJars, 0, allJars, 0, endorsedJars.length);
             System.arraycopy(jars, 0, allJars, endorsedJars.length, jars.length);
-            final ClassLoader agentClassLoader = new SpawnedAgentClassLoader(jars, null, topClassloader);
+            final ClassLoader agentClassLoader = new SpawnedAgentClassLoader(allJars, null, topClassloader);
 
             final int agentId = i;
 

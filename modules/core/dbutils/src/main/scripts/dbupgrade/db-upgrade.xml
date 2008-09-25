@@ -410,6 +410,30 @@ DB Upgrade:
             table="RHQ_ALERT_DEFINITION"
             column="READ_ONLY"
             columnType="BOOLEAN" />
+   	
+      <schema-directSQL>
+          <statement targetDBVendor="postgresql" 
+                     desc="Updating existing alert definitions with default for READ_ONLY flag">
+              UPDATE RHQ_ALERT_DEFINITION SET READ_ONLY = FALSE
+          </statement>
+          <statement targetDBVendor="oracle" 
+            desc="Updating existing alert definitions with default for READ_ONLY flag">
+              UPDATE RHQ_ALERT_DEFINITION SET READ_ONLY = 0
+          </statement>      	
+      </schema-directSQL>
+
+      <schema-directSQL>
+          <statement targetDBVendor="postgresql" 
+                     desc="Setting alert definition READ_ONLY DEFAULT">
+              ALTER TABLE RHQ_ALERT_DEFINITION ALTER COLUMN READ_ONLY SET DEFAULT FALSE
+          </statement>
+          <statement targetDBVendor="oracle" 
+                     desc="Setting alert definition READ_ONLY DEFAULT">
+          	ALTER TABLE RHQ_ALERT_DEFINITION MODIFY READ_ONLY DEFAULT 0
+          </statement>
+      </schema-directSQL>
+
+      <schema-alterColumn table="RHQ_ALERT_DEFINITION" column="READ_ONLY" nullable="FALSE" />
    </schemaSpec>
 	
    <schemaSpec version="2.15">
@@ -460,14 +484,41 @@ DB Upgrade:
 
    <!-- RHQ-786 - Add read_only column to alert definitions table -->
    <schemaSpec version="2.17">
-      <schema-addColumn
-            table="RHQ_ALERT"
-            column="RECOVERY_ID"
-            columnType="INTEGER" />
-      <schema-addColumn
-            table="RHQ_ALERT"
-            column="WILL_RECOVER"
-            columnType="BOOLEAN" />
+      <schema-addColumn table="RHQ_ALERT" column="RECOVERY_ID" columnType="INTEGER" />
+      
+      <schema-directSQL>
+          <statement desc="Updating existing alerts with default for recovery_id">
+              UPDATE RHQ_ALERT SET RECOVERY_ID = 0
+          </statement>
+      </schema-directSQL>
+
+      <schema-alterColumn table="RHQ_ALERT" column="RECOVERY_ID" nullable="FALSE" />
+   	
+   	<schema-addColumn table="RHQ_ALERT" column="WILL_RECOVER" columnType="BOOLEAN" />
+   	
+      <schema-directSQL>
+          <statement targetDBVendor="postgresql" 
+                     desc="Updating existing alerts with default for WILL_RECOVER flag">
+              UPDATE RHQ_ALERT SET WILL_RECOVER = FALSE
+          </statement>
+          <statement targetDBVendor="oracle" 
+            desc="Updating existing alerts with default for WILL_RECOVER flag">
+              UPDATE RHQ_ALERT SET WILL_RECOVER = 0
+          </statement>
+      </schema-directSQL>
+
+      <schema-directSQL>
+          <statement targetDBVendor="postgresql" 
+                     desc="Setting alert WILL_RECOVER DEFAULT">
+              ALTER TABLE RHQ_ALERT ALTER COLUMN WILL_RECOVER SET DEFAULT FALSE
+          </statement>
+          <statement targetDBVendor="oracle" 
+                     desc="Setting alert WILL_RECOVER DEFAULT">
+            ALTER TABLE RHQ_ALERT MODIFY WILL_RECOVER DEFAULT 0
+          </statement>
+      </schema-directSQL>
+   	
+      <schema-alterColumn table="RHQ_ALERT" column="WILL_RECOVER" nullable="FALSE" />     
    </schemaSpec>
 
    <schemaSpec version="2.18">
@@ -494,7 +545,7 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_AGENT.LAST_AVAILABILITY_REPORT timestamp to long">
             UPDATE RHQ_AGENT
-            SET LAST_AVAILABILITY_REPORT_LONG =
+            SET LAST_AVAILABILITY_REPORT_LONG = 1000 *
             (   extract(day    from (LAST_AVAILABILITY_REPORT at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
                 extract(hour   from (LAST_AVAILABILITY_REPORT at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
                 extract(minute from (LAST_AVAILABILITY_REPORT at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
@@ -525,7 +576,7 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_ALERT_DAMPEN_EVENT.EVENT_TIMESTAMP timestamp to long">
             UPDATE RHQ_ALERT_DAMPEN_EVENT
-            SET EVENT_TIMESTAMP_LONG =
+            SET EVENT_TIMESTAMP_LONG = 1000 *
             (   extract(day    from (EVENT_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
                 extract(hour   from (EVENT_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
                 extract(minute from (EVENT_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
@@ -563,7 +614,7 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_EVENT.TIMESTAMP timestamp to long">
             UPDATE RHQ_EVENT
-            SET TIMESTAMP_LONG =
+            SET TIMESTAMP_LONG = 1000 *
             (   extract(day    from (TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
                 extract(hour   from (TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
                 extract(minute from (TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
@@ -574,7 +625,7 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_EVENT.ACK_TIME timestamp to long">
             UPDATE RHQ_EVENT
-            SET ACK_TIME_LONG =
+            SET ACK_TIME_LONG = 1000 *
             (   extract(day    from (ACK_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
                 extract(hour   from (ACK_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
                 extract(minute from (ACK_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
@@ -619,7 +670,7 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_CONTENT_SOURCE.CREATION_TIME timestamp to long">
          	UPDATE RHQ_CONTENT_SOURCE 
-         	SET CREATION_TIME_LONG =
+         	SET CREATION_TIME_LONG = 1000 *
          	(   extract(day    from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
          	    extract(hour   from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
          	    extract(minute from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
@@ -630,7 +681,7 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_CONTENT_SOURCE.LAST_MODIFIED_TIME timestamp to long">
          	UPDATE RHQ_CONTENT_SOURCE
-            SET LAST_MODIFIED_TIME_LONG =
+            SET LAST_MODIFIED_TIME_LONG = 1000 *
             (   extract(day    from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
                 extract(hour   from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
                 extract(minute from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
@@ -673,7 +724,7 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_CHANNEL.CREATION_TIME timestamp to long">
             UPDATE RHQ_CHANNEL
-            SET CREATION_TIME_LONG =
+            SET CREATION_TIME_LONG = 1000 *
             (   extract(day    from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
                 extract(hour   from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
                 extract(minute from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
@@ -684,7 +735,7 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_CHANNEL.LAST_MODIFIED_TIME timestamp to long">
             UPDATE RHQ_CHANNEL
-            SET LAST_MODIFIED_TIME_LONG =
+            SET LAST_MODIFIED_TIME_LONG = 1000 *
             (   extract(day    from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
                 extract(hour   from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
                 extract(minute from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
@@ -720,7 +771,7 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_PACKAGE_VERSION.FILE_CREATION_TIME timestamp to long">
             UPDATE RHQ_PACKAGE_VERSION
-            SET FILE_CREATION_TIME_LONG =
+            SET FILE_CREATION_TIME_LONG = 1000 *
             (   extract(day    from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
                 extract(hour   from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
                 extract(minute from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
@@ -750,7 +801,7 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_INSTALLED_PACKAGE.INSTALLATION_TIME timestamp to long">
             UPDATE RHQ_INSTALLED_PACKAGE
-            SET INSTALLATION_TIME_LONG =
+            SET INSTALLATION_TIME_LONG = 1000 *
             (   extract(day    from (INSTALLATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
                 extract(hour   from (INSTALLATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
                 extract(minute from (INSTALLATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
@@ -780,7 +831,7 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_INSTALLED_PKG_HIST.HISTORY_TIMESTAMP timestamp to long">
             UPDATE RHQ_INSTALLED_PKG_HIST
-            SET HISTORY_TIMESTAMP_LONG =
+            SET HISTORY_TIMESTAMP_LONG = 1000 *
             (   extract(day    from (HISTORY_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
                 extract(hour   from (HISTORY_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
                 extract(minute from (HISTORY_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
@@ -811,7 +862,7 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_MEASUREMENT_SCHED.MTIME timestamp to long">
             UPDATE RHQ_MEASUREMENT_SCHED
-            SET MTIME_LONG =
+            SET MTIME_LONG = 1000 *
             (   extract(day    from (MTIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
                 extract(hour   from (MTIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
                 extract(minute from (MTIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+

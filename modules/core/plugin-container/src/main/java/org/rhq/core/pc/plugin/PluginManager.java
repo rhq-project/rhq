@@ -223,7 +223,7 @@ public class PluginManager implements ContainerService {
      * @throws PluginContainerException if the plugin fails to load
      */
     private void loadPlugin(URL pluginUrl, ClassLoader classLoader) throws PluginContainerException {
-        log.info("Loading plugin from: " + pluginUrl);
+        log.debug("Loading plugin from: " + pluginUrl);
 
         PluginDescriptorLoader pluginDescriptorLoader = new PluginDescriptorLoader(pluginUrl, classLoader, null, true, this.configuration.getTemporaryDirectory());
         PluginDescriptor pluginDescriptor = pluginDescriptorLoader.loadPluginDescriptor();

@@ -105,24 +105,23 @@ public class ContentDiscoveryRunner implements Runnable, Callable<ContentDiscove
             // Check to see if the discovery is executing too far past its next scheduled discovery
             // If it is, skip this discovery and increment its next discovery.
             if ((System.currentTimeMillis() - 120000L) > info.getNextDiscovery()) {
-                log.warn("Content discovery is falling behind. Missed discovery by: "
+                log.debug("Content discovery is falling behind. Missed discovery for " + info + " by: "
                     + (System.currentTimeMillis() - info.getNextDiscovery()) + "ms");
             }
         }
 
-        log.info("Performing discovery: " + info);
+        log.debug("Performing discovery: " + info);
 
         // Catch any error that may occur on the plugin
         ContentDiscoveryReport result = null;
         try {
             result = contentManager.performContentDiscovery(info.getResourceId(), info.getPackageType());
         } catch (Throwable throwable) {
-            log.warn("Exception received from component while attempting content retrieve", throwable);
+            log.warn("Exception received from component while attempting content retrieval", throwable);
         } finally {
             // Reschedule after this report has been sent (or failed). Putting this here will delay further discoveries
             // if the limited concurrency puts off sending this message for a while.
-            if (!oneTimeDiscovery) {
-                log.info("Rescheduling discovery: " + info);
+            if (!oneTimeDiscovery) {                
                 contentManager.rescheduleDiscovery(info);
             }
         }

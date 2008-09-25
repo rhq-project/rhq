@@ -187,7 +187,7 @@ public class PluginContainer implements ContainerService {
         synchronized (INSTANCE) {
             if (!started) {
                 version = PluginContainer.class.getPackage().getImplementationVersion();
-                log.info("Starting PluginContainer " + ((version != null) ? (" Version: " + version) : ""));
+                log.info("Initializing Plugin Container" + ((version != null) ? (" v" + version) : "") + "...");
 
                 if (configuration == null) {
                     configuration = new PluginContainerConfiguration();

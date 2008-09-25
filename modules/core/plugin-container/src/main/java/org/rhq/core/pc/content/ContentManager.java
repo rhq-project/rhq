@@ -51,10 +51,8 @@ import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.pc.ContainerService;
@@ -118,14 +116,10 @@ public class ContentManager extends AgentService implements ContainerService, Co
     // ContainerService Implementation  --------------------------------------------
 
     public void initialize() {
-        log.info("Initializing...");
+        log.info("Initializing Content Manager...");
 
         // Determine discovery mode - we only enable discovery if we are inside the agent and the period is positive non-zero
-        if ((configuration.getContentDiscoveryPeriod() > 0)) {
-            this.scheduledDiscoveriesEnabled = true;
-        } else {
-            this.scheduledDiscoveriesEnabled = false;
-        }
+        this.scheduledDiscoveriesEnabled = (configuration.getContentDiscoveryPeriod() > 0);
 
         // Create thread pool executor. Used in both scheduled and non-scheduled mode for all discoveries.
         int threadPoolSize = configuration.getContentDiscoveryThreadPoolSize();
@@ -142,7 +136,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
 
         // When running in scheduled mode, create and schedule the thread pool for discovering content
         if (scheduledDiscoveriesEnabled) {
-            log.info("Initializing scheduled discoveries");
+            log.info("Initializing scheduled content discovery...");
 
             // Without specifying a particular piece of work, this runner will request the next piece of work from
             // the scheduled items queue
@@ -158,13 +152,13 @@ public class ContentManager extends AgentService implements ContainerService, Co
             inventoryEventListener = new ContentInventoryEventListener();
             PluginContainer.getInstance().getInventoryManager().addInventoryEventListener(inventoryEventListener);
         }
+        log.info("Content Manager initialized...");
     }
 
     public void shutdown() {
-        log.info("Shutting down...");
+        log.info("Shutting down Content Manager...");
         discoveryThreadPoolExecutor.shutdown();
         crudExecutor.shutdown();
-
         PluginContainer.getInstance().getInventoryManager().removeInventoryEventListener(inventoryEventListener);
     }
 
@@ -182,7 +176,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         // Nothing to do if the container doesn't exist or isn't running, so punch out
         if ((container == null)
             || (ResourceContainer.ResourceComponentState.STARTED != container.getResourceComponentState())) {
-            throw new RuntimeException("Container does not exist or is not running for resource ID: " + resourceId);
+            throw new RuntimeException("Container does not exist or is not running for Resource with id [" + resourceId + "].");
         }
 
         return container.getInstalledPackages();
@@ -336,8 +330,8 @@ public class ContentManager extends AgentService implements ContainerService, Co
     synchronized void rescheduleDiscovery(ScheduledContentDiscoveryInfo discoveryInfo) {
         // Sanity check
         if (!scheduledDiscoveriesEnabled) {
-            log.warn("Attempting to reschedule a discovery for a resource "
-                + "while not running in scheduled discovery mode");
+            log.warn("An attempt was made to reschedule a content discovery "
+                + "while not running in scheduled discovery mode - returning...");
             return;
         }
 
@@ -351,10 +345,10 @@ public class ContentManager extends AgentService implements ContainerService, Co
             discoveryInfo.getResourceId());
 
         if (resourceContainer != null) {
-            log.info("Rescheduling " + discoveryInfo);
+            log.debug("Rescheduling " + discoveryInfo + "...");
             discoveryInfo.setNextDiscovery(System.currentTimeMillis() + discoveryInfo.getInterval());
             addToQueue(discoveryInfo);
-            log.info("Finished rescheduling: " + discoveryInfo);
+            log.debug("Finished rescheduling: " + discoveryInfo);
         }
     }
 
@@ -364,7 +358,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
      * @param resource resource whose discoveries to remove; cannot be <code>null</code>
      */
     synchronized void unscheduleDiscoveries(Resource resource) {
-        log.info("Unscheduling content discoveries for resource: " + resource);
+        log.debug("Unscheduling content discoveries for " + resource);
 
         // Find all scheduled items for this resource
         Set<ScheduledContentDiscoveryInfo> unscheduleUs = new HashSet<ScheduledContentDiscoveryInfo>();
@@ -396,8 +390,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         ContentFacet contentFacet = ComponentUtil.getComponent(resourceId, ContentFacet.class, FacetLockType.READ, FACET_METHOD_TIMEOUT, false, true);
 
         Set<ResourcePackageDetails> details = contentFacet.discoverDeployedPackages(type);
-        log.info("Discovered number of packages: " + ((details != null) ? details.size() : null) + " for type: "
-                + type);
+        log.debug("Discovered " + ((details != null) ? details.size() : null) + " packages of type " + type);
 
         // Process the results
         ContentDiscoveryReport report = handleDiscoveredContent(details, resourceId);
@@ -497,7 +490,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
             }
         }
 
-        log.debug("Scheduling content discovery for resource: " + resource.getId());
+        log.debug("Scheduling content discovery for resource with id [" + resource.getId() + "]...");
 
         // Add discovery items for each type
         // Since intervals will vary per type, create separate scheduled items for each type
@@ -563,12 +556,20 @@ public class ContentManager extends AgentService implements ContainerService, Co
         }
 
         // Strip out content that have been removed (i.e. not returned on the latest discovery)
+        int originalPackageCount = existingInstalledPackagesSet.size();
         existingInstalledPackagesSet.retainAll(updatedPackageSet);
+        int removedPackagesCount = originalPackageCount - existingInstalledPackagesSet.size();
+        if (removedPackagesCount > 0)
+           log.info("Removed " + removedPackagesCount + " obsolete packages for Resource with id ["
+                    + resourceId + "].");
 
         // Strip from updated list content that are already known for the resource, we don't need to do anything
         updatedPackageSet.removeAll(existingInstalledPackagesSet);
 
         // Remaining content in updated list are "new" content
+        if (!updatedPackageSet.isEmpty())
+            log.info("Discovered " + updatedPackageSet.size() + " new packages for Resource with id ["
+                    + resourceId + "].");
 
         // Add new content
         existingInstalledPackagesSet.addAll(updatedPackageSet);
@@ -584,8 +585,9 @@ public class ContentManager extends AgentService implements ContainerService, Co
         ContentServerService contentServerService = getContentServerService();
         if (contentServerService != null) {
             // Make sure there are actually contents to send
-            if (existingInstalledPackagesSet.size() > 0) {
-                log.info("Merging number of discovered packages with server: " + existingInstalledPackagesSet.size());
+            if (!existingInstalledPackagesSet.isEmpty()) {
+                log.debug("Merging " + existingInstalledPackagesSet.size()
+                        + " discovered packages for Resource with id [" + resourceId + "] with Server...");
                 contentServerService.mergeDiscoveredPackages(report);
             }
         }

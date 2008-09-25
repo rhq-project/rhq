@@ -175,11 +175,17 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             return;
         }
 
-        // do a live check of availability here. This won't set the availability anywhere but will allow us
+        // Do a live check of availability here. This won't set the availability anywhere but will allow us
         // to find nested resources, i.e. children of resources we've found during our recursive call 
         // to discoverForResource(). Without this live check, the availability of these newly discovered
         // resources would be null, so we would just return without checking for their children.
-        AvailabilityType availability = parentComponent.getAvailability();
+        AvailabilityType availability;
+        try {
+            availability = parentComponent.getAvailability();
+        }
+        catch (Exception e) {
+            availability = AvailabilityType.DOWN;
+        }
         if (availability != AvailabilityType.UP) {
             log.debug("Availability of " + parent + " is not UP, so we can't execute runtime discovery on it.");
             return;

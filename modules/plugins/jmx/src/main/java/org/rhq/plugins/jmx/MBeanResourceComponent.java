@@ -84,7 +84,6 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
 
     public void start(ResourceContext<T> context) {
         this.resourceContext = context;
-
         loadBean();
         //      pluginConfiguration.getSimple(PROPERTY_TRANSFORM)
     }
@@ -95,10 +94,20 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
     }
 
     protected void loadBean() {
-        JMXComponent parentServer = resourceContext.getParentResourceComponent();
-        Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
-        bean = parentServer.getEmsConnection()
-            .getBean(pluginConfiguration.getSimple(OBJECT_NAME_PROP).getStringValue());
+        JMXComponent parentServer = this.resourceContext.getParentResourceComponent();
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        EmsConnection emsConnection = parentServer.getEmsConnection();
+        String objectName = pluginConfig.getSimple(OBJECT_NAME_PROP).getStringValue();
+        this.bean = emsConnection.getBean(objectName);
+        if (this.bean == null) {
+            // In some cases, this resource component may have been discovered by some means other than querying its
+            // parent's EMSConnection (e.g. ApplicationDiscoveryComponent uses a filesystem to discover EARs and
+            // WARs that are not yet deployed). In such cases, getBean() will return null, since EMS won't have the
+            // bean in its cache. To cover such cases, make an attempt to query the underlying MBeanServer for the
+            // bean before giving up.
+            emsConnection.queryBeans(objectName);
+            this.bean = emsConnection.getBean(objectName);
+        }
     }
 
     /**
@@ -109,31 +118,26 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
     public AvailabilityType getAvailability() {
         try {
             return (getEmsBean().isRegistered()) ? AvailabilityType.UP : AvailabilityType.DOWN;
-        } catch (NullPointerException npe) {
-            if (resourceContext != null) {
-                log.warn("Could not determine availability of unknown ems bean for ["
-                    + resourceContext.getResourceType() + ":" + resourceContext.getResourceKey() + "]");
+        } catch (RuntimeException e) {
+            if (this.bean != null) {
+                // Retry by connecting to a new parent connection (this bean might have been connected to by an old
+                // provider that's since been recreated).
+                this.bean = null;
+                return (getEmsBean().isRegistered()) ? AvailabilityType.UP : AvailabilityType.DOWN;
+            } else {
+                throw e;
             }
-
-            return AvailabilityType.DOWN;
-        } catch (Exception e) {
-            // Retry by connecting to a new parent connection (this bean might have been connected to an old provider that's been recreated
-            this.bean = null;
-            return (getEmsBean().isRegistered()) ? AvailabilityType.UP : AvailabilityType.DOWN;
-
         }
     }
 
     public EmsBean getEmsBean() {
         if (this.bean == null) {
             loadBean();
-
-            if (this.bean == null) {
-                throw new NullPointerException("Could not collect measurements as ems bean was null for ["
-                    + resourceContext.getResourceType() + ":" + resourceContext.getResourceKey() + "]");
-            }
+            if (this.bean == null)
+                throw new IllegalStateException("EMS bean was null for Resource with type ["
+                        + this.resourceContext.getResourceType() + "] and key [" + this.resourceContext.getResourceKey()
+                        + "].");
         }
-
         return this.bean;
     }
 

@@ -45,12 +45,12 @@ public interface ContentServerService {
     String CONCURRENCY_LIMIT_CONTENT_REPORT = "rhq.server.concurrency-limit.content-report";
 
     /**
-     * Concurreny control setting to limit the number of packages that can be downloaded.
+     * Concurrency control setting to limit the number of packages that can be downloaded.
      */
     String CONCURRENCY_LIMIT_CONTENT_DOWNLOAD = "rhq.server.concurrency-limit.content-download";
 
     /**
-     * Sends a set of newly discovered packages to the server. The collection of packagesrepresents the current set of
+     * Sends a set of newly discovered packages to the server. The collection of packages represents the current set of
      * packages deployed on the specified resource. As such, entries may be either new packages or packages that have
      * been returned from a previous discovery. Any packages that were known for the resource that are not in this
      * collection of package are considered deleted from the resource.

@@ -143,6 +143,10 @@ public class AgentSpawn {
 
             // We need to build the agent's classloader so it is completely isolated.
             URL[] jars = getSpawnedAgentClasspath();
+            URL[] endorsedJars = getSpawnedAgentEndorsedClasspath();
+            URL[] allJars = new URL[jars.length + endorsedJars.length];
+            System.arraycopy(endorsedJars, 0, allJars, 0, endorsedJars.length);
+            System.arraycopy(jars, 0, allJars, endorsedJars.length, jars.length);
             final ClassLoader agentClassLoader = new SpawnedAgentClassLoader(jars, null, topClassloader);
 
             final int agentId = i;
@@ -359,7 +363,8 @@ public class AgentSpawn {
      */
     private static String getAgentDistribution() {
         // default uses the maven build layout and assume we are running out of the perftest target dir
-        String distString = System.getProperty(PROP_AGENTDIST, "../../../modules/enterprise/agent/target/dist");
+        String distString = System.getProperty(PROP_AGENTDIST,
+            "../../../modules/enterprise/agent/target/rhq-agent-1.1.0-SNAPSHOT");
         File dist = new File(distString);
         if (!dist.isDirectory()) {
             throw new RuntimeException("Missing the agent distribution at : " + distString);
@@ -706,12 +711,49 @@ public class AgentSpawn {
         classpathUrls.add(dist.toURI().toURL()); // allows the agent to find resources in here, like log4j.xml
 
         for (File jarFile : jarFiles) {
-            if (!isJNIJar(jarFile)) {
-                classpathUrls.add(jarFile.toURI().toURL());
+            if (!jarFile.isDirectory()) {
+                if (!isJNIJar(jarFile)) {
+                    classpathUrls.add(jarFile.toURI().toURL());
+                }
             }
         }
 
         return classpathUrls.toArray(new URL[classpathUrls.size()]);
+    }
+
+    /**
+     * This will return URLs to all of the endorsed jars that the spawned agents will have access to in their
+     * isolated classloader.
+     *
+     * <p>The returns array will <b>not</b> include any JNI jars - they should be in a separate classpath which will be
+     * in an upper classloader.</p>
+     *
+     * @return URLs to embedded agent jars that will be in the embedded agent's classloader
+     *
+     * @throws Exception if failed to find the jars
+     */
+    private static URL[] getSpawnedAgentEndorsedClasspath() throws Exception {
+        File dist = new File(getAgentDistribution());
+        File lib = new File(dist, "lib/endorsed");
+
+        if (!lib.isDirectory()) {
+            throw new Exception("There is no lib/endorsed directory under [" + dist + "]; cannot get endorsed jars");
+        }
+
+        File[] jarFiles = lib.listFiles();
+        ArrayList<URL> endorsedUrls = new ArrayList<URL>(jarFiles.length + 1);
+
+        //classpathUrls.add(dist.toURI().toURL()); // allows the agent to find resources in here, like log4j.xml
+
+        for (File jarFile : jarFiles) {
+            if (!jarFile.isDirectory()) {
+                if (!isJNIJar(jarFile)) {
+                    endorsedUrls.add(jarFile.toURI().toURL());
+                }
+            }
+        }
+
+        return endorsedUrls.toArray(new URL[endorsedUrls.size()]);
     }
 
     /**

@@ -1,4 +1,3 @@
-<?xml version="1.0"?>
 
 <project name="db-upgrade" default="upgrade" basedir=".">
 
@@ -144,7 +143,7 @@ DB Upgrade:
         <schema-directSQL>
              <statement desc="Creating RHQ_SERVER foreign key relation to RHQ_AFFINITY_GROUP">
                   ALTER TABLE RHQ_SERVER 
-                  ADD CONSTRAINT RHQ_SERVER_AFFINITY_GROUP_ID_FKEY 
+                  ADD CONSTRAINT RHQ_SERVER_AG_ID_FK 
                   FOREIGN KEY (AFFINITY_GROUP_ID)
                   REFERENCES RHQ_AFFINITY_GROUP (ID)
              </statement>
@@ -155,7 +154,7 @@ DB Upgrade:
         <schema-directSQL>
              <statement desc="Creating RHQ_AGENT foreign key relation to RHQ_AFFINITY_GROUP">
                   ALTER TABLE RHQ_AGENT 
-                  ADD CONSTRAINT RHQ_AGENT_AFFINITY_GROUP_ID_FKEY 
+                  ADD CONSTRAINT RHQ_AGENT_AG_ID_FK
                   FOREIGN KEY (AFFINITY_GROUP_ID)
                   REFERENCES RHQ_AFFINITY_GROUP (ID)
              </statement>
@@ -164,7 +163,7 @@ DB Upgrade:
         <schema-directSQL>
              <statement desc="Creating RHQ_AGENT foreign key relation to RHQ_SERVER">
                   ALTER TABLE RHQ_AGENT 
-                  ADD CONSTRAINT RHQ_AGENT_SERVER_ID_FKEY 
+                  ADD CONSTRAINT RHQ_AGENT_SERVER_ID_FK 
                   FOREIGN KEY (SERVER_ID)
                   REFERENCES RHQ_SERVER (ID)
              </statement>
@@ -208,7 +207,7 @@ DB Upgrade:
         <schema-directSQL>
              <statement desc="Creating RHQ_PARTITION_DETAILS foreign key relation to RHQ_PARTITION_EVENT">
                   ALTER TABLE RHQ_PARTITION_DETAILS 
-                  ADD CONSTRAINT RHQ_PARTITION_DETAILS_EVENT_ID_FKEY 
+                  ADD CONSTRAINT RHQ_PD_EVENT_ID_FK
                   FOREIGN KEY (PARTITION_EVENT_ID)
                   REFERENCES RHQ_PARTITION_EVENT (ID)
              </statement>
@@ -218,7 +217,7 @@ DB Upgrade:
         <schema-directSQL>
              <statement desc="Creating RHQ_PARTITION_DETAILS foreign key relation to RHQ_AGENT">
                   ALTER TABLE RHQ_PARTITION_DETAILS 
-                  ADD CONSTRAINT RHQ_PARTITION_DETAILS_AGENT_ID_FKEY 
+                  ADD CONSTRAINT RHQ_PD_AGENT_ID_FK
                   FOREIGN KEY (AGENT_ID)
                   REFERENCES RHQ_AGENT (ID)
              </statement>
@@ -228,7 +227,7 @@ DB Upgrade:
         <schema-directSQL>
              <statement desc="Creating RHQ_PARTITION_DETAILS foreign key relation to RHQ_SERVER">
                   ALTER TABLE RHQ_PARTITION_DETAILS 
-                  ADD CONSTRAINT RHQ_PARTITION_DETAILS_SERVER_ID_FKEY 
+                  ADD CONSTRAINT RHQ_PD_SERVER_ID_FK 
                   FOREIGN KEY (SERVER_ID)
                   REFERENCES RHQ_SERVER (ID)
              </statement>
@@ -252,7 +251,7 @@ DB Upgrade:
         <schema-directSQL>
              <statement desc="Creating RHQ_FAILOVER_LIST foreign key relation to RHQ_PARTITION_EVENT">
                   ALTER TABLE RHQ_FAILOVER_LIST 
-                  ADD CONSTRAINT RHQ_FAILOVER_LIST_EVENT_ID_FKEY 
+                  ADD CONSTRAINT RHQ_FL_EVENT_ID_FK 
                   FOREIGN KEY (PARTITION_EVENT_ID)
                   REFERENCES RHQ_PARTITION_EVENT (ID)
              </statement>
@@ -262,7 +261,7 @@ DB Upgrade:
         <schema-directSQL>
              <statement desc="Creating RHQ_FAILOVER_LIST foreign key relation to RHQ_AGENT">
                   ALTER TABLE RHQ_FAILOVER_LIST 
-                  ADD CONSTRAINT RHQ_FAILOVER_LIST_AGENT_ID_FKEY 
+                  ADD CONSTRAINT RHQ_FL_AGENT_ID_FK 
                   FOREIGN KEY (AGENT_ID)
                   REFERENCES RHQ_AGENT (ID)
              </statement>
@@ -288,7 +287,7 @@ DB Upgrade:
         <schema-directSQL>
              <statement desc="Creating RHQ_FAILOVER_DETAILS foreign key relation to FAILOVER_LIST_ID">
                   ALTER TABLE RHQ_FAILOVER_DETAILS 
-                  ADD CONSTRAINT RHQ_FAILOVER_DETAILS_LIST_ID_FKEY 
+                  ADD CONSTRAINT RHQ_FD_FAILOVER_LIST_ID_FK 
                   FOREIGN KEY (FAILOVER_LIST_ID)
                   REFERENCES RHQ_FAILOVER_LIST (ID)
              </statement>
@@ -298,7 +297,7 @@ DB Upgrade:
         <schema-directSQL>
              <statement desc="Creating RHQ_FAILOVER_DETAILS foreign key relation to RHQ_SERVER">
                   ALTER TABLE RHQ_FAILOVER_DETAILS 
-                  ADD CONSTRAINT RHQ_FAILOVER_DETAILS_SERVER_ID_FKEY 
+                  ADD CONSTRAINT RHQ_FD_SERVER_ID_FK 
                   FOREIGN KEY (SERVER_ID)
                   REFERENCES RHQ_SERVER (ID)
              </statement>
@@ -315,7 +314,7 @@ DB Upgrade:
                  UPDATE RHQ_AGENT SET STATUS = 0
              </statement>
         </schema-directSQL>
-        <schema-alterColumn table="RHQ_AGENT" column="STATUS" nullable="TRUE" default="0" />
+        <schema-alterColumn table="RHQ_AGENT" column="STATUS" default="0" />
    </schemaSpec>
 
    <schemaSpec version="2.8">
@@ -329,8 +328,7 @@ DB Upgrade:
 
         <schema-directSQL>
             <statement desc="Creating RHQ_SERVER unique constraint on NAME">
-                CREATE UNIQUE INDEX rhq_server_name_unique
-                ON rhq_server (name);
+                CREATE UNIQUE INDEX rhq_server_name_unique ON rhq_server (name)
             </statement>
         </schema-directSQL>
    </schemaSpec>
@@ -496,8 +494,12 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_AGENT.LAST_AVAILABILITY_REPORT timestamp to long">
             UPDATE RHQ_AGENT
-            SET LAST_AVAILABILITY_REPORT_LONG = ( 86400 * 
-               ( TO_DATE( LAST_AVAILABILITY_REPORT,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            SET LAST_AVAILABILITY_REPORT_LONG =
+            (   extract(day    from (LAST_AVAILABILITY_REPORT at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                extract(hour   from (LAST_AVAILABILITY_REPORT at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                extract(minute from (LAST_AVAILABILITY_REPORT at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                extract(second from (LAST_AVAILABILITY_REPORT at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
+            )
             WHERE LAST_AVAILABILITY_REPORT IS NOT NULL
          </statement>
       </schema-directSQL>
@@ -523,8 +525,12 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_ALERT_DAMPEN_EVENT.EVENT_TIMESTAMP timestamp to long">
             UPDATE RHQ_ALERT_DAMPEN_EVENT
-            SET EVENT_TIMESTAMP_LONG = ( 86400 * 
-               ( TO_DATE( EVENT_TIMESTAMP,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            SET EVENT_TIMESTAMP_LONG =
+            (   extract(day    from (EVENT_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                extract(hour   from (EVENT_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                extract(minute from (EVENT_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                extract(second from (EVENT_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
+            )
             WHERE EVENT_TIMESTAMP IS NOT NULL
          </statement>
       </schema-directSQL>
@@ -555,17 +561,25 @@ DB Upgrade:
             WHERE ACK_TIME IS NOT NULL
          </statement>
          <statement targetDBVendor="oracle"
-                    desc="Converting RHQ_EVENT.EVENT_TIMESTAMP timestamp to long">
+                    desc="Converting RHQ_EVENT.TIMESTAMP timestamp to long">
             UPDATE RHQ_EVENT
-            SET ACK_TIME_LONG = ( 86400 * 
-               ( TO_DATE( ACK_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
-            WHERE ACK_TIME IS NOT NULL
+            SET TIMESTAMP_LONG =
+            (   extract(day    from (TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                extract(hour   from (TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                extract(minute from (TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                extract(second from (TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
+            )
+            WHERE TIMESTAMP IS NOT NULL
          </statement>
          <statement targetDBVendor="oracle"
-                    desc="Converting RHQ_EVENT.EVENT_TIMESTAMP timestamp to long">
+                    desc="Converting RHQ_EVENT.ACK_TIME timestamp to long">
             UPDATE RHQ_EVENT
-            SET ACK_TIME_LONG = ( 86400 * 
-               ( TO_DATE( ACK_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            SET ACK_TIME_LONG =
+            (   extract(day    from (ACK_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                extract(hour   from (ACK_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                extract(minute from (ACK_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                extract(second from (ACK_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
+            )
             WHERE ACK_TIME IS NOT NULL
          </statement>
       </schema-directSQL>
@@ -604,16 +618,24 @@ DB Upgrade:
          </statement>
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_CONTENT_SOURCE.CREATION_TIME timestamp to long">
-            UPDATE RHQ_CONTENT_SOURCE
-            SET CREATION_TIME_LONG = ( 86400 * 
-               ( TO_DATE( CREATION_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
-            WHERE CREATION_TIME IS NOT NULL
+         	UPDATE RHQ_CONTENT_SOURCE 
+         	SET CREATION_TIME_LONG =
+         	(   extract(day    from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+         	    extract(hour   from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+         	    extract(minute from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+         	    extract(second from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
+         	)
+         	WHERE CREATION_TIME IS NOT NULL
          </statement>
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_CONTENT_SOURCE.LAST_MODIFIED_TIME timestamp to long">
-            UPDATE RHQ_CONTENT_SOURCE
-            SET LAST_MODIFIED_TIME_LONG = ( 86400 * 
-               ( TO_DATE( LAST_MODIFIED_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+         	UPDATE RHQ_CONTENT_SOURCE
+            SET LAST_MODIFIED_TIME_LONG =
+            (   extract(day    from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                extract(hour   from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                extract(minute from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                extract(second from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
+            )
             WHERE LAST_MODIFIED_TIME IS NOT NULL
          </statement>
       </schema-directSQL>
@@ -651,15 +673,23 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_CHANNEL.CREATION_TIME timestamp to long">
             UPDATE RHQ_CHANNEL
-            SET CREATION_TIME_LONG = ( 86400 * 
-               ( TO_DATE( CREATION_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            SET CREATION_TIME_LONG =
+            (   extract(day    from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                extract(hour   from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                extract(minute from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                extract(second from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
+            )         	
             WHERE CREATION_TIME IS NOT NULL
          </statement>
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_CHANNEL.LAST_MODIFIED_TIME timestamp to long">
             UPDATE RHQ_CHANNEL
-            SET LAST_MODIFIED_TIME_LONG = ( 86400 * 
-               ( TO_DATE( LAST_MODIFIED_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            SET LAST_MODIFIED_TIME_LONG =
+            (   extract(day    from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                extract(hour   from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                extract(minute from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                extract(second from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
+            )
             WHERE LAST_MODIFIED_TIME IS NOT NULL
          </statement>
       </schema-directSQL>
@@ -690,8 +720,12 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_PACKAGE_VERSION.FILE_CREATION_TIME timestamp to long">
             UPDATE RHQ_PACKAGE_VERSION
-            SET FILE_CREATION_TIME_LONG = ( 86400 * 
-               ( TO_DATE( FILE_CREATION_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            SET FILE_CREATION_TIME_LONG =
+            (   extract(day    from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                extract(hour   from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                extract(minute from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                extract(second from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
+            )           
             WHERE FILE_CREATION_TIME IS NOT NULL
          </statement>
       </schema-directSQL>
@@ -716,8 +750,12 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_INSTALLED_PACKAGE.INSTALLATION_TIME timestamp to long">
             UPDATE RHQ_INSTALLED_PACKAGE
-            SET INSTALLATION_TIME_LONG = ( 86400 * 
-               ( TO_DATE( INSTALLATION_TIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            SET INSTALLATION_TIME_LONG =
+            (   extract(day    from (INSTALLATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                extract(hour   from (INSTALLATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                extract(minute from (INSTALLATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                extract(second from (INSTALLATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
+            )
             WHERE INSTALLATION_TIME IS NOT NULL
          </statement>
       </schema-directSQL>
@@ -742,8 +780,12 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_INSTALLED_PKG_HIST.HISTORY_TIMESTAMP timestamp to long">
             UPDATE RHQ_INSTALLED_PKG_HIST
-            SET HISTORY_TIMESTAMP_LONG = ( 86400 * 
-               ( TO_DATE( HISTORY_TIMESTAMP,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            SET HISTORY_TIMESTAMP_LONG =
+            (   extract(day    from (HISTORY_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                extract(hour   from (HISTORY_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                extract(minute from (HISTORY_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                extract(second from (HISTORY_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
+            )
             WHERE HISTORY_TIMESTAMP IS NOT NULL
          </statement>
       </schema-directSQL>
@@ -769,8 +811,12 @@ DB Upgrade:
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_MEASUREMENT_SCHED.MTIME timestamp to long">
             UPDATE RHQ_MEASUREMENT_SCHED
-            SET MTIME_LONG = ( 86400 * 
-               ( TO_DATE( MTIME,'DD.MM.YYYY:HH24:MI:SS' ) - TO_DATE('01-JAN-1970','DD-MON-YYYY') ) )
+            SET MTIME_LONG =
+            (   extract(day    from (MTIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                extract(hour   from (MTIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                extract(minute from (MTIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                extract(second from (MTIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
+            )
             WHERE MTIME IS NOT NULL
          </statement>
       </schema-directSQL>

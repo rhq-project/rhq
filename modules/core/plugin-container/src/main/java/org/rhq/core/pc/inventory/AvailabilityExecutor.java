@@ -22,6 +22,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -197,14 +199,14 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             }
 
             if (checkChildren) {
+                // Wrap in a fresh HashSet to avoid ConcurrentModificationExceptions.
+                Set<Resource> children = new HashSet(resource.getChildResources());
                 if (current == AvailabilityType.UP) {
-                    for (Resource child : resource.getChildResources()) {
+                    for (Resource child : children)
                         checkInventory(child, availabilityReport, reportChangesOnly, true);
-                    }
                 } else {
-                    for (Resource child : resource.getChildResources()) {
-                        markDown(child, availabilityReport, reportChangesOnly);
-                    }
+                    for (Resource child : children)
+                        markDown(child, availabilityReport, reportChangesOnly);                    
                 }
             }
         }
@@ -213,10 +215,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     }
 
     /**
-     * Marks all descendent resources as down for the report
-     * @param resource
-     * @param availabilityReport
-     * @param changesOnly
+     * Marks the specified Resource and all its descendants as DOWN for the report.
      */
     private void markDown(Resource resource, AvailabilityReport availabilityReport, boolean changesOnly) {
         Availability previous = this.inventoryManager.getAvailabilityIfKnown(resource);
@@ -224,7 +223,9 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             Availability availability = this.inventoryManager.updateAvailability(resource, AvailabilityType.DOWN);
             availabilityReport.addAvailability(availability);
         }
-        for (Resource child : resource.getChildResources()) {
+        // Wrap in a fresh HashSet to avoid ConcurrentModificationExceptions.
+        Set<Resource> children = new HashSet(resource.getChildResources());
+        for (Resource child : children) {
             markDown(child, availabilityReport, changesOnly);
         }
     }

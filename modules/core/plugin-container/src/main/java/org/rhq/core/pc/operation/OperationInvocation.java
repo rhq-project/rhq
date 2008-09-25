@@ -219,7 +219,7 @@ public class OperationInvocation implements Runnable {
                                 .getResultsConfigurationDefinition());
                             // TODO: Validate the result Configuration?
                         } else {
-                            log.error("Plugin error: Operation [" + this.operationDefinition.getName() + "] is defined as returning no results, but it returned non-null results: " + result);
+                            log.error("Plugin error: Operation [" + this.operationDefinition.getName() + "] is defined as returning no results, but it returned non-null results: " + result.toString(true));
                             result = null; // Don't return results that the GUI won't be able to display anyway.
                         }
                     }

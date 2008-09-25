@@ -498,22 +498,28 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder("Configuration[id=").append(this.id);
-        if (this.notes != null) {
-            builder.append(", notes=").append(this.notes);
-        }
+        // Default to non-verbose (i.e. not printing the properties), since printing them makes toStrings extremely
+        // verbose for large configs.
+        final boolean verbose = false;
+        return toString(verbose);
+    }
 
-        /* This makes toStrings extremely verbose for large configs
-        for (Property property : this.getMap().values()) {
-            builder.append(", ");
-            builder.append(property.getName());
-            builder.append("=");
-            if (property instanceof PropertySimple) {
-                builder.append(((PropertySimple) property).getStringValue());
-            } else {
-                builder.append(property);
+    public String toString(boolean verbose) {
+        StringBuilder builder = new StringBuilder("Configuration[id=").append(this.id);
+        if (this.notes != null)
+            builder.append(", notes=").append(this.notes);
+
+        if (verbose) {
+            for (Property property : this.getMap().values()) {
+                builder.append(", ");
+                builder.append(property.getName());
+                builder.append("=");
+                if (property instanceof PropertySimple)
+                    builder.append(((PropertySimple) property).getStringValue());
+                else
+                    builder.append(property);
             }
-        }*/
+        }
         return builder.append("]").toString();
     }
 

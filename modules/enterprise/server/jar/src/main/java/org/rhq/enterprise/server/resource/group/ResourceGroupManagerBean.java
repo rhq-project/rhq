@@ -643,11 +643,18 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
     @SuppressWarnings("unchecked")
     private int[] getMeasurementDefinitionIdsForResourceType(ResourceType type, boolean summariesOnly) {
-        String queryString = "SELECT id FROM MeasurementDefinition md WHERE md.resourceType.id = :resourceTypeId";
+        String queryString = "" //
+            + "SELECT id " //
+            + "  FROM MeasurementDefinition md " //
+            + " WHERE md.resourceType.id = :resourceTypeId ";
+
         queryString += " AND md.dataType = :dataType";
         if (summariesOnly) {
             queryString += " AND md.displayType = :dispType";
         }
+
+        // should respect the ordering
+        queryString += " ORDER BY md.displayOrder, md.displayName";
 
         Query q = entityManager.createQuery(queryString);
         q.setParameter("resourceTypeId", type.getId());

@@ -94,20 +94,24 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
     }
 
     protected void loadBean() {
-        JMXComponent parentServer = this.resourceContext.getParentResourceComponent();
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        EmsConnection emsConnection = parentServer.getEmsConnection();
         String objectName = pluginConfig.getSimple(OBJECT_NAME_PROP).getStringValue();
-        this.bean = emsConnection.getBean(objectName);
-        if (this.bean == null) {
+        this.bean = loadBean(objectName);        
+    }
+
+    protected EmsBean loadBean(String objectName) {
+        EmsConnection emsConnection = getEmsConnection();
+        EmsBean bean = emsConnection.getBean(objectName);
+        if (bean == null) {
             // In some cases, this resource component may have been discovered by some means other than querying its
             // parent's EMSConnection (e.g. ApplicationDiscoveryComponent uses a filesystem to discover EARs and
             // WARs that are not yet deployed). In such cases, getBean() will return null, since EMS won't have the
             // bean in its cache. To cover such cases, make an attempt to query the underlying MBeanServer for the
             // bean before giving up.
             emsConnection.queryBeans(objectName);
-            this.bean = emsConnection.getBean(objectName);
+            bean = emsConnection.getBean(objectName);
         }
+        return bean;
     }
 
     /**

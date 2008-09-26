@@ -358,7 +358,7 @@
                 id="createHistoryDataTable"
                 rows="#{PageControl.CreateResourceHistory.pageSize}"
                 value="#{createHistoryDataModel}"
-                var="item"
+                var="createItem"
                 width="100%"
                 columnsWidth="12%,22%,16%,12%,13%,13%,12%"
                 headerClass="tableRowHeader"
@@ -377,7 +377,7 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="#{item.resourceType.name}"/>
+   <h:outputText value="#{createItem.resourceType.name}"/>
 </rich:column>
 
 <ui:remove><!-- Resource Key --></ui:remove>
@@ -388,9 +388,9 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="#{item.newResourceKey}" rendered="#{item.newResourceKey ne null}"/>
-   <i><h:outputText value="Plugin has not specified a key yet" rendered="#{item.newResourceKey eq null and item.status ne 'FAILURE'}"/></i>
-   <i><h:outputText value="No resource key specified for failed request" rendered="#{item.newResourceKey eq null and item.status eq 'FAILURE'}"/></i>
+   <h:outputText value="#{createItem.newResourceKey}" rendered="#{createItem.newResourceKey ne null}"/>
+   <i><h:outputText value="Plugin has not specified a key yet" rendered="#{createItem.newResourceKey eq null and createItem.status ne 'FAILURE'}"/></i>
+   <i><h:outputText value="No resource key specified for failed request" rendered="#{createItem.newResourceKey eq null and createItem.status eq 'FAILURE'}"/></i>
 </rich:column>
 
 <ui:remove><!-- Request Status --></ui:remove>
@@ -401,30 +401,34 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="#{item.status}" rendered="#{item.status ne 'FAILURE'}"/>
-   <onc:errorPopup popupId="create-#{item.id}" errorMessage="#{item.errorMessage}" rendered="#{item.status eq 'FAILURE'}">Failure</onc:errorPopup>
+   <h:outputText value="#{createItem.status}" rendered="#{createItem.status ne 'FAILURE'}"/>
+   <onc:errorPopup popupId="create-#{createItem.id}" errorMessage="#{createItem.errorMessage}" rendered="#{createItem.status eq 'FAILURE'}">Failure</onc:errorPopup>
 </rich:column>
 
 <ui:remove><!-- Request Start Time --></ui:remove>
 <rich:column>
    <f:facet name="header">
-      <onc:sortableColumnHeader sort="crh.createdTime">
+      <onc:sortableColumnHeader sort="crh.ctime">
          <h:outputText styleClass="headerText" value="Request Started"/>
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="#{item.createdDate}"/>
+   <h:outputText value="#{createItem.createdTime}">
+      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+   </h:outputText>
 </rich:column>
 
 <ui:remove><!-- Last Modified Time --></ui:remove>
 <rich:column>
    <f:facet name="header">
-      <onc:sortableColumnHeader sort="crh.lastModifiedTime">
+      <onc:sortableColumnHeader sort="crh.mtime">
          <h:outputText styleClass="headerText" value="Last Request Update"/>
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="#{item.lastModifiedDate}"/>
+   <h:outputText value="#{createItem.lastModifiedTime}">
+      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+   </h:outputText>
 </rich:column>
 
 <ui:remove><!-- User --></ui:remove>
@@ -435,7 +439,7 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="${item.subjectName}"/>
+   <h:outputText value="${createItem.subjectName}"/>
 </rich:column>
 
 <ui:remove><!-- Retry failed create link --></ui:remove>
@@ -443,8 +447,8 @@
    <f:facet name="header">
       <h:outputText styleClass="headerText" value="Resubmit"/>
    </f:facet>
-   <h:commandLink action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" rendered="#{item.status eq 'FAILURE'}">
-      <f:param name="retryCreateItemId" value="#{item.id}"/>
+   <h:commandLink action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" rendered="#{createItem.status eq 'FAILURE'}">
+      <f:param name="retryCreateItemId" value="#{createItem.id}"/>
       <h:outputText value="Resubmit"/>
    </h:commandLink>
 </rich:column>
@@ -477,7 +481,7 @@
                 id="deleteHistoryDataTable"
                 rows="#{PageControl.DeleteResourceHistory.pageSize}"
                 value="#{deleteHistoryDataModel}"
-                var="item"
+                var="deleteItem"
                 width="100%"
                 columnsWidth="16%,16%,17%,17%,17%,17%"
                 headerClass="tableRowHeader"
@@ -495,7 +499,7 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="#{item.resource.name}"/>
+   <h:outputText value="#{deleteItem.resource.name}"/>
 </rich:column>
 
 <ui:remove><!-- Resource Type --></ui:remove>
@@ -506,7 +510,7 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="#{item.resource.resourceType.name}"/>
+   <h:outputText value="#{deleteItem.resource.resourceType.name}"/>
 </rich:column>
 
 <ui:remove><!-- Request Status --></ui:remove>
@@ -517,31 +521,35 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="#{item.status}" rendered="#{item.status ne 'FAILURE'}"/>
-   <onc:errorPopup popupId="delete-#{item.id}" errorMessage="#{item.errorMessage}" rendered="#{item.status eq 'FAILURE'}">Failure</onc:errorPopup>
+   <h:outputText value="#{deleteItem.status}" rendered="#{deleteItem.status ne 'FAILURE'}"/>
+   <onc:errorPopup popupId="delete-#{deleteItem.id}" errorMessage="#{deleteItem.errorMessage}" rendered="#{deleteItem.status eq 'FAILURE'}">Failure</onc:errorPopup>
       
 </rich:column>
 
 <ui:remove><!-- Request Started Time --></ui:remove>
 <rich:column>
    <f:facet name="header">
-      <onc:sortableColumnHeader sort="drh.createdTime">
+      <onc:sortableColumnHeader sort="drh.ctime">
          <h:outputText styleClass="headerText" value="Request Started"/>
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="#{item.createdDate}"/>
+   <h:outputText value="#{deleteItem.createdTime}">
+      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+   </h:outputText>
 </rich:column>
 
 <ui:remove><!-- Request Updated Time --></ui:remove>
 <rich:column>
    <f:facet name="header">
-      <onc:sortableColumnHeader sort="drh.lastModifiedTime">
+      <onc:sortableColumnHeader sort="drh.mtime">
          <h:outputText styleClass="headerText" value="Last Request Update"/>
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="#{item.lastModifiedDate}"/>
+   <h:outputText value="#{deleteItem.lastModifiedTime}">
+      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+   </h:outputText>
 </rich:column>
 
 <ui:remove><!-- User --></ui:remove>
@@ -552,7 +560,7 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="${item.subjectName}"/>
+   <h:outputText value="${deleteItem.subjectName}"/>
 </rich:column>
 
 <f:facet name="footer">

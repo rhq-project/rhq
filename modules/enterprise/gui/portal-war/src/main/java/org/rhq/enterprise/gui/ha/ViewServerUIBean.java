@@ -65,8 +65,8 @@ public class ViewServerUIBean extends PagedDataTableUIBean {
     public String save() {
         try {
             clusterManager.updateServer(getSubject(), getServer());
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The server has been updated; "
-                + "changes to address/port/securePort require a restart to take affect.");
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                "This server's public address and ports have been updated.");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + e.getMessage());
             return "edit"; // stay in edit mode on failure

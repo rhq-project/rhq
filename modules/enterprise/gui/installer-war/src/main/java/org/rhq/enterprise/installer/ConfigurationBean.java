@@ -624,7 +624,7 @@ public class ConfigurationBean {
             String endpointAddress = "";
 
             try {
-                endpointAddress = InetAddress.getLocalHost().getHostAddress();
+                endpointAddress = InetAddress.getLocalHost().getCanonicalHostName();
             } catch (Exception e) {
                 LOG.info("Could not determine default server address: ", e);
             }

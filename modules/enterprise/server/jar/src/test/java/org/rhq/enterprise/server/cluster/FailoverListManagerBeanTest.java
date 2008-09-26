@@ -349,6 +349,13 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         assert validateBalance(result, 2, 3);
     }
 
+    public void testGetForAllAgents2_9() throws Exception {
+        setupTest(2, 9);
+        Map<Agent, FailoverListComposite> result = failoverListManager.refresh(partitionEvent, servers, agents);
+        assert null != result;
+        assert validateBalance(result, 2, 9);
+    }
+
     public void testGetForAllAgents2_10() throws Exception {
         setupTest(2, 10);
         long start = System.currentTimeMillis();

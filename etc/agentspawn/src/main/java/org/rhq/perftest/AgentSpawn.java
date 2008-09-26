@@ -367,7 +367,8 @@ public class AgentSpawn {
             "../../../modules/enterprise/agent/target/rhq-agent-1.1.0-SNAPSHOT");
         File dist = new File(distString);
         if (!dist.isDirectory()) {
-            throw new RuntimeException("Missing the agent distribution at : " + distString);
+            throw new RuntimeException("Missing the agent distribution at : " + distString + ". Please set ["
+                + PROP_AGENTDIST + "] to point to the exploded agent distribution (not a zip/tar file).");
         }
 
         return distString;

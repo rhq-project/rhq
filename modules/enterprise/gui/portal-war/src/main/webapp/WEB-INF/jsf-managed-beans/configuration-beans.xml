@@ -4,8 +4,13 @@
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
 
-   <!-- /rhq/resource/configuration/view.xhtml, /rhq/resource/configuration/view-map.xhtml,
-        /rhq/resource/configuration/history.xhtml, /rhq/resource/configuration/edit.xhtml, and
+   <!-- /rhq/resource/configuration/view.xhtml, /rhq/resource/configuration/view-map.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ExistingResourceConfigurationViewUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.configuration.resource.ExistingResourceConfigurationUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <!-- /rhq/resource/configuration/history.xhtml, /rhq/resource/configuration/edit.xhtml, and
         /rhq/resource/configuration/edit-map.xhtml -->
    <managed-bean>
       <managed-bean-name>ExistingResourceConfigurationUIBean</managed-bean-name>

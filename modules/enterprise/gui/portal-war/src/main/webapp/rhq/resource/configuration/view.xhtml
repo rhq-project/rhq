@@ -23,7 +23,7 @@ THIS TEXT WILL BE REMOVED.
 
    <ui:define name="content">
 
-      <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationUIBean.updateInProgress}">
+      <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationViewUIBean.updateInProgress}">
          <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
       </h:panelGroup>
 
@@ -32,30 +32,30 @@ THIS TEXT WILL BE REMOVED.
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
          <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell"
-                      rendered="#{ExistingResourceConfigurationUIBean.configuration != null and !ExistingResourceConfigurationUIBean.updateInProgress}">
-            <h:commandButton value="EDIT" action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
+                      rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
+            <h:commandButton value="EDIT" action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
                              title="Edit this Configuration" styleClass="buttonmed" 
                              rendered="${ResourceUIBean.permissions.configure}" />
          </h:panelGrid>
          
-         <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
-                     configuration="#{ExistingResourceConfigurationUIBean.configuration}"
-                     accessMapActionExpression="#{ExistingResourceConfigurationUIBean.accessMap}"
+         <onc:config configurationDefinition="#{ExistingResourceConfigurationViewUIBean.configurationDefinition}"
+                     configuration="#{ExistingResourceConfigurationViewUIBean.configuration}"
+                     accessMapActionExpression="#{ExistingResourceConfigurationViewUIBean.accessMap}"
                      readOnly="true"
-                     nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
-                     nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
+                     nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationDefinitionMessage}"
+                     nullConfigurationMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationMessage}"
                      prevalidate="true"/>
 
          <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell"
-                      rendered="#{ExistingResourceConfigurationUIBean.configuration != null and !ExistingResourceConfigurationUIBean.updateInProgress}">
-            <h:commandButton value="EDIT" action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
+                      rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
+            <h:commandButton value="EDIT" action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
                              title="Edit this Configuration" styleClass="buttonmed" 
                              rendered="${ResourceUIBean.permissions.configure}" />
          </h:panelGrid>
 
       </h:form>
 
-      <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationUIBean.updateInProgress}">
+      <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationViewUIBean.updateInProgress}">
          <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
       </h:panelGroup>
 

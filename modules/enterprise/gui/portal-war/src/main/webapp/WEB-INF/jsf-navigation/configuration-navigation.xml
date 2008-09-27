@@ -9,7 +9,7 @@
       <from-view-id>/rhq/resource/configuration/view.xhtml</from-view-id>
 
       <navigation-case>
-         <from-action>#{ExistingResourceConfigurationUIBean.editConfiguration}</from-action>
+         <from-action>#{ExistingResourceConfigurationViewUIBean.editConfiguration}</from-action>
          <to-view-id>/rhq/resource/configuration/edit.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>

@@ -48,6 +48,7 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
@@ -392,6 +393,11 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     //      (ips, 09/05/08)
     public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType, String... measurementName) {
         MeasurementFacet measurementFacet;
+        Resource resource = PluginContainer.getInstance().getInventoryManager().getResourceContainer(resourceId).getResource();
+        ResourceType resourceType = resource.getResourceType();
+        if (resourceType.getMetricDefinitions().isEmpty())
+            return Collections.emptySet();
+
         try {
             measurementFacet = ComponentUtil.getComponent(resourceId, MeasurementFacet.class, FacetLockType.READ,
                 FACET_METHOD_TIMEOUT, true, true);

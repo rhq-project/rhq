@@ -115,8 +115,10 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
                 }
             }
         } catch (Exception e) {
-            log.warn("Unable to complete base jmx server discovery - cause (enable DEBUG to see stack trace): " + e);
-            log.debug("Stack trace follows...", e);
+            if (log.isDebugEnabled())
+                log.debug("Unable to complete base jmx server discovery.", e);
+            else
+                log.warn("Unable to complete base jmx server discovery - cause (enable DEBUG to see stack trace): " + e);                
         }
 
         for (Configuration c : (List<Configuration>) context.getPluginConfigurations()) {

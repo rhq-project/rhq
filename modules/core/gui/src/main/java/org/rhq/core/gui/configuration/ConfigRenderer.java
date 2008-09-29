@@ -33,9 +33,12 @@ import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.component.html.HtmlSelectOneRadio;
 import javax.faces.context.FacesContext;
 import javax.faces.render.Renderer;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.richfaces.component.html.HtmlSimpleTogglePanel;
+
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -48,7 +51,6 @@ import org.rhq.core.gui.RequestParameterNameConstants;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 
 /**
  * A renderer that renders a {@link ConfigUIComponent} component as XHTML.
@@ -62,7 +64,7 @@ public class ConfigRenderer extends Renderer {
     protected static final String UNGROUPED_PROPERTIES_STYLE_CLASS = "BlockContent";
     protected static final String REQUIRED_MARKER_TEXT_STYLE_CLASS = "required-marker-text";
     protected static final String GROUP_DESCRIPTION_PANEL_STYLE_CLASS = "group-description-panel";
-    protected static final String GROUP_DESCRIPTION_TEXT_PANEL_STYLE_CLASS = "group-description-text-panel";    
+    protected static final String GROUP_DESCRIPTION_TEXT_PANEL_STYLE_CLASS = "group-description-text-panel";
 
     private static final String JAVASCRIPT_INCLUDES = "\n<script type='text/javascript' src='/js/rhq.js'></script>\n\n";
 
@@ -324,7 +326,7 @@ public class ConfigRenderer extends Renderer {
                 unsetInputs.add(input);
             }
 
-            if (FacesComponentUtility.isReadonly(input)) {
+            if (!config.isFullyEditable() && FacesComponentUtility.isReadonly(input)) {
                 readOnlyInputs.add(input);
             }
         }

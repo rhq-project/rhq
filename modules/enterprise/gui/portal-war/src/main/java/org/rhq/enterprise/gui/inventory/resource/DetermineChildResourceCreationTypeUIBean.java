@@ -20,9 +20,11 @@ package org.rhq.enterprise.gui.inventory.resource;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletRequest;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.CreateResourceHistory;
@@ -79,14 +81,15 @@ public class DetermineChildResourceCreationTypeUIBean {
             // call failed because of an invalid configuration, the new page in the workflow should show the previous
             // configuration, with any plugin-side validation errors that occurred.
             resourceType = this.retryCreateItem.getResourceType();
+
             FacesContextUtility.getFacesContext().getExternalContext().getRequestMap().put(
                 ParamConstants.RESOURCE_TYPE_ID_PARAM, resourceType.getId());
+
             switch (resourceType.getCreationDataType()) {
             case CONTENT: {
                 CreateNewPackageChildResourceUIBean createPackageBean = FacesContextUtility
                     .getManagedBean(CreateNewPackageChildResourceUIBean.class);
                 createPackageBean.setResourceType(this.retryCreateItem.getResourceType());
-                //               createPackageBean.setPackageName(this.retryCreateItem.getPackageName());
                 createPackageBean.setConfiguration(this.retryCreateItem.getConfiguration());
                 break;
             }

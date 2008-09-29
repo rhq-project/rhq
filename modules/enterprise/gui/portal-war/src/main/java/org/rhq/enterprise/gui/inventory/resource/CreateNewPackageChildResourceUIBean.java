@@ -22,17 +22,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
+
 import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
-import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -64,21 +65,18 @@ public class CreateNewPackageChildResourceUIBean {
 
     private static final String OUTCOME_SUCCESS_OR_FAILURE = "successOrFailure";
     private static final String OUTCOME_SUCCESS = "success";
-             
+
     // Attributes  --------------------------------------------
 
     private ResourceType resourceType;
     private PackageType packageType;
-
     private String packageVersion;
 
     private int selectedArchitectureId;
-    
+
     private CreateResourceHistory retryCreateItem;
     private ConfigurationDefinition configurationDefinition;
     private Configuration configuration;
-
-    private final Log log = LogFactory.getLog(this.getClass());
 
     public CreateNewPackageChildResourceUIBean() {
         this.resourceType = lookupResourceType();

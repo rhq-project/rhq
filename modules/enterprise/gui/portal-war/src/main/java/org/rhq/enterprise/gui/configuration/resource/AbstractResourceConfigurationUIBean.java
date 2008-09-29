@@ -19,11 +19,8 @@
 package org.rhq.enterprise.gui.configuration.resource;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * This is a JSF managed bean for the Resource Configuration view and edit pages. The contents of the page are
@@ -33,7 +30,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public abstract class AbstractResourceConfigurationUIBean extends AbstractConfigurationUIBean {
-    protected ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
     public boolean isUpdateInProgress() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();

@@ -42,7 +42,6 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.configuration.resource.AbstractResourceConfigurationUIBean;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -60,7 +59,6 @@ public class CreateNewConfigurationChildResourceUIBean extends AbstractResourceC
     public static final String MANAGED_BEAN_NAME = "CreateNewConfigurationChildResourceUIBean";
 
     private static final String OUTCOME_SUCCESS_OR_FAILURE = "successOrFailure";
-    private static final String OUTCOME_SUCCESS = "success";
 
     // Attributes  --------------------------------------------
 
@@ -120,15 +118,15 @@ public class CreateNewConfigurationChildResourceUIBean extends AbstractResourceC
     }
 
     public String selectTemplate() {
-        return OUTCOME_SUCCESS;
+        return SUCCESS_OUTCOME;
     }
 
     public String cancel() {
-        return OUTCOME_SUCCESS;
+        return SUCCESS_OUTCOME;
     }
 
     public String finish() {
-        return OUTCOME_SUCCESS;
+        return SUCCESS_OUTCOME;
     }
 
     // Other Methods  --------------------------------------------
@@ -162,14 +160,15 @@ public class CreateNewConfigurationChildResourceUIBean extends AbstractResourceC
         return resourceType;
     }
 
+    @Override
     protected ConfigurationDefinition lookupConfigurationDefinition() {
         Subject user = EnterpriseFacesContextUtility.getSubject();
-        ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
-        ConfigurationDefinition configurationDefinition = configurationManager
+        ConfigurationDefinition configurationDefinition = this.configurationManager
             .getResourceConfigurationDefinitionWithTemplatesForResourceType(user, getResourceTypeId());
         return configurationDefinition;
     }
 
+    @Override
     @NotNull
     protected Configuration lookupConfiguration() {
         ConfigurationTemplate resourceConfigTemplate;
@@ -263,18 +262,22 @@ public class CreateNewConfigurationChildResourceUIBean extends AbstractResourceC
         super.clearConfiguration();
     }
 
+    @Override
     public String getNullConfigurationDefinitionMessage() {
         return "This resource does not expose a configuration.";
     }
 
+    @Override
     public String getNullConfigurationMessage() {
         return "Unable to create an initial configuration for resource being added.";
     }
 
+    @Override
     protected int getConfigurationDefinitionKey() {
         return getResourceTypeId();
     }
 
+    @Override
     protected int getConfigurationKey() {
         return getResourceTypeId();
     }
@@ -289,8 +292,7 @@ public class CreateNewConfigurationChildResourceUIBean extends AbstractResourceC
     }
 
     private Configuration createPluginConfiguration(Subject user) {
-        ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
-        ConfigurationDefinition pluginConfigDefinition = configurationManager
+        ConfigurationDefinition pluginConfigDefinition = this.configurationManager
             .getPluginConfigurationDefinitionForResourceType(user, getResourceTypeId());
         Configuration pluginConfig = null;
         if (pluginConfigDefinition != null) {

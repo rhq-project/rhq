@@ -115,22 +115,20 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
                 }
             }
         } catch (Exception e) {
-            log.info("Unable to complete base jmx server discovery");
+            log.warn("Unable to complete base jmx server discovery - cause (enable DEBUG to see stack trace): " + e);
+            log.debug("Stack trace follows...", e);
         }
 
+        for (Configuration c : (List<Configuration>) context.getPluginConfigurations()) {
+            String resourceKey = c.getSimpleValue(CONNECTOR_ADDRESS_CONFIG_PROPERTY, null);
+            String connectionType = c.getSimpleValue(CONNECTION_TYPE, null);
 
-        if (context.getPluginConfigurations() != null) {
-            for (Configuration c : (List<Configuration>) context.getPluginConfigurations()) {
-                String resourceKey = c.getSimpleValue(CONNECTOR_ADDRESS_CONFIG_PROPERTY, null);
-                String connectionType = c.getSimpleValue(CONNECTION_TYPE, null);
+            DiscoveredResourceDetails s = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
+                    "Java VM", "?", connectionType + " [" + resourceKey + "]", null, null);
 
-                DiscoveredResourceDetails s = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
-                        "Java VM", "?", connectionType + " [" + resourceKey + "]", null, null);
+            s.setPluginConfiguration(c);
 
-                s.setPluginConfiguration(c);
-
-                found.add(s);
-            }
+            found.add(s);
         }
 
         return found;

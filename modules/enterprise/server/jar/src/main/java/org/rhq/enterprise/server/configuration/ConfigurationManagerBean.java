@@ -157,6 +157,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
             update.setErrorMessage(response.getErrorMessage());
         }
 
+        // Flush before merging to ensure the update has been persisted and avoid StaleStateExceptions. 
+        entityManager.flush();
         entityManager.merge(update);
     }
 

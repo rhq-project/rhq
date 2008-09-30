@@ -69,7 +69,16 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
                 "Fatal error occurred during merging of inventory report from agent [" + report.getAgent() + "].", e);
             throw e;
         }
-        log.info("Performance: inventory merge (" + (System.currentTimeMillis() - start) + ")ms");
+
+        long elapsed = (System.currentTimeMillis() - start);
+        if (elapsed > 30000L) {
+            log.info("Performance: inventory merge (" + elapsed + ")ms");
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Performance: inventory merge (" + elapsed + ")ms");
+            }
+        }
+
         return syncInfo;
     }
 
@@ -107,14 +116,16 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     public Set<Resource> getResources(Set<Integer> resourceIds, boolean includeDescendants) {
         long start = System.currentTimeMillis();
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        Set<Resource> resources = new HashSet();
+        Set<Resource> resources = new HashSet<Resource>();
         for (Integer resourceId : resourceIds) {
             Resource resource = resourceManager.getResourceTree(resourceId, includeDescendants);
             resource = convertToPojoResource(resource, includeDescendants);
             resources.add(resource);
         }
-        log.debug("Performance: get Resources [" + resourceIds + "], recursive=" + includeDescendants + ", timing ("
-            + (System.currentTimeMillis() - start) + ")ms");
+        if (log.isDebugEnabled()) {
+            log.debug("Performance: get Resources [" + resourceIds + "], recursive=" + includeDescendants
+                + ", timing (" + (System.currentTimeMillis() - start) + ")ms");
+        }
         return resources;
     }
 
@@ -122,8 +133,10 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         long start = System.currentTimeMillis();
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
         Map<Integer, InventoryStatus> statuses = resourceManager.getResourceStatuses(rootResourceId, descendents);
-        log.debug("Performance: get inventory statuses for [" + statuses.size() + "] timing ("
-            + (System.currentTimeMillis() - start) + ")ms");
+        if (log.isDebugEnabled()) {
+            log.debug("Performance: get inventory statuses for [" + statuses.size() + "] timing ("
+                + (System.currentTimeMillis() - start) + ")ms");
+        }
         return statuses;
     }
 

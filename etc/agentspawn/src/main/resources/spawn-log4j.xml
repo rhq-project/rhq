@@ -38,11 +38,6 @@
    <!-- Limit categories -->
    <!-- ================ -->
 
-   <!-- JBoss ON -->
-   <category name="org.jboss.on">
-      <priority value="INFO"/>
-   </category>
-   
    <!-- JBoss/Remoting : for low level communications layer tracing -->
    <!--
    <category name="org.jboss.remoting">
@@ -55,7 +50,7 @@
    <!-- ======================= -->
 
    <root>
-      <priority value="INFO"/>
+      <priority value="DEBUG"/>
       <!--
       <appender-ref ref="FILE"/>
       -->

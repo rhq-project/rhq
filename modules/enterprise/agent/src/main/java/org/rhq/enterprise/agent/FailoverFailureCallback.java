@@ -46,7 +46,7 @@ import org.rhq.enterprise.communications.util.NotProcessedException;
 public class FailoverFailureCallback implements FailureCallback {
 
     private static final String FAILOVER_ATTEMPTS = "rhq.failover-attempts";
-    private static final Logger LOG = AgentI18NFactory.getLogger(AgentMain.class);
+    private static final Logger LOG = AgentI18NFactory.getLogger(FailoverFailureCallback.class);
 
     private AgentMain agent;
 

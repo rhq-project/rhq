@@ -150,7 +150,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         Resource platform = this.resourceManager.getPlatform(knownAgent);
         ResourceSyncInfo syncInfo = this.entityManager.find(ResourceSyncInfo.class, platform.getId());
 
-        log.info("Inventory merge completed in (" + (System.currentTimeMillis() - start) + ")ms");
+        if (log.isDebugEnabled()) {
+            log.debug("Inventory merge completed in (" + (System.currentTimeMillis() - start) + ")ms");
+        }
 
         return syncInfo;
     }
@@ -408,10 +410,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
      *
      * @throws InvalidInventoryReportException if a critical field in the resource is missing or invalid
      */
-    private void mergeResource(@NotNull
-    Resource resource, @Nullable
-    Resource parentResource, @NotNull
-    Agent agent) throws InvalidInventoryReportException {
+    private void mergeResource(@NotNull Resource resource, @Nullable Resource parentResource, @NotNull Agent agent)
+        throws InvalidInventoryReportException {
         long start = System.currentTimeMillis();
 
         log.debug("Merging [" + resource + "]...");

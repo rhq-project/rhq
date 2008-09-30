@@ -97,6 +97,9 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
     */
 
     public boolean isReadOnly() {
+        if (isFullyEditable())
+            return false;
+
         if (this.readOnly == null) {
             this.readOnly = FacesComponentUtility.getExpressionAttribute(this, READ_ONLY_ATTRIBUTE, Boolean.class);
         }

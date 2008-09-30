@@ -1073,6 +1073,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     }
 
     private boolean isReadOnly(PropertyDefinition propertyDefinition) {
+        // a fully editable config overrides any other means of setting read only
         return (!this.config.isFullyEditable() && (this.config.isReadOnly() || (propertyDefinition.isReadOnly() && !isUndefinedRequiredProperty(propertyDefinition))));
     }
 

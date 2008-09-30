@@ -122,6 +122,7 @@ public class CreateNewConfigurationChildResourceUIBean extends AbstractResourceC
     }
 
     public String cancel() {
+        clear();
         return SUCCESS_OUTCOME;
     }
 

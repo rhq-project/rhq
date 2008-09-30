@@ -124,8 +124,10 @@ public class AgentSpawn {
     }
 
     private static void start(String[] args) throws Exception {
-        // so we pick up our own log4j for the spawned agents
-        System.setProperty("log4j.configuration", "spawn-log4j.xml");
+        // so we pick up our own log4j for the spawned agents but allow someone to override it
+        if (System.getProperty("log4j.configuration") == null) {
+            System.setProperty("log4j.configuration", "spawn-log4j.xml");
+        }
 
         final int count = getSpawnCount();
         final int startPort = getStartPort();

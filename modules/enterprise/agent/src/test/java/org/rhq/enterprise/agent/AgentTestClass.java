@@ -197,7 +197,7 @@ public class AgentTestClass {
         ServiceContainerMetricsMBean metrics;
 
         try {
-            metrics = MBeanServerInvocationHandler.newProxyInstance(mbs,
+            metrics = (ServiceContainerMetricsMBean) MBeanServerInvocationHandler.newProxyInstance(mbs,
                 ServiceContainerMetricsMBean.OBJECTNAME_METRICS, ServiceContainerMetricsMBean.class, false);
         } catch (Exception e) {
             throw new RuntimeException(e);

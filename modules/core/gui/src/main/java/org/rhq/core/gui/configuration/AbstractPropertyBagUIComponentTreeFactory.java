@@ -1074,21 +1074,26 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
     private boolean isReadOnly(PropertyDefinition propertyDefinition) {
         // a fully editable config overrides any other means of setting read only
-        return (!this.config.isFullyEditable() && (this.config.isReadOnly() || (propertyDefinition.isReadOnly() && !isUndefinedRequiredProperty(propertyDefinition))));
+        return (!this.config.isFullyEditable() && (this.config.isReadOnly() || (propertyDefinition.isReadOnly() && !isInvalidRequiredProperty(propertyDefinition))));
     }
 
-    private boolean isUndefinedRequiredProperty(PropertyDefinition propertyDefinition) {
-        boolean isUndefinedRequiredProperty = false;
+    private boolean isInvalidRequiredProperty(PropertyDefinition propertyDefinition) {
+        boolean isInvalidRequiredProperty = false;
+
         if ((propertyDefinition instanceof PropertyDefinitionSimple) && propertyDefinition.isRequired()) {
             PropertySimple propertySimple = this.propertyMap.getSimple(propertyDefinition.getName());
-            if ((propertySimple.getStringValue() == null) || propertySimple.getStringValue().equals("")) {
-                // Required properties with a value of null or "" should never be set to read-only, otherwise the user
-                // will have no way to give the property a value and thereby get things to a valid state.
-                isUndefinedRequiredProperty = true;
+            String errorMessage = propertySimple.getErrorMessage();
+
+            if ((null == propertySimple.getStringValue()) || "".equals(propertySimple.getStringValue())
+                || ((null != errorMessage) && (!"".equals(errorMessage.trim())))) {
+                // Required properties with no value, or an invalid value (assumed if we see an error message) should never
+                // be set to read-only, otherwise the user will have no way to give the property a value and thereby
+                // get things to a valid state.
+                isInvalidRequiredProperty = true;
             }
         }
 
-        return isUndefinedRequiredProperty;
+        return isInvalidRequiredProperty;
     }
 
     private boolean isUnset(PropertyDefinition propertyDefinition) {

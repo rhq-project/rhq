@@ -1730,15 +1730,18 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     public void clearResourceConfigError(int resourceId) {
-        Resource resource = entityManager.find(Resource.class, resourceId);
-        if (resource == null) {
-            throw new ResourceNotFoundException("Error cleaning config errors for unknown resource: " + resourceId);
-        }
-        List<ResourceError> doomedErrors = resource.getResourceErrors(ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
-        // there should only ever be at most 1, but loop through the list just in case something got screwed up
-        // and there ended up more than 1 associated with the resource.
-        for (ResourceError doomedError : doomedErrors) {
-            entityManager.remove(doomedError);
+        // TODO Add subject permissions to this method
+
+        Query q =
+                entityManager.createQuery("delete from ResourceError e where e.resource.id = :resourceId and e.errorType = :type");
+
+        q.setParameter("resourceId", resourceId);
+        q.setParameter("type", ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
+
+        int updates = q.executeUpdate();
+
+        if (updates > 1) {
+            log.error("Resource [" + resourceId + "] has [" + updates + "] INVALID_PLUGIN_CONFIGURATION ResourceError associated with it.");            
         }
 
     }

@@ -594,28 +594,28 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
             }
         }
 
-        // let's make sure all IDs are zero - we want to persist a brand new copy
-        Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
+            // let's make sure all IDs are zero - we want to persist a brand new copy
+            Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
 
-        // create our new update request and assign it to our resource - its status will initially be "in progress"
-        ResourceConfigurationUpdate newUpdateRequest = new ResourceConfigurationUpdate(resource, zeroedConfiguration,
-            newSubject);
+            // create our new update request and assign it to our resource - its status will initially be "in progress"
+            ResourceConfigurationUpdate newUpdateRequest = new ResourceConfigurationUpdate(resource, zeroedConfiguration,
+                    newSubject);
 
-        newUpdateRequest.setStatus(newStatus);
+            newUpdateRequest.setStatus(newStatus);
 
-        entityManager.persist(newUpdateRequest);
-        resource.addResourceConfigurationUpdates(newUpdateRequest);
+            entityManager.persist(newUpdateRequest);
+            resource.addResourceConfigurationUpdates(newUpdateRequest);
 
-        resource.getChildResources().size();
+            resource.getChildResources().size();
 
-        // agent field is LAZY - force it to load because the caller will need it.
-        Agent agent = resource.getAgent();
-        if (agent != null) {
-            agent.getName();
+            // agent field is LAZY - force it to load because the caller will need it.
+            Agent agent = resource.getAgent();
+            if (agent != null) {
+                agent.getName();
+            }
+
+            return newUpdateRequest;
         }
-
-        return newUpdateRequest;
-    }
 
     public void completeResourceConfigurationUpdate(ConfigurationUpdateResponse response) {
         log.debug("Received a configuration-update-completed message: " + response);
@@ -782,15 +782,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
     }
 
     private void removeAnyExistingInvalidPluginConfigurationErrors(Subject whoami, Resource resource) {
-        List<ResourceError> invalidPluginConfigErrors = this.resourceManager.getResourceErrors(whoami,
-            resource.getId(), ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
-        if (invalidPluginConfigErrors.size() > 1) {
-            log.error(resource + " has more than one INVALID_PLUGIN_CONFIGURATION ResourceError associated with it.");
-        }
 
-        for (ResourceError invalidPluginConfigError : invalidPluginConfigErrors) {
-            this.resourceManager.deleteResourceError(whoami, invalidPluginConfigError.getId());
-        }
+        this.resourceManager.clearResourceConfigError(resource.getId());
+
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)

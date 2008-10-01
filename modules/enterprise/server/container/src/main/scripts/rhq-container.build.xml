@@ -362,15 +362,15 @@ rhq.server.email.from-address=rhqadmin@localhost
 rhq.server.operation-timeout=600
 
 # Concurrency limits for incoming UI and agent messages
-rhq.server.startup.web.max-connections=305
-rhq.communications.global-concurrency-limit=300
+rhq.server.startup.web.max-connections=50
+rhq.communications.global-concurrency-limit=45
 rhq.server.concurrency-limit.inventory-report=5
-rhq.server.concurrency-limit.availability-report=200
-rhq.server.concurrency-limit.inventory-sync=50
+rhq.server.concurrency-limit.availability-report=40
+rhq.server.concurrency-limit.inventory-sync=30
 rhq.server.concurrency-limit.content-report=5
 rhq.server.concurrency-limit.content-download=5
-rhq.server.concurrency-limit.measurement-report=50
-rhq.server.concurrency-limit.measurement-schedule-request=50
+rhq.server.concurrency-limit.measurement-report=30
+rhq.server.concurrency-limit.measurement-schedule-request=30
 
 # Content Local Filesystem Repository
 rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits

@@ -132,16 +132,6 @@ public class AgentComm4Test extends AgentCommTestBase {
     @Test(enabled = ENABLE_TESTS)
     public void testMetrics() throws Exception {
 
-        Properties props1 = new Properties();
-        // set this so the agent will not pre-send connectAgent because JBoss Remoting 2 doesn't seem to like bi-directional messaging within the same VM
-        props1.setProperty(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, "");
-        m_agent1Test.setConfigurationOverrides(props1);
-
-        Properties props2 = new Properties();
-        // set this so the agent will not pre-send connectAgent because JBoss Remoting 2 doesn't seem to like bi-directional messaging within the same VM
-        props2.setProperty(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, "");
-        m_agent2Test.setConfigurationOverrides(props2);
-
         AgentMain agent1 = m_agent1Test.createAgent(true);
         AgentMain agent2 = m_agent2Test.createAgent(true);
 
@@ -254,6 +244,7 @@ public class AgentComm4Test extends AgentCommTestBase {
 
         AgentMain agent1 = m_agent1Test.createAgent(false);
         agent1.start();
+        agent1.getClientCommandSender().getRemoteCommunicator().setInitializeCallback(null);
 
         final Boolean[] online = new Boolean[] { null };
         agent1.getServiceContainer().addDiscoveryListener(new AutoDiscoveryListener() {
@@ -318,6 +309,7 @@ public class AgentComm4Test extends AgentCommTestBase {
 
         AgentMain agent1 = m_agent1Test.createAgent(false);
         agent1.start();
+        agent1.getClientCommandSender().getRemoteCommunicator().setInitializeCallback(null);
 
         AgentMain agent2 = null;
         try {
@@ -378,6 +370,7 @@ public class AgentComm4Test extends AgentCommTestBase {
 
         AgentMain agent1 = m_agent1Test.createAgent(false);
         agent1.start();
+        agent1.getClientCommandSender().getRemoteCommunicator().setInitializeCallback(null);
 
         AgentMain agent2 = null;
         try {

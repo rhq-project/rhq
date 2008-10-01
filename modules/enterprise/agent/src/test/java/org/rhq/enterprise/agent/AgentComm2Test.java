@@ -305,9 +305,6 @@ public class AgentComm2Test extends AgentCommTestBase {
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_CLIENT_AUTH_MODE,
             SSLSocketBuilder.CLIENT_AUTH_MODE_NEED);
 
-        // set this so the agent will not pre-send connectAgent because JBoss Remoting 2 doesn't seem to like bi-directional messaging within the same VM
-        props1.setProperty(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, "");
-
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
@@ -321,9 +318,6 @@ public class AgentComm2Test extends AgentCommTestBase {
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "true");
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_CLIENT_AUTH_MODE,
             SSLSocketBuilder.CLIENT_AUTH_MODE_NEED);
-
-        // set this so the agent will not pre-send connectAgent because JBoss Remoting 2 doesn't seem to like bi-directional messaging within the same VM
-        props2.setProperty(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, "");
 
         m_agent2Test.setConfigurationOverrides(props2);
 
@@ -443,9 +437,6 @@ public class AgentComm2Test extends AgentCommTestBase {
         props1.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_CLIENT_AUTH_MODE,
             SSLSocketBuilder.CLIENT_AUTH_MODE_WANT);
 
-        // set this so the agent will not pre-send connectAgent because JBoss Remoting 2 doesn't seem to like bi-directional messaging within the same VM
-        props1.setProperty(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, "");
-
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
@@ -459,9 +450,6 @@ public class AgentComm2Test extends AgentCommTestBase {
         props2.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SECURITY_SERVER_AUTH_MODE, "true");
         props2.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_CLIENT_AUTH_MODE,
             SSLSocketBuilder.CLIENT_AUTH_MODE_WANT);
-
-        // set this so the agent will not pre-send connectAgent because JBoss Remoting 2 doesn't seem to like bi-directional messaging within the same VM
-        props2.setProperty(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, "");
 
         m_agent2Test.setConfigurationOverrides(props2);
 

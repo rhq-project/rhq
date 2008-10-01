@@ -22,10 +22,13 @@ import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import mazz.i18n.Logger;
+
 import org.jboss.remoting.Client;
 import org.jboss.remoting.InvokerLocator;
 import org.jboss.remoting.ServerInvoker;
 
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.impl.generic.GenericCommandResponse;
@@ -50,6 +53,8 @@ import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
  * @author John Mazzitelli
  */
 public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
+    private static final Logger LOG = CommI18NFactory.getLogger(JBossRemotingRemoteCommunicator.class);
+
     /**
      * The default subsystem to use when sending messages via the JBoss/Remoting client.
      */
@@ -81,6 +86,18 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
      * Optionally-defined callback that will be called when a failure is detected when sending a message. 
      */
     private FailureCallback m_failureCallback;
+
+    /**
+     * Optionally-defined callback that will be called when this communicator sends its first command
+     * after it has been {@link #connect() connected}. 
+     */
+    private InitializeCallback m_initializeCallback;
+
+    /**
+     * When the first element is <code>true</code>, the initialize callback will need to be called prior
+     * to sending any commands. This is an array because the array itself is used for its lock.
+     */
+    private final boolean[] m_needToCallInitializeCallback;
 
     /**
      * Constructor for {@link JBossRemotingRemoteCommunicator} that initializes the client with no invoker locator
@@ -181,6 +198,8 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         if (client_config != null) {
             m_clientConfiguration.putAll(client_config);
         }
+
+        m_needToCallInitializeCallback = new boolean[] { false };
 
         return;
     }
@@ -349,6 +368,15 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         m_failureCallback = callback;
     }
 
+    public InitializeCallback getInitializeCallback() {
+        return m_initializeCallback;
+    }
+
+    public void setInitializeCallback(InitializeCallback callback) {
+        m_initializeCallback = callback;
+        m_needToCallInitializeCallback[0] = (callback != null); // specifically do not synchronize, just set it
+    }
+
     public String getRemoteEndpoint() {
         return (m_invokerLocator != null) ? m_invokerLocator.getLocatorURI() : "<null>";
     }
@@ -368,6 +396,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
     public void connect() throws Exception {
         if ((m_remotingClient != null) && !m_remotingClient.isConnected()) {
             m_remotingClient.connect();
+            m_needToCallInitializeCallback[0] = (getInitializeCallback() != null); // specifically do not synchronize, just set it
         }
 
         return;
@@ -376,6 +405,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
     public void disconnect() {
         if (m_remotingClient != null) {
             m_remotingClient.disconnect();
+            m_needToCallInitializeCallback[0] = (getInitializeCallback() != null); // specifically do not synchronize, just set it
         }
 
         return;
@@ -385,7 +415,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         return (m_remotingClient != null) && m_remotingClient.isConnected();
     }
 
-    public CommandResponse sendWithoutFailureCallback(Command command) throws Throwable {
+    public CommandResponse sendWithoutCallbacks(Command command) throws Throwable {
         Object ret_response;
 
         try {
@@ -404,8 +434,47 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
             return (CommandResponse) ret_response;
         } catch (Exception e) {
             // see comments in #send for why this is here
-            CommI18NFactory.getLogger(JBossRemotingRemoteCommunicator.class).error(CommI18NResourceKeys.COMM_CCE,
-                ret_response);
+            LOG.error(CommI18NResourceKeys.COMM_CCE, ret_response);
+            return new GenericCommandResponse(command, false, ret_response, e);
+        }
+    }
+
+    public CommandResponse sendWithoutInitializeCallback(Command command) throws Throwable {
+        Object ret_response = null;
+        boolean retry = false;
+
+        do {
+            try {
+                try {
+                    ret_response = getRemotingClient().invoke(command, null);
+                } catch (ServerInvoker.InvalidStateException serverDown) {
+                    // see comments in #send for why this is here
+                    ret_response = getRemotingClient().invoke(command, null);
+                }
+
+                // this is to support http(s) transport - those transports will return Exception objects when errors occur
+                if (ret_response instanceof Exception) {
+                    throw (Exception) ret_response;
+                }
+
+                retry = invokeFailureCallbackIfNeeded(command,
+                    (ret_response instanceof CommandResponse) ? (CommandResponse) ret_response : null, null);
+
+            } catch (Throwable t) {
+                retry = invokeFailureCallbackIfNeeded(command,
+                    (ret_response instanceof CommandResponse) ? (CommandResponse) ret_response : null, t);
+
+                if (!retry) {
+                    throw t;
+                }
+            }
+        } while (retry);
+
+        try {
+            return (CommandResponse) ret_response;
+        } catch (Exception e) {
+            // see comments in #send for why this is here
+            LOG.error(CommI18NResourceKeys.COMM_CCE, ret_response);
             return new GenericCommandResponse(command, false, ret_response, e);
         }
     }
@@ -414,8 +483,16 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         Object ret_response = null;
         boolean retry = false;
 
+        // invoke our initialize callback - if our method returns a response, it means
+        // the initialize callback had an error and we need to abort the sending of this command
+        CommandResponse initializeErrorResponse = invokeInitializeCallbackIfNeeded(command);
+        if (initializeErrorResponse != null) {
+            return initializeErrorResponse;
+        }
+
         do {
             try {
+
                 try {
                     ret_response = getRemotingClient().invoke(command, null);
                 } catch (ServerInvoker.InvalidStateException serverDown) {
@@ -430,11 +507,11 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
                     throw (Exception) ret_response;
                 }
 
-                retry = invokeCallbackIfNeeded(command,
+                retry = invokeFailureCallbackIfNeeded(command,
                     (ret_response instanceof CommandResponse) ? (CommandResponse) ret_response : null, null);
 
             } catch (Throwable t) {
-                retry = invokeCallbackIfNeeded(command,
+                retry = invokeFailureCallbackIfNeeded(command,
                     (ret_response instanceof CommandResponse) ? (CommandResponse) ret_response : null, t);
 
                 if (!retry) {
@@ -451,10 +528,43 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
             // round trip, so I think we would want to have a CommandResponse sent back, not throw an exception.
             // However, we got an exception when casting the remote endpoint's reply (the most likely cause here
             // is a ClassCastException - the endpoint didn't reply with the expected CommandResponse).
-            CommI18NFactory.getLogger(JBossRemotingRemoteCommunicator.class).error(CommI18NResourceKeys.COMM_CCE,
-                ret_response);
+            LOG.error(CommI18NResourceKeys.COMM_CCE, ret_response);
             return new GenericCommandResponse(command, false, ret_response, e);
         }
+    }
+
+    /**
+     * This will determine if the initialize callback needs to be invoked and if it does, it will
+     * call it.  The initialize callback has the responsibility to handle calling
+     * {@link #sendWithoutInitializeCallback(Command)} if it wants to send its own commands to the server
+     * but wants failover to happen when appropriate for those commands.
+     * 
+     * If there is an initialize callback set, this method will block all callers until
+     * the callback has been invoked.
+     *
+     * @param command the command that it going to be sent after the callback is invoked
+     * 
+     * @return if the initialize callback had an error, this response will be non-<code>null</code> and
+     *         will indicate that the sending of <code>command</code> should be aborted.
+     */
+    private CommandResponse invokeInitializeCallbackIfNeeded(Command command) {
+        InitializeCallback callback = getInitializeCallback();
+        if (callback != null) {
+            // block here - in effect, this will stop all commands from going out until the callback is done 
+            synchronized (m_needToCallInitializeCallback) {
+                if (m_needToCallInitializeCallback[0]) {
+                    try {
+                        m_needToCallInitializeCallback[0] = !callback.sendingInitialCommand(this, command);
+                        LOG.debug(CommI18NResourceKeys.INITIALIZE_CALLBACK_DONE, m_needToCallInitializeCallback[0]);
+                    } catch (Throwable t) {
+                        m_needToCallInitializeCallback[0] = true; // callback failed, we'll want to call it again
+                        LOG.error(t, CommI18NResourceKeys.INITIALIZE_CALLBACK_FAILED, ThrowableUtil.getAllMessages(t));
+                        return new GenericCommandResponse(command, false, null, t);
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -470,7 +580,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
      * 
      * @return <code>true</code> if the command should be retried, <code>false</code> otherwise
      */
-    private boolean invokeCallbackIfNeeded(Command command, CommandResponse response, Throwable throwable) {
+    private boolean invokeFailureCallbackIfNeeded(Command command, CommandResponse response, Throwable throwable) {
 
         FailureCallback callback = getFailureCallback(); // get a local reference to avoid this being changed underneath us
         boolean retry = false;

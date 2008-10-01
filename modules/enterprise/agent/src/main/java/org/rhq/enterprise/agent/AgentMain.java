@@ -120,9 +120,7 @@ import org.rhq.enterprise.communications.command.client.ClientCommandSender;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderConfiguration;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderStateListener;
 import org.rhq.enterprise.communications.command.client.ClientRemotePojoFactory;
-import org.rhq.enterprise.communications.command.client.CommandAndCallback;
 import org.rhq.enterprise.communications.command.client.CommandPreprocessor;
-import org.rhq.enterprise.communications.command.client.CommandResponseCallback;
 import org.rhq.enterprise.communications.command.client.JBossRemotingRemoteCommunicator;
 import org.rhq.enterprise.communications.command.client.RemoteCommunicator;
 import org.rhq.enterprise.communications.command.impl.remotepojo.RemotePojoInvocationCommand;
@@ -301,6 +299,11 @@ public class AgentMain {
      * Thread used to try to maintain connectivity to the primary server as much as possible.
      */
     private PrimaryServerSwitchoverThread m_primaryServerSwitchoverThread;
+
+    /**
+     * Object that remembers when the last connect agent message was sent and to which server.
+     */
+    private LastSentConnectAgent m_lastSentConnectAgent = new LastSentConnectAgent();
 
     /**
      * The main method that starts the whole thing.
@@ -1003,9 +1006,6 @@ public class AgentMain {
                                     LOG.debug(AgentI18NResourceKeys.NEW_SECURITY_TOKEN, token);
                                 }
 
-                                // we are now registered and know our security token, let's prepare the startup commands 
-                                addSenderStartupCommands(sender);
-
                                 storeServerFailoverList(failoverList);
                                 m_serverFailoverList = failoverList;
 
@@ -1025,7 +1025,11 @@ public class AgentMain {
                                         // we are already pointing to the primary server, so all we have to do is
                                         // call next to move the index to the next in the list for when we have to failover in the future
                                         nextServer = failoverList.next();
-                                        sendConnectRequestToServer(sender.getRemoteCommunicator());
+
+                                        // [mazz] I don't think we need to do this here anymore - with the addition of
+                                        // the remote communicator's initialize callback, this connect request
+                                        // will be made the next time a command is sent by the sender
+                                        //sendConnectRequestToServer(sender.getRemoteCommunicator(), false);
                                     } else {
                                         failoverToNewServer(sender.getRemoteCommunicator());
                                     }
@@ -1415,7 +1419,7 @@ public class AgentMain {
                     ((JBossRemotingRemoteCommunicator) comm).setInvokerLocator(config.getServerLocatorUri());
 
                     // send the connect message to tell the server we want to talk to it (also verifies that server is up)
-                    sendConnectRequestToServer(comm);
+                    sendConnectRequestToServer(comm, false);
                 } catch (Throwable t) {
                     LOG.warn(AgentI18NResourceKeys.FAILOVER_FAILED, t);
                     return;
@@ -1445,24 +1449,54 @@ public class AgentMain {
     /**
      * This sends a direct "connect" request to the server pointed to by the given communicator.
      * The purpose of this is very important - this request tells the server that this agent
-     * is making the server its primary server and will begin sending it messages.
+     * is making the server its primary server and will begin sending it messages. The request
+     * is sent such that the communicator's initialize callback will never be invoked, however,
+     * the caller can ask for the request to attempt failover.
+     * 
+     * <p>This is package scoped so the initialize callback can call this</p>
      *  
      * @param comm the communicator used to send the message to the server
-     * @param config the agent configuration
+     * @param attemptFailover if <code>true</code>, and the connect command fails, server failover will be attempted
      * 
      * @throws Throwable
      */
-    private void sendConnectRequestToServer(RemoteCommunicator comm) throws Throwable {
+    void sendConnectRequestToServer(RemoteCommunicator comm, boolean attemptFailover) throws Throwable {
+        // to avoid sending mulitple connect agents is quick succession, only send the message is one hasn't recently been sent to the same server
+        synchronized (m_lastSentConnectAgent) {
+            if (m_lastSentConnectAgent.serverEndpoint.equals(comm.getRemoteEndpoint())
+                && (System.currentTimeMillis() - m_lastSentConnectAgent.timestamp) < 30000L) {
+                return; // we just sent one to the same server recently, don't bother sending another one
+            }
+            m_lastSentConnectAgent.timestamp = System.currentTimeMillis();
+            m_lastSentConnectAgent.serverEndpoint = comm.getRemoteEndpoint();
+        }
+
         Command connectCommand = createConnectAgentCommand();
         getClientCommandSender().preprocessCommand(connectCommand); // important that we are already registered by now!
-        CommandResponse connectResponse = comm.sendWithoutFailureCallback(connectCommand);
-        if (!connectResponse.isSuccessful()) {
-            if (connectResponse.getException() != null) {
-                throw connectResponse.getException();
+        CommandResponse connectResponse;
+
+        try {
+            if (attemptFailover) {
+                connectResponse = comm.sendWithoutInitializeCallback(connectCommand);
             } else {
-                throw new Exception("FAILED: " + connectCommand);
+                connectResponse = comm.sendWithoutCallbacks(connectCommand);
             }
+
+            if (!connectResponse.isSuccessful()) {
+                if (connectResponse.getException() != null) {
+                    throw connectResponse.getException();
+                } else {
+                    throw new Exception("FAILED: " + connectCommand);
+                }
+            }
+        } catch (Throwable t) {
+            // error, so allow any quick call back to this method to try it again
+            synchronized (m_lastSentConnectAgent) {
+                m_lastSentConnectAgent.timestamp = 0L;
+            }
+            throw t;
         }
+
         return;
     }
 
@@ -1603,7 +1637,7 @@ public class AgentMain {
                 .getPreferences());
             if (comm_config.isMulticastDetectorEnabled()) {
                 m_autoDiscoveryListener = new AgentAutoDiscoveryListener(this, createServerRemoteCommunicator(null,
-                    false));
+                    false, false));
                 m_commServices.addDiscoveryListener(m_autoDiscoveryListener);
                 LOG.debug(AgentI18NResourceKeys.SERVER_AUTO_DETECT_ENABLED, m_configuration.getServerLocatorUri());
             } else {
@@ -1732,7 +1766,11 @@ public class AgentMain {
      * @return the agent's registration security token, or <code>null</code> if it is not known
      */
     private String getAgentSecurityToken() {
-        return m_configuration.getAgentSecurityToken();
+        String token = m_configuration.getAgentSecurityToken();
+        if (token == null || token.length() == 0) {
+            return null;
+        }
+        return token;
     }
 
     /**
@@ -1797,7 +1835,7 @@ public class AgentMain {
      * @throws Exception if the configured server locator URI in malformed
      */
     private ClientCommandSender createClientCommandSender() throws Exception {
-        RemoteCommunicator remote_comm = createServerRemoteCommunicator(null, true);
+        RemoteCommunicator remote_comm = createServerRemoteCommunicator(null, true, true);
         ClientCommandSenderConfiguration config = m_configuration.getClientCommandSenderConfiguration();
 
         ClientCommandSender client_sender = new ClientCommandSender(remote_comm, config, m_previouslyQueueCommands);
@@ -1808,44 +1846,7 @@ public class AgentMain {
             }
         }
 
-        addSenderStartupCommands(client_sender);
-
         return client_sender;
-    }
-
-    /**
-     * Given a sender object, this will add all startup commands to it that the agent will need.
-     * 
-     * @param client_sender the sender whose startup commands are to be setup
-     * 
-     * @throws Exception if failed to prepare the sender with the appropriate startup commands
-     */
-    private void addSenderStartupCommands(ClientCommandSender client_sender) throws Exception {
-        // empty out the current list of startup commands, we'll start from scratch
-        client_sender.clearStartupCommands();
-
-        // in order to send the connectAgent command, the agent needs to be registered
-        // we won't add this command if we know we aren't registered yet
-        String agentSecurityToken = getAgentSecurityToken();
-        if (agentSecurityToken != null && agentSecurityToken.length() > 0) {
-            Command connectAgentCommand = createConnectAgentCommand();
-            client_sender.preprocessCommand(connectAgentCommand);
-            CommandResponseCallback callback = new CommandResponseCallback() {
-                private static final long serialVersionUID = 1L;
-
-                public void commandSent(CommandResponse response) {
-                    if (response.isSuccessful()) {
-                        LOG.info(AgentI18NResourceKeys.AUTO_CONNECT_AGENT_COMMAND_SENT);
-                    } else {
-                        LOG.info(AgentI18NResourceKeys.AUTO_CONNECT_AGENT_COMMAND_FAILED, response.getException());
-                    }
-                }
-            };
-            CommandAndCallback cnc = new CommandAndCallback(connectAgentCommand, callback);
-            client_sender.addStartupCommand(cnc);
-        }
-
-        return;
     }
 
     /**
@@ -1866,7 +1867,7 @@ public class AgentMain {
         throws Exception {
 
         String uri = AgentConfiguration.buildServerLocatorUri(transport, address, port, transportParams);
-        return createServerRemoteCommunicator(uri, false);
+        return createServerRemoteCommunicator(uri, false, false);
     }
 
     /**
@@ -1877,12 +1878,15 @@ public class AgentMain {
      * @param withFailover if <code>true</code>, the communicator will be configured to attempt to failover
      *                     to another server when it can't send commands to the current server. if <code>false</code>,
      *                     the communicator will not try to do any failover attempts
+     * @param withInitializer if <code>true</code>, the communicator will be configured with an initializer callback
+     *                        that will be invoked the first time the communicator will try to send a command.
      *
      * @return the remote communicator to use to communicate with the server
      *
      * @throws Exception if the configured server locator URI is malformed
      */
-    private RemoteCommunicator createServerRemoteCommunicator(String uri, boolean withFailover) throws Exception {
+    private RemoteCommunicator createServerRemoteCommunicator(String uri, boolean withFailover, boolean withInitializer)
+        throws Exception {
 
         if (uri == null) {
             uri = m_configuration.getServerLocatorUri();
@@ -1937,6 +1941,9 @@ public class AgentMain {
         RemoteCommunicator remote_comm = new JBossRemotingRemoteCommunicator(uri, config);
         if (withFailover) {
             remote_comm.setFailureCallback(new FailoverFailureCallback(this));
+        }
+        if (withInitializer) {
+            remote_comm.setInitializeCallback(new ConnectAgentInitializeCallback(this));
         }
 
         return remote_comm;
@@ -2777,5 +2784,11 @@ public class AgentMain {
         public HelpException(String msg) {
             super(msg);
         }
+    }
+
+    // a simple class that encapsulates when and to whom the last connect agent command was sent
+    private class LastSentConnectAgent {
+        public long timestamp = 0L;
+        public String serverEndpoint = "";
     }
 }

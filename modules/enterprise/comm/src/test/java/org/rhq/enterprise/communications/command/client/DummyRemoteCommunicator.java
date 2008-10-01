@@ -131,8 +131,12 @@ public class DummyRemoteCommunicator implements RemoteCommunicator {
         return new GenericCommandResponse(command, true, null, null);
     }
 
-    public CommandResponse sendWithoutFailureCallback(Command command) throws Throwable {
-        return null;
+    public CommandResponse sendWithoutCallbacks(Command command) throws Throwable {
+        return send(command);
+    }
+
+    public CommandResponse sendWithoutInitializeCallback(Command command) throws Throwable {
+        return send(command);
     }
 
     public FailureCallback getFailureCallback() {
@@ -140,6 +144,13 @@ public class DummyRemoteCommunicator implements RemoteCommunicator {
     }
 
     public void setFailureCallback(FailureCallback callback) {
+    }
+
+    public InitializeCallback getInitializeCallback() {
+        return null;
+    }
+
+    public void setInitializeCallback(InitializeCallback callback) {
     }
 
     public String getRemoteEndpoint() {

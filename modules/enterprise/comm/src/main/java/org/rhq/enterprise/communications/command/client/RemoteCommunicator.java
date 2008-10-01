@@ -71,8 +71,10 @@ public interface RemoteCommunicator {
 
     /**
      * This is the same as {@link #send(Command)} except, on error, this method will not attempt
-     * to call the failure callback, if one was set. This is useful when the caller wants to
+     * to call the failure callback, if one was set.  This is useful when the caller wants to
      * explicitly handle any failure that might occur without any interference with a failure callback.
+     * This method will also not attempt to call the {@link #getInitializeCallback() initialize callback},
+     * thus allowing this method to be called from the initialize callback itself.
      * 
      * @param command encapsulates the command that is to be executed (must not be <code>null</code>)
      *
@@ -80,7 +82,20 @@ public interface RemoteCommunicator {
      * 
      * @throws Throwable on any error (either during the sending or execution of the command)
      */
-    CommandResponse sendWithoutFailureCallback(Command command) throws Throwable;
+    CommandResponse sendWithoutCallbacks(Command command) throws Throwable;
+
+    /**
+     * This is the same as {@link #send(Command)} except this method will not attempt
+     * to call the {@link #getInitializeCallback() initialize callback},
+     * thus allowing this method to be called from the initialize callback itself.
+     * 
+     * @param command encapsulates the command that is to be executed (must not be <code>null</code>)
+     *
+     * @return the command response
+     * 
+     * @throws Throwable on any error (either during the sending or execution of the command)
+     */
+    CommandResponse sendWithoutInitializeCallback(Command command) throws Throwable;
 
     /**
      * Returns the failure callback currently configured within this object.
@@ -98,6 +113,24 @@ public interface RemoteCommunicator {
      * @param callback the object that listens to failures and may trigger retries (may be <code>null</code>)
      */
     void setFailureCallback(FailureCallback callback);
+
+    /**
+     * Returns the initialize callback currently configured within this object.
+     * 
+     * @return the callback (may be <code>null</code>)
+     */
+    InitializeCallback getInitializeCallback();
+
+    /**
+     * Sets the given initialize callback as the one that will be notified when this object attempts
+     * to send its very first message after a {@link #connect()}. This allows the callback to perform
+     * additional initialization procedures prior to the first message getting sent to the remote
+     * endpoint.  The callback is free to send its own messages via {@link #sendWithoutCallbacks(Command)}
+     * or {@link #sendWithoutInitializeCallback(Command)}.
+     * 
+     * @param callback
+     */
+    void setInitializeCallback(InitializeCallback callback);
 
     /**
      * Returns a string representation of the remote endpoint this communicator is configured to talk to.

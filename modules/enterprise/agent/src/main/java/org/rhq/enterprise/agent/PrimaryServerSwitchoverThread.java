@@ -179,7 +179,7 @@ public class PrimaryServerSwitchoverThread extends Thread {
         IdentifyCommand id_cmd = new IdentifyCommand();
         this.agent.getClientCommandSender().preprocessCommand(id_cmd);
         try {
-            CommandResponse response = comm.sendWithoutFailureCallback(id_cmd);
+            CommandResponse response = comm.sendWithoutCallbacks(id_cmd);
             // there is a special case when we might get a response back but it should be considered "server down".
             // that is: when the server replies with a NotProcessedException response
             if (response.getException() instanceof NotProcessedException) {

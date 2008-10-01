@@ -208,11 +208,6 @@ public class ClientCommandSender {
     private ClientCommandSenderMetrics m_metrics;
 
     /**
-     * A list of commands that will be sent to the remote endpoint as soon as the sender starts.
-     */
-    private List<CommandAndCallback> m_startupCommands = new ArrayList<CommandAndCallback>();
-
-    /**
      * Constructor for {@link ClientCommandSender}. Note that if the configuration's queue size is less than or equal to
      * 0, the queue will be unbounded - be careful since this means there will be no way to stop resources from being
      * used up if commands keep getting queued but nothing is getting sent.
@@ -462,43 +457,6 @@ public class ClientCommandSender {
         }
 
         return;
-    }
-
-    /**
-     * Returns a list of the currently defined startup commands.  The list is a shallow copy;
-     * adding or removing from the returned list does nothing to the list held by this sender.
-     * 
-     * @return the list of startup commands (and their optional callbacks) currently defined;
-     *         may be empty but will never be <code>null</code>
-     */
-    public List<CommandAndCallback> getStartupCommands() {
-        synchronized (m_changingModeLock) {
-            return new ArrayList<CommandAndCallback>(m_startupCommands);
-        }
-    }
-
-    /**
-     * Adds a new startup command that will be send to the remote endpoint whenver this sender
-     * enters the start state.  Startup commands are issued in the order they are added to this sender.
-     * Note that <code>startupCommand</code> can also be provided with a command response callback so
-     * you can have an object that is told when the command goes out.
-     * 
-     * @param startupCommand the new startup command (and an optional callback) that will be send when this sender is started
-     */
-    public void addStartupCommand(CommandAndCallback startupCommand) {
-        synchronized (m_changingModeLock) {
-            m_startupCommands.add(startupCommand);
-        }
-    }
-
-    /**
-     * Clears the startup commands list - after this returns, no commands will be sent when this
-     * sender is started.
-     */
-    public void clearStartupCommands() {
-        synchronized (m_changingModeLock) {
-            m_startupCommands.clear();
-        }
     }
 
     /**
@@ -832,14 +790,6 @@ public class ClientCommandSender {
                         return new Thread(r, "ClientCommandSenderTask Timer Thread #" + (m_timerThreadIndex++));
                     }
                 });
-
-                // if there are start up commands defined, we need to queue them up first - they need to go out ahead of all others
-                for (CommandAndCallback cnc : m_startupCommands) {
-                    LOG.debug(CommI18NResourceKeys.CLIENT_COMMAND_SENDER_QUEUING_STARTUP_COMMAND, cnc.getCommand());
-                    long timeout = getCommandTimeout(cnc.getCommand());
-                    ClientCommandSenderTask task = new ClientCommandSenderTask(this, cnc, timeout, true, null);
-                    m_executor.execute(task);
-                }
 
                 // If there are any persisted commands, we need to unspool them and put them on the queue so they can be resent.
                 // Queue these first since they were guaranteed to be delivered and hence (presumably) more important.

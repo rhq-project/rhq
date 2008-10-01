@@ -168,6 +168,7 @@ public class AgentTestClass {
         if (start_it) {
             // start the agent *and* allow it to send messages immediately
             m_agent.start();
+            m_agent.getClientCommandSender().getRemoteCommunicator().setInitializeCallback(null);
             m_agent.getClientCommandSender().startSending();
         }
 
@@ -196,7 +197,7 @@ public class AgentTestClass {
         ServiceContainerMetricsMBean metrics;
 
         try {
-            metrics = (ServiceContainerMetricsMBean) MBeanServerInvocationHandler.newProxyInstance(mbs,
+            metrics = MBeanServerInvocationHandler.newProxyInstance(mbs,
                 ServiceContainerMetricsMBean.OBJECTNAME_METRICS, ServiceContainerMetricsMBean.class, false);
         } catch (Exception e) {
             throw new RuntimeException(e);

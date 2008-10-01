@@ -29,6 +29,12 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "comm-messages", defaultLocale = "en")
 public interface CommI18NResourceKeys {
+    @I18NMessages( { @I18NMessage("The initialize callback has finished. Callback to be invoked again? [{0}]") })
+    String INITIALIZE_CALLBACK_DONE = "JBossRemotingRemoteCommunicator.init-callback-done";
+
+    @I18NMessages( { @I18NMessage("The initialize callback has failed. It will be tried again. Cause: {0}") })
+    String INITIALIZE_CALLBACK_FAILED = "JBossRemotingRemoteCommunicator.init-callback-failed";
+
     @I18NMessages( { @I18NMessage("The remote server did not reply with a valid command response. Reply was: [{0}]") })
     String COMM_CCE = "JBossRemotingRemoteCommunicator.comm-cce";
 

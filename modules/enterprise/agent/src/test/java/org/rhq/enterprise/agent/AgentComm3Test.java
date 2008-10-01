@@ -78,12 +78,13 @@ public class AgentComm3Test extends AgentCommTestBase {
 
         AgentMain agent1 = m_agent1Test.createAgent(false); // don't start its sender yet
         agent1.start();
+        agent1.getClientCommandSender().getRemoteCommunicator().setInitializeCallback(null);
 
         AgentMain agent2 = m_agent2Test.createAgent(true); // we can start its sender now, we'll use it to send agent1 a command
 
         try {
             Thread.sleep(5000);
-            assert agent1.getClientCommandSender().isSending() : "connectAgent should have triggered our listener and started the sender";
+            assert !agent1.getClientCommandSender().isSending() : "we should have been able to turn off the InitializeCallback/connectAgent should therefore not have triggered our listener and started the sender";
             assert agent2.getClientCommandSender().isSending() : "Should have already started the sender";
 
             // our canary-in-the-mine is the sending mode, the sender goes into sending mode when it detects the server
@@ -109,6 +110,7 @@ public class AgentComm3Test extends AgentCommTestBase {
             assert agent2.getClientCommandSender().isSending() : "Should still be started";
 
             agent1.start();
+            agent1.getClientCommandSender().getRemoteCommunicator().setInitializeCallback(null);
             assert agent1.getClientCommandSender() != null : "agent1 should be started again";
             assert !agent1.getClientCommandSender().isSending() : "Should still not yet be in sending mode again";
             assert agent2.getClientCommandSender().isSending() : "Should still be started";
@@ -406,13 +408,13 @@ public class AgentComm3Test extends AgentCommTestBase {
 
         Thread.sleep(2000L); // wait for the initial connectAgent messages to get sent
 
-        assert SimpleCounterCommandPreprocessor.COUNTER.get() == 1L : "Counter should have been reset but equal to 1 due to the agent's initial connectAgent message";
+        assert SimpleCounterCommandPreprocessor.COUNTER.get() == 0L : "Counter should have been reset to 0";
         agent1.getClientCommandSender().sendSynch(new IdentifyCommand());
-        assert SimpleCounterCommandPreprocessor.COUNTER.get() == 2L : "Should have counted 2 commands (including the auto-connectAgent at startup)";
+        assert SimpleCounterCommandPreprocessor.COUNTER.get() == 1L : "Should have counted 1 commands (there should be no auto-connectAgent at startup)";
         agent1.getClientCommandSender().sendSynch(new IdentifyCommand());
-        assert SimpleCounterCommandPreprocessor.COUNTER.get() == 3L : "Should have counted 3 commands (including the auto-connectAgent at startup)";
+        assert SimpleCounterCommandPreprocessor.COUNTER.get() == 2L : "Should have counted 2 commands (there should be no auto-connectAgent at startup)";
         agent1.getClientCommandSender().sendSynch(new IdentifyCommand());
-        assert SimpleCounterCommandPreprocessor.COUNTER.get() == 4L : "Should have counted 4 commands (including the auto-connectAgent at startup)";
+        assert SimpleCounterCommandPreprocessor.COUNTER.get() == 3L : "Should have counted 3 commands (there should be no auto-connectAgent at startup)";
 
         return;
     }

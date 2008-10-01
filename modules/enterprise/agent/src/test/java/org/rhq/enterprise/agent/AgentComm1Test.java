@@ -117,9 +117,6 @@ public class AgentComm1Test extends AgentCommTestBase {
         props1.setProperty(ServiceContainerConfigurationConstants.COMMAND_AUTHENTICATOR,
             SimpleCommandAuthenticator.class.getName());
 
-        // set this so the agent will not pre-send connectAgent because JBoss Remoting 2 doesn't seem to like bi-directional messaging within the same VM
-        props1.setProperty(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, "");
-
         m_agent1Test.setConfigurationOverrides(props1);
 
         Properties props2 = new Properties();
@@ -141,9 +138,6 @@ public class AgentComm1Test extends AgentCommTestBase {
             SimpleCommandAuthenticator.class.getName());
         props2.setProperty(ServiceContainerConfigurationConstants.REMOTE_POJOS, SimpleTestStreamPojo.class.getName()
             + ':' + ITestStreamPojo.class.getName());
-
-        // set this so the agent will not pre-send connectAgent because JBoss Remoting 2 doesn't seem to like bi-directional messaging within the same VM
-        props2.setProperty(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, "");
 
         m_agent2Test.setConfigurationOverrides(props2);
 

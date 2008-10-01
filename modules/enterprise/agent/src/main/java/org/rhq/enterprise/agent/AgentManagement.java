@@ -473,8 +473,8 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
     private ServiceContainerMetricsMBean getServerSideMetrics() {
         try {
             MBeanServer mbs = m_agent.getServiceContainer().getMBeanServer();
-            return MBeanServerInvocationHandler.newProxyInstance(mbs, ServiceContainerMetricsMBean.OBJECTNAME_METRICS,
-                ServiceContainerMetricsMBean.class, false);
+            return (ServiceContainerMetricsMBean) MBeanServerInvocationHandler.newProxyInstance(mbs,
+                ServiceContainerMetricsMBean.OBJECTNAME_METRICS, ServiceContainerMetricsMBean.class, false);
         } catch (Exception e) {
             throw new IllegalStateException(e); // should never happen
         }

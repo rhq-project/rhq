@@ -20,8 +20,12 @@ package org.rhq.enterprise.agent;
 
 import java.util.List;
 import java.util.Properties;
+import java.util.TimeZone;
+
 import javax.management.ObjectName;
+
 import org.jboss.mx.util.ObjectNameFactory;
+
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -103,7 +107,7 @@ public interface AgentManagementMBean {
      * the agent is pointing to its primary server as found in the new failover list and, if not, will
      * attempt to switch to the primary server now.
      */
-    void getLatestFailoverList();
+    void downloadLatestFailoverList();
 
     /**
      * This will tell the agent to update its plugins. If the JON Server is up and the agent has detected it, this will
@@ -176,6 +180,30 @@ public interface AgentManagementMBean {
      * @return current time, as it is known to the agent
      */
     long getCurrentTime();
+
+    /**
+     * Returns a string of the agent's current date/time, formatted with the given time zone.
+     * If the given time zone is null or empty string, the agent's local time zone will be used.
+     * If the given time zone is unknown, GMT will be the default.
+     * <code>timeZone</code>can be either an abbreviation such as "PST", a full name such as
+     * "America/Los_Angeles", or a custom ID such as "GMT-8:00". Note that the support of abbreviations is
+     * for JDK 1.1.x compatibility only and full names should be used.
+     *
+     * @param timeZone the time zone to display the date/time in
+     * 
+     * @return the agent's current date/time
+     * 
+     * @see TimeZone#getTimeZone(String)
+     */
+    String retrieveCurrentDateTime(String timeZone);
+
+    /**
+     * Returns the number of milliseconds this agent thinks its clock is ahead or behind from
+     * its server's clock.  A positive value means the agent clock is ahead.
+     *
+     * @return time the agent-server clock difference
+     */
+    long getAgentServerClockDifference();
 
     /**
      * Returns the number of seconds the agent has been started - this resets everytime the agent is shutdown. This time

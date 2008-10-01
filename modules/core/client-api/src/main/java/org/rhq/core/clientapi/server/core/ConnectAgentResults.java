@@ -16,28 +16,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.communications.command.impl.identify;
+package org.rhq.core.clientapi.server.core;
 
-import java.util.Date;
+import java.io.Serializable;
 
 /**
- * Identification information about a JON Server.
+ * These are the results of a successful "agent connect".
  *
  * @author John Mazzitelli
  */
-public class ServerIdentification extends Identification {
-    /**
-     * the UID to identify the serializable version of this class
-     */
+public class ConnectAgentResults implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private long serverTime;
+
+    public ConnectAgentResults(long serverTime) {
+        this.serverTime = serverTime;
+    }
+
     /**
-     * Constructor for {@link ServerIdentification}.
+     * The current time as seen by the server clock.  This is the time the agent connect
+     * was made and can also be used to determine if the agent's clock is in sync with the server.
      *
-     * @see Identification#Identification(String, String)
+     * @return the server's clock, in epoch milliseconds
      */
-    public ServerIdentification(String type, String locatorUri) throws IllegalArgumentException {
-        super(type, locatorUri);
+    public long getServerTime() {
+        return this.serverTime;
     }
 
     /**
@@ -45,14 +49,6 @@ public class ServerIdentification extends Identification {
      */
     @Override
     public String toString() {
-        StringBuffer buf = new StringBuffer("Server Identification: type=[");
-        buf.append(getType());
-        buf.append("]; locator=[");
-        buf.append(getInvokerLocator());
-        buf.append("]; timestamp=[");
-        buf.append(new Date(getTimestamp()));
-        buf.append("]");
-
-        return buf.toString();
+        return "ConnectAgentResults: [server-time=" + this.serverTime + "]";
     }
 }

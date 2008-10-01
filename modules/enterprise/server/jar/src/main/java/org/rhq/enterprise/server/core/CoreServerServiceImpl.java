@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -34,6 +35,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.server.core.AgentRegistrationException;
 import org.rhq.core.clientapi.server.core.AgentRegistrationRequest;
 import org.rhq.core.clientapi.server.core.AgentRegistrationResults;
+import org.rhq.core.clientapi.server.core.ConnectAgentResults;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.domain.cluster.PartitionEventType;
 import org.rhq.core.domain.cluster.Server;
@@ -178,7 +180,7 @@ public class CoreServerServiceImpl implements CoreServerService {
     /**
      * @see CoreServerService#connectAgent()
      */
-    public void connectAgent(String agentName) {
+    public ConnectAgentResults connectAgent(String agentName) {
         Agent agent = getAgentManager().getAgentByName(agentName);
         Server server = getServerManager().getServer();
 
@@ -190,8 +192,9 @@ public class CoreServerServiceImpl implements CoreServerService {
         getPartitionEventManager().auditPartitionEvent(getSubjectManager().getOverlord(),
             PartitionEventType.AGENT_CONNECT, agentName + " - " + server.getName());
 
-        // TODO: this may not be necessary due to the audit above. 
-        log.info("Agent [" + agentName + "] has connected to this server.");
+        Date now = new Date();
+        log.info("Agent [" + agentName + "] has connected to this server at " + now);
+        return new ConnectAgentResults(now.getTime());
     }
 
     /**

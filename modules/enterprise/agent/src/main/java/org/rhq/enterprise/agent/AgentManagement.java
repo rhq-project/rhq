@@ -21,15 +21,19 @@ package org.rhq.enterprise.agent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.prefs.Preferences;
+
 import javax.management.MBeanRegistration;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
+
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -111,7 +115,7 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         }, "Shutdown Thread").start();
     }
 
-    public void getLatestFailoverList() {
+    public void downloadLatestFailoverList() {
         m_agent.performPrimaryServerSwitchoverCheck();
     }
 
@@ -242,6 +246,22 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
 
     public long getCurrentTime() {
         return System.currentTimeMillis();
+    }
+
+    public String retrieveCurrentDateTime(String timeZone) {
+        DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.FULL);
+
+        if (timeZone == null || timeZone.length() == 0) {
+            df.setTimeZone(TimeZone.getDefault());
+        } else {
+            df.setTimeZone(TimeZone.getTimeZone(timeZone));
+        }
+
+        return df.format(new Date());
+    }
+
+    public long getAgentServerClockDifference() {
+        return m_agent.getAgentServerClockDifference();
     }
 
     public long getUptime() {
@@ -453,7 +473,7 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
     private ServiceContainerMetricsMBean getServerSideMetrics() {
         try {
             MBeanServer mbs = m_agent.getServiceContainer().getMBeanServer();
-            return (ServiceContainerMetricsMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, ServiceContainerMetricsMBean.OBJECTNAME_METRICS,
+            return MBeanServerInvocationHandler.newProxyInstance(mbs, ServiceContainerMetricsMBean.OBJECTNAME_METRICS,
                 ServiceContainerMetricsMBean.class, false);
         } catch (Exception e) {
             throw new IllegalStateException(e); // should never happen

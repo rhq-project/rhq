@@ -38,6 +38,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -62,6 +63,7 @@ import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.core.AgentRegistrationException;
 import org.rhq.core.clientapi.server.core.AgentRegistrationRequest;
 import org.rhq.core.clientapi.server.core.AgentRegistrationResults;
+import org.rhq.core.clientapi.server.core.ConnectAgentResults;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.event.EventServerService;
@@ -306,6 +308,15 @@ public class AgentMain {
     private LastSentConnectAgent m_lastSentConnectAgent = new LastSentConnectAgent();
 
     /**
+     * This is the number of milliseconds this agent clock differs from its server's clock.
+     * A positive number means the agent's clock is ahead of the server.
+     * This is only updated at certain times during the agent lifetime but it is useful
+     * for the agent management interface to disclose as it will help to determine if
+     * agent/server boxes are in sync.
+     */
+    private long m_agentServerClockDifference = 0L;
+
+    /**
      * The main method that starts the whole thing.
      *
      * @param args
@@ -429,6 +440,31 @@ public class AgentMain {
      */
     public long getStartTime() {
         return m_startTime;
+    }
+
+    /**
+     * Returns the number of milliseconds this agent thinks its clock is ahead or behind from
+     * its server's clock.  A positive value means the agent clock is ahead.
+     *
+     * @return time the agent-server clock difference
+     */
+    public long getAgentServerClockDifference() {
+        return m_agentServerClockDifference;
+    }
+
+    /**
+     * This method should be called whenever the server time is known. This helps
+     * keep the {@link #getAgentServerClockDifference()} up-to-date.
+     * 
+     * @param serverTime the currently know value of the server clock (epoch millis)
+     */
+    public void serverClockNotification(long serverTime) {
+        long agentTime = System.currentTimeMillis();
+        m_agentServerClockDifference = agentTime - serverTime;
+        if (Math.abs(m_agentServerClockDifference) > 30000L) {
+            LOG.error(AgentI18NResourceKeys.TIME_NOT_SYNCED, serverTime, new Date(serverTime), agentTime, new Date(
+                agentTime));
+        }
     }
 
     /**
@@ -1489,6 +1525,16 @@ public class AgentMain {
                     throw new Exception("FAILED: " + connectCommand);
                 }
             }
+
+            try {
+                ConnectAgentResults results = (ConnectAgentResults) connectResponse.getResults();
+                long serverTime = results.getServerTime();
+                serverClockNotification(serverTime);
+            } catch (Throwable t) {
+                // should never happen, should always cast to non-null ConnectAgentResults
+                LOG.error(AgentI18NResourceKeys.TIME_UNKNOWN, ThrowableUtil.getAllMessages(t));
+            }
+
         } catch (Throwable t) {
             // error, so allow any quick call back to this method to try it again
             synchronized (m_lastSentConnectAgent) {

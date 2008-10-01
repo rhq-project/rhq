@@ -28,6 +28,12 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
+    @I18NMessage("The server and agent clocks are not in sync. Server=[{0,number,#}][{1,date,long} {1,time,full}], Agent=[{2,number,#}][{3,date,long} {3,time,full}]")
+    String TIME_NOT_SYNCED = "AgentMain.time-not-synced";
+
+    @I18NMessage("Failed to determine the server time. Cause: {0}")
+    String TIME_UNKNOWN = "AgentMain.time-unknown";
+
     @I18NMessage("The agent is not talking to its primary server [{0}:{1,number,#}] - it is talking to [{2}:{3,number,#}]")
     String NOT_TALKING_TO_PRIMARY_SERVER = "PrimaryServerSwitchoverThread.not-talking-to-primary";
 

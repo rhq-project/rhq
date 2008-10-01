@@ -21,7 +21,7 @@ package org.rhq.enterprise.communications.command.impl.identify;
 import java.io.Serializable;
 
 /**
- * Identification information that is common for either a JON Agent or JON Server.
+ * Identification information that is common for both types of remote endpoints: an agent or server.
  *
  * @author John Mazzitelli
  */
@@ -29,25 +29,26 @@ public abstract class Identification implements Serializable {
     /**
      * the UID to identify the serializable version of this class
      */
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     /**
-     * The type string that identifies the remote endpoint as a JON Agent.
+     * The type string that identifies the remote endpoint as an Agent.
      */
     public static final String TYPE_AGENT = "agent";
 
     /**
-     * The type string that identifies the remote endpoint as a JON Server.
+     * The type string that identifies the remote endpoint as a Server.
      */
     public static final String TYPE_SERVER = "server";
 
     private final String m_type;
     private final String m_locator;
+    private final long m_timestamp;
 
     /**
      * Constructor for {@link Identification}.
      *
-     * @param  type    indicates if this is an {@link #TYPE_AGENT JON Agent} or {@link #TYPE_SERVER JON Server}
+     * @param  type    indicates if this is an {@link #TYPE_AGENT Agent} or {@link #TYPE_SERVER Server}
      * @param  locator the locator endpoint of remoting server
      *
      * @throws IllegalArgumentException if either parameter is <code>null</code>
@@ -63,6 +64,7 @@ public abstract class Identification implements Serializable {
 
         m_type = type;
         m_locator = locator;
+        m_timestamp = System.currentTimeMillis();
     }
 
     /**
@@ -85,8 +87,19 @@ public abstract class Identification implements Serializable {
     }
 
     /**
-     * @see java.lang.Object#equals(java.lang.Object)
+     * Returns the epoch milliseconds of the identified endpoint. This is the time
+     * at the point when this object was created.
+     * 
+     * @return epoch millis
      */
+    public long getTimestamp() {
+        return m_timestamp;
+    }
+
+    /**
+     * Determines equality based solely on the type and locator.
+     */
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -102,8 +115,9 @@ public abstract class Identification implements Serializable {
     }
 
     /**
-     * @see java.lang.Object#hashCode()
+     * Determines hash based solely on the type and locator.
      */
+    @Override
     public int hashCode() {
         int result = 17;
 

@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.communications.command.impl.identify;
 
+import java.util.Date;
+
 /**
  * Identification information about a JON Agent.
  *
@@ -41,11 +43,14 @@ public class AgentIdentification extends Identification {
     /**
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString() {
         StringBuffer buf = new StringBuffer("Agent Identification: type=[");
         buf.append(getType());
         buf.append("]; locator=[");
         buf.append(getInvokerLocator());
+        buf.append("]; timestamp=[");
+        buf.append(new Date(getTimestamp()));
         buf.append("]");
 
         return buf.toString();

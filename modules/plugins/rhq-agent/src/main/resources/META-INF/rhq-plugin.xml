@@ -36,8 +36,8 @@
                  description="Shuts down the agent's comm layer and plugin container.  If the agent is in daemon mode, the entire VM will exit">
       </operation>
 
-      <operation name="getLatestFailoverList"
-                 displayName="Get Latest Failover List"
+      <operation name="downloadLatestFailoverList"
+                 displayName="Download Latest Failover List"
                  description="Tells the agent to download an updated server failover list. This will also check to make sure the agent is pointing to its primary server as found in the new failover list and, if not, will attempt to switch to the primary server now.">
       </operation>
 
@@ -101,16 +101,37 @@
          </results>
       </operation>
 
+      <operation name="retrieveCurrentDateTime"
+                 displayName="Get Current Date/Time"
+                 description="Obtains the agent's current date/time.">
+         <parameters>
+            <c:simple-property name="timeZone" type="string" default="" required="false" description="A timezone identifier that will be used to format the date/time string. This can be either an abbreviation such as 'PST', a full name such as 'America/Los_Angeles', or a custom ID such as 'GMT-8:00'. If this is not specified, the agent's local time zone will be used. If the given time zone identifier is unknown, 'GMT' will be the default."/>
+         </parameters>
+         <results>
+            <c:simple-property name="dateTime" type="string" description="The agent's current date/time, formatted in the given time zone" />
+         </results>
+      </operation>
+
       <metric property="Trait.SigarVersion"
               displayName="SIGAR Version"
               dataType="trait"
               displayType="summary"
               description="The version of the SIGAR (System Information Gatherer and Reporter) native library used by the Agent" />
 
+      <metric property="AgentServerClockDifference"
+              displayName="Agent-Server Clock Difference"
+              description="Number of milliseconds the agent's clock differs from its server's clock"
+              defaultInterval="1800000"
+              defaultOn="true"
+              displayType="summary"
+              units="milliseconds"
+              category="performance"
+              measurementType="dynamic" />
+
       <metric property="Uptime"
               displayName="Up Time"
               description="Total number of seconds since the agent was started"
-              defaultOn="true"
+              defaultOn="false"
               units="seconds"
               category="availability"
               measurementType="dynamic" />  <!-- changed to dynamic to prevent generation of per Minute metric. -->

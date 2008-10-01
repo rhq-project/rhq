@@ -46,10 +46,12 @@ public interface CoreServerService {
      * activity. The agent must already be registered.
      *
      * @param  agentRegistrationRequest
+     * 
+     * @return the results, which includes the current time in epoch millis of the server
      *
      * @throws AgentRegistrationException if the agent is not registered
      */
-    void connectAgent(String agentName) throws AgentRegistrationException;
+    ConnectAgentResults connectAgent(String agentName) throws AgentRegistrationException;
 
     /**
      * Get a list of the registered plugins managed in the server.

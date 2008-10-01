@@ -129,6 +129,11 @@ public class AgentServerComponent extends JMXServerComponent implements JMXCompo
                 } else if (name.equals("executeAvailabilityScan")) {
                     Boolean changesOnly = params.getSimple("changesOnly").getBooleanValue();
                     result = (OperationResult) getAgentBean().getOperation(name).invoke(changesOnly);
+                } else if (name.equals("retrieveCurrentDateTime")) {
+                    String timeZone = params.getSimple("timeZone").getStringValue();
+                    result = new OperationResult();
+                    result.getComplexResults().put(
+                        new PropertySimple("dateTime", getAgentBean().getOperation(name).invoke(timeZone)));
                 } else {
                     // this should really never happen
                     throw new IllegalArgumentException("Operation [" + name + "] does not support params");

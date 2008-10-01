@@ -20,7 +20,9 @@ package org.rhq.enterprise.agent.promptcmd;
 
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
+
 import mazz.i18n.Msg;
+
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
@@ -31,6 +33,7 @@ import org.rhq.enterprise.communications.command.client.JBossRemotingRemoteCommu
 import org.rhq.enterprise.communications.command.client.RemoteCommunicator;
 import org.rhq.enterprise.communications.command.impl.generic.GenericCommandClient;
 import org.rhq.enterprise.communications.command.impl.identify.IdentifyCommand;
+import org.rhq.enterprise.communications.command.impl.identify.IdentifyCommandResponse;
 
 /**
  * Asks to identify a remote server.
@@ -56,12 +59,18 @@ public class IdentifyPromptCommand implements AgentPromptCommand {
 
         try {
             if (args.length <= 1) {
-                // the user didn't specify a locator URI, by default, we'll send the command to our JON Server
+                // the user didn't specify a locator URI, by default, we'll send the command to our configured server
                 ClientCommandSender sender = agent.getClientCommandSender();
                 if (agent.isStarted() && (sender != null)) {
                     out.println(MSG.getMsg(AgentI18NResourceKeys.IDENTIFY_ASK_SERVER_FOR_ID));
                     CommandResponse response = sender.sendSynch(command);
                     out.println(response);
+
+                    // let the server know about the time of the server
+                    if (response instanceof IdentifyCommandResponse && response.isSuccessful()) {
+                        long serverTime = ((IdentifyCommandResponse) response).getIdentification().getTimestamp();
+                        agent.serverClockNotification(serverTime);
+                    }
                 } else {
                     out.println(MSG.getMsg(AgentI18NResourceKeys.IDENTIFY_NOT_SENDING));
                 }

@@ -29,4 +29,12 @@
       
    </navigation-rule>
    
+   <navigation-rule>
+      <navigation-case>
+         <from-outcome>sessionExpired</from-outcome>
+         <to-view-id>/Login.do</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+   
 </faces-config>

@@ -18,9 +18,11 @@
  */
 package org.rhq.enterprise.server.measurement;
 
-import java.util.List;
 import java.util.Date;
+import java.util.List;
+
 import javax.ejb.Local;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
@@ -97,6 +99,14 @@ public interface AvailabilityManagerLocal {
      *         full report.
      */
     boolean mergeAvailabilityReport(AvailabilityReport report);
+
+    /**
+     * Executing this method will update the given agent's lastAvailabilityReport time
+     * in a new transaction
+     *  
+     * @param agentId the id of the agent
+     */
+    void updateLastAvailabilityReport(int agentId);
 
     /**
      * Sets all availabilities for all resources managed by the given agent to the given availability type (which may be

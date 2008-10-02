@@ -77,6 +77,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
     private DataSource dataSource;
 
     @EJB
+    private AvailabilityManagerLocal availabilityManager;
+    @EJB
     private AgentManagerLocal agentManager;
     @EJB
     private AuthorizationManagerLocal authorizationManager;
@@ -316,7 +318,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
 
         if (agentToUpdate != null) {
             // do this now, before we might clear() the entity manager
-            agentToUpdate.setLastAvailabilityReport(System.currentTimeMillis());
+            availabilityManager.updateLastAvailabilityReport(agentToUpdate.getId());
+            //agentToUpdate.setLastAvailabilityReport(System.currentTimeMillis());
         }
 
         int numInserted = 0;
@@ -421,6 +424,22 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         }
 
         return true; // everything is OK and things look to be in sync
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void updateLastAvailabilityReport(int agentId) {
+        // should we catch exceptions here, or allow them to bubble up and be caught?
+
+        String updateStatement = "" //
+            + "UPDATE RHQ_AGENT " //
+            + "   SET LAST_AVAILABILITY_REPORT = ? " //
+            + " WHERE ID = ? ";
+
+        Query query = entityManager.createNativeQuery(updateStatement);
+        query.setParameter(1, System.currentTimeMillis());
+        query.setParameter(2, agentId);
+
+        query.executeUpdate();
     }
 
     @SuppressWarnings("unchecked")

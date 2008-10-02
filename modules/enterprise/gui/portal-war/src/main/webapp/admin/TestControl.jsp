@@ -8,6 +8,7 @@
 <%@ page import="org.rhq.enterprise.server.test.AlertTemplateTestLocal" %>
 <%@ page import="org.rhq.enterprise.server.cluster.instance.ServerManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.ResourceGroupTestBeanLocal" %>
+<%@ page import="org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="javax.naming.NamingException" %>
 <%@ page import="org.rhq.core.domain.util.PersistenceUtility" %>
@@ -31,6 +32,7 @@
    SubjectRoleTestBeanLocal subjectRoleTestBean;
    ServerManagerLocal serverManager;
    AlertTemplateTestLocal alertTemplateTestBean;
+   MeasurementBaselineManagerLocal measurementBaselineManager;
    
    coreTestBean = LookupUtil.getCoreTest();
    discoveryTestBean = LookupUtil.getDiscoveryTest();
@@ -39,6 +41,7 @@
    subjectRoleTestBean = LookupUtil.getSubjectRoleTestBean();
    serverManager = LookupUtil.getServerManager();
    alertTemplateTestBean = LookupUtil.getAlertTemplateTestBean();
+   measurementBaselineManager = LookupUtil.getMeasurementBaselineManager();
 
    String result = null;
    String mode = pageContext.getRequest().getParameter("mode");
@@ -113,6 +116,10 @@
          String alertTemplateId = pageContext.getRequest().getParameter("alertTemplateId");
          String numberOfClones = pageContext.getRequest().getParameter("numberOfClones");
          alertTemplateTestBean.cloneAlertTemplate(Integer.parseInt(alertTemplateId), Integer.parseInt(numberOfClones));  
+      }
+      else if ("calculateAutoBaselines".equals(mode))
+      {
+         measurementBaselineManager.calculateAutoBaselines();
       }
    }
    catch (Exception e)
@@ -202,6 +209,8 @@ Send New Platform Inventory Report
 <h2>Measurement</h2>
 
 <ul>
+  <li><c:url var="url" value="/admin/TestControl.jsp?mode=calculateAutoBaselines"/>
+      <a href="<c:out value="${url}"/>">Calculate Auto Baselines</a></li>
   <li><c:url var="url" value="/admin/TestControl.jsp?mode=sendTestMeasurementReport"/>
       <a href="<c:out value="${url}"/>">Send Measurement Report</a></li>
   <li><c:url var="url" value="/admin/TestControl.jsp?mode=addProblemResource"/>

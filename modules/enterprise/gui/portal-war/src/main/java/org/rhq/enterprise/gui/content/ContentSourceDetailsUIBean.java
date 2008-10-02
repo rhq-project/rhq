@@ -20,6 +20,8 @@ package org.rhq.enterprise.gui.content;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
+
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.ContentSource;
@@ -132,6 +134,9 @@ public class ContentSourceDetailsUIBean {
             // make sure we load the full CST including the config def
             String cstName = this.contentSource.getContentSourceType().getName();
             this.contentSource.setContentSourceType(manager.getContentSourceType(cstName));
+
+            ConfigurationUtility.normalizeConfiguration(this.contentSource.getConfiguration(), this.contentSource
+                .getContentSourceType().getContentSourceConfigurationDefinition());
         }
     }
 }

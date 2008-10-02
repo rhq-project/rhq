@@ -1833,11 +1833,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
             break;
         }
-        case DELETED: {
-            removeResource(resource.getId());
-            break;
         }
-        }
+
         container.setSynchronizationState(ResourceContainer.SynchronizationState.SYNCHRONIZED);
     }
 

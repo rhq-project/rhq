@@ -18,27 +18,19 @@
  */
 package org.rhq.enterprise.server.alert.engine.jms;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import javax.ejb.ActivationConfigProperty;
+import javax.ejb.EJB;
 import javax.ejb.MessageDriven;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.jms.model.OutOfBoundsConditionMessage;
-import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 
 /**
  * Use the default message provider
@@ -53,50 +45,26 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class OutOfBoundsConditionConsumerBean implements MessageListener {
     private final Log log = LogFactory.getLog(OutOfBoundsConditionConsumerBean.class);
 
-    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
-    @SuppressWarnings("unused")
-    private EntityManager entityManager;
+    @EJB
+    MeasurementBaselineManagerLocal measurementBaselineManager;
 
     public void onMessage(Message message) {
-        OutOfBoundsConditionMessage outOfBoundsMessage = null;
-        MeasurementOutOfBounds oob = null;
         try {
             ObjectMessage objectMessage = (ObjectMessage) message;
             Object object = objectMessage.getObject();
 
-            outOfBoundsMessage = (OutOfBoundsConditionMessage) object;
+            OutOfBoundsConditionMessage outOfBoundsMessage = (OutOfBoundsConditionMessage) object;
 
-            MeasurementSchedule schedule = new MeasurementSchedule();
-            schedule.setId(outOfBoundsMessage.getScheduleId());
+            measurementBaselineManager.insertOutOfBoundsMessage(outOfBoundsMessage);
+        } catch (Throwable t) {
+            log.error("Error persisting OOB: " + t.getMessage(), t);
 
-            oob = new MeasurementOutOfBounds(schedule, outOfBoundsMessage.getTimestamp(), outOfBoundsMessage
-                .getOobValue());
-
-            // JBNADM-2772 (Make sure the txn doesn't get rolled back for constraint violations)
-            entityManager.persist(oob);
-            entityManager.flush();
-            //problemResourceManager.addMeasurementOutOfBounds(oob); // the exception flowing cross bean call boundaries was setting rollback only
-        } catch (Exception e) {
-            log.error("Error persisting OOB, Message: " + e.getMessage());
-            log.error("Is cache in a valid state? -- "
-                + (LookupUtil.getAlertConditionCacheManager().isCacheValid() ? "yes" : "no"));
-
-            if (outOfBoundsMessage != null) {
-                DateFormat df = new SimpleDateFormat("HH:mm:ss.SSS");
-
-                log.error("for scheduleId: " + outOfBoundsMessage.getScheduleId());
-                log.error("Original @ " + df.format(new Date(outOfBoundsMessage.getTimestamp())) + " - "
-                    + outOfBoundsMessage.getOobValue());
-            }
             try {
                 log.error("JMS Message Info: messageId=" + message.getJMSMessageID() + ", redelivered="
                     + message.getJMSRedelivered());
             } catch (JMSException jmse) {
                 log.error("JMS Message Info: error reading information from message, exception was: "
                     + jmse.getMessage());
-            }
-            if (oob != null) {
-                log.error("Duplicate OOB?: " + oob.toString());
             }
         }
     }

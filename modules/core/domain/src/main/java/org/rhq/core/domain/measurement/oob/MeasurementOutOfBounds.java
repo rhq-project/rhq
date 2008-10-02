@@ -74,9 +74,11 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
     @NamedQuery(name = MeasurementOutOfBounds.QUERY_DELETE_BY_RESOURCES, query = "DELETE MeasurementOutOfBounds oob WHERE oob.schedule IN ( SELECT ms FROM MeasurementSchedule ms WHERE ms.resource IN ( :resources ) )"),
     @NamedQuery(name = MeasurementOutOfBounds.QUERY_DELETE_BY_TIME, query = "DELETE MeasurementOutOfBounds oob WHERE oob.occurred < :oldest") })
 @SequenceGenerator(name = "RHQ_MEASUREMENT_OOB_ID_SEQ", sequenceName = "RHQ_MEASUREMENT_OOB_ID_SEQ")
-@Table(name = "RHQ_MEASUREMENT_OOB")
+@Table(name = MeasurementOutOfBounds.TABLE_NAME)
 public class MeasurementOutOfBounds implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    public static final String TABLE_NAME = "RHQ_MEASUREMENT_OOB";
 
     public static final String QUERY_FIND_BY_ID_AND_LOAD = "MeasurementOutOfBounds.findByIdAndLoad";
     public static final String QUERY_FIND_ALL_ADMIN = "MeasurementOutOfBounds.findAll_admin";

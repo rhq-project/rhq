@@ -20,6 +20,9 @@ package org.rhq.enterprise.server.measurement;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -46,11 +49,14 @@ import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.measurement.composite.MeasurementBaselineComposite;
+import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.alert.engine.jms.model.OutOfBoundsConditionMessage;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
@@ -73,6 +79,10 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
     @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource dataSource;
+
+    private static final String OOB_INSERT_STMT = "" //
+        + "INSERT INTO " + MeasurementOutOfBounds.TABLE_NAME + " (id, schedule_id, occurred, diff) " //
+        + "VALUES (%s, ?, ?, ?)";
 
     @EJB
     private AgentStatusManagerLocal agentStatusManager;
@@ -484,6 +494,42 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         }
 
         return baseline;
+    }
+
+    public void insertOutOfBoundsMessage(OutOfBoundsConditionMessage outOfBoundsMessage) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try {
+            conn = dataSource.getConnection();
+
+            String nextvalSql = JDBCUtil.getNextValSql(conn, MeasurementOutOfBounds.TABLE_NAME);
+            String statementSql = String.format(OOB_INSERT_STMT, nextvalSql);
+            ps = conn.prepareStatement(statementSql);
+
+            int paramIndex = 1;
+            ps.setInt(paramIndex++, outOfBoundsMessage.getScheduleId());
+            ps.setLong(paramIndex++, outOfBoundsMessage.getTimestamp());
+            ps.setDouble(paramIndex++, outOfBoundsMessage.getOobValue());
+
+            ps.executeUpdate();
+
+        } catch (SQLException sqle) {
+            // allows non SQLExceptions to bubble up
+            log.warn("insertOutOfBoundsMessage: insert of OOB failed : " + outOfBoundsMessage, sqle);
+
+            log.error("Error persisting OOB, Message: " + sqle.getMessage());
+            log.error("Is cache in a valid state? -- "
+                + (LookupUtil.getAlertConditionCacheManager().isCacheValid() ? "yes" : "no"));
+
+            DateFormat df = new SimpleDateFormat("HH:mm:ss.SSS");
+
+            log.error("for scheduleId: " + outOfBoundsMessage.getScheduleId());
+            log.error("Original @ " + df.format(new Date(outOfBoundsMessage.getTimestamp())) + " - "
+                + outOfBoundsMessage.getOobValue());
+
+        } finally {
+            JDBCUtil.safeClose(conn, ps, null);
+        }
     }
 
     private void notifyAlertConditionCacheManager(String callingMethod, MeasurementBaseline baseline) {

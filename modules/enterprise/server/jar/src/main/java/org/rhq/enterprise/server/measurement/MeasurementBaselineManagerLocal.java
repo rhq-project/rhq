@@ -26,9 +26,11 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.measurement.composite.MeasurementBaselineComposite;
+import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.alert.engine.jms.model.OutOfBoundsConditionMessage;
 
 /**
  * A manager for {@link MeasurementBaseline}s.
@@ -124,4 +126,12 @@ public interface MeasurementBaselineManagerLocal {
      */
     PageList<MeasurementBaselineComposite> getAllDynamicMeasurementBaselines(int agentId, Subject subject,
         PageControl pc);
+
+    /**
+     * Insert the data contained side an {@link OutOfBoundsConditionMessage} into the table exposed by the
+     * {@link MeasurementOutOfBounds} entity
+     *  
+     * @param outOfBoundsMessage the message that contains the OutOfBounds data to persist
+     */
+    void insertOutOfBoundsMessage(OutOfBoundsConditionMessage outOfBoundsMessage);
 }

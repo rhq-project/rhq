@@ -403,17 +403,21 @@ public class InventoryManager extends AgentService implements ContainerService, 
             Resource parentResource = getResourceContainer(parentResourceId).getResource();
             Resource existingResource = findMatchingChildResource(resource, parentResource);
             if (existingResource != null) {
-                log.debug("Manual add for resource type '" + resourceType.getName() + "' and parent resource id "
-                    + parentResourceId
-                    + " found a resource that already exists in inventory - updating existing resource "
-                    + existingResource + "...");
+                if (log.isDebugEnabled()) {
+                    log.debug("Manual add for resource type '" + resourceType.getName() + "' and parent resource id "
+                        + parentResourceId
+                        + " found a resource that already exists in inventory - updating existing resource "
+                        + existingResource + "...");
+                }
                 resourceAlreadyExisted = true;
                 resource = existingResource;
                 if (resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
                     resource.setPluginConfiguration(pluginConfiguration);
                 }
             } else {
-                log.debug("Adding manually discovered resource " + resource + " to inventory...");
+                if (log.isDebugEnabled()) {
+                    log.debug("Adding manually discovered resource " + resource + " to inventory...");
+                }
                 initResourceContainer(resource);
                 parentResource.addChildResource(resource);
             }
@@ -421,7 +425,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // Make sure the resource's component is activated (i.e. started).
             boolean newPluginConfig = true;
             ResourceContainer resourceContainer = getResourceContainer(resource);
-            log.debug("Activating resource " + resource + "...");
+            if (log.isDebugEnabled()) {
+                log.debug("Activating resource " + resource + "...");
+            }
             activateResource(resource, resourceContainer, newPluginConfig);
 
             // NOTE: We don't mess with inventory status - that's the server's responsibility.
@@ -598,8 +604,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
             DiscoveryServerService discoveryServerService = configuration.getServerServices()
                 .getDiscoveryServerService();
             syncInfo = discoveryServerService.mergeInventoryReport(report);
-            log.debug(String.format("Server DONE merging inventory report (%d)ms.",
-                (System.currentTimeMillis() - startTime)));
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Server DONE merging inventory report (%d)ms.",
+                    (System.currentTimeMillis() - startTime)));
+            }
         } catch (InvalidInventoryReportException e) {
             log.error("Failure sending inventory report to Server - was this Agent's platform deleted?", e);
             if ((this.platform != null) && (this.platform.getInventoryStatus() == InventoryStatus.NEW)
@@ -624,15 +632,21 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Set<Resource> syncedResources = new LinkedHashSet<Resource>();
         Set<Integer> unknownResourceIds = new LinkedHashSet<Integer>();
         Set<Integer> modifiedResourceIds = new LinkedHashSet<Integer>();
+        Set<Integer> deletedResourceIds = new LinkedHashSet<Integer>();
         Set<Resource> newlyCommittedResources = new LinkedHashSet<Resource>();
         Set<String> allUuids = new HashSet<String>();
-        processSyncInfo(syncInfo, syncedResources, unknownResourceIds, modifiedResourceIds, newlyCommittedResources,
-            allUuids);
+        processSyncInfo(syncInfo, syncedResources, unknownResourceIds, modifiedResourceIds, deletedResourceIds,
+            newlyCommittedResources, allUuids);
         mergeUnknownResources(unknownResourceIds);
         mergeModifiedResources(modifiedResourceIds);
         purgeObsoleteResources(allUuids);
         syncSchedulesAndTemplatesForNewlyImportedResources(newlyCommittedResources);
-        log.debug(String.format("DONE syncing local inventory (%d)ms.", (System.currentTimeMillis() - startTime)));
+        if (log.isDebugEnabled()) {
+            if (!deletedResourceIds.isEmpty()) {
+                log.debug("Ignored " + deletedResourceIds.size() + " DELETED resources.");
+            }
+            log.debug(String.format("DONE syncing local inventory (%d)ms.", (System.currentTimeMillis() - startTime)));
+        }
         // If we synced any Resources, one or more Resource components were probably started,
         // so run an avail check to report on their availabilities immediately. Also kick off
         // a service scan to scan those Resources for new child Resources. Kick both tasks off
@@ -696,7 +710,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
     public void removeResource(int resourceId) {
         ResourceContainer resourceContainer = getResourceContainer(resourceId);
         if (resourceContainer == null) {
-            log.debug("Could not remove Resource [" + resourceId + "] because its container was null.");
+            if (log.isDebugEnabled()) {
+                log.debug("Could not remove Resource [" + resourceId + "] because its container was null.");
+            }
             return;
         }
         boolean scan = removeResourceAndIndicateIfScanIsNeeded(resourceContainer.getResource());
@@ -718,7 +734,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         this.inventoryLock.writeLock().lock();
         try {
-            log.debug("Removing " + resource + " from local inventory...");
+            if (log.isDebugEnabled()) {
+                log.debug("Removing " + resource + " from local inventory...");
+            }
 
             // this will deactivate the resource starting bottom-up - so this ends up as a no-op if we are being called
             // recursively, but we need to do this now to ensure everything is stopped prior to removing them from inventory
@@ -739,8 +757,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 Collections.singleton(resource.getId()));
 
             if (this.resourceContainers.remove(resource.getUuid()) == null) {
-                log.debug("Asked to remove an unknown Resource [" + resource + "] with UUID [" + resource.getUuid()
-                    + "]");
+                if (log.isDebugEnabled()) {
+                    log.debug("Asked to remove an unknown Resource [" + resource + "] with UUID [" + resource.getUuid()
+                        + "]");
+                }
             }
 
             // Notify InventoryEventListeners a Resource has been removed.
@@ -749,7 +769,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // if we just so happened to have removed our top level platform, we need to re-discover it, can't go living without it
             // once we discover the platform, let's schedule an immediate server scan
             if ((this.platform == null) || (this.platform.getId() == resource.getId())) {
-                log.debug("Platform [" + resource.getId() + "] was deleted - running platform scan now...");
+                if (log.isDebugEnabled()) {
+                    log.debug("Platform [" + resource.getId() + "] was deleted - running platform scan now...");
+                }
                 this.platform = null;
                 executePlatformScan();
                 newPlatformWasDeletedRecently = true;
@@ -759,7 +781,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     && (this.platform.equals(resource.getParentResource()))
                     && (resource.getResourceType().getCategory() != ResourceCategory.SERVICE);
                 if (isTopLevelServer) {
-                    log.debug("Top-level server [" + resource.getId() + "] was deleted - server discovery is needed.");
+                    if (log.isDebugEnabled()) {
+                        log.debug("Top-level server [" + resource.getId()
+                            + "] was deleted - server discovery is needed.");
+                    }
                     // if we got here, we just deleted a top level server (whose parent is the platform), let's request a scan
                     scanIsNeeded = true;
                 }
@@ -808,24 +833,26 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         // Add the Resource to the Resource hierarchy.
-        // (log services at DEBUG, servers and platforms at INFO)
-        String logMessage = String.format("Detected new %s [%s] - adding to local inventory...",
-                resource.getResourceType().getCategory(), resource);
+        // (log services at DEBUG, servers and platforms at INFO) 
+        String logMessage = String.format("Detected new %s [%s] - adding to local inventory...", resource
+            .getResourceType().getCategory(), resource);
         if (parent != null) {
             switch (resource.getResourceType().getCategory()) {
-                case SERVICE:
-                    log.debug(logMessage);
-                    break;
-                case SERVER:
-                    log.info(logMessage);
-                    break;
-                case PLATFORM:
-                    throw new IllegalStateException("An attempt was made to add a platform Resource as a child of another Resource.");
+            case SERVICE:
+                log.debug(logMessage);
+                break;
+            case SERVER:
+                log.info(logMessage);
+                break;
+            case PLATFORM:
+                throw new IllegalStateException(
+                    "An attempt was made to add a platform Resource as a child of another Resource.");
             }
             parent.addChildResource(resource);
         } else {
             if (resource.getResourceType().getCategory() != ResourceCategory.PLATFORM)
-                throw new IllegalStateException("An attempt was made to add a non-platform Resource as the root Resource.");
+                throw new IllegalStateException(
+                    "An attempt was made to add a non-platform Resource as the root Resource.");
             log.info(logMessage);
             this.platform = resource;
         }
@@ -906,12 +933,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return;
         }
 
-        log.debug("Starting component for " + resource + "(current state = " + container.getResourceComponentState()
-            + ", new plugin config = " + updatedPluginConfig + ")...");
+        if (log.isDebugEnabled()) {
+            log.debug("Starting component for " + resource + "(current state = "
+                + container.getResourceComponentState() + ", new plugin config = " + updatedPluginConfig + ")...");
+        }
 
         // If the component does not even exist yet, we need to instantiate it and set it on the container.
         if (component == null) {
-            log.debug("Creating component for " + resource + "...");
+            if (log.isDebugEnabled()) {
+                log.debug("Creating component for " + resource + "...");
+            }
             try {
                 component = PluginContainer.getInstance().getPluginComponentFactory().buildResourceComponent(
                     resource.getResourceType());
@@ -968,8 +999,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 resource.setConnected(true); // This tells the server-side that the resource has connected successfully.
             } catch (Throwable t) {
                 if (updatedPluginConfig || (t instanceof InvalidPluginConfigurationException)) {
-                    if (log.isDebugEnabled())
+                    if (log.isDebugEnabled()) {
                         log.debug("Resource has a bad config, waiting for this to go away " + resource);
+                    }
                     InventoryEventListener iel = new ResourceGotActivatedListener();
                     addInventoryEventListener(iel);
                     throw new InvalidPluginConfigurationException("Failed to start component for resource " + resource
@@ -989,8 +1021,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // Finally, inform the rest of the plugin container that this resource has been activated
             fireResourceActivated(resource);
         } else {
-            log.debug("Not activating resource [" + resource + "] because its parent isn't started: "
-                + getResourceContainer(resource.getParentResource()));
+            if (log.isDebugEnabled()) {
+                log.debug("Not activating resource [" + resource + "] because its parent isn't started: "
+                    + getResourceContainer(resource.getParentResource()));
+            }
         }
     }
 
@@ -1086,7 +1120,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
         resource.setAgent(this.agent);
         ResourceContainer container = getResourceContainer(resource.getId());
         if (container.getSynchronizationState() != ResourceContainer.SynchronizationState.SYNCHRONIZED) {
-            log.debug("Stopped activating resources at unsynchronized resource [" + resource + "]");
+            if (log.isDebugEnabled()) {
+                log.debug("Stopped activating resources at unsynchronized resource [" + resource + "]");
+            }
             return;
         }
 
@@ -1145,13 +1181,17 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     ResourceComponent<?> component = container.createResourceComponentProxy(ResourceComponent.class,
                         FacetLockType.WRITE, COMPONENT_STOP_TIMEOUT, true, true);
                     component.stop();
-                    log.debug("Successfully deactivated resource with id [" + resource.getId() + "].");
+                    if (log.isDebugEnabled()) {
+                        log.debug("Successfully deactivated resource with id [" + resource.getId() + "].");
+                    }
                 } catch (Throwable t) {
                     log.warn("Plugin Error: Failed to stop component for [" + resource + "].");
                 }
 
                 container.setResourceComponentState(ResourceComponentState.STOPPED);
-                log.debug("Set component state to STOPPED for resource with id [" + resource.getId() + "].");
+                if (log.isDebugEnabled()) {
+                    log.debug("Set component state to STOPPED for resource with id [" + resource.getId() + "].");
+                }
             }
         } finally {
             this.inventoryLock.writeLock().unlock();
@@ -1384,11 +1424,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     void fireResourceActivated(Resource resource) {
         if ((resource == null) || (resource.getId() == 0)) {
-            log.debug("Not firing activated event for resource: " + resource);
+            if (log.isDebugEnabled()) {
+                log.debug("Not firing activated event for resource: " + resource);
+            }
             return;
         }
 
-        log.debug("Firing activated for resource: " + resource);
+        if (log.isDebugEnabled()) {
+            log.debug("Firing activated for resource: " + resource);
+        }
 
         InventoryEventListener[] iteratorSafeListeners = new InventoryEventListener[inventoryEventListeners.size()];
         iteratorSafeListeners = inventoryEventListeners.toArray(iteratorSafeListeners);
@@ -1503,8 +1547,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
         String existingVersion = resource.getVersion();
         boolean versionChanged = (existingVersion != null) ? !existingVersion.equals(version) : version != null;
         if (versionChanged) {
-            log.debug("Discovery reported that version of " + resource + " changed from '" + existingVersion + "' to '"
-                + version + "'.");
+            if (log.isDebugEnabled()) {
+                log.debug("Discovery reported that version of " + resource + " changed from '" + existingVersion
+                    + "' to '" + version + "'.");
+            }
             boolean versionShouldBeUpdated = resource.getInventoryStatus() != InventoryStatus.COMMITTED
                 || updateResourceVersionOnServer(resource, version);
             if (versionShouldBeUpdated) {
@@ -1542,56 +1588,67 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private void processSyncInfo(ResourceSyncInfo syncInfo, Set<Resource> syncedResources,
-        Set<Integer> unknownResourceIds, Set<Integer> modifiedResourceIds, Set<Resource> newlyCommittedResources,
-        Set<String> allUuids) {
+        Set<Integer> unknownResourceIds, Set<Integer> modifiedResourceIds, Set<Integer> deletedResourceIds,
+        Set<Resource> newlyCommittedResources, Set<String> allUuids) {
         long startTime = System.currentTimeMillis();
         boolean initialCall = allUuids.isEmpty();
         if (initialCall)
             log.debug("Processing Server sync info...");
+
         allUuids.add(syncInfo.getUuid());
-        ResourceContainer container = this.resourceContainers.get(syncInfo.getUuid());
-        if (container == null) {
-            // Either a manually added Resource or just something we haven't discovered.
-            unknownResourceIds.add(syncInfo.getId());
+
+        if (InventoryStatus.DELETED == syncInfo.getInventoryStatus()) {
+            // A previously deleted resource still being reported by the server. Support for this option can
+            // be removed if the server is ever modified to not report deleted resources. It is happening currently
+            // because deleted resources are kept to support resource history. The deleted resources are rightfully not
+            // in the PC inventory, and so must be handled separately, and not as unknown resources.
+            deletedResourceIds.add(syncInfo.getId());
         } else {
-            Resource resource = container.getResource();
-
-            if (resource.getInventoryStatus() != InventoryStatus.COMMITTED
-                && syncInfo.getInventoryStatus() == InventoryStatus.COMMITTED) {
-                newlyCommittedResources.add(resource);
-            }
-
-            if (resource.getId() == 0) {
-                // This must be a Resource we just reported to the server. Just update its id, mtime, and status.
-                resource.setId(syncInfo.getId());
-                resource.setMtime(syncInfo.getMtime());
-                resource.setInventoryStatus(syncInfo.getInventoryStatus());
-                refreshResourceComponentState(container, true);
-                syncedResources.add(resource);
+            ResourceContainer container = this.resourceContainers.get(syncInfo.getUuid());
+            if (container == null) {
+                // Either a manually added Resource or just something we haven't discovered.
+                unknownResourceIds.add(syncInfo.getId());
             } else {
-                // It's a resource that was already synced at least once.
-                if (resource.getId() != syncInfo.getId()) {
-                    // This really should never happen, but check for it just to be bulletproof.
-                    log.error("PC Resource id (" + resource.getId() + ") does not match Server Resource id ("
-                        + syncInfo.getId() + ") for Resource with uuid " + resource.getUuid() + ": " + resource);
-                    modifiedResourceIds.add(syncInfo.getId());
-                }
-                // See if it's been modified on the Server since the last time we synced.
-                else if (resource.getMtime() < syncInfo.getMtime()) {
-                    modifiedResourceIds.add(resource.getId());
-                } else {
-                    // Only try to start up the component if the Resource has *not* been modified on the Server.
-                    // Otherwise, hold off until we've synced the Resource with the Server.
-                    refreshResourceComponentState(container, false);
-                }
-            }
+                Resource resource = container.getResource();
 
-            // Recurse...
-            for (ResourceSyncInfo childSyncInfo : syncInfo.getChildSyncInfos()) {
-                processSyncInfo(childSyncInfo, syncedResources, unknownResourceIds, modifiedResourceIds,
-                    newlyCommittedResources, allUuids);
+                if (resource.getInventoryStatus() != InventoryStatus.COMMITTED
+                    && syncInfo.getInventoryStatus() == InventoryStatus.COMMITTED) {
+                    newlyCommittedResources.add(resource);
+                }
+
+                if (resource.getId() == 0) {
+                    // This must be a Resource we just reported to the server. Just update its id, mtime, and status.
+                    resource.setId(syncInfo.getId());
+                    resource.setMtime(syncInfo.getMtime());
+                    resource.setInventoryStatus(syncInfo.getInventoryStatus());
+                    refreshResourceComponentState(container, true);
+                    syncedResources.add(resource);
+                } else {
+                    // It's a resource that was already synced at least once.
+                    if (resource.getId() != syncInfo.getId()) {
+                        // This really should never happen, but check for it just to be bulletproof.
+                        log.error("PC Resource id (" + resource.getId() + ") does not match Server Resource id ("
+                            + syncInfo.getId() + ") for Resource with uuid " + resource.getUuid() + ": " + resource);
+                        modifiedResourceIds.add(syncInfo.getId());
+                    }
+                    // See if it's been modified on the Server since the last time we synced.
+                    else if (resource.getMtime() < syncInfo.getMtime()) {
+                        modifiedResourceIds.add(resource.getId());
+                    } else {
+                        // Only try to start up the component if the Resource has *not* been modified on the Server.
+                        // Otherwise, hold off until we've synced the Resource with the Server.
+                        refreshResourceComponentState(container, false);
+                    }
+                }
+
+                // Recurse...
+                for (ResourceSyncInfo childSyncInfo : syncInfo.getChildSyncInfos()) {
+                    processSyncInfo(childSyncInfo, syncedResources, unknownResourceIds, modifiedResourceIds,
+                        deletedResourceIds, newlyCommittedResources, allUuids);
+                }
             }
         }
+
         if (initialCall && log.isDebugEnabled()) {
             log.debug(String.format(
                 "DONE Processing sync info - took %d ms. Processed %d Resources - synced %d Resources "
@@ -1602,7 +1659,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private void mergeModifiedResources(Set<Integer> modifiedResourceIds) {
-        log.debug("Merging " + modifiedResourceIds.size() + " modified Resources into local inventory...");
+        if (log.isDebugEnabled()) {
+            log.debug("Merging " + modifiedResourceIds.size() + " modified Resources into local inventory...");
+        }
         Set<Resource> modifiedResources = configuration.getServerServices().getDiscoveryServerService().getResources(
             modifiedResourceIds, false);
         syncSchedules(modifiedResources); // RHQ-792, mtime is the indicator that schedules should be sync'ed too
@@ -1612,8 +1671,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private void mergeUnknownResources(Set<Integer> unknownResourceIds) {
-        log.debug("Merging " + unknownResourceIds.size()
-            + " unknown Resources and their descendants into local inventory...");
+        if (log.isDebugEnabled()) {
+            log.debug("Merging " + unknownResourceIds.size()
+                + " unknown Resources and their descendants into local inventory...");
+        }
         Set<Resource> unknownResources = configuration.getServerServices().getDiscoveryServerService().getResources(
             unknownResourceIds, true);
         for (Resource unknownResource : unknownResources) {
@@ -1623,7 +1684,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private void mergeResource(Resource resource) {
-        log.debug("Merging " + resource + " into local inventory...");
+        if (log.isDebugEnabled()) {
+            log.debug("Merging " + resource + " into local inventory...");
+        }
         Resource parentResource;
         if (resource.getParentResource() != null) {
             ResourceContainer parentResourceContainer = getResourceContainer(resource.getParentResource());
@@ -1734,7 +1797,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     }
                 }
             }
-            log.debug("Purged " + removedResources + " obsolete Resources.");
+            if (log.isDebugEnabled()) {
+                log.debug("Purged " + removedResources + " obsolete Resources.");
+            }
         } finally {
             this.inventoryLock.writeLock().unlock();
         }
@@ -1742,7 +1807,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private void syncSchedulesAndTemplatesForNewlyImportedResources(Set<Resource> resources) {
         if (!resources.isEmpty()) {
-            log.debug("Syncing metric schedules and alert templates for newly imported Resources: " + resources);
+            if (log.isDebugEnabled()) {
+                log.debug("Syncing metric schedules and alert templates for newly imported Resources: " + resources);
+            }
             syncSchedules(resources);
             syncAlertTemplates(resources);
         }
@@ -1783,8 +1850,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         public void resourceActivated(Resource resource) {
             if (resource != null && resource.getId() > 0) {
-                if (log.isDebugEnabled())
+                if (log.isDebugEnabled()) {
                     log.debug("Resource got finally activated, cleaning out config errors " + resource);
+                }
 
                 DiscoveryServerService serverService = configuration.getServerServices().getDiscoveryServerService();
                 if (serverService != null) {

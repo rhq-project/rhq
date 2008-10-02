@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-plugins-parent</artifactId>
-      <version>1.1.0-SNAPSHOT</version>
+      <version>1.1.0.CR1</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
    <description>a plugin for managing a generic JMX-enabled application</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/JBossON_2_0_0_Alpha2</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/JBossON_2_0_0_Alpha2</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_0_CR1</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_0_CR1</developerConnection>
    </scm>
 
    <properties>

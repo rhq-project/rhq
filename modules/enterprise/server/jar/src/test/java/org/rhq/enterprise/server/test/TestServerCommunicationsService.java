@@ -179,6 +179,10 @@ public class TestServerCommunicationsService implements TestServerCommunications
         return new MockServiceContainer();
     }
 
+    public ServiceContainer safeGetServiceContainer() {
+        return new MockServiceContainer();
+    }
+
     public String getStartedServerEndpoint() {
         return "http://TestServerCommunicationsService";
     }

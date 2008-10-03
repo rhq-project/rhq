@@ -169,5 +169,16 @@
       <!--  This will allow you to invoke "org.rhq" Maven goals using the "rhq" prefix -->
       <pluginGroup>org.rhq</pluginGroup>
    </pluginGroups>
+   
+   <!-- See: http://maven.apache.org/settings.html#Servers -->
+   <servers>
+      <server>
+         <id>jboss-snapshots</id>
+         <!-- Set the below properties to your jboss.org (i.e. external JIRA/SVN) username and password - 
+              used by the release plugin to publish via WebDAV to the JBoss Snapshots repo. -->
+         <username>YOUR_USERNAME</username>   
+         <password>YOUR_PASSWORD</password>         
+      </server>
+   </servers>   
 
 </settings>

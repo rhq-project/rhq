@@ -63,23 +63,25 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
          */
         Collection<Timer> timers = timerService.getTimers();
         for (Timer existingTimer : timers) {
-            log.debug("Found timer: " + existingTimer.toString());
-            existingTimer.cancel();
+            log.debug("Found timer - attempting to cancel: " + existingTimer.toString());
+            try {
+                existingTimer.cancel();
+            } catch (Exception e) {
+                log.warn("Failed in attempting to cancel timer: " + existingTimer.toString());
+            }
         }
 
-        // start it now, and repeat every 30 seconds
-        timerService.createTimer(0, 30000, TIMER_DATA);
+        // single-action timer that will trigger in 30 seconds
+        timerService.createTimer(30000, TIMER_DATA);
     }
 
     @Timeout
     public void handleHeartbeatTimer(Timer timer) {
-        timer.cancel();
-
         try {
             reloadServerCacheIfNeeded();
         } finally {
-            // start it now, and repeat every 30 seconds
-            timerService.createTimer(0, 30000, TIMER_DATA);
+            // reschedule ourself to trigger in another 30 seconds
+            timerService.createTimer(30000, TIMER_DATA);
         }
     }
 

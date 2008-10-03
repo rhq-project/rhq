@@ -496,11 +496,12 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     public void insertOutOfBoundsMessage(OutOfBoundsConditionMessage outOfBoundsMessage) {
         Connection conn = null;
         PreparedStatement ps = null;
+        String statementSql = null;
         try {
             conn = dataSource.getConnection();
 
             String nextvalSql = JDBCUtil.getNextValSql(conn, MeasurementOutOfBounds.TABLE_NAME);
-            String statementSql = String.format(OOB_INSERT_STMT, nextvalSql);
+            statementSql = String.format(OOB_INSERT_STMT, nextvalSql);
             ps = conn.prepareStatement(statementSql);
 
             int paramIndex = 1;
@@ -513,10 +514,10 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         } catch (Throwable t) {
             // never allow OOB insertion failures to bubble up
             if (log.isDebugEnabled()) {
-                log.debug("insertOutOfBoundsMessage: insert of OOB failed : " + outOfBoundsMessage, t);
+                log.debug("Insert of OOB failed : " + outOfBoundsMessage, t);
             } else {
-                log.error("insertOutOfBoundsMessage: insert of OOB failed : " + outOfBoundsMessage + ", cause: "
-                    + t.getMessage());
+                log.error("Insert of OOB failed : " + outOfBoundsMessage + ", sql was \"" + statementSql
+                    + "\", cause: " + t.getMessage());
             }
         } finally {
             JDBCUtil.safeClose(conn, ps, null);

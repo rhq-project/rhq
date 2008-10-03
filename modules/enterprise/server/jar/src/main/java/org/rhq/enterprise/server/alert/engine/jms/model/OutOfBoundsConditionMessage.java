@@ -48,4 +48,10 @@ public class OutOfBoundsConditionMessage implements Serializable {
     public double getOobValue() {
         return oobValue;
     }
+
+    @Override
+    public String toString() {
+        return OutOfBoundsConditionMessage.class.getSimpleName() + "[scheduleId=" + scheduleId + ", timestamp="
+            + timestamp + ", oobValue " + oobValue + "]";
+    }
 }

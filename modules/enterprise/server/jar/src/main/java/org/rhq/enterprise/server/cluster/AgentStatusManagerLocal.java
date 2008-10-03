@@ -22,15 +22,13 @@ import java.util.List;
 
 import javax.ejb.Local;
 
-import org.rhq.core.domain.resource.Agent;
-
 /**
  * @author Joseph Marques
  */
 @Local
 public interface AgentStatusManagerLocal {
 
-    List<Agent> getAgentsWithStatusForServer(String serverName);
+    List<Integer> getAndClearAgentsWithStatusForServer(String serverName);
 
     void updateByAlertDefinition(int alertDefinitionId);
 

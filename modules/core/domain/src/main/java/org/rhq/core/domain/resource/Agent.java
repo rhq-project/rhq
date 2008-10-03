@@ -67,9 +67,13 @@ import org.rhq.core.domain.cluster.Server;
         + " WHERE a.server.name = :serverName " //
         + "   AND a.status <> 0 "), // 
     @NamedQuery(name = Agent.QUERY_FIND_ALL_WITH_STATUS, query = "" //
-        + "SELECT a " //
+        + "SELECT a.id " //
         + "  FROM Agent a " //
-        + " WHERE a.status <> 0 "), // 
+        + " WHERE a.status <> 0 "), //
+    @NamedQuery(name = Agent.UPDATE_CLEAR_STATUS_BY_IDS, query = "" //
+        + "UPDATE Agent a " //
+        + "   SET a.status = 0 " //
+        + " WHERE a.id IN ( :agentIds ) "), // 
     @NamedQuery(name = Agent.QUERY_FIND_BY_AFFINITY_GROUP, query = "" //
         + "SELECT a " //
         + "  FROM Agent a " //
@@ -98,6 +102,7 @@ public class Agent implements Serializable {
     // HA queries
     public static final String QUERY_FIND_ALL_WITH_STATUS_BY_SERVER = "Agent.findAllWithStatusByServer";
     public static final String QUERY_FIND_ALL_WITH_STATUS = "Agent.findAllWithStatus";
+    public static final String UPDATE_CLEAR_STATUS_BY_IDS = "Agent.updateClearStatusByIds";
     public static final String QUERY_REMOVE_SERVER_REFERENCE = "Agent.removeServerReference";
 
     @Column(name = "ID", nullable = false)

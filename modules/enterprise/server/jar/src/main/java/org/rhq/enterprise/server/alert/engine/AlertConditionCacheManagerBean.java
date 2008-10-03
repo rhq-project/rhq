@@ -110,6 +110,7 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
         AlertConditionCache.getInstance().printAllCaches();
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void reloadCachesForAgent(int agentId) {
         AlertConditionCache.getInstance().reloadCachesForAgent(agentId);
     }

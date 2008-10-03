@@ -31,7 +31,6 @@ import javax.ejb.TimerService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 
 /**
@@ -55,6 +54,8 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
     @EJB
     AlertConditionCacheManagerLocal cacheManager;
 
+    private final String TIMER_DATA = "CacheConsistencyManagerBean.reloadServerCacheIfNeeded";
+
     @SuppressWarnings("unchecked")
     public void scheduleServerCacheReloader() {
         /* each time the webapp is reloaded, it would create 
@@ -65,34 +66,36 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
             log.debug("Found timer: " + existingTimer.toString());
             existingTimer.cancel();
         }
+
         // start it now, and repeat every 30 seconds
-        timerService.createTimer(0, 30000, "CacheConsistencyManagerBean.reloadServerCacheIfNeeded");
+        timerService.createTimer(0, 30000, TIMER_DATA);
     }
 
     @Timeout
     public void handleHeartbeatTimer(Timer timer) {
-        reloadServerCacheIfNeeded();
+        timer.cancel();
+
+        try {
+            reloadServerCacheIfNeeded();
+        } finally {
+            // start it now, and repeat every 30 seconds
+            timerService.createTimer(0, 30000, TIMER_DATA);
+        }
     }
 
     public void reloadServerCacheIfNeeded() {
-        List<Agent> agents = serverManager.getAgentsWithStatus();
+        List<Integer> agentIds = serverManager.getAndClearAgentsWithStatus();
 
         // do nothing if nothing to do
-        if (agents.size() == 0) {
+        if (agentIds.size() == 0) {
             return;
         }
 
         // otherwise print informational messages for poor-man's verification purposes
         long startTime = System.currentTimeMillis();
-        for (Agent nextAgent : agents) {
-            log.debug("Agent[id=" + nextAgent.getId() + ", name=" + nextAgent.getName() + ", status="
-                + nextAgent.getStatus() + "] is stale ");
-            List<String> statusMessages = nextAgent.getStatusMessages();
-            for (String nextMessage : statusMessages) {
-                log.debug(nextMessage);
-            }
-            nextAgent.clearStatus();
-            cacheManager.reloadCachesForAgent(nextAgent.getId());
+        for (Integer nextAgentId : agentIds) {
+            log.debug("Agent[id=" + nextAgentId + " is stale ");
+            cacheManager.reloadCachesForAgent(nextAgentId);
         }
         long endTime = System.currentTimeMillis();
 

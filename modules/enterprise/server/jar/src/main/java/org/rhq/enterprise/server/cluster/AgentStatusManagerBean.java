@@ -22,6 +22,8 @@ import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -58,14 +60,19 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
     AgentManagerLocal agentManager;
 
     @SuppressWarnings("unchecked")
-    public List<Agent> getAgentsWithStatusForServer(String serverName) {
-        // replace this query with QUERY_FIND_ALL_WITH_STATUS_BY_SERVER and uncomment setParameter
-        // when agents can successfully register with server and the HA tables are updating
-        Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_ALL_WITH_STATUS);
-        //query.setParameter("serverName", serverName);
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public List<Integer> getAndClearAgentsWithStatusForServer(String serverName) {
+        Query selectQuery = entityManager.createNamedQuery(Agent.QUERY_FIND_ALL_WITH_STATUS);
+        selectQuery.setParameter("serverName", serverName);
+        List<Integer> agentIds = selectQuery.getResultList();
 
-        List<Agent> results = query.getResultList();
-        return results;
+        if (agentIds.size() > 0) {
+            Query updateQuery = entityManager.createNamedQuery(Agent.UPDATE_CLEAR_STATUS_BY_IDS);
+            updateQuery.setParameter("agentIds", agentIds);
+            updateQuery.executeUpdate();
+        }
+
+        return agentIds;
     }
 
     public void updateByAlertDefinition(int alertDefinitionId) {
@@ -80,8 +87,10 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
 
         agent.addStatus(Agent.Status.ALERT_DEFINITIONS_CHANGED);
 
-        log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
-            + "] for alertDefinition[id=" + alertDefinitionId + "]");
+        if (log.isDebugEnabled()) {
+            log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
+                + "] for alertDefinition[id=" + alertDefinitionId + "]");
+        }
     }
 
     public void updateByMeasurementBaseline(int baselineId) {
@@ -90,8 +99,10 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
 
         agent.addStatus(Agent.Status.BASELINES_CALCULATED);
 
-        log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
-            + "] for measurementBaseline[id=" + baselineId + "]");
+        if (log.isDebugEnabled()) {
+            log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
+                + "] for measurementBaseline[id=" + baselineId + "]");
+        }
     }
 
     public void updateByResource(int resourceId) {
@@ -104,8 +115,10 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
 
         agent.addStatus(Agent.Status.RESOURCE_HIERARCHY_UPDATED);
 
-        log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus() + "] for resource[id="
-            + resourceId + "]");
+        if (log.isDebugEnabled()) {
+            log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
+                + "] for resource[id=" + resourceId + "]");
+        }
     }
 
     public void updateByAutoBaselineCalculationJob() {
@@ -113,8 +126,10 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
         for (Agent agent : agents) {
             agent.addStatus(Agent.Status.BASELINES_CALCULATED);
 
-            log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
-                + "] for AutoBaselineCalculationJob");
+            if (log.isDebugEnabled()) {
+                log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
+                    + "] for AutoBaselineCalculationJob");
+            }
         }
     }
 }

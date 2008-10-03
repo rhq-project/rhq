@@ -68,7 +68,7 @@ public interface ServerManagerLocal {
      * 
      * @return The subset of agents referencing this server that currently have some Status set.  
      */
-    List<Agent> getAgentsWithStatus();
+    List<Integer> getAndClearAgentsWithStatus();
 
     /**
      * 

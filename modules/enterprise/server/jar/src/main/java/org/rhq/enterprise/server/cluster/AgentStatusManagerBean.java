@@ -67,6 +67,10 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
         List<Integer> agentIds = selectQuery.getResultList();
 
         if (agentIds.size() > 0) {
+            /* 
+             * note: not worried about size of the in clause, because the number of
+             * agents per server will be reasonable, say, 50-150
+             */
             Query updateQuery = entityManager.createNamedQuery(Agent.UPDATE_CLEAR_STATUS_BY_IDS);
             updateQuery.setParameter("agentIds", agentIds);
             updateQuery.executeUpdate();

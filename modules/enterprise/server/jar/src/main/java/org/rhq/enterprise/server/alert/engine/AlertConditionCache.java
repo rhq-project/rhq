@@ -1498,8 +1498,10 @@ public final class AlertConditionCache {
          * let's not fail with NPE if it does for some reason
          */
         if (inverseCacheElements == null) {
-            log.debug("There were no inverseCacheElements for " + alertConditionId
-                + ", but all alertConditions should be in the cache");
+            if (log.isDebugEnabled()) {
+                log.debug("There were no inverseCacheElements for " + alertConditionId
+                    + ", but all alertConditions should be in the cache");
+            }
             return;
         }
 

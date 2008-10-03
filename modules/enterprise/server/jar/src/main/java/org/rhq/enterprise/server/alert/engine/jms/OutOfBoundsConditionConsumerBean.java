@@ -58,7 +58,7 @@ public class OutOfBoundsConditionConsumerBean implements MessageListener {
             measurementBaselineManager.insertOutOfBoundsMessage(outOfBoundsMessage);
         } catch (JMSException jmse) {
             if (log.isDebugEnabled()) {
-                log.error("Error getting message from OutOfBoundsConditionQueue", jmse);
+                log.debug("Error getting message from OutOfBoundsConditionQueue", jmse);
             } else {
                 log.error("Error getting message from OutOfBoundsConditionQueue: " + jmse.getMessage());
             }

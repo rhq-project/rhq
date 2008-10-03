@@ -513,9 +513,9 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         } catch (Throwable t) {
             // never allow OOB insertion failures to bubble up
             if (log.isDebugEnabled()) {
-                log.error("insertOutOfBoundsMessage: insert of OOB failed : " + outOfBoundsMessage, t);
+                log.debug("insertOutOfBoundsMessage: insert of OOB failed : " + outOfBoundsMessage, t);
             } else {
-                log.warn("insertOutOfBoundsMessage: insert of OOB failed : " + outOfBoundsMessage + ", cause: "
+                log.error("insertOutOfBoundsMessage: insert of OOB failed : " + outOfBoundsMessage + ", cause: "
                     + t.getMessage());
             }
         } finally {

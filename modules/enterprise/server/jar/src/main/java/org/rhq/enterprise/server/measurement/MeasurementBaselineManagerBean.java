@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.measurement;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -511,9 +510,14 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
             ps.executeUpdate();
 
-        } catch (SQLException sqle) {
-            // allows non SQLExceptions to bubble up
-            log.warn("insertOutOfBoundsMessage: insert of OOB failed : " + outOfBoundsMessage, sqle);
+        } catch (Throwable t) {
+            // never allow OOB insertion failures to bubble up
+            if (log.isDebugEnabled()) {
+                log.error("insertOutOfBoundsMessage: insert of OOB failed : " + outOfBoundsMessage, t);
+            } else {
+                log.warn("insertOutOfBoundsMessage: insert of OOB failed : " + outOfBoundsMessage + ", cause: "
+                    + t.getMessage());
+            }
         } finally {
             JDBCUtil.safeClose(conn, ps, null);
         }

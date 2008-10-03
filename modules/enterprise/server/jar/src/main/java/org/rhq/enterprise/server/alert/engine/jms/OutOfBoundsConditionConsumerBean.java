@@ -56,15 +56,11 @@ public class OutOfBoundsConditionConsumerBean implements MessageListener {
             OutOfBoundsConditionMessage outOfBoundsMessage = (OutOfBoundsConditionMessage) object;
 
             measurementBaselineManager.insertOutOfBoundsMessage(outOfBoundsMessage);
-        } catch (Throwable t) {
-            log.error("Error persisting OOB: " + t.getMessage(), t);
-
-            try {
-                log.error("JMS Message Info: messageId=" + message.getJMSMessageID() + ", redelivered="
-                    + message.getJMSRedelivered());
-            } catch (JMSException jmse) {
-                log.error("JMS Message Info: error reading information from message, exception was: "
-                    + jmse.getMessage());
+        } catch (JMSException jmse) {
+            if (log.isDebugEnabled()) {
+                log.error("Error getting message from OutOfBoundsConditionQueue", jmse);
+            } else {
+                log.error("Error getting message from OutOfBoundsConditionQueue: " + jmse.getMessage());
             }
         }
     }

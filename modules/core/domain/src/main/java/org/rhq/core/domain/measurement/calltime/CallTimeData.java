@@ -23,9 +23,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 
 /**
@@ -112,7 +114,8 @@ public class CallTimeData implements Serializable {
 
     private CallTimeDataValue addValue(Date beginTime, Date endTime, String destination) {
         if (beginTime.after(endTime)) {
-            throw new IllegalArgumentException("Begin time (" + beginTime + " [" + beginTime.getTime() + "]) is after end time (" + endTime + " [" + endTime.getTime() + "]).");
+            throw new IllegalArgumentException("Begin time (" + beginTime + " [" + beginTime.getTime()
+                + "]) is after end time (" + endTime + " [" + endTime.getTime() + "]).");
         }
 
         if (destination.length() > CallTimeDataKey.DESTINATION_MAX_LENGTH) {
@@ -129,4 +132,28 @@ public class CallTimeData implements Serializable {
 
         return value;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if ((o == null) || (!(o instanceof CallTimeData))) {
+            return false;
+        }
+
+        final CallTimeData other = (CallTimeData) o;
+        return (this.scheduleId == other.scheduleId);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + this.scheduleId;
+
+        return result;
+    }
+
 }

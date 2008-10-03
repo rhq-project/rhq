@@ -62,7 +62,7 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public List<Integer> getAndClearAgentsWithStatusForServer(String serverName) {
-        Query selectQuery = entityManager.createNamedQuery(Agent.QUERY_FIND_ALL_WITH_STATUS);
+        Query selectQuery = entityManager.createNamedQuery(Agent.QUERY_FIND_ALL_WITH_STATUS_BY_SERVER);
         selectQuery.setParameter("serverName", serverName);
         List<Integer> agentIds = selectQuery.getResultList();
 

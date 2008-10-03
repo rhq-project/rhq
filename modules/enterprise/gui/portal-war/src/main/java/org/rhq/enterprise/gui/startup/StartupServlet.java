@@ -317,7 +317,8 @@ public class StartupServlet extends HttpServlet {
         // Baseline calculation Job
         try {
             // Check the need to calculate baselines every 77 minutes
-            scheduler.scheduleSimpleRepeatingJob(AutoBaselineCalculationJob.class, true, false, 60000L, 60000L);
+            scheduler.scheduleSimpleRepeatingJob(AutoBaselineCalculationJob.class, true, false, 11 * 60 * 1000L,
+                77 * 60 * 1000L);
         } catch (Exception e) {
             throw new ServletException("Cannot schedule baseline calculation job", e);
         }

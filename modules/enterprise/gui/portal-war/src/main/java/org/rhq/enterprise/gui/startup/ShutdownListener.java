@@ -51,9 +51,11 @@ public class ShutdownListener implements NotificationListener {
         if (org.jboss.system.server.Server.STOP_NOTIFICATION_TYPE.equals(notification.getType())) {
             stopScheduler();
 
-            // Set the server operation mode to DOWN
+            // Set the server operation mode to DOWN unless in MM
             Server server = LookupUtil.getServerManager().getServer();
-            LookupUtil.getClusterManager().updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
+            if (Server.OperationMode.MAINTENANCE != server.getOperationMode()) {
+                LookupUtil.getClusterManager().updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
+            }
         }
     }
 

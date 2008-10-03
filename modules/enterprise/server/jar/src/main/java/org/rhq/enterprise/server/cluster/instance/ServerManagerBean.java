@@ -29,6 +29,7 @@ import javax.ejb.Timer;
 import javax.ejb.TimerService;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -138,24 +139,37 @@ public class ServerManagerBean implements ServerManagerLocal {
         if (serverMode == lastEstablishedServerMode)
             return;
 
+        // whenever starting up clear the agent references to this server. Agent references will exist
+        // for previously connected agents that did not fail-over while this server was unavailable. This
+        // is done to avoid unnecessary cache re/load and moreover provides a logically initialized environment.
+        if (null == lastEstablishedServerMode) {
+            clearAgentReferences(server);
+        }
+
         try {
-            if (Server.OperationMode.MAINTENANCE == serverMode) {
+            if (Server.OperationMode.NORMAL == serverMode) {
 
-                // If moving into Maintenance Mode from any other mode then stop processing agent commands
-                ServerCommunicationsServiceUtil.getService().getServiceContainer().addCommandListener(
-                    getMaintenanceModeListener());
-
-                log.info("Notified communication layer of server operation mode " + serverMode);
-
-            } else if (Server.OperationMode.NORMAL == serverMode) {
-
-                // If moving into normal operating mode from Maintenance Mode then start processing agent commands                
+                // If moving into normal operating mode from Maintenance Mode then:
+                // 1) Ensure lingering agent references are cleared
+                //    - this may have been done at startup already, this covers the case when we go in and
+                //    - out of MM without ever taking down the server
+                // 2) Re-establish server communication by taking away the MM listener
                 if (Server.OperationMode.MAINTENANCE == lastEstablishedServerMode) {
-                    ServerCommunicationsServiceUtil.getService().getServiceContainer().removeCommandListener(
+                    clearAgentReferences(server);
+
+                    ServerCommunicationsServiceUtil.getService().safeGetServiceContainer().removeCommandListener(
                         getMaintenanceModeListener());
 
                     log.info("Notified communication layer of server operation mode " + serverMode);
                 }
+            } else if (Server.OperationMode.MAINTENANCE == serverMode) {
+
+                // If moving into Maintenance Mode from any other mode then stop processing agent commands
+                ServerCommunicationsServiceUtil.getService().safeGetServiceContainer().addCommandListener(
+                    getMaintenanceModeListener());
+
+                log.info("Notified communication layer of server operation mode " + serverMode);
+
             } else if (Server.OperationMode.INSTALLED == serverMode) {
 
                 // The server must have just been installed and must be coming for the first time
@@ -203,6 +217,15 @@ public class ServerManagerBean implements ServerManagerLocal {
         } catch (Exception e) {
             log.error("Unable to change HA Server Mode from " + lastEstablishedServerMode + " to " + serverMode + ": "
                 + e);
+        }
+    }
+
+    private void clearAgentReferences(Server server) {
+        Query query = entityManager.createNamedQuery(Agent.QUERY_REMOVE_SERVER_REFERENCE);
+        query.setParameter("serverId", server.getId());
+        int numRows = query.executeUpdate();
+        if (numRows > 0) {
+            log.info("Removed " + numRows + " obsolete agent reference(s) to server " + server.getName());
         }
     }
 

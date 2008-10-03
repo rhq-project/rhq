@@ -136,8 +136,18 @@ public interface ServerCommunicationsServiceMBean extends ServiceContainerMetric
     boolean isStarted();
 
     /**
+     * Returns the service container that houses all the server-side communications services. Will create
+     * a service container for the comm services if one has not yet been created. This is typically only called
+     * to add or remove listeners prior to comm service startup. Use isStarted() as necessary.
+     * 
+     * @return service container object
+     */
+    ServiceContainer safeGetServiceContainer();
+
+    /**
      * Returns the service container that houses all the server-side communications services. Will return <code>
-     * null</code> if the server-side comm services are not yet initialized or have been shutdown.
+     * null</code> if the serviceContainer has not been initialized. It is possible for this to be non-null
+     * prior to server-side comm services initialization. Use isStarted() as necessary.
      *
      * @return service container object
      */

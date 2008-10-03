@@ -131,6 +131,11 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
     private File m_serverPropertiesFile = null;
 
     /**
+     * Have the communication services been started
+     */
+    boolean m_started = false;
+
+    /**
      * Sets up some internal state.
      *
      * @see MBeanRegistration#preRegister(MBeanServer, ObjectName)
@@ -160,7 +165,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      * @see ServerCommunicationsServiceMBean#startCommunicationServices()
      */
     public synchronized void startCommunicationServices() throws Exception {
-        if (m_container == null) {
+        if (m_started == false) {
             // do not rely on the configuration that has been persisted
             // we are forcing the configuration file to be reloaded
             // if we ever want to change this so the server does pick up
@@ -168,7 +173,8 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
             // config = prepareConfigurationPreferences();
             ServerConfiguration config = reloadConfiguration();
 
-            ServiceContainer container = new ServiceContainer();
+            ServiceContainer container = (null == m_container) ? new ServiceContainer() : m_container;
+
             AutoDiscoveryListener listener = new ServerAutoDiscoveryListener(m_knownAgents);
 
             container.addDiscoveryListener(listener);
@@ -178,6 +184,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
 
             m_container = container;
             m_configuration = config;
+            m_started = true;
         }
 
         return;
@@ -192,6 +199,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         if (m_container != null) {
             m_container.shutdown();
             m_container = null;
+            m_started = false;
         }
 
         // stop all our clients - any messages flagged with guaranteed delivery will be spooled
@@ -210,7 +218,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      * @see ServerCommunicationsServiceMBean#isStarted()
      */
     public boolean isStarted() {
-        return (m_container != null);
+        return m_started;
     }
 
     /**
@@ -236,6 +244,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         m_configurationOverrides = null;
         m_knownAgents.removeAllAgents();
         m_knownAgentClients.clear();
+        m_started = false;
 
         return;
     }
@@ -296,6 +305,17 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      */
     public ServerConfiguration getConfiguration() {
         return m_configuration;
+    }
+
+    /*
+     * @see ServerCommunicationsServiceMBean#safeGetServiceContainer()
+     */
+    public synchronized ServiceContainer safeGetServiceContainer() {
+        if (null == m_container) {
+            m_container = new ServiceContainer();
+        }
+
+        return m_container;
     }
 
     /*

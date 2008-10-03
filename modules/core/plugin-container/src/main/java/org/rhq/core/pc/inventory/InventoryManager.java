@@ -1509,11 +1509,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         ResourceType resourceType = resource.getResourceType();
         boolean hasPackageTypes = (resourceType.getPackageTypes() != null && !resourceType.getPackageTypes().isEmpty());
         boolean hasContentBasedCreatableChildren = false;
-        for (ResourceType childResourceType : resourceType.getChildResourceTypes()) {
-            if (childResourceType.isCreatable()
-                && childResourceType.getCreationDataType() == ResourceCreationDataType.CONTENT) {
-                hasContentBasedCreatableChildren = true;
-                break;
+        if (resourceType.getChildResourceTypes() != null) {
+            for (ResourceType childResourceType : resourceType.getChildResourceTypes()) {
+                if (childResourceType.isCreatable()
+                        && childResourceType.getCreationDataType() == ResourceCreationDataType.CONTENT) {
+                    hasContentBasedCreatableChildren = true;
+                    break;
+                }
             }
         }
         // Only give the ResourceComponent a ContentContext if its metadata says it actually needs one.

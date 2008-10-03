@@ -117,9 +117,32 @@ public class MeasurementScheduleRequest implements Serializable {
         return perMinute;
     }
 
+    @Override
     public String toString() {
         return "MeasurementScheduleRequest[scheduleId=" + scheduleId + ", name=" + name + ", interval=" + interval
             + ", enabled=" + enabled + ", dataType=" + dataType + ", numericType=" + numericType + ", perMinute="
             + perMinute + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + scheduleId;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if ((obj == null) || !(obj instanceof MeasurementScheduleRequest)) {
+            return false;
+        }
+
+        final MeasurementScheduleRequest other = (MeasurementScheduleRequest) obj;
+        return (scheduleId == other.scheduleId);
     }
 }

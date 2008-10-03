@@ -58,4 +58,28 @@ public class ResourceMeasurementScheduleRequest implements Serializable {
     public int getResourceId() {
         return resourceId;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if ((o == null) || (!(o instanceof ResourceMeasurementScheduleRequest))) {
+            return false;
+        }
+
+        final ResourceMeasurementScheduleRequest rmsr = (ResourceMeasurementScheduleRequest) o;
+        return (this.resourceId == rmsr.resourceId);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + this.resourceId;
+
+        return result;
+    }
+
 }

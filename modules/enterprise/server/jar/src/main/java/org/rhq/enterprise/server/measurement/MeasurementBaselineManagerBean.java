@@ -21,8 +21,6 @@ package org.rhq.enterprise.server.measurement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -516,17 +514,6 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         } catch (SQLException sqle) {
             // allows non SQLExceptions to bubble up
             log.warn("insertOutOfBoundsMessage: insert of OOB failed : " + outOfBoundsMessage, sqle);
-
-            log.error("Error persisting OOB, Message: " + sqle.getMessage());
-            log.error("Is cache in a valid state? -- "
-                + (LookupUtil.getAlertConditionCacheManager().isCacheValid() ? "yes" : "no"));
-
-            DateFormat df = new SimpleDateFormat("HH:mm:ss.SSS");
-
-            log.error("for scheduleId: " + outOfBoundsMessage.getScheduleId());
-            log.error("Original @ " + df.format(new Date(outOfBoundsMessage.getTimestamp())) + " - "
-                + outOfBoundsMessage.getOobValue());
-
         } finally {
             JDBCUtil.safeClose(conn, ps, null);
         }

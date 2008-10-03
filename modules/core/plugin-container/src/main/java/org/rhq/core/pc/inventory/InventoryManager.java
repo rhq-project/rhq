@@ -362,10 +362,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
         // resource, but never says this is required. It then proceeds to auto-import the first resource returned. For
         // discoveries that are process based it works because this passes in a null process scan... also a bad idea.
 
-        // Lookup the full, local Resource type (the provided one is just the keys).
-        ResourceType fullResourceType = this.pluginManager.getMetadataManager().getType(resourceType);
-        if (fullResourceType == null) {
-            throw new IllegalStateException("Server specified unknown Resource type: " + resourceType);
+        // Lookup the full Resource type (the one provided by the Server is just the keys).
+        String resourceTypeString = resourceType.toString();
+        resourceType = this.pluginManager.getMetadataManager().getType(resourceType);
+        if (resourceType == null) {
+            throw new IllegalStateException("Server specified unknown Resource type: " + resourceTypeString);
         }
 
         MergeResourceResponse mergeResourceResponse;

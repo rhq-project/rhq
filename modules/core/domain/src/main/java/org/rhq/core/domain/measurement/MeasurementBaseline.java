@@ -95,7 +95,8 @@ import javax.persistence.Table;
         + "     LEFT JOIN mb.schedule sched " //
         + "     LEFT JOIN sched.definition def " //
         + "WHERE def.numericType = :numericType " //
-        + "     AND sched.resource.agent.id = :agentId "),
+        + "     AND sched.resource.agent.id = :agentId " //
+        + "ORDER BY mb.id"),
 
     // this query will potentially load in alot - keep composite object small
     @NamedQuery(name = MeasurementBaseline.QUERY_FIND_BY_COMPUTE_TIME, query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementBaselineComposite( "

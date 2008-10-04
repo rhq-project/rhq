@@ -50,6 +50,7 @@ import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -399,6 +400,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     @SuppressWarnings("unchecked")
     public PageList<MeasurementBaselineComposite> getAllDynamicMeasurementBaselines(int agentId, Subject user,
         PageControl pc) {
+        pc.initDefaultOrderingField("mb.id", PageOrdering.ASC);
+
         if (authorizationManager.isOverlord(user) == false) {
             throw new PermissionException("User [" + user.getName() + "] does not have permission to call "
                 + "getAllDynamicMeasurementBaselines; only the overlord has that right");

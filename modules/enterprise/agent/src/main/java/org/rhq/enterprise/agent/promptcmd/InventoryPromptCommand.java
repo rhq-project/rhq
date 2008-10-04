@@ -215,7 +215,7 @@ public class InventoryPromptCommand implements AgentPromptCommand {
                 try {
                     InventoryFile file = new InventoryFile(new File(inventoryBinaryFile));
                     file.loadInventory();
-                    InventoryPrinter.outputInventory(exportWriter, !noRecurse, dumpXml, null);
+                    InventoryPrinter.outputInventory(exportWriter, !noRecurse, dumpXml, file);
                 } catch (PluginContainerException e) {
                     out.println(MSG.getMsg(AgentI18NResourceKeys.INVENTORY_BAD_INVENTORY_FILE, inventoryBinaryFile, e));
                 }

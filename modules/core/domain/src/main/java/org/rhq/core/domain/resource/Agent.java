@@ -62,7 +62,7 @@ import org.rhq.core.domain.cluster.Server;
         + "       ) "
         + "  FROM Agent a " + " WHERE a.lastAvailabilityReport < :dateThreshold "),
     @NamedQuery(name = Agent.QUERY_FIND_ALL_WITH_STATUS_BY_SERVER, query = "" //
-        + "SELECT a " //
+        + "SELECT a.id " //
         + "  FROM Agent a " //
         + " WHERE a.server.name = :serverName " //
         + "   AND a.status <> 0 "), // 

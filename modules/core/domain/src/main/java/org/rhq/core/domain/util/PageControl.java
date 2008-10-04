@@ -86,6 +86,7 @@ public class PageControl implements Serializable, Cloneable {
     public void addDefaultOrderingField(String defaultField, PageOrdering defaultPageOrdering) {
         for (OrderingField ordering : orderingFields) {
             if (ordering.getField().equals(defaultField)) {
+                ordering.setOrdering(defaultPageOrdering); // might be changing sort of default column
                 return;
             }
         }

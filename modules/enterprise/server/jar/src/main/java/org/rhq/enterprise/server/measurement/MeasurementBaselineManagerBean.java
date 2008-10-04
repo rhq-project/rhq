@@ -399,8 +399,6 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     @SuppressWarnings("unchecked")
     public PageList<MeasurementBaselineComposite> getAllDynamicMeasurementBaselines(int agentId, Subject user,
         PageControl pc) {
-        pc.initDefaultOrderingField("mb.id");
-
         if (authorizationManager.isOverlord(user) == false) {
             throw new PermissionException("User [" + user.getName() + "] does not have permission to call "
                 + "getAllDynamicMeasurementBaselines; only the overlord has that right");

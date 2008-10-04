@@ -115,6 +115,7 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
         }
 
         Query query = entityManager.createNamedQuery(queryName);
+        PersistenceUtility.setDataPage(query, pageControl);
         Query queryCount = entityManager.createNamedQuery(AlertCondition.QUERY_BY_CATEGORY_COUNT_PARAMETERIZED);
         queryCount.setParameter("category", category);
 

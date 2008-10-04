@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.cluster.instance;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -27,6 +28,8 @@ import javax.ejb.Stateless;
 import javax.ejb.Timeout;
 import javax.ejb.Timer;
 import javax.ejb.TimerService;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -54,6 +57,9 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
     @EJB
     AlertConditionCacheManagerLocal cacheManager;
 
+    @EJB
+    CacheConsistencyManagerLocal cacheConsistencyManager;
+
     private final String TIMER_DATA = "CacheConsistencyManagerBean.reloadServerCacheIfNeeded";
 
     @SuppressWarnings("unchecked")
@@ -78,30 +84,45 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
     @Timeout
     public void handleHeartbeatTimer(Timer timer) {
         try {
-            reloadServerCacheIfNeeded();
+            cacheConsistencyManager.reloadServerCacheIfNeeded();
         } finally {
             // reschedule ourself to trigger in another 30 seconds
             timerService.createTimer(30000, TIMER_DATA);
         }
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void reloadServerCacheIfNeeded() {
-        List<Integer> agentIds = serverManager.getAndClearAgentsWithStatus();
+        /* 
+         * catch absolutely everything, so that even if this REQUIRES_NEW transaction rollback, 
+         * it doesn't rollback the caller (where we reschedule the TIMER to trigger this job again
+         */
+        List<Integer> agentIds = new ArrayList<Integer>();
+        try {
+            agentIds = serverManager.getAndClearAgentsWithStatus();
 
-        // do nothing if nothing to do
-        if (agentIds.size() == 0) {
-            return;
+            // do nothing if nothing to do
+            if (agentIds.size() == 0) {
+                return;
+            }
+
+            // otherwise print informational messages for poor-man's verification purposes
+            long startTime = System.currentTimeMillis();
+            for (Integer nextAgentId : agentIds) {
+                log.debug("Agent[id=" + nextAgentId + " is stale ");
+                cacheManager.reloadCachesForAgent(nextAgentId);
+            }
+            long endTime = System.currentTimeMillis();
+
+            String serverName = serverManager.getIdentity();
+            log.info("Took [" + (endTime - startTime) + "]ms to reload cache for " + serverName);
+        } catch (Throwable t) {
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to reload caches for the following agents: " + agentIds, t);
+            } else {
+                log.error("Failed to reload caches for the following agents: " + agentIds + ", cause: "
+                    + t.getMessage());
+            }
         }
-
-        // otherwise print informational messages for poor-man's verification purposes
-        long startTime = System.currentTimeMillis();
-        for (Integer nextAgentId : agentIds) {
-            log.debug("Agent[id=" + nextAgentId + " is stale ");
-            cacheManager.reloadCachesForAgent(nextAgentId);
-        }
-        long endTime = System.currentTimeMillis();
-
-        String serverName = serverManager.getIdentity();
-        log.info("Took [" + (endTime - startTime) + "]ms to reload cache for " + serverName);
     }
 }

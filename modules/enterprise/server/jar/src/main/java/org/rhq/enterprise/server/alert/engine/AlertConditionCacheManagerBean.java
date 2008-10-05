@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.alert.engine;
 
-import java.util.List;
-
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -27,14 +25,11 @@ import javax.ejb.TransactionAttributeType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
-import org.rhq.core.domain.measurement.composite.MeasurementBaselineComposite;
 import org.rhq.core.domain.operation.OperationHistory;
-import org.rhq.core.domain.resource.Resource;
 
 /**
  * @author Joseph Marques
@@ -68,32 +63,6 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
         AlertConditionCacheStats stats;
         stats = AlertConditionCache.getInstance().checkConditions(source, events);
         return stats;
-    }
-
-    public AlertConditionCacheStats updateConditions(Resource deletedResource) {
-        AlertConditionCacheStats stats;
-        stats = AlertConditionCache.getInstance().updateConditions(deletedResource);
-        return stats;
-    }
-
-    // this could potentially take really long, but we don't need to be in a transactional scope anyway
-    public AlertConditionCacheStats updateConditions(List<MeasurementBaselineComposite> measurementBaselines) {
-        AlertConditionCacheStats stats;
-        stats = AlertConditionCache.getInstance().updateConditions(measurementBaselines);
-        return stats;
-    }
-
-    public AlertConditionCacheStats updateConditions(AlertDefinition alertDefinition,
-        AlertDefinitionEvent alertDefinitionEvent) {
-        AlertConditionCacheStats stats;
-        stats = AlertConditionCache.getInstance().updateConditions(alertDefinition, alertDefinitionEvent);
-        return stats;
-    }
-
-    public boolean isCacheValid() {
-        boolean valid;
-        valid = AlertConditionCache.getInstance().isCacheValid();
-        return valid;
     }
 
     public String[] getCacheNames() {

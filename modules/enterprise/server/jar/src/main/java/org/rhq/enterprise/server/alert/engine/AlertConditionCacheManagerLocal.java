@@ -37,13 +37,6 @@ import org.rhq.core.domain.operation.OperationHistory;
  * on the recovery property, enablement actions, and enablement filtering options that were set on the AlertDefinition
  * this condition was triggered against - whether an alert should fire or not.
  */
-/*
- * note for developers:
- * 
- * the updateConditions methods have been commented out because no one should updating the cache directly anymore;
- * it's done solely through full-cache reloads (indirectly via the periodic job that comes along and checks the 
- * status field on specific agents) until further notice.
- */
 @Local
 public interface AlertConditionCacheManagerLocal {
     /**
@@ -84,41 +77,11 @@ public interface AlertConditionCacheManagerLocal {
      */
     AlertConditionCacheStats checkConditions(EventSource source, Event... events);
 
-    /**
-     * When items are removed from inventory, their AlertDefinitions (as well as the corresponding Alerts, Conditions,
-     * Logs, etc) are removed too. This means that the cache must be updated to remove the conditions associated with
-     * any AlertDefinition attached to the deleted resource.
-     *
-     * @return the number of internal conditions that were updated
-     */
-    //AlertConditionCacheStats updateConditions(Resource deletedResource);
-    /**
-     * When baselines are recalculated, the cache will need to store new values so that the appropriate AlertDefinitions
-     * that are based off of those baselines can fire in the appropriate instances.
-     *
-     * @return the number of internal conditions that were updated
-     */
-    //AlertConditionCacheStats updateConditions(List<MeasurementBaselineComposite> measurementBaselines);
-    /**
-     * This method will handle all event types in {@link AlertDefinitionEvent} When an AlertDefinition is removed via
-     * the Web UI a flag is set to prevent it from being shown, but it is not actually deleted. This method will also
-     * take care of removing conditions from the cache based on the deleted flag of the alert. The same goes for whether
-     * an AlertDefinition has been enabled / disabled, it will update the cache accordingly. Since this method does not
-     * directly take care of updating an alert definition when a user changes the list of conditions, if this sort of
-     * functionality is needed the caller must make consecutive calls to this method: one using a copy of the old
-     * alertDefinition without any updates to its conditions passing AlertDefinitionEvent.DELETED, and once using the
-     * updated definition passing AlertDefinitionEvent.CREATED instead.
-     *
-     * @return the number of internal conditions that were updated
-     */
-    //AlertConditionCacheStats updateConditions(AlertDefinition alertDefinition, AlertDefinitionEvent alertDefinitionEvent);
     String[] getCacheNames();
 
     void printCache(String cacheName);
 
     void printAllCaches();
-
-    boolean isCacheValid();
 
     void reloadCachesForAgent(int agentId);
 }

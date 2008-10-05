@@ -112,6 +112,4 @@ public interface AlertConditionCacheMonitorMBean {
     public void printCache(String cacheName);
 
     public void printAllCaches();
-
-    public boolean isCacheValid();
 }

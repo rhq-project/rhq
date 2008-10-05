@@ -248,10 +248,6 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
         LookupUtil.getAlertConditionCacheManager().printAllCaches();
     }
 
-    public boolean isCacheValid() {
-        return LookupUtil.getAlertConditionCacheManager().isCacheValid();
-    }
-
     public ObjectName preRegister(MBeanServer server, ObjectName name) throws Exception {
         objectName = name;
         mbeanServer = server;

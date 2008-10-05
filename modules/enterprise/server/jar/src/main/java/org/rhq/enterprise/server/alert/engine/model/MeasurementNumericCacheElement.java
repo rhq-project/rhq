@@ -23,7 +23,7 @@ package org.rhq.enterprise.server.alert.engine.model;
  */
 
 /*
- * Just a thin layer on top of StringCacheElement so that traits can be found
+ * Just a thin layer on top of NumericDoubleCacheElement so that metrics can be found
  * when being removed from the inverse cache by use of the 'instanceof' operator
  */
 public class MeasurementNumericCacheElement extends NumericDoubleCacheElement {

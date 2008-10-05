@@ -21,7 +21,9 @@
    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
       <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>
       <param name="Target" value="System.out"/>
-      <param name="Threshold" value="DEBUG"/>
+      <!-- Appender will not log any messages with priority lower than INFO even if the category's priority is set lower. 
+           So essentially, this means DEBUG and TRACE messages will never be output to the console -->
+      <param name="Threshold" value="INFO"/>
 
       <layout class="org.apache.log4j.PatternLayout">
          <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c{1}] %m%n"/>

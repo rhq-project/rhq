@@ -47,11 +47,16 @@
    <!-- Categories for the various RHQ subsystems -->
    <!-- ========================================= -->
 
-   <!--
-   <category name="org.rhq">
-      <priority value="DEBUG"/>
+   <!-- unless otherwise overridden, all org, com and net categories will be at INFO level -->
+   <category name="org">
+      <priority value="INFO"/>
    </category>
-   -->
+   <category name="com">
+      <priority value="INFO"/>
+   </category>
+   <category name="net">
+      <priority value="INFO"/>
+   </category>
 
    <!-- details on dbsetup and dbupgrade ant tasks and their internals -->
    <category name="org.rhq.core.db.ant">

@@ -21,9 +21,7 @@
    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
       <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>
       <param name="Target" value="System.out"/>
-      <!-- Appender will not log any messages with priority lower than INFO even if the category's priority is set lower. 
-           So essentially, DEBUG and TRACE messages will never be output to this appender. -->
-      <param name="Threshold" value="INFO"/>
+      <param name="Threshold" value="DEBUG"/>
 
       <layout class="org.apache.log4j.PatternLayout">
          <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c{1}] %m%n"/>
@@ -52,16 +50,13 @@
       <priority value="DEBUG"/>
    </category>
    -->
-   <!--
-   <category name="net.hyperic">
-      <priority value="DEBUG"/>
-   </category>
-   -->
 
+   <!-- details on dbsetup and dbupgrade ant tasks and their internals -->
    <category name="org.rhq.core.db.ant">
       <priority value="DEBUG"/>
    </category>
 
+   <!-- details on the db setup classes used to build the database schema -->
    <category name="org.rhq.core.db.setup">
       <priority value="DEBUG"/>
    </category>
@@ -80,6 +75,138 @@
    </category>
    -->
 
+   <!-- details on baseline calculations -->
+   <!--
+   <category name="org.rhq.enterprise.server.measurement.MeasurementBaselineManagerBean">
+      <priority value="DEBUG"/>
+   </category>
+   -->
+
+   <!-- details on incoming remote pojo invocations; emits concurrency limit debug messages -->
+   <!--
+   <category name="org.rhq.enterprise.communications.command.impl.remotepojo.server.RemotePojoInvocationCommandService">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+
+   <!-- details on outgoing messages; emits concurrency limit debug messages -->
+   <!--
+   <category name="org.rhq.enterprise.communications.command.client.ClientCommandSenderTask">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+
+   <!-- Top category for the entire comm module -->
+   <!--
+   <category name="org.rhq.enterprise.communications">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+
+   <!-- Top category for the enterprise GUI module -->
+   <!--
+   <category name="org.rhq.enterprise.gui">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+
+   <!-- Top category for the server-side code, including SLSBs -->
+   <!--
+   <category name="org.rhq.enterprise.server">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+
+   <!--
+   <category name="org.rhq.enterprise.server.alert">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   
+   <!--
+   <category name="org.rhq.enterprise.server.authz">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   
+   <!--
+   <category name="org.rhq.enterprise.server.cluster">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   
+   <!--
+   <category name="org.rhq.enterprise.server.configuration">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   
+   <!--
+   <category name="org.rhq.enterprise.server.content">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   
+   <!--
+   <category name="org.rhq.enterprise.server.core">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   
+   <!--
+   <category name="org.rhq.enterprise.server.discovery">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   
+   <!--
+   <category name="org.rhq.enterprise.server.event">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   
+   <!--
+   <category name="org.rhq.enterprise.server.measurement">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   
+   <!--
+   <category name="org.rhq.enterprise.server.operation">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   
+   <!--
+   <category name="org.rhq.enterprise.server.plugin">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   
+   <!--
+   <category name="org.rhq.enterprise.server.resource">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   
+   <!--
+   <category name="org.rhq.enterprise.server.scheduler">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   
+   <!--
+   <category name="org.rhq.enterprise.server.system">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   
+   <!--
+   <category name="org.rhq.enterprise.server.util">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+   
    <!-- ============================================= -->
    <!-- Categories for the various JBossAS subsystems -->
    <!-- ============================================= -->

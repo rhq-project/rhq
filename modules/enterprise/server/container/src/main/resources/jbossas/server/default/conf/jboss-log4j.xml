@@ -58,6 +58,13 @@
       <priority value="INFO"/>
    </category>
 
+   <!-- this will control RHQ categories - set to DEBUG if you want full RHQ debug messages -->
+   <!--
+   <category name="org.rhq">
+      <priority value="DEBUG"/>
+   </category>
+   -->
+
    <!-- details on dbsetup and dbupgrade ant tasks and their internals -->
    <category name="org.rhq.core.db.ant">
       <priority value="DEBUG"/>

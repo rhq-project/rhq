@@ -114,7 +114,7 @@ class ClientCommandSenderTask implements Callable<CommandResponse>, Runnable {
                 Throwable exception = response.getException();
                 if ((exception != null) && (exception instanceof NotPermittedException)) {
                     long pause = ((NotPermittedException) exception).getSleepBeforeRetry();
-                    LOG.warn(CommI18NResourceKeys.COMMAND_NOT_PERMITTED, m_cnc.getCommand(), pause);
+                    LOG.debug(CommI18NResourceKeys.COMMAND_NOT_PERMITTED, m_cnc.getCommand(), pause);
                     retry = true;
                     Thread.sleep(pause);
                 }

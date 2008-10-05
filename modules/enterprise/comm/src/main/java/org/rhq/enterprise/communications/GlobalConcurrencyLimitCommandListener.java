@@ -64,7 +64,7 @@ public class GlobalConcurrencyLimitCommandListener implements CommandListener {
             Permit permit = this.serviceContainer.getConcurrencyManager().getPermit(CONCURRENCY_LIMIT_NAME);
             this.permitsObtained.add(permit);
         } catch (NotPermittedException npe) {
-            LOG.warn(CommI18NResourceKeys.COMMAND_NOT_PERMITTED, command, npe.getSleepBeforeRetry());
+            LOG.debug(CommI18NResourceKeys.COMMAND_NOT_PERMITTED, command, npe.getSleepBeforeRetry());
             this.droppedCommands.release(); // adds 1 to the semaphore count so we know we dropped another command
             throw npe; // command processor will get this and abort the command
         }

@@ -4,3 +4,4 @@ cleanup-profile.xml : Preferences > Java Code Style > Clean Up
 formatter-profile.xml : Preferences > Java Code Style > Formatter
 organize-imports-profile.importorder : Preferences > Java Code Style > Organize Imports
 code-templates.xml : Preferences > Java Code Style > Code Templates
+license-editor-templates.xml : Preferences > Java > Editor > Templates

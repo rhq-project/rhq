@@ -881,6 +881,14 @@ DB Upgrade:
       </schema-directSQL>
    </schemaSpec>
 
+   <schemaSpec version="2.24">
+      <schema-directSQL>
+         <statement desc="Creating RHQ_MEASUREMENT_BLINE index on SCHEDULE_ID">
+            CREATE INDEX rhq_meas_baseline_sid_idx ON rhq_measurement_bline (schedule_id)
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

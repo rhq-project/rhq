@@ -1458,6 +1458,12 @@ public class AgentMain {
                     sendConnectRequestToServer(comm, false);
                 } catch (Throwable t) {
                     LOG.warn(AgentI18NResourceKeys.FAILOVER_FAILED, t);
+                    // TODO: I am unsure if this causes deadlocks or other problems, but consider
+                    // disconnecting the comm object here to force the initialize callback to be triggered again.
+                    // This will ensure we attempt to send the connect request again.  I left this commented out
+                    // because I don't know what happens if we are called in a thread that is already currently
+                    // attempting to send a connect request.
+                    // comm.disconnect();
                     return;
                 }
 

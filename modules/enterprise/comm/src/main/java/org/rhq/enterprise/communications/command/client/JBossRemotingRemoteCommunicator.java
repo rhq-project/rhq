@@ -34,6 +34,7 @@ import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.impl.generic.GenericCommandResponse;
 import org.rhq.enterprise.communications.i18n.CommI18NFactory;
 import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
+import org.rhq.enterprise.communications.util.NotPermittedException;
 
 /**
  * Provides basic functionality to all command clients that want to use JBoss/Remoting as the remoting framework.
@@ -416,73 +417,44 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
     }
 
     public CommandResponse sendWithoutCallbacks(Command command) throws Throwable {
-        Object ret_response;
+        // handle NotPermittedException in here
+        CommandResponse ret_response = null;
+        boolean retry;
+        do {
+            retry = false;
+            ret_response = rawSend(command);
+            Throwable exception = ret_response.getException();
+            if ((exception != null) && (exception instanceof NotPermittedException)) {
+                long pause = ((NotPermittedException) exception).getSleepBeforeRetry();
+                LOG.debug(CommI18NResourceKeys.COMMAND_NOT_PERMITTED, command, pause);
+                retry = true;
+                Thread.sleep(pause);
+            }
+        } while (retry);
 
-        try {
-            ret_response = getRemotingClient().invoke(command, null);
-        } catch (ServerInvoker.InvalidStateException serverDown) {
-            // see comments in #send for why this is here
-            ret_response = getRemotingClient().invoke(command, null);
-        }
-
-        // this is to support http(s) transport - those transports will return Exception objects when errors occur
-        if (ret_response instanceof Exception) {
-            throw (Exception) ret_response;
-        }
-
-        try {
-            return (CommandResponse) ret_response;
-        } catch (Exception e) {
-            // see comments in #send for why this is here
-            LOG.error(CommI18NResourceKeys.COMM_CCE, ret_response);
-            return new GenericCommandResponse(command, false, ret_response, e);
-        }
+        return ret_response;
     }
 
     public CommandResponse sendWithoutInitializeCallback(Command command) throws Throwable {
-        Object ret_response = null;
+        CommandResponse ret_response = null;
         boolean retry = false;
 
         do {
             try {
-                try {
-                    ret_response = getRemotingClient().invoke(command, null);
-                } catch (ServerInvoker.InvalidStateException serverDown) {
-                    // see comments in #send for why this is here
-                    ret_response = getRemotingClient().invoke(command, null);
-                }
-
-                // this is to support http(s) transport - those transports will return Exception objects when errors occur
-                if (ret_response instanceof Exception) {
-                    throw (Exception) ret_response;
-                }
-
-                retry = invokeFailureCallbackIfNeeded(command,
-                    (ret_response instanceof CommandResponse) ? (CommandResponse) ret_response : null, null);
-
+                ret_response = sendWithoutCallbacks(command);
+                retry = invokeFailureCallbackIfNeeded(command, ret_response, null);
             } catch (Throwable t) {
-                retry = invokeFailureCallbackIfNeeded(command,
-                    (ret_response instanceof CommandResponse) ? (CommandResponse) ret_response : null, t);
-
+                retry = invokeFailureCallbackIfNeeded(command, ret_response, t);
                 if (!retry) {
                     throw t;
                 }
             }
         } while (retry);
 
-        try {
-            return (CommandResponse) ret_response;
-        } catch (Exception e) {
-            // see comments in #send for why this is here
-            LOG.error(CommI18NResourceKeys.COMM_CCE, ret_response);
-            return new GenericCommandResponse(command, false, ret_response, e);
-        }
+        return ret_response;
     }
 
     public CommandResponse send(Command command) throws Throwable {
-        Object ret_response = null;
-        boolean retry = false;
-
         // invoke our initialize callback - if our method returns a response, it means
         // the initialize callback had an error and we need to abort the sending of this command
         CommandResponse initializeErrorResponse = invokeInitializeCallbackIfNeeded(command);
@@ -490,35 +462,34 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
             return initializeErrorResponse;
         }
 
-        do {
-            try {
+        return sendWithoutInitializeCallback(command);
+    }
 
-                try {
-                    ret_response = getRemotingClient().invoke(command, null);
-                } catch (ServerInvoker.InvalidStateException serverDown) {
-                    // under rare condition, a bug in remoting 2.2 causes this when the server restarted
-                    // try it one more time, this will get a new server thread on the server side (JBREM-745)
-                    // once JBREM-745 is fixed, we can probably get rid of this catch block
-                    ret_response = getRemotingClient().invoke(command, null);
-                }
+    /**
+     * The code that sends the command via the remote client.
+     * 
+     * @param command the command to send
+     * 
+     * @return the command response
+     * 
+     * @throws Throwable if a low-level, unhandled exception occurred
+     */
+    private CommandResponse rawSend(Command command) throws Throwable {
+        Object ret_response;
 
-                // this is to support http(s) transport - those transports will return Exception objects when errors occur
-                if (ret_response instanceof Exception) {
-                    throw (Exception) ret_response;
-                }
+        try {
+            ret_response = getRemotingClient().invoke(command, null);
+        } catch (ServerInvoker.InvalidStateException serverDown) {
+            // under rare condition, a bug in remoting 2.2 causes this when the server restarted
+            // try it one more time, this will get a new server thread on the server side (JBREM-745)
+            // once JBREM-745 is fixed, we can probably get rid of this catch block
+            ret_response = getRemotingClient().invoke(command, null);
+        }
 
-                retry = invokeFailureCallbackIfNeeded(command,
-                    (ret_response instanceof CommandResponse) ? (CommandResponse) ret_response : null, null);
-
-            } catch (Throwable t) {
-                retry = invokeFailureCallbackIfNeeded(command,
-                    (ret_response instanceof CommandResponse) ? (CommandResponse) ret_response : null, t);
-
-                if (!retry) {
-                    throw t;
-                }
-            }
-        } while (retry);
+        // this is to support http(s) transport - those transports will return Exception objects when errors occur
+        if (ret_response instanceof Exception) {
+            throw (Exception) ret_response;
+        }
 
         try {
             return (CommandResponse) ret_response;

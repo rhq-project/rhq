@@ -109,6 +109,18 @@ public class DataPoint implements IDisplayDataPoint {
         this.m_dValue = value;
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        long temp;
+        temp = Double.doubleToLongBits(m_dValue);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
+        result = prime * result + (int) (m_timestamp ^ (m_timestamp >>> 32));
+        return result;
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof DataPoint) {
             DataPoint val = (DataPoint) obj;
@@ -117,4 +129,5 @@ public class DataPoint implements IDisplayDataPoint {
 
         return false;
     }
+
 }

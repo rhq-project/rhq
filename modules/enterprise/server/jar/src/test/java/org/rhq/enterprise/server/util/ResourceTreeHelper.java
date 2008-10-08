@@ -117,7 +117,9 @@ public class ResourceTreeHelper {
             }
         }
 
-        entityManager.flush();
+        // only flush when we are in persisting mode
+        if (entityManager != null)
+            entityManager.flush();
 
         return roots;
     }

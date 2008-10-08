@@ -85,6 +85,7 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
         // See if an old package was requested
         String oldPackageIdString = FacesContextUtility.getRequest().getParameter("oldPackageId");
 
+        // TODO did we really want to pass null or some old package version determined by oldPackageIdString? 
         return toCombinedValues(currentPackage, null);
     }
 
@@ -117,7 +118,7 @@ public class ListPackageHistoryUIBean extends PagedDataTableUIBean {
         results.add(new PackageTableDataValue("SHA256", current.getPackageVersion().getSHA256(), ((old != null) ? old
             .getPackageVersion().getSHA256() : null)));
         results.add(new PackageTableDataValue("Installation Date", dateToString(current.getInstallationDate()),
-            dateToString(old.getInstallationDate())));
+            dateToString((old != null) ? old.getInstallationDate() : null)));
         results.add(new PackageTableDataValue("Owner", (current.getUser() != null) ? current.getUser().toString()
             : null, (old != null) ? ((old.getUser() != null) ? old.getUser().toString() : null) : null));
 

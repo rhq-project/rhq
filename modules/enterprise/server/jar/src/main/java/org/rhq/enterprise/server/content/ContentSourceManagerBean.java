@@ -1376,31 +1376,31 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
                 ContentSourceAdapterManager adapterMgr = pc.getAdapterManager();
                 int contentSourceId = pvcs.getPackageVersionContentSourcePK().getContentSource().getId();
                 bitsStream = adapterMgr.loadPackageBits(contentSourceId, pvcs.getLocation());
-            }
-
-            if (composite.isPackageBitsInDatabase()) {
-                // this is  DownloadMode.DATABASE - put the bits in the database
-                conn = dataSource.getConnection();
-                ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = ?");
-
-                ps.setInt(1, composite.getPackageBitsId());
-                results = ps.executeQuery();
-                results.next();
-                bitsStream = results.getBinaryStream(1);
-                if (bitsStream == null) {
-                    throw new RuntimeException("Got null for package bits stream from DB for [" + packageDetailsKey
-                        + "]");
-                }
             } else {
-                // this is  DownloadMode.FILESYSTEM - put the bits on the filesystem
-                File bitsFile = getPackageBitsLocalFilesystemFile(composite.getPackageVersionId(), composite
-                    .getFileName());
-                if (!bitsFile.exists()) {
-                    throw new RuntimeException("Package bits at [" + bitsFile + "] are missing for ["
-                        + packageDetailsKey + "]");
-                }
+                if (composite.isPackageBitsInDatabase()) {
+                    // this is  DownloadMode.DATABASE - put the bits in the database
+                    conn = dataSource.getConnection();
+                    ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = ?");
 
-                bitsStream = new FileInputStream(bitsFile);
+                    ps.setInt(1, composite.getPackageBitsId());
+                    results = ps.executeQuery();
+                    results.next();
+                    bitsStream = results.getBinaryStream(1);
+                    if (bitsStream == null) {
+                        throw new RuntimeException("Got null for package bits stream from DB for [" + packageDetailsKey
+                            + "]");
+                    }
+                } else {
+                    // this is  DownloadMode.FILESYSTEM - put the bits on the filesystem
+                    File bitsFile = getPackageBitsLocalFilesystemFile(composite.getPackageVersionId(), composite
+                        .getFileName());
+                    if (!bitsFile.exists()) {
+                        throw new RuntimeException("Package bits at [" + bitsFile + "] are missing for ["
+                            + packageDetailsKey + "]");
+                    }
+
+                    bitsStream = new FileInputStream(bitsFile);
+                }
             }
 
             // the magic happens here - outputStream is probably a remote stream down to the agent

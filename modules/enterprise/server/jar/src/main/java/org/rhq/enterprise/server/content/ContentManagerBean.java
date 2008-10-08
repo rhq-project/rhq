@@ -81,7 +81,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -120,9 +119,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @EJB
     private ContentManagerLocal contentManager;
-
-    @EJB
-    private SubjectManagerLocal subjectManager;
 
     // ContentManagerLocal Implementation  --------------------------------------------
 
@@ -829,7 +825,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // Load persisted request
         ContentServiceRequest persistedRequest = entityManager.find(ContentServiceRequest.class, response
             .getRequestId());
-        Resource resource = persistedRequest.getResource();
 
         // There is some inconsistency if we're completing a request that was not in the database
         if (persistedRequest == null) {
@@ -838,6 +833,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                     + response.getRequestId());
             return;
         }
+        Resource resource = persistedRequest.getResource();
 
         InstalledPackageHistory initialRequestHistory = persistedRequest.getInstalledPackageHistory().iterator().next();
         PackageVersion packageVersion = initialRequestHistory.getPackageVersion();

@@ -103,6 +103,13 @@
    </category>
    -->
 
+   <!-- emits global concurrency limit debug messages -->
+   <!--
+   <category name="org.rhq.enterprise.communications.GlobalConcurrencyLimitCommandListener">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+
    <!-- details on outgoing messages; emits concurrency limit debug messages -->
    <!--
    <category name="org.rhq.enterprise.communications.command.client.ClientCommandSenderTask">

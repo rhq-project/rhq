@@ -1,0 +1,6 @@
+String s1 = "Use this scrapbook page to execute/debug arbitrary code inside Eclipse.";
+String s2 = "Select the lines in this scrapbook you want to execute, then right-mouse";
+String s3 = "click and choose 'Execute' to run the code. See output in the Console view.";
+String printMe = s1 + '\n' + s2 + '\n' + s3;
+System.out.println(printMe);
+System.out.println("Today's date is " + new java.util.Date());

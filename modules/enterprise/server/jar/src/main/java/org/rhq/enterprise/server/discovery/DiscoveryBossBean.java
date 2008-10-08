@@ -113,8 +113,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
                 + "] sent an inventory report - that report will be ignored");
         }
 
-        log.info("Received inventory report from RHQ Agent [" + knownAgent + "]. Number of added roots: "
-            + report.getAddedRoots().size());
+        if (log.isDebugEnabled()) {
+            log.debug("Received inventory report from RHQ Agent [" + knownAgent + "]. Number of added roots: "
+                + report.getAddedRoots().size());
+        }
 
         Set<Resource> roots = report.getAddedRoots();
         log.debug(report);
@@ -260,8 +262,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             }
         }
 
-        log.info("Inventory status set to [" + status + "] for [" + platforms.size() + "] platforms and ["
-            + servers.size() + "] servers in [" + (System.currentTimeMillis() - start) + "]ms");
+        if (log.isDebugEnabled()) {
+            log.debug("Inventory status set to [" + status + "] for [" + platforms.size() + "] platforms and ["
+                + servers.size() + "] servers in [" + (System.currentTimeMillis() - start) + "]ms");
+        }
     }
 
     /**
@@ -450,11 +454,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
      */
     private Resource getExistingResource(Resource resource) {
         Resource existingResource = null;
-        log.debug("");
+
         log.debug("getExistingResource processing for [" + resource + "]");
 
+        String idLogMsg = "id=" + resource.getId();
+
         if (resource.getId() != 0) {
-            log.debug("id=" + resource.getId() + ": Agent claims resource is already in inventory.");
+            log.debug(idLogMsg + ": Agent claims resource is already in inventory.");
 
             /* agent says this resource is already in inventory.
              *
@@ -464,16 +470,16 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             existingResource = entityManager.find(Resource.class, resource.getId());
             if (existingResource == null) {
                 // agent lied - agent's copy of JON server inventory must be stale.
-                log.debug("id=" + resource.getId() + ": However, no resource exists with the specified id.");
+                log.debug(idLogMsg + ": However, no resource exists with the specified id.");
             } else {
-                log.debug("id=" + resource.getId() + ": Found resource already in inventory with specified id");
+                log.debug(idLogMsg + ": Found resource already in inventory with specified id");
             }
         } else {
-            log.debug("id=" + resource.getId() + ": Agent reported resource with id of 0.");
+            log.debug(idLogMsg + ": Agent reported resource with id of 0.");
         }
 
         if (existingResource == null) {
-            log.debug("id=" + resource.getId() + ": Checking if a resource exists with the specified business key.");
+            log.debug(idLogMsg + ": Checking if a resource exists with the specified business key.");
 
             /*
              * double-check for an existing resource using the business key.
@@ -487,20 +493,17 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             if (existingResource != null) {
                 // we found it, reset the id to what it should be
                 resource.setId(existingResource.getId());
-                log.debug("id=" + resource.getId()
-                    + ": Found resource already in inventory with specified business key");
+                log.debug(idLogMsg + ": Found resource already in inventory with specified business key");
             } else {
-                log.debug("id=" + resource.getId()
-                    + ": Unable to find the agent-reported resource by id and business key.");
+                log.debug(idLogMsg + ": Unable to find the agent-reported resource by id and business key.");
 
                 if (resource.getId() != 0) {
                     // existingResource is still null at this point, the resource does not exist in inventory.
-                    log.error("id=" + resource.getId() + ": Resetting the resource's id to zero.");
+                    log.error(idLogMsg + ": Resetting the resource's id to zero.");
                     resource.setId(0);
                     // TODO: Is there anything else we should do here to inform the agent it has an out-of-sync resource?
                 } else {
-                    log.debug("id=" + resource.getId()
-                        + ": Resource's id was already zero, nothing to do for the merge.");
+                    log.debug(idLogMsg + ": Resource's id was already zero, nothing to do for the merge.");
                 }
             }
         }

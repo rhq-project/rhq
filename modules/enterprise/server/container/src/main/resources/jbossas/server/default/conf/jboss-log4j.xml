@@ -110,6 +110,13 @@
    </category>
    -->
 
+   <!-- details on incoming inventory reports -->
+   <!--
+   <category name="org.rhq.enterprise.server.discovery.DiscoveryBossBean">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+
    <!-- Top category for the entire comm module -->
    <!--
    <category name="org.rhq.enterprise.communications">

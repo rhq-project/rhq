@@ -2,7 +2,7 @@
   <parent>
     <artifactId>rhq-plugins-parent</artifactId>
     <groupId>org.rhq</groupId>
-    <version>1.1.0-SNAPSHOT</version>
+    <version>1.2.0-SNAPSHOT</version>
   </parent>
   
   <modelVersion>4.0.0</modelVersion>
@@ -10,7 +10,7 @@
   <groupId>org.rhq</groupId>
   <artifactId>rhq-snmptrapd-plugin</artifactId>
   <name>snmptrapd</name>
-  <version>1.1.0-SNAPSHOT</version>
+  <version>1.2.0-SNAPSHOT</version>
   <description>RHQ SnmpTrapd Plugin</description>
   
      <scm>

@@ -62,9 +62,11 @@ public class ListChildrenAction extends TilesAction {
     protected static final Log log = LogFactory.getLog(ListChildrenAction.class.getName());
     MeasurementDataManagerLocal dataManager;
 
+    @SuppressWarnings("unchecked")
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
+
         dataManager = LookupUtil.getMeasurementDataManager();
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
@@ -72,7 +74,7 @@ public class ListChildrenAction extends TilesAction {
         Resource resource = (Resource) request.getAttribute(AttrConstants.RESOURCE_ATTR);
 
         // Get metric time range
-        Map pref = user.getMetricRangePreference(true);
+        Map<String, ?> pref = user.getMetricRangePreference(true);
         long begin = (Long) pref.get(MonitorUtils.BEGIN);
         long end = (Long) pref.get(MonitorUtils.END);
 
@@ -88,8 +90,19 @@ public class ListChildrenAction extends TilesAction {
                     -1);
                 children = getAutoGroupChildren(subject, parentId, resourceTypeId);
                 if (children == null)
-                    children = new ArrayList();
-                displaySummary = new ArrayList<AutoGroupCompositeDisplaySummary>(children.size());
+                    children = new ArrayList<AutoGroupComposite>();
+                displaySummary = new ArrayList<AutoGroupCompositeDisplaySummary>(children.size() + 1);
+
+                // get the parent
+                ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+                AutoGroupComposite parentComposite = resourceManager.getResourceAutoGroup(subject, parentId);
+                if (parentComposite != null) {
+                    parentComposite.setMainResource(true);
+                    List<MetricDisplaySummary> metricSummaries = null;
+                    metricSummaries = dataManager.getMetricDisplaySummariesForMetrics(subject, parentId,
+                        DataType.MEASUREMENT, begin, end, true, true);
+                    displaySummary.add(0, new AutoGroupCompositeDisplaySummary(parentComposite, metricSummaries));
+                }
                 /* We have n children with each child representing exactly 1 resource.
                  * As we are in an autogroup, all children have the same type, so we can just feed them to the backend
                  * in one call with all n resources.
@@ -108,11 +121,15 @@ public class ListChildrenAction extends TilesAction {
                     .getNarrowedMetricDisplaySummariesForResourcesAndParent(subject, resourceTypeId, parentId,
                         resourceIds, begin, end);
                 for (AutoGroupComposite child : children) {
+                    if (parentComposite != null)
+                        child.increaseDepth(1);
+
                     List resources = child.getResources();
                     ResourceWithAvailability rwa = (ResourceWithAvailability) resources.get(0);
                     List<MetricDisplaySummary> sumList = summaries.get(rwa.getResource().getId());
                     displaySummary.add(new AutoGroupCompositeDisplaySummary(child, sumList));
                 }
+
             } else {
                 RequestUtils.setError(request, MessageConstants.ERR_RESOURCE_NOT_FOUND);
                 return null;
@@ -200,7 +217,7 @@ public class ListChildrenAction extends TilesAction {
         if (parentGroupComposite != null) {
             // now increase everyone's depth by one to account for the parent
             for (AutoGroupComposite child : children) {
-                child.setDepth(child.getDepth() + 1);
+                child.increaseDepth(1);
             }
 
             children.add(0, parentGroupComposite);
@@ -225,6 +242,7 @@ public class ListChildrenAction extends TilesAction {
         }
 
         if ((resourceType != null) && (parentResource != null)) {
+
             // first get the resources in the autogroup
             List<ResourceWithAvailability> resourcesForAutoGroup = resourceManager.getResourcesByParentAndType(subject,
                 parentResource, resourceType);
@@ -236,9 +254,9 @@ public class ListChildrenAction extends TilesAction {
             }
 
             // And then the composite to return
-            List<AutoGroupComposite> composite = resourceManager.getResourcesAutoGroups(subject, resourceIds);
+            List<AutoGroupComposite> composites = resourceManager.getResourcesAutoGroups(subject, resourceIds);
 
-            return composite;
+            return composites;
         }
 
         return children; // empty

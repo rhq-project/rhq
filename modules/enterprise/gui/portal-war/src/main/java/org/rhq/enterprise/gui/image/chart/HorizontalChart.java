@@ -100,10 +100,10 @@ public class HorizontalChart extends Chart {
         String[] labels = this.getUnitLabels();
 
         for (int i = 0; i < labels.length; i++) {
-            int width = this.m_metricsLabel.stringWidth(labels[i]);
+            int labelWidth = this.m_metricsLabel.stringWidth(labels[i]);
 
-            if (width > maxWidth) {
-                maxWidth = width;
+            if (labelWidth > maxWidth) {
+                maxWidth = labelWidth;
             }
         }
 
@@ -126,7 +126,6 @@ public class HorizontalChart extends Chart {
 
         // Calculate points
         double dScale = this.scale(rect.width);
-        int lineWidth = this.lineWidth;
 
         //////////////////////////////////////////////////////////
         // Draw the Value (Y) Legend

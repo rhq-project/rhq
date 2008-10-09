@@ -22,6 +22,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Rectangle;
 import java.util.Iterator;
+
 import org.rhq.core.domain.measurement.MeasurementUnits;
 
 public class StackedPerformanceChart extends HorizontalChart {
@@ -66,6 +67,7 @@ public class StackedPerformanceChart extends HorizontalChart {
         m_destinationType = (destinationType != null) ? destinationType : DEFAULT_DESTINATION_TYPE;
     }
 
+    @Override
     protected void init() {
         super.init();
 
@@ -75,6 +77,7 @@ public class StackedPerformanceChart extends HorizontalChart {
         this.bottomBorder = 0;
     }
 
+    @Override
     protected int calcVariableHeight() {
         int height = 0;
 
@@ -84,7 +87,7 @@ public class StackedPerformanceChart extends HorizontalChart {
         }
 
         // Iterator through each data set
-        Iterator iterBars = this.getDataSetIterator();
+        Iterator<DataPointCollection> iterBars = this.getDataSetIterator();
         for (int line = 0; iterBars.hasNext(); line++) {
             // Calculate the height
             PerfDataPointCollection coll = (PerfDataPointCollection) iterBars.next();
@@ -108,6 +111,7 @@ public class StackedPerformanceChart extends HorizontalChart {
         return height;
     }
 
+    @Override
     protected Class getDataCollectionClass() {
         return PerfDataPointCollection.class;
     }
@@ -127,6 +131,7 @@ public class StackedPerformanceChart extends HorizontalChart {
         return result;
     }
 
+    @Override
     protected Rectangle draw(ChartGraphics g) {
         Rectangle rect = null;
 
@@ -240,6 +245,7 @@ public class StackedPerformanceChart extends HorizontalChart {
         m_perf.showStacked = true;
     }
 
+    @Override
     public void setFormat(MeasurementUnits units) {
         super.setFormat(units);
         m_perf.setValueLegend(m_perf.getValueLegend() + " (" + m_fmtUnits + ")");

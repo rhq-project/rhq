@@ -20,15 +20,18 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
-import org.rhq.enterprise.gui.legacy.Constants;
+
 import org.rhq.enterprise.gui.legacy.ParamConstants;
+import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.util.ActionUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
@@ -44,6 +47,7 @@ public class PerformanceAction extends MetricsControlAction {
     /**
      * Modify the metrics summary display as specified in the given <code>PerformanceForm</code>.
      */
+    @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         PerformanceForm perfForm = (PerformanceForm) form;
@@ -85,6 +89,6 @@ public class PerformanceAction extends MetricsControlAction {
         String returnPath = ActionUtils.findReturnPath(mapping, params);
         SessionUtils.setReturnPath(request.getSession(), returnPath);
 
-        return constructForward(request, mapping, Constants.CHART_URL, params, NO_RETURN_PATH);
+        return constructForward(request, mapping, RetCodeConstants.CHART_URL, params, NO_RETURN_PATH);
     }
 }

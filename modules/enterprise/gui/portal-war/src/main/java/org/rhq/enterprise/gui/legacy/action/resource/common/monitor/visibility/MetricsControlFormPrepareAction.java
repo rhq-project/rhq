@@ -20,14 +20,17 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
 import java.util.Date;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
@@ -50,20 +53,28 @@ public class MetricsControlFormPrepareAction extends TilesAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         MetricsControlForm controlForm = (MetricsControlForm) form;
-        Integer groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
-        if (groupId == -1) {
-            Resource resource = (Resource) request.getAttribute(AttrConstants.RESOURCE_ATTR);
-            if (resource == null) {
-                return null;
-            }
+        int groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
+        int parent = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
+        int type = WebUtility.getOptionalIntRequestParameter(request, "type", -1);
+        if (parent > -1 && type > 1) {
+            // autogroup
+            controlForm.setParent(parent);
+            controlForm.setCtype(type);
+            controlForm.setCategory("Autogroup");
 
-            controlForm.setId(resource.getId());
-            controlForm.setCategory(resource.getResourceType().getCategory().name());
-        } else {
+        } else if (groupId > -1) {
             ResourceType resourceType = (ResourceType) request.getAttribute(AttrConstants.RESOURCE_TYPE_ATTR);
             if (resourceType != null) {
-                //             controlForm.setCategory(resourceType.getCategory().name());
-                controlForm.setCategory(GroupCategory.COMPATIBLE.getName()); // TODO could those be mixed groups as well?
+                controlForm.setCategory(GroupCategory.COMPATIBLE.getName());
+                controlForm.setGroupId(groupId);
+            }
+
+        } else {
+            Resource resource = (Resource) request.getAttribute(AttrConstants.RESOURCE_ATTR);
+            if (resource != null) {
+
+                controlForm.setId(resource.getId());
+                controlForm.setCategory(resource.getResourceType().getCategory().name());
             }
         }
 

@@ -26,14 +26,13 @@
          <artifactId>rhq-core-client-api</artifactId>
          <version>${project.version}</version>
       </dependency>
-
+      
       <dependency>
          <groupId>commons-logging</groupId>
          <artifactId>commons-logging</artifactId>
-         <version>1.1</version>
-         <scope>provided</scope>
-      </dependency>
-
+         <version>1.1.0.jboss</version>         
+      </dependency>     
+      
       <dependency>
          <groupId>hibernate-annotations</groupId>
          <artifactId>hibernate-annotations</artifactId>

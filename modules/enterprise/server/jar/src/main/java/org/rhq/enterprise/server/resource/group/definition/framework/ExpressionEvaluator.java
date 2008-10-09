@@ -35,6 +35,7 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -53,7 +54,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         RESOURCE_CONFIGURATION(".resourceConfiguration", "conf"), // 
         PLUGIN_CONFIGURATION(".pluginConfiguration", "pluginConf"), //
         SCHEDULES(".schedules", "sched"), //
-        RESOURCE_CHILD(".childResources", "child");
+        RESOURCE_CHILD(".childResources", "child"), //
+        AVAILABILITY(".availability", "avail");
 
         String subexpression;
         String alias;
@@ -210,6 +212,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         ResourceGrandParent(false), //
         ResourceChild(false), //
         ResourceType(false), //
+        Availability(true), //
         Trait(true), //
         Configuration(true), //
         StringMatch(true), //
@@ -371,6 +374,19 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                     throw new InvalidExpressionException("Invalid 'type' subexpression: "
                         + PrintUtils.getDelimitedString(tokens, parseIndex, "."));
                 }
+            } else if (context == ParseContext.Availability) {
+                AvailabilityType type = null;
+                if (value.equals("up")) {
+                    type = AvailabilityType.UP;
+                } else if (value.equals("down")) {
+                    type = AvailabilityType.DOWN;
+                } else {
+                    throw new InvalidExpressionException("Invalid 'resource.availability' comparision value, "
+                        + "only 'UP' and 'DOWN' are valid values");
+                }
+                joinConditions.add(JoinCondition.AVAILABILITY);
+                populatePredicateCollections(JoinCondition.AVAILABILITY.alias + ".availabilityType", type);
+                whereStatics.add(JoinCondition.AVAILABILITY.alias + ".endTime IS NULL");
             } else if (context == ParseContext.Trait) {
                 // SELECT res.id FROM Resource res JOIN res.schedules sched, sched.definition def, MeasurementDataTrait trait
                 // WHERE def.name = :arg1 AND trait.value = :arg2 AND trait.schedule = sched AND trait.id.timestamp =
@@ -477,6 +493,9 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             populatePredicateCollections(getResourceRelativeContextToken() + ".version", value);
         } else if (nextToken.equals("type")) {
             context = ParseContext.ResourceType;
+        } else if (nextToken.startsWith("availability")) {
+            context = ParseContext.Availability;
+            parseIndex--; // undo auto-inc, since this context requires element re-parse
         } else if (nextToken.startsWith("trait")) {
             context = ParseContext.Trait;
             parseIndex--; // undo auto-inc, since this context requires element re-parse
@@ -730,6 +749,9 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     private String getQueryJoinConditions() {
         String result = "";
         for (JoinCondition joinCondition : joinConditions) {
+            /*
+             * TODO: jmarques - instead of JOIN res, need to JOIN <correct_res_context>
+             */
             result += " JOIN res" + joinCondition.subexpression + " " + joinCondition.alias;
             if (joinCondition == JoinCondition.SCHEDULES) {
                 result += " JOIN " + joinCondition.alias + ".definition " + METRIC_DEF_ALIAS;

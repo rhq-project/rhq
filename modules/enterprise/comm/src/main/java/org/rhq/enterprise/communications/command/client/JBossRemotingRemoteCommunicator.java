@@ -478,12 +478,20 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         Object ret_response;
 
         try {
-            ret_response = getRemotingClient().invoke(command, null);
-        } catch (ServerInvoker.InvalidStateException serverDown) {
-            // under rare condition, a bug in remoting 2.2 causes this when the server restarted
-            // try it one more time, this will get a new server thread on the server side (JBREM-745)
-            // once JBREM-745 is fixed, we can probably get rid of this catch block
-            ret_response = getRemotingClient().invoke(command, null);
+            try {
+                OutgoingCommandTrace.start(command);
+                ret_response = getRemotingClient().invoke(command, null);
+                OutgoingCommandTrace.finish(command, ret_response);
+            } catch (ServerInvoker.InvalidStateException serverDown) {
+                // under rare condition, a bug in remoting 2.2 causes this when the server restarted
+                // try it one more time, this will get a new server thread on the server side (JBREM-745)
+                // once JBREM-745 is fixed, we can probably get rid of this catch block
+                ret_response = getRemotingClient().invoke(command, null);
+                OutgoingCommandTrace.finish(command, ret_response);
+            }
+        } catch (Throwable t) {
+            OutgoingCommandTrace.finish(command, t);
+            throw t;
         }
 
         // this is to support http(s) transport - those transports will return Exception objects when errors occur

@@ -6,7 +6,7 @@
    <!-- ============================== -->
    <!-- Append messages to the console -->
    <!-- ============================== -->
- 
+
    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
       <param name="Threshold" value="DEBUG"/>
       <param name="Target" value="System.out"/>
@@ -34,6 +34,23 @@
 
    </appender>
 
+   <!-- ====================================== -->
+   <!-- Append command trace to a rolling file -->
+   <!-- ====================================== -->
+   <appender name="COMMANDTRACE" class="org.apache.log4j.RollingFileAppender">
+
+      <param name="Threshold"      value="TRACE"/>
+      <param name="File"           value="logs/command-trace.log"/>
+      <param name="MaxBackupIndex" value="9"/>
+      <param name="MaxFileSize"    value="10MB"/>
+      <param name="Append"         value="true"/>
+
+      <layout class="org.apache.log4j.PatternLayout">
+         <param name="ConversionPattern" value="%d{MMM-dd HH:mm:ss,SSS} %m%n"/>
+      </layout>
+
+   </appender>
+
    <!-- ================ -->
    <!-- Limit categories -->
    <!-- ================ -->
@@ -42,7 +59,19 @@
    <category name="org.rhq">
       <priority value="DEBUG"/>
    </category>
-   
+
+   <!-- RHQ outgoing command tracing  - set to TRACE to trace commands sent by the agent -->
+   <category name="org.rhq.enterprise.communications.command.client.OutgoingCommandTrace">
+      <priority value="NONE"/>
+      <appender-ref ref="COMMANDTRACE"/>
+   </category>
+
+   <!-- RHQ incoming command tracing  - set to TRACE to trace commands coming in from the Server -->
+   <category name="org.rhq.enterprise.communications.command.server.IncomingCommandTrace">
+      <priority value="NONE"/>
+      <appender-ref ref="COMMANDTRACE"/>
+   </category>
+
    <!-- JBoss/Remoting - for low level communications layer tracing -->
    <!--
    <category name="org.jboss.remoting">
@@ -56,7 +85,7 @@
       <priority value="ERROR"/>
    </category>
    -->
-   
+
    <!-- ======================= -->
    <!-- Setup the Root category -->
    <!-- ======================= -->

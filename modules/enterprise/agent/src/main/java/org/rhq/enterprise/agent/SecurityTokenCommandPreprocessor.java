@@ -43,9 +43,19 @@ public class SecurityTokenCommandPreprocessor implements CommandPreprocessor {
     private static final String CMDCONFIG_PROP_SECURITY_TOKEN = "rhq.security-token";
 
     /**
+     * This is the name of the command configuration property that will get assigned the agent name.
+     */
+    private static final String CMDCONFIG_PROP_AGENT_NAME = "rhq.agent-name";
+
+    /**
      * The agent configuration that will be used to persist the security token.
      */
     private AgentConfiguration m_agentConfiguration = null;
+
+    /**
+     * The name of the agent sending commands.
+     */
+    private String m_agentName = "unknown";
 
     /**
      * If the agent has a security token established, this will insert that security token in the command's
@@ -60,6 +70,9 @@ public class SecurityTokenCommandPreprocessor implements CommandPreprocessor {
             command.getConfiguration().setProperty(CMDCONFIG_PROP_SECURITY_TOKEN, token);
         }
 
+        // as of 10/9/2008, this is here solely to be able to debug where a command was sent from
+        command.getConfiguration().setProperty(CMDCONFIG_PROP_AGENT_NAME, m_agentName);
+
         return;
     }
 
@@ -71,6 +84,7 @@ public class SecurityTokenCommandPreprocessor implements CommandPreprocessor {
      */
     public void setAgentConfiguration(AgentConfiguration config) {
         m_agentConfiguration = config;
+        m_agentName = config.getAgentName();
     }
 
     /**

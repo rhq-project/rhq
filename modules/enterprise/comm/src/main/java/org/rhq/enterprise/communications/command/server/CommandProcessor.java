@@ -295,7 +295,7 @@ public class CommandProcessor implements StreamInvocationHandler {
      */
     private Object handleIncomingInvocationRequest(InputStream in, InvocationRequest invocation) {
         Command cmd = null;
-        CommandResponse ret_response;
+        CommandResponse ret_response = null;
 
         long elapsed = 0L; // will be the time in ms that it took to invoked the command service if we did invoke it
 
@@ -305,6 +305,7 @@ public class CommandProcessor implements StreamInvocationHandler {
 
             // get the Command the client wants to execute
             cmd = (Command) invocation.getParameter();
+            IncomingCommandTrace.start(cmd);
 
             if (cmd != null) {
                 notifyListenersOfReceivedCommand(cmd);
@@ -371,6 +372,8 @@ public class CommandProcessor implements StreamInvocationHandler {
         } catch (Throwable t) {
             ret_response = new GenericCommandResponse(cmd, false, null, t);
         } finally {
+            IncomingCommandTrace.finish(cmd, ret_response);
+
             // as per JBoss/Remoting docs, you must ensure you close the input stream
             if (in != null) {
                 try {

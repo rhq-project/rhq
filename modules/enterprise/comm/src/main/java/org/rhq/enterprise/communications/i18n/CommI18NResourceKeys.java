@@ -938,4 +938,16 @@ public interface CommI18NResourceKeys {
 
     @I18NMessages( { @I18NMessage("Transport must be one of the following: servlet, sslservlet") })
     String NOT_SERVLET_TRANSPORT = "Setup.not-servlet-transport";
+
+    @I18NMessage("==>{0}|{1}")
+    String TRACE_OUTGOING_COMMAND_START = "send.initiate";
+
+    @I18NMessage("=>>{0}|{1}|{2}")
+    String TRACE_OUTGOING_COMMAND_FINISH = "send.complete";
+
+    @I18NMessage("<=={0}|{1}")
+    String TRACE_INCOMING_COMMAND_START = "recv.initiate";
+
+    @I18NMessage("<<={0}|{1}|{2}")
+    String TRACE_INCOMING_COMMAND_FINISH = "recv.complete";
 }

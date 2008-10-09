@@ -49,6 +49,13 @@
       <priority value="TRACE" class="org.jboss.logging.XLevel"/>
    </category>
    -->
+
+   <!-- EMS can be noisy with its WARN messages - uncomment the below to suppress them. -->
+   <!--
+   <category name="org.mc4j.ems">
+      <priority value="ERROR"/>
+   </category>
+   -->
    
    <!-- ======================= -->
    <!-- Setup the Root category -->

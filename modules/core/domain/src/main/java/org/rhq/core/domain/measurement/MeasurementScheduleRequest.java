@@ -129,24 +129,20 @@ public class MeasurementScheduleRequest implements Serializable {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + scheduleId;
-        return result;
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        MeasurementScheduleRequest that = (MeasurementScheduleRequest)obj;
+        if (scheduleId != that.scheduleId) return false;
+        if (!name.equals(that.name)) return false;
+        return true;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-
-        if ((obj == null) || !(obj instanceof MeasurementScheduleRequest)) {
-            return false;
-        }
-
-        final MeasurementScheduleRequest other = (MeasurementScheduleRequest) obj;
-        return (scheduleId == other.scheduleId);
+    public int hashCode() {
+        int result;
+        result = scheduleId;
+        result = 31 * result + name.hashCode();
+        return result;
     }
 }

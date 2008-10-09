@@ -22,11 +22,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.enterprise.gui.image.chart.Chart;
 import org.rhq.enterprise.gui.image.chart.DataPoint;
@@ -127,7 +131,7 @@ public class PerformanceChartServlet extends ChartServlet {
                 setNumCharts(chartData.getSegments().size());
             }
 
-            if (units == null) {
+            if (units == null || units == MeasurementUnits.NONE) {
                 units = chartData.getMeasurementDefinition().getUnits();
             }
 

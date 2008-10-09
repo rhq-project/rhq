@@ -225,8 +225,10 @@ public abstract class ChartServlet extends ImageServlet {
         if (parameter != null && !"".equals(parameter)) {
             units = MeasurementUnits.valueOf(parameter);
         } else {
-            units = MeasurementUnits.NONE;
-            log.warn("Request did not specify measurement units. Using NONE.");
+            if (units == null) { // Only set to NONE, when we don't have them yet. Subclasses may have set them.
+                units = MeasurementUnits.NONE;
+                log.warn("Request did not specify measurement units. Using NONE.");
+            }
         }
 
         // chart flags

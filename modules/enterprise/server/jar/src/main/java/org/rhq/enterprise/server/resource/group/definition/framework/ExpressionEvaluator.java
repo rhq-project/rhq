@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -66,7 +65,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         }
     }
 
-    private Set<JoinCondition> joinConditions;
+    private Map<JoinCondition, ResourceRelativeContext> joinConditions;
     private Map<String, String> whereConditions;
     private Map<String, Object> whereReplacements;
     private Map<String, Class<?>> whereReplacementTypes;
@@ -95,7 +94,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
          * the query technology, of course, doesn't require this...but it makes generating a test suite and verifying
          * expected output a lot easier
          */
-        joinConditions = new HashSet<JoinCondition>();
+        joinConditions = new HashMap<JoinCondition, ResourceRelativeContext>();
         whereConditions = new LinkedHashMap<String, String>();
         whereReplacements = new HashMap<String, Object>();
         whereReplacementTypes = new HashMap<String, Class<?>>();
@@ -384,7 +383,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                     throw new InvalidExpressionException("Invalid 'resource.availability' comparision value, "
                         + "only 'UP' and 'DOWN' are valid values");
                 }
-                joinConditions.add(JoinCondition.AVAILABILITY);
+                addJoinCondition(JoinCondition.AVAILABILITY);
                 populatePredicateCollections(JoinCondition.AVAILABILITY.alias + ".availabilityType", type);
                 whereStatics.add(JoinCondition.AVAILABILITY.alias + ".endTime IS NULL");
             } else if (context == ParseContext.Trait) {
@@ -392,7 +391,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 // WHERE def.name = :arg1 AND trait.value = :arg2 AND trait.schedule = sched AND trait.id.timestamp =
                 // (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)
                 String traitName = parseTraitName(originalTokens);
-                joinConditions.add(JoinCondition.SCHEDULES);
+                addJoinCondition(JoinCondition.SCHEDULES);
                 populatePredicateCollections(METRIC_DEF_ALIAS + ".name", traitName, false);
                 populatePredicateCollections(TRAIT_ALIAS + ".value", value);
                 whereStatics.add(TRAIT_ALIAS + ".schedule = " + JoinCondition.SCHEDULES.alias);
@@ -425,7 +424,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
                 String propertyName = suffix.substring(1, suffix.length() - 1);
 
-                joinConditions.add(joinCondition);
+                addJoinCondition(joinCondition);
                 populatePredicateCollections(PROP_SIMPLE_ALIAS + ".name", propertyName, false);
                 populatePredicateCollections(PROP_SIMPLE_ALIAS + ".stringValue", value);
                 whereStatics.add(PROP_SIMPLE_ALIAS + ".configuration = " + joinCondition.alias);
@@ -466,17 +465,38 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         }
     }
 
+    private enum ResourceRelativeContext {
+        Resource("res"), //
+        ResourceParent("res.parentResource"), //
+        ResourceGrandParent("res.parentResource.parentResource"), //
+        ResourceChild("child");
+
+        public String pathToken;
+
+        private ResourceRelativeContext(String pathToken) {
+            this.pathToken = pathToken;
+        }
+    }
+
+    private void addJoinCondition(JoinCondition condition) {
+        joinConditions.put(condition, getResourceRelativeContext());
+    }
+
     private String getResourceRelativeContextToken() {
+        return getResourceRelativeContext().pathToken;
+    }
+
+    private ResourceRelativeContext getResourceRelativeContext() {
         if (deepestResourceContext == ParseContext.Resource) {
-            return "res";
+            return ResourceRelativeContext.Resource;
         } else if (deepestResourceContext == ParseContext.ResourceParent) {
-            return "res.parentResource";
+            return ResourceRelativeContext.ResourceParent;
         } else if (deepestResourceContext == ParseContext.ResourceGrandParent) {
-            return "res.parentResource.parentResource";
+            return ResourceRelativeContext.ResourceGrandParent;
         } else if (deepestResourceContext == ParseContext.ResourceChild) {
             // populate child stuff
-            joinConditions.add(JoinCondition.RESOURCE_CHILD);
-            return "child";
+            joinConditions.put(JoinCondition.RESOURCE_CHILD, ResourceRelativeContext.Resource);
+            return ResourceRelativeContext.ResourceChild;
         } else {
             throw new IllegalStateException("Expression only supports filtering on two levels of resource ancestry");
         }
@@ -748,16 +768,27 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
     private String getQueryJoinConditions() {
         String result = "";
-        for (JoinCondition joinCondition : joinConditions) {
-            /*
-             * TODO: jmarques - instead of JOIN res, need to JOIN <correct_res_context>
-             */
-            result += " JOIN res" + joinCondition.subexpression + " " + joinCondition.alias;
+
+        // question: can we support multiple complex join clauses (schedules and plugin/resourceConfig)
+        JoinCondition[] orderedConditionProcessing = new JoinCondition[] { JoinCondition.RESOURCE_CHILD,
+            JoinCondition.AVAILABILITY, JoinCondition.SCHEDULES, JoinCondition.PLUGIN_CONFIGURATION,
+            JoinCondition.RESOURCE_CONFIGURATION };
+
+        for (JoinCondition joinCondition : orderedConditionProcessing) {
+            ResourceRelativeContext context = joinConditions.get(joinCondition);
+            if (context == null) {
+                continue;
+            }
+            // add simple joins to the beginning of the JOIN clause
+            result += " JOIN " + context.pathToken + joinCondition.subexpression + " " + joinCondition.alias;
             if (joinCondition == JoinCondition.SCHEDULES) {
+                // add simple joins to the beginning of the JOIN clause
                 result += " JOIN " + joinCondition.alias + ".definition " + METRIC_DEF_ALIAS;
+                // add complex joins to the end of the JOIN clause
                 result += ", MeasurementDataTrait " + TRAIT_ALIAS + " ";
             } else if (joinCondition == JoinCondition.PLUGIN_CONFIGURATION
                 || joinCondition == JoinCondition.RESOURCE_CONFIGURATION) {
+                // add complex joins to the end of the JOIN clause
                 result += ", PropertySimple " + PROP_SIMPLE_ALIAS + " ";
             }
         }

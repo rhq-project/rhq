@@ -44,6 +44,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.InvalidPreferencesFormatException;
 import java.util.prefs.Preferences;
@@ -1452,6 +1455,7 @@ public class AgentMain {
 
                 try {
                     // tell the comm object about the new server (note the dependency on knowing its based on Jboss/Remoting!)
+                    // we are synchronized already - and we never call setInvokerLocator anywhere else - so we are thread safe
                     ((JBossRemotingRemoteCommunicator) comm).setInvokerLocator(config.getServerLocatorUri());
 
                     // send the connect message to tell the server we want to talk to it (also verifies that server is up)
@@ -1503,21 +1507,27 @@ public class AgentMain {
      * @throws Throwable
      */
     void sendConnectRequestToServer(RemoteCommunicator comm, boolean attemptFailover) throws Throwable {
-        // to avoid sending mulitple connect agents is quick succession, only send the message is one hasn't recently been sent to the same server
-        synchronized (m_lastSentConnectAgent) {
-            if (m_lastSentConnectAgent.serverEndpoint.equals(comm.getRemoteEndpoint())
-                && (System.currentTimeMillis() - m_lastSentConnectAgent.timestamp) < 30000L) {
-                return; // we just sent one to the same server recently, don't bother sending another one
-            }
-            m_lastSentConnectAgent.timestamp = System.currentTimeMillis();
-            m_lastSentConnectAgent.serverEndpoint = comm.getRemoteEndpoint();
+
+        // be careful callers - make sure the comm's remote endpoint won't change underneath us!
+        // if the comm's remote endpoint is changed by some other thread while we are in here,
+        // we could send the connectAgent to the wrong server and not know it
+
+        // acquire the write lock but abort if its been a while, this should avoid any possible deadlock in the future
+        if (!m_lastSentConnectAgent.rwLock.writeLock().tryLock(120, TimeUnit.SECONDS)) {
+            throw new IllegalStateException(MSG.getMsg(AgentI18NResourceKeys.TIMEOUT_WAITING_FOR_CONNECT_LOCK));
         }
 
-        Command connectCommand = createConnectAgentCommand();
-        getClientCommandSender().preprocessCommand(connectCommand); // important that we are already registered by now!
-        CommandResponse connectResponse;
-
         try {
+            if (m_lastSentConnectAgent.serverEndpoint.equals(comm.getRemoteEndpoint())
+                && (System.currentTimeMillis() - m_lastSentConnectAgent.timestamp) < 30000L) {
+                LOG.info(AgentI18NResourceKeys.NOT_SENDING_DUP_CONNECT, m_lastSentConnectAgent);
+                return;
+            }
+
+            Command connectCommand = createConnectAgentCommand();
+            getClientCommandSender().preprocessCommand(connectCommand); // important that we are already registered by now!
+            CommandResponse connectResponse;
+
             if (attemptFailover) {
                 connectResponse = comm.sendWithoutInitializeCallback(connectCommand);
             } else {
@@ -1532,6 +1542,9 @@ public class AgentMain {
                 }
             }
 
+            m_lastSentConnectAgent.timestamp = System.currentTimeMillis();
+            m_lastSentConnectAgent.serverEndpoint = comm.getRemoteEndpoint();
+
             try {
                 ConnectAgentResults results = (ConnectAgentResults) connectResponse.getResults();
                 long serverTime = results.getServerTime();
@@ -1543,10 +1556,10 @@ public class AgentMain {
 
         } catch (Throwable t) {
             // error, so allow any quick call back to this method to try it again
-            synchronized (m_lastSentConnectAgent) {
-                m_lastSentConnectAgent.timestamp = 0L;
-            }
+            m_lastSentConnectAgent.timestamp = 0L;
             throw t;
+        } finally {
+            m_lastSentConnectAgent.rwLock.writeLock().unlock();
         }
 
         return;
@@ -2839,8 +2852,15 @@ public class AgentMain {
     }
 
     // a simple class that encapsulates when and to whom the last connect agent command was sent
+    // also contains a R/W lock that is used so the agent only attempts to send one connect command at a time
     private class LastSentConnectAgent {
         public long timestamp = 0L;
         public String serverEndpoint = "";
+        public ReadWriteLock rwLock = new ReentrantReadWriteLock();
+
+        @Override
+        public String toString() {
+            return this.serverEndpoint + "@" + new Date(this.timestamp);
+        }
     }
 }

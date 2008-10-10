@@ -319,8 +319,10 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         if (m_remotingClient != null) {
             m_remotingClient.disconnect();
             m_remotingClient = null;
+            m_needToCallInitializeCallback[0] = (getInitializeCallback() != null); // specifically do not synchronize, just set it
         }
 
+        LOG.info(CommI18NResourceKeys.COMMUNICATOR_CHANGING_ENDPOINT, m_invokerLocator, locator);
         m_invokerLocator = locator;
 
         if (client_config != null) {

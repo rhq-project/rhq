@@ -133,6 +133,7 @@ public class AgentConfiguration {
     public void tagWithAgentConfigurationVersion() {
         m_preferences.putInt(AgentConfigurationConstants.CONFIG_SCHEMA_VERSION,
             AgentConfigurationConstants.CURRENT_CONFIG_SCHEMA_VERSION);
+        flush(AgentConfigurationConstants.CONFIG_SCHEMA_VERSION);
     }
 
     /**
@@ -157,6 +158,7 @@ public class AgentConfiguration {
      */
     public void setAgentConfigurationSetup(boolean flag) {
         m_preferences.putBoolean(AgentConfigurationConstants.CONFIG_SETUP, flag);
+        flush(AgentConfigurationConstants.CONFIG_SETUP);
     }
 
     /**
@@ -253,38 +255,11 @@ public class AgentConfiguration {
      * @param transportParams see {@link #getServerTransportParams()}
      */
     public void setServerLocatorUri(String transport, String bindAddress, int bindPort, String transportParams) {
-        try {
-            m_preferences.put(AgentConfigurationConstants.SERVER_TRANSPORT, transport);
-            m_preferences.flush();
-        } catch (Exception e) {
-            LOG.warn(LOG.getMsgString(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES),
-                AgentConfigurationConstants.SERVER_TRANSPORT, e);
-        }
-
-        try {
-            m_preferences.put(AgentConfigurationConstants.SERVER_BIND_ADDRESS, bindAddress);
-            m_preferences.flush();
-        } catch (Exception e) {
-            LOG.warn(LOG.getMsgString(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES),
-                AgentConfigurationConstants.SERVER_BIND_ADDRESS, e);
-        }
-
-        try {
-            m_preferences.putInt(AgentConfigurationConstants.SERVER_BIND_PORT, bindPort);
-            m_preferences.flush();
-        } catch (Exception e) {
-            LOG.warn(LOG.getMsgString(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES),
-                AgentConfigurationConstants.SERVER_BIND_PORT, e);
-        }
-
-        try {
-            m_preferences.put(AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS, transportParams);
-            m_preferences.flush();
-        } catch (Exception e) {
-            LOG.warn(LOG.getMsgString(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES),
-                AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS, e);
-        }
-
+        m_preferences.put(AgentConfigurationConstants.SERVER_TRANSPORT, transport);
+        m_preferences.put(AgentConfigurationConstants.SERVER_BIND_ADDRESS, bindAddress);
+        m_preferences.putInt(AgentConfigurationConstants.SERVER_BIND_PORT, bindPort);
+        m_preferences.put(AgentConfigurationConstants.SERVER_TRANSPORT_PARAMS, transportParams);
+        flush("ServerLocatorUri");
         return;
     }
 
@@ -1087,12 +1062,7 @@ public class AgentConfiguration {
     public void setAgentSecurityToken(String value) {
         if (value != null) {
             m_preferences.put(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, value);
-            try {
-                m_preferences.flush();
-            } catch (BackingStoreException e) {
-                LOG.warn(LOG.getMsgString(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES),
-                    AgentConfigurationConstants.AGENT_SECURITY_TOKEN, e);
-            }
+            flush(AgentConfigurationConstants.AGENT_SECURITY_TOKEN);
         } else {
             m_preferences.remove(AgentConfigurationConstants.AGENT_SECURITY_TOKEN);
         }
@@ -1183,5 +1153,19 @@ public class AgentConfiguration {
         buf.append(']');
 
         return buf.toString();
+    }
+
+    /**
+     * Forces the preferences to flush so they get written to the backing store.
+     * 
+     * @param changedPreference the name of the preference that was changed to
+     *                          cause flush to be called (used for error log message)
+     */
+    private void flush(String changedPreference) {
+        try {
+            m_preferences.flush();
+        } catch (Exception e) {
+            LOG.warn(LOG.getMsgString(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES), changedPreference, e);
+        }
     }
 }

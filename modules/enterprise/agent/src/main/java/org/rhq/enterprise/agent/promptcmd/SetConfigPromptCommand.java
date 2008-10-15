@@ -19,7 +19,11 @@
 package org.rhq.enterprise.agent.promptcmd;
 
 import java.io.PrintWriter;
+import java.util.prefs.Preferences;
+
 import mazz.i18n.Msg;
+
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
@@ -53,12 +57,14 @@ public class SetConfigPromptCommand implements AgentPromptCommand {
             String name;
             String value;
 
+            Preferences prefs = agent.getConfiguration().getPreferences();
+
             if (i == -1) {
                 name = prop;
 
                 // removes the named preference from both system properties and agent configuration
                 System.getProperties().remove(name);
-                agent.getConfiguration().getPreferences().remove(name);
+                prefs.remove(name);
 
                 out.println(MSG.getMsg(AgentI18NResourceKeys.SETCONFIG_REMOVED, name));
             } else {
@@ -67,10 +73,13 @@ public class SetConfigPromptCommand implements AgentPromptCommand {
 
                 // set the named preference in both system properties and agent configuration
                 System.setProperty(name, value);
-                agent.getConfiguration().getPreferences().put(name, value);
+                prefs.put(name, value);
 
                 out.println(MSG.getMsg(AgentI18NResourceKeys.SETCONFIG_SET, name, value));
             }
+
+            // make sure we push the changes to the backing store
+            flush(prefs, out);
         }
 
         return true;
@@ -95,5 +104,13 @@ public class SetConfigPromptCommand implements AgentPromptCommand {
      */
     public String getDetailedHelp() {
         return MSG.getMsg(AgentI18NResourceKeys.SETCONFIG_DETAILED_HELP);
+    }
+
+    private void flush(Preferences prefsToFlush, PrintWriter out) {
+        try {
+            prefsToFlush.flush();
+        } catch (Exception e) {
+            out.println(MSG.getMsg(AgentI18NResourceKeys.SETCONFIG_FLUSH_FAILED, ThrowableUtil.getAllMessages(e)));
+        }
     }
 }

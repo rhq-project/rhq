@@ -923,6 +923,9 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Removed preference: {0}")
     String SETCONFIG_REMOVED = "PromptCommand.setconfig.removed";
 
+    @I18NMessage("Failed to flush the new configuration. Cause: {0}")
+    String SETCONFIG_FLUSH_FAILED = "PromptCommand.setconfig.flush-failed";
+
     @I18NMessage("Sets an agent configuration preference")
     String SETCONFIG_HELP = "PromptCommand.setconfig.help";
 

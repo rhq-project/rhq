@@ -99,6 +99,7 @@ public class ServiceContainerConfiguration {
     public void tagWithServiceContainerConfigurationVersion() {
         m_preferences.putInt(ServiceContainerConfigurationConstants.CONFIG_SCHEMA_VERSION,
             ServiceContainerConfigurationConstants.CURRENT_CONFIG_SCHEMA_VERSION);
+        flush(ServiceContainerConfigurationConstants.CONFIG_SCHEMA_VERSION);
     }
 
     /**
@@ -657,5 +658,19 @@ public class ServiceContainerConfiguration {
         buf.append(']');
 
         return buf.toString();
+    }
+
+    /**
+     * Forces the preferences to flush so they get written to the backing store.
+     * 
+     * @param changedPreference the name of the preference that was changed to
+     *                          cause flush to be called (used for error log message)
+     */
+    private void flush(String changedPreference) {
+        try {
+            m_preferences.flush();
+        } catch (Exception e) {
+            LOG.warn(LOG.getMsgString(CommI18NResourceKeys.CANNOT_STORE_PREFERENCES), changedPreference, e);
+        }
     }
 }

@@ -953,4 +953,7 @@ public interface CommI18NResourceKeys {
 
     @I18NMessage("<<={0}|{1}|{2}")
     String TRACE_INCOMING_COMMAND_FINISH = "recv.complete";
+
+    @I18NMessage("Failed to store preference key [{0}]. Cause: {1}")
+    String CANNOT_STORE_PREFERENCES = "ServiceContainerConfiguration.cannot-store-preferences";
 }

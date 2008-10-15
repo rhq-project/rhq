@@ -82,6 +82,7 @@ public class IdentifyPromptCommand implements AgentPromptCommand {
                 GenericCommandClient client = new GenericCommandClient(rc);
 
                 out.println(MSG.getMsg(AgentI18NResourceKeys.IDENTIFY_ASK_REMOTE_SERVER_FOR_ID, args[1]));
+                agent.getClientCommandSender().preprocessCommand(command);
                 CommandResponse response = client.invoke(command);
 
                 client.disconnectRemoteCommunicator();

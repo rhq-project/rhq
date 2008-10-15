@@ -42,12 +42,15 @@
     
     <property name="jboss.home" location="${project.build.outputDirectory}/jbossas" />
 
-    <property name="hypersonic.lock.file" location="${jboss.home}/server/default/data/hypersonic/localDB.lck" />
-    <fail message="The RHQ container appears to be currently running (${hypersonic.lock.file} exists). Please stop the container before rebuilding it in place.">
+  	 <!-- TODO: we no longer deploy hypersonic - so we no longer have a marker file that we can check to see if server is running -->
+  	 <!--
+    <property name="marker.file" location="${jboss.home}/server/default/data/hypersonic/localDB.lck" />
+    <fail message="The RHQ container appears to be currently running (${marker.file} exists). Please stop the container before rebuilding it in place.">
        <condition>
-          <available file="${hypersonic.lock.file}" />
+          <available file="${marker.file}" />
        </condition>
     </fail>
+    -->
 
     <property name="jboss.deploy.dir" location="${jboss.home}/server/default/deploy" />
 
@@ -141,6 +144,10 @@
 
     <!-- Delete unused stuff from deploy dir... -->
     <echo>Removing unwanted files from ${jboss.deploy.dir} ...</echo>
+
+  	 <!-- remove Hypersonic -->
+    <delete file="${jboss.deploy.dir}/hsqldb-ds.xml" />
+    <delete dir="${jboss.deploy.dir}/juddi-service.sar" />
 
     <delete dir="${jboss.deploy.dir}/http-invoker.sar" />
     <delete dir="${jboss.deploy.dir}/jms/jbossmq-httpil.sar" />

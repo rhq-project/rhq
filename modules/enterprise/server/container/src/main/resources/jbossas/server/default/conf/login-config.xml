@@ -26,18 +26,6 @@
        </authentication>
     </application-policy>
 
-    <!-- Security domains for testing new jca framework -->
-    <application-policy name = "HsqlDbRealm">
-       <authentication>
-          <login-module code = "org.jboss.resource.security.ConfiguredIdentityLoginModule" flag = "required">
-             <module-option name = "principal">sa</module-option>
-             <module-option name = "userName">sa</module-option>
-             <module-option name = "password"></module-option>
-             <module-option name = "managedConnectionFactoryName">jboss.jca:service=LocalTxCM,name=DefaultDS</module-option>
-          </login-module>
-       </authentication>
-    </application-policy>
-
     <application-policy name = "JmsXARealm">
        <authentication>
           <login-module code = "org.jboss.resource.security.ConfiguredIdentityLoginModule" flag = "required">

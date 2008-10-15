@@ -1,0 +1,139 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  
+  <parent>
+    <groupId>org.jboss.on</groupId>
+    <artifactId>jboss-on-parent</artifactId>
+    <version>2.2.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.jboss.on</groupId>
+  <artifactId>jon-parent</artifactId>
+  <packaging>pom</packaging>
+
+  <name>JON Parent</name>
+  <description>parent POM for all JON-specific build modules</description>
+
+  <scm>
+    <connection>scm:svn:https://svn.corp.jboss.com/repos/jon/trunk/jon/</connection>
+    <developerConnection>scm:svn:https://svn.corp.jboss.com/repos/jon/trunk/jon/</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>jon/</scm.module.path>
+    
+    <!-- dependency versions -->
+    <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>
+    <persistence-api.version>1.0</persistence-api.version>
+  </properties>
+
+  <!-- These dependencies are (mostly) common to the plugin artifacts built under the
+       JON umbrella.  They are not specific to the build a one particular artifact but
+       placed here to simplify the child poms. -->
+  <dependencies>
+
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-domain</artifactId>
+      <version>${rhq.version}</version>
+      <scope>provided</scope> <!-- by PC -->
+    </dependency>
+
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-plugin-api</artifactId>
+      <version>${rhq.version}</version>
+      <scope>provided</scope> <!-- by PC -->
+    </dependency>
+
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-native-system</artifactId>
+      <version>${rhq.version}</version>
+      <scope>provided</scope> <!-- by PC -->
+    </dependency>
+
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-plugin-container</artifactId>
+      <version>${rhq.version}</version>
+      <scope>test</scope>
+    </dependency>
+    
+    <!-- Third-party libs -->
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.sun.xml.bind</groupId>
+      <artifactId>jaxb-impl</artifactId>
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- The RHQ plugins that the JON plugins depend on -->
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-jmx-plugin</artifactId>
+      <version>${rhq.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-database-plugin</artifactId>
+      <version>${rhq.version}</version>
+      <scope>test</scope>
+    </dependency>
+    
+    <!-- TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent classes. It is fixed in JDK 6. -->
+    <dependency>
+      <groupId>javax.persistence</groupId>
+      <artifactId>persistence-api</artifactId>
+      <version>${persistence-api.version}</version>
+      <scope>provided</scope> <!-- by ON container -->
+    </dependency>
+
+    <!-- TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent classes; it is fixed in JDK 6. -->
+    <dependency>
+      <groupId>jboss.jboss-embeddable-ejb3</groupId>
+      <artifactId>hibernate-all</artifactId>
+      <version>${hibernate-all.version}</version>
+      <scope>provided</scope> <!-- by ON container -->
+    </dependency>
+
+  </dependencies>
+  
+  <modules>
+    <module>plugins</module>  
+  </modules>
+        
+  <profiles>
+  	  	
+    <!-- enterprise-only stuff -->
+    <profile>
+  		<id>enterprise</id>
+  		<activation>
+  			<activeByDefault>true</activeByDefault>
+  		</activation>
+  		<modules>  			
+  			<module>serverplugins</module>
+  		</modules>
+  	</profile>
+        
+    <!-- same as enterprise profile, except includes container/dist and embedded-only plugins 
+         (activate this for the JON TeamCity build and when tagging JON) -->
+    <profile>
+  		<id>enterprise-dist</id>
+  		<modules>
+            <module>serverplugins</module>
+  			<module>dist</module>            
+  		</modules>
+  	</profile>
+        
+  </profiles>
+</project>

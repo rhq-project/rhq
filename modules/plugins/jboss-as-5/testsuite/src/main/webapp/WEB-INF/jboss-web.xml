@@ -1,0 +1,12 @@
+<jboss-web>
+    <context-root>/jboss-as5-testsuite</context-root>
+
+    <class-loading>
+        <loader-repository>
+            <!-- needs a name because of
+           http://www.jboss.com/index.html?module=bb&op=viewtopic&t=127140 -->
+            jboss.on.org:loader=jboss-as5-test
+            <loader-repository-config>java2ParentDelegation=false</loader-repository-config>
+        </loader-repository>
+    </class-loading>
+</jboss-web>

@@ -1,0 +1,165 @@
+<plugin name="RHQServer"
+        displayName="RHQ Server"
+        package="org.rhq.plugins.server"
+        description="Monitoring of RHQ Server features and performance"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="JMX"/>
+   <depends plugin="JBossAS" useClasses="true"/>
+
+   <service name="RHQ Server Alerts Engine Subsystem"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            class="org.rhq.plugins.jmx.MBeanResourceComponent"
+            description="RHQ Server Alerts Engine Subsystem">
+
+      <runs-inside>
+         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+      </runs-inside>
+
+      <plugin-configuration>
+         <c:simple-property name="objectName" readOnly="true" default="rhq:service=AlertConditionCacheMonitor"/>
+         <c:simple-property name="nameTemplate" default="RHQ Server Alerts Engine Subsystem"/>
+         <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Alerts Engine Subsystem."/>
+      </plugin-configuration>
+
+      <metric property="TotalCacheElementCount" category="throughput" displayType="summary" />
+      <metric property="AvailabilityCacheElementCount" category="throughput" displayType="summary" />
+      <metric property="MeasurementCacheElementCount" category="throughput" displayType="summary" />
+      <metric property="EventCacheElementCount" category="throughput" displayType="summary" />
+      <metric property="OperationCacheElementCount" category="throughput" displayType="summary" />
+      <metric property="OOBCacheElementCount" category="throughput" displayType="summary" />
+
+      <metric property="TotalCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
+      <metric property="AvailabilityCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
+      <metric property="MeasurementCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
+      <metric property="EventCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
+      <metric property="OperationCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
+      
+      <metric property="TotalProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
+      <metric property="AvailabilityProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
+      <metric property="MeasurementProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
+      <metric property="EventProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
+      <metric property="OperationProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
+   </service>
+
+   <service name="RHQ Server Measurement Subsystem"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            class="org.rhq.plugins.jmx.MBeanResourceComponent"
+            description="RHQ Server Measurement Subsystem">
+
+      <runs-inside>
+         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+      </runs-inside>
+
+      <plugin-configuration>
+         <c:simple-property name="objectName" readOnly="true" default="rhq:service=MeasurementMonitor"/>
+         <c:simple-property name="nameTemplate" default="RHQ Server Measurement Subsystem"/>
+         <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Measurement Subsystem."/>
+      </plugin-configuration>
+
+      <metric property="MeasurementsInserted" category="throughput" displayType="summary" measurementType="trendsup"/>
+      <metric property="ScheduledMeasurementsPerMinute"/>
+      <metric property="MeasurementInsertTime" units="milliseconds" displayType="summary" measurementType="trendsup"/>
+      <metric property="BaselineCalculationTime" units="milliseconds" measurementType="trendsup"/>
+      <metric property="MeasurementCompressionTime" units="milliseconds" displayType="summary"
+              measurementType="trendsup"/>
+      <metric property="PurgeTime" displayType="summary" units="milliseconds" measurementType="trendsup"/>
+
+      <metric property="AvailabilityInsertTime" displayType="summary" units="milliseconds" measurementType="trendsup"/>
+      <metric property="AvailabilitiesInserted" displayType="summary" measurementType="trendsup"/>
+   </service>
+
+   <service name="RHQ Server Communications Subsystem"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            class="org.rhq.plugins.jmx.MBeanResourceComponent"
+            description="Details on communications with agents">
+
+      <runs-inside>
+         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+      </runs-inside>
+
+      <plugin-configuration>
+         <c:simple-property name="objectName" readOnly="true" default="rhq:service=ServerCommunications"/>
+         <c:simple-property name="nameTemplate" default="RHQ Server Communications Subsystem"/>
+         <c:simple-property name="descriptionTemplate" default="Details on communications with agents"/>
+      </plugin-configuration>
+
+      <metric property="NumberFailedCommandsReceived" category="throughput" displayType="summary" measurementType="trendsup"
+              description="Total number of commands that were received but failed to be processed fully"/>
+      <metric property="NumberSuccessfulCommandsReceived" category="throughput" displayType="summary" measurementType="trendsup"
+              description="Total number of commands that were received and successfully processed"/>
+      <metric property="NumberTotalCommandsReceived" category="throughput" displayType="summary" measurementType="trendsup"
+              description="Total number of commands that were received regardless of their success or failure"/>
+      <metric property="NumberDroppedCommandsReceived" category="throughput" displayType="summary" measurementType="trendsup"
+              description="Total number of commands that were received but were dropped, usually due to a limit reached in the server that prohibits more commands from being processed until commands currently being processed are finished."/>
+      <metric property="AverageExecutionTimeReceived" category="performance" displayType="summary" measurementType="dynamic" units="milliseconds"
+              description="Average time it took (in milliseconds) to process incoming commands that are ultimately successful"/>
+
+      <resource-configuration>
+         <c:group name="concurrencylimits" displayName="Concurrency Limits" hiddenByDefault="false">
+            <c:description>Limits the number of concurrent requests to a particular subsystem before requests start getting dropped</c:description>
+            <c:simple-property name="GlobalConcurrencyLimit" displayName="Global Concurrency Limit" type="integer" required="true" activationPolicy="immediate"
+                               description="Number of incoming commands from agents that can be processed concurrently; if zero or less, there is no limit"/>
+            <c:simple-property name="InventoryReportConcurrencyLimit" displayName="Inventory Report Limit" type="integer" required="true" activationPolicy="immediate"
+                               description="Number of inventory reports that can be processed concurrently; if zero or less, there is no limit"/>
+            <c:simple-property name="AvailabilityReportConcurrencyLimit" displayName="Availability Report Limit" type="integer" required="true" activationPolicy="immediate"
+                               description="Number of availability reports that can be processed concurrently; if zero or less, there is no limit"/>
+            <c:simple-property name="InventorySyncConcurrencyLimit" displayName="Inventory Synchronization Limit" type="integer" required="true" activationPolicy="immediate"
+                               description="Number of inventory synchronizations that can be processed concurrently; if zero or less, there is no limit"/>
+            <c:simple-property name="ContentReportConcurrencyLimit" displayName="Content Report Limit" type="integer" required="true" activationPolicy="immediate"
+                               description="Number of content reports that can be processed concurrently; if zero or less, there is no limit"/>
+            <c:simple-property name="ContentDownloadConcurrencyLimit" displayName="Content Download Limit" type="integer" required="true" activationPolicy="immediate"
+                               description="Number of package version downloads that can be processed concurrently; if zero or less, there is no limit"/>
+            <c:simple-property name="MeasurementReportConcurrencyLimit" displayName="Measurement Report Concurrency Limit" type="integer" required="true" activationPolicy="immediate"
+                               description="Number of measurement reports that can be processed concurrently; if zero or less, there is no limit"/>
+            <c:simple-property name="MeasurementScheduleRequestConcurrencyLimit" displayName="Measurement Schedule Request Concurrency Limit" type="integer" required="true" activationPolicy="immediate"
+                               description="Number of measurement schedule requests that can be processed concurrently; if zero or less, there is no limit"/>
+         </c:group>
+      </resource-configuration>
+     
+   </service>
+
+   <service name="RHQ Server Content Source Server Plugin Subsystem"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            class="org.rhq.plugins.jmx.MBeanResourceComponent"
+            description="Details on the content source server plugin subsystem">
+
+      <runs-inside>
+         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+      </runs-inside>
+
+      <plugin-configuration>
+         <c:simple-property name="objectName" readOnly="true" default="rhq.serverplugin:service=ContentSourcePluginService"/>
+         <c:simple-property name="nameTemplate" default="RHQ Server Content Source Server Plugin Subsystem"/>
+         <c:simple-property name="descriptionTemplate" default="Details on the content source server plugin subsystem"/>
+      </plugin-configuration>
+
+      <operation name="startPluginContainer" displayName="Start Plugin Container"
+                 description="Starts the plugin container which will load and initialize all content source plugins. Once started, content source feed data will be able to start to flow">
+      </operation>
+     
+      <operation name="stopPluginContainer" displayName="Stop Plugin Container"
+                 description="Stops the plugin container which will shutdown all content source plugins. Once stopped, content source feed data will not be able to flow">
+      </operation>
+
+      <operation name="restartPluginContainer" displayName="Restart Plugin Container"
+                 description="Convienence operation that first stops and then immediately restarts the plugin container.">
+      </operation>
+
+      <metric property="{pluginContainer.configuration.pluginDirectory}"
+              displayName="Plugin Directory"
+              dataType="trait"
+              displayType="detail"
+              description="The location where this plugin container expects to find all of its plugins."/>
+
+      <metric property="{pluginContainer.configuration.temporaryDirectory}"
+              displayName="Temporary Directory"
+              dataType="trait"
+              displayType="detail"
+              description="The location that the plugin uses to store transient files. Dependency jars found in plugins will be stored here to help build plugin classloaders."/>
+     
+   </service>
+
+</plugin>

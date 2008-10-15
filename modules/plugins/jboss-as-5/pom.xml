@@ -1,0 +1,113 @@
+<?xml version="1.0"?>
+
+<!-- $Id$ -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+      <groupId>org.jboss.on</groupId>
+      <!--  Bypass the jon-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
+      <artifactId>jon-parent</artifactId>
+      <version>2.1.0-SNAPSHOT</version>
+    </parent>
+
+    <groupId>org.jboss.on</groupId>
+    <artifactId>rhq-jboss-as-5-plugin</artifactId>
+    <packaging>jar</packaging>
+
+    <name>JON JBossAS 5.x Plugin</name>
+    <description>A plugin for managing JBoss Application Server 5.x</description>
+
+    <scm>
+        <connection>scm:svn:http://svn.corp.jboss.com/repos/jon/${scm.branch}/${scm.module.path}</connection>
+        <developerConnection>
+            scm:svn:http://svn.corp.jboss.com/repos/jon/${scm.branch}/${scm.module.path}
+        </developerConnection>
+    </scm>
+
+    <properties>
+        <scm.module.path>jon/plugins/jboss-as-5/</scm.module.path>
+
+        <jboss5.version>5.0.0-SNAPSHOT</jboss5.version>
+        <jboss-managed.version>2.0.0-SNAPSHOT</jboss-managed.version>
+    </properties>
+
+    <dependencies>
+
+        <!-- External Dependencies -->
+        <dependency>
+            <groupId>org.jboss.man</groupId>
+            <artifactId>jboss-managed</artifactId>
+            <version>${jboss-managed.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-profileservice</artifactId>
+            <version>${jboss5.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.5</source>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>surefire-it</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${maven.test.skip}</skip>
+                            <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                            <useSystemClassLoader>false</useSystemClassLoader>
+
+                            <systemProperties>
+                                <property>
+                                    <name>project.artifactId</name>
+                                    <value>${project.artifactId}</value>
+                                </property>
+                                <property>
+                                    <name>project.version</name>
+                                    <value>${project.version}</value>
+                                </property>
+                            </systemProperties>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <repositories>
+        <repository>
+        <id>jboss-snapshot</id>
+        <name>JBoss Snapshot Repository</name>
+        <url>http://snapshots.jboss.org/maven2/</url>
+        <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+        </snapshots>
+        </repository>
+    </repositories>
+
+</project>

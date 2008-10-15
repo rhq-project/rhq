@@ -1,0 +1,22 @@
+<process-definition>
+   <start-state>
+      <transition to="main_process/1"/>
+   </start-state>
+   <super-state name="main_process">
+      <node name="1">
+         <action class="com.jboss.jbossnetwork.product.jbpm.handlers.UnzipActionHandler"
+                 config-type="bean">
+            <destinationDirectoryLocation>{0}</destinationDirectoryLocation>
+         </action>
+         <transition name="success" to="../end"/>
+      </node>
+
+      <transition name="error" to="end">
+         <action class="com.jboss.jbossnetwork.product.jbpm.handlers.SetProcessStatusActionHandler" config-type="bean">
+            <status>false</status>
+         </action>
+      </transition>
+
+   </super-state>
+   <end-state name="end"/>
+</process-definition>

@@ -1,0 +1,132 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.jboss.on</groupId>
+    <artifactId>jon-parent</artifactId>
+    <version>2.2.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.jboss.on</groupId>
+  <artifactId>rhq-serverplugin-jboss-software</artifactId>
+  <packaging>jar</packaging>
+
+  <name>JON Enterprise Server JBoss Software Plugin</name>
+  <description>JBoss Operations Network Enterprise Server JBoss Software RSS Feed Plugin</description>
+
+  <scm>
+    <connection>scm:svn:https://svn.corp.jboss.com/repos/jon/trunk/jon/serverplugins/jboss-software/</connection>
+    <developerConnection>scm:svn:https://svn.corp.jboss.com/repos/jon/trunk/jon/serverplugins/jboss-software/</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>jboss-software/</scm.module.path>    
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-client-api</artifactId>
+      <version>${rhq.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-httpclient</groupId>
+      <artifactId>commons-httpclient</artifactId>
+      <version>3.0.1</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>rss4j</groupId>
+      <artifactId>rss4j</artifactId>
+      <version>0.92-on.2</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>xerces</groupId>
+      <artifactId>xercesImpl</artifactId>
+      <version>2.8.1</version>
+      <scope>provided</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+          <!--<argLine>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+
+   <profiles>
+
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-serverplugins</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <tasks>
+                            <mkdir dir="${rhq.deploymentDir}" />
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Updating ${deployment.file}...</echo>
+                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Deleting ${deployment.file}...</echo>
+                            <delete file="${deployment.file}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                   </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+
+   </profiles>
+
+</project>

@@ -1,0 +1,2417 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="JBossAS"
+        displayName="JBoss Application Server"
+        package="org.rhq.plugins.jbossas"
+        description="Supports management and monitoring of JBoss AS from version 3.2.3 to 4.2.x and EAP 4.x"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="JMX"/>
+   <depends plugin="Tomcat"/>
+
+   <server name="JBossAS Server"
+           discovery="JBossASDiscoveryComponent"
+           class="JBossASServerComponent"
+           description="JBoss Application Server"
+           supportsManualAdd="true">
+
+      <subcategories>
+         <subcategory name="Environment"/>
+         <subcategory name="Services"/>
+         <subcategory name="Resources" >
+            <subcategory name="Messaging" />
+         </subcategory>
+         <subcategory name="Applications"/>
+      </subcategories>
+
+      <plugin-configuration>
+         <c:group name="connection" displayName="Connection Info">
+            <c:simple-property name="namingURL" displayName="Naming Provider URL"
+                               description="The JNP URL with which to connect to the JBoss Application Server instance (e.g. jnp://127.0.0.1:1099)."
+                               default="jnp://127.0.0.1:1099"/>
+            <c:simple-property name="principal" required="false" description="The name of the principal (i.e. user) to authenticate."/>
+            <c:simple-property name="credentials" type="password" required="false"
+                               description="The credentials (i.e. password) that should be used to authenticate the principal."/>
+            <c:simple-property name="jbossHomeDir" displayName="JBoss Home Directory" type="directory" readOnly="true"
+                               description="The absolute path to the directory where JBossAS is installed (e.g. /opt/jboss-4.2.2.GA)."/>
+            <c:simple-property name="configurationPath" displayName="Configuration Path" type="directory" readOnly="true"
+                               description="The path to the configuration directory under which this instance
+                                            operates (e.g. /opt/jboss-4.2.2.GA/server/default); if the path is not absolute,
+                                            then it will be resolved relative to {jbossHomeDir}."/>
+            <c:simple-property name="configurationSet" displayName="Configuration Set" required="false"
+                               description="The name of the server configuration (e.g. minimal, default, or all);
+                                            if not specified, it will default to the last path component of {configurationPath}."
+                               default="default"/>
+         </c:group>
+
+         <c:group name="control" displayName="Operations">
+            <c:simple-property name="scriptPrefix" displayName="Script Prefix" type="string" required="false"
+                               description="A prefix applied to script execution commands. Typically a sudo
+                                            for applicable platforms. The prefix is applied verbatim. As such, a
+                                            sudo user must be configured appropriately. Ignored if not set."/>                                            
+            <c:simple-property name="startScript" displayName="Start Script" type="file" required="false"
+                               description="The path to the script used by the 'Start' operation
+                                            to start this JBossAS server
+                                            (e.g. /opt/jboss-4.2.2.GA/bin/run.sh); if the path is not absolute,
+                                            then it will be resolved relative to {jbossHomeDir};
+                                            defaults to 'bin/run.sh' on UNIX or 'bin\run.bat' on Windows."/>
+            <c:simple-property name="shutdownScript" displayName="Shutdown Script" type="file" required="false"
+                               description="The path to the script used by the 'Shutdown' operation
+                                            to shutdown this JBossAS server
+                                            (e.g. /opt/jboss-4.2.2.GA/bin/shutdown.sh); if the path is not absolute,
+                                            then it will be resolved relative to {jbossHomeDir};
+                                            defaults to 'bin/shutdown.sh' on UNIX or 'bin\shutdown.bat' on Windows."/>
+            <c:simple-property name="shutdownMethod" displayName="Shutdown Method" type="string" required="false" default="JMX" 
+                               description="The method used to execute the Shutdown operation;
+                                            defaults to 'JMX MBean'.">
+                <c:property-options>
+                   <c:option value="JMX"    name="JMX MBean" default="true"/>
+                   <c:option value="SCRIPT" name="shutdown script"/>
+                </c:property-options>                    
+            </c:simple-property>                                            
+            <c:simple-property name="bindingAddress" displayName="Binding Address" required="false" default="127.0.0.1"
+                               description="The host or IP address used by all JBoss services as the binding
+                                            address (e.g. 10.11.14.233); specify 0.0.0.0 to tell JBossAS to
+                                            bind to all available network interfaces; defaults to '127.0.0.1'."/>
+            <c:simple-property name="javaHomePath" displayName="JAVA_HOME Path" required="false"
+                               description="The absolute path to a JRE or JDK installation directory containing
+                                            the JVM that should be used to start and shutdown the JBossAS instance;
+                                            defaults to the home directory of the RHQ agent JRE."/>
+         </c:group>
+
+         <c:group name="event" displayName="Events">
+             <c:list-property name="logEventSources">
+                 <c:map-property name="logEventSource">
+                     <c:simple-property name="logFilePath" type="file" summary="true"
+                                        description="The absolute path to the source log file."/>
+                     <c:simple-property name="enabled" type="boolean" summary="true"
+                                        description="A flag indicating whether of not this log Event source is currently
+                                                     enabled (i.e. whether the associated log file should be tailed for
+                                                     new entries)."/>
+                     <c:simple-property name="dateFormat" required="false"
+                                        description="The date format to use when parsing the dates in log entries. The
+                                                     format must be in the syntax defined by the Java SimpleDateFormat
+                                                     class. If not specified, the three date formats that are predefined
+                                                     by Log4J (ISO8601, DATE, and ABSOLUTE) will be tried."/>
+                     <c:simple-property name="includesPattern" required="false"
+                                        description="A regular expression against which a log entry's detail is matched
+                                                     to determine if an Event should be fired for that entry. If not
+                                                     specified, no filtering of log entries will be done based on their
+                                                     detail."/>
+                     <c:simple-property name="minimumSeverity" required="false" default="error"
+                                        description="The minimum severity of Events that should be collected for this
+                                                     source. If not specified, there is no minimum severity (i.e. all
+                                                     events will be collected).">
+                         <c:property-options>
+                            <c:option name="debug" value="debug"/>
+                            <c:option name="info"  value="info"/>
+                            <c:option name="warn"  value="warn"/>
+                            <c:option name="error" value="error" default="true"/>
+                            <c:option name="fatal" value="fatal"/>
+                         </c:property-options>
+                     </c:simple-property>
+                 </c:map-property>
+             </c:list-property>
+         </c:group>
+          
+         <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
+            <c:simple-property name="type" description="The type of the connection."
+                               default="org.mc4j.ems.connection.support.metadata.JBossConnectionTypeDescriptor"/>
+            <c:simple-property name="shutdownMbeanName" displayName="Shutdown MBean Name"
+                               default="jboss.system:type=Server"
+                               description="Name of the MBean to use when shutting down this server through JMX."/>
+            <c:simple-property name="shutdownMbeanOperation" displayName="Shutdown MBean Operation" default="shutdown"
+                               description="Name of the operation to invoke when shutting down this server through JMX.
+                                 Note that only operations with no parameter or with one int parameter are supported. If the
+                                 operation requires an int parameter, '0' will be supplied."/>
+         </c:group>
+      </plugin-configuration>
+
+      <process-scan name="JBoss4" query="process|basename|match=^java.*,arg|org.jboss.Main|match=.*"/>
+
+      <operation name="start" displayName="Start"
+                 description="Start this application server. The script used is specified in Control Properties."/>
+      <operation name="shutdown" displayName="Shutdown"
+                 description="Shutdown this application server via script or JMX depending on the settings in Advanced Properties."/>
+      <operation name="restart" displayName="Restart"
+                 description="Shutdown and then start this application server."/>
+
+      <metric property="partitionName" dataType="trait" displayType="summary"
+              description="the name of the cluster partition this app server instance belongs to"/>
+
+      <metric displayName="Version Name" property="jboss.system:type=Server:VersionName"
+              dataType="trait" displayType="summary"
+              description="the code name for the this app server instance's major version (AS 3.2 = WonderLand, AS 4.0 = Zion, AS 4.2 = Trinity, EAP 4.x = EAP, SOA 4.x = SOA)"/>
+
+      <metric displayName="Build Date" property="jboss.system:type=Server:BuildDate"
+              dataType="trait" displayType="summary"
+              description="the date this app server was built"/>
+
+      <metric displayName="Start Date" property="jboss.system:type=Server:StartDate"
+              dataType="trait" displayType="summary"
+              description="the date and time this app server instance was started"/>
+
+      <metric property="jboss.system:type=ServerInfo:ActiveThreadCount" displayName="Active Thread Count"
+              defaultInterval="300000" displayType="summary" category="throughput"/>
+      
+      <metric property="jboss.system:type=ServerInfo:ActiveThreadGroupCount" displayName="Active Thread Group Count"
+              defaultInterval="300000" defaultOn="true" category="throughput"/>
+
+      <metric property="jboss.system:type=ServerInfo:FreeMemory" displayName="JVM Free Memory" displayType="summary"
+              defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
+
+      <metric property="jboss.system:type=ServerInfo:MaxMemory" displayName="JVM Max Memory"
+              defaultInterval="1800000" defaultOn="true" category="utilization" units="bytes"/>
+
+      <metric property="jboss.system:type=ServerInfo:TotalMemory" displayName="JVM Total Memory" displayType="summary"
+              defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
+
+      <metric property="jboss:service=TransactionManager:TransactionCount" displayName="Transactions Active"
+              defaultInterval="300000" defaultOn="true" category="utilization"/>
+      
+      <metric property="jboss:service=TransactionManager:CommitCount" displayName="Transactions Committed" displayType="summary" measurementType="trendsup"
+              defaultInterval="600000" defaultOn="true" category="utilization"/>
+
+      <metric property="jboss:service=TransactionManager:RollbackCount" displayName="Transactions Rolledback" measurementType="trendsup"
+              defaultInterval="600000" defaultOn="true" category="utilization"/>
+
+      <event name="logEntry" description="an entry in a log file"/>
+
+      <content name="library" displayName="Jar Library" category="deployable"
+                description="Library Jar files deployed in JBoss AS">
+         <configuration>
+            <c:simple-property name="version" readOnly="true" description="The version declared by the JAR's manifest."/>
+            <c:simple-property name="title" readOnly="true" description="The title declared by the JAR's manifest."/>
+            <c:simple-property name="url" readOnly="true" description="The url declared by the JAR's manifest."/>
+            <c:simple-property name="vendor" readOnly="true" description="The vendor declared by the JAR's manifest."/>
+            <c:simple-property name="classpath" readOnly="true"
+                               description="The classpath declared by the JAR's manifest."/>
+            <c:simple-property name="sealed" readOnly="true" type="boolean" description="True if the JAR is sealed."/>
+         </configuration>
+      </content>
+
+      <content name="cumulativePatch" displayName="Cumulative Patch" category="deployable"
+               description="Automatically installable application server patches">
+         <configuration>
+            <c:simple-property name="jiraId"/>
+            <c:simple-property name="distributionStatus"/>
+            <c:simple-property name="downloadUrl"/>
+            <c:simple-property name="instructionCompatibilityVersion"/>
+         </configuration>
+      </content>
+
+       <help>
+       <![CDATA[
+        h3. Binding to IP addresses
+
+        When starting JBossAS instances that need to be monitored using remote JMX (i.e. JNP), it is necessary that the {{java.rmi.server.hostname}} System property is set to the same value as the server's JNP address (which is set to the {{jboss.bind.address}} System property by default). Due to bugs in JBossAS \[1]\[2], {{java.rmi.server.hostname}} will default to "127.0.0.1", unless JBossAS is started using -b, in which case {{java.rmi.server.hostname}} will default to the bind address specified as the argument to -b.
+
+        Therefore, you must start your JBossAS instances using either -b, e.g.:
+
+        {code}
+        run -b 12.34.56.78 ...
+        {code}
+
+        or by explicitly specifying a value for {{java.rmi.server.hostname}} via -D or -P, e.g.:
+
+        {code}
+        run -Djboss.bind.address=12.34.56.78 -Djava.rmi.server.hostname=12.34.56.78 ...
+        {code}
+
+        Otherwise, you will not be able to manage the instance via JON.
+
+        {note}
+        Using -b is the recommended way to specify the bind address, since, in addition to setting {{jboss.bind.address}} and {{java.rmi.server.hostname}}, it will also set a couple other JGroups-related System properties to the specified address.
+        {note}
+
+        \[1] http://jira.jboss.com/jira/browse/JBAS-4736
+        \[2] http://jira.jboss.com/jira/browse/JBAS-4955
+
+        h3. Monitoring of EJB 2.x EJBs
+
+        The issue here is that JBossAS changed its way it creates the MBeans names of the deployed EJBs from the jndiNames / ejb-names (this has happened around 4.0.3.sp1)
+        Basically the <jndi-name> or (if it is not present) <local-jndi-name> from jboss.xml is used.
+
+        So the workaround is to set the <jndi-name> to the ejb-name in your application.
+        As this probably breaks client code, you want/need to afterwards have a naming reference restoring the original hierarchy.
+
+        For example:
+
+        If you have in jboss.xml:
+        {code:title=jboss.xml}
+<session>
+   <ejb-name>Ability</ejb-name>
+   <local-jndi-name>flower.AbilityLocal</local-jndi-name>
+...
+        {code}
+
+        You might change this to:
+
+        {code:title=jboss.xml}
+<session>
+   <ejb-name>Ability</ejb-name>
+   <local-jndi-name>Ability</local-jndi-name>
+        {code}
+
+        And then add an MBean flowsys-naming-alias-service.xml:
+
+        {code:title=flower-naming-alias-service.xml}
+<mbean code="org.jboss.naming.NamingAlias"
+       name=":service=naming-alias">
+    <attribute name="ToName">flower.AbilityLocal</attribute>
+    <attribute name="FromName">Ability</attribute>
+</mbean>
+        {code}
+
+        When you have done this, you probably still need to go into the inventory of the respective beans, edit the configuration and just click ok.
+
+        The namig alias ensures that clients of the Ability ejb can still see the bean in JNDI at the place it looks for.
+        Naming aliases appear in JNDIView (within JMX-Console) as LinkRef.
+       ]]>
+       </help>
+       
+      <server name="Embedded Tomcat Server"
+              description="Tomcat Web Application Container embedded in a JBossAS Server"
+              subCategory="Services"
+              sourcePlugin="Tomcat"
+              sourceType="Tomcat Server"
+              discovery="JBossASTomcatDiscoveryComponent"
+              class="JBossASTomcatServerComponent"
+              singleton="true">
+
+         <!-- This should be a service. See JBNADM-1697 -->
+         <service name="Connector"
+                 discovery="JBossASTomcatConnectorDiscoveryComponent"
+                 class="org.rhq.plugins.jbossas.JBossASTomcatConnectorComponent">
+
+            <!-- jboss.web:address=/0.0.0.0,port=9009,type=Connector  -->
+
+            <plugin-configuration>
+               <c:group name="general" displayName="General">
+                  <c:simple-property name="objectName" readOnly="true"
+                                     default="jboss.web:address=%address%,port=%port%,type=Connector"/>
+                  <c:simple-property name="port" type="string" description="Port this connector listens on." readOnly="true"/>
+                  <c:simple-property name="address" type="string" description="Address this connector listens on." readOnly="true"/>
+                  <c:simple-property name="schema" type="string" description="The protocol schema (jk, ajp, http)." default="http"/>
+               </c:group>
+               <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
+                  <c:simple-property name="nameTemplate" default="Tomcat Connector ({port})"/>
+                  <c:simple-property name="descriptionTemplate" default="A Tomcat connector"/>
+               </c:group>
+            </plugin-configuration>
+
+            <!-- jboss.web:name=http-0.0.0.0-8080,type=GlobalRequestProcessor:maxTime -->
+            <metric property="jboss.web:name=%schema%%dash%%address%-%port%,type=GlobalRequestProcessor:maxTime" 
+                    displayName="Maximum Request Time"
+                    description="Maximum time it took to process a request"
+                    units="milliseconds"
+                    defaultOn="true" category="performance"/>
+
+            <!-- jboss.web:name=http-0.0.0.0-8080,type=GlobalRequestProcessor:requestCount -->
+            <metric property="jboss.web:name=%schema%%dash%%address%-%port%,type=GlobalRequestProcessor:requestCount" 
+                    displayName="Request count" description="Total number of requests processed since last restart."
+                    defaultOn="false" category="utilization" measurementType="trendsup"/>
+
+            <!-- jboss.web:name=http-0.0.0.0-8080,type=GlobalRequestProcessor:errorCount -->
+            <metric property="jboss.web:name=%schema%%dash%%address%-%port%,type=GlobalRequestProcessor:errorCount" 
+                    displayName="Error count" description="Number of errors while processing since last restart."
+                    defaultOn="true" category="utilization" measurementType="trendsup"/>
+
+            <!-- jboss.web:name=http-0.0.0.0-8080,type=ThreadPool:currentThreadsBusy -->
+            <metric property="jboss.web:name=%schema%%dash%%address%-%port%,type=ThreadPool:currentThreadsBusy" 
+                    displayName="Threads Active"
+                    defaultOn="true" category="utilization" displayType="summary"/>
+
+            <!-- jboss.web:name=http-0.0.0.0-8080,type=ThreadPool:currentThreadCount -->
+            <metric property="jboss.web:name=%schema%%dash%%address%-%port%,type=ThreadPool:currentThreadCount" 
+                    displayName="Threads Allocated"
+                    defaultOn="true" category="utilization" displayType="summary"/>
+
+         </service>
+         <service name="VHost"
+            discovery="JBossASTomcatVHostDiscoveryService"
+            class="JBossASTomcatVHostService"
+            description="A virtual host in the web container">
+            
+            <plugin-configuration>
+               <c:simple-property name="objectName"
+                  readOnly="true"
+                  default="jboss.web:type=Host,host=%name%"/>
+            </plugin-configuration>
+            
+            <metric property="jboss.web:type=Host,host=%name%:aliases"
+               displayName="Aliases"
+               defaultOn="true" dataType="trait" />
+         </service>
+      </server>
+
+
+      <server name="JBoss AS JVM"
+              description="The JVM that JBossAS is running on"
+              subCategory="Environment"
+              sourcePlugin="JMX"
+              sourceType="JMX Server"
+              discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
+              class="org.rhq.plugins.jmx.JMXServerComponent"
+              singleton="true">
+      </server>
+
+      <service name="Datasource" class="DatasourceComponent"
+               discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+               createDeletePolicy="both"
+               subCategory="Resources">
+
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true"
+                               default="jboss.jca:name=%name%,service=DataSourceBinding"/>
+             <!--DataSourceBinding or ManagedConnectionPool-->
+            <c:simple-property name="nameTemplate" default="{name} Datasource"/>
+            <c:simple-property name="descriptionTemplate" default="A JCA Datasource"/>
+            <c:simple-property name="name" type="string" description="The name of this datasource"/>
+         </plugin-configuration>
+
+         <operation name="flush" description="Resets the connection pool for this datasource. Performs the following steps:
+                                              1) all idle connections are immediately closed, 2) any in use connections are
+                                              closed when the application finishes with them, and 3) new connections are
+                                              created."/>
+
+         <metric displayName="Total Connections" property="ConnectionCount"
+                 category="utilization" defaultOn="true" displayType="summary"
+                 description="Total Number of Connections for the Connection Pool, both active and in-active."/>
+         <metric displayName="Available Connections" property="AvailableConnectionCount"
+                 category="utilization" defaultOn="true" displayType="summary"
+                 description="Number of available connections in the connection pool in-active and waiting."/>
+         <metric displayName="Active Connections" property="InUseConnectionCount"
+                 category="utilization" defaultOn="true" displayType="summary"
+                 description="Number of Connections currently supporting clients."/>
+         <metric displayName="Connections Created" property="ConnectionCreatedCount"
+                 category="utilization" defaultOn="true" displayType="summary"
+                 measurementType="trendsup"
+                 description="Number of Connections created since the Connection Pool was created."/>
+         <metric displayName="Connections Destroyed" property="ConnectionDestroyedCount"
+                 category="utilization" defaultOn="true" displayType="summary"
+                 measurementType="trendsup"
+                 description=""/>
+
+
+         <resource-configuration>
+
+            <c:group name="connection" displayName="Connection Information">
+               <c:simple-property name="type">
+                  <c:property-options>
+                     <c:option value="no-tx-datasource" name="No TX Datasource"/>
+                     <c:option value="local-tx-datasource" name="Local TX Datasource" default="true"/>
+                     <c:option value="xa-datasource" name="XA Datasource"/>
+                  </c:property-options>
+               </c:simple-property>
+               <c:simple-property name="jndi-name" readOnly="true" displayName="JNDI Name"
+                                  description="The JNDI name under which the DataSource wrapper will be bound."/>
+               <c:simple-property name="driver-class"
+                                  description="The fully qualified name of the JDBC driver or datasource class"/>
+               <!-- xa-datasource-class -->
+               <c:simple-property name="connection-url" displayName="Connection Url"
+                                  description="The JDBC driver connection URL string"/>
+
+               <c:simple-property name="user-name" required="false"/>
+               <c:simple-property name="password" type="password" required="false"/>
+
+               <c:simple-property name="min-pool-size" type="integer" default="0" required="false"/>
+               <c:simple-property name="max-pool-size" type="integer" default="20" required="false"/>
+            </c:group>
+
+            <c:group name="advanced" displayName="Advanced">
+               <c:simple-property name="transaction-isolation" required="false"
+                                  description="The Transaction Isolation level. The default setting is to use whichever isolation level is provided by default by the database.">
+                  <c:property-options>
+                     <c:option value="TRANSACTION_READ_UNCOMMITTED" name="Read Uncommitted"/>
+                     <c:option value="TRANSACTION_READ_COMMITTED" default="true" name="Read Committed"/>
+                     <c:option value="TRANSACTION_REPEATABLE_READ" name="Repeatable Read"/>
+                     <c:option value="TRANSACTION_SERIALIZABLE" name="Serializable"/>
+                     <c:option value="TRANSACTION_NONE" name="None"/>
+                  </c:property-options>
+               </c:simple-property>
+
+               <c:simple-property name="blocking-timeout-millis" type="integer" required="false"
+                                  description="Indicates the maximum time in milliseconds to block while waiting for a connection before throwing an exception. Note that this blocks only while waiting for a permit for a connection, and will never throw an exception if creating a new connection takes an inordinately long time. If nothing is specified the default of 30000 milliseconds is used."/>
+               <c:simple-property name="idle-timeout-minutes" type="integer" required="false"
+                                  description="Indicates the maximum time in minutes a connection may be idle before being closed.  The actual maximum time depends also on the IdleRemover scan time, which is 1/2 the smallest idle-timeout-minutes of any pool. If nothing is specified the default of 15 minutes is used."/>
+               <c:simple-property name="prepared-statement-cache-size" type="integer" required="false"
+                                  description="The number of prepared statements per connection in an LRU cache."/>
+
+               <c:simple-property name="valid-connection-checker-class-name" required="false"
+                                  description="An org.jboss.resource.adapter.jdbc.ValidConnectionChecker that provides a SQLException isValidConnection(Connection e) method to validate is a connection is valid. An exception means the connection is destroyed. This overrides the check-valid-connection-sql when present."/>
+               <c:simple-property name="use-java-context" required="false"
+                                  description="Indicates if the JNDI name should be prefixed with java: which causes the DataSource to only be accessible from within the JBoss server vm. The default is Yes."/>
+               <c:simple-property name="security-domain" required="false"
+                                  description="Indicates Subjects (from security domain) are used to distinguish connections in the pool.  The content of the security domain is the name of the JAAS security manager that will handle authentication. This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute. Must be specified if either Container Based or Container and Application Based authentication types are specified."/>
+               <c:simple-property name="new-connection-sql" required="false"
+                                  description="Specify an SQL statement to execute whenever a connection is added to the connection pool."/>
+
+               <c:simple-property name="exception-sorter-class-name" required="false"
+                                  description="An org.jboss.resource.adapter.jdbc.ExceptionSorter that provides a boolean isExceptionFatal(SQLException e) method to validate is an exception should be broadcast to all javax.resource.spi.ConnectionEventListener as a connectionErrorOccurred message."/>
+               <c:simple-property name="check-valid-connection-sql" required="false"
+                                  description="Specify an SQL statement to check validity of a pool connection. This may be called when managed connection is taken from pool for use."/>
+
+               <c:simple-property name="track-statements" type="boolean" required="false"
+                                  description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/returned to the prepared statement cache. The default is Yes, but no warnings."/>
+
+               <c:map-property name="connection-property" required="false"/>
+               <!-- xa-datasource-property -->
+
+               <c:simple-property name="no-tx-separate-pools" required="false"
+                                  description="Whether to use separate pools for connections retrieved in a transaction and those retrieved outside a transaction. The default is Yes."/>
+               <c:simple-property name="application-managed-security" required="false"/>
+               <c:simple-property name="security-domain-and-application" required="false"/>
+               <c:simple-property name="track-connection-by-tx" required="false"
+                                  description="Whether the connection should be &quot;locked&quot; to the transaction, returning it to the pool at the end of the transaction. The default is No."/>
+               <!-- XA only -->
+               <c:simple-property name="isSameRM-override-value" required="false"
+                                  description="Allows one to unconditionally set whether the javax.transaction.xa.XAResource.isSameRM(XAResource) returns true or false. The default is not to override the return value."/>
+               <!-- XA only -->
+            </c:group>
+
+            <c:template name="Oracle Local TX" description="Local Transaction Template for Oracle">
+               <c:simple-property name="type" default="local-tx-datasource"/>
+               <c:simple-property name="driver-class" default="oracle.jdbc.driver.OracleDriver"/>
+               <c:simple-property name="connection-url" default="jdbc:oracle:oci:@youroracle-tns-name"/>
+               <c:simple-property name="exception-sorter-class-name"
+                                  default="org.jboss.resource.adapter.jdbc.vendor.OracleExceptionSorter"/>
+               <c:simple-property name="check-valid-connection-sql" default="SELECT * FROM DUAL"/>
+            </c:template>
+            <c:template name="Oracle XA" description="XA Transaction Template for Oracle">
+               <c:simple-property name="type" default="xa-datasource"/>
+               <c:simple-property name="track-connection-by-tx" default="true"/>
+               <c:simple-property name="isSameRM-override-value" default="false"/>
+               <c:simple-property name="xa-datasource-class" default="oracle.jdbc.xa.client.OracleXADataSource"/>
+               <!--xa-datasource-property name="URL">jdbc:oracle:oci8:@tc</xa-datasource-property>-->
+               <!--xa-datasource-property name="User">scott</xa-datasource-property>-->
+               <!--<xa-datasource-property name="Password">tiger</xa-datasource-property>-->
+               <!-- Uses the pingDatabase method to check a connection is still valid before handing it out from the pool -->
+               <!--valid-connection-checker-class-name>org.jboss.resource.adapter.jdbc.vendor.OracleValidConnectionChecker</valid-connection-checker-class-name-->
+               <!-- Checks the Oracle error codes and messages for fatal errors -->
+               <c:simple-property name="exception-sorter-class-name"
+                                  default="org.jboss.resource.adapter.jdbc.vendor.OracleExceptionSorter"/>
+               <!-- Oracles XA datasource cannot reuse a connection outside a transaction once enlisted in a global transaction and vice-versa -->
+               <c:simple-property name="no-tx-separate-pools" default="true"/>
+            </c:template>
+
+         </resource-configuration>
+
+      </service>
+
+      <service name="ConnectionFactory"
+               class="ConnectionFactoryComponent"
+               discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+               createDeletePolicy="both"
+               subCategory="Resources">
+
+            <plugin-configuration>
+               <c:simple-property name="objectName" readOnly="true"
+                                  default="jboss.jca:name=%name%,service=ConnectionFactoryBinding"/>
+               <c:simple-property name="nameTemplate" default="{name} Connection Factory"/>
+               <c:simple-property name="descriptionTemplate" default="A JCA Connection Factory"/>
+               <c:simple-property name="name" type="string" description="The name of this Connection Factory"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+
+                <c:group name="connection" displayName="Connection Information">
+                    <c:simple-property name="type"
+                                       displayName="Connection Factory Type"
+                                       description="Connection Factory Type (Tx or no Tx)"
+                                       type="string"
+                                       required="true">
+                        <c:property-options>
+                            <c:option value="no-tx-connection-factory"/>
+                            <c:option value="tx-connection-factory"/>
+                        </c:property-options>
+                    </c:simple-property>
+
+                    <c:simple-property name="jndi-name" readOnly="true"
+                                       displayName="JNDI Name"
+                                       description="The JNDI Name under which the DataSource wrapper will be bound."
+                                       type="string"/>
+
+                    <c:simple-property name="user-name"
+                                       displayName="User Name"
+                                       type="string"
+                                       required="false"
+                                       description="This element specifies the default username used when creating a new
+                                       connection. The actual username may be overridden by the application code
+                                       getConnection parameters or the connection creation context JAAS Subject."/>
+
+                    <c:simple-property name="password"
+                                       displayName="Password"
+                                       type="password"
+                                       required="false"
+                                       description="This element specifies the default password used when creating a new connection.
+                                       The actual password may be overridden by the application code getConnection parameters
+                                       or the connection creation context JAAS Subject."/>
+
+                    <c:simple-property name="min-pool-size"
+                                       displayName="Minimum Pool Size"
+                                       description="Indicates the minimum number of connections the pool should hold."
+                                       type="integer"
+                                       activationPolicy="immediate"
+                                       required="false">
+                        <c:constraint>
+                            <c:integer-constraint minimum="0"/>
+                        </c:constraint>
+                        <c:defaultValueDescription>If nothing is specified, the default of 0 will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+
+                    <c:simple-property name="max-pool-size"
+                                       displayName="Maximum Pool Size"
+                                       description="Indicates the maximum number of connections the pool should hold."
+                                       activationPolicy="immediate"
+                                       type="integer"
+                                       required="false">
+                        <c:constraint>
+                            <c:integer-constraint minimum="0"/>
+                        </c:constraint>
+                        <c:defaultValueDescription>If nothing is specified, the default of 20 will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+                </c:group>
+
+                <c:group name="advanced" displayName="Advanced">
+
+                    <c:simple-property name="application-managed-security"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="Application Managed Security"
+                                       required="false">
+                        <c:description>Specifying this element indicates that connections in the pool should be distinguished
+                            by application code supplied parameters, such as from getConnection(user, pw). This requires
+                        that you set a security domain which will populate a security-domain-and-application tag. If it is missing
+                        this resource will not be created or saved.</c:description>
+                    </c:simple-property>
+
+                    <c:simple-property name="security-domain"
+                                       type="string"
+                                       activationPolicy="immediate"
+                                       displayName="Security Domain/Security Domain and Application"
+                                       required="false">
+                        <c:description>Indicates Subjects from security domain are used to distinguish connections in
+                            this pool. If Application Managed Security is set to true, then this will create a security-domain
+                            tag. If it is set to false or unset, then this property will populate a security-domain-and-application
+                            tag.
+                        </c:description>
+                        <c:defaultValueDescription>If nothing is specified, the default will be to use a single pool of
+                            equivalent connections.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+
+                    <c:simple-property name="adapter-display-name"
+                                       type="string"
+                                       activationPolicy="immediate"
+                                       displayName="Adapter Display Name"
+                                       description="used to identify the RAR deployment matching the display-name in the ra.xml"
+                                       required="false">
+                    </c:simple-property>
+
+                    <!-- @TODO bring back when ui can do List of Simples
+                    <c:list-property name="depends"
+                                     displayName="Depends"
+                                     description="The depends element specifies the JMX ObjectName string of a service that
+                                        the connection manager services depend on. The connection manager service will
+                                        not be started until the dependent services have been started."
+                                     required="false">
+                        <c:simple-property name="dependObjectName"
+                                           type="string"
+                                           activationPolicy="immediate"
+                                           displayName="ObjectName"
+                                           required="false"/>
+                    </c:list-property>-->
+
+                    <c:simple-property name="depends"
+                                     displayName="Depends"
+                                     description="The depends element specifies the JMX ObjectName string of a service that
+                                        the connection manager services depend on. The connection manager service will
+                                        not be started until the dependent services have been started."
+                                     required="false"
+                                     type="string"
+                                     activationPolicy="immediate"
+                                     />
+
+                    <c:simple-property name="rar-name"
+                                        type="string"
+                                        activationPolicy="immediate"
+                                        displayName="Rar Name"
+                                        description="This is the name of the RAR file that contains the definition for the
+                                        resource we want to provide. For nested RAR files, the name would look like
+                                        myapplication.ear#my.rar."
+                                        required="true"/>
+
+                    <c:simple-property name="connection-definition"
+                                        type="string"
+                                        activationPolicy="immediate"
+                                        displayName="Connection Definition"
+                                        description="This is the connection factory interface class. It should match the
+                                        connectionfactory-interface in the ra.xml file."
+                                        required="true"/>
+
+                   <c:simple-property name="type-mapping"
+                                       type="string"
+                                       activationPolicy="immediate"
+                                       displayName="Type Mappings"
+                                       description="This element declares a default type mapping for this datasource. The
+                                       type mapping should match a type-mapping/name element from standardjbosscmp-jdbc.xml."
+                                       required="false"/>
+
+                    <c:simple-property name="use-java-context"
+                                       displayName="Use Java Context"
+                                       description="Indicates if the JNDI name should be prefixed with java:."
+                                       type="boolean"
+                                       required="false">
+                        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+
+                    <c:simple-property name="transaction-type"
+                                       type="string"
+                                       displayName="Transaction Type"
+                                       default="true"
+                                       description="Whether to use local or xa transactions. If nothing is specified, the default of local will be used."
+                                       required="false">
+                        <c:property-options>
+                            <c:option value="Local Transaction" default="true"/>
+                            <c:option value="XA Transaction"/>
+                        </c:property-options>
+                    </c:simple-property>
+
+                    <!--<c:simple-property name="local-transaction"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="Local Transaction"
+                                       required="false">
+                        <c:description>Whether on not to use local transactions.</c:description>
+                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+
+                    <c:simple-property name="xa-transaction"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="XA Transaction"
+                                       required="false">
+                        <c:description>Whether on not to use XA transactions.</c:description>
+                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>-->
+
+                    <c:simple-property name="no-tx-separate-pools"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="No Tx Separate Pools"
+                                       required="false">
+                        <c:description>The presence of this element indicates that two connection pools are required to
+                            isolate connections used with JTA transaction from those used without a JTA transaction.
+                            The pools are lazily constructed on first use. Its use case is for Oracle
+                            (and possibly other vendors) XA implementations that don't like using an XA connection with
+                            and without a JTA transaction.</c:description>
+                        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+
+                    <c:simple-property name="track-connection-by-tx"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="Track Connection By Transaction"
+                                       required="false">
+                        <c:description>Whether the connection should be locked into the transaction.</c:description>
+                    </c:simple-property>
+
+                    <c:simple-property name="isSameRM-override-value"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="isSameRM Override Value"
+                                       required="false">
+                        <c:description>Allows one to unconditionally set whether the
+                            javax.transaction.xa.XAResource.isSameRMXAResource returns true or false. The default is not
+                            to override the return value.
+                        </c:description>
+                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+
+                    <c:simple-property name="use-strict-min"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="Use Strict Minimum"
+                                       required="false">
+                        <c:description>Whether on not to use strict minumum.</c:description>
+                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+
+                    <c:simple-property name="prefill"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="Prefill"
+                                       description="Prefill the Pool with Connection objects, or lazy load objects in the pool" required="false">
+                        <c:description>Whether or not to use prefill.</c:description>
+                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
+                        </c:defaultValueDescription>
+                    </c:simple-property>
+
+                    <c:simple-property name="blocking-timeout-millis"
+                                       displayName="Blocking Timeout in Milliseconds"
+                                       units="milliseconds"
+                                       activationPolicy="immediate"
+                                       type="integer"
+                                       required="false">
+                        <c:description>
+                            Indicates the maximum time in milliseconds to block while waiting for a connection before throwing
+                            an exception. Note that this blocks only while waiting for a permit for a connection, and will never
+                            throw an exception if creating a new connection takes an inordinately long time. If nothing is specified
+                            the default of 30000 milliseconds is used.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="0"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <c:simple-property name="idle-timeout-minutes"
+                                       type="integer"
+                                       activationPolicy="immediate"
+                                       displayName="Idle Timeout"
+                                       units="minutes"
+                                       required="false">
+                        <c:description>Maximum time in minutes a connection can be idle before it is closed.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="0"/>
+                        </c:constraint>
+                    </c:simple-property>
+
+                    <!-- XA ONLY-->
+                    <c:simple-property name="xa-resource-timeout"
+                                       type="integer"
+                                       activationPolicy="immediate"
+                                       displayName="XA Resource Timeout"
+                                       units="minutes"
+                                       required="false">
+                        <c:description>Maximum time in minutes an XA Resource can be idle before it is removed.
+                        </c:description>
+                        <c:constraint>
+                            <c:integer-constraint minimum="0"/>
+                        </c:constraint>
+                    </c:simple-property>
+                    <!-- XA ONLY-->
+
+                    <c:simple-property name="new-connection-sql"
+                                       displayName="New Connection SQL"
+                                       type="string"
+                                       required="false"
+                                       description="Specify an SQL statement to execute whenever a connection is added to
+                                       the connection pool."/>
+
+                    <c:simple-property name="check-valid-connection-sql"
+                                       displayName="Check Valid Connection SQL"
+                                       type="string"
+                                       required="false"
+                                       description="Specify an SQL statement to check validity of a pool connection.
+                                       This may be called when managed connection is taken from pool for use."/>
+
+                    <c:list-property name="config-property"
+                                     displayName="Config Property"
+                                     description="Configuration Properties"
+                                     required="false">
+                        <c:map-property name="property-values">
+                            <c:simple-property name="config-property-name"
+                                               displayName="Name"
+                                               description="Name of the Configuration Property"
+                                               required="true"/>
+                            <c:simple-property name="config-property-type"
+                                               displayName="Type"
+                                               description="Type of the Configuration Property"
+                                               required="true"/>
+                            <c:simple-property name="config-property-value"
+                                               displayName="Value"
+                                               description="Value of the Configuration Property"
+                                               required="true"/>
+                        </c:map-property>
+                    </c:list-property>
+
+                </c:group>
+            </resource-configuration>
+
+        </service>
+
+      <service name="JBossMQ" 
+               class="JMSComponent"
+               subCategory="Messaging"
+               discovery="JBossMQDiscoveryComponent"
+               description="The JBossMQ subsystem"
+               singleton="true">
+               
+          <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true"
+                  default="jboss.mq:service=DestinationManager"/>
+            <c:simple-property name="name" readOnly="true"
+                  default="JBossMQ"/>
+          </plugin-configuration>
+               
+
+          <metric property="jboss.mq:service=MessageCache:CacheHits" displayName="JMS Message Cache Hits"
+                  defaultInterval="300000" defaultOn="false" category="throughput" measurementType="trendsup"/>
+
+          <metric property="jboss.mq:service=MessageCache:CacheMisses" displayName="JMS Message Cache Misses"
+                  defaultInterval="300000" defaultOn="false" category="throughput" measurementType="trendsup"/>
+
+          <metric property="jboss.mq:service=MessageCache:CurrentMemoryUsage" displayName="JMS Message Cache Current Memory Usage"
+                  defaultInterval="300000" defaultOn="false" category="utilization" units="bytes"/>
+
+          <metric property="jboss.mq:service=MessageCache:HighMemoryMark" displayName="JMS Message Cache High Memory Mark"
+                  defaultInterval="300000" defaultOn="false" category="utilization" units="bytes"/>
+
+          <metric property="jboss.mq:service=MessageCache:MaxMemoryMark" displayName="JMS Message Cache Max Memory Mark"
+                  defaultInterval="300000" defaultOn="false" category="utilization" units="bytes"/>
+
+          <metric property="jboss.mq:service=MessageCache:TotalCacheSize" displayName="JMS Message Cache Size"
+                  defaultInterval="300000" defaultOn="false" category="utilization" units="bytes"/>
+
+
+
+
+          <service name="JMQ JMS Queue" class="JMSComponent"                  
+                   discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+                   createDeletePolicy="both">
+
+             <plugin-configuration>
+                <c:simple-property name="objectName" readOnly="true"
+                                   default="jboss.mq.destination:service=Queue,name=%name%"/>
+                <c:simple-property name="nameTemplate" default="{name} JMS Queue"/>
+                <c:simple-property name="descriptionTemplate" default="A JMS Queue in JBossMQ"/>
+                <c:simple-property name="name" type="string" description="The name of this queue"/>
+             </plugin-configuration>
+
+             <operation name="removeAllMessages" displayName="Remove All Messages"
+                        description="Clears all Messages in the Queue"/>
+             <operation name="resetMessageCounter" displayName="Reset Message Counter"
+                        description="Clears the MessageCounter data for this Queue"/>
+             <operation name="resetMessageCounterHistory" displayName="Reset Message Counter History"
+                        description="Clears the MessageCounter history data for this Queue"/>
+             <operation name="listMessages" displayName="List Messages by Selector"
+                        description="Lists the Messages in the Queue by Selector (if provided). Selector is not required.">
+                <parameters>
+                   <c:simple-property name="selector" displayName="Selector" required="false"/>
+                </parameters>
+                <results>
+                   <c:list-property name="Messages">
+                      <c:simple-property name="message"/>
+                   </c:list-property>
+                </results>
+             </operation>
+             <operation name="listScheduledMessages" displayName="List Scheduled Messages"
+                        description="Lists the Scheduled Messages by Selector (if provided). Selector is not required.">
+                <parameters>
+                   <c:simple-property name="selector" displayName="Selector" required="false"/>
+                </parameters>
+                <results>
+                   <c:list-property name="scheduledMessages">
+                      <c:simple-property name="message"/>
+                   </c:list-property>
+                </results>
+             </operation>
+             <operation name="listInProcessMessages" displayName="List In Process Messages"
+                        description="Lists the Messages in process by Selector (if provided). Selector is not required.">
+                <parameters>
+                   <c:simple-property name="selector" displayName="Selector" required="false"/>
+                </parameters>
+                <results>
+                   <c:list-property name="inProcessMessages">
+                      <c:simple-property name="message"/>
+                   </c:list-property>
+                </results>
+             </operation>
+
+             <metric displayName="Messages in Queue"
+                     property="QueueDepth"
+                     category="utilization"
+                     defaultOn="true"
+                     displayType="summary"
+                     description="The number of undelivered messages in the queue."/>
+
+             <metric displayName="Receivers Count"
+                     property="ReceiversCount"
+                     category="utilization"
+                     defaultOn="true"
+                     description="The number of ClientConsumers waiting for a message."/>
+
+             <metric displayName="Scheduled Message Count"
+                     property="ScheduledMessageCount"
+                     category="utilization"
+                     defaultOn="true"
+                     description="The number of messages waiting to be scheduled"/>
+
+             <metric displayName="In Process Message Count"
+                     property="InProcessMessageCount"
+                     category="utilization"
+                     defaultOn="true"
+                     description="The number of messages received by clients but not acknowledged (from AS 4.0.5)"/>
+
+             <resource-configuration>
+
+                <c:simple-property name="MBeanName"
+                                   displayName="Queue Name"
+                                   required="true" readOnly="true"
+                                   description="Name of the queue to be used in the JMX object name."/>
+                <c:simple-property name="JNDIBinding"
+                                 displayName="JNDI Binding"
+                                 readOnly="true"
+                                 summary="true"
+                                 description="Binding path of this Queue in JNDI."/>
+                <c:group name="optional-attribute-name" displayName="Optional Attributes">
+                   <c:simple-property name="DestinationManager"
+                                      displayName="Destination Manager"
+                                      required="true"
+                                      default="jboss.mq:service=DestinationManager"
+                                      description="The JMX object name of the destination manager configured for the server."/>
+                   <c:simple-property name="SecurityManager"
+                                      displayName="Security Manager"
+                                      required="false"
+                                      description="The JMX object name of the security manager that is being used to validate client requests."/>
+                   <c:simple-property name="ExpiryDestination"
+                                      displayName="Expiry Destination"
+                                      required="false"
+                                      description="By default, JBossMQ silently removes expired JMS message from its destination. As of JBoss 4.0.4, expired messages can now be moved into a separate destination. ExpiryDestination indicates the javax.management.ObjectName of the expiry destination. This destination must be located on the same server and be a JBossMQ destination."/>
+                </c:group>
+
+                <c:group name="attribute" displayName="attributes">
+                   <c:simple-property name="JNDIName"
+                                      displayName="JNDI Name"
+                                      required="false"
+                                      description="The location in JNDI to which the queue object will be bound. If this is not set it will be bound under the queue context using the name of the queue.
+                                    This property is optional, in most cases the mbean name is used for binding purpose. See {server-config}/deploy/jms/jbossmq-destinations-service.xml for examples."/>
+                   <c:simple-property name="InMemory"
+                                      displayName="In Memory"
+                                      required="false"
+                                      type="boolean"
+                                      description="Don't persist messages and avoid message softening when using the NullPersistenceManager"/>
+                   <c:simple-property name="RedeliveryLimit"
+                                      displayName="Redelivery Limit"
+                                      required="false"
+                                      type="integer"
+                                      description="The maximum times a message is nacked before a message is sent to the Dead Letter Queue (0 - don't redeliver, n - redeliver n times, -1 - continue redelivering indefinitely)"/>
+                   <c:simple-property name="RedeliveryDelay"
+                                      displayName="Redelivery Delay"
+                                      required="false"
+                                      type="integer"
+                                      units="milliseconds"
+                                      description="The length of time in milliseconds to wait before a message is redelivered after a nack"/>
+                   <c:simple-property name="MessageCounterHistoryDayLimit"
+                                      displayName="Message Counter History Day Limit"
+                                      required="false"
+                                      type="integer"
+                                      description="Sets the destination message counter history day limit with a value less than 0 indicating unlimited history, a 0 value disabling history and a value greater than 0 giving the history days count."/>
+                   <c:simple-property name="MaxDepth"
+                                      displayName="Maximum Depth"
+                                      required="false"
+                                      type="integer"
+                                      description="The MaxDepth is an upper limit to the backlog of messages that can exist for a
+                                      destination. If exceeded, attempts to add new messages will result in a
+                                      org.jboss.mq.DestinationFullException. The MaxDepth can still be exceeded in a
+                                      number of situations, e.g. when a message is placed back into the queue.
+                                      Also transactions performing read committed processing, look at the current size
+                                      of queue, ignoring any messages that may be added as a result of the current
+                                      transaction or other transactions. This is because we don't want the transaction
+                                      to fail during the commit phase when the message is physically added to the queue."/>
+                   <c:simple-property name="RecoveryRetries"
+                                      displayName="Recovery Retries"
+                                      required="false"
+                                      type="integer"
+                                      description="Specifies the number of times uncommitted transactions are to be resolved before failing. Default 0 - zero (from JBoss-4.0.3). "/>
+                </c:group>
+
+                <c:group name="securityConf" displayName="Security Role Configurations">
+                   <c:list-property name="SecurityConf" max="4" min="2"
+                                    displayName="Security Configurations"
+                                    description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
+                      <c:map-property name="role"
+                                      displayName="Security Configuration Attributes"
+                                      description="These are the attributes that define the role name, and if the role is allowed to read, write or create Messages on this Queue">
+                         <c:simple-property name="name"
+                                            displayName="Name"
+                                            description="Name of the Security Role. e.g. Guest"
+                                            summary="true"
+                                            required="true"/>
+                         <c:simple-property name="read"
+                                            displayName="Read"
+                                            description="Is this role allowed to read messages?"
+                                            summary="true"
+                                            required="false"
+                                            type="boolean"/>
+                         <c:simple-property name="write"
+                                            displayName="Write"
+                                            description="Is this role allowed to write messages?"
+                                            summary="true"
+                                            required="false"
+                                            type="boolean"/>
+                         <c:simple-property name="create"
+                                            displayName="Create"
+                                            description="Is this role allowed to create messages?"
+                                            summary="true"
+                                            required="false"
+                                            type="boolean"/>
+                      </c:map-property>
+
+                   </c:list-property>
+                </c:group>
+
+             </resource-configuration>
+
+          </service>
+
+          <service name="JMQ JMS Topic" class="JMSComponent"                   
+                   discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+                   createDeletePolicy="both">
+
+             <plugin-configuration>
+                <c:simple-property name="objectName" readOnly="true"
+                                  default="jboss.mq.destination:service=Topic,name=%name%"/>
+                <c:simple-property name="nameTemplate" default="{name} JMS Topic"/>
+                <c:simple-property name="descriptionTemplate" default="A JMS Topic in JBossMQ"/>
+                <c:simple-property name="name" type="string" description="The name of this topic"/>
+             </plugin-configuration>
+
+             <operation name="removeAllMessages" displayName="Remove All Messages"
+                        description="Clears all Subscriptions"/>
+             <operation name="listAllSubscriptions" displayName="List All Subscriptions"
+                        description="Lists all the Subscriptions.">
+                <results>
+                   <c:list-property name="subscriptions" displayName="Subscriptions">
+                      <c:simple-property name="subscription"/>
+                   </c:list-property>
+                </results>
+             </operation>
+             <operation name="listDurableSubscriptions" displayName="List Durable Subscriptions"
+                        description="Lists all the durable subscriptions.">
+                <results>
+                   <c:list-property name="durableSubscriptions" displayName="Durable Subscriptions">
+                      <c:simple-property name="durableSubscription"/>
+                   </c:list-property>
+                </results>
+             </operation>
+             <operation name="listNonDurableSubscriptions" displayName="List Non-durable Subscriptions"
+                        description="Lists all the non-durable subscriptions.">
+                <results>
+                   <c:list-property name="nonDurableSubscriptions" displayName="Non-durable Subscriptions">
+                      <c:simple-property name="nonDurablesubscription"/>
+                   </c:list-property>
+                </results>
+             </operation>
+             <operation name="resetMessageCounter" displayName="Reset Message Counter"
+                        description="Clears the message counter data for all topic subscriptions."/>
+             <operation name="resetMessageCounterHistory" displayName="Reset Message Counter History"
+                        description="Clears the message counter history data for this topic."/>
+
+
+             <operation name="listMessages" displayName="List Messages by ID and Selector"
+                        description="List the messages for a subscription by ID and with an optional selector.">
+                <parameters>
+                   <c:simple-property name="id" displayName="Subscription ID" required="true"/>
+                   <c:simple-property name="selector" displayName="Selector" required="false"/>
+                </parameters>
+                <results>
+                   <c:list-property name="messages" displayName="Messages">
+                      <c:simple-property name="message"/>
+                   </c:list-property>
+                </results>
+             </operation>
+
+             <operation name="getNonDurableMessageCount" displayName="Get Non-durable Message Count"
+                        description="Gets the message count for non-durable messages by client ID and subscription ID.">
+                <parameters>
+                   <c:simple-property name="clientID" displayName="Client ID" required="true"/>
+                   <c:simple-property name="subID" displayName="Subscription ID" required="true"/>
+                </parameters>
+                <results>
+                   <c:simple-property name="nonDurableMessageCount" displayName="Non-durable Message Count"/>
+                </results>
+             </operation>
+             <operation name="listNonDurableMessages" displayName="List Non-durable Messages"
+                        description="Lists the non-durable messages by client ID, subscription ID, and an optional selector.">
+                <parameters>
+                   <c:simple-property name="clientID" displayName="Client ID" required="true"/>
+                   <c:simple-property name="subID" displayName="Subscription ID" required="true"/>
+                   <c:simple-property name="selector" displayName="Selector" required="false"/>
+                </parameters>
+                <results>
+                   <c:list-property name="nonDurableMessages" displayName="Non-durable Messages">
+                      <c:simple-property name="nonDurableMessage"/>
+                   </c:list-property>
+                </results>
+             </operation>
+
+             <operation name="getDurableMessageCount" displayName="Get Durable Message Count"
+                        description="Gets the message count for durable messages by client ID and subscription ID.">
+                <parameters>
+                   <c:simple-property name="clientID" displayName="Client ID" required="true"/>
+                   <c:simple-property name="subID" displayName="Subscription ID" required="true"/>
+                </parameters>
+                <results>
+                   <c:simple-property name="DurableMessageCount" displayName="Durable Message Count"/>
+                </results>
+             </operation>
+             <operation name="listDurableMessages" displayName="List Durable Messages"
+                        description="Lists the durable messages by client ID, subscription ID, and an optional selector.">
+                <parameters>
+                   <c:simple-property name="clientID" displayName="Client ID" required="true"/>
+                   <c:simple-property name="subID" displayName="Subscription ID" required="true"/>
+                   <c:simple-property name="selector" displayName="Selector" required="false"/>
+                </parameters>
+                <results>
+                   <c:list-property name="durableMessages" displayName="Durable Messages">
+                      <c:simple-property name="durableMessage"/>
+                   </c:list-property>
+                </results>
+             </operation>
+
+             <operation name="getNonDurableScheduledMessageCount" displayName="Get Non-durable Scheduled Message Count"
+                        description="Gets the message count for non-durable scheduled messages by client ID and subscription ID.">
+                <parameters>
+                   <c:simple-property name="clientID" displayName="Client ID" required="true"/>
+                   <c:simple-property name="subID" displayName="Subscription ID" required="true"/>
+                </parameters>
+                <results>
+                   <c:simple-property name="nonDurableScheduledMessageCount"
+                                      displayName="Non-durable Scheduled Message Count"/>
+                </results>
+             </operation>
+             <operation name="listNonDurableScheduledMessages" displayName="List Non-durable Scheduled Messages"
+                        description="Lists the non-durable scheduled messages by client ID, subscription ID, and an optional selector.">
+                <parameters>
+                   <c:simple-property name="clientID" displayName="Client ID" required="true"/>
+                   <c:simple-property name="subID" displayName="Subscription ID" required="true"/>
+                   <c:simple-property name="selector" displayName="Selector" required="false"/>
+                </parameters>
+                <results>
+                   <c:list-property name="nonDurableScheduledMessages" displayName="Non-durable Scheduled Messages">
+                      <c:simple-property name="nonDurableScheduledMessage"/>
+                   </c:list-property>
+                </results>
+             </operation>
+
+             <operation name="getDurableMessageScheduledCount" displayName="Get Durable Scheduled Message Count"
+                        description="Gets the message count for durable scheduled messages by client ID and subscription ID.">
+                <parameters>
+                   <c:simple-property name="clientID" displayName="Client ID" required="true"/>
+                   <c:simple-property name="subID" displayName="Subscription ID" required="true"/>
+                </parameters>
+                <results>
+                   <c:simple-property name="durableScheduledMessageCount" displayName="Durable Scheduled Message Count"/>
+                </results>
+             </operation>
+             <operation name="listDurableScheduledMessages" displayName="List Durable Scheduled Messages"
+                        description="Lists the durable scheduled messages by client ID, subscription ID, and an optional selector.">
+                <parameters>
+                   <c:simple-property name="clientID" displayName="Client ID" required="true"/>
+                   <c:simple-property name="subID" displayName="Subscription ID" required="true"/>
+                   <c:simple-property name="selector" displayName="Selector" required="false"/>
+                </parameters>
+                <results>
+                   <c:list-property name="durableScheduledMessages" displayName="Durable Scheduled Messages">
+                      <c:simple-property name="durableScheduledMessage"/>
+                   </c:list-property>
+                </results>
+             </operation>
+
+             <operation name="getNonDurableInProcessMessageCount" displayName="Get Non-durable In-process Message Count"
+                        description="Gets the message count for non-durable in-process messages by client Id and subscription Id">
+                <parameters>
+                   <c:simple-property name="clientID" displayName="Client ID" required="true"/>
+                   <c:simple-property name="subID" displayName="Subscription ID" required="true"/>
+                </parameters>
+                <results>
+                   <c:simple-property name="nonDurableInProcessMessageCount"
+                                      displayName="Non-durable in-process Message Count"/>
+                </results>
+             </operation>
+             <operation name="listNonDurableInProcessMessages" displayName="List Non-durable In-process Messages"
+                        description="Lists the non-durable in-process messages by client ID, subscription ID, and an optional selector.">
+                <parameters>
+                   <c:simple-property name="clientID" displayName="Client ID" required="true"/>
+                   <c:simple-property name="subID" displayName="Subscription ID" required="true"/>
+                   <c:simple-property name="selector" displayName="Selector" required="false"/>
+                </parameters>
+                <results>
+                   <c:list-property name="nonDurableInProcessMessages" displayName="Non-durable In-process Messages">
+                      <c:simple-property name="nonDurableInProcessMessage"/>
+                   </c:list-property>
+                </results>
+             </operation>
+
+             <operation name="getDurableInProcessMessageCount" displayName="Get Durable In-process Message Count"
+                        description="Gets the message count for durable in-process messages by client ID and subscription Id">
+                <parameters>
+                   <c:simple-property name="clientID" displayName="Client ID" required="true"/>
+                   <c:simple-property name="subID" displayName="Subscription ID" required="true"/>
+                </parameters>
+                <results>
+                   <c:simple-property name="DurableInProcessMessageCount" displayName="Durable In-process Message Count"/>
+                </results>
+             </operation>
+             <operation name="listDurableInProcessMessages" displayName="List Durable In-process Messages"
+                        description="Lists the durable in-process messages by client ID, subscription ID, and an optional selector.">
+                <parameters>
+                   <c:simple-property name="clientID" displayName="Client ID" required="true"/>
+                   <c:simple-property name="subID" displayName="Subscription ID" required="true"/>
+                   <c:simple-property name="selector" displayName="Selector" required="false"/>
+                </parameters>
+                <results>
+                   <c:list-property name="durableInProcessMessages" displayName="Durable In-process Messages">
+                      <c:simple-property name="durableInProcessMessage"/>
+                   </c:list-property>
+                </results>
+             </operation>
+
+             <metric displayName="All Message Counter"
+                     property="AllMessageCount"
+                     category="utilization"
+                     defaultOn="true"
+                     displayType="summary"
+                     description="Returns the total message count for all subscriptions."/>
+             <metric displayName="Durable Message Count"
+                     property="DurableMessageCount"
+                     category="utilization"
+                     defaultOn="true"
+                     displayType="summary"
+                     description="Total number of messages for all durable subscriptions."/>
+             <metric displayName="Non-durable Message Count"
+                     property="NonDurableMessageCount"
+                     category="utilization"
+                     defaultOn="true"
+                     displayType="summary"
+                     description="Total number of messages for all non-durable subscriptions."/>
+             <metric displayName="All Subscription Count"
+                     property="AllSubscriptionsCount"
+                     category="utilization"
+                     defaultOn="true"
+                     displayType="summary"
+                     description="Number of subscriptions waiting for a message."/>
+             <metric displayName="Durable Subscription Count"
+                     property="DurableSubscriptionsCount"
+                     category="utilization"
+                     defaultOn="true"
+                     displayType="summary"
+                     description="Number of durable subscriptions waiting for a message."/>
+             <metric displayName="Non-durable Subscription Count"
+                     property="NonDurableSubscriptionsCount"
+                     category="utilization"
+                     defaultOn="true"
+                     displayType="summary"
+                     description="Number of non-durable subscriptions waiting for a message."/>
+
+             <resource-configuration>
+
+                <c:simple-property name="MBeanName"
+                                   displayName="Topic Name"
+                                   required="true" readOnly="true"
+                                   description="Name of the queue to be used as the JMX object name."/>
+                <c:simple-property name="JNDIBinding"
+                                   displayName="JNDI Binding"
+                                   readOnly="true"
+                                   summary="true"
+                                   description="Binding path of this Topic in JNDI."/>
+                <c:group name="optional-attribute-name" displayName="Optional Attributes">
+                   <c:simple-property name="DestinationManager"
+                                      displayName="Destination Manager"
+                                      required="true"
+                                      default="jboss.mq:service=DestinationManager"
+                                      description="The JMX object name of the destination manager configured for the server."/>
+                   <c:simple-property name="SecurityManager"
+                                      displayName="Security Manager"
+                                      required="false"
+                                      description="The JMX object name of the security manager that is being used to validate client requests."/>
+                   <c:simple-property name="ExpiryDestination"
+                                      displayName="Expiry Destination"
+                                      required="false"
+                                      description="By default, JBossMQ silently removes expired JMS message from its destination. As of JBoss 4.0.4, expired messages can now be moved into a separate destination. ExpiryDestination indicates the javax.management.ObjectName of the expiry destination. This destination must be located on the same server and be a JBossMQ destination."/>
+                </c:group>
+
+                <c:group name="attribute" displayName="attributes">
+                   <c:simple-property name="JNDIName"
+                                      displayName="JNDI Name"
+                                      required="false"
+                                      description="The location in JNDI to which the topic will be bound. If this is not set it will be bound under the topic context using the mbean name of the topic.
+                                      This property is optional, in most cases the mbean name is used for binding purpose. See {server-config}/deploy/jms/jbossmq-destinations-service.xml for examples."/>
+                   <c:simple-property name="InMemory"
+                                      displayName="In Memory"
+                                      required="false"
+                                      type="boolean"
+                                      description="Don't persist messages and avoid message softening when using the NullPersistenceManager."/>
+                   <c:simple-property name="RedeliveryLimit"
+                                      displayName="Redelivery Limit"
+                                      required="false"
+                                      type="integer"
+                                      description="The maximum times a message is nacked before a message is sent to the Dead Letter Queue (0 - don't redeliver, n - redeliver n times, -1 - continue redelivering indefinitely)."/>
+                   <c:simple-property name="RedeliveryDelay"
+                                      displayName="Redelivery Delay"
+                                      required="false"
+                                      type="integer"
+                                      units="milliseconds"
+                                      description="The length of time in milliseconds to wait before a message is redelivered after a nack."/>
+                   <c:simple-property name="MessageCounterHistoryDayLimit"
+                                      displayName="Message Counter History Day Limit"
+                                      required="false"
+                                      type="integer"
+                                      description="Sets the destination message counter history day limit with a value less than 0 indicating unlimited history, a 0 value disabling history and a value greater than 0 giving the history days count."/>
+                   <c:simple-property name="MaxDepth"
+                                      displayName="Maximum Depth"
+                                      required="false"
+                                      type="integer"
+                                      description="The MaxDepth is an upper limit to the backlog of messages that can exist for a
+                                      destination. If exceeded, attempts to add new messages will result in a
+                                      org.jboss.mq.DestinationFullException. The MaxDepth can still be exceeded in a
+                                      number of situations, e.g. when a message is placed back into the queue.
+                                      Also transactions performing read committed processing, look at the current size
+                                      of queue, ignoring any messages that may be added as a result of the current
+                                      transaction or other transactions. This is because we don't want the transaction
+                                      to fail during the commit phase when the message is physically added to the queue."/>
+                   <c:simple-property name="RecoveryRetries"
+                                      displayName="Recovery Retries"
+                                      required="false"
+                                      type="integer"
+                                      description="Specifies the number of times uncommitted transactions are to be resolved before failing. Default 0 - zero (from JBoss-4.0.3). "/>
+                </c:group>
+
+                <c:group name="securityConf" displayName="Security Role Configurations">
+                   <c:list-property name="SecurityConf" max="4" min="2"
+                                    displayName="Security Configurations"
+                                    description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
+                      <c:map-property name="role"
+                                      displayName="Security Configuration Attributes"
+                                      description="These are the attributes that define the role name, and if the role is allowed to read, write or create Messages on this Queue">
+                         <c:simple-property name="name"
+                                            displayName="Name"
+                                            description="Name of the Security Role. e.g. Guest"
+                                            summary="true"
+                                            required="true"/>
+                         <c:simple-property name="read"
+                                            displayName="Read"
+                                            description="Is this role allowed to read messages?"
+                                            summary="true"
+                                            required="false"
+                                            type="boolean"/>
+                         <c:simple-property name="write"
+                                            displayName="Write"
+                                            description="Is this role allowed to write messages?"
+                                            summary="true"
+                                            required="false"
+                                            type="boolean"/>
+                         <c:simple-property name="create"
+                                            displayName="Create"
+                                            description="Is this role allowed to create messages?"
+                                            summary="true"
+                                            required="false"
+                                            type="boolean"/>
+                      </c:map-property>
+
+                   </c:list-property>
+                </c:group>
+
+             </resource-configuration>
+
+          </service>
+      </service>
+
+   
+      <service name="JBossMessaging" 
+               class="JBossMessagingComponent"
+               subCategory="Messaging"
+               discovery="JBossMessagingDiscoveryComponent"
+               description="The JBoss Messaging subsystem"
+               singleton="true">
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true"
+                  default="jboss.messaging:service=PostOffice"/>
+            <c:simple-property name="name" readOnly="true"
+                  default="JBossMessaging"/>
+         </plugin-configuration>
+
+         <metric property="jboss.messaging:service=ServerPeer:ProviderVersion" 
+                 displayName="Version of the Provider"
+                 dataType="trait"
+                 displayType="summary" />
+      
+
+         <service name="JBM JMS Queue" class="JBossMessagingComponent"                  
+                  discovery="JBMDestinationDiscoveryComponent"
+                  createDeletePolicy="both">
+   
+            <plugin-configuration>
+               <c:simple-property name="objectName" readOnly="true"
+                                  default="jboss.messaging.destination:service=Queue,name=%name%|jboss.esb.*:service=Queue,name=%name%"/>
+               <c:simple-property name="nameTemplate" default="{name} JMS Queue"/>
+               <c:simple-property name="descriptionTemplate" default="A JMS Queue in JBossMessaging"/>
+               <c:simple-property name="name" type="string" description="The name of this queue"/>
+            </plugin-configuration>
+   
+            <operation name="removeAllMessages" displayName="Remove All Messages"
+                       description="Clears all Messages in the Queue"/>
+            <operation name="resetMessageCounter" displayName="Reset Message Counter"
+                       description="Clears the MessageCounter data for this Queue"/>
+            <operation name="resetMessageCounterHistory" displayName="Reset Message Counter History"
+                       description="Clears the MessageCounter history data for this Queue"/>
+            <operation name="listMessages" displayName="List Messages by Selector"
+                       description="Lists the Messages in the Queue by Selector (if provided). Selector is not required.">
+               <parameters>
+                  <c:simple-property name="selector" displayName="Selector" required="false"/>
+               </parameters>
+               <results>
+                  <c:list-property name="Messages">
+                     <c:simple-property name="message"/>
+                  </c:list-property>
+               </results>
+            </operation>
+             
+            <operation name="listAllMessages" displayName="List All Messages"
+                       description="Lists All Messages by Selector (if provided). Selector is not required.">
+               <parameters>
+                  <c:simple-property name="selector" displayName="Selector" required="false"/>
+               </parameters>
+               <results>
+                  <c:list-property name="scheduledMessages">
+                     <c:simple-property name="message"/>
+                  </c:list-property>
+               </results>
+            </operation>
+            <operation name="listDurableMessages" displayName="List Durable Messages"
+                       description="Lists Durable Messages by Selector (if provided). Selector is not required.">
+               <parameters>
+                  <c:simple-property name="selector" displayName="Selector" required="false"/>
+               </parameters>
+               <results>
+                  <c:list-property name="scheduledMessages">
+                     <c:simple-property name="message"/>
+                  </c:list-property>
+               </results>
+            </operation>
+            <operation name="listNonDurableMessages" displayName="List Non-Durable Messages"
+                       description="Lists Non-Durable Messages by Selector (if provided). Selector is not required.">
+               <parameters>
+                  <c:simple-property name="selector" displayName="Selector" required="false"/>
+               </parameters>
+               <results>
+                  <c:list-property name="scheduledMessages">
+                     <c:simple-property name="message"/>
+                  </c:list-property>
+               </results>
+            </operation>
+   
+            <metric displayName="Messages in Queue"
+                    property="MessageCount"
+                    category="utilization"
+                    defaultOn="true"
+                    displayType="summary"
+                    description="The number of messages in the queue."/>
+            <metric displayName="Consumer Count"
+                    property="ConsumerCount"
+                    category="utilization"
+                    defaultOn="true"
+                    description="The number of ClientConsumers waiting for a message."/>
+            <metric displayName="Scheduled Message Count"
+                    property="ScheduledMessageCount"
+                    category="utilization"
+                    defaultOn="true"
+                    description="The number of scheduled messages in the Queue"/>
+            <metric displayName="Created programmatically"
+                    property="CreatedProgrammatically"
+                    dataType="trait"
+                    displayType="summary"
+                    defaultOn="true"
+                    description="Was this Queue created dynamically" />
+            <metric displayName="Delivering Count"
+                    property="DeliveringCount"
+                    category="utilization"
+                    description="The number of messages currently being delivered"/>
+                    
+   
+            <resource-configuration>
+               <c:simple-property name="MBeanName"
+                                   displayName="Queue Name"
+                                   required="true" readOnly="true"
+                                   description="Name of the queue to be used in the JMX object name."/>
+               <c:simple-property name="JNDIBinding"
+                                displayName="JNDI Binding"
+                                summary="true"
+                                description="Binding path of this Queue in JNDI."/>
+               <c:group name="optional-attribute-name" displayName="Optional Attributes">
+                  <c:simple-property name="ServerPeer"
+                                     displayName="Server Peer"
+                                     required="true"
+                                     default="jboss.messaging:service=ServerPeer"
+                                     description="The ObjectName of the server peer this destination was deployed on."/>
+                  <c:simple-property name="DLQ"
+                                     displayName="Dead Letter Queue"
+                                     required="false"
+                                     description="The DLQ for this queue, overrides the default DLQ on the server peer."/>
+                  <c:simple-property name="ExpiryQueue"
+                                     displayName="Expiry Queue"
+                                     required="false"
+                                     description="By default, JBoss Messaging silently removes expired JMS message from its destination.  ExpiryDestination indicates the javax.management.ObjectName of the expiry destination. This destination must be located on the same server and be a JBossMessaging destination."/>
+               </c:group>
+   
+               <c:group name="attribute" displayName="attributes">
+                  <c:simple-property name="JNDIName"
+                                     displayName="JNDI Name"
+                                     required="false"
+                                     description="The location in JNDI to which the queue object will be bound. If this is not set it will be bound under the queue context using the name of the queue.
+                                   This property is optional, in most cases the mbean name is used for binding purpose. See {server-config}/deploy/jms/jbossmq-destinations-service.xml for examples."/>
+                  <c:simple-property name="Clustered"
+                                     displayName="Clustered"
+                                     required="false"
+                                     type="boolean"
+                                     description="Is this a clustered destination?"/>
+                  <c:simple-property name="MaxDeliveryAttempts"
+                                     displayName="Max Delivery Attempts"
+                                     required="false"
+                                     type="integer"
+                                     description="The maximum times a message is nacked before a message is sent to the Dead Letter Queue (0 - don't redeliver, n - redeliver n times, -1 - continue redelivering indefinitely)"/>
+                  <c:simple-property name="RedeliveryDelay"
+                                     displayName="Redelivery Delay"
+                                     required="false"
+                                     type="long"
+                                     units="milliseconds"
+                                     description="The length of time in milliseconds to wait before a message is redelivered after a nack"/>
+                  <c:simple-property name="MessageCounterHistoryDayLimit"
+                                     displayName="Message Counter History Day Limit"
+                                     required="false"
+                                     type="integer"
+                                     description="Sets the destination message counter history day limit with a value less than 0 indicating unlimited history, a 0 value disabling history and a value greater than 0 giving the history days count."/>
+                  <c:simple-property name="MaxSize"
+                                     displayName="Maximum Queue Size"
+                                     required="false"
+                                     type="integer"
+                                     description="The maximum number of messages this queue can hold before they are dropped (-1 = infinite)"/>
+                  <c:simple-property name="FullSize"
+                                     displayName="Full Size"
+                                     required="false"
+                                     type="integer"
+                                     description="The in-memory message limit, can only be set when queue is stopped"/>
+                  <c:simple-property name="PageSize"
+                                     displayName="Page Size"
+                                     required="false"
+                                     type="integer"
+                                     description="The paging size, can only be set when queue is stopped"/>
+                  <c:simple-property name="DownCacheSize"
+                                     displayName="Down Cache Size"
+                                     required="false"
+                                     type="integer"
+                                     description="The write-cache size, can only be set when queue is stopped"/>
+               </c:group>
+   
+               <c:group name="securityConf" displayName="Security Role Configurations">
+                  <c:list-property name="SecurityConfig" max="4" min="2"
+                                   displayName="Security Configurations"
+                                   description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
+                     <c:map-property name="role"
+                                     displayName="Security Configuration Attributes"
+                                     description="These are the attributes that define the role name, and if the role is allowed to read, write or create Messages on this Queue">
+                        <c:simple-property name="name"
+                                           displayName="Name"
+                                           description="Name of the Security Role. e.g. Guest"
+                                           summary="true"
+                                           required="true"/>
+                        <c:simple-property name="read"
+                                           displayName="Read"
+                                           description="Is this role allowed to read messages?"
+                                           summary="true"
+                                           required="false"
+                                           type="boolean"/>
+                        <c:simple-property name="write"
+                                           displayName="Write"
+                                           description="Is this role allowed to write messages?"
+                                           summary="true"
+                                           required="false"
+                                           type="boolean"/>
+                        <c:simple-property name="create"
+                                           displayName="Create"
+                                           description="Is this role allowed to create messages?"
+                                           summary="true"
+                                           required="false"
+                                           type="boolean"/>
+                     </c:map-property>
+   
+                  </c:list-property>
+               </c:group>
+   
+            </resource-configuration>
+   
+         </service>
+   
+         <service name="JBM JMS Topic" class="JBossMessagingComponent"                  
+                  discovery="JBMDestinationDiscoveryComponent"
+                  createDeletePolicy="both">
+   
+            <plugin-configuration>
+               <c:simple-property name="objectName" readOnly="true"
+                                 default="jboss.messaging.destination:service=Topic,name=%name%|jboss.esb.*:service=Topic,name=%name%"/>
+               <c:simple-property name="nameTemplate" default="{name} JMS Topic"/>
+               <c:simple-property name="descriptionTemplate" default="A JMS Topic in JBossMessaging"/>
+               <c:simple-property name="name" type="string" description="The name of this topic"/>
+            </plugin-configuration>
+   
+            <operation name="removeAllMessages" displayName="Remove All Messages"
+                       description="Clears all Subscriptions"/>
+            <operation name="listAllSubscriptions" displayName="List All Subscriptions"
+                       description="Lists all the Subscriptions.">
+               <results>
+                  <c:list-property name="subscriptions" displayName="Subscriptions">
+                     <c:simple-property name="subscription"/>
+                  </c:list-property>
+               </results>
+            </operation>
+            <operation name="listDurableSubscriptions" displayName="List Durable Subscriptions"
+                       description="Lists all the durable subscriptions.">
+               <results>
+                  <c:list-property name="durableSubscriptions" displayName="Durable Subscriptions">
+                     <c:simple-property name="durableSubscription"/>
+                  </c:list-property>
+               </results>
+            </operation>
+            <operation name="listNonDurableSubscriptions" displayName="List Non-durable Subscriptions"
+                       description="Lists all the non-durable subscriptions.">
+               <results>
+                  <c:list-property name="nonDurableSubscriptions" displayName="Non-durable Subscriptions">
+                     <c:simple-property name="nonDurablesubscription"/>
+                  </c:list-property>
+               </results>
+            </operation>
+            
+            <operation name="listAllMessages" displayName="List Messages by ID and Selector"
+                       description="List the messages for a subscription by ID and with an optional selector.">
+               <parameters>
+                  <c:simple-property name="subscriptionID" displayName="Subscription ID" required="true"/>
+                  <c:simple-property name="selector" displayName="Selector" required="false"/>
+               </parameters>
+               <results>
+                  <c:list-property name="messages" displayName="Messages">
+                     <c:simple-property name="message"/>
+                  </c:list-property>
+               </results>
+            </operation>
+   
+            <operation name="listNonDurableMessages" displayName="List Non-durable Messages"
+                       description="Lists the non-durable messages by subscription ID and an optional selector.">
+               <parameters>
+                  <c:simple-property name="subscriptionID" displayName="Subscription ID" required="true"/>
+                  <c:simple-property name="selector" displayName="Selector" required="false"/>
+               </parameters>
+               <results>
+                  <c:list-property name="nonDurableMessages" displayName="Non-durable Messages">
+                     <c:simple-property name="nonDurableMessage"/>
+                  </c:list-property>
+               </results>
+            </operation>
+   
+            <operation name="listDurableMessages" displayName="List Durable Messages"
+                       description="Lists the durable messages by subscription ID and an optional selector.">
+               <parameters>
+                  <c:simple-property name="subscriptionID" displayName="Subscription ID" required="true"/>
+                  <c:simple-property name="selector" displayName="Selector" required="false"/>
+               </parameters>
+               <results>
+                  <c:list-property name="durableMessages" displayName="Durable Messages">
+                     <c:simple-property name="durableMessage"/>
+                  </c:list-property>
+               </results>
+            </operation>
+   
+            <metric displayName="All Message Counter"
+                    property="AllMessageCount"
+                    category="utilization"
+                    defaultOn="true"
+                    displayType="summary"
+                    description="Returns the total message count for all subscriptions."/>
+            <metric displayName="Durable Message Count"
+                    property="DurableMessageCount"
+                    category="utilization"
+                    defaultOn="false"
+                    description="Total number of messages for all durable subscriptions."/>
+            <metric displayName="Non-durable Message Count"
+                    property="NonDurableMessageCount"
+                    category="utilization"
+                    defaultOn="false"
+                    description="Total number of messages for all non-durable subscriptions."/>
+            <metric displayName="All Subscription Count"
+                    property="AllSubscriptionsCount"
+                    category="utilization"
+                    defaultOn="true"
+                    displayType="summary"
+                    description="Number of subscriptions waiting for a message."/>
+            <metric displayName="Durable Subscription Count"
+                    property="DurableSubscriptionsCount"
+                    category="utilization"
+                    defaultOn="false"
+                    description="Number of durable subscriptions waiting for a message."/>
+            <metric displayName="Non-durable Subscription Count"
+                    property="NonDurableSubscriptionsCount"
+                    category="utilization"
+                    defaultOn="false"
+                    description="Number of non-durable subscriptions waiting for a message."/>
+            <metric displayName="Created programmatically"
+                    property="CreatedProgrammatically"
+                    dataType="trait"
+                    displayType="summary"
+                    defaultOn="true"
+                    description="Was this Topic created dynamically" />
+   
+            <resource-configuration>
+   
+               <c:simple-property name="MBeanName"
+                                  displayName="Topic Name"
+                                  required="true" readOnly="true"
+                                  description="Name of the queue to be used in the JMX object name."/>
+               <c:simple-property name="JNDIBinding"
+                                  displayName="JNDI Binding"
+                                  summary="true"
+                                  description="Binding path of this Topic in JNDI."/>
+               <c:group name="optional-attribute-name" displayName="Optional Attributes">
+                  <c:simple-property name="ServerPeer"
+                                     displayName="Server Peer"
+                                     required="true"
+                                     default="jboss.messaging:service=ServerPeer"
+                                     description="The ObjectName of the server peer this destination was deployed on."/>
+                  <c:simple-property name="DLQ"
+                                     displayName="Dead Letter Queue"
+                                     required="false"
+                                     description="The DLQ for this queue, overrides the default DLQ on the server peer."/>
+                  <c:simple-property name="ExpiryQueue"
+                                     displayName="Expiry Queue"
+                                     required="false"
+                                     description="By default, JBoss Messaging silently removes expired JMS message from its destination.  ExpiryDestination indicates the javax.management.ObjectName of the expiry destination. This destination must be located on the same server and be a JBossMessaging destination."/>
+               </c:group>
+   
+               <c:group name="attribute" displayName="attributes">
+                  <c:simple-property name="JNDIName"
+                                     displayName="JNDI Name"
+                                     required="false"
+                                     description="The location in JNDI to which the topic will be bound. If this is not set it will be bound under the topic context using the mbean name of the topic.
+                                     This property is optional, in most cases the mbean name is used for binding purpose. See {server-config}/deploy/jms/jbossmq-destinations-service.xml for examples."/>
+                  <c:simple-property name="Clustered"
+                                     displayName="Clustered"
+                                     required="false"
+                                     type="boolean"
+                                     description="Is this a clustered destination?"/>
+                  <c:simple-property name="MaxDeliveryAttempts"
+                                     displayName="Max Delivery Attempts"
+                                     required="false"
+                                     type="integer"
+                                     description="The maximum times a message is nacked before a message is sent to the Dead Letter Queue (0 - don't redeliver, n - redeliver n times, -1 - continue redelivering indefinitely)"/>
+                  <c:simple-property name="RedeliveryDelay"
+                                     displayName="Redelivery Delay"
+                                     required="false"
+                                     type="long"
+                                     units="milliseconds"
+                                     description="The length of time in milliseconds to wait before a message is redelivered after a NACK"/>
+                  <c:simple-property name="MessageCounterHistoryDayLimit"
+                                     displayName="Message Counter History Day Limit"
+                                     required="false"
+                                     type="integer"
+                                     description="Sets the destination message counter history day limit with a value less than 0 indicating unlimited history, a 0 value disabling history and a value greater than 0 giving the history days count."/>
+                  <c:simple-property name="MaxSize"
+                                     displayName="Maximum Queue Size"
+                                     required="false"
+                                     type="integer"
+                                     description="The maximum number of messages this queue can hold before they are dropped (-1 = infinite)"/>
+                  <c:simple-property name="FullSize"
+                                     displayName="Full Size"
+                                     required="false"
+                                     type="integer"
+                                     description="The in-memory message limit, can only be set when queue is stopped"/>
+                  <c:simple-property name="PageSize"
+                                     displayName="Page Size"
+                                     required="false"
+                                     type="integer"
+                                     description="The paging size, can only be set when queue is stopped"/>
+                  <c:simple-property name="DownCacheSize"
+                                     displayName="Down Cache Size"
+                                     required="false"
+                                     type="integer"
+                                     description="The write-cache size, can only be set when queue is stopped"/>
+               </c:group>
+   
+               <c:group name="securityConf" displayName="Security Role Configurations">
+                  <c:list-property name="SecurityConfig" max="4" min="2"
+                                   displayName="Security Configurations"
+                                   description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
+                     <c:map-property name="role"
+                                     displayName="Security Configuration Attributes"
+                                     description="These are the attributes that define the role name, and if the role is allowed to read, write or create Messages on this Queue">
+                        <c:simple-property name="name"
+                                           displayName="Name"
+                                           description="Name of the Security Role. e.g. Guest"
+                                           summary="true"
+                                           required="true"/>
+                        <c:simple-property name="read"
+                                           displayName="Read"
+                                           description="Is this role allowed to read messages?"
+                                           summary="true"
+                                           required="false"
+                                           type="boolean"/>
+                        <c:simple-property name="write"
+                                           displayName="Write"
+                                           description="Is this role allowed to write messages?"
+                                           summary="true"
+                                           required="false"
+                                           type="boolean"/>
+                        <c:simple-property name="create"
+                                           displayName="Create"
+                                           description="Is this role allowed to create messages?"
+                                           summary="true"
+                                           required="false"
+                                           type="boolean"/>
+                     </c:map-property>
+   
+                  </c:list-property>
+               </c:group>
+   
+            </resource-configuration>
+   
+         </service>
+
+      </service>
+      
+      <!-- Application deployments -->
+
+      <service name="EJB3 Session Bean"
+               subCategory="Applications"
+               class="EJB3BeanComponent"
+               discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+               description="An EJB3 Stateless or Stateful Session Bean">
+
+         <!-- ear=rhq.ear,jar=rhq-enterprise-server-ejb.ejb3,name=AgentManagerBean,service=EJB3 -->
+         <!-- jboss.j2ee:jar=SimpleSLSB.jar,name=SimpleSLSB,service=EJB3 -->
+
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true"
+                               default="jboss.j2ee:ear=%ear%,jar=%jar%,name=%name%,service=EJB3|jboss.j2ee:jar=%jar%,name=%name%,service=EJB3"/>
+            <c:simple-property name="nameTemplate" default="{name}"/>
+            <c:simple-property name="descriptionTemplate" default="An EJB3 Session Bean"/>
+
+            <c:simple-property name="name" description="The name of this bean"/>
+            <c:simple-property name="ear"/>
+            <c:simple-property name="jar"/>
+         </plugin-configuration>
+
+
+         <operation name="viewMethodStats" description="View method execution statistics for the EJB;
+                                                        NOTE: this operation is only available if JBoss EJB3 RC9 Patch 1 or later is being used
+                                                        (a capable version of EJB3 is included with JBossAS 4.2.0.GA or later)">
+            <results>
+               <c:list-property name="methods">
+                  <c:map-property name="method">
+                     <c:simple-property name="methodName" summary="true"/>
+                     <c:simple-property name="count" displayName="Call Count" summary="true" type="integer"/>
+                     <c:simple-property name="minTime" displayName="Min Time" summary="true" type="integer"/>
+                     <c:simple-property name="maxTime" displayName="Max Time" summary="true" type="integer"/>
+                     <c:simple-property name="totalTime" displayName="Total Time" summary="true" type="integer"/>
+                  </c:map-property>
+               </c:list-property>
+            </results>
+         </operation>
+
+
+         <metric displayName="Current Count" property="CurrentSize"/>
+         <metric displayName="Create Count" property="CreateCount" displayType="summary" measurementType="trendsup"
+                 description="the number of instances of this EJB that have been created"/>
+         <metric displayName="Remove Count" property="RemoveCount" displayType="summary" measurementType="trendsup"
+                 description="the number of instances of this EJB that have been removed"/>
+         <metric displayName="Available Count" property="AvailableCount"/>
+         <metric displayName="Max Size" property="MaxSize"/>
+
+         <!-- default interval == 600000 ms == 10 min -->
+         <metric property="MethodInvocationTime" dataType="calltime" units="milliseconds"
+                 defaultOn="false" defaultInterval="600000" destinationType="Method Name"
+                 description="the minimum, maximum, and average invocation times for each of the methods exposed by this EJB;
+                              NOTE: this metric is only available if JBoss EJB3 RC9 Patch 1 or later is being used
+                              (a capable version of EJB3 is included with JBossAS 4.2.0.GA or later)"/>
+
+      </service>
+
+      <service name="Stateless Session EJB"
+               subCategory="Applications"
+               class="org.rhq.plugins.jmx.MBeanResourceComponent"
+               discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+               description="An EJB 1.x or 2.x Stateless Session Bean">
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true"
+                               default="jboss.management.local:name=%name%,J2EEServer=Local,J2EEApplication=%j2eeApplication%,EJBModule=%ejbJar%,j2eeType=StatelessSessionBean"/>
+            <c:simple-property name="nameTemplate" default="{name}"/>
+            <c:simple-property name="descriptionTemplate" default="An EJB 1.x or 2.x Stateless Session Bean"/>
+
+            <c:simple-property name="name" description="The name of this ejb"/>
+            <c:simple-property name="j2eeApplication"/>
+            <c:simple-property name="ejbJar"/>
+         </plugin-configuration>
+
+           <metric displayName="Create Calls"
+                   property="{stats.createCount.count}"
+                   displayType="summary"
+                   measurementType="trendsup"/>
+
+           <metric displayName="Remove Calls"
+                   property="{stats.removeCount.count}"
+                   displayType="summary"
+                   measurementType="trendsup"/>
+
+           <metric displayName="Method-Ready Beans"
+                   property="{stats.methodReadyCount.current}"
+                   displayType="summary"/>
+
+           <metric displayName="Pool Size"
+                   property="{{jboss.j2ee:jndiName=%name%,plugin=pool,service=EJB}CurrentSize}"/>
+
+           <metric displayName="Max Pool Size"
+                   property="{{jboss.j2ee:jndiName=%name%,plugin=pool,service=EJB}MaxSize}"/>
+
+         </service>
+
+      <service name="Entity EJB"
+               subCategory="Applications"
+               class="org.rhq.plugins.jmx.MBeanResourceComponent"
+               discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+               description="An EJB 1.x or 2.x Entity Bean">
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true"
+                               default="jboss.management.local:name=%name%,J2EEServer=Local,J2EEApplication=%j2eeApplication%,EJBModule=%ejbJar%,j2eeType=EntityBean"/>
+            <c:simple-property name="nameTemplate" default="{name}"/>
+            <c:simple-property name="descriptionTemplate" default="An EJB 1.x or 2.x Entity Bean"/>
+
+            <c:simple-property name="name" description="The name of this ejb"/>
+            <c:simple-property name="j2eeApplication"/>
+            <c:simple-property name="ejbJar"/>
+         </plugin-configuration>
+
+
+      <metric displayName="Create Calls"
+              property="{stats.createCount.count}"
+              displayType="summary"
+              measurementType="trendsup"/>
+
+      <metric displayName="Remove Calls"
+              property="{stats.removeCount.count}"
+              displayType="summary"
+              measurementType="trendsup"/>
+
+      <metric displayName="Method-Ready Beans"
+              property="{stats.methodReadyCount.current}"
+              displayType="summary"/>
+
+      <metric displayName="Pooled Beans"
+              property="{stats.pooledCount.current}"
+              displayType="summary"/>
+
+
+       <metric property="{{jboss.j2ee:jndiName=%name%,plugin=cache,service=EJB}CacheSize}"
+               displayName="Cache Size"
+               defaultOn="true"/>
+
+
+       <metric property="{{jboss.j2ee:jndiName=%name%,plugin=cache,service=EJB}PassivatedCount}"
+               displayName="Passivated Count"
+               defaultOn="true"
+               measurementType="trendsup"/>
+
+       <metric property="{{jboss.j2ee:jndiName=%name%,plugin=pool,service=EJB}PoolSize}"
+               displayName="Current Size"
+               defaultOn="true"/>
+
+
+       <metric property="{{jboss.j2ee:jndiName=%name%,plugin=pool,service=EJB}MaxPoolSize}"
+               displayName="Max Size"
+               defaultOn="true"/>
+
+
+      </service>
+
+      <service name="Message Driven EJB"
+               subCategory="Applications"
+               class="org.rhq.plugins.jmx.MBeanResourceComponent"
+               discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+               description="An EJB 1.x or 2.x Message Driven Bean">
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true"
+                             default="jboss.management.local:name=%name%,J2EEServer=Local,J2EEApplication=%j2eeApplication%,EJBModule=%ejbJar%,j2eeType=MessageDrivenBean"/>
+            <c:simple-property name="nameTemplate" default="{name}"/>
+            <c:simple-property name="descriptionTemplate" default="An EJB 1.x or 2.x Message Driven Bean"/>
+
+            <c:simple-property name="name" description="The name of this ejb"/>
+            <c:simple-property name="j2eeApplication"/>
+            <c:simple-property name="ejbJar"/>
+         </plugin-configuration>
+
+
+      <metric displayName="Create Calls"
+              property="{stats.createCount.count}"
+              displayType="summary"
+              measurementType="trendsup"/>
+
+      <metric displayName="Remove Calls"
+              property="{stats.removeCount.count}"
+              displayType="summary"
+              measurementType="trendsup"/>
+
+      <metric displayName="Method-Ready Beans"
+              property="{stats.messageCount.count}"
+              displayType="summary"
+              measurementType="trendsup"/>
+      </service>
+
+      <service name="Enterprise Application (EAR)"
+               subCategory="Applications"
+               class="org.rhq.plugins.applications.ApplicationResourceComponent"
+               discovery="org.rhq.plugins.applications.ApplicationDiscoveryComponent"
+               description="Enterprise Application"
+               createDeletePolicy="both"
+               creationDataType="content">
+
+         <!-- jboss.management.local:J2EEServer=Local,j2eeType=J2EEApplication,name=rhq.ear -->
+
+         <plugin-configuration>
+            <c:group name="general" displayName="General">
+               <c:simple-property name="name" description="The name of this EAR" readOnly="true"/>
+               <c:simple-property name="filename" readOnly="true"/>
+               <c:simple-property name="objectName" readOnly="true"
+                                default="jboss.management.local:J2EEServer=Local,j2eeType=J2EEApplication,name=%name%"/>
+            </c:group>
+            <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
+               <c:simple-property name="nameTemplate" default="{name}" readOnly="true"/>
+               <c:simple-property name="extension" default="ear" readOnly="true"/>
+               <c:simple-property name="descriptionTemplate" default="Enterprise Application" readOnly="true"/>
+            </c:group>
+         </plugin-configuration>
+
+         <content name="file" displayName="EAR File" category="deployable" isCreationType="true">
+            <configuration>
+               <c:group name="deployment" displayName="Deployment Options">
+                  <c:simple-property name="deployZipped" displayName="Deploy Zipped" type="boolean" default="false" required="true"
+                                     description="Indicates if the EAR is deployed either zipped or exploded."/>
+                  <c:simple-property name="deployDirectory" displayName="Deploy Directory" type="string" required="true" default="deploy"
+                                     description="Path to deploy the file. This must be a path relative to the AS configuration set in use."/>
+               </c:group>
+            </configuration>
+         </content>
+
+         <service name="Embedded Web Application (WAR)"                  
+                  class="org.rhq.plugins.jbossas.WarComponent"
+                  discovery="org.rhq.plugins.jbossas.EmbeddedWarDiscoveryComponent"
+                  description="Web Application embedded inside of an Enterprise Application"
+                  createDeletePolicy="neither">
+
+            <!-- jboss.management.local:J2EEApplication=rhq.ear,J2EEServer=Local,j2eeType=WebModule,name=rhq-portal.war -->
+
+            <plugin-configuration>
+               <c:group name="General">
+                  <c:simple-property name="name" description="The name of this WAR" readOnly="true"/>
+                  <c:simple-property name="filename" readOnly="true"/>
+                  <c:simple-property name="objectName" readOnly="true"
+                                     default="-- Generated by discovery component --"/>
+                  <c:simple-property name="contextRoot" readOnly="true" required="false"
+                                     description="this WAR's context root - used as a unique path prefix for URLs corresponding to this WAR"/>
+                  <c:simple-property name="vHost" displayName="Virtual Host" readOnly="true" required="false"
+                                     description="The (virtual) host that this application is running on. If no virtual host is set, this defaults to 'localhost'"/>                   
+                  <c:simple-property name="jbossWebName" readOnly="true" required="false"
+                                     description="the objectName for the jboss.web WebModule that will be used to fire operations"/>
+               </c:group>
+               <c:group name="ResponseTime">
+                  <c:simple-property name="responseTimeLogFile" required="false"
+                                     description="the full path to the log file containing response-time stats for this webapp"/>
+                  <c:simple-property name="responseTimeUrlExcludes" required="false"
+                                     description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
+                  <c:simple-property name="responseTimeUrlTransforms" required="false"
+                                     description="a space-delimited list of Perl-style substitution expressions that should be applied to all URLs for which response-time stats are collected (e.g. |^/dept/finance/.*|/dept/finance/*|)"/>
+               </c:group>
+               <c:group name="Advanced" hiddenByDefault="true">
+                  <c:simple-property name="nameTemplate" default="{name}"/>
+                  <c:simple-property name="extension" default="war" readOnly="true"/>
+                  <c:simple-property name="descriptionTemplate" default="Embedded Web Application" readOnly="true"/>
+               </c:group>
+            </plugin-configuration>
+
+            <operation name="start"
+                       description="starts this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)"/>
+            <operation name="stop"
+                       description="stops this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)"/>
+            <operation name="reload"
+                       description="reloads this webapp; NOTE: if the webapp is not in the started state, this operation will fail"/>
+
+            <metric property="ContextRoot" displayName="Context Root"
+                    dataType="trait" displayType="summary"
+                    description="this WAR's context root - used as a unique path prefix for URLs corresponding to this WAR"/>
+
+            <metric property="ResponseTime" displayName="HTTP Response Time"
+                    dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
+                    description="the minimum, maximum, and average response times for HTTP requests serviced by this webapp"/>
+                    
+            <metric property="Servlet.MinResponseTime" displayName="Min. Servlet Resp. Time"
+                    units="milliseconds"
+                    description="Minimum response time of a servlet"/>
+
+            <metric property="Servlet.AvgResponseTime" displayName="Avg. Servlet Resp. Time"
+                    units="milliseconds"
+                    description="Average response time of a servlet"/>
+
+            <metric property="Servlet.MaxResponseTime" displayName="Max. Servlet Resp. Time"
+                    units="milliseconds"
+                    description="Maximum response time of a servlet"/>
+                    
+            <metric property="Servlet.TotalTime" displayName="Total processing time" 
+                 units="milliseconds"
+                 description="Total processing time of the webapp" measurementType="trendsup"/>                    
+                    
+            <metric property="Servlet.NumRequests" displayName="Requests served" 
+                    units="none" description="Number of requests served by servlets"
+                    measurementType="trendsup" displayType="summary"/>
+                    
+            <metric property="Servlet.NumErrors" displayName="Errors while processing"
+                    units="none" description="Number of errors while processing"
+                    measurementType="trendsup" displayType="summary"/>
+                    
+            <metric property="Session.activeSessions" displayName="Currently Active Sessions"
+                    units="none" description="Number active sessions for the webapp right now" />
+
+            <metric property="Session.maxActive" displayName="Maximum number of Active Sessions"
+                    units="none" description="Maximum number of active sessions for the webapp" />
+
+            <metric property="Session.sessionCounter" displayName="Sessions created"
+                    units="none" description="Number of sessions created for the webapp"
+                    measurementType="trendsup" />
+
+            <metric property="Session.expiredSessions" displayName="Expired Sessions"
+                    units="none" description="Number of expired sessions for the webapp"
+                    measurementType="trendsup" />
+                    
+            <metric property="Session.rejectedSessions" displayName="Rejected Sessions"
+                    units="none" description="Number of sessions rejected for the webapp"
+                    measurementType="trendsup" />
+
+            <metric property="Session.sessionAverageAliveTime" displayName="Session Average alive time"
+                    units="seconds" description="Average alive time of a Sessions" />
+
+            <metric property="Session.sessionMaxAliveTime" displayName="Max Session alive time"
+                    units="seconds" description="Maximum alive time of a Sessions" />
+                    
+            <metric property="Vhost.name" displayName="Vhost" dataType="trait" defaultOn="true"
+                    description="Virtual hosts this app runs on"/>
+
+         </service>
+
+      </service>
+
+      <service name="Web Application (WAR)"
+               subCategory="Applications"
+               class="org.rhq.plugins.jbossas.WarComponent"
+               discovery="org.rhq.plugins.jbossas.WarDiscoveryComponent"
+               description="Web Application"
+               createDeletePolicy="both"
+               creationDataType="content">
+
+         <!-- jboss.management.local:J2EEApplication=null,J2EEServer=Local,j2eeType=WebModule,name=<NAME> -->
+
+         <plugin-configuration>
+            <c:group name="General">
+               <c:simple-property name="name" description="The name of this WAR" readOnly="true"/>
+               <c:simple-property name="filename" readOnly="true"/>
+               <c:simple-property name="objectName" readOnly="true"
+                                  default="jboss.management.local:J2EEApplication=null,J2EEServer=Local,j2eeType=WebModule,name=%name%"/>
+               <c:simple-property name="contextRoot" readOnly="true" required="false"
+                                  description="this WAR's context root - used as a unique path prefix for URLs corresponding to this WAR"/>
+               <c:simple-property name="vHost" displayName="Virtual Host" readOnly="true" required="false"
+                                  description="The (virtual) host that this application is running on. If no virtual host is set, this defaults to 'localhost'"/>                   
+               <c:simple-property name="jbossWebName" readOnly="true" required="false"
+                                  description="the objectName for the jboss.web WebModule that will be used to fire operations"/>
+            </c:group>
+            <c:group name="ResponseTime">
+               <c:simple-property name="responseTimeLogFile" required="false"
+                                  description="the full path to the log file containing response-time stats for this webapp"/>
+               <c:simple-property name="responseTimeUrlExcludes" required="false"
+                                  description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
+               <c:simple-property name="responseTimeUrlTransforms" required="false"
+                                  description="a space-delimited list of Perl-style substitution expressions that should be applied to all URLs for which response-time stats are collected (e.g. |^/dept/finance/.*|/dept/finance/*|)"/>
+            </c:group>
+            <c:group name="Advanced" hiddenByDefault="true">
+               <c:simple-property name="nameTemplate" default="{name}"/>
+               <c:simple-property name="extension" default="war" readOnly="true"/>
+               <c:simple-property name="descriptionTemplate" default="Web Application" readOnly="true"/>
+            </c:group>
+         </plugin-configuration>
+
+         <operation name="start"
+                    description="starts this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)"/>
+         <operation name="stop"
+                    description="stops this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)"/>
+         <operation name="reload"
+                    description="reloads this webapp; NOTE: if the webapp is not in the started state, this operation will fail"/>                                   
+
+         <metric property="ContextRoot" displayName="Context Root"
+                 dataType="trait" displayType="summary"
+                 description="this WAR's context root - used as a unique path prefix for URLs corresponding to this WAR"/>
+         
+         <metric property="ResponseTime" displayName="HTTP Response Time"
+                 dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
+                 description="the minimum, maximum, and average response times for HTTP requests serviced by this webapp"/>
+
+            <metric property="Servlet.MinResponseTime" displayName="Min. Servlet Resp. Time"
+                    units="milliseconds"
+                    description="Minimum response time of a servlet"/>
+
+            <metric property="Servlet.AvgResponseTime" displayName="Avg. Servlet Resp. Time"
+                    units="milliseconds"
+                    description="Average response time of a servlet"/>
+
+            <metric property="Servlet.MaxResponseTime" displayName="Max. Servlet Resp. Time"
+                    units="milliseconds"
+                    description="Maximum response time of a servlet"/>
+                    
+            <metric property="Servlet.TotalTime" displayName="Total processing time" 
+                 units="milliseconds"
+                 description="Total processing time of the webapp" measurementType="trendsup"/>                    
+                    
+            <metric property="Servlet.NumRequests" displayName="Requests served" 
+                    units="none" description="Number of requests served by servlets"
+                    measurementType="trendsup" displayType="summary"/>
+                    
+            <metric property="Servlet.NumErrors" displayName="Errors while processing"
+                    units="none" description="Number of errors while processing"
+                    measurementType="trendsup" displayType="summary"/>
+                    
+            <metric property="Session.activeSessions" displayName="Currently Active Sessions"
+                    units="none" description="Number active sessions for the webapp right now" />
+
+            <metric property="Session.maxActive" displayName="Maximum number of Active Sessions"
+                    units="none" description="Maximum number of active sessions for the webapp" />
+
+            <metric property="Session.sessionCounter" displayName="Sessions created"
+                    units="none" description="Number of sessions created for the webapp"
+                    measurementType="trendsup" />
+
+            <metric property="Session.expiredSessions" displayName="Expired Sessions"
+                    units="none" description="Number of expired sessions for the webapp"
+                    measurementType="trendsup" />
+                    
+            <metric property="Session.rejectedSessions" displayName="Rejected Sessions"
+                    units="none" description="Number of sessions rejected for the webapp"
+                    measurementType="trendsup" />
+
+            <metric property="Session.sessionAverageAliveTime" displayName="Session Average alive time"
+                    units="seconds" description="Average alive time of a Sessions" />
+
+            <metric property="Session.sessionMaxAliveTime" displayName="Max Session alive time"
+                    units="seconds" description="Maximum alive time of a Sessions" />
+                    
+            <metric property="Vhost.name" displayName="Vhost" dataType="trait" defaultOn="true"
+                    description="Virtual hosts this app runs on"/>
+                 
+         <content name="file" displayName="WAR File" category="deployable" isCreationType="true">
+            <configuration>
+               <c:group name="deployment" displayName="Deployment Options">
+                  <c:simple-property name="deployZipped" displayName="Deploy Zipped" type="boolean" default="false" required="true"
+                                     description="Indicates if the WAR is deployed either zipped or exploded."/>
+                  <c:simple-property name="deployDirectory" displayName="Deploy Directory" type="string" default="deploy" required="true"
+                                     description="Path to deploy the file. This must be a path relative to the AS configuration set in use."/>
+               </c:group>
+            </configuration>
+         </content>
+
+      </service>
+
+      <service name="EJB3 Entity Tree Cache"
+               subCategory="Services"
+               class="org.rhq.plugins.jmx.MBeanResourceComponent"
+               discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+               description="The entity cache">
+
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true"
+                               default="jboss.cache:service=EJB3EntityTreeCache"/>
+            <c:simple-property name="nameTemplate" default="EJB3 Entity Tree Cache"/>
+         </plugin-configuration>
+
+
+         <metric property="NumberOfLocksHeld" displayType="summary"/>
+         <metric property="NumberOfNodes" displayType="summary"/>
+
+
+         <service name="EJB3 Entity Tree Cache Interceptor"
+                  class="org.rhq.plugins.jmx.MBeanResourceComponent"
+                  discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+                  description="The entity cache interceptor">
+
+            <plugin-configuration>
+               <c:simple-property name="objectName" readOnly="true"
+                                  default="jboss.cache:service=EJB3EntityTreeCache,treecache-interceptor=CacheMgmtInterceptor"/>
+               <c:simple-property name="nameTemplate" default="EJB3 Entity Tree Cache Interceptor"/>
+            </plugin-configuration>
+
+
+            <metric property="HitMissRatio" displayType="summary" units="percentage"
+                    description="Returns the hit/miss ratio for the cache. This ratio is defined as hits/(hits + misses)."/>
+            <metric property="ReadWriteRatio" displayType="summary" units="percentage"
+                    description="Returns the read/write ratio for the cache. This ratio is defined as (hits + misses)/stores."/>
+            <metric property="Hits" displayType="summary"/>
+            <metric property="Misses" displayType="summary"/>
+            <metric property="Evictions" displayType="summary"/>
+
+            <metric property="NumberOfLocksHeld"/>
+            <metric property="NumberOfNodes"/>
+            <metric property="AverageWriteTime" units="milliseconds"/>
+
+            <metric property="TimeSinceReset" units="seconds"/>
+
+            <metric property="AverageReadTime" units="milliseconds"/>
+            <metric property="NumberOfNodes"/>
+            <metric property="Stores"/>
+            <metric property="NumberOfAttributes"/>
+
+            <metric property="ElapsedTime" units="milliseconds"/>
+
+         </service>
+      </service>
+
+      <service name="Script"
+               discovery="org.rhq.plugins.jbossas.script.ScriptDiscoveryComponent"
+               class="org.rhq.plugins.jbossas.script.ScriptComponent"
+               supportsManualAdd="true"
+               description="provides the ability to execute a script that performs some task related to its parent JBossAS server">
+
+         <plugin-configuration>
+            <c:simple-property name="path" description="the absolute path to the script file"/>
+            <c:simple-property name="environmentVariables" type="longString" required="false"
+                               description="the environment variables that will be passed to the script; each variable must
+                                            be on a new line and have the syntax name=value; the variable's value can contain properties
+                                            with the syntax %propertyName%; the script plugin will interpolate these with
+                                            the current values of the corresponding properties from the
+                                            script's parent JBossAS server's connection properties"/>
+         </plugin-configuration>
+
+         <operation name="execute" displayName="Execute Script"
+                    description="execute the script; NOTE: environment variables to be
+                                 passed to the script can be configured via this Script
+                                 service's connection properties (under its Inventory tab)">
+            <parameters>
+               <c:simple-property name="commandLineArguments" type="longString" required="false"
+                                  description="the command-line arguments (if any) to pass to the script; each
+                                               command-line argument must be on a new line;
+                                               the arguments can contain properties
+                                               with the syntax %propertyName%; the script plugin will interpolate these with
+                                               the current values of the corresponding properties from the
+                                               script's parent JBossAS server's connection properties"/>
+            </parameters>
+            <results>
+               <c:simple-property name="exitCode" type="integer" description="the script's exit code (0 indicates success, any other value indicates failure)"/>
+               <c:simple-property name="output" type="longString" description="the script's output (stdout and stderr interleaved)"/>
+            </results>
+         </operation>
+
+      </service>
+
+   </server>
+
+</plugin>

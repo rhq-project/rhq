@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<process-definition>
+   <start-state>
+      <transition to="main_process/1"/>
+   </start-state>
+   <super-state name="main_process">
+      <node name="1">
+         <action class="com.jboss.jbossnetwork.product.jbpm.handlers.JONServerDownloadActionHandler"
+                 config-type="bean">
+         </action>
+         <transition name="success" to="2"/>
+      </node>
+
+      <node name="2">
+         <!-- JPBM will go through this doc and for each element within the actionNode it will call
+         set[ElementName] passing in the value of that element-->
+         <action class="com.jboss.jbossnetwork.product.jbpm.handlers.CompareDigestActionHandler"
+                 config-type="bean">
+            <algorithm>MD5</algorithm>
+            <fileToBeCheckedLocation>#{downloadFolder}/#{software.filename}</fileToBeCheckedLocation>
+            <expectedDigest>#{software.MD5}</expectedDigest>
+         </action>
+         <transition name="success" to="3"/>
+      </node>
+
+      <node name="3">
+         <action class="com.jboss.jbossnetwork.product.jbpm.handlers.UnzipActionHandler"
+                 config-type="bean">
+            <fileToBeUnzippedLocation>#{downloadFolder}/#{software.filename}</fileToBeUnzippedLocation>
+            <destinationDirectoryLocation>#{patchFolder}</destinationDirectoryLocation>
+         </action>
+         <transition name="success" to="4"/>
+      </node>
+
+      <node name="4">
+         <action class='com.jboss.jbossnetwork.product.jbpm.handlers.ControlActionHandler' config-type='bean'>
+            <actionName>stopIfRunning</actionName>
+         </action>
+         <transition name="success" to="5"/>
+      </node>
+
+      <!-- the XML above should *not* change per patch -->
+
+      <node name="5">
+         <action class="com.jboss.jbossnetwork.product.jbpm.handlers.BackupAndReplaceFileActionHandler"
+                 config-type="bean">
+            <originalFileLocation>#{jbossServerHomeDir}/lib/jboss.jar</originalFileLocation>
+            <replacementFileLocation>#{patchFolder}/jboss/server/all/lib/jboss.jar</replacementFileLocation>
+         </action>
+         <transition name="originalFileNotFound" to="6"/>
+         <transition name="success" to="6"/>
+      </node>
+
+      <node name="6">
+         <action class="com.jboss.jbossnetwork.product.jbpm.handlers.BackupAndReplaceFileActionHandler"
+                 config-type="bean">
+            <originalFileLocation>#{jbossClientDir}/jbosscx-client.jar</originalFileLocation>
+            <replacementFileLocation>#{patchFolder}/jboss/client/jbosscx-client.jar</replacementFileLocation>
+         </action>
+         <transition name="originalFileNotFound" to="7"/>
+         <transition name="success" to="7"/>
+      </node>
+
+      <node name="7">
+         <action class="com.jboss.jbossnetwork.product.jbpm.handlers.BackupAndReplaceFileActionHandler"
+                 config-type="bean">
+            <originalFileLocation>#{jbossHomeDir}/lib/jboss-common.jar</originalFileLocation>
+            <replacementFileLocation>#{patchFolder}/jboss/lib/jboss-common.jar</replacementFileLocation>
+         </action>
+         <transition name="originalFileNotFound" to="8"/>
+         <transition name="success" to="8"/>
+      </node>
+
+      <!-- the XML below should *not* change per patch -->
+
+      <node name="8">
+         <action class='com.jboss.jbossnetwork.product.jbpm.handlers.ControlActionHandler' config-type='bean'>
+            <actionName>start</actionName>
+         </action>
+         <transition name="success" to="../end"/>
+      </node>
+
+      <transition name="error" to="end">
+         <action class="com.jboss.jbossnetwork.product.jbpm.handlers.SetProcessStatusActionHandler" config-type="bean">
+            <status>false</status>
+         </action>
+      </transition>
+
+   </super-state>
+   <end-state name="end"/>
+</process-definition>

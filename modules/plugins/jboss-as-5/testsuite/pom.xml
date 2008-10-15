@@ -1,0 +1,230 @@
+<?xml version="1.0"?>
+
+<!-- $Id: pom.xml 10133 2008-07-10 07:35:12Z jmarques $ -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.jboss.on</groupId>
+        <artifactId>jboss-on-parent</artifactId>
+        <version>2.1.0-SNAPSHOT</version>
+    </parent>
+
+    <groupId>org.jboss.on</groupId>
+    <artifactId>rhq-jboss-as-5-plugin-testsuite</artifactId>
+    <packaging>war</packaging>
+
+    <name>JON JBossAS 5.x Plugin Test Suite</name>
+    <description>Test suite for JBoss Application Server 5.x plugin</description>
+
+    <scm>
+        <connection>scm:svn:http://svn.corp.jboss.com/repos/jon/${scm.branch}/${scm.module.path}</connection>
+        <developerConnection>
+            scm:svn:http://${maven.username}@svn.corp.jboss.com/repos/jon/${scm.branch}/${scm.module.path}
+        </developerConnection>
+    </scm>
+
+    <properties>
+        <scm.module.path>jon/plugins/jboss-as-5/testsuite</scm.module.path>
+        <final.name>jboss-as5-testsuite</final.name>
+        <war.dir>${basedir}/target/${final.name}</war.dir>
+        <jon.version>2.0.1-SNAPSHOT</jon.version>
+        <jon.groupId>org.jboss.on</jon.groupId>
+        <jboss5.version>5.0.0-SNAPSHOT</jboss5.version>
+        <jboss-managed.version>2.0.0-SNAPSHOT</jboss-managed.version>
+    </properties>
+
+    <dependencies>
+
+        <!-- Internal Dependencies -->
+
+        <dependency>
+            <groupId>${rhq.groupId}</groupId>
+            <artifactId>rhq-core-domain</artifactId>
+            <version>${rhq.version}</version>
+            <type>ejb</type>
+        </dependency>
+
+        <dependency>
+            <groupId>${rhq.groupId}</groupId>
+            <artifactId>rhq-core-plugin-container</artifactId>
+            <version>${rhq.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sun.xml.bind</groupId>
+                    <artifactId>jaxb-impl</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>${rhq.groupId}</groupId>
+            <artifactId>rhq-core-plugin-api</artifactId>
+            <version>${rhq.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sun.xml.bind</groupId>
+                    <artifactId>jaxb-impl</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>${rhq.groupId}</groupId>
+            <artifactId>rhq-core-native-system</artifactId>
+            <version>${rhq.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.4</version>
+            <scope>provided</scope>
+            <!-- by JBossAS -->
+        </dependency>
+
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.man</groupId>
+            <artifactId>jboss-managed</artifactId>
+            <version>${jboss-managed.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-profileservice</artifactId>
+            <version>${jboss5.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Third Party Dependencies -->
+        <dependency>
+            <groupId>cactus</groupId>
+            <artifactId>cactus</artifactId>
+            <version>13-1.7.1</version>
+
+
+            <exclusions>
+                <!-- Xerces causes AS5 Beta1 to blow up when it's included in the JAR. That is, every context fails
+to load. Cactus will still run without this JAR.     jdobies, Feb 16, 2007. -->
+                <exclusion>
+                    <groupId>xerces</groupId>
+                    <artifactId>xercesImpl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>servlet-api</artifactId>
+                </exclusion>
+                <!-- JBAS5 Beta 3 blows up if the jaxb jars are included in the .war -->
+                <exclusion>
+                    <groupId>com.sun.xml.bind</groupId>
+                    <artifactId>jaxb-impl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.xml.bind</groupId>
+                    <artifactId>jaxb-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- TODO: This is a fix for the Javac bug requiring annotations to be
+available when compiling dependent classes. It is fixed in JDK 6. -->
+        <dependency>
+            <groupId>javax.persistence</groupId>
+            <artifactId>persistence-api</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
+            <!-- by ON container -->
+        </dependency>
+
+        <!-- TODO: This is a fix for the Javac bug requiring annotations to be
+available when compiling dependent classes; it is fixed in JDK 6. -->
+        <dependency>
+            <groupId>jboss.jboss-embeddable-ejb3</groupId>
+            <artifactId>hibernate-all</artifactId>
+            <version>1.0.0.Alpha9</version>
+            <scope>provided</scope>
+            <!-- by ON container -->
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <finalName>${final.name}</finalName>
+
+        <plugins>            
+
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-dist-plugins</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${war.dir}/plugins</outputDirectory>
+                            <artifactItems>
+
+                                <artifactItem>
+                                    <groupId>${rhq.groupId}</groupId>
+                                    <artifactId>rhq-platform-plugin</artifactId>
+                                    <version>${rhq.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>${rhq.groupId}</groupId>
+                                    <artifactId>rhq-jmx-plugin</artifactId>
+                                    <version>${rhq.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>rhq-jboss-as-5-plugin</artifactId>
+                                    <version>${project.version}</version>
+                                </artifactItem>
+
+                                <!--<artifactItem>
+                                   <groupId>${rhq.groupId}</groupId>
+                                   <artifactId>rhq-tomcat-plugin</artifactId>
+                                   <version>${rhq.version}</version>
+                                </artifactItem>-->
+
+                            </artifactItems>
+
+                        </configuration>
+                    </execution>
+
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-war-plugin</artifactId>
+                <configuration>
+                    <webResources>
+                        <resource>
+                            <filtering>true</filtering>
+                            <directory>${basedir}/src/main/webapp</directory>
+                        </resource>
+                    </webResources>
+                </configuration>
+            </plugin>
+
+
+        </plugins>
+    </build>
+
+</project>

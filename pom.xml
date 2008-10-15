@@ -159,13 +159,6 @@
         <version>${ems.version}</version>
       </dependency>
 
-      <!-- Oracle JDBC driver -->
-      <dependency>
-        <groupId>ojdbc14</groupId>
-        <artifactId>ojdbc14</artifactId>
-        <version>${ojdbc14.version}</version>
-      </dependency>
-
       <dependency>
         <groupId>org.hyperic</groupId>
         <artifactId>sigar</artifactId>
@@ -489,6 +482,23 @@
 
   <profiles>
 
+    <profile>      
+        <id>ojdbc-driver</id>
+         
+        <dependencies>
+            <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle.
+                 Add a top level dependency if oracle profile is active to allow for db-required tests in any module.
+                 The driver can not be packaged for OpenSource distributions due to licensing issues and as such this
+                 profile should not be active -->
+            <dependency>
+                <groupId>ojdbc14</groupId>
+                <artifactId>ojdbc14</artifactId>
+                <version>${ojdbc14.version}</version>                  
+                <scope>provided</scope>
+            </dependency>        
+        </dependencies>
+    </profile>     
+
     <profile>
      <id>dev</id>
 
@@ -534,14 +544,6 @@
       <profile>
          <id>prod</id>
          
-         <dependencies>
-            <dependency>
-               <groupId>ojdbc14</groupId>
-               <artifactId>ojdbc14</artifactId>
-               <scope>provided</scope>
-            </dependency>
-         </dependencies>
-
          <build>
             <plugins>
               <plugin>
@@ -562,18 +564,6 @@
               </plugin>
             </plugins>
          </build>
-      </profile>
-
-      <profile>
-         <id>oracle</id>
-         
-         <dependencies>
-            <dependency>
-               <groupId>ojdbc14</groupId>
-               <artifactId>ojdbc14</artifactId>
-               <scope>provided</scope>
-            </dependency>
-         </dependencies>
       </profile>
 
       <profile>
@@ -638,7 +628,16 @@
           </build>    
           
       </profile>
-      
+
+      <profile>
+          <id>community</id>
+
+          <properties>
+              <!-- The below prop can be used to check if the community profile is enabled. -->
+              <community.profile.active>true</community.profile.active>
+          </properties>
+      </profile>
+
   </profiles>
 
 </project>

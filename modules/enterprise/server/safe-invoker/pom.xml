@@ -11,7 +11,6 @@
    <groupId>org.rhq</groupId>
    <artifactId>safe-invoker</artifactId>
    <packaging>jar</packaging>
-   <version>1.0.2</version>
 
    <name>RHQ Enterprise Safe WebService Invoker</name>
    <description>A webservice invoker that safely calls returns ejb3 pojo's with lazy attributes</description>

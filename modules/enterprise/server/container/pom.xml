@@ -73,16 +73,6 @@
       <version>2.2.9.1</version>
     </dependency>
 
-    <!-- Uncomment the below block to pull down the Oracle JDBC jar from an internal repo.
-         The jar is optional, but if it is available in the local repo, the build will
-         include it in the container distribution. -->
-    <!--
-    <dependency>
-      <groupId>ojdbc14</groupId>
-      <artifactId>ojdbc14</artifactId>
-    </dependency>
-    -->
-
     <dependency>
       <groupId>postgresql</groupId>
       <artifactId>postgresql</artifactId>

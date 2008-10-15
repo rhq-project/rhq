@@ -27,9 +27,6 @@
 
   <dependencies>
 
-    <!-- Internal Deps -->
-
-
     <!-- 3rd Party Deps -->
 
     <dependency>
@@ -44,15 +41,6 @@
       <version>1.6.5</version>
       <scope>test</scope>
     </dependency>
-
-    <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle. -->
-    <!--
-    <dependency>
-      <groupId>ojdbc14</groupId>
-      <artifactId>ojdbc14</artifactId>
-      <scope>test</scope>
-    </dependency>
-    -->
 
     <dependency>
       <groupId>postgresql</groupId>
@@ -257,7 +245,7 @@
            </plugins>
          </build>
       </profile>
-
+      
    </profiles>
 
 </project>

@@ -92,15 +92,6 @@
 
       <!--================ Test Deps ================-->
 
-      <!-- Oracle JDBC driver - required only if you want to run the tests against Oracle. -->
-      <!--
-      <dependency>
-         <groupId>ojdbc14</groupId>
-         <artifactId>ojdbc14</artifactId>
-         <scope>test</scope>
-      </dependency>
-      -->
-
       <dependency>
          <groupId>postgresql</groupId>
          <artifactId>postgresql</artifactId>
@@ -300,7 +291,7 @@
            </plugins>
          </build>
       </profile>
-
+      
    </profiles>
 
 </project>

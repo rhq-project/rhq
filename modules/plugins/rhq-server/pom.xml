@@ -4,25 +4,25 @@
 
    <parent>
       <groupId>org.jboss.on</groupId>
-      <!--  Bypass the jon-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
-      <artifactId>jon-parent</artifactId>
+      <!--  Bypass the jopr-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
+      <artifactId>jopr-modules-parent</artifactId>
       <version>2.2.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.jboss.on</groupId>
-   <artifactId>rhq-server-plugin</artifactId>
+   <artifactId>jopr-rhq-server-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>JON RHQ-Server Plugin</name>
+   <name>Jopr RHQ-Server Plugin</name>
    <description>A plugin for managing RHQ Servers</description>
 
    <scm>
-    <connection>scm:svn:https://svn.corp.jboss.com/repos/jon/trunk/jon/plugins</connection>
-    <developerConnection>scm:svn:https://svn.corp.jboss.com/repos/jon/trunk/jon/plugins</developerConnection>
+    <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/rhq-server</connection>
+    <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/rhq-server</developerConnection>
    </scm>
 
    <properties>
-      <scm.module.path>jon/plugins/rhq-server/</scm.module.path>
+      <scm.module.path>modules/plugins/rhq-server/</scm.module.path>
    </properties>
 
    <profiles>

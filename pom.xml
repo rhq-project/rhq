@@ -11,14 +11,14 @@
   </parent>
   
   <groupId>org.jboss.on</groupId>
-  <artifactId>jboss-on-parent</artifactId>
+  <artifactId>jopr-parent</artifactId>
   <version>2.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>JON</name>
-  <description>parent POM for all JBoss ON (non-RHQ) modules</description>
-  <url>http://www.jboss.com/products/jbosson</url>
-  <inceptionYear>2005</inceptionYear>
+  <name>Jopr</name>
+  <description>parent POM for all Jopr (non-RHQ) modules</description>
+  <url>http://www.jboss.org/jopr/</url>
+  <inceptionYear>2008</inceptionYear>
 
   <organization>
     <name>Red Hat, Inc., JBoss Division</name>
@@ -26,13 +26,13 @@
   </organization>
 
   <scm>
-    <connection>scm:svn:http://svn.corp.jboss.com/repos/jon/trunk</connection>
-    <developerConnection>scm:svn:http://svn.corp.jboss.com/repos/jon/trunk</developerConnection>
+    <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk</connection>
+    <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk</developerConnection>
   </scm>
 
   <issueManagement>
     <system>jira</system>
-    <url>http://jira.jboss.com/jira/browse/JBNADM</url>
+    <url>https://jira.jboss.org/jira/browse/JOPR</url>
   </issueManagement>
 
   <properties>    
@@ -50,19 +50,7 @@
   </properties>
 
   <modules>
-    <module>jon</module>         
+    <module>modules</module>    
   </modules>    
   
-  <profiles>
-       
-    <!-- embedded-only stuff -->       
-    <profile>
-    	<id>embedded</id>
-    	<modules>    
-    		<module>embedded</module>
-    	</modules>
-    </profile>
-    
-  </profiles>
-
 </project>

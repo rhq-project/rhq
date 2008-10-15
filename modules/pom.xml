@@ -4,24 +4,24 @@
   
   <parent>
     <groupId>org.jboss.on</groupId>
-    <artifactId>jboss-on-parent</artifactId>
+    <artifactId>jopr-parent</artifactId>
     <version>2.2.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.jboss.on</groupId>
-  <artifactId>jon-parent</artifactId>
+  <artifactId>jopr-modules-parent</artifactId>
   <packaging>pom</packaging>
 
-  <name>JON Parent</name>
-  <description>parent POM for all JON-specific build modules</description>
+  <name>Jopr Modules</name>
+  <description>parent POM for all Jopr modules</description>
 
   <scm>
-    <connection>scm:svn:https://svn.corp.jboss.com/repos/jon/trunk/jon/</connection>
-    <developerConnection>scm:svn:https://svn.corp.jboss.com/repos/jon/trunk/jon/</developerConnection>
+    <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/</connection>
+    <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/</developerConnection>
   </scm>
 
   <properties>
-    <scm.module.path>jon/</scm.module.path>
+    <scm.module.path>modules/</scm.module.path>
     
     <!-- dependency versions -->
     <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>
@@ -29,7 +29,7 @@
   </properties>
 
   <!-- These dependencies are (mostly) common to the plugin artifacts built under the
-       JON umbrella.  They are not specific to the build a one particular artifact but
+       Jopr umbrella.  They are not specific to the build a one particular artifact but
        placed here to simplify the child poms. -->
   <dependencies>
 
@@ -75,7 +75,7 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- The RHQ plugins that the JON plugins depend on -->
+    <!-- The RHQ plugins that the Jopr plugins depend on -->
     <dependency>
       <groupId>${rhq.groupId}</groupId>
       <artifactId>rhq-jmx-plugin</artifactId>
@@ -125,13 +125,12 @@
   		</modules>
   	</profile>
         
-    <!-- same as enterprise profile, except includes container/dist and embedded-only plugins 
-         (activate this for the JON TeamCity build and when tagging JON) -->
+    <!-- same as enterprise profile, except includes dist -->
     <profile>
   		<id>enterprise-dist</id>
   		<modules>
-            <module>serverplugins</module>
-  			<module>dist</module>            
+         <module>serverplugins</module>
+  			<!--  add back when we have Jopr specific dist content <module>dist</module>  -->            
   		</modules>
   	</profile>
         

@@ -4,24 +4,24 @@
   
   <parent>
     <groupId>org.jboss.on</groupId>
-    <artifactId>jboss-on-parent</artifactId>
+    <artifactId>jopr-modules-parent</artifactId>
     <version>2.2.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.jboss.on</groupId>
-  <artifactId>jon-serverplugins-parent</artifactId>
+  <artifactId>jopr-serverplugins-parent</artifactId>
   <packaging>pom</packaging>
 
-  <name>JON Server-side Content Source Plugins</name>
-  <description>parent POM for all JON server-side content source plugins</description>
+  <name>Jopr Server-side Plugins</name>
+  <description>parent POM for all Jopr server-side content source plugins</description>
 
   <scm>
-    <connection>scm:svn:https://svn.corp.jboss.com/repos/jon/trunk/jon/serverplugins</connection>
-    <developerConnection>scm:svn:https://svn.corp.jboss.com/repos/jon/trunk/jon/serverplugins</developerConnection>
+    <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/serverplugins</connection>
+    <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/serverplugins</developerConnection>
   </scm>
 
   <properties>
-    <scm.module.path>jon/serverplugins/</scm.module.path>
+    <scm.module.path>modules/serverplugins/</scm.module.path>
   </properties>
 
   <modules>

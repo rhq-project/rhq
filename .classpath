@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="modules/serverplugins/jboss-software/src/main/java"/>
+	<classpathentry kind="src" path="modules/serverplugins/jboss-software/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/tomcat/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/hibernate/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/hibernate/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/tomcat/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/jboss-as/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/jboss-as/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/rhq-server/src/test/java"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5">
+		<accessrules>
+			<accessrule kind="accessible" pattern="sun/misc/**"/>
+			<accessrule kind="accessible" pattern="sun/security/**"/>
+			<accessrule kind="accessible" pattern="com/sun/java_cup/internal/**"/>
+			<accessrule kind="accessible" pattern="com/sun/org/apache/bcel/internal/generic/**"/>
+		</accessrules>
+	</classpathentry>
+	<classpathentry exported="true" kind="var" path="M2_REPO/commons-httpclient/commons-httpclient/3.0.1/commons-httpclient-3.0.1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/mc4j/org-mc4j-ems/1.2.5/org-mc4j-ems-1.2.5.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/rhq"/>
+	<classpathentry kind="output" path="eclipse-classes"/>
+</classpath>

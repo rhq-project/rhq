@@ -4,25 +4,25 @@
 
    <parent>
       <groupId>org.jboss.on</groupId>
-      <!--  Bypass the jon-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
-      <artifactId>jon-parent</artifactId>
+      <!--  Bypass the jopr-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
+      <artifactId>jopr-modules-parent</artifactId>
       <version>2.2.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.jboss.on</groupId>
-   <artifactId>rhq-hibernate-plugin</artifactId>
+   <artifactId>jopr-hibernate-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>JON Hibernate Plugin</name>
+   <name>Jopr Hibernate Plugin</name>
    <description>A plugin for managing Hibernate services</description>
 
    <scm>
-      <connection>scm:svn:http://svn.corp.jboss.com/repos/jon/trunk/jon/plugins/hibernate/</connection>
-      <developerConnection>scm:svn:http://svn.corp.jboss.com/repos/jon/trunk/jon/plugins/hibernate/</developerConnection>
+      <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/hibernate/</connection>
+      <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/plugins/hibernate/</developerConnection>
    </scm>
 
    <properties>
-      <scm.module.path>jon/plugins/hibernate/</scm.module.path>
+      <scm.module.path>modules/plugins/hibernate/</scm.module.path>
    </properties>
 
    <build>
@@ -84,8 +84,8 @@
                                  <fileset dir="${settings.localRepository}/">
                                     <include name="org/rhq/rhq-platform-plugin/${rhq.version}/rhq-platform-plugin-${rhq.version}.jar" />
                                     <include name="org/rhq/rhq-jmx-plugin/${rhq.version}/rhq-jmx-plugin-${rhq.version}.jar" />
-                                    <include name="org/jboss/on/rhq-tomcat-plugin/${project.version}/rhq-tomcat-plugin-${project.version}.jar" />
-                                    <include name="org/jboss/on/rhq-jbossas-plugin/${project.version}/rhq-jbossas-plugin-${project.version}.jar" />
+                                    <include name="org/jboss/on/jopr-tomcat-plugin/${project.version}/jopr-tomcat-plugin-${project.version}.jar" />
+                                    <include name="org/jboss/on/jopr-jboss-as-plugin/${project.version}/jopr-jboss-as-plugin-${project.version}.jar" />
                                  </fileset>
                                  <fileset dir="${project.build.directory}">
                                     <include name="${project.artifactId}-${project.version}.jar" />

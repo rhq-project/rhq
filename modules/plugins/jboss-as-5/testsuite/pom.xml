@@ -10,21 +10,21 @@
 
     <parent>
         <groupId>org.jboss.on</groupId>
-        <artifactId>jboss-on-parent</artifactId>
-        <version>2.1.0-SNAPSHOT</version>
+        <artifactId>jopr-parent</artifactId>
+        <version>2.2.0-SNAPSHOT</version>
     </parent>
 
     <groupId>org.jboss.on</groupId>
-    <artifactId>rhq-jboss-as-5-plugin-testsuite</artifactId>
+    <artifactId>jopr-jboss-as-5-plugin-testsuite</artifactId>
     <packaging>war</packaging>
 
-    <name>JON JBossAS 5.x Plugin Test Suite</name>
+    <name>Jopr JBossAS 5.x Plugin Test Suite</name>
     <description>Test suite for JBoss Application Server 5.x plugin</description>
 
     <scm>
-        <connection>scm:svn:http://svn.corp.jboss.com/repos/jon/${scm.branch}/${scm.module.path}</connection>
+        <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-as-5/testsuite</connection>
         <developerConnection>
-            scm:svn:http://${maven.username}@svn.corp.jboss.com/repos/jon/${scm.branch}/${scm.module.path}
+            scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-as-5/testsuite
         </developerConnection>
     </scm>
 
@@ -193,13 +193,13 @@ available when compiling dependent classes; it is fixed in JDK 6. -->
 
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
-                                    <artifactId>rhq-jboss-as-5-plugin</artifactId>
+                                    <artifactId>jopr-jboss-as-5-plugin</artifactId>
                                     <version>${project.version}</version>
                                 </artifactItem>
 
                                 <!--<artifactItem>
                                    <groupId>${rhq.groupId}</groupId>
-                                   <artifactId>rhq-tomcat-plugin</artifactId>
+                                   <artifactId>jopr-tomcat-plugin</artifactId>
                                    <version>${rhq.version}</version>
                                 </artifactItem>-->
 

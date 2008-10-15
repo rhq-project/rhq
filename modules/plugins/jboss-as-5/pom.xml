@@ -10,27 +10,27 @@
 
     <parent>
       <groupId>org.jboss.on</groupId>
-      <!--  Bypass the jon-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
-      <artifactId>jon-parent</artifactId>
-      <version>2.1.0-SNAPSHOT</version>
+      <!--  Bypass the jopr-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
+      <artifactId>jopr-modules-parent</artifactId>
+      <version>2.2.0-SNAPSHOT</version>
     </parent>
 
     <groupId>org.jboss.on</groupId>
-    <artifactId>rhq-jboss-as-5-plugin</artifactId>
+    <artifactId>jopr-jboss-as-5-plugin</artifactId>
     <packaging>jar</packaging>
 
-    <name>JON JBossAS 5.x Plugin</name>
+    <name>Jopr JBossAS 5.x Plugin</name>
     <description>A plugin for managing JBoss Application Server 5.x</description>
 
     <scm>
-        <connection>scm:svn:http://svn.corp.jboss.com/repos/jon/${scm.branch}/${scm.module.path}</connection>
+        <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-as-5</connection>
         <developerConnection>
-            scm:svn:http://svn.corp.jboss.com/repos/jon/${scm.branch}/${scm.module.path}
+            scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-as-5
         </developerConnection>
     </scm>
 
     <properties>
-        <scm.module.path>jon/plugins/jboss-as-5/</scm.module.path>
+        <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
 
         <jboss5.version>5.0.0-SNAPSHOT</jboss5.version>
         <jboss-managed.version>2.0.0-SNAPSHOT</jboss-managed.version>

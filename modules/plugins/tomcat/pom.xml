@@ -4,25 +4,25 @@
 
   <parent>
     <groupId>org.jboss.on</groupId>
-      <!--  Bypass the jon-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
-    <artifactId>jon-parent</artifactId>
+      <!--  Bypass the jopr-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
+    <artifactId>jopr-modules-parent</artifactId>
     <version>2.2.0-SNAPSHOT</version> 
   </parent>
 
   <groupId>org.jboss.on</groupId>
-  <artifactId>rhq-tomcat-plugin</artifactId>
+  <artifactId>jopr-tomcat-plugin</artifactId>
   <packaging>jar</packaging>
 
-  <name>JON Tomcat Plugin</name>
+  <name>Jopr Tomcat Plugin</name>
   <description>A plugin for managing Apache Tomcat servers</description>
 
    <scm>
-      <connection>scm:svn:http://svn.corp.jboss.com/repos/jon/trunk/jon/plugins/tomcat/</connection>
-      <developerConnection>scm:svn:http://svn.corp.jboss.com/repos/jon/trunk/jon/plugins/tomcat/</developerConnection>
+      <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/tomcat/</connection>
+      <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/tomcat/</developerConnection>
    </scm>
 
    <properties>
-      <scm.module.path>jon/plugins/tomcat/</scm.module.path>
+      <scm.module.path>modules/plugins/tomcat/</scm.module.path>
    </properties>
 
   <dependencies>

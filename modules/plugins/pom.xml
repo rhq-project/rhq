@@ -3,33 +3,36 @@
     
 	<parent>
 		<groupId>org.jboss.on</groupId>
-		<artifactId>jon-parent</artifactId>
+		<artifactId>jopr-modules-parent</artifactId>
 		<version>2.2.0-SNAPSHOT</version>
 	</parent>
     
-	<!--  Plugin poms should not set their parent pom to this artifact. Instead, set to "jon-parent".  This is due to
+	<!--  Plugin poms should not set their parent pom to this artifact. Instead, set to "jopr-modules-parent".  This is due to
 		the fact that this pom runs integration tests *on* the plugins.  This pom must process in the reactor after the
 		plugins themselves, as such, it can't be their parent. -->
 	<groupId>org.jboss.on</groupId>
-	<artifactId>jon-plugins-parent</artifactId>
+	<artifactId>jopr-plugins-parent</artifactId>
 	<packaging>pom</packaging>
-	<name>JON Plugins</name>
-	<description>parent POM for all JON plugins</description>
+	<name>Jopr Plugins</name>
+	<description>parent POM for all Jopr plugins</description>
 	
     <scm>
-		<connection>scm:svn:https://svn.corp.jboss.com/repos/jon/trunk/jon/plugins</connection>
-		<developerConnection>scm:svn:https://svn.corp.jboss.com/repos/jon/trunk/jon/plugins</developerConnection>
+		<connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins</connection>
+		<developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins</developerConnection>
 	</scm>
 	
     <properties>
-		<scm.module.path>jon/plugins/</scm.module.path>
+		<scm.module.path>modules/plugins/</scm.module.path>
 	</properties>
     
-    <!-- plugins used by both enterprise and embedded -->
+    <!-- plugins, order is important -->
 	<modules>
-		<module>tomcat</module>
-		<module>jboss-as</module>
-		<module>hibernate</module>        
+      <module>tomcat</module>
+      <module>jboss-as</module>      
+      <module>hibernate</module>
+      <module>rhq-server</module>      
+      <!-- NOTE: The jboss-as5 plugin is not included for now, because all its deps are
+                 snapshots, which the maven release plugin would deeply frown upon.-->		        
 	</modules>
     
 	<build>
@@ -47,14 +50,12 @@
 								<java classname="org.rhq.core.pc.plugin.PluginValidator" failonerror="true" fork="true">
 									<classpath>
 										<pathelement path="${test.classpath}" />
-										<pathelement location="perftest/target/rhq-perftest-plugin-${project.version}.jar" />
-										<pathelement location="hibernate/target/rhq-hibernate-plugin-${project.version}.jar" />
-										<pathelement location="tomcat/target/rhq-tomcat-plugin-${project.version}.jar" />
-										<pathelement location="jboss-as/target/rhq-jbossas-plugin-${project.version}.jar" />
+										<pathelement location="hibernate/target/jopr-hibernate-plugin-${project.version}.jar" />
+										<pathelement location="tomcat/target/jopr-tomcat-plugin-${project.version}.jar" />
+										<pathelement location="jboss-as/target/jopr-jboss-as-plugin-${project.version}.jar" />
 										<!-- TODO: Figure out why this is causing NoClassDefFoundErrors and fix it. -->
-										<!--<pathelement location="jboss-as-5/target/rhq-jboss-as-5-plugin-${project.version}.jar" />-->
-										<pathelement location="rhq-server/target/rhq-server-plugin-${project.version}.jar" />
-										<pathelement location="oracle/target/rhq-oracle-plugin-${project.version}.jar" />
+										<!--<pathelement location="jboss-as-5/target/jopr-jboss-as-5-plugin-${project.version}.jar" />-->
+										<pathelement location="rhq-server/target/jopr-rhq-server-plugin-${project.version}.jar" />
 									</classpath>
 									<sysproperty key="org.apache.commons.logging.Log" value="org.apache.commons.logging.impl.SimpleLog" />
 								</java>
@@ -68,44 +69,5 @@
 			</plugin>
 		</plugins>
 	</build>
-    
-	<profiles>
-        
-        <!-- enterprise-only stuff -->
-		<profile>
-			<id>enterprise</id>
-			<activation>
-				<activeByDefault>true</activeByDefault>
-			</activation>			
-			<modules>
-				<module>rhq-server</module>
-				<module>perftest</module>
-			</modules>
-		</profile>
-
-        <!-- same as enterprise profile, except includes container/dist and embedded-only plugins 
-            (activate this for the JON TeamCity build and when tagging JON) -->
-		<profile>
-			<id>enterprise-dist</id>			
-			<modules>            
-				<module>rhq-server</module>
-				<module>perftest</module>
-                <module>mock-jboss</module>
-                <!-- NOTE: The jboss-as5 plugin is not included for now, because all its deps are
-                           snapshots, which the maven release plugin would deeply frown upon.-->
-			</modules>
-		</profile>
-        
-        <!-- includes embedded-only plugins + embedded itself -->
-		<profile>
-			<id>embedded</id>
-			<modules>
-                <module>mock-jboss</module>
-				<module>jboss-as-5</module>
-				<module>jboss-as-5/testsuite</module>
-			</modules>
-		</profile>
-                
-	</profiles>
     
 </project>

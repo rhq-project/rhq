@@ -14,8 +14,8 @@
   <version>1.2.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>hudson</name>
-  <description>RHQ Plugin</description>
+  <name>RHQ Hudson Plugin</name>
+  <description>RHQ Hudson Plugin</description>
 
   <properties>        
     <rhq.version>1.2.0-SNAPSHOT</rhq.version>
@@ -126,12 +126,6 @@
           <source>1.5</source>
           <target>1.5</target>
         </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.rhq</groupId>
-        <artifactId>rhq-plugin-validator</artifactId>
-        <version>${rhq.version}</version>
       </plugin>
 
       <!--

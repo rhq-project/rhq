@@ -573,7 +573,7 @@
 
       <service name="Oracle User"
          discovery="org.rhq.plugins.database.CustomTableRowDiscoveryComponent"
-         class="org.rhq.plugins.database.OracleUserComponent">
+         class="org.rhq.plugins.oracle.OracleUserComponent">
 
          <plugin-configuration>
             <c:simple-property name="table" default="DBA_USERS"/>

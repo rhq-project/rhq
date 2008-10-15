@@ -9,8 +9,7 @@
   
   <groupId>org.rhq</groupId>
   <artifactId>rhq-snmptrapd-plugin</artifactId>
-  <name>snmptrapd</name>
-  <version>1.2.0-SNAPSHOT</version>
+  <name>RHQ SnmpTrapd Plugin</name>
   <description>RHQ SnmpTrapd Plugin</description>
   
      <scm>
@@ -20,8 +19,6 @@
 
    <properties>
       <scm.module.path>modules/plugins/snmptrapd/</scm.module.path>
-      <!-- next is needed for the plugin validator -->
-      <rhq.version>1.0.0.GA</rhq.version>
    </properties>
   
   <build>
@@ -32,11 +29,6 @@
           <source>1.5</source>
           <target>1.5</target>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.rhq</groupId>
-        <artifactId>rhq-plugin-validator</artifactId>
-        <version>${rhq.version}</version>
       </plugin>
       
       <plugin>
@@ -187,19 +179,19 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-domain</artifactId>
-      <version>${rhq.version}</version>
+      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-plugin-api</artifactId>
-      <version>${rhq.version}</version>
+      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-native-system</artifactId>
-      <version>${rhq.version}</version>
+      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

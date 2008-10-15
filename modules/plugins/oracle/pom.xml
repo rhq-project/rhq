@@ -26,13 +26,6 @@
 
    <dependencies>
 
-      <!-- Oracle JDBC driver - needed by both tests and runtime. -->
-      <dependency>
-         <groupId>ojdbc14</groupId>
-         <artifactId>ojdbc14</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      </dependency>
-
       <dependency>
          <groupId>org.hyperic</groupId>
          <artifactId>sigar</artifactId>        
@@ -49,37 +42,43 @@
     
    </dependencies>
 
-   <build>
-      <plugins>
-
-         <!-- Make sure the Oracle JDBC jar gets included in the plugin jar's lib dir. -->
-         <plugin>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.0</version>
-            <executions>
-               <execution>
-                  <id>copy-oracle-jar</id>
-                  <phase>process-resources</phase>
-                  <goals>
-                     <goal>copy</goal>
-                  </goals>
-                  <configuration>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>ojdbc14</groupId>
-                           <artifactId>ojdbc14</artifactId>
-                        </artifactItem>
-                     </artifactItems>
-                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-
-      </plugins>
-   </build>
-
    <profiles>
+      <profile>      
+          <id>ojdbc-driver</id>
+         
+          <!-- Make sure the Oracle JDBC jar gets included in the plugin jar's lib dir. -->
+               
+         <build>
+            <plugins>
+
+               <plugin>
+                  <artifactId>maven-dependency-plugin</artifactId>
+                  <version>2.0</version>
+                  <executions>
+                     <execution>
+                        <id>copy-oracle-jar</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                           <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                           <artifactItems>
+                              <artifactItem>
+                                 <groupId>ojdbc14</groupId>
+                                 <artifactId>ojdbc14</artifactId>
+                              </artifactItem>
+                           </artifactItems>
+                           <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+          
+      </profile>     
+      
       <profile>
          <id>integration-tests</id>
          <activation>

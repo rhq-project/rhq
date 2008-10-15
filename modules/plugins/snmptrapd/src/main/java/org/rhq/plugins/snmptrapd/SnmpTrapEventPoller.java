@@ -21,7 +21,6 @@ package org.rhq.plugins.snmptrapd;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -58,7 +57,7 @@ public class SnmpTrapEventPoller implements EventPoller, CommandResponder {
     public SnmpTrapEventPoller() {
         severityOid = null;
 
-        // Load proprties, that translate from oid strings (1.2.2...) to their name in the mib
+        // Load properties, that translate from oid strings (1.2.2...) to their name in the mib
         // Should be done through a mib parser
         ClassLoader cl = getClass().getClassLoader();
         InputStream in = cl.getResourceAsStream("MibTrans.properties");
@@ -167,7 +166,8 @@ public class SnmpTrapEventPoller implements EventPoller, CommandResponder {
                 }
             }
 
-            Event event = new Event(getEventType(), sourceAddr, new Date(), severity, payload.toString());
+            Event event = new Event(getEventType(), sourceAddr, System.currentTimeMillis(), severity, payload
+                .toString());
 
             synchronized (events) {
                 events.add(event);

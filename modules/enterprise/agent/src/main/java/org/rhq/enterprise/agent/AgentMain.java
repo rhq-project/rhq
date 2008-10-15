@@ -153,6 +153,7 @@ public class AgentMain {
     private static final String PROMPT_SHUTDOWN = MSG.getMsg(AgentI18NResourceKeys.PROMPT_STRING_SHUTDOWN) + "> ";
     private static final String PROMPT_STARTED = MSG.getMsg(AgentI18NResourceKeys.PROMPT_STRING_STARTED) + "> ";
     private static final String PROMPT_SENDING = MSG.getMsg(AgentI18NResourceKeys.PROMPT_STRING_SENDING) + "> ";
+    private static final String PROMPT_TINY = "> ";
 
     private static final String FILENAME_SERVER_FAILOVER_LIST = "failover-list.dat";
 
@@ -2120,18 +2121,23 @@ public class AgentMain {
 
     /**
      * Returns the default user prompt, which is dynamically determined based on the state of the agent and its client
-     * command sender.
+     * command sender if the agent's logger is in debug mode.  If not, a standard prompt is used no matter
+     * what state the sender object is in.
      *
      * @return default prompt string
      */
     private String getDefaultPrompt() {
         String prompt;
-        ClientCommandSender sender = m_clientSender;
 
-        if ((sender != null) && isStarted()) {
-            prompt = (sender.isSending()) ? PROMPT_SENDING : PROMPT_STARTED;
+        if (LOG.isDebugEnabled()) {
+            ClientCommandSender sender = m_clientSender;
+            if ((sender != null) && isStarted()) {
+                prompt = (sender.isSending()) ? PROMPT_SENDING : PROMPT_STARTED;
+            } else {
+                prompt = PROMPT_SHUTDOWN;
+            }
         } else {
-            prompt = PROMPT_SHUTDOWN;
+            prompt = PROMPT_TINY;
         }
 
         return prompt;

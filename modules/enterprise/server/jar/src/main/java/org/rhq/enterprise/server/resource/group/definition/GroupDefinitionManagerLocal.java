@@ -55,6 +55,8 @@ public interface GroupDefinitionManagerLocal {
 
     PageList<GroupDefinition> getGroupDefinitions(PageControl pc);
 
+    int getGroupDefinitionCount();
+
     void removeGroupDefinition(Subject subject, Integer groupDefinitionId) throws GroupDefinitionNotFoundException,
         GroupDefinitionDeleteException;
 

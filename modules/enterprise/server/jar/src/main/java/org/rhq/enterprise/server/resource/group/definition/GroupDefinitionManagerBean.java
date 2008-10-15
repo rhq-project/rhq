@@ -344,11 +344,17 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         pc.initDefaultOrderingField("gd.name");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, GroupDefinition.QUERY_FIND_ALL, pc);
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager, GroupDefinition.QUERY_FIND_ALL);
-        long count = (Long) queryCount.getSingleResult();
         List<GroupDefinition> results = query.getResultList();
 
+        int count = getGroupDefinitionCount();
+
         return new PageList<GroupDefinition>(results, (int) count, pc);
+    }
+
+    public int getGroupDefinitionCount() {
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, GroupDefinition.QUERY_FIND_ALL);
+        long count = (Long) queryCount.getSingleResult();
+        return (int) count;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

@@ -20,11 +20,11 @@ package org.rhq.enterprise.server.resource;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.GroupCategory;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
@@ -60,8 +60,7 @@ public class ResourceBossBean implements ResourceBossLocal {
         summary.setCompatibleGroupCount(groupManager.getResourceGroupCountByCategory(user, GroupCategory.COMPATIBLE));
         summary.setMixedGroupCount(groupManager.getResourceGroupCountByCategory(user, GroupCategory.MIXED));
 
-        summary.setGroupDefinitionCount(groupDefinitionManager.getGroupDefinitions(PageControl.getSingleRowInstance())
-            .getTotalSize());
+        summary.setGroupDefinitionCount(groupDefinitionManager.getGroupDefinitionCount());
 
         summary.setScheduledMeasurementsPerMinute(scheduleManager.getScheduledMeasurementsPerMinute());
 

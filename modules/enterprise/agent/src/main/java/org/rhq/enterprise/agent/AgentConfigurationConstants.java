@@ -587,10 +587,9 @@ public interface AgentConfigurationConstants {
      */
     long DEFAULT_PLUGINS_CONTENT_DISCOVERY_PERIOD = PluginContainerConfiguration.CONTENT_DISCOVERY_PERIOD_DEFAULT;
 
-
-
     /** Defines the delay to starting Configuration discoveries */
-    String PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY = PROPERTY_NAME_PREFIX + ".plugins.configuration-discovery.intial-delay";
+    String PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY = PROPERTY_NAME_PREFIX
+        + ".plugins.configuration-discovery.initial-delay";
 
     long DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY = PluginContainerConfiguration.CONFIGURATION_DISCOVERY_INITIAL_DELAY_DEFAULT;
 
@@ -598,9 +597,6 @@ public interface AgentConfigurationConstants {
     String PLUGINS_CONFIGURATION_DISCOVERY_PERIOD = PROPERTY_NAME_PREFIX + ".plugins.configuration-discovery.period";
 
     long DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_PERIOD = PluginContainerConfiguration.CONFIGURATION_DISCOVERY_PERIOD_DEFAULT;
-
-
-
 
     /**
      * If defined, this is to be the size of the operation invoker thread pool. If not defined, the plugin container

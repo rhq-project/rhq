@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>1.1.0.GA</version>
+      <version>1.1.2-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
    <description>RHQ plugin container</description>
 
    <scm>
-     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_0_GA/modules/core/plugin-container</connection>
-     <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_0_GA/modules/core/plugin-container</developerConnection>
+     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/core/plugin-container</connection>
+     <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/core/plugin-container</developerConnection>
    </scm>
 
    <properties>

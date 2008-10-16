@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc;
 
 import java.io.File;
@@ -87,14 +87,12 @@ public class PluginContainerConfiguration {
     private static final String CONTENT_DISCOVERY_THREADCOUNT_PROP = PROP_PREFIX + "content-discovery-threadpoolsize";
     public static final int CONTENT_DISCOVERY_THREADCOUNT_DEFAULT = 10;
 
-
     // Configuration -------
+
     private static final String CONFIGURATION_DISCOVERY_INITIAL_DELAY_PROP = PROP_PREFIX + "configuration-discovery-initial-delay";
     public static final long CONFIGURATION_DISCOVERY_INITIAL_DELAY_DEFAULT = 300L; // in seconds
-    private static final String CONFIGURATION_DISCOVERY_PERIOD_PROP = PROP_PREFIX + "configuration-discovery-initial-delay";
+    private static final String CONFIGURATION_DISCOVERY_PERIOD_PROP = PROP_PREFIX + "configuration-discovery-period";
     public static final long CONFIGURATION_DISCOVERY_PERIOD_DEFAULT = 3600L; // in seconds
-
-
 
     // Operation ----------
 
@@ -416,7 +414,6 @@ public class PluginContainerConfiguration {
         configuration.put(CONTENT_DISCOVERY_THREADCOUNT_PROP, size);
     }
 
-
     public long getConfigurationDiscoveryInitialDelay() {
         Long delay = (Long) configuration.get(CONFIGURATION_DISCOVERY_INITIAL_DELAY_PROP);
         return (delay == null) ? CONFIGURATION_DISCOVERY_INITIAL_DELAY_DEFAULT : delay.longValue();
@@ -425,7 +422,6 @@ public class PluginContainerConfiguration {
     public void setConfigurationDiscoveryInitialDelay(long delay) {
         configuration.put(CONFIGURATION_DISCOVERY_INITIAL_DELAY_PROP, delay);
     }
-
 
     public long getConfigurationDiscoveryPeriod() {
         Long period = (Long) configuration.get(CONFIGURATION_DISCOVERY_PERIOD_PROP);

@@ -4,7 +4,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-parent</artifactId>
-  <version>1.1.2.GA</version>
+  <version>1.1.2-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>RHQ</name>
@@ -18,8 +18,8 @@
   </organization>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_2_GA</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_2_GA</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2</developerConnection>
   </scm>
 
   <issueManagement>

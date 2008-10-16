@@ -34,6 +34,12 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Failed to determine the server time. Cause: {0}")
     String TIME_UNKNOWN = "AgentMain.time-unknown";
 
+    @I18NMessage("Timed out waiting for the connectAgent R/W lock to avoid a possible deadlock")
+    String TIMEOUT_WAITING_FOR_CONNECT_LOCK = "AgentMain.connect-lock-timeout";
+
+    @I18NMessage("Not sending another connect message since one was recently sent: [{0}]")
+    String NOT_SENDING_DUP_CONNECT = "AgentMain.not-sending-dup-connect";
+
     @I18NMessage("The agent is not talking to its primary server [{0}:{1,number,#}] - it is talking to [{2}:{3,number,#}]")
     String NOT_TALKING_TO_PRIMARY_SERVER = "PrimaryServerSwitchoverThread.not-talking-to-primary";
 

@@ -29,6 +29,9 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "comm-messages", defaultLocale = "en")
 public interface CommI18NResourceKeys {
+    @I18NMessages( { @I18NMessage("Communicator is changing endpoint from [{0}] to [{1}]") })
+    String COMMUNICATOR_CHANGING_ENDPOINT = "JBossRemotingRemoteCommunicator.changing-endpoint";
+
     @I18NMessages( { @I18NMessage("The initialize callback has finished. Callback to be invoked again? [{0}]") })
     String INITIALIZE_CALLBACK_DONE = "JBossRemotingRemoteCommunicator.init-callback-done";
 

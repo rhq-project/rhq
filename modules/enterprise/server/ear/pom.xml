@@ -217,36 +217,137 @@
                    <version>${project.version}</version>
                  </artifactItem>
 
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-apt-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
+
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-bluetooth-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
+
                  <artifactItem>
                    <groupId>org.rhq</groupId>
                    <artifactId>rhq-database-plugin</artifactId>
                    <version>${project.version}</version>
                  </artifactItem>
+
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-grub-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
+
+<!--  In Development
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-hardware-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
+-->                 
                  
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
-                   <artifactId>rhq-jmx-plugin</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-hosts-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
                  
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-hudson-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
+
                  <artifactItem>
                    <groupId>org.rhq</groupId>
                    <artifactId>rhq-iis-plugin</artifactId>
                    <version>${project.version}</version>
                  </artifactItem>
 
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-jira-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
+
+                 <artifactItem>
+                   <groupId>org.rhq</groupId>
+                   <artifactId>rhq-jmx-plugin</artifactId>
+                   <version>${project.version}</version>
+                 </artifactItem>
+                 
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-mock-jboss-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
+                 
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-mysql-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
+
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-netservices-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
+
+<!--  In Development
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-onewire-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
+-->                 
+
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-oracle-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
+
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-perftest-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
+
                  <artifactItem>
                    <groupId>org.rhq</groupId>
                    <artifactId>rhq-platform-plugin</artifactId>
                    <version>${project.version}</version>
                  </artifactItem>
-                 
+
+
                  <artifactItem>
                    <groupId>org.rhq</groupId>
                    <artifactId>rhq-postgres-plugin</artifactId>
                    <version>${project.version}</version>
                  </artifactItem>
+                 
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-snmptrapd-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
 
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-sshd-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
+
+                              <artifactItem>
+                                 <groupId>org.rhq</groupId>
+                                 <artifactId>rhq-virt-plugin</artifactId>
+                                 <version>${project.version}</version>
+                              </artifactItem>
+                
                </artifactItems>
                <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
             </configuration>
@@ -360,118 +461,6 @@
 
             </plugins>
          </build>
-      </profile>
-
-      <profile>
-         <id>community</id>
-
-         <build>
-            <plugins>
-               <plugin>
-                  <artifactId>maven-dependency-plugin</artifactId>
-                     <version>2.0</version>
-                     <executions>
-
-                        <execution>
-                           <id>copy-rhq-plugins</id>
-                           <phase>process-resources</phase>
-                           <goals>
-                             <goal>copy</goal>
-                           </goals>
-                           <configuration>
-                              <artifactItems>
-
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-apt-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
-
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-grub-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
-
-<!--  In Development
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-hardware-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
--->                 
-                 
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-hosts-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
-                 
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-hudson-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
-
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-jira-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
-                 
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-mysql-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
-
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-netservices-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
-
-<!--  In Development
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-onewire-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
--->                 
-
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-oracle-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
-
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-snmptrapd-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
-
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-sshd-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
-
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-virt-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
-
-                              </artifactItems>
-
-                              <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
-                           </configuration>
-                        </execution>
-                     </executions>
-                  </plugin>
-               </plugins>
-            </build>          
       </profile>
 
    </profiles>

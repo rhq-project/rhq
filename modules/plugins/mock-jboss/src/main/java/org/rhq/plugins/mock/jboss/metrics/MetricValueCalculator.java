@@ -3,7 +3,7 @@
  * Copyright 2007, Red Hat Middleware, LLC. All rights reserved.
  */
 
-package org.jboss.on.plugins.mock.jboss.metrics;
+package org.rhq.plugins.mock.jboss.metrics;
 
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -15,15 +15,14 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
  *
  * @author Jason Dobies
  */
-public interface MetricValueCalculator
-{
-   /**
-    * Returns a value for a specific metric. Depending on the implmentation, the algorithm for how the next value is
-    * computed will vary.
-    *
-    * @param request used in the creation of the <code>MeasurementData</code> return value.
-    *
-    * @return measurement domain object to be added to the measurement report.
-    */
-   MeasurementData nextValue(MeasurementScheduleRequest request);
+public interface MetricValueCalculator {
+    /**
+     * Returns a value for a specific metric. Depending on the implmentation, the algorithm for how the next value is
+     * computed will vary.
+     *
+     * @param request used in the creation of the <code>MeasurementData</code> return value.
+     *
+     * @return measurement domain object to be added to the measurement report.
+     */
+    MeasurementData nextValue(MeasurementScheduleRequest request);
 }

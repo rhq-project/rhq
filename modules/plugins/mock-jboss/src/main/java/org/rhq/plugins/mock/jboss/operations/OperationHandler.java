@@ -3,7 +3,7 @@
  * Copyright 2007, Red Hat Middleware, LLC. All rights reserved.
  */
 
-package org.jboss.on.plugins.mock.jboss.operations;
+package org.rhq.plugins.mock.jboss.operations;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -16,17 +16,15 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  *
  * @author Jason Dobies
  */
-public interface OperationHandler
-{
-   /**
-    * Takes appropriate action when an operation on the resource is requested.
-    *
-    * @param configuration parameters to the operation.
-    * @return response message as appropriate for the specified implementaiton.
-    * @throws Exception if the particular implementation emulates an exception case.
-    * @throws InterruptedException if the operation was canceled or was timed out by external forces
-    */
-   OperationResult handleOperation(Configuration configuration)
-      throws Exception, InterruptedException;
+public interface OperationHandler {
+    /**
+     * Takes appropriate action when an operation on the resource is requested.
+     *
+     * @param configuration parameters to the operation.
+     * @return response message as appropriate for the specified implementaiton.
+     * @throws Exception if the particular implementation emulates an exception case.
+     * @throws InterruptedException if the operation was canceled or was timed out by external forces
+     */
+    OperationResult handleOperation(Configuration configuration) throws Exception, InterruptedException;
 
 }

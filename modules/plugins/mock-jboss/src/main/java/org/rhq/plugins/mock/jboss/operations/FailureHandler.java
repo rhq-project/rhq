@@ -3,7 +3,7 @@
  * Copyright 2007, Red Hat Middleware, LLC. All rights reserved.
  */
 
-package org.jboss.on.plugins.mock.jboss.operations;
+package org.rhq.plugins.mock.jboss.operations;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -14,23 +14,20 @@ import org.rhq.plugins.mock.jboss.scenario.OperationFailure;
  *
  * @author Jason Dobies
  */
-public class FailureHandler implements OperationHandler
-{
-   // Attributes  --------------------------------------------
+public class FailureHandler implements OperationHandler {
+    // Attributes  --------------------------------------------
 
-   private String message;
+    private String message;
 
-   // Constructors  --------------------------------------------
+    // Constructors  --------------------------------------------
 
-   public FailureHandler(OperationFailure resultPolicy)
-   {
-      this.message = resultPolicy.getMessage();
-   }
+    public FailureHandler(OperationFailure resultPolicy) {
+        this.message = resultPolicy.getMessage();
+    }
 
-   // OperationHandler Implementation  --------------------------------------------
+    // OperationHandler Implementation  --------------------------------------------
 
-   public OperationResult handleOperation(Configuration configuration) throws Exception
-   {
-      throw new Exception(message);
-   }
+    public OperationResult handleOperation(Configuration configuration) throws Exception {
+        throw new Exception(message);
+    }
 }

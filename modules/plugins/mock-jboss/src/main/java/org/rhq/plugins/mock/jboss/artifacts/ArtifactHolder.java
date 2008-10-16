@@ -3,57 +3,49 @@
  * Copyright 2007, Red Hat Middleware, LLC. All rights reserved.
  */
 
-package org.jboss.on.plugins.mock.jboss.artifacts;
+package org.rhq.plugins.mock.jboss.artifacts;
 
 /**
  * @author Jason Dobies
  */
-public class ArtifactHolder
-{
-   // Attributes  --------------------------------------------
-   
-   private String key;
-   private String name;
-   private String type;
-   
-   // Constructors  --------------------------------------------
+public class ArtifactHolder {
+    // Attributes  --------------------------------------------
 
-   public ArtifactHolder(String key, String name, String type)
-   {
-      this.key = key;
-      this.name = name;
-      this.type = type;
-   }
-   
-   // Public  --------------------------------------------
+    private String key;
+    private String name;
+    private String type;
 
-   public String getKey()
-   {
-      return key;
-   }
+    // Constructors  --------------------------------------------
 
-   public void setKey(String key)
-   {
-      this.key = key;
-   }
+    public ArtifactHolder(String key, String name, String type) {
+        this.key = key;
+        this.name = name;
+        this.type = type;
+    }
 
-   public String getName()
-   {
-      return name;
-   }
+    // Public  --------------------------------------------
 
-   public void setName(String name)
-   {
-      this.name = name;
-   }
+    public String getKey() {
+        return key;
+    }
 
-   public String getType()
-   {
-      return type;
-   }
+    public void setKey(String key) {
+        this.key = key;
+    }
 
-   public void setType(String type)
-   {
-      this.type = type;
-   }
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
 }

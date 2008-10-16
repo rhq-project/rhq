@@ -629,15 +629,6 @@
           
       </profile>
 
-      <profile>
-          <id>community</id>
-
-          <properties>
-              <!-- The below prop can be used to check if the community profile is enabled. -->
-              <community.profile.active>true</community.profile.active>
-          </properties>
-      </profile>
-
   </profiles>
 
 </project>

@@ -3,7 +3,7 @@
  * Copyright 2007, Red Hat Middleware, LLC. All rights reserved.
  */
 
-package org.jboss.on.plugins.mock.jboss.operations;
+package org.rhq.plugins.mock.jboss.operations;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -16,43 +16,37 @@ import org.rhq.plugins.mock.jboss.scenario.OperationSuccess;
  *
  * @author Jason Dobies
  */
-public class SuccessHandler implements OperationHandler
-{
-   // Attributes  --------------------------------------------
+public class SuccessHandler implements OperationHandler {
+    // Attributes  --------------------------------------------
 
-   private String message;
-   private boolean echoParameters;
+    private String message;
+    private boolean echoParameters;
 
-   // Constructors  --------------------------------------------
+    // Constructors  --------------------------------------------
 
-   public SuccessHandler(OperationSuccess resultPolicy)
-   {
-      this.message = resultPolicy.getMessage();
-      this.echoParameters = resultPolicy.isEchoParameters();
-   }
+    public SuccessHandler(OperationSuccess resultPolicy) {
+        this.message = resultPolicy.getMessage();
+        this.echoParameters = resultPolicy.isEchoParameters();
+    }
 
-   // OperationHandler Implementation  --------------------------------------------
+    // OperationHandler Implementation  --------------------------------------------
 
-   public OperationResult handleOperation(Configuration configuration)
-   {
-      StringBuffer sb = new StringBuffer();
-      sb.append(message);
+    public OperationResult handleOperation(Configuration configuration) {
+        StringBuffer sb = new StringBuffer();
+        sb.append(message);
 
-      if (echoParameters)
-      {
-         sb.append("Parameters: ");
-         for (Property p : configuration.getProperties())
-         {
-            if (p instanceof PropertySimple)
-            {
-               PropertySimple simple = (PropertySimple)p;
-               sb.append(p.getName()).append(" -> ").append(simple.getStringValue()).append("  ");
+        if (echoParameters) {
+            sb.append("Parameters: ");
+            for (Property p : configuration.getProperties()) {
+                if (p instanceof PropertySimple) {
+                    PropertySimple simple = (PropertySimple) p;
+                    sb.append(p.getName()).append(" -> ").append(simple.getStringValue()).append("  ");
+                }
             }
-         }
-      }
+        }
 
-      OperationResult results = new OperationResult();
-      results.getComplexResults().put(new PropertySimple("results", sb.toString()));
-      return results;
-   }
+        OperationResult results = new OperationResult();
+        results.getComplexResults().put(new PropertySimple("results", sb.toString()));
+        return results;
+    }
 }

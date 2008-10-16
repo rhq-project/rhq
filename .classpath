@@ -1,6 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/core/util/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/mock-jboss/target/generated-sources/xjc"/>
+	<classpathentry kind="src" path="modules/plugins/perftest/target/generated-sources/xjc"/>
+	<classpathentry kind="src" path="modules/plugins/perftest/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/mock-jboss/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/perftest/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/mock-jboss/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/bluetooth/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/bluetooth/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/jira/target/generated-sources/axistools/wsdl2java"/>
+	<classpathentry kind="src" path="modules/plugins/jira/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/apt/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/hosts/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/sshd/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/sshd/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/hardware/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/oracle/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/grub/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/grub/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/hudson/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/platform/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/apt/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/hosts/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/virt/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/util/src/test/java"/>
 	<classpathentry kind="src" path="modules/core/dbutils/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/dbutils/src/test/java"/>
@@ -101,7 +125,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/faces/jsf-impl/1.2_06/jsf-impl-1.2_06.jar" sourcepath="/M2_REPO/javax/faces/jsf-impl/1.2_06/jsf-impl-1.2_06-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/el/el-api/1.0/el-api-1.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/sun/facelets/jsf-facelets/1.1.14/jsf-facelets-1.1.14.jar" sourcepath="/M2_REPO/com/sun/facelets/jsf-facelets/1.1.13/jsf-facelets-1.1.13-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/mc4j/org-mc4j-ems/1.2.5/org-mc4j-ems-1.2.5.jar"/>
+	<classpathentry kind="var" path="M2_REPO/mc4j/org-mc4j-ems/1.2.5/org-mc4j-ems-1.2.5.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/opensymphony/quartz/1.5.2/quartz-1.5.2.jar" sourcepath="/M2_REPO/opensymphony/quartz/1.5.2/quartz-1.5.2-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/mail/mail/1.3.1/mail-1.3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-fileupload/commons-fileupload/1.2/commons-fileupload-1.2.jar"/>
@@ -118,5 +142,12 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-plugin-api/2.0.8/maven-plugin-api-2.0.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/swizzle/swizzle-confluence/1.2.Alpha1/swizzle-confluence-1.2.Alpha1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jvnet/inflector/0.7.0/inflector-0.7.0.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/axis/axis/1.4/axis-1.4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/axis/axis-jaxrpc/1.4/axis-jaxrpc-1.4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/axis/axis-saaj/1.4/axis-saaj-1.4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/net/augeas/java-augeas/1.0/java-augeas-1.0.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/json/json/20080701/json-20080701.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/sun/jna/jna/3.0.1/jna-3.0.1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/net/sf/bluecove/bluecove/2.0.1/bluecove-2.0.1.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

@@ -3,7 +3,7 @@
  * Copyright 2007, Red Hat Middleware, LLC. All rights reserved.
  */
 
-package org.jboss.on.plugins.mock.jboss.metrics;
+package org.rhq.plugins.mock.jboss.metrics;
 
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -15,26 +15,23 @@ import org.rhq.plugins.mock.jboss.scenario.MetricRandomDouble;
  *
  * @author Jason Dobies
  */
-public class RandomDoubleMetricCalculator implements MetricValueCalculator
-{
-   // Attributes --------------------------------------------
+public class RandomDoubleMetricCalculator implements MetricValueCalculator {
+    // Attributes --------------------------------------------
 
-   private double minimumValue;
-   private double maximumValue;
+    private double minimumValue;
+    private double maximumValue;
 
-   // Constructors  --------------------------------------------
+    // Constructors  --------------------------------------------
 
-   public RandomDoubleMetricCalculator(MetricRandomDouble policy)
-   {
-      minimumValue = policy.getMinimumValue();
-      maximumValue = policy.getMaximumValue();
-   }
+    public RandomDoubleMetricCalculator(MetricRandomDouble policy) {
+        minimumValue = policy.getMinimumValue();
+        maximumValue = policy.getMaximumValue();
+    }
 
-   // MetricValueCalculator Implementation  --------------------------------------------
+    // MetricValueCalculator Implementation  --------------------------------------------
 
-   public MeasurementData nextValue(MeasurementScheduleRequest request)
-   {
-      double value = minimumValue + (Math.random() * (maximumValue - minimumValue));
-      return new MeasurementDataNumeric(request, value);
-   }
+    public MeasurementData nextValue(MeasurementScheduleRequest request) {
+        double value = minimumValue + (Math.random() * (maximumValue - minimumValue));
+        return new MeasurementDataNumeric(request, value);
+    }
 }

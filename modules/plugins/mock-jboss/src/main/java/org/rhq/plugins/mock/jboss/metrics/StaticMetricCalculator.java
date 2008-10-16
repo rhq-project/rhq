@@ -3,7 +3,7 @@
  * Copyright 2007, Red Hat Middleware, LLC. All rights reserved.
  */
 
-package org.jboss.on.plugins.mock.jboss.metrics;
+package org.rhq.plugins.mock.jboss.metrics;
 
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -15,23 +15,20 @@ import org.rhq.plugins.mock.jboss.scenario.MetricStatic;
  *
  * @author Jason Dobies
  */
-public class StaticMetricCalculator implements MetricValueCalculator
-{
-   // Attributes  --------------------------------------------
+public class StaticMetricCalculator implements MetricValueCalculator {
+    // Attributes  --------------------------------------------
 
-   private double value;
+    private double value;
 
-   // Constructors  --------------------------------------------
+    // Constructors  --------------------------------------------
 
-   public StaticMetricCalculator(MetricStatic policy)
-   {
-      this.value = policy.getValue();
-   }
+    public StaticMetricCalculator(MetricStatic policy) {
+        this.value = policy.getValue();
+    }
 
-   // MetricValueCalculator  --------------------------------------------
+    // MetricValueCalculator  --------------------------------------------
 
-   public MeasurementData nextValue(MeasurementScheduleRequest request)
-   {
-      return new MeasurementDataNumeric(request, this.value);
-   }
+    public MeasurementData nextValue(MeasurementScheduleRequest request) {
+        return new MeasurementDataNumeric(request, this.value);
+    }
 }

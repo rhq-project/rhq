@@ -37,8 +37,7 @@
     
 	<build>
 		<plugins>
-			<plugin>
-				<!-- update this to respect the build profiles below -->			
+			<plugin>			
 				<artifactId>maven-antrun-plugin</artifactId>
 				<executions>
 					<execution>

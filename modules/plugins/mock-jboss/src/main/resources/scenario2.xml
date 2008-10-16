@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<!-- ======================================================================================================    
+       This scenario is the primary scenario in use by the embedded console. As such, there should only
+       be one server defined in the scenario.
+     ====================================================================================================== -->
+
+<scenario scenario-name="Basic Scenario #1"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="urn:xmlns:jboss.org:on-mock-jboss-plugin">
+
+   <server server-name="JBoss Application Server 4.0.4.GA"
+           install-path="/opt/jboss/jboss-4.0.4.GA"
+           version="4.0.4.GA">
+
+      <!-- Datasources ======================================================== -->
+
+      <resource type="no-tx-datasource">
+         <property name="jndiName" value="datasourceOne"/>
+         <property name="datasourceClass" value="com.jboss.DataSource"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/ds1?protocolVersion=2"/>
+         <property name="username" value="ds1"/>
+         <property name="password" value="ds1"/>
+         <property name="maxPoolSize" value="10"/>
+         <metric name="connectionCount">
+            <metricStatic value="22"/>
+         </metric>
+         <metric name="availableConnectionCount">
+            <metricStatic value="40"/>
+         </metric>
+      </resource>
+
+      <resource type="local-datasource" availability="down">
+         <property name="jndiName" value="datasourceTwo"/>
+         <property name="datasourceClass" value="com.jboss.DataSource"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/ds2?protocolVersion=2"/>
+         <property name="username" value="ds2"/>
+         <property name="password" value="ds2"/>
+         <property name="maxPoolSize" value="20"/>
+      </resource>
+
+      <resource type="xa-datasource">
+         <configurationError message="general error for datasourceThree"/>
+         <property name="jndiName" value="datasourceThree">
+             <configurationError message="jndiName datasourceThree is already in use"/>
+         </property>
+         <property name="xaDatasourceClass" value="com.jboss.XADataSource"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/ds3?protocolVersion=2">
+            <configurationError message="cannot connect to supplied URL, please try again"/>
+         </property>
+         <property name="username" value="ds3"/>
+         <property name="password" value="ds3"/>
+         <property name="maxPoolSize" value="30"/>
+         <operationResults name="testOperation1">
+            <operationFailure>
+               <message>Error occurred while trying to access the datasource descriptor.</message>
+            </operationFailure>
+         </operationResults>
+         <operationResults name="testOperation2">
+            <operationSuccess>
+               <message>Local Datasource dms-db has been started correctly.</message>
+            </operationSuccess>
+         </operationResults>
+         <operationResults name="testOperation3">
+            <operationTimedOut timeToWait="6000"/>
+         </operationResults>
+         <operationResults name="testOperation4">
+            <operationSuccess>
+               <message>Local Datasource dms-db has been started correctly.</message>
+            </operationSuccess>
+         </operationResults>
+         <operationResults name="testOperation5">
+            <operationSuccess>
+               <message>Local Datasource dms-db has been started correctly.</message>
+            </operationSuccess>
+         </operationResults>
+      </resource>
+
+      <resource type="no-tx-datasource" availability="down">
+         <property name="jndiName" value="datasourceFour"/>
+         <property name="datasourceClass" value="com.jboss.DataSource"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/ds4?protocolVersion=2"/>
+         <property name="username" value="ds4"/>
+         <property name="password" value="ds4"/>
+         <property name="maxPoolSize" value="40"/>
+      </resource>
+
+      <resource type="local-datasource">
+         <property name="jndiName" value="datasourceFive"/>
+         <property name="datasourceClass" value="com.jboss.DataSource"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/ds5?protocolVersion=2"/>
+         <property name="username" value="ds5"/>
+         <property name="password" value="ds5"/>
+         <property name="maxPoolSize" value="50"/>
+      </resource>
+
+      <resource type="local-datasource" availability="down">
+         <property name="jndiName" value="datasourceSix"/>
+         <property name="datasourceClass" value="com.jboss.DataSource"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/ds6?protocolVersion=2"/>
+         <property name="username" value="ds6"/>
+         <property name="password" value="ds6"/>
+         <property name="maxPoolSize" value="60"/>
+      </resource>
+
+      <resource type="no-tx-datasource">
+         <property name="jndiName" value="datasourceSeven"/>
+         <property name="datasourceClass" value="com.jboss.DataSource"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/ds7?protocolVersion=2"/>
+         <property name="username" value="ds7"/>
+         <property name="password" value="ds7"/>
+         <property name="maxPoolSize" value="70"/>
+         <metric name="connectionCount">
+            <metricStatic value="12"/>
+         </metric>
+         <metric name="availableConnectionCount">
+            <metricStatic value="20"/>
+         </metric>
+         <metric name="maxConnectionsInUse">
+            <metricStatic value="15"/>
+         </metric>
+      </resource>
+
+      <resource type="local-datasource" availability="down">
+         <property name="jndiName" value="datasourceEight"/>
+         <property name="datasourceClass" value="com.jboss.DataSource"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/ds8?protocolVersion=2"/>
+         <property name="username" value="ds8"/>
+         <property name="password" value="ds8"/>
+         <property name="maxPoolSize" value="80"/>
+      </resource>
+
+      <resource type="local-datasource">
+         <property name="jndiName" value="datasourceNine"/>
+         <property name="datasourceClass" value="com.jboss.DataSource"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/ds9?protocolVersion=2"/>
+         <property name="username" value="ds9"/>
+         <property name="password" value="ds9"/>
+         <property name="maxPoolSize" value="90"/>
+      </resource>
+
+      <resource type="local-datasource" availability="down">
+         <property name="jndiName" value="datasourceTen"/>
+         <property name="datasourceClass" value="com.jboss.DataSource"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/ds10?protocolVersion=2"/>
+         <property name="username" value="ds10"/>
+         <property name="password" value="ds10"/>
+         <property name="maxPoolSize" value="100"/>
+      </resource>
+
+      <!-- JMS Queues ======================================================== -->
+
+      <resource type="jms-queue">
+         <property name="jndiName" value="Queue1"/>
+         <property name="redeliveryDelay" value="1"/>
+         <property name="redeliveryLimit" value="10"/>
+         <metric name="ConsumerCount">
+            <metricStatic value="10"/>
+         </metric>
+         <metric name="MessageCount">
+            <metricStatic value="4"/>
+         </metric>
+         <metric name="ScheduledMessageCount">
+            <metricStatic value="2"/>
+         </metric>
+         <operationResults name="testOperation1">
+            <operationFailure>
+               <message>Error occurred while trying to access jms queue.</message>
+            </operationFailure>
+         </operationResults>
+         <operationResults name="testOperation2">
+            <operationSuccess>
+               <message>Test Operation2 completed successfully.</message>
+            </operationSuccess>
+         </operationResults>
+         <operationResults name="testOperation3">
+            <operationTimedOut timeToWait="6000"/>
+         </operationResults>
+         <operationResults name="testOperation4">
+            <operationSuccess>
+               <message>Test Operation4 completed successfully.</message>
+            </operationSuccess>
+         </operationResults>
+         <operationResults name="testOperation5">
+            <operationSuccess>
+               <message>Test Operation5 completed successfully.</message>
+            </operationSuccess>
+         </operationResults>
+      </resource>
+
+      <resource type="jms-queue">
+         <property name="jndiName" value="Queue2"/>
+         <property name="redeliveryDelay" value="2"/>
+         <property name="redeliveryLimit" value="20"/>
+      </resource>
+
+      <resource type="jms-queue">
+         <property name="jndiName" value="Queue3"/>
+         <property name="redeliveryDelay" value="3"/>
+         <property name="redeliveryLimit" value="30"/>
+      </resource>
+
+      <resource type="jms-queue">
+         <property name="jndiName" value="Queue4"/>
+         <property name="redeliveryDelay" value="4"/>
+         <property name="redeliveryLimit" value="40"/>
+      </resource>
+
+      <!-- JMS Topics ======================================================== -->
+
+      <resource type="jms-topic">
+         <property name="jndiName" value="Topic1"/>
+         <property name="redeliveryDelay" value="100"/>
+         <property name="redeliveryLimit" value="1000"/>
+         <metric name="AllMessageCount">
+            <metricStatic value="300"/>
+         </metric>
+         <metric name="DurableMessageCount">
+            <metricStatic value="15"/>
+         </metric>
+         <metric name="NonDurableMessageCount">
+            <metricStatic value="22"/>
+         </metric>
+         <metric name="AllSubscriptionCount">
+            <metricStatic value="253"/>
+         </metric>
+         <metric name="DurableSubscriptionCount">
+            <metricStatic value="199"/>
+         </metric>
+         <metric name="NonDurableSubscriptionCount">
+            <metricStatic value="54"/>
+         </metric>
+
+         
+         <metric name="FakeByteMetricSummary">
+            <metricStatic value="123456789"/>
+             <!--should be rendered to 117.7 MB -->
+         </metric>
+         <metric name="FakeBitMetricSummary">
+            <metricStatic value="987654321"/>
+             <!--should be rendered to 941.9 Mb -->
+         </metric>
+         <metric name="FakeTimeMetricSummary">
+            <metricStatic value="1234567"/>
+             <!--should be rendered to 14 days 06:56:07 -->
+         </metric>
+
+         <metric name="FakeTraitNumericSummary">
+            <metricStatic value="333"/>
+         </metric>
+         <metric name="FakeTraitNumericDetail">
+            <metricStatic value="555"/>
+         </metric>
+         <metric name="trait1"><metricStatic value="111111"/></metric>
+         <metric name="trait2"><metricStatic value="22.2222"/></metric>
+         <metric name="trait3"><metricStatic value="333333"/></metric>
+         <metric name="trait4"><metricStatic value="444444"/></metric>
+         <metric name="trait5"><metricStatic value="555.555"/></metric>
+         <metric name="trait6"><metricStatic value="66666.6"/></metric>
+         <metric name="trait7"><metricStatic value="77.77"/></metric>
+         <metric name="trait8"><metricStatic value="8.88888"/></metric>
+         <metric name="trait9"><metricStatic value="999999"/></metric>         
+
+         <operationResults name="testOperation1">
+            <operationFailure>
+               <message>Error occurred while trying to access jms queue.</message>
+            </operationFailure>
+         </operationResults>
+         <operationResults name="testOperation2">
+            <operationSuccess>
+               <message>Test Operation2 completed successfully.</message>
+            </operationSuccess>
+         </operationResults>
+         <operationResults name="testOperation3">
+            <operationTimedOut timeToWait="6000"/>
+         </operationResults>
+         <operationResults name="testOperation4">
+            <operationSuccess>
+               <message>Test Operation4 completed successfully.</message>
+            </operationSuccess>
+         </operationResults>
+         <operationResults name="testOperation5">
+            <operationSuccess>
+               <message>Test Operation5 completed successfully.</message>
+            </operationSuccess>
+         </operationResults>
+      </resource>
+
+      <resource type="jms-topic">
+         <property name="jndiName" value="Topic2"/>
+         <property name="redeliveryDelay" value="200"/>
+         <property name="redeliveryLimit" value="2000"/>
+
+         <metric name="trait1"><metricStatic value="4444.44"/></metric>
+         <metric name="trait2"><metricStatic value="33.3333"/></metric>
+         <metric name="trait3"><metricStatic value="222.22"/></metric>
+         <metric name="trait4"><metricStatic value="11.1111"/></metric>
+
+         <metric name="DurableSubscriptionCount">
+            <metricStatic value="211"/>
+         </metric>
+         <metric name="NonDurableSubscriptionCount">
+            <metricStatic value="66"/>
+         </metric>
+      </resource>
+
+      <resource type="jms-topic">
+         <property name="jndiName" value="Topic3"/>
+         <property name="redeliveryDelay" value="300"/>
+         <property name="redeliveryLimit" value="3000"/>
+      </resource>
+
+   </server>
+
+</scenario>

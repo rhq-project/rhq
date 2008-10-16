@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<scenario xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="urn:xmlns:jboss.org:on-perftest">
+
+   <resource type="server-a">
+      <simpleResourceGenerator property="on.perftest.server-a-count"/>
+      <simpleContentGenerator packageType="artifact1" numberOfPackages="10" property="on.perftest.artifact1-count"/>
+   </resource>
+
+</scenario>

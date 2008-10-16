@@ -18,8 +18,7 @@
 
    <scm>
       <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/apt/</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/apt/
-      </developerConnection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/apt/</developerConnection>
    </scm>
 
    <properties>

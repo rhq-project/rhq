@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<scenario xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="urn:xmlns:jboss.org:on-perftest">
+
+   <!--
+        This scenario will try to mimic an "average" inventory with a typical number of metrics, plugin
+        configuration properties and packages per resource.
+
+        This scenario will create a number of servers, each with a number of services. Some services (those of type
+        service-ab will be children of each instance of service-a). All are configurable through the properties
+        specified in this file. For example, to create 10 servers, each with 25 services, and each of those services
+        having 2 child services, the following should be passed to the agent:
+
+        -Don.perftest.scenario=configurable-average
+        -Don.perftest.server-a-count=10
+        -Don.perftest.service-a-count=25
+        -Don.perftest.service-ab-count=2
+        
+        You can optionally indicate how many content packages to have:
+        -Don.perftest.package[0-4]-count
+        -Don.perftest.childPackage0-count
+   -->
+
+   <resource type="server-a">
+      <simpleResourceGenerator property="on.perftest.server-a-count"/>
+      <simpleConfigurationGenerator/>
+      <simpleNumericMeasurementGenerator/>
+      <simpleContentGenerator packageType="package0" property="on.perftest.package0-count" numberOfPackages="0" />
+      <simpleContentGenerator packageType="package1" property="on.perftest.package1-count" numberOfPackages="1" />
+      <simpleContentGenerator packageType="package2" property="on.perftest.package2-count" numberOfPackages="2" />
+      <simpleContentGenerator packageType="package3" property="on.perftest.package3-count" numberOfPackages="3" />
+      <simpleContentGenerator packageType="package4" property="on.perftest.package4-count" numberOfPackages="4" />
+   </resource>
+
+   <resource type="service-a">
+      <simpleResourceGenerator property="on.perftest.service-a-count"/>
+      <simpleConfigurationGenerator/>
+      <simpleNumericMeasurementGenerator/>
+      <simpleContentGenerator packageType="childPackage0" property="on.perftest.childPackage0-count" numberOfPackages="1" />
+   </resource>
+
+   <resource type="service-ab">
+      <simpleResourceGenerator property="on.perftest.service-ab-count"/>
+      <simpleConfigurationGenerator/>
+      <simpleNumericMeasurementGenerator/>
+   </resource>
+
+</scenario>

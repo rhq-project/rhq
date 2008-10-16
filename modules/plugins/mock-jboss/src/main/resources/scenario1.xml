@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<scenario scenario-name="Basic Scenario #1"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="urn:xmlns:jboss.org:on-mock-jboss-plugin">
+
+   <server server-name="JON Server"
+           install-path="/opt/jon/jon-2.0.0/"
+           version="4.0.4.GA">
+
+      <resource type="xa-datasource">
+         <property name="jndiName" value="RHQDS"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/hqdb?protocolVersion=2"/>
+         <property name="username" value="hqadmin"/>
+         <property name="password" value="hqadmin"/>
+         <metric name="connectionCount">
+            <metricStatic value="12"/>
+         </metric>
+         <metric name="availableConnectionCount">
+            <metricStatic value="20"/>
+         </metric>
+         <metric name="maxConnectionsInUse">
+            <metricStatic value="15"/>
+         </metric>
+      </resource>
+      <resource type="local-datasource" availability="down">
+         <property name="jndiName" value="DefaultDS"/>
+         <property name="connectionUrl" value="jdbc:oracle:thin:@dev33.qa.atl.jboss.com:1521:jon"/>
+         <property name="username" value="rhqadmin"/>
+         <property name="password" value="rhqadmin"/>
+      </resource>
+
+      <resource type="jms-queue">
+         <property name="jndiName" value="EventQueue"/>
+         <property name="redeliveryDelay" value="30"/>
+         <property name="redeliveryLimit" value="5"/>
+         <property name="destinationManager" value="jboss.mq:service=DestinationManager"/>
+         <property name="securityManager" value="jboss.mq:service=SecurityManager"/>
+
+         <metric name="message-count">
+            <metricIncrement baseValue="0" incrementValue="3"/>
+         </metric>
+         <metric name="consumer-count">
+            <metricStatic value="6"/>
+         </metric>
+      </resource>
+      <resource type="jms-topic">
+         <property name="jndiName" value="InventoryTopic"/>
+         <property name="destinationManager" value="jboss.mq:service=DestinationManager"/>
+         <property name="securityManager" value="jboss.mq:service=SecurityManager"/>
+      </resource>
+
+   </server>
+
+   <server server-name="JBoss Application Server 4.0.4.GA"
+           install-path="/opt/jboss/jboss-4.0.4.GA"
+           version="4.0.4.GA">
+
+      <resource type="no-tx-datasource">
+         <property name="jndiName" value="xswtp-db"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/xswtp?protocolVersion=2"/>
+         <property name="username" value="xswtp"/>
+         <property name="password" value="xswtppass"/>
+         
+         <artifact name="xswtp-db.xml" artifactKey="descriptor" type="datasourceDescriptor">
+            <revisionIdentifierIncrement baseValue="1" incrementFrequency="1" incrementValue="1">
+               <revisionData
+                  md5="e7bf381ecadb8977c0a13ab3dc2d09c9"
+                  characterSet="UTF-8"
+                  contentSize="1787"
+                  contentFileName="scenario1.xml"
+               />
+            </revisionIdentifierIncrement>
+         </artifact>
+         <artifact name="Artifact 2" artifactKey="art2" type="datasourceArtifact2">
+            <revisionIdentifierIncrement baseValue="2" incrementFrequency="1" incrementValue="2">
+               <revisionData
+                  md5="1d37fe60ed4aa2b81a760ba68646842f"
+                  contentSize="342775"
+               />
+            </revisionIdentifierIncrement>
+         </artifact>
+      </resource>
+      <resource type="local-datasource">
+         <property name="jndiName" value="dms-db"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/dms"/>
+         <property name="username" value="dms"/>
+         <property name="password" value="dmspass"/>
+
+         <operationResults name="start">
+            <operationSuccess>
+               <message>Local Datasource dms-db has been started correctly.</message>
+            </operationSuccess>
+         </operationResults>
+      </resource>
+      <resource type="xa-datasource">
+         <property name="jndiName" value="mcsoa-core-db"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/mcsoaCore"/>
+         <property name="username" value="mcsoa"/>
+         <property name="password" value="mcsoapass"/>
+
+         <operationResults name="start">
+            <operationFailure>
+               <message>Error occurred while trying to access the datasource descriptor.</message>
+            </operationFailure>
+         </operationResults>
+      </resource>
+      <resource type="no-tx-datasource">
+         <property name="jndiName" value="mcsoa-pubsub-db"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/mcsoaPubSub"/>
+         <property name="username" value="mcsoaPubSub"/>
+         <property name="password" value="mcsoaPubSubPass"/>
+
+         <operationResults name="start">
+            <operationTimedOut timeToWait="70000"/>
+         </operationResults>
+      </resource>
+
+      <resource type="jms-queue">
+         <property name="jndiName" value="AfatdsAgentQueue"/>
+      </resource>
+      <resource type="jms-queue">
+         <property name="jndiName" value="DmsAgentQueue"/>
+      </resource>     
+
+      <resource type="jms-topic">
+         <property name="jndiName" value="AedTopic"/>
+      </resource>
+
+      <resource type="jms-topic">
+         <property name="jndiName" value="FakeMetricsTopic"/>
+         <metric name="FakeByteMetricSummary">
+            <metricStatic value="123456789"/>
+             <!--should be rendered to 117.7 MB -->
+         </metric>
+         <metric name="FakeBitMetricSummary">
+            <metricStatic value="987654321"/>
+             <!--should be rendered to 941.9 Mb -->
+         </metric>
+         <metric name="FakeTimeMetricSummary">
+            <metricStatic value="1234567"/>
+             <!--should be rendered to 14 days 06:56:07 -->
+         </metric>
+         <metric name="FakeByteMetricDetail">
+            <metricStatic value="98765"/>
+             <!--should be rendered to 96.4 KB -->
+         </metric>
+         <metric name="FakeBitMetricDetail">
+            <metricStatic value="12345"/>
+             <!--should be rendered to 12.1 Kb -->
+         </metric>
+         <metric name="FakeTimeMetricDetail">
+            <metricStatic value="9876"/>
+             <!--should be rendered to 02:44:36 -->
+         </metric>
+
+         <metric name="FakeTraitNumericSummary">
+            <metricStatic value="333"/>
+         </metric>
+         <metric name="FakeTraitNumericDetail">
+            <metricStatic value="555"/>
+         </metric>
+      </resource>
+
+
+   </server>
+
+</scenario>

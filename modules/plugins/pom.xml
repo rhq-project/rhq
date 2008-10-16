@@ -84,34 +84,23 @@
     <module>database</module>
     <module>postgres</module>
 
-  </modules>
-
-  <profiles>
-
-    <!-- build plugins for the community release. This can include any plugin that actually 
-         builds, as opposed to the supported RHQ plugins above.
-    -->
-    <profile>
-      <id>community</id>
-      <modules>
-
-        <module>apt</module>
-        <module>grub</module>
+    <module>apt</module>
+    <module>bluetooth</module>        
+    <module>grub</module>
 <!--        <module>hardware</module> -->
-        <module>hosts</module>
-        <module>hudson</module>
-        <module>jira</module>
-        <module>mysql</module>
-        <module>netservices</module>
+    <module>hosts</module>
+    <module>hudson</module>
+    <module>jira</module>
+    <module>mock-jboss</module>        
+    <module>mysql</module>
+    <module>netservices</module>
 <!--        <module>onewire</module> -->
-        <module>oracle</module>
-        <module>snmptrapd</module>
-        <module>sshd</module>
-        <module>virt</module>
+    <module>oracle</module>
+    <module>perftest</module>        
+    <module>snmptrapd</module>
+    <module>sshd</module>
+    <module>virt</module>
 
-      </modules>
-    </profile>
-
-  </profiles>
+  </modules>
 
 </project>

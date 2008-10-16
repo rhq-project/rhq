@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<scenario scenario-name="Basic Scenario #1"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="urn:xmlns:jboss.org:on-mock-jboss-plugin">
+
+   <server server-name="JON Server"
+           install-path="/opt/jon/jon-2.0.0/"
+           version="4.0.4.GA">
+
+      <resource type="xa-datasource">
+         <property name="jndiName" value="RHQDS"/>
+         <property name="connectionUrl" value="jdbc:postgresql://localhost:9432/hqdb?protocolVersion=2"/>
+         <property name="username" value="hqadmin"/>
+         <property name="password" value="hqadmin"/>
+         <metric name="connectionCount">
+            <metricStatic value="12"/>
+         </metric>
+         <metric name="availableConnectionCount">
+            <metricStatic value="20"/>
+         </metric>
+         <metric name="maxConnectionsInUse">
+            <metricStatic value="15"/>
+         </metric>
+      </resource>
+      <resource type="local-datasource" availability="down">
+         <property name="jndiName" value="DefaultDS"/>
+         <property name="connectionUrl" value="jdbc:oracle:thin:@dev33.qa.atl.jboss.com:1521:jon"/>
+         <property name="username" value="rhqadmin"/>
+         <property name="password" value="rhqadmin"/>
+      </resource>
+
+      <resource type="jms-queue">
+         <property name="jndiName" value="EventQueue"/>
+         <property name="redeliveryDelay" value="30"/>
+         <property name="redeliveryLimit" value="5"/>
+         <property name="destinationManager" value="jboss.mq:service=DestinationManager"/>
+         <property name="securityManager" value="jboss.mq:service=SecurityManager"/>
+
+         <metric name="message-count">
+            <metricIncrement baseValue="0" incrementValue="3"/>
+         </metric>
+         <metric name="consumer-count">
+            <metricStatic value="6"/>
+         </metric>
+      </resource>
+      <resource type="jms-topic">
+         <property name="jndiName" value="InventoryTopic"/>
+         <property name="destinationManager" value="jboss.mq:service=DestinationManager"/>
+         <property name="securityManager" value="jboss.mq:service=SecurityManager"/>
+      </resource>
+
+   </server>
+
+</scenario>

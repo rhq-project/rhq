@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:mock="urn:xmlns:jboss.org:on-mock-jboss-plugin"
+           targetNamespace="urn:xmlns:jboss.org:on-mock-jboss-plugin"
+           elementFormDefault="qualified"
+           jaxb:version="2.0"
+           xmlns:jaxb="http://java.sun.com/xml/ns/jaxb">
+
+   <xs:element name="scenario">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="server" type="mock:scenarioServer" minOccurs="0" maxOccurs="unbounded"/>
+         </xs:sequence>
+         <xs:attribute name="scenario-name"/>
+      </xs:complexType>
+   </xs:element>
+
+   <xs:complexType name="scenarioServer">
+      <xs:sequence>
+         <xs:element name="resource" type="mock:scenarioResource" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element name="metric" type="mock:scenarioMetric" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element name="operationResults" type="mock:scenarioOperationResult" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="server-name"/>
+      <xs:attribute name="install-path"/>
+      <xs:attribute name="version"/>
+   </xs:complexType>
+
+   <xs:complexType name="scenarioResource">
+      <xs:sequence>
+         <xs:element name="configurationError" type="mock:scenarioResourceConfigurationError" minOccurs="0" maxOccurs="1"/>
+         <xs:element name="property" type="mock:scenarioProperty" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element name="metric" type="mock:scenarioMetric" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element name="operationResults" type="mock:scenarioOperationResult" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element name="artifact" type="mock:scenarioArtifact" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="type" use="required"/>
+      <xs:attribute name="name" use="optional"/>
+      <xs:attribute name="key" use="optional"/>
+      <xs:attribute name="availability" use="optional" type="mock:scenarioAvailability" default="up"/>
+   </xs:complexType>
+
+   <xs:complexType name="scenarioResourceConfigurationError">
+      <xs:attribute name="message"/>
+   </xs:complexType>
+
+   <!-- Availability =============================================== -->
+
+   <xs:simpleType name="scenarioAvailability">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="up"/>
+         <xs:enumeration value="down"/>
+         <xs:enumeration value="unknown"/>
+         <xs:enumeration value="suspect"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+   <!-- Configuration =============================================== -->
+
+   <xs:complexType name="scenarioProperty">
+      <xs:sequence>
+         <xs:element name="configurationError" type="mock:scenarioPropertyConfigurationError" minOccurs="0" maxOccurs="1"/>
+      </xs:sequence>
+      <xs:attribute name="name"/>
+      <xs:attribute name="value"/>
+   </xs:complexType>
+
+   <xs:complexType name="scenarioPropertyConfigurationError">
+      <xs:attribute name="message"/>
+   </xs:complexType>
+
+   <!-- Metrics =============================================== -->
+
+   <xs:complexType name="scenarioMetric">
+      <xs:sequence>
+         <xs:element ref="mock:metricPolicy" minOccurs="1" maxOccurs="1"/>
+      </xs:sequence>
+      <xs:attribute name="name"/>
+   </xs:complexType>
+
+   <xs:element name="metricPolicy" type="mock:scenarioMetricPolicy" abstract="true"/>
+   <xs:complexType name="scenarioMetricPolicy">
+   </xs:complexType>
+
+   <xs:element name="metricStatic" type="mock:metricStatic" substitutionGroup="mock:metricPolicy"/>
+   <xs:complexType name="metricStatic">
+      <xs:complexContent>
+         <xs:extension base="mock:scenarioMetricPolicy">
+            <xs:attribute name="value" type="xs:double" use="required"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:element name="metricRandomDouble" type="mock:metricRandomDouble" substitutionGroup="mock:metricPolicy"/>
+   <xs:complexType name="metricRandomDouble">
+      <xs:complexContent>
+         <xs:extension base="mock:scenarioMetricPolicy">
+            <xs:attribute name="minimumValue" type="xs:double" use="required"/>
+            <xs:attribute name="maximumValue" type="xs:double" use="required"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:element name="metricRandomInteger" type="mock:metricRandomInteger" substitutionGroup="mock:metricPolicy"/>
+   <xs:complexType name="metricRandomInteger">
+      <xs:complexContent>
+         <xs:extension base="mock:scenarioMetricPolicy">
+            <xs:attribute name="minimumValue" type="xs:int" use="required"/>
+            <xs:attribute name="maximumValue" type="xs:int" use="required"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:element name="metricIncrement" type="mock:metricIncrement" substitutionGroup="mock:metricPolicy"/>
+   <xs:complexType name="metricIncrement">
+      <xs:complexContent>
+         <xs:extension base="mock:scenarioMetricPolicy">
+            <xs:attribute name="baseValue" type="xs:int" use="required"/>
+            <xs:attribute name="incrementValue" type="xs:int" use="required"/>
+            <xs:attribute name="incrementFrequency" type="xs:int" default="1"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <!-- Operations =============================================== -->
+
+   <xs:complexType name="scenarioOperationResult">
+      <xs:sequence>
+         <xs:element ref="mock:operationResultPolicy" minOccurs="1" maxOccurs="1"/>
+      </xs:sequence>
+      <xs:attribute name="name" use="required"/>
+   </xs:complexType>
+
+   <xs:element name="operationResultPolicy" type="mock:scenarioOperationResultPolicy" abstract="true"/>
+   <xs:complexType name="scenarioOperationResultPolicy">
+   </xs:complexType>
+
+   <xs:element name="operationSuccess" type="mock:operationSuccess" substitutionGroup="mock:operationResultPolicy"/>
+   <xs:complexType name="operationSuccess">
+      <xs:complexContent>
+         <xs:extension base="mock:scenarioOperationResultPolicy">
+            <xs:sequence>
+               <xs:element name="message" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            </xs:sequence>
+            <xs:attribute name="echoParameters" type="xs:boolean" default="false"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:element name="operationFailure" type="mock:operationFailure" substitutionGroup="mock:operationResultPolicy"/>
+   <xs:complexType name="operationFailure">
+      <xs:complexContent>
+         <xs:extension base="mock:scenarioOperationResultPolicy">
+            <xs:sequence>
+               <xs:element name="message" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:element name="operationTimedOut" type="mock:operationTimedOut" substitutionGroup="mock:operationResultPolicy"/>
+   <xs:complexType name="operationTimedOut">
+      <xs:complexContent>
+         <xs:extension base="mock:scenarioOperationResultPolicy">
+            <xs:attribute name="timeToWait" type="xs:int" use="required"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <!-- Artifacts =============================================== -->
+
+   <xs:complexType name="scenarioArtifact">
+      <xs:sequence>
+         <xs:element ref="mock:artifactRevisionPolicy" minOccurs="1" maxOccurs="1"/>
+      </xs:sequence>
+      <xs:attribute name="name" use="required"/>
+      <xs:attribute name="artifactKey" use="required"/>
+      <xs:attribute name="type" use="required"/>
+   </xs:complexType>
+
+   <xs:complexType name="revisionData">
+      <xs:attribute name="contentSize" type="xs:int"/>
+      <xs:attribute name="md5"/>
+      <xs:attribute name="mimeType"/>
+      <xs:attribute name="characterSet"/>
+      <xs:attribute name="owner"/>
+      <xs:attribute name="createdDate" type="xs:dateTime"/>
+      <xs:attribute name="lastModifiedDate" type="xs:dateTime"/>
+      <xs:attribute name="lastAccessedDate" type="xs:dateTime"/>
+      <xs:attribute name="contentFileName"/>
+   </xs:complexType>
+
+   <xs:element name="artifactRevisionPolicy" type="mock:scenarioArtifactRevisionPolicy" abstract="true"/>
+   <xs:complexType name="scenarioArtifactRevisionPolicy">
+   </xs:complexType>
+
+   <xs:element name="revisionOneTime" type="mock:revisionOneTime" substitutionGroup="mock:artifactRevisionPolicy"/>
+   <xs:complexType name="revisionOneTime">
+      <xs:complexContent>
+         <xs:extension base="mock:scenarioArtifactRevisionPolicy">
+            <xs:sequence>
+               <xs:element name="revisionData" type="mock:revisionData" minOccurs="1" maxOccurs="1"/>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:element name="revisionIdentifierIncrement" type="mock:revisionIdentifierIncrement"
+               substitutionGroup="mock:artifactRevisionPolicy"/>
+   <xs:complexType name="revisionIdentifierIncrement">
+      <xs:complexContent>
+         <xs:extension base="mock:scenarioArtifactRevisionPolicy">
+            <xs:sequence>
+               <xs:element name="revisionData" type="mock:revisionData" minOccurs="1" maxOccurs="1"/>
+            </xs:sequence>
+            <xs:attribute name="baseValue" type="xs:int" use="required"/>
+            <xs:attribute name="incrementValue" type="xs:int" use="required"/>
+            <xs:attribute name="incrementFrequency" type="xs:int" default="1"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+</xs:schema>

@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.resource;
 
 import java.io.Externalizable;
@@ -600,7 +600,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 6), " // we want CREATE_CHILD_RESOURCES, 6
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 5)) " // we want DELETE_RESOURCES, 5
         + "FROM Resource res " //
-        + "     LEFT JOIN res.parentResource res " //
+        + "     LEFT JOIN res.parentResource parent " //
         + "     LEFT JOIN res.availability a WITH a.endTime is null " //
         + "WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "  AND (:category = res.resourceType.category OR :category is null) " //
@@ -950,10 +950,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
         this.id = id;
     }
 
-    public Resource(@NotNull
-    String resourceKey, @NotNull
-    String name, @NotNull
-    ResourceType type) {
+    public Resource(@NotNull String resourceKey, @NotNull String name, @NotNull ResourceType type) {
         this.resourceKey = resourceKey;
         this.name = name;
         this.resourceType = type;
@@ -986,8 +983,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return this.name;
     }
 
-    public void setName(@NotNull
-    String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 
@@ -1132,8 +1128,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return parentResource;
     }
 
-    public void setParentResource(@Nullable
-    Resource parentResource) {
+    public void setParentResource(@Nullable Resource parentResource) {
         this.parentResource = parentResource;
     }
 

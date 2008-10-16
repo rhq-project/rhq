@@ -125,6 +125,10 @@ public class ConfigurationManagerTest {
                 response.setStatus(ConfigurationUpdateStatus.FAILURE);
             }
         }
+
+        public void persistUpdatedResourceConfiguration(int resourceId, Configuration resourceConfiguration) {
+        }
+
     }
 
     private class MockConfigurationFacet implements ConfigurationFacet {

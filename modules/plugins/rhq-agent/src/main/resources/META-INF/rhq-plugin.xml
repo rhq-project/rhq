@@ -291,6 +291,9 @@
             <c:simple-property name="rhq.agent.plugins.content-discovery.initial-delay-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="30" displayName="Content Discovery Initial Delay" description="Startup delay before the first content discovery is run" />
             <c:simple-property name="rhq.agent.plugins.content-discovery.period-secs" type="integer" units="seconds" activationPolicy="restart" required="false" default="10" displayName="Content Discovery Period" description="Time between content discoveries" />
             <c:simple-property name="rhq.agent.plugins.content-discovery.threadpool-size" type="integer" activationPolicy="restart" required="false" default="10" displayName="Content Discovery Threadpool Size" description="Number of concurrent content discoveries that can be run" />
+            <c:simple-property name="rhq.agent.plugins.configuration-discovery.intial-delay" type="integer" activationPolicy="restart" required="false" default="10" displayName="Configuration Change Detection Startup Delay" description="Time before configuration change detection starts in seconds" />
+            <c:simple-property name="rhq.agent.plugins.configuration-discovery.period" type="integer" activationPolicy="restart" required="false" default="10" displayName="Configuration Change Detection Interval" description="Time period for checking for configuration changes in seconds" />
+
          </c:group>
          <c:group name="comm-endpoints" displayName="Communication Endpoints" hiddenByDefault="false">
             <c:description>Communication settings that define the endpoints of this RHQ Agent and its RHQ Server</c:description>

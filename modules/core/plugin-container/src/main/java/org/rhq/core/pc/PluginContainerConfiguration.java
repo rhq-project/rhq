@@ -87,6 +87,15 @@ public class PluginContainerConfiguration {
     private static final String CONTENT_DISCOVERY_THREADCOUNT_PROP = PROP_PREFIX + "content-discovery-threadpoolsize";
     public static final int CONTENT_DISCOVERY_THREADCOUNT_DEFAULT = 10;
 
+
+    // Configuration -------
+    private static final String CONFIGURATION_DISCOVERY_INITIAL_DELAY_PROP = PROP_PREFIX + "configuration-discovery-initial-delay";
+    public static final long CONFIGURATION_DISCOVERY_INITIAL_DELAY_DEFAULT = 300L; // in seconds
+    private static final String CONFIGURATION_DISCOVERY_PERIOD_PROP = PROP_PREFIX + "configuration-discovery-initial-delay";
+    public static final long CONFIGURATION_DISCOVERY_PERIOD_DEFAULT = 3600L; // in seconds
+
+
+
     // Operation ----------
 
     private static final String OPERATION_INVOKER_THREADCOUNT_PROP = PROP_PREFIX + "operation-invoker-threadpoolsize";
@@ -405,6 +414,26 @@ public class PluginContainerConfiguration {
      */
     public void setContentDiscoveryThreadPoolSize(int size) {
         configuration.put(CONTENT_DISCOVERY_THREADCOUNT_PROP, size);
+    }
+
+
+    public long getConfigurationDiscoveryInitialDelay() {
+        Long delay = (Long) configuration.get(CONFIGURATION_DISCOVERY_INITIAL_DELAY_PROP);
+        return (delay == null) ? CONFIGURATION_DISCOVERY_INITIAL_DELAY_DEFAULT : delay.longValue();
+    }
+
+    public void setConfigurationDiscoveryInitialDelay(long delay) {
+        configuration.put(CONFIGURATION_DISCOVERY_INITIAL_DELAY_PROP, delay);
+    }
+
+
+    public long getConfigurationDiscoveryPeriod() {
+        Long period = (Long) configuration.get(CONFIGURATION_DISCOVERY_PERIOD_PROP);
+        return (period == null) ? CONFIGURATION_DISCOVERY_PERIOD_DEFAULT : period.longValue();
+    }
+
+    public void setConfigurationDiscoveryPeriod(long period) {
+        configuration.put(CONFIGURATION_DISCOVERY_PERIOD_PROP, period);
     }
 
     /**

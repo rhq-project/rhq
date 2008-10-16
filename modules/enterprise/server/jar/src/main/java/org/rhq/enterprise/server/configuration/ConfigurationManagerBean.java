@@ -157,7 +157,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
             update.setErrorMessage(response.getErrorMessage());
         }
 
-        // Flush before merging to ensure the update has been persisted and avoid StaleStateExceptions. 
+        // Flush before merging to ensure the update has been persisted and avoid StaleStateExceptions.
         entityManager.flush();
         entityManager.merge(update);
     }
@@ -594,6 +594,24 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
             }
         }
 
+
+        ResourceConfigurationUpdate current;
+
+        // Get the latest configuration as known to the server (i.e. persisted in the DB).
+        try {
+            Query query = entityManager
+                .createNamedQuery(ResourceConfigurationUpdate.QUERY_FIND_CURRENTLY_ACTIVE_CONFIG);
+            query.setParameter("resourceId", resourceId);
+            current = (ResourceConfigurationUpdate) query.getSingleResult();
+            resource = current.getResource();
+        } catch (NoResultException nre) {
+            current = null; // The resource hasn't been successfully configured yet.
+        }
+
+        // If the configuration has not changed since the last persisted version do not save a new
+        // version.
+        if (current == null || !newConfiguration.equals(current.getConfiguration())) {
+
             // let's make sure all IDs are zero - we want to persist a brand new copy
             Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
 
@@ -615,7 +633,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
             }
 
             return newUpdateRequest;
+        } else {
+            return null;
         }
+    }
 
     public void completeResourceConfigurationUpdate(ConfigurationUpdateResponse response) {
         log.debug("Received a configuration-update-completed message: " + response);
@@ -625,6 +646,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         // find the current update request that is persisted - this is the one that is being reported as being complete
         persistedRequest = entityManager.find(ResourceConfigurationUpdate.class, response.getConfigurationUpdateId());
         if (persistedRequest == null) {
+
             throw new IllegalStateException(
                 "The completed request passed in does not match any request for any resource in inventory: " + response);
         }
@@ -822,14 +844,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
          * processing of this method; if we try to create and attach the PluginConfigurationUpdate children
          * to the parent aggregate before the aggregate is actually persisted, we'll get StaleStateExceptions
          * from Hibernate because of our use of flush/clear (we're trying to update the aggregate before it
-         * actually exists); this is also why we need to retrieve the aggregate and overlord fresh in the loop 
+         * actually exists); this is also why we need to retrieve the aggregate and overlord fresh in the loop
          */
         AggregatePluginConfigurationUpdate newAggregateUpdate = new AggregatePluginConfigurationUpdate(group,
             pluginConfigurationUpdate, whoami.getName());
         int updateId = configurationManager.createAggregateConfigurationUpdate(newAggregateUpdate);
 
-        /* 
-         * efficiently create all resource-level plugin configuration update objects by 
+        /*
+         * efficiently create all resource-level plugin configuration update objects by
          * iterating the implicit list in smaller, more memory-manageable chunks
          */
         int pageNumber = 0;
@@ -870,7 +892,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         jobDataMap.putAsString(AbstractAggregateConfigurationUpdateJob.DATAMAP_INT_CONFIG_GROUP_UPDATE_ID, updateId);
         jobDataMap.putAsString(AbstractAggregateConfigurationUpdateJob.DATAMAP_INT_SUBJECT_ID, whoami.getId());
 
-        /* 
+        /*
          * acquire quartz objects and schedule the aggregate update, but deferred the execution for 10 seconds
          * because we need this transaction to complete so that the data is available when the quartz job triggers
          */

@@ -55,4 +55,16 @@ public interface ConfigurationServerService {
      */
     @Asynchronous(guaranteedDelivery = true)
     void completeConfigurationUpdate(ConfigurationUpdateResponse response);
+
+
+    /**
+     * This is for when the agent needs to notify the server that a new Resource configuration has been detected
+     * on the agent side. This happens when a resource configuration is changed outside of this system and is
+     * detected on its regularly scheduled checks for update.
+     * @param resourceId the resourceId to update
+     * @param resourceConfiguration the newly detected configuration
+     */
+    @Asynchronous(guaranteedDelivery = true)
+    void persistUpdatedResourceConfiguration(int resourceId, Configuration resourceConfiguration);
+
 }

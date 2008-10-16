@@ -24,9 +24,13 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 
 public class ConfigurationServerServiceImpl implements ConfigurationServerService {
     private static final Log LOG = LogFactory.getLog(ConfigurationServerServiceImpl.class);
@@ -42,17 +46,35 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
         int configurationUpdateId = response.getConfigurationUpdateId();
 
         ResourceConfigurationUpdate update = configurationManager.getResourceConfigurationUpdate(subjectManager
-            .getOverlord(), configurationUpdateId);
+                .getOverlord(), configurationUpdateId);
 
         if (update != null) {
             Resource resource = update.getResource();
 
             if (resource != null) {
                 LOG.info("ConfigurationUpdateResponse status for " + "Resource" + "[ " + "id = " + resource.getId()
-                    + ", " + "name = " + resource.getName() + "] " + "was " + response.getStatus());
+                        + ", " + "name = " + resource.getName() + "] " + "was " + response.getStatus());
             }
         }
 
         configurationManager.completeResourceConfigurationUpdate(response);
+    }
+
+    public void persistUpdatedResourceConfiguration(int resourceId, Configuration resourceConfiguration) {
+        ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+
+        Subject overlord = subjectManager.getOverlord();
+        configurationManager.persistNewResourceConfigurationUpdateHistory(
+                overlord,
+                resourceId,
+                resourceConfiguration,
+                ConfigurationUpdateStatus.SUCCESS,
+                null);
+
+        Resource resource = resourceManager.getResourceById(overlord, resourceId);
+        resource.setResourceConfiguration(resourceConfiguration.deepCopy(false));
+        resourceManager.updateResource(overlord, resource);
     }
 }

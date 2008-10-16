@@ -23,11 +23,7 @@
 package org.rhq.core.pc.configuration;
 
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,6 +39,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
@@ -65,7 +62,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     private static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
 
     private PluginContainerConfiguration pluginContainerConfiguration;
-    private ExecutorService threadPool;
+    private ScheduledExecutorService threadPool;
 
     public ConfigurationManager() {
         super(ConfigurationAgentService.class);
@@ -74,8 +71,22 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     public void initialize() {
         LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>(10000);
         LoggingThreadFactory threadFactory = new LoggingThreadFactory(SENDER_THREAD_POOL_NAME, true);
-        threadPool = new ThreadPoolExecutor(1, 100, // TODO [mazz]: do we want to make this configurable?
-            1000, TimeUnit.MILLISECONDS, queue, threadFactory);
+        threadPool = new ScheduledThreadPoolExecutor(1, threadFactory);
+
+
+        ConfigurationCheckExecutor configurationChecker =
+                new ConfigurationCheckExecutor(this, getConfigurationServerService(),
+                        PluginContainer.getInstance().getInventoryManager());
+
+
+        if (pluginContainerConfiguration.getConfigurationDiscoveryPeriod() != 0
+               && pluginContainerConfiguration.isInsideAgent()) {
+            threadPool.scheduleAtFixedRate(
+                    configurationChecker,
+                    pluginContainerConfiguration.getConfigurationDiscoveryInitialDelay(),
+                    pluginContainerConfiguration.getConfigurationDiscoveryPeriod(),
+                    TimeUnit.SECONDS);
+        }
     }
 
     public void shutdown() {

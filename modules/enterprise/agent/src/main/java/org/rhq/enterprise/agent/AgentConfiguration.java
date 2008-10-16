@@ -1034,6 +1034,16 @@ public class AgentConfiguration {
         config.setContentDiscoveryInitialDelay(con_initial_delay);
         config.setContentDiscoveryPeriod(con_period);
 
+        config.setConfigurationDiscoveryInitialDelay(
+                m_preferences.getLong(
+                        AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY,
+                        AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY));
+
+        config.setConfigurationDiscoveryPeriod(
+                m_preferences.getLong(
+                        AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_PERIOD,
+                        AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_PERIOD));
+
         if (name != null) {
             config.setContainerName(name);
         }

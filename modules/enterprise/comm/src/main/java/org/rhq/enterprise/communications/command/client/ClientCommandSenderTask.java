@@ -39,7 +39,6 @@ import org.rhq.enterprise.communications.command.impl.generic.GenericCommandResp
 import org.rhq.enterprise.communications.command.impl.remotepojo.RemotePojoInvocationCommand;
 import org.rhq.enterprise.communications.i18n.CommI18NFactory;
 import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
-import org.rhq.enterprise.communications.util.NotPermittedException;
 
 /**
  * This is runnable task that will be queued in the executor pool within the {@link ClientCommandSender}. It is a
@@ -105,20 +104,7 @@ class ClientCommandSenderTask implements Callable<CommandResponse>, Runnable {
         CommandResponse response;
 
         try {
-            boolean retry;
-            do {
-                retry = false;
-
-                response = send(m_sender, m_cnc);
-
-                Throwable exception = response.getException();
-                if ((exception != null) && (exception instanceof NotPermittedException)) {
-                    long pause = ((NotPermittedException) exception).getSleepBeforeRetry();
-                    LOG.debug(CommI18NResourceKeys.COMMAND_NOT_PERMITTED, m_cnc.getCommand(), pause);
-                    retry = true;
-                    Thread.sleep(pause);
-                }
-            } while (retry);
+            response = send(m_sender, m_cnc);
         } catch (Exception e) {
             throw e;
         } catch (Throwable t) {

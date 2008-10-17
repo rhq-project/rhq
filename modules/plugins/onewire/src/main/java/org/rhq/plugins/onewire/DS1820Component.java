@@ -27,7 +27,6 @@ import com.dalsemi.onewire.container.OneWireContainer10;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -46,9 +45,8 @@ public class DS1820Component implements ResourceComponent<OneWireAdapterComponen
 
     DSPortAdapter adapter;
     OneWireContainer10 container;
-    boolean wantCelcius = true;
     OneWireAdapterComponent parent;
-    private Log log = LogFactory.getLog(DS1820Component.class);
+    private static final Log log = LogFactory.getLog(DS1820Component.class);
 
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
@@ -75,19 +73,13 @@ public class DS1820Component implements ResourceComponent<OneWireAdapterComponen
         adapter = parent.getAdapter();
         String device = context.getResourceKey();
         container = (OneWireContainer10) adapter.getDeviceContainer(device);
-        PropertySimple unitProp = context.getPluginConfiguration().getSimple("unit");
-        if (unitProp != null) {
-            Boolean unit = unitProp.getBooleanValue();
-            if (unit != null)
-                wantCelcius = unit.booleanValue();
-        }
     }
 
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#stop()
      */
     public void stop() {
-        ; // nothing to do
+        // nothing to do
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
@@ -108,10 +100,6 @@ public class DS1820Component implements ResourceComponent<OneWireAdapterComponen
                 if (temp > 75.0) {
                     good = false;
                     log.info("Found a spike at " + temp);
-                }
-
-                if (!wantCelcius) { // Fahrenheit then
-                    temp = 1.8 * temp + 32;
                 }
 
                 if (good) {

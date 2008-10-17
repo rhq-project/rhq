@@ -14,7 +14,7 @@
            class="OneWireAdapterComponent">
            
       <plugin-configuration>
-         <c:simple-property name="type" displayName="Adapter type" required="true" default="DS9490"/>
+         <c:simple-property name="type" displayName="Adapter type" required="true" default="DS9490" readOnly="true"/>
          <c:simple-property name="port" displayName="Adapter port" required="true" default="USB1"/>
          </plugin-configuration>     
            
@@ -24,17 +24,9 @@
          class="DS1820Component"
          discovery="DS1820Discovery"
          >     
-         <plugin-configuration>
-            <c:simple-property name="unit" required="true"
-               description="Temperature unit">
-               <c:property-options>
-                  <c:option value="celsius" default="true"/>
-                  <c:option value="fahrenheit"/>
-               </c:property-options>
-            </c:simple-property>
-         </plugin-configuration>
          
-         <metric property="temperature" defaultOn="true" description="Temperature measured" displayType="summary"/>
+         <metric property="temperature" defaultOn="true" description="Temperature measured" 
+                 displayType="summary" units="celsius"/>
          
       </service>
    </server>

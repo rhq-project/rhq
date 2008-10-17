@@ -44,7 +44,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  */
 public class OneWireAdapterDiscovery implements ResourceDiscoveryComponent<OneWireAdapterComponent> {
 
-    private Log log = LogFactory.getLog(OneWireAdapterDiscovery.class);
+    private static final Log log = LogFactory.getLog(OneWireAdapterDiscovery.class);
 
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext)
@@ -53,7 +53,6 @@ public class OneWireAdapterDiscovery implements ResourceDiscoveryComponent<OneWi
         throws InvalidPluginConfigurationException, Exception {
 
         Configuration pluginConfig = context.getDefaultPluginConfiguration();
-        String device = pluginConfig.getSimple("type").getStringValue();
         String port = pluginConfig.getSimple("port").getStringValue();
 
         DSPortAdapter adapter = new PDKAdapterUSB();

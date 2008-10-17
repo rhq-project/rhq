@@ -589,13 +589,13 @@ public interface AgentConfigurationConstants {
 
     /** Defines the delay to starting Configuration discoveries */
     String PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY = PROPERTY_NAME_PREFIX
-        + ".plugins.configuration-discovery.initial-delay-secs";
+        + "plugins.configuration-discovery.initial-delay-secs";
 
     long DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY = PluginContainerConfiguration.CONFIGURATION_DISCOVERY_INITIAL_DELAY_DEFAULT;
 
     /* Defines the period of configuration chnage detection checks */
     String PLUGINS_CONFIGURATION_DISCOVERY_PERIOD = PROPERTY_NAME_PREFIX
-        + ".plugins.configuration-discovery.period-secs";
+        + "plugins.configuration-discovery.period-secs";
 
     long DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_PERIOD = PluginContainerConfiguration.CONFIGURATION_DISCOVERY_PERIOD_DEFAULT;
 

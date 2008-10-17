@@ -508,6 +508,9 @@
          <xs:enumeration value="minutes"/>
          <xs:enumeration value="hours"/>
          <xs:enumeration value="days"/>
+         <xs:enumeration value="kelvin"/>
+         <xs:enumeration value="celsius"/>
+         <xs:enumeration value="fahrenheit"/>
       </xs:restriction>
    </xs:simpleType>
 

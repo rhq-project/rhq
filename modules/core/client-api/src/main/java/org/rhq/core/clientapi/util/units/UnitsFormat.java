@@ -40,6 +40,8 @@ public class UnitsFormat {
         formatters.put(UnitsConstants.UNIT_DURATION, new DurationFormatter());
         formatters.put(UnitsConstants.UNIT_DATE, new DateFormatter());
         formatters.put(UnitsConstants.UNIT_PERCENTAGE, new PercentageFormatter());
+        formatters.put(UnitsConstants.UNIT_TEMPERATURE, new TemperatureFormatter());
+
     }
 
     private static Log log = LogFactory.getLog(UnitsFormat.class);

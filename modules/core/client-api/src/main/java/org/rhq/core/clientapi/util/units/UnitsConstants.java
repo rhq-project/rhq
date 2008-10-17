@@ -28,5 +28,5 @@ package org.rhq.core.clientapi.util.units;
  * @author Heiko W. Rupp
  */
 public enum UnitsConstants {
-    UNIT_NONE, UNIT_BYTES, UNIT_BITS, UNIT_DURATION, UNIT_DATE, UNIT_PERCENTAGE;
+    UNIT_NONE, UNIT_BYTES, UNIT_BITS, UNIT_DURATION, UNIT_DATE, UNIT_PERCENTAGE, UNIT_TEMPERATURE;
 }

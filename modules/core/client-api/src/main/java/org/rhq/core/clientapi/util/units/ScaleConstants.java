@@ -36,7 +36,10 @@ public enum ScaleConstants {
     SCALE_KILO, SCALE_MEGA, SCALE_GIGA, SCALE_TERA, SCALE_PETA,
 
     // Time based scaling factors
-    SCALE_YEAR, SCALE_WEEK, SCALE_DAY, SCALE_HOUR, SCALE_MIN, SCALE_SEC, SCALE_JIFFY, SCALE_MILLI, SCALE_MICRO, SCALE_NANO;
+    SCALE_YEAR, SCALE_WEEK, SCALE_DAY, SCALE_HOUR, SCALE_MIN, SCALE_SEC, SCALE_JIFFY, SCALE_MILLI, SCALE_MICRO, SCALE_NANO,
+
+    // Temperature scaling factors
+    SCALE_KELVIN, SCALE_CELSIUS, SCALE_FAHRENHEIT;
 
     /**
      * Return an EnumSet that contain all SCALE_ enum constants dealing with binary scaling
@@ -52,11 +55,15 @@ public enum ScaleConstants {
         return EnumSet.range(SCALE_YEAR, SCALE_NANO);
     }
 
+    public static EnumSet<ScaleConstants> getTemperatureSet() {
+        return EnumSet.range(SCALE_KELVIN, SCALE_FAHRENHEIT);
+    }
+
     /**
      * Return an EnumSet that conatins all SCALE_ enum constants
      */
     public static EnumSet<ScaleConstants> getAllScales() {
-        return EnumSet.range(SCALE_NONE, SCALE_NANO);
+        return EnumSet.range(SCALE_NONE, SCALE_FAHRENHEIT);
     }
 
     /**

@@ -25,7 +25,7 @@ package org.rhq.core.clientapi.util.units;
 /**
  * An class which different unit types use to give additional information to formatting.
  */
-public class FormatSpecifics {
+public class  FormatSpecifics {
     public static final int PRECISION_MAX = 1;
 
     private int precision;

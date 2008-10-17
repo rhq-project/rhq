@@ -254,7 +254,7 @@ Embedded RHQ Agent Configuration
                -->
                <entry key="rhq.agent.client.retry-interval-msecs" value="15000" />
 
-               <!-- 
+               <!--
                _______________________________________________________________
                rhq.agent.client.max-retries
 
@@ -498,7 +498,9 @@ Embedded RHQ Agent Configuration
 
                Defines how often a service discovery scan is run.  This type
                of scan is used to find new services that have been added or
-               removed from existing platforms and servers.
+               removed from existing platforms and servers. Technically,
+               this kind of discovery is used to find any child resource
+               to an existing parent resource (like a platform or server).
                The value is specified in seconds.
                -->
                <!--
@@ -583,10 +585,37 @@ Embedded RHQ Agent Configuration
 
                Defines how often content discoveries are run. The value is
                specified in seconds. If this value is 0 or less, content
-               discovery will be disabled.
+               discovery will be disabled. Content discovery is used to
+               detect new or changed content that are associated with
+               resources in inventory.
                -->
                <!--
                <entry key="rhq.agent.plugins.content-discovery.period-secs" value="30"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.configuration-discovery.initial-delay-secs
+
+               Defines the delay before the first configuration discovery is
+               run. The value is specified in seconds.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.configuration-discovery.initial-delay-secs" value="300"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.configuration-discovery.period-secs
+
+               Defines how often configuration discoveries are run. The value is
+               specified in seconds. If this value is 0 or less, configuration
+               discovery will be disabled. Configuration discovery is
+               performed to detect changes in a managed resource's
+               configuration settings.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.configuration-discovery.period-secs" value="3600"/>
                -->
 
                <!--
@@ -629,7 +658,7 @@ Embedded RHQ Agent Configuration
                <!--
                _______________________________________________________________
                rhq.communications.global-concurrency-limit
-               
+
                The maximum number of incoming commands that are allowed to be
                received concurrently. Zero or less indicates there is to
                be no limit and the agent can accept as many incoming

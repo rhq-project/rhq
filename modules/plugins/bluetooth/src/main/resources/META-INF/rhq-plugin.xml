@@ -2,7 +2,8 @@
         displayName="Bluetooth Devices"
         package="org.rhq.plugins.bluetooth"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns="urn:xmlns:rhq-plugin">
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
 
    <server name="Bluetooth Devices"
            discovery="BluetoothDiscoveryComponent"
@@ -23,21 +24,21 @@
       </runs-inside>
 
       <plugin-configuration>
-          <simple-property name="bluetoothAddress"
+          <c:simple-property name="bluetoothAddress"
                            summary="true"
                            activationPolicy="immediate"
                            readOnly="true"
                            required="true"
                            displayName="Bluetooth Address"
                            description="Bluetooth address of the Bluetooth device"/>
-         <simple-property  name="friendlyName"
+         <c:simple-property  name="friendlyName"
                            summary="true"
                            activationPolicy="immediate"
                            readOnly="true"
                            required="true"
                            displayName="Friendly Name"
                            description="a prettier, easier to understand name of the Bluetooth device."/>
-         <simple-property  name="classDescription"
+         <c:simple-property  name="classDescription"
                            summary="true"
                            activationPolicy="immediate"
                            readOnly="true"
@@ -80,7 +81,7 @@
         class="BluetoothDeviceServiceComponent">
 
          <plugin-configuration>
-            <simple-property  name="connectionURL"
+            <c:simple-property  name="connectionURL"
                               summary="true"
                               activationPolicy="immediate"
                               readOnly="true"
@@ -88,15 +89,15 @@
                               displayName="Connection URL"
                               description="URL that the local Bluetooth device will use to connect to the
                                         remote Bluetooth device"/>
-            <simple-property  name="passcode"
+            <c:simple-property  name="passcode"
                               summary="true"
                               activationPolicy="immediate"
                               required="false"
                               displayName="Device Passcode"
                               description="the passcode to use to connect to the Bluetooth device"/>
-            <list-property name="serviceAction">
-               <simple-property name="actions"/>
-            </list-property>            
+            <c:list-property name="serviceAction">
+               <c:simple-property name="actions"/>
+            </c:list-property>            
          </plugin-configuration>
 
          <operation name="fireAction">

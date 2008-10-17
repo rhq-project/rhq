@@ -41,15 +41,17 @@ public class VirtualizationBlockDeviceDiscoveryComponent implements ResourceDisc
 
         Configuration config = discoveryContext.getParentResourceComponent().loadResourceConfiguration();
 
-        PropertyList list = config.getList("disks");
-        for (Property p : list.getList()) {
-            PropertyMap intf = (PropertyMap) p;
+        if (config != null) {
+            PropertyList list = config.getList("disks");
+            for (Property p : list.getList()) {
+                PropertyMap intf = (PropertyMap) p;
 
-            String device = intf.getSimple("targetDevice").getStringValue();
+                String device = intf.getSimple("targetDevice").getStringValue();
 
-            DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-                device, device + " virtual device", null, "Virtual block device", null, null);
-            details.add(detail);
+                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
+                    device, device + " virtual device", null, "Virtual block device", null, null);
+                details.add(detail);
+            }
         }
         return details;
     }

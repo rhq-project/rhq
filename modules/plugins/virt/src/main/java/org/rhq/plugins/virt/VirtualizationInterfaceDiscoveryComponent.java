@@ -41,15 +41,17 @@ public class VirtualizationInterfaceDiscoveryComponent implements ResourceDiscov
 
         Configuration config = discoveryContext.getParentResourceComponent().loadResourceConfiguration();
 
-        PropertyList list = config.getList("interfaces");
-        for (Property p : list.getList()) {
-            PropertyMap intf = (PropertyMap) p;
+        if (config != null) {
+            PropertyList list = config.getList("interfaces");
+            for (Property p : list.getList()) {
+                PropertyMap intf = (PropertyMap) p;
 
-            String path = intf.getSimple("target").getStringValue();
+                String path = intf.getSimple("target").getStringValue();
 
-            DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(), path,
-                path + " virtual interface", null, "Virtual network interface", null, null);
-            details.add(detail);
+                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
+                    path, path + " virtual interface", null, "Virtual network interface", null, null);
+                details.add(detail);
+            }
         }
         return details;
     }

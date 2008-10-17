@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="JBossCache"
+        displayName="JBossCache Services"
+        package="org.rhq.plugins.jbosscache"
+        description="Provides monitoring of JBossCache statistics"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="JMX" />
+   <depends plugin="JBossAS" useClasses="true"/>
+
+   <server name="JBossCacheSubsystem"
+           class="JBossCacheSubsystemComponent"
+           discovery="JBossCacheSubsystemDiscovery"
+           description="The JBoss Cache instances on this server"
+           singleton="true"
+           >  
+           
+      <runs-inside>
+          <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+      </runs-inside>
+
+      <service name="JBossCache"
+         discovery="JBossCacheDiscoveryComponent"
+         class="JBossCacheComponent"
+         description="Statistics for JBossCache"
+         createDeletePolicy="neither"
+         >
+   
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true" default="*:cache-interceptor=CacheMgmtInterceptor,*|*:treecache-interceptor=CacheMgmtInterceptor,*"/>
+            <c:simple-property name="isTreeCache" readOnly="true" type="boolean" default="false" description="Is this a TreeCache instance or a POJO Cache"/>
+         </plugin-configuration>
+         
+         <operation name="resetStatistics" displayName="Reset Statistics" description="Resets all statistics" />
+         <operation name="listAssociatedMBeans" displayName="List associated MBeans" description="List all MBeans that form this Cache instance">
+            <results><c:simple-property name="mbeans"></c:simple-property></results>
+         </operation>
+      
+         <metric property=":numberOfNodes" displayName="Number of Nodes" displayType="summary" />
+   
+         <metric property="ActivationInterceptor:activations" displayName="Activations" 
+                 description="Number of passivated nodes that have been activated."/>
+         
+         <metric property="CacheLoaderInterceptor:cacheLoaderLoads" displayName="Cache Loader Loads" 
+                 measurementType="trendsup" description="Number of nodes loaded through a cache loader."/>
+         <metric property="CacheLoaderInterceptor:cacheLoaderMisses" displayName="Cache Loader Misses"
+                 measurementType="trendsup" description="Number of unsuccessful attempts to load a node through a cache loader."/>
+         
+         <metric property="CacheMgmtInterceptor:hits" displayName="Cache Hits" category="performance" 
+                 measurementType="trendsup" description="Number of successful attribute retrievals."/>
+         <metric property="CacheMgmtInterceptor:misses" displayName="Cache Misses" category="performance"
+                 measurementType="trendsup" description="Number of unsuccessful attribute retrievals."/>
+         <metric property="CacheMgmtInterceptor:hitMissRatio" displayName="Hit-miss-ratio" displayType="summary"
+                 description="Ratio of hits to hits and misses. A hit is a get attribute operation that results in an object being returned to the client. The retrieval may be from a cache loader if the entry isn't in the local cache."/>
+         <metric property="CacheMgmtInterceptor:readWriteRatio" displayName="Read-write-ratio" displayType="summary"
+                 description="Ratio of read operations to write operations. This is the ratio of cache hits and misses to cache stores."/>
+         <metric property="CacheMgmtInterceptor:stores" displayName="Cache Stores" category="performance" 
+                 measurementType="trendsup" description="Number of attribute store operations."/>
+         <metric property="CacheMgmtInterceptor:evictions" displayName="Cache Evictions" category="performance" 
+                 measurementType="trendsup" description="Number of node evictions."/>
+         <metric property="CacheMgmtInterceptor:numberOfAttributes" displayName="Number of Attributes" 
+                 category="performance" description="Number of attributes currently cached." />
+         <metric property="CacheMgmtInterceptor:numberOfNodes" displayName="Number of Nodes cached" 
+                 category="performance" description="Number of nodes currently cached."/>
+         <metric property="CacheMgmtInterceptor:elapsedTime" displayName="Elapsed Time" category="utilization" 
+                 measurementType="trendsup" description="Number of seconds that the cache has been running." 
+                 units="seconds"/>
+         <metric property="CacheMgmtInterceptor:timeSinceReset" displayName="Time since reset" category="utilization" 
+                 measurementType="trendsup" description="Number of seconds since the cache statistics have been reset." 
+                 units="seconds"/>
+         <metric property="CacheMgmtInterceptor:averageReadTime" displayName="Average Read Time" category="performance" 
+                 description="Average time in milliseconds to retrieve a cache attribute, including unsuccessful attribute retrievals." 
+                 units="milliseconds"/>
+         <metric property="CacheMgmtInterceptor:averageWriteTime" displayName="Average Write Time" 
+                 category="performance" description="Average time in milliseconds to write a cache attribute." 
+                 units="milliseconds"/>
+   
+         <metric property="CacheStoreInterceptor:cacheLoaderStores" displayName="Cache Loader Stores" 
+                 category="utilization" description="Number of nodes written to the cache loader." measurementType="trendsup" />
+   
+         <metric property="InvalidationInterceptor:invalidations" displayName="Invalidataions" 
+                 category="utilization" description="Number of cached nodes that have been invalidated." 
+                 measurementType="trendsup" />
+   
+         <metric property="PassivationInterceptor:passivations" displayName="Passivations" category="utilization" 
+                 description="Number of cached nodes that have been passivated." measurementType="trendsup"/>
+   
+         <metric property="TxInterceptor:prepares" displayName="Tx prepares" 
+                 description="Number of transaction prepare operations performed." measurementType="trendsup" />       
+         <metric property="TxInterceptor:commits" displayName="Tx commits" 
+                 description="Number of transaction commit operations performed." measurementType="trendsup" />       
+         <metric property="TxInterceptor:rollbacks" displayName="Tx rollbacks" 
+                 description="Number of transaction rollback operations performed." measurementType="trendsup" />       
+            
+<!--             
+         <resource-configuration>
+            <c:simple-property name="Flavour" default="treecache">
+               <c:property-options>
+                  <c:option name="POJO Cache" value="cache" default="false"/>
+                  <c:option name="Tree Cache" value="treecache" default="true"/>
+               </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="ResourceManager" />
+            <c:simple-property name="IsolationLevel" default="REPEATABLE_READ">
+               <c:property-options>
+                  <c:option value="REPEATABLE_READ" default="true"/>
+                  <c:option value="READ_COMMITTED"/>
+                  <c:option value="READ_UNCOMMITTED"/>
+                  <c:option value="NONE"/>
+               </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="NodeLockingScheme" default="PESSIMISTIC">
+               <c:property-options>
+                  <c:option value="OPTIMISTIC"/>
+                  <c:option value="PESSIMISTIC" default="true"/>
+               </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="CacheMode" default="LOCAL">
+               <c:property-options>
+                  <c:option value="LOCAL" default="true"/>
+                  <c:option value="REPL_ASYNC"/>
+                  <c:option value="REPL_SYNC"/>
+               </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="UseReplQueue" type="boolean" default="false"
+                  description="Just used for async repl: use a replication queue "/>
+            <c:simple-property name="ReplQueueInterval" type="integer" default="100"
+                  description="Replication interval for replication queue (in ms) "/>  
+            <c:simple-property name="ReplQueueMaxElements" type="integer" default="10"
+                  description="Max number of elements which trigger replication" />
+            <c:simple-property name="ClusterName" default="DefaultPartition"
+                  description="Name of cluster. Needs to be the same for all clusters, in order to find each other"/>
+               
+            <c:simple-property name="FetchStateOnStartup" type="boolean" default="true" 
+                  description="Whether or not to fetch state on joining a cluster"/>
+            <c:simple-property name="InitialStateRetrievalTimeout" type="long" 
+                  description=" The max amount of time (in milliseconds) we wait until the
+            initial state (ie. the contents of the cache) are retrieved from
+            existing members in a clustered environment" default="5000"/>   
+            <c:simple-property name="SyncReplTimeout" type="long" default="15000"
+                  description="Number of milliseconds to wait until all responses for a
+            synchronous call have been received."/>
+            <c:simple-property name="LockAcquisitionTimeout" type="long" default="10000"
+                  description="Max number of milliseconds to wait for a lock acquisition."/>
+                 
+                 < !- -  TODO - - >
+            <c:simple-property name="ClusterConfig" description="Underlying JGroups configuration"
+            type="longString"/>
+            
+         </resource-configuration>
+ -->            
+         <help>
+         Please note that the number of possible metrics varies depending on the configuration and flavour of Cache used.
+         </help>
+                  
+       </service>
+    </server>
+</plugin>

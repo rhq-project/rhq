@@ -119,21 +119,17 @@
       </profile>
    
       <profile>
-         <id>EAP-4.3</id>
+         <id>dev</id>
          <properties>         
-            <!-- Set the below prop to the location to your dev JBAS 4.2/4.3 deploy location for the embedded console WAR. -->         
-            <embedded.asConfigDir>C:/opt/jboss-eap-4.3.0.GA_CP02/jboss-as/server/production</embedded.asConfigDir>            
+            <!-- Set the below prop to the location to your dev JBAS 4.2/4.3 deploy location for the admin console WAR.
+                 e.g.: C:/opt/jboss-eap-4.3.0.GA_CP02/jboss-as/server/production -->
+            <jbas4.configDir>SET_ME</jbas4.configDir>            
+            <!-- Set the below prop to the location to your dev JBAS 5.0 deploy location for the embedded console WAR. 
+                 e.g.: C:/opt/jboss-5.0.0.CR1/server/default -->                  
+            <jbas5.configDir>SET_ME</jbas5.configDir>            
          </properties>                 
       </profile>
-
-      <profile>
-         <id>JBAS-5.0</id>
-         <properties>   
-            <!-- Set the below prop to the location to your dev JBAS 5.0 deploy location for the embedded console WAR. -->                  
-            <embedded.asConfigDir>C:/opt/jboss-5.0.0.CR1/server/all</embedded.asConfigDir>            
-         </properties>                 
-      </profile>      
-      
+            
    </profiles>
 
    <!--**************************** REPOS ****************************-->

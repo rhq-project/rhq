@@ -217,11 +217,13 @@
                    <version>${project.version}</version>
                  </artifactItem>
 
+<!--  In Development
                               <artifactItem>
                                  <groupId>org.rhq</groupId>
                                  <artifactId>rhq-apt-plugin</artifactId>
                                  <version>${project.version}</version>
                               </artifactItem>
+-->                              
 
                               <artifactItem>
                                  <groupId>org.rhq</groupId>

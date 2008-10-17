@@ -84,7 +84,7 @@
     <module>database</module>
     <module>postgres</module>
 
-    <module>apt</module>
+<!--        <module>apt</module>  -->
     <module>bluetooth</module>        
     <module>grub</module>
 <!--        <module>hardware</module> -->

@@ -37,6 +37,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
@@ -318,5 +319,12 @@ public class JBossASPluginTest {
         public void completeConfigurationUpdate(ConfigurationUpdateResponse response) {
             lastResult = response;
         }
+
+      public void persistUpdatedResourceConfiguration(int resourceId,
+               Configuration resourceConfiguration)
+      {
+         // TODO Auto-generated method stub
+         
+      }
     }
 }

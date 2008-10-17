@@ -723,7 +723,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         configuration1.put(new PropertySimple("myboolean", "true"));
 
         Configuration configuration2 = new Configuration();
-        configuration2.put(new PropertySimple("myboolean", "true"));
+        configuration2.put(new PropertySimple("myboolean", "false"));
 
         configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration1);
         Thread.sleep(2000); // wait for the test agent to complete the request

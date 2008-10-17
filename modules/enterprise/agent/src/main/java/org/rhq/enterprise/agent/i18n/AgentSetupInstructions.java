@@ -842,4 +842,23 @@ public interface AgentSetupInstructions {
     String SETUP_INSTRUCTION_PLUGINSCONTENTDISCOVERYINITIALDELAY_PROMPT = "PromptCommand.setup.instruction.plugins.contentdiscovery-initialdelay.prompt";
     @I18NMessages( { @I18NMessage("The time in seconds before the initial content discovery is performed.") })
     String SETUP_INSTRUCTION_PLUGINSCONTENTDISCOVERYINITIALDELAY_HELP = "PromptCommand.setup.instruction.plugins.contentdiscovery-initialdelay.help";
+
+    // PLUGINS CONFIGURATION DISCOVERY PERIOD
+    String SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYPERIOD_PREF = AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_PERIOD;
+    String SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYPERIOD_DEFAULT = Long
+        .toString(AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_PERIOD);
+    @I18NMessages( { @I18NMessage("Configuration Discovery Period") })
+    String SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYPERIOD_PROMPT = "PromptCommand.setup.instruction.plugins.configurationdiscovery-period.prompt";
+    @I18NMessages( { @I18NMessage("The time in seconds that defines how often configuration discoveries are run.\\n\\\n"
+        + "If 0 or less, configuration discovery is disabled.") })
+    String SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYPERIOD_HELP = "PromptCommand.setup.instruction.plugins.configurationdiscovery-period.help";
+
+    // PLUGINS CONFIGURATION DISCOVERY INITIAL DELAY
+    String SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_PREF = AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY;
+    String SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_DEFAULT = Long
+        .toString(AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY);
+    @I18NMessages( { @I18NMessage("Configuration Discovery Initial Delay") })
+    String SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_PROMPT = "PromptCommand.setup.instruction.plugins.configurationdiscovery-initialdelay.prompt";
+    @I18NMessages( { @I18NMessage("The time in seconds before the initial configuration discovery is performed.") })
+    String SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_HELP = "PromptCommand.setup.instruction.plugins.configurationdiscovery-initialdelay.help";
 }

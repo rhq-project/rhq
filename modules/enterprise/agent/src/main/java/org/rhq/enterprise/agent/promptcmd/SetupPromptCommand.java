@@ -566,7 +566,7 @@ public class SetupPromptCommand implements AgentPromptCommand {
         instr.add(new DefaultSetupInstruction(
             AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONTENTDISCOVERYPERIOD_PREF,
             AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONTENTDISCOVERYPERIOD_DEFAULT,
-            new LongSetupValidityChecker(1L, null), SETUPMSG
+            new LongSetupValidityChecker(0L, null), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONTENTDISCOVERYPERIOD_PROMPT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONTENTDISCOVERYPERIOD_HELP)));
 
@@ -583,6 +583,20 @@ public class SetupPromptCommand implements AgentPromptCommand {
             new IntegerSetupValidityChecker(1, null), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONTENTDISCOVERYTHREADCOUNT_PROMPT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONTENTDISCOVERYTHREADCOUNT_HELP)));
+
+        instr.add(new DefaultSetupInstruction(
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYPERIOD_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYPERIOD_DEFAULT,
+            new LongSetupValidityChecker(0L, null), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYPERIOD_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYPERIOD_HELP)));
+
+        instr.add(new DefaultSetupInstruction(
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_DEFAULT,
+            new LongSetupValidityChecker(1L, null), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_PROMPT),
+            SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_HELP)));
 
         instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_CLIENTSENDERTIMEOUT_PREF,
             AgentSetupInstructions.SETUP_INSTRUCTION_CLIENTSENDERTIMEOUT_DEFAULT, new LongSetupValidityChecker(-1L,

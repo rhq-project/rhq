@@ -18,26 +18,29 @@
  */
 package org.rhq.plugins.sshd;
 
-import java.net.URL;
 import java.io.File;
+import java.net.URL;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Set;
-import java.util.Collection;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.util.ValidationEventCollector;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Test;
+
+import org.rhq.core.clientapi.agent.metadata.PluginMetadataParser;
+import org.rhq.core.clientapi.descriptor.DescriptorPackages;
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
-import org.rhq.core.clientapi.descriptor.DescriptorPackages;
-import org.rhq.core.clientapi.agent.metadata.PluginMetadataParser;
 
 /**
  * @author Jason Dobies
@@ -62,7 +65,8 @@ public class OpenSSHDComponentTest {
     public void initResourceConfigurationDefinition() throws Exception {
         PluginDescriptor pluginDescriptor;
 
-        URL descriptorUrl = this.getClass().getClassLoader().getResource("META-INF" + File.separator + "rhq-plugin.xml");
+        URL descriptorUrl = this.getClass().getClassLoader()
+            .getResource("META-INF" + File.separator + "rhq-plugin.xml");
         System.out.println("Loading plugin descriptor at: " + descriptorUrl);
 
         JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
@@ -72,10 +76,12 @@ public class OpenSSHDComponentTest {
         unmarshaller.setEventHandler(vec);
         pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(descriptorUrl.openStream());
 
-        PluginMetadataParser parser = new PluginMetadataParser(pluginDescriptor, new HashMap<String, PluginMetadataParser>());
+        PluginMetadataParser parser = new PluginMetadataParser(pluginDescriptor,
+            new HashMap<String, PluginMetadataParser>());
         Set<ResourceType> resourceTypes = parser.getRootResourceTypes();
 
-        assert resourceTypes.size() == 1 : "Incorrect number of resource types found. Expected: 1, Found: " + resourceTypes.size();
+        assert resourceTypes.size() == 1 : "Incorrect number of resource types found. Expected: 1, Found: "
+            + resourceTypes.size();
 
         ResourceType sshdType = resourceTypes.iterator().next();
         resourceConfigurationDefinition = sshdType.getResourceConfigurationDefinition();
@@ -83,7 +89,13 @@ public class OpenSSHDComponentTest {
 
     @Test
     public void loadResourceConfiguration() throws Exception {
-        Configuration configuration = component.loadResourceConfiguration(pluginConfiguration, resourceConfigurationDefinition);
+        Configuration configuration;
+        try {
+            configuration = component.loadResourceConfiguration(pluginConfiguration, resourceConfigurationDefinition);
+        } catch (UnsatisfiedLinkError ule) {
+            // Skip tests if augeas not available
+            return;
+        }
 
         assert configuration != null : "Configuration returned as null";
 
@@ -91,9 +103,10 @@ public class OpenSSHDComponentTest {
 
         for (Property property : allProperties) {
             if (property instanceof PropertySimple) {
-                PropertySimple propertySimple = (PropertySimple)property;
+                PropertySimple propertySimple = (PropertySimple) property;
                 log.info("Property: " + propertySimple.getName() + " - " + propertySimple.getStringValue());
-                assert propertySimple.getStringValue() != null : "Null string value found for property: " + propertySimple.getName();
+                assert propertySimple.getStringValue() != null : "Null string value found for property: "
+                    + propertySimple.getName();
             }
         }
     }

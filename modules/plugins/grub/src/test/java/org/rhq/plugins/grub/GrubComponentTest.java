@@ -21,15 +21,17 @@ package org.rhq.plugins.grub;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 
 /**
  * @author Jason Dobies
@@ -52,32 +54,39 @@ public class GrubComponentTest {
 
     @Test
     public void loadResourceConfiguration() throws Exception {
-        Configuration configuration = component.loadResourceConfiguration(pluginConfiguration);
+        Configuration configuration;
+        try {
+            configuration = component.loadResourceConfiguration(pluginConfiguration);
+        } catch (UnsatisfiedLinkError ule) {
+            // Skip tests if augeas not available
+            return;
+        }
 
         assert configuration != null : "Null configuration returned from load call";
 
         Collection<Property> allProperties = configuration.getProperties();
 
-        assert allProperties.size() == 2 : "Incorrect number of properties found. Expected: 2, Found: " + allProperties.size();
+        assert allProperties.size() == 2 : "Incorrect number of properties found. Expected: 2, Found: "
+            + allProperties.size();
 
         Iterator<Property> propertyIterator = allProperties.iterator();
 
         // General properties
-        PropertyMap generalProperties = (PropertyMap)propertyIterator.next();
+        PropertyMap generalProperties = (PropertyMap) propertyIterator.next();
 
         assert generalProperties != null : "General properties map was null";
 
-        Map<String,Property> map = generalProperties.getMap();
+        Map<String, Property> map = generalProperties.getMap();
         for (Property property : map.values()) {
-            PropertySimple propertySimple = (PropertySimple)property;
+            PropertySimple propertySimple = (PropertySimple) property;
             log.info(property.getName() + ": " + propertySimple.getStringValue());
         }
 
         // Kernel list
-        PropertyList entryList = (PropertyList)propertyIterator.next();
+        PropertyList entryList = (PropertyList) propertyIterator.next();
 
         for (Property property : entryList.getList()) {
-            PropertyMap entry = (PropertyMap)property;
+            PropertyMap entry = (PropertyMap) property;
 
             Property titleProperty = entry.get("title");
             Property rootProperty = entry.get("root");
@@ -89,10 +98,10 @@ public class GrubComponentTest {
             assert kernelProperty != null : "Kernel was null in entry";
             assert initrdProperty != null : "Initrd was null in entry";
 
-            log.info("Title: " + ((PropertySimple)titleProperty).getStringValue());
-            log.info("Root: " + ((PropertySimple)rootProperty).getStringValue());
-            log.info("Kernel: " + ((PropertySimple)kernelProperty).getStringValue());
-            log.info("Initrd: " + ((PropertySimple)initrdProperty).getStringValue());
+            log.info("Title: " + ((PropertySimple) titleProperty).getStringValue());
+            log.info("Root: " + ((PropertySimple) rootProperty).getStringValue());
+            log.info("Kernel: " + ((PropertySimple) kernelProperty).getStringValue());
+            log.info("Initrd: " + ((PropertySimple) initrdProperty).getStringValue());
         }
 
     }

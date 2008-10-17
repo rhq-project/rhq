@@ -19,15 +19,17 @@
 package org.rhq.plugins.hosts;
 
 import java.util.Collection;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 
 /**
  * @author Jason Dobies
@@ -50,18 +52,25 @@ public class HostsComponentTest {
 
     @Test
     public void loadResourceConfiguration() throws Exception {
-        Configuration configuration = component.loadResourceConfiguration(pluginConfiguration);
+        Configuration configuration;
+        try {
+            configuration = component.loadResourceConfiguration(pluginConfiguration);
+        } catch (UnsatisfiedLinkError ule) {
+            // Skip tests if augeas not available
+            return;
+        }
 
         assert configuration != null : "Null configuration returned from load call";
 
         Collection<Property> allProperties = configuration.getProperties();
 
-        assert allProperties.size() == 1 : "Incorrect number of properties found. Expected: 1, Found: " + allProperties.size();
+        assert allProperties.size() == 1 : "Incorrect number of properties found. Expected: 1, Found: "
+            + allProperties.size();
 
-        PropertyList entryList = (PropertyList)allProperties.iterator().next();
+        PropertyList entryList = (PropertyList) allProperties.iterator().next();
 
         for (Property property : entryList.getList()) {
-            PropertyMap entry = (PropertyMap)property;
+            PropertyMap entry = (PropertyMap) property;
 
             Property ipProperty = entry.get("ip");
             Property canonicalProperty = entry.get("canonical");
@@ -69,8 +78,8 @@ public class HostsComponentTest {
             assert ipProperty != null : "IP was null in entry";
             assert canonicalProperty != null : "Canonical was null in entry";
 
-            log.info("IP: " + ((PropertySimple)ipProperty).getStringValue());
-            log.info("Canonical: " + ((PropertySimple)canonicalProperty).getStringValue());
+            log.info("IP: " + ((PropertySimple) ipProperty).getStringValue());
+            log.info("Canonical: " + ((PropertySimple) canonicalProperty).getStringValue());
         }
 
     }

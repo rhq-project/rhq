@@ -176,8 +176,10 @@ public interface ConfigurationManagerLocal {
      * @param  resourceId       identifies the resource to be updated
      * @param  newConfiguration the resource's desired new configuration
      *
-     * @return the resource configuration update item corresponding to this request
+     * @return the resource configuration update item corresponding to this request. null 
+     * if newConfiguration is equal to the existing configuration.
      */
+    @Nullable
     ResourceConfigurationUpdate updateResourceConfiguration(Subject whoami, int resourceId,
         Configuration newConfiguration);
 

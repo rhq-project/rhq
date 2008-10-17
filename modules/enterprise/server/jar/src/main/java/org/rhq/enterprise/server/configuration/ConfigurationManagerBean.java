@@ -522,6 +522,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         return;
     }
 
+    @Nullable
     public ResourceConfigurationUpdate updateResourceConfiguration(Subject whoami, int resourceId,
         Configuration newConfiguration) {
         // must do this in a separate transaction so it is committed prior to sending the agent request
@@ -530,6 +531,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         ResourceConfigurationUpdate newUpdate;
 
         // here we call ourself, but we do so via the EJB interface so we pick up the REQUIRES_NEW semantics
+        // this can return null if newConfiguration is not actually different.
         newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(whoami, resourceId,
             newConfiguration, ConfigurationUpdateStatus.INPROGRESS, whoami.getName());
 
@@ -542,11 +544,13 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         } catch (RuntimeException e) {
             // Any exception means the remote call itself failed - make sure to change the status on the update to FAILURE
             // and set its error message field.
-            newUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
-            newUpdate.setErrorMessageFromThrowable(e);
+            if (null != newUpdate) {
+                newUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
+                newUpdate.setErrorMessageFromThrowable(e);
 
-            // here we call ourself, but we do so via the EJB interface so we pick up the REQUIRES_NEW semantics
-            this.configurationManager.mergeConfigurationUpdate(newUpdate);
+                // here we call ourself, but we do so via the EJB interface so we pick up the REQUIRES_NEW semantics
+                this.configurationManager.mergeConfigurationUpdate(newUpdate);
+            }
         }
 
         return newUpdate;
@@ -594,7 +598,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
             }
         }
 
-
         ResourceConfigurationUpdate current;
 
         // Get the latest configuration as known to the server (i.e. persisted in the DB).
@@ -616,8 +619,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
             Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
 
             // create our new update request and assign it to our resource - its status will initially be "in progress"
-            ResourceConfigurationUpdate newUpdateRequest = new ResourceConfigurationUpdate(resource, zeroedConfiguration,
-                    newSubject);
+            ResourceConfigurationUpdate newUpdateRequest = new ResourceConfigurationUpdate(resource,
+                zeroedConfiguration, newSubject);
 
             newUpdateRequest.setStatus(newStatus);
 

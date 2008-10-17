@@ -713,7 +713,33 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert current.getConfiguration().getId() == newConfigUpdate.getConfiguration().getId();
     }
 
-    public void testPurgeConfigurationHistory() throws Exception {
+    public void testPurgeConfigurationHistorySame() throws Exception {
+        Resource resource = newResource1;
+
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
+        // create a couple configs in history
+        Configuration configuration1 = new Configuration();
+        configuration1.put(new PropertySimple("myboolean", "true"));
+
+        Configuration configuration2 = new Configuration();
+        configuration2.put(new PropertySimple("myboolean", "true"));
+
+        configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration1);
+        Thread.sleep(2000); // wait for the test agent to complete the request
+        configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration2);
+        Thread.sleep(2000); // wait for the test agent to complete the request
+
+        // at this point in time, the round trip messaging is done and we have the agent response
+        List<ResourceConfigurationUpdate> requests;
+
+        requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), pageControl);
+
+        assert requests != null;
+        assert requests.size() == 1 : "Got " + requests.size() + " config update requests - expected 1.";
+    }
+
+    public void testPurgeConfigurationHistoryDifferent() throws Exception {
         Resource resource = newResource1;
 
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();

@@ -124,6 +124,8 @@ public class JBossInstanceInfo {
                 new LongOpt("host", 1, null, 'b'),
         };
         Getopt options = new Getopt(programName, args, shortOpts, longOpts);
+        // Tell Getopt not to complain to stderr about unrecognized options...
+        options.setOpterr(false); 
         int c;
         while ((c = options.getopt()) != -1) {
             switch (c) {

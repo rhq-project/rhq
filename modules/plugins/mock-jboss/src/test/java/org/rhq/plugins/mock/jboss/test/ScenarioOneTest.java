@@ -763,6 +763,11 @@ public class ScenarioOneTest {
             lastResult = response;
         }
 
+        public void persistUpdatedResourceConfiguration(int resourceId, Configuration resourceConfiguration) {
+            // TODO Auto-generated method stub
+
+        }
+
     }
 
     private class MockContentServerService implements ContentServerService {

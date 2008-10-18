@@ -1,0 +1,110 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.jboss.on</groupId>
+    <artifactId>jopr-dist-parent</artifactId>
+    <version>2.2.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.jboss.on</groupId>
+  <artifactId>jopr-agent</artifactId>
+  <version>2.2.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>Jopr Agent</name>
+  <description>The Jopr Agent</description>
+
+  <scm>
+    <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/dist/agent/</connection>
+    <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/dist/agent/</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>modules/dist/agent/</scm.module.path>
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-enterprise-agent</artifactId>
+      <version>${rhq.version}</version>
+      <type>zip</type>
+    </dependency>
+
+  </dependencies>
+  
+  <build>
+
+    <finalName>${project.artifactId}-${project.version}</finalName>
+    <outputDirectory>target/${project.build.finalName}</outputDirectory>
+
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.1</version>
+        <executions>
+
+          <execution>
+            <id>build-dist</id>
+            <phase>generate-resources</phase>
+            <configuration>
+              <tasks>      
+                <property name="jopr.trunk.dir" location="../../.." />             
+                <property name="rhq.agent.dist.zipfile" location="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${rhq.version}/rhq-enterprise-agent-${rhq.version}.zip" />
+                <property name="rhq.connectors.dist.zipfile" location="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${rhq.version}/rhq-product_connectors-${rhq.version}.zip" />
+                <property name="jopr.agent.dist.dir" location="${project.build.outputDirectory}" />
+                <echo>RHQ Agent dist zipfile=${rhq.agent.dist.zipfile}</echo>
+                <echo>RHQ Product Connectors dist zipfile=${rhq.connectors.dist.zipfile}</echo>
+                <echo>Jopr Agent dist output dir=${jopr.agent.dist.dir}</echo>
+                <unzip src="${rhq.agent.dist.zipfile}" dest="target" />                
+                <copy todir="${jopr.agent.dist.dir}">
+                   <fileset dir="target/rhq-agent-${rhq.version}" />               
+                </copy>                
+                <unzip src="${rhq.connectors.dist.zipfile}" dest="target" />
+                <copy todir="${jopr.agent.dist.dir}/product_connectors">         
+                   <!--  none currently
+                   <fileset dir="${jopr.trunk.dir}/etc/product_connectors" />
+                   -->
+                   <fileset dir="target/rhq-product_connectors-${rhq.version}" />
+                </copy>
+                <copy todir="${jopr.agent.dist.dir}">         
+                   <fileset dir="${jopr.trunk.dir}" includes="LICENSE*" />
+                </copy>                                                
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+
+        </executions>
+      </plugin>
+      
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptors>
+            <descriptor>src/main/scripts/jopr-agent.assembly.xml</descriptor>
+          </descriptors>
+          <finalName>${project.build.finalName}</finalName>       
+        </configuration>
+        <executions>
+          <execution>
+            <id>assemble-jopr-agent-zip</id>
+            <phase>package</phase>          
+            <goals>
+              <goal>attached</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>      
+
+    </plugins>
+
+  </build>
+
+</project>

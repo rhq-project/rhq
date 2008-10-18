@@ -130,7 +130,7 @@
   		<id>enterprise-dist</id>
   		<modules>
          <module>serverplugins</module>
-  			<!--  add back when we have Jopr specific dist content <module>dist</module>  -->            
+  			<module>dist</module>            
   		</modules>
   	</profile>
         

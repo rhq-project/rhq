@@ -1,0 +1,217 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.jboss.on</groupId>
+    <artifactId>jopr-dist-parent</artifactId>
+    <version>2.2.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.jboss.on</groupId>
+  <artifactId>jopr-server</artifactId>
+  <version>2.2.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>Jopr Server</name>
+  <description>The Jopr Server</description>
+
+  <scm>
+    <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/dist/server/</connection>
+    <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/dist/server/</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>modules/dist/server/</scm.module.path>
+
+    <!-- dependency versions -->
+    <product.shortName>Jopr</product.shortName>
+    <product.name>Jopr</product.name>
+    <product.fullName>Jopr</product.fullName>
+    <product.url.domain>redhat.com</product.url.domain>
+    <product.sales.email>sales@redhat.com</product.sales.email>
+    <product.support.email>support@redhat.com</product.support.email>
+    <product.version>${project.version}</product.version>
+    <product.help.doc.root>http://www.jboss.org/community/docs/DOC-12803</product.help.doc.root>
+    <product.help.installation>http://www.jboss.org/community/docs/DOC-12828</product.help.installation>
+    <product.help.guide.server>http://www.jboss.org/community/docs/DOC-12803/</product.help.guide.server>
+    <product.help.guide.agent>http://www.jboss.org/community/docs/DOC-12803/</product.help.guide.agent>
+    <product.help.FAQ>http://www.jboss.org/community/docs/DOC-12803/</product.help.FAQ>
+    <product.help.config.props>http://www.jboss.org/community/docs/DOC-12803/</product.help.config.props>
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-enterprise-server-container</artifactId>
+      <version>${rhq.version}</version>
+      <type>zip</type>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+
+    <finalName>${project.artifactId}-${project.version}</finalName>
+    <outputDirectory>target/${project.build.finalName}</outputDirectory>
+
+    <resources>
+
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>false</filtering>
+      </resource>
+
+      <resource>
+        <directory>src/main/resources-filtered</directory>
+        <filtering>true</filtering>
+      </resource>
+
+    </resources>
+
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>move-src</id>
+            <phase>process-resources</phase>          
+            <goals>
+              <goal>resources</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>  
+      
+      <!--  Package the Jopr plugins with the RHQ plugins -->
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.0</version>
+        <executions>
+          <execution>
+            <id>copy-plugins</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>jopr-hibernate-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>jopr-jboss-as-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>jopr-rhq-server-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>jopr-tomcat-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+              </artifactItems>
+              <outputDirectory>${project.build.outputDirectory}/jbossas/server/default/deploy/rhq.ear.rej/rhq-downloads/rhq-plugins</outputDirectory>
+            </configuration>
+          </execution>
+
+          <!-- The jboss-software plugin is not currently needed in the binary distribution. Leaving this if we want to add it back
+          <execution>
+            <id>copy-jopr-serverplugins</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>jopr-serverplugin-jboss-software</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+              </artifactItems>
+              <outputDirectory>${project.build.outputDirectory}/jbossas/server/default/deploy/rhq.ear.rej/rhq-serverplugins</outputDirectory>
+            </configuration>
+          </execution>
+          -->
+          
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.1</version>
+        <executions>
+
+          <execution>
+            <id>build-dist</id>
+            <phase>generate-resources</phase>
+            <configuration>
+              <tasks>
+                <echo>settings.localRepository=${settings.localRepository}</echo>
+                <echo>project.build.outputDirectory=${project.build.outputDirectory}</echo>
+                <ant antfile="src/main/scripts/dist.build.xml" target="run">
+                  <property name="settings.localRepository" value="${settings.localRepository}" />
+                  <property name="project.build.outputDirectory" value="${project.build.outputDirectory}" />
+
+                  <!-- dependency versions -->
+                  <property name="rhq.version" value="${rhq.version}" />
+
+                  <!-- default server settings - these are not used currently; here just for future use, if needed -->
+                  <property name="rhq.server.http.port" value="${rhq.server.http.port}" />
+                  <property name="rhq.server.https.port" value="${rhq.server.https.port}" />
+                  <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
+                  <property name="rhq.ds.driver-class" value="${rhq.ds.driver-class}" />
+                  <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
+                  <property name="rhq.ds.password" value="${rhq.ds.password}" />
+                  <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                </ant>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptors>
+            <descriptor>src/main/scripts/jopr-server.assembly.xml</descriptor>
+          </descriptors>
+          <finalName>${project.build.finalName}</finalName>       
+        </configuration>
+        <executions>
+          <execution>
+            <id>assemble-jopr-server-zip</id>
+            <phase>package</phase>          
+            <goals>
+              <goal>attached</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>      
+
+    </plugins>
+
+  </build>
+
+</project>

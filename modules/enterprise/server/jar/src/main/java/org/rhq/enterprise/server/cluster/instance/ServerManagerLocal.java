@@ -71,9 +71,13 @@ public interface ServerManagerLocal {
     List<Integer> getAndClearAgentsWithStatus();
 
     /**
-     * 
-     * @return
+     * Returns an object representing this server as it is known within the registered cloud of servers.
+     *
+     * @return object representing this server
+     *
      * @throws ServerNotFoundException
+     *
+     * @see {@link #getIdentity()}
      */
     Server getServer() throws ServerNotFoundException;
 

@@ -665,7 +665,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     }
 
     /**
-     * Adss a ResourceSubCategory to the List which have been defined
+     * Adds a ResourceSubCategory to the List which have been defined
      * on this ResourceType.
      */
     public void addSubCategory(ResourceSubCategory subCategory) {

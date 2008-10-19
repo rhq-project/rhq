@@ -27,6 +27,7 @@ import java.util.List;
 
 import javax.faces.component.StateHolder;
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.validator.DoubleRangeValidator;
 import javax.faces.validator.LengthValidator;
@@ -42,7 +43,6 @@ import org.rhq.core.domain.configuration.definition.constraint.Constraint;
 import org.rhq.core.domain.configuration.definition.constraint.FloatRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
-import org.rhq.core.gui.converter.PropertySimpleValueConverter;
 import org.rhq.core.gui.util.FacesComponentUtility;
 
 /**
@@ -54,7 +54,7 @@ import org.rhq.core.gui.util.FacesComponentUtility;
  *
  * @author Ian Springer
  */
-public class PropertySimpleValueValidator implements Validator, StateHolder {
+public class PropertySimpleValueValidator implements Validator, StateHolder {    
     private static final String INPUT_ERROR_STYLE_CLASS = "inputerror";
 
     private PropertyDefinitionSimple propertyDefinition;
@@ -70,14 +70,8 @@ public class PropertySimpleValueValidator implements Validator, StateHolder {
     }
 
     public void validate(FacesContext facesContext, UIComponent component, Object value) throws ValidatorException {
-        String stringValue = (String) value;
-        if ((stringValue == null) || stringValue.equals(PropertySimpleValueConverter.NULL_INPUT_VALUE)) {
-            // If the property is required, the standard JSF "required" attribute will catch the null value case.
-            // If the property is optional, a null value means it is "unset."
-            // In either case, there's nothing else we need to do.
-            return;
-        }
-
+        String stringValue = (String) value;        
+        
         if (!FacesComponentUtility.isOverride(component)) {
             // don't validate if it's not being updated
             return;
@@ -87,10 +81,13 @@ public class PropertySimpleValueValidator implements Validator, StateHolder {
 
         for (Validator subValidator : subValidators) {
             try {
-                subValidator.validate(facesContext, component, value);
+                subValidator.validate(facesContext, component, stringValue);
             }
             catch (ValidatorException e) {
                 component.getAttributes().put("styleClass", INPUT_ERROR_STYLE_CLASS);
+                if (" ".equals(stringValue)) {
+                    ((UIInput)component).setSubmittedValue("");
+                }
                 throw e;
             }
         }

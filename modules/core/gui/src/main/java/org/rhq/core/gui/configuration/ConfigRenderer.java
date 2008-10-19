@@ -22,39 +22,40 @@
   */
 package org.rhq.core.gui.configuration;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+ import java.io.IOException;
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.Map;
 
-import javax.faces.application.FacesMessage;
-import javax.faces.component.NamingContainer;
-import javax.faces.component.UIComponent;
-import javax.faces.component.UIInput;
-import javax.faces.component.UIParameter;
-import javax.faces.component.UISelectItem;
-import javax.faces.component.html.HtmlPanelGroup;
-import javax.faces.component.html.HtmlSelectOneRadio;
-import javax.faces.context.FacesContext;
-import javax.faces.render.Renderer;
+ import javax.faces.application.FacesMessage;
+ import javax.faces.component.NamingContainer;
+ import javax.faces.component.UIComponent;
+ import javax.faces.component.UIInput;
+ import javax.faces.component.UIOutput;
+ import javax.faces.component.UIParameter;
+ import javax.faces.component.UISelectItem;
+ import javax.faces.component.html.HtmlPanelGroup;
+ import javax.faces.component.html.HtmlSelectOneRadio;
+ import javax.faces.context.FacesContext;
+ import javax.faces.render.Renderer;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.richfaces.component.html.HtmlSimpleTogglePanel;
-
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
-import org.rhq.core.gui.RequestParameterNameConstants;
-import org.rhq.core.gui.util.FacesComponentUtility;
-import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
+ import org.apache.commons.logging.Log;
+ import org.apache.commons.logging.LogFactory;
+ import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
+ import org.rhq.core.domain.configuration.Property;
+ import org.rhq.core.domain.configuration.PropertyList;
+ import org.rhq.core.domain.configuration.PropertyMap;
+ import org.rhq.core.domain.configuration.PropertySimple;
+ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
+ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+ import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
+ import org.rhq.core.gui.RequestParameterNameConstants;
+ import org.rhq.core.gui.converter.PropertySimpleValueConverter;
+ import org.rhq.core.gui.util.FacesComponentUtility;
+ import org.rhq.core.gui.util.FacesContextUtility;
+ import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
+ import org.richfaces.component.html.HtmlSimpleTogglePanel;
 
 /**
  * A renderer that renders a {@link ConfigUIComponent} component as XHTML.
@@ -73,6 +74,7 @@ public class ConfigRenderer extends Renderer {
     private static final String JAVASCRIPT_INCLUDES = "\n<script type='text/javascript' src='/js/rhq.js'></script>\n\n";
 
     private final Log LOG = LogFactory.getLog(ConfigRenderer.class);
+    private static final String INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID = "initInputsJavaScript";    
 
     /**
      * Decode request parameters for the given {@link ConfigUIComponent}.
@@ -93,6 +95,9 @@ public class ConfigRenderer extends Renderer {
                 deleteOpenMapMemberProperty(config);
             }
         }
+        UIComponent initInputsJavaScriptComponent = config.findComponent(INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID);
+        FacesComponentUtility.detachComponent(initInputsJavaScriptComponent);
+        addInitInputsJavaScript(config, true);
     }
 
     /**
@@ -140,7 +145,7 @@ public class ConfigRenderer extends Renderer {
                 addConfiguration(config);
             }
 
-            addInitInputsJavaScript(config);
+            addInitInputsJavaScript(config, false);
         }
     }
 
@@ -314,7 +319,7 @@ public class ConfigRenderer extends Renderer {
         return groupPanel;
     }
 
-    private void addInitInputsJavaScript(ConfigUIComponent config) {
+    private void addInitInputsJavaScript(ConfigUIComponent config, boolean postBack) {
         List<UIInput> inputs = FacesComponentUtility.getDescendantsOfType(config, UIInput.class);
         List<UIInput> overrideInputs = new ArrayList<UIInput>();
         List<UIInput> unsetInputs = new ArrayList<UIInput>();
@@ -326,6 +331,10 @@ public class ConfigRenderer extends Renderer {
                 overrideInputs.add(input);
             }
 
+            if (postBack) {
+                boolean inputIsNull = PropertySimpleValueConverter.NULL_INPUT_VALUE.equals(input.getSubmittedValue());
+                FacesComponentUtility.setUnset(input, inputIsNull);
+            }
             if (FacesComponentUtility.isUnset(input)) {
                 unsetInputs.add(input);
             }
@@ -335,8 +344,9 @@ public class ConfigRenderer extends Renderer {
             }
         }
 
+        StringBuilder script = new StringBuilder();
+
         if (!overrideInputs.isEmpty()) {
-            StringBuilder script = new StringBuilder();
             script.append("var overrideInputArray = new Array(");
             for (UIInput input : overrideInputs) {
                 for (String htmlDomReference : getHtmlDomReferences(input)) {
@@ -350,11 +360,9 @@ public class ConfigRenderer extends Renderer {
             // do it this way instead of DISABLED attribute via code, because if DISABLED is used and
             // even if javascript later enables them, JSF won't submit them as part of the component
             script.append("setInputsOverride(overrideInputArray, false);");
-            FacesComponentUtility.addJavaScript(config, config, null, script);
         }
 
         if (!unsetInputs.isEmpty()) {
-            StringBuilder script = new StringBuilder();
             script.append("var unsetInputArray = new Array(");
             for (UIInput input : unsetInputs) {
                 for (String htmlDomReference : getHtmlDomReferences(input)) {
@@ -368,11 +376,9 @@ public class ConfigRenderer extends Renderer {
             // do it this way instead of DISABLED attribute via code, because if DISABLED is used and
             // even if javascript later enables them, JSF won't submit them as part of the component
             script.append("unsetInputs(unsetInputArray);");
-            FacesComponentUtility.addJavaScript(config, config, null, script);
         }
 
         if (!readOnlyInputs.isEmpty()) {
-            StringBuilder script = new StringBuilder();
             script.append("var readOnlyInputArray = new Array(");
             for (UIInput input : readOnlyInputs) {
                 for (String htmlDomReference : getHtmlDomReferences(input)) {
@@ -382,9 +388,11 @@ public class ConfigRenderer extends Renderer {
 
             script.delete(script.length() - 2, script.length()); // chop off the extra ", "
             script.append(");\n");
-            script.append("writeProtectInputs(readOnlyInputArray);");
-            FacesComponentUtility.addJavaScript(config, config, null, script);
+            script.append("writeProtectInputs(readOnlyInputArray);");            
         }
+
+        UIOutput uiOutput = FacesComponentUtility.addJavaScript(config, config, null, script);
+        uiOutput.setId(INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID);
     }
 
     static List<String> getHtmlDomReferences(UIComponent component) {

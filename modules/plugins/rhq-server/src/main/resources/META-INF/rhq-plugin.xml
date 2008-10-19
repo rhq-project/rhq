@@ -29,18 +29,21 @@
       <metric property="MeasurementCacheElementCount" category="throughput" displayType="summary" />
       <metric property="EventCacheElementCount" category="throughput" displayType="summary" />
       <metric property="OperationCacheElementCount" category="throughput" displayType="summary" />
+      <metric property="ResourceConfigurationCacheElementCount" category="throughput" displayType="summary" />
       <metric property="OOBCacheElementCount" category="throughput" displayType="summary" />
 
       <metric property="TotalCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
       <metric property="AvailabilityCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
       <metric property="MeasurementCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
       <metric property="EventCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
+      <metric property="ResourceConfigurationCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
       <metric property="OperationCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
       
       <metric property="TotalProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
       <metric property="AvailabilityProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
       <metric property="MeasurementProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
       <metric property="EventProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
+      <metric property="ResourceConfigurationProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
       <metric property="OperationProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
    </service>
 

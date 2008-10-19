@@ -124,11 +124,15 @@ public abstract class AbstractCacheElement<T> {
     }
 
     public final boolean process(T providedValue, Object... extraParams) {
-        String beforeString = this.toString();
-        boolean match = matches(providedValue, extraParams);
-        String afterString = this.toString();
+        String beforeString = null;
+        String afterString = null;
 
         if (log.isDebugEnabled()) {
+            beforeString = this.toString();
+        }
+        boolean match = matches(providedValue, extraParams);
+        if (log.isDebugEnabled()) {
+            afterString = this.toString();
             log.debug("comparing " + ((providedValue == null) ? "<null>" : providedValue) + " " + "against "
                 + beforeString + " " + (match ? "match" : ""));
             if (afterString.equals(beforeString) == false) {
@@ -164,10 +168,16 @@ public abstract class AbstractCacheElement<T> {
 
     @Override
     public String toString() {
+        String conditionValue = null;
+        try {
+            conditionValue = alertConditionValue.toString();
+        } catch (Throwable t) {
+            conditionValue = t.getClass().getSimpleName() + "(" + alertConditionValue.getClass().getSimpleName() + ")";
+        }
         return getClass().getSimpleName() + "[ " + "alertConditionTriggerId=" + alertConditionTriggerId + ", "
             + "alertConditionOperator=" + alertConditionOperator
             + ((alertConditionOperatorOption != null) ? ("(" + alertConditionOperatorOption + ")") : "") + ", "
-            + "alertConditionValue=" + alertConditionValue + " ]";
+            + "alertConditionValue=" + conditionValue + " ]";
     }
 
     @Override

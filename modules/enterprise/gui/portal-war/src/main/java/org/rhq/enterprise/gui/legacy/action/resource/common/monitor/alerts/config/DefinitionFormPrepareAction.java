@@ -35,6 +35,7 @@ import org.apache.struts.util.LabelValueBean;
 
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -45,6 +46,7 @@ import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.beans.OptionItem;
 import org.rhq.enterprise.gui.legacy.beans.RelatedOptionBean;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.legacy.measurement.MeasurementConstants;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
@@ -90,7 +92,7 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
 
         request.setAttribute("showMetrics", defForm.getMetrics().size() > 0);
         request.setAttribute("showTraits", defForm.getTraits().size() > 0);
-        request.setAttribute("showProperties", false); // not-implemented yet
+        request.setAttribute("showResourceConfiguration", defForm.isResourceConfigurationSupported());
         request.setAttribute("showAvailability", defForm.getAvailabilityOptions().length > 0);
         request.setAttribute("showOperations", defForm.getControlActions().size() > 0);
 
@@ -119,6 +121,7 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
 
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
         MeasurementDefinitionManagerLocal definitionManager = LookupUtil.getMeasurementDefinitionManager();
+        ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
         Subject subject = RequestUtils.getSubject(request);
         Resource resource = RequestUtils.getResource(request);
@@ -182,6 +185,10 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
         }
 
         defForm.setControlActions(controlActions);
+
+        ConfigurationDefinition configurationDefinition = configurationManager
+            .getResourceConfigurationDefinitionForResourceType(subject, type.getId());
+        defForm.setResourceConfigurationSupported(configurationDefinition != null);
     }
 
     private void setDisabledName(MeasurementSchedule schedule, MeasurementDefinition definition) {

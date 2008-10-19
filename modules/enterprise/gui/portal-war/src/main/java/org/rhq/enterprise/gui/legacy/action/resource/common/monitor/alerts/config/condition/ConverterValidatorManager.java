@@ -27,19 +27,19 @@ import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.confi
 
 public class ConverterValidatorManager {
     private static AvailabilityConverterValidator availabilityConverter;
-    private static ConfigurationPropertyConverterValidator configurationPropertyConverter;
     private static EventsConverterValidator eventsConverter;
     private static MeasurementConverterValidator measurementConverter;
     private static OperationConverterValidator operationConverter;
     private static TraitConverterValidator traitConverter;
+    private static ResourceConfigurationConverterValidator resourceConfigurationConverter;
 
     static {
         availabilityConverter = new AvailabilityConverterValidator();
-        configurationPropertyConverter = new ConfigurationPropertyConverterValidator();
         eventsConverter = new EventsConverterValidator();
         measurementConverter = new MeasurementConverterValidator();
         operationConverter = new OperationConverterValidator();
         traitConverter = new TraitConverterValidator();
+        resourceConfigurationConverter = new ResourceConfigurationConverterValidator();
     }
 
     public static AlertCondition exportProperties(Subject subject, ConditionBean fromBean) {
@@ -49,14 +49,17 @@ public class ConverterValidatorManager {
             measurementConverter.exportProperties(subject, fromBean, toCondition);
         } else if (fromBean.getTrigger().equals(traitConverter.getTriggerName())) {
             traitConverter.exportProperties(subject, fromBean, toCondition);
-        } else if (fromBean.getTrigger().equals(configurationPropertyConverter.getTriggerName())) {
-            configurationPropertyConverter.exportProperties(subject, fromBean, toCondition);
         } else if (fromBean.getTrigger().equals(eventsConverter.getTriggerName())) {
             eventsConverter.exportProperties(subject, fromBean, toCondition);
         } else if (fromBean.getTrigger().equals(availabilityConverter.getTriggerName())) {
             availabilityConverter.exportProperties(subject, fromBean, toCondition);
         } else if (fromBean.getTrigger().equals(operationConverter.getTriggerName())) {
             operationConverter.exportProperties(subject, fromBean, toCondition);
+        } else if (fromBean.getTrigger().equals(resourceConfigurationConverter.getTriggerName())) {
+            resourceConfigurationConverter.exportProperties(subject, fromBean, toCondition);
+        } else {
+            throw new IllegalStateException(ConverterValidatorManager.class.getSimpleName()
+                + " does not exporting for the trigger: " + fromBean.getTrigger());
         }
 
         return toCondition;
@@ -70,14 +73,17 @@ public class ConverterValidatorManager {
             measurementConverter.importProperties(subject, fromCondition, toBean);
         } else if (category == AlertConditionCategory.TRAIT) {
             traitConverter.importProperties(subject, fromCondition, toBean);
-        } else if (category == AlertConditionCategory.CONFIGURATION_PROPERTY) {
-            configurationPropertyConverter.importProperties(subject, fromCondition, toBean);
         } else if (category == AlertConditionCategory.EVENT) {
             eventsConverter.importProperties(subject, fromCondition, toBean);
         } else if (category == AlertConditionCategory.AVAILABILITY) {
             availabilityConverter.importProperties(subject, fromCondition, toBean);
         } else if (category == AlertConditionCategory.CONTROL) {
             operationConverter.importProperties(subject, fromCondition, toBean);
+        } else if (category == AlertConditionCategory.RESOURCE_CONFIG) {
+            resourceConfigurationConverter.importProperties(subject, fromCondition, toBean);
+        } else {
+            throw new IllegalStateException(ConverterValidatorManager.class.getSimpleName()
+                + " does not importing for the AlertConditionCategory: " + category);
         }
     }
 
@@ -86,17 +92,18 @@ public class ConverterValidatorManager {
             return measurementConverter.validate(bean, errors, index);
         } else if (bean.getTrigger().equals(traitConverter.getTriggerName())) {
             return traitConverter.validate(bean, errors, index);
-        } else if (bean.getTrigger().equals(configurationPropertyConverter.getTriggerName())) {
-            return configurationPropertyConverter.validate(bean, errors, index);
         } else if (bean.getTrigger().equals(eventsConverter.getTriggerName())) {
             return eventsConverter.validate(bean, errors, index);
         } else if (bean.getTrigger().equals(availabilityConverter.getTriggerName())) {
             return availabilityConverter.validate(bean, errors, index);
         } else if (bean.getTrigger().equals(operationConverter.getTriggerName())) {
             return operationConverter.validate(bean, errors, index);
+        } else if (bean.getTrigger().equals(resourceConfigurationConverter.getTriggerName())) {
+            return resourceConfigurationConverter.validate(bean, errors, index);
+        } else {
+            throw new IllegalStateException(ConverterValidatorManager.class.getSimpleName()
+                + " does not validation for the trigger: " + bean.getTrigger());
         }
-
-        return false;
     }
 
     public static void setDefaults(ConditionBean bean) {

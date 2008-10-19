@@ -119,7 +119,7 @@ public class ViewAlertAction extends TilesAction {
                 }
 
                 alertCondBean.setActualValue(firedValue);
-            } else if ((category == AlertConditionCategory.CONFIGURATION_PROPERTY)
+            } else if ((category == AlertConditionCategory.RESOURCE_CONFIG)
                 || (category == AlertConditionCategory.EVENT)) {
                 // TODO: jmarques - add validation to make sure condition is a valid regex Pattern
                 alertCondBean.setActualValue(condLog.getValue());

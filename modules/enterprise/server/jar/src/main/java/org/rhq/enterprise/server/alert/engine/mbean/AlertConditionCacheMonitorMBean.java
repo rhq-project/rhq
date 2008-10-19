@@ -44,6 +44,8 @@ public interface AlertConditionCacheMonitorMBean {
 
     public void incrementEventProcessingTime(long moreMillis);
 
+    public void incrementResourceConfigurationProcessingTime(long moreMillis);
+
     public void incrementOperationProcessingTime(long moreMillis);
 
     /*
@@ -57,6 +59,8 @@ public interface AlertConditionCacheMonitorMBean {
 
     public int getEventCacheElementCount();
 
+    public int getResourceConfigurationCacheElementCount();
+
     public int getOperationCacheElementCount();
 
     public int getOOBCacheElementCount();
@@ -66,6 +70,8 @@ public interface AlertConditionCacheMonitorMBean {
     public void resetEventCacheElementCounts();
 
     public void resetMeasurementCacheElementCounts();
+
+    public void resetResourceConfigurationCacheElementCounts();
 
     public void resetOperationCacheElementCounts();
 
@@ -78,6 +84,8 @@ public interface AlertConditionCacheMonitorMBean {
     public void incrementMeasurementCacheElementCount(int count);
 
     public void incrementEventCacheElementCount(int count);
+
+    public void incrementResourceConfigurationCacheElementCount(int count);
 
     public void incrementOperationCacheElementCount(int count);
 
@@ -94,6 +102,8 @@ public interface AlertConditionCacheMonitorMBean {
 
     public int getEventCacheElementMatches();
 
+    public int getResourceConfigurationCacheElementMatches();
+
     public int getOperationCacheElementMatches();
 
     public void incrementAvailabilityCacheElementMatches(int matches);
@@ -101,6 +111,8 @@ public interface AlertConditionCacheMonitorMBean {
     public void incrementMeasurementCacheElementMatches(int matches);
 
     public void incrementEventCacheElementMatches(int matches);
+
+    public void incrementResourceConfigurationCacheElementMatches(int matches);
 
     public void incrementOperationCacheElementMatches(int matches);
 

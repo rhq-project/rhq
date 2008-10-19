@@ -177,7 +177,6 @@ public class EventManagerBean implements EventManagerLocal {
         }
     }
 
-    @SuppressWarnings("unused")
     private void notifyAlertConditionCacheManager(String callingMethod, EventSource source, Event... events) {
         AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(source, events);
 
@@ -348,7 +347,6 @@ public class EventManagerBean implements EventManagerLocal {
     }
 
     @NotNull
-    @SuppressWarnings("unchecked")
     public PageList<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
         EventSeverity severity, PageControl pc) {
 

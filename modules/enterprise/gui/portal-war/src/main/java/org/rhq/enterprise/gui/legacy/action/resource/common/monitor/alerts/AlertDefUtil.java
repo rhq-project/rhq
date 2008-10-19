@@ -99,6 +99,9 @@ public final class AlertDefUtil {
             } catch (Exception e) {
                 textValue.append(cond.getName()).append(' ');
             }
+        } else if (category == AlertConditionCategory.RESOURCE_CONFIG) {
+            textValue.append(RequestUtils.message(request, "alert.config.props.CB.Content.ResourceConfiguration"))
+                .append(' ');
         } else {
             textValue.append(cond.getName()).append(' ');
         }
@@ -128,8 +131,8 @@ public final class AlertDefUtil {
                 textValue.append(" of ");
                 textValue.append(MeasurementFormatter.getBaselineText(cond.getOption(), schedule));
             }
-        } else if ((category == AlertConditionCategory.CONFIGURATION_PROPERTY)
-            || (category == AlertConditionCategory.CHANGE) || (category == AlertConditionCategory.TRAIT)) {
+        } else if (category == AlertConditionCategory.RESOURCE_CONFIG || category == AlertConditionCategory.CHANGE
+            || category == AlertConditionCategory.TRAIT) {
             textValue.append(RequestUtils.message(request, "alert.current.list.ValueChanged"));
         } else if (category == AlertConditionCategory.EVENT) {
             String msgKey = "alert.config.props.CB.EventSeverity";

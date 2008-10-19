@@ -57,7 +57,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 @Stateless
 public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
-    @SuppressWarnings("unused")
+
     private static final Log LOG = LogFactory.getLog(AlertDefinitionManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)

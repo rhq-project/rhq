@@ -19,34 +19,26 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.condition;
 
 import org.apache.struts.action.ActionErrors;
-import org.apache.struts.action.ActionMessage;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ConditionBean;
 
-public class ConfigurationPropertyConverterValidator implements ConditionBeanConverterValidator {
+class ResourceConfigurationConverterValidator implements ConditionBeanConverterValidator {
     public void exportProperties(Subject subject, ConditionBean fromBean, AlertCondition toCondition) {
-        toCondition.setCategory(AlertConditionCategory.CONFIGURATION_PROPERTY);
-        toCondition.setName(fromBean.getCustomProperty());
+        toCondition.setCategory(AlertConditionCategory.RESOURCE_CONFIG);
     }
 
     public void importProperties(Subject subject, AlertCondition fromCondition, ConditionBean toBean) {
         toBean.setTrigger(getTriggerName());
-        toBean.setCustomProperty(fromCondition.getName());
     }
 
     public boolean validate(ConditionBean bean, ActionErrors errors, int index) {
-        if (0 == bean.getCustomProperty().length()) {
-            ActionMessage err = new ActionMessage("alert.config.error.NoCustomPropertySelected");
-            errors.add("condition[" + index + "].customProperty", err);
-            return false;
-        }
-
         return true;
     }
 
     public String getTriggerName() {
-        return "onConfigurationProperty";
+        return "onResourceConfiguration";
     }
 }

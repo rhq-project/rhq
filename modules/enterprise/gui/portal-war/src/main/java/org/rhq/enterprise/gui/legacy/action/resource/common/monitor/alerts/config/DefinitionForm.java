@@ -104,6 +104,7 @@ public final class DefinitionForm extends ResourceForm {
     private List<MeasurementDefinition> traits;
     private Collection<Map.Entry<String, Integer>> alertnames;
     private Collection<Map.Entry<String, String>> conditionExpressionNames;
+    private boolean resourceConfigurationSupported;
 
     //    private boolean cascade;
     private boolean readOnly;
@@ -720,6 +721,14 @@ public final class DefinitionForm extends ResourceForm {
 
     public void setConditionExpressionNames(Collection<Map.Entry<String, String>> conditionExpressionNames) {
         this.conditionExpressionNames = conditionExpressionNames;
+    }
+
+    public boolean isResourceConfigurationSupported() {
+        return resourceConfigurationSupported;
+    }
+
+    public void setResourceConfigurationSupported(boolean resourceConfigurationSupported) {
+        this.resourceConfigurationSupported = resourceConfigurationSupported;
     }
 
     public String getConsecutiveCountValue() {

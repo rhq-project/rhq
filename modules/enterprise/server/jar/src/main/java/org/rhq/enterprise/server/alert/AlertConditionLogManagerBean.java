@@ -138,7 +138,6 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void checkForCompletedAlertConditionSet(int alertConditionId) {
         AlertCondition alertCondition = alertConditionManager.getAlertConditionById(alertConditionId);
         AlertDefinition alertDefinition = alertCondition.getAlertDefinition();
@@ -238,7 +237,6 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
         }
     }
 
-    @SuppressWarnings("unchecked")
     private boolean evaluateConditionSet(AlertDefinition alertDefinition) {
         List<AlertConditionLog> unmatchedLogs = this.getUnmatchedLogsByAlertDefinitionId(alertDefinition.getId());
 

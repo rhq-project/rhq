@@ -178,13 +178,11 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private boolean shouldFireConsecutiveCountAlert(int alertDefinitionId, long count) {
         // consecutive is a more specific case of general where count == period
         return shouldFirePartialCountAlert(alertDefinitionId, count, count);
     }
 
-    @SuppressWarnings("unchecked")
     private boolean shouldFirePartialCountAlert(int alertDefinitionId, long countNeeded, long period) {
 
         List<AlertDampeningEvent> events = getRecentAlertDampeningEvents(alertDefinitionId, period);

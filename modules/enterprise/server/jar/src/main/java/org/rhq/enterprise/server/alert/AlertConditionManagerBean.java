@@ -109,6 +109,9 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
         } else if (category == AlertConditionCategory.EVENT) {
             queryName = AlertCondition.QUERY_BY_CATEGORY_EVENT;
 
+        } else if (category == AlertConditionCategory.RESOURCE_CONFIG) {
+            queryName = AlertCondition.QUERY_BY_CATEGORY_RESOURCE_CONFIG;
+
         } else {
             throw new IllegalArgumentException("getAlertConditionComposites does not support category '" + category
                 + "'");

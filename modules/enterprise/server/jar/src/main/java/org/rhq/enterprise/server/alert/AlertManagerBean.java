@@ -90,7 +90,6 @@ public class AlertManagerBean implements AlertManagerLocal {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(AlertManagerBean.class);
 
     @EJB
@@ -692,8 +691,8 @@ public class AlertManagerBean implements AlertManagerLocal {
                 builder.append(" of ");
                 builder.append(MeasurementFormatter.getBaselineText(condition.getOption(), schedule));
             }
-        } else if ((category == AlertConditionCategory.CONFIGURATION_PROPERTY)
-            || (category == AlertConditionCategory.CHANGE) || (category == AlertConditionCategory.TRAIT)) {
+        } else if ((category == AlertConditionCategory.RESOURCE_CONFIG) || (category == AlertConditionCategory.CHANGE)
+            || (category == AlertConditionCategory.TRAIT)) {
             builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CURRENT_LIST_VALUE_CHANGED));
         } else if (category == AlertConditionCategory.EVENT) {
             if ((condition.getOption() != null) && (condition.getOption().length() > 0)) {

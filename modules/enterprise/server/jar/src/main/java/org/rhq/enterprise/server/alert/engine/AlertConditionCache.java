@@ -36,9 +36,11 @@ import org.rhq.core.domain.alert.composite.AlertConditionBaselineCategoryComposi
 import org.rhq.core.domain.alert.composite.AlertConditionChangesCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionControlCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionEventCategoryComposite;
+import org.rhq.core.domain.alert.composite.AlertConditionResourceConfigurationCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionScheduleCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionTraitCategoryComposite;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.EventSource;
@@ -69,6 +71,7 @@ import org.rhq.enterprise.server.alert.engine.model.MeasurementNumericCacheEleme
 import org.rhq.enterprise.server.alert.engine.model.MeasurementTraitCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.NumericDoubleCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.OutOfBoundsCacheElement;
+import org.rhq.enterprise.server.alert.engine.model.ResourceConfigurationCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.ResourceOperationCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.UnsupportedAlertConditionOperatorException;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -108,6 +111,8 @@ public final class AlertConditionCache {
         MeasurementOutOfBoundsCache, //
         ResourceOperationCache, //
         AvailabilityCache, //
+        EventsCache, //
+        ResourceConfigurationCache, //
         Inverse;
     }
 
@@ -167,6 +172,16 @@ public final class AlertConditionCache {
     private Map<Integer, List<EventCacheElement>> eventsCache;
 
     /*
+     * structure:
+     *      map< resourceId, list< ResourceConfigurationCacheElement > >
+     * 
+     * algorithm:
+     *      When resource configurations get updated, either through the UI or on the agent-side, the
+     *      ResourceConfigurationUpdate objects are passed to the cache to check whether there was a change.
+     */
+    private Map<Integer, List<ResourceConfigurationCacheElement>> resourceConfigurationCache;
+
+    /*
      * structure: 
      *      map< alertConditionId, list< tuple< AbstractCacheElement, list< AbstractCacheElement > > > >
      *
@@ -218,6 +233,7 @@ public final class AlertConditionCache {
         resourceOperationCache = new HashMap<Integer, Map<Integer, List<ResourceOperationCacheElement>>>();
         availabilityCache = new HashMap<Integer, List<AvailabilityCacheElement>>();
         eventsCache = new HashMap<Integer, List<EventCacheElement>>();
+        resourceConfigurationCache = new HashMap<Integer, List<ResourceConfigurationCacheElement>>();
 
         // bookkeeping constructs for fast agent-by-agent removal of cache elements
         inverseAlertConditionMap = new HashMap<Integer, List<Tuple<AbstractCacheElement<?>, List<AbstractCacheElement<?>>>>>();
@@ -311,7 +327,8 @@ public final class AlertConditionCache {
 
             EnumSet<AlertConditionCategory> supportedCategories = EnumSet.of(AlertConditionCategory.BASELINE,
                 AlertConditionCategory.CHANGE, AlertConditionCategory.TRAIT, AlertConditionCategory.AVAILABILITY,
-                AlertConditionCategory.CONTROL, AlertConditionCategory.THRESHOLD, AlertConditionCategory.EVENT);
+                AlertConditionCategory.CONTROL, AlertConditionCategory.THRESHOLD, AlertConditionCategory.EVENT,
+                AlertConditionCategory.RESOURCE_CONFIG);
 
             for (AlertConditionCategory nextCategory : supportedCategories) {
                 // page thru all alert definitions
@@ -483,6 +500,34 @@ public final class AlertConditionCache {
             AlertConditionCacheMonitor.getMBean().incrementOperationCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementOperationProcessingTime(stats.getAge());
             log.debug("Check OperationHistory[size=1] - " + stats);
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
+        } finally {
+            rwLock.readLock().unlock();
+        }
+        return stats;
+    }
+
+    public AlertConditionCacheStats checkConditions(ResourceConfigurationUpdate update) {
+        if (update == null) {
+            return new AlertConditionCacheStats();
+        }
+
+        rwLock.readLock().lock();
+
+        AlertConditionCacheStats stats = new AlertConditionCacheStats();
+        try {
+            Resource resource = update.getResource();
+
+            List<ResourceConfigurationCacheElement> cacheElements = lookupResourceConfigurationCacheElements(resource
+                .getId());
+
+            processCacheElements(cacheElements, update.getConfiguration(), update.getCreatedTime().getTime(), stats);
+
+            AlertConditionCacheMonitor.getMBean().incrementResourceConfigurationCacheElementMatches(stats.matched);
+            AlertConditionCacheMonitor.getMBean().incrementResourceConfigurationProcessingTime(stats.getAge());
+            log.debug("Check " + update + " - " + stats);
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error(t);
@@ -707,7 +752,6 @@ public final class AlertConditionCache {
         return tuples.add(inverseTuple);
     }
 
-    @SuppressWarnings("unchecked")
     private <T extends AbstractCacheElement<?>> boolean addToInverseAlertOutOfBoundsMap(Integer scheduleId,
         Integer agentId) {
         List<Integer> agentOutOfBounds = inverseAgentOutOfBoundsMap.get(agentId);
@@ -754,7 +798,8 @@ public final class AlertConditionCache {
             return AlertConditionOperator.GREATER_THAN_OR_EQUAL_TO;
         }
 
-        if ((category == AlertConditionCategory.CHANGE) || (category == AlertConditionCategory.TRAIT)) {
+        if (category == AlertConditionCategory.RESOURCE_CONFIG || category == AlertConditionCategory.CHANGE
+            || category == AlertConditionCategory.TRAIT) {
             // the model currently supports CHANGE as a category type instead of a comparator
             return AlertConditionOperator.CHANGES;
         }
@@ -823,6 +868,10 @@ public final class AlertConditionCache {
 
     private List<EventCacheElement> lookupEventCacheElements(int resourceId) {
         return eventsCache.get(resourceId); // yup, might be null
+    }
+
+    private List<ResourceConfigurationCacheElement> lookupResourceConfigurationCacheElements(int resourceId) {
+        return resourceConfigurationCache.get(resourceId); // yup, might be null
     }
 
     private void insertAlertConditionComposite(int agentId, AbstractAlertConditionCategoryComposite composite,
@@ -980,6 +1029,21 @@ public final class AlertConditionCache {
             addTo("eventsCache", eventsCache, eventComposite.getResourceId(), cacheElement, alertConditionId, agentId,
                 stats);
             AlertConditionCacheMonitor.getMBean().incrementEventCacheElementCount(1);
+        } else if (alertConditionCategory == AlertConditionCategory.RESOURCE_CONFIG) {
+            AlertConditionResourceConfigurationCategoryComposite resourceConfigurationComposite = (AlertConditionResourceConfigurationCategoryComposite) composite;
+
+            ResourceConfigurationCacheElement cacheElement = null;
+            try {
+                cacheElement = new ResourceConfigurationCacheElement(alertConditionOperator,
+                    resourceConfigurationComposite.getResourceConfiguration(), alertConditionId);
+            } catch (InvalidCacheElementException icee) {
+                log.info("Failed to create EventCacheElement with parameters: "
+                    + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, null));
+            }
+
+            addTo("resourceConfigurationCache", resourceConfigurationCache, resourceConfigurationComposite
+                .getResourceId(), cacheElement, alertConditionId, agentId, stats);
+            AlertConditionCacheMonitor.getMBean().incrementResourceConfigurationCacheElementCount(1);
         }
     }
 
@@ -1146,6 +1210,8 @@ public final class AlertConditionCache {
                 AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(-1);
             } else if (inverseCacheElement.lefty instanceof MeasurementNumericCacheElement) {
                 AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(-1);
+            } else if (inverseCacheElement.lefty instanceof ResourceConfigurationCacheElement) {
+                AlertConditionCacheMonitor.getMBean().incrementResourceConfigurationCacheElementCount(-1);
             } else {
                 log.info("AlertConditionCacheMonitor does not yet remove/reset cache counts for elements of type '"
                     + inverseCacheElement.lefty.getClass() + "'");
@@ -1188,6 +1254,10 @@ public final class AlertConditionCache {
                 printNestedCache(CacheName.ResourceOperationCache.name(), resourceOperationCache);
             } else if (CacheName.AvailabilityCache.name().equals(cacheName)) {
                 printListCache(CacheName.AvailabilityCache.name(), availabilityCache);
+            } else if (CacheName.EventsCache.name().equals(cacheName)) {
+                printListCache(CacheName.EventsCache.name(), eventsCache);
+            } else if (CacheName.ResourceConfigurationCache.name().equals(cacheName)) {
+                printListCache(CacheName.ResourceConfigurationCache.name(), resourceConfigurationCache);
             } else if (CacheName.Inverse.name().equals(cacheName)) {
                 printInverseCache();
             }
@@ -1210,6 +1280,8 @@ public final class AlertConditionCache {
                 printListCache(CacheName.MeasurementOutOfBoundsCache.name(), measurementOutOfBoundsCache);
                 printNestedCache(CacheName.ResourceOperationCache.name(), resourceOperationCache);
                 printListCache(CacheName.AvailabilityCache.name(), availabilityCache);
+                printListCache(CacheName.EventsCache.name(), eventsCache);
+                printListCache(CacheName.ResourceConfigurationCache.name(), resourceConfigurationCache);
                 printInverseCache();
             }
         } catch (Throwable t) {

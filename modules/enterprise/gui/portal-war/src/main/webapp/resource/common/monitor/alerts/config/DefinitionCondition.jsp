@@ -150,33 +150,32 @@
   <td class="BlockLabel">&nbsp;</td>
   
 </c:if> <!-- end conditional traits display logic -->
-<c:if test="${showProperties}"> <!-- begin conditional customProperties display logic -->
-
-  <logic:messagesPresent property="condition[${i}].customProperty">
-  <c:set var="customPropertyErrs" value="true"/>
+<c:if test="${showResourceConfiguration}" > <!-- begin conditional resource config display logic -->
+  
+  <logic:messagesPresent property="condition[${i}].resourceConfigurationStatus">
+     <c:set var="resourceConfigurationStatusErrs" value="true"/>
   </logic:messagesPresent>
+  
   <c:choose>
-  <c:when test="${customPropertyErrs}">
-  <td class="ErrorField" nowrap>
-  </c:when>
-  <c:otherwise>
-  <td class="BlockContent" nowrap>
-  </c:otherwise>
+     <c:when test="${resourceConfigurationStatusErrs}">
+        <td class="ErrorField">
+     </c:when>
+     <c:otherwise>
+        <td class="BlockContent">
+     </c:otherwise>
   </c:choose>
-    <html:radio property="condition[${i}].trigger" value="onCustProp"/>
-    <fmt:message key="alert.config.props.CB.Content.CustomProperty"/>
-    <html:select property="condition[${i}].customProperty">
-      <html:option value="" key="alert.dropdown.SelectOption"/>
-      <html:optionsCollection property="customProperties"/>
-    </html:select>
+  
+    <html:radio property="condition[${i}].trigger" value="onResourceConfiguration"/>
+    <fmt:message key="alert.config.props.CB.Content.ResourceConfiguration"/>&nbsp;
     <fmt:message key="alert.config.props.CB.Content.Changes"/>
   </td>
 </tr>
 
+
 <tr>
   <td class="BlockLabel">&nbsp;</td>
   
-</c:if> <!-- end conditional customProperties display logic -->
+</c:if> <!-- end conditional resource config display logic -->
 <c:if test="${showAvailability}"> <!-- begin conditional availabilityOptions display logic -->
   
   <logic:messagesPresent property="condition[${i}].availabilityStatus">

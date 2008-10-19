@@ -38,6 +38,7 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     public AtomicInteger availabilityCacheElementCount = new AtomicInteger();
     public AtomicInteger eventCacheElementCount = new AtomicInteger();
     public AtomicInteger measurementCacheElementCount = new AtomicInteger();
+    public AtomicInteger resourceConfigurationCacheElementCount = new AtomicInteger();
     public AtomicInteger operationCacheElementCount = new AtomicInteger();
     public AtomicInteger OOBCacheElementCount = new AtomicInteger();
     public AtomicInteger totalCacheElementCount = new AtomicInteger();
@@ -45,12 +46,14 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     public AtomicInteger availabilityCacheElementMatches = new AtomicInteger();
     public AtomicInteger eventCacheElementMatches = new AtomicInteger();
     public AtomicInteger measurementCacheElementMatches = new AtomicInteger();
+    public AtomicInteger resourceConfigurationCacheElementMatches = new AtomicInteger();
     public AtomicInteger operationCacheElementMatches = new AtomicInteger();
     public AtomicInteger totalCacheElementMatches = new AtomicInteger();
 
     public AtomicLong availabilityProcessingTime = new AtomicLong();
     public AtomicLong eventProcessingTime = new AtomicLong();
     public AtomicLong measurementProcessingTime = new AtomicLong();
+    public AtomicLong resourceConfigurationProcessingTime = new AtomicLong();
     public AtomicLong operationProcessingTime = new AtomicLong();
     public AtomicLong totalProcessingTime = new AtomicLong();
 
@@ -85,6 +88,10 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
         return measurementCacheElementCount.get();
     }
 
+    public int getResourceConfigurationCacheElementCount() {
+        return resourceConfigurationCacheElementCount.get();
+    }
+
     public int getOperationCacheElementCount() {
         return operationCacheElementCount.get();
     }
@@ -117,6 +124,11 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
         totalCacheElementCount.addAndGet(-removed);
     }
 
+    public void resetResourceConfigurationCacheElementCounts() {
+        int removed = resourceConfigurationCacheElementCount.getAndSet(0);
+        totalCacheElementCount.addAndGet(-removed);
+    }
+
     public void resetOperationCacheElementCounts() {
         int removed = operationCacheElementCount.getAndSet(0);
         totalCacheElementCount.addAndGet(-removed);
@@ -127,6 +139,7 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
         eventCacheElementCount.set(0);
         measurementCacheElementCount.set(0);
         operationCacheElementCount.set(0);
+        resourceConfigurationCacheElementCount.set(0);
         OOBCacheElementCount.set(0);
         totalCacheElementCount.set(0);
     }
@@ -141,6 +154,10 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
 
     public int getMeasurementCacheElementMatches() {
         return measurementCacheElementMatches.get();
+    }
+
+    public int getResourceConfigurationCacheElementMatches() {
+        return resourceConfigurationCacheElementMatches.get();
     }
 
     public int getOperationCacheElementMatches() {
@@ -159,6 +176,11 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     public void incrementEventCacheElementCount(int insertedCount) {
         eventCacheElementCount.addAndGet(insertedCount);
         totalCacheElementCount.addAndGet(insertedCount);
+    }
+
+    public void incrementResourceConfigurationCacheElementCount(int count) {
+        resourceConfigurationCacheElementCount.addAndGet(count);
+        totalCacheElementCount.addAndGet(count);
     }
 
     public void incrementMeasurementCacheElementCount(int insertedCount) {
@@ -183,6 +205,11 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
 
     public void incrementEventCacheElementMatches(int matches) {
         eventCacheElementMatches.addAndGet(matches);
+        totalCacheElementMatches.addAndGet(matches);
+    }
+
+    public void incrementResourceConfigurationCacheElementMatches(int matches) {
+        resourceConfigurationCacheElementMatches.addAndGet(matches);
         totalCacheElementMatches.addAndGet(matches);
     }
 
@@ -226,6 +253,11 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
         totalProcessingTime.addAndGet(moreMillis);
     }
 
+    public void incrementResourceConfigurationProcessingTime(long moreMillis) {
+        resourceConfigurationProcessingTime.addAndGet(moreMillis);
+        totalProcessingTime.addAndGet(moreMillis);
+    }
+
     public void incrementMeasurementProcessingTime(long moreMillis) {
         measurementProcessingTime.addAndGet(moreMillis);
         totalProcessingTime.addAndGet(moreMillis);
@@ -263,4 +295,5 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     public void postDeregister() {
         mbeanServer = null;
     }
+
 }

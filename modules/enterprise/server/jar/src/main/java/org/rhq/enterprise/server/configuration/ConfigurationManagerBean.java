@@ -71,6 +71,8 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -98,6 +100,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
 
     @EJB
     private AgentManagerLocal agentManager;
+    @EJB
+    private AlertConditionCacheManagerLocal alertConditionCacheManager;
     @EJB
     private AuthorizationManagerLocal authorizationManager;
     @EJB
@@ -625,6 +629,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
             newUpdateRequest.setStatus(newStatus);
 
             entityManager.persist(newUpdateRequest);
+            notifyAlertConditionCacheManager("persistNewResourceConfigurationUpdateHistory", newUpdateRequest);
+
             resource.addResourceConfigurationUpdates(newUpdateRequest);
 
             resource.getChildResources().size();
@@ -639,6 +645,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         } else {
             return null;
         }
+    }
+
+    private void notifyAlertConditionCacheManager(String callingMethod, ResourceConfigurationUpdate update) {
+        AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(update);
+
+        log.debug(callingMethod + ": " + stats.toString());
     }
 
     public void completeResourceConfigurationUpdate(ConfigurationUpdateResponse response) {

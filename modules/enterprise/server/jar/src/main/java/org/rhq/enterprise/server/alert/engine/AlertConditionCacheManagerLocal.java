@@ -24,6 +24,7 @@ package org.rhq.enterprise.server.alert.engine;
 
 import javax.ejb.Local;
 
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
@@ -76,6 +77,14 @@ public interface AlertConditionCacheManagerLocal {
      * @return the number of conditions that were true against this argument
      */
     AlertConditionCacheStats checkConditions(EventSource source, Event... events);
+
+    /**
+     * ResourceConfiguration changes can be made through the UI or on the managed resource.  Whenever a new
+     * ResourceConfigurationUpdate is created, it should be passed to this method
+     * 
+     * @return the number of conditions that were true against this argument
+     */
+    AlertConditionCacheStats checkConditions(ResourceConfigurationUpdate update);
 
     String[] getCacheNames();
 

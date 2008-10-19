@@ -52,7 +52,6 @@ public final class AlertConditionConsumerBean implements MessageListener {
 
     @EJB
     private AlertConditionManagerLocal alertConditionManager;
-
     @EJB
     private CachedConditionManagerLocal cachedConditionManager;
 
@@ -86,7 +85,6 @@ public final class AlertConditionConsumerBean implements MessageListener {
              * completes and unlocks, the next thread will see all of its results
              */
             cachedConditionManager.processCachedConditionMessage(conditionMessage, definition);
-            //processCachedConditionMessage(conditionMessage, definition);
         } catch (Exception e) {
             log.error("Error handling " + conditionMessage + " - " + e.toString());
         } finally {
@@ -95,29 +93,4 @@ public final class AlertConditionConsumerBean implements MessageListener {
             }
         }
     }
-
-    //    private void processCachedConditionMessage(AbstractAlertConditionMessage conditionMessage,
-    //        AlertDefinition definition) {
-    //        /*
-    //         * note that ctime is the time when the condition was known to be true, not the time we're persisting the
-    //         * condition log message
-    //         */
-    //        if (conditionMessage instanceof ActiveAlertConditionMessage) {
-    //            ActiveAlertConditionMessage activeConditionMessage = (ActiveAlertConditionMessage) conditionMessage;
-    //
-    //            alertConditionLogManager.updateUnmatchedLogByAlertConditionId(activeConditionMessage.getAlertConditionId(),
-    //                activeConditionMessage.getTimestamp(), activeConditionMessage.getValue());
-    //
-    //            alertConditionLogManager.checkForCompletedAlertConditionSet(activeConditionMessage.getAlertConditionId());
-    //        } else if (conditionMessage instanceof InactiveAlertConditionMessage) {
-    //
-    //            AlertDampeningEvent event = new AlertDampeningEvent(definition, AlertDampeningEvent.Type.NEGATIVE);
-    //            entityManager.persist(event);
-    //
-    //            alertDampeningManager.processEventType(definition.getId(), AlertDampeningEvent.Type.NEGATIVE);
-    //        } else {
-    //            log.error("Unsupported message type sent to consumer for processing: "
-    //                + conditionMessage.getClass().getSimpleName());
-    //        }
-    //    }
 }

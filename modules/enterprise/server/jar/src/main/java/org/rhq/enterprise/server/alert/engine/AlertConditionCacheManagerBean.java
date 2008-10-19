@@ -25,6 +25,7 @@ import javax.ejb.TransactionAttributeType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
@@ -62,6 +63,12 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
     public AlertConditionCacheStats checkConditions(EventSource source, Event... events) {
         AlertConditionCacheStats stats;
         stats = AlertConditionCache.getInstance().checkConditions(source, events);
+        return stats;
+    }
+
+    public AlertConditionCacheStats checkConditions(ResourceConfigurationUpdate update) {
+        AlertConditionCacheStats stats;
+        stats = AlertConditionCache.getInstance().checkConditions(update);
         return stats;
     }
 

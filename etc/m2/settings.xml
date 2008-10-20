@@ -63,25 +63,25 @@
 
          <!--
          <repositories>
-          <repository>
-            <id>central</id>
-            <name>Artifactory Proxy Repository</name>
-            <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>
-            <snapshots>
-               <enabled>false</enabled>
-            </snapshots>
-          </repository>
+            <repository>
+               <id>central</id>
+               <name>Artifactory Proxy Repository</name>
+               <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>
+               <snapshots>
+                  <enabled>false</enabled>
+               </snapshots>
+            </repository>
          </repositories>
 
          <pluginRepositories>
-          <pluginRepository>
-            <id>central</id>
-            <name>Artifactory Proxy Repository</name>
-            <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>
-            <snapshots>
-               <enabled>false</enabled>
-            </snapshots>
-          </pluginRepository>
+            <pluginRepository>
+               <id>central</id>
+               <name>Artifactory Proxy Repository</name>
+               <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>
+               <snapshots>
+                  <enabled>false</enabled>
+               </snapshots>
+            </pluginRepository>
          </pluginRepositories>
          -->
 
@@ -134,29 +134,29 @@
 
    <!--**************************** REPOS ****************************-->
 
-     <!--
-     <repositories>
+   <!--
+   <repositories>
       <repository>
-        <id>central</id>
-        <name>Artifactory Proxy Repository</name>
-        <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>
-        <snapshots>
-           <enabled>false</enabled>
-        </snapshots>
+         <id>central</id>
+         <name>Artifactory Proxy Repository</name>
+         <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
       </repository>
-     </repositories>
+   </repositories>
 
-     <pluginRepositories>
+   <pluginRepositories>
       <pluginRepository>
-        <id>central</id>
-        <name>Artifactory Proxy Repository</name>
-        <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>
-        <snapshots>
-           <enabled>false</enabled>
-        </snapshots>
+         <id>central</id>
+         <name>Artifactory Proxy Repository</name>
+         <url>http://ARTIFACTORY_HOST:9999/artifactory/repo</url>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
       </pluginRepository>
-     </pluginRepositories>
-     -->
+   </pluginRepositories>
+   -->
 
    <!--**************************** PLUGIN GROUPS ****************************-->
 

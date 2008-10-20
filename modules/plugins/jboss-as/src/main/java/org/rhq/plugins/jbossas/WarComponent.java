@@ -191,10 +191,9 @@ public class WarComponent extends ApplicationResourceComponent<JBossASServerComp
     }
 
     private Double getSessionMetric(String metricName) {
-
         EmsConnection jmxConnection = getEmsConnection();
-        String ctxRoot = "/" + contextRoot;
-        String servletMBeanNames = SESSION_NAME_BASE_TEMPLATE.replace("%PATH%", ctxRoot);
+        String servletMBeanNames = SESSION_NAME_BASE_TEMPLATE.replace("%PATH%",
+                WarDiscoveryHelper.getContextPath(this.contextRoot));
         servletMBeanNames = servletMBeanNames.replace("%HOST%", vhost);
         ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(servletMBeanNames);
         List<EmsBean> mBeans = jmxConnection.queryBeans(queryUtility.getTranslatedQuery());

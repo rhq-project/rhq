@@ -74,7 +74,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
     private static final String CHANGE_ME = "***CHANGE_ME***";
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
-        log.info("Discovering JBossAS 3.2.x and 4.x servers...");
+        log.debug("Discovering JBossAS 3.2.x and 4.x servers...");
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
         DiscoveredResourceDetails jbossPcIsEmbeddedIn = discoverJBossPcIsEmbeddedIn(context);
         if (jbossPcIsEmbeddedIn != null) {

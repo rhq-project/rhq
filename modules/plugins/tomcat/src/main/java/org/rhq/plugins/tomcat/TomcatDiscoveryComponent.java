@@ -62,7 +62,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
     private static final String PRODUCT_NAME = "Apache Tomcat";
 
     /**
-     * Formal description of the Tomcat prodcut passed into discovered resources.
+     * Formal description of the Tomcat product passed into discovered resources.
      */
     private static final String PRODUCT_DESCRIPTION = "Apache Tomcat Web Application Server";
 
@@ -105,7 +105,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
     // ResourceDiscoveryComponent  --------------------------------------------
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
-        log.info("Discovering Tomcat servers");
+        log.debug("Discovering Tomcat servers...");
 
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
 
@@ -170,7 +170,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
     }
 
     /**
-     * Check from the commandline if this is a standalone tomcat
+     * Check from the command line if this is a standalone tomcat
      *
      * @param  commandLine
      *

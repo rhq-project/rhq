@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.operation;
 
 import java.io.ByteArrayOutputStream;
@@ -62,7 +62,6 @@ import org.rhq.core.domain.configuration.Configuration;
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @NamedQueries( {
-    @NamedQuery(name = OperationHistory.QUERY_FIND_ALL_IN_STATUS, query = "SELECT h FROM OperationHistory h WHERE h.status = :status"),
     @NamedQuery(name = OperationHistory.QUERY_FIND_BY_JOB_ID, query = "SELECT h FROM OperationHistory h "
         + " WHERE h.jobName = :jobName " + "   AND h.jobGroup = :jobGroup " + "   AND h.createdTime = :createdTime"),
     @NamedQuery(name = OperationHistory.QUERY_GET_RECENTLY_COMPLETED_RESOURCE_ADMIN, query = "SELECT DISTINCT new org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite( "
@@ -106,7 +105,6 @@ import org.rhq.core.domain.configuration.Configuration;
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_OPERATION_HISTORY_ID_SEQ")
 @Table(name = "RHQ_OPERATION_HISTORY")
 public abstract class OperationHistory implements Serializable {
-    public static final String QUERY_FIND_ALL_IN_STATUS = "OperationHistory.findAllInStatus";
     public static final String QUERY_FIND_BY_JOB_ID = "OperationHistory.findByJobId";
 
     public static final String QUERY_GET_RECENTLY_COMPLETED_RESOURCE = "OperationHistory.getRecentlyCompletedResource";

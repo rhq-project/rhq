@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.operation;
 
 import java.util.ArrayList;
@@ -40,15 +40,33 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 @DiscriminatorValue("group")
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = GroupOperationHistory.QUERY_FIND_ABANDONED_IN_PROGRESS, query = "select h "
-        + "from GroupOperationHistory h where h.id IN "
-        + "( select distinct ih.id from GroupOperationHistory ih join ih.resourceOperationHistories iroh "
-        + "where iroh.status <> :status and ih.status = :status )"),
+    // should always pass INPROGRESS for status
+    @NamedQuery(name = GroupOperationHistory.QUERY_FIND_ACTIVE_IN_PROGRESS, query = "" //
+        + "SELECT h " //
+        + "  FROM GroupOperationHistory h " //
+        + "  WHERE h.status = :status " //
+        + "  AND EXISTS " //
+        + "      ( SELECT roh.id " //
+        + "          FROM ResourceOperationHistory roh " //
+        + "         WHERE roh.groupOperationHistory.id = h.id " //
+        + "           AND roh.status = :status ) "),
+    // should always pass INPROGRESS for status
+    @NamedQuery(name = GroupOperationHistory.QUERY_FIND_ABANDONED_IN_PROGRESS, query = "" //
+        + "SELECT h " //
+        + "  FROM GroupOperationHistory h " //
+        + "  WHERE h.status = :status " // 
+        + "  AND EXISTS " //
+        + "      ( SELECT roh.id " //
+        + "          FROM ResourceOperationHistory roh " //
+        + "         WHERE roh.groupOperationHistory.id = h.id " //
+        + "           AND roh.status <> :status ) "),
     @NamedQuery(name = GroupOperationHistory.QUERY_FIND_BY_GROUP_ID_AND_STATUS, query = "select h "
         + "from GroupOperationHistory h " + "where h.group.id = :groupId " + "and h.status = :status"),
     @NamedQuery(name = GroupOperationHistory.QUERY_FIND_BY_GROUP_ID_AND_NOT_STATUS, query = "select h "
         + "from GroupOperationHistory h " + "where h.group.id = :groupId " + "and h.status <> :status") })
 public class GroupOperationHistory extends OperationHistory {
+
+    public static final String QUERY_FIND_ACTIVE_IN_PROGRESS = "GroupOperationHistory.findActiveInProgress";
     public static final String QUERY_FIND_ABANDONED_IN_PROGRESS = "GroupOperationHistory.findAbandonedInProgress";
     public static final String QUERY_FIND_BY_GROUP_ID_AND_STATUS = "GroupOperationHistory.findByGroupIdAndStatus";
     public static final String QUERY_FIND_BY_GROUP_ID_AND_NOT_STATUS = "GroupOperationHistory.findByGroupIdAndNotStatus";

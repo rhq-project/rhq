@@ -887,7 +887,6 @@ public class OperationManagerBean implements OperationManagerLocal {
         return;
     }
 
-    @SuppressWarnings("unchecked")
     public List<OperationDefinition> getSupportedResourceOperations(Subject whoami, int resourceId) {
         Resource resource = getResourceIfAuthorized(whoami, resourceId);
 
@@ -1041,23 +1040,21 @@ public class OperationManagerBean implements OperationManagerLocal {
         // in progress for a very long time, we assume we'll never hear from the agent and time out
         // that history item (that is, set its status to FAILURE and set an error string).
         try {
-            Query query = entityManager.createNamedQuery(OperationHistory.QUERY_FIND_ALL_IN_STATUS);
+            Query query = entityManager.createNamedQuery(ResourceOperationHistory.QUERY_FIND_ALL_IN_STATUS);
             query.setParameter("status", OperationRequestStatus.INPROGRESS);
-            List<OperationHistory> histories = query.getResultList();
-            for (OperationHistory history : histories) {
-                if (history instanceof ResourceOperationHistory) {
-                    long timeout = getOperationTimeout(history.getOperationDefinition(), history.getParameters());
+            List<ResourceOperationHistory> histories = query.getResultList();
+            for (ResourceOperationHistory history : histories) {
+                long timeout = getOperationTimeout(history.getOperationDefinition(), history.getParameters());
 
-                    if (history.getDuration() > timeout) {
-                        history.setErrorMessage("Timed out : did not complete after " + history.getDuration() + "ms"
-                            + " (the timeout period was [" + timeout + "] ms)");
-                        history.setStatus(OperationRequestStatus.FAILURE);
-                        notifyAlertConditionCacheManager("checkForTimedOutOperations", history);
+                if (history.getDuration() > timeout) {
+                    history.setErrorMessage("Timed out : did not complete after " + history.getDuration() + "ms"
+                        + " (the timeout period was [" + timeout + "] ms)");
+                    history.setStatus(OperationRequestStatus.FAILURE);
+                    notifyAlertConditionCacheManager("checkForTimedOutOperations", history);
 
-                        LOG.info("Operation seems to have been orphaned - timing it out: " + history);
+                    LOG.info("Operation seems to have been orphaned - timing it out: " + history);
 
-                        checkForCompletedGroupOperation(history);
-                    }
+                    checkForCompletedGroupOperation(history);
                 }
             }
         } catch (Throwable t) {
@@ -1078,24 +1075,100 @@ public class OperationManagerBean implements OperationManagerLocal {
          * concerns the in-band handler code mentioned in the above paragraph.
          */
         try {
+            /*
+             * the first part of the logic needs to check for group operations that have timed out.  these are
+             * operations that are still in progress that *do* have children in progress.  if any children are 
+             * in progress, they should be canceled (the server may have already submitted the resource-level 
+             * job down to the agent, in which case the cancel request may or may not be honored).  thus, it's 
+             * technically possible for a group operation to have timed out, one or more resource operation 
+             * children to be marked as canceled, and the agent later come back with a successful result.  in the 
+             * strictest sense, the group operation still timed out, even though all resource operations completed 
+             * successfully.  the timing on this is extremely slim, but possible.  the group operation error 
+             * message should make a note of this potentiality.
+             */
+            Query query = entityManager.createNamedQuery(GroupOperationHistory.QUERY_FIND_ACTIVE_IN_PROGRESS);
+            query.setParameter("status", OperationRequestStatus.INPROGRESS);
+            List<GroupOperationHistory> groupHistories = query.getResultList();
+            for (GroupOperationHistory groupHistory : groupHistories) {
+
+                long timeout = getOperationTimeout(groupHistory.getOperationDefinition(), groupHistory.getParameters());
+                if (groupHistory.getDuration() < timeout) {
+                    /*
+                     * this INPROGRESS group operation has some children that are still INPROGRESS, but since this
+                     * group operation hasn't timed out yet continue waiting for the children to complete normally. 
+                     */
+                    continue;
+                }
+
+                /*
+                 * otherwise, the group operation has timed out, even though some of its children are still INPROGRESS
+                 */
+                for (ResourceOperationHistory resourceHistory : groupHistory.getResourceOperationHistories()) {
+                    if (resourceHistory.getStatus() == OperationRequestStatus.INPROGRESS) {
+                        /* 
+                         * when resource-level operations are still INPROGRESS, let's try to cancel them on a
+                         * best-effort basis; however, we don't want to fail and throw exceptions out of this
+                         * job if the agent (for one or more target resources) can not be reached; so, we'll
+                         * mark the resource-level operations as CANCELED but we'll gracefully ignore agent errors.
+                         * 
+                         * if by some chance the agent happens to later ping back its connected server with updated
+                         * data about one or more resource-level operation results, it will override the CANCELED
+                         * status, but the group operation will still have a descriptive error message as to why
+                         * it FAILED (in this case, timeout) and what happened as a result (cancellation messages 
+                         * where sent to the remaining INPROGRESS elements).
+                         */
+                        cancelOperationHistory(subject, resourceHistory.getId(), true);
+                        break;
+                    }
+                }
+
+                groupHistory.setErrorMessage("This group operation timed out "
+                    + "before all child resource operations could complete normally, "
+                    + "those still in progress will attempt to be canceled.");
+                groupHistory.setStatus(OperationRequestStatus.FAILURE);
+            }
+        } catch (Throwable t) {
+            LOG.warn("Failed to check for completed group operations. Cause: " + t);
+        }
+
+        try {
+            /*
+             * the second part of the logic needs to check for abandoned group operations.  these are records
+             * whose resource-level children have all reached some terminating state (canceled / failed / success),
+             * but the group operation was not marked accordingly because of the possibility that two resource
+             * operations were completing at the same time and thought that the other was still processing, thus
+             * the update to the containing group operation was erroneously skipped.
+             */
             Query query = entityManager.createNamedQuery(GroupOperationHistory.QUERY_FIND_ABANDONED_IN_PROGRESS);
             query.setParameter("status", OperationRequestStatus.INPROGRESS);
             List<GroupOperationHistory> groupHistories = query.getResultList();
             for (GroupOperationHistory groupHistory : groupHistories) {
-                boolean hadFailure = false;
-                long timeout = getOperationTimeout(groupHistory.getOperationDefinition(), groupHistory.getParameters());
-                if (groupHistory.getDuration() < timeout) {
-                    continue; // this group operation has not timed out yet
-                }
+                /* 
+                 * assume success at first, override with failure for resource-level operation failures only;
+                 * we'll be a little lenient with the logic here, and say that if a group operation hasn't already
+                 * been marked for timeout, and if all of its children reach some terminating state, that it
+                 * can not be marked for timeout now...it can only be marked as failure if there was in fact a
+                 * resource-level operation failure
+                 */
+                OperationRequestStatus groupStatus = OperationRequestStatus.SUCCESS;
 
                 for (ResourceOperationHistory resourceHistory : groupHistory.getResourceOperationHistories()) {
                     if (resourceHistory.getStatus() != OperationRequestStatus.SUCCESS) {
-                        hadFailure = true;
+                        /* 
+                         * some child was either canceled or failed for some reason, and so the group operation must 
+                         * also be marked as failed.   remember, group operations are only a success if all resource 
+                         * operation children succeeded.
+                         */
+                        groupStatus = OperationRequestStatus.FAILURE;
                         break;
                     }
                 }
-                groupHistory.setErrorMessage("One or more child resource operations timed out and/or did not complete");
-                groupHistory.setStatus(hadFailure ? OperationRequestStatus.FAILURE : OperationRequestStatus.SUCCESS);
+                // only set the error message if one or more resource operations weren't successful
+                if (groupStatus != OperationRequestStatus.SUCCESS) {
+                    groupHistory.setErrorMessage("One or more resource operations timed out and/or did not complete");
+                }
+                // always set the status
+                groupHistory.setStatus(groupStatus);
             }
         } catch (Throwable t) {
             LOG.warn("Failed to check for completed group operations. Cause: " + t);

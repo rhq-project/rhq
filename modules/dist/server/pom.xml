@@ -32,12 +32,12 @@
     <product.sales.email>sales@redhat.com</product.sales.email>
     <product.support.email>support@redhat.com</product.support.email>
     <product.version>${project.version}</product.version>
-    <product.help.doc.root>http://www.jboss.org/community/docs/DOC-12803</product.help.doc.root>
-    <product.help.installation>http://www.jboss.org/community/docs/DOC-12828</product.help.installation>
-    <product.help.guide.server>http://www.jboss.org/community/docs/DOC-12803/</product.help.guide.server>
-    <product.help.guide.agent>http://www.jboss.org/community/docs/DOC-12803/</product.help.guide.agent>
-    <product.help.FAQ>http://www.jboss.org/community/docs/DOC-12803/</product.help.FAQ>
-    <product.help.config.props>http://www.jboss.org/community/docs/DOC-12803/</product.help.config.props>
+    <product.help.doc.root>http://www.jboss.org/community/docs/</product.help.doc.root>
+    <product.help.installation>DOC-12828</product.help.installation>
+    <product.help.guide.server>DOC-12803</product.help.guide.server>
+    <product.help.guide.agent>DOC-12803</product.help.guide.agent>
+    <product.help.FAQ>DOC-12803</product.help.FAQ>
+    <product.help.config.props>DOC-12803</product.help.config.props>
   </properties>
 
   <dependencies>

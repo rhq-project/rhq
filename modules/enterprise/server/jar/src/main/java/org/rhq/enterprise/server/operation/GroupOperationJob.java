@@ -148,7 +148,8 @@ public class GroupOperationJob extends OperationJob {
                             // there was a failure during execution of this group operation;
                             // thus, mark all remaining operation histories as cancelled
                             composite.history.setStatus(OperationRequestStatus.CANCELED);
-                            operationManager.updateOperationHistory(getUserWithSession(user, true), composite.history);
+                            composite.history = (ResourceOperationHistory) operationManager.updateOperationHistory(
+                                getUserWithSession(user, true), composite.history);
                             continue;
                         }
 
@@ -179,7 +180,8 @@ public class GroupOperationJob extends OperationJob {
                     } catch (Exception e) {
                         // failed to even send to the agent, immediately mark the job as failed
                         groupHistory.setErrorMessageFromThrowable(e);
-                        operationManager.updateOperationHistory(getUserWithSession(user, true), groupHistory);
+                        groupHistory = (GroupOperationHistory) operationManager.updateOperationHistory(
+                            getUserWithSession(user, true), groupHistory);
 
                         if (schedule.isHaltOnFailure()) {
                             throw e;
@@ -194,7 +196,8 @@ public class GroupOperationJob extends OperationJob {
                     } catch (Exception e) {
                         // failed to even send to the agent, immediately mark the job as failed
                         groupHistory.setErrorMessageFromThrowable(e);
-                        operationManager.updateOperationHistory(getUserWithSession(user, true), groupHistory);
+                        groupHistory = (GroupOperationHistory) operationManager.updateOperationHistory(
+                            getUserWithSession(user, true), groupHistory);
 
                         if (schedule.isHaltOnFailure()) {
                             throw e;

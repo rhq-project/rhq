@@ -117,7 +117,7 @@
         <include name="safe-invoker*" />
       </fileset>
     </delete>
-    <copy file="${settings.localRepository}/org/rhq/safe-invoker/1.0.2/safe-invoker-1.0.2.jar"
+    <copy file="${settings.localRepository}/org/rhq/safe-invoker/${rhq.version}/safe-invoker-${rhq.version}.jar"
            toDir="${jboss.deploy.dir}/jbossws.sar" verbose="true" />
 
     <echo>Installing patched hibernate jar ...</echo>

@@ -314,9 +314,10 @@ rhq.server.startup.keystore.sslprotocol=TLS
 
 # RHQ Server's remote endpoint for agents to talk to
 rhq.communications.connector.transport=servlet
-# In 1.1 the address and port are derived from the HA server definition (do not set) 
-rhq.communications.connector.bind-address=  
-rhq.communications.connector.bind-port= 
+# In 1.1 the address and port are derived from the HA server definition
+# If you set the address/port here, they will override the HA server definition found in the database
+rhq.communications.connector.bind-address=
+rhq.communications.connector.bind-port=
 rhq.communications.connector.transport-params=/jboss-remoting-servlet-invoker/ServerInvokerServlet
 
 # Multicast detector configuration for auto-discovery

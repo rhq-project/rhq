@@ -14,7 +14,7 @@
                           xmlns:xs="http://www.w3.org/2001/XMLSchema-instance"
                           xs:schemaLocation="urn:jboss:java-properties resource:java-properties_1_0.xsd">
 
-            <!-- name of the embedded agent - the server's bind address will be part of the name -->
+            <!-- name of the embedded agent -->
 
             <java:property>
                <java:key>rhq.agent.name</java:key>
@@ -33,11 +33,22 @@
             </java:property>
             <java:property>
                <java:key>rhq.agent.server.bind-port</java:key>
-               <java:value>${rhq.communications.connector.bind-port:7080}</java:value>
+               <java:value>${rhq.communications.connector.bind-port}</java:value>
             </java:property>
             <java:property>
                <java:key>rhq.agent.server.transport-params</java:key>
                <java:value>${rhq.communications.connector.transport-params:/jboss-remoting-servlet-invoker/ServerInvokerServlet}</java:value>
+            </java:property>
+            
+            <!-- the binding address/port for the agent's server socket -->
+
+            <java:property>
+               <java:key>rhq.communications.connector.bind-address</java:key>
+               <java:value>${rhq.communications.connector.bind-address}</java:value>
+            </java:property>
+            <java:property>
+               <java:key>rhq.communications.connector.bind-port</java:key>
+               <java:value>${rhq.server.embedded-agent.bind-port:26163}</java:value>
             </java:property>
             
             <!-- location where data files can be stored -->

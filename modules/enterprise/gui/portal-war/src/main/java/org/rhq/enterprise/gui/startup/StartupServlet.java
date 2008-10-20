@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
+import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
@@ -38,6 +39,8 @@ import org.jboss.mx.util.MBeanServerLocator;
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
+import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
+import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.cluster.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
@@ -369,6 +372,7 @@ public class StartupServlet extends HttpServlet {
         final ObjectName agentBootstrapMBean = ObjectNameFactory.create("rhq:service=EmbeddedAgentBootstrap");
         final String agentEnabledAttribute = "AgentEnabled";
         final String startAgentMethod = "startAgent";
+        final String configurationOverridesAttribute = "ConfigurationOverrides";
         final MBeanServer mbs = MBeanServerLocator.locateJBoss();
 
         try {
@@ -380,6 +384,54 @@ public class StartupServlet extends HttpServlet {
             try {
                 if (Boolean.valueOf(enabled)) {
                     log("The embedded Agent is installed and enabled - it will now be started...");
+
+                    // NOTE: we cannot directly import AgentConfigurationConstants, so we hardcode the
+                    // actual constant values here - need to keep an eye on these in the unlikely event
+                    // the constant values change.
+                    String AgentConfigurationConstants_SERVER_TRANSPORT = "rhq.agent.server.transport";
+                    String AgentConfigurationConstants_SERVER_BIND_ADDRESS = "rhq.agent.server.bind-address";
+                    String AgentConfigurationConstants_SERVER_BIND_PORT = "rhq.agent.server.bind-port";
+
+                    // Get the configuration overrides as set in the configuration file.
+                    // If the agent's bind address isn't overridden with a non-empty value,
+                    // then we need to get the Server bind address and use it for the agent's bind address.
+                    // If the agent's server endpoint address/port are empty, we again use the values
+                    // appropriate for the Server this agent is embedded in.
+                    // Note that we don't look for the values in persisted preferences - we assume they
+                    // are always present in the configuration overrides (which they should always be);
+                    Properties overrides;
+                    String serverTransport;
+                    String serverAddress;
+                    String serverPort;
+                    String agentAddress;
+
+                    overrides = (Properties) mbs.getAttribute(agentBootstrapMBean, configurationOverridesAttribute);
+
+                    serverTransport = overrides.getProperty(AgentConfigurationConstants_SERVER_TRANSPORT);
+                    serverAddress = overrides.getProperty(AgentConfigurationConstants_SERVER_BIND_ADDRESS);
+                    serverPort = overrides.getProperty(AgentConfigurationConstants_SERVER_BIND_PORT);
+                    agentAddress = overrides.getProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS);
+
+                    Server server = LookupUtil.getServerManager().getServer();
+
+                    if (agentAddress == null || agentAddress.trim().equals("")) {
+                        overrides.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, server
+                            .getAddress());
+                    }
+                    if (serverAddress == null || serverAddress.trim().equals("")) {
+                        overrides.setProperty(AgentConfigurationConstants_SERVER_BIND_ADDRESS, server.getAddress());
+                    }
+                    if (serverPort == null || serverPort.trim().equals("")) {
+                        if (SecurityUtil.isTransportSecure(serverTransport)) {
+                            overrides.setProperty(AgentConfigurationConstants_SERVER_BIND_PORT, Integer.toString(server
+                                .getSecurePort()));
+                        } else {
+                            overrides.setProperty(AgentConfigurationConstants_SERVER_BIND_PORT, Integer.toString(server
+                                .getPort()));
+                        }
+                    }
+
+                    mbs.setAttribute(agentBootstrapMBean, new Attribute(configurationOverridesAttribute, overrides));
 
                     // We need to do the agent startup in a separate thread so we do not hang
                     // this startup servlet.  JBossAS 4.2 will not begin accepting HTTP requests

@@ -723,11 +723,17 @@ Embedded RHQ Agent Configuration
                that can be specified.  Note that because this is an XML file,
                you must specify "&amp;" in the transport-params value
                when needing an ampersand to separate the parameters.
+
+               EMBEDDED: the bind address will be overridden to be the
+               one used by the server. The bind port is normally overridden
+               in the jboss-service.xml also. 
                -->
                <entry key="rhq.communications.connector.rhqtype"          value="agent" />
                <entry key="rhq.communications.connector.transport"        value="socket" />
+               <!--
                <entry key="rhq.communications.connector.bind-address"     value="127.0.0.1" />
                <entry key="rhq.communications.connector.bind-port"        value="26163" />
+               -->
                <!--
                <entry key="rhq.communications.connector.transport-params" value="clientConnectAddress=127.0.0.1&amp;clientConnectPort=16163&amp;numAcceptThreads=3&amp;maxPoolSize=303&amp;clientMaxPoolSize=304&amp;socketTimeout=60000&amp;enableTcpNoDelay=true&amp;backlog=200" />
                <entry key="rhq.communications.connector.lease-period"     value="5000" />

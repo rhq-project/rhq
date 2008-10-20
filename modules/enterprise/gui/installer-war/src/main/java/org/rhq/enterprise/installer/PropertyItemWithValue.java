@@ -42,6 +42,12 @@ public class PropertyItemWithValue {
         return value;
     }
 
+    /**
+     * Sets the property's value.  If the given value is null or empty,
+     * a default will be assigned depending on  the property's type.
+     * 
+     * @param value the new property value
+     */
     public void setValue(String value) {
         if ((value == null) || (value.trim().length() <= 0)) {
             Class<?> propertyType = this.itemDefinition.getPropertyType();
@@ -61,6 +67,16 @@ public class PropertyItemWithValue {
             }
         }
 
+        this.value = value;
+    }
+
+    /**
+     * Sets the property's value. No matter what value is, it will
+     * be stored as-is.  See {@link #setValue(String)} for different behavior.
+     * 
+     * @param value the new value
+     */
+    public void setRawValue(String value) {
         this.value = value;
     }
 }

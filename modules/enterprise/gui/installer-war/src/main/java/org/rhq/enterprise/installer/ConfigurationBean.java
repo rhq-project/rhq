@@ -440,6 +440,15 @@ public class ConfigurationBean {
                 getHaServer().getEndpointPortString());
             getConfigurationProperty(configuration, ServerProperties.PROP_HTTPS_PORT).setValue(
                 getHaServer().getEndpointSecurePortString());
+
+            // the comm bind port is a special setting - it is allowed to be blank;
+            // if it was originally blank, it will have been set to 0 because its an integer property;
+            // but we do not want it to be 0, so make sure we switch it back to empty
+            PropertyItemWithValue portConfig = getConfigurationProperty(configuration,
+                ServerProperties.PROP_CONNECTOR_BIND_PORT);
+            if ("0".equals(portConfig.getValue())) {
+                portConfig.setRawValue("");
+            }
         } catch (Exception e) {
             LOG.fatal("Could not save the settings for some reason", e);
             lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.SAVE_ERROR, ThrowableUtil.getAllMessages(e));
@@ -466,9 +475,14 @@ public class ConfigurationBean {
                 try {
                     Integer.parseInt(newValue.getValue());
                 } catch (Exception e) {
-                    lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.INVALID_NUMBER, newValue.getItemDefinition()
-                        .getPropertyLabel(), newValue.getValue());
-                    return StartPageResults.ERROR;
+                    // there is one special property - the connector bind port - that is allowed to be empty
+                    // ignore this error if we are looking at that property and its empty; otherwise, this is an error
+                    if (!(newValue.getItemDefinition().getPropertyName().equals(
+                        ServerProperties.PROP_CONNECTOR_BIND_PORT) && newValue.getValue().length() == 0)) {
+                        lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.INVALID_NUMBER, newValue
+                            .getItemDefinition().getPropertyLabel(), newValue.getValue());
+                        return StartPageResults.ERROR;
+                    }
                 }
             } else if (Boolean.class.isAssignableFrom(newValue.getItemDefinition().getPropertyType())) {
                 try {

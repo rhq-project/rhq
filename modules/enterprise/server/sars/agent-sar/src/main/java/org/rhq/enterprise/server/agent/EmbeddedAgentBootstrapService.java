@@ -270,10 +270,12 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
     }
 
     public Properties getConfigurationOverrides() {
+        //-- if this method signature changes, you must also change StartupServlet.startEmbeddedAgent
         return configurationOverrides;
     }
 
     public void setConfigurationOverrides(Properties overrides) {
+        //-- if this method signature changes, you must also change StartupServlet.startEmbeddedAgent
         configurationOverrides = overrides;
     }
 
@@ -391,10 +393,10 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
         File[] jarFiles = lib.listFiles();
         ArrayList<URL> classpathUrls = new ArrayList<URL>(jarFiles.length + 1);
 
-        classpathUrls.add(embeddedAgentDirectory.toURL()); // allows the agent to find resourcees in here, like log4j.xml
+        classpathUrls.add(embeddedAgentDirectory.toURI().toURL()); // allows the agent to find resourcees in here, like log4j.xml
 
         for (File jarFile : jarFiles) {
-            classpathUrls.add(jarFile.toURL());
+            classpathUrls.add(jarFile.toURI().toURL());
         }
 
         return classpathUrls.toArray(new URL[classpathUrls.size()]);
@@ -427,7 +429,7 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
     private void addDirectories(File dir, ArrayList<URL> list) throws Exception {
         if (dir.isDirectory()) {
             // add the given directory to the list and add all its subdirectories to the list
-            list.add(dir.toURL());
+            list.add(dir.toURI().toURL());
 
             for (File dirEntry : dir.listFiles()) {
                 addDirectories(dirEntry, list);

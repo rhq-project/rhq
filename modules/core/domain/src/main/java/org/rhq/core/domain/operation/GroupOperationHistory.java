@@ -60,6 +60,15 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "          FROM ResourceOperationHistory roh " //
         + "         WHERE roh.groupOperationHistory.id = h.id " //
         + "           AND roh.status <> :status ) "),
+    // should always pass INPROGRESS for status
+    @NamedQuery(name = GroupOperationHistory.QUERY_FIND_MEMBERLESS_IN_PROGRESS, query = "" //
+        + "SELECT h " //
+        + "  FROM GroupOperationHistory h " //
+        + "  WHERE h.status = :status " // 
+        + "  AND NOT EXISTS " //
+        + "      ( SELECT roh.id " //
+        + "          FROM ResourceOperationHistory roh " //
+        + "         WHERE roh.groupOperationHistory.id = h.id ) "),
     @NamedQuery(name = GroupOperationHistory.QUERY_FIND_BY_GROUP_ID_AND_STATUS, query = "select h "
         + "from GroupOperationHistory h " + "where h.group.id = :groupId " + "and h.status = :status"),
     @NamedQuery(name = GroupOperationHistory.QUERY_FIND_BY_GROUP_ID_AND_NOT_STATUS, query = "select h "
@@ -68,6 +77,7 @@ public class GroupOperationHistory extends OperationHistory {
 
     public static final String QUERY_FIND_ACTIVE_IN_PROGRESS = "GroupOperationHistory.findActiveInProgress";
     public static final String QUERY_FIND_ABANDONED_IN_PROGRESS = "GroupOperationHistory.findAbandonedInProgress";
+    public static final String QUERY_FIND_MEMBERLESS_IN_PROGRESS = "GroupOperationHistory.findMemberlessInProgress";
     public static final String QUERY_FIND_BY_GROUP_ID_AND_STATUS = "GroupOperationHistory.findByGroupIdAndStatus";
     public static final String QUERY_FIND_BY_GROUP_ID_AND_NOT_STATUS = "GroupOperationHistory.findByGroupIdAndNotStatus";
 

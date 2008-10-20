@@ -1143,6 +1143,7 @@ public class OperationManagerBean implements OperationManagerLocal {
             query.setParameter("status", OperationRequestStatus.INPROGRESS);
             List<GroupOperationHistory> groupHistories = query.getResultList();
             for (GroupOperationHistory groupHistory : groupHistories) {
+
                 /* 
                  * assume success at first, override with failure for resource-level operation failures only;
                  * we'll be a little lenient with the logic here, and say that if a group operation hasn't already
@@ -1172,6 +1173,23 @@ public class OperationManagerBean implements OperationManagerLocal {
             }
         } catch (Throwable t) {
             LOG.warn("Failed to check for completed group operations. Cause: " + t);
+        }
+
+        try {
+            Query query = entityManager.createNamedQuery(GroupOperationHistory.QUERY_FIND_MEMBERLESS_IN_PROGRESS);
+            query.setParameter("status", OperationRequestStatus.INPROGRESS);
+            List<GroupOperationHistory> groupHistories = query.getResultList();
+
+            for (GroupOperationHistory groupHistory : groupHistories) {
+                /* 
+                 * since no children histories ended in the FAILURE state (because there were no resource members at
+                 * the time this group operation was kicked off), the group operation was a success by definition 
+                 */
+                groupHistory.setStatus(OperationRequestStatus.SUCCESS);
+                continue;
+            }
+        } catch (Throwable t) {
+            LOG.warn("Failed to check for memberless group operations. Cause: " + t);
         }
     }
 

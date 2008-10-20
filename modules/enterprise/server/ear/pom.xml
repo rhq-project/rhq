@@ -223,11 +223,13 @@
                                  <version>${project.version}</version>
                               </artifactItem>
 
+<!-- In development
                               <artifactItem>
                                  <groupId>org.rhq</groupId>
                                  <artifactId>rhq-bluetooth-plugin</artifactId>
                                  <version>${project.version}</version>
                               </artifactItem>
+-->                              
 
                  <artifactItem>
                    <groupId>org.rhq</groupId>

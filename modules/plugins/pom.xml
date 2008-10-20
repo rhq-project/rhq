@@ -85,16 +85,16 @@
     <module>postgres</module>
 
     <module>apt</module>
-    <module>bluetooth</module>        
+<!-- not behaving        <module>bluetooth</module> -->        
     <module>grub</module>
-<!--        <module>hardware</module> -->
+<!-- not behaving       <module>hardware</module> -->
     <module>hosts</module>
     <module>hudson</module>
     <module>jira</module>
     <module>mock-jboss</module>        
     <module>mysql</module>
     <module>netservices</module>
-<!--        <module>onewire</module> -->
+<!-- non-public dependency        <module>onewire</module> -->
     <module>oracle</module>
     <module>perftest</module>        
     <module>snmptrapd</module>

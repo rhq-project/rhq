@@ -265,7 +265,7 @@ if [ -z "$RHQ_SERVER_PIDFILE_DIR" ]; then
    RHQ_SERVER_PIDFILE_DIR=/var/run
 fi
 
-PIDFILE=${RHQ_SERVER_PIDFILE_DIR}/.rhq-server.pid
+PIDFILE=${RHQ_SERVER_PIDFILE_DIR}/rhq-server.pid
 
 # ----------------------------------------------------------------------
 # Execute the command that the user wants us to do

@@ -3,7 +3,7 @@
 #
 
 # enable remote debugging
-wrapper.java.additional.11=-agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=n
+wrapper.java.additional.12=-agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=n
 
 # disable JVM startup timeout
 wrapper.startup.timeout=0

@@ -374,6 +374,8 @@ public class CommandServiceDirectory extends CommandMBean implements CommandServ
             retComandTypes = proxy.getSupportedCommandTypes();
         } catch (Exception e) {
             // ignore, "name" does not correspond to a command service
+            // log at trace mainly for debugging purposes in case we want to see the exception
+            getLog().trace(CommI18NResourceKeys.EXCEPTION, e);
         }
 
         return retComandTypes;

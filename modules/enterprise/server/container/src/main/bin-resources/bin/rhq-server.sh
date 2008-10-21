@@ -215,7 +215,7 @@ if [ -z "$RHQ_SERVER_JAVA_OPTS" ]; then
    fi
    RHQ_SERVER_JAVA_OPTS="-Xms256M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M -Djava.net.preferIPv4Stack=true -Djboss.server.log.dir=${_LOG_DIR_PATH}"
 fi
-RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server $RHQ_SERVER_JAVA_OPTS -Djava.awt.headless=true -Djboss.platform.mbeanserver"
+RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server $RHQ_SERVER_JAVA_OPTS -Djava.awt.headless=true -Djboss.platform.mbeanserver -Dsun.lang.ClassLoader.allowArraySyntax=true"
 debug_msg "RHQ_SERVER_JAVA_OPTS: $RHQ_SERVER_JAVA_OPTS"
 debug_msg "RHQ_SERVER_ADDITIONAL_JAVA_OPTS: $RHQ_SERVER_ADDITIONAL_JAVA_OPTS"
 

@@ -956,4 +956,7 @@ public interface CommI18NResourceKeys {
 
     @I18NMessage("Failed to store preference key [{0}]. Cause: {1}")
     String CANNOT_STORE_PREFERENCES = "ServiceContainerConfiguration.cannot-store-preferences";
+
+    @I18NMessage("Exception occurred: {0}")
+    String EXCEPTION = "Misc.exception";
 }

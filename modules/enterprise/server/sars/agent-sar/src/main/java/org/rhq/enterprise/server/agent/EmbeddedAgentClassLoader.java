@@ -38,6 +38,18 @@ public class EmbeddedAgentClassLoader extends URLClassLoader {
         nativeLibraryUrls = (nativeUrls != null) ? nativeUrls : new URL[0];
     }
 
+    @Override
+    public Class<?> loadClass(String name) throws ClassNotFoundException {
+        // attempt to workaround http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6434149
+        if (name.indexOf('[') > -1) {
+            return Class.forName(name, false, this);
+        }
+
+        // we are not being asked to load an array - so we can load it
+        return super.loadClass(name);
+    }
+
+    @Override
     protected String findLibrary(String libname) {
         String platformLibraryName = System.mapLibraryName(libname);
 

@@ -127,7 +127,7 @@
         
     <!-- same as enterprise profile, except includes dist -->
     <profile>
-  		<id>enterprise-dist</id>
+  		<id>dist</id>
   		<modules>
          <module>serverplugins</module>
   			<module>dist</module>            

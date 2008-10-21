@@ -264,6 +264,7 @@ debug_msg "_JBOSS_RUN_SCRIPT: $_JBOSS_RUN_SCRIPT"
 if [ -z "$RHQ_SERVER_PIDFILE_DIR" ]; then
    RHQ_SERVER_PIDFILE_DIR=/var/run
 fi
+mkdir -p $RHQ_SERVER_PIDFILE_DIR
 
 PIDFILE=${RHQ_SERVER_PIDFILE_DIR}/rhq-server.pid
 

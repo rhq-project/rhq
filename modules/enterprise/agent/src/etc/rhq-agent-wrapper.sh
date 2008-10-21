@@ -39,6 +39,7 @@
 if [ "x$RHQ_AGENT_PIDFILE_DIR" = "x" ]; then
    RHQ_AGENT_PIDFILE_DIR=/var/run
 fi
+mkdir -p $RHQ_AGENT_PIDFILE_DIR
 
 # The --daemon argument is required, but you can add additional arguments as appropriate
 export RHQ_AGENT_CMDLINE_OPTS=--daemon

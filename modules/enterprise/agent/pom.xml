@@ -60,9 +60,14 @@
     </dependency>
 
     <dependency>
+      <!-- The only reason why this is here is so we can pull this down from the repo.
+           Its scope is provided so we don't actually put it anywhere. 
+           Our assembly process will place this library in the connector directory.
+           I'm not convinced this is actually needed, but it isn't hurting anything. -->
       <groupId>org.rhq</groupId>
       <artifactId>rhq-rtfilter</artifactId>
       <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- 3rd Party Deps -->

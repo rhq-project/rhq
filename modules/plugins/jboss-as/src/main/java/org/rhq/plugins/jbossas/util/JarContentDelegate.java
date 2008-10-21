@@ -120,8 +120,10 @@ public class JarContentDelegate extends FileContentDelegate {
                 // If we can't open it, don't worry about it, we just won't know the version
             } finally {
                 try {
-                    jf.close();
+                   if (jf!=null)
+                      jf.close();
                 } catch (Exception e) {
+                   // Nothing we can do here ...
                 }
             }
         }

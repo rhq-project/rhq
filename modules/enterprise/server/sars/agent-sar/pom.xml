@@ -42,19 +42,22 @@
     <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
-      <version>1.1</version>
+      <!-- make sure you match that which is used by standalone agent! -->
+      <version>1.1.0.jboss</version>
     </dependency>
 
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
+      <!-- make sure you match that which is used by standalone agent! -->
       <version>1.2.14</version>
     </dependency>
 
     <dependency>
       <groupId>commons-httpclient</groupId>
       <artifactId>commons-httpclient</artifactId>
-      <version>3.0.1</version>
+      <!-- make sure you match that which is used by standalone agent! -->
+      <version>2.0.2</version>
     </dependency>
 
   </dependencies>
@@ -104,6 +107,14 @@
                     </fileset>
                  </move>
                  <delete dir="${sarDirectory}/META-INF/embedded-agent/lib/hyperic-sigar-${sigar.version}" />
+
+                 <echo>Removing libraries that are either unused or in the RHQ Server's JBossAS endorsed dir</echo>
+                 <delete>
+                    <fileset dir="${sarDirectory}/META-INF/embedded-agent/lib">
+                       <include name="jdom*.jar" /> <!-- never needed; only for deprecated XML code for the license stuff -->
+                       <include name="jaxb*.jar" /> <!-- JAXB is in JBossAS's endorsed directory -->
+                    </fileset>
+                 </delete>
 
                  <!-- I can't figure out how to avoid this - should be able to bind to prepare-package but it isn't working -->
                  <!-- so I have to re-package the sar after I added the lib -->

@@ -52,6 +52,10 @@
 #    RHQ_SERVER_CMDLINE_OPTS - If this is defined, these are the command line
 #                              arguments that will be passed to the RHQ Server.
 #
+#    RHQ_SERVER_PIDFILE_DIR - a full path to a writable directory where this
+#                             script can write its pidfile to.
+#                             If not defined, this defaults to "/var/run".
+#
 # If the embedded JRE is to be used but is not available, the fallback
 # JRE to be used will be determined by the JAVA_HOME environment variable.
 #
@@ -253,7 +257,15 @@ if [ ! -f "$_JBOSS_RUN_SCRIPT" ]; then
 fi
 debug_msg "_JBOSS_RUN_SCRIPT: $_JBOSS_RUN_SCRIPT"
 
-PIDFILE=${RHQ_SERVER_HOME}/bin/.rhq-server.pid
+# ----------------------------------------------------------------------
+# Define where we want to write the pidfile - let user override the dir
+# ----------------------------------------------------------------------
+
+if [ -z "$RHQ_SERVER_PIDFILE_DIR" ]; then
+   RHQ_SERVER_PIDFILE_DIR=/var/run
+fi
+
+PIDFILE=${RHQ_SERVER_PIDFILE_DIR}/.rhq-server.pid
 
 # ----------------------------------------------------------------------
 # Execute the command that the user wants us to do

@@ -28,24 +28,8 @@
 
     <profile>
       <id>default</id>
-      <!-- everything except enterprise/server/container and embedded -->
       <activation>
         <activeByDefault>true</activeByDefault>
-      </activation>
-      <modules>
-        <module>core</module>
-        <module>plugins</module>
-        <module>helpers</module>
-        <module>enterprise</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>enterprise</id>
-      <activation>
-        <property>
-          <name>enterprise</name>
-        </property>
       </activation>
       <modules>
         <module>core</module>
@@ -66,21 +50,6 @@
         <module>core</module>
         <module>enterprise/comm</module>
         <module>enterprise/agent</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>all</id>
-      <activation>
-        <property>
-          <name>all</name>
-        </property>
-      </activation>
-      <modules>
-        <module>core</module>
-        <module>plugins</module>
-        <module>helpers</module>
-        <module>enterprise</module>
       </modules>
     </profile>
 

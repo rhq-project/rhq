@@ -65,20 +65,6 @@
        </modules>
     </profile>
 
-    <profile>
-      <id>javadoc</id>
-      <activation>
-        <property>
-          <name>javadoc</name>
-        </property>
-      </activation>
-      <modules>
-        <module>native-system</module>
-        <module>domain</module>
-        <module>plugin-api</module>
-      </modules>
-    </profile>
-
   </profiles>
    
 </project>

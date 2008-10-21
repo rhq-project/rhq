@@ -507,7 +507,7 @@
       </profile>
 
       <profile>
-         <id>prod</id>
+         <id>dist</id>
 
          <build>
             <plugins>

@@ -237,7 +237,7 @@ Build-Number=${buildNumber}
    <profiles>
 
       <profile>
-         <id>prod</id>
+         <id>dist</id>
          <properties>         
             <agent-with-connectors>true</agent-with-connectors>
          </properties>

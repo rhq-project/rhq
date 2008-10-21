@@ -18,18 +18,27 @@
 #
 # Note that if this script is to be used as an init.d script, you must set
 # RHQ_AGENT_HOME so this script knows where to find the agent installation.
+#
+# You may optionally set the RHQ_AGENT_PIDFILE_DIR environment variable if
+# you want to write the pidfile to a specific location.  This value must
+# be a full path to a directory with write permissions so the pidfile can
+# be stored there.  If not set, its default is /var/run.
 # =============================================================================
 
 # Here are some environment variables you can set to customize the launch
 # of the RHQ Agent.
 
 # RHQ_AGENT_HOME=/path/to/agent/home
+# RHQ_AGENT_PIDFILE_DIR=/var/run
 # export RHQ_AGENT_DEBUG=true
 # export RHQ_AGENT_JAVA_HOME=/path/to/java/installation
 # export RHQ_AGENT_JAVA_EXE_FILE_PATH=/path/directly/to/java/executable
 # export RHQ_AGENT_JAVA_OPTS=VM options
 # export RHQ_AGENT_ADDITIONAL_JAVA_OPTS=additional VM options
-PIDFILEDIR=/var/run
+
+if [ "x$RHQ_AGENT_PIDFILE_DIR" = "x" ]; then
+   RHQ_AGENT_PIDFILE_DIR=/var/run
+fi
 
 # The --daemon argument is required, but you can add additional arguments as appropriate
 export RHQ_AGENT_CMDLINE_OPTS=--daemon
@@ -59,7 +68,7 @@ if [ ! -f $RHQ_AGENT_START_SCRIPT ]; then
    exit 1
 fi
 
-PIDFILE=${PIDFILEDIR}/rhq-agent.pid
+PIDFILE=${RHQ_AGENT_PIDFILE_DIR}/rhq-agent.pid
 
 # Sets STATUS, RUNNING and PID based on the status of the RHQ Agent
 check_status ()

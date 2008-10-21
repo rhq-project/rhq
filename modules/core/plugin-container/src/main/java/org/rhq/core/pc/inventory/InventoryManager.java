@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.inventory;
 
 import java.io.File;
@@ -924,9 +924,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @throws PluginContainerException            for all other errors
      */
     @SuppressWarnings("unchecked")
-    public void activateResource(Resource resource, @NotNull
-    ResourceContainer container, boolean updatedPluginConfig) throws InvalidPluginConfigurationException,
-        PluginContainerException {
+    public void activateResource(Resource resource, @NotNull ResourceContainer container, boolean updatedPluginConfig)
+        throws InvalidPluginConfigurationException, PluginContainerException {
         ResourceComponent component = container.getResourceComponent();
 
         // if the component already exists and is started, and the resource's plugin config has not changed, there is
@@ -1065,15 +1064,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private Resource findMatchingChildResource(Resource resource, Resource parent) {
-        if (parent == null) {
-            // Resource must be a platform - see if it matches our local platform
-            if (this.platform != null && matches(resource, this.platform)) {
-                return this.platform;
-            }
-        } else {
-            for (Resource child : parent.getChildResources()) {
-                if (matches(resource, child)) {
-                    return child;
+        if (resource != null) {
+            if (parent == null) {
+                // Resource must be a platform - see if it matches our local platform
+                if (this.platform != null && matches(resource, this.platform)) {
+                    return this.platform;
+                }
+            } else {
+                if (parent.getChildResources() != null) {
+                    for (Resource child : parent.getChildResources()) {
+                        if (child != null && matches(resource, child)) {
+                            return child;
+                        }
+                    }
                 }
             }
         }
@@ -1517,7 +1520,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (resourceType.getChildResourceTypes() != null) {
             for (ResourceType childResourceType : resourceType.getChildResourceTypes()) {
                 if (childResourceType.isCreatable()
-                        && childResourceType.getCreationDataType() == ResourceCreationDataType.CONTENT) {
+                    && childResourceType.getCreationDataType() == ResourceCreationDataType.CONTENT) {
                     hasContentBasedCreatableChildren = true;
                     break;
                 }

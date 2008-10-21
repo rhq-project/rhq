@@ -238,7 +238,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         for (Resource platform : platforms) {
             AgentClient agentClient = agentManager.getAgentClient(platform.getAgent());
             try {
-                //agentClient.getDiscoveryAgentService().synchronizeInventory(platform.getId(), syncTypes);
                 agentClient.getDiscoveryAgentService().synchronizeInventory(
                     entityManager.find(ResourceSyncInfo.class, platform.getId()));
             } catch (Exception e) {
@@ -252,7 +251,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             if (!platforms.contains(server.getParentResource())) {
                 AgentClient agentClient = agentManager.getAgentClient(server.getAgent());
                 try {
-                    //agentClient.getDiscoveryAgentService().synchronizeInventory(server.getId(), syncTypes);
                     agentClient.getDiscoveryAgentService().synchronizeInventory(
                         entityManager.find(ResourceSyncInfo.class, server.getId()));
                 } catch (Exception e) {
@@ -414,8 +412,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
      *
      * @throws InvalidInventoryReportException if a critical field in the resource is missing or invalid
      */
-    private void mergeResource(@NotNull Resource resource, @Nullable Resource parentResource, @NotNull Agent agent)
-        throws InvalidInventoryReportException {
+    private void mergeResource(@NotNull
+    Resource resource, @Nullable
+    Resource parentResource, @NotNull
+    Agent agent) throws InvalidInventoryReportException {
         long start = System.currentTimeMillis();
 
         log.debug("Merging [" + resource + "]...");

@@ -45,8 +45,6 @@ ANT Script that provides ways to package the agent.
          <include name="org/rhq/rhq-core-plugin-api/${project.version}/rhq-core-plugin-api-${project.version}.jar" />
          <include name="org/rhq/rhq-core-plugin-container/${project.version}/rhq-core-plugin-container-${project.version}.jar" />
          <include name="org/rhq/rhq-core-client-api/${project.version}/rhq-core-client-api-${project.version}.jar" />
-
-         <include name="javax/xml/bind/jsr173_api/1.0/jsr173_api-1.0.jar"/>
       </fileset>
 
    </path>

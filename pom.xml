@@ -43,9 +43,6 @@
     
     <java5.home>${java.home}</java5.home>
 
-    <!-- this is overridden by the prod profile -->
-    <buildNumber>n/a</buildNumber>        
-    
     <!-- dependency versions -->
     <commons-logging.version>1.1.0.jboss</commons-logging.version>
     <concurrent.version>1.3.4-jboss</concurrent.version>

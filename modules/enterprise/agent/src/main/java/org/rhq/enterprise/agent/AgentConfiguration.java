@@ -70,7 +70,7 @@ public class AgentConfiguration {
             if (transport_params.startsWith("/")) {
                 locator_uri += transport_params;
             } else {
-                locator_uri = "/?" + transport_params;
+                locator_uri += "/?" + transport_params;
             }
         }
 

@@ -6,10 +6,9 @@
 var WINDOW_THEME = 'alphacube';
 
 /**
- * A special value (a single NBSP character) for an input that tells the server-side that the corresponding value
- * should be set to null.
+ * A special value for an input that tells the server-side that the corresponding value should be set to null.
  */
-var NULL_INPUT_VALUE = "\u00A0";
+var NULL_INPUT_VALUE = " ";
 
 /**
  * Set the unset status of the specified input.

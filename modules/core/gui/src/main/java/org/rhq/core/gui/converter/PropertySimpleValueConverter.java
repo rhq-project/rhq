@@ -35,7 +35,10 @@ import javax.faces.validator.ValidatorException;
  */
 public class PropertySimpleValueConverter implements Converter
 {
-    public static final String NULL_INPUT_VALUE = "\u00A0"; // a NBSP character
+    /**
+     * A special value for an input that tells the server-side that the corresponding value should be set to null.
+     */
+    public static final String NULL_INPUT_VALUE = " ";
 
     public Object getAsObject(FacesContext context, UIComponent component, String string)
     {

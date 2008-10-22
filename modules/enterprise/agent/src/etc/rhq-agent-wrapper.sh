@@ -160,6 +160,29 @@ case "$1" in
         exit 0
         ;;
 
+'kill')
+        if [ "$RUNNING" = "0" ]; then
+           echo $STATUS
+           remove_pid_file
+           exit 0
+        fi
+
+        echo Killing RHQ Agent...
+
+        # do not try to gracefully kill, use a hard -KILL/-9
+        echo "RHQ Agent (pid=${PID}) is being killed..."
+        kill -9 $PID
+
+        while [ "$RUNNING" = "1"  ]; do
+           sleep 2
+           check_status
+        done
+
+        remove_pid_file
+        echo "RHQ Agent has been killed."
+        exit 0
+        ;;
+
 'status')
         echo $STATUS
         exit 0
@@ -172,7 +195,7 @@ case "$1" in
         ;;
 
 *)
-        echo "Usage: $0 { start | stop | restart | status }"
+        echo "Usage: $0 { start | stop | kill | restart | status }"
         exit 1
         ;;
 esac

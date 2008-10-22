@@ -360,13 +360,44 @@ case "$1" in
         exit 0
         ;;
 
+'kill')
+        if [ "$RUNNING" = "0" ]; then
+           echo $STATUS
+           remove_pid_file
+           exit 0
+        fi
+
+        echo Trying to kill the RHQ Server...
+        
+        if [ -n "$_SOLARIS" ]; then
+        	kill -9 `cat ${RHQ_SERVER_HOME}/jbossas/.jboss_pid`
+        	sleep 3
+        fi
+
+        echo "RHQ Server (pid=${PID}) is being killed..."
+
+        while [ "$RUNNING" = "1"  ]; do
+           kill -9 $PID
+           sleep 2
+           if [ -n "$_SOLARIS" ]; then
+               kill -9 $PID
+               sleep 2
+           fi
+           check_status "killing..."
+        done
+
+        remove_pid_file
+        echo "RHQ Server has been killed."
+        exit 0
+        ;;
+
 'status')
         echo $STATUS
         exit 0
         ;;
 
 *)
-        echo "Usage: $0 { start | stop | status | console }"
+        echo "Usage: $0 { start | stop | kill | status | console }"
         exit 1
         ;;
 esac

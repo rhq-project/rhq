@@ -138,4 +138,13 @@ public interface RemoteCommunicator {
      * @return remote endpoint string
      */
     String getRemoteEndpoint();
+
+    /**
+     * Sets the remote endpoint that this communicator object will send commands to.
+     *
+     * @param endpoint the new remote endpoint
+     *
+     * @throws Exception if the communicator could not point to the new remote endpoint
+     */
+    void setRemoteEndpoint(String endpoint) throws Exception;
 }

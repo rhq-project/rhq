@@ -28,6 +28,12 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
+    @I18NMessage("Cannot switch to server - the sender is not read. Is the agent shutdown?. Cause: {0}")
+    String CANNOT_SWITCH_NULL_COMMUNICATOR = "AgentMain.cannot-switch-null-communicator";
+
+    @I18NMessage("Cannot switch to server - the server endpoint is invalid [{0}]. Cause: {1}")
+    String CANNOT_SWITCH_TO_INVALID_SERVER = "AgentMain.cannot-switch-to-invalid-server";
+
     @I18NMessage("The server and agent clocks are not in sync. Server=[{0,number,#}][{1,date,long} {1,time,full}], Agent=[{2,number,#}][{3,date,long} {3,time,full}]")
     String TIME_NOT_SYNCED = "AgentMain.time-not-synced";
 
@@ -64,7 +70,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Failed to failover to another server. Cause: {0}")
     String FAILOVER_FAILED = "AgentMain.failover-failed";
 
-    @I18NMessage("During failover attempt, the discovery features failed to start. Discovery may be disabled.")
+    @I18NMessage("During failover attempt, the discovery features failed to start. Discovery may be disabled. Cause: {0}")
     String FAILOVER_DISCOVERY_START_FAILURE = "AgentMain.failover-discovery-start-failure";
 
     @I18NMessage("Too many failover attempts have been made [{0}]. Exception that triggered the failover: [{1}]")
@@ -571,7 +577,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("failover")
     String FAILOVER = "PromptCommand.failover";
 
-    @I18NMessage("failover -c | -l | -r")
+    @I18NMessage("failover --check | --list | --reset | --switch <server>")
     String FAILOVER_SYNTAX = "PromptCommand.failover.syntax";
 
     @I18NMessage("Provides HA failover functionality")
@@ -584,7 +590,19 @@ public interface AgentI18NResourceKeys {
         + "-l|--list:  Will show the server failover list.\\n\\\n"
         + "-r|--reset: Will reset the failover list index such that the next server to\\n\\\n"
         + "\\            be failed over to (when necessary) will be the first server\\n\\\n"
-        + "\\            in the failover list.")
+        + "\\            in the failover list.\\n\\\n"
+        + "-s|--switch <server>: Immediately switch to the given server. This switch is\\n\\\n"
+        + "\\                      to be considered a temporary change, unless you switch\\n\\\n"
+        + "\\                      to the primary server of this agent. If you switch to\\n\\\n"
+        + "\\                      a server that is not the primary, the agent will\\n\\\n"
+        + "\\                      eventually perform its switchover check which will\\n\\\n"
+        + "\\                      bring the agent back to its primary.\\n\\\n"
+        + "\\                      <server> can be a server name, in which case\\n\\\n"
+        + "\\                      the same transport, port and transport params that are\\n\\\n"
+        + "\\                      configured for the current server will stay the same.\\n\\\n"
+        + "\\                      If you want to talk to the new server over a\\n\\\n"
+        + "\\                      different transport or port, <server> can be specified\\n\\\n"
+        + "\\                      as a full endpoint URL.")
     String FAILOVER_DETAILED_HELP = "PromptCommand.failover.detailed-help";
 
     @I18NMessage("The failover list index has been reset to the top. The next time\\n\\\n"
@@ -597,6 +615,12 @@ public interface AgentI18NResourceKeys {
         + "to switch over now.  Use the <sender> prompt command to see\\n\\\n"
         + "which server the agent is connected to.")
     String FAILOVER_CHECK_NOW = "PromptCommand.failover.check-now";
+
+    @I18NMessage("Switched over to server [{0}]")
+    String FAILOVER_IMMEDIATE_SWITCH_DONE = "PromptCommand.failover.immediate_switch-done";
+
+    @I18NMessage("Failed to switch over to server [{0}]. See log file for details.")
+    String FAILOVER_IMMEDIATE_SWITCH_FAILED = "PromptCommand.failover.immediate_switch-failed";
 
     @I18NMessage("quit")
     String QUIT = "PromptCommand.quit";

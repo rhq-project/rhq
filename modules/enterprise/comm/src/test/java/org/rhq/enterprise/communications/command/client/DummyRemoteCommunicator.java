@@ -157,4 +157,6 @@ public class DummyRemoteCommunicator implements RemoteCommunicator {
         return "dummy://dummy";
     }
 
+    public void setRemoteEndpoint(String endpoint) throws Exception {
+    }
 }

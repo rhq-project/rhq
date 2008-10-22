@@ -57,6 +57,7 @@ import javax.management.ObjectName;
 import mazz.i18n.Logger;
 import mazz.i18n.Msg;
 
+import org.jboss.remoting.InvokerLocator;
 import org.jboss.remoting.invocation.NameBasedInvocation;
 import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
@@ -1417,6 +1418,89 @@ public class AgentMain {
     }
 
     /**
+     * Tell the agent to immediately switch to another server.  The given
+     * server can be a simple hostname in which case, the current transport,
+     * port and transport parameters being used to talk to the current server
+     * will stay the same.  Otherwise, it will be assumed the server is a
+     * full endpoint URL.
+     * 
+     * @param server the host of the server to switch to, or a full server endpoint URL
+     * 
+     * @return <code>true</code> if successfully switched, <code>false</code> otherwise
+     */
+    @SuppressWarnings("unchecked")
+    public boolean switchToServer(String server) {
+        ServerEntry newServer;
+        String newTransport;
+        String newTransportParams;
+
+        // hostnames never have a ":" - if there is a ":", this is therefore a full endpoint URL
+        if (server.indexOf(':') > -1) {
+            try {
+                InvokerLocator endpointUrl = new InvokerLocator(server);
+                String host = endpointUrl.getHost();
+                int port = endpointUrl.getPort();
+                newServer = new ServerEntry(host, port, port);
+                newTransport = endpointUrl.getProtocol();
+                String path = endpointUrl.getPath();
+                Map<Object, Object> config = endpointUrl.getParameters();
+                newTransportParams = "/" + ((path != null) ? path : "");
+                if (config != null && config.size() > 0) {
+                    newTransportParams += "?";
+                    boolean needAmp = false;
+                    for (Map.Entry<Object, Object> configEntry : config.entrySet()) {
+                        if (needAmp) {
+                            newTransportParams += "&";
+                        }
+                        newTransportParams += configEntry.getKey().toString() + "=" + configEntry.getValue().toString();
+                        needAmp = true;
+                    }
+                }
+
+            } catch (Exception e) {
+                LOG.warn(AgentI18NResourceKeys.CANNOT_SWITCH_TO_INVALID_SERVER, server, e);
+                return false;
+            }
+        } else {
+            AgentConfiguration config = getConfiguration();
+            int currentPort = config.getServerBindPort();
+            newServer = new ServerEntry(server, currentPort, currentPort);
+            newTransport = config.getServerTransport();
+            newTransportParams = config.getServerTransportParams();
+        }
+
+        RemoteCommunicator comm;
+
+        try {
+            comm = getClientCommandSender().getRemoteCommunicator();
+            if (comm == null) {
+                throw new IllegalStateException(); // i don't think this will ever happen, but just in case
+            }
+        } catch (Exception e) {
+            LOG.warn(AgentI18NResourceKeys.CANNOT_SWITCH_NULL_COMMUNICATOR, server, e);
+            return false;
+        }
+
+        // remember this in case we fail - we have to revert back to the original server we were talking to
+        String originalServerEndpoint = comm.getRemoteEndpoint();
+
+        // need to synch on last failover time so we don't clash with the real failover stuff
+        synchronized (m_lastFailoverTime) {
+            boolean ok = switchCommServer(comm, newServer, newTransport, newTransportParams);
+            if (!ok) {
+                try {
+                    // we are switching back to the original server because our switch failed
+                    comm.setRemoteEndpoint(originalServerEndpoint);
+                } catch (Exception e) {
+                    // this should never happen
+                    LOG.warn(AgentI18NResourceKeys.CANNOT_SWITCH_TO_INVALID_SERVER, originalServerEndpoint, e);
+                }
+            }
+            return ok;
+        }
+    }
+
+    /**
      * Switches the agent to talk to the next server in the failover list.
      * 
      * This is package-scoped so the failover callback can call this.
@@ -1444,53 +1528,72 @@ public class AgentMain {
 
             ServerEntry nextServer = failoverList.next();
 
-            // our auto-discovery listener needs to be recreated since it needs the new server locator URL
-            // so get rid of the old one.
-            unprepareAutoDiscoveryListener();
+            boolean ok = switchCommServer(comm, nextServer, currentTransport, currentTransportParams);
+            if (ok) {
+                // we've successfully failed over; the design of the HA system calls for us to start
+                // over at the top of the failover list the next time we get a failure.
+                failoverList.resetIndex();
 
-            try {
-                // set the new server locator information into config
-                config.setServerLocatorUri(currentTransport, nextServer.address, (SecurityUtil
-                    .isTransportSecure(currentTransport)) ? nextServer.securePort : nextServer.port,
-                    currentTransportParams);
-
-                try {
-                    // tell the comm object about the new server (note the dependency on knowing its based on Jboss/Remoting!)
-                    // we are synchronized already - and we never call setInvokerLocator anywhere else - so we are thread safe
-                    ((JBossRemotingRemoteCommunicator) comm).setInvokerLocator(config.getServerLocatorUri());
-
-                    // send the connect message to tell the server we want to talk to it (also verifies that server is up)
-                    sendConnectRequestToServer(comm, false);
-                } catch (Throwable t) {
-                    LOG.warn(AgentI18NResourceKeys.FAILOVER_FAILED, t);
-                    // TODO: I am unsure if this causes deadlocks or other problems, but consider
-                    // disconnecting the comm object here to force the initialize callback to be triggered again.
-                    // This will ensure we attempt to send the connect request again.  I left this commented out
-                    // because I don't know what happens if we are called in a thread that is already currently
-                    // attempting to send a connect request.
-                    // comm.disconnect();
-                    return;
-                }
-
-                LOG.info(AgentI18NResourceKeys.FAILED_OVER_TO_SERVER, config.getServerLocatorUri());
-
-            } finally {
-                // now that we switched, re-setup discovery
-                try {
-                    prepareAutoDiscoveryListener();
-                } catch (Exception e) {
-                    LOG.info(AgentI18NResourceKeys.FAILOVER_DISCOVERY_START_FAILURE, ThrowableUtil.getAllMessages(e));
-                }
+                m_lastFailoverTime[0] = System.currentTimeMillis();
             }
-
-            // we've successfully failed over; the design of the HA system calls for us to start
-            // over at the top of the failover list the next time we get a failure.
-            failoverList.resetIndex();
-
-            m_lastFailoverTime[0] = System.currentTimeMillis();
-
             return;
         }
+    }
+
+    /**
+     * Immediately switches the given communicator to the given server.
+     * 
+     * @param comm the communicator whose server is switched
+     * @param newServer the endpoint of the new server
+     * @param transport the transport that should be used in the new remote endpoint URL
+     * @param transportParams the transport params that should be used in the new remote endpoint URL
+     * 
+     * @return <code>true</code> if successfully switched; <code>false</code> otherwise
+     */
+    private boolean switchCommServer(RemoteCommunicator comm, ServerEntry newServer, String transport,
+        String transportParams) {
+
+        AgentConfiguration config = getConfiguration();
+
+        // our auto-discovery listener needs to be recreated since it needs the new server locator URL
+        // so get rid of the old one.
+        unprepareAutoDiscoveryListener();
+
+        try {
+            // set the new server locator information into config
+            config.setServerLocatorUri(transport, newServer.address,
+                (SecurityUtil.isTransportSecure(transport)) ? newServer.securePort : newServer.port, transportParams);
+
+            try {
+                // tell the comm object about the new server
+                // NOTE! callers should be synchronized already on lastFailoverTime - so we are thread safe
+                comm.setRemoteEndpoint(config.getServerLocatorUri());
+
+                // send the connect message to tell the server we want to talk to it (also verifies that server is up)
+                sendConnectRequestToServer(comm, false);
+            } catch (Throwable t) {
+                LOG.warn(AgentI18NResourceKeys.FAILOVER_FAILED, t);
+                // TODO: I am unsure if this causes deadlocks or other problems, but consider
+                // disconnecting the comm object here to force the initialize callback to be triggered again.
+                // This will ensure we attempt to send the connect request again.  I left this commented out
+                // because I don't know what happens if we are called in a thread that is already currently
+                // attempting to send a connect request.
+                // comm.disconnect();
+                return false;
+            }
+
+            LOG.info(AgentI18NResourceKeys.FAILED_OVER_TO_SERVER, config.getServerLocatorUri());
+
+        } finally {
+            // now that we switched, re-setup discovery
+            try {
+                prepareAutoDiscoveryListener();
+            } catch (Exception e) {
+                LOG.info(AgentI18NResourceKeys.FAILOVER_DISCOVERY_START_FAILURE, ThrowableUtil.getAllMessages(e));
+            }
+        }
+
+        return true;
     }
 
     /**

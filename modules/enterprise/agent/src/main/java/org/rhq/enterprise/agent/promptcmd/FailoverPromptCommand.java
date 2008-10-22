@@ -83,10 +83,11 @@ public class FailoverPromptCommand implements AgentPromptCommand {
             return;
         }
 
-        String sopts = "clr";
+        String sopts = "clrs:";
         LongOpt[] lopts = { new LongOpt("check", LongOpt.NO_ARGUMENT, null, 'c'), // check if using primary server
             new LongOpt("list", LongOpt.NO_ARGUMENT, null, 'l'), // show the failover list
-            new LongOpt("reset", LongOpt.NO_ARGUMENT, null, 'r') }; // reset the failover list iterator
+            new LongOpt("reset", LongOpt.NO_ARGUMENT, null, 'r'), // reset the failover list iterator
+            new LongOpt("switch", LongOpt.REQUIRED_ARGUMENT, null, 's') }; // switch immediately to the given server
 
         Getopt getopt = new Getopt(getPromptCommandString(), args, sopts, lopts);
         int code;
@@ -116,6 +117,16 @@ public class FailoverPromptCommand implements AgentPromptCommand {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.FAILOVER_RESET_DONE));
                 out.println();
                 showFailoverList(agent, out);
+                break;
+            }
+
+            case 's': {
+                String server = getopt.getOptarg();
+                if (agent.switchToServer(server)) {
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.FAILOVER_IMMEDIATE_SWITCH_DONE, server));
+                } else {
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.FAILOVER_IMMEDIATE_SWITCH_FAILED, server));
+                }
                 break;
             }
             }

@@ -23,6 +23,7 @@ import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
+
 import org.rhq.enterprise.communications.util.StringUtil;
 
 /**
@@ -40,6 +41,11 @@ public class Version {
      * Version property whose value is the product version.
      */
     public static final String PROP_PRODUCT_VERSION = "Product-Version";
+
+    /**
+     * Version property whose value is the source code revision number used to make the build.
+     */
+    public static final String PROP_BUILD_NUMBER = "Build-Number";
 
     /**
      * Version property whose value is the date when this version of the product was built.
@@ -154,6 +160,17 @@ public class Version {
         String build_date = props.getProperty(PROP_BUILD_DATE);
         Date date = getVersionPropertyAsDate(build_date);
         return date;
+    }
+
+    /**
+     * Returns just the product build number.
+     *
+     * @return product build number
+     */
+    public static String getBuildNumber() {
+        Properties props = getVersionProperties();
+        String build_num = props.getProperty(PROP_BUILD_NUMBER);
+        return build_num;
     }
 
     /**

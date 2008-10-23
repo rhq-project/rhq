@@ -332,7 +332,12 @@ public class AgentMain {
         try {
             agent = new AgentMain(args);
 
-            agent.getOut().println(Version.getProductNameAndVersion() + " (" + Version.getBuildDate() + ")");
+            // immediately show/log the version information
+            String productNameAndVersion = Version.getProductNameAndVersion();
+            String buildNumber = Version.getBuildNumber();
+            Date buildDate = Version.getBuildDate();
+            agent.getOut().println(productNameAndVersion + " [" + buildNumber + "] (" + buildDate + ")");
+            LOG.info(AgentI18NResourceKeys.IDENTIFY_VERSION, productNameAndVersion, buildNumber, buildDate);
 
             // ask the user to setup the agent if the agent hasn't been setup yet or we are being forced to
             if (agent.m_forcedSetup || (!agent.m_daemonMode && !agent.m_configuration.isAgentConfigurationSetup())) {

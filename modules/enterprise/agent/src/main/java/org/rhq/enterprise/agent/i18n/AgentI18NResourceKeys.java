@@ -28,6 +28,9 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
+    @I18NMessage("Version=[{0}], Build Number=[{1}], Build Date=[{2,date,medium} {2,time,short}]")
+    String IDENTIFY_VERSION = "AgentMain.identify-version";
+
     @I18NMessage("Cannot switch to server - the sender is not read. Is the agent shutdown?. Cause: {0}")
     String CANNOT_SWITCH_NULL_COMMUNICATOR = "AgentMain.cannot-switch-null-communicator";
 

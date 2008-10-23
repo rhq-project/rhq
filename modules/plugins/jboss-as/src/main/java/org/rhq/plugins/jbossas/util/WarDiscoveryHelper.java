@@ -156,7 +156,7 @@ public class WarDiscoveryHelper {
         WarDeploymentInformation deploymentInformation) {
         // JBNADM-3420 - These are being set incorrectly. Specifically, the incorrect file name is causing invalid
         // file names on windows and thus breaking WAR updates.
-        //        pluginConfig.put(new PropertySimple(WarComponent.FILE_NAME, deploymentInformation.getFileName()));
+        pluginConfig.put(new PropertySimple(WarComponent.FILE_NAME, deploymentInformation.getFileName()));
         pluginConfig.put(new PropertySimple(WarComponent.JBOSS_WEB_NAME, deploymentInformation
             .getJbossWebModuleMBeanObjectName()));
         pluginConfig.put(new PropertySimple(WarComponent.CONTEXT_ROOT_CONFIG_PROP, deploymentInformation

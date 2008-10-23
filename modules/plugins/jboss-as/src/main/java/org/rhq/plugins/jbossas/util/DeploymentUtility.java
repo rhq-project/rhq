@@ -183,6 +183,9 @@ public class DeploymentUtility {
         catch (Exception e) {
             return null;
         }
+        
+        String separator = System.getProperty("file.separator");
+        boolean isOnWin = separator.equals("\\");
 
         // Loop through the deployments, get the name information and compare it to the collection
         // of strings passed into this method
@@ -210,7 +213,14 @@ public class DeploymentUtility {
 
                             String file = getFieldValue(sdi, "url", URL.class).toString();
                             if (file.startsWith("file:/")) {
-                                file = file.substring(5);
+                               if (isOnWin) {
+                                  file = file.substring(6);
+                                  // listDeployed() always delivers / as path separator, so we need to correct this.
+                                  File tmp = new File(file);
+                                  file = tmp.getCanonicalPath();
+                               }
+                               else
+                                  file = file.substring(5);
                             }
 
                             /*

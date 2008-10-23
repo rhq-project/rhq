@@ -22,7 +22,7 @@
 # You may optionally set the RHQ_AGENT_PIDFILE_DIR environment variable if
 # you want to write the pidfile to a specific location.  This value must
 # be a full path to a directory with write permissions so the pidfile can
-# be stored there.  If not set, its default is /var/run.
+# be stored there.  If not set, its default is the agent's bin directory.
 # =============================================================================
 
 # Here are some environment variables you can set to customize the launch
@@ -35,11 +35,6 @@
 # export RHQ_AGENT_JAVA_EXE_FILE_PATH=/path/directly/to/java/executable
 # export RHQ_AGENT_JAVA_OPTS=VM options
 # export RHQ_AGENT_ADDITIONAL_JAVA_OPTS=additional VM options
-
-if [ "x$RHQ_AGENT_PIDFILE_DIR" = "x" ]; then
-   RHQ_AGENT_PIDFILE_DIR=/var/run
-fi
-mkdir -p $RHQ_AGENT_PIDFILE_DIR
 
 # The --daemon argument is required, but you can add additional arguments as appropriate
 export RHQ_AGENT_CMDLINE_OPTS=--daemon
@@ -60,6 +55,11 @@ else
       exit 1
       }
 fi
+
+if [ "x$RHQ_AGENT_PIDFILE_DIR" = "x" ]; then
+   RHQ_AGENT_PIDFILE_DIR=${RHQ_AGENT_HOME}/bin
+fi
+mkdir -p $RHQ_AGENT_PIDFILE_DIR
 
 RHQ_AGENT_START_SCRIPT=${RHQ_AGENT_START_SCRIPT_DIR}/rhq-agent.sh
 

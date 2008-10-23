@@ -54,7 +54,8 @@
 #
 #    RHQ_SERVER_PIDFILE_DIR - a full path to a writable directory where this
 #                             script can write its pidfile to.
-#                             If not defined, this defaults to "/var/run".
+#                             If not defined, this defaults to the server's
+#                             bin directory.
 #
 # If the embedded JRE is to be used but is not available, the fallback
 # JRE to be used will be determined by the JAVA_HOME environment variable.
@@ -262,7 +263,7 @@ debug_msg "_JBOSS_RUN_SCRIPT: $_JBOSS_RUN_SCRIPT"
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_PIDFILE_DIR" ]; then
-   RHQ_SERVER_PIDFILE_DIR=/var/run
+   RHQ_SERVER_PIDFILE_DIR=${RHQ_SERVER_HOME}/bin
 fi
 mkdir -p $RHQ_SERVER_PIDFILE_DIR
 

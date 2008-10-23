@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -46,16 +45,26 @@ public class ExistingResourceConfigurationUIBean extends AbstractResourceConfigu
         int resourceId = EnterpriseFacesContextUtility.getResource().getId();
         AbstractResourceConfigurationUpdate updateRequest = this.configurationManager.updateResourceConfiguration(
             EnterpriseFacesContextUtility.getSubject(), resourceId, getConfiguration());
-        if (updateRequest.getStatus() == ConfigurationUpdateStatus.FAILURE) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
-                + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
-            return FAILURE_OUTCOME;
+        if (updateRequest != null) {
+            switch (updateRequest.getStatus()) {
+                case SUCCESS:
+                case INPROGRESS:
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration update request with id "
+                        + updateRequest.getId() + " has been sent to the Agent.");
+                    clearConfiguration();
+                    return SUCCESS_OUTCOME;
+                case FAILURE:
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
+                        + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
+                    return FAILURE_OUTCOME;
+            }            
         } else {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration update request with id "
-                + updateRequest.getId() + " sent to agent.");
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "No changes were made to the configuration, so "
+                    + "no update request has been sent to the Agent.");
             clearConfiguration();
             return SUCCESS_OUTCOME;
         }
+        return null;
     }
 
     public String finishAddMap() {

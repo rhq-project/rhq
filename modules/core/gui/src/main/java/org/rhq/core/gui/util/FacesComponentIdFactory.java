@@ -27,9 +27,9 @@ package org.rhq.core.gui.util;
  */
 public interface FacesComponentIdFactory {
     /**
-     * A prefix implementors of this interface can use for the id's they create.
+     * A prefix implementers of this interface can use for the id's they create.
      */
-    String UNIQUE_ID_PREFIX = "jon_id";
+    String UNIQUE_ID_PREFIX = "rhq_id";
 
     /**
      * Creates a unique id that can be assigned to a new JSF {@link javax.faces.component.UIComponent}. Note, JSF id's

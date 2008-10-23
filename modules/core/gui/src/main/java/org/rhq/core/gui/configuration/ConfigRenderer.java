@@ -74,7 +74,7 @@ public class ConfigRenderer extends Renderer {
     private static final String JAVASCRIPT_INCLUDES = "\n<script type='text/javascript' src='/js/rhq.js'></script>\n\n";
 
     private final Log LOG = LogFactory.getLog(ConfigRenderer.class);
-    private static final String INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID = "initInputsJavaScript";
+    private static final String INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID_SUFFIX = "-initInputsJavaScript";
 
     /**
      * Decode request parameters for the given {@link ConfigUIComponent}.
@@ -95,11 +95,15 @@ public class ConfigRenderer extends Renderer {
                 deleteOpenMapMemberProperty(config);
             }
         }
-        UIComponent initInputsJavaScriptComponent = config.findComponent(INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID);
-        if (initInputsJavaScriptComponent != null) {
-            FacesComponentUtility.detachComponent(initInputsJavaScriptComponent);
+        if (config.getConfiguration() != null) {
+            String id = PropertyIdGeneratorUtility.getIdentifier(config.getConfiguration(),
+                    INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID_SUFFIX);
+            UIComponent initInputsJavaScriptComponent = config.findComponent(id);
+            if (initInputsJavaScriptComponent != null) {
+                FacesComponentUtility.detachComponent(initInputsJavaScriptComponent);
+                addInitInputsJavaScript(config, true);
+            }
         }
-        addInitInputsJavaScript(config, true);
     }
 
     /**
@@ -394,7 +398,9 @@ public class ConfigRenderer extends Renderer {
         }
 
         UIOutput uiOutput = FacesComponentUtility.addJavaScript(config, config, null, script);
-        uiOutput.setId(INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID);
+        String id = PropertyIdGeneratorUtility.getIdentifier(config.getConfiguration(),
+                    INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID_SUFFIX);
+        uiOutput.setId(id);
     }
 
     static List<String> getHtmlDomReferences(UIComponent component) {

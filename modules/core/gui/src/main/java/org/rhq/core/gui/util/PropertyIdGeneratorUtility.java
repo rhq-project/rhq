@@ -34,7 +34,7 @@ import org.rhq.core.domain.configuration.Property;
  * @author Ian Springer @author Charles Crouch
  */
 public class PropertyIdGeneratorUtility {
-    private static final String ID_PREFIX = "jon_prop-";
+    private static final String ID_PREFIX = "rhq_prop-";
     private static final String ID_DELIMITER = "_";
 
     /**
@@ -91,7 +91,8 @@ public class PropertyIdGeneratorUtility {
         //       configs and will not change if the Configuration is modified.
         // TODO (embedded): id will always be zero - perhaps the id could be set to a unique identifier for the entity to
         //                  which the Configuration applies (e.g. for a Resource Configuration, the Resource's path).
-        identifier.append(configuration.getId());
+        int configId = (configuration.getId() != 0) ? configuration.getId() : configuration.hashCode();
+        identifier.append(configId);
         for (Property propertyNode : propertyHierarchy) {
             // NOTE: Use the hash code of the property name rather than the hash code of the property itself, since for
             //       lists and maps, this will be much more performant and just as effective for uniquely identifying a
@@ -106,6 +107,29 @@ public class PropertyIdGeneratorUtility {
                 }
             }
         }
+
+        if (suffix != null) {
+            identifier.append(suffix);
+        }
+
+        return identifier.toString();
+    }
+
+    public static String getIdentifier(@NotNull
+    Configuration configuration, @Nullable String suffix) {
+        //noinspection ConstantConditions
+        if (configuration == null) {
+            throw new IllegalArgumentException("Configuration parameter cannot be null.");
+        }
+
+        StringBuilder identifier = new StringBuilder(ID_PREFIX);
+
+        // NOTE: Use the Configuration's id rather than its hash code, since the id will always be unique across multiple
+        //       configs and will not change if the Configuration is modified.
+        // TODO (embedded): id will always be zero - perhaps the id could be set to a unique identifier for the entity to
+        //                  which the Configuration applies (e.g. for a Resource Configuration, the Resource's path).
+        int configId = (configuration.getId() != 0) ? configuration.getId() : configuration.hashCode();
+        identifier.append(configId);
 
         if (suffix != null) {
             identifier.append(suffix);

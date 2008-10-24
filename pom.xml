@@ -484,7 +484,7 @@
 
   <distributionManagement>
     <snapshotRepository>
-      <id>snapshots.jboss.org</id>
+      <id>jboss-snapshots</id>
       <name>JBoss Snapshot Repository</name>
       <url>dav:https://snapshots.jboss.org/maven2/</url>
     </snapshotRepository>

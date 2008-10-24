@@ -22,7 +22,7 @@ rem ===========================================================================
 setlocal
 
 if exist rhq-agent-env.bat echo Loading script environment from rhq-agent-env.bat...
-if exist rhq-agent-env.bat call rhq-agent-env.bat
+if exist rhq-agent-env.bat call rhq-agent-env.bat %*
 
 if "%1"=="_SETENV_ONLY" (
    set _SETENV_ONLY=true

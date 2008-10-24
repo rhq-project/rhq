@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.core;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -155,7 +156,8 @@ public class AgentManagerBean implements AgentManagerLocal {
 
     @SuppressWarnings("unchecked")
     public void checkForSuspectAgents() {
-        log.debug("Checking to see if there are agents that we suspect are down...");
+        if (log.isDebugEnabled())
+            log.debug("Checking to see if there are agents that we suspect are down...");
 
         // TODO [mazz]: make this configurable via SystemManager bean
         long maximumQuietTimeAllowed = 1000L * 60 * 2;
@@ -189,7 +191,8 @@ public class AgentManagerBean implements AgentManagerLocal {
             // was already backfilled, we still want to do this in case somehow the client was started again.
             if ((timeSinceLastReport % 21600000L) < (maximumQuietTimeAllowed * 2L)) {
                 log.warn("Have not heard from agent [" + record.getAgentName() + "] since ["
-                    + record.getLastAvailabilityReport() + "]. Will be backfilled since we suspect it is down");
+                    + new Date(record.getLastAvailabilityReport())
+                    + "]. Will be backfilled since we suspect it is down");
 
                 if (serverComm == null) {
                     serverComm = ServerCommunicationsServiceUtil.getService();
@@ -214,7 +217,8 @@ public class AgentManagerBean implements AgentManagerLocal {
             }
         }
 
-        log.debug("Finished checking for suspected agents");
+        if (log.isDebugEnabled())
+            log.debug("Finished checking for suspected agents");
 
         return;
     }

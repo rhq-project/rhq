@@ -38,6 +38,7 @@ import java.util.zip.ZipInputStream;
 public class FileUtils {
     /**
      * Writes the content in the input stream to the specified file.
+     * NOTE: content will be closed by this.
      *
      * @param  content    stream containing the content to write
      * @param  outputFile file to which the content will be written
@@ -61,7 +62,7 @@ public class FileUtils {
 
     /**
      * Writes the content out to the specified directory as an unzipped file. The input stream should contain a valid
-     * ZIP archive that will be extracted.
+     * ZIP archive that will be extracted. NOTE: content will be closed by this method.
      *
      * @param  content   stream containing the content to write; should be formatted as a ZIP file
      * @param  outputDir directory to which

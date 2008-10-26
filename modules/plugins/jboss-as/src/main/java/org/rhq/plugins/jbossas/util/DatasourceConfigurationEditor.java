@@ -258,7 +258,7 @@ public class DatasourceConfigurationEditor {
     private static void updateMap(Element parent, Configuration configuration, String name) {
         PropertyMap map = configuration.getMap(name);
         // Wrap in ArrayList to avoid ConcurrentModificationException when adding or removing children while iterating.
-        List<Element> mapElements = new ArrayList((List<Element>) parent.getChildren(name));
+        List<Element> mapElements = new ArrayList<Element>(parent.getChildren(name));
 
         if ((map == null) || map.getMap().isEmpty()) {
             if (!mapElements.isEmpty()) {

@@ -145,7 +145,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     public static final String LOG_EVENT_SOURCES_CONFIG_PROP = "logEventSources";
     public static final String LOG_EVENT_SOURCE_CONFIG_PROP = "logEventSource";
 
-    public abstract class LogEventSourcePropertyNames {
+    public abstract static class LogEventSourcePropertyNames {
         public static final String LOG_FILE_PATH = "logFilePath";
         public static final String ENABLED = "enabled";
         public static final String DATE_FORMAT = "dateFormat";
@@ -193,7 +193,6 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
     private ResourceContext resourceContext;
     private ContentContext contentContext;
-    private OperationContext operationContext;
     private EventContext eventContext;
 
     private ControlActionFacade controlFacade;
@@ -225,7 +224,6 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         this.resourceContext = context;
         this.eventContext = context.getEventContext();
         this.contentContext = context.getContentContext();
-        this.operationContext = context.getOperationContext();
 
         this.operationsDelegate = new JBossASServerOperationsDelegate(this, resourceContext.getSystemInformation());
 

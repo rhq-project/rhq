@@ -157,7 +157,7 @@ public class ScriptFileFinder {
         }
     }
 
-    protected class DirectoryFilter implements FileFilter {
+    protected static class DirectoryFilter implements FileFilter {
         public boolean accept(File file) {
             return (file.isDirectory());
         }

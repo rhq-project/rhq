@@ -125,7 +125,7 @@
                    </classfileset>
                 </i18n>
 
-                <!-- create our version.txt file that goes in our jar -->
+                <!-- create our rhq-agent-version.properties file that goes in our jar -->
                 <tstamp>
                   <format property="build.time" pattern="dd.MMM.yyyy HH.mm.ss z" />
                 </tstamp>
@@ -133,7 +133,7 @@
                 <!-- cross-platform way to get the hostname, assuming hostname executable is in your path -->
                 <exec executable="hostname" outputproperty="build.hostname" failifexecutionfails="false" failonerror="false" />
 
-                <echo file="${project.build.outputDirectory}/version.txt" append="false">Product-Name=${rhq.product.name}
+                <echo file="${project.build.outputDirectory}/rhq-agent-version.properties" append="false">Product-Name=${rhq.product.name}
 Product-Version=${project.version}
 Module-Name=${pom.name}
 Module-Version=${pom.version}

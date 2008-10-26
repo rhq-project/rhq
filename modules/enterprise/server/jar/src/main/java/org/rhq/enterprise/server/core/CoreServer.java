@@ -20,24 +20,46 @@ package org.rhq.enterprise.server.core;
 
 import java.io.InputStream;
 import java.util.Properties;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.system.ServiceMBeanSupport;
 
 public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
-    private static final String SERVER_GROUPID = "org.rhq";
-    private static final String SERVER_ARTIFACTID = "rhq-enterprise-server";
-    private static final String SERVER_BUILD_PROPERTIES_RESOURCE_NAME = "META-INF/maven/" + SERVER_GROUPID + "/"
-        + SERVER_ARTIFACTID + "/pom.properties";
-    private static final String VERSION_PROP = "version";
-
     private final Log log = LogFactory.getLog(CoreServer.class);
+
+    /**
+     * The name of the version file as found in this class's classloader
+     */
+    private static final String VERSION_FILE = "rhq-server-version.properties";
+
+    /**
+     * Version property whose value is the product version.
+     */
+    private static final String PROP_PRODUCT_VERSION = "Product-Version";
+
+    /**
+     * Version property whose value is the source code revision number used to make the build.
+     */
+    private static final String PROP_BUILD_NUMBER = "Build-Number";
+
+    /**
+     * Version property whose value is the date when this version of the product was built.
+     */
+    private static final String PROP_BUILD_DATE = "Build-Date";
 
     private Properties buildProps;
 
     @Override
     protected void createService() throws Exception {
         this.buildProps = loadBuildProperties();
+
+        // make sure our log file has an indication of the version of this server
+        String version = this.buildProps.getProperty(PROP_PRODUCT_VERSION, "?");
+        String buildNumber = this.buildProps.getProperty(PROP_BUILD_NUMBER, "?");
+        String buildDate = this.buildProps.getProperty(PROP_BUILD_DATE, "?");
+        log.info("Version=[" + version + "], Build Number=[" + buildNumber + "], Build Date=[" + buildDate + "]");
     }
 
     @Override
@@ -46,19 +68,18 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
     }
 
     public String getVersion() {
-        return this.buildProps.getProperty(VERSION_PROP, "?");
+        return this.buildProps.getProperty(PROP_PRODUCT_VERSION, "?");
     }
 
     private Properties loadBuildProperties() {
         Properties buildProps = new Properties();
         ClassLoader classLoader = this.getClass().getClassLoader();
         try {
-            InputStream buildPropsInputStream = classLoader.getResourceAsStream(SERVER_BUILD_PROPERTIES_RESOURCE_NAME);
-            buildProps.load(buildPropsInputStream);
-            buildPropsInputStream.close();
+            InputStream stream = classLoader.getResourceAsStream(VERSION_FILE);
+            buildProps.load(stream);
+            stream.close();
         } catch (Exception e) {
-            log.fatal("Failed to load " + SERVER_BUILD_PROPERTIES_RESOURCE_NAME + " via class loader " + classLoader
-                + ".");
+            log.fatal("Failed to load [" + VERSION_FILE + "] via class loader [" + classLoader + "]");
         }
 
         return buildProps;

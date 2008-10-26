@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.clientapi.util;
 
 import java.io.File;
@@ -87,7 +87,7 @@ public class StringUtil {
         StringBuffer remove = new StringBuffer(source);
 
         try {
-            if ((source != null) && (sourceLen > 0) && (find != null) && (findLen > 0)) {
+            if ((sourceLen > 0) && (findLen > 0)) {
                 int fromIndex;
                 int idx;
 
@@ -322,7 +322,7 @@ public class StringUtil {
     public static String[] explodeToArray(String toExplode, String delim) {
         List<String> strings = explode(toExplode, delim);
         String[] ret;
-        ret = strings.toArray(new String[0]);
+        ret = strings.toArray(new String[strings.size()]);
         return ret;
     }
 
@@ -368,7 +368,7 @@ public class StringUtil {
             throw new IllegalArgumentException("Unbalanced quotation marks");
         }
 
-        return res.toArray(new String[0]);
+        return res.toArray(new String[res.size()]);
     }
 
     /**

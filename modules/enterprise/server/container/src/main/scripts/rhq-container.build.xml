@@ -16,11 +16,11 @@
           <equals arg1="${dev.profile.active}" arg2="true" />
           <equals arg1="${developer}" arg2="true" />
        </or>
-    </condition>  
+    </condition>
   </target>
-  
-  <target name="set-dev-server-props" if="predeploy">  
-     <echo>*** Using dev database settings in rhq-server.properties...</echo>  
+
+  <target name="set-dev-server-props" if="predeploy">
+     <echo>*** Using dev database settings in rhq-server.properties...</echo>
      <property name="rhq.server.database.connection-url" value="${rhq.test.ds.connection-url}"/>
      <property name="rhq.server.database.driver-class" value="${rhq.test.ds.driver-class}"/>
      <property name="rhq.server.database.user-name" value="${rhq.test.ds.user-name}"/>
@@ -28,8 +28,8 @@
      <property name="rhq.server.database.type-mapping" value="${rhq.test.ds.type-mapping}"/>
   </target>
 
-  <target name="set-default-server-props" unless="predeploy">  
-     <echo>*** Using default database settings in rhq-server.properties...</echo>    
+  <target name="set-default-server-props" unless="predeploy">
+     <echo>*** Using default database settings in rhq-server.properties...</echo>
      <property name="rhq.server.database.connection-url" value="${default.rhq.server.database.connection-url}"/>
      <property name="rhq.server.database.driver-class" value="${default.rhq.server.database.driver-class}"/>
      <property name="rhq.server.database.user-name" value="${default.rhq.server.database.user-name}"/>
@@ -39,11 +39,11 @@
 
   <target name="initialize" depends="set-predeploy-prop, set-dev-server-props, set-default-server-props">
     <echo>*** Database type is ${default.rhq.server.database.type-mapping}</echo>
-    
+
     <property name="jboss.home" location="${project.build.outputDirectory}/jbossas" />
 
-  	 <!-- TODO: we no longer deploy hypersonic - so we no longer have a marker file that we can check to see if server is running -->
-  	 <!--
+    <!-- TODO: we no longer deploy hypersonic - so we no longer have a marker file that we can check to see if server is running -->
+    <!--
     <property name="marker.file" location="${jboss.home}/server/default/data/hypersonic/localDB.lck" />
     <fail message="The RHQ container appears to be currently running (${marker.file} exists). Please stop the container before rebuilding it in place.">
        <condition>
@@ -88,8 +88,8 @@
 
   <target name="prepare-container"
           depends="prepare-web-services-1,
-                   prepare-jbossas-dir, 
-                   prepare-bin-dir, 
+                   prepare-jbossas-dir,
+                   prepare-bin-dir,
                    prepare-web-services-2" />
 
   <target name="prepare-jbossas-dir"
@@ -145,7 +145,7 @@
     <!-- Delete unused stuff from deploy dir... -->
     <echo>Removing unwanted files from ${jboss.deploy.dir} ...</echo>
 
-  	 <!-- remove Hypersonic -->
+    <!-- remove Hypersonic -->
     <delete file="${jboss.deploy.dir}/hsqldb-ds.xml" />
     <delete dir="${jboss.deploy.dir}/juddi-service.sar" />
 
@@ -182,8 +182,8 @@
 
     <echo>Upgrading jboss-faces.jar to v${jboss-faces.version} ...</echo>
     <copy file="${settings.localRepository}/org/jboss/jboss-faces/${jboss-faces.version}/jboss-faces-${jboss-faces.version}.jar"
-          tofile="${jsf-libs.dir}/jboss-faces.jar" overwrite="true" verbose="true" />      
-          
+          tofile="${jsf-libs.dir}/jboss-faces.jar" overwrite="true" verbose="true" />
+
     <echo>Preparing JMS backend ...</echo>
     <mkdir dir="${jboss.deploy.dir}/jms"/>
     <copy todir="${jboss.deploy.dir}/${jms.oracle.dir}">
@@ -225,9 +225,9 @@
       <fileset dir="${jboss.home}" includes="*.*" />
     </delete>
 
-  	 <!-- make sure our downloads directories exist -->
-  	 <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins"/>
-  	 <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent"/>
+    <!-- make sure our downloads directories exist -->
+    <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins"/>
+    <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent"/>
 
     <!-- Let's deploy some developer-only stuff - we'll remove these later if this is a release build -->
     <echo>Deploying the performance testing plugin and the license file ...</echo>
@@ -240,7 +240,7 @@
           verbose="true"
           failonerror="false"/>
 
-    <echo>Enabling server to run on Java 6 ...</echo>          
+    <echo>Enabling server to run on Java 6 ...</echo>
     <move todir="${jboss.home}/lib/endorsed" verbose="true">
        <fileset dir="${jboss.deploy.dir}/jbossws.sar">
           <include name="jaxb-api.jar" />
@@ -251,12 +251,12 @@
        </fileset>
        <fileset dir="${jboss.home}/server/default/lib">
           <include name="activation.jar" />
-       </fileset>       
+       </fileset>
     </move>
     <delete file="${jboss.home}/lib/endorsed/xalan.jar" verbose="true" />
-    
+
   </target>
-  
+
   <target name="prepare-bin-dir">
     <echo>*** Preparing bin dir... ***</echo>
     <echo>connection URL is ${rhq.server.database.connection-url}</echo>
@@ -274,7 +274,7 @@ rhq.server.database.type-mapping=${rhq.server.database.type-mapping}
 
 # Container configuration
 # ********************************** NOTE ************************************
-# If the jboss.bind.address property is set to anything besides 0.0.0.0, 
+# If the jboss.bind.address property is set to anything besides 0.0.0.0,
 # uncomment the java.rmi.server.hostname property below and set it to the same
 # value - setting it to ${jboss.bind.address} will *not* work.
 jboss.bind.address=0.0.0.0
@@ -396,7 +396,7 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
   <target name="prepare-web-services-1" depends="initialize">
      <move todir="${jboss.deploy.dir}/jbossws.sar"
            verbose="true" failonerror="false">
-        <!-- failonerror is false because if the container is built clean 
+        <!-- failonerror is false because if the container is built clean
              the rej dir will not exist yet, so this error must be skipped;
              if undeploy-web-services has never been set, this will be a no-op -->
         <fileset dir="${jboss.deploy.dir}/jbossws.sar.rej" />
@@ -411,7 +411,7 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
         <fileset dir="${jboss.deploy.dir}/jbossws.sar" />
      </move>
   </target>
-	
+
   <target name="unzip-jboss" unless="jboss.uptodate">
     <unzip src="${settings.localRepository}/jboss/jboss/${jboss.version}/jboss-${jboss.version}.zip"
            dest="${basedir}/target" />
@@ -530,12 +530,12 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
   </target>
 
   <!-- Removing cluster service in 1.1, potentially adding back later for cluster management support
-       dev profile or not, we always want to execute this target so remove the 'unless' attribute; 
+       dev profile or not, we always want to execute this target so remove the 'unless' attribute;
        do not fail on error, because we don't want to fail if the file has already been renamed -->
   <target name="undeploy-cluster-service">
      <echo>Undeploying Cluster Service...</echo>
-     <move failonerror="false" 
-           file="${jboss.deploy.dir}/cluster-service.xml" 
+     <move failonerror="false"
+           file="${jboss.deploy.dir}/cluster-service.xml"
            tofile="${jboss.deploy.dir}/cluster-service.xml.rej"/>
   </target>
 

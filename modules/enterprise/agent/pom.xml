@@ -130,9 +130,6 @@
                   <format property="build.time" pattern="dd.MMM.yyyy HH.mm.ss z" />
                 </tstamp>
 
-                <!-- cross-platform way to get the hostname, assuming hostname executable is in your path -->
-                <exec executable="hostname" outputproperty="build.hostname" failifexecutionfails="false" failonerror="false" />
-
                 <echo file="${project.build.outputDirectory}/rhq-agent-version.properties" append="false">Product-Name=${rhq.product.name}
 Product-Version=${project.version}
 Module-Name=${pom.name}
@@ -142,8 +139,6 @@ Build-Jdk-Vendor=${java.vendor}
 Build-Jdk=${java.version}
 Build-OS-Name=${os.name}
 Build-OS-Version=${os.version}
-Built-By=${user.name}
-Build-Machine=${build.hostname}
 Build-Number=${buildNumber}
 </echo>
 

@@ -73,16 +73,6 @@ public class Version {
     public static final String PROP_BUILD_OS_VERSION = "Build-OS-Version";
 
     /**
-     * Version property whose value identifies the user that built this version of the product.
-     */
-    public static final String PROP_BUILD_USER = "Built-By";
-
-    /**
-     * Version property whose value identifies the build machine where this version of the product was built.
-     */
-    public static final String PROP_BUILD_MACHINE = "Build-Machine";
-
-    /**
      * A main method that can be used to determine the version information from a command line.
      *
      * @param args the version properties to print to stdout; if no arguments are given then all version properties are

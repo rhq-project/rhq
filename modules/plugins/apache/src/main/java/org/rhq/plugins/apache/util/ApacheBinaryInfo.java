@@ -25,10 +25,12 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
@@ -216,7 +218,7 @@ public class ApacheBinaryInfo {
             libhttpd = new File(bindir, "libhttpd.dll");
         }
 
-        if (libhttpd.exists()) {
+        if (libhttpd != null && libhttpd.exists()) {
             return libhttpd;
         } else {
             return null;

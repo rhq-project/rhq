@@ -230,6 +230,13 @@
       <load-on-startup>1</load-on-startup>
    </servlet>
 
+   <!-- Servlet that serves the agent update binaries and version information -->
+   <servlet>
+      <servlet-name>AgentUpdateServlet</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.agentupdate.AgentUpdateServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+   </servlet>
+
    <!-- standalone servlets used by the JSPs -->
    <servlet>
       <servlet-name>navMapImage</servlet-name>
@@ -298,6 +305,16 @@
       </init-param>
       <load-on-startup>2</load-on-startup>
    </servlet>
+
+   <!-- The endpoints to the agent update servlet -->
+   <servlet-mapping>
+      <servlet-name>AgentUpdateServlet</servlet-name>
+      <url-pattern>/agentupdate/version</url-pattern>
+   </servlet-mapping>
+   <servlet-mapping>
+      <servlet-name>AgentUpdateServlet</servlet-name>
+      <url-pattern>/agentupdate/download</url-pattern>
+   </servlet-mapping>
 
    <!-- standalone servlets used by the JSPs -->
    <servlet-mapping>

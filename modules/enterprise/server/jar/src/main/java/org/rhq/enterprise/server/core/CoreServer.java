@@ -56,8 +56,8 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
         this.buildProps = loadBuildProperties();
 
         // make sure our log file has an indication of the version of this server
-        String version = this.buildProps.getProperty(PROP_PRODUCT_VERSION, "?");
-        String buildNumber = this.buildProps.getProperty(PROP_BUILD_NUMBER, "?");
+        String version = getVersion();
+        String buildNumber = getBuildNumber();
         String buildDate = this.buildProps.getProperty(PROP_BUILD_DATE, "?");
         log.info("Version=[" + version + "], Build Number=[" + buildNumber + "], Build Date=[" + buildDate + "]");
     }
@@ -69,6 +69,10 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
 
     public String getVersion() {
         return this.buildProps.getProperty(PROP_PRODUCT_VERSION, "?");
+    }
+
+    public String getBuildNumber() {
+        return this.buildProps.getProperty(PROP_BUILD_NUMBER, "?");
     }
 
     private Properties loadBuildProperties() {

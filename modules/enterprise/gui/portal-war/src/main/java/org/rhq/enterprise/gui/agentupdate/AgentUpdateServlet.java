@@ -21,7 +21,11 @@ package org.rhq.enterprise.gui.agentupdate;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
@@ -36,6 +40,8 @@ import org.jboss.system.server.ServerConfig;
 
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.core.CoreServerMBean;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Serves the agent update binary that is stored in the RHQ Server's download area.
@@ -62,6 +68,24 @@ public class AgentUpdateServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         log("Starting the agent update servlet");
+
+        // make sure we have a agent update binary file; log its location
+        try {
+            log("Agent Update Binary File: " + getAgentUpdateBinaryFile());
+        } catch (Throwable t) {
+            log("Missing agent update binary file - agents will not be able to update", t);
+        }
+
+        // make sure we create a version file if we have to by getting the version file now
+        try {
+            File versionFile = getAgentUpdateVersionFile();
+
+            // log the version info - this also makes sure we can read it back in
+            log(versionFile + ": " + new String(StreamUtil.slurp(new FileInputStream(versionFile))));
+
+        } catch (Throwable t) {
+            log("Cannot determine the agent version information - agents will not be able to update", t);
+        }
     }
 
     @Override
@@ -180,13 +204,40 @@ public class AgentUpdateServlet extends HttpServlet {
 
     private File getAgentUpdateVersionFile() throws Exception {
         File agentDownloadDir = getAgentDownloadDir();
-        File versionFile = new File(agentDownloadDir, "agent-update-version.properties");
-        if (versionFile.exists()) {
-            return versionFile;
+        File versionFile = new File(agentDownloadDir, "rhq-server-agent-versions.properties");
+        if (!versionFile.exists()) {
+            // we do not have the version properties file yet, let's extract some info and create one
+            StringBuilder serverVersionInfo = new StringBuilder();
+
+            // first, get the server version info (by asking our server for the info)
+            CoreServerMBean coreServer = LookupUtil.getCoreServer();
+            serverVersionInfo.append("rhq-server.version=").append(coreServer.getVersion()).append('\n');
+            serverVersionInfo.append("rhq-server.build-number=").append(coreServer.getBuildNumber()).append('\n');
+
+            // second, get the agent version info (by peeking into the agent update binary jar)
+            File binaryFile = getAgentUpdateBinaryFile();
+            JarFile binaryJarFile = new JarFile(binaryFile);
+            JarEntry binaryJarFileEntry = binaryJarFile.getJarEntry("rhq-agent-update-version.properties");
+            InputStream binaryJarFileEntryStream = binaryJarFile.getInputStream(binaryJarFileEntry);
+
+            // now write the server and agent version info in our internal version file our servlet will use
+            FileOutputStream versionFileOutputStream = new FileOutputStream(versionFile);
+            try {
+                versionFileOutputStream.write(serverVersionInfo.toString().getBytes());
+                StreamUtil.copy(binaryJarFileEntryStream, versionFileOutputStream, false);
+            } finally {
+                try {
+                    versionFileOutputStream.close();
+                } catch (Exception e) {
+                }
+                try {
+                    binaryJarFileEntryStream.close();
+                } catch (Exception e) {
+                }
+            }
         }
 
-        // TODO: extract the version info from the agent jar and build the version file now
-        throw new FileNotFoundException("Missing agent version info in [" + agentDownloadDir + "]");
+        return versionFile;
     }
 
     private File getAgentUpdateBinaryFile() throws Exception {
@@ -206,6 +257,9 @@ public class AgentUpdateServlet extends HttpServlet {
         Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
         File serverHomeDir = ((ServerConfig) mbean).getServerHomeDir();
         File agentDownloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/rhq-agent");
+        if (!agentDownloadDir.exists()) {
+            throw new FileNotFoundException("Missing agent downloads directory at [" + agentDownloadDir + "]");
+        }
         return agentDownloadDir;
     }
 

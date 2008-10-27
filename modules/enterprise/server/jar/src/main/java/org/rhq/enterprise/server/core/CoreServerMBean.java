@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.core;
 
 import javax.management.ObjectName;
+
 import org.jboss.mx.util.ObjectNameFactory;
 import org.jboss.system.ServiceMBean;
 
@@ -37,4 +38,13 @@ public interface CoreServerMBean extends ServiceMBean {
      * @return the version of the server
      */
     String getVersion();
+
+    /**
+     * Returns the build number of the core RHQ Server. Servers that returns the same
+     * {@link #getVersion() version} may return different build numbers, depending
+     * on the source code stream that built the server binaries. 
+     * 
+     * @return the build number
+     */
+    String getBuildNumber();
 }

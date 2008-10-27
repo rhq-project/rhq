@@ -375,6 +375,7 @@ rhq.server.operation-timeout=600
 
 # Concurrency limits for incoming UI and agent messages
 rhq.server.startup.web.max-connections=50
+rhq.server.agent-downloads-limit=45
 rhq.communications.global-concurrency-limit=45
 rhq.server.concurrency-limit.inventory-report=5
 rhq.server.concurrency-limit.availability-report=40

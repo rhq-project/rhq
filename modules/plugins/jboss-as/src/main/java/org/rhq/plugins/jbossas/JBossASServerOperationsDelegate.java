@@ -152,7 +152,8 @@ public class JBossASServerOperationsDelegate {
 
         ProcessExecution processExecution;
 
-        if (prefix == null) {
+        // prefix is either null or contains ONLY whitespace characters
+        if (prefix == null || prefix.replaceAll("\\s", "").equals("")) {
             processExecution = ProcessExecutionUtility.createProcessExecution(startScriptFile);
 
             processExecution.getArguments().add(configArgument);

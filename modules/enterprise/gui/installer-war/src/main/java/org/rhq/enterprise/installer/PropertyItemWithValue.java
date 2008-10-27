@@ -79,4 +79,9 @@ public class PropertyItemWithValue {
     public void setRawValue(String value) {
         this.value = value;
     }
+
+    @Override
+    public String toString() {
+        return this.itemDefinition.getPropertyName() + "=" + this.value;
+    }
 }

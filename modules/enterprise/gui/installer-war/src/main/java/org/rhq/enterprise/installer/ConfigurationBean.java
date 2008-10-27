@@ -431,6 +431,7 @@ public class ConfigurationBean {
     }
 
     public StartPageResults save() {
+        LOG.info("Installer raw values: " + configuration);
 
         try {
             // update server properties with the latest ha info to keep the form and server properties file up to date
@@ -532,6 +533,8 @@ public class ConfigurationBean {
 
             return StartPageResults.ERROR;
         }
+
+        LOG.info("Installer: final submitted values: " + configurationAsProperties);
 
         return StartPageResults.SUCCESS;
     }

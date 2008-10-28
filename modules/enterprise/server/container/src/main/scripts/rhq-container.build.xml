@@ -229,6 +229,13 @@
     <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins"/>
     <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent"/>
 
+    <!-- deploy the agent update binary to the downloads location -->
+    <echo>Deploying the latest agent update binary and renaming it rhq-agent-${rhq.version}.jar</echo>
+    <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-agentupdate/${rhq.version}/rhq-enterprise-agentupdate-${rhq.version}.jar"
+          tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent/rhq-agent-${rhq.version}.jar"
+          verbose="true"
+          failonerror="true"/>
+
     <!-- Let's deploy some developer-only stuff - we'll remove these later if this is a release build -->
     <echo>Deploying the performance testing plugin and the license file ...</echo>
     <copy file="${settings.localRepository}/org/rhq/rhq-perftest-plugin/${rhq.version}/rhq-perftest-plugin-${rhq.version}.jar"

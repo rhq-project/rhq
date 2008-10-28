@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="rhq-agent-update" default="start" basedir=".">
+   
+   <!-- the initial target that logs some basic information, then performs the install or update -->
+   <target name="start" depends="header, verify, install, update">
+   </target>
+
+   <!-- performs a base install - this does not attempt to upgrade an agent; this provisions a fresh new agent -->
+   <target name="install" unless="rhq.agent.update.update-flag">
+      <unjar src="${rhq.agent.update.jar-file}"
+             dest="${basedir}">
+         <patternset>
+             <include name="rhq-enterprise-agent-${rhq-agent.latest.version}.zip"/>
+         </patternset>
+      </unjar>
+      <unzip src="${basedir}/rhq-enterprise-agent-${rhq-agent.latest.version}.zip"
+             dest="${rhq.agent.update.install-agent-dir}"/>
+      <delete file="${basedir}/rhq-enterprise-agent-${rhq-agent.latest.version}.zip"
+              failonerror="false"/>
+      <echo>Agent version ${rhq-agent.latest.version} (build number=${rhq-agent.latest.build-number}) has been installed to ${rhq.agent.update.install-agent-dir}</echo>
+   </target>
+
+   <!-- upgrades an existing agent -->
+   <target name="update" if="rhq.agent.update.update-flag">
+      <!-- we build up the new, updated agent in the update-### subdirectory
+           only when we feel we successfully have a complete agent will we attempt to
+           move it in the current agent's place -->
+      <property name="_update.tmp.dir.name" value="update-${rhq-agent.latest.build-number}" />
+      <property name="_update.tmp.dir" location="${rhq.agent.update.update-agent-dir}/${_update.tmp.dir.name}" />
+      <unjar src="${rhq.agent.update.jar-file}"
+             dest="${_update.tmp.dir}">
+         <patternset>
+             <include name="rhq-enterprise-agent-${rhq-agent.latest.version}.zip"/>
+         </patternset>
+      </unjar>
+      <unzip src="${_update.tmp.dir}/rhq-enterprise-agent-${rhq-agent.latest.version}.zip"
+             dest="${_update.tmp.dir}"/>
+      <delete file="${_update.tmp.dir}/rhq-enterprise-agent-${rhq-agent.latest.version}.zip"
+              failonerror="false"/>
+      
+      <!-- at this point, we have the new but raw agent extracted to the ${_update.tmp.dir}/rhq-agent -->
+
+      <!-- if there are plugins, keep them -->
+      <copy todir="${_update.tmp.dir}/rhq-agent/plugins">
+        <fileset dir="${rhq.agent.update.update-agent-dir}/plugins"/>
+      </copy>
+
+      <!-- if there is a failover list, keep it -->
+      <copy file="${rhq.agent.update.update-agent-dir}/data/failover-list.dat"
+            tofile="${_update.tmp.dir}/rhq-agent/data/failover-list.dat"
+            failonerror="false" />
+
+      <!-- copy any custom launch scripts (we are going to lose our UNIX +x permission bits) -->
+      <move file="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-env.bat"
+            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-env.bat.default" />
+      <copy file="${rhq.agent.update.update-agent-dir}/bin/rhq-agent-env.bat"
+            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-env.bat" />
+      <move file="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-env.sh"
+            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-env.sh.default"/>
+      <copy file="${rhq.agent.update.update-agent-dir}/bin/rhq-agent-env.sh"
+            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-env.sh" />
+      <move file="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-wrapper.bat"
+            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-wrapper.bat.default"/>
+      <copy file="${rhq.agent.update.update-agent-dir}/bin/rhq-agent-wrapper.bat"
+            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-wrapper.bat" />
+      <move file="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-wrapper.sh"
+            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-wrapper.sh.default"/>
+      <copy file="${rhq.agent.update.update-agent-dir}/bin/rhq-agent-wrapper.sh"
+            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-wrapper.sh" />
+      <move file="${_update.tmp.dir}/rhq-agent/bin/wrapper/rhq-agent-wrapper.conf"
+            tofile="${_update.tmp.dir}/rhq-agent/bin/wrapper/rhq-agent-wrapper.conf.default"/>
+      <copy file="${rhq.agent.update.update-agent-dir}/bin/wrapper/rhq-agent-wrapper.conf"
+            tofile="${_update.tmp.dir}/rhq-agent/bin/wrapper/rhq-agent-wrapper.conf" />
+
+      <!-- copy over the agent-configuration and log4j xml files, but rename them so they do not take effect -->
+      <copy file="${rhq.agent.update.update-agent-dir}/conf/agent-configuration.xml"
+            tofile="${_update.tmp.dir}/rhq-agent/conf/agent-configuration.xml.custom"
+            failonerror="false"/>
+      <copy file="${rhq.agent.update.update-agent-dir}/conf/log4j.xml"
+            tofile="${_update.tmp.dir}/rhq-agent/conf/log4j.xml.custom"
+            failonerror="false"/>
+      
+      <!-- everything is done; _update.tmp.dir/rhq-agent has our new agent -->
+      <!-- start moving things around to get the new agent in the old agent's directory -->
+      <property name="new.location.for.old.agent" location="${rhq.agent.update.update-agent-dir}/../rhq-agent-OLD" />
+      <delete dir="${new.location.for.old.agent}" />
+      <move file="${rhq.agent.update.update-agent-dir}"
+            tofile="${new.location.for.old.agent}"
+            failonerror="true"/>
+      <move file="${new.location.for.old.agent}/${_update.tmp.dir.name}/rhq-agent"
+            tofile="${rhq.agent.update.update-agent-dir}"
+            failonerror="true"/>
+      <delete dir="${new.location.for.old.agent}/${_update.tmp.dir.name}" />
+   </target>
+
+   <!-- makes sure the jar file where the agent distro is supposed to be actually exists -->
+   <target name="verify">
+      <fail message="Could not determine the location of the jar file or it does not exist: ${rhq.agent.update.jar-file}">
+         <condition>
+            <not>
+               <available file="${rhq.agent.update.jar-file}" />
+            </not>
+         </condition>
+      </fail>
+   </target>
+
+   <!-- header targets will simply output some information to the console -->
+   <target name="header" depends="header-for-update, header-for-install">
+   </target>
+
+   <target name="header-for-update" if="rhq.agent.update.update-flag">
+      <echo>
+===== RHQ AGENT UPDATE =====
+Agent To Be Updated: ${rhq.agent.update.update-agent-dir}
+Version: ${rhq-agent.latest.version}
+Build Number: ${rhq-agent.latest.build-number}
+Jar File: ${rhq.agent.update.jar-file}
+</echo>
+   </target>
+
+   <target name="header-for-install" unless="rhq.agent.update.update-flag">
+      <echo>
+===== RHQ AGENT INSTALL =====
+Installing Agent To: ${rhq.agent.update.install-agent-dir}
+Version: ${rhq-agent.latest.version}
+Build Number: ${rhq-agent.latest.build-number}
+Jar File: ${rhq.agent.update.jar-file}
+</echo>
+   </target>
+</project>

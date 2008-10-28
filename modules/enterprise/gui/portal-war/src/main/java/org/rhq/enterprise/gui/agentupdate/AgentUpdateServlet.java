@@ -243,7 +243,7 @@ public class AgentUpdateServlet extends HttpServlet {
     private File getAgentUpdateBinaryFile() throws Exception {
         File agentDownloadDir = getAgentDownloadDir();
         for (File file : agentDownloadDir.listFiles()) {
-            if (file.getName().startsWith("rhq-agent") && file.getName().endsWith(".jar")) {
+            if (file.getName().endsWith(".jar")) {
                 return file;
             }
         }

@@ -35,6 +35,7 @@
       <modules>
         <module>comm</module>
         <module>agent</module>
+        <module>agentupdate</module>
         <module>server/jar</module>
         <module>server/safe-invoker</module>
         <module>server/sars</module>
@@ -54,6 +55,7 @@
       <modules>
         <module>comm</module>
         <module>agent</module>
+        <module>agentupdate</module>
         <module>server/jar</module>
         <module>server/safe-invoker</module>
         <module>server/sars</module>

@@ -52,7 +52,7 @@ ANT Script that provides ways to package the agent.
    <path id="endorsed.classpath">
 
       <!-- The JAXB jars need to go in endorsed, since we use JAXB 2.1, which would cause conflicts with
-           JAXB 2.0, which is bundled with Java 6, when running under Java 6. JAXB 2.1 depends on 
+           JAXB 2.0, which is bundled with Java 6, when running under Java 6. JAXB 2.1 depends on
            Activation 1.1, which we also need to include, in order to remain compatible with Java 5,
            which bundles Activation 1.0. -->
       <fileset dir="${settings.localRepository}" id="endorsed.classpath.fileset">
@@ -62,7 +62,7 @@ ANT Script that provides ways to package the agent.
       </fileset>
 
    </path>
-   
+
    <fileset dir="${settings.localRepository}" id="native.fileset">
       <include name="org/hyperic/sigar-dist/${sigar.version}/sigar-dist-${sigar.version}.zip" />
    </fileset>
@@ -87,7 +87,9 @@ ANT Script that provides ways to package the agent.
    -->
    <target name="package-dist">
       <echo>Running ant package-dist</echo>
-      <property name="agent.distro.dir" location="${basedir}/target/rhq-agent-${project.version}"/>
+      <!-- do not put our distro in a directory with a specific version in the name! -->
+      <property name="agent.distro.dir" location="${basedir}/target/rhq-agent"/>
+
       <!-- Don't want to delete every time <delete dir="${agent.distro.dir}" />-->
 
       <copy todir="${agent.distro.dir}/lib"
@@ -99,7 +101,7 @@ ANT Script that provides ways to package the agent.
             flatten="true">
          <fileset refid="endorsed.classpath.fileset" />
       </copy>
-      
+
       <unzip dest="${agent.distro.dir}/lib" overwrite="false">
          <fileset refid="native.fileset" />
          <patternset>
@@ -156,63 +158,38 @@ ANT Script that provides ways to package the agent.
          </fileset>
       </copy>
 
-      <delete file="${basedir}/target/rhq-agent-${project.version}.zip" />     
-   	  <zip destfile="${basedir}/target/rhq-agent-${project.version}.zip" >
-  	  	 <!-- The zip task does not mantain file permissions, we have to make sure they are set here -->   	  	
+      <delete file="${basedir}/target/rhq-agent-${project.version}.zip" />
+      <zip destfile="${basedir}/target/rhq-agent-${project.version}.zip" >
+         <!-- The zip task does not mantain file permissions, we have to make sure they are set here -->
          <zipfileset dir="${basedir}/target">
-            <include name="rhq-agent-${project.version}/**"/>
-         	<exclude name="rhq-agent-${project.version}/bin/*.sh"/>
-         	<exclude name="rhq-agent-${project.version}/lib/*.so"/>
-         	<exclude name="rhq-agent-${project.version}/lib/*.sl"/>         	
-         	<exclude name="rhq-agent-${project.version}/lib/*.dylib"/>         	
+            <include name="rhq-agent/**"/>
+            <exclude name="rhq-agent/bin/*.sh"/>
+            <exclude name="rhq-agent/lib/*.so"/>
+            <exclude name="rhq-agent/lib/*.sl"/>
+            <exclude name="rhq-agent/lib/*.dylib"/>
          </zipfileset>
          <zipfileset dir="${basedir}/target" filemode="755">
-         	<include name="rhq-agent-${project.version}/bin/*.sh"/>
-         	<include name="rhq-agent-${project.version}/lib/*.so"/>
-         	<include name="rhq-agent-${project.version}/lib/*.sl"/>
-            <include name="rhq-agent-${project.version}/lib/*.dylib"/>
-         </zipfileset>      	
+            <include name="rhq-agent/bin/*.sh"/>
+            <include name="rhq-agent/lib/*.so"/>
+            <include name="rhq-agent/lib/*.sl"/>
+            <include name="rhq-agent/lib/*.dylib"/>
+         </zipfileset>
       </zip>
-      
+
       <mkdir dir="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}"/>
       <copy file="${basedir}/target/rhq-agent-${project.version}.zip"
             tofile="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}/rhq-enterprise-agent-${project.version}.zip"
-            verbose="true"/>      
-      
+            verbose="true"/>
+
       <antcall target="package-connectors-dist" />
    </target>
 
    <!--
    =======================================================================
    -->
-   <target name="package-standalone">
+   <target name="package-connectors-dist" if="agent-with-connectors">
+      <property name="connectors.distro.dir" location="${basedir}/target/rhq-product_connectors-${project.version}"/>
 
-      <delete dir="${java.io.tmpdir}/rhqagent" />
-
-      <unjar dest="${java.io.tmpdir}/rhqagent">
-         <fileset refid="run.classpath.fileset" />
-         <patternset>
-             <exclude name="META-INF/**" />
-         </patternset>
-      </unjar>
-
-      <mkdir dir="target/standalone" />
-      <delete file="target/standalone/rhq-agent.jar" />
-      <jar jarfile="target/standalone/rhq-agent.jar">
-         <fileset dir="${java.io.tmpdir}/rhqagent" />
-         <manifest>
-            <attribute name="Main-Class" value="org.rhq.enterprise.agent.AgentMain"/>
-         </manifest>
-      </jar>
-
-   </target>
-
-   <!--
-   =======================================================================
-   -->
-   <target name="package-connectors-dist" if="agent-with-connectors">     
-      <property name="connectors.distro.dir" location="${basedir}/target/rhq-product_connectors-${project.version}"/>   
-      
       <property name="trunk.dir" location="${basedir}/../../.."/>
       <property name="product_connectors.dir" location="${trunk.dir}/etc/product_connectors"/>
 
@@ -229,11 +206,11 @@ ANT Script that provides ways to package the agent.
       <zip destfile="${basedir}/target/rhq-product_connectors-${project.version}.zip" >
          <fileset dir="${basedir}/target" includes="rhq-product_connectors-${project.version}/**"/>
       </zip>
-      
+
       <mkdir dir="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}"/>
       <copy file="${basedir}/target/rhq-product_connectors-${project.version}.zip"
             todir="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}"
-            verbose="true"/>      
+            verbose="true"/>
    </target>
 
 </project>

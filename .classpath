@@ -47,6 +47,7 @@
 	<classpathentry kind="src" path="modules/enterprise/comm/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/agent/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/agent/src/test/java"/>
+	<classpathentry kind="src" path="modules/enterprise/agentupdate/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/jar/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/jar/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/disk/src/main/java"/>

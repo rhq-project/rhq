@@ -1,0 +1,159 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-parent</artifactId>
+    <version>1.2.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-enterprise-agentupdate</artifactId>
+  <packaging>jar</packaging>
+
+  <name>RHQ Enterprise Agent Update</name>
+  <description>RHQ Agent Update</description>
+
+  <scm>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/agentupdate/</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/agentupdate/</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>modules/enterprise/agentupdate/</scm.module.path>
+    <ant.version>1.7.1</ant.version>
+  </properties>
+
+  <dependencies>
+
+    <!-- Internal Deps -->
+
+    <!-- have a dependency on the agent because we need it built/assembled first -->
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-enterprise-agent</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- 3rd Party Deps -->
+
+    <dependency>
+      <groupId>org.apache.ant</groupId>
+      <artifactId>ant</artifactId>
+      <version>${ant.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.ant</groupId>
+      <artifactId>ant-launcher</artifactId>
+      <version>${ant.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>gnu-getopt</groupId>
+      <artifactId>getopt</artifactId>
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>process-classes</phase>
+            <configuration>
+              <tasks>
+
+                <!-- create our rhq-agent-update-version.properties file that goes in our jar -->
+                <tstamp>
+                  <format property="build.time" pattern="dd.MMM.yyyy HH.mm.ss z" />
+                </tstamp>
+
+                <echo file="${project.build.outputDirectory}/rhq-agent-update-version.properties" append="false">rhq-agent.latest.version=${project.version}
+rhq-agent.latest.build-number=${buildNumber}
+</echo>
+
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+
+          <!-- assemble the self-executing jar -->
+          <execution>
+            <id>agent-update-package</id>
+            <phase>process-resources</phase>
+            <configuration>
+              <tasks>
+                <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}/rhq-enterprise-agent-${project.version}.zip"
+                      todir="${project.build.outputDirectory}" />
+                <fileset dir="${settings.localRepository}" id="run.classpath.fileset">
+                  <!-- we do not need logging (yet) in AgentUpdate
+                  <include name="log4j/log4j/1.2.14/log4j-1.2.14.jar" />
+                  <include name="commons-logging/commons-logging/${commons-logging.version}/commons-logging-${commons-logging.version}.jar" />
+                  -->
+                  <include name="gnu-getopt/getopt/${getopt.version}/getopt-${getopt.version}.jar" />
+                  <include name="org/apache/ant/ant/${ant.version}/ant-${ant.version}.jar" />
+                  <include name="org/apache/ant/ant-launcher/${ant.version}/ant-launcher-${ant.version}.jar" />
+                </fileset>
+                <unjar dest="${project.build.outputDirectory}">
+                  <fileset refid="run.classpath.fileset" />
+                  <patternset>
+                    <exclude name="META-INF/**" />
+                    <exclude name="images/" />
+                  </patternset>
+                </unjar>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>org.rhq.enterprise.agent.update.AgentUpdate</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+      </plugin>
+
+    </plugins>
+  </build>
+
+  <reporting>
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+      </plugin>
+
+    </plugins>
+  </reporting>
+
+</project>

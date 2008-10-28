@@ -70,7 +70,7 @@ public class PluginClassLoader extends URLClassLoader {
                 try {
                     unpackedDirectory = unpackEmbeddedJars(pluginJarName, pluginUrl, classpathUrlList, tmpDirectory);
                 } catch (Exception e) {
-                    throw new PluginContainerException("Failed to unpack embedded JARs within: " + pluginUrl);
+                    throw new PluginContainerException("Failed to unpack embedded JARs within: " + pluginUrl, e);
                 }
             }
         }

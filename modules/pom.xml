@@ -50,6 +50,7 @@
         <module>core</module>
         <module>enterprise/comm</module>
         <module>enterprise/agent</module>
+        <module>enterprise/agentupdate</module>
       </modules>
     </profile>
 

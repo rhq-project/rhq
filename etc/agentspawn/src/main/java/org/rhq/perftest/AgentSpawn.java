@@ -366,7 +366,7 @@ public class AgentSpawn {
     private static String getAgentDistribution() {
         // default uses the maven build layout and assume we are running out of the perftest target dir
         String distString = System.getProperty(PROP_AGENTDIST,
-            "../../../modules/enterprise/agent/target/rhq-agent-1.2.0-SNAPSHOT");
+            "../../../modules/enterprise/agent/target/rhq-enterprise-agent-1.2.0-SNAPSHOT");
         File dist = new File(distString);
         if (!dist.isDirectory()) {
             throw new RuntimeException("Missing the agent distribution at : " + distString + ". Please set ["

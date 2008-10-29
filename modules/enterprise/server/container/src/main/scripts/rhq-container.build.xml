@@ -230,18 +230,17 @@
     <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent"/>
 
     <!-- deploy the agent update binary to the downloads location -->
-    <echo>Deploying the latest agent update binary and renaming it rhq-agent-${rhq.version}.jar</echo>
+    <echo>Deploying the latest agent update binary and renaming it rhq-enterprise-agent-${rhq.version}.jar</echo>
     <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-agentupdate/${rhq.version}/rhq-enterprise-agentupdate-${rhq.version}.jar"
-          tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent/rhq-agent-${rhq.version}.jar"
+          tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent/rhq-enterprise-agent-${rhq.version}.jar"
           verbose="true"
           failonerror="true"/>
+  	
+    <!-- optionally package the connectors -->
+    <antcall target="package-connectors" />
 
     <!-- Let's deploy some developer-only stuff - we'll remove these later if this is a release build -->
-    <echo>Deploying the performance testing plugin and the license file ...</echo>
-    <copy file="${settings.localRepository}/org/rhq/rhq-perftest-plugin/${rhq.version}/rhq-perftest-plugin-${rhq.version}.jar"
-          todir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins"
-          verbose="true"
-          failonerror="false"/>
+    <echo>Deploying the license file ...</echo>
     <copy file="${basedir}/src/main/license/license.xml"
           todir="${jboss.deploy.dir}/${rhq.earName}/license"
           verbose="true"
@@ -261,9 +260,22 @@
        </fileset>
     </move>
     <delete file="${jboss.home}/lib/endorsed/xalan.jar" verbose="true" />
-
+   
   </target>
 
+  <target name="package-connectors" if="package-connectors">
+    <echo>Deploying the rt-filter conectors ...</echo>
+  	 <delete file="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connector-rtfilter.zip" />
+    <zip destfile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connector-rtfilter.zip" >
+      <zipfileset dir="${basedir}/../../agent/src/etc/product_connectors">
+         <include name="README.txt"/>
+      </zipfileset>
+      <zipfileset dir="${settings.localRepository}/org/rhq/rhq-rtfilter/${project.version}">
+         <include name="rhq-rtfilter-${project.version}.jar"/>
+      </zipfileset>
+   </zip>
+  </target>
+	
   <target name="prepare-bin-dir">
     <echo>*** Preparing bin dir... ***</echo>
     <echo>connection URL is ${rhq.server.database.connection-url}</echo>
@@ -507,8 +519,14 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
                    undeploy-ear,
                    undeploy-ds,
                    prepare-web-services-2"
-          description="If this is a release build, make sure it is properly prepared." />
+          description="If this is a release build, make sure it is properly prepared." >
 
+    <echo>Adding license headers files...</echo>
+    <copy todir="${project.build.outputDirectory}">         
+      <fileset dir="${basedir}/../../../.." includes="LICENSE*" />
+    </copy>                                                
+  </target>
+	
   <target name="fix-perms">
     <!-- Make sure shell scripts are readable and executable. -->
     <chmod dir="${project.build.outputDirectory}/bin" includes="*.sh" perm="ug+x" verbose="true" />
@@ -557,14 +575,8 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
      <move file="${jboss.deploy.dir}/rhq-agent.sar" tofile="${jboss.deploy.dir}/rhq-agent.sar.rej"/>
   </target>
 
-  <target name="undeploy-ear" unless="predeploy">
+  <target name="undeploy-ear" unless="predeploy">  	
      <echo>Preparing for release - cleaning and undeploying EAR...</echo>
-     <delete>
-        <fileset dir="${jboss.deploy.dir}/${rhq.earName}/license" includes="*" />
-     </delete>
-     <delete>
-        <fileset dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins" includes="rhq-perftest-plugin*" />
-     </delete>
      <move file="${jboss.deploy.dir}/${rhq.earName}" tofile="${jboss.deploy.dir}/${rhq.earName}.rej"/>
   </target>
 

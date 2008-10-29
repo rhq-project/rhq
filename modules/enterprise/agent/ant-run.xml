@@ -158,8 +158,8 @@ ANT Script that provides ways to package the agent.
          </fileset>
       </copy>
 
-      <delete file="${basedir}/target/rhq-agent-${project.version}.zip" />
-      <zip destfile="${basedir}/target/rhq-agent-${project.version}.zip" >
+      <delete file="${basedir}/target/rhq-enterprise-agent-${project.version}.zip" />
+      <zip destfile="${basedir}/target/rhq-enterprise-agent-${project.version}.zip" >
          <!-- The zip task does not mantain file permissions, we have to make sure they are set here -->
          <zipfileset dir="${basedir}/target">
             <include name="rhq-agent/**"/>
@@ -177,40 +177,10 @@ ANT Script that provides ways to package the agent.
       </zip>
 
       <mkdir dir="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}"/>
-      <copy file="${basedir}/target/rhq-agent-${project.version}.zip"
+      <copy file="${basedir}/target/rhq-enterprise-agent-${project.version}.zip"
             tofile="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}/rhq-enterprise-agent-${project.version}.zip"
             verbose="true"/>
 
-      <antcall target="package-connectors-dist" />
-   </target>
-
-   <!--
-   =======================================================================
-   -->
-   <target name="package-connectors-dist" if="agent-with-connectors">
-      <property name="connectors.distro.dir" location="${basedir}/target/rhq-product_connectors-${project.version}"/>
-
-      <property name="trunk.dir" location="${basedir}/../../.."/>
-      <property name="product_connectors.dir" location="${trunk.dir}/etc/product_connectors"/>
-
-      <copy todir="${connectors.distro.dir}">
-         <fileset dir="${basedir}/src/etc/product_connectors"/>
-         <!-- We can't include these for now, since they live in JON SVN (ips, 04/01/08). -->
-         <!--<fileset dir="${product_connectors.dir}"/>-->
-         <fileset dir="${settings.localRepository}/org/rhq/rhq-rtfilter/${project.version}">
-            <include name="rhq-rtfilter-${project.version}.jar"/>
-         </fileset>
-      </copy>
-
-      <delete file="${basedir}/target/rhq-product_connectors-${project.version}.zip" />
-      <zip destfile="${basedir}/target/rhq-product_connectors-${project.version}.zip" >
-         <fileset dir="${basedir}/target" includes="rhq-product_connectors-${project.version}/**"/>
-      </zip>
-
-      <mkdir dir="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}"/>
-      <copy file="${basedir}/target/rhq-product_connectors-${project.version}.zip"
-            todir="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}"
-            verbose="true"/>
    </target>
 
 </project>

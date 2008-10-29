@@ -157,9 +157,7 @@ Build-Number=${buildNumber}
               <tasks>
                 <ant antfile="${basedir}/ant-run.xml" dir="${basedir}" target="package-dist" inheritAll="false" inheritRefs="false">
                    <property name="settings.localRepository" value="${settings.localRepository}" />
-                   <property name="project.version" value="${project.version}" />
-                   <property name="agent-with-connectors" value="${agent-with-connectors}" />
-                   
+                   <property name="project.version" value="${project.version}" />                   
                    <property name="concurrent.version" value="${concurrent.version}" />
                    <property name="getopt.version" value="${getopt.version}" />
                    <property name="jboss.version" value="${jboss.version}" />
@@ -228,16 +226,5 @@ Build-Number=${buildNumber}
 
     </plugins>
   </reporting>
-  
-   <profiles>
-
-      <profile>
-         <id>dist</id>
-         <properties>         
-            <agent-with-connectors>true</agent-with-connectors>
-         </properties>
-      </profile>
-
-  </profiles>
-  
+    
 </project>

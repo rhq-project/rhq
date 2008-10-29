@@ -128,7 +128,8 @@ public class AgentUpdate {
         }
 
         // run the ant script now
-        agentUpdate.startAnt(buildFile, null, props, logFile, !agentUpdate.quietFlag);
+        agentUpdate.startAnt(buildFile, "rhq-agent-update-build-tasks.properties", props, logFile,
+            !agentUpdate.quietFlag);
 
         return;
     }
@@ -387,7 +388,7 @@ public class AgentUpdate {
             // notice we are adding the listener before we set the properties - if we do not want the
             // the properties echoed out in the log (e.g. if they contain sensitive passwords)
             // we should do this after we set the properties.
-            project.addBuildListener(new LoggerAntBuildListener(logFileOutput, Project.MSG_VERBOSE));
+            project.addBuildListener(new LoggerAntBuildListener(logFileOutput, Project.MSG_DEBUG));
             if (logStdOut) {
                 project.addBuildListener(new LoggerAntBuildListener(new PrintWriter(System.out), Project.MSG_INFO));
             }

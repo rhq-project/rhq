@@ -52,34 +52,29 @@
             failonerror="false" />
 
       <!-- copy any custom launch scripts (we are going to lose our UNIX +x permission bits) -->
-      <move file="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-env.bat"
-            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-env.bat.default" />
-      <copy file="${rhq.agent.update.update-agent-dir}/bin/rhq-agent-env.bat"
-            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-env.bat" />
-      <move file="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-env.sh"
-            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-env.sh.default"/>
-      <copy file="${rhq.agent.update.update-agent-dir}/bin/rhq-agent-env.sh"
-            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-env.sh" />
-      <move file="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-wrapper.bat"
-            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-wrapper.bat.default"/>
-      <copy file="${rhq.agent.update.update-agent-dir}/bin/rhq-agent-wrapper.bat"
-            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-wrapper.bat" />
-      <move file="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-wrapper.sh"
-            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-wrapper.sh.default"/>
-      <copy file="${rhq.agent.update.update-agent-dir}/bin/rhq-agent-wrapper.sh"
-            tofile="${_update.tmp.dir}/rhq-agent/bin/rhq-agent-wrapper.sh" />
-      <move file="${_update.tmp.dir}/rhq-agent/bin/wrapper/rhq-agent-wrapper.conf"
-            tofile="${_update.tmp.dir}/rhq-agent/bin/wrapper/rhq-agent-wrapper.conf.default"/>
-      <copy file="${rhq.agent.update.update-agent-dir}/bin/wrapper/rhq-agent-wrapper.conf"
-            tofile="${_update.tmp.dir}/rhq-agent/bin/wrapper/rhq-agent-wrapper.conf" />
+      <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/bin"
+                        newdir="${_update.tmp.dir}/rhq-agent/bin"
+                        filename="rhq-agent-env.bat" keep="old" backupextension=".default" failonerror="false" />
+      <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/bin"
+                        newdir="${_update.tmp.dir}/rhq-agent/bin"
+                        filename="rhq-agent-env.sh" keep="old" backupextension=".default" failonerror="false" />
+      <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/bin"
+                        newdir="${_update.tmp.dir}/rhq-agent/bin"
+                        filename="rhq-agent-wrapper.bat" keep="old" backupextension=".default" failonerror="false" />
+      <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/bin"
+                        newdir="${_update.tmp.dir}/rhq-agent/bin"
+                        filename="rhq-agent-wrapper.sh" keep="old" backupextension=".default" failonerror="false" />
+      <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/bin/wrapper"
+                        newdir="${_update.tmp.dir}/rhq-agent/bin/wrapper"
+                        filename="rhq-agent-wrapper.conf" keep="old" backupextension=".default" failonerror="false" />
 
       <!-- copy over the agent-configuration and log4j xml files, but rename them so they do not take effect -->
-      <copy file="${rhq.agent.update.update-agent-dir}/conf/agent-configuration.xml"
-            tofile="${_update.tmp.dir}/rhq-agent/conf/agent-configuration.xml.custom"
-            failonerror="false"/>
-      <copy file="${rhq.agent.update.update-agent-dir}/conf/log4j.xml"
-            tofile="${_update.tmp.dir}/rhq-agent/conf/log4j.xml.custom"
-            failonerror="false"/>
+      <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/conf"
+                        newdir="${_update.tmp.dir}/rhq-agent/conf"
+                        filename="agent-configuration.xml" keep="new" backupextension=".custom" failonerror="false" />
+      <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/conf"
+                        newdir="${_update.tmp.dir}/rhq-agent/conf"
+                        filename="log4j.xml" keep="new" backupextension=".custom" failonerror="false" />
       
       <!-- everything is done; _update.tmp.dir/rhq-agent has our new agent -->
       <!-- start moving things around to get the new agent in the old agent's directory -->
@@ -87,7 +82,8 @@
       <delete dir="${new.location.for.old.agent}" />
       <move file="${rhq.agent.update.update-agent-dir}"
             tofile="${new.location.for.old.agent}"
-            failonerror="true"/>
+            failonerror="false"/> <!-- do not fail if we fail to backup the old agent - hope we don't need it -->
+      <delete dir="${rhq.agent.update.update-agent-dir}" failonerror="false" /> <!-- just trying to clear the way for the new agent -->
       <move file="${new.location.for.old.agent}/${_update.tmp.dir.name}/rhq-agent"
             tofile="${rhq.agent.update.update-agent-dir}"
             failonerror="true"/>

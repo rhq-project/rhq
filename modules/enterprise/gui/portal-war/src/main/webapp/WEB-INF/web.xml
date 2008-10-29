@@ -237,6 +237,13 @@
       <load-on-startup>1</load-on-startup>
    </servlet>
 
+   <!-- Servlet that serves the content from rhq-downloads -->
+   <servlet>
+      <servlet-name>DownloadServlet</servlet-name>
+      <servlet-class>org.rhq.enterprise.gui.download.DownloadServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+   </servlet>
+
    <!-- standalone servlets used by the JSPs -->
    <servlet>
       <servlet-name>navMapImage</servlet-name>
@@ -314,6 +321,12 @@
    <servlet-mapping>
       <servlet-name>AgentUpdateServlet</servlet-name>
       <url-pattern>/agentupdate/download</url-pattern>
+   </servlet-mapping>
+
+   <!-- The download servlet; this URI /downloads will effectively look like its pointing to rhq-downloads -->
+   <servlet-mapping>
+      <servlet-name>DownloadServlet</servlet-name>
+      <url-pattern>/downloads/*</url-pattern>
    </servlet-mapping>
 
    <!-- standalone servlets used by the JSPs -->

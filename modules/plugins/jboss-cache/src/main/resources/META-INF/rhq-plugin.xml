@@ -96,15 +96,20 @@
                  description="Number of transaction rollback operations performed." measurementType="trendsup" />       
             
          <resource-configuration>
-            <c:simple-property name="Flavour" default="treecache">
+            <c:simple-property name="Flavour" default="treecache"
+               description="Is this going to be a Pojo Cache or a Tree Cache">
                <c:property-options>
                   <c:option name="POJO Cache" value="cache" default="false"/>
                   <c:option name="Tree Cache" value="treecache" default="true"/>
                </c:property-options>
             </c:simple-property>
-            <c:simple-property name="TransactionManagerLookupClass" default="org.jboss.cache.JBossTransactionManagerLookup"/>
-            <c:simple-property name="IsolationLevel" default="REPEATABLE_READ">
+            <c:simple-property name="TransactionManagerLookupClass" 
+               default="org.jboss.cache.JBossTransactionManagerLookup"
+               description="What class should be used to get a transaction manager instance"/>
+            <c:simple-property name="IsolationLevel" default="REPEATABLE_READ"
+               description="The isolation level for access to the cache">
                <c:property-options>
+                  <c:option value="SERIALIZABLE"/>
                   <c:option value="REPEATABLE_READ" default="true"/>
                   <c:option value="READ_COMMITTED"/>
                   <c:option value="READ_UNCOMMITTED"/>

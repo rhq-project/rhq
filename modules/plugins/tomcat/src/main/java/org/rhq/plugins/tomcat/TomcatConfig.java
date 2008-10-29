@@ -38,7 +38,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * Config parsing intended only for Tomcat server auto discovery. Copied over from the 1.4 source tree.
  */
 public class TomcatConfig {
-    private static HashMap cache = null;
+    private static HashMap<File,TomcatConfig> cache = null;
     private String address;
     private String port;
     private long lastModified = 0;
@@ -48,10 +48,10 @@ public class TomcatConfig {
 
     public static synchronized TomcatConfig getConfig(File configXML) {
         if (cache == null) {
-            cache = new HashMap();
+            cache = new HashMap<File, TomcatConfig>();
         }
 
-        TomcatConfig cfg = (TomcatConfig) cache.get(configXML);
+        TomcatConfig cfg = cache.get(configXML);
 
         long lastModified = configXML.lastModified();
 
@@ -107,7 +107,7 @@ public class TomcatConfig {
         address = handler.getAddress();
     }
 
-    private class TomcatConnectorHandler extends DefaultHandler {
+    static class TomcatConnectorHandler extends DefaultHandler {
         private String address;
         private String port;
 

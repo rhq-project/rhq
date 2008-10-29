@@ -152,7 +152,7 @@ public class ApplicationDiscoveryComponent extends MBeanResourceDiscoveryCompone
     /**
      * Filter used to find applications.
      */
-    private class ApplicationFileFilter implements FilenameFilter {
+    private static class ApplicationFileFilter implements FilenameFilter {
         // Attributes  --------------------------------------------
 
         private String applicationExtension;

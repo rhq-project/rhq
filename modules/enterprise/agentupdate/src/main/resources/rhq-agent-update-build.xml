@@ -1,6 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project name="rhq-agent-update" default="start" basedir=".">
+
+   <!-- this will back up the current agent, in case it needs to be recovered -->
+   <!-- this is a standalone target that the AgentUpdate will call when it needs to backup the agent -->
+   <target name="backup-agent"> 
+      <echo>=== BACKING UP CURRENT AGENT ===</echo>
+      <echo>From: ${rhq.agent.update.update-agent-dir}</echo> 
+      <echo>To: ${java.io.tmpdir}/rhq-agent-update-backup</echo> 
+      <delete dir="${java.io.tmpdir}/rhq-agent-update-backup" />
+      <copy todir="${java.io.tmpdir}/rhq-agent-update-backup">
+        <fileset dir="${rhq.agent.update.update-agent-dir}"/>
+      </copy>
+      <echo>=== BACKUP OF CURRENT AGENT COMPLETE ===</echo>
+   </target>
+   
+   <!-- this will restore a backed up agent -->
+   <!-- this is a standalone target that the AgentUpdate will call when it needs to restore the agent -->
+   <target name="restore-agent"> 
+      <echo>=== RESTORING OLD AGENT ===</echo>
+      <echo>From: ${java.io.tmpdir}/rhq-agent-update-backup</echo> 
+      <echo>To: ${rhq.agent.update.update-agent-dir}</echo> 
+      <delete dir="${rhq.agent.update.update-agent-dir}" />
+      <copy todir="${rhq.agent.update.update-agent-dir}" overwrite="true">
+        <fileset dir="${java.io.tmpdir}/rhq-agent-update-backup"/>
+      </copy>
+      <echo>=== RESTORE OF OLD AGENT COMPLETE ===</echo>
+   </target>
    
    <!-- the initial target that logs some basic information, then performs the install or update -->
    <target name="start" depends="header, verify, install, update">

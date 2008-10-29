@@ -39,8 +39,10 @@ public class LoggerAntBuildListener implements BuildListener {
         this.output = logFile;
         this.priorityThreshold = priorityThreshold;
 
-        // just output our first line with the date this was started
+        // start with the date this was started
+        this.output.println("======================================");
         this.output.println(new Date().toString());
+        this.output.println("======================================");
     }
 
     public void buildFinished(BuildEvent event) {

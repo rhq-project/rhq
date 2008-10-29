@@ -157,7 +157,7 @@ public class CopyWithBackup extends Task {
                 byte[] newMD5Bytes = messageDigest.digest(slurp(newFile));
 
                 if (MessageDigest.isEqual(oldMD5Bytes, newMD5Bytes)) {
-                    log("old file and new file are the same - nothing to be done");
+                    log("old file and new file are the same, nothing to do");
                     return;
                 }
 

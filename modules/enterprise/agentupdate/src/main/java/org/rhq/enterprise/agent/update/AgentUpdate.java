@@ -127,9 +127,37 @@ public class AgentUpdate {
             props.setProperty("rhq.agent.update.install-agent-dir", agentUpdate.newAgentHomeParentArgument);
         }
 
-        // run the ant script now
-        agentUpdate.startAnt(buildFile, "rhq-agent-update-build-tasks.properties", props, logFile,
-            !agentUpdate.quietFlag);
+        // if we are updating, backup the current agent just in case we have to restore it
+        if (agentUpdate.updateFlag) {
+            try {
+                agentUpdate.startAnt(buildFile, "backup-agent", "rhq-agent-update-build-tasks.properties", props,
+                    logFile, !agentUpdate.quietFlag);
+            } catch (Exception e) {
+                System.out.println("WARNING! Agent backup failed! Agent will not recover if it can't update!");
+                e.printStackTrace();
+            }
+        }
+
+        // run the default ant script target now
+        try {
+            agentUpdate.startAnt(buildFile, null, "rhq-agent-update-build-tasks.properties", props, logFile,
+                !agentUpdate.quietFlag);
+        } catch (Exception e) {
+            // if we were updating, try to restore the old agent to recover from the error
+            if (agentUpdate.updateFlag) {
+                System.out.println("WARNING! Agent update failed! Will try to restore old agent!");
+                e.printStackTrace();
+                try {
+                    agentUpdate.startAnt(buildFile, "restore-agent", "rhq-agent-update-build-tasks.properties", props,
+                        logFile, true);
+                } catch (Exception e2) {
+                    System.out.println("WARNING! Agent restore failed! Agent is dead and cannot recover!");
+                    e2.printStackTrace();
+                }
+            } else {
+                throw e;
+            }
+        }
 
         return;
     }
@@ -356,6 +384,7 @@ public class AgentUpdate {
      * Launches ANT and runs the default target in the given build file.
      *
      * @param  buildFile      the build file that ANT will run
+     * @param  target         the target to run, <code>null</code> for the default target
      * @param  customTaskDefs the properties file found in classloader that contains all the taskdef definitions
      * @param  properties     set of properties to set for the ANT task to access
      * @param  logFile        where ANT messages will be logged
@@ -363,11 +392,12 @@ public class AgentUpdate {
      *
      * @throws RuntimeException
      */
-    private void startAnt(URL buildFile, String customTaskDefs, Properties properties, File logFile, boolean logStdOut) {
+    private void startAnt(URL buildFile, String target, String customTaskDefs, Properties properties, File logFile,
+        boolean logStdOut) {
         PrintWriter logFileOutput = null;
 
         try {
-            logFileOutput = new PrintWriter(new FileOutputStream(logFile));
+            logFileOutput = new PrintWriter(new FileOutputStream(logFile, true));
 
             ClassLoader classLoader = getClass().getClassLoader();
 
@@ -405,7 +435,7 @@ public class AgentUpdate {
             }
 
             new ProjectHelper2().parse(project, buildFile);
-            project.executeTarget(project.getDefaultTarget());
+            project.executeTarget((target == null) ? project.getDefaultTarget() : target);
         } catch (Exception e) {
             throw new RuntimeException("Cannot run ANT on script [" + buildFile + "]. Cause: " + e, e);
         } finally {

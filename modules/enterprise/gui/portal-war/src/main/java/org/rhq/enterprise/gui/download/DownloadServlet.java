@@ -47,7 +47,7 @@ public class DownloadServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     // the system property that disables/enables file listing - default is to show the listing
-    private static String SYSPROP_AGENT_DOWNLOADS_LIMIT = "rhq.server.show-downloads-listing";
+    private static String SYSPROP_SHOW_DOWNLOADS_LISTING = "rhq.server.show-downloads-listing";
 
     private static int numActiveDownloads = 0;
     private static boolean showDownloadsListing;
@@ -56,7 +56,7 @@ public class DownloadServlet extends HttpServlet {
     public void init() throws ServletException {
         log("Starting the download servlet");
 
-        String propValue = System.getProperty(SYSPROP_AGENT_DOWNLOADS_LIMIT, "true");
+        String propValue = System.getProperty(SYSPROP_SHOW_DOWNLOADS_LISTING, "true");
         showDownloadsListing = Boolean.parseBoolean(propValue);
     }
 

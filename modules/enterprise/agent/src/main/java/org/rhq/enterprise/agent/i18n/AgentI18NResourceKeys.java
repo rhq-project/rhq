@@ -1234,8 +1234,11 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("The wait time has expired and the agent is still not registered.")
     String CANNOT_WAIT_TO_BE_REGISTERED_ANY_LONGER = "AgentMain.waiting-to-be-registered-timeout";
 
-    @I18NMessage("The name of this agent is not defined - you cannot start the agent until you give it a valid name")
+    @I18NMessage("The name of this agent is not defined and cannot be generated - you cannot start the agent until you give it a valid name.")
     String AGENT_NAME_NOT_DEFINED = "AgentMain.agent-name-not-defined";
+
+    @I18NMessage("The name of this agent was not predefined so it was auto-generated. The agent name is now [{0}]")
+    String AGENT_NAME_AUTO_GENERATED = "AgentMain.agent-name-auto-generated";
 
     @I18NMessage("Agent is not starting the plugin container at startup, as per its configuration")
     String NOT_STARTING_PLUGIN_CONTAINER_AT_STARTUP = "AgentMain.not-starting-pc-at-startup";

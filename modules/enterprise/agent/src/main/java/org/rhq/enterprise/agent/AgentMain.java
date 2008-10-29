@@ -36,6 +36,7 @@ import java.io.PrintWriter;
 import java.io.StreamTokenizer;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -487,7 +488,15 @@ public class AgentMain {
             if (!isStarted()) {
                 try {
                     if ((m_configuration.getAgentName() == null) || (m_configuration.getAgentName().length() == 0)) {
-                        throw new IllegalStateException(MSG.getMsg(AgentI18NResourceKeys.AGENT_NAME_NOT_DEFINED));
+                        // the agent name isn't defined yet - let's auto-generate one for the user
+                        try {
+                            String hostname = InetAddress.getLocalHost().getCanonicalHostName();
+                            m_configuration.getPreferences().put(AgentConfigurationConstants.NAME, hostname);
+                            m_configuration.getPreferences().flush();
+                            LOG.info(AgentI18NResourceKeys.AGENT_NAME_AUTO_GENERATED, hostname);
+                        } catch (Exception e) {
+                            throw new IllegalStateException(MSG.getMsg(AgentI18NResourceKeys.AGENT_NAME_NOT_DEFINED), e);
+                        }
                     }
 
                     prepareNativeSystem();

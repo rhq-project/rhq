@@ -52,9 +52,9 @@ import org.apache.tools.ant.helper.ProjectHelper2;
 public class AgentUpdate {
     private static final String RHQ_AGENT_UPDATE_VERSION_PROPERTIES = "rhq-agent-update-version.properties";
 
-    private static final String DEFAULT_OLD_AGENT_HOME = "./rhq-agent";
+    private static final String DEFAULT_OLD_AGENT_HOME = "rhq-agent";
     private static final String DEFAULT_NEW_AGENT_HOME_PARENT = ".";
-    private static final String DEFAULT_LOG_FILE = "./rhq-agent-update.log";
+    private static final String DEFAULT_LOG_FILE = "rhq-agent-update.log";
     private static final boolean DEFAULT_QUIET_FLAG = false;
     private static final String DEFAULT_SCRIPT_FILE = "rhq-agent-update-build.xml";
 

@@ -4,30 +4,30 @@
 
    <!-- this will back up the current agent, in case it needs to be recovered -->
    <!-- this is a standalone target that the AgentUpdate will call when it needs to backup the agent -->
-   <target name="backup-agent"> 
+   <target name="backup-agent">
       <echo>=== BACKING UP CURRENT AGENT ===</echo>
-      <echo>From: ${rhq.agent.update.update-agent-dir}</echo> 
-      <echo>To: ${java.io.tmpdir}/rhq-agent-update-backup</echo> 
+      <echo>From: ${rhq.agent.update.update-agent-dir}</echo>
+      <echo>To: ${java.io.tmpdir}/rhq-agent-update-backup</echo>
       <delete dir="${java.io.tmpdir}/rhq-agent-update-backup" />
       <copy todir="${java.io.tmpdir}/rhq-agent-update-backup">
         <fileset dir="${rhq.agent.update.update-agent-dir}"/>
       </copy>
       <echo>=== BACKUP OF CURRENT AGENT COMPLETE ===</echo>
    </target>
-   
+
    <!-- this will restore a backed up agent -->
    <!-- this is a standalone target that the AgentUpdate will call when it needs to restore the agent -->
-   <target name="restore-agent"> 
+   <target name="restore-agent">
       <echo>=== RESTORING OLD AGENT ===</echo>
-      <echo>From: ${java.io.tmpdir}/rhq-agent-update-backup</echo> 
-      <echo>To: ${rhq.agent.update.update-agent-dir}</echo> 
+      <echo>From: ${java.io.tmpdir}/rhq-agent-update-backup</echo>
+      <echo>To: ${rhq.agent.update.update-agent-dir}</echo>
       <delete dir="${rhq.agent.update.update-agent-dir}" />
       <copy todir="${rhq.agent.update.update-agent-dir}" overwrite="true">
         <fileset dir="${java.io.tmpdir}/rhq-agent-update-backup"/>
       </copy>
       <echo>=== RESTORE OF OLD AGENT COMPLETE ===</echo>
    </target>
-   
+
    <!-- the initial target that logs some basic information, then performs the install or update -->
    <target name="start" depends="header, verify, install, update">
    </target>
@@ -64,7 +64,7 @@
              dest="${_update.tmp.dir}"/>
       <delete file="${_update.tmp.dir}/rhq-enterprise-agent-${rhq-agent.latest.version}.zip"
               failonerror="false"/>
-      
+
       <!-- at this point, we have the new but raw agent extracted to the ${_update.tmp.dir}/rhq-agent -->
 
       <!-- if there are plugins, keep them -->
@@ -77,7 +77,7 @@
             tofile="${_update.tmp.dir}/rhq-agent/data/failover-list.dat"
             failonerror="false" />
 
-      <!-- copy any custom launch scripts (we are going to lose our UNIX +x permission bits) -->
+      <!-- copy any custom launch scripts (if we copy, we lose our UNIX +x permission bits) -->
       <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/bin"
                         newdir="${_update.tmp.dir}/rhq-agent/bin"
                         filename="rhq-agent-env.bat" keep="old" backupextension=".default" failonerror="false" />
@@ -101,7 +101,7 @@
       <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/conf"
                         newdir="${_update.tmp.dir}/rhq-agent/conf"
                         filename="log4j.xml" keep="new" backupextension=".custom" failonerror="false" />
-      
+
       <!-- everything is done; _update.tmp.dir/rhq-agent has our new agent -->
       <!-- the old agent is still intact, albeit with a new update subdirectory with the new agent in it -->
       <!-- start moving things around to get the new agent in the old agent's directory -->
@@ -116,9 +116,15 @@
             tofile="${rhq.agent.update.update-agent-dir}"
             failonerror="true"/>
       <delete dir="${new.location.for.old.agent}/${_update.tmp.dir.name}" />
-         
+
       <!-- at this point, the new agent should now be at the old agent's location -->
-      <!-- the old agent is backed up to the rhq-agent-OLD directory next to new agent --> 
+      <!-- the old agent is backed up to the rhq-agent-OLD directory next to new agent -->
+
+      <!-- let's try to get our +x execute permissions back -->
+      <chmod dir="${rhq.agent.update.update-agent-dir}/bin" perm="ug+rx" includes="*.sh"/>
+      <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.s0"/>
+      <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.sl"/>
+      <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.dylib"/>
    </target>
 
    <!-- makes sure the jar file where the agent distro is supposed to be actually exists -->

@@ -77,17 +77,22 @@
                         filename="log4j.xml" keep="new" backupextension=".custom" failonerror="false" />
       
       <!-- everything is done; _update.tmp.dir/rhq-agent has our new agent -->
+      <!-- the old agent is still intact, albeit with a new update subdirectory with the new agent in it -->
       <!-- start moving things around to get the new agent in the old agent's directory -->
+      <!-- if anything fails below, bad things will happen because the old agent will be ruined -->
       <property name="new.location.for.old.agent" location="${rhq.agent.update.update-agent-dir}/../rhq-agent-OLD" />
-      <delete dir="${new.location.for.old.agent}" />
+      <delete dir="${new.location.for.old.agent}" /> <!-- in case there was a previous update's backup in here -->
       <move file="${rhq.agent.update.update-agent-dir}"
             tofile="${new.location.for.old.agent}"
-            failonerror="false"/> <!-- do not fail if we fail to backup the old agent - hope we don't need it -->
-      <delete dir="${rhq.agent.update.update-agent-dir}" failonerror="false" /> <!-- just trying to clear the way for the new agent -->
+            failonerror="true"/>
+      <delete dir="${rhq.agent.update.update-agent-dir}" /> <!-- just trying to clear the way for the new agent -->
       <move file="${new.location.for.old.agent}/${_update.tmp.dir.name}/rhq-agent"
             tofile="${rhq.agent.update.update-agent-dir}"
             failonerror="true"/>
       <delete dir="${new.location.for.old.agent}/${_update.tmp.dir.name}" />
+         
+      <!-- at this point, the new agent should now be at the old agent's location -->
+      <!-- the old agent is backed up to the rhq-agent-OLD directory next to new agent --> 
    </target>
 
    <!-- makes sure the jar file where the agent distro is supposed to be actually exists -->

@@ -63,7 +63,7 @@ public class AgentUpdateServlet extends HttpServlet {
     // the error code that will be returned if the server has too many agents downloading the agent update binary
     private static final int ERROR_CODE_TOO_MANY_DOWNLOADS = HttpServletResponse.SC_SERVICE_UNAVAILABLE;
 
-    public static int numActiveDownloads = 0;
+    private static int numActiveDownloads = 0;
 
     @Override
     public void init() throws ServletException {

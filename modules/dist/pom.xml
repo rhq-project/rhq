@@ -25,7 +25,7 @@
   </properties>
 
   <modules>
-    <module>agent</module>
+    <!-- Note, The Jopr Agent is the RHQ Agent verbatim. There is no need currently to make any tweaks. -->
     <module>server</module>
   </modules>
 

@@ -26,7 +26,7 @@
          discovery="JBossCacheDiscoveryComponent"
          class="JBossCacheComponent"
          description="Statistics for JBossCache"
-         createDeletePolicy="neither"
+         createDeletePolicy="create-only"
          >
    
          <plugin-configuration>
@@ -95,7 +95,6 @@
          <metric property="TxInterceptor:rollbacks" displayName="Tx rollbacks" 
                  description="Number of transaction rollback operations performed." measurementType="trendsup" />       
             
-<!--             
          <resource-configuration>
             <c:simple-property name="Flavour" default="treecache">
                <c:property-options>
@@ -103,7 +102,7 @@
                   <c:option name="Tree Cache" value="treecache" default="true"/>
                </c:property-options>
             </c:simple-property>
-            <c:simple-property name="ResourceManager" />
+            <c:simple-property name="TransactionManagerLookupClass" default="org.jboss.cache.JBossTransactionManagerLookup"/>
             <c:simple-property name="IsolationLevel" default="REPEATABLE_READ">
                <c:property-options>
                   <c:option value="REPEATABLE_READ" default="true"/>
@@ -146,12 +145,12 @@
             <c:simple-property name="LockAcquisitionTimeout" type="long" default="10000"
                   description="Max number of milliseconds to wait for a lock acquisition."/>
                  
-                 < !- -  TODO - - >
+            <!--  TODO this is not trivial to do it right, as it means to have a sub editor in the gui -->
+            <!--  TODO use a list of maps here -->
             <c:simple-property name="ClusterConfig" description="Underlying JGroups configuration"
             type="longString"/>
             
          </resource-configuration>
- -->            
          <help>
          Please note that the number of possible metrics varies depending on the configuration and flavour of Cache used.
          </help>

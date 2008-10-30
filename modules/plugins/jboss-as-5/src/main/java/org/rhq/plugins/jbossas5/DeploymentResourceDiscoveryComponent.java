@@ -33,6 +33,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.profileservice.spi.NoSuchDeploymentException;
 
 import java.util.Set;
 import java.util.HashSet;
@@ -43,7 +44,7 @@ import java.util.HashSet;
  * @author: Mark Spritzler
  */
 public class DeploymentResourceDiscoveryComponent implements ResourceDiscoveryComponent<ProfileJBossServerComponent> {
-    private final Log LOG = LogFactory.getLog(JndiResourceDiscoveryComponent.class);
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private final String DEPLOYMENT_PROPERTY_NAME = "deploymentName";
 
@@ -51,18 +52,19 @@ public class DeploymentResourceDiscoveryComponent implements ResourceDiscoveryCo
     {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
         ResourceType resourceType = resourceDiscoveryContext.getResourceType();
+        log.info("Discovering " + resourceType.getName() + " Resources..." );
         String deploymentTypeString = ConversionUtil.getDeploymentTypeString(resourceType);
 
-        ManagementView mgtView = ProfileServiceFactory.getCurrentProfileView();
+        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
 
         Set<String> deployments = null;
         try
         {
-            deployments = mgtView.getDeploymentNamesForType(deploymentTypeString);
+            deployments = managementView.getDeploymentNamesForType(deploymentTypeString);
         }
         catch (Exception e)
         {
-            LOG.error("Unable to get deployment for type " + deploymentTypeString, e);
+            log.error("Unable to get deployment for type " + deploymentTypeString, e);
         }
 
         if (deployments != null)
@@ -75,42 +77,46 @@ public class DeploymentResourceDiscoveryComponent implements ResourceDiscoveryCo
             */
             for (String deployment : deployments)
             {
-                try {
-                    ManagedDeployment managedDeployment = mgtView.getDeployment(deployment, ManagedDeployment.DeploymentPhase.APPLICATION);
+                try
+                {
+                    ManagedDeployment managedDeployment = managementView.getDeployment(deployment, ManagedDeployment.DeploymentPhase.APPLICATION);
                     String resourceName = managedDeployment.getSimpleName();
                     // @TODO remove this when AS5 actually implements this for sars, and some other DeploymentTypes that haven't implemented getSimpleName()
                     if (resourceName.equals("%Generated%"))
                     {
                         resourceName = getResourceName(deployment);
                     }
-
+                    String version = "?"; // TODO
                     DiscoveredResourceDetails resource =
                             new DiscoveredResourceDetails(resourceType,
                                     deployment,
                                     resourceName,
-                                    "resourceVersion",
+                                    version,
                                     resourceType.getDescription(), null, null);
 
                     resource.getPluginConfiguration().put(new PropertySimple(DEPLOYMENT_PROPERTY_NAME, deployment));
-
                     discoveredResources.add(resource);
-                } catch (Exception e) {
-                    LOG.error("While mgtView.getDeploymentNamesForType returned [" + deployment + "] as a deployment, the following call to getDeployment with that String failed.");
+                }
+                catch (NoSuchDeploymentException e)
+                {
+                    // This is a bug in the profile service that occurs often, so don't log the stack trace.
+                    log.error("ManagementView.getDeploymentNamesForType() returned [" + deployment
+                            + "] as a deployment name, but calling getDeployment() with that name failed.");
+                }
+                catch (Exception e)
+                {
+                    log.error("An error occurred while discovering " + resourceType + " Resources.", e);
                 }
             }
         }
+
+        log.info("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources." );
         return discoveredResources;
     }
 
-    private String getResourceName(String fullPath)
+    private static String getResourceName(String fullPath)
     {
-        int lastSlash = fullPath.lastIndexOf("/");
-        String resourceName = fullPath.substring(lastSlash + 1);
-        if (resourceName == null || resourceName.equals(""))
-        {
-            resourceName = fullPath;
-        }
-        return fullPath.substring(lastSlash + 1);
+        int lastSlashIndex = fullPath.lastIndexOf("/");                
+        return fullPath.substring(lastSlashIndex + 1);
     }
-
 }

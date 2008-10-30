@@ -28,7 +28,6 @@ import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
-import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.profileservice.spi.ProfileKey;
 import org.jboss.profileservice.spi.ProfileService;
 import org.jboss.profileservice.spi.Profile;
@@ -38,10 +37,10 @@ import javax.naming.NamingException;
 import java.util.Set;
 
 /**
- * Factory class to get the ProfileService and Profile Service related objects
- * directly from the ProfileService object
- * <p/>
- * Author: Mark Spritzler
+ * Factory class to get the ProfileService and Profile Service related objects directly from the
+ * ProfileService object.
+ *
+ * @author Mark Spritzler
  */
 public class ProfileServiceFactory
 {

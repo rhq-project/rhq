@@ -28,26 +28,23 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
-//import org.jboss.profileservice.spi.NoSuchProfileException;
-//import org.jboss.profileservice.spi.Profile;
-//import org.jboss.profileservice.spi.ProfileService;
 
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Discovery component for the JBoss Server and Profile Service
+ * Discovery component for JBossAS 5.x Servers.
  *
  * @author Mark Spritzler
  */
 public class ProfileJBossServerDiscoveryComponent
         implements ResourceDiscoveryComponent
 {
-    private final Log LOG = LogFactory.getLog(ProfileJBossServerDiscoveryComponent.class);
+    private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context)
     {
-        LOG.info("Discovering resources of Server Type: " + context.getResourceType());
+        log.info("Discovering " + context.getResourceType().getName() + " Resources..." );
 
         Set<DiscoveredResourceDetails> servers = new HashSet<DiscoveredResourceDetails>();
         // Not just the one that it finds when in the embedded console
@@ -90,7 +87,6 @@ public class ProfileJBossServerDiscoveryComponent
         /*
         Collection<ProfileKey> profileKeys = profileService.getProfileKeys();
 
-
         for (ProfileKey key: profileKeys)
         {
 
@@ -106,7 +102,7 @@ public class ProfileJBossServerDiscoveryComponent
            servers.add( server );
         }
         */
-        LOG.info("Discovered " + servers.size() + " servers");
+        log.info("Discovered " + servers.size() + " " + context.getResourceType().getName() + " Resources." );
 
         return servers;
     }

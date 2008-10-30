@@ -47,7 +47,7 @@ import java.util.Set;
 public class JndiResourceDiscoveryComponent
         implements ResourceDiscoveryComponent<ProfileJBossServerComponent>
 {
-    private final Log LOG = LogFactory.getLog(JndiResourceDiscoveryComponent.class);
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private final String DEPLOYMENT_PROPERTY_NAME = "deploymentName";
 
@@ -55,6 +55,7 @@ public class JndiResourceDiscoveryComponent
     {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
         ResourceType resourceType = resourceDiscoveryContext.getResourceType();
+        log.info("Discovering " + resourceType.getName() + " Resources..." );
         ComponentType componentType = ConversionUtil.getComponentType(resourceType);
 
         ManagementView mgtView = ProfileServiceFactory.getCurrentProfileView();
@@ -66,7 +67,7 @@ public class JndiResourceDiscoveryComponent
         }
         catch (Exception e)
         {
-            LOG.error("Unable to get component for type " + componentType, e);
+            log.error("Unable to get component for type " + componentType, e);
         }
 
         if (components != null)
@@ -84,11 +85,12 @@ public class JndiResourceDiscoveryComponent
                 String resourceKey = componentType.getType() + ":" +
                         componentType.getSubtype() + ":" + name;
 
+                String version = "?"; // TODO
                 DiscoveredResourceDetails resource =
                         new DiscoveredResourceDetails(resourceType,
                                 resourceKey,
                                 name,
-                                "resourceVersion",
+                                version,
                                 resourceType.getDescription(), null, null);
 
                 resource.getPluginConfiguration().put(new PropertySimple(DEPLOYMENT_PROPERTY_NAME, name));
@@ -97,6 +99,7 @@ public class JndiResourceDiscoveryComponent
             }
         }
 
+        log.info("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources." );
         return discoveredResources;
     }
 }

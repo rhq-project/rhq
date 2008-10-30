@@ -22,28 +22,19 @@
   */
 package org.rhq.plugins.jbossas5;
 
-import org.rhq.core.domain.content.Package;
-import org.rhq.core.domain.content.PackageType;
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeployPackageStep;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
-import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pluginapi.content.ContentFacet;
-import org.rhq.core.pluginapi.content.ContentServices;
-import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
-import org.jboss.deployers.spi.management.deploy.DeploymentManager;
-import org.jboss.deployers.spi.management.ManagementView;
-import org.jboss.deployers.spi.management.KnownComponentTypes;
-import org.jboss.managed.api.ManagedDeployment;
+ import java.io.InputStream;
+ import java.util.HashSet;
+ import java.util.List;
+ import java.util.Set;
 
-import java.io.InputStream;
-import java.io.File;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.ArrayList;
+ import org.rhq.core.domain.content.PackageType;
+ import org.rhq.core.domain.content.transfer.ContentResponseResult;
+ import org.rhq.core.domain.content.transfer.DeployPackageStep;
+ import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+ import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
+ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+ import org.rhq.core.pluginapi.content.ContentFacet;
+ import org.rhq.core.pluginapi.content.ContentServices;
 
 public class ContentDeploymentComponent implements ContentFacet
 {

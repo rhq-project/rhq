@@ -88,12 +88,10 @@ public class ProfileJBossServerComponent
     //private OperationContext operationContext;
     //private EventContext eventContext;
 
-
     public AvailabilityType getAvailability()
     {
         return AvailabilityType.UP;
     }
-
 
     public void start(ResourceContext resourceContext)
     {

@@ -219,13 +219,20 @@ public class JBossInstanceInfo {
 
 
     private File getHomeDir() throws Exception {
+       
+       File runJar=null;
+       File binDir=null;
+       File homeDir=null;
         // method 1: should work 99% of the time.
-        File homeDir = new File(this.processInfo.getExecutable().getCwd()).getParentFile();
-        File binDir = new File(homeDir, "bin");
-        File runJar = new File(binDir, "run.jar");
-        if (runJar.exists()) {
+       if (this.processInfo != null && this.processInfo.getExecutable()!=null && 
+                this.processInfo.getExecutable().getCwd() != null) {
+          homeDir = new File(this.processInfo.getExecutable().getCwd()).getParentFile();
+          binDir = new File(homeDir, "bin");
+          runJar = new File(binDir, "run.jar");
+          if (runJar.exists()) {
             return homeDir;
-        }
+          }
+       }
         // method 2: more expensive, but also more reliable.
         for (String pathElement : this.classPath) {
             if (pathElement.endsWith("run.jar")) {

@@ -181,6 +181,8 @@ public class CoreServerServiceImpl implements CoreServerService {
      * @see CoreServerService#connectAgent()
      */
     public ConnectAgentResults connectAgent(String agentName) {
+        log.info("Agent [" + agentName + "] would like to connect to this server");
+
         Agent agent = getAgentManager().getAgentByName(agentName);
         Server server = getServerManager().getServer();
 

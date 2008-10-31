@@ -323,6 +323,11 @@ public class AgentMain {
     private long m_agentServerClockDifference = 0L;
 
     /**
+     * Thread used to monitor the agent's VM and to hibernate the agent if the VM seems to be critically ill.
+     */
+    private VMHealthCheckThread m_vmHealthCheckThread;
+
+    /**
      * The main method that starts the whole thing.
      *
      * @param args
@@ -407,6 +412,7 @@ public class AgentMain {
         m_registration = null;
         m_serverFailoverList = null;
         m_primaryServerSwitchoverThread = null;
+        m_vmHealthCheckThread = null;
 
         if (args == null) {
             args = new String[0];
@@ -529,6 +535,11 @@ public class AgentMain {
                         m_primaryServerSwitchoverThread.start();
                     }
 
+                    // start the vm health check thread so it can monitor the health of the VM
+                    m_vmHealthCheckThread = new VMHealthCheckThread(this);
+                    // TODO: only start it if the agent config has enabled it
+                    m_vmHealthCheckThread.start();
+
                     // indicate that we have started
                     setStarted(true);
 
@@ -556,37 +567,89 @@ public class AgentMain {
             if (isStarted()) {
                 LOG.info(AgentI18NResourceKeys.SHUTTING_DOWN);
 
-                // stop the thread that tries to keep the agent pointed to its primary server
-                if (m_primaryServerSwitchoverThread != null) {
-                    m_primaryServerSwitchoverThread.stopChecking();
-                    m_primaryServerSwitchoverThread.interrupt();
-                    m_primaryServerSwitchoverThread = null;
+                // Notice that for every component we shutdown, we wrap in a try-catch to ignore exceptions.
+                // We want to keep going to ensure we attempt to try to shutdown everything.
+
+                ///////
+                // stop the thread that checks the VM health
+                try {
+                    if (m_vmHealthCheckThread != null) {
+                        m_vmHealthCheckThread.stopChecking();
+                        m_vmHealthCheckThread.interrupt();
+                        m_vmHealthCheckThread = null;
+                    }
+                } catch (Throwable ignore) {
+                    LOG.warn(AgentI18NResourceKeys.FAILED_TO_SHUTDOWN_COMPONENT, "Low Memory Check Thread",
+                        ThrowableUtil.getAllMessages(ignore));
                 }
 
+                ///////
+                // stop the thread that tries to keep the agent pointed to its primary server
+                try {
+                    if (m_primaryServerSwitchoverThread != null) {
+                        m_primaryServerSwitchoverThread.stopChecking();
+                        m_primaryServerSwitchoverThread.interrupt();
+                        m_primaryServerSwitchoverThread = null;
+                    }
+                } catch (Throwable ignore) {
+                    LOG.warn(AgentI18NResourceKeys.FAILED_TO_SHUTDOWN_COMPONENT, "Server Switchover Thread",
+                        ThrowableUtil.getAllMessages(ignore));
+                }
+
+                ///////
                 // remove our shutdown hook
                 if (m_shutdownHook != null) {
                     try {
                         Runtime.getRuntime().removeShutdownHook(m_shutdownHook);
-                    } catch (Exception ignore) {
+                    } catch (Throwable ignore) {
                         // looks like we are already in the process of shutting down, ignore this exception
                     }
-
                     m_shutdownHook = null;
                 }
 
+                ///////
                 // shutdown the PC, tell the server that we are shutting down, and shutdown all comm services, in that order
-                shutdownPluginContainer();
-
-                if (!m_configuration.doNotNotifyServerOfShutdown()) {
-                    notifyServerOfShutdown();
-                } else {
-                    LOG.info(AgentI18NResourceKeys.TOLD_TO_NOT_NOTIFY_SERVER_OF_SHUTDOWN);
+                try {
+                    shutdownPluginContainer();
+                } catch (Throwable ignore) {
+                    LOG.warn(AgentI18NResourceKeys.FAILED_TO_SHUTDOWN_COMPONENT, "Plugin Container", ThrowableUtil
+                        .getAllMessages(ignore));
                 }
 
-                stopManagementServices();
-                shutdownCommServices();
+                ///////
+                // notify the server that we are shutting down
+                try {
+                    if (!m_configuration.doNotNotifyServerOfShutdown()) {
+                        notifyServerOfShutdown();
+                    } else {
+                        LOG.info(AgentI18NResourceKeys.TOLD_TO_NOT_NOTIFY_SERVER_OF_SHUTDOWN);
+                    }
+                } catch (Throwable ignore) {
+                    LOG.warn(AgentI18NResourceKeys.FAILED_TO_SHUTDOWN_COMPONENT, "Server Shutdown Notification",
+                        ThrowableUtil.getAllMessages(ignore));
+                }
 
-                // notify our input loop that we've stopped
+                ///////
+                // shutdown our management MBean
+                try {
+                    stopManagementServices();
+                } catch (Throwable ignore) {
+                    LOG.warn(AgentI18NResourceKeys.FAILED_TO_SHUTDOWN_COMPONENT, "Agent Management Services",
+                        ThrowableUtil.getAllMessages(ignore));
+
+                }
+
+                ///////
+                // shutdown our comm layer so we no longer accept incoming messages
+                try {
+                    shutdownCommServices();
+                } catch (Throwable ignore) {
+                    LOG.warn(AgentI18NResourceKeys.FAILED_TO_SHUTDOWN_COMPONENT, "Communication Services",
+                        ThrowableUtil.getAllMessages(ignore));
+                }
+
+                ///////
+                // everything should be down - finalize things and notify our input loop that we've stopped
                 setStarted(false);
 
                 m_started.notify();
@@ -1935,7 +1998,7 @@ public class AgentMain {
             } else {
                 LOG.debug(AgentI18NResourceKeys.NOT_NOTIFYING_SERVER_OF_SHUTDOWN);
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOG.warn(AgentI18NResourceKeys.FAILED_TO_NOTIFY_SERVER_OF_SHUTDOWN, ThrowableUtil.getAllMessages(e));
         }
 

@@ -31,6 +31,24 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Version=[{0}], Build Number=[{1}], Build Date=[{2,date,medium} {2,time,short}]")
     String IDENTIFY_VERSION = "AgentMain.identify-version";
 
+    @I18NMessage("VM health check thread has started and will check every [{0}] milliseconds")
+    String VM_HEALTH_CHECK_THREAD_STARTED = "VMHealthCheckThread.started";
+
+    @I18NMessage("VM Health check thread has been stopped")
+    String VM_HEALTH_CHECK_THREAD_STOPPED = "VMHealthCheckThread.stopped";
+
+    @I18NMessage("VM Health check thread has encountered a fatal exception and will be stopped. Cause: {0}")
+    String VM_HEALTH_CHECK_THREAD_EXCEPTION = "VMHealthCheckThread.exception";
+
+    @I18NMessage("VM health check thread has detected [{0}] memory has crossed the threshold [{1}] and is low: memory-usage=[{2}]")
+    String VM_HEALTH_CHECK_THREAD_MEM_LOW = "VMHealthCheckThread.mem-low";
+
+    @I18NMessage("VM health check thread is invoking the garbage collector to see if more memory can be freed")
+    String VM_HEALTH_CHECK_THREAD_GC = "VMHealthCheckThread.gc";
+
+    @I18NMessage("VM health check thread sees that memory is critically low and will try to reboot the agent")
+    String VM_HEALTH_CHECK_SEES_MEM_PROBLEM = "VMHealthCheckThread.mem-problem";
+
     @I18NMessage("Cannot switch to server - the sender is not read. Is the agent shutdown?. Cause: {0}")
     String CANNOT_SWITCH_NULL_COMMUNICATOR = "AgentMain.cannot-switch-null-communicator";
 
@@ -1245,6 +1263,9 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("Agent is not notifying the server that it is shutting down, as per its configuration")
     String TOLD_TO_NOT_NOTIFY_SERVER_OF_SHUTDOWN = "AgentMain.told-to-not-notify-server-of-shutdown";
+
+    @I18NMessage("Agent failed to shutdown component [{0}]. Cause: {1}")
+    String FAILED_TO_SHUTDOWN_COMPONENT = "AgentMain.failed-to-shutdown-component";
 
     @I18NMessage("metrics")
     String METRICS = "PromptCommand.metrics";

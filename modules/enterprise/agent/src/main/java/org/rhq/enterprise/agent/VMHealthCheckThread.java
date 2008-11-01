@@ -122,11 +122,12 @@ public class VMHealthCheckThread extends Thread {
                         continue;
                     }
 
-                    // TODO: if our memory is good, we might have to check
-                    //       and make sure we are the only thread running.  Under odd
-                    //       circumstances (if restartAgent fails to start the agent)
-                    //       it is possible that another vm check thread will start.
-                    //       we'll need to make sure we kill all threads but one
+                    // TODO: if our memory is good, we might have to check and make sure we are
+                    //       the only thread running.  Under an odd and rare circumstance (if
+                    //       restartAgent fails to completely start the agent but did manage to
+                    //       start another VM check thread and failed to "re-shutdown" the agent)
+                    //       there will end up being more than one of these threads running.
+                    //       We'll need to make sure we kill all threads but one.
 
                     // go to sleep before we check again
                     synchronized (this) {
@@ -190,16 +191,20 @@ public class VMHealthCheckThread extends Thread {
             // do NOT set stop flags to false yet as this would cause a deadlock
             try {
                 this.agent.shutdown();
-                // TODO: I think we should consider purging the command pool file now
-                //       agentConfig.getDataDirectory() + agentConfig.getClientSenderCommandSpoolFileName()
+                // TODO: purging spool: agentConfig.getDataDirectory() + agentConfig.getClientSenderCommandSpoolFileName()
             } catch (Throwable ignore) {
+                // at this point, we may (or may not) have two VM check threads running, what should we do?
             }
 
             // do not stop the thread - let it continue and see if we can recover the next time
             this.stop = false;
             this.stopped = false;
             Thread.interrupted(); // clear the interrupted status to ensure our thread doesn't abort
+            return;
         }
+
+        // At this point, we have "rebooted" the agent - our memory usage should be back to normal.
+        // TODO: what can we do to notify the server / user that we rebooted the agent?
 
         return;
     }

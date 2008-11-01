@@ -2088,6 +2088,15 @@
             </c:group>
          </plugin-configuration>
 
+         <!-- The two traits below are collected by ApplicationComponent (from the Tomcat plugin), which WarComponent extends. -->
+         <metric property="Application.path" displayName="Path"
+                 dataType="trait" displayType="summary"
+                 description="the abosolute path of this EAR file or directory"/>
+
+         <metric property="Application.exploded" displayName="Exploded?"
+                 dataType="trait" displayType="summary"
+                 description="whether this EAR is deployed exploded (i.e. as a directory)"/>
+
          <content name="file" displayName="EAR File" category="deployable" isCreationType="true">
             <configuration>
                <c:group name="deployment" displayName="Deployment Options">
@@ -2141,6 +2150,15 @@
                        description="stops this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)"/>
             <operation name="reload"
                        description="reloads this webapp; NOTE: if the webapp is not in the started state, this operation will fail"/>
+
+            <!-- The two traits below are collected by ApplicationComponent (from the Tomcat plugin), which WarComponent extends. -->
+            <metric property="Application.path" displayName="Path"
+                    dataType="trait" displayType="summary"
+                    description="the abosolute path of this WAR file or directory"/>
+
+            <metric property="Application.exploded" displayName="Exploded?"
+                    dataType="trait" displayType="summary"
+                    description="whether this WAR is deployed exploded (i.e. as a directory)"/>
 
             <metric property="ContextRoot" displayName="Context Root"
                     dataType="trait" displayType="summary"
@@ -2249,6 +2267,15 @@
                     description="stops this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)"/>
          <operation name="reload"
                     description="reloads this webapp; NOTE: if the webapp is not in the started state, this operation will fail"/>                                   
+
+         <!-- The two traits below are collected by ApplicationComponent (from the Tomcat plugin), which WarComponent extends. -->
+         <metric property="Application.path" displayName="Path"
+                 dataType="trait" displayType="summary"
+                 description="the abosolute path of this WAR file or directory"/>
+
+         <metric property="Application.exploded" displayName="Exploded?"
+                 dataType="trait" displayType="summary"
+                 description="whether this WAR is deployed exploded (i.e. as a directory)"/>
 
          <metric property="ContextRoot" displayName="Context Root"
                  dataType="trait" displayType="summary"

@@ -43,6 +43,9 @@ import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
@@ -52,8 +55,8 @@ import org.rhq.plugins.utils.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-/**
- * JON resource component for handling EARs and WARs. Most of the functionality is handled by the JMX plugin's super
+ /**
+ * RHQ resource component for handling EARs and WARs. Most of the functionality is handled by the JMX plugin's super
  * class. This implementation adds content support for discovery of the EAR/WAR files.
  *
  * @author Jason Dobies
@@ -80,6 +83,11 @@ public class ApplicationResourceComponent<T extends JMXComponent>
      */
     private ApplicationVersions versions;
 
+    private static final String FILENAME_PLUGIN_CONFIG_PROP = "filename";
+
+    private static final String APPLICATION_PATH_TRAIT = "Application.path";
+    private static final String APPLICATION_EXPLODED_TRAIT = "Application.exploded";
+
     // ContentFacet Implementation  --------------------------------------------
 
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
@@ -91,7 +99,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
         Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
 
         Configuration pluginConfiguration = super.resourceContext.getPluginConfiguration();
-        String fullFileName = pluginConfiguration.getSimple("filename").getStringValue();
+        String fullFileName = pluginConfiguration.getSimpleValue(FILENAME_PLUGIN_CONFIG_PROP, null);
 
         if (fullFileName == null) {
             throw new IllegalStateException("Plugin configuration does not contain the full file name of the EAR/WAR file.");
@@ -143,7 +151,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
         ResourcePackageDetails packageDetails = packages.iterator().next();
 
         // Find location of existing application
-        String fullFileName = resourceContext.getPluginConfiguration().getSimple("filename").getStringValue();
+        String fullFileName = resourceContext.getPluginConfiguration().getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
         String filename = determinePackageName(fullFileName);
 
         // Write the new updated application to a temp file
@@ -264,7 +272,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
 
     public void deleteResource() throws Exception {
         Configuration pluginConfiguration = super.resourceContext.getPluginConfiguration();
-        String fullFileName = pluginConfiguration.getSimple("filename").getStringValue();
+        String fullFileName = pluginConfiguration.getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
 
         File file = new File(fullFileName);
 
@@ -283,7 +291,29 @@ public class ApplicationResourceComponent<T extends JMXComponent>
         }
     }
 
-    // Public  --------------------------------------------
+    // MeasurementFacet Implementation  --------------------------------------------
+
+    @Override
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
+        if (!requests.isEmpty()) {
+            Configuration pluginConfig = super.resourceContext.getPluginConfiguration();
+            String path = pluginConfig.getSimpleValue(FILENAME_PLUGIN_CONFIG_PROP, null);
+            for (MeasurementScheduleRequest request : requests) {
+                 String metricName = request.getName();
+                 if (metricName.equals(APPLICATION_PATH_TRAIT)) {
+                     MeasurementDataTrait trait = new MeasurementDataTrait(request, path);
+                     report.addData(trait);
+                 }
+                 else if (metricName.equals(APPLICATION_EXPLODED_TRAIT)) {
+                     boolean exploded = new File(path).isDirectory();
+                     MeasurementDataTrait trait = new MeasurementDataTrait(request, (exploded) ? "yes" : "no");
+                     report.addData(trait);
+                 }
+            }
+        }
+    }
+
+     // Public  --------------------------------------------
 
     /**
      * Returns the name of the application.
@@ -304,7 +334,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
      */
     public String getFileName() {
         Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
-        return pluginConfiguration.getSimple("filename").getStringValue();
+        return pluginConfiguration.getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
     }
 
     public T getParentResourceComponent() {

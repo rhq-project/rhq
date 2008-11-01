@@ -186,8 +186,7 @@ public class WarComponent extends ApplicationResourceComponent<JBossASServerComp
                 remainingSchedules.add(schedule);
             }
         }
-        // TODO: What's the deal here - should the below be uncommented or can we get rid of it? (ips, 08/28/08)
-        //super.getValues(report, remainingSchedules);
+        super.getValues(report, remainingSchedules);
     }
 
     private Double getSessionMetric(String metricName) {

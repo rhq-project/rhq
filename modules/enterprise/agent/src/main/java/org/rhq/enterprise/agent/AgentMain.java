@@ -537,8 +537,9 @@ public class AgentMain {
 
                     // start the vm health check thread so it can monitor the health of the VM
                     m_vmHealthCheckThread = new VMHealthCheckThread(this);
-                    // TODO: only start it if the agent config has enabled it
-                    m_vmHealthCheckThread.start();
+                    if (m_configuration.getVMHealthCheckIntervalMsecs() > 0) {
+                        m_vmHealthCheckThread.start();
+                    }
 
                     // indicate that we have started
                     setStarted(true);

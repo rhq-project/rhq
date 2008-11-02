@@ -59,7 +59,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                file conforms to.  This is the schema for the rhq.agent
                preferences.
                -->
-               <entry key="rhq.agent.configuration-schema-version" value="2" />
+               <entry key="rhq.agent.configuration-schema-version" value="3" />
 
                <!--
                _______________________________________________________________
@@ -188,6 +188,37 @@ commands named "config", "setconfig" and "setup" and the command line options
                an RHQ HA environment.
                -->
                <entry key="rhq.agent.primary-server-switchover-check-interval-msecs" value="3600000" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.vm-health-check.interval-msecs
+
+               The agent will periodically check the health of its JVM if
+               this preference is larger than 0. This check will allow the
+               agent to attempt to correct possibly fatal problems that are
+               detected (such as the JVM getting critically low on memory).
+               The value of this preference, if larger than 0, is the number
+               of milliseconds the agent should wait in between checks.
+               -->
+               <entry key="rhq.agent.vm-health-check.interval-msecs" value="5000" />
+               
+               <!--
+               _______________________________________________________________
+               rhq.agent.vm-health-check.low-heap-mem-threshold
+               rhq.agent.vm-health-check.low-nonheap-mem-threshold
+
+               The threshold percentage (as a floating decimal) that must be
+               crossed if the agent's VM health check thread is to consider
+               the JVM with critically low memory. For example, if
+               the agent's maximum heap size is 100MB and the heap
+               threshold is set to 0.90, the agent's VM health check thread
+               will consider the agent critically low on memory if the agent
+               is using over 90MB of heap space.
+               Note that he heap and non-heap memory thresholds are specified
+               as separate preferences.
+               -->
+               <entry key="rhq.agent.vm-health-check.low-heap-mem-threshold" value="0.90" />
+               <entry key="rhq.agent.vm-health-check.low-nonheap-mem-threshold" value="0.90" />
 
                <!--
                _______________________________________________________________

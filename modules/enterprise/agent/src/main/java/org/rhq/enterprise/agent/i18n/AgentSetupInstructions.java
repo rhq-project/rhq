@@ -861,4 +861,35 @@ public interface AgentSetupInstructions {
     String SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_PROMPT = "PromptCommand.setup.instruction.plugins.configurationdiscovery-initialdelay.prompt";
     @I18NMessages( { @I18NMessage("The time in seconds before the initial configuration discovery is performed.") })
     String SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_HELP = "PromptCommand.setup.instruction.plugins.configurationdiscovery-initialdelay.help";
+
+    // VM HEALTH CHECK INTERVAL
+    String SETUP_INSTRUCTION_VMHEALTHCHECKINTERVAL_PREF = AgentConfigurationConstants.VM_HEALTH_CHECK_INTERVAL_MSECS;
+    String SETUP_INSTRUCTION_VMHEALTHCHECKINTERVAL_DEFAULT = Long
+        .toString(AgentConfigurationConstants.DEFAULT_VM_HEALTH_CHECK_INTERVAL_MSECS);
+    @I18NMessages( { @I18NMessage("VM Health Check Interval") })
+    String SETUP_INSTRUCTION_VMHEALTHCHECKINTERVAL_PROMPT = "PromptCommand.setup.instruction.vm-health-check.interval.prompt";
+    @I18NMessages( { @I18NMessage("The time in milliseconds in between checking the VM's health.") })
+    String SETUP_INSTRUCTION_VMHEALTHCHECKINTERVAL_HELP = "PromptCommand.setup.instruction.vm-health-check.interval.help";
+
+    // VM HEALTH CHECK LOW HEAP MEM THRESHOLD
+    String SETUP_INSTRUCTION_VMHEALTHCHECKLOWHEAPMEMTHRESHOLD_PREF = AgentConfigurationConstants.VM_HEALTH_CHECK_LOW_HEAP_MEM_THRESHOLD;
+    String SETUP_INSTRUCTION_VMHEALTHCHECKLOWHEAPMEMTHRESHOLD_DEFAULT = Float
+        .toString(AgentConfigurationConstants.DEFAULT_VM_HEALTH_CHECK_LOW_HEAP_MEM_THRESHOLD);
+    @I18NMessages( { @I18NMessage("VM Health Check Low Heap Mem Threshold") })
+    String SETUP_INSTRUCTION_VMHEALTHCHECKLOWHEAPMEMTHRESHOLD_PROMPT = "PromptCommand.setup.instruction.vm-health-check.low-heap-mem-threshold.prompt";
+    @I18NMessages( { @I18NMessage("The threshold percentage that must be crossed if the agent's VM health check\\n\\\n"
+        + "is to consider the JVM with critically low memory. This value is a percentage\\n\\\n"
+        + "of used heap memory out of the maximum heap size.") })
+    String SETUP_INSTRUCTION_VMHEALTHCHECKLOWHEAPMEMTHRESHOLD_HELP = "PromptCommand.setup.instruction.vm-health-check.low-heap-mem-threshold.help";
+
+    // VM HEALTH CHECK LOW NONHEAP MEM THRESHOLD
+    String SETUP_INSTRUCTION_VMHEALTHCHECKLOWNONHEAPMEMTHRESHOLD_PREF = AgentConfigurationConstants.VM_HEALTH_CHECK_LOW_NONHEAP_MEM_THRESHOLD;
+    String SETUP_INSTRUCTION_VMHEALTHCHECKLOWNONHEAPMEMTHRESHOLD_DEFAULT = Float
+        .toString(AgentConfigurationConstants.DEFAULT_VM_HEALTH_CHECK_LOW_NONHEAP_MEM_THRESHOLD);
+    @I18NMessages( { @I18NMessage("VM Health Check Low Non-Heap Mem Threshold") })
+    String SETUP_INSTRUCTION_VMHEALTHCHECKLOWNONHEAPMEMTHRESHOLD_PROMPT = "PromptCommand.setup.instruction.vm-health-check.low-nonheap-mem-threshold.prompt";
+    @I18NMessages( { @I18NMessage("The threshold percentage that must be crossed if the agent's VM health check\\n\\\n"
+        + "is to consider the JVM with critically low memory. This value is a percentage\\n\\\n"
+        + "of used nonheap memory out of the maximum nonheap size.") })
+    String SETUP_INSTRUCTION_VMHEALTHCHECKLOWNONHEAPMEMTHRESHOLD_HELP = "PromptCommand.setup.instruction.vm-health-check.low-nonheap-mem-threshold.help";
 }

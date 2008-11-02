@@ -80,9 +80,17 @@ public class VMHealthCheckThread extends Thread {
         this.stop = false;
         this.stopped = true;
         this.agent = agent;
-        this.interval = 5000L;
-        this.heapThreshold = 0.90f;
-        this.nonheapThreshold = 0.90f;
+
+        AgentConfiguration config = agent.getConfiguration();
+        if (config != null) {
+            this.interval = config.getVMHealthCheckIntervalMsecs();
+            this.heapThreshold = config.getVMHealthCheckLowHeapMemThreshold();
+            this.nonheapThreshold = config.getVMHealthCheckLowNonHeapMemThreshold();
+        } else { // this should never happen, but I'm paranoid
+            this.interval = 5000L;
+            this.heapThreshold = 0.90f;
+            this.nonheapThreshold = 0.90f;
+        }
     }
 
     /**
@@ -177,6 +185,10 @@ public class VMHealthCheckThread extends Thread {
             return;
         }
 
+        // If we are told to wait before restarting, do so here. We want to wait because its possible
+        // some external influence (downed server or downed managed resource) is causing our agent
+        // to misbehave. In that case, we'll want to wait a bit to give time for that external resource
+        // to correct itself and thus allow the agent to get back to normal itself.
         if (pause > 0) {
             Thread.sleep(pause);
         }

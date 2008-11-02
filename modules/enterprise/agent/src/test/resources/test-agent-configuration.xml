@@ -29,7 +29,7 @@
    
    <!-- the "real" settings -->
    <entry key="rhq.agent.name"                                                       value="jboss-on" />
-   <entry key="rhq.agent.configuration-schema-version"                               value="2" />
+   <entry key="rhq.agent.configuration-schema-version"                               value="3" />
    <entry key="rhq.agent.configuration-setup-flag"                                   value="true" />
    <entry key="rhq.agent.server.transport"                                           value="socket" />
    <entry key="rhq.agent.server.bind-address"                                        value="127.0.0.1" />
@@ -41,6 +41,7 @@
    <entry key="rhq.agent.update-plugins-at-startup"                                  value="false" />
    <entry key="rhq.agent.data-directory"                                             value="target/testdata" />
    <entry key="rhq.agent.primary-server-switchover-check-interval-msecs"             value="0" />
+   <entry key="rhq.agent.vm-health-check.interval-msecs"                             value="0" />
    <entry key="rhq.agent.plugins.directory"                                          value="target/plugins" />
    <entry key="rhq.agent.client.queue-size"                                          value="10000" />
    <entry key="rhq.agent.client.max-concurrent"                                      value="5" />

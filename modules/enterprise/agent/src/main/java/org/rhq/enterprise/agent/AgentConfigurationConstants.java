@@ -58,7 +58,7 @@ public interface AgentConfigurationConstants {
     /**
      * This is the current schema version that our agent configuration knows about.
      */
-    int CURRENT_CONFIG_SCHEMA_VERSION = 2;
+    int CURRENT_CONFIG_SCHEMA_VERSION = 3;
 
     /**
      * Flag to indicate if the agent's configuration has been setup.
@@ -155,6 +155,37 @@ public interface AgentConfigurationConstants {
      * If the switchover-check-interval is not defined, this is the default.
      */
     long DEFAULT_PRIMARY_SERVER_SWITCHOVER_CHECK_INTERVAL_MSECS = 1000L * 60 * 60;
+
+    /**
+     * The amount of milliseconds between checks of the agent's VM health.
+     */
+    String VM_HEALTH_CHECK_INTERVAL_MSECS = PROPERTY_NAME_PREFIX + "vm-health-check.interval-msecs";
+
+    /**
+     * If the vm-health-check interval is not defined, this is its default.
+     */
+    long DEFAULT_VM_HEALTH_CHECK_INTERVAL_MSECS = 5000L;
+
+    /**
+     * The percentage threshold (as a float) of used heap to max that is considered to be critically low free mem.
+     */
+    String VM_HEALTH_CHECK_LOW_HEAP_MEM_THRESHOLD = PROPERTY_NAME_PREFIX + "vm-health-check.low-heap-mem-threshold";
+
+    /**
+     * If the heap threshold is not defined, this is its default.
+     */
+    float DEFAULT_VM_HEALTH_CHECK_LOW_HEAP_MEM_THRESHOLD = 0.90f;
+
+    /**
+     * The percentage threshold (as a float) of used nonheap to max that is considered to be critically low free mem.
+     */
+    String VM_HEALTH_CHECK_LOW_NONHEAP_MEM_THRESHOLD = PROPERTY_NAME_PREFIX
+        + "vm-health-check.low-nonheap-mem-threshold";
+
+    /**
+     * If the nonheap threshold is not defined, this is its default.
+     */
+    float DEFAULT_VM_HEALTH_CHECK_LOW_NONHEAP_MEM_THRESHOLD = 0.90f;
 
     /**
      * The flag that, if <code>true</code>, will tell the agent to attempt to update its plugins at startup.

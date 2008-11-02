@@ -532,6 +532,21 @@
                </c:constraint>
             </c:simple-property>
             <c:simple-property name="rhq.agent.client.command-spool-file.compressed" required="false" type="boolean" activationPolicy="restart" default="false" displayName="Compress Spool File?" description="If true, data in the spool file will be compressed. Note that this saves disk space at the expense of performance" />
+            <c:simple-property name="rhq.agent.vm-health-check.interval-msecs" required="false" type="integer" activationPolicy="restart" default="5000" displayName="VM Health Check Interval" description="The amount of milliseconds in between checking the health of the agent's Java Virtual Machine. The check is disabled if this is set to 0.">
+               <c:constraint>
+                  <c:integer-constraint minimum="0" />
+               </c:constraint>
+            </c:simple-property>
+            <c:simple-property name="rhq.agent.vm-health-check.low-heap-mem-threshold" required="false" type="float" activationPolicy="restart" default="0.90" displayName="VM Health Check Low Heap Memory Threshold" description="The threshold percentage that must be crossed if the agent's VM health check is to consider the JVM with critically low memory. This value is a percentage of used heap memory out of the maximum heap size.">
+               <c:constraint>
+                  <c:float-constraint minimum="0.00" maximum="1.00" />
+               </c:constraint>
+            </c:simple-property>
+            <c:simple-property name="rhq.agent.vm-health-check.low-nonheap-mem-threshold" required="false" type="float" activationPolicy="restart" default="0.90" displayName="VM Health Check Low NonHeap Memory Threshold" description="The threshold percentage that must be crossed if the agent's VM health check is to consider the JVM with critically low memory. This value is a percentage of used non-heap memory out of the maximum non-heap size.">
+               <c:constraint>
+                  <c:float-constraint minimum="0.00" maximum="1.00" />
+               </c:constraint>
+            </c:simple-property>
          </c:group>
       </resource-configuration>
 

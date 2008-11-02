@@ -55,11 +55,11 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
     private static List<PreferencesUpgradeStep> getSteps() {
         List<PreferencesUpgradeStep> list = new ArrayList<PreferencesUpgradeStep>();
         list.add(new Step1to2()); // goes from v1 to v2
+        list.add(new Step2to3()); // goes from v2 to v3
         return list;
     }
 
     static class Step1to2 extends PreferencesUpgradeStep {
-
         public int getSupportedConfigurationSchemaVersion() {
             return 2;
         }
@@ -69,6 +69,21 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
             preferences.putLong(AgentConfigurationConstants.PRIMARY_SERVER_SWITCHOVER_CHECK_INTERVAL_MSECS,
                 AgentConfigurationConstants.DEFAULT_PRIMARY_SERVER_SWITCHOVER_CHECK_INTERVAL_MSECS);
         }
+    }
 
+    static class Step2to3 extends PreferencesUpgradeStep {
+        public int getSupportedConfigurationSchemaVersion() {
+            return 3;
+        }
+
+        public void upgrade(Preferences preferences) {
+            // add the vm health check settings - just set them to their hardcoded defaults
+            preferences.putLong(AgentConfigurationConstants.VM_HEALTH_CHECK_INTERVAL_MSECS,
+                AgentConfigurationConstants.DEFAULT_VM_HEALTH_CHECK_INTERVAL_MSECS);
+            preferences.putFloat(AgentConfigurationConstants.VM_HEALTH_CHECK_LOW_HEAP_MEM_THRESHOLD,
+                AgentConfigurationConstants.DEFAULT_VM_HEALTH_CHECK_LOW_HEAP_MEM_THRESHOLD);
+            preferences.putFloat(AgentConfigurationConstants.VM_HEALTH_CHECK_LOW_NONHEAP_MEM_THRESHOLD,
+                AgentConfigurationConstants.DEFAULT_VM_HEALTH_CHECK_LOW_NONHEAP_MEM_THRESHOLD);
+        }
     }
 }

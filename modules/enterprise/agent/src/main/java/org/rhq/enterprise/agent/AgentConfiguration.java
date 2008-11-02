@@ -320,6 +320,44 @@ public class AgentConfiguration {
     }
 
     /**
+     * This defines how many milliseconds the agent should wait between each check that determines
+     * if the VM is healthy or not (such as if the VM is critically low on memory).
+     *
+     * @return check interval time in milliseconds
+     */
+    public long getVMHealthCheckIntervalMsecs() {
+        long value = m_preferences.getLong(AgentConfigurationConstants.VM_HEALTH_CHECK_INTERVAL_MSECS,
+            AgentConfigurationConstants.DEFAULT_VM_HEALTH_CHECK_INTERVAL_MSECS);
+        return value;
+    }
+
+    /**
+     * This defines when the VM health check will consider the heap memory to be critically low.
+     * This is a percentage of used heap memory to max heap - when used heap is larger than this
+     * percentage of max, the VM will be considered critically low on heap memory. 
+     *
+     * @return threshold percentage, as a float
+     */
+    public float getVMHealthCheckLowHeapMemThreshold() {
+        float value = m_preferences.getFloat(AgentConfigurationConstants.VM_HEALTH_CHECK_LOW_HEAP_MEM_THRESHOLD,
+            AgentConfigurationConstants.DEFAULT_VM_HEALTH_CHECK_LOW_HEAP_MEM_THRESHOLD);
+        return value;
+    }
+
+    /**
+     * This defines when the VM health check will consider the nonheap memory to be critically low.
+     * This is a percentage of used nonheap memory to max nonheap - when used nonheap is larger than this
+     * percentage of max, the VM will be considered critically low on nonheap memory. 
+     *
+     * @return threshold percentage, as a float
+     */
+    public float getVMHealthCheckLowNonHeapMemThreshold() {
+        float value = m_preferences.getFloat(AgentConfigurationConstants.VM_HEALTH_CHECK_LOW_NONHEAP_MEM_THRESHOLD,
+            AgentConfigurationConstants.DEFAULT_VM_HEALTH_CHECK_LOW_NONHEAP_MEM_THRESHOLD);
+        return value;
+    }
+
+    /**
      * Returns <code>true</code> if the agent should update its plugins when the agent starts up. If <code>false</code>,
      * the agent will not automatically update the plugins and will use it current plugins. Note that the side effect of
      * this being <code>true</code> is that the agent will block waiting for at least one plugin to be available before
@@ -1034,15 +1072,13 @@ public class AgentConfiguration {
         config.setContentDiscoveryInitialDelay(con_initial_delay);
         config.setContentDiscoveryPeriod(con_period);
 
-        config.setConfigurationDiscoveryInitialDelay(
-                m_preferences.getLong(
-                        AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY,
-                        AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY));
+        config.setConfigurationDiscoveryInitialDelay(m_preferences.getLong(
+            AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY,
+            AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY));
 
-        config.setConfigurationDiscoveryPeriod(
-                m_preferences.getLong(
-                        AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_PERIOD,
-                        AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_PERIOD));
+        config.setConfigurationDiscoveryPeriod(m_preferences.getLong(
+            AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_PERIOD,
+            AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_PERIOD));
 
         if (name != null) {
             config.setContainerName(name);

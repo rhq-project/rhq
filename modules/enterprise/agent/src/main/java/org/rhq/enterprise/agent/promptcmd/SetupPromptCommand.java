@@ -39,6 +39,7 @@ import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.communications.util.prefs.BooleanSetupValidityChecker;
 import org.rhq.enterprise.communications.util.prefs.DefaultSetupInstruction;
+import org.rhq.enterprise.communications.util.prefs.FloatSetupValidityChecker;
 import org.rhq.enterprise.communications.util.prefs.InetAddressSetupValidityChecker;
 import org.rhq.enterprise.communications.util.prefs.IntegerSetupValidityChecker;
 import org.rhq.enterprise.communications.util.prefs.LocalInetAddressSetupInstruction;
@@ -597,6 +598,25 @@ public class SetupPromptCommand implements AgentPromptCommand {
             new LongSetupValidityChecker(1L, null), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_PROMPT),
             SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_HELP)));
+
+        instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_VMHEALTHCHECKINTERVAL_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_VMHEALTHCHECKINTERVAL_DEFAULT, new LongSetupValidityChecker(0L,
+                null), SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_VMHEALTHCHECKINTERVAL_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_VMHEALTHCHECKINTERVAL_HELP)));
+
+        instr.add(new DefaultSetupInstruction(
+            AgentSetupInstructions.SETUP_INSTRUCTION_VMHEALTHCHECKLOWHEAPMEMTHRESHOLD_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_VMHEALTHCHECKLOWHEAPMEMTHRESHOLD_DEFAULT,
+            new FloatSetupValidityChecker(0.00f, 1.00f), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_VMHEALTHCHECKLOWHEAPMEMTHRESHOLD_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_VMHEALTHCHECKLOWHEAPMEMTHRESHOLD_HELP)));
+
+        instr.add(new DefaultSetupInstruction(
+            AgentSetupInstructions.SETUP_INSTRUCTION_VMHEALTHCHECKLOWNONHEAPMEMTHRESHOLD_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_VMHEALTHCHECKLOWNONHEAPMEMTHRESHOLD_DEFAULT,
+            new FloatSetupValidityChecker(0.00f, 1.00f), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_VMHEALTHCHECKLOWNONHEAPMEMTHRESHOLD_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_VMHEALTHCHECKLOWNONHEAPMEMTHRESHOLD_HELP)));
 
         instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_CLIENTSENDERTIMEOUT_PREF,
             AgentSetupInstructions.SETUP_INSTRUCTION_CLIENTSENDERTIMEOUT_DEFAULT, new LongSetupValidityChecker(-1L,

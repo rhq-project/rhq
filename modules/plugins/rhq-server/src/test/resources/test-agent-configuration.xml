@@ -18,7 +18,7 @@
    
    <!-- the "real" settings -->
    <entry key="rhq.agent.name"                                                       value="jboss-on" />
-   <entry key="rhq.agent.configuration-schema-version"                               value="1" />
+   <entry key="rhq.agent.configuration-schema-version"                               value="3" />
    <entry key="rhq.agent.configuration-setup-flag"                                   value="true" />
    <entry key="rhq.agent.server.transport"                                           value="socket" />
    <entry key="rhq.agent.server.bind-address"                                        value="127.0.0.1" />
@@ -42,6 +42,7 @@
    <entry key="rhq.agent.client.queue-throttling"                                    value="5:3000" />
    <entry key="rhq.communications.configuration-schema-version"                      value="2" />
    <entry key="rhq.agent.primary-server-switchover-check-interval-msecs"             value="0" />
+   <entry key="rhq.agent.vm-health-check.interval-msecs"                             value="0" />
    <!--
    <entry key="rhq.communications.service-container.mbean-server-name"               value="jboss-on" />
    -->

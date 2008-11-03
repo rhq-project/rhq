@@ -23,12 +23,19 @@
 
 package org.rhq.plugins.jbosscache;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jdom.Attribute;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.input.SAXBuilder;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
@@ -50,6 +57,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.plugins.jbossas.util.DeploymentUtility;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
@@ -61,15 +69,22 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 public class JBossCacheComponent implements ResourceComponent<JMXComponent>, MeasurementFacet, OperationFacet,
     ConfigurationFacet {
 
+    private String[] CACHE_PROPS = { "TransactionManagerLookupClass", "IsolationLevel", "NodeLockingScheme",
+        "CacheMode", "UseReplQueue", "ReplQueueInterval", "ReplQueueMaxElements", "ClusterName", "FetchStateOnStartup",
+        "InitialStateRetrievalTimeout", "SyncReplTimeout", "LockAcquisitionTimeout" };
+
     private final static Log log = LogFactory.getLog(JBossCacheComponent.class);
     private String baseObjectName;
     JBossCacheSubsystemComponent parentServer;
     boolean isTreeCache = false;
     List<EmsBean> interceptors = new ArrayList<EmsBean>();
+    ResourceContext context;
 
     public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
+
         PropertySimple objectName = context.getPluginConfiguration().getSimple("objectName");
         baseObjectName = objectName.getStringValue();
+        this.context = context;
 
         PropertySimple tcProp = context.getPluginConfiguration().getSimple("isTreeCache");
         isTreeCache = tcProp.getBooleanValue();
@@ -176,12 +191,61 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
      */
     public Configuration loadResourceConfiguration() throws Exception {
 
-        Configuration config = new Configuration();
-        PropertySimple ps = new PropertySimple("Flavour", "cache");
-        config.getProperties().add(ps);
+        File file = DeploymentUtility.getDescriptorFile(parentServer.getEmsConnection(), context.getResourceKey());
+        try {
+            SAXBuilder builder = new SAXBuilder();
+            Document doc = builder.build(file);
 
-        // TODO Auto-generated method stub
-        return config;
+            // Get the root element
+            Element root = doc.getRootElement();
+
+            // First look for the right mbean of *our* cache - the file may contain more than one
+            Configuration config = new Configuration();
+            for (Object mbeanObj : root.getChildren("mbean")) {
+                if (mbeanObj instanceof Element) {
+                    Element mbean = (Element) mbeanObj;
+                    if (mbean.getAttributeValue("name").contains(context.getResourceKey())) {
+                        // found ours, let the fun begin
+                        fillAttributesInConfig(mbean, config);
+                        Attribute code = mbean.getAttribute("code");
+                        PropertySimple flavour = new PropertySimple();
+                        flavour.setName("Flavour");
+                        if (code.getValue().contains("Tree")) {
+                            flavour.setStringValue("treecache");
+                        } else
+                            flavour.setStringValue("cache");
+                        config.put(flavour);
+                    }
+                }
+            }
+
+            return config;
+        } catch (IOException e) {
+            log.error("IO error occurred while reading file: " + file, e);
+        } catch (JDOMException e) {
+            log.error("Parsing error occurred while reading file: " + file, e);
+        }
+
+        return null;
+    }
+
+    /**
+     * Fill all the &lt;attribute name="XXX"&gt; elements found under mbean into the passed config.
+     * @param mbean The &gt;mbean&lt; element that builds the root of the JBossCache config
+     * @param config The configuration object to fill stuff in
+     */
+    private void fillAttributesInConfig(Element mbean, Configuration config) {
+
+        List children = mbean.getChildren("attribute");
+        for (Object childObj : children) {
+            if (childObj instanceof Element) {
+                Element child = (Element) childObj;
+                String name = child.getAttributeValue("name");
+                String value = child.getText();
+                PropertySimple ps = new PropertySimple(name, value);
+                config.put(ps);
+            }
+        }
     }
 
     /**

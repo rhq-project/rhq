@@ -213,8 +213,18 @@ public class ContentManager extends AgentService implements ContainerService, Co
     }
 
     public void deployPackages(DeployPackagesRequest request) {
-        CreateContentRunner runner = new CreateContentRunner(this, request);
+        Runnable runner = new CreateContentRunner(this, request);
         crudExecutor.submit(runner);
+    }
+
+    public DeployPackagesResponse deployPackagesImmediately(DeployPackagesRequest request) throws PluginContainerException {
+        Callable<DeployPackagesResponse> runner = new CreateContentRunner(this, request);
+        try {
+            return crudExecutor.submit(runner).get();
+        }
+        catch (Exception e) {
+            throw new PluginContainerException("Exception occurred during deployment of packages - request: " + request, e);
+        }
     }
 
     public void deletePackages(DeletePackagesRequest request) {

@@ -26,6 +26,9 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -60,6 +63,7 @@ public class ContentDiscoveryReport implements Serializable {
         this.resourceId = resourceId;
     }
 
+    @NotNull
     public Set<ResourcePackageDetails> getDeployedPackages() {
         return deployedPackages;
     }

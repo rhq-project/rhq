@@ -24,10 +24,11 @@ package org.rhq.core.pc.content;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.server.content.ContentServerService;
-import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
@@ -44,7 +45,7 @@ import org.rhq.core.pc.PluginContainer;
  *
  * @author Jason Dobies
  */
-public class CreateContentRunner implements Runnable {
+public class CreateContentRunner implements Runnable, Callable<DeployPackagesResponse> {
     // Attributes  --------------------------------------------
 
     private final Log log = LogFactory.getLog(CreateContentRunner.class);
@@ -63,9 +64,19 @@ public class CreateContentRunner implements Runnable {
         this.request = request;
     }
 
-    // Runnable Implementation  --------------------------------------------
+        // Runnable Implementation  --------------------------------------------
 
     public void run() {
+        try {
+            call();
+        } catch (Exception e) {
+            log.error("Create content runner failed", e);
+        }
+    }
+
+    // Callable Implementation  --------------------------------------------
+
+    public DeployPackagesResponse call() throws Exception {
 
         DeployPackagesResponse response;
 
@@ -134,6 +145,7 @@ public class CreateContentRunner implements Runnable {
             }
         }
 
+        return response;
     }
 
     /**

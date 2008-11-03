@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component">
+
+<head>
+</head>
+
+<body>
+
+<f:view>
+
+<h:form> <!-- datascroll tag wants a form to be present -->
+
+    <rich:panel>
+
+        <f:facet name="header">
+            Server Resources (in single element pages)
+        </f:facet>
+
+
+        <h:form>
+            <h:panelGrid>
+
+
+                <rich:tree style="width:300px" switchType="ajax" stateAdvisor="#{ResourceTreeStateAdvisor}"
+                           var="treeNode"
+                        icon="/images/icn_tree_Platform.gif"
+                           nodeFace="#{treeNode.data.class.simpleName}">
+                    <rich:recursiveTreeNodesAdaptor roots="#{ResourceTreeModelUIBean.roots}" var="item"
+                                                    nodes="#{item.nodes}" >
+
+
+                    </rich:recursiveTreeNodesAdaptor>
+
+
+                    <rich:treeNode type="AutoGroupComposite" 
+                                   iconLeaf="/images/icn_tree_folder.gif" icon="/images/icn_tree_folder.gif">
+                        <h:outputText value="#{item}"/>
+
+                    </rich:treeNode>
+
+
+
+                    <rich:treeNode type="ResourceWithAvailability"
+                        icon="/images/icn_tree_#{item.data.resource.resourceType.category}.gif"
+                        iconLeaf="/images/icn_tree_#{item.data.resource.resourceType.category}.gif">
+
+
+                        <a4j:support event="oncontextmenu" reRender="menu,resourceMenub" timeout="5000">
+                            <f:param name="contextResourceId" value="#{item.data.resource.id}"/>
+                            <f:param name="contextResourceTypeId" value="#{item.data.resource.resourceType.id}"/>
+
+                            <rich:componentControl disableDefault="true" event="oncomplete" for="resourceMenu"
+                                                   operation="show">
+                                <f:param value="#{item.data.resource.name}" name="name"/>
+                                <f:param value="#{item.data.resource.id}" name="id"/>
+                                <f:param value="#{item.data.resource.resourceType.name}" name="type"/>
+                                <f:param value="'#{item.data.resource.resourceType.operationDefinitions}'"
+                                         name="ops"/>
+                            </rich:componentControl>
+                        </a4j:support>
+
+
+                        <h:outputText value="#{item}"/>
+                    </rich:treeNode>
+
+
+                </rich:tree>
+
+                <a4j:status>
+                    <f:facet name="start">
+                        <h:graphicImage value="/images/status_bar.gif"/>
+                    </f:facet>
+                </a4j:status>
+
+
+            </h:panelGrid>
+        </h:form>
+
+
+
+    </rich:panel>
+
+    <a4j:log popup="false" level="WARN" style="width: 800px; height: 300px;"></a4j:log>
+
+</h:form>
+
+<h:form>
+    <a4j:outputPanel id="menu" ajaxRendered="true">
+
+        <rich:contextMenu attached="false" id="resourceMenu" binding="#{ResourceTreeModelUIBean.menu}">
+
+        </rich:contextMenu>
+    </a4j:outputPanel>
+</h:form>
+</f:view>
+
+</body>
+
+</html>

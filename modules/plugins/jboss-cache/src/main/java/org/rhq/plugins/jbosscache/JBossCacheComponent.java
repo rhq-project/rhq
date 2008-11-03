@@ -201,6 +201,7 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
 
             // First look for the right mbean of *our* cache - the file may contain more than one
             Configuration config = new Configuration();
+            // TODO replace the access of 'our' mbean with an XPath expression
             for (Object mbeanObj : root.getChildren("mbean")) {
                 if (mbeanObj instanceof Element) {
                     Element mbean = (Element) mbeanObj;
@@ -227,6 +228,10 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
         }
 
         return null;
+    }
+
+    EmsConnection getEmsConnection() {
+        return parentServer.getEmsConnection();
     }
 
     /**

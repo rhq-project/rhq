@@ -149,17 +149,18 @@
             synchronous call have been received."/>
             <c:simple-property name="LockAcquisitionTimeout" type="long" default="10000"
                   description="Max number of milliseconds to wait for a lock acquisition."/>
-                 
-            <!--  TODO this is not trivial to do it right, as it means to have a sub editor in the gui -->
-            <!--  TODO use a list of maps here -->
-            <c:simple-property name="ClusterConfig" description="Underlying JGroups configuration"
-            type="longString"/>
-            
+                             
          </resource-configuration>
          <help>
          Please note that the number of possible metrics varies depending on the configuration and flavour of Cache used.
          </help>
                   
+         <service name="JGroupsChannel"
+            description="The underlying JGroups channel for this cache instance"
+            supportsManualAdd="true"
+            class="JGroupsChannelComponent"
+            discovery="JGroupsChannelDiscovery">
+         </service>
        </service>
     </server>
 </plugin>

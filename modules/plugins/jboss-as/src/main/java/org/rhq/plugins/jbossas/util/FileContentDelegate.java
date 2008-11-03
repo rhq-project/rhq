@@ -82,16 +82,28 @@ public class FileContentDelegate {
      *                  content will be written to directly to a file using the package name as the file name
      */
     public void createContent(PackageDetails details, InputStream content, boolean unzip) {
+        File contentFile = getPath(details);
+        try {
+            if (unzip) {
+                FileUtils.unzipFile(content, contentFile);
+            } else {
+                FileUtils.writeFile(content, contentFile);
+            }
+            details.setFileName(contentFile.getPath());
+        } catch (IOException e) {
+            throw new RuntimeException("Error creating artifact from details: " + contentFile, e);
+        }
+    }
 
+    public File getPath(PackageDetails details) {
         /* JBNADM-2022 - It still needs to be determined if it is the responsibility of the plugin container or the
-         *               plugin to be concerned with path information in the package name. For now, it's the plugin's 
-         *               reponsibility. We strip out the path information to keep control of where the JARs are 
-         *               deployed to. Note: when we add support for more package types, we'll need to refactor this 
-         *               out on an package type basis.      
-         *               
+         *               plugin to be concerned with path information in the package name. For now, it's the plugin's
+         *               responsibility. We strip out the path information to keep control of where the JARs are
+         *               deployed to. Note: when we add support for more package types, we'll need to refactor this
+         *               out on a package type basis.
+         *
          * jdobies, Sep 20, 2007
          */
-
         PackageDetailsKey key = details.getKey();
         String fileName = key.getName();
         int lastPathStart = fileName.lastIndexOf(File.separatorChar);
@@ -102,50 +114,33 @@ public class FileContentDelegate {
         if (!fileName.endsWith(fileEnding)) {
             fileName = fileName + fileEnding;
         }
-
-        try {
-            if (unzip) {
-                File outputDir = new File(this.directory.getAbsolutePath() + File.separator + fileName + File.separator);
-                FileUtils.unzipFile(content, outputDir);
-            } else {
-                File contentFile = new File(this.directory, fileName);
-                FileUtils.writeFile(content, contentFile);
-            }
-
-            details.setFileName(fileName);
-        } catch (IOException e) {
-            throw new RuntimeException("Error creating artifact from details: " + fileName, e);
-        }
-
+        return new File(this.directory, fileName);
     }
 
     /**
      * Returns a stream from which the content of the specified package can be read.
      *
-     * @param  fileName package being loaded
+     * @param details package being loaded
      *
      * @return buffered input stream containing the contents of the package; will not be <code>null</code>, an
      *         exception is thrown if the content cannot be loaded
      */
     public InputStream getContent(PackageDetails details) {
-        PackageDetailsKey key = details.getKey();
-        File contentFile = new File(this.directory, key.getName());
+        File contentFile = getPath(details);
         try {
             return new BufferedInputStream(new FileInputStream(contentFile));
         } catch (FileNotFoundException e) {
-            throw new RuntimeException("Package content not found for package " + key.getName(), e);
+            throw new RuntimeException("Package content not found for package " + contentFile, e);
         }
     }
 
     /**
      * Deletes the underlying file for the specified package.
      *
-     * @param fileName package to delete
+     * @param details package to delete
      */
     public void deleteContent(PackageDetails details) {
-        PackageDetailsKey key = details.getKey();
-        File contentFile = new File(this.directory, key.getName());
-
+        File contentFile = getPath(details);
         if (!contentFile.exists())
             return;
 
@@ -156,8 +151,8 @@ public class FileContentDelegate {
 
         boolean deleteResult = contentFile.delete();
 
-        if (deleteResult == false) {
-            throw new RuntimeException("Package content not succesfully deleted: " + key.getName());
+        if (!deleteResult) {
+            throw new RuntimeException("Package content not successfully deleted: " + details.getKey().getName());
         }
 
     }

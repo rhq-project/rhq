@@ -99,7 +99,6 @@ import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jbossas.helper.JavaSystemProperties;
@@ -840,6 +839,14 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
             // Perform the deployment
             FileContentDelegate deployer = new FileContentDelegate(new File(getConfigurationPath() + File.separator
                 + deployDirectory), "", details.getPackageTypeName());
+
+            File path = deployer.getPath(details);
+            if (path.exists()) {
+                report.setStatus(CreateResourceStatus.FAILURE);
+                report.setErrorMessage("A " + resourceTypeName + " file named " + path.getName() + " is already deployed"
+                        + " with path " + path + ".");
+                return;
+            }
 
             PropertySimple zipProperty = deployTimeConfiguration.getSimple("deployZipped");
 

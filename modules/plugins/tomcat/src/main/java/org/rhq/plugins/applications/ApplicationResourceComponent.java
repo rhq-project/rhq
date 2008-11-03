@@ -30,6 +30,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.Set;
 import java.util.List;
 import java.util.HashSet;
@@ -91,7 +92,13 @@ public class ApplicationResourceComponent<T extends JMXComponent>
     // ContentFacet Implementation  --------------------------------------------
 
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
-        return null;
+        String fileName = packageDetails.getName();
+        try {
+            return new BufferedInputStream(new FileInputStream(fileName));
+        }
+        catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
@@ -125,6 +132,10 @@ public class ApplicationResourceComponent<T extends JMXComponent>
             PackageDetailsKey key = new PackageDetailsKey(fileName, version, PKG_TYPE_FILE, ARCHITECTURE);
             ResourcePackageDetails details = new ResourcePackageDetails(key);
             details.setFileName(fileName);
+            details.setLocation(file.getPath());
+            if (!file.isDirectory())
+                details.setFileSize(file.length());
+            details.setFileCreatedDate(null); // TODO: get created date via SIGAR
 
             packages.add(details);
         }

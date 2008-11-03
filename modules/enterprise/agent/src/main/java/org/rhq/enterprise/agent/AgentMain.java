@@ -573,7 +573,12 @@ public class AgentMain {
     public void shutdown() {
         synchronized (m_started) {
             if (isStarted()) {
-                LOG.info(AgentI18NResourceKeys.SHUTTING_DOWN);
+                try {
+                    LOG.info(AgentI18NResourceKeys.SHUTTING_DOWN);
+                } catch (Throwable t) {
+                    // this really would only happen under very bad conditions, like OutOfMemoryError
+                    // but if that happens, let's keep going and try to shutdown things anyway
+                }
 
                 // Notice that for every component we shutdown, we wrap in a try-catch to ignore exceptions.
                 // We want to keep going to ensure we attempt to try to shutdown everything.

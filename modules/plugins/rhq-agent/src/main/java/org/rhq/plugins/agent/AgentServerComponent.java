@@ -66,6 +66,7 @@ public class AgentServerComponent extends JMXServerComponent implements JMXCompo
     private static final String TRAIT_INDICATOR = "Trait.";
 
     private static final String SIGAR_VERSION_METRIC_SUFFIX = "SigarVersion";
+    private static final String REASON_FOR_LAST_RESTART_METRIC_SUFFIX = "ReasonForLastRestart";
 
     private String sigarVersion;
 
@@ -93,6 +94,9 @@ public class AgentServerComponent extends JMXServerComponent implements JMXCompo
                 try {
                     if (metric_name.endsWith(SIGAR_VERSION_METRIC_SUFFIX)) {
                         report.addData(new MeasurementDataTrait(metric_request, this.sigarVersion));
+                    } else if (metric_name.endsWith(REASON_FOR_LAST_RESTART_METRIC_SUFFIX)) {
+                        Object reason = getAgentBean().getAttribute(REASON_FOR_LAST_RESTART_METRIC_SUFFIX).refresh();
+                        report.addData(new MeasurementDataTrait(metric_request, reason.toString()));
                     } else {
                         log.error("Being asked to collect an unknown trait measurement: " + metric_name);
                     }

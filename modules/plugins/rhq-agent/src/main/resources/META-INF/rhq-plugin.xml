@@ -118,6 +118,21 @@
               displayType="summary"
               description="The version of the SIGAR (System Information Gatherer and Reporter) native library used by the Agent" />
 
+      <metric property="Trait.ReasonForLastRestart"
+              displayName="Reason For Last Restart"
+              dataType="trait"
+              displayType="summary"
+              description="Indicates what caused the last agent restart" />
+
+      <metric property="NumberAgentRestarts"
+              displayName="Number of Agent Restarts"
+              description="Number of times the agent was restarted during the lifetime of its Java Virtual Machine"
+              defaultOn="true"
+              displayType="detail"      
+              units="none"
+              category="availability"
+              measurementType="dynamic" />
+
       <metric property="AgentServerClockDifference"
               displayName="Agent-Server Clock Difference"
               description="Number of milliseconds the agent's clock differs from its server's clock"

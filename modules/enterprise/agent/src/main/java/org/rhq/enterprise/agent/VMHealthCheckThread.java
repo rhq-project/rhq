@@ -24,6 +24,7 @@ import java.lang.management.MemoryUsage;
 
 import mazz.i18n.Logger;
 
+import org.rhq.enterprise.agent.AgentRestartCounter.AgentRestartReason;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 
@@ -216,7 +217,7 @@ public class VMHealthCheckThread extends Thread {
         }
 
         // At this point, we have "rebooted" the agent - our memory usage should be back to normal.
-        // TODO: what can we do to notify the server / user that we rebooted the agent?
+        this.agent.getAgentRestartCounter().restartedAgent(AgentRestartReason.VM_HEALTH_CHECK);
 
         return;
     }

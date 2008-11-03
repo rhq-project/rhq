@@ -198,6 +198,24 @@ public interface AgentManagementMBean {
     String retrieveCurrentDateTime(String timeZone);
 
     /**
+     * Returns the number of times the agent has been restarted for the entire lifetime of
+     * the agent's JVM.  Reasons for a restart can include the execution of the agent
+     * plugin's "restart" operation or the VM Health Check detected a critical problem and
+     * restarted the agent automatically. To find out why the agent was last restarted,
+     * see {@link #getReasonForLastRestart()}.
+     *
+     * @return number of agent restarts that have occured
+     */
+    int getNumberAgentRestarts();
+
+    /**
+     * Returns the code that indicates why the agent was last restarted.
+     * 
+     * @return restart code
+     */
+    String getReasonForLastRestart();
+
+    /**
      * Returns the number of milliseconds this agent thinks its clock is ahead or behind from
      * its server's clock.  A positive value means the agent clock is ahead.
      *

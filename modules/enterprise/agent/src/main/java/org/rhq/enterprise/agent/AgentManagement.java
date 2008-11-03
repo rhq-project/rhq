@@ -48,6 +48,7 @@ import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.enterprise.agent.AgentRestartCounter.AgentRestartReason;
 import org.rhq.enterprise.communications.ServiceContainerMetricsMBean;
 import org.rhq.enterprise.communications.command.client.ClientCommandSender;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderMetrics;
@@ -95,6 +96,7 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
                     sleep(5000L); // give our restart() caller a chance to return and finish
                     m_agent.shutdown();
                     m_agent.start();
+                    m_agent.getAgentRestartCounter().restartedAgent(AgentRestartReason.OPERATION);
                 } catch (Exception e) {
                     e.printStackTrace(); // TODO what do to here?
                 }
@@ -258,6 +260,14 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         }
 
         return df.format(new Date());
+    }
+
+    public int getNumberAgentRestarts() {
+        return m_agent.getAgentRestartCounter().getNumberOfRestarts();
+    }
+
+    public String getReasonForLastRestart() {
+        return m_agent.getAgentRestartCounter().getLastAgentRestartReason().toString();
     }
 
     public long getAgentServerClockDifference() {

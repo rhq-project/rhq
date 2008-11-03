@@ -86,6 +86,7 @@ import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.agent.AgentRestartCounter.AgentRestartReason;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 import org.rhq.enterprise.agent.promptcmd.AgentPromptCommand;
@@ -328,6 +329,11 @@ public class AgentMain {
     private VMHealthCheckThread m_vmHealthCheckThread;
 
     /**
+     * Counts the number of times the agent has been restarted and holds the reason for the last restart. 
+     */
+    private final AgentRestartCounter m_agentRestartCounter = new AgentRestartCounter();
+
+    /**
      * The main method that starts the whole thing.
      *
      * @param args
@@ -361,6 +367,7 @@ public class AgentMain {
             // start the agent automatically only if we are configured to do so; otherwise, just start the user input loop
             if (agent.m_startAtBoot) {
                 agent.start();
+                agent.m_agentRestartCounter.restartedAgent(AgentRestartReason.PROCESS_START);
             } else {
                 agent.inputLoop();
             }
@@ -1756,6 +1763,15 @@ public class AgentMain {
         connectCommand.setNameBasedInvocation(inv);
         connectCommand.setTargetInterfaceName(CoreServerService.class.getName());
         return connectCommand;
+    }
+
+    /**
+     * Returns the agent restart counter object.
+     * 
+     * @return the agent restart counter
+     */
+    public AgentRestartCounter getAgentRestartCounter() {
+        return m_agentRestartCounter;
     }
 
     /**

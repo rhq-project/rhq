@@ -21,6 +21,7 @@ package org.rhq.enterprise.agent.promptcmd;
 import java.io.PrintWriter;
 import mazz.i18n.Msg;
 import org.rhq.enterprise.agent.AgentMain;
+import org.rhq.enterprise.agent.AgentRestartCounter.AgentRestartReason;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 
@@ -55,6 +56,7 @@ public class StartPromptCommand implements AgentPromptCommand {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.START_STARTING));
                 agent.start();
                 out.println(MSG.getMsg(AgentI18NResourceKeys.START_STARTED));
+                agent.getAgentRestartCounter().restartedAgent(AgentRestartReason.PROMPT_COMMAND);
             } catch (Exception e) {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.START_FAILURE));
                 e.printStackTrace(out);

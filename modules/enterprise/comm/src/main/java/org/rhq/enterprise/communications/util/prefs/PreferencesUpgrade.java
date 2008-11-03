@@ -19,6 +19,7 @@
 package org.rhq.enterprise.communications.util.prefs;
 
 import java.util.List;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import mazz.i18n.Logger;
 import org.rhq.enterprise.communications.i18n.CommI18NFactory;
@@ -80,6 +81,11 @@ public abstract class PreferencesUpgrade {
                     // upgrade to the step version and once that's done, bump up the version number
                     step.upgrade(preferences);
                     setConfigurationSchemaVersion(preferences, step_version);
+                    try {
+                        preferences.flush();
+                    } catch (BackingStoreException e) {
+                        throw new RuntimeException(e); // abort the upgrade
+                    }
                     current_version = step_version;
 
                     LOG.debug(CommI18NResourceKeys.CONFIG_SCHEMA_VERSION_STEP_UPGRADED, version_pref_name,

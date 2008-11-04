@@ -30,7 +30,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.Set;
 import java.util.List;
 import java.util.HashSet;
@@ -92,12 +91,19 @@ public class ApplicationResourceComponent<T extends JMXComponent>
     // ContentFacet Implementation  --------------------------------------------
 
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
-        String fileName = packageDetails.getName();
+        File packageFile = new File(packageDetails.getName());
+        File fileToSend;
         try {
-            return new BufferedInputStream(new FileInputStream(fileName));
+            if (packageFile.isDirectory()) {
+                fileToSend = File.createTempFile("rhq", ".zip");
+                FileUtils.zipFileOrDirectory(packageFile, fileToSend);
+            }
+            else
+                fileToSend = packageFile;
+            return new BufferedInputStream(new FileInputStream(fileToSend));
         }
-        catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+        catch (IOException e) {
+            throw new RuntimeException("Failed to retrieve package bits for " + packageDetails, e);
         }
     }
 
@@ -333,7 +339,6 @@ public class ApplicationResourceComponent<T extends JMXComponent>
      */
     public String getApplicationName() {
         String resourceKey = resourceContext.getResourceKey();
-
         String applicationName = resourceKey.substring(resourceKey.lastIndexOf('=') + 1);
         return applicationName;
     }

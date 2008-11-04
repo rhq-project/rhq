@@ -27,13 +27,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.FileInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Utilities for working with files from a plugin.
  *
  * @author Jason Dobies
+ * @author Ian Springer
  */
 public class FileUtils {
     /**
@@ -58,6 +61,41 @@ public class FileUtils {
         content.close();
         buf.flush();
         fos.close();
+    }
+
+    public static void zipFileOrDirectory(File fileOrDirToZip, File zipFile) throws IOException {
+        ZipOutputStream zos = null;
+        try {
+            zos = new ZipOutputStream(new FileOutputStream(zipFile));
+            zipFileOrDirectory(fileOrDirToZip, zos);
+        }
+        finally {
+            if (zos != null)
+                zos.close();
+        }
+    }
+
+    private static void zipFileOrDirectory(File fileOrDirToZip, ZipOutputStream zos) throws IOException {
+        if (fileOrDirToZip.isDirectory()) {
+            File[] files = fileOrDirToZip.listFiles();
+            for (File f : files)
+                zipFileOrDirectory(f, zos); // recurse
+        } else {
+            FileInputStream fis = null;
+            try {
+                fis = new FileInputStream(fileOrDirToZip);
+                ZipEntry zipEntry = new ZipEntry(fileOrDirToZip.getPath());
+                zos.putNextEntry(zipEntry);
+                byte[] readBuffer = new byte[4096];
+                int bytesIn;
+                while((bytesIn = fis.read(readBuffer)) != -1)
+                    zos.write(readBuffer, 0, bytesIn);
+            }
+            finally {
+                if (fis != null)
+                    fis.close();
+            }
+        }
     }
 
     /**

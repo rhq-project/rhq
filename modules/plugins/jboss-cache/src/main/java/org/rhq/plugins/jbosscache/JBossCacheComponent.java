@@ -29,6 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jdom.Attribute;
@@ -201,11 +204,18 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
 
             // First look for the right mbean of *our* cache - the file may contain more than one
             Configuration config = new Configuration();
-            // TODO replace the access of 'our' mbean with an XPath expression
             for (Object mbeanObj : root.getChildren("mbean")) {
                 if (mbeanObj instanceof Element) {
                     Element mbean = (Element) mbeanObj;
-                    if (mbean.getAttributeValue("name").contains(context.getResourceKey())) {
+                    // normalize the content of 'name'
+                    String nameAttrib = mbean.getAttributeValue("name");
+                    try {
+                        ObjectName on = new ObjectName(nameAttrib);
+                        nameAttrib = on.getCanonicalName();
+                    } catch (MalformedObjectNameException e) {
+                        log.warn("Can't canonicalize " + nameAttrib);
+                    }
+                    if (nameAttrib.equals(context.getResourceKey())) {
                         // found ours, let the fun begin
                         fillAttributesInConfig(mbean, config);
                         Attribute code = mbean.getAttribute("code");

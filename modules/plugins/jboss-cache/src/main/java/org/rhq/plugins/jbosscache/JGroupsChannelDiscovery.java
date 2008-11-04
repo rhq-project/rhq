@@ -28,6 +28,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jdom.Document;
@@ -74,6 +77,15 @@ public class JGroupsChannelDiscovery implements ResourceDiscoveryComponent {
             // Get the root element
             Element root = doc.getRootElement();
 
+            //            XPath xpath = XPathFactory.newInstance().newXPath();
+            // TODO this expression would need to work against non-normalized versions of the name attribute
+            //            XPathExpression xp = xpath
+            //                .compile("/server/mbean[@name='" + resKey + "']/attribute[@name='ClusterConfig']");
+            //            InputSource inputSource = new InputSource(new FileInputStream(file));
+            //            NodeList cconfig = (NodeList) xp.evaluate(inputSource, XPathConstants.NODESET);
+            //            if (cconfig != null && cconfig.getLength() > 0)
+            //                found = true;
+
             // First look for the right mbean of *our* cache - the file may contain more than one
 
             // TODO move code in helper, as we'll need it later again
@@ -81,7 +93,14 @@ public class JGroupsChannelDiscovery implements ResourceDiscoveryComponent {
             for (Object mbeanObj : root.getChildren("mbean")) {
                 if (mbeanObj instanceof Element) {
                     Element mbean = (Element) mbeanObj;
-                    if (mbean.getAttributeValue("name").contains(resKey)) {
+                    String nameAttrib = mbean.getAttributeValue("name");
+                    try {
+                        ObjectName on = new ObjectName(nameAttrib);
+                        nameAttrib = on.getCanonicalName();
+                    } catch (MalformedObjectNameException e) {
+                        log.warn("Can't canonicalize " + nameAttrib);
+                    }
+                    if (nameAttrib.equals(resKey)) {
                         // our cache instance, look for the right attribute
                         List children = mbean.getChildren("attribute");
                         for (Object childObj : children) {

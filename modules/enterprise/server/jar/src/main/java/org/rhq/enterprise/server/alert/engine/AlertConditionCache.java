@@ -611,11 +611,21 @@ public final class AlertConditionCache {
                 try {
                     if (OutOfBoundsCacheElement.class.isInstance(cacheElement)) {
                         // don't bother with active property for OutOfBoundsCacheElement types
-                        double diff = ((Double) providedValue).doubleValue()
-                            - ((Double) cacheElement.getAlertConditionValue()).doubleValue();
+                        double providedDoubleValue = ((Double) providedValue).doubleValue();
+                        double cacheElementDoubleValue = ((Double) cacheElement.getAlertConditionValue()).doubleValue();
+                        double diff = providedDoubleValue - cacheElementDoubleValue;
                         cachedConditionProducer.sendOutOfBoundsConditionMessage(cacheElement
                             .getAlertConditionTriggerId(), Double.valueOf(diff), timestamp);
 
+                        if (log.isDebugEnabled()) {
+                            OutOfBoundsCacheElement oobCacheElement = ((OutOfBoundsCacheElement) cacheElement);
+                            AlertConditionOperator operator = oobCacheElement.getAlertConditionOperator();
+                            String type = (operator == AlertConditionOperator.LESS_THAN) ? "LOW" : "HIGH";
+                            log.debug("OutOfBoundsCacheElement match: baselineId="
+                                + oobCacheElement.getAlertConditionTriggerId() + "type=" + type + ", providedValue="
+                                + providedDoubleValue + ", cacheElementValue=" + cacheElementDoubleValue + ", diff="
+                                + diff + ", timestamp=" + timestamp);
+                        }
                     } else {
                         /*
                          * Set the active property for alertCondition-based cache elements, and send it on its way;

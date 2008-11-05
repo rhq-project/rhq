@@ -25,8 +25,8 @@
       <!-- The 'dev' profile enables automatic copying of artifacts to a dev RHQ container. -->
       <!--<activeProfile>dev</activeProfile>-->
 
-      <!-- The 'prod' profile is for CI and production builds and enables things such as JSP precompilation. -->
-      <!--<activeProfile>prod</activeProfile>-->
+      <!-- The 'dist' profile is for binary distribution builds and enables things such as JSP precompilation. -->
+      <!--<activeProfile>dist</activeProfile>-->
 
       <!--<activeProfile>oracle</activeProfile>-->
    </activeProfiles>

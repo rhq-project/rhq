@@ -247,6 +247,7 @@
     <form name="SnmpTrapForm">
 
        <field property="host" depends="required">
+         <arg0 key="alert.config.edit.snmp.host"/>
          <msg name="required"
               key="errors.required"/>
        </field>

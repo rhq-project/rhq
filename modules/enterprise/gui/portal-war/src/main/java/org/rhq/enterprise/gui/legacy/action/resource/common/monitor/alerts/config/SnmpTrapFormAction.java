@@ -20,17 +20,20 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.jetbrains.annotations.Nullable;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.SnmpNotification;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
@@ -101,7 +104,11 @@ public class SnmpTrapFormAction extends BaseAction {
     private Map<String, Integer> createRequestParamsMap(SnmpTrapForm snmpTrapForm) {
         Map<String, Integer> params = new HashMap<String, Integer>();
         params.put(Constants.ALERT_DEFINITION_PARAM, snmpTrapForm.getAd());
-        params.put(Constants.RESOURCE_ID_PARAM, snmpTrapForm.getId());
+        if (snmpTrapForm.isAlertTemplate()) {
+            params.put(Constants.RESOURCE_TYPE_ID_PARAM, snmpTrapForm.getType());
+        } else {
+            params.put(Constants.RESOURCE_ID_PARAM, snmpTrapForm.getId());
+        }
         return params;
     }
 }

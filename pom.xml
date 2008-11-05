@@ -388,7 +388,8 @@
                   <version>2.0</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>[1.5,1.7)</version> <!-- 1.5.x, 1.6.x -->
+                  <version>[1.5,1.6)</version> <!-- 1.5.x -->
+                  <!-- NOTE: To build w/ JDK 1.6, activate the 'jdk6' profile (see below). -->
                 </requireJavaVersion>
               </rules>
             </configuration>
@@ -604,7 +605,7 @@
                     <configuration>
                       <rules>
                         <requireJavaVersion>
-                          <version>[1.5,1.7)</version> <!-- 1.5.x/1.6.x -->
+                          <version>[1.5,1.7)</version> <!-- 1.5.x, 1.6.x -->
                         </requireJavaVersion>
                       </rules>
                     </configuration>

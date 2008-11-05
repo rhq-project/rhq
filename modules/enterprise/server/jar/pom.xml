@@ -442,9 +442,15 @@ Build-OS-Version=${os.version}
                      <value>target/classes</value>
                   </property>
                </systemProperties>
-               <!-- The below is required for tests to run against Oracle. -->
                <additionalClasspathElements>
+               <!-- The below is required for tests to run against Oracle. -->               
                   <additionalClasspathElement>${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar</additionalClasspathElement>
+               <!-- The below is required for WS tests -->
+                  <additionalClasspathElement>${jbossws-native-home}/deploy/lib/jbossws-spi.jar</additionalClasspathElement>               
+                  <additionalClasspathElement>${jbossws-native-home}/deploy/lib/jbossws-common.jar</additionalClasspathElement>                  
+                  <additionalClasspathElement>${jbossws-native-home}/deploy/lib/jbossws-native-saaj.jar</additionalClasspathElement>                  
+                  <additionalClasspathElement>${jbossws-native-home}/deploy/lib/wsdl4j.jar</additionalClasspathElement>                  
+                  <additionalClasspathElement>${jbossws-native-home}/deploy/lib/policy.jar</additionalClasspathElement>                  
                </additionalClasspathElements>
             </configuration>
          </plugin>

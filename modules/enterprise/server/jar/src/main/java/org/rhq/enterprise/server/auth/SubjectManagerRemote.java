@@ -18,27 +18,131 @@
  */
 package org.rhq.enterprise.server.auth;
 
+import javax.ejb.CreateException;
+import javax.ejb.Remote;
+import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 import javax.security.auth.login.LoginException;
 import javax.xml.bind.annotation.XmlSeeAlso;
 
+import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.authz.RoleManagerLocal;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService
+@Remote
 @XmlSeeAlso( { PropertySimple.class, PropertyList.class, PropertyMap.class })
 public interface SubjectManagerRemote {
+
+    /**
+     * Change the password for a user.
+     *
+     * @param  user  The logged in user's subject.
+     * @param  username The user whose password will be changed
+     * @param  password The new password for the user
+     *
+     * @throws Exception if the password could not be changed
+     */
+    @WebMethod
+    void changePassword( //
+        @WebParam(name = "user")
+        Subject user, //
+        @WebParam(name = "username")
+        String username, //
+        @WebParam(name = "password")
+        String password) //
+        throws Exception;
+
+    /**
+     * Creates a new principal (username and password) in the internal database. The password will be encoded before
+     * being stored.
+     *
+     * @param  user  The logged in user's subject.
+     * @param  username The username part of the principal
+     * @param  password The password part ofthe principal
+     *
+     * @throws Exception if the principal could not be added
+     */
+    @WebMethod
+    void createPrincipal( //
+        @WebParam(name = "user")
+        Subject user, //
+        @WebParam(name = "username")
+        String username, //
+        @WebParam(name = "password")
+        String password) throws Exception;
+
+    /**
+     * Create a a new subject. This <b>ignores</b> the roles in <code>subject</code>. The created subject will not be
+     * assigned to any roles; use the {@link RoleManagerLocal role manager} to assign roles to a subject.
+     *
+     * @param  user  The logged in user's subject.
+     * @param  subject The subject to be created.
+     *
+     * @return the newly persisted {@link Subject}
+     *
+     * @throws CreateException if there is already a subject with the same name
+     */
+    @WebMethod
+    Subject createSubject( //
+        @WebParam(name = "user")
+        Subject user, //
+        @WebParam(name = "subject")
+        Subject subject) throws CreateException;
+
+    /**
+     * Deletes the given set of users, including both the {@link Subject} and {@link Principal} objects associated with
+     * those users.
+     *
+     * @param  user  The logged in user's subject.
+     * @param  subjectIds identifies the subject IDs for all the users that are to be deleted
+     *
+     * @throws Exception if failed to delete one or more users
+     */
+    @WebMethod
+    void deleteUsers( //
+        @WebParam(name = "user")
+        Subject user, //
+        @WebParam(name = "subjectIds")
+        Integer[] subjectIds) throws Exception;
+
+    /**
+     * Looks up the existing of a subject by the given username.
+     *
+     * @param  user  The logged in user's subject.
+     * @param  username the name of the subject to look for
+     *
+     * @return the subject that was found or <code>null</code> if not found
+     */
+    @WebMethod
+    Subject findSubjectByName( //
+        @WebParam(name = "user")
+        Subject user, //
+        @WebParam(name = "username")
+        String username);
+
+    /**
+     * Check if a user is logged in.
+     *
+     * @param  username The name of the user.
+     *
+     * @return <code>true</code> if the given user is logged in; <code>false</code> if not.
+     */
+    @WebMethod
+    boolean isLoggedIn( //
+        @WebParam(name = "username")
+        String username);
+
     /**
      * Logs a user into the system. This will authenticate the given user with the given password. If the user was
      * already logged in, the current session will be used but the password will still need to be authenticated.
-
+     *
      * @param     username The name of the user.
      * @param     password The password.
      *
@@ -46,36 +150,38 @@ public interface SubjectManagerRemote {
      *
      * @exception LoginException if the login failed for some reason
      */
-    Subject login(@WebParam(name = "username")
-    String username, @WebParam(name = "password")
-    String password) throws LoginException;
+    @WebMethod
+    Subject login( //
+        @WebParam(name = "username")
+        String username, //
+        @WebParam(name = "password")
+        String password) //
+        throws LoginException;
 
     /**
      * Logs out a user.
      *
      * @param sessionId The session id for the current user
      */
-
-    void logout(@WebParam(name = "sessionId")
-    int sessionId);
-
-    /**
-     * Loads in the given subject's {@link Subject#getUserConfiguration() configuration}.
-     *
-     * @param  subjectId identifies the subject whose user configuration is to be loaded
-     *
-     * @return the subject, with its user configuration loaded
-     */
-    Subject loadUserConfiguration(@WebParam(name = "subjectId")
-    Integer subjectId);
+    @WebMethod
+    void logout( //
+        @WebParam(name = "sessionId")
+        int sessionId);
 
     /**
-     * Returns a list all subjects in the system, excluding internal system users.
+     * Updates an existing subject with new data. This does <b>not</b> cascade any changes to the roles but it will save
+     * the subject's configuration.
      *
-     * @param  pageControl A page control object.
+     * @param  user  The logged in user's subject.
+     * @param  subjectToModify the subject whose data is to be updated (which may or may not be the same as <code>user</code>)
      *
-     * @return the list of subjects paged with the given page control
+     * @return the merged subject, which may or may not be the same instance of <code>subjectToModify</code>
      */
-    PageList<Subject> getAllSubjects(@WebParam(name = "pageControl")
-    PageControl pc);
+    @WebMethod
+    Subject updateSubject( //
+        @WebParam(name = "user")
+        Subject user, //
+        @WebParam(name = "subjectToModify")
+        Subject subjectToModify);
+
 }

@@ -67,7 +67,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.auth.SubjectManagerRemote")
-//@WebContext(contextRoot = "/webservices")
 public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRemote {
     private final Log log = LogFactory.getLog(SubjectManagerBean.class);
 
@@ -161,6 +160,14 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      */
     public Subject getOverlord() {
         return sessionManager.getOverlord();
+    }
+
+    /**
+     * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#findSubjectByName(Subject,String)
+     */
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    public Subject findSubjectByName(Subject user, String username) {
+        return findSubjectByName(username);
     }
 
     /**

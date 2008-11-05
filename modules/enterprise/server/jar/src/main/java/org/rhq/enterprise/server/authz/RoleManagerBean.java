@@ -22,12 +22,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.ExcludeDefaultInterceptors;
+import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -45,7 +48,8 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
  * @author John Mazzitelli
  */
 @Stateless
-public class RoleManagerBean implements RoleManagerLocal {
+@WebService(endpointInterface = "org.rhq.enterprise.server.authz.RoleManagerRemote")
+public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -73,6 +77,15 @@ public class RoleManagerBean implements RoleManagerLocal {
         }
 
         return roles;
+    }
+
+    /**
+     * @see org.rhq.enterprise.server.authz.RoleManagerRemote#getAllRoles(Subject,PageControl)
+     */
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    public PageList<Role> getAllRoles(Subject subject, PageControl pc) {
+        return getAllRoles(pc);
     }
 
     /**
@@ -255,6 +268,15 @@ public class RoleManagerBean implements RoleManagerLocal {
     public Role updateRole(Subject whoami, Role role) {
         processDependentPermissions(role);
         return entityManager.merge(role);
+    }
+
+    /**
+     * @see org.rhq.enterprise.server.authz.RoleManagerRemote#getRoleSubjects(Subject,Integer,PageControl)
+     */
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    public PageList<Subject> getRoleSubjects(Subject subject, Integer roleId, PageControl pc) {
+        return getRoleSubjects(roleId, pc);
     }
 
     /**

@@ -276,6 +276,12 @@
       <priority value="OFF"/>
    </category>
 
+   <!-- Suppress heavy ERROR level logging generated due to EJB3SafeEndpointInvoker, which unavoidably
+        forces this exception, Hibernate has no workaround.  -->
+   <category name="org.hibernate.LazyInitializationException">
+      <priority value="OFF"/>
+   </category>
+
    <!-- log SQL statements -->
    <!--
    <category name="org.hibernate.SQL">

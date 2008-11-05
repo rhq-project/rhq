@@ -25,6 +25,7 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
+import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 
 import org.rhq.core.clientapi.agent.operation.CancelResults;
@@ -84,7 +86,8 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 
 @Stateless
-public class OperationManagerBean implements OperationManagerLocal {
+@WebService(endpointInterface = "org.rhq.enterprise.server.operation.OperationManagerRemote")
+public class OperationManagerBean implements OperationManagerLocal, OperationManagerRemote {
     private static final Log LOG = LogFactory.getLog(OperationManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -120,6 +123,30 @@ public class OperationManagerBean implements OperationManagerLocal {
         List<IntegerOptionItem> results = query.getResultList();
 
         return results;
+    }
+
+    public ResourceOperationSchedule scheduleResourceOperation(Subject whoami, int resourceId, String operationName,
+        long delay, long repeatInterval, int repeatCount, int timeout, Configuration parameters, String notes)
+        throws SchedulerException {
+
+        SimpleTrigger trigger = new SimpleTrigger();
+        if (delay < 0L) {
+            delay = 0L;
+        }
+        trigger.setRepeatCount((repeatCount < 0) ? SimpleTrigger.REPEAT_INDEFINITELY : repeatCount);
+        trigger.setRepeatInterval((repeatInterval < 0L) ? 0L : repeatInterval);
+        trigger.setStartTime(new Date(System.currentTimeMillis() + delay));
+
+        // if the user set a timeout, add it to our configuration
+        if (timeout > 0L) {
+            if (null == parameters) {
+                parameters = new Configuration();
+            }
+
+            parameters.put(new PropertySimple(OperationDefinition.TIMEOUT_PARAM_NAME, timeout));
+        }
+
+        return scheduleResourceOperation(whoami, resourceId, operationName, parameters, trigger, notes);
     }
 
     public ResourceOperationSchedule scheduleResourceOperation(Subject whoami, int resourceId, String operationName,

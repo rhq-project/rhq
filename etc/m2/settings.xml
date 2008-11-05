@@ -25,9 +25,12 @@
       <!-- The 'dev' profile enables automatic copying of artifacts to a dev RHQ container. -->
       <!--<activeProfile>dev</activeProfile>-->
 
+      <!-- The 'jdk6' profile can be used to build RHQ using JDK6. See the 'jdk6' profile block below. -->
+      <!--<activeProfile>jdk6</activeProfile>-->
+
       <!-- The 'dist' profile is for binary distribution builds and enables things such as JSP precompilation. -->
       <!--<activeProfile>dist</activeProfile>-->
-
+      
       <!--<activeProfile>oracle</activeProfile>-->
    </activeProfiles>
 

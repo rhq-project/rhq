@@ -31,7 +31,24 @@ public class SimpleNumericMeasurementFactory implements MeasurementFactory {
     // MeasurementFactory Implementation  --------------------------------------------
 
     public MeasurementData nextValue(MeasurementScheduleRequest request) {
-        MeasurementDataNumeric data = new MeasurementDataNumeric(request, Math.random());
+        // We want "random" data, but just enough randomness to possibly trigger som OOBs
+        // but not flood the system with unrealistic OOBs.
+        // I ran a test to confirm that every 10,000 executions of Math.random will produce
+        // between 1 and 4 numbers that will be lower than 0.0001 or higher than 0.9999
+        // When the random number is between .0001 and .9999, the normal metric value is the schedule id.
+        // When the random number is really low, the metric value will be 10% lower than normal.
+        // When the random number is really high, the metric value will be 10% higher than normal.
+
+        double value = request.getScheduleId();
+        double random = Math.random();
+
+        if (random < 0.0001) {
+            value = value * 0.90;
+        } else if (random > 0.9999) {
+            value = value * 1.10;
+        }
+
+        MeasurementDataNumeric data = new MeasurementDataNumeric(request, value);
         return data;
     }
 }

@@ -77,7 +77,7 @@ public class VMHealthCheckThread extends Thread {
 
     public VMHealthCheckThread(AgentMain agent) {
         super("RHQ VM Health Check Thread");
-        setDaemon(true);
+        setDaemon(false);
         this.stop = false;
         this.stopped = true;
         this.agent = agent;

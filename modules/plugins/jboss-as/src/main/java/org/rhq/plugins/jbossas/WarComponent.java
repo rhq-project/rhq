@@ -49,7 +49,6 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
-import org.rhq.plugins.applications.ApplicationResourceComponent;
 import org.rhq.plugins.jbossas.util.DeploymentUtility;
 import org.rhq.plugins.jbossas.util.WarDeploymentInformation;
 import org.rhq.plugins.jbossas.util.WarDiscoveryHelper;
@@ -61,7 +60,7 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * @author Ian Springer
  * @author Heiko W. Rupp
  */
-public class WarComponent extends ApplicationResourceComponent<JBossASServerComponent> implements OperationFacet {
+public class WarComponent extends JBossApplicationComponent implements OperationFacet {
     private static final String SERVLET_PREFIX = "Servlet.";
     public static final String CONTEXT_ROOT_CONFIG_PROP = "contextRoot";
     public static final String NAME_CONFIG_PROP = "name";

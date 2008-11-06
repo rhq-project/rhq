@@ -113,8 +113,9 @@ import org.rhq.plugins.jbossas.util.XMLConfigurationEditor;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
+import org.rhq.plugins.utils.FileUtils;
 
-/**
+ /**
  * Supports JBoss 3.2.3 through 4.2.x
  *
  * @author Greg Hinkle
@@ -431,28 +432,21 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
     public CreateResourceReport createResource(CreateResourceReport report) {
         String resourceTypeName = report.getResourceType().getName();
-
-        if (resourceTypeName.equals(RESOURCE_TYPE_DATASOURCE)) {
-            datasourceCreate(report);
-        } else if (resourceTypeName.equals(RESOURCE_TYPE_CONNECTION_FACTORY)) {
-            connectionFactoryCreate(report);
-        } else if (resourceTypeName.equals(RESOURCE_TYPE_EAR) || resourceTypeName.equals(RESOURCE_TYPE_WAR)) {
-            earWarCreate(report, resourceTypeName);
-        } else {
-            throw new UnsupportedOperationException("Unknown Resource type: " + resourceTypeName);
-        }
-
-        return report;
-    }
-
-    private void sleepAfterConfigXmlUpdate() {
-        // JBNADM-1984 - The contract with this method is that the newly created managed resource should be discoverable.
-        //               Wait here so JBoss can recognize that the new managed resource has been created.
         try {
-            Thread.sleep(5000L);
-        } catch (InterruptedException e) {
-            log.info("Sleep after Resource create interrupted", e);
+            if (resourceTypeName.equals(RESOURCE_TYPE_DATASOURCE)) {
+                datasourceCreate(report);
+            } else if (resourceTypeName.equals(RESOURCE_TYPE_CONNECTION_FACTORY)) {
+                connectionFactoryCreate(report);
+            } else if (resourceTypeName.equals(RESOURCE_TYPE_EAR) || resourceTypeName.equals(RESOURCE_TYPE_WAR)) {
+                earWarCreate(report, resourceTypeName);
+            } else {
+                throw new UnsupportedOperationException("Unknown Resource type: " + resourceTypeName);
+            }
         }
+        catch (Exception e) {
+            setErrorOnCreateResourceReport(report, e);
+        }
+        return report;
     }
 
     // JMXComponent Implementation  --------------------------------------------
@@ -641,7 +635,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         }
     }
 
-    private void datasourceCreate(CreateResourceReport report) {
+    private void datasourceCreate(CreateResourceReport report) throws Exception {
         Configuration config = report.getResourceConfiguration();
         String name = config.getSimple("jndi-name").getStringValue();
         if (DeploymentUtility.isDuplicateJndiName(connection, XMLConfigurationEditor.DATASOURCE_MBEAN_NAME, name)) {
@@ -654,12 +648,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         File dsFile = new File(deployDir, FileNameUtility.formatFileName(name) + "-ds.xml");
         DatasourceConfigurationEditor.updateDatasource(dsFile, name, report);
 
-        try {
-            deployFile(dsFile);
-        } catch (Exception e) {
-            setErrorOnCreateResourceReport(report, e.getLocalizedMessage(), e);
-            return;
-        }
+        deployFile(dsFile);
 
         String objectName = String.format("jboss.jca:name=%s,service=DataSourceBinding", name);
         // IMPORTANT: The object name must be canonicalized so it matches the resource key that
@@ -668,7 +657,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         setResourceName(report, name);
     }
 
-    private void connectionFactoryCreate(CreateResourceReport report) {
+    private void connectionFactoryCreate(CreateResourceReport report) throws MainDeployer.DeployerException {
         Configuration config = report.getResourceConfiguration();
         String name = config.getSimple("jndi-name").getStringValue();
 
@@ -681,12 +670,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         File dsFile = new File(deployDir, FileNameUtility.formatFileName(name) + "-ds.xml");
         ConnectionFactoryConfigurationEditor.updateConnectionFactory(dsFile, name, report);
 
-        try {
-            deployFile(dsFile);
-        } catch (Exception e) {
-            setErrorOnCreateResourceReport(report, e.getLocalizedMessage(), e);
-            return;
-        }
+        deployFile(dsFile);
 
         String objectName = String.format("jboss.jca:name=%s,service=ConnectionFactoryBinding", name);
         // IMPORTANT: The object name must be canonicalized so it matches the resource key that 
@@ -695,33 +679,41 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         setResourceName(report, name);
     }
 
+    static void setErrorOnCreateResourceReport(CreateResourceReport report, String message) {
+        setErrorOnCreateResourceReport(report, message, null);
+    }
+
+    static void setErrorOnCreateResourceReport(CreateResourceReport report, Exception e) {
+        setErrorOnCreateResourceReport(report, null, e);
+    }
+
     static void setErrorOnCreateResourceReport(CreateResourceReport report, String message, Exception e) {
         report.setStatus(CreateResourceStatus.FAILURE);
         report.setErrorMessage(message);
         report.setException(e);
     }
 
-    void deployFile(File file) throws Exception {
+    void deployFile(File file) throws MainDeployer.DeployerException {
         getEmsConnection();
         if (this.connection == null) {
             log.warn("Unable to deploy " + file + ", because we could not connect to the JBoss instance.");
             return;
         }
         if (this.mainDeployer == null) {
-            throw new Exception("Unable to deploy " + file + ", because MainDeployer MBean could "
+            throw new IllegalStateException("Unable to deploy " + file + ", because MainDeployer MBean could "
                 + "not be accessed - this should never happen.");
         }
         this.mainDeployer.deploy(file);
     }
 
-    void redeployFile(File file) throws Exception {
+    void redeployFile(File file) throws MainDeployer.DeployerException {
         getEmsConnection();
         if (this.connection == null) {
             log.warn("Unable to redeploy " + file + ", because we could not connect to the JBoss instance.");
             return;
         }
         if (this.mainDeployer == null) {
-            throw new Exception("Unable to redeploy " + file + ", because MainDeployer MBean could "
+            throw new IllegalStateException("Unable to redeploy " + file + ", because MainDeployer MBean could "
                 + "not be accessed - this should never happen.");
         }
         this.mainDeployer.redeploy(file);
@@ -793,120 +785,119 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         return operationsDelegate;
     }
 
-    private void earWarCreate(CreateResourceReport report, String resourceTypeName) {
+    private void earWarCreate(CreateResourceReport report, String resourceTypeName) throws Exception {
         ResourcePackageDetails details = report.getPackageDetails();
         PackageDetailsKey key = details.getKey();
         String archiveName = key.getName();
 
+        // First check to see if the file name has the correct extension. Reject if the user attempts to
+        // deploy a WAR file with a bad extension.
+        String expectedExtension = resourceTypeName.equals(RESOURCE_TYPE_EAR) ? "ear" : "war";
+
+        int lastPeriod = archiveName.lastIndexOf(".");
+        String extension = archiveName.substring(lastPeriod + 1);
+        if (lastPeriod == -1 || !expectedExtension.equals(extension)) {
+            setErrorOnCreateResourceReport(report, "Incorrect extension specified on filename [" + archiveName
+                    + "]. Expected [" + expectedExtension + "]");
+            return;
+        }
+
+        Configuration deployTimeConfiguration = details.getDeploymentTimeConfiguration();
+        String deployDirectory = deployTimeConfiguration.getSimple("deployDirectory").getStringValue();
+
+        // Verify the user did not enter a path that represents a security issue:
+        // - No absolute directories; must be relative to the configuration path
+        // - Cannot contain parent directory references
+        File relativeDeployDir = new File(deployDirectory);
+
+        if (relativeDeployDir.isAbsolute()) {
+            setErrorOnCreateResourceReport(report, "Path to deploy (deployDirectory) must be a relative path. "
+                + "Path specified: " + deployDirectory);
+            return;
+        }
+
+        if (deployDirectory.contains("..")) {
+            setErrorOnCreateResourceReport(report, "Path to deploy (deployDirectory) may not reference the parent directory. "
+                    + "Path specified: " + deployDirectory);
+            return;
+        }
+
+        // Perform the deployment
+        File deployDir = new File(getConfigurationPath(), deployDirectory);
+        FileContentDelegate deployer = new FileContentDelegate(deployDir, "", details.getPackageTypeName());
+
+        File path = deployer.getPath(details);
+        if (path.exists()) {
+            setErrorOnCreateResourceReport(report, "A " + resourceTypeName + " file named " + path.getName()
+                    + " is already deployed with path " + path + ".");
+            return;
+        }
+
+        PropertySimple zipProperty = deployTimeConfiguration.getSimple("deployZipped");
+
+        if (zipProperty == null || zipProperty.getBooleanValue() == null) {
+            setErrorOnCreateResourceReport(report, "Zipped property is required.");
+            return;
+        }
+
+        boolean zip = zipProperty.getBooleanValue();
+
+        File tempDir = resourceContext.getTemporaryDirectory();
+        File tempFile = new File(tempDir.getAbsolutePath(), "ear_war.bin");
+        OutputStream osForTempDir = new BufferedOutputStream(new FileOutputStream(tempFile));
+
+        ContentServices contentServices = contentContext.getContentServices();
+        contentServices
+            .downloadPackageBitsForChildResource(contentContext, resourceTypeName, key, osForTempDir);
+
+        osForTempDir.close();
+
+        // check for content
+        boolean valid = isOfType(tempFile, resourceTypeName);
+        if (!valid) {
+            setErrorOnCreateResourceReport(report, "Expected a " + resourceTypeName + " file, but its format/content did not match");
+            return;
+        }
+
+        InputStream isForTempDir = new BufferedInputStream(new FileInputStream(tempFile));
+        deployer.createContent(details, isForTempDir, !zip);
+
+        String vhost = null;
+        if (resourceTypeName.equals(RESOURCE_TYPE_WAR)) {
+            vhost = getVhostFromWarFile(tempFile);
+        }
+
+        // Resource key should match the following:
+        // EAR: jboss.management.local:J2EEServer=Local,j2eeType=J2EEApplication,name=rhq.ear
+        // WAR: jboss.management.local:J2EEApplication=null,J2EEServer=Local,j2eeType=WebModule,name=embedded-console.war
+
+        String resourceKey;
+        if (resourceTypeName.equals(RESOURCE_TYPE_EAR)) {
+            resourceKey = "jboss.management.local:J2EEServer=Local,j2eeType=J2EEApplication,name="
+                + archiveName;
+        } else {
+            resourceKey = "jboss.management.local:J2EEApplication=null,J2EEServer=Local,j2eeType=WebModule,name="
+                + archiveName;
+            if (!LOCALHOST.equals(vhost))
+                resourceKey += ",vhost=" + vhost;
+        }
+
+        report.setResourceName(archiveName);
+        report.setResourceKey(resourceKey);
+        report.setStatus(CreateResourceStatus.SUCCESS);
+
         try {
-            // First check to see if the file name has the correct extension. Reject if the user attempts to
-            // deploy a WAR file with a bad extension.
-            String expectedExtension;
-            if (resourceTypeName.equals(RESOURCE_TYPE_EAR)) {
-                expectedExtension = "ear";
-            } else {
-                expectedExtension = "war";
+            deployFile(path);
+        }
+        catch (MainDeployer.DeployerException e) {
+            log.debug("Failed to deploy [" + path + "] - deleting [" + path + "]...");
+            try {
+                FileUtils.deleteDirectoryContents(new File[] {path});
             }
-
-            int lastPeriod = archiveName.lastIndexOf(".");
-            String extension = archiveName.substring(lastPeriod + 1);
-            if (lastPeriod == -1 || !expectedExtension.equals(extension)) {
-                report.setStatus(CreateResourceStatus.FAILURE);
-                report.setErrorMessage("Incorrect extension specified on filename [" + archiveName + "]. Expected ["
-                    + expectedExtension + "]");
-                return;
+            catch (Exception e1) {
+                log.error("Failed to delete [" + path + "].", e1);
             }
-
-            Configuration deployTimeConfiguration = details.getDeploymentTimeConfiguration();
-            String deployDirectory = deployTimeConfiguration.getSimple("deployDirectory").getStringValue();
-
-            // Verify the user did not enter a path that represents a security issue:
-            // - No absolute directories; must be relative to the configuration path
-            // - Cannot contain parent directory references
-            File testPath = new File(deployDirectory);
-
-            if (testPath.isAbsolute()) {
-                throw new RuntimeException("Path to deploy (deployDirectory) must be a relative path. Path specified: "
-                    + deployDirectory);
-            }
-
-            if (deployDirectory.contains("..")) {
-                throw new RuntimeException(
-                    "Path to deploy (deployDirectory) may not reference the parent directory. Path specified: "
-                        + deployDirectory);
-            }
-
-            // Perform the deployment
-            FileContentDelegate deployer = new FileContentDelegate(new File(getConfigurationPath() + File.separator
-                + deployDirectory), "", details.getPackageTypeName());
-
-            File path = deployer.getPath(details);
-            if (path.exists()) {
-                report.setStatus(CreateResourceStatus.FAILURE);
-                report.setErrorMessage("A " + resourceTypeName + " file named " + path.getName() + " is already deployed"
-                        + " with path " + path + ".");
-                return;
-            }
-
-            PropertySimple zipProperty = deployTimeConfiguration.getSimple("deployZipped");
-
-            if (zipProperty != null && zipProperty.getBooleanValue() != null) {
-                boolean zip = zipProperty.getBooleanValue();
-
-                File tempDir = resourceContext.getTemporaryDirectory();
-                File tempFile = new File(tempDir.getAbsolutePath(), "ear_war.bin");
-                OutputStream osForTempDir = new BufferedOutputStream(new FileOutputStream(tempFile));
-
-                ContentServices contentServices = contentContext.getContentServices();
-                contentServices
-                    .downloadPackageBitsForChildResource(contentContext, resourceTypeName, key, osForTempDir);
-
-                osForTempDir.close();
-
-                // check for content 
-                boolean valid = isOfType(tempFile, resourceTypeName);
-                if (!valid) {
-                    report.setStatus(CreateResourceStatus.FAILURE);
-                    report.setErrorMessage("Expected a " + resourceTypeName
-                        + " file, but its format/content did not match");
-                    return;
-                }
-
-                InputStream isForTempDir = new BufferedInputStream(new FileInputStream(tempFile));
-                deployer.createContent(details, isForTempDir, !zip);
-
-                String vhost = null;
-                if (resourceTypeName.equals(RESOURCE_TYPE_WAR)) {
-                    vhost = getVhostFromWarFile(tempFile);
-                }
-
-                // Resource key should match the following:      
-                // EAR: jboss.management.local:J2EEServer=Local,j2eeType=J2EEApplication,name=rhq.ear      
-                // WAR: jboss.management.local:J2EEApplication=null,J2EEServer=Local,j2eeType=WebModule,name=embedded-console.war
-
-                String resourceKey;
-                if (resourceTypeName.equals(RESOURCE_TYPE_EAR)) {
-                    resourceKey = "jboss.management.local:J2EEServer=Local,j2eeType=J2EEApplication,name="
-                        + archiveName;
-                } else {
-                    resourceKey = "jboss.management.local:J2EEApplication=null,J2EEServer=Local,j2eeType=WebModule,name="
-                        + archiveName;
-                    if (!LOCALHOST.equals(vhost))
-                        resourceKey += ",vhost=" + vhost;
-                }
-
-                report.setResourceName(archiveName);
-                report.setResourceKey(resourceKey);
-                report.setStatus(CreateResourceStatus.SUCCESS);
-                sleepAfterConfigXmlUpdate();
-            } else {
-                report.setStatus(CreateResourceStatus.FAILURE);
-                report.setErrorMessage("Zipped property is required");
-            }
-        } catch (Throwable t) {
-            log.error("Error deploying application for report: " + report, t);
-            report.setException(t);
-            report.setStatus(CreateResourceStatus.FAILURE);
+            throw e;
         }
     }
 
@@ -1180,5 +1171,5 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         }
 
         return connection;
-    }
+    }   
 }

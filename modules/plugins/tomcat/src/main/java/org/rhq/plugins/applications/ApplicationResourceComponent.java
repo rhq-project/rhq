@@ -83,7 +83,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
      */
     private ApplicationVersions versions;
 
-    private static final String FILENAME_PLUGIN_CONFIG_PROP = "filename";
+    protected static final String FILENAME_PLUGIN_CONFIG_PROP = "filename";
 
     private static final String APPLICATION_PATH_TRAIT = "Application.path";
     private static final String APPLICATION_EXPLODED_TRAIT = "Application.exploded";
@@ -357,6 +357,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
         return this.resourceContext.getParentResourceComponent();
     }
 
+
     // Private  --------------------------------------------
 
     /**
@@ -367,7 +368,6 @@ public class ApplicationResourceComponent<T extends JMXComponent>
      * @return will not be <code>null</code> 
      */
     private String determinePackageName(String fullFileName) {
-
         // There was a change that caused WAR files to have a trailing slash in the file name. Account for this.
         if (fullFileName.endsWith(File.separator)) {
             fullFileName = fullFileName.substring(0, fullFileName.length() - 1);
@@ -412,7 +412,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
      *
      * @return response populated to reflect a failure
      */
-    private DeployPackagesResponse failApplicationDeployment(String errorMessage, ResourcePackageDetails packageDetails) {
+    protected DeployPackagesResponse failApplicationDeployment(String errorMessage, ResourcePackageDetails packageDetails) {
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
 
         DeployIndividualPackageResponse packageResponse =

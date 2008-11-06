@@ -2066,7 +2066,7 @@
 
       <service name="Enterprise Application (EAR)"
                subCategory="Applications"
-               class="org.rhq.plugins.applications.ApplicationResourceComponent"
+               class="org.rhq.plugins.jbossas.JBossApplicationComponent"
                discovery="org.rhq.plugins.applications.ApplicationDiscoveryComponent"
                description="Enterprise Application"
                createDeletePolicy="both"

@@ -52,25 +52,25 @@ public class MainDeployer {
         this.redeployOperation = EmsUtility.getOperation(mainDeployer, "redeploy", URL.class);
     }
 
-    public void deploy(File file) throws Exception {
+    public void deploy(File file) throws DeployerException {
         log.debug("Deploying " + file + "...");
         try {
             URL url = toURL(file);
             this.deployOperation.invoke(new Object[]{url});
         }
         catch (RuntimeException e) {
-            throw new Exception("Failed to deploy " + file, e);
+            throw new DeployerException("Failed to deploy " + file, e);
         }
     }
 
-    public void redeploy(File file) throws Exception {
+    public void redeploy(File file) throws DeployerException {
         log.debug("Redeploying " + file + "...");
         try {
             URL url = toURL(file);
             this.redeployOperation.invoke(new Object[]{url});
         }
         catch (RuntimeException e) {
-            throw new Exception("Failed to redeploy " + file, e);
+            throw new DeployerException("Failed to redeploy " + file, e);
         }
     }
 
@@ -83,5 +83,16 @@ public class MainDeployer {
             throw new IllegalStateException(e);
         }
         return url;
+    }
+
+    public class DeployerException extends Exception
+    {
+        DeployerException(String message) {
+            super(message);
+        }
+
+        DeployerException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 }

@@ -45,6 +45,7 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -269,8 +270,18 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
         Configuration newOne = report.getConfiguration();
-        // TODO Auto-generated method stub
+        String mbeanName = context.getResourceKey();
+        File file = DeploymentUtility.getDescriptorFile(parentServer.getEmsConnection(), mbeanName);
 
+        CacheConfigurationHelper helper = new CacheConfigurationHelper();
+        try {
+            helper.writeConfig(file, newOne, mbeanName, true);
+            report.setStatus(ConfigurationUpdateStatus.SUCCESS);
+        } catch (Exception e) {
+            log.error(e); // TODO do more?
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            report.setErrorMessageFromThrowable(e);
+        }
     }
 
 }

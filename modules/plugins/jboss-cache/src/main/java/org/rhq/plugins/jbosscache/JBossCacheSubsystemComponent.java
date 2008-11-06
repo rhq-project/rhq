@@ -23,8 +23,6 @@
 package org.rhq.plugins.jbosscache;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -85,57 +83,25 @@ public class JBossCacheSubsystemComponent<T extends JMXComponent> implements Res
         File deployDir = new File(parentResourceComponent.getConfigurationPath() + "/deploy");
         File deploymentFile = new File(deployDir, FileNameUtility.formatFileName(name) + "-cache-service.xml");
 
-        FileOutputStream fos = null;
         String flavour = config.getSimple("Flavour").getStringValue();
         boolean isTc = false;
         if (flavour != null && flavour.startsWith("tree"))
             isTc = true;
 
+        String mbeanName = "jboss.cache:name=" + name;
         try {
-            fos = new FileOutputStream(deploymentFile);
-            fos.write("<server>\n".getBytes());
-            fos.write(("  <mbean name=\"jboss.cache:name=" + name + "\"\n").getBytes());
-            if (isTc)
-                fos.write("      code=\"org.jboss.cache.TreeCache\">\n".getBytes());
-            else
-                fos.write("      code=\"org.jboss.cache.PojoCache\">\n".getBytes());
-            fos.write("    <depends>jboss:service=TransactionManager</depends>".getBytes());
+            CacheConfigurationHelper helper = new CacheConfigurationHelper();
+            helper.writeConfig(deploymentFile, config, mbeanName, false);
 
-            for (String propName : config.getSimpleProperties().keySet()) {
-
-                if (propName.equals("Flavour")) // Skip this, this is to set the mbean class
-                    continue;
-
-                String propVal = config.getSimple(propName).getStringValue();
-                fos.write(("    <attribute name=\"" + propName + "\">").getBytes());
-                if (propName.equals("ClusterConfig"))
-                    fos.write("\n".getBytes());
-                fos.write(propVal.getBytes());
-                if (propName.equals("ClusterConfig"))
-                    fos.write("\n".getBytes());
-                fos.write(("</attribute>\n").getBytes());
-            }
-            fos.write("  </mbean>\n".getBytes());
-            fos.write("</server>\n".getBytes());
-            fos.flush();
-
-        } catch (IOException ioe) {
+        } catch (Exception ioe) {
             ioe.printStackTrace(); // TODO remove later
             report.setErrorMessage(ioe.getLocalizedMessage());
             report.setException(ioe);
             report.setStatus(CreateResourceStatus.FAILURE);
             return report;
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (Exception e) {
-                    log.error("Error closing output stream: ", e);
-                }
-            }
         }
 
-        String objectName = "jboss.cache:name=" + name;
+        String objectName = mbeanName;
         if (isTc)
             objectName += ",treecache-interceptor=CacheMgmtInterceptor";
         else

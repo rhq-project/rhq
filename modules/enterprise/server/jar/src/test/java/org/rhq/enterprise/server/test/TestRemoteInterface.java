@@ -12,12 +12,15 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
@@ -41,6 +44,7 @@ public class TestRemoteInterface extends AbstractEJB3Test {
     static private final boolean TESTS_ENABLED = false;
 
     static private final String WSDL_URL_PREFIX = "http://127.0.0.1:7080/rhq-rhq-enterprise-server-ejb3/";
+    static private final String TARGET_NS_CONFIGURATION_MANAGER = "http://configuration.server.enterprise.rhq.org/";
     static private final String TARGET_NS_OPERATION_MANAGER = "http://operation.server.enterprise.rhq.org/";
     static private final String TARGET_NS_RESOURCE_MANAGER = "http://resource.server.enterprise.rhq.org/";
     static private final String TARGET_NS_ROLE_MANAGER = "http://authz.server.enterprise.rhq.org/";
@@ -255,4 +259,48 @@ public class TestRemoteInterface extends AbstractEJB3Test {
         schedules = operationManager.getScheduledResourceOperations(user, testAS.getResource().getId());
         assertTrue(schedules.isEmpty());
     }
+
+    @Test(enabled = true)
+    public void testUpdateConfiguration() throws Exception {
+
+        URL wsdlURL = new URL(WSDL_URL_PREFIX + "SubjectManagerBean?wsdl");
+        QName serviceName = new QName(TARGET_NS_SUBJECT_MANAGER, "SubjectManagerBeanService");
+        Service service = Service.create(wsdlURL, serviceName);
+        subjectManager = service.getPort(SubjectManagerRemote.class);
+
+        user = subjectManager.login("ws-test", "ws-test");
+
+        wsdlURL = new URL(WSDL_URL_PREFIX + "ResourceManagerBean?wsdl");
+        serviceName = new QName(TARGET_NS_RESOURCE_MANAGER, "ResourceManagerBeanService");
+        service = Service.create(wsdlURL, serviceName);
+        ResourceManagerRemote resourceManager = service.getPort(ResourceManagerRemote.class);
+
+        PageList<ResourceComposite> resources = resourceManager.findResourceComposites(user, null, "RHQ Agent", 0,
+            null, PageControl.getUnlimitedInstance());
+
+        assertNotNull(resources);
+        assertTrue(resources.size() >= 1);
+
+        ResourceComposite testAgent = null;
+        for (ResourceComposite resource : resources) {
+            if (resource.getAvailability().equals(AvailabilityType.UP)) {
+                testAgent = resource;
+                break;
+            }
+        }
+
+        assertNotNull("Test requires an available RHQ Agent, please start an RHQ Agent", testAgent);
+
+        wsdlURL = new URL(WSDL_URL_PREFIX + "ConfigurationManagerBean?wsdl");
+        serviceName = new QName(TARGET_NS_CONFIGURATION_MANAGER, "ConfigurationManagerBeanService");
+        service = Service.create(wsdlURL, serviceName);
+        ConfigurationManagerRemote configManager = service.getPort(ConfigurationManagerRemote.class);
+
+        // Configuration pconfig = configManager.getCurrentPluginConfiguration(user, testAgent.getResource().getId());
+
+        Configuration config = configManager.getActiveResourceConfiguration(user, testAgent.getResource().getId());
+        assertNotNull(config);
+        assertEquals("plugins", config.get("plugins directory"));
+    }
+
 }

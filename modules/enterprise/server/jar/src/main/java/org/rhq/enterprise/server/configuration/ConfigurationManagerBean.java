@@ -27,6 +27,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.jws.WebService;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
@@ -92,7 +93,8 @@ import org.rhq.enterprise.server.util.QuartzUtil;
  * @author Ian Springer
  */
 @Stateless
-public class ConfigurationManagerBean implements ConfigurationManagerLocal {
+@WebService(endpointInterface = "org.rhq.enterprise.server.configuration.ConfigurationManagerRemote")
+public class ConfigurationManagerBean implements ConfigurationManagerLocal, ConfigurationManagerRemote {
     private final Log log = LogFactory.getLog(ConfigurationManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -221,6 +223,21 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal {
         configurationManager.completePluginConfigurationUpdate(update);
 
         return update;
+    }
+
+    public Configuration getActiveResourceConfiguration(Subject whoami, int resourceId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+
+        if (resource == null) {
+            throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
+        }
+
+        if (!authorizationManager.canViewResource(whoami, resource.getId())) {
+            throw new PermissionException("User [" + whoami.getName()
+                + "] does not have permission to view resource configuration for [" + resource + "]");
+        }
+
+        return getActiveResourceConfiguration(resourceId);
     }
 
     public Configuration getActiveResourceConfiguration(int resourceId) {

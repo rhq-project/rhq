@@ -30,64 +30,12 @@
                              REPL_ASYNC
                              REPL_SYNC
     -->
-    <attribute name="CacheMode">REPL_SYNC</attribute>
+    <attribute name="CacheMode">LOCAL</attribute>
       
       <!-- Must be true if any entity deployment uses a scoped classloader -->
       <attribute name="UseRegionBasedMarshalling">true</attribute>
       <!-- Must match the value of "useRegionBasedMarshalling" -->
       <attribute name="InactiveOnStartup">true</attribute>
-
-	  <!-- 
-	        JGroups protocol stack config in XML format.
-		    
-		    On Windows machines, because of the media sense feature
-            being broken with multicast (even after disabling media sense)
-            set the UDP.loopback attribute to true
-      -->     
-      <attribute name="ClusterConfig">
-         <config>
-            <UDP mcast_addr="${jgroups.udp.mcast_addr:230.1.2.3}" 
-                 mcast_port="${jboss.ejb3entitypartition.mcast_port:43333}"
-                 bind_addr="${jgroups.bind_addr}"
-                 tos="8"
-                 ucast_recv_buf_size="20000000"
-                 ucast_send_buf_size="640000"
-                 mcast_recv_buf_size="25000000"
-                 mcast_send_buf_size="640000"
-                 loopback="${rhq.server.startup.partition.udpLoopback:false}"
-                 discard_incompatible_packets="true"
-                 enable_bundling="false"
-                 max_bundle_size="64000"
-                 max_bundle_timeout="30"
-                 use_incoming_packet_handler="true"
-                 use_outgoing_packet_handler="false"
-                 ip_ttl="${jgroups.udp.ip_ttl:2}"
-                 down_thread="false" up_thread="false"/>
-            <PING timeout="2000"
-                  down_thread="false" up_thread="false" num_initial_members="3"/>
-            <MERGE2 max_interval="100000"
-                    down_thread="false" up_thread="false" min_interval="20000"/>
-            <FD_SOCK down_thread="false" up_thread="false"/>
-            <FD timeout="10000" max_tries="5" down_thread="false" up_thread="false" shun="true"/>
-            <VERIFY_SUSPECT timeout="1500" down_thread="false" up_thread="false"/>
-            <pbcast.NAKACK max_xmit_size="60000"
-                    use_mcast_xmit="false" gc_lag="0"
-                    retransmit_timeout="300,600,1200,2400,4800"
-                    down_thread="false" up_thread="false"
-                    discard_delivered_msgs="true"/>
-            <UNICAST timeout="300,600,1200,2400,3600"
-                    down_thread="false" up_thread="false"/>
-            <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
-                    down_thread="false" up_thread="false"
-                    max_bytes="400000"/>
-            <pbcast.GMS print_local_addr="true" join_timeout="3000"
-                    down_thread="false" up_thread="false"
-                    join_retry_timeout="2000" shun="true"
-                    view_bundling="true"/>
-            <FRAG2 frag_size="60000" down_thread="false" up_thread="false"/>
-            <pbcast.STATE_TRANSFER down_thread="false" up_thread="false" use_flush="false"/>
-        </config>
-      </attribute>
 
     <!--    The max amount of time (in milliseconds) we wait until the
             initial state (ie. the contents of the cache) are retrieved from

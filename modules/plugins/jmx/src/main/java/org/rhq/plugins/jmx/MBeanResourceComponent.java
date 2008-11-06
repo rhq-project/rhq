@@ -408,6 +408,10 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
         return this.resourceContext.getParentResourceComponent().getEmsConnection();
     }
 
+    protected ResourceContext<T> getResourceContext() {
+        return this.resourceContext;
+    }
+
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         return invokeOperation(name, parameters, getEmsBean());
     }

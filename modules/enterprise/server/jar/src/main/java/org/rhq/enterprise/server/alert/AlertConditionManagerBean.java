@@ -87,9 +87,11 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
         }
 
         String queryName = null;
+        String countQueryName = AlertCondition.QUERY_BY_CATEGORY_COUNT_PARAMETERIZED; // default
 
         if (category == AlertConditionCategory.BASELINE) {
             queryName = AlertCondition.QUERY_BY_CATEGORY_BASELINE;
+            countQueryName = AlertCondition.QUERY_BY_CATEGORY_COUNT_BASELINE; // no countQuery parameters needed
 
         } else if (category == AlertConditionCategory.CHANGE) {
             queryName = AlertCondition.QUERY_BY_CATEGORY_CHANGE;
@@ -116,8 +118,12 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
 
         Query query = entityManager.createNamedQuery(queryName);
         PersistenceUtility.setDataPage(query, pageControl);
-        Query queryCount = entityManager.createNamedQuery(AlertCondition.QUERY_BY_CATEGORY_COUNT_PARAMETERIZED);
-        queryCount.setParameter("category", category);
+        Query queryCount = entityManager.createNamedQuery(countQueryName);
+
+        // only the default parameterized count query needs a parameter
+        if (countQueryName == AlertCondition.QUERY_BY_CATEGORY_COUNT_PARAMETERIZED) {
+            queryCount.setParameter("category", category);
+        }
 
         long totalCount = (Long) queryCount.getSingleResult();
         List<? extends AbstractAlertConditionCategoryComposite> list = query.getResultList();

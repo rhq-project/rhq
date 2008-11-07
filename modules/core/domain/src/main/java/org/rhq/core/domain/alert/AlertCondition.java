@@ -73,6 +73,18 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "     AND mb IS NOT NULL " //
         + "     AND ac.category = 'BASELINE' " //
         + "ORDER BY ac.id"), //
+    @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_COUNT_BASELINE, query = "" //
+        + "  SELECT count(ac.id) " //
+        + "    FROM AlertCondition AS ac " //
+        + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms JOIN ms.baseline mb " //
+        + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
+        + "     AND ad.enabled = TRUE " //
+        + "     AND ad.deleted = FALSE " //
+        + "     AND ms.definition = md " //
+        + "     AND ms.resource = ad.resource " //
+        + "     AND mb IS NOT NULL " //
+        + "     AND ac.category = 'BASELINE' "), // 
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_CHANGE, query = "" //
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionChangesCategoryComposite " //
         + "       ( " //
@@ -210,7 +222,9 @@ public class AlertCondition implements Serializable {
     public static final String QUERY_BY_CATEGORY_CONTROL = "AlertCondition.byCategoryControl";
     public static final String QUERY_BY_CATEGORY_THRESHOLD = "AlertCondition.byCategoryThreshold";
     public static final String QUERY_BY_CATEGORY_EVENT = "AlertCondition.byCategoryEvent";
-    public static final String QUERY_BY_CATEGORY_COUNT_PARAMETERIZED = "AlertCondition.byCategoryCount";
+
+    public static final String QUERY_BY_CATEGORY_COUNT_BASELINE = "AlertCondition.byCategoryCountBaseline";
+    public static final String QUERY_BY_CATEGORY_COUNT_PARAMETERIZED = "AlertCondition.byCategoryCountParameterized";
 
     public static final String RECOVERY_CONDITIONAL_EXPRESSION = "" //
         + " ( ad.recoveryId = 0 " //

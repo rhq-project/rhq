@@ -5,7 +5,7 @@
    <table name="RHQ_MEASUREMENT_DEF">
 
       <!-- === required columns === -->
-        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
       <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE(ID)"/>
       <column name="NAME" type="VARCHAR2" size="100" required="true"/>
 
@@ -25,8 +25,8 @@
       <column name="DESCRIPTION" type="VARCHAR2" size="500"/>
       <column name="DESTINATION_TYPE" type="VARCHAR2" size="100"/>
 
-        <column name="VERSION" type="INTEGER"/>
-        <!-- for optimistic locking -->
+      <column name="VERSION" type="INTEGER"/>
+      <!-- for optimistic locking -->
 
       <!-- === business key (RESOURCE_TYPE_ID + NAME + PER_MIN) === -->
       <index name="RHQ_METRIC_DEF_KEY_IDX" unique="true">
@@ -38,7 +38,7 @@
 
 
    <table name="RHQ_MEASUREMENT_SCHED">
-        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
 
       <column name="ENABLED" type="BOOLEAN" default="false"/>
       <column name="MTIME" type="LONG" />
@@ -54,7 +54,7 @@
 
 
    <table name="RHQ_MEASUREMENT_BLINE">
-        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+      <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
 
       <column name="BL_USER_ENTERED" type="BOOLEAN" default="false" required="true"/>
       <column name="BL_MIN" type="DOUBLE" required="true"/>
@@ -139,7 +139,7 @@
 
 
    <table name="RHQ_CALLTIME_DATA_KEY">
-        <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
+      <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
       <column name="SCHEDULE_ID" type="INTEGER" required="true"/>
       <column name="CALL_DESTINATION" type="VARCHAR2" size="4000" required="true"/>
       <index name="RHQ_CALLTIME_DATA_KEY_IDX" unique="true">
@@ -150,7 +150,7 @@
 
 
    <table name="RHQ_CALLTIME_DATA_VALUE">
-        <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
+      <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
       <column name="KEY_ID" type="INTEGER" references="RHQ_CALLTIME_DATA_KEY" required="true"/>
       <column name="BEGIN_TIME" type="LONG" required="true"/>
       <column name="END_TIME" type="LONG" required="true"/>
@@ -162,7 +162,7 @@
 
 
    <table name="RHQ_AVAILABILITY">
-        <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
+      <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
       <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE(ID)"/>
       <column name="START_TIME" type="LONG" required="true" />
       <column name="END_TIME" type="LONG" required="false" />
@@ -178,9 +178,21 @@
       </index>
    </table>
 
+   <!-- !!!!! REMOVED !!!!! -->
+   <table name="RHQ_MEASUREMENT_OOB" obsolete="true">
+      <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
+      <column name="SCHEDULE_ID" type="INTEGER" references="RHQ_MEASUREMENT_SCHED(ID)" required="true"/>
+      <column name="OCCURRED" type="LONG" required="true"/>
+      <column name="DIFF" type="DOUBLE" required="true"/>
+
+      <index name="RHQ_MEASUREMENT_OOB_IDX" unique="true">
+         <field ref="SCHEDULE_ID" />
+         <field ref="OCCURRED" />
+      </index>
+   </table>
+
    <table name="RHQ_NUMBERS">
-        <column name="i" type="INTEGER" default="sequence-only" initial="10001"
-         primarykey="true" required="true" />
+      <column name="i" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true" />
    </table>
 
 

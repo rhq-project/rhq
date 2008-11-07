@@ -493,6 +493,11 @@ public class DBSetup {
             List<Table> tables = Table.getTables(root_node, getDatabaseType(), this);
 
             for (Table table : tables) {
+                if (table.isObsolete()) {
+                    log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_IGNORING_OBSOLETE_TABLE, table.getName());
+                    continue;
+                }
+
                 if (table_name != null) {
                     if (!table_name.equalsIgnoreCase(table.getName())) {
                         continue;
@@ -977,7 +982,7 @@ public class DBSetup {
         Statement stmt;
 
         log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_DO_SQL, sql);
-        
+
         // Cache the original commit option
         boolean committing = this.getConnection().getAutoCommit();
         if (committing) {

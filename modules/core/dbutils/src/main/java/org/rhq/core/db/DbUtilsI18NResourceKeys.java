@@ -159,6 +159,10 @@ public interface DbUtilsI18NResourceKeys {
         @I18NMessage(value = "[{0}] Tabellen konnten nicht gelöscht werden ", locale = "de") })
     String DBSETUP_UNINSTALL_FAILED_TABLES = "DBSetup.uninstall.tables.failed";
 
+    @I18NMessages( { @I18NMessage("Ignoring obsolete table [{0}]"),
+        @I18NMessage(value = "Ignorieren von veralteten Tabelle [{0}]", locale = "de") })
+    String DBSETUP_IGNORING_OBSOLETE_TABLE = "DBSetup.ignoring-obsolete-table";
+
     @I18NMessages( { @I18NMessage("Setting up table [{0}]"),
         @I18NMessage(value = "Setze Tabelle [{0}] auf", locale = "de") })
     String DBSETUP_SETTING_UP_TABLE = "DBSetup.setting-up-table";

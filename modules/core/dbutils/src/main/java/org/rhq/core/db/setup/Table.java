@@ -46,6 +46,7 @@ class Table {
     private Collection<Index> m_collIndexes;
     private Collection<Constraint> m_collConstraints;
     private DataSet m_dataset;
+    private boolean m_obsolete = false; // will be true if the table should no longer exist in the schema
 
     protected Table(Node node, DatabaseType dbtype, DBSetup dbsetup) throws SAXException {
         m_parent = dbsetup;
@@ -72,6 +73,9 @@ class Table {
                     this.m_storage = nodeMap.getNodeValue();
                 } else if (nodeMap.getNodeName().equalsIgnoreCase("engine")) {
                     this.m_engine = nodeMap.getNodeValue();
+                } else if (nodeMap.getNodeName().equalsIgnoreCase("obsolete")) {
+                    this.m_obsolete = (nodeMap.getNodeValue() != null)
+                        && nodeMap.getNodeValue().equalsIgnoreCase("true");
                 } else {
                     System.out.println("Unknown attribute \'" + nodeMap.getNodeName() + "\' in tag \'table\'");
                 }
@@ -163,6 +167,10 @@ class Table {
 
     protected String getEngine() {
         return this.m_engine;
+    }
+
+    protected boolean isObsolete() {
+        return this.m_obsolete;
     }
 
     protected void getCreateCommands(List cmds, Collection typemaps, DatabaseType dbtype) {

@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.measurement;
 
 import java.lang.management.ManagementFactory;
@@ -82,13 +82,13 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
 
     static final int FACET_METHOD_TIMEOUT = 30 * 1000; // 30 seconds
 
-    private static final Log LOG = LogFactory.getLog(MeasurementManager.class);
+    static final Log LOG = LogFactory.getLog(MeasurementManager.class);
 
     private ScheduledThreadPoolExecutor collectorThreadPool;
     private ScheduledThreadPoolExecutor senderThreadPool;
 
     private MeasurementSenderRunner measurementSenderRunner;
-    private MeasurementCollectorRunner measurementCollectorRunner;
+    MeasurementCollectorRunner measurementCollectorRunner;
 
     private PluginContainerConfiguration configuration;
 
@@ -155,7 +155,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
     }
 
-    private class MeasurementCollectionRequester implements Runnable {
+    class MeasurementCollectionRequester implements Runnable {
         public void run() {
             try {
                 while (true) {
@@ -395,9 +395,11 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     //       corresponding metric defs - one for the raw value and one for the derived per-minute value. There's no
     //       way to tell which value the caller wants. For now, it assumes the caller wants the raw value.
     //      (ips, 09/05/08)
-    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType, String... measurementName) {
+    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType,
+        String... measurementName) {
         MeasurementFacet measurementFacet;
-        Resource resource = PluginContainer.getInstance().getInventoryManager().getResourceContainer(resourceId).getResource();
+        Resource resource = PluginContainer.getInstance().getInventoryManager().getResourceContainer(resourceId)
+            .getResource();
         ResourceType resourceType = resource.getResourceType();
         if (resourceType.getMetricDefinitions().isEmpty())
             return Collections.emptySet();
@@ -571,7 +573,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     }
 
     private static class CachedValue {
-        private CachedValue(long timestamp, double value) {
+        CachedValue(long timestamp, double value) {
             this.timestamp = timestamp;
             this.value = value;
         }

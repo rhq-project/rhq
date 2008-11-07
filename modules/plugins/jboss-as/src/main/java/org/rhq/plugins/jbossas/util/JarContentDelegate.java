@@ -61,7 +61,7 @@ public class JarContentDelegate extends FileContentDelegate {
      * if (!contentFile.exists())      return;
      *
      * // If the artifact is a directory, its contents need to be deleted first   if (contentFile.isDirectory())   {
-     *  FileUtils.deleteDirectoryContents(contentFile.listFiles());   }
+     *  TomcatFileUtils.deleteDirectoryContents(contentFile.listFiles());   }
      *
      * boolean deleteResult = contentFile.delete();
      *

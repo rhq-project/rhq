@@ -33,12 +33,13 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
- * Utilities for working with files from a plugin.
+ * Various utility methods for working with files.
  *
  * @author Jason Dobies
  * @author Ian Springer
  */
-public class FileUtils {
+// TODO: Move these methods to the util or plugin-api modules. They are in no way specific to the Tomcat plugin.
+public class TomcatFileUtils {
     /**
      * Writes the content in the input stream to the specified file.
      * NOTE: content will be closed by this.

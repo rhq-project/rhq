@@ -33,7 +33,7 @@ import java.util.Set;
 import org.rhq.core.domain.content.PackageDetails;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.plugins.utils.FileUtils;
+import org.rhq.plugins.utils.TomcatFileUtils;
 
 /**
  * Delegate class used for manipulating artifacts in a JON plugin.
@@ -85,9 +85,9 @@ public class FileContentDelegate {
         File contentFile = getPath(details);
         try {
             if (unzip) {
-                FileUtils.unzipFile(content, contentFile);
+                TomcatFileUtils.unzipFile(content, contentFile);
             } else {
-                FileUtils.writeFile(content, contentFile);
+                TomcatFileUtils.writeFile(content, contentFile);
             }
             details.setFileName(contentFile.getPath());
         } catch (IOException e) {
@@ -146,7 +146,7 @@ public class FileContentDelegate {
 
         //If the artifact is a directory, its contents need to be deleted first   
         if (contentFile.isDirectory()) {
-            FileUtils.deleteDirectoryContents(contentFile.listFiles());
+            TomcatFileUtils.deleteDirectoryContents(contentFile.listFiles());
         }
 
         boolean deleteResult = contentFile.delete();

@@ -51,7 +51,8 @@ import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
-import org.rhq.plugins.utils.FileUtils;
+import org.rhq.plugins.utils.TomcatFileUtils;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -96,7 +97,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
         try {
             if (packageFile.isDirectory()) {
                 fileToSend = File.createTempFile("rhq", ".zip");
-                FileUtils.zipFileOrDirectory(packageFile, fileToSend);
+                TomcatFileUtils.zipFileOrDirectory(packageFile, fileToSend);
             }
             else
                 fileToSend = packageFile;
@@ -123,7 +124,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
         if (file.exists())
         {
             // Package name and file name of the application are the same
-            String fileName = determinePackageName(fullFileName);
+            String fileName = new File(fullFileName).getName();
 
             ApplicationVersions versions = loadApplicationVersions();
             String version = versions.getVersion(fileName);
@@ -158,10 +159,9 @@ public class ApplicationResourceComponent<T extends JMXComponent>
         // You can only update the one application file referenced by this resource, so punch out if multiple are
         // specified
         if (packages.size() != 1) {
-            LOG.warn("Request to update an EAR/WAR file contained multiple packages");
-
+            LOG.warn("Request to update an EAR/WAR file contained multiple packages.");
             DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
-            response.setOverallRequestErrorMessage("When deploying an EAR, only one EAR can be updated at a time.");
+            response.setOverallRequestErrorMessage("When deploying an EAR/WAR, only one EAR/WAR can be updated at a time.");
             return response;
         }
 
@@ -169,7 +169,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
 
         // Find location of existing application
         String fullFileName = resourceContext.getPluginConfiguration().getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
-        String filename = determinePackageName(fullFileName);
+        String filename = new File(fullFileName).getName();
 
         // Write the new updated application to a temp file
         File tempDir = resourceContext.getTemporaryDirectory();
@@ -220,7 +220,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
 
         // Delete the existing application
         if (unzip) {
-            FileUtils.deleteDirectoryContents(existingFile.listFiles());
+            TomcatFileUtils.deleteDirectoryContents(existingFile.listFiles());
         }
         boolean deleteResult = existingFile.delete();
 
@@ -236,9 +236,9 @@ public class ApplicationResourceComponent<T extends JMXComponent>
             
             if (unzip) {
                 existingFile.mkdir();
-                FileUtils.unzipFile(tempIs, existingFile);
+                TomcatFileUtils.unzipFile(tempIs, existingFile);
             } else {
-                FileUtils.writeFile(tempIs, existingFile);
+                TomcatFileUtils.writeFile(tempIs, existingFile);
             }
 
         } catch (IOException e) {
@@ -265,7 +265,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
         // If we got this far, it was successful
 
         // Update the persistent store for this new version
-        String packageName = determinePackageName(fullFileName);
+        String packageName = new File(fullFileName).getName();
         ApplicationVersions versions = loadApplicationVersions();
         versions.putVersion(packageName, packageDetails.getVersion());
 
@@ -298,7 +298,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
         }
 
         if (file.isDirectory()) {
-            FileUtils.deleteDirectoryContents(file.listFiles());
+            TomcatFileUtils.deleteDirectoryContents(file.listFiles());
         }
 
         boolean result = file.delete();
@@ -361,27 +361,11 @@ public class ApplicationResourceComponent<T extends JMXComponent>
     // Private  --------------------------------------------
 
     /**
-     * Determines what the name of the package should be based on the full file name of the application.
-     *
-     * @param fullFileName location of the application
-     *
-     * @return will not be <code>null</code> 
-     */
-    private String determinePackageName(String fullFileName) {
-        // There was a change that caused WAR files to have a trailing slash in the file name. Account for this.
-        if (fullFileName.endsWith(File.separator)) {
-            fullFileName = fullFileName.substring(0, fullFileName.length() - 1);
-        }
-
-        return fullFileName.substring(fullFileName.lastIndexOf(File.separator) + 1);
-    }
-
-    /**
      * Returns an instantiated and loaded versions store access point.
      *
      * @return will not be <code>null</code> 
      */
-    private ApplicationVersions loadApplicationVersions() {
+    protected ApplicationVersions loadApplicationVersions() {
         if (versions == null) {
             ResourceType resourceType = super.resourceContext.getResourceType();
             String pluginName = resourceType.getPlugin();

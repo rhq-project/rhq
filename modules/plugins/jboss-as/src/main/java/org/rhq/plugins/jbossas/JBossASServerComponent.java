@@ -113,7 +113,7 @@ import org.rhq.plugins.jbossas.util.XMLConfigurationEditor;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
-import org.rhq.plugins.utils.FileUtils;
+import org.rhq.plugins.utils.TomcatFileUtils;
 
  /**
  * Supports JBoss 3.2.3 through 4.2.x
@@ -892,7 +892,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         catch (MainDeployer.DeployerException e) {
             log.debug("Failed to deploy [" + path + "] - deleting [" + path + "]...");
             try {
-                FileUtils.deleteDirectoryContents(new File[] {path});
+                TomcatFileUtils.deleteDirectoryContents(new File[] {path});
             }
             catch (Exception e1) {
                 log.error("Failed to delete [" + path + "].", e1);

@@ -100,74 +100,78 @@ public class ContentSourcePluginClassLoader extends URLClassLoader {
         ZipEntry entry;
         File extractionDirectory = null; // this is where we will actually store the files we extract
 
-        while ((entry = zis.getNextEntry()) != null) {
-            String entryName = entry.getName();
+        try {
+            while ((entry = zis.getNextEntry()) != null) {
+                String entryName = entry.getName();
 
-            // Only care about entries in the lib directory
-            if (entryName.startsWith("lib") && (entryName.length() > 4)) {
-                if (extractionDirectory == null) {
-                    extractionDirectory = createTempDirectory(tmpDirectory, pluginJarName);
-                }
-
-                int i = entryName.lastIndexOf('/');
-                if (i < 0) {
-                    i = entryName.lastIndexOf('\\');
-                }
-
-                String s = entryName.substring(i + 1);
-
-                File file = null;
-                try {
-                    if (s.endsWith(".jar")) {
-                        file = File.createTempFile(s, null, extractionDirectory);
-                        urls.add(file.toURL());
-                    } else {
-                        // All non-jar files are extracted as-is with the
-                        // same filename.
-                        file = new File(extractionDirectory, s);
-
-                        // since we have a regular file, we need to make sure the tmp dir is in classpath so it can be found
-                        URL tmpUrl = extractionDirectory.toURL();
-                        if (!urls.contains(tmpUrl)) {
-                            urls.add(tmpUrl);
-                        }
+                // Only care about entries in the lib directory
+                if (entryName.startsWith("lib") && (entryName.length() > 4)) {
+                    if (extractionDirectory == null) {
+                        extractionDirectory = createTempDirectory(tmpDirectory, pluginJarName);
                     }
 
-                    BufferedOutputStream outputStream;
+                    int i = entryName.lastIndexOf('/');
+                    if (i < 0) {
+                        i = entryName.lastIndexOf('\\');
+                    }
+
+                    String s = entryName.substring(i + 1);
+
+                    File file = null;
                     try {
-                        outputStream = new BufferedOutputStream(new FileOutputStream(file));
-                    } catch (FileNotFoundException ex) {
-                        if (file.exists() && (file.length() > 0)) {
-                            // e.g. on win32, agent running w/ dll loaded PluginDumper cannot overwrite file inuse.
-                            continue;
+                        if (s.endsWith(".jar")) {
+                            file = File.createTempFile(s, null, extractionDirectory);
+                            urls.add(file.toURI().toURL());
+                        } else {
+                            // All non-jar files are extracted as-is with the
+                            // same filename.
+                            file = new File(extractionDirectory, s);
+
+                            // since we have a regular file, we need to make sure the tmp dir is in classpath so it can be found
+                            URL tmpUrl = extractionDirectory.toURI().toURL();
+                            if (!urls.contains(tmpUrl)) {
+                                urls.add(tmpUrl);
+                            }
                         }
 
-                        throw ex;
+                        BufferedOutputStream outputStream;
+                        try {
+                            outputStream = new BufferedOutputStream(new FileOutputStream(file));
+                        } catch (FileNotFoundException ex) {
+                            if (file.exists() && (file.length() > 0)) {
+                                // e.g. on win32, agent running w/ dll loaded PluginDumper cannot overwrite file inuse.
+                                continue;
+                            }
+
+                            throw ex;
+                        }
+
+                        try {
+                            file.deleteOnExit();
+
+                            BufferedInputStream inputStream = new BufferedInputStream(zis);
+
+                            int count = 0;
+                            byte[] b = new byte[8192];
+                            while ((count = inputStream.read(b)) > -1) {
+                                outputStream.write(b, 0, count);
+                            }
+                        } finally {
+                            outputStream.flush();
+                            outputStream.close();
+                        }
+                    } catch (IOException ioe) {
+                        if (file != null) {
+                            file.delete();
+                        }
+
+                        throw ioe;
                     }
-
-                    file.deleteOnExit();
-
-                    BufferedInputStream inputStream = new BufferedInputStream(zis);
-
-                    int count = 0;
-                    byte[] b = new byte[8192];
-                    while ((count = inputStream.read(b)) > -1) {
-                        outputStream.write(b, 0, count);
-                    }
-
-                    outputStream.flush();
-                    outputStream.close();
-                } catch (IOException ioe) {
-                    if (file != null) {
-                        file.delete();
-                    }
-
-                    throw ioe;
                 }
             }
+        } finally {
+            zis.close();
         }
-
-        zis.close();
 
         return extractionDirectory;
     }

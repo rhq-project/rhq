@@ -19,8 +19,5 @@
 package org.rhq.enterprise.server.measurement;
 
 public class MeasurementConstants {
-    public static final double LOW_OOB_THRESHOLD = 0.95;
-    public static final double HIGH_OOB_THRESHOLD = 1.05;
-
     public static final long MINIMUM_COLLECTION_INTERVAL_MILLIS = 30000L;
 }

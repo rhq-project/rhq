@@ -247,7 +247,7 @@ public interface MeasurementDataManagerLocal {
 
     /**
      * Get metric display summaries for the resources of the passed compatible group, where the
-     * {@link MetricDisplaySummary} only contains the metric name, number of OOBs and number of alerts. All other fields
+     * {@link MetricDisplaySummary} only contains the metric name and number of alerts. All other fields
      * are not set.
      *
      * @param  subject subject of the caller

@@ -63,8 +63,6 @@ public interface AlertConditionCacheMonitorMBean {
 
     public int getOperationCacheElementCount();
 
-    public int getOOBCacheElementCount();
-
     public void resetAvailabilityCacheElementCounts();
 
     public void resetEventCacheElementCounts();
@@ -74,8 +72,6 @@ public interface AlertConditionCacheMonitorMBean {
     public void resetResourceConfigurationCacheElementCounts();
 
     public void resetOperationCacheElementCounts();
-
-    public void resetOOBCacheElementCounts();
 
     public void resetAllCacheElementCounts();
 
@@ -88,8 +84,6 @@ public interface AlertConditionCacheMonitorMBean {
     public void incrementResourceConfigurationCacheElementCount(int count);
 
     public void incrementOperationCacheElementCount(int count);
-
-    public void incrementOOBCacheElementCount(int count);
 
     /*
      * for out-bound traffic

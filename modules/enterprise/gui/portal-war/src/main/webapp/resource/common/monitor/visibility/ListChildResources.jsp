@@ -141,14 +141,12 @@
             <table>
                <tr>
                   <th><fmt:message key="resource.common.monitor.visibility.MeasurementTH"/></th>
-                  <th><fmt:message key="resource.common.monitor.visibility.OobTH"/></th>
                   <th><fmt:message key="resource.common.monitor.visibility.AlertTH"/></th>
                   <th><fmt:message key="resource.common.monitor.visibility.ChartTH"/></th>
                </tr>
                <c:forEach var="metricSummary" items="${summary.metricSummaries}">
                   <tr>
                      <td>${metricSummary.label}</td>
-                     <td>${metricSummary.oobCount}</td>
                      <td>${metricSummary.alertCount}</td>
                      <td>
                        <a href="javascript:menuLayers.hide();addMetric('ag,${metricSummary.parentId},${metricSummary.definitionId},${metricSummary.childTypeId}')">+</a>
@@ -221,14 +219,12 @@
          <table>
             <tr>
                <th><fmt:message key="resource.common.monitor.visibility.MeasurementTH"/></th>
-               <th><fmt:message key="resource.common.monitor.visibility.OobTH"/></th>
                <th><fmt:message key="resource.common.monitor.visibility.AlertTH"/></th>
                <th><fmt:message key="resource.common.monitor.visibility.ChartTH"/></th>
             </tr>
             <c:forEach var="metricSummary" items="${summary.metricSummaries}">
                <tr>
                   <td>${metricSummary.label}</td>
-                  <td>${metricSummary.oobCount}</td>
                   <td>${metricSummary.alertCount}</td>
                   <td>
                      <c:choose>

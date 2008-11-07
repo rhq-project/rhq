@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.measurement;
 
 import java.io.Serializable;
@@ -89,18 +89,6 @@ import javax.persistence.Table;
     @NamedQuery(name = MeasurementBaseline.QUERY_FIND_BY_RESOURCE_IDS_AND_DEF_IDS, query = "SELECT mb FROM MeasurementBaseline mb "
         + "WHERE mb.schedule.resource.id IN (:resourceIds) AND  mb.schedule.definition.id IN (:definitionIds)"),
 
-    // this query will potentially load in alot - keep composite object small (all baselines essentially)
-    // this is needed for the alert cache - which itself will require alot of memory for large inventories
-    // with large amounts of measurements getting collected
-    @NamedQuery(name = MeasurementBaseline.QUERY_FIND_ALL_DYNAMIC_MEASUREMENT_BASELINES, query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementBaselineComposite( "
-        + "       mb.id, mb.baselineMin, mb.baselineMax, mb.baselineMean, sched.id "
-        + "       ) "
-        + "FROM MeasurementBaseline mb " //
-        + "     LEFT JOIN mb.schedule sched " //
-        + "     LEFT JOIN sched.definition def " //
-        + "WHERE def.numericType = :numericType " //
-        + "     AND sched.resource.agent.id = :agentId "),
-
     // this query will potentially load in alot - keep composite object small
     @NamedQuery(name = MeasurementBaseline.QUERY_FIND_BY_COMPUTE_TIME, query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementBaselineComposite( "
         + "       mb.id, mb.baselineMin, mb.baselineMax, mb.baselineMean, sched.id "
@@ -114,7 +102,6 @@ import javax.persistence.Table;
 @SuppressWarnings("unused")
 @Table(name = "RHQ_MEASUREMENT_BLINE")
 public class MeasurementBaseline implements Serializable {
-    public static final String QUERY_FIND_ALL_DYNAMIC_MEASUREMENT_BASELINES = "MeasurementBaseline.findAllDynamicMeasurementBaselines";
     public static final String QUERY_FIND_BY_RESOURCE = "MeasurementBaseline.findBaselinesForResource";
     public static final String QUERY_FIND_BY_RESOURCE_IDS_AND_DEF_IDS = "MeasurementBaseline.findBaselineForResourceIdsAndDefinitionIds";
     public static final String QUERY_FIND_BY_COMPUTE_TIME = "MeasurementBaseline.findByComputeTime";

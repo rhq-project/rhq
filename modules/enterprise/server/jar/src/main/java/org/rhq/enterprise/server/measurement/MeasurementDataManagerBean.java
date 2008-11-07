@@ -454,12 +454,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
             }
         }
 
-        // now set the oob counts
-        Map<Integer, Integer> oobs = measurementProblemManager.getMeasurementSchedulesOOBCount(beginTime, endTime,
-            scheduleIds);
         Map<Integer, Integer> alerts = alertManager.getAlertCountForSchedules(beginTime, endTime, scheduleIds);
         for (MetricDisplaySummary sum : allMeasurementData) {
-            sum.setOobCount(oobs.get(sum.getScheduleId()));
             sum.setAlertCount(alerts.get(sum.getScheduleId()));
         }
 
@@ -559,11 +555,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
             }
         }
 
-        // now set the oob counts
-        Map<Integer, Integer> oobs = measurementProblemManager.getMeasurementSchedulesOOBCount(begin, end, scheduleIds);
         Map<Integer, Integer> alerts = alertManager.getAlertCountForSchedules(begin, end, scheduleIds);
         for (MetricDisplaySummary sum : summaries) {
-            sum.setOobCount(oobs.get(sum.getScheduleId()));
             sum.setAlertCount(alerts.get(sum.getScheduleId()));
         }
 
@@ -619,7 +612,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
             defSchedMap.put(def, sid);
         }
 
-        Map<Integer, Integer> oobs = measurementProblemManager.getMeasurementSchedulesOOBCount(begin, end, scheduleIds);
         Map<Integer, Integer> alerts = alertManager.getAlertCountForSchedules(begin, end, scheduleIds);
 
         List<MeasurementDefinition> definitions = measurementDefinitionManager.getMeasurementDefinitionsByResourceType(
@@ -645,7 +637,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
                     int sid = defSchedMap.get(defId);
                     MetricDisplaySummary mds = new MetricDisplaySummary();
                     mds.setAlertCount(alerts.get(sid));
-                    mds.setOobCount(oobs.get(sid));
                     mds.setBeginTimeFrame(begin);
                     mds.setEndTimeFrame(end);
                     mds.setDefinitionId(defId);
@@ -681,12 +672,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
             }
         }
 
-        // now set the oob counts
-        Map<Integer, Integer> oobs = measurementProblemManager.getMeasurementSchedulesOOBCount(beginTime, endTime,
-            scheduleIds);
         Map<Integer, Integer> alerts = alertManager.getAlertCountForSchedules(beginTime, endTime, scheduleIds);
         for (MetricDisplaySummary sum : summaries) {
-            sum.setOobCount(oobs.get(sum.getScheduleId()));
             sum.setAlertCount(alerts.get(sum.getScheduleId()));
         }
 
@@ -696,8 +683,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
     /**
      * get a display summary for the passed schedule
      *
-     * @param narrowed if true, don't obtain the metrical values NOTE: oobCounts need to be set by the caller. NOTE:
-     *                 alertCounts need to be set by the caller.
+     * @param narrowed if true, don't obtain the metrical values  NOTE: alertCounts need to be set by the caller.
      */
     private MetricDisplaySummary getMetricDisplaySummary(MeasurementSchedule schedule, long begin, long end,
         boolean narrowed) throws MeasurementException {
@@ -711,7 +697,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
         summary.setLabel(definition.getDisplayName());
         summary.setDescription(definition.getDescription());
         summary.setMetricSource(schedule.getResource().getName());
-        //      summary.setOobCount(problemManager.findScheduleMeasurementOutOfBoundsCount(begin, end, schedule.getId()));
 
         List<Resource> resources = new ArrayList<Resource>(1);
         resources.add(schedule.getResource());
@@ -985,9 +970,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
             summary.setDescription(definition.getDescription());
             summary.setMetricSource(definition.getResourceType().getName());
 
-            summary.setOobCount(measurementProblemManager.findMeasurementOutOfBoundCountForDefinitionAndResources(
-                begin, end, definitionId, resources));
-
             /*
              * Get the aggregate data from the backend and check if it is empty or not. If it is empty (for all members
              * of the group), skip over this metric.
@@ -1130,8 +1112,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
             defSchedMap.put(def, sid);
         }
 
-        Map<Integer, Integer> oobs = measurementProblemManager.getMeasurementSchedulesOOBCount(beginTime, endTime,
-            scheduleIds);
         Map<Integer, Integer> alerts = alertManager.getAlertCountForSchedules(beginTime, endTime, scheduleIds);
 
         /*
@@ -1155,7 +1135,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
                         int sid = defSched.get(def.getId());
                         sum.setScheduleId(sid);
                         sum.setAlertCount(alerts.get(sid));
-                        sum.setOobCount(oobs.get(sid));
                         summaries.add(sum);
                     }
                 }

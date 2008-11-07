@@ -40,7 +40,6 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -105,9 +104,6 @@ public class MeasurementTestBean implements MeasurementTestLocal {
             res.addSchedule(schedule);
         }
 
-        MeasurementOutOfBounds oob = new MeasurementOutOfBounds(res.getSchedules().iterator().next(), System
-            .currentTimeMillis(), 1L);
-        entityManager.persist(oob);
         entityManager.flush();
     }
 

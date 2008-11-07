@@ -66,7 +66,6 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
-import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -214,9 +213,6 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 // add trait data
                 createNewTraitData(newResource, 0, 100);
 
-                // add OOB data
-                createNewOOBData(newResource, 0, 1000, em);
-
                 getTransactionManager().commit();
             } catch (Throwable t) {
                 getTransactionManager().rollback();
@@ -286,18 +282,6 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             // implement trait purging
             //assert persistedTraits.size() == 1 : "bad purged trait data:" + persistedTraits.size();
 
-            // check OOB data
-            MeasurementSchedule measSchedule = null;
-            for (MeasurementSchedule sched : res.getSchedules()) {
-                if (sched.getDefinition().getDataType() == DataType.MEASUREMENT) {
-                    measSchedule = sched;
-                    break;
-                }
-            }
-            assert measSchedule != null : "why don't we have a meas schedule?";
-            assert measSchedule.getOutOfBounds().size() == 0 : "didn't purge all OOB data: "
-                + measSchedule.getOutOfBounds().size();
-
         } finally {
             getTransactionManager().rollback();
             em.close();
@@ -339,25 +323,6 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         }
 
         return;
-    }
-
-    private void createNewOOBData(Resource res, int timestamp, int count, EntityManager em) {
-        MeasurementSchedule measSchedule = null;
-        for (MeasurementSchedule sched : res.getSchedules()) {
-            if (sched.getDefinition().getDataType() == DataType.MEASUREMENT) {
-                measSchedule = sched;
-                break;
-            }
-        }
-        assert measSchedule != null : "why don't we have a normal meas schedule?";
-
-        MeasurementOutOfBounds oob;
-        for (int i = 0; i < count; i++) {
-            oob = new MeasurementOutOfBounds(measSchedule, timestamp + i, 7.7d);
-            em.persist(oob);
-            assert oob.getId() > 0 : "didn't persist OOB";
-        }
-        em.flush();
     }
 
     private void createNewTraitData(Resource res, int timestamp, int count) {

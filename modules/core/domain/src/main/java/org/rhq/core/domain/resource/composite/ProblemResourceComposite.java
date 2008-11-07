@@ -1,34 +1,34 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.resource.composite;
-
-import org.rhq.core.domain.measurement.AvailabilityType;
 
 import java.io.Serializable;
 
+import org.rhq.core.domain.measurement.AvailabilityType;
+
 /**
  * Information on a resource that is considered having a "problem" - it is either {@link AvailabilityType#DOWN down},
- * has one or more alerts, has one or more out-of-bound measurements or a combination of those three conditions.
+ * has one or more alerts, or a combination of those two conditions.
  *
  * @author John Mazzitelli
  */
@@ -40,15 +40,13 @@ public class ProblemResourceComposite implements Serializable {
     private String resourceName;
     private AvailabilityType availabilityType;
     private long numAlerts;
-    private long numOutOfBounds;
 
     public ProblemResourceComposite(int resourceId, String resourceName, AvailabilityType availabilityType,
-        long numAlerts, long numOutOfBounds) {
+        long numAlerts) {
         this.resourceId = resourceId;
         this.resourceName = resourceName;
         this.availabilityType = availabilityType;
         this.numAlerts = numAlerts;
-        this.numOutOfBounds = numOutOfBounds;
     }
 
     public int getResourceId() {
@@ -73,10 +71,6 @@ public class ProblemResourceComposite implements Serializable {
         return numAlerts;
     }
 
-    public long getNumOutOfBounds() {
-        return numOutOfBounds;
-    }
-
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder("ProblemResource: ");
@@ -85,7 +79,6 @@ public class ProblemResourceComposite implements Serializable {
         str.append("], resource-name=[" + this.resourceName);
         str.append("], availability-type=[" + this.availabilityType);
         str.append("], num-alerts=[" + this.numAlerts);
-        str.append("], num-oob=[" + this.numOutOfBounds);
         str.append("]");
 
         return str.toString();

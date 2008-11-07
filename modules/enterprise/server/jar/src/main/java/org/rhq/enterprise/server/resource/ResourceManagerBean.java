@@ -71,7 +71,6 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataKey;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
-import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationScheduleEntity;
 import org.rhq.core.domain.resource.Agent;
@@ -419,11 +418,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         q.setParameter("resourceIds", resources);
         q.executeUpdate();
 
-        // bulk delete: measurement oob, must come before MeasurementSchedule 
-        q = entityManager.createNamedQuery(MeasurementOutOfBounds.QUERY_DELETE_BY_RESOURCES);
-        q.setParameter("resources", resources);
-        q.executeUpdate();
-
         // bulk delete: measurement baseline, must come before MeasurementSchedule
         q = entityManager.createNamedQuery(MeasurementBaseline.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
@@ -444,7 +438,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         q.setParameter("resources", resources);
         q.executeUpdate();
 
-        // bulk delete: measurement schedule, must come after measurement baseline, oob, trait, and calltime data
+        // bulk delete: measurement schedule, must come after measurement baseline, trait, and calltime data
         q = entityManager.createNamedQuery(MeasurementSchedule.DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
@@ -1732,8 +1726,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public void clearResourceConfigError(int resourceId) {
         // TODO Add subject permissions to this method
 
-        Query q =
-                entityManager.createQuery("delete from ResourceError e where e.resource.id = :resourceId and e.errorType = :type");
+        Query q = entityManager
+            .createQuery("delete from ResourceError e where e.resource.id = :resourceId and e.errorType = :type");
 
         q.setParameter("resourceId", resourceId);
         q.setParameter("type", ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
@@ -1741,7 +1735,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         int updates = q.executeUpdate();
 
         if (updates > 1) {
-            log.error("Resource [" + resourceId + "] has [" + updates + "] INVALID_PLUGIN_CONFIGURATION ResourceError associated with it.");            
+            log.error("Resource [" + resourceId + "] has [" + updates
+                + "] INVALID_PLUGIN_CONFIGURATION ResourceError associated with it.");
         }
 
     }

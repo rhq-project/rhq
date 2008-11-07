@@ -37,6 +37,4 @@ public interface CachedConditionProducerLocal {
         S value, Object... extraParams) throws JMSException;
 
     void sendDeactivateAlertConditionMessage(int alertConditionId, long timestamp) throws JMSException;
-
-    void sendOutOfBoundsConditionMessage(int scheduleId, Double value, long timestamp) throws JMSException;
 }

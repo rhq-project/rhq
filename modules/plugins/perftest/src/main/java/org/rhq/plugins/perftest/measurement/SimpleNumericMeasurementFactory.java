@@ -31,8 +31,8 @@ public class SimpleNumericMeasurementFactory implements MeasurementFactory {
     // MeasurementFactory Implementation  --------------------------------------------
 
     public MeasurementData nextValue(MeasurementScheduleRequest request) {
-        // We want "random" data, but just enough randomness to possibly trigger som OOBs
-        // but not flood the system with unrealistic OOBs.
+        // We want "random" data, but just enough randomness to possibly trigger some
+        // baseline-based alert definitions, but not flood the system with unrealistic alerts.
         // I ran a test to confirm that every 10,000 executions of Math.random will produce
         // between 1 and 4 numbers that will be lower than 0.0001 or higher than 0.9999
         // When the random number is between .0001 and .9999, the normal metric value is the schedule id.

@@ -321,7 +321,7 @@ public class AlertManagerBean implements AlertManagerLocal {
             }
         }
 
-        // Now fill in those schedules without return value to have an oobCount of 0
+        // Now fill in those schedules without return value to have an alertCount of 0
         for (int scheduleId : scheduleIds) {
             if (!resMap.containsKey(scheduleId)) {
                 resMap.put(scheduleId, 0);

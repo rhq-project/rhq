@@ -30,7 +30,6 @@ import javax.jms.Session;
 
 import org.rhq.enterprise.server.alert.engine.jms.model.ActiveAlertConditionMessage;
 import org.rhq.enterprise.server.alert.engine.jms.model.InactiveAlertConditionMessage;
-import org.rhq.enterprise.server.alert.engine.jms.model.OutOfBoundsConditionMessage;
 import org.rhq.enterprise.server.alert.engine.model.AbstractCacheElement;
 
 /**
@@ -51,9 +50,6 @@ public class CachedConditionProducerBean implements CachedConditionProducerLocal
 
     @Resource(mappedName = "queue/AlertConditionQueue")
     private Queue alertConditionQueue;
-
-    @Resource(mappedName = "queue/OutOfBoundsConditionQueue")
-    private Queue outOfBoundsConditionQueue;
 
     public <T extends AbstractCacheElement<S>, S> void sendActivateAlertConditionMessage(int alertConditionId,
         long timestamp, S value, Object... extraParams) throws JMSException {
@@ -82,24 +78,6 @@ public class CachedConditionProducerBean implements CachedConditionProducerLocal
 
         // missing "value" element in the message is a negative event
         InactiveAlertConditionMessage conditionMessage = new InactiveAlertConditionMessage(alertConditionId, timestamp);
-
-        ObjectMessage message = session.createObjectMessage(conditionMessage);
-
-        sender.send(message);
-
-        connection.close();
-    }
-
-    public void sendOutOfBoundsConditionMessage(int scheduleId, Double value, long timestamp) throws JMSException {
-        Connection connection = factory.createConnection();
-        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        MessageProducer sender = session.createProducer(outOfBoundsConditionQueue);
-
-        /*
-         * The triggered alert condition gets stored as a string anyway, so until this is made more flexible we'll just
-         * send the string representation of the value for the AbstractCacheElement in the JMS message
-         */
-        OutOfBoundsConditionMessage conditionMessage = new OutOfBoundsConditionMessage(scheduleId, value, timestamp);
 
         ObjectMessage message = session.createObjectMessage(conditionMessage);
 

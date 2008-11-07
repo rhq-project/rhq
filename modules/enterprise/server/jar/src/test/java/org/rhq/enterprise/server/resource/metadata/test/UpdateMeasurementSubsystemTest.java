@@ -33,7 +33,6 @@ import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -192,8 +191,6 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
             MeasurementSchedule sched = new MeasurementSchedule(definitions1.iterator().next(), testResource);
             entityManager.persist(sched);
             entityManager.flush();
-            MeasurementOutOfBounds oob = new MeasurementOutOfBounds(sched, System.currentTimeMillis(), 0.0);
-            entityManager.persist(oob);
             MeasurementBaseline baseline = new MeasurementBaseline();
             baseline.setSchedule(sched);
             baseline.setUserEntered(true);

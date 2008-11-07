@@ -49,7 +49,6 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
-import org.rhq.core.domain.measurement.composite.MeasurementBaselineComposite;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
@@ -70,14 +69,11 @@ import org.rhq.enterprise.server.alert.engine.model.MeasurementBaselineCacheElem
 import org.rhq.enterprise.server.alert.engine.model.MeasurementNumericCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.MeasurementTraitCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.NumericDoubleCacheElement;
-import org.rhq.enterprise.server.alert.engine.model.OutOfBoundsCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.ResourceConfigurationCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.ResourceOperationCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.UnsupportedAlertConditionOperatorException;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
-import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementConstants;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -108,7 +104,6 @@ public final class AlertConditionCache {
     private enum CacheName {
         MeasurementDataCache, //
         MeasurementTraitCache, //
-        MeasurementOutOfBoundsCache, //
         ResourceOperationCache, //
         AvailabilityCache, //
         EventsCache, //
@@ -129,14 +124,12 @@ public final class AlertConditionCache {
      * structure: 
      *      map< measurementScheduleId, list < NumericDoubleCacheElement > >    (MeasurementDataNumeric cache)
      *      map< measurementScheduleId, list < MeasurementTraitCacheElement > > (MeasurementDataTrait   cache)
-     *      map< measurementScheduleId, list < OutOfBoundsCacheElement > >      (MeasurementOutOfBounds cache)
      *
      * algorithm: 
      *      Use the measurementScheduleId to find a list of cached conditions for measurement numerics.
      */
     private Map<Integer, List<NumericDoubleCacheElement>> measurementDataCache;
     private Map<Integer, List<MeasurementTraitCacheElement>> measurementTraitCache;
-    private Map<Integer, List<OutOfBoundsCacheElement>> measurementOutOfBoundsCache;
 
     /*
      * structure: 
@@ -214,13 +207,11 @@ public final class AlertConditionCache {
      */
     private Map<Integer, List<Tuple<AbstractCacheElement<?>, List<AbstractCacheElement<?>>>>> inverseAlertConditionMap;
     private Map<Integer, List<Integer>> inverseAgentConditionMap;
-    private Map<Integer, List<Integer>> inverseAgentOutOfBoundsMap;
 
     /*
      * The SLBSs used by the cache.
      */
     private AlertConditionManagerLocal alertConditionManager;
-    private MeasurementBaselineManagerLocal measurementBaselineManager;
     private MeasurementDataManagerLocal measurementDataManager;
     private SubjectManagerLocal subjectManager;
     private CachedConditionProducerLocal cachedConditionProducer;
@@ -229,7 +220,6 @@ public final class AlertConditionCache {
     private AlertConditionCache() {
         measurementDataCache = new HashMap<Integer, List<NumericDoubleCacheElement>>();
         measurementTraitCache = new HashMap<Integer, List<MeasurementTraitCacheElement>>();
-        measurementOutOfBoundsCache = new HashMap<Integer, List<OutOfBoundsCacheElement>>();
         resourceOperationCache = new HashMap<Integer, Map<Integer, List<ResourceOperationCacheElement>>>();
         availabilityCache = new HashMap<Integer, List<AvailabilityCacheElement>>();
         eventsCache = new HashMap<Integer, List<EventCacheElement>>();
@@ -238,10 +228,8 @@ public final class AlertConditionCache {
         // bookkeeping constructs for fast agent-by-agent removal of cache elements
         inverseAlertConditionMap = new HashMap<Integer, List<Tuple<AbstractCacheElement<?>, List<AbstractCacheElement<?>>>>>();
         inverseAgentConditionMap = new HashMap<Integer, List<Integer>>();
-        inverseAgentOutOfBoundsMap = new HashMap<Integer, List<Integer>>();
 
         alertConditionManager = LookupUtil.getAlertConditionManager();
-        measurementBaselineManager = LookupUtil.getMeasurementBaselineManager();
         measurementDataManager = LookupUtil.getMeasurementDataManager();
         subjectManager = LookupUtil.getSubjectManager();
         cachedConditionProducer = LookupUtil.getCachedConditionProducerLocal();
@@ -286,23 +274,6 @@ public final class AlertConditionCache {
 
             // reverse mappings are no longer needed once we unload all of the elements
             agentConditions.clear();
-        }
-
-        // then unload the baselines
-        List<Integer> agentOutOfBounds = inverseAgentOutOfBoundsMap.get(agentId);
-
-        if (agentOutOfBounds == null) {
-            log.debug("Found no OOB elements to remove for agent[id=" + agentId + "]");
-        } else {
-            log.debug("Found " + agentOutOfBounds.size() + " OOB elements to remove for agent[id=" + agentId + "]");
-            log.trace("Baselines were: " + agentOutOfBounds);
-
-            for (Integer scheduleId : agentOutOfBounds) {
-                removeOutOfBoundsCondition(scheduleId, stats);
-            }
-
-            // reverse mappings are no longer needed once we unload all of the elements
-            agentOutOfBounds.clear();
         }
 
         return stats;
@@ -362,44 +333,6 @@ public final class AlertConditionCache {
                 log.debug("Loaded " + rowsProcessed + " Alert Condition Composites of type '" + nextCategory + "'");
             }
 
-            // page thru all dynamic baselines
-            int rowsProcessed = 0;
-            PageControl pc = new PageControl();
-            pc.setPageNumber(0);
-            pc.setPageSize(PAGE_SIZE); // baseline composites are small so we can grab alot; use the setter, constructor limits this to 100
-
-            while (true) {
-                PageList<MeasurementBaselineComposite> baselines = measurementBaselineManager
-                    .getAllDynamicMeasurementBaselines(agentId, overlord, pc);
-
-                if (baselines.isEmpty()) {
-                    break; // didn't get any rows back, must not have any data or no more rows left to process
-                }
-
-                for (MeasurementBaselineComposite baseline : baselines) {
-                    // don't insert borked baselines: only when min/max is correctly non-null, non-NAN, non-INF
-                    if (isInvalidDouble(baseline.getMin()) || isInvalidDouble(baseline.getMax())) {
-                        continue; // process the next baseline
-                    }
-
-                    // safe auto-unboxing here, because min/max both guaranteed to be valid by this point
-                    insertOutOfBoundsBaseline(agentId, baseline.getId(), baseline.getMin(), baseline.getMax(), baseline
-                        .getScheduleId(), stats);
-                }
-
-                entityManagerFacade.flush();
-                entityManagerFacade.clear();
-
-                rowsProcessed += baselines.size();
-                if (rowsProcessed >= baselines.getTotalSize()) {
-                    break; // we've processed all data, we can stop now
-                }
-
-                pc.setPageNumber(pc.getPageNumber() + 1);
-            }
-
-            log.debug("Loaded " + rowsProcessed + " Measurement Baseline Composites (for OOBs)");
-
             log.debug("Loaded Alert Condition Caches for agent[id=" + agentId + "]");
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
@@ -445,14 +378,11 @@ public final class AlertConditionCache {
                 int scheduleId = datum.getScheduleId();
 
                 if (datum instanceof MeasurementDataNumeric) {
-                    // check two caches, one for measurement-based alert condition, the other strictly for OOBs
                     List<? extends NumericDoubleCacheElement> conditionCacheElements = lookupMeasurementDataCacheElements(scheduleId);
-                    List<OutOfBoundsCacheElement> outOfBoundsCacheElements = lookupOutOfBoundsCacheElements(scheduleId);
 
                     Double providedValue = ((MeasurementDataNumeric) datum).getValue();
 
                     processCacheElements(conditionCacheElements, providedValue, datum.getTimestamp(), stats);
-                    processCacheElements(outOfBoundsCacheElements, providedValue, datum.getTimestamp(), stats);
                 } else if (datum instanceof MeasurementDataTrait) {
                     List<MeasurementTraitCacheElement> cacheElements = lookupMeasurementTraitCacheElements(scheduleId);
 
@@ -609,33 +539,14 @@ public final class AlertConditionCache {
             if (matched) // send positive event in case of a match
             {
                 try {
-                    if (OutOfBoundsCacheElement.class.isInstance(cacheElement)) {
-                        // don't bother with active property for OutOfBoundsCacheElement types
-                        double providedDoubleValue = ((Double) providedValue).doubleValue();
-                        double cacheElementDoubleValue = ((Double) cacheElement.getAlertConditionValue()).doubleValue();
-                        double diff = providedDoubleValue - cacheElementDoubleValue;
-                        cachedConditionProducer.sendOutOfBoundsConditionMessage(cacheElement
-                            .getAlertConditionTriggerId(), Double.valueOf(diff), timestamp);
-
-                        if (log.isDebugEnabled()) {
-                            OutOfBoundsCacheElement oobCacheElement = ((OutOfBoundsCacheElement) cacheElement);
-                            AlertConditionOperator operator = oobCacheElement.getAlertConditionOperator();
-                            String type = (operator == AlertConditionOperator.LESS_THAN) ? "LOW" : "HIGH";
-                            log.debug("OutOfBoundsCacheElement match: baselineId="
-                                + oobCacheElement.getAlertConditionTriggerId() + "type=" + type + ", providedValue="
-                                + providedDoubleValue + ", cacheElementValue=" + cacheElementDoubleValue + ", diff="
-                                + diff + ", timestamp=" + timestamp);
-                        }
-                    } else {
-                        /*
-                         * Set the active property for alertCondition-based cache elements, and send it on its way;
-                         * Thus, even if the element is already active, we're going to send another message with the new
-                         * value
-                         */
-                        cacheElement.setActive(true); // no harm to always set active (though, technically, STATELESS operators don't need it)
-                        cachedConditionProducer.sendActivateAlertConditionMessage(cacheElement
-                            .getAlertConditionTriggerId(), timestamp, providedValue, extraParams);
-                    }
+                    /*
+                     * Set the active property for alertCondition-based cache elements, and send it on its way;
+                     * Thus, even if the element is already active, we're going to send another message with the new
+                     * value
+                     */
+                    cacheElement.setActive(true); // no harm to always set active (though, technically, STATELESS operators don't need it)
+                    cachedConditionProducer.sendActivateAlertConditionMessage(
+                        cacheElement.getAlertConditionTriggerId(), timestamp, providedValue, extraParams);
 
                     stats.matched++;
                 } catch (Exception e) {
@@ -677,32 +588,6 @@ public final class AlertConditionCache {
             log.error("There were " + errors + " alert conditions that did not fire. "
                 + "Please check the configuration of the JMS subsystem and try again. ");
         }
-    }
-
-    private boolean addToOutOfBoundsCache(Integer scheduleId, OutOfBoundsCacheElement outOfBoundsCacheElement,
-        Integer agentId, AlertConditionCacheStats stats) {
-        List<OutOfBoundsCacheElement> outOfBoundsCacheElements = measurementOutOfBoundsCache.get(scheduleId);
-
-        if (outOfBoundsCacheElements == null) {
-            outOfBoundsCacheElements = new ArrayList<OutOfBoundsCacheElement>();
-            measurementOutOfBoundsCache.put(scheduleId, outOfBoundsCacheElements);
-        }
-
-        if (log.isTraceEnabled()) {
-            log.trace("Inserted '" + OutOfBoundsCacheElement.class.getSimpleName() + "' element: " + "key="
-                + scheduleId + ", " + "value=" + outOfBoundsCacheElement);
-        }
-
-        // make sure to add bookkeeping information to the inverse cache too
-        addToInverseAlertOutOfBoundsMap(scheduleId, agentId);
-
-        // and finally update stats and return whether it was success
-        boolean success = outOfBoundsCacheElements.add(outOfBoundsCacheElement);
-        if (success) {
-            stats.created++;
-        }
-
-        return success;
     }
 
     private <T extends AbstractCacheElement<?>> boolean addTo(String mapName, Map<Integer, List<T>> cache, Integer key,
@@ -761,22 +646,6 @@ public final class AlertConditionCache {
 
         Tuple inverseTuple = new Tuple<T, List<T>>(inverseCacheElement, inverseList);
         return tuples.add(inverseTuple);
-    }
-
-    private <T extends AbstractCacheElement<?>> boolean addToInverseAlertOutOfBoundsMap(Integer scheduleId,
-        Integer agentId) {
-        List<Integer> agentOutOfBounds = inverseAgentOutOfBoundsMap.get(agentId);
-
-        if (agentOutOfBounds == null) {
-            agentOutOfBounds = new ArrayList<Integer>();
-            inverseAgentOutOfBoundsMap.put(agentId, agentOutOfBounds);
-            log.trace("Adding new inverseAgentOutOfBoundsMap for agent[id=" + agentId + "]");
-        }
-
-        log
-            .trace("Adding entry for inverseAgentOutOfBoundsMap for agent[id=" + agentId + "]: scheduleId="
-                + scheduleId);
-        return agentOutOfBounds.add(scheduleId);
     }
 
     private boolean addToResourceOperationCache(Integer resourceId, Integer operationDefinitionId,
@@ -847,10 +716,6 @@ public final class AlertConditionCache {
             throw new UnsupportedAlertConditionOperatorException("Comparator '" + comparator + "' "
                 + "is not supported for ArtifactConditionCategory." + category.name());
         }
-    }
-
-    private List<OutOfBoundsCacheElement> lookupOutOfBoundsCacheElements(int scheduleId) {
-        return measurementOutOfBoundsCache.get(scheduleId); // yup, might be null
     }
 
     private List<? extends NumericDoubleCacheElement> lookupMeasurementDataCacheElements(int scheduleId) {
@@ -1094,82 +959,6 @@ public final class AlertConditionCache {
         return percentage * baselineValue;
     }
 
-    private void insertOutOfBoundsBaseline(int agentId, int baselineId, double baselineMin, double baselineMax,
-        int scheduleId, AlertConditionCacheStats stats) {
-        List<OutOfBoundsCacheElement> oobCacheElements = lookupOutOfBoundsCacheElements(scheduleId);
-
-        /*
-         * as a sanity check, make sure we never insert duplicate OOB cache elements; this will
-         * prevent upstream logic from passing data that puts the OOB portion of the cache into
-         * an inconsistent state, which upon processing would create duplicate OOBs that blow up
-         * later during out-of-band processing / insertion due to database constraint violations
-         */
-
-        if (oobCacheElements == null || oobCacheElements.isEmpty()) {
-            // all is well in the land of OOBs
-        } else {
-            if (log.isDebugEnabled()) {
-                /*
-                 * this should never happen if the upstream logic is correct, but let's be lenient 
-                 * during cache load and prevent it; showing it at debug level only so that it's
-                 * not confused as an error in the logic, since the CORRECT logic *is* to prevent
-                 * duplicate elements (i.e., only two OOB elements per scheduleId - one high, one low) 
-                 */
-                log.debug("Will not insert duplicate " + OutOfBoundsCacheElement.class.getSimpleName()
-                    + " for schedule[id=" + scheduleId + "]");
-            }
-            return;
-        }
-
-        /*
-         * First, do some calculations to compute the cache elements from the raw data
-         */
-        double lowOOB = baselineMin * MeasurementConstants.LOW_OOB_THRESHOLD;
-        double highOOB = baselineMax * MeasurementConstants.HIGH_OOB_THRESHOLD;
-
-        /*
-         * when dealing with negative numbers, the LOW_OOB_THRESHOLD will create a **larger** lowOOB than the
-         * highOOB...so, after multiplying by the thresholds, swap if necessary to correct the issue
-         */
-        if (lowOOB > highOOB) {
-            double temp = highOOB;
-
-            highOOB = lowOOB;
-            lowOOB = temp;
-        }
-
-        OutOfBoundsCacheElement lowCacheElement = null;
-        OutOfBoundsCacheElement highCacheElement = null;
-
-        try {
-            lowCacheElement = new OutOfBoundsCacheElement(AlertConditionOperator.LESS_THAN, lowOOB, scheduleId);
-        } catch (InvalidCacheElementException icee) {
-            log.info("Failed to create OutOfBoundsCacheElement with parameters: "
-                + getCacheElementErrorString(scheduleId, AlertConditionOperator.LESS_THAN, null, lowOOB));
-        }
-
-        try {
-            highCacheElement = new OutOfBoundsCacheElement(AlertConditionOperator.GREATER_THAN, highOOB, scheduleId);
-        } catch (InvalidCacheElementException icee) {
-            log.info("Failed to create OutOfBoundsCacheElement with parameters: "
-                + getCacheElementErrorString(scheduleId, AlertConditionOperator.GREATER_THAN, null, highOOB));
-        }
-
-        if ((lowCacheElement != null) && (highCacheElement != null)) {
-            /*
-             * Next, add the calculated values to the measurementDataCache
-             */
-            addToOutOfBoundsCache(scheduleId, lowCacheElement, agentId, stats);
-            addToOutOfBoundsCache(scheduleId, highCacheElement, agentId, stats);
-
-            /* 
-             * can't pass (stats.created-stats.deleted) to the monitor because this methods called in a loop, which
-             * means the first time this is called the count will increase by 2, next time by 4, etc
-             */
-            AlertConditionCacheMonitor.getMBean().incrementOOBCacheElementCount(2);
-        }
-    }
-
     private String getCacheElementErrorString(int conditionId, AlertConditionOperator operator, Object option,
         Object value) {
         return "id=" + conditionId + ", " + "operator=" + operator + ", "
@@ -1204,7 +993,6 @@ public final class AlertConditionCache {
             inverseCacheElement.righty.remove(inverseCacheElement.lefty);
             stats.deleted++;
 
-            // OOBs elements are no longer removed here, see removeOutOfBoundsCondition(int, AlertConditionCacheStats)
             if (inverseCacheElement.lefty instanceof AvailabilityCacheElement) {
                 AlertConditionCacheMonitor.getMBean().incrementAvailabilityCacheElementCount(-1);
             } else if (inverseCacheElement.lefty instanceof EventCacheElement) {
@@ -1222,15 +1010,6 @@ public final class AlertConditionCache {
                     + inverseCacheElement.lefty.getClass() + "'");
             }
         }
-    }
-
-    private void removeOutOfBoundsCondition(int scheduleId, AlertConditionCacheStats stats) {
-        // purposefully NOT removing the List for this scheduleId, cause it'll be reloaded in a few moments anyway
-        List<OutOfBoundsCacheElement> outOfBoundsCacheElements = lookupOutOfBoundsCacheElements(scheduleId);
-        int toDeleteCount = outOfBoundsCacheElements.size();
-        stats.deleted += toDeleteCount;
-        AlertConditionCacheMonitor.getMBean().incrementOOBCacheElementCount(-toDeleteCount);
-        outOfBoundsCacheElements.clear(); // but we do need to clear it
     }
 
     public String[] getCacheNames() {
@@ -1253,8 +1032,6 @@ public final class AlertConditionCache {
                 printListCache(CacheName.MeasurementDataCache.name(), measurementDataCache);
             } else if (CacheName.MeasurementTraitCache.name().equals(cacheName)) {
                 printListCache(CacheName.MeasurementTraitCache.name(), measurementTraitCache);
-            } else if (CacheName.MeasurementOutOfBoundsCache.name().equals(cacheName)) {
-                printListCache(CacheName.MeasurementOutOfBoundsCache.name(), measurementOutOfBoundsCache);
             } else if (CacheName.ResourceOperationCache.name().equals(cacheName)) {
                 printNestedCache(CacheName.ResourceOperationCache.name(), resourceOperationCache);
             } else if (CacheName.AvailabilityCache.name().equals(cacheName)) {
@@ -1282,7 +1059,6 @@ public final class AlertConditionCache {
                 log.debug(""); // visually separate logs better
                 printListCache(CacheName.MeasurementDataCache.name(), measurementDataCache);
                 printListCache(CacheName.MeasurementTraitCache.name(), measurementTraitCache);
-                printListCache(CacheName.MeasurementOutOfBoundsCache.name(), measurementOutOfBoundsCache);
                 printNestedCache(CacheName.ResourceOperationCache.name(), resourceOperationCache);
                 printListCache(CacheName.AvailabilityCache.name(), availabilityCache);
                 printListCache(CacheName.EventsCache.name(), eventsCache);

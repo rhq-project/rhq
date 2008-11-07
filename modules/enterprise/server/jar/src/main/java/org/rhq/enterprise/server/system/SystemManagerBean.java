@@ -82,11 +82,10 @@ public class SystemManagerBean implements SystemManagerLocal {
 
     private final String[] DATA_TABLES = { "RHQ_MEASUREMENT_DATA_NUM_1D", "RHQ_MEASUREMENT_DATA_NUM_6H",
         "RHQ_MEASUREMENT_DATA_NUM_1H", "RHQ_MEASUREMENT_DATA_TRAIT", "RHQ_CALLTIME_DATA_KEY",
-        "RHQ_CALLTIME_DATA_VALUE", "RHQ_MEASUREMENT_OOB", "RHQ_AVAILABILITY" };
+        "RHQ_CALLTIME_DATA_VALUE", "RHQ_AVAILABILITY" };
 
     private final String[] ORA_INDEXES = { "RHQ_MEAS_DATA_1H_ID_TIME_PK", "RHQ_MEAS_DATA_6H_ID_TIME_PK",
-        "RHQ_MEAS_DATA_1D_ID_TIME_PK", "RHQ_MEAS_BASELINE_CTIME_IDX", "RHQ_MEAS_DATA_TRAIT_ID_TIME_PK",
-        "RHQ_MEASUREMENT_OOB_IDX" };
+        "RHQ_MEAS_DATA_1D_ID_TIME_PK", "RHQ_MEAS_BASELINE_CTIME_IDX", "RHQ_MEAS_DATA_TRAIT_ID_TIME_PK" };
 
     protected Log log = LogFactory.getLog(SystemManagerBean.class);
 
@@ -472,9 +471,8 @@ public class SystemManagerBean implements SystemManagerLocal {
         try {
             CustomJaasDeploymentServiceMBean mbean;
 
-            mbean = (CustomJaasDeploymentServiceMBean) MBeanServerInvocationHandler.newProxyInstance(MBeanServerLocator
-                .locateJBoss(), CustomJaasDeploymentServiceMBean.OBJECT_NAME, CustomJaasDeploymentServiceMBean.class,
-                false);
+            mbean = (CustomJaasDeploymentServiceMBean)MBeanServerInvocationHandler.newProxyInstance(MBeanServerLocator.locateJBoss(),
+                CustomJaasDeploymentServiceMBean.OBJECT_NAME, CustomJaasDeploymentServiceMBean.class, false);
             mbean.installJaasModules();
         } catch (Exception e) {
             throw new RuntimeException(e);

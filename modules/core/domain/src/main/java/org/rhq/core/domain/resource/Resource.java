@@ -87,7 +87,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
-        + "         res.id, res.name, avail.availabilityType, COUNT(DISTINCT alert.id), 0L"
+        + "         res.id, res.name, avail.availabilityType, COUNT(DISTINCT alert.id)"
         + "         ) "
         + "    FROM Resource res "
         + "         LEFT JOIN res.availability avail "
@@ -100,7 +100,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
-        + "         res.id, res.name, avail.availabilityType, COUNT(DISTINCT alert.id), 0L"
+        + "         res.id, res.name, avail.availabilityType, COUNT(DISTINCT alert.id)"
         + "         ) "
         + "    FROM Resource res "
         + "         LEFT JOIN res.availability avail "
@@ -132,54 +132,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "     AND res.inventoryStatus = 'COMMITTED' " //
         + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) " //
         + "          OR (alert.ctime >= :oldest)) "),
-    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB_ADMIN, query = "" //
-        + "   SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
-        + "         ( "
-        + "         res.id, res.name, avail.availabilityType, 0L, COUNT(DISTINCT oob.id)"
-        + "         ) "
-        + "    FROM Resource res "
-        + "         LEFT JOIN res.availability avail "
-        + "         LEFT JOIN res.schedules schedule "
-        + "         LEFT JOIN schedule.outOfBounds oob "
-        + "   WHERE avail.endTime IS NULL "
-        + "     AND res.inventoryStatus = 'COMMITTED' "
-        + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) "
-        + "          OR (oob.occurred >= :oldest)) " + "GROUP BY res.id, res.name, avail.availabilityType "),
-    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB, query = "" //
-        + "   SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
-        + "         ( "
-        + "         res.id, res.name, avail.availabilityType, 0L, COUNT(DISTINCT oob.id)"
-        + "         ) "
-        + "    FROM Resource res "
-        + "         LEFT JOIN res.availability avail "
-        + "         LEFT JOIN res.schedules schedule "
-        + "         LEFT JOIN schedule.outOfBounds oob "
-        + "   WHERE avail.endTime IS NULL "
-        + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
-        + "     AND res.inventoryStatus = 'COMMITTED' "
-        + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) "
-        + "          OR (oob.occurred >= :oldest)) " + "GROUP BY res.id, res.name, avail.availabilityType "),
-    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB_COUNT_ADMIN, query = "" //
-        + "   SELECT COUNT( DISTINCT res.id ) "
-        + "    FROM Resource res "
-        + "         LEFT JOIN res.availability avail "
-        + "         LEFT JOIN res.schedules schedule "
-        + "         LEFT JOIN schedule.outOfBounds oob "
-        + "   WHERE avail.endTime IS NULL "
-        + "     AND res.inventoryStatus = 'COMMITTED' "
-        + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) "
-        + "          OR (oob.occurred >= :oldest)) "),
-    @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_OOB_COUNT, query = "" //
-        + "  SELECT COUNT( DISTINCT res.id ) "
-        + "    FROM Resource res " //
-        + "         LEFT JOIN res.availability avail " //
-        + "         LEFT JOIN res.schedules schedule " //
-        + "         LEFT JOIN schedule.outOfBounds oob " //
-        + "   WHERE avail.endTime IS NULL " //
-        + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
-        + "     AND res.inventoryStatus = 'COMMITTED' " //
-        + "     AND (( avail.availabilityType = 0 AND avail.startTime >= :oldest) " //
-        + "          OR (oob.occurred >= :oldest)) "),
 
     /* the following three are for auto-group details */
     @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_TYPE, query = "" //
@@ -671,10 +623,6 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN = "Resource.findProblemResourcesAlert_admin";
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT = "Resource.findProblemResourcesAlertCount";
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT_ADMIN = "Resource.findProblemResourcesAlertCount_admin";
-    public static final String QUERY_FIND_PROBLEM_RESOURCES_OOB = "Resource.findProblemResourcesOOB";
-    public static final String QUERY_FIND_PROBLEM_RESOURCES_OOB_ADMIN = "Resource.findProblemResourcesOOB_admin";
-    public static final String QUERY_FIND_PROBLEM_RESOURCES_OOB_COUNT = "Resource.findProblemResourcesOOBCount";
-    public static final String QUERY_FIND_PROBLEM_RESOURCES_OOB_COUNT_ADMIN = "Resource.findProblemResourcesOOBCount_admin";
 
     public static final String QUERY_FIND_BY_PARENT_AND_TYPE = "Resource.findByParentAndType";
     public static final String QUERY_FIND_BY_PARENT_AND_TYPE_ADMIN = "Resource.findByParentAndType_admin";

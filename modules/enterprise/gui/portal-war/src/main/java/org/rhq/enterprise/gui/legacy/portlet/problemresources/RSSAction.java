@@ -83,8 +83,8 @@ public class RSSAction extends BaseRSSAction {
                 }
 
                 feed.addItem(problem.getResourceName(), link, res.getMessage(
-                    "dash.home.ProblemResources.rss.item.description", availText, problem.getNumAlerts(), problem
-                        .getNumOutOfBounds()), System.currentTimeMillis());
+                    "dash.home.ProblemResources.rss.item.description", availText, problem.getNumAlerts()), System
+                    .currentTimeMillis());
             }
         }
 

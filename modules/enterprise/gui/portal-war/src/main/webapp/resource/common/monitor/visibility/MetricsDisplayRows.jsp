@@ -183,9 +183,6 @@
 <td class="ListCellLeftLineNoPadding" align="center">
    <c:out value="${metricDisplaySummary.alertCount}"/>
 </td>
-<td class="ListCellLeftLineNoPadding" align="center">
-   <c:out value="${metricDisplaySummary.oobCount}"/>
-</td>
 <c:choose>
    <c:when test="${MetricsDisplayForm.showBaseline}">
       <td class="ListCellRight" nowrap>

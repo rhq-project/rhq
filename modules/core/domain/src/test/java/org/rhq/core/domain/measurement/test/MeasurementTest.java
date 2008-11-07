@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 /**
  */
 package org.rhq.core.domain.measurement.test;
@@ -46,7 +46,6 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
-import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -315,81 +314,6 @@ public class MeasurementTest extends AbstractEJB3Test {
              * should get endUpTime availability because it starts between the two times we're passing
              */
             assert results.size() == 2;
-        } finally {
-            getTransactionManager().rollback();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test(groups = "integration.ejb3")
-    public void testNewMeasurementOOB() throws Exception {
-        getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-        try {
-            Query q = em.createNamedQuery(MeasurementOutOfBounds.QUERY_FIND_ALL_ADMIN);
-            q.setParameter("oldest", 0L);
-            List<MeasurementOutOfBounds> res = q.getResultList();
-            int sizeOld = res.size();
-
-            setupTables(em);
-
-            MeasurementOutOfBounds oob = new MeasurementOutOfBounds(testPlatform.getSchedules().iterator().next(),
-                System.currentTimeMillis(), 1);
-            em.persist(oob);
-
-            oob = new MeasurementOutOfBounds(testPlatform.getSchedules().iterator().next(),
-                System.currentTimeMillis() - 60000, -20);
-            em.persist(oob);
-
-            em.flush();
-
-            q = em.createNamedQuery(MeasurementOutOfBounds.QUERY_FIND_ALL_ADMIN);
-            q.setParameter("oldest", 0L);
-            res = q.getResultList();
-
-            assert res.size() == (sizeOld + 2) : "Did not find my two stored OOBs";
-        } finally {
-            getTransactionManager().rollback();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test(groups = "integration.ejb3")
-    public void testNewMeasurementOOBForResource() throws Exception {
-        getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-        try {
-            MeasurementDefinition def = setupTables(em);
-            MeasurementSchedule sched = def.getSchedules().get(0);
-
-            Query q = em.createNamedQuery(MeasurementOutOfBounds.QUERY_FIND_FOR_RESOURCE_ADMIN);
-            q.setParameter("oldest", 0L);
-            q.setParameter("resourceId", sched.getResource().getId());
-            List<MeasurementOutOfBounds> res = q.getResultList();
-            int sizeOld = res.size();
-
-            q = em.createNamedQuery(MeasurementOutOfBounds.QUERY_FIND_FOR_SCHEDULE_ADMIN);
-            q.setParameter("begin", 0L);
-            q.setParameter("end", System.currentTimeMillis());
-            q.setParameter("scheduleId", sched.getId());
-            res = q.getResultList();
-            assert res.size() == sizeOld;
-
-            MeasurementOutOfBounds oob = new MeasurementOutOfBounds(sched, System.currentTimeMillis(), 33);
-            em.persist(oob);
-
-            q = em.createNamedQuery(MeasurementOutOfBounds.QUERY_FIND_FOR_RESOURCE_ADMIN);
-            q.setParameter("oldest", 0L);
-            q.setParameter("resourceId", sched.getResource().getId());
-            res = q.getResultList();
-            assert res.size() == (sizeOld + 1) : "Cant find my recently added OOB";
-
-            q = em.createNamedQuery(MeasurementOutOfBounds.QUERY_FIND_FOR_SCHEDULE_ADMIN);
-            q.setParameter("begin", 0L);
-            q.setParameter("end", System.currentTimeMillis());
-            q.setParameter("scheduleId", sched.getId());
-            res = q.getResultList();
-            assert res.size() == (sizeOld + 1) : "Cant find my recently added OOB";
         } finally {
             getTransactionManager().rollback();
         }

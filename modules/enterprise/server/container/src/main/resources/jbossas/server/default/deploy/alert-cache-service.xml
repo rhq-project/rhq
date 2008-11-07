@@ -8,12 +8,6 @@
       <depends optional-attribute-name="DestinationManager">jboss.mq:service=DestinationManager</depends>
    </mbean>
 
-   <mbean code="org.jboss.mq.server.jmx.Queue" 
-          name="jboss.mq.destination:service=Queue,name=OutOfBoundsConditionQueue">
-      <!--<attribute name="RecoveryRetries">0</attribute>-->
-      <depends optional-attribute-name="DestinationManager">jboss.mq:service=DestinationManager</depends>
-   </mbean>
-
    <!-- Alert Cache Definition 
    <mbean code="org.jboss.cache.aop.PojoCache"
    -->

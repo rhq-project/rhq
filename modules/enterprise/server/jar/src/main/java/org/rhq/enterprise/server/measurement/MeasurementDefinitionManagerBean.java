@@ -38,7 +38,6 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.enterprise.server.RHQConstants;
 
 /**
@@ -97,15 +96,6 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
             if (sched.getBaseline() != null) {
                 entityManager.remove(sched.getBaseline());
                 sched.setBaseline(null);
-            }
-            if (sched.getOutOfBounds() != null) {
-                List<MeasurementOutOfBounds> oobs = sched.getOutOfBounds();
-                Iterator<MeasurementOutOfBounds> oobIter = oobs.iterator();
-                while (oobIter.hasNext()) {
-                    MeasurementOutOfBounds oob = oobIter.next();
-                    entityManager.remove(oob);
-                    oobIter.remove();
-                }
             }
             entityManager.remove(sched);
             schedIter.remove();

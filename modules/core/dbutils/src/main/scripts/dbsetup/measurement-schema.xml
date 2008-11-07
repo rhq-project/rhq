@@ -178,20 +178,6 @@
       </index>
    </table>
 
-
-   <table name="RHQ_MEASUREMENT_OOB">
-        <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
-      <column name="SCHEDULE_ID" type="INTEGER" references="RHQ_MEASUREMENT_SCHED(ID)" required="true"/>
-      <column name="OCCURRED" type="LONG" required="true"/>
-      <column name="DIFF" type="DOUBLE" required="true"/>
-
-      <index name="RHQ_MEASUREMENT_OOB_IDX" unique="true">
-         <field ref="SCHEDULE_ID" />
-         <field ref="OCCURRED" />
-      </index>
-   </table>
-
-
    <table name="RHQ_NUMBERS">
         <column name="i" type="INTEGER" default="sequence-only" initial="10001"
          primarykey="true" required="true" />

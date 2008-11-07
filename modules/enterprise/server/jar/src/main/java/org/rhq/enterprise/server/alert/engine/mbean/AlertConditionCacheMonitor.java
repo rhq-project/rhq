@@ -40,7 +40,6 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     public AtomicInteger measurementCacheElementCount = new AtomicInteger();
     public AtomicInteger resourceConfigurationCacheElementCount = new AtomicInteger();
     public AtomicInteger operationCacheElementCount = new AtomicInteger();
-    public AtomicInteger OOBCacheElementCount = new AtomicInteger();
     public AtomicInteger totalCacheElementCount = new AtomicInteger();
 
     public AtomicInteger availabilityCacheElementMatches = new AtomicInteger();
@@ -65,8 +64,8 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     public static AlertConditionCacheMonitorMBean getMBean() {
         if (proxy == null) {
             if (objectName != null) {
-                proxy = (AlertConditionCacheMonitorMBean) MBeanServerInvocationHandler.newProxyInstance(mbeanServer,
-                    objectName, AlertConditionCacheMonitorMBean.class, false);
+                proxy = (AlertConditionCacheMonitorMBean)MBeanServerInvocationHandler.newProxyInstance(mbeanServer, objectName,
+                    AlertConditionCacheMonitorMBean.class, false);
             } else {
                 // create a local object
                 proxy = new AlertConditionCacheMonitor();
@@ -96,10 +95,6 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
         return operationCacheElementCount.get();
     }
 
-    public int getOOBCacheElementCount() {
-        return OOBCacheElementCount.get();
-    }
-
     public int getTotalCacheElementCount() {
         return totalCacheElementCount.get();
     }
@@ -119,11 +114,6 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
         totalCacheElementCount.addAndGet(-removed);
     }
 
-    public void resetOOBCacheElementCounts() {
-        int removed = OOBCacheElementCount.getAndSet(0);
-        totalCacheElementCount.addAndGet(-removed);
-    }
-
     public void resetResourceConfigurationCacheElementCounts() {
         int removed = resourceConfigurationCacheElementCount.getAndSet(0);
         totalCacheElementCount.addAndGet(-removed);
@@ -140,7 +130,6 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
         measurementCacheElementCount.set(0);
         operationCacheElementCount.set(0);
         resourceConfigurationCacheElementCount.set(0);
-        OOBCacheElementCount.set(0);
         totalCacheElementCount.set(0);
     }
 
@@ -190,11 +179,6 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
 
     public void incrementOperationCacheElementCount(int insertedCount) {
         operationCacheElementCount.addAndGet(insertedCount);
-        totalCacheElementCount.addAndGet(insertedCount);
-    }
-
-    public void incrementOOBCacheElementCount(int insertedCount) {
-        OOBCacheElementCount.addAndGet(insertedCount);
         totalCacheElementCount.addAndGet(insertedCount);
     }
 

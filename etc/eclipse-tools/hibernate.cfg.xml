@@ -111,7 +111,6 @@
         <mapping class="org.rhq.core.domain.alert.notification.SubjectNotification" />
         <mapping class="org.rhq.core.domain.measurement.calltime.CallTimeDataKey" />
         <mapping class="org.rhq.core.domain.measurement.calltime.CallTimeDataValue" />
-        <mapping class="org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds" />
         <mapping class="org.rhq.core.domain.resource.group.Group" />
         <mapping class="org.rhq.core.domain.resource.group.GroupDefinition" />
         <mapping class="org.rhq.core.domain.resource.group.ResourceGroup" />

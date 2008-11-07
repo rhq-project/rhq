@@ -1,29 +1,27 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -43,7 +41,6 @@ import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.NumericType;
-import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -92,13 +89,6 @@ public class QueriesTest extends AbstractEJB3Test {
 
         add(MeasurementBaseline.QUERY_FIND_BY_COMPUTE_TIME, new Object[] { "computeTime", 1L, "numericType",
             NumericType.DYNAMIC });
-
-        add(MeasurementBaseline.QUERY_FIND_ALL_DYNAMIC_MEASUREMENT_BASELINES, new Object[] { "numericType",
-            NumericType.DYNAMIC, "agentId", 0 });
-
-        add(MeasurementOutOfBounds.QUERY_COUNT_FOR_SCHEDULE_IDS_ADMIN, new Object[] { "scheduleIds",
-            new ArrayList<Integer>(Arrays.asList(Integer.MAX_VALUE)), // an empty list caused a problem
-            "begin", 0L, "end", System.currentTimeMillis() });
 
         //
         ////////////////////////////////////////////

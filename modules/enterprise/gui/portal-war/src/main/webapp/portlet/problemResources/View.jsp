@@ -35,7 +35,6 @@
                    var="probres" items="${problemResources}" >
       <display:column width="60%" href="/resource/common/monitor/Visibility.do?mode=currentHealth&id=${probres.resourceId}" property="resourceName" title="dash.home.TableHeader.ResourceName"/>
       <display:column width="10%" property="numAlerts" title="dash.home.TableHeader.Alerts" align="center"/>
-      <display:column width="10%" property="numOutOfBounds" title="dash.home.TableHeader.OOB" align="center" />
       <display:column width="10%" property="availabilityType" title="resource.common.monitor.visibility.CAvailabilityTH" align="center" >
         <display:availabilitydecorator/> 
       </display:column>        

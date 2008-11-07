@@ -116,7 +116,6 @@
           <html:option value="2"><fmt:message key="resource.common.monitor.visibility.MiniTab.All"/></html:option>
         </html:select>
       </th>
-      <th class="ListHeaderInactive" width="15%"><fmt:message key="resource.common.monitor.visibility.MiniTab.OOB"/></th>
       <th class="ListHeaderInactive" width="15%"><fmt:message key="resource.common.monitor.visibility.MiniTab.Alerts"/></th>
       <th class="ListHeaderInactive" width="4%"><fmt:message key="resource.common.monitor.visibility.MiniTab.More"/></th>
     </tr>
@@ -139,7 +138,6 @@
 
     <tr>
       <td class="ListCell"><c:out value="${metric.name}"/></td>
-      <td class="ListCell" align="center"><c:out value="${metric.oobCount}"/></td>
       <td class="ListCell" align="center"><c:out value="${metric.alertCount}"/></td>
       <td class="ListCell">
       <a href="<c:out value="${scriptUrl}"/>"><html:img page="/images/icon_menu.gif" onmouseover="menuLayers.show('metric_menu_${metric.scheduleId}', event)" onmouseout="menuLayers.hide()" border="0"/></a>

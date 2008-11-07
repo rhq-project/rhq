@@ -144,7 +144,6 @@ sometimes we don't want any left side buttons or checkboxes at all
       </c:if>
 
       <display:column property="alertCount" title="Alerts" isLocalizedTitle="false" width="5%"/>
-      <display:column property="oobCount" title="O.O.B." isLocalizedTitle="false" width="5%"/>
       <display:column property="minMetric" title="Low" isLocalizedTitle="false"/>
       <display:column property="avgMetric" title="Average" isLocalizedTitle="false"/>
       <display:column property="maxMetric" title="Peak" isLocalizedTitle="false"/>

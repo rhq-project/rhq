@@ -27,7 +27,6 @@ public class MetricDisplaySummary extends BaseMetricDisplay implements java.io.S
     private static final long serialVersionUID = 1L;
 
     private int alertCount = 0;
-    private int oobCount = 0;
 
     /**
      * for traits
@@ -81,14 +80,6 @@ public class MetricDisplaySummary extends BaseMetricDisplay implements java.io.S
 
     public void setAlertCount(int alertCount) {
         this.alertCount = alertCount;
-    }
-
-    public int getOobCount() {
-        return oobCount;
-    }
-
-    public void setOobCount(int oobCount) {
-        this.oobCount = oobCount;
     }
 
     public String getValue() {
@@ -172,7 +163,7 @@ public class MetricDisplaySummary extends BaseMetricDisplay implements java.io.S
     public void setParent(Resource parent) {
         this.parent = parent;
     }
-    
+
     /**
      * @return the parentId
      */

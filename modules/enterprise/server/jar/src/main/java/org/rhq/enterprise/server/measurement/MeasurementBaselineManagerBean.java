@@ -45,16 +45,8 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
-import org.rhq.core.domain.measurement.composite.MeasurementBaselineComposite;
-import org.rhq.core.domain.measurement.oob.MeasurementOutOfBounds;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.alert.engine.jms.model.OutOfBoundsConditionMessage;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
@@ -77,10 +69,6 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
     @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource dataSource;
-
-    private static final String OOB_INSERT_STMT = "" //
-        + "INSERT INTO " + MeasurementOutOfBounds.TABLE_NAME + " (id, schedule_id, occurred, diff) " //
-        + "VALUES (%s, ?, ?, ?)";
 
     @EJB
     private AgentStatusManagerLocal agentStatusManager;
@@ -398,33 +386,6 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<MeasurementBaselineComposite> getAllDynamicMeasurementBaselines(int agentId, Subject user,
-        PageControl pc) {
-        pc.initDefaultOrderingField("mb.id", PageOrdering.ASC);
-
-        if (authorizationManager.isOverlord(user) == false) {
-            throw new PermissionException("User [" + user.getName() + "] does not have permission to call "
-                + "getAllDynamicMeasurementBaselines; only the overlord has that right");
-        }
-
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            MeasurementBaseline.QUERY_FIND_ALL_DYNAMIC_MEASUREMENT_BASELINES, pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-            MeasurementBaseline.QUERY_FIND_ALL_DYNAMIC_MEASUREMENT_BASELINES);
-
-        query.setParameter("numericType", NumericType.DYNAMIC);
-        countQuery.setParameter("numericType", NumericType.DYNAMIC);
-
-        query.setParameter("agentId", agentId);
-        countQuery.setParameter("agentId", agentId);
-
-        List<MeasurementBaselineComposite> results = query.getResultList();
-        long count = (Long) countQuery.getSingleResult();
-
-        return new PageList<MeasurementBaselineComposite>(results, (int) count, pc);
-    }
-
-    @SuppressWarnings("unchecked")
     private List<MeasurementBaseline> getBaselinesForResourcesAndDefinitionIds(Integer[] resourceIds,
         Integer[] definitionIds) {
         Query q = entityManager.createNamedQuery(MeasurementBaseline.QUERY_FIND_BY_RESOURCE_IDS_AND_DEF_IDS);
@@ -493,37 +454,6 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         }
 
         return baseline;
-    }
-
-    public void insertOutOfBoundsMessage(OutOfBoundsConditionMessage outOfBoundsMessage) {
-        Connection conn = null;
-        PreparedStatement ps = null;
-        String statementSql = null;
-        try {
-            conn = dataSource.getConnection();
-
-            String nextvalSql = JDBCUtil.getNextValSql(conn, MeasurementOutOfBounds.TABLE_NAME);
-            statementSql = String.format(OOB_INSERT_STMT, nextvalSql);
-            ps = conn.prepareStatement(statementSql);
-
-            int paramIndex = 1;
-            ps.setInt(paramIndex++, outOfBoundsMessage.getScheduleId());
-            ps.setLong(paramIndex++, outOfBoundsMessage.getTimestamp());
-            ps.setDouble(paramIndex++, outOfBoundsMessage.getOobValue());
-
-            ps.executeUpdate();
-
-        } catch (Throwable t) {
-            // never allow OOB insertion failures to bubble up
-            if (log.isDebugEnabled()) {
-                log.debug("Insert of OOB failed : " + outOfBoundsMessage, t);
-            } else {
-                log.error("Insert of OOB failed : " + outOfBoundsMessage + ", sql was \"" + statementSql
-                    + "\", cause: " + t.getMessage());
-            }
-        } finally {
-            JDBCUtil.safeClose(conn, ps, null);
-        }
     }
 
     private void notifyAlertConditionCacheManager(String callingMethod, MeasurementBaseline baseline) {

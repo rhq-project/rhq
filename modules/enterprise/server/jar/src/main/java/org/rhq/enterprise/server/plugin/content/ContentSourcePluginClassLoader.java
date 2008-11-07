@@ -170,7 +170,10 @@ public class ContentSourcePluginClassLoader extends URLClassLoader {
                 }
             }
         } finally {
-            zis.close();
+            try {
+                zis.close();
+            } catch (Exception e) {
+            }
         }
 
         return extractionDirectory;

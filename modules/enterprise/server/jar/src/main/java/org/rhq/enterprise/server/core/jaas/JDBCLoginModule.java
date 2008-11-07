@@ -97,6 +97,7 @@ public class JDBCLoginModule extends UsernamePasswordLoginModule {
         String password = null;
         Connection conn = null;
         PreparedStatement ps = null;
+        ResultSet rs = null;
 
         try {
             Properties props = getProperties();
@@ -106,29 +107,35 @@ public class JDBCLoginModule extends UsernamePasswordLoginModule {
 
             ps = conn.prepareStatement(principalsQuery);
             ps.setString(1, username);
-            ResultSet rs = ps.executeQuery();
+            rs = ps.executeQuery();
             if (rs.next() == false) {
                 throw new FailedLoginException("No matching username found in principals");
             }
 
             password = rs.getString(1);
-            rs.close();
         } catch (NamingException ex) {
             throw new LoginException(ex.toString(true));
         } catch (SQLException ex) {
             throw new LoginException(ex.toString());
         } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (Exception e) {
+                }
+            }
+
             if (ps != null) {
                 try {
                     ps.close();
-                } catch (SQLException e) {
+                } catch (Exception e) {
                 }
             }
 
             if (conn != null) {
                 try {
                     conn.close();
-                } catch (SQLException ex) {
+                } catch (Exception ex) {
                 }
             }
         }

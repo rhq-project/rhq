@@ -18,11 +18,12 @@
 
    <scm>
       <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/bluetooth</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/bluetooth</developerConnection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/plugins/bluetooth</developerConnection>      
    </scm>
 
    <properties>
       <scm.module.path>modules/plugins/bluetooth/</scm.module.path>
+      <bluecove.version>2.0.3</bluecove.version>
    </properties>
 
    <dependencies>
@@ -30,7 +31,7 @@
       <dependency>
          <groupId>net.sf.bluecove</groupId>
          <artifactId>bluecove</artifactId>
-         <version>2.0.1</version>
+         <version>${bluecove.version}</version>
       </dependency>
 
    </dependencies>
@@ -39,7 +40,6 @@
       <plugins>
          <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.0</version>
             <executions>
                <execution>
                   <id>copy-dependencies</id>
@@ -52,7 +52,7 @@
                         <artifactItem>
                            <groupId>net.sf.bluecove</groupId>
                            <artifactId>bluecove</artifactId>
-                           <version>2.0.1</version>
+                           <version>${bluecove.version}</version>
                         </artifactItem>
                      </artifactItems>
                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
@@ -63,6 +63,13 @@
       </plugins>
    </build>
 
+   <repositories>     
+      <repository>
+         <id>pyx4me</id>
+         <url>http://www.pyx4me.com/maven2/</url>
+      </repository>
+   </repositories>
+            
    <profiles>
       <profile>
          <id>integration-tests</id>
@@ -105,7 +112,6 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
-                  <version>2.3</version>
                   <configuration>
                      <skip>true</skip>
                   </configuration>

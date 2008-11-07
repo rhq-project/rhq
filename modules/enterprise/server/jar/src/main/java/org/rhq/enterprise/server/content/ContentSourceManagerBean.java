@@ -115,7 +115,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
     private EntityManager entityManager;
 
     @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
-    public DataSource dataSource;
+    private DataSource dataSource;
 
     @EJB
     private ContentSourceManagerLocal contentSourceManager; //self

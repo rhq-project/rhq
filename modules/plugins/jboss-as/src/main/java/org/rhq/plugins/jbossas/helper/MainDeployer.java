@@ -42,6 +42,7 @@ public class MainDeployer {
 
     private EmsOperation deployOperation;
     private EmsOperation redeployOperation;
+    private EmsOperation undeployOperation;
 
     public MainDeployer(EmsConnection connection) throws NoSuchMethodException {
         EmsBean mainDeployer = connection.getBean(JBossMBeans.MAIN_DEPLOYER);
@@ -50,6 +51,7 @@ public class MainDeployer {
         }
         this.deployOperation = EmsUtility.getOperation(mainDeployer, "deploy", URL.class);
         this.redeployOperation = EmsUtility.getOperation(mainDeployer, "redeploy", URL.class);
+        this.undeployOperation = EmsUtility.getOperation(mainDeployer, "undeploy", URL.class);
     }
 
     public void deploy(File file) throws DeployerException {
@@ -71,6 +73,17 @@ public class MainDeployer {
         }
         catch (RuntimeException e) {
             throw new DeployerException("Failed to redeploy " + file, e);
+        }
+    }
+
+    public void undeploy(File file) throws DeployerException {
+        log.debug("Undeploying " + file + "...");
+        try {
+            URL url = toURL(file);
+            this.undeployOperation.invoke(new Object[]{url});
+        }
+        catch (RuntimeException e) {
+            throw new DeployerException("Failed to undeploy " + file, e);
         }
     }
 

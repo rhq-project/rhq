@@ -101,6 +101,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.plugins.jbossas.helper.JavaSystemProperties;
 import org.rhq.plugins.jbossas.helper.MainDeployer;
 import org.rhq.plugins.jbossas.util.ConnectionFactoryConfigurationEditor;
@@ -113,7 +114,6 @@ import org.rhq.plugins.jbossas.util.XMLConfigurationEditor;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
-import org.rhq.plugins.utils.TomcatFileUtils;
 
  /**
  * Supports JBoss 3.2.3 through 4.2.x
@@ -719,6 +719,19 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         this.mainDeployer.redeploy(file);
     }
 
+    void undeployFile(File file) throws MainDeployer.DeployerException {
+        getEmsConnection();
+        if (this.connection == null) {
+            log.warn("Unable to undeploy " + file + ", because we could not connect to the JBoss instance.");
+            return;
+        }
+        if (this.mainDeployer == null) {
+            throw new IllegalStateException("Unable to undeploy " + file + ", because MainDeployer MBean could "
+                + "not be accessed - this should never happen.");
+        }
+        this.mainDeployer.undeploy(file);
+    }
+
     private String getDuplicateJndiNameErrorMessage(String resourceTypeName, String name) {
         return "Duplicate JNDI Name: " + name + " - a " + resourceTypeName + " with that name already exists.";
     }
@@ -890,12 +903,13 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
             deployFile(path);
         }
         catch (MainDeployer.DeployerException e) {
-            log.debug("Failed to deploy [" + path + "] - deleting [" + path + "]...");
+            log.debug("Failed to deploy [" + path + "] - undeploying and deleting [" + path + "]...");
             try {
-                TomcatFileUtils.deleteDirectoryContents(new File[] {path});
+                undeployFile(path);
+                FileUtils.purge(path, true);
             }
             catch (Exception e1) {
-                log.error("Failed to delete [" + path + "].", e1);
+                log.error("Failed to rollback deployment of [" + path + "].", e1);
             }
             throw e;
         }

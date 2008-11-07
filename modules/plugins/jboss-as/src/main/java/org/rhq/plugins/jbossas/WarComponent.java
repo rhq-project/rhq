@@ -55,12 +55,12 @@ import org.rhq.plugins.jbossas.util.WarDiscoveryHelper;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
 /**
- * A JON plugin resource component for managing a webapp deployed to a JBossAS server.
+ * A resource component for managing a web application (WAR) deployed to a JBossAS server.
  *
  * @author Ian Springer
  * @author Heiko W. Rupp
  */
-public class WarComponent extends JBossApplicationComponent implements OperationFacet {
+public class WarComponent extends ApplicationComponent implements OperationFacet {
     private static final String SERVLET_PREFIX = "Servlet.";
     public static final String CONTEXT_ROOT_CONFIG_PROP = "contextRoot";
     public static final String NAME_CONFIG_PROP = "name";

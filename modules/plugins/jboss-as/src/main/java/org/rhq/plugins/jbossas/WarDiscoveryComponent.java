@@ -26,7 +26,7 @@ import java.util.Set;
 
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.plugins.applications.ApplicationDiscoveryComponent;
+import org.rhq.plugins.jbossas.ApplicationDiscoveryComponent;
 import org.rhq.plugins.jbossas.util.WarDiscoveryHelper;
 import org.rhq.plugins.jmx.JMXComponent;
 

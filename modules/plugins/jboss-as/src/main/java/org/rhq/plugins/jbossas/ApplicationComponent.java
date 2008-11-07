@@ -1,70 +1,69 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
-package org.rhq.plugins.applications;
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.plugins.jbossas;
 
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.util.Set;
-import java.util.List;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashSet;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.content.PackageType;
-import org.rhq.core.domain.content.PackageDetailsKey;
-import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.transfer.DeployPackageStep;
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
-import org.rhq.core.pluginapi.content.ContentServices;
-import org.rhq.core.pluginapi.content.ContentFacet;
-import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
-import org.rhq.plugins.jmx.JMXComponent;
-import org.rhq.plugins.jmx.MBeanResourceComponent;
-import org.rhq.plugins.utils.TomcatFileUtils;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
- /**
- * RHQ resource component for handling EARs and WARs. Most of the functionality is handled by the JMX plugin's super
- * class. This implementation adds content support for discovery of the EAR/WAR files.
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
+import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
+import org.rhq.core.domain.content.transfer.DeployPackageStep;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.content.ContentFacet;
+import org.rhq.core.pluginapi.content.ContentServices;
+import org.rhq.core.pluginapi.content.version.ApplicationVersions;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
+import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.util.ZipUtil;
+import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.plugins.jbossas.helper.MainDeployer;
+import org.rhq.plugins.jmx.MBeanResourceComponent;
+
+/**
+ * A resource component for managing an application (e.g. EAR or WAR) deployed to a JBossAS server.
  *
- * @author Jason Dobies
+ * @author Ian Springer
  */
-public class ApplicationResourceComponent<T extends JMXComponent>
-    extends MBeanResourceComponent<T> implements ContentFacet, DeleteResourceFacet {
-    private static final Log LOG = LogFactory.getLog(ApplicationResourceComponent.class);
+public class ApplicationComponent
+    extends MBeanResourceComponent<JBossASServerComponent> implements ContentFacet, DeleteResourceFacet {
+    private static final String BACKUP_FILE_EXTENSION = ".rej";
 
     /**
      * Name of the backing package type that will be used when discovering packages. This corresponds to the name
@@ -79,15 +78,17 @@ public class ApplicationResourceComponent<T extends JMXComponent>
      */
     private static final String ARCHITECTURE = "noarch";
 
-    /**
-     * Entry point to the persisted store of EAR/WAR package versions.
-     */
-    private ApplicationVersions versions;
-
     protected static final String FILENAME_PLUGIN_CONFIG_PROP = "filename";
 
     private static final String APPLICATION_PATH_TRAIT = "Application.path";
     private static final String APPLICATION_EXPLODED_TRAIT = "Application.exploded";
+
+    private final Log log = LogFactory.getLog(this.getClass());
+
+    /**
+     * Entry point to the persisted store of EAR/WAR package versions.
+     */
+    private ApplicationVersions versions;
 
     // ContentFacet Implementation  --------------------------------------------
 
@@ -97,7 +98,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
         try {
             if (packageFile.isDirectory()) {
                 fileToSend = File.createTempFile("rhq", ".zip");
-                TomcatFileUtils.zipFileOrDirectory(packageFile, fileToSend);
+                ZipUtil.zipFileOrDirectory(packageFile, fileToSend);
             }
             else
                 fileToSend = packageFile;
@@ -154,12 +155,16 @@ public class ApplicationResourceComponent<T extends JMXComponent>
         throw new UnsupportedOperationException("Cannot remove the package backing an EAR/WAR resource.");
     }
 
-    public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
+    public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
+        // Intentional - there are no steps involved in installing an EAR or WAR.
+        return null;
+    }
 
+    public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
         // You can only update the one application file referenced by this resource, so punch out if multiple are
-        // specified
+        // specified.
         if (packages.size() != 1) {
-            LOG.warn("Request to update an EAR/WAR file contained multiple packages.");
+            log.warn("Request to update an EAR/WAR file contained multiple packages.");
             DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
             response.setOverallRequestErrorMessage("When deploying an EAR/WAR, only one EAR/WAR can be updated at a time.");
             return response;
@@ -168,121 +173,62 @@ public class ApplicationResourceComponent<T extends JMXComponent>
         ResourcePackageDetails packageDetails = packages.iterator().next();
 
         // Find location of existing application
-        String fullFileName = resourceContext.getPluginConfiguration().getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
-        String filename = new File(fullFileName).getName();
-
-        // Write the new updated application to a temp file
-        File tempDir = resourceContext.getTemporaryDirectory();
-        File tempFile = new File(tempDir.getAbsolutePath(), filename + System.currentTimeMillis());
-
-        // The temp file shouldn't be there, but check and delete it if it is
-        if (tempFile.exists()) {
-            LOG.warn("Existing temporary file found and will be deleted at: " + tempFile);
-            tempFile.delete();
-        }
-
-        // Determine if existing application is exploded or not
-        File existingFile = new File(fullFileName);
-
-        if (!existingFile.exists()) {
-            return failApplicationDeployment("Could not find application to update at location: " + fullFileName,
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+        File appFile = new File(pluginConfig.getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue());
+        if (!appFile.exists()) {
+            return failApplicationDeployment("Could not find application to update at location: " + appFile,
                 packageDetails);
         }
 
-        boolean unzip = existingFile.isDirectory();
-
-        // Write the updated application bits to a temporary location
-        OutputStream tempOutputStream = null;
+        File tempFile;
         try {
-            tempOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
-            contentServices.downloadPackageBits(resourceContext.getContentContext(), packageDetails.getKey(), tempOutputStream, true);
-            tempOutputStream.close();
-        } catch (IOException e) {
-            LOG.error("Error writing updated application bits to temporary location: " + tempFile, e);
-            return failApplicationDeployment("Error writing updated application bits to temporary location: " +
-                tempFile, packageDetails);
-        } finally {
-            if (tempOutputStream != null) {
-                try {
-                    tempOutputStream.close();
-                } catch (IOException e) {
-                    LOG.error("Error closing temporary output stream", e);
-                }
-            }
+            tempFile = writeNewAppBitsToTempFile(appFile, contentServices, packageDetails);
+        }
+        catch (Exception e) {
+            return failApplicationDeployment("Error writing new application bits to temporary file - cause: " + e,
+                    packageDetails);
         }
 
-        // Make sure the file was downloaded
-        if (!tempFile.exists()) {
-            LOG.error("Temporary file for application update not written to: " + tempFile);
-            return failApplicationDeployment("Temporary file for application update not written to: " + tempFile,
-                packageDetails);
-        }
-
-        // Delete the existing application
-        if (unzip) {
-            TomcatFileUtils.deleteDirectoryContents(existingFile.listFiles());
-        }
-        boolean deleteResult = existingFile.delete();
-
-        if (!deleteResult) {
-            return failApplicationDeployment("Could not delete existing application that is being updated at: " +
-                existingFile, packageDetails);
-        }
+        // Backup the existing app file/dir to <filename>.rej.
+        File backupOfOriginalFile = new File(appFile.getPath() + BACKUP_FILE_EXTENSION);
+        appFile.renameTo(backupOfOriginalFile);
 
         // Write the new bits for the application
-        InputStream tempIs = null;
+        moveTempFileToDeployLocation(tempFile, appFile);
+
+        // The file has been written successfully to the deploy dir. Now try to actually deploy it.
+        MainDeployer mainDeployer = getParentResourceComponent().getMainDeployer();
         try {
-            tempIs = new BufferedInputStream(new FileInputStream(tempFile));
-            
-            if (unzip) {
-                existingFile.mkdir();
-                TomcatFileUtils.unzipFile(tempIs, existingFile);
-            } else {
-                TomcatFileUtils.writeFile(tempIs, existingFile);
+            mainDeployer.redeploy(appFile);
+        }
+        catch (Exception e) {
+            // Deploy failed - rollback to the original app file...
+            String errorMessage = ThrowableUtil.getAllMessages(e);
+            try {
+                FileUtils.purge(appFile, true);
+                backupOfOriginalFile.renameTo(appFile);
+                // Need to redeploy the original file - this generally should succeed.
+                mainDeployer.redeploy(appFile);
+                errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
             }
-
-        } catch (IOException e) {
-            LOG.error("Error writing updated package bits to the existing application location: " + existingFile, e);
-            return failApplicationDeployment("Error writing updated package bits to the existing application location: " +
-                existingFile, packageDetails);
-        } finally {
-            if (tempIs != null) {
-                try {
-                    tempIs.close();
-                } catch (IOException e) {
-                    LOG.error("Error closing temporary input stream", e);
-                }
+            catch (Exception e1) {
+                errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
+                        + ThrowableUtil.getAllMessages(e1);
             }
+            return failApplicationDeployment(errorMessage, packageDetails);
         }
 
-        // Quick verification for zipped applications
-        if (!existingFile.exists()) {
-            LOG.error("Updated application file not found at existing application file location: " + existingFile);
-            return failApplicationDeployment("Updated application file not found at existing application file location: " +
-                existingFile, packageDetails);
-        }
+        // Deploy was successful!
 
-        // If we got this far, it was successful
+        deleteBackupOfOriginalFile(backupOfOriginalFile);
+        persistApplicationVersion(packageDetails, appFile);
 
-        // Update the persistent store for this new version
-        String packageName = new File(fullFileName).getName();
-        ApplicationVersions versions = loadApplicationVersions();
-        versions.putVersion(packageName, packageDetails.getVersion());
-
-        // Create and return response
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
-
         DeployIndividualPackageResponse packageResponse =
             new DeployIndividualPackageResponse(packageDetails.getKey(), ContentResponseResult.SUCCESS);
-        
         response.addPackageResponse(packageResponse);
 
         return response;
-    }
-
-    public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
-        // Intentional, there are no steps involved in installing an EAR
-        return null;
     }
 
     // DeleteResourceFacet Implementation  --------------------------------------------
@@ -298,13 +244,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
         }
 
         if (file.isDirectory()) {
-            TomcatFileUtils.deleteDirectoryContents(file.listFiles());
-        }
-
-        boolean result = file.delete();
-
-        if (!result) {
-            throw new Exception("File delete call returned unsuccessful with no further detail");
+            FileUtils.purge(file, true);
         }
     }
 
@@ -339,8 +279,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
      */
     public String getApplicationName() {
         String resourceKey = resourceContext.getResourceKey();
-        String applicationName = resourceKey.substring(resourceKey.lastIndexOf('=') + 1);
-        return applicationName;
+        return resourceKey.substring(resourceKey.lastIndexOf('=') + 1);
     }
 
     /**
@@ -353,7 +292,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
         return pluginConfiguration.getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
     }
 
-    public T getParentResourceComponent() {
+    public JBossASServerComponent getParentResourceComponent() {
         return this.resourceContext.getParentResourceComponent();
     }
 
@@ -363,9 +302,9 @@ public class ApplicationResourceComponent<T extends JMXComponent>
     /**
      * Returns an instantiated and loaded versions store access point.
      *
-     * @return will not be <code>null</code> 
+     * @return will not be <code>null</code>
      */
-    protected ApplicationVersions loadApplicationVersions() {
+    private ApplicationVersions loadApplicationVersions() {
         if (versions == null) {
             ResourceType resourceType = super.resourceContext.getResourceType();
             String pluginName = resourceType.getPlugin();
@@ -378,7 +317,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
 
             String dataDirectory = dataDirectoryFile.getAbsolutePath();
 
-            LOG.debug("Creating application versions store with plugin name [" + pluginName +
+            log.debug("Creating application versions store with plugin name [" + pluginName +
                 "] and data directory [" + dataDirectory + "]");
 
             versions = new ApplicationVersions(pluginName, dataDirectory);
@@ -396,7 +335,7 @@ public class ApplicationResourceComponent<T extends JMXComponent>
      *
      * @return response populated to reflect a failure
      */
-    protected DeployPackagesResponse failApplicationDeployment(String errorMessage, ResourcePackageDetails packageDetails) {
+    private DeployPackagesResponse failApplicationDeployment(String errorMessage, ResourcePackageDetails packageDetails) {
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
 
         DeployIndividualPackageResponse packageResponse =
@@ -406,5 +345,79 @@ public class ApplicationResourceComponent<T extends JMXComponent>
         response.addPackageResponse(packageResponse);
 
         return response;
+    }
+
+    private void persistApplicationVersion(ResourcePackageDetails packageDetails, File appFile) {        
+        String packageName = appFile.getName();
+        ApplicationVersions versions = loadApplicationVersions();
+        versions.putVersion(packageName, packageDetails.getVersion());
+    }
+
+    private void deleteBackupOfOriginalFile(File backupOfOriginalFile) {
+        try {
+            FileUtils.purge(backupOfOriginalFile, true);
+        }
+        catch (Exception e) {
+            // not critical.
+            log.warn("Failed to delete backup of original file: " + backupOfOriginalFile);
+        }
+    }
+
+    private void moveTempFileToDeployLocation(File tempFile, File appFile) {
+        InputStream tempIs = null;
+        try {
+            if (appFile.isDirectory()) {
+                tempIs = new BufferedInputStream(new FileInputStream(tempFile));
+                appFile.mkdir();
+                ZipUtil.unzipFile(tempIs, appFile);
+            } else {
+                tempFile.renameTo(appFile);
+            }
+        } catch (IOException e) {
+            log.error("Error writing updated package bits to the existing application location: " + appFile, e);
+            //return failApplicationDeployment("Error writing updated package bits to the existing application location: " +
+            //    appFile, packageDetails);
+        } finally {
+            if (tempIs != null) {
+                try {
+                    tempIs.close();
+                } catch (IOException e) {
+                    log.error("Error closing temporary input stream", e);
+                }
+            }
+        }
+    }
+
+    private File writeNewAppBitsToTempFile(File file, ContentServices contentServices, ResourcePackageDetails packageDetails
+    ) throws Exception {
+        File tempDir = getResourceContext().getTemporaryDirectory();
+        File tempFile = new File(tempDir.getAbsolutePath(), file.getName() + System.currentTimeMillis());
+
+        // The temp file shouldn't be there, but check and delete it if it is
+        if (tempFile.exists()) {
+            log.warn("Existing temporary file found and will be deleted at: " + tempFile);
+            tempFile.delete();
+        }
+        OutputStream tempOutputStream = null;
+        try {
+            tempOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
+            contentServices.downloadPackageBits(resourceContext.getContentContext(), packageDetails.getKey(), tempOutputStream, true);
+        } catch (IOException e) {
+            log.error("Error writing updated application bits to temporary location: " + tempFile, e);
+            throw e;
+        } finally {
+            if (tempOutputStream != null) {
+                try {
+                    tempOutputStream.close();
+                } catch (IOException e) {
+                    log.error("Error closing temporary output stream", e);
+                }
+            }
+        }
+        if (!tempFile.exists()) {
+            log.error("Temporary file for application update not written to: " + tempFile);
+            throw new Exception();
+        }
+        return tempFile;
     }
 }

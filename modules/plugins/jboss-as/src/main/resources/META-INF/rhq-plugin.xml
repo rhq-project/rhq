@@ -2066,8 +2066,8 @@
 
       <service name="Enterprise Application (EAR)"
                subCategory="Applications"
-               class="org.rhq.plugins.jbossas.JBossApplicationComponent"
-               discovery="org.rhq.plugins.applications.ApplicationDiscoveryComponent"
+               class="org.rhq.plugins.jbossas.ApplicationComponent"
+               discovery="org.rhq.plugins.jbossas.ApplicationDiscoveryComponent"
                description="Enterprise Application"
                createDeletePolicy="both"
                creationDataType="content">
@@ -2088,10 +2088,10 @@
             </c:group>
          </plugin-configuration>
 
-         <!-- The two traits below are collected by ApplicationComponent (from the Tomcat plugin), which WarComponent extends. -->
+         <!-- The two traits below are collected by the ApplicationComponent class. -->
          <metric property="Application.path" displayName="Path"
                  dataType="trait" displayType="summary"
-                 description="the abosolute path of this EAR file or directory"/>
+                 description="the absolute path of this EAR file or directory"/>
 
          <metric property="Application.exploded" displayName="Exploded?"
                  dataType="trait" displayType="summary"
@@ -2151,10 +2151,10 @@
             <operation name="reload"
                        description="reloads this webapp; NOTE: if the webapp is not in the started state, this operation will fail"/>
 
-            <!-- The two traits below are collected by ApplicationComponent (from the Tomcat plugin), which WarComponent extends. -->
+            <!-- The two traits below are collected by the ApplicationComponent class, which WarComponent extends.. -->
             <metric property="Application.path" displayName="Path"
                     dataType="trait" displayType="summary"
-                    description="the abosolute path of this WAR file or directory"/>
+                    description="the absolute path of this WAR file or directory"/>
 
             <metric property="Application.exploded" displayName="Exploded?"
                     dataType="trait" displayType="summary"
@@ -2268,10 +2268,10 @@
          <operation name="reload"
                     description="reloads this webapp; NOTE: if the webapp is not in the started state, this operation will fail"/>                                   
 
-         <!-- The two traits below are collected by ApplicationComponent (from the Tomcat plugin), which WarComponent extends. -->
+         <!-- The two traits below are collected by the ApplicationComponent class, which WarComponent extends.. -->
          <metric property="Application.path" displayName="Path"
                  dataType="trait" displayType="summary"
-                 description="the abosolute path of this WAR file or directory"/>
+                 description="the absolute path of this WAR file or directory"/>
 
          <metric property="Application.exploded" displayName="Exploded?"
                  dataType="trait" displayType="summary"

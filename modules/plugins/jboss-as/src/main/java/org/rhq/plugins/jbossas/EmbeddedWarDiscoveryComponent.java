@@ -29,7 +29,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.plugins.applications.ApplicationResourceComponent;
 import org.rhq.plugins.jbossas.util.WarDiscoveryHelper;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
@@ -48,8 +47,7 @@ public class EmbeddedWarDiscoveryComponent extends MBeanResourceDiscoveryCompone
         // Generate object name based on the parent EAR with the following format.
         //   jboss.management.local:J2EEApplication=rhq.ear,J2EEServer=Local,j2eeType=WebModule,name=on-portal.war
 
-        ApplicationResourceComponent parentEarComponent = (ApplicationResourceComponent) context
-            .getParentResourceComponent();
+        ApplicationComponent parentEarComponent = (ApplicationComponent) context.getParentResourceComponent();
         String parentEar = parentEarComponent.getApplicationName();
 
         String objectName = "jboss.management.local:J2EEApplication=" + parentEar
@@ -67,8 +65,7 @@ public class EmbeddedWarDiscoveryComponent extends MBeanResourceDiscoveryCompone
 
         // Once we've finished making sure the plugin configurations have the data we need:
         // 1) First the stuff generic to all WARs...
-        JBossASServerComponent grandparentJBossASComponent = (JBossASServerComponent) parentEarComponent
-            .getParentResourceComponent();
+        JBossASServerComponent grandparentJBossASComponent = parentEarComponent.getParentResourceComponent();
         resourceDetails = WarDiscoveryHelper.initPluginConfigurations(grandparentJBossASComponent, resourceDetails);
 
         // 2) Then the stuff specific to embedded WARs...

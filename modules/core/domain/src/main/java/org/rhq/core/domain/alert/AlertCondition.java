@@ -60,7 +60,9 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "         ac, " //
         + "         ms.id, " //
         + "         mb.id, " //
-        + "         mb.baselineMean " //
+        + "         mb.baselineMin, " //
+        + "         mb.baselineMean, " //
+        + "         mb.baselineMax " //
         + "       ) " //
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //

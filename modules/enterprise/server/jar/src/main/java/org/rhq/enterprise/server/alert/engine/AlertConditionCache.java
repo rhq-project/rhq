@@ -570,6 +570,7 @@ public final class AlertConditionCache {
                             - ((Double) cacheElement.getAlertConditionValue()).doubleValue();
                         cachedConditionProducer.sendOutOfBoundsConditionMessage(cacheElement
                             .getAlertConditionTriggerId(), Double.valueOf(diff), timestamp);
+
                     } else {
                         /*
                          * Set the active property for alertCondition-based cache elements, and send it on its way;
@@ -846,8 +847,8 @@ public final class AlertConditionCache {
              * yes, calculatedValue may be null, but that's OK because the match 
              * method for MeasurementBaselineCacheElement handles nulls just fine
              */
-            Double calculatedValue = getCalculatedBaselineMeanValue(alertConditionId,
-                baselineComposite.getBaselineId(), baselineComposite.getValue(), optionStatus, threshold);
+            Double calculatedValue = getCalculatedBaselineValue(alertConditionId, baselineComposite, optionStatus,
+                threshold);
 
             try {
                 MeasurementBaselineCacheElement cacheElement = new MeasurementBaselineCacheElement(
@@ -983,15 +984,9 @@ public final class AlertConditionCache {
         }
     }
 
-    private Double getCalculatedBaselineMeanValue(int alertConditionId, int baselineId, Double mean,
+    private Double getCalculatedBaselineValue(int conditionId, AlertConditionBaselineCategoryComposite composite,
         String optionStatus, Double threshold) {
-        return getCalculatedBaselineValue_helper(alertConditionId, baselineId, null, mean, null, optionStatus,
-            threshold);
-    }
-
-    // this is auto-unboxing heaven, so let's be overly defensive at every turn
-    private Double getCalculatedBaselineValue_helper(int conditionId, int baselineId, Double min, Double mean,
-        Double max, String optionStatus, Double threshold) {
+        int baselineId = composite.getBaselineId();
 
         if (isInvalidDouble(threshold)) {
             log.error("Failed to calculate baseline for [conditionId=" + conditionId + ", baselineId=" + baselineId
@@ -1006,11 +1001,11 @@ public final class AlertConditionCache {
             log.error("Failed to calculate baseline for [conditionId=" + conditionId + ", baselineId=" + baselineId
                 + "]: optionStatus string was null");
         } else if (optionStatus.equals("min")) {
-            baselineValue = min;
+            baselineValue = composite.getMinValue();
         } else if (optionStatus.equals("mean")) {
-            baselineValue = mean;
+            baselineValue = composite.getMeanValue();
         } else if (optionStatus.equals("max")) {
-            baselineValue = max;
+            baselineValue = composite.getMaxValue();
         } else {
             log.error("Failed to calculate baseline for [conditionId=" + conditionId + ", baselineId=" + baselineId
                 + "]: unrecognized optionStatus string of '" + optionStatus + "'");

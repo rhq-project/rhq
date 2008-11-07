@@ -486,7 +486,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         baseline.setMax(agg.getMax());
 
         if (save) {
-            entityManager.merge(schedule); // merge will persist new baseline
+            entityManager.persist(baseline);
+            entityManager.merge(schedule);
 
             notifyAlertConditionCacheManager("calculateBaseline", baseline);
         }

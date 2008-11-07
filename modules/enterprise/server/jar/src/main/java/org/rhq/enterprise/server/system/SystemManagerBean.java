@@ -93,7 +93,7 @@ public class SystemManagerBean implements SystemManagerLocal {
     private EntityManager entityManager;
 
     @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
-    DataSource dataSource;
+    private DataSource dataSource;
 
     LicenseManager licenseManager;
 

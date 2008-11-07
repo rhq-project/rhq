@@ -160,7 +160,7 @@ public interface DbUtilsI18NResourceKeys {
     String DBSETUP_UNINSTALL_FAILED_TABLES = "DBSetup.uninstall.tables.failed";
 
     @I18NMessages( { @I18NMessage("Ignoring obsolete table [{0}]"),
-        @I18NMessage(value = "Ignorieren von veralteten Tabelle [{0}]", locale = "de") })
+        @I18NMessage(value = "Veraltete Tabelle [{0}] wird übersprungen", locale = "de") })
     String DBSETUP_IGNORING_OBSOLETE_TABLE = "DBSetup.ignoring-obsolete-table";
 
     @I18NMessages( { @I18NMessage("Setting up table [{0}]"),

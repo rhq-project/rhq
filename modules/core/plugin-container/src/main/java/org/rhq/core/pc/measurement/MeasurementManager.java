@@ -215,14 +215,16 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     }
 
     /**
+     * Check if the passed trait is new or has changed
      * @param  scheduleId
      * @param  traitValue
      *
      * @return true if the value is new or changed and should be included in the report
      */
     public boolean checkTrait(int scheduleId, String traitValue) {
-        String historic = traitCache.get(scheduleId);
+
         if (traitCache.containsKey(scheduleId)) {
+            String historic = traitCache.get(scheduleId);
             if (((historic == null) && (traitValue != null)) || ((historic != null) && !historic.equals(traitValue))) {
                 traitCache.put(scheduleId, traitValue);
                 return true;

@@ -87,6 +87,22 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public final class AlertConditionCache {
     private static final Log log = LogFactory.getLog(AlertConditionCache.class);
 
+    private static final String RHQ_MEASUREMENT_OOB_PROCESSING_PROPERTY = "rhq.measurement.out-of-bounds.processing";
+    private static final boolean measurementOutOfBoundsProcessingEnabled;
+
+    static {
+        // assumption is that oob processing is disabled, unless the property exists and its value is exactly 'enabled'
+        boolean enabled = false;
+        try {
+            String processingState = System.getProperty(RHQ_MEASUREMENT_OOB_PROCESSING_PROPERTY, "disabled");
+            enabled = processingState.equals("enabled");
+        } catch (Throwable t) {
+            // be paranoid about this completing without exception
+        }
+        measurementOutOfBoundsProcessingEnabled = enabled;
+        log.debug("Measurement out-of-bounds processing is " + (enabled ? "enabled" : "disabled"));
+    }
+
     /**
      * the batch size of conditions into the cache at a time
      */
@@ -345,43 +361,45 @@ public final class AlertConditionCache {
                 log.debug("Loaded " + rowsProcessed + " Alert Condition Composites of type '" + nextCategory + "'");
             }
 
-            // page thru all dynamic baselines
-            int rowsProcessed = 0;
-            PageControl pc = new PageControl();
-            pc.setPageNumber(0);
-            pc.setPageSize(PAGE_SIZE); // baseline composites are small so we can grab alot; use the setter, constructor limits this to 100
+            if (isOOBProcessingEnabled()) {
+                // page thru all dynamic baselines
+                int rowsProcessed = 0;
+                PageControl pc = new PageControl();
+                pc.setPageNumber(0);
+                pc.setPageSize(PAGE_SIZE); // baseline composites are small so we can grab alot; use the setter, constructor limits this to 100
 
-            while (true) {
-                PageList<MeasurementBaselineComposite> baselines = measurementBaselineManager
-                    .getAllDynamicMeasurementBaselines(agentId, overlord, pc);
+                while (true) {
+                    PageList<MeasurementBaselineComposite> baselines = measurementBaselineManager
+                        .getAllDynamicMeasurementBaselines(agentId, overlord, pc);
 
-                if (baselines.isEmpty()) {
-                    break; // didn't get any rows back, must not have any data or no more rows left to process
-                }
-
-                for (MeasurementBaselineComposite baseline : baselines) {
-                    // don't insert borked baselines: only when min/max is correctly non-null, non-NAN, non-INF
-                    if (isInvalidDouble(baseline.getMin()) || isInvalidDouble(baseline.getMax())) {
-                        continue; // process the next baseline
+                    if (baselines.isEmpty()) {
+                        break; // didn't get any rows back, must not have any data or no more rows left to process
                     }
 
-                    // safe auto-unboxing here, because min/max both guaranteed to be valid by this point
-                    insertOutOfBoundsBaseline(agentId, baseline.getId(), baseline.getMin(), baseline.getMax(), baseline
-                        .getScheduleId(), stats);
+                    for (MeasurementBaselineComposite baseline : baselines) {
+                        // don't insert borked baselines: only when min/max is correctly non-null, non-NAN, non-INF
+                        if (isInvalidDouble(baseline.getMin()) || isInvalidDouble(baseline.getMax())) {
+                            continue; // process the next baseline
+                        }
+
+                        // safe auto-unboxing here, because min/max both guaranteed to be valid by this point
+                        insertOutOfBoundsBaseline(agentId, baseline.getId(), baseline.getMin(), baseline.getMax(),
+                            baseline.getScheduleId(), stats);
+                    }
+
+                    entityManagerFacade.flush();
+                    entityManagerFacade.clear();
+
+                    rowsProcessed += baselines.size();
+                    if (rowsProcessed >= baselines.getTotalSize()) {
+                        break; // we've processed all data, we can stop now
+                    }
+
+                    pc.setPageNumber(pc.getPageNumber() + 1);
                 }
 
-                entityManagerFacade.flush();
-                entityManagerFacade.clear();
-
-                rowsProcessed += baselines.size();
-                if (rowsProcessed >= baselines.getTotalSize()) {
-                    break; // we've processed all data, we can stop now
-                }
-
-                pc.setPageNumber(pc.getPageNumber() + 1);
+                log.debug("Loaded " + rowsProcessed + " Measurement Baseline Composites (for OOBs)");
             }
-
-            log.debug("Loaded " + rowsProcessed + " Measurement Baseline Composites (for OOBs)");
 
             log.debug("Loaded Alert Condition Caches for agent[id=" + agentId + "]");
         } catch (Throwable t) {
@@ -1255,6 +1273,10 @@ public final class AlertConditionCache {
 
     private boolean isInvalidDouble(Double d) {
         return (d == null || Double.isNaN(d) || d == Double.POSITIVE_INFINITY || d == Double.NEGATIVE_INFINITY);
+    }
+
+    private boolean isOOBProcessingEnabled() {
+        return measurementOutOfBoundsProcessingEnabled;
     }
 
 }

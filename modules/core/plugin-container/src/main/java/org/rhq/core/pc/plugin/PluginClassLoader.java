@@ -36,22 +36,33 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.pluginapi.util.FileUtils;
 
 /**
- * Classloader for the plugin jar itself and any embedded lib/* jars. TODO: ghinkle, Dec 14, 2006: Consider using a
- * deepjar: direct style classloader instead of the temporary file system. TODO: jdobies, Dec 14, 2006: Add logging
+ * Classloader for the plugin jar itself and any embedded lib/* jars.
  */
+// TODO: ghinkle, Dec 14, 2006: Consider using a deepjar: direct style classloader instead of the temporary file system.
+// TODO: jdobies, Dec 14, 2006: Add logging
 public class PluginClassLoader extends URLClassLoader {
-    private File embeddedJarsDirectory = null;
+    private final Log log = LogFactory.getLog(this.getClass());
+
+    private File embeddedJarsDirectory;
 
     public PluginClassLoader(URL[] urls, ClassLoader parent) {
         super(urls, parent);
     }
 
     public void destroy() {
-        FileUtils.purge(embeddedJarsDirectory, true);
+        try {
+            FileUtils.purge(embeddedJarsDirectory, true);
+        }
+        catch (IOException e) {
+            log.warn("Failed to purge embedded jars directory.", e);
+        }
     }
 
     public static PluginClassLoader create(String pluginJarName, URL pluginUrl, boolean unpackNestedJars,

@@ -42,31 +42,33 @@ public abstract class FileUtils {
      * If <code>dir</code> is not a directory, but rather a simple file, it will be deleted only if
      * <code>deleteIt</code> is <code>true</code>.
      * 
-     * Note - This method does not protect against symbolic links and will follow them on unix/linux.
+     * Note - This method does not protect against symbolic links and will follow them on UNIX/Linux.
      * 
      * <p>If <code>dir</code> is <code>null</code>, this method does nothing.</p>
      * 
-     * @param dir the directory to purge (may also be just a simple file)
-     * @param deleteIt if <code>true</code>, <code>file</code> will be deleted after all of its contents are
+     * @param fileOrDir the file or directory to purge
+     * @param deleteIt if <code>true</code>, <code>dir</code> will be deleted after all of its contents are
      *                 deleted
+     * @throws IOException if the purge fails
      */
-    public static void purge(File dir, boolean deleteIt) {
-        if (dir != null) {
-            if (dir.isDirectory()) {
-                File[] doomedFiles = dir.listFiles();
+    public static void purge(File fileOrDir, boolean deleteIt) throws IOException {
+        if (fileOrDir != null) {
+            if (fileOrDir.isDirectory()) {
+                File[] doomedFiles = fileOrDir.listFiles();
                 if (doomedFiles != null) {
                     for (File doomedFile : doomedFiles) {
-                        purge(doomedFile, true); // call this method recursively
+                        purge(doomedFile, true); // recurse
                     }
                 }
             }
-
             if (deleteIt) {
-                dir.delete();
+                if (!fileOrDir.delete())
+                    throw new IOException("Failed to delete file or directory: " + fileOrDir);
+            } else {
+                if (fileOrDir.isDirectory() && fileOrDir.list().length != 0)
+                    throw new IOException("Failed to delete contents of directory: " + fileOrDir);
             }
         }
-
-        return;
     }
 
     // I *think* this returns the entire line where stringToFind is found

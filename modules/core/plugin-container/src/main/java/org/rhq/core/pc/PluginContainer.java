@@ -24,6 +24,8 @@ package org.rhq.core.pc;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.io.IOException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
@@ -256,7 +258,12 @@ public class PluginContainer implements ContainerService {
     }
 
     private void purgeTmpDirectoryContents() {
-        FileUtils.purge(configuration.getTemporaryDirectory(), false);
+        try {
+            FileUtils.purge(configuration.getTemporaryDirectory(), false);
+        }
+        catch (IOException e) {
+            log.warn("Failed to purge contents of temporary directory - cause: " + e);
+        }
     }
 
     private void startContainerService(ContainerService containerService) {

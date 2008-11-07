@@ -33,8 +33,9 @@ import org.rhq.core.domain.util.ReportUtils;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.util.exception.ThrowableUtil;
 
-/**
+ /**
  * Runnable implementation to thread create request requests.
  *
  * @author Jason Dobies
@@ -142,13 +143,15 @@ public class CreateResourceRunner implements Callable, Runnable {
 
             Throwable throwable = report.getException();
             if (throwable != null) {
-                log.warn("Throwable was found in creation report for request: " + requestId);
-
-                // If we still don't have an error message, populate it from the exception
-                if (errorMessage == null) {
-                    errorMessage = ReportUtils.getErrorMessageFromThrowable(throwable);
-                }
+                if (log.isDebugEnabled())
+                    log.debug("Throwable was found in creation report for request [" + requestId + "].", throwable);
+                else
+                    log.warn("Throwable was found in creation report for request [" + requestId + "]: " + throwable
+                           + " - Enable DEBUG logging to see the stack trace.");
                 status = CreateResourceStatus.FAILURE;
+                String messages = ThrowableUtil.getAllMessages(throwable);
+                // If we still don't have an error message, populate it from the exception
+                errorMessage = (errorMessage != null) ? (errorMessage + " - Cause: " + messages) : messages;
             }
         } catch (Throwable t) {
             errorMessage = ReportUtils.getErrorMessageFromThrowable(t);

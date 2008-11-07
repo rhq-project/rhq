@@ -73,6 +73,22 @@ public class FileUtil {
         }
     }
 
+    /**
+     * Writes the content in the input stream to the specified file.
+     * NOTE: inputStream will be closed by this.
+     *
+     * @param  inputStream stream containing the content to write
+     * @param  outputFile file to which the content will be written
+     *
+     * @throws IOException if any errors occur during the reading or writing
+     */
+    public static void writeFile(InputStream inputStream, File outputFile) throws IOException {
+        FileOutputStream fos = new FileOutputStream(outputFile);
+        copyStream(inputStream, fos);
+        inputStream.close();
+        fos.close();
+    }
+
     public static String findString(String fname, String toFind) throws IOException {
         StringBuffer result = null;
 

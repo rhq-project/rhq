@@ -226,40 +226,45 @@ public class MeasurementDataManagerUtility {
         try {
             myConnection = getConnection();
             for (int measurementDefinitionId : measurementDefinitionIds) {
-                ps = getFullQuery(myConnection, beginTime, endTime, 60, otherTable, conditions, resourceId,
-                    measurementDefinitionId);
-                rs = ps.executeQuery();
+                ps = null;
+                rs = null;
+                try {
+                    ps = getFullQuery(myConnection, beginTime, endTime, 60, otherTable, conditions, resourceId,
+                        measurementDefinitionId);
+                    rs = ps.executeQuery();
 
-                List<MeasurementDataNumericHighLowComposite> compositeList = new ArrayList<MeasurementDataNumericHighLowComposite>();
-                while (rs.next()) {
-                    long timestamp = rs.getLong(1);
-                    double value = rs.getDouble(2);
-                    if (rs.wasNull()) {
-                        value = Double.NaN;
+                    List<MeasurementDataNumericHighLowComposite> compositeList = new ArrayList<MeasurementDataNumericHighLowComposite>();
+                    while (rs.next()) {
+                        long timestamp = rs.getLong(1);
+                        double value = rs.getDouble(2);
+                        if (rs.wasNull()) {
+                            value = Double.NaN;
+                        }
+
+                        double peak = rs.getDouble(3);
+                        if (rs.wasNull()) {
+                            peak = Double.NaN;
+                        }
+
+                        double low = rs.getDouble(4);
+                        if (rs.wasNull()) {
+                            low = Double.NaN;
+                        }
+
+                        MeasurementDataNumericHighLowComposite next = new MeasurementDataNumericHighLowComposite(
+                            timestamp, value, peak, low);
+                        compositeList.add(next);
                     }
 
-                    double peak = rs.getDouble(3);
-                    if (rs.wasNull()) {
-                        peak = Double.NaN;
-                    }
-
-                    double low = rs.getDouble(4);
-                    if (rs.wasNull()) {
-                        low = Double.NaN;
-                    }
-
-                    MeasurementDataNumericHighLowComposite next = new MeasurementDataNumericHighLowComposite(timestamp,
-                        value, peak, low);
-                    compositeList.add(next);
+                    data.add(compositeList);
+                } finally {
+                    JDBCUtil.safeClose(ps, rs);
                 }
-
-                data.add(compositeList);
-                JDBCUtil.safeClose(ps, rs);
             }
         } catch (SQLException e) {
             throw new MeasurementNotFoundException(e);
         } finally {
-            JDBCUtil.safeClose(myConnection, ps, rs);
+            JDBCUtil.safeClose(myConnection);
             connection = null; // the close above invalidates the member
         }
         return data;
@@ -372,6 +377,7 @@ public class MeasurementDataManagerUtility {
         throws MeasurementNotFoundException {
         Connection myConnection = null;
         PreparedStatement ps = null;
+        ResultSet rs = null;
 
         try {
             myConnection = getConnection();
@@ -379,7 +385,7 @@ public class MeasurementDataManagerUtility {
 
             ps = getFullQuery(myConnection, beginTime, endTime, 1, "", condition, scheduleId);
 
-            ResultSet rs = ps.executeQuery();
+            rs = ps.executeQuery();
             if (rs.next()) {
                 MeasurementAggregate measurementAggregate = fillAggregateFromResultSet(rs);
                 return measurementAggregate;
@@ -389,7 +395,7 @@ public class MeasurementDataManagerUtility {
         } catch (SQLException e) {
             throw new MeasurementNotFoundException(e);
         } finally {
-            JDBCUtil.safeClose(myConnection, ps, null);
+            JDBCUtil.safeClose(myConnection, ps, rs);
             connection = null; // the close above invalidates the member
         }
     }
@@ -430,6 +436,7 @@ public class MeasurementDataManagerUtility {
 
         Connection myConnection = null;
         PreparedStatement ps = null;
+        ResultSet rs = null;
         String condition = null;
 
         try {
@@ -438,7 +445,7 @@ public class MeasurementDataManagerUtility {
             myConnection = getConnection();
             ps = getFullQuery(myConnection, beginTime, endTime, 1, "", condition, scheduleIds);
 
-            ResultSet rs = ps.executeQuery();
+            rs = ps.executeQuery();
             if (rs.next()) {
                 MeasurementAggregate measurementAggregate = fillAggregateFromResultSet(rs);
                 return measurementAggregate;
@@ -449,7 +456,7 @@ public class MeasurementDataManagerUtility {
             LOG.warn("Error condition :" + condition);
             throw new MeasurementNotFoundException(e);
         } finally {
-            JDBCUtil.safeClose(myConnection, ps, null);
+            JDBCUtil.safeClose(myConnection, ps, rs);
             connection = null; // the close above invalidates the member
         }
     }

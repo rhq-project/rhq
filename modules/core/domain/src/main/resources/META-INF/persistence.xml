@@ -16,6 +16,7 @@
          -->
          <!--<property name="hibernate.hbm2ddl.auto" value="create-drop" />-->
          <property name="hibernate.jdbc.batch_size" value="30"/>
+         <property name="hibernate.cache.use_second_level_cache" value="false"/>
 
          <!--<property name="com.intellij.javaee.persistence.datasource" value="rhq-oracle" />-->
          <property name="com.intellij.javaee.persistence.datasource" value="rhq-postgres" />

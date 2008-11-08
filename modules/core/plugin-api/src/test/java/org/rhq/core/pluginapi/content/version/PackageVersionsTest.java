@@ -1,4 +1,4 @@
- /*
+/*
   * Jopr Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.
@@ -20,7 +20,7 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
- package org.rhq.core.pluginapi.content.version;
+package org.rhq.core.pluginapi.content.version;
 
 import java.io.File;
 import org.testng.annotations.Test;
@@ -28,8 +28,7 @@ import org.testng.annotations.Test;
  /**
  * @author Jason Dobies
  */
-public class ApplicationVersionsTest {
-
+public class PackageVersionsTest {
     private static final boolean TESTS_ENABLED = true;
 
     private static final String TARGET_DIR = "." + File.separator + "target" + File.separator;
@@ -38,7 +37,7 @@ public class ApplicationVersionsTest {
     public void persistAndLoad() {
         // Setup
         String pluginName = "persist-test";
-        ApplicationVersions versions = new ApplicationVersions(pluginName, TARGET_DIR);
+        PackageVersions versions = new PackageVersions(pluginName, TARGET_DIR);
         versions.loadFromDisk();
 
         // Integrity check
@@ -51,13 +50,13 @@ public class ApplicationVersionsTest {
         versions.saveToDisk();
 
         // Verify
-        String fullFileName = TARGET_DIR + ApplicationVersions.FILENAME;
+        String fullFileName = TARGET_DIR + PackageVersions.FILENAME;
         File persistedFile = new File(fullFileName);
 
         assert persistedFile.exists() : "Persisted file not found at: " + fullFileName;
 
         // Test loading
-        versions = new ApplicationVersions(pluginName, TARGET_DIR);
+        versions = new PackageVersions(pluginName, TARGET_DIR);
 
         versions.loadFromDisk();
 
@@ -73,7 +72,7 @@ public class ApplicationVersionsTest {
     @Test(enabled = TESTS_ENABLED)
     public void noLoadCall() {
         // Setup
-        ApplicationVersions versions = new ApplicationVersions("no-load-call", TARGET_DIR);
+        PackageVersions versions = new PackageVersions("no-load-call", TARGET_DIR);
 
         // Test
         try {

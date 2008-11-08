@@ -1,4 +1,4 @@
- /*
+/*
   * Jopr Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.
@@ -20,7 +20,7 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
- package org.rhq.core.pluginapi.content.version;
+package org.rhq.core.pluginapi.content.version;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,26 +32,30 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.pluginapi.content.version.ApplicationVersionData;
-
- /**
- * Access to the persistent storage of application (EARs, WARs) package versions. This class provides the ability to
- * save and load the versions to disk, along with the basic retrieval and set calls for the versions themselves.
+/**
+ * Access to the persistent storage of package versions. This class provides the ability to save and load the versions
+ * to disk, along with the basic retrieval and set calls for the versions themselves.
  *
  * @author Jason Dobies
  */
-public class ApplicationVersions {
+public class PackageVersions {
 
     /**
      * Name of the file used to persist the version data.
      */
-    public static final String FILENAME = "application-versions.dat";
-    
+    public static final String FILENAME = "package-versions.dat";
+
+    /**
+     * Name of the file used in JON 2.1 and earlier to persist the version data.
+     */
+    // TODO: check for this
+    public static final String LEGACY_FILENAME = "application-versions.dat";
+
     /**
      * Version data storage. This is loaded through the {@link #loadFromDisk()} method which must be called prior
      * to any version manipulation calls.
      */
-    private static ApplicationVersionData data;
+    private static PackageVersionData data;
     private static ReentrantReadWriteLock dataLock = new ReentrantReadWriteLock(true);
 
     /**
@@ -76,7 +80,7 @@ public class ApplicationVersions {
      * @param pluginName    plugin loading the version data
      * @param dataDirectory directory into which to persist the versions
      */
-    public ApplicationVersions(String pluginName, String dataDirectory) {
+    public PackageVersions(String pluginName, String dataDirectory) {
         this.pluginName = pluginName;
         this.dataDirectory = dataDirectory;
     }
@@ -98,24 +102,33 @@ public class ApplicationVersions {
             if (data != null)
                 return;
 
-            log.debug("Loading application versions from storage for plugin [" + pluginName + "]");
-
+            log.debug("Loading package versions from storage for plugin [" + pluginName + "]");
             File file = new File(dataDirectory, FILENAME);
 
-            // There will be no data file after a clean or on the first run, so create an empty one 
+            // If there's no package-versions.dat, check for the old filename, application-versions.dat.
             if (!file.exists()) {
-                log.debug("No application versions found for plugin [" + pluginName +
+                File legacyFile = new File(dataDirectory, LEGACY_FILENAME);
+                if (legacyFile.exists()) {
+                    log.info("Found legacy package versions data file [" + legacyFile + "] - renaming to ["
+                            + file + "]...");
+                    legacyFile.renameTo(file);
+                }
+            }
+
+            // There will be no data file after a clean or on the first run, so create an empty one
+            if (!file.exists()) {
+                log.debug("No package versions found for plugin [" + pluginName +
                     "]. This will be the case if the Agent was cleaned or on the first run.");
-                data = new ApplicationVersionData();
+                data = new PackageVersionData();
             } else {
                 FileInputStream fis = new FileInputStream(file);
                 ois = new ObjectInputStream(fis);
-                data = (ApplicationVersionData) ois.readObject();
+                data = (PackageVersionData) ois.readObject();
             }
         } catch (Exception e) {
             log.error("Could not load persistent version data from disk for plugin [" + pluginName +
-                "]. Application version values will be reset.", e);
-            data = new ApplicationVersionData();
+                "]. Package version values will be reset.", e);
+            data = new PackageVersionData();
         } finally {
             if (ois != null) {
                 try {
@@ -149,7 +162,7 @@ public class ApplicationVersions {
             oos.writeObject(data);
         } catch (Exception e) {
             log.error("Error saving persistent version data for plugin [" + pluginName +
-                "]. Application versions may not be maintained between agent restarts.", e);
+                "]. Package versions may not be maintained between agent restarts.", e);
         } finally {
             if (oos != null) {
                 try {

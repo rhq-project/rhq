@@ -1,4 +1,4 @@
- /*
+/*
   * Jopr Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.
@@ -20,23 +20,23 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
- package org.rhq.core.pluginapi.content.version;
+package org.rhq.core.pluginapi.content.version;
 
 import java.io.Serializable;
 import java.util.Map;
 import java.util.HashMap;
 
 /**
- * Object that will be persisted to store the package versions for applications (EARs, WARs) detected by plugins.
+ * Object that will be persisted to store the versions for packages detected by plugins.
  *
  * @author Jason Dobies
  */
-public class ApplicationVersionData implements Serializable {
+public class PackageVersionData implements Serializable {
 
     /**
      * Mapping of package key to package version.
      */
-    private Map<String, String> applicationVersions = new HashMap<String, String>();
+    private Map<String, String> packageVersions = new HashMap<String, String>();
 
     /**
      * Returns the package version associated with the package identified by the specified key.
@@ -46,7 +46,7 @@ public class ApplicationVersionData implements Serializable {
      * @return version of the package if it is known; <code>null</code> otherwise
      */
     public String getVersion(String packageKey) {
-        return applicationVersions.get(packageKey);
+        return packageVersions.get(packageKey);
     }
 
     /**
@@ -57,6 +57,6 @@ public class ApplicationVersionData implements Serializable {
      * @param version    version of the package                           
      */
     public void setVersion(String packageKey, String version) {
-        applicationVersions.put(packageKey, version);
+        packageVersions.put(packageKey, version);
     }
 }

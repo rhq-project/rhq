@@ -129,51 +129,59 @@ public class EventManagerBean implements EventManagerLocal {
             String nextvalSql = JDBCUtil.getNextValSql(conn, EventSource.TABLE_NAME);
             String statementSql = String.format(EVENT_SOURCE_INSERT_STMT, nextvalSql);
             ps = conn.prepareStatement(statementSql);
-            for (EventSource eventSource : events.keySet()) {
-                int paramIndex = 1;
-                ps.setString(paramIndex++, eventSource.getEventDefinition().getName());
-                ps.setString(paramIndex++, eventSource.getEventDefinition().getResourceType().getName());
-                ps.setString(paramIndex++, eventSource.getEventDefinition().getResourceType().getPlugin());
-                ps.setInt(paramIndex++, eventSource.getResource().getId());
-                ps.setString(paramIndex++, eventSource.getLocation());
-                ps.setString(paramIndex++, eventSource.getEventDefinition().getName());
-                ps.setString(paramIndex++, eventSource.getEventDefinition().getResourceType().getName());
-                ps.setString(paramIndex++, eventSource.getEventDefinition().getResourceType().getPlugin());
-                ps.setInt(paramIndex++, eventSource.getResource().getId());
-                ps.setString(paramIndex++, eventSource.getLocation());
-
-                ps.addBatch();
-            }
-            ps.executeBatch();
-
-            // Then insert the "values" (i.e. the Events).
-            nextvalSql = JDBCUtil.getNextValSql(conn, Event.TABLE_NAME);
-            statementSql = String.format(EVENT_INSERT_STMT, nextvalSql);
-            ps = conn.prepareStatement(statementSql);
-            for (EventSource eventSource : events.keySet()) {
-                Set<Event> eventData = events.get(eventSource);
-                for (Event event : eventData) {
+            try {
+                for (EventSource eventSource : events.keySet()) {
                     int paramIndex = 1;
                     ps.setString(paramIndex++, eventSource.getEventDefinition().getName());
                     ps.setString(paramIndex++, eventSource.getEventDefinition().getResourceType().getName());
                     ps.setString(paramIndex++, eventSource.getEventDefinition().getResourceType().getPlugin());
                     ps.setInt(paramIndex++, eventSource.getResource().getId());
                     ps.setString(paramIndex++, eventSource.getLocation());
-                    ps.setLong(paramIndex++, event.getTimestamp());
-                    ps.setString(paramIndex++, event.getSeverity().toString());
-                    ps.setString(paramIndex++, event.getDetail());
+                    ps.setString(paramIndex++, eventSource.getEventDefinition().getName());
+                    ps.setString(paramIndex++, eventSource.getEventDefinition().getResourceType().getName());
+                    ps.setString(paramIndex++, eventSource.getEventDefinition().getResourceType().getPlugin());
+                    ps.setInt(paramIndex++, eventSource.getResource().getId());
+                    ps.setString(paramIndex++, eventSource.getLocation());
+
                     ps.addBatch();
                 }
-
-                notifyAlertConditionCacheManager("addEventData", eventSource, eventData.toArray(new Event[0]));
+                ps.executeBatch();
+            } finally {
+                JDBCUtil.safeClose(ps);
             }
-            ps.executeBatch();
+
+            // Then insert the "values" (i.e. the Events).
+            nextvalSql = JDBCUtil.getNextValSql(conn, Event.TABLE_NAME);
+            statementSql = String.format(EVENT_INSERT_STMT, nextvalSql);
+            ps = conn.prepareStatement(statementSql);
+            try {
+                for (EventSource eventSource : events.keySet()) {
+                    Set<Event> eventData = events.get(eventSource);
+                    for (Event event : eventData) {
+                        int paramIndex = 1;
+                        ps.setString(paramIndex++, eventSource.getEventDefinition().getName());
+                        ps.setString(paramIndex++, eventSource.getEventDefinition().getResourceType().getName());
+                        ps.setString(paramIndex++, eventSource.getEventDefinition().getResourceType().getPlugin());
+                        ps.setInt(paramIndex++, eventSource.getResource().getId());
+                        ps.setString(paramIndex++, eventSource.getLocation());
+                        ps.setLong(paramIndex++, event.getTimestamp());
+                        ps.setString(paramIndex++, event.getSeverity().toString());
+                        ps.setString(paramIndex++, event.getDetail());
+                        ps.addBatch();
+                    }
+
+                    notifyAlertConditionCacheManager("addEventData", eventSource, eventData.toArray(new Event[0]));
+                }
+                ps.executeBatch();
+            } finally {
+                JDBCUtil.safeClose(ps);
+            }
 
         } catch (SQLException e) {
             // TODO what do we want to do here ?
             log.warn("addEventData: Insert of events failed : " + e.getMessage());
         } finally {
-            JDBCUtil.safeClose(conn, ps, null);
+            JDBCUtil.safeClose(conn);
         }
     }
 

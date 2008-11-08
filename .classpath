@@ -149,6 +149,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/augeas/java-augeas/1.0/java-augeas-1.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/json/json/20080701/json-20080701.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/sun/jna/jna/3.0.1/jna-3.0.1.jar"/>
-	<classpathentry kind="var" path="M2_REPO/net/sf/bluecove/bluecove/2.0.3/bluecove-2.0.3.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/net/sf/bluecove/bluecove/2.0.3/bluecove-2.0.3.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

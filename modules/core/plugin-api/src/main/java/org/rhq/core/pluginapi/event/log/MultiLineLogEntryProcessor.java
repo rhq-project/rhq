@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pluginapi.event.log;
 
 import java.io.BufferedReader;
@@ -63,7 +63,7 @@ public abstract class MultiLineLogEntryProcessor implements LogEntryProcessor {
     @Nullable
     public Set<Event> processLines(BufferedReader bufferedReader) throws IOException {
         // Use a LinkedHashSet so the Events are in the same order as the log entries they correspond to.
-        Set<Event> events = new LinkedHashSet();
+        Set<Event> events = new LinkedHashSet<Event>();
         LogEntry currentEntry = null;
         String line;
         while ((line = bufferedReader.readLine()) != null) {
@@ -160,7 +160,7 @@ public abstract class MultiLineLogEntryProcessor implements LogEntryProcessor {
         return date;
     }
 
-    protected class LogEntry {
+    protected static class LogEntry {
         private Date date;
         private EventSeverity severity;
         private StringBuilder detail;
@@ -189,7 +189,7 @@ public abstract class MultiLineLogEntryProcessor implements LogEntryProcessor {
         }
     }
 
-    protected class ParseException extends Exception {
+    protected static class ParseException extends Exception {
         public ParseException(String message) {
             super(message);
         }

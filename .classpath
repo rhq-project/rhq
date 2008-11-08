@@ -17,7 +17,6 @@
 		</accessrules>
 	</classpathentry>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-httpclient/commons-httpclient/3.0.1/commons-httpclient-3.0.1.jar"/>
-	<classpathentry kind="var" path="M2_REPO/mc4j/org-mc4j-ems/1.2.6/org-mc4j-ems-1.2.6.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/rhq"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

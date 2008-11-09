@@ -46,7 +46,8 @@ public interface ResourceGroupManagerLocal {
     ResourceGroup updateResourceGroup(Subject user, ResourceGroup group) throws ResourceGroupAlreadyExistsException,
         ResourceGroupUpdateException;
 
-    void deleteResourceGroup(Subject user, Integer groupId);
+    void deleteResourceGroup(Subject user, Integer groupId) throws ResourceGroupNotFoundException,
+        ResourceGroupDeleteException;
 
     ResourceGroup getResourceGroupById(Subject user, int id, GroupCategory category)
         throws ResourceGroupNotFoundException;
@@ -61,6 +62,8 @@ public interface ResourceGroupManagerLocal {
 
     ResourceGroup removeResourcesFromGroup(Subject subject, Integer groupId, Integer[] resourceIds)
         throws ResourceGroupUpdateException;
+
+    void removeAllResourcesFromGroup(Subject subject, Integer groupId) throws ResourceGroupDeleteException;
 
     PageList<ResourceGroup> getAvailableResourceGroupsForRole(Subject subject, Integer roleId, Integer[] excludeIds,
         PageControl pageControl);

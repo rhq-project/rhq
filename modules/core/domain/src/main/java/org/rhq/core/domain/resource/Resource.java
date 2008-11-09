@@ -358,10 +358,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "SELECT res.id " //
         + "  FROM ResourceGroup rg, IN (rg.explicitResources) res " //
         + " WHERE rg.id = :groupId "),
-    @NamedQuery(name = Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_GROUP_ID, query = "" // 
-        + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
-        + "  FROM ResourceGroup rg JOIN rg.explicitResources res " //
-        + " WHERE rg.id = :groupId "),
     @NamedQuery(name = Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceIdFlyWeight(res.id, res.uuid) " //
         + "  FROM Resource res " //
@@ -675,7 +671,6 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public static final String QUERY_FIND_EXPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN = "Resource.findExplicitIdsByResourceGroup_admin";
 
-    public static final String QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_GROUP_ID = "Resource.findExplicitFlyWeightsByResourceGroupId";
     public static final String QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS = "Resource.findFlyWeights";
     public static final String QUERY_FIND_FLY_WEIGHTS_BY_PARENT_RESOURCE_ID = "Resource.findFlyWeightsByResourceParentId";
 

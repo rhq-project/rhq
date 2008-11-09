@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.server.resource.group;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -27,12 +30,15 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
+import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -58,6 +64,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -77,6 +84,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
  * @author Joseph Marques
  */
 @Stateless
+@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     private final Log log = LogFactory.getLog(ResourceGroupManagerBean.class);
 
@@ -96,6 +104,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     @EJB
     @IgnoreDependency
     private ResourceManagerLocal resourceManager;
+    @EJB
+    private ResourceGroupManagerLocal resourceGroupManager;
+
+    @javax.annotation.Resource(name = "RHQ_DS")
+    private DataSource rhqDs;
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -158,7 +171,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void deleteResourceGroup(Subject user, Integer groupId) throws ResourceGroupNotFoundException {
+    public void deleteResourceGroup(Subject user, Integer groupId) throws ResourceGroupNotFoundException,
+        ResourceGroupDeleteException {
         ResourceGroup group = getResourceGroupById(user, groupId, null);
 
         // first unschedule all jobs for this group (only compatible groups have operations, mixed do not)
@@ -188,11 +202,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
         group = entityManager.merge(group);
 
-        // now clean the group itself
-        List<ResourceIdFlyWeight> flyWeights = resourceManager.getExplicitFlyWeightsByResourceGroup(group.getId());
-        for (ResourceIdFlyWeight fly : flyWeights) {
-            removeResourcesFromGroupHelper(group, fly);
-        }
+        // remove all resources in the group
+        resourceGroupManager.removeAllResourcesFromGroup(user, groupId);
 
         // break resource and plugin configuration update links in order to preserve individual change history
         Query q = null;
@@ -393,6 +404,35 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         log.info("removeResourcesFromGroup took " + (endTime - startTime) + " millis");
 
         return mergedResult;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void removeAllResourcesFromGroup(Subject subject, Integer groupId) throws ResourceGroupDeleteException {
+        Connection conn = null;
+        PreparedStatement explicitStatement = null;
+        PreparedStatement implicitStatement = null;
+        try {
+            conn = rhqDs.getConnection();
+
+            explicitStatement = conn
+                .prepareStatement("delete from rhq_resource_group_res_exp_map where resource_group_id = ?");
+            implicitStatement = conn
+                .prepareStatement("delete from rhq_resource_group_res_imp_map where resource_group_id = ?");
+
+            explicitStatement.setInt(1, groupId);
+            implicitStatement.setInt(1, groupId);
+
+            explicitStatement.executeUpdate();
+            implicitStatement.executeUpdate();
+        } catch (SQLException sqle) {
+            log.error("Error removing group resources", sqle);
+            throw new ResourceGroupDeleteException("Error removing group resources: " + sqle.getMessage());
+        } finally {
+            JDBCUtil.safeClose(explicitStatement);
+            JDBCUtil.safeClose(implicitStatement);
+            JDBCUtil.safeClose(conn);
+        }
     }
 
     @RequiredPermission(Permission.MANAGE_SECURITY)

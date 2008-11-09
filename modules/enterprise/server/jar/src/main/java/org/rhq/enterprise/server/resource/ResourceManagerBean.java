@@ -1332,15 +1332,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<ResourceIdFlyWeight> getExplicitFlyWeightsByResourceGroup(int resourceGroupId) {
-        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_GROUP_ID);
-        query.setParameter("groupId", resourceGroupId);
-
-        List<ResourceIdFlyWeight> results = query.getResultList();
-        return results;
-    }
-
-    @SuppressWarnings("unchecked")
     public List<ResourceIdFlyWeight> getFlyWeights(Integer[] resourceIds) {
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS);
         query.setParameter("resourceIds", Arrays.asList(resourceIds));

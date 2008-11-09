@@ -173,8 +173,8 @@ public interface ResourceManagerLocal {
      * @return the resource, or null if no such resource exists
      */
     @Nullable
-    Resource getResourceByParentAndKey(Subject user, @Nullable
-    Resource parent, String key, String plugin, String typeName);
+    Resource getResourceByParentAndKey(Subject user, @Nullable Resource parent, String key, String plugin,
+        String typeName);
 
     PageList<Resource> getResourceByParentAndInventoryStatus(Subject user, Resource parent, InventoryStatus status,
         PageControl pageControl);
@@ -226,8 +226,6 @@ public interface ResourceManagerLocal {
      *         ctime</code>
      */
     List<RecentlyAddedResourceComposite> getRecentlyAddedServers(Subject user, long ctime, int platformId);
-
-    List<ResourceIdFlyWeight> getExplicitFlyWeightsByResourceGroup(int resourceGroupId);
 
     List<Integer> getExplicitResourceIdsByResourceGroup(int resourceGroupId);
 

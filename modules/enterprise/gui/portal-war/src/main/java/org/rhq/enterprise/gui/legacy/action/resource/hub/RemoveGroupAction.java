@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.legacy.action.resource.hub;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionErrors;
@@ -28,9 +29,11 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionMessages;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
+import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -53,6 +56,7 @@ public class RemoveGroupAction extends BaseAction {
 
         String invalidGroupIds = "";
         String invalidIntegers = "";
+        String errorGroupIds = "";
 
         for (String item : resources) {
             try {
@@ -62,6 +66,8 @@ public class RemoveGroupAction extends BaseAction {
                 invalidGroupIds = add(invalidGroupIds, item);
             } catch (NumberFormatException nfe) {
                 invalidIntegers = add(invalidIntegers, item);
+            } catch (ResourceGroupDeleteException rgde) {
+                errorGroupIds = add(errorGroupIds, item);
             }
         }
 
@@ -78,6 +84,11 @@ public class RemoveGroupAction extends BaseAction {
             if (invalidIntegers.length() > 0) {
                 errors.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage("resource.common.error.InvalidIntegers",
                     invalidIntegers));
+            }
+
+            if (errorGroupIds.length() > 0) {
+                errors.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage("resource.common.error.ErrorGroupIds",
+                    errorGroupIds));
             }
 
             RequestUtils.setErrors(request, errors);

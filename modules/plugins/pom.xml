@@ -69,13 +69,4 @@
 		</plugins>
 	</build>
 
-   <profiles>
-      <profile>
-         <id>dev</id>
-         <modules>
-            <module>jboss-as-5</module>
-         </modules>
-      </profile>
-   </profiles>
-
 </project>

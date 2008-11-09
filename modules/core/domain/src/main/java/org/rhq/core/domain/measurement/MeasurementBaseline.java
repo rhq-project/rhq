@@ -250,7 +250,7 @@ public class MeasurementBaseline implements Serializable {
     public void setSchedule(MeasurementSchedule schedule) {
         this.schedule = schedule;
         this.schedule.setBaseline(this);
-        this.scheduleId = (schedule == null) ? 0 : schedule.getId();
+        this.scheduleId = schedule.getId();
     }
 
     /**

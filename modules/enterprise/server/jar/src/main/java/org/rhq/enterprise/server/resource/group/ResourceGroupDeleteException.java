@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.server.resource.group;
 
+import javax.ejb.ApplicationException;
+
+@ApplicationException(rollback = true)
 public class ResourceGroupDeleteException extends Exception {
     private static final long serialVersionUID = 1L;
 

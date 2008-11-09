@@ -226,7 +226,24 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         try {
             entityManager.flush();
 
+            // see if there is already an existing type that we need to update
+            if (log.isDebugEnabled()) {
+                log.debug("Searching existing type for name " + resourceType.getName() + " and plugin "
+                    + resourceType.getPlugin());
+            }
+
+            Query q = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN);
+            q.setParameter("name", resourceType.getName()).setParameter("plugin", resourceType.getPlugin());
+            List<ResourceType> findTypeByNameAndPlugin = q.getResultList();
+
+            ResourceType existingType = null;
+            if (findTypeByNameAndPlugin.size() == 1) {
+                existingType = findTypeByNameAndPlugin.get(0);
+            }
+
             // Connect the parent types if they exist which they should
+            // We'll do this no matter if the resourceType exists or not - but we use existing vs. resourceType appropriately
+            // This is to support the case when an existing type gets a new parent resource type in <runs-inside>
             Set<ResourceType> types = new HashSet<ResourceType>(resourceType.getParentResourceTypes());
             resourceType.setParentResourceTypes(new HashSet<ResourceType>());
             for (ResourceType resourceTypeParent : types) {
@@ -234,45 +251,34 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     ResourceType realParentType = (ResourceType) entityManager.createNamedQuery(
                         ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN).setParameter("name", resourceTypeParent.getName())
                         .setParameter("plugin", resourceTypeParent.getPlugin()).getSingleResult();
-                    realParentType.addChildResourceType(resourceType);
+                    realParentType.addChildResourceType(existingType != null ? existingType : resourceType);
                 } catch (NoResultException nre) {
                     throw new RuntimeException("Couldn't persist type [" + resourceType
                         + "] because parent wasn't already persisted [" + resourceTypeParent + "]");
                 }
             }
 
-            // now see if there is already an existing type that we need to update
-
-            if (log.isDebugEnabled()) {
-                String out = "Searching existing type for name " + resourceType.getName() + " and plugin "
-                    + resourceType.getPlugin();
-                log.debug(out);
+            if (findTypeByNameAndPlugin.size() == 0) {
+                throw new NoResultException(); // falls into the catch block down below. TODO refactor this stuff
             }
 
-            Query q = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN).setParameter("name",
-                resourceType.getName()).setParameter("plugin", resourceType.getPlugin());
-            List<ResourceType> results = q.getResultList();
-
+            // XXX: I do not think the code in this if-block is valid - see RHQ-1086 - I think it should be removed
             // see what we have. Default is 0 or 1. When hot deploying and moving a RT 2 can happen
-            ResourceType existingType = null;
-            if (results.size() == 1) {
-                existingType = results.get(0);
-            } else if (results.size() == 0) {
-                throw new NoResultException(); // continue below TODO refactor the blocks
-            } else {
+            if (findTypeByNameAndPlugin.size() > 1) {
                 // No Unique result. List what we have and bail out if more than 2 results
                 if (log.isDebugEnabled()) {
-                    for (ResourceType rType : results) {
+                    for (ResourceType rType : findTypeByNameAndPlugin) {
                         log.debug("updateType: found: " + rType.toString());
                     }
                 }
 
-                if (results.size() != 2) {
-                    throw new IllegalArgumentException("We only expected two results here, but got " + results.size());
+                if (findTypeByNameAndPlugin.size() != 2) {
+                    throw new IllegalArgumentException("We only expected two results here, but got "
+                        + findTypeByNameAndPlugin.size());
                 }
 
                 // two results - see if one is us, then the other must be the existing type that we are looking for
-                Iterator<ResourceType> iter = results.iterator();
+                Iterator<ResourceType> iter = findTypeByNameAndPlugin.iterator();
                 ResourceType rt1 = iter.next();
                 ResourceType rt2 = iter.next();
                 if (rt1.equals(resourceType)) {

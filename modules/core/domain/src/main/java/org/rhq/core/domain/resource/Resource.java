@@ -385,18 +385,24 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "  FROM ResourceGroup rg, IN (rg.implicitResources) res " //
         + " WHERE rg = :group "),
     @NamedQuery(name = Resource.QUERY_FIND_EXPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP, query = "" //
-        + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType, 1, " //
-        + "(SELECT count(iir) FROM rg.implicitResources iir WHERE iir = res)) " //
-        + "  FROM ResourceGroup rg JOIN rg.explicitResources res " //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, " //
+        + " (SELECT parentRes FROM Resource parentRes WHERE parentRes = res.parentResource), " //
+        + " a.availabilityType, " //
+        + " 1, (SELECT count(iir) FROM rg.implicitResources iir WHERE iir = res)) " //
+        + "  FROM ResourceGroup rg JOIN rg.explicitResources res LEFT JOIN res.parentResource parent " //
         + "  LEFT JOIN res.availability a WITH a.endTime is null " //
-        + " WHERE rg = :group " //
-        + "   AND rg.id IN (SELECT irg.id FROM ResourceGroup irg JOIN irg.roles r JOIN r.subjects s WHERE s = :subject) "),
+        + " WHERE rg.id = :groupId " //
+        + "   AND rg.id IN (SELECT irg.id FROM ResourceGroup irg JOIN irg.roles r JOIN r.subjects s WHERE s = :subject) " //
+        + "   AND res.inventoryStatus = 'COMMITTED' "), //
     @NamedQuery(name = Resource.QUERY_FIND_EXPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_ADMIN, query = "" //
-        + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, a.availabilityType, 1, " //
-        + "(SELECT count(iir) FROM rg.implicitResources iir WHERE iir = res)) "
-        + "  FROM ResourceGroup rg JOIN rg.explicitResources res " //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, " //
+        + " (SELECT parentRes FROM Resource parentRes WHERE parentRes = res.parentResource), " //
+        + " a.availabilityType, 1, " //
+        + "(SELECT count(iir) FROM rg.implicitResources iir WHERE iir = res)) " //
+        + "  FROM ResourceGroup rg JOIN rg.explicitResources res LEFT JOIN res.parentResource parent " //
         + "  LEFT JOIN res.availability a WITH a.endTime is null " //
-        + " WHERE rg = :group "),
+        + " WHERE rg.id = :groupId " + //
+        "   AND res.inventoryStatus = 'COMMITTED' "), //
     @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, " //
         + " (SELECT parentRes FROM Resource parentRes WHERE parentRes = res.parentResource), " //
@@ -404,35 +410,40 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "(SELECT count(ier) FROM rg.explicitResources ier WHERE ier = res), 1) " //
         + "  FROM ResourceGroup rg JOIN rg.implicitResources res LEFT JOIN res.parentResource parent " //
         + "  LEFT JOIN res.availability a WITH a.endTime is null " //
-        + " WHERE rg = :group " //
+        + " WHERE rg.id = :groupId " //
         + "   AND rg.id IN (SELECT irg.id FROM ResourceGroup irg JOIN irg.roles r JOIN r.subjects s WHERE s = :subject) "
-        + "   AND res.inventoryStatus = 'COMMITTED' "),
+        + "   AND res.inventoryStatus = 'COMMITTED' "), //
     @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_ADMIN, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceWithAvailability(res, " //
         + " (SELECT parentRes FROM Resource parentRes WHERE parentRes = res.parentResource), " //
         + " a.availabilityType, " //
-        + "(SELECT count(ier) FROM rg.explicitResources ier WHERE ier = res), 1) "
+        + "(SELECT count(ier) FROM rg.explicitResources ier WHERE ier = res), 1) " //
         + "  FROM ResourceGroup rg JOIN rg.implicitResources res LEFT JOIN res.parentResource parent " //
-        + "  LEFT JOIN res.availability a WITH a.endTime is null "
-        + " WHERE rg = :group "
-        + "   AND res.inventoryStatus = 'COMMITTED' "),
-    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT, query = "" //
+        + "  LEFT JOIN res.availability a WITH a.endTime is null " //
+        + " WHERE rg.id = :groupId " //
+        + "   AND res.inventoryStatus = 'COMMITTED' "), //
+    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT, query = "" //
         + "SELECT count(DISTINCT res) " //
         + "  FROM ResourceGroup rg JOIN rg.implicitResources res JOIN rg.roles r JOIN r.subjects s " //
-        + "  LEFT JOIN res.availability a WITH a.endTime is null " //
-        + " WHERE rg = :group " //
+        + " WHERE rg.id = :groupId " //
         + "   AND res.inventoryStatus = 'COMMITTED' " //
         + "   AND s = :subject "),
-    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT_ADMIN, query = "" //
+    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT_ADMIN, query = "" //
         + "SELECT count(res) " //
         + "  FROM ResourceGroup rg JOIN rg.implicitResources res " //
-        + "  LEFT JOIN res.availability a WITH a.endTime is null " //
-        + " WHERE rg = :group " //
+        + " WHERE rg.id = :groupId " //
         + "   AND res.inventoryStatus = 'COMMITTED' "),
-    @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_COUNT_ADMIN, query = "" //
+    @NamedQuery(name = Resource.QUERY_FIND_EXPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT, query = "" //
+        + "SELECT count(DISTINCT res) " //
+        + "  FROM ResourceGroup rg JOIN rg.explicitResources res JOIN rg.roles r JOIN r.subjects s " //
+        + " WHERE rg.id = :groupId " //
+        + "   AND res.inventoryStatus = 'COMMITTED' " //
+        + "   AND s = :subject "),
+    @NamedQuery(name = Resource.QUERY_FIND_EXPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT_ADMIN, query = "" //
         + "SELECT count(res) " //
-        + "  FROM ResourceGroup rg JOIN rg.implicitResources res " //
-        + " WHERE rg.id = :resourceGroupId "),
+        + "  FROM ResourceGroup rg JOIN rg.explicitResources res " //
+        + " WHERE rg.id = :groupId " //
+        + "   AND res.inventoryStatus = 'COMMITTED' "),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL, query = "" //
         + "  SELECT res " //  
         + "    FROM Resource AS res " //
@@ -682,12 +693,12 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public static final String QUERY_FIND_EXPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP = "ResourceWithAvailability.findExplicitByResourceGroup";
     public static final String QUERY_FIND_EXPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_ADMIN = "ResourceWithAvailability.findExplicitByResourceGroup_admin";
-
     public static final String QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP = "ResourceWithAvailability.findImplicitByResourceGroup";
-    public static final String QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT = "ResourceWithAvailability.findImplicitByResourceGroup_count";
     public static final String QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_ADMIN = "ResourceWithAvailability.findImplicitByResourceGroup_admin";
-    public static final String QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT_ADMIN = "ResourceWithAvailability.findImplicitByResourceGroup_count_admin";
-    public static final String QUERY_FIND_IMPLICIT_RESOURCES_COUNT_ADMIN = "Resource.findImplicitByResourceGroup_count_admin";
+    public static final String QUERY_FIND_IMPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT = "ResourceWithAvailability.findImplicitByResourceGroup_count";
+    public static final String QUERY_FIND_IMPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT_ADMIN = "ResourceWithAvailability.findImplicitByResourceGroup_count_admin";
+    public static final String QUERY_FIND_EXPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT = "ResourceWithAvailability.findExplicitByResourceGroup_count";
+    public static final String QUERY_FIND_EXPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT_ADMIN = "ResourceWithAvailability.findExplicitByResourceGroup_count_admin";
 
     public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_CHANNEL = "Resource.getAvailableResourcesForChannel";
 

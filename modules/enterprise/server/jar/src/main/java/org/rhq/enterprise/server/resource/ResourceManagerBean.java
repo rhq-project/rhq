@@ -1381,6 +1381,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @SuppressWarnings("unchecked")
+    // RHQ-796, queries now return the parent resource attached
     public PageList<ResourceWithAvailability> getExplicitResourceWithAvailabilityByResourceGroup(Subject subject,
         ResourceGroup group, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
@@ -1389,29 +1390,29 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Query query;
         if (authorizationManager.isInventoryManager(subject)) {
             queryCount = PersistenceUtility.createCountQuery(entityManager,
-                Resource.QUERY_FIND_EXPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_ADMIN);
+                Resource.QUERY_FIND_EXPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT_ADMIN);
             query = PersistenceUtility.createQueryWithOrderBy(entityManager,
                 Resource.QUERY_FIND_EXPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_ADMIN, pageControl);
         } else {
             queryCount = PersistenceUtility.createCountQuery(entityManager,
-                Resource.QUERY_FIND_EXPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP);
+                Resource.QUERY_FIND_EXPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT);
             queryCount.setParameter("subject", subject);
             query = PersistenceUtility.createQueryWithOrderBy(entityManager,
                 Resource.QUERY_FIND_EXPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP, pageControl);
             query.setParameter("subject", subject);
         }
 
-        queryCount.setParameter("group", group);
+        queryCount.setParameter("groupId", group.getId());
         long count = (Long) queryCount.getSingleResult();
 
-        query.setParameter("group", group);
+        query.setParameter("groupId", group.getId());
 
         List<ResourceWithAvailability> results = query.getResultList();
         return new PageList<ResourceWithAvailability>(results, (int) count, pageControl);
     }
 
     @SuppressWarnings("unchecked")
-    // RHQ-796, queries not return the parent resource attached
+    // RHQ-796, queries now return the parent resource attached
     public PageList<ResourceWithAvailability> getImplicitResourceWithAvailabilityByResourceGroup(Subject subject,
         ResourceGroup group, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
@@ -1420,26 +1421,24 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Query query;
         if (authorizationManager.isInventoryManager(subject)) {
             queryCount = entityManager
-                .createNamedQuery(Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT_ADMIN);
+                .createNamedQuery(Resource.QUERY_FIND_IMPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT_ADMIN);
             query = PersistenceUtility.createQueryWithOrderBy(entityManager,
                 Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_ADMIN, pageControl);
         } else {
             queryCount = entityManager
-                .createNamedQuery(Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP_COUNT);
+                .createNamedQuery(Resource.QUERY_FIND_IMPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT);
             queryCount.setParameter("subject", subject);
             query = PersistenceUtility.createQueryWithOrderBy(entityManager,
                 Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP, pageControl);
             query.setParameter("subject", subject);
         }
 
-        queryCount.setParameter("group", group);
+        queryCount.setParameter("groupId", group.getId());
         long count = (Long) queryCount.getSingleResult();
 
-        query.setParameter("group", group);
+        query.setParameter("groupId", group.getId());
 
         List<ResourceWithAvailability> results = query.getResultList();
-
-        //setImplicitMarkers(group, results);
         return new PageList<ResourceWithAvailability>(results, (int) count, pageControl);
     }
 

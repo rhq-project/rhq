@@ -23,12 +23,15 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -42,6 +45,7 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ListResourceGroupMembersUIBean";
 
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
+    private Boolean suppressRecursiveResults;
 
     public ListResourceGroupMembersUIBean() {
     }
@@ -58,6 +62,18 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
         }
 
         return dataModel;
+    }
+
+    public void setSuppressRecursiveResults(boolean suppressRecursiveResults) {
+        this.suppressRecursiveResults = suppressRecursiveResults;
+    }
+
+    public boolean getSuppressRecursiveResults() {
+        if (suppressRecursiveResults == null) {
+            suppressRecursiveResults = FacesContextUtility.getOptionalRequestParameter(
+                "groupMembersForm:suppressRecursiveResults", Boolean.class);
+        }
+        return (this.suppressRecursiveResults == null ? false : true);
     }
 
     public List<Tuple<String, Integer>> getResourceTypeCounts() {
@@ -111,8 +127,13 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
             ResourceGroup resourceGroup = EnterpriseFacesContextUtility.getResourceGroup();
 
             PageList<ResourceWithAvailability> results = null;
-            results = resourceManager.getImplicitResourceWithAvailabilityByResourceGroup(subject, resourceGroup,
-                pageControl);
+            if (getSuppressRecursiveResults()) {
+                results = resourceManager.getExplicitResourceWithAvailabilityByResourceGroup(subject, resourceGroup,
+                    pageControl);
+            } else {
+                results = resourceManager.getImplicitResourceWithAvailabilityByResourceGroup(subject, resourceGroup,
+                    pageControl);
+            }
 
             return results;
         }

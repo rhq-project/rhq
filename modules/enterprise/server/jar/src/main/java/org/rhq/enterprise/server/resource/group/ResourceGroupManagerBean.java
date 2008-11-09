@@ -762,8 +762,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     }
 
     public int getImplicitGroupMemberCount(int resourceGroupId) {
-        Query countQuery = entityManager.createNamedQuery(Resource.QUERY_FIND_IMPLICIT_RESOURCES_COUNT_ADMIN);
-        countQuery.setParameter("resourceGroupId", resourceGroupId);
+        Query countQuery = entityManager
+            .createNamedQuery(Resource.QUERY_FIND_IMPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT_ADMIN);
+        countQuery.setParameter("groupId", resourceGroupId);
         long count = (Long) countQuery.getSingleResult();
         return (int) count;
     }

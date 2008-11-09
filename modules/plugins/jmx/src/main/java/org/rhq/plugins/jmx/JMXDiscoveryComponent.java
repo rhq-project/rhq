@@ -19,17 +19,17 @@
 package org.rhq.plugins.jmx;
 
 import java.util.HashSet;
-import java.util.Set;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.system.ProcessInfo;
 
 /**
@@ -102,11 +102,8 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
         //             *found.add(localVM);*/
         //      }
 
-
         try {
-            List<ProcessInfo> processes =
-                    context.getSystemInformation().getProcesses(
-                            "process|basename|match=^java.*");
+            List<ProcessInfo> processes = context.getSystemInformation().getProcesses("process|basename|match=^java.*");
 
             for (ProcessInfo process : processes) {
                 DiscoveredResourceDetails details = discoverProcess(context, process);
@@ -118,7 +115,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
             if (log.isDebugEnabled())
                 log.debug("Unable to complete base jmx server discovery.", e);
             else
-                log.warn("Unable to complete base jmx server discovery - cause (enable DEBUG to see stack trace): " + e);                
+                log.warn("Unable to complete base jmx server discovery (enable DEBUG for stack): " + e);
         }
 
         for (Configuration c : (List<Configuration>) context.getPluginConfigurations()) {
@@ -126,7 +123,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
             String connectionType = c.getSimpleValue(CONNECTION_TYPE, null);
 
             DiscoveredResourceDetails s = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
-                    "Java VM", "?", connectionType + " [" + resourceKey + "]", null, null);
+                "Java VM", "?", connectionType + " [" + resourceKey + "]", null, null);
 
             s.setPluginConfiguration(c);
 
@@ -168,18 +165,14 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
             name += " (" + port + ")";
 
             Configuration config = context.getDefaultPluginConfiguration();
-            config.put(new PropertySimple(CONNECTION_TYPE,"org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"));
-            config.put(new PropertySimple(CONNECTOR_ADDRESS_CONFIG_PROPERTY, "service:jmx:rmi:///jndi/rmi://localhost:" + port + "/jmxrmi"));
-//            config.put(new PropertySimple(INSTALL_URI, process.getCurrentWorkingDirectory()));
+            config.put(new PropertySimple(CONNECTION_TYPE,
+                "org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"));
+            config.put(new PropertySimple(CONNECTOR_ADDRESS_CONFIG_PROPERTY, "service:jmx:rmi:///jndi/rmi://localhost:"
+                + port + "/jmxrmi"));
+            // config.put(new PropertySimple(INSTALL_URI, process.getCurrentWorkingDirectory()));
 
-            details = new DiscoveredResourceDetails(
-                    context.getResourceType(),
-                    port,
-                    name,
-                    null,
-                    "Standalone JVM Process",
-                    config,
-                    null);
+            details = new DiscoveredResourceDetails(context.getResourceType(), port, name, null,
+                "Standalone JVM Process", config, null);
         }
 
         return details;

@@ -48,7 +48,7 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
-import org.rhq.core.pluginapi.content.version.ApplicationVersions;
+import org.rhq.core.pluginapi.content.version.PackageVersions;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.util.ZipUtil;
@@ -88,7 +88,7 @@ public class ApplicationComponent
     /**
      * Entry point to the persisted store of EAR/WAR package versions.
      */
-    private ApplicationVersions versions;
+    private PackageVersions versions;
 
     // ContentFacet Implementation  --------------------------------------------
 
@@ -127,7 +127,7 @@ public class ApplicationComponent
             // Package name and file name of the application are the same
             String fileName = new File(fullFileName).getName();
 
-            ApplicationVersions versions = loadApplicationVersions();
+            PackageVersions versions = loadApplicationVersions();
             String version = versions.getVersion(fileName);
 
             // First discovery of this EAR/WAR
@@ -304,7 +304,7 @@ public class ApplicationComponent
      *
      * @return will not be <code>null</code>
      */
-    private ApplicationVersions loadApplicationVersions() {
+    private PackageVersions loadApplicationVersions() {
         if (versions == null) {
             ResourceType resourceType = super.resourceContext.getResourceType();
             String pluginName = resourceType.getPlugin();
@@ -320,7 +320,7 @@ public class ApplicationComponent
             log.debug("Creating application versions store with plugin name [" + pluginName +
                 "] and data directory [" + dataDirectory + "]");
 
-            versions = new ApplicationVersions(pluginName, dataDirectory);
+            versions = new PackageVersions(pluginName, dataDirectory);
             versions.loadFromDisk();
         }
 
@@ -349,7 +349,7 @@ public class ApplicationComponent
 
     private void persistApplicationVersion(ResourcePackageDetails packageDetails, File appFile) {        
         String packageName = appFile.getName();
-        ApplicationVersions versions = loadApplicationVersions();
+        PackageVersions versions = loadApplicationVersions();
         versions.putVersion(packageName, packageDetails.getVersion());
     }
 

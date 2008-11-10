@@ -45,7 +45,6 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.ConversionUtil;
 
@@ -61,7 +60,6 @@ import java.util.Set;
 public class JndiResourceComponent
         implements ResourceComponent, ConfigurationFacet, DeleteResourceFacet, OperationFacet, MeasurementFacet
 {
-
     private final Log LOG = LogFactory.getLog(JndiResourceComponent.class);
     protected final String DEPLOYMENT_PROPERTY_NAME = "deploymentName";
 
@@ -75,19 +73,19 @@ public class JndiResourceComponent
 
     public AvailabilityType getAvailability()
     {
-        return null;
+        return null; // TODO
     }
 
 
     public void start(ResourceContext resourceContext)
     {
         this.resourceContext = resourceContext;
-        resourceType = resourceContext.getResourceType();
+        this.resourceType = resourceContext.getResourceType();
 
         // Convert the resource type into the component type
         Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
-        deploymentName = pluginConfiguration.getSimple(DEPLOYMENT_PROPERTY_NAME).getStringValue();
-        componentType = ConversionUtil.getComponentType(resourceType);
+        this.deploymentName = pluginConfiguration.getSimple(DEPLOYMENT_PROPERTY_NAME).getStringValue();
+        this.componentType = ConversionUtil.getComponentType(resourceType);
     }
 
     public void stop()
@@ -100,18 +98,11 @@ public class JndiResourceComponent
     public Configuration loadResourceConfiguration()
     {
         Configuration configuration = resourceContext.getPluginConfiguration();
-        ManagementView profileView = ProfileServiceFactory.getCurrentProfileView();
         try
         {
-            //resourceContext.getResourceKey();
-            ManagedComponent managedComponent =
-                    ProfileServiceFactory.getManagedComponent(profileView,
-                            componentType, deploymentName);
-
+            ManagedComponent managedComponent = getManagedComponent();
             Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
-
             ConversionUtil.convertManagedObjectToConfiguration(managedProperties, configuration, resourceType);
-
         }
         catch (Exception e)
         {
@@ -127,8 +118,7 @@ public class JndiResourceComponent
         ManagementView mgtView = ProfileServiceFactory.getCurrentProfileView();
         try
         {
-            String componentName = configuration.getSimple(DEPLOYMENT_PROPERTY_NAME).getStringValue();
-            ManagedComponent managedComponent = ProfileServiceFactory.getManagedComponent(mgtView, componentType, componentName);
+            ManagedComponent managedComponent = getManagedComponent();
             Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
 
             ConversionUtil.convertConfigurationToManagedProperties(managedProperties, configuration, resourceType);
@@ -141,8 +131,8 @@ public class JndiResourceComponent
         catch (Exception e)
         {
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
+            configurationUpdateReport.setErrorMessageFromThrowable(e);
         }
-
     }
 
     // DeleteResourceFacet Implementation  --------------------------------------------
@@ -150,8 +140,8 @@ public class JndiResourceComponent
     public void deleteResource() throws Exception
     {
         ManagementView mgtView = ProfileServiceFactory.getCurrentProfileView();
-        ManagedComponent component = getManagedComponent();
-        ManagedDeployment deployment = component.getDeployment();
+        ManagedComponent managedComponent = getManagedComponent();
+        ManagedDeployment deployment = managedComponent.getDeployment();
         mgtView.removeDeployment(deployment.getName(), ManagedDeployment.DeploymentPhase.APPLICATION);
         mgtView.process();
     }
@@ -161,8 +151,8 @@ public class JndiResourceComponent
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception
     {
         OperationResult results = new OperationResult();
-        ManagedComponent component = getManagedComponent();
-        Set<ManagedOperation> operations = component.getOperations();
+        ManagedComponent managedComponent = getManagedComponent();
+        Set<ManagedOperation> operations = managedComponent.getOperations();
         for (ManagedOperation operation : operations)
         {
             String operationName = operation.getName();
@@ -184,29 +174,22 @@ public class JndiResourceComponent
         return results;
     }
 
-    public void startOperationFacet(OperationContext context)
-    {
-    }
-
     // MeasurementFacet Implementation  --------------------------------------------
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception
     {
-        ManagedComponent component = getManagedComponent();
+        ManagedComponent managedComponent = getManagedComponent();
         for (MeasurementScheduleRequest request : metrics)
         {
             String metricName = request.getName();
-            ManagedProperty metricProperty = component.getProperty(metricName);
+            ManagedProperty metricProperty = managedComponent.getProperty(metricName);
             ConversionUtil.convertMetricValuesToMeasurement(report, metricProperty, request, resourceType, deploymentName);
         }
     }
 
-
     private ManagedComponent getManagedComponent() throws Exception
     {
-        ManagementView mgtView = ProfileServiceFactory.getCurrentProfileView();
-        ComponentType type = ConversionUtil.getComponentType(resourceType);
-        return ProfileServiceFactory.getManagedComponent(mgtView, type, deploymentName);
+        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        return ProfileServiceFactory.getManagedComponent(managementView, this.componentType, this.deploymentName);
     }
-
 }

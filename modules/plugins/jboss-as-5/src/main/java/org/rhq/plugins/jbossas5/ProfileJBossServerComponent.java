@@ -50,9 +50,6 @@ import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-//import org.rhq.core.pluginapi.content.ContentContext;
-//import org.rhq.core.pluginapi.operation.OperationContext;
-//import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
@@ -285,6 +282,7 @@ public class ProfileJBossServerComponent
 
             deployArchive(tempFile, createResourceReport);
 
+            createResourceReport.setResourceName(archiveName);
             createResourceReport.setResourceKey(archiveName);
             createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
         } catch (Throwable t) {

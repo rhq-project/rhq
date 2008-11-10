@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <plugin name="CustomJmx"
+        version="1.0"
         displayName="Custom JMX Plugin"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
    <depends plugin="JMX" useClasses="true"/>
-   <depends plugin="JBossAS"/>        
+   <depends plugin="JBossAS"/>
 
    <!--
       This service represents your custom MBean.
@@ -18,7 +19,7 @@
             description="A custom service representing a single custom MBean"
             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="org.rhq.plugins.jmx.MBeanResourceComponent">
-   
+
       <!--
          Denotes that the custom MBean can be found in any custom JMX server
          detected via EMS or it can be in any JBossAS resource.
@@ -26,11 +27,14 @@
          new types inside which your service can run.
       -->
       <runs-inside>
-         <parent-resource-type name="JMX Server" plugin="JMX"/>         
+         <parent-resource-type name="JMX Server" plugin="JMX"/>
          <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
       </runs-inside>
-      
+
       <!-- Define the object name of your custom MBean -->
+      <!-- If the MBean name has dynamic keys, use %% as in: -->
+      <!-- myDomain:type=myMBean,id=%myKey% -->
+      <!-- Then define a simple-property "myKey" so it can be stored when auto-discovered. -->
       <plugin-configuration>
          <c:simple-property name="objectName"
                             default="myDomain:type=myMBean"
@@ -43,7 +47,7 @@
       <operation name="mbeanOperationName"
                  displayName="Friendly Operation Name"
                  description="This describes what the MBean's operation does"/>
-                 
+
       <!--
          Define any attributes your custom MBean exposes and that you want monitored via RHQ.
          NOTE: The property attribute should start with a capital letter.

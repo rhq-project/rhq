@@ -159,12 +159,32 @@ Embedded RHQ Agent Configuration
 
                <!--
                _______________________________________________________________
+               rhq.agent.agent-update.enabled
+
+               If true, the agent will be allowed to update itself if it
+               finds there is a new agent update binary available.
+               If this feature is not enabled, the agent will never
+               be allowed to update itself.
+
+               EMBEDDED: we never have to worry about being up-to-date,
+                         the embedded agent will always be able to talk
+                         to the server it is embedded in.
+               -->
+               <entry key="rhq.agent.agent-update.enabled" value="false" />
+
+               <!--
+               _______________________________________________________________
                rhq.agent.primary-server-switchover-check-interval-msecs
 
                The agent will periodically check to ensure that the server
                it is connected to is its primary server (as opposed to one
                of its failover servers). This preference defines how many
                milliseconds the agent should wait in between these checks.
+               A side-effect of this check is that the agent will also
+               download an updated version of its failover list. So if
+               new servers have been added to the cloud, the agent will
+               now know about it.
+
                If this is 0, this check is never performed. You should never
                set this to 0 unless your agent will never participate in
                an RHQ HA environment.
@@ -185,7 +205,7 @@ Embedded RHQ Agent Configuration
                EMBEDDED: disabled - will not check the VM health
                -->
                <entry key="rhq.agent.vm-health-check.interval-msecs" value="0" />
-               
+
                <!--
                _______________________________________________________________
                rhq.agent.vm-health-check.low-heap-mem-threshold
@@ -759,7 +779,7 @@ Embedded RHQ Agent Configuration
 
                EMBEDDED: the bind address will be overridden to be the
                one used by the server. The bind port is normally overridden
-               in the jboss-service.xml also. 
+               in the jboss-service.xml also.
                -->
                <entry key="rhq.communications.connector.rhqtype"          value="agent" />
                <entry key="rhq.communications.connector.transport"        value="socket" />

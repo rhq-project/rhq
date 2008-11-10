@@ -177,12 +177,28 @@ commands named "config", "setconfig" and "setup" and the command line options
 
                <!--
                _______________________________________________________________
+               rhq.agent.agent-update.enabled
+
+               If true, the agent will be allowed to update itself if it
+               finds there is a new agent update binary available.
+               If this feature is not enabled, the agent will never
+               be allowed to update itself.
+               -->
+               <entry key="rhq.agent.agent-update.enabled" value="true" />
+
+               <!--
+               _______________________________________________________________
                rhq.agent.primary-server-switchover-check-interval-msecs
 
                The agent will periodically check to ensure that the server
                it is connected to is its primary server (as opposed to one
                of its failover servers). This preference defines how many
                milliseconds the agent should wait in between these checks.
+               A side-effect of this check is that the agent will also
+               download an updated version of its failover list. So if
+               new servers have been added to the cloud, the agent will
+               now know about it.
+
                If this is 0, this check is never performed. You should never
                set this to 0 unless your agent will never participate in
                an RHQ HA environment.
@@ -201,7 +217,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                of milliseconds the agent should wait in between checks.
                -->
                <entry key="rhq.agent.vm-health-check.interval-msecs" value="5000" />
-               
+
                <!--
                _______________________________________________________________
                rhq.agent.vm-health-check.low-heap-mem-threshold

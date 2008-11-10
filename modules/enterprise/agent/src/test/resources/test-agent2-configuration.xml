@@ -29,6 +29,7 @@
    <entry key="rhq.agent.wait-for-server-at-startup-msecs"                           value="0" />
    <entry key="rhq.agent.update-plugins-at-startup"                                  value="false" />
    <entry key="rhq.agent.data-directory"                                             value="target/testdata2" />
+   <entry key="rhq.agent.agent-update.enabled"                                       value="false" />
    <entry key="rhq.agent.primary-server-switchover-check-interval-msecs"             value="0" />
    <entry key="rhq.agent.vm-health-check.interval-msecs"                             value="0" />
    <entry key="rhq.agent.plugins.directory"                                          value="target/plugins" />

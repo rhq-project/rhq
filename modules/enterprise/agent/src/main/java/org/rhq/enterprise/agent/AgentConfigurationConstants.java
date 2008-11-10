@@ -136,6 +136,16 @@ public interface AgentConfigurationConstants {
     boolean DEFAULT_REGISTER_WITH_SERVER_AT_STARTUP = true;
 
     /**
+     * The flag that, if <code>true</code>, means the agent is allowed to apply updates to itself.
+     */
+    String AGENT_UPDATE_ENABLED = PROPERTY_NAME_PREFIX + "agent-update.enabled";
+
+    /**
+     * If the agent update enabled flag is not set, this is the default.
+     */
+    boolean DEFAULT_AGENT_UPDATE_ENABLED = true;
+
+    /**
      * The amount of milliseconds the agent will wait at startup for the server to be detected.
      */
     String WAIT_FOR_SERVER_AT_STARTUP_MSECS = PROPERTY_NAME_PREFIX + "wait-for-server-at-startup-msecs";

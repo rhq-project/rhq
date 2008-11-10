@@ -308,6 +308,19 @@ public class AgentConfiguration {
     }
 
     /**
+     * Returns <code>true</code> if the agent is allowed to apply updates to itself. This means that
+     * the agent will be enabled to process agent update binaries, effectively upgrading the agent
+     * to a newer version.
+     * 
+     * @return <code>true</code> if the agent is allowed to update itself
+     */
+    public boolean isAgentUpdateEnabled() {
+        boolean flag = m_preferences.getBoolean(AgentConfigurationConstants.AGENT_UPDATE_ENABLED,
+            AgentConfigurationConstants.DEFAULT_AGENT_UPDATE_ENABLED);
+        return flag;
+    }
+
+    /**
      * This defines how many milliseconds the agent should wait between each check that ensures it is connected
      * to the primary server, as opposed to one of its failure servers.
      *

@@ -84,6 +84,10 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
                 AgentConfigurationConstants.DEFAULT_VM_HEALTH_CHECK_LOW_HEAP_MEM_THRESHOLD);
             preferences.putFloat(AgentConfigurationConstants.VM_HEALTH_CHECK_LOW_NONHEAP_MEM_THRESHOLD,
                 AgentConfigurationConstants.DEFAULT_VM_HEALTH_CHECK_LOW_NONHEAP_MEM_THRESHOLD);
+
+            // add the agent update enable flag
+            preferences.putBoolean(AgentConfigurationConstants.AGENT_UPDATE_ENABLED,
+                AgentConfigurationConstants.DEFAULT_AGENT_UPDATE_ENABLED);
         }
     }
 }

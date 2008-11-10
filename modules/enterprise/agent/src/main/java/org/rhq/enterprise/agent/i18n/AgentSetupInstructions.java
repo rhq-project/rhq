@@ -768,6 +768,16 @@ public interface AgentSetupInstructions {
         + "the plugins; the agent will use its current plugins.") })
     String SETUP_INSTRUCTION_UPDATEPLUGINSATSTARTUP_HELP = "PromptCommand.setup.instruction.updateplugins.help";
 
+    // AGENT UPDATE ENABLED
+    String SETUP_INSTRUCTION_AGENTUPDATEENABLED_PREF = AgentConfigurationConstants.AGENT_UPDATE_ENABLED;
+    String SETUP_INSTRUCTION_AGENTUPDATEENABLED_DEFAULT = Boolean
+        .toString(AgentConfigurationConstants.DEFAULT_AGENT_UPDATE_ENABLED);
+    @I18NMessages( { @I18NMessage("Enable Agent Updates") })
+    String SETUP_INSTRUCTION_AGENTUPDATEENABLED_PROMPT = "PromptCommand.setup.instruction.agentupdateenabled.prompt";
+    @I18NMessages( { @I18NMessage("If true, the agent will be allowed to apply agent updates to itself.\\n\\\n"
+        + "If false, the agent will never apply updates; therefore any agent updates\\n\\\n" + "must be done manually.") })
+    String SETUP_INSTRUCTION_AGENTUPDATEENABLED_HELP = "PromptCommand.setup.instruction.agentupdateenabled.help";
+
     // AGENT NAME
     String SETUP_INSTRUCTION_AGENTNAME_PREF = AgentConfigurationConstants.NAME;
     @I18NMessages( { @I18NMessage("Agent Name") })

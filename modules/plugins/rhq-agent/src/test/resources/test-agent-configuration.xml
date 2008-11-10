@@ -41,6 +41,7 @@
    <entry key="rhq.agent.client.send-throttling"                                     value="10:5000" />
    <entry key="rhq.agent.client.queue-throttling"                                    value="5:3000" />
    <entry key="rhq.communications.configuration-schema-version"                      value="2" />
+   <entry key="rhq.agent.agent-update.enabled"                                       value="false" />
    <entry key="rhq.agent.primary-server-switchover-check-interval-msecs"             value="0" />
    <entry key="rhq.agent.vm-health-check.interval-msecs"                             value="0" />
    <!--

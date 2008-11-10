@@ -28,6 +28,7 @@ RHQ Agent Configuration - Default Template For Agent Spawn Utility
                <entry key="rhq.agent.register-with-server-at-startup" value="true" />
                <entry key="rhq.agent.wait-for-server-at-startup-msecs" value="10000" />
                <entry key="rhq.agent.update-plugins-at-startup" value="true" />
+               <entry key="rhq.agent.agent-update.enabled" value="false" />
                <entry key="rhq.agent.data-directory" value="data" /> <!-- TO BE OVERRIDDEN -->
 
                <entry key="rhq.agent.client.queue-size" value="50000" />

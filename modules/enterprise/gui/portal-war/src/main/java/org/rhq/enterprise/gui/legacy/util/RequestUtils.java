@@ -51,6 +51,7 @@ import org.rhq.enterprise.gui.legacy.HubConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.exception.ParameterNotFoundException;
+import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -180,7 +181,9 @@ public class RequestUtils {
      * Return the <code>Subject</code> representing the person currently interacting with the product.
      *
      * @throws ServletException if the session cannot be accessed
+     * @deprecated Use {@link WebUtility#getSubject(HttpServletRequest)} instead
      */
+    @Deprecated
     public static Subject getSubject(HttpServletRequest request) throws ServletException {
         return getWebUser(request).getSubject();
     }

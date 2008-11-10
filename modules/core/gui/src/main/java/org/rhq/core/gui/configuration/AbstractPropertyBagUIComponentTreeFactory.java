@@ -930,7 +930,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         UIInput valueInput, HtmlSelectBooleanCheckbox unsetCheckbox) {
         if (!propertyDefinitionSimple.isRequired()) {
             parent.getChildren().add(unsetCheckbox);
-            unsetCheckbox.setValue(String.valueOf(isUnset(propertyDefinitionSimple)));
+            unsetCheckbox.setValue(Boolean.valueOf(isUnset(propertyDefinitionSimple)));
             if (isReadOnly(propertyDefinitionSimple)) {
                 FacesComponentUtility.setDisabled(unsetCheckbox, true);
             } else {

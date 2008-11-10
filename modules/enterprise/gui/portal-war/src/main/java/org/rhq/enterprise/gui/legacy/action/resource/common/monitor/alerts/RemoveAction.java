@@ -31,9 +31,10 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
+import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
-import org.rhq.enterprise.gui.legacy.util.RequestUtils;
+import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -54,19 +55,19 @@ public class RemoveAction extends BaseAction {
 
         Integer resourceId = nwForm.getId();
 
-        Map params = new HashMap();
-        params.put(Constants.RESOURCE_ID_PARAM, resourceId);
+        Map<String, Integer> params = new HashMap<String, Integer>();
+        params.put(ParamConstants.RESOURCE_ID_PARAM, resourceId);
 
         ActionForward forward = checkSubmit(request, mapping, form, params);
 
         // if the remove button was clicked, we are coming from
         // the alerts list page and just want to continue
         // processing ...
-        if ((forward != null) && !forward.getName().equals(Constants.REMOVE_URL)) {
+        if ((forward != null) && !forward.getName().equals(RetCodeConstants.REMOVE_URL)) {
             log.trace("returning " + forward);
 
             // if there is no resourceId -- go to dashboard on cancel
-            if (forward.getName().equals(Constants.CANCEL_URL) && (resourceId == null)) {
+            if (forward.getName().equals(RetCodeConstants.CANCEL_URL) && (resourceId == null)) {
                 return returnNoResource(request, mapping);
             }
 
@@ -82,16 +83,16 @@ public class RemoveAction extends BaseAction {
             return returnSuccess(request, mapping, params);
         }
 
-        AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-        alertManager.deleteAlerts(RequestUtils.getSubject(request), resourceId, alertIds);
-
-        log.debug("!!!!!!!!!!!!!!!! removing alerts!!!!!!!!!!!!");
-
-        if (resourceId == null) {
+        if (resourceId == null)
             return returnNoResource(request, mapping);
-        } else {
-            return returnSuccess(request, mapping, params);
-        }
+
+        AlertManagerLocal alertManager = LookupUtil.getAlertManager();
+        alertManager.deleteAlerts(WebUtility.getSubject(request), resourceId, alertIds);
+
+        if (log.isDebugEnabled())
+            log.debug("!!!!!!!!!!!!!!!! removing alerts!!!!!!!!!!!!");
+
+        return returnSuccess(request, mapping, params);
     }
 
     protected ActionForward returnNoResource(HttpServletRequest request, ActionMapping mapping) throws Exception {

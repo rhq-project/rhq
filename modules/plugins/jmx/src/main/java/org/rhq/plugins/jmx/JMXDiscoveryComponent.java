@@ -53,6 +53,8 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
 
     public static final String PARENT_TYPE = "PARENT";
 
+    public static final String ADDITIONAL_CLASSPATH_ENTRIES = "additionalClassPathEntries";
+
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
 
         Set<DiscoveredResourceDetails> found = new HashSet<DiscoveredResourceDetails>();

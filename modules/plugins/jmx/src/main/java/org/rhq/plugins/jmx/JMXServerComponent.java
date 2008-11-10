@@ -18,7 +18,10 @@
  */
 package org.rhq.plugins.jmx;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +45,17 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 
 /**
+ * The generic JMX server component used to create and cache a connection to a local or
+ * remote JMX MBeanServer. This component is responsible for building an isolated connection/classloader
+ * to the managed resource's JMX MBeanServer. Each connection is isolated from other connections
+ * created by other instances of this component. This allows for it to do things like manage
+ * multiple JBossAS servers that are running on the same box, even if they are of different JBossAS
+ * versions. The same holds true for Hibernate applications - multiple connections can be created
+ * to different versions of the Hibernate MBean and due to the isolation of each connection, there
+ * are no version incompatibility errors that will occur.
+ *  
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
 public class JMXServerComponent implements JMXComponent {
     private static Log log = LogFactory.getLog(JMXServerComponent.class);
@@ -81,13 +94,11 @@ public class JMXServerComponent implements JMXComponent {
             String commandLine = configuration.getSimple(JMXDiscoveryComponent.COMMAND_LINE_CONFIG_PROPERTY)
                 .getStringValue();
 
-            List<Resource> found = new ArrayList<Resource>();
-
             Map<Integer, LocalVirtualMachine> vms = LocalVMFinder.getManageableVirtualMachines();
             if (vms != null) {
                 for (LocalVirtualMachine vm : vms.values()) {
                     if (vm.getCommandLine().equals(commandLine)) {
-                        connectLocal(vm.getVmid(), context);
+                        connectLocal(vm.getVmid());
                     }
                 }
             }
@@ -108,18 +119,19 @@ public class JMXServerComponent implements JMXComponent {
                 credentials = o.getStringValue();
             }
 
-            ConnectionSettings cs = new ConnectionSettings();
+            ConnectionSettings settings = new ConnectionSettings();
             J2SE5ConnectionTypeDescriptor desc = new J2SE5ConnectionTypeDescriptor();
-            cs.setConnectionType(desc);
-            cs.setServerUrl(configuration.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY)
+            settings.setConnectionType(desc);
+            settings.setServerUrl(configuration.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY)
                 .getStringValue());
-            if (principal != null)
-                cs.setPrincipal(principal);
-            if (credentials != null)
-                cs.setCredentials(credentials);
-            ConnectionFactory cf = new ConnectionFactory();
-            this.connection = cf.connect(cs);
-            this.connectionProvider = this.connection.getConnectionProvider();
+            if (principal != null) {
+                settings.setPrincipal(principal);
+            }
+            if (credentials != null) {
+                settings.setCredentials(credentials);
+            }
+
+            prepareConnection(settings);
 
         } else {
             // This can handle internal connections (within the same vm as the plugin container) as well as
@@ -133,19 +145,13 @@ public class JMXServerComponent implements JMXComponent {
                 .newInstance());
             settings.setServerUrl(configuration.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY)
                 .getStringValue());
-            settings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR,
-                context.getTemporaryDirectory().getAbsolutePath());
 
             String installPath = configuration.getSimpleValue(JMXDiscoveryComponent.INSTALL_URI, null);
             if (installPath != null) {
                 settings.setLibraryURI(configuration.getSimple(JMXDiscoveryComponent.INSTALL_URI).getStringValue());
             }
 
-            ConnectionFactory cf = new ConnectionFactory();
-            cf.discoverServerClasses(settings);
-
-            this.connectionProvider = cf.getConnectionProvider(settings);
-            this.connection = connectionProvider.connect();
+            prepareConnection(settings);
         }
 
         this.connection.loadSynchronous(false);
@@ -159,18 +165,26 @@ public class JMXServerComponent implements JMXComponent {
         }
     }
 
-    protected void connectLocal(int vmid, ResourceContext context) {
+    protected void connectLocal(int vmid) {
         // TODO GH: Refactor ems to also accept the vm itself
         ConnectionSettings settings = new ConnectionSettings();
         settings.setConnectionType(new LocalVMTypeDescriptor());
         settings.setServerUrl(String.valueOf(vmid));
-        ConnectionFactory connectionFactory = new ConnectionFactory();
+        prepareConnection(settings);
+    }
 
+    protected void prepareConnection(ConnectionSettings settings) {
         settings.getControlProperties().setProperty(ConnectionFactory.COPY_JARS_TO_TEMP, String.valueOf(Boolean.TRUE));
         settings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR,
-            context.getTemporaryDirectory().getAbsolutePath());
-        this.connection = connectionFactory.connect(settings);
-        this.connectionProvider = this.connection.getConnectionProvider();
+            this.context.getTemporaryDirectory().getAbsolutePath());
+
+        addAdditionalJarsToConnectionSettings(settings);
+
+        ConnectionFactory cf = new ConnectionFactory();
+        cf.discoverServerClasses(settings);
+
+        this.connectionProvider = cf.getConnectionProvider(settings);
+        this.connection = this.connectionProvider.connect();
     }
 
     public EmsConnection getEmsConnection() {
@@ -197,36 +211,54 @@ public class JMXServerComponent implements JMXComponent {
         return null;
     }
 
-    /*
-     * public void initialize() {   connection = ConnectionFactory
-     *
-     * String url = config.getProperty(Context.PROVIDER_URL);
-     *
-     * ConnectionFactory connectionFactory = new ConnectionFactory();
-     *
-     * ConnectionSettings connectionSettings = new ConnectionSettings();
-     * connectionSettings.initializeConnectionType(new J2SE5ConnectionTypeDescriptor());
-     *
-     * //connectionFactory.discoverServerClasses(connectionSettings);
-     *
-     * connectionSettings.setServerUrl(url);
-     *
-     * String principal = config.getProperty(Context.SECURITY_PRINCIPAL);   if (principal != null)
-     * connectionSettings.setPrincipal(principal);
-     *
-     * String credentials = config.getProperty(Context.SECURITY_CREDENTIALS);   if (credentials != null)
-     * connectionSettings.setCredentials(credentials);
-     *
-     * log.info("Loading JBoss connection [" +     config.getProperty(Context.PROVIDER_URL) +     "] with install path
-     * [" +     config.getProperty("installpath"));   try   {      Class.forName("javax.management.MBeanServer");
-     * ClassLoader cl = Thread.currentThread().getContextClassLoader();      if (cl != null)      {
-     * Class.forName("javax.management.MBeanServer", false, cl);      }      log.warn("An MBeanServer class has be found
-     * at the plugin level. MBeanServer classes should not be found here " +        "unless you are running JDK 5+.");
-     * }   catch (ClassNotFoundException e)   {   }
-     *
-     * EmsConnection connection = connectionFactory.connect(connectionSettings);   // Do a *,* query
-     * connection.loadSynchronous(false);
-     *
-     * connectionCache.put(key, connection);   return connection; }
-     */
+    private void addAdditionalJarsToConnectionSettings(ConnectionSettings settings) {
+        // get the plugin config setting that contains comma-separated list of files/dirs to additional jars
+        // if no additional classpath entries are specified, we'll return immediately and not do anything to settings
+        Configuration pc = context.getPluginConfiguration();
+        PropertySimple prop = pc.getSimple(JMXDiscoveryComponent.ADDITIONAL_CLASSPATH_ENTRIES);
+        if (prop == null || prop.getStringValue() == null || prop.getStringValue().trim().length() == 0) {
+            return;
+        }
+        String[] paths = prop.getStringValue().trim().split(",");
+        if (paths == null || paths.length == 0) {
+            return;
+        }
+
+        // get the current set of class path entries - we are going to add to these
+        List<File> entries = settings.getClassPathEntries();
+        if (entries == null) {
+            entries = new ArrayList<File>();
+        }
+
+        // Get all additional classpath entries which can be listed as jar filenames or directories.
+        // If a directory has "/*.jar" at the end, all jar files found in that directory will be added
+        // as class path entries.
+        final class JarFilenameFilter implements FilenameFilter {
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".jar");
+            }
+        }
+
+        for (String path : paths) {
+            path = path.trim();
+            if (path.length() > 0) {
+                if (path.endsWith("*.jar")) {
+                    path = path.substring(0, path.length() - 5);
+                    File dir = new File(path);
+                    File[] jars = dir.listFiles(new JarFilenameFilter());
+                    if (jars != null && jars.length > 0) {
+                        entries.addAll(Arrays.asList(jars));
+                    }
+                } else {
+                    File pathFile = new File(path);
+                    entries.add(pathFile);
+                }
+            }
+        }
+
+        // now that we've appended our additional jars, tell the connection settings about the new list
+        settings.setClassPathEntries(entries);
+
+        return;
+    }
 }

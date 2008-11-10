@@ -41,6 +41,7 @@
          <c:simple-property name="installURI" required="false" type="string" description="The installation path for the selected server type which will be used to find client libraries (if appropriate)."/>
          <c:simple-property name="principal" required="false" description="The login principal/username"/>
          <c:simple-property name="credentials" required="false" description="The login credentials/password"/>
+         <c:simple-property name="additionalClassPathEntries" required="false" type="string" description="Comma-separated list of directories and filenames that contain resources and classes needed to communicate with the JMX Server and its MBeans. If you specify 'some/directory/*.jar', all jars found in the given directory will be added."/>
 
          <c:template name="JDK 5" description="Connect to JDK 5">
             <c:simple-property name="type" default="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"/>

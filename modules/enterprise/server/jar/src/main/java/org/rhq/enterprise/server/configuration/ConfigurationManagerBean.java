@@ -84,7 +84,6 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.QuartzUtil;
 
 /**
@@ -132,8 +131,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 + "] does not have permission to view plugin configuration for [" + resource + "]");
         }
 
-        Configuration pluginConfiguration = LookupUtil.getConfigurationManager().getActivePluginConfiguration(
-            resourceId);
+        Configuration pluginConfiguration = configurationManager.getActivePluginConfiguration(resourceId);
 
         return pluginConfiguration;
     }
@@ -253,7 +251,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 + "] does not have permission to view resource configuration for [" + resource + "]");
         }
 
-        Configuration result = LookupUtil.getConfigurationManager().getActiveResourceConfiguration(resourceId);
+        Configuration result = configurationManager.getActiveResourceConfiguration(resourceId);
 
         return result;
     }

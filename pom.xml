@@ -388,8 +388,7 @@
                   <version>2.0</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>[1.5,1.6)</version> <!-- 1.5.x -->
-                  <!-- NOTE: To build w/ JDK 1.6, activate the 'jdk6' profile (see below). -->
+                  <version>[1.5,1.8)</version> <!-- 1.5.x, 1.6.x, 1.7.x -->                  
                 </requireJavaVersion>
               </rules>
             </configuration>
@@ -569,29 +568,18 @@
          </properties>
       </profile>
 
+      <!-- Require dist builds be done using JDK5. -->
       <profile>
-         <id>jdk6</id>
+         <id>dist</id>
          
-         <!-- To build using JDK 6, enable this profile and set the java5.home property to a Java 5 jre dir (i.e. C:/opt/jdk-1.5.0_15/jre). --> 
-
          <activation>
             <property>
-               <name>jdk6</name>
+               <name>dist</name>
             </property>
          </activation>
          
          <build>
-           <plugins>
-
-              <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                  <compilerArguments>
-                    <bootclasspath>${java5.home}/lib/rt.jar${path.separator}${java5.home}/lib/jsse.jar${path.separator}${java5.home}/lib/jce.jar</bootclasspath>
-                  </compilerArguments>          
-                </configuration>
-              </plugin>
-                
+           <plugins>                             
               <plugin>
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <executions>
@@ -605,19 +593,41 @@
                     <configuration>
                       <rules>
                         <requireJavaVersion>
-                          <version>[1.5,1.7)</version> <!-- 1.5.x, 1.6.x -->
+                          <version>[1.5,1.6)</version> <!-- 1.5.x -->
                         </requireJavaVersion>
                       </rules>
                     </configuration>
                   </execution>
                 </executions>
-              </plugin>
-                          
+              </plugin>                         
             </plugins>  
-          </build>    
-          
+          </build>              
       </profile>
 
+      <!-- Set the java5.home prop to a Java5 JRE dir to enforce that only Java5 APIs are used. -->
+      <profile>
+         <id>check-java-api</id>
+         
+         <activation>
+            <property>
+               <name>java5.home</name>
+            </property>
+         </activation>
+
+         <build>
+           <plugins>         
+              <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                  <compilerArguments>
+                    <bootclasspath>${java5.home}/lib/rt.jar${path.separator}${java5.home}/lib/jsse.jar${path.separator}${java5.home}/lib/jce.jar</bootclasspath>
+                  </compilerArguments>          
+                </configuration>
+              </plugin>
+            </plugins>  
+          </build>             
+      </profile>
+      
   </profiles>
 
 </project>

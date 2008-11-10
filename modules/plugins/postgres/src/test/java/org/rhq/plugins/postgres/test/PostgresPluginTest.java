@@ -130,8 +130,8 @@ public class PostgresPluginTest {
                 assert report.getNumericData().size() > 0 : "Measurement " + def.getName() + " not collected from "
                     + resource;
                 MeasurementData data = report.getNumericData().iterator().next();
-                System.out.println("Measurement: " + def.getName() + "=" + data.getValue());
                 assert data != null : "Unable to collect metric [" + def.getName() + "] on " + resource;
+                System.out.println("Measurement: " + def.getName() + "=" + data.getValue());
             }
         }
     }

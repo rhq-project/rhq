@@ -313,7 +313,9 @@ public class ProfileJBossServerComponent
     {
         DeploymentManager manager = ProfileServiceFactory.getDeploymentManager();
         String archiveName = tempFile.getName();
-        DeploymentProgress progress = manager.distribute(archiveName, ManagedDeployment.DeploymentPhase.APPLICATION, tempFile.toURL());
+        boolean copyContent = true;
+        DeploymentProgress progress = manager.distribute(archiveName, ManagedDeployment.DeploymentPhase.APPLICATION,
+                tempFile.toURL(), copyContent);
         progress.addProgressListener(this);
         progress.run();        
 

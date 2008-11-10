@@ -73,9 +73,14 @@ public class JndiResourceComponent
 
     public AvailabilityType getAvailability()
     {
-        return null; // TODO
+        // TODO (ips, 11/10/08): Verify this is the correct way to check availablity.
+        try {
+            return (getManagedComponent() != null) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
-
 
     public void start(ResourceContext resourceContext)
     {

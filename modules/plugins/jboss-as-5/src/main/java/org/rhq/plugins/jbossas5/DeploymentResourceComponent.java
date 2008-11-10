@@ -33,9 +33,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * Component class for deployable resources like ear/war/jar/sar
+ * Component class for deployable resources like ear/war/jar/sar.
  *
- * @author: Mark Spritzler
+ * @author Mark Spritzler
  */
 public class DeploymentResourceComponent
         extends ContentDeploymentComponent
@@ -56,17 +56,17 @@ public class DeploymentResourceComponent
     }
 
     public AvailabilityType getAvailability() {
-        String resourceKey = resourceContext.getResourceKey();
-        ManagementView mgtView = ProfileServiceFactory.getCurrentProfileView();
+        // TODO (ips, 11/10/08): Verify this is the correct way to check availablity.
         try {
-            ManagedDeployment deployment = mgtView.getDeployment(resourceKey, ManagedDeployment.DeploymentPhase.APPLICATION);
-            if (deployment != null)
-            {
-                return AvailabilityType.UP;
-            }
+            return (getManagedDeployment() != null) ? AvailabilityType.UP : AvailabilityType.DOWN;
         } catch (Exception e) {
-
+            throw new RuntimeException(e);
         }
-        return AvailabilityType.DOWN;
+    }
+
+    private ManagedDeployment getManagedDeployment() throws Exception {
+        String resourceKey = this.resourceContext.getResourceKey();
+        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        return managementView.getDeployment(resourceKey, ManagedDeployment.DeploymentPhase.APPLICATION);
     }
 }

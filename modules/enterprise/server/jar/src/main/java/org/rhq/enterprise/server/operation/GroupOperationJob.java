@@ -48,6 +48,7 @@ public class GroupOperationJob extends OperationJob {
     public static final String DATAMAP_INT_GROUP_ID = "groupId";
     public static final String DATAMAP_INT_ARRAY_EXECUTION_ORDER = "executionOrder"; // comma-separated list of IDs
     public static final String DATAMAP_BOOL_HALT_ON_FAILURE = "haltOnFailure";
+    public static final int BREAK_VALUE = 1000 * 60 * 60 * 24;
 
     class ResourceOperationDetailsComposite {
         Resource resource;
@@ -167,7 +168,8 @@ public class GroupOperationJob extends OperationJob {
                             // (based on the operation's define timeout).  But, me being paranoid, I want to be able
                             // to break this infinite loop if for some reason the operation manager isn't doing its job.
                             // if the operation took longer than 24 hours, this breaks the loop.
-                            if (updatedOperationHistory.getDuration() > (1000 * 60 * 60 * 24)) {
+
+                            if (updatedOperationHistory.getDuration() > (GroupOperationJob.BREAK_VALUE)) {
                                 break;
                             }
                         } while (updatedOperationHistory.getStatus() == OperationRequestStatus.INPROGRESS);

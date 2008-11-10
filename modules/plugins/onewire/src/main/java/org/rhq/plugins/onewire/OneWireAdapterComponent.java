@@ -28,6 +28,8 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * @author Heiko W. Rupp
@@ -37,6 +39,7 @@ public class OneWireAdapterComponent implements ResourceComponent {
 
     private DSPortAdapter adapter = null;
     String port;
+    private final Log log = LogFactory.getLog(OneWireAdapterComponent.class);
 
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
@@ -79,8 +82,7 @@ public class OneWireAdapterComponent implements ResourceComponent {
             try {
                 adapter.freePort();
             } catch (OneWireException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.warn("Exception stopping the adapter: " ,e);
             }
         }
     }
@@ -93,13 +95,12 @@ public class OneWireAdapterComponent implements ResourceComponent {
         if (adapter != null) {
             try {
                 adapter.freePort();
-                Thread.sleep(500);
+                Thread.sleep(700);
                 adapter = new PDKAdapterUSB();
                 adapter.selectPort(port);
 
             } catch (OneWireException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.warn("Exception re-opening the adapter - is it connected?: " ,e);
             } catch (InterruptedException e) {
                 ; // Does not matter
             }

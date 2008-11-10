@@ -19,6 +19,7 @@
       description="Statistics for Hibernate">
 
       <runs-inside>
+         <parent-resource-type name="JMX Server" plugin="JMX"/>
          <parent-resource-type name="Tomcat Server" plugin="Tomcat"/>
          <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
       </runs-inside>

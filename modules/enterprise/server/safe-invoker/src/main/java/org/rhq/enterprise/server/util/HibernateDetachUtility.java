@@ -18,13 +18,6 @@
  */
 package org.rhq.enterprise.server.util;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.hibernate.Hibernate;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlTransient;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
@@ -35,6 +28,14 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hibernate.Hibernate;
+
 /**
  * @author Greg Hinkle
  */
@@ -42,7 +43,9 @@ public class HibernateDetachUtility {
 
     private static final Log LOG = LogFactory.getLog(HibernateDetachUtility.class);
 
-    public static enum SerializationType { SERIALIZATION, JAXB }
+    public static enum SerializationType {
+        SERIALIZATION, JAXB
+    }
 
     public static void nullOutUninitializedFields(Object value, SerializationType serializationType) throws Exception {
         long start = System.currentTimeMillis();
@@ -51,8 +54,8 @@ public class HibernateDetachUtility {
         LOG.debug("Checked [" + checkedObjs.size() + "] in [" + (System.currentTimeMillis() - start) + "]ms");
     }
 
-    private static void nullOutUninitializedFields(Object value, Set<Integer> nulledObjects, int depth, SerializationType serializationType)
-            throws Exception {
+    private static void nullOutUninitializedFields(Object value, Set<Integer> nulledObjects, int depth,
+        SerializationType serializationType) throws Exception {
         //        System.out.println("*");
         if (depth > 50) {
             //         LOG.warn("Getting different object hierarchies back from calls: " + value.getClass().getName());
@@ -82,14 +85,14 @@ public class HibernateDetachUtility {
                     nullOutFieldsByAccessors(value, nulledObjects, depth, serializationType);
                 }
             } else if (serializationType == SerializationType.SERIALIZATION) {
-//                System.out.println("-----------JRMP-------- field access");
+                //                System.out.println("-----------JRMP-------- field access");
                 nullOutFieldsByFieldAccess(value, nulledObjects, depth, serializationType);
             }
         }
     }
 
-
-    private static void nullOutFieldsByFieldAccess(Object value, Set<Integer> nulledObjects, int depth, SerializationType serializationType) throws Exception {
+    private static void nullOutFieldsByFieldAccess(Object value, Set<Integer> nulledObjects, int depth,
+        SerializationType serializationType) throws Exception {
 
         BeanInfo bi = Introspector.getBeanInfo(value.getClass(), Object.class);
 
@@ -107,7 +110,7 @@ public class HibernateDetachUtility {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Couldn't load: " + field.getName() + " off of " + value.getClass().getSimpleName(), lie);
                 }
-                nullOutField(value,field.getName());
+                nullOutField(value, field.getName());
             }
 
             if (!Hibernate.isInitialized(propertyValue)) {
@@ -120,12 +123,11 @@ public class HibernateDetachUtility {
 
                 } catch (Exception lie) {
                     LOG.debug("Couldn't null out: " + field.getName() + " off of " + value.getClass().getSimpleName()
-                            + " trying field access", lie);
+                        + " trying field access", lie);
                 }
             } else {
                 if ((propertyValue instanceof Collection)
-                        || ((propertyValue != null) && propertyValue.getClass().getName().startsWith(
-                        "org.rhq.core.domain"))) {
+                    || ((propertyValue != null) && propertyValue.getClass().getName().startsWith("org.rhq.core.domain"))) {
                     nullOutUninitializedFields(propertyValue, nulledObjects, depth + 1, serializationType);
                 }
             }
@@ -133,10 +135,8 @@ public class HibernateDetachUtility {
 
     }
 
-
-
-
-    private static void nullOutFieldsByAccessors(Object value, Set<Integer> nulledObjects, int depth, SerializationType serializationType) throws Exception {
+    private static void nullOutFieldsByAccessors(Object value, Set<Integer> nulledObjects, int depth,
+        SerializationType serializationType) throws Exception {
         // Null out any collections that aren't loaded
         BeanInfo bi = Introspector.getBeanInfo(value.getClass(), Object.class);
 
@@ -147,8 +147,7 @@ public class HibernateDetachUtility {
                 propertyValue = pd.getReadMethod().invoke(value);
             } catch (Throwable lie) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Couldn't load: " + pd.getName() + " off of " + value.getClass().getSimpleName(),
-                                    lie);
+                    LOG.debug("Couldn't load: " + pd.getName() + " off of " + value.getClass().getSimpleName(), lie);
                 }
             }
 
@@ -160,19 +159,18 @@ public class HibernateDetachUtility {
 
                     Method writeMethod = pd.getWriteMethod();
                     if ((writeMethod != null) && (writeMethod.getAnnotation(XmlTransient.class) == null)) {
-                        pd.getWriteMethod().invoke(value, new Object[]{null});
+                        pd.getWriteMethod().invoke(value, new Object[] { null });
                     } else {
                         nullOutField(value, pd.getName());
                     }
                 } catch (Exception lie) {
                     LOG.debug("Couldn't null out: " + pd.getName() + " off of " + value.getClass().getSimpleName()
-                            + " trying field access", lie);
+                        + " trying field access", lie);
                     nullOutField(value, pd.getName());
                 }
             } else {
                 if ((propertyValue instanceof Collection)
-                        || ((propertyValue != null) && propertyValue.getClass().getName().startsWith(
-                        "org.rhq.core.domain"))) {
+                    || ((propertyValue != null) && propertyValue.getClass().getName().startsWith("org.rhq.core.domain"))) {
                     nullOutUninitializedFields(propertyValue, nulledObjects, depth + 1, serializationType);
                 }
             }

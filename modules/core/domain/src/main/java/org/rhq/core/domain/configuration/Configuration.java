@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.configuration;
 
 import java.io.ByteArrayInputStream;
@@ -90,16 +90,21 @@ import org.jetbrains.annotations.NotNull;
  * @see    PropertyMap
  */
 @Entity(name = "Configuration")
-@NamedQueries( { @NamedQuery(name = Configuration.QUERY_GET_PLUGIN_CONFIG_UNIQUE_COUNT_BY_GROUP_AND_PROP_NAME, query = "" //
-    + "  SELECT ps.stringValue, count(ps) "//
-    + "    FROM ResourceGroup rg " //
-    + "    JOIN rg.implicitResources res " //
-    + "    JOIN res.pluginConfiguration rpc, PropertySimple ps " //
-    + "         WHERE ps.configuration = rpc " //
-    + "           AND ps.name = :propertyName " //
-    + "           AND rg.id = :resourceGroupId " //
-    + "           AND ps.stringValue IS NOT NULL " //
-    + "GROUP BY ps.stringValue") })
+@NamedQueries( { //
+    @NamedQuery(name = Configuration.QUERY_GET_PLUGIN_CONFIG_UNIQUE_COUNT_BY_GROUP_AND_PROP_NAME, query = "" //
+        + "  SELECT ps.stringValue, count(ps) "//
+        + "    FROM ResourceGroup rg " //
+        + "    JOIN rg.implicitResources res " //
+        + "    JOIN res.pluginConfiguration rpc, PropertySimple ps " //
+        + "         WHERE ps.configuration = rpc " //
+        + "           AND ps.name = :propertyName " //
+        + "           AND rg.id = :resourceGroupId " //
+        + "           AND ps.stringValue IS NOT NULL " //
+        + "GROUP BY ps.stringValue"), //
+    @NamedQuery(name = Configuration.QUERY_GET_PLUGIN_CONFIG_BY_RESOURCE_ID, query = "" //
+        + "select c from Configuration c, Resource r where r.id = :resourceId and c = r.pluginConfiguration"),
+    @NamedQuery(name = Configuration.QUERY_GET_RESOURCE_CONFIG_BY_RESOURCE_ID, query = "" //
+        + "select c from Configuration c, Resource r where r.id = :resourceId and c = r.resourceConfiguration") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_ID_SEQ")
 @Table(name = "RHQ_CONFIG")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -108,6 +113,8 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_GET_PLUGIN_CONFIG_UNIQUE_COUNT_BY_GROUP_AND_PROP_NAME = "Configuration.getPluginConfigUniqueCountByGroupAndPropertyName";
+    public static final String QUERY_GET_PLUGIN_CONFIG_BY_RESOURCE_ID = "Configuration.getPluginConfigByResourceId";
+    public static final String QUERY_GET_RESOURCE_CONFIG_BY_RESOURCE_ID = "Configuration.getResourceConfigByResourceId";
 
     @GeneratedValue(generator = "SEQ", strategy = GenerationType.SEQUENCE)
     @Id

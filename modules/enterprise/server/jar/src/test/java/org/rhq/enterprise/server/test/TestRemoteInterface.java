@@ -260,8 +260,8 @@ public class TestRemoteInterface extends AbstractEJB3Test {
         assertTrue(schedules.isEmpty());
     }
 
-    @Test(enabled = true)
-    public void testUpdateConfiguration() throws Exception {
+    @Test(enabled = TESTS_ENABLED)
+    public void testUpdateResourceConfiguration() throws Exception {
 
         URL wsdlURL = new URL(WSDL_URL_PREFIX + "SubjectManagerBean?wsdl");
         QName serviceName = new QName(TARGET_NS_SUBJECT_MANAGER, "SubjectManagerBeanService");
@@ -296,11 +296,82 @@ public class TestRemoteInterface extends AbstractEJB3Test {
         service = Service.create(wsdlURL, serviceName);
         ConfigurationManagerRemote configManager = service.getPort(ConfigurationManagerRemote.class);
 
-        // Configuration pconfig = configManager.getCurrentPluginConfiguration(user, testAgent.getResource().getId());
-
-        Configuration config = configManager.getActiveResourceConfiguration(user, testAgent.getResource().getId());
+        Configuration config = configManager.getCurrentResourceConfiguration(user, testAgent.getResource().getId());
         assertNotNull(config);
-        assertEquals("plugins", config.get("plugins directory"));
+        assertEquals("plugins", config.getSimpleProperties().get("rhq.agent.plugins.directory").getStringValue());
+
+        config.getSimpleProperties().get("rhq.agent.plugins.directory").setStringValue("plugins/../plugins");
+        configManager.updateResourceConfiguration(user, testAgent.getResource().getId(), config);
+
+        long now = System.currentTimeMillis();
+        do {
+        } while (configManager.isResourceConfigurationUpdateInProgress(user, testAgent.getResource().getId())
+            && (System.currentTimeMillis() < (now + 60000L)));
+        if (configManager.isResourceConfigurationUpdateInProgress(user, testAgent.getResource().getId())) {
+            fail("Config Update not completed, may need to fix property manually");
+        }
+
+        config = configManager.getCurrentResourceConfiguration(user, testAgent.getResource().getId());
+        assertNotNull(config);
+        assertEquals("plugins/../plugins", config.getSimpleProperties().get("rhq.agent.plugins.directory")
+            .getStringValue());
+
+        config.getSimpleProperties().get("rhq.agent.plugins.directory").setStringValue("plugins");
+        configManager.updateResourceConfiguration(user, testAgent.getResource().getId(), config);
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    public void testUpdatePluginConfiguration() throws Exception {
+
+        URL wsdlURL = new URL(WSDL_URL_PREFIX + "SubjectManagerBean?wsdl");
+        QName serviceName = new QName(TARGET_NS_SUBJECT_MANAGER, "SubjectManagerBeanService");
+        Service service = Service.create(wsdlURL, serviceName);
+        subjectManager = service.getPort(SubjectManagerRemote.class);
+
+        user = subjectManager.login("ws-test", "ws-test");
+
+        wsdlURL = new URL(WSDL_URL_PREFIX + "ResourceManagerBean?wsdl");
+        serviceName = new QName(TARGET_NS_RESOURCE_MANAGER, "ResourceManagerBeanService");
+        service = Service.create(wsdlURL, serviceName);
+        ResourceManagerRemote resourceManager = service.getPort(ResourceManagerRemote.class);
+
+        PageList<ResourceComposite> resources = resourceManager.findResourceComposites(user, null, "JBossAS Server", 0,
+            null, PageControl.getUnlimitedInstance());
+
+        assertNotNull(resources);
+        assertTrue(resources.size() >= 1);
+
+        ResourceComposite testAS = null;
+        for (ResourceComposite resource : resources) {
+            if (resource.getResource().getName().contains("RHQ Server")) {
+                testAS = resource;
+                break;
+            }
+        }
+
+        assertNotNull("Could not find RHQ Server, that's not good...", testAS);
+
+        wsdlURL = new URL(WSDL_URL_PREFIX + "ConfigurationManagerBean?wsdl");
+        serviceName = new QName(TARGET_NS_CONFIGURATION_MANAGER, "ConfigurationManagerBeanService");
+        service = Service.create(wsdlURL, serviceName);
+        ConfigurationManagerRemote configManager = service.getPort(ConfigurationManagerRemote.class);
+
+        Configuration config = configManager.getCurrentPluginConfiguration(user, testAS.getResource().getId());
+        assertNotNull(config);
+        assertTrue(config.getSimpleProperties().get("startScript").getStringValue().endsWith("run.bat"));
+
+        String newString = config.getSimpleProperties().get("startScript").getStringValue().replace("run.bat",
+            "batter.run");
+        config.getSimpleProperties().get("startScript").setStringValue(newString);
+        configManager.updatePluginConfiguration(user, testAS.getResource().getId(), config);
+
+        config = configManager.getCurrentPluginConfiguration(user, testAS.getResource().getId());
+        assertNotNull(config);
+        assertTrue(config.getSimpleProperties().get("startScript").getStringValue().endsWith("batter.run"));
+
+        newString = config.getSimpleProperties().get("startScript").getStringValue().replace("batter.run", "run.bat");
+        config.getSimpleProperties().get("startScript").setStringValue(newString);
+        configManager.updatePluginConfiguration(user, testAS.getResource().getId(), config);
     }
 
 }

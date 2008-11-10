@@ -89,6 +89,14 @@ public interface ConfigurationManagerLocal {
 
     void completePluginConfigurationUpdate(Integer updateId);
 
+    /** This does not perform permission checks and should be used internally only. In general, use
+     * {@link #getCurrentPluginConfiguration(Subject, int)}.
+     */
+    Configuration getActivePluginConfiguration(int resourceId);
+
+    /** This does not perform permission checks and should be used internally only. In general, use
+     * {@link #getCurrentResourceConfiguration(Subject, int)}.
+     */
     Configuration getActiveResourceConfiguration(int resourceId);
 
     /**

@@ -84,6 +84,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.QuartzUtil;
 
 /**
@@ -126,14 +127,29 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             throw new IllegalStateException("Cannot retrieve plugin config for unknown resource [" + resourceId + "]");
         }
 
-        if (!authorizationManager.canViewResource(whoami, resource.getId())) {
+        if (!authorizationManager.canViewResource(whoami, resourceId)) {
             throw new PermissionException("User [" + whoami.getName()
                 + "] does not have permission to view plugin configuration for [" + resource + "]");
         }
 
-        Configuration pluginConfiguration = resource.getPluginConfiguration();
-        pluginConfiguration.getId(); // Initialize the lazy proxy
+        Configuration pluginConfiguration = LookupUtil.getConfigurationManager().getActivePluginConfiguration(
+            resourceId);
+
         return pluginConfiguration;
+    }
+
+    // Use new transaction because this only works if the resource in question has not
+    // yet been loaded by Hibernate.  We want the query to return a non-proxied configuration,
+    // this is critical for remote API use.
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public Configuration getActivePluginConfiguration(int resourceId) {
+        // Ensure that we return a non-proxied Configuration object that can survive after the
+        // Hibernate session goes away.
+        Query query = entityManager.createNamedQuery(Configuration.QUERY_GET_PLUGIN_CONFIG_BY_RESOURCE_ID);
+        query.setParameter("resourceId", resourceId);
+        Configuration result = (Configuration) query.getSingleResult();
+
+        return result;
     }
 
     public void completePluginConfigurationUpdate(Integer updateId) {
@@ -225,28 +241,35 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update;
     }
 
-    public Configuration getActiveResourceConfiguration(Subject whoami, int resourceId) {
+    public Configuration getCurrentResourceConfiguration(Subject user, int resourceId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
 
         if (resource == null) {
             throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
         }
 
-        if (!authorizationManager.canViewResource(whoami, resource.getId())) {
-            throw new PermissionException("User [" + whoami.getName()
+        if (!authorizationManager.canViewResource(user, resource.getId())) {
+            throw new PermissionException("User [" + user.getName()
                 + "] does not have permission to view resource configuration for [" + resource + "]");
         }
 
-        return getActiveResourceConfiguration(resourceId);
+        Configuration result = LookupUtil.getConfigurationManager().getActiveResourceConfiguration(resourceId);
+
+        return result;
     }
 
+    // Use new transaction because this only works if the resource in question has not
+    // yet been loaded by Hibernate.  We want the query to return a non-proxied configuration,
+    // this is critical for remote API use.
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public Configuration getActiveResourceConfiguration(int resourceId) {
-        Resource resource = entityManager.find(Resource.class, resourceId);
-        Configuration resourceConfiguration = resource.getResourceConfiguration();
-        if (resourceConfiguration != null) {
-            resourceConfiguration.getProperties().size(); // cause it's lazy
-        }
-        return resourceConfiguration;
+        // Ensure that we return a non-proxied Configuration object that can survive after the
+        // Hibernate session goes away.
+        Query query = entityManager.createNamedQuery(Configuration.QUERY_GET_RESOURCE_CONFIG_BY_RESOURCE_ID);
+        query.setParameter("resourceId", resourceId);
+        Configuration result = (Configuration) query.getSingleResult();
+
+        return result;
     }
 
     @Nullable

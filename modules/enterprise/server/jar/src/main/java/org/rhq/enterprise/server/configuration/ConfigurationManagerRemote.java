@@ -52,7 +52,7 @@ public interface ConfigurationManagerRemote {
      * @return The specified configuration.
      */
     @WebMethod
-    Configuration getActiveResourceConfiguration( //
+    Configuration getCurrentResourceConfiguration( //
         @WebParam(name = "user")
         Subject user, //
         @WebParam(name = "resourceId")

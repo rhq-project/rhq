@@ -170,7 +170,7 @@ public class EventManagerBean implements EventManagerLocal {
                         ps.addBatch();
                     }
 
-                    notifyAlertConditionCacheManager("addEventData", eventSource, eventData.toArray(new Event[0]));
+                    notifyAlertConditionCacheManager("addEventData", eventSource, eventData.toArray(new Event[eventData.size()]));
                 }
                 ps.executeBatch();
             } finally {
@@ -455,7 +455,7 @@ public class EventManagerBean implements EventManagerLocal {
             return pl;
 
         /*
-         * We're still here - either the specified event was not found or we got called without 
+         * We're still here - either the specified event was not found or we got called without
          * passing any specific event. Return a bunch of events for the resource etc.
          */
         String query = setupEventsQuery(resourceIds, severity, source, searchString, pc, false);

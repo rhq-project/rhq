@@ -75,7 +75,17 @@ public class DataPurgeJob implements StatefulJob {
         long start = System.currentTimeMillis();
         LOG.info("Data Purge Job STARTING");
         compressData();
+        calculateAutoBaselines();
         LOG.info("Data Purge Job FINISHED [" + (System.currentTimeMillis() - start) + "]ms");
+    }
+
+    private void calculateAutoBaselines() {
+        try {
+            LOG.info("Initiating the calculation of auto-baselines");
+            LookupUtil.getMeasurementBaselineManager().calculateAutoBaselines();
+        } catch (Exception e) {
+            LOG.error("Failed to auto-calculate baselines. Cause: " + e);
+        }
     }
 
     private void compressData() {

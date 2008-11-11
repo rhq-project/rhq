@@ -893,6 +893,21 @@ DB Upgrade:
       <schema-dropTable table="RHQ_MEASUREMENT_OOB" />
       <schema-dropSequence name="rhq_measurement_oob_id_seq" />
    </schemaSpec>
+
+   <schemaSpec version="2.26">
+      <schema-directSQL>
+         <statement desc="Unscheduling auto-baseline job from Quartz - removing trigger">
+            DELETE FROM rhq_qrtz_triggers WHERE trigger_name='org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob'
+         </statement>
+         <statement desc="Unscheduling auto-baseline job from Quartz - removing simple trigger">
+            DELETE FROM rhq_qrtz_simple_triggers WHERE trigger_name='org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob'
+         </statement>
+         <statement desc="Unscheduling auto-baseline job from Quartz - removing job details">
+            DELETE FROM rhq_qrtz_job_details WHERE job_name='org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob'
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

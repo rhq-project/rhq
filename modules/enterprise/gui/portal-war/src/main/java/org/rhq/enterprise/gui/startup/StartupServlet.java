@@ -48,7 +48,6 @@ import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.core.plugin.ProductPluginDeployerMBean;
 import org.rhq.enterprise.server.plugin.content.ContentSourcePluginServiceManagement;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForSuspectedAgentsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutContentRequestsJob;
@@ -315,15 +314,6 @@ public class StartupServlet extends HttpServlet {
             scheduler.scheduleSimpleCronJob(DataPurgeJob.class, true, false, cronString);
         } catch (Exception e) {
             throw new ServletException("Cannot schedule data purge job", e);
-        }
-
-        // Baseline calculation Job
-        try {
-            // Check the need to calculate baselines every 77 minutes
-            scheduler.scheduleSimpleRepeatingJob(AutoBaselineCalculationJob.class, true, false, 11 * 60 * 1000L,
-                77 * 60 * 1000L);
-        } catch (Exception e) {
-            throw new ServletException("Cannot schedule baseline calculation job", e);
         }
 
         // Content source sync jobs

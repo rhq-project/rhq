@@ -34,22 +34,22 @@ DB Upgrade:
     <schemaSpec version="2.0">
         <!-- Empty initial schema to avoid install failure on default latest schema version -->
     </schemaSpec>
-	
+
     <schemaSpec version="2.1">
         <!-- Keep the columnType VARCHAR2, but increase size;
             (see note for RHQ_ALERT_CONDITION table in alert-schema.xml for more info) -->
         <schema-alterColumn
             table="RHQ_ALERT_CONDITION"
-            column="OPTION_STATUS" 
+            column="OPTION_STATUS"
             columnType="VARCHAR2"
             precision="256" />
     </schemaSpec>
-	
+
     <schemaSpec version="2.2">
         <!-- RHQ-481 make resource names longer -->
         <schema-alterColumn
             table="RHQ_RESOURCE"
-            column="NAME" 
+            column="NAME"
             columnType="VARCHAR2"
             precision="500" />
     </schemaSpec>
@@ -71,11 +71,11 @@ DB Upgrade:
             columnType="BOOLEAN" />
 
         <schema-directSQL>
-            <statement targetDBVendor="postgresql" 
+            <statement targetDBVendor="postgresql"
                        desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
                 UPDATE RHQ_PACKAGE_TYPE SET SUPPORTS_ARCHITECTURE = FALSE
             </statement>
-            <statement targetDBVendor="oracle" 
+            <statement targetDBVendor="oracle"
                        desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
                 UPDATE RHQ_PACKAGE_TYPE SET SUPPORTS_ARCHITECTURE = 0
             </statement>
@@ -142,18 +142,18 @@ DB Upgrade:
         <schema-addColumn   table="RHQ_SERVER" column="AFFINITY_GROUP_ID" columnType="INTEGER" />
         <schema-directSQL>
              <statement desc="Creating RHQ_SERVER foreign key relation to RHQ_AFFINITY_GROUP">
-                  ALTER TABLE RHQ_SERVER 
-                  ADD CONSTRAINT RHQ_SERVER_AG_ID_FK 
+                  ALTER TABLE RHQ_SERVER
+                  ADD CONSTRAINT RHQ_SERVER_AG_ID_FK
                   FOREIGN KEY (AFFINITY_GROUP_ID)
                   REFERENCES RHQ_AFFINITY_GROUP (ID)
              </statement>
         </schema-directSQL>
 
         <!-- RHQ_AGENT modifications -->
-   	    <schema-addColumn   table="RHQ_AGENT" column="AFFINITY_GROUP_ID" columnType="INTEGER" />
+          <schema-addColumn   table="RHQ_AGENT" column="AFFINITY_GROUP_ID" columnType="INTEGER" />
         <schema-directSQL>
              <statement desc="Creating RHQ_AGENT foreign key relation to RHQ_AFFINITY_GROUP">
-                  ALTER TABLE RHQ_AGENT 
+                  ALTER TABLE RHQ_AGENT
                   ADD CONSTRAINT RHQ_AGENT_AG_ID_FK
                   FOREIGN KEY (AFFINITY_GROUP_ID)
                   REFERENCES RHQ_AFFINITY_GROUP (ID)
@@ -162,8 +162,8 @@ DB Upgrade:
         <schema-addColumn   table="RHQ_AGENT" column="SERVER_ID" columnType="INTEGER" />
         <schema-directSQL>
              <statement desc="Creating RHQ_AGENT foreign key relation to RHQ_SERVER">
-                  ALTER TABLE RHQ_AGENT 
-                  ADD CONSTRAINT RHQ_AGENT_SERVER_ID_FK 
+                  ALTER TABLE RHQ_AGENT
+                  ADD CONSTRAINT RHQ_AGENT_SERVER_ID_FK
                   FOREIGN KEY (SERVER_ID)
                   REFERENCES RHQ_SERVER (ID)
              </statement>
@@ -206,7 +206,7 @@ DB Upgrade:
         <schema-alterColumn table="RHQ_PARTITION_DETAILS" column="PARTITION_EVENT_ID" nullable="FALSE"/>
         <schema-directSQL>
              <statement desc="Creating RHQ_PARTITION_DETAILS foreign key relation to RHQ_PARTITION_EVENT">
-                  ALTER TABLE RHQ_PARTITION_DETAILS 
+                  ALTER TABLE RHQ_PARTITION_DETAILS
                   ADD CONSTRAINT RHQ_PD_EVENT_ID_FK
                   FOREIGN KEY (PARTITION_EVENT_ID)
                   REFERENCES RHQ_PARTITION_EVENT (ID)
@@ -216,7 +216,7 @@ DB Upgrade:
         <schema-alterColumn table="RHQ_PARTITION_DETAILS" column="AGENT_ID" nullable="FALSE"/>
         <schema-directSQL>
              <statement desc="Creating RHQ_PARTITION_DETAILS foreign key relation to RHQ_AGENT">
-                  ALTER TABLE RHQ_PARTITION_DETAILS 
+                  ALTER TABLE RHQ_PARTITION_DETAILS
                   ADD CONSTRAINT RHQ_PD_AGENT_ID_FK
                   FOREIGN KEY (AGENT_ID)
                   REFERENCES RHQ_AGENT (ID)
@@ -226,8 +226,8 @@ DB Upgrade:
         <schema-alterColumn table="RHQ_PARTITION_DETAILS" column="SERVER_ID" nullable="FALSE"/>
         <schema-directSQL>
              <statement desc="Creating RHQ_PARTITION_DETAILS foreign key relation to RHQ_SERVER">
-                  ALTER TABLE RHQ_PARTITION_DETAILS 
-                  ADD CONSTRAINT RHQ_PD_SERVER_ID_FK 
+                  ALTER TABLE RHQ_PARTITION_DETAILS
+                  ADD CONSTRAINT RHQ_PD_SERVER_ID_FK
                   FOREIGN KEY (SERVER_ID)
                   REFERENCES RHQ_SERVER (ID)
              </statement>
@@ -250,8 +250,8 @@ DB Upgrade:
         <schema-alterColumn table="RHQ_FAILOVER_LIST" column="PARTITION_EVENT_ID" nullable="FALSE"/>
         <schema-directSQL>
              <statement desc="Creating RHQ_FAILOVER_LIST foreign key relation to RHQ_PARTITION_EVENT">
-                  ALTER TABLE RHQ_FAILOVER_LIST 
-                  ADD CONSTRAINT RHQ_FL_EVENT_ID_FK 
+                  ALTER TABLE RHQ_FAILOVER_LIST
+                  ADD CONSTRAINT RHQ_FL_EVENT_ID_FK
                   FOREIGN KEY (PARTITION_EVENT_ID)
                   REFERENCES RHQ_PARTITION_EVENT (ID)
              </statement>
@@ -260,8 +260,8 @@ DB Upgrade:
         <schema-alterColumn table="RHQ_FAILOVER_LIST" column="AGENT_ID" nullable="FALSE"/>
         <schema-directSQL>
              <statement desc="Creating RHQ_FAILOVER_LIST foreign key relation to RHQ_AGENT">
-                  ALTER TABLE RHQ_FAILOVER_LIST 
-                  ADD CONSTRAINT RHQ_FL_AGENT_ID_FK 
+                  ALTER TABLE RHQ_FAILOVER_LIST
+                  ADD CONSTRAINT RHQ_FL_AGENT_ID_FK
                   FOREIGN KEY (AGENT_ID)
                   REFERENCES RHQ_AGENT (ID)
              </statement>
@@ -286,8 +286,8 @@ DB Upgrade:
         <schema-alterColumn table="RHQ_FAILOVER_DETAILS" column="FAILOVER_LIST_ID" nullable="FALSE"/>
         <schema-directSQL>
              <statement desc="Creating RHQ_FAILOVER_DETAILS foreign key relation to FAILOVER_LIST_ID">
-                  ALTER TABLE RHQ_FAILOVER_DETAILS 
-                  ADD CONSTRAINT RHQ_FD_FAILOVER_LIST_ID_FK 
+                  ALTER TABLE RHQ_FAILOVER_DETAILS
+                  ADD CONSTRAINT RHQ_FD_FAILOVER_LIST_ID_FK
                   FOREIGN KEY (FAILOVER_LIST_ID)
                   REFERENCES RHQ_FAILOVER_LIST (ID)
              </statement>
@@ -296,8 +296,8 @@ DB Upgrade:
         <schema-alterColumn table="RHQ_FAILOVER_DETAILS" column="SERVER_ID" nullable="FALSE"/>
         <schema-directSQL>
              <statement desc="Creating RHQ_FAILOVER_DETAILS foreign key relation to RHQ_SERVER">
-                  ALTER TABLE RHQ_FAILOVER_DETAILS 
-                  ADD CONSTRAINT RHQ_FD_SERVER_ID_FK 
+                  ALTER TABLE RHQ_FAILOVER_DETAILS
+                  ADD CONSTRAINT RHQ_FD_SERVER_ID_FK
                   FOREIGN KEY (SERVER_ID)
                   REFERENCES RHQ_SERVER (ID)
              </statement>
@@ -403,39 +403,39 @@ DB Upgrade:
       </schema-directSQL>
       <schema-alterColumn table="RHQ_SERVER" column="SECURE_PORT" nullable="FALSE"/>
    </schemaSpec>
-	
+
    <!-- RHQ-720 - Add read_only column to alert definitions table -->
    <schemaSpec version="2.14">
         <schema-addColumn
             table="RHQ_ALERT_DEFINITION"
             column="READ_ONLY"
             columnType="BOOLEAN" />
-   	
+
       <schema-directSQL>
-          <statement targetDBVendor="postgresql" 
+          <statement targetDBVendor="postgresql"
                      desc="Updating existing alert definitions with default for READ_ONLY flag">
               UPDATE RHQ_ALERT_DEFINITION SET READ_ONLY = FALSE
           </statement>
-          <statement targetDBVendor="oracle" 
+          <statement targetDBVendor="oracle"
             desc="Updating existing alert definitions with default for READ_ONLY flag">
               UPDATE RHQ_ALERT_DEFINITION SET READ_ONLY = 0
-          </statement>      	
+          </statement>
       </schema-directSQL>
 
       <schema-directSQL>
-          <statement targetDBVendor="postgresql" 
+          <statement targetDBVendor="postgresql"
                      desc="Setting alert definition READ_ONLY DEFAULT">
               ALTER TABLE RHQ_ALERT_DEFINITION ALTER COLUMN READ_ONLY SET DEFAULT FALSE
           </statement>
-          <statement targetDBVendor="oracle" 
+          <statement targetDBVendor="oracle"
                      desc="Setting alert definition READ_ONLY DEFAULT">
-          	ALTER TABLE RHQ_ALERT_DEFINITION MODIFY READ_ONLY DEFAULT 0
+             ALTER TABLE RHQ_ALERT_DEFINITION MODIFY READ_ONLY DEFAULT 0
           </statement>
       </schema-directSQL>
 
       <schema-alterColumn table="RHQ_ALERT_DEFINITION" column="READ_ONLY" nullable="FALSE" />
    </schemaSpec>
-	
+
    <schemaSpec version="2.15">
       <schema-addColumn table="RHQ_PARTITION_EVENT" column="EXECUTION_STATUS" columnType="VARCHAR2" precision="32"/>
       <schema-directSQL>
@@ -457,7 +457,7 @@ DB Upgrade:
       </schema-directSQL>
       <schema-directSQL>
          <statement desc="Updating existing partition events details with known agents">
-            UPDATE RHQ_PARTITION_DETAILS 
+            UPDATE RHQ_PARTITION_DETAILS
             SET AGENT_NAME = ( SELECT RHQ_AGENT.NAME
                                FROM RHQ_AGENT
                                WHERE RHQ_AGENT.ID = RHQ_PARTITION_DETAILS.AGENT_ID )
@@ -471,7 +471,7 @@ DB Upgrade:
       </schema-directSQL>
       <schema-directSQL>
          <statement desc="Updating existing partition events details with known servers">
-            UPDATE RHQ_PARTITION_DETAILS 
+            UPDATE RHQ_PARTITION_DETAILS
             SET SERVER_NAME = ( SELECT RHQ_SERVER.NAME
                                 FROM RHQ_SERVER
                                 WHERE RHQ_SERVER.ID = RHQ_PARTITION_DETAILS.SERVER_ID )
@@ -485,7 +485,7 @@ DB Upgrade:
    <!-- RHQ-786 - Add read_only column to alert definitions table -->
    <schemaSpec version="2.17">
       <schema-addColumn table="RHQ_ALERT" column="RECOVERY_ID" columnType="INTEGER" />
-      
+
       <schema-directSQL>
           <statement desc="Updating existing alerts with default for recovery_id">
               UPDATE RHQ_ALERT SET RECOVERY_ID = 0
@@ -493,32 +493,32 @@ DB Upgrade:
       </schema-directSQL>
 
       <schema-alterColumn table="RHQ_ALERT" column="RECOVERY_ID" nullable="FALSE" />
-   	
-   	<schema-addColumn table="RHQ_ALERT" column="WILL_RECOVER" columnType="BOOLEAN" />
-   	
+
+      <schema-addColumn table="RHQ_ALERT" column="WILL_RECOVER" columnType="BOOLEAN" />
+
       <schema-directSQL>
-          <statement targetDBVendor="postgresql" 
+          <statement targetDBVendor="postgresql"
                      desc="Updating existing alerts with default for WILL_RECOVER flag">
               UPDATE RHQ_ALERT SET WILL_RECOVER = FALSE
           </statement>
-          <statement targetDBVendor="oracle" 
+          <statement targetDBVendor="oracle"
             desc="Updating existing alerts with default for WILL_RECOVER flag">
               UPDATE RHQ_ALERT SET WILL_RECOVER = 0
           </statement>
       </schema-directSQL>
 
       <schema-directSQL>
-          <statement targetDBVendor="postgresql" 
+          <statement targetDBVendor="postgresql"
                      desc="Setting alert WILL_RECOVER DEFAULT">
               ALTER TABLE RHQ_ALERT ALTER COLUMN WILL_RECOVER SET DEFAULT FALSE
           </statement>
-          <statement targetDBVendor="oracle" 
+          <statement targetDBVendor="oracle"
                      desc="Setting alert WILL_RECOVER DEFAULT">
             ALTER TABLE RHQ_ALERT MODIFY WILL_RECOVER DEFAULT 0
           </statement>
       </schema-directSQL>
-   	
-      <schema-alterColumn table="RHQ_ALERT" column="WILL_RECOVER" nullable="FALSE" />     
+
+      <schema-alterColumn table="RHQ_ALERT" column="WILL_RECOVER" nullable="FALSE" />
    </schemaSpec>
 
    <schemaSpec version="2.18">
@@ -669,18 +669,18 @@ DB Upgrade:
          </statement>
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_CONTENT_SOURCE.CREATION_TIME timestamp to long">
-         	UPDATE RHQ_CONTENT_SOURCE 
-         	SET CREATION_TIME_LONG = 1000 *
-         	(   extract(day    from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
-         	    extract(hour   from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
-         	    extract(minute from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
-         	    extract(second from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
-         	)
-         	WHERE CREATION_TIME IS NOT NULL
+            UPDATE RHQ_CONTENT_SOURCE
+            SET CREATION_TIME_LONG = 1000 *
+            (   extract(day    from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                extract(hour   from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                extract(minute from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                extract(second from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
+            )
+            WHERE CREATION_TIME IS NOT NULL
          </statement>
          <statement targetDBVendor="oracle"
                     desc="Converting RHQ_CONTENT_SOURCE.LAST_MODIFIED_TIME timestamp to long">
-         	UPDATE RHQ_CONTENT_SOURCE
+            UPDATE RHQ_CONTENT_SOURCE
             SET LAST_MODIFIED_TIME_LONG = 1000 *
             (   extract(day    from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
                 extract(hour   from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
@@ -702,7 +702,7 @@ DB Upgrade:
             ALTER TABLE RHQ_CONTENT_SOURCE
             RENAME COLUMN LAST_MODIFIED_TIME_LONG
             TO LAST_MODIFIED_TIME
-         </statement> 
+         </statement>
       </schema-directSQL>
 
       <!-- RHQ_CHANNEL timestamp to long conversion -->
@@ -729,7 +729,7 @@ DB Upgrade:
                 extract(hour   from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
                 extract(minute from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
                 extract(second from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
-            )         	
+            )
             WHERE CREATION_TIME IS NOT NULL
          </statement>
          <statement targetDBVendor="oracle"
@@ -756,7 +756,7 @@ DB Upgrade:
             ALTER TABLE RHQ_CHANNEL
             RENAME COLUMN LAST_MODIFIED_TIME_LONG
             TO LAST_MODIFIED_TIME
-         </statement> 
+         </statement>
       </schema-directSQL>
 
       <!-- RHQ_PACKAGE_VERSION timestamp to long conversion -->
@@ -776,7 +776,7 @@ DB Upgrade:
                 extract(hour   from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
                 extract(minute from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
                 extract(second from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
-            )           
+            )
             WHERE FILE_CREATION_TIME IS NOT NULL
          </statement>
       </schema-directSQL>

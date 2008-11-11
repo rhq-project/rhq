@@ -21,10 +21,12 @@ package org.rhq.enterprise.gui.common.tabbar;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
+
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.UrlUtility;
 
@@ -32,11 +34,9 @@ import org.rhq.core.gui.util.UrlUtility;
  * A renderer that renders a {@link TabComponent} component as XHTML.
  *
  * @author Ian Springer
+ * @author Joseph Marques
  */
 public class TabRenderer extends Renderer {
-    static final String IMAGES_PATH = "/images";
-    static final int TAB_IMAGE_WIDTH = 102;
-    static final int TAB_IMAGE_HEIGHT = 21;
 
     /**
      * Encode this component.
@@ -53,26 +53,28 @@ public class TabRenderer extends Renderer {
 
         ResponseWriter writer = facesContext.getResponseWriter();
         writer.startElement("td", tab);
+
         if (!tab.isSelected()) {
             writer.startElement("a", tab);
+            writer.writeAttribute("style", "text-decoration: none;", null);
             writer.writeAttribute("href", buildURL(tab), "url");
         }
+        writer.startElement("div", tab);
 
-        writer.startElement("img", tab);
-        String imageBasePath = IMAGES_PATH + "/tab_" + tab.getName();
-        String imageQualifier = (tab.isSelected()) ? "on" : "off";
-        String imageURL = imageBasePath + "_" + imageQualifier + ".gif";
-        writer.writeAttribute("src", imageURL, null);
         if (!tab.isSelected()) {
-            writer.writeAttribute("onmouseover", "imageSwap(this, '" + imageBasePath + "', '_over')", null);
-            writer.writeAttribute("onmouseout", "imageSwap(this, '" + imageBasePath + "', '_off')", null);
+            writer.writeAttribute("class", "tab-inactive tab-common", null);
+            writer.writeAttribute("onmouseover", "this.className='tab-hover tab-common'", null);
+            writer.writeAttribute("onmouseout", "this.className='tab-inactive tab-common'", null);
+        } else {
+            writer.writeAttribute("class", "tab-active tab-common", null);
+        }
+        if (tab.getDisplayName() != null) {
+            writer.write(tab.getDisplayName().toLowerCase());
+        } else {
+            writer.write(tab.getName().toLowerCase());
         }
 
-        writer.writeAttribute("alt", buildAlt(tab), "alt");
-        writer.writeAttribute("width", TAB_IMAGE_WIDTH, null);
-        writer.writeAttribute("height", TAB_IMAGE_HEIGHT, null);
-        writer.writeAttribute("border", 0, null);
-        writer.endElement("img");
+        writer.endElement("div");
         if (!tab.isSelected()) {
             writer.endElement("a");
         }
@@ -123,17 +125,5 @@ public class TabRenderer extends Renderer {
         url = FacesContext.getCurrentInstance().getExternalContext().encodeResourceURL(url);
 
         return url;
-    }
-
-    private String buildAlt(TabComponent tab) {
-        String alt;
-        SubtabComponent defaultSubtab = tab.getDefaultSubtab();
-        if (defaultSubtab != null) {
-            alt = (defaultSubtab.getAlt() != null) ? defaultSubtab.getAlt() : "";
-        } else {
-            alt = (tab.getAlt() != null) ? tab.getAlt() : "";
-        }
-
-        return alt;
     }
 }

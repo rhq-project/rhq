@@ -22,10 +22,12 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
+
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.UrlUtility;
 
@@ -35,9 +37,6 @@ import org.rhq.core.gui.util.UrlUtility;
  * @author Ian Springer
  */
 public class SubtabRenderer extends Renderer {
-    static final String IMAGES_PATH = "/images";
-    static final int SUBTAB_IMAGE_WIDTH = 104;
-    static final int SUBTAB_IMAGE_HEIGHT = 25;
 
     /**
      * Encode this component.
@@ -65,25 +64,31 @@ public class SubtabRenderer extends Renderer {
         writer.startElement("td", subtab);
         if (!subtab.isSelected()) {
             writer.startElement("a", subtab);
-            String url = buildURL(subtab);
-            writer.writeAttribute("href", url, "url");
+            writer.writeAttribute("style", "text-decoration: none;", null);
+            writer.writeAttribute("href", buildURL(subtab), "url");
         }
+        writer.startElement("div", subtab);
 
-        writer.startElement("img", subtab);
-        String imageBasePath = IMAGES_PATH + "/Sub" + parentTab.getName() + "_" + subtab.getName();
-        String imageQualifier = (subtab.isSelected()) ? "on" : "off";
-        String imageURL = imageBasePath + "_" + imageQualifier + ".gif";
-        writer.writeAttribute("src", imageURL, null);
         if (!subtab.isSelected()) {
-            writer.writeAttribute("onmouseover", "imageSwap(this, '" + imageBasePath + "', '_over')", null);
-            writer.writeAttribute("onmouseout", "imageSwap(this, '" + imageBasePath + "', '_off')", null);
+            writer.writeAttribute("class", "subtab-inactive subtab-common", null);
+            writer.writeAttribute("onmouseover", "this.className='subtab-hover subtab-common'", null);
+            writer.writeAttribute("onmouseout", "this.className='subtab-inactive subtab-common'", null);
+        } else {
+            writer.writeAttribute("class", "subtab-active subtab-common", null);
+
+            writer.startElement("img", subtab);
+            writer.writeAttribute("src", "/images/icon_right_arrow.gif", null);
+            writer.endElement("img");
+            writer.write(" ");
         }
 
-        writer.writeAttribute("alt", (subtab.getAlt() != null) ? subtab.getAlt() : "", "alt");
-        writer.writeAttribute("width", SUBTAB_IMAGE_WIDTH, null);
-        writer.writeAttribute("height", SUBTAB_IMAGE_HEIGHT, null);
-        writer.writeAttribute("border", 0, null);
-        writer.endElement("img");
+        if (subtab.getDisplayName() != null) {
+            writer.write(subtab.getDisplayName().toLowerCase());
+        } else {
+            writer.write(subtab.getName().toLowerCase());
+        }
+
+        writer.endElement("div");
         if (!subtab.isSelected()) {
             writer.endElement("a");
         }

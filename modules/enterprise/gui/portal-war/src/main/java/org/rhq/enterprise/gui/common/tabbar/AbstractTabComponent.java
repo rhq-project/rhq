@@ -20,18 +20,23 @@ package org.rhq.enterprise.gui.common.tabbar;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
+
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.gui.util.FacesComponentUtility;
 
 /**
  * The base class for {@link TabComponent} and {@link SubtabComponent}.
  *
  * @author Ian Springer
+ * @author Joseph Marques
  */
 public abstract class AbstractTabComponent extends UIComponentBase {
     private String name;
+    private String displayName;
     private String url;
     private String alt;
     private boolean selected;
@@ -47,6 +52,14 @@ public abstract class AbstractTabComponent extends UIComponentBase {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDisplayName() {
+        return this.displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     public String getUrl() {
@@ -86,8 +99,7 @@ public abstract class AbstractTabComponent extends UIComponentBase {
         return parameters;
     }
 
-    public void setParameters(@NotNull
-    Map<String, String> parameters) {
+    public void setParameters(@NotNull Map<String, String> parameters) {
         this.parameters = parameters;
     }
 
@@ -95,13 +107,14 @@ public abstract class AbstractTabComponent extends UIComponentBase {
 
     public Object saveState(FacesContext facesContext) {
         if (this.stateValues == null) {
-            this.stateValues = new Object[4];
+            this.stateValues = new Object[5];
         }
 
         this.stateValues[0] = super.saveState(facesContext);
         this.stateValues[1] = this.name;
-        this.stateValues[2] = this.url;
-        this.stateValues[3] = this.alt;
+        this.stateValues[2] = this.displayName;
+        this.stateValues[3] = this.url;
+        this.stateValues[4] = this.alt;
         return this.stateValues;
     }
 
@@ -109,7 +122,8 @@ public abstract class AbstractTabComponent extends UIComponentBase {
         this.stateValues = (Object[]) stateValues;
         super.restoreState(context, this.stateValues[0]);
         this.name = (String) this.stateValues[1];
-        this.url = (String) this.stateValues[2];
-        this.alt = (String) this.stateValues[3];
+        this.displayName = (String) this.stateValues[2];
+        this.url = (String) this.stateValues[3];
+        this.alt = (String) this.stateValues[4];
     }
 }

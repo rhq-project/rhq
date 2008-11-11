@@ -9,3 +9,74 @@
 
 .commonColumn {
 }
+
+
+div.tab-active {
+	border-width: 1px 1px 0px 1px;
+	border-style: solid solid none solid;
+	background-color: RGB(217, 217, 217);
+}
+
+div.tab-inactive {
+	border-width: 0px 0px 1px 0px;
+	border-style: none none solid none;
+	color: RGB(125,125,125);
+	cursor: default;
+}
+
+div.tab-hover {
+	border-width: 0px 0px 1px 0px;
+	border-style: none none solid none;
+	color: RGB(51,51,51);
+	cursor: pointer;
+}
+
+div.tab-common {
+	padding: 1px 3px 1px 1px;
+	border-color: RGB(222,101,45);
+	width: 120px;
+	font-family: arial;
+	font-weight: bold;
+	font-size: 12pt;
+	text-align: center;
+	font-variant: small-caps;
+}
+
+div.tab-spacer {
+	width: 100%;
+	color: white;
+}
+
+div.subtab-active {
+	color: RGB(102,102,102);
+}
+
+div.subtab-inactive {
+	color: RGB(169,169,169);
+	cursor: default;
+}
+
+div.subtab-hover {
+	color: RGB(51,51,51);
+	cursor: pointer;
+}
+
+div.subtab-common {
+	padding: 3px 1px 3px 1px;
+	background-color: RGB(217, 217, 217);
+	border-width: 0px 0px 0px 0px;
+	border-style: line;
+	width: 100px;
+	font-family: arial;
+	font-weight: bold;
+	font-size: 8pt;
+	text-align: center;
+	font-variant: small-caps;
+}
+
+div.subtab-spacer {
+	width: 100%;
+	color: RGB(217, 217, 217);
+	padding-left: 0px;
+	padding-right: 0px;
+}

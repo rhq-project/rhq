@@ -20,21 +20,21 @@ package org.rhq.enterprise.gui.common.tabbar;
 
 import java.io.IOException;
 import java.util.List;
+
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
+
 import org.rhq.core.gui.util.FacesComponentUtility;
 
 /**
  * A renderer that renders a {@link TabBarComponent} component as XHTML.
  *
  * @author Ian Springer
+ * @author Joseph Marques
  */
 public class TabBarRenderer extends Renderer {
-    private static final String TAB_SPACER_CELL_STYLE_CLASS = "TabCell";
-    private static final String SUBTAB_SPACER_CELL_STYLE_CLASS = "SubTabCell";
-
     /**
      * Encode the beginning of this component.
      *
@@ -61,7 +61,7 @@ public class TabBarRenderer extends Renderer {
         writer.writeAttribute("cellpadding", "0", null);
 
         writer.startElement("tr", tabBar);
-        writeSpacerCell(writer, tabBar, null, TAB_SPACER_CELL_STYLE_CLASS, 20, 1);
+        writeCSSSpacerCell(writer, tabBar, true, false);
     }
 
     /**
@@ -75,7 +75,7 @@ public class TabBarRenderer extends Renderer {
         ResponseWriter writer = facesContext.getResponseWriter();
 
         // Add a spacer cell to fill up any remaining horizontal space remaining in the row of tabs.
-        writeSpacerCell(writer, tabBar, "100%", TAB_SPACER_CELL_STYLE_CLASS, 1, 1);
+        writeCSSSpacerCell(writer, tabBar, false, false);
 
         writer.endElement("tr");
         writeSubTabs(writer, tabBar);
@@ -106,7 +106,8 @@ public class TabBarRenderer extends Renderer {
         writer.writeAttribute("cellpadding", "0", null);
 
         writer.startElement("tr", tabBar);
-        writeSpacerCell(writer, tabBar, null, SUBTAB_SPACER_CELL_STYLE_CLASS, 5, SubtabRenderer.SUBTAB_IMAGE_HEIGHT);
+        writer.writeAttribute("style", "background-color: RGB(217, 217, 217);", null);
+        writeCSSSpacerCell(writer, tabBar, true, true);
 
         // Write out the actual subtabs, which already rendered themselves earlier.
         List<SubtabComponent> subtabs = tabBar.getSelectedTab().getSubtabs();
@@ -120,30 +121,30 @@ public class TabBarRenderer extends Renderer {
         }
 
         // Add a spacer cell to fill up any remaining horizontal space remaining in the row of subtabs.
-        writeSpacerCell(writer, tabBar, "100%", SUBTAB_SPACER_CELL_STYLE_CLASS, 1, SubtabRenderer.SUBTAB_IMAGE_HEIGHT);
+        writeCSSSpacerCell(writer, tabBar, false, true);
 
         writer.endElement("tr");
         writer.endElement("table");
         writer.endElement("td");
     }
 
-    private void writeSpacerCell(ResponseWriter writer, TabBarComponent tabBar, String cellWidth, String styleClass,
-        int width, int height) throws IOException {
+    private void writeCSSSpacerCell(ResponseWriter writer, TabBarComponent tabBar, boolean isLeft, boolean isSub)
+        throws IOException {
         writer.startElement("td", tabBar);
-        if (cellWidth != null) {
-            writer.writeAttribute("width", cellWidth, null);
+        if (!isLeft) { // last column takes up remainder of width
+            writer.writeAttribute("width", "100%", null);
         }
 
-        writer.writeAttribute("class", styleClass, null);
+        writer.startElement("div", tabBar);
+        if (isLeft) { // first column is a fixed-width spacer
+            writer.writeAttribute("style", "width: 25px;", null);
+        }
+        String prefix = (isSub) ? "sub" : "";
+        String styleClass = prefix + "tab-inactive " + prefix + "tab-common " + prefix + "tab-spacer";
 
-        // <img src="/images/spacer.gif" width="x" height="1" alt="" border="0"/>
-        writer.startElement("img", tabBar);
-        writer.writeAttribute("src", "/images/spacer.gif", null);
-        writer.writeAttribute("width", width, null);
-        writer.writeAttribute("height", height, null);
-        writer.writeAttribute("alt", "", null);
-        writer.writeAttribute("border", "0", null);
-        writer.endElement("img");
+        writer.writeAttribute("class", styleClass, null);
+        writer.write("q"); // won't see this because text color will match background oolor
+        writer.endElement("div");
 
         writer.endElement("td");
     }

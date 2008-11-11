@@ -102,9 +102,9 @@ import org.jetbrains.annotations.NotNull;
         + "           AND ps.stringValue IS NOT NULL " //
         + "GROUP BY ps.stringValue"), //
     @NamedQuery(name = Configuration.QUERY_GET_PLUGIN_CONFIG_BY_RESOURCE_ID, query = "" //
-        + "select c from Configuration c, Resource r where r.id = :resourceId and c = r.pluginConfiguration"),
+        + "select r.pluginConfiguration from Resource r where r.id = :resourceId"),
     @NamedQuery(name = Configuration.QUERY_GET_RESOURCE_CONFIG_BY_RESOURCE_ID, query = "" //
-        + "select c from Configuration c, Resource r where r.id = :resourceId and c = r.resourceConfiguration") })
+        + "select r.resourceConfiguration from Resource r where r.id = :resourceId") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_ID_SEQ")
 @Table(name = "RHQ_CONFIG")
 @XmlAccessorType(XmlAccessType.FIELD)

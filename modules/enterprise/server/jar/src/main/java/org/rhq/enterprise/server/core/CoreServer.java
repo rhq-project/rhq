@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.core;
 
 import java.io.InputStream;
+import java.util.Date;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
@@ -51,9 +52,12 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
 
     private Properties buildProps;
 
+    private Date bootTime;
+
     @Override
     protected void createService() throws Exception {
         this.buildProps = loadBuildProperties();
+        this.bootTime = new Date();
 
         // make sure our log file has an indication of the version of this server
         String version = getVersion();
@@ -73,6 +77,10 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
 
     public String getBuildNumber() {
         return this.buildProps.getProperty(PROP_BUILD_NUMBER, "?");
+    }
+
+    public Date getBootTime() {
+        return bootTime;
     }
 
     private Properties loadBuildProperties() {

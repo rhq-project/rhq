@@ -742,7 +742,7 @@ public class AlertManagerBean implements AlertManagerLocal {
         String alertUrl = prettyPrintAlertURL(alert);
         try {
             if (bootTime == null)
-                bootTime = systemManager.getBootTime();
+                bootTime = LookupUtil.getCoreServer().getBootTime();
             result = snmpTrapSender.sendSnmpTrap(alert, snmpNotification, platformName, conditions, bootTime, alertUrl);
         } catch (Throwable t) {
             result = "failed - cause: " + t;

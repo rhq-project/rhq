@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.system;
 
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.Date;
 import java.util.Properties;
 
@@ -27,7 +25,6 @@ import javax.ejb.Local;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.enterprise.server.license.License;
 
 @Local
@@ -118,6 +115,4 @@ public interface SystemManagerLocal {
     Date getExpiration();
 
     void reconfigureSystem(Subject whoami);
-
-    public Date getBootTime();
 }

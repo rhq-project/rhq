@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.core;
 
+import java.util.Date;
+
 import javax.management.ObjectName;
 
 import org.jboss.mx.util.ObjectNameFactory;
@@ -47,4 +49,11 @@ public interface CoreServerMBean extends ServiceMBean {
      * @return the build number
      */
     String getBuildNumber();
+
+    /**
+     * Returns the time when this server started.
+     * 
+     * @return the boot time of the server
+     */
+    Date getBootTime();
 }

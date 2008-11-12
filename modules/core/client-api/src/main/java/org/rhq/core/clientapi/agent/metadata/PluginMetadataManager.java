@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.clientapi.agent.metadata;
 
 import java.util.HashMap;
@@ -30,18 +30,16 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * This is meant to provide an interface to the underlying metadata of a plugin. It will load, translate and cache the
  * metadata for the rest of the services in the form of the domain object classes and the jaxb version of the
  * descriptors.
- *
- * <p/>
  *
  * @author Greg Hinkle
  */
@@ -52,8 +50,8 @@ public class PluginMetadataManager {
     private Log log = LogFactory.getLog(PluginMetadataManager.class);
 
     private Map<ResourceCategory, LinkedHashSet<ResourceType>> typesByCategory = new HashMap<ResourceCategory, LinkedHashSet<ResourceType>>();
-
     private Set<ResourceType> types = new HashSet<ResourceType>();
+    private Object typesLock = new Object();
 
     private Map<String, PluginMetadataParser> parsersByPlugin = new HashMap<String, PluginMetadataParser>();
 
@@ -62,12 +60,15 @@ public class PluginMetadataManager {
 
     private void addType(ResourceType type) {
         ResourceCategory category = type.getCategory();
-        if (!typesByCategory.containsKey(category)) {
-            typesByCategory.put(category, new LinkedHashSet<ResourceType>());
-        }
 
-        typesByCategory.get(category).add(type);
-        types.add(type);
+        synchronized (typesLock) {
+            if (!typesByCategory.containsKey(category)) {
+                typesByCategory.put(category, new LinkedHashSet<ResourceType>());
+            }
+
+            typesByCategory.get(category).add(type);
+            types.add(type);
+        }
     }
 
     /**
@@ -103,23 +104,28 @@ public class PluginMetadataManager {
     public synchronized Set<ResourceType> loadPlugin(PluginDescriptor pluginDescriptor) {
         try {
             PluginMetadataParser parser = new PluginMetadataParser(pluginDescriptor, parsersByPlugin);
-
             PluginMetadataParser oldParser = this.parsersByPlugin.get(pluginDescriptor.getName());
+
             if (oldParser != null) {
                 // This is a redeploy, first delete all the original types
-                for (ResourceType oldType : oldParser.getAllTypes()) {
-                    this.typesByCategory.get(oldType.getCategory()).remove(oldType);
-                    this.types.remove(oldType);
+                synchronized (this.typesLock) {
+                    for (ResourceType oldType : oldParser.getAllTypes()) {
+                        this.typesByCategory.get(oldType.getCategory()).remove(oldType);
+                        this.types.remove(oldType);
+                    }
                 }
             }
 
             this.parsersByPlugin.put(pluginDescriptor.getName(), parser);
-            for (ResourceType resourceType : parser.getAllTypes()) {
-                if (types.contains(resourceType)) {
-                    throw new InvalidPluginDescriptorException("Type [" + resourceType
-                        + "] is duplicate for this plugin. This is illegal.");
+
+            synchronized (this.typesLock) {
+                for (ResourceType resourceType : parser.getAllTypes()) {
+                    if (types.contains(resourceType)) {
+                        throw new InvalidPluginDescriptorException("Type [" + resourceType
+                            + "] is duplicate for this plugin. This is illegal.");
+                    }
+                    addType(resourceType);
                 }
-                addType(resourceType);
             }
 
             return parser.getRootResourceTypes();
@@ -155,9 +161,11 @@ public class PluginMetadataManager {
     @Nullable
     public ResourceType getType(String resourceTypeName, String pluginName) {
         ResourceType searchType = new ResourceType(resourceTypeName, pluginName, null, null);
-        for (ResourceType t : types) {
-            if (t.equals(searchType)) {
-                return t;
+        synchronized (this.typesLock) {
+            for (ResourceType t : types) {
+                if (t.equals(searchType)) {
+                    return t;
+                }
             }
         }
         return null;
@@ -169,12 +177,16 @@ public class PluginMetadataManager {
     }
 
     public Set<ResourceType> getTypesForCategory(ResourceCategory category) {
-        LinkedHashSet<ResourceType> types = this.typesByCategory.get(category);
-        return (types != null) ? types : new HashSet<ResourceType>();
+        synchronized (this.typesLock) {
+            LinkedHashSet<ResourceType> types = this.typesByCategory.get(category);
+            return (types != null) ? types : new HashSet<ResourceType>();
+        }
     }
 
     public Set<ResourceType> getAllTypes() {
-        return types;
+        synchronized (this.typesLock) {
+            return new HashSet<ResourceType>(types);
+        }
     }
 
     public Set<ResourceType> getRootTypes() {

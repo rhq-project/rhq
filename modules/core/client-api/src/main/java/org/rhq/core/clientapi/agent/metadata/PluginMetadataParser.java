@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.clientapi.agent.metadata;
 
 import java.util.ArrayList;
@@ -29,16 +29,32 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.clientapi.descriptor.plugin.*;
+
+import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.EventDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.MetricDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.OperationDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ParentResourceType;
+import org.rhq.core.clientapi.descriptor.plugin.PlatformDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ProcessScanDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ResourceCreateDeletePolicy;
+import org.rhq.core.clientapi.descriptor.plugin.ResourceCreationData;
+import org.rhq.core.clientapi.descriptor.plugin.ResourceDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.RunsInsideType;
+import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
+import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.event.EventDefinition;
 
 /**
  * This is a stateful class intended to hold the related metadata for a single plugin descriptor. It is designed to be
@@ -73,7 +89,7 @@ public class PluginMetadataParser {
     }
 
     public List<ResourceType> getAllTypes() {
-        return resourceTypes;
+        return new ArrayList<ResourceType>(resourceTypes);
     }
 
     /**

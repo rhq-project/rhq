@@ -47,13 +47,13 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * A manager for {@link MeasurementBaseline}s.
@@ -80,12 +80,15 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     private MeasurementScheduleManagerLocal measurementScheduleManager;
     @EJB
     private MeasurementBaselineManagerLocal measurementBaselineManager; // self
+    @EJB
+    private SystemManagerLocal systemManager;
+    @EJB
+    private SubjectManagerLocal subjectManager;
 
     private final Log log = LogFactory.getLog(MeasurementBaselineManagerBean.class);
 
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void calculateAutoBaselines() {
-        SystemManagerLocal systemManager = LookupUtil.getSystemManager();
         Properties conf = systemManager.getSystemConfiguration();
 
         // frequency is how often the baselines are recalculated
@@ -131,13 +134,12 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         long endTime = now;
         long startTime = endTime - dataSet;
 
-        MeasurementBaselineManagerLocal baselineManager = LookupUtil.getMeasurementBaselineManager();
-        long computeTime = baselineManager.calculateAutoBaselines(startTime, endTime);
+        long computeTime = measurementBaselineManager.calculateAutoBaselines(startTime, endTime);
 
         // everything was calculated successfully, remember this time
         conf = systemManager.getSystemConfiguration(); // reload the config in case it was changed since we started
         conf.setProperty(HQConstants.BaselineLastCalculationTime, String.valueOf(computeTime));
-        systemManager.setSystemConfiguration(LookupUtil.getSubjectManager().getOverlord(), conf);
+        systemManager.setSystemConfiguration(subjectManager.getOverlord(), conf);
 
         log.info("Auto-calculation of baselines done. Next scheduled for " + new Date(computeTime + frequency));
     }
@@ -361,7 +363,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
             return baselines.get(0);
         }
 
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        Subject overlord = subjectManager.getOverlord();
         try {
             MeasurementSchedule schedule = measurementScheduleManager.getMeasurementSchedule(overlord,
                 measurementDefinitionId, resourceId, true);

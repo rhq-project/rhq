@@ -108,7 +108,7 @@ public class PluginClassLoader extends URLClassLoader {
      *
      * @return the location where all the extract files are now located
      *
-     * @throws IOException
+     * @throws IOException       If any IO goes wrong
      */
     private static File unpackEmbeddedJars(String pluginJarName, URL pluginUrl, List<URL> urls, File tmpDirectory)
         throws IOException {
@@ -163,11 +163,10 @@ public class PluginClassLoader extends URLClassLoader {
                             throw ex;
                         }
 
-                        BufferedInputStream inputStream = null;
                         try {
                             file.deleteOnExit();
 
-                            inputStream = new BufferedInputStream(zis);
+                            BufferedInputStream inputStream = new BufferedInputStream(zis);
 
                             int count = 0;
                             byte[] b = new byte[8192];
@@ -177,7 +176,6 @@ public class PluginClassLoader extends URLClassLoader {
                         } finally {
                             outputStream.flush();
                             outputStream.close();
-                            inputStream.close();
                         }
                     } catch (IOException ioe) {
                         if (file != null) {

@@ -163,10 +163,11 @@ public class PluginClassLoader extends URLClassLoader {
                             throw ex;
                         }
 
+                        BufferedInputStream inputStream = null;
                         try {
                             file.deleteOnExit();
 
-                            BufferedInputStream inputStream = new BufferedInputStream(zis);
+                            inputStream = new BufferedInputStream(zis);
 
                             int count = 0;
                             byte[] b = new byte[8192];
@@ -176,6 +177,7 @@ public class PluginClassLoader extends URLClassLoader {
                         } finally {
                             outputStream.flush();
                             outputStream.close();
+                            inputStream.close();
                         }
                     } catch (IOException ioe) {
                         if (file != null) {

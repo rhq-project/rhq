@@ -562,7 +562,7 @@
                   <c:float-constraint minimum="0.00" maximum="1.00" />
                </c:constraint>
             </c:simple-property>
-            <c:simple-property name="rhq.agent.agent-update.enabled" required="false" type="boolean" activationPolicy="restart" default="true" displayName="Enable Agent Update" description="If true, the agent will be allowed to update itself if it finds there is a new agent update binary available. If this feature is not enabled, the agent will never be allowed to update itself." />
+            <c:simple-property name="rhq.agent.agent-update.enabled" required="false" type="boolean" activationPolicy="immediate" default="true" displayName="Enable Agent Update" description="If true, the agent will be allowed to update itself if it finds there is a new agent update binary available. If this feature is not enabled, the agent will never be allowed to update itself." />
          </c:group>
       </resource-configuration>
 

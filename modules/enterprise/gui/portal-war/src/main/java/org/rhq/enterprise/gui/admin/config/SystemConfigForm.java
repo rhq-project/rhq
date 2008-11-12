@@ -33,6 +33,8 @@ import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 
 public class SystemConfigForm extends BaseValidatorForm {
     private String baseUrl = "";
+    private String agentMaxQuietTimeAllowed = "";
+    private String agentMaxQuietTimeAllowedVal = "0";
     private String helpUserId = "";
     private String helpPassword = "";
     private String maintIntervalVal = "0";
@@ -76,6 +78,7 @@ public class SystemConfigForm extends BaseValidatorForm {
         StringBuffer buf = new StringBuffer(super.toString());
 
         buf.append(" baseUrl=").append(baseUrl);
+        buf.append(" agentMaxQuietTimeAllowed=").append(agentMaxQuietTimeAllowed);
         buf.append(" helpUserId=").append(helpUserId);
         buf.append(" helpPassword=").append(helpPassword);
         buf.append(" ldapEnabled=").append(ldapEnabled);
@@ -112,6 +115,8 @@ public class SystemConfigForm extends BaseValidatorForm {
      */
     @Override
     public void reset(ActionMapping mapping, HttpServletRequest request) {
+        agentMaxQuietTimeAllowed = "";
+        agentMaxQuietTimeAllowedVal = null;
         helpUserId = "";
         helpPassword = "";
         maintInterval = "";
@@ -156,6 +161,11 @@ public class SystemConfigForm extends BaseValidatorForm {
         baseUrl = prop.getProperty(HQConstants.BaseURL);
         helpUserId = prop.getProperty(HQConstants.HelpUser);
         helpPassword = prop.getProperty(HQConstants.HelpUserPassword);
+
+        String agentMaxQuietTimeAllowedValStr = prop.getProperty(HQConstants.AgentMaxQuietTimeAllowed);
+        Long agentMaxQuietTimeAllowedLong = new Long(agentMaxQuietTimeAllowedValStr);
+        agentMaxQuietTimeAllowed = findTimeUnit(agentMaxQuietTimeAllowedLong.longValue());
+        agentMaxQuietTimeAllowedVal = calcTimeUnit(agentMaxQuietTimeAllowedLong.longValue());
 
         String maintIntervalValStr = prop.getProperty(HQConstants.DataMaintenance);
         Long maintIntervalLong = new Long(maintIntervalValStr);
@@ -271,6 +281,10 @@ public class SystemConfigForm extends BaseValidatorForm {
 
         prop.setProperty(HQConstants.DataReindex, String.valueOf(reindex));
 
+        long agentMaxQuietTimeAllowedLong = convertToMillisecond(Integer.parseInt(agentMaxQuietTimeAllowedVal),
+            agentMaxQuietTimeAllowed);
+        prop.setProperty(HQConstants.AgentMaxQuietTimeAllowed, String.valueOf(agentMaxQuietTimeAllowedLong));
+
         long maintIntervalLong = convertToMillisecond(Integer.parseInt(maintIntervalVal), maintInterval);
         prop.setProperty(HQConstants.DataMaintenance, String.valueOf(maintIntervalLong));
 
@@ -345,6 +359,22 @@ public class SystemConfigForm extends BaseValidatorForm {
 
     public void setHelpUserId(String string) {
         helpUserId = string;
+    }
+
+    public String getAgentMaxQuietTimeAllowed() {
+        return agentMaxQuietTimeAllowed;
+    }
+
+    public void setAgentMaxQuietTimeAllowed(String string) {
+        this.agentMaxQuietTimeAllowed = string;
+    }
+
+    public String getAgentMaxQuietTimeAllowedVal() {
+        return agentMaxQuietTimeAllowedVal;
+    }
+
+    public void setAgentMaxQuietTimeAllowedVal(String string) {
+        this.agentMaxQuietTimeAllowedVal = string;
     }
 
     public String getMaintIntervalVal() {

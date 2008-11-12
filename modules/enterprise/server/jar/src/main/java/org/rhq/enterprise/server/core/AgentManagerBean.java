@@ -48,7 +48,9 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.cluster.FailoverListManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
+import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
 
 /**
@@ -71,6 +73,9 @@ public class AgentManagerBean implements AgentManagerLocal {
     @EJB
     @IgnoreDependency
     private AvailabilityManagerLocal availabilityManager;
+
+    @EJB
+    private SystemManagerLocal systemManager;
 
     public void createAgent(Agent agent) {
         entityManager.persist(agent);
@@ -156,17 +161,16 @@ public class AgentManagerBean implements AgentManagerLocal {
 
     @SuppressWarnings("unchecked")
     public void checkForSuspectAgents() {
-        if (log.isDebugEnabled())
-            log.debug("Checking to see if there are agents that we suspect are down...");
+        log.debug("Checking to see if there are agents that we suspect are down...");
 
-        // TODO [mazz]: make this configurable via SystemManager bean
-        long maximumQuietTimeAllowed = 1000L * 60 * 2;
+        long maximumQuietTimeAllowed = 120000L;
         try {
-            String propStr = System.getProperty("rhq.server.agent-max-quiet-time-allowed");
-            if (propStr != null) {
-                maximumQuietTimeAllowed = Long.parseLong(propStr);
+            String prop = systemManager.getSystemConfiguration().getProperty(HQConstants.AgentMaxQuietTimeAllowed);
+            if (prop != null) {
+                maximumQuietTimeAllowed = Long.parseLong(prop);
             }
         } catch (Exception e) {
+            log.warn("Agent quiet time config is invalid in DB, defaulting to: " + maximumQuietTimeAllowed, e);
         }
 
         List<AgentLastAvailabilityReportComposite> records;
@@ -217,8 +221,7 @@ public class AgentManagerBean implements AgentManagerLocal {
             }
         }
 
-        if (log.isDebugEnabled())
-            log.debug("Finished checking for suspected agents");
+        log.debug("Finished checking for suspected agents");
 
         return;
     }

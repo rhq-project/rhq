@@ -43,6 +43,57 @@
     <td width="20%" class="BlockContent" colspan="2"></td>
   </tr>
   <tr>
+    <td class="BlockLabel"><fmt:message key="admin.settings.AgentMaxQuietTimeAllowed"/></td>
+    <td class="BlockContent">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+<logic:messagesPresent property="agentMaxQuietTimeAllowedVal">
+          <td class="ErrorField">
+            <html:text size="2" property="agentMaxQuietTimeAllowedVal" />
+          </td>
+          <td class="ErrorField" width="100%">
+            <html:select property="agentMaxQuietTimeAllowed">
+              <html:option value="${CONST_MINUTES}"><fmt:message key="admin.settings.Minutes"/></html:option>
+            </html:select>
+          </td>
+</logic:messagesPresent>
+<logic:messagesNotPresent property="agentMaxQuietTimeAllowedVal">
+          <td class="BlockContent">
+            <html:text size="2" property="agentMaxQuietTimeAllowedVal" />
+          </td>
+          <td class="BlockContent" width="100%">
+            <html:select property="agentMaxQuietTimeAllowed">
+              <html:option value="${CONST_MINUTES}"><fmt:message key="admin.settings.Minutes"/></html:option>
+            </html:select>
+          </td>
+</logic:messagesNotPresent>
+        </tr>
+<logic:messagesPresent property="agentMaxQuietTimeAllowedVal">
+        <tr>
+          <td class="ErrorField" colspan="2">
+            <span class="ErrorFieldContent">- <html:errors property="agentMaxQuietTimeAllowedVal"/></span>
+          </td>
+        </tr>
+</logic:messagesPresent>
+<logic:messagesNotPresent property="agentMaxQuietTimeAllowedVal">
+        <tr>
+          <td class="BlockContent" colspan="2">
+          </td>
+        </tr>
+</logic:messagesNotPresent>
+      </table>
+    </td>
+    <td class="BlockLabel"/>
+    <td class="BlockContent">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="BlockContent" colspan="2">
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
     <td colspan="4" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>
 <!--  /  -->

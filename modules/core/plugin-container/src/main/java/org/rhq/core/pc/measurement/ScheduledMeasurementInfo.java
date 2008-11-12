@@ -80,7 +80,7 @@ public class ScheduledMeasurementInfo extends MeasurementScheduleRequest impleme
             return n;
         }
 
-        return (new Integer(getScheduleId())).compareTo(o.getScheduleId());
+        return (getScheduleId()-o.getScheduleId());
     }
 
     @Override

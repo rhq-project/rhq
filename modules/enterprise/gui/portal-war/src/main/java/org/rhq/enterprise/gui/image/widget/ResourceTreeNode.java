@@ -56,14 +56,14 @@ public class ResourceTreeNode extends TreeNode implements IResourceTreeNode {
      * @see org.rhq.enterprise.gui.image.data.ITreeNode#getUpChildren()
      */
     public ITreeNode[] getUpChildren() {
-        return (IResourceTreeNode[]) m_upChildren.toArray(new IResourceTreeNode[0]);
+        return (IResourceTreeNode[]) m_upChildren.toArray(new IResourceTreeNode[m_upChildren.size()]);
     }
 
     /**
      * @see org.rhq.enterprise.gui.image.data.ITreeNode#getDownChildren()
      */
     public ITreeNode[] getDownChildren() {
-        return (IResourceTreeNode[]) m_downChildren.toArray(new IResourceTreeNode[0]);
+        return (IResourceTreeNode[]) m_downChildren.toArray(new IResourceTreeNode[m_downChildren.size()]);
     }
 
     /**

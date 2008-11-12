@@ -70,7 +70,7 @@ public class TreeNode implements ITreeNode, Serializable {
      * @see org.rhq.enterprise.gui.image.data.ITreeNode#getUpChildren()
      */
     public ITreeNode[] getUpChildren() {
-        return (ITreeNode[]) m_upChildren.toArray(new ITreeNode[0]);
+        return (ITreeNode[]) m_upChildren.toArray(new ITreeNode[m_upChildren.size()]);
     }
 
     /**
@@ -115,7 +115,7 @@ public class TreeNode implements ITreeNode, Serializable {
      * @see org.rhq.enterprise.gui.image.data.ITreeNode#getDownChildren()
      */
     public ITreeNode[] getDownChildren() {
-        return (ITreeNode[]) m_downChildren.toArray(new ITreeNode[0]);
+        return (ITreeNode[]) m_downChildren.toArray(new ITreeNode[m_downChildren.size()]);
     }
 
     /**
@@ -148,7 +148,6 @@ public class TreeNode implements ITreeNode, Serializable {
     }
 
     /**
-     * @see org.rhq.enterprise.gui.image.data.ITreeNode#getImage()
      */
     public BufferedImage getImage() {
         return null;
@@ -176,7 +175,7 @@ public class TreeNode implements ITreeNode, Serializable {
     }
 
     /**
-     * @see org.rhq.enterprise.gui.image.data.ITreeNode#addRectangle()
+     * @see org.rhq.enterprise.gui.image.data.ITreeNode#addRectangle(int, int, int, int)
      */
     public void addRectangle(int x, int y, int cx, int cy) {
         if (m_rects == null) {

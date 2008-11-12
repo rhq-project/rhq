@@ -21,9 +21,6 @@ rem ===========================================================================
 
 setlocal
 
-if exist rhq-agent-env.bat echo Loading script environment from rhq-agent-env.bat...
-if exist rhq-agent-env.bat call rhq-agent-env.bat %*
-
 if "%1"=="_SETENV_ONLY" (
    set _SETENV_ONLY=true
 ) else (
@@ -33,9 +30,18 @@ if "%1"=="_SETENV_ONLY" (
 rem ----------------------------------------------------------------------
 rem Change directory so the current directory is the Agent home.
 rem Here we assume this script is a child directory of the Agent home
+rem We also assume our custom environment script is located in the same
+rem place as this script.
 rem ----------------------------------------------------------------------
 
 set RHQ_AGENT_BIN_DIR_PATH=%~dp0
+
+if exist %RHQ_AGENT_BIN_DIR_PATH%\rhq-agent-env.bat (
+   if defined RHQ_AGENT_DEBUG echo Loading environment script: %RHQ_AGENT_BIN_DIR_PATH%\rhq-agent-env.bat
+   call %RHQ_AGENT_BIN_DIR_PATH%\rhq-agent-env.bat %*
+) else (
+   if defined RHQ_AGENT_DEBUG echo No environment script found at: %RHQ_AGENT_BIN_DIR_PATH%\rhq-agent-env.bat
+)
 
 if not defined RHQ_AGENT_HOME (
    cd %RHQ_AGENT_BIN_DIR_PATH%\..

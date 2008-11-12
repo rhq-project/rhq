@@ -38,6 +38,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.jboss.mx.util.MBeanServerLocator;
 import org.jboss.system.server.ServerConfig;
 
+import org.rhq.core.domain.util.MD5Generator;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.core.CoreServerMBean;
@@ -214,8 +215,11 @@ public class AgentUpdateServlet extends HttpServlet {
             serverVersionInfo.append("rhq-server.version=").append(coreServer.getVersion()).append('\n');
             serverVersionInfo.append("rhq-server.build-number=").append(coreServer.getBuildNumber()).append('\n');
 
-            // second, get the agent version info (by peeking into the agent update binary jar)
+            // calculate the MD5 of the agent update binary file
             File binaryFile = getAgentUpdateBinaryFile();
+            String md5Property = "rhq-agent.latest.md5=" + MD5Generator.getDigestString(binaryFile) + '\n';
+
+            // second, get the agent version info (by peeking into the agent update binary jar)
             JarFile binaryJarFile = new JarFile(binaryFile);
             JarEntry binaryJarFileEntry = binaryJarFile.getJarEntry("rhq-agent-update-version.properties");
             InputStream binaryJarFileEntryStream = binaryJarFile.getInputStream(binaryJarFileEntry);
@@ -224,6 +228,7 @@ public class AgentUpdateServlet extends HttpServlet {
             FileOutputStream versionFileOutputStream = new FileOutputStream(versionFile);
             try {
                 versionFileOutputStream.write(serverVersionInfo.toString().getBytes());
+                versionFileOutputStream.write(md5Property.getBytes());
                 StreamUtil.copy(binaryJarFileEntryStream, versionFileOutputStream, false);
             } finally {
                 try {

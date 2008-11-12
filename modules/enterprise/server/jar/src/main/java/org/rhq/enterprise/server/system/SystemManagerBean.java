@@ -145,7 +145,10 @@ public class SystemManagerBean implements SystemManagerLocal {
             systemConfigurationCache = properties;
         }
 
-        return systemConfigurationCache;
+        // this is the only time we actually access the systemConfiguration cache object, no need to synchronize
+        Properties copy = new Properties();
+        copy.putAll(systemConfigurationCache);
+        return copy;
     }
 
     @SuppressWarnings("unchecked")

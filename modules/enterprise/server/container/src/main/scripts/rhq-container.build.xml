@@ -235,7 +235,7 @@
           tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent/rhq-enterprise-agent-${rhq.version}.jar"
           verbose="true"
           failonerror="true"/>
-  	
+
     <!-- optionally package the connectors -->
     <antcall target="package-connectors" />
 
@@ -260,12 +260,12 @@
        </fileset>
     </move>
     <delete file="${jboss.home}/lib/endorsed/xalan.jar" verbose="true" />
-   
+
   </target>
 
   <target name="package-connectors" if="package-connectors">
     <echo>Deploying the rt-filter conectors ...</echo>
-  	 <delete file="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connector-rtfilter.zip" />
+    <delete file="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connector-rtfilter.zip" />
     <zip destfile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connector-rtfilter.zip" >
       <zipfileset dir="${basedir}/../../agent/src/etc/product_connectors">
          <include name="README.txt"/>
@@ -275,7 +275,7 @@
       </zipfileset>
    </zip>
   </target>
-	
+
   <target name="prepare-bin-dir">
     <echo>*** Preparing bin dir... ***</echo>
     <echo>connection URL is ${rhq.server.database.connection-url}</echo>
@@ -393,7 +393,7 @@ rhq.server.email.from-address=rhqadmin@localhost
 rhq.server.operation-timeout=600
 
 # Concurrency limits for incoming UI and agent messages
-rhq.server.startup.web.max-connections=50
+rhq.server.startup.web.max-connections=200
 rhq.server.agent-downloads-limit=45
 rhq.communications.global-concurrency-limit=45
 rhq.server.concurrency-limit.inventory-report=5
@@ -522,11 +522,11 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
           description="If this is a release build, make sure it is properly prepared." >
 
     <echo>Adding license headers files...</echo>
-    <copy todir="${project.build.outputDirectory}">         
+    <copy todir="${project.build.outputDirectory}">
       <fileset dir="${basedir}/../../../.." includes="LICENSE*" />
-    </copy>                                                
+    </copy>
   </target>
-	
+
   <target name="fix-perms">
     <!-- Make sure shell scripts are readable and executable. -->
     <chmod dir="${project.build.outputDirectory}/bin" includes="*.sh" perm="ug+x" verbose="true" />
@@ -575,7 +575,7 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
      <move file="${jboss.deploy.dir}/rhq-agent.sar" tofile="${jboss.deploy.dir}/rhq-agent.sar.rej"/>
   </target>
 
-  <target name="undeploy-ear" unless="predeploy">  	
+  <target name="undeploy-ear" unless="predeploy">
      <echo>Preparing for release - cleaning and undeploying EAR...</echo>
      <move file="${jboss.deploy.dir}/${rhq.earName}" tofile="${jboss.deploy.dir}/${rhq.earName}.rej"/>
   </target>

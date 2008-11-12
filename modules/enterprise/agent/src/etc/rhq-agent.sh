@@ -8,20 +8,14 @@
 # Note that this script can also be used to run the agent on a Windows
 # platform if this script is run within a Cygwin environment.
 #
-# This script is customizable by setting the following environment variables:
-#
 # This script is customizable by setting certain environment variables, which
-# are described in comments in rhq-agent-env.sh. The variables can also be
-# set via rhq-agent-env.sh, which is sourced by this script.
+# are described in comments in rhq-agent-env.sh found in the same directory
+# as this script. The variables can also be set via that rhq-agent-env.sh file,
+# which is sourced by this script.
 #
 # If the embedded JRE is to be used but is not available, the fallback
 # JRE to be used will be determined by the JAVA_HOME environment variable.
 # =============================================================================
-
-if [ -f "rhq-agent-env.sh" ]; then
-   echo "Loading script environment from rhq-agent-env.sh..."
-   . ./rhq-agent-env.sh $*
-fi
 
 # ----------------------------------------------------------------------
 # Subroutine that simply dumps a message iff debug mode is enabled
@@ -46,9 +40,18 @@ esac
 
 # ----------------------------------------------------------------------
 # Change directory so the current directory is the agent home.
-# Here we assume this script is a child directory of the agent home
+# Here we assume this script is a child directory of the agent home.
+# We also assume our custom environment script is located in the same
+# place as this script.
 # ----------------------------------------------------------------------
 RHQ_AGENT_BIN_DIR_PATH=`dirname $0`
+
+if [ -f "${RHQ_AGENT_BIN_DIR_PATH}/rhq-agent-env.sh" ]; then
+   debug_msg "Loading environment script: ${RHQ_AGENT_BIN_DIR_PATH}/rhq-agent-env.sh"
+   . ${RHQ_AGENT_BIN_DIR_PATH}/rhq-agent-env.sh $*
+else
+   debug_msg "No environment script found at: ${RHQ_AGENT_BIN_DIR_PATH}/rhq-agent-env.sh"
+fi
 
 if [ -z "$RHQ_AGENT_HOME" ]; then
    cd ${RHQ_AGENT_BIN_DIR_PATH}/..

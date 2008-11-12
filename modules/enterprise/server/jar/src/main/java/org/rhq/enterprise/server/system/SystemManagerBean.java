@@ -208,6 +208,11 @@ public class SystemManagerBean implements SystemManagerLocal {
             if (freq > (1000L * 60 * 60 * 24 * 14)) {
                 throw new IllegalArgumentException("Baseline dataset must be less than 14 days");
             }
+        } else if (HQConstants.AgentMaxQuietTimeAllowed.endsWith(name)) {
+            long time = Long.parseLong(value);
+            if (time < 1000L * 60 * 2) {
+                throw new IllegalArgumentException("Agent Max Quiet Time Allowed must be at least 2 minutes");
+            }
         }
 
         return;

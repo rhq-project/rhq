@@ -374,7 +374,7 @@ public class WebUser {
         //  "null"). if so, use their default values.
         Boolean ro;
         try {
-            ro = new Boolean(getPreference(PREF_METRIC_RANGE_RO));
+            ro = Boolean.valueOf(getPreference(PREF_METRIC_RANGE_RO));
         } catch (IllegalArgumentException nfe) {
             ro = MonitorUtils.DEFAULT_VALUE_RANGE_RO;
         }
@@ -382,7 +382,7 @@ public class WebUser {
 
         Integer lastN = null;
         try {
-            lastN = new Integer(getPreference(PREF_METRIC_RANGE_LASTN));
+            lastN = Integer.valueOf(getPreference(PREF_METRIC_RANGE_LASTN));
         } catch (IllegalArgumentException nfe) {
             lastN = MonitorUtils.DEFAULT_VALUE_RANGE_LASTN;
         }
@@ -390,7 +390,7 @@ public class WebUser {
 
         Integer unit = null;
         try {
-            unit = new Integer(getPreference(PREF_METRIC_RANGE_UNIT));
+            unit = Integer.valueOf(getPreference(PREF_METRIC_RANGE_UNIT));
         } catch (IllegalArgumentException nfe) {
             unit = MonitorUtils.DEFAULT_VALUE_RANGE_UNIT;
         }

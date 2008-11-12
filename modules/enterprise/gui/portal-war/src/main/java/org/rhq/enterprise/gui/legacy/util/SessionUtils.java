@@ -32,8 +32,8 @@ import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionMessages;
-import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.beans.ReturnPath;
 
 public class SessionUtils {
@@ -45,13 +45,14 @@ public class SessionUtils {
      * Retrieve the cached <code>WebUser</code> representing the user.
      *
      * @param session the http session
+     * @return null if the session or its attribute 'webUser' is invalid, the user otherwise
      */
     public static WebUser getWebUser(HttpSession session) {
         if (session == null) {
             return null;
         }
 
-        Object attr = session.getAttribute(Constants.WEBUSER_SES_ATTR);
+        Object attr = session.getAttribute(AttrConstants.WEBUSER_SES_ATTR);
         if (attr == null) {
             return null;
         }
@@ -72,7 +73,7 @@ public class SessionUtils {
             pendingIds = (Integer[]) list;
         } catch (ClassCastException e) {
             List pendingIdsList = (List) list;
-            pendingIds = (Integer[]) pendingIdsList.toArray(new Integer[0]);
+            pendingIds = (Integer[]) pendingIdsList.toArray(new Integer[pendingIdsList.size()]);
         }
 
         if (pendingIds == null) {
@@ -236,7 +237,7 @@ public class SessionUtils {
      * @param session the http session
      */
     public static String getReturnPath(HttpSession session) {
-        LinkedList stack = (LinkedList) session.getAttribute(Constants.RETURN_LOC_SES_ATTR);
+        LinkedList stack = (LinkedList) session.getAttribute(AttrConstants.RETURN_LOC_SES_ATTR);
 
         if ((stack == null) || stack.isEmpty()) {
             return null;
@@ -265,7 +266,7 @@ public class SessionUtils {
      * @param ignore
      */
     public static void setReturnPath(HttpSession session, String path, Boolean ignore) {
-        LinkedList stack = (LinkedList) session.getAttribute(Constants.RETURN_LOC_SES_ATTR);
+        LinkedList stack = (LinkedList) session.getAttribute(AttrConstants.RETURN_LOC_SES_ATTR);
 
         ReturnPath returnPath = new ReturnPath();
 
@@ -283,7 +284,7 @@ public class SessionUtils {
             stack.removeLast();
         }
 
-        session.setAttribute(Constants.RETURN_LOC_SES_ATTR, stack);
+        session.setAttribute(AttrConstants.RETURN_LOC_SES_ATTR, stack);
     }
 
     /**
@@ -292,7 +293,7 @@ public class SessionUtils {
     public static void resetReturnPath(HttpSession session) {
         LinkedList stack = new LinkedList();
 
-        session.setAttribute(Constants.RETURN_LOC_SES_ATTR, stack);
+        session.setAttribute(AttrConstants.RETURN_LOC_SES_ATTR, stack);
     }
 
     /**
@@ -301,7 +302,7 @@ public class SessionUtils {
      * @param session the http session
      */
     public static void unsetReturnPath(HttpSession session) {
-        LinkedList retstack = (LinkedList) session.getAttribute(Constants.RETURN_LOC_SES_ATTR);
+        LinkedList retstack = (LinkedList) session.getAttribute(AttrConstants.RETURN_LOC_SES_ATTR);
 
         if ((retstack != null) && (retstack.size() >= 1)) {
             retstack.removeFirst();
@@ -317,7 +318,7 @@ public class SessionUtils {
      * @return whether or not to ignore the return path
      */
     public static Boolean getReturnPathIgnoredForOk(HttpSession session) {
-        LinkedList stack = (LinkedList) session.getAttribute(Constants.RETURN_LOC_SES_ATTR);
+        LinkedList stack = (LinkedList) session.getAttribute(AttrConstants.RETURN_LOC_SES_ATTR);
 
         if ((stack == null) || stack.isEmpty()) {
             return Boolean.FALSE;
@@ -338,7 +339,7 @@ public class SessionUtils {
      * @param session the http session
      */
     public static void unsetReturnPathIgnoredForOk(HttpSession session) {
-        LinkedList stack = (LinkedList) session.getAttribute(Constants.RETURN_LOC_SES_ATTR);
+        LinkedList stack = (LinkedList) session.getAttribute(AttrConstants.RETURN_LOC_SES_ATTR);
         ReturnPath returnPath = (ReturnPath) stack.getFirst();
         returnPath.setIgnore(Boolean.TRUE);
     }
@@ -347,11 +348,10 @@ public class SessionUtils {
      * Remove any old workflows
      *
      * @param session
-     * @param mapping
      * @param workflowName
      */
     public static void clearWorkflow(HttpSession session, String workflowName) {
-        HashMap workflows = (HashMap) session.getAttribute(Constants.WORKFLOW_SES_ATTR);
+        HashMap workflows = (HashMap) session.getAttribute(AttrConstants.WORKFLOW_SES_ATTR);
 
         if (workflows != null) {
             workflows.remove(workflowName);
@@ -367,7 +367,7 @@ public class SessionUtils {
      * @param workflowName The name of the workflow scope to save the input under.
      */
     public static void pushWorkflow(HttpSession session, ActionMapping mapping, String workflowName) {
-        HashMap workflows = (HashMap) session.getAttribute(Constants.WORKFLOW_SES_ATTR);
+        HashMap workflows = (HashMap) session.getAttribute(AttrConstants.WORKFLOW_SES_ATTR);
         if (workflows == null) {
             workflows = new HashMap();
         }
@@ -391,19 +391,18 @@ public class SessionUtils {
         urlStack.addLast(returnPath);
         workflows.put(workflowName, urlStack);
 
-        session.setAttribute(Constants.WORKFLOW_SES_ATTR, workflows);
+        session.setAttribute(AttrConstants.WORKFLOW_SES_ATTR, workflows);
     }
 
     /**
      * Takes the current returnPath and pops it off of the workflow's stack.
      *
      * @param session      The HttpSesion to get and save the workflow to/from
-     * @param mapping      Use the input attribute from this mapping if a returnPath is not defined in the current
-     *                     session.
      * @param workflowName The name of the workflow scope to save the input under.
+     * @return return path or null if it can't be retrieved
      */
     public static String popWorkflow(HttpSession session, String workflowName) {
-        HashMap workflows = (HashMap) session.getAttribute(Constants.WORKFLOW_SES_ATTR);
+        HashMap workflows = (HashMap) session.getAttribute(AttrConstants.WORKFLOW_SES_ATTR);
         if (workflows == null) {
             return null;
         }
@@ -415,7 +414,7 @@ public class SessionUtils {
 
         String returnUrl = (String) urlStack.removeLast();
         workflows.put(workflowName, urlStack);
-        session.setAttribute(Constants.WORKFLOW_SES_ATTR, workflows);
+        session.setAttribute(AttrConstants.WORKFLOW_SES_ATTR, workflows);
 
         return returnUrl;
     }
@@ -427,7 +426,7 @@ public class SessionUtils {
      * @param workflowName The name of the workflow scope to save the input under.
      */
     public static int countWorkflow(HttpSession session, String workflowName) {
-        HashMap workflows = (HashMap) session.getAttribute(Constants.WORKFLOW_SES_ATTR);
+        HashMap workflows = (HashMap) session.getAttribute(AttrConstants.WORKFLOW_SES_ATTR);
         if (workflows == null) {
             return 0;
         }

@@ -34,7 +34,7 @@ public final class NumberUtil {
     /**
      * Constant value representing "not a number".
      */
-    public static final Number NaN = new Double(Double.NaN);
+    public static final Number NaN = Double.NaN;
 
     // static class, privatize ctor
     private NumberUtil() {
@@ -42,7 +42,7 @@ public final class NumberUtil {
 
     /**
      * Parse the <code>input</code> string (using the default locale) and return its numeric representation. If the
-     * <code>input</code> string is null, empty or cannot be parsed, return <code>{@link NaN} <code>.
+     * <code>input</code> string is null, empty or cannot be parsed, return <code>{@link Double#NaN} <code>.
      */
     public static Number stringAsNumber(String input) {
         return _parse(input, NumberFormat.getNumberInstance());
@@ -50,7 +50,7 @@ public final class NumberUtil {
 
     /**
      * Format the <code>input</code> number as a string (using the default locale). If the <code>input</code> number is
-     * <code>{@link NaN}</code>, return null.
+     * <code>{@link Double#NaN}</code>, return null.
      */
     public static String numberAsString(double input) {
         return _format(input, NumberFormat.getNumberInstance());
@@ -58,7 +58,7 @@ public final class NumberUtil {
 
     /**
      * Parse the <code>input</code> string (using the default locale) and return its numeric percentage representation.
-     * If the <code>input</code> string is null, empty or cannot be parsed, return <code>{@link NaN} <code>.
+     * If the <code>input</code> string is null, empty or cannot be parsed, return <code>{@link Double#NaN} <code>.
      */
     public static Number stringAsPercentage(String input) {
         return _parse(input, NumberFormat.getPercentInstance());
@@ -66,7 +66,7 @@ public final class NumberUtil {
 
     /**
      * Format the <code>input</code> percentage as a string (using the default locale). If the <code>input</code>
-     * percentage is <code>{@link NaN}</code>, return null.
+     * percentage is <code>{@link Double#NaN}</code>, return null.
      */
     public static String percentageAsString(double input) {
         return _format(input, NumberFormat.getPercentInstance());

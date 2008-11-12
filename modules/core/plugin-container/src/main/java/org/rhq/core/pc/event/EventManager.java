@@ -182,7 +182,7 @@ public class EventManager implements ContainerService {
         return new EventSource(event.getSourceLocation(), eventDefinition, resource);
     }
 
-    class PollerKey {
+    static class PollerKey {
         int resourceId;
         String eventType;
         String sourceLocation;

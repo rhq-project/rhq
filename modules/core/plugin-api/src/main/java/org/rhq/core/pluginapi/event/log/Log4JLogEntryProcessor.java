@@ -52,7 +52,7 @@ public class Log4JLogEntryProcessor extends MultiLineLogEntryProcessor {
     private static final String DATE_DATE_PATTERN = "dd MMM yyyy kk:mm:ss,SSS";
     private static final DateFormat DATE_DATE_FORMAT = new SimpleDateFormat(DATE_DATE_PATTERN);
 
-    private static final Map<Priority, EventSeverity> PRIORITY_TO_SEVERITY_MAP = new LinkedHashMap();
+    private static final Map<Priority, EventSeverity> PRIORITY_TO_SEVERITY_MAP = new LinkedHashMap<Priority,EventSeverity>();
 
     static {
         PRIORITY_TO_SEVERITY_MAP.put(Priority.TRACE, EventSeverity.DEBUG);

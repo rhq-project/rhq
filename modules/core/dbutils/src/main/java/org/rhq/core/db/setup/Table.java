@@ -380,9 +380,6 @@ class Table {
             return OracleTable.getTables(parent, username);
         }
 
-        if (username != null) {
-            username = username.toUpperCase();
-        }
 
         Collection<Table> coll = new ArrayList<Table>();
         DatabaseMetaData meta = parent.getConnection().getMetaData();

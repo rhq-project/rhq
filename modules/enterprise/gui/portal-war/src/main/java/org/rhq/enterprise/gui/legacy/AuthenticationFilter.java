@@ -71,12 +71,12 @@ public final class AuthenticationFilter extends BaseFilter {
 
                 SessionManager.getInstance().getSubject(subject.getSessionId());
             } catch (SessionNotFoundException snfe) {
-                session.removeAttribute(Constants.USER_PARAM);
-                session.removeAttribute(Constants.WEBUSER_SES_ATTR);
+                session.removeAttribute(ParamConstants.USER_PARAM);
+                session.removeAttribute(AttrConstants.WEBUSER_SES_ATTR);
                 webUser = null;
             } catch (SessionTimeoutException ste) {
-                session.removeAttribute(Constants.USER_PARAM);
-                session.removeAttribute(Constants.WEBUSER_SES_ATTR);
+                session.removeAttribute(ParamConstants.USER_PARAM);
+                session.removeAttribute(AttrConstants.WEBUSER_SES_ATTR);
                 webUser = null;
             }
         }
@@ -91,16 +91,16 @@ public final class AuthenticationFilter extends BaseFilter {
                 // forwarded to the originally requested page after authorization
                 Map parameters = request.getParameterMap();
                 if (!parameters.isEmpty()) {
-                    Map newMap = new HashMap();
+                    Map<String,String> newMap = new HashMap<String,String>();
                     for (Object keyObj : parameters.keySet()) {
                         String key = (String) keyObj;
                         newMap.put(key, request.getParameter(key));
                     }
 
-                    session.setAttribute(Constants.LOGON_URL_PARAMETERS, newMap);
+                    session.setAttribute(ParamConstants.LOGON_URL_PARAMETERS, newMap);
                 }
 
-                session.setAttribute(Constants.LOGON_URL_KEY, request.getServletPath());
+                session.setAttribute(KeyConstants.LOGON_URL_KEY, request.getServletPath());
                 response.setStatus(401);
                 response.sendRedirect(request.getContextPath() + "/Login.do");
             }
@@ -127,11 +127,7 @@ public final class AuthenticationFilter extends BaseFilter {
             try {
                 chain.doFilter(request, response);
             } catch (IOException e) {
-                if (request != null) {
-                    log.warn("Caught IO Exception from client " + request.getRemoteAddr() + ": " + e.getMessage());
-                } else {
-                    log.debug("Caught IO Exception: " + e.getMessage());
-                }
+                log.warn("Caught IO Exception from client " + request.getRemoteAddr() + ": " + e.getMessage());
             }
         }
     }

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/serverplugins/jboss-software/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/jboss-cache/src/main/java"/>
 	<classpathentry kind="src" path="modules/serverplugins/jboss-software/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/tomcat/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/hibernate/src/main/java"/>

@@ -75,16 +75,16 @@ public class SystemManagerBean implements SystemManagerLocal {
 
     private final String SQL_REBUILD = "ALTER INDEX {0} REBUILD UNRECOVERABLE";
 
-    private final String[] APPDEF_TABLES = { "RHQ_RESOURCE", "RHQ_CONFIG", "RHQ_CONFIG_PROPERTY", "RHQ_AGENT" };
+    private final String[] TABLES_TO_VACUUM = { "RHQ_RESOURCE", "RHQ_CONFIG", "RHQ_CONFIG_PROPERTY", "RHQ_AGENT" };
 
-    private final String[] DATA_TABLES = { "RHQ_MEASUREMENT_DATA_NUM_1D", "RHQ_MEASUREMENT_DATA_NUM_6H",
+    private final String[] TABLES_TO_REINDEX = { "RHQ_MEASUREMENT_DATA_NUM_1D", "RHQ_MEASUREMENT_DATA_NUM_6H",
         "RHQ_MEASUREMENT_DATA_NUM_1H", "RHQ_MEASUREMENT_DATA_TRAIT", "RHQ_CALLTIME_DATA_KEY",
         "RHQ_CALLTIME_DATA_VALUE", "RHQ_AVAILABILITY" };
 
-    private final String[] ORA_INDEXES = { "RHQ_MEAS_DATA_1H_ID_TIME_PK", "RHQ_MEAS_DATA_6H_ID_TIME_PK",
+    private final String[] ORA_INDEXES_TO_REBUILD = { "RHQ_MEAS_DATA_1H_ID_TIME_PK", "RHQ_MEAS_DATA_6H_ID_TIME_PK",
         "RHQ_MEAS_DATA_1D_ID_TIME_PK", "RHQ_MEAS_BASELINE_CTIME_IDX", "RHQ_MEAS_DATA_TRAIT_ID_TIME_PK" };
 
-    protected Log log = LogFactory.getLog(SystemManagerBean.class);
+    private Log log = LogFactory.getLog(SystemManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -92,7 +92,9 @@ public class SystemManagerBean implements SystemManagerLocal {
     @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource dataSource;
 
-    LicenseManager licenseManager;
+    private LicenseManager licenseManager;
+
+    private static Properties systemConfigurationCache = null;
 
     @PostConstruct
     public void initialize() {
@@ -122,40 +124,56 @@ public class SystemManagerBean implements SystemManagerLocal {
 
     @SuppressWarnings("unchecked")
     public Properties getSystemConfiguration() {
-        Properties properties = new Properties();
 
-        List<SystemConfiguration> configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL)
-            .getResultList();
-        for (SystemConfiguration config : configs) {
-            if (config.getPropertyValue() == null) {
-                properties.put(config.getPropertyKey(), (config.getDefaultPropertyValue() != null) ? config
-                    .getDefaultPropertyValue() : "");
-            } else {
-                properties.put(config.getPropertyKey(), config.getPropertyValue());
+        if (systemConfigurationCache == null) {
+            List<SystemConfiguration> configs;
+            configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL).getResultList();
+
+            Properties properties = new Properties();
+
+            for (SystemConfiguration config : configs) {
+                if (config.getPropertyValue() == null) {
+                    // for some reason, the configuration is not found in the DB, so fallback to the persisted default.
+                    // if there isn't even a persisted default, just use an empty string.
+                    String defaultValue = config.getDefaultPropertyValue();
+                    properties.put(config.getPropertyKey(), (defaultValue != null) ? defaultValue : "");
+                } else {
+                    properties.put(config.getPropertyKey(), config.getPropertyValue());
+                }
             }
+
+            systemConfigurationCache = properties;
         }
 
-        return properties;
+        return systemConfigurationCache;
     }
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void setSystemConfiguration(Subject subject, Properties properties) {
-        Map<String, SystemConfiguration> configMap = new HashMap<String, SystemConfiguration>();
-        List<SystemConfiguration> configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL)
-            .getResultList();
+        // first, we need to get the current settings so we'll know if we need to persist or merge the new ones
+        List<SystemConfiguration> configs;
+        configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL).getResultList();
+
+        Map<String, SystemConfiguration> existingConfigMap = new HashMap<String, SystemConfiguration>();
 
         for (SystemConfiguration config : configs) {
-            configMap.put(config.getPropertyKey(), config);
+            existingConfigMap.put(config.getPropertyKey(), config);
         }
 
+        Properties newCacheProperties = new Properties(); // create our own object - we don't want to reuse the caller's
+
+        // verify each new setting and persist them to the database
+        // note that if a new setting is the same as the old one, we do nothing - leave the old entity as is
         for (Object key : properties.keySet()) {
             String name = (String) key;
             String value = properties.getProperty(name);
 
             verifyNewSystemConfigurationProperty(name, value, properties);
 
-            SystemConfiguration existingConfig = configMap.get(name);
+            newCacheProperties.setProperty(name, value);
+
+            SystemConfiguration existingConfig = existingConfigMap.get(name);
             if (existingConfig == null) {
                 existingConfig = new SystemConfiguration(name, value);
                 entityManager.persist(existingConfig);
@@ -166,6 +184,8 @@ public class SystemManagerBean implements SystemManagerLocal {
                 }
             }
         }
+
+        systemConfigurationCache = newCacheProperties;
     }
 
     /**
@@ -195,6 +215,19 @@ public class SystemManagerBean implements SystemManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void reconfigureSystem(Subject whoami) {
+        try {
+            CustomJaasDeploymentServiceMBean mbean;
+
+            mbean = (CustomJaasDeploymentServiceMBean)MBeanServerInvocationHandler.newProxyInstance(MBeanServerLocator.locateJBoss(),
+                CustomJaasDeploymentServiceMBean.OBJECT_NAME, CustomJaasDeploymentServiceMBean.class, false);
+            mbean.installJaasModules();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public long analyze(Subject whoami) {
         Connection conn = null;
@@ -209,7 +242,7 @@ public class SystemManagerBean implements SystemManagerLocal {
             long duration = doCommand(dbtype, conn, SQL_ANALYZE, null);
             return duration;
         } catch (Exception e) {
-            log.error("Error creating database connection", e);
+            log.error("Error analyzing database", e);
             throw new RuntimeException("Error analyzing database", e);
         } finally {
             if (dbtype != null) {
@@ -228,12 +261,12 @@ public class SystemManagerBean implements SystemManagerLocal {
             dbtype = DatabaseTypeFactory.getDatabaseType(conn);
             long duration = 0;
             if (DatabaseTypeFactory.isPostgres(dbtype)) {
-                for (int i = 0; i < DATA_TABLES.length; i++) {
-                    duration += doCommand(dbtype, conn, SQL_REINDEX, DATA_TABLES[i]);
+                for (int i = 0; i < TABLES_TO_REINDEX.length; i++) {
+                    duration += doCommand(dbtype, conn, SQL_REINDEX, TABLES_TO_REINDEX[i]);
                 }
             } else if (DatabaseTypeFactory.isOracle(dbtype)) {
-                for (int i = 0; i < ORA_INDEXES.length; i++) {
-                    duration += doCommand(dbtype, conn, SQL_REBUILD, ORA_INDEXES[i]);
+                for (int i = 0; i < ORA_INDEXES_TO_REBUILD.length; i++) {
+                    duration += doCommand(dbtype, conn, SQL_REBUILD, ORA_INDEXES_TO_REBUILD[i]);
                 }
             } else {
                 return -1;
@@ -241,7 +274,7 @@ public class SystemManagerBean implements SystemManagerLocal {
 
             return duration;
         } catch (Exception e) {
-            log.error("Error creating database connection", e);
+            log.error("Error reindexing database", e);
             throw new RuntimeException("Error reindexing database", e);
         } finally {
             if (dbtype != null) {
@@ -293,7 +326,7 @@ public class SystemManagerBean implements SystemManagerLocal {
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public long vacuumAppdef(Subject whoami) {
-        return vacuum(whoami, APPDEF_TABLES);
+        return vacuum(whoami, TABLES_TO_VACUUM);
     }
 
     private long doCommand(DatabaseType dbtype, Connection conn, String command, String table) {
@@ -323,17 +356,14 @@ public class SystemManagerBean implements SystemManagerLocal {
     }
 
     /**
-     * See if monitoring feature is enabled for product
+     * See if monitoring feature is enabled for product.
      */
     public boolean isMonitoringEnabled() {
         try {
             LicenseManager.instance().enforceFeatureLimit(LicenseManager.FEATURE_MONITOR);
             return true;
         } catch (FeatureUnavailableException e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Monitoring feature is not enabled");
-            }
-
+            log.debug("Monitoring feature is not enabled");
             return false;
         }
     }
@@ -346,20 +376,17 @@ public class SystemManagerBean implements SystemManagerLocal {
      * @return The License object
      */
     public License getLicense() {
-        // it's legal to return a null license, which then by-passes
-        // the check to whether the expirationDate in the backing store
-        // has been fiddled with
+        // it's legal to return a null license, which then by-passes the check to 
+        // whether the expirationDate in the backing store has been fiddled with
         License license = LicenseManager.instance().getLicense();
         if (license == null) {
             return license;
         }
 
-        /*
-         * but if the license exists, it can only be returned if the data in the backing store is consistent.  so call
-         * the get method, which checks the backing store, and returns the license. if there are any errors, they will
-         * bubble up as exceptions for the UI to handle appropriately.  otherwise, the license will be synced with the
-         * backing store appropriately.
-         */
+        // but if the license exists, it can only be returned if the data in the backing store is consistent.  so call
+        // the get method, which checks the backing store, and returns the license. if there are any errors, they will
+        // bubble up as exceptions for the UI to handle appropriately.  otherwise, the license will be synced with the
+        // backing store appropriately.
         try {
             LicenseStoreManager.store(license);
         } catch (Exception ule) {
@@ -427,7 +454,6 @@ public class SystemManagerBean implements SystemManagerLocal {
     public Date getExpiration() {
         long exp;
         try {
-            // TODO GH: Port over the LicenseManager
             exp = licenseManager.getExpiration();
         } catch (Exception e) {
             throw new LicenseException(e);
@@ -438,21 +464,5 @@ public class SystemManagerBean implements SystemManagerLocal {
         }
 
         return new Date(exp);
-    }
-
-    /**
-     * Redeploy globally configured systems such as JAAS.
-     */
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void reconfigureSystem(Subject whoami) {
-        try {
-            CustomJaasDeploymentServiceMBean mbean;
-
-            mbean = (CustomJaasDeploymentServiceMBean)MBeanServerInvocationHandler.newProxyInstance(MBeanServerLocator.locateJBoss(),
-                CustomJaasDeploymentServiceMBean.OBJECT_NAME, CustomJaasDeploymentServiceMBean.class, false);
-            mbean.installJaasModules();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }

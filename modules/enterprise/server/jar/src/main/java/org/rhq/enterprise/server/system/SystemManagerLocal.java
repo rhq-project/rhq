@@ -27,6 +27,10 @@ import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.license.License;
 
+/**
+ * Provides access to the server cloud's system configuration as well as some methods
+ * to perform configuration on the server in which this bean is running.
+ */
 @Local
 public interface SystemManagerLocal {
     /**
@@ -40,15 +44,56 @@ public interface SystemManagerLocal {
     DatabaseType getDatabaseType();
 
     /**
-     * Run an analyze command.
+     * Get the server cloud configuration. These are the server configurations that will be
+     * the same for all servers in the HA server cloud.
+     *
+     * @return Properties
+     */
+    Properties getSystemConfiguration();
+
+    /**
+     * Set the server cloud configuration.  The given properties will be the new settings
+     * for all servers in the HA server cloud.
+     *
+     * @param subject    the user who wants to change the settings
+     * @param properties the new system configuration settings
+     */
+    void setSystemConfiguration(Subject subject, Properties properties);
+
+    /**
+     * Creates and registers the Hibernate Statistics MBean. This allows us to monitor
+     * our own Hibernate usage.
+     */
+    void enableHibernateStatistics();
+
+    /**
+     * Performs some reconfiguration things on the server where we are running.
+     * This includes redeploying the configured JAAS modules.
+     */
+    void reconfigureSystem(Subject whoami);
+
+    /**
+     * Run analyze command on PostgreSQL databases. On non-PostgreSQL, this returns -1.
      *
      * @param whoami the user requesting the operation
+     *
+     * @return The time it took to analyze, in milliseconds, or -1 if the database is not PostgreSQL.
      */
     long analyze(Subject whoami);
 
     /**
-     * Run database-specific cleanup routines -- on PostgreSQL we do a VACUUM ANALYZE. On other databases we just return
-     * -1.
+     * Reindexes all tables that need to be periodically reindexed.
+     * For Oracle, this "rebuilds" the indexes, for PostgreSQL, its a "reindex". 
+     *
+     * @param  whoami the user requesting the operation
+     *
+     * @return The time it took to reindex, in milliseconds
+     */
+    long reindex(Subject whoami);
+
+    /**
+     * Run database-specific cleanup routines.
+     * On PostgreSQL we do a VACUUM ANALYZE on all tables. On other databases we just return -1.
      *
      * @param  whoami the user requesting the operation
      *
@@ -57,19 +102,19 @@ public interface SystemManagerLocal {
     long vacuum(Subject whoami);
 
     /**
-     * Run database-specific cleanup routines for a bunch of tables -- on PostgreSQL we do a VACUUM ANALYZE. On other
-     * databases we just return -1.
+     * Run database-specific cleanup routines for the given tables.
+     * On PostgreSQL we do a VACUUM ANALYZE on the given tables. On other databases we just return -1.
      *
      * @param  whoami     the user requesting the operation
-     * @param  tableNames names of specific tables
+     * @param  tableNames names of specific tables that will be vacuumed.
      *
      * @return The time it took to vaccum, in milliseconds, or -1 if the database is not PostgreSQL.
      */
     long vacuum(Subject whoami, String[] tableNames);
 
     /**
-     * Run database-specific cleanup routines on appdef tables -- on PostgreSQL we do a VACUUM ANALYZE against the
-     * relevant appdef, authz and measurement tables. On other databases we just return -1.
+     * Run database-specific cleanup routines on appdef tables.
+     * On PostgreSQL we do a VACUUM ANALYZE against the relevant tables.  On other databases we just return -1.
      *
      * @param  whoami the user requesting the operation
      *
@@ -77,34 +122,8 @@ public interface SystemManagerLocal {
      */
     long vacuumAppdef(Subject whoami);
 
-    /**
-     * Run a REINDEX command on all HQ data tables
-     *
-     * @param  whoami the user requesting the operation
-     *
-     * @return The time it took to vaccum, in milliseconds, or -1 if the database is not PostgreSQL.
-     */
-    long reindex(Subject whoami);
-
-    /**
-     * Get the "root" server configuration, that means those keys that have the NULL prefix.
-     *
-     * @return Properties
-     */
-    Properties getSystemConfiguration();
-
-    /**
-     * Set the server configuration
-     *
-     * @param subject    the user who wants to change the settings
-     * @param properties
-     */
-    void setSystemConfiguration(Subject subject, Properties properties);
-
-    /**
-     * Load the hibernate statistics mbean
-     */
-    void enableHibernateStatistics();
+    //////////////////////////////////
+    // license specific methods follow
 
     boolean isMonitoringEnabled();
 
@@ -113,6 +132,4 @@ public interface SystemManagerLocal {
     void updateLicense(Subject subject, byte[] licenseData);
 
     Date getExpiration();
-
-    void reconfigureSystem(Subject whoami);
 }

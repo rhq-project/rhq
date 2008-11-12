@@ -9,6 +9,7 @@
 <%@ page import="org.rhq.enterprise.server.cluster.instance.ServerManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.ResourceGroupTestBeanLocal" %>
 <%@ page import="org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal" %>
+<%@ page import="org.rhq.enterprise.server.core.AgentManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="javax.naming.NamingException" %>
 <%@ page import="org.rhq.core.domain.util.PersistenceUtility" %>
@@ -33,6 +34,7 @@
    ServerManagerLocal serverManager;
    AlertTemplateTestLocal alertTemplateTestBean;
    MeasurementBaselineManagerLocal measurementBaselineManager;
+   AgentManagerLocal agentManager;
    
    coreTestBean = LookupUtil.getCoreTest();
    discoveryTestBean = LookupUtil.getDiscoveryTest();
@@ -42,6 +44,7 @@
    serverManager = LookupUtil.getServerManager();
    alertTemplateTestBean = LookupUtil.getAlertTemplateTestBean();
    measurementBaselineManager = LookupUtil.getMeasurementBaselineManager();
+   agentManager = LookupUtil.getAgentManager();
 
    String result = null;
    String mode = pageContext.getRequest().getParameter("mode");
@@ -120,6 +123,10 @@
       else if ("calculateAutoBaselines".equals(mode))
       {
          measurementBaselineManager.calculateAutoBaselines();
+      }
+      else if ("checkForSuspectAgents".equals(mode))
+      {
+         agentManager.checkForSuspectAgents();
       }
    }
    catch (Exception e)
@@ -219,6 +226,8 @@ Send New Platform Inventory Report
       <a href="<c:out value="${url}"/>">Set RHQ Agent 'CurrentlyScheduleMetrics' to 100</a></li>
   <li><c:url var="url" value="/admin/TestControl.jsp?mode=setAgentCurrentlyScheduledMetrics&v=50"/>
       <a href="<c:out value="${url}"/>">Set RHQ Agent 'CurrentlyScheduleMetrics' to 50</a></li>
+  <li><c:url var="url" value="/admin/TestControl.jsp?mode=checkForSuspectAgents"/>
+      <a href="<c:out value="${url}"/>">Check For Suspect Agents</a></li>
 </ul>
 
 <h2>Alerts</h2>

@@ -329,7 +329,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         // list to hold the different types of errors
         List<Integer> alreadyMemberIds = new ArrayList<Integer>();
 
-        List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(uniqueResourceIds.toArray(new Integer[0]));
+        List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(uniqueResourceIds.toArray(new Integer[uniqueResourceIds.size()]));
 
         for (ResourceIdFlyWeight fly : flyWeights) {
             // if resource is already in the explicit list, no work needs to be done
@@ -376,7 +376,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         // list to hold the different types of errors
         List<Integer> notValidMemberIds = new ArrayList<Integer>();
 
-        List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(uniqueResourceIds.toArray(new Integer[0]));
+        List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(uniqueResourceIds.toArray(new Integer[uniqueResourceIds.size()]));
         // prepare structures for remove*Helper
 
         for (ResourceIdFlyWeight fly : flyWeights) {
@@ -718,8 +718,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_GROUP_DEFINITION_AND_EXPRESSION);
 
         /*
-         * since oracle interprets empty strings as null, let's cleanse the 
-         * groupByClause so that the processing is identical on postgres 
+         * since oracle interprets empty strings as null, let's cleanse the
+         * groupByClause so that the processing is identical on postgres
          */
         if (groupByClause.equals("")) {
             groupByClause = null;
@@ -816,7 +816,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         }
 
         /*
-         * if some ancestor is in the explicit group, the implicit list will contain 
+         * if some ancestor is in the explicit group, the implicit list will contain
          * the descendant subtree of resource - thus, no work has to be done here
          */
         List<Integer> lineage = resourceManager.getResourceIdLineage(fly.getId());
@@ -832,7 +832,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         // remove from the collection we want to change
         group.removeImplicitResource(fly);
 
-        // BFS the descendants of resource - starting with the children 
+        // BFS the descendants of resource - starting with the children
         toBeSearched.addAll(resourceManager.getChildrenFlyWeights(fly.getId(), InventoryStatus.COMMITTED));
 
         while (toBeSearched.size() > 0) {

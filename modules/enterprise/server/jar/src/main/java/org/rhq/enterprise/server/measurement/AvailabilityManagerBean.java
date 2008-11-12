@@ -311,7 +311,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         }
 
         notifyAlertConditionCacheManager("mergeAvailabilityReport", report.getResourceAvailability().toArray(
-            new Availability[0]));
+                new Availability[report.getResourceAvailability().size()]));
 
         boolean askForFullReport = false;
         Agent agentToUpdate = agentManager.getAgentByName(agentName);
@@ -480,7 +480,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
 
         // To handle backfilling process, which will mark them down
         notifyAlertConditionCacheManager("setAllAgentResourceAvailabilities", newAvailabilities
-            .toArray(new Availability[0]));
+                .toArray(new Availability[newAvailabilities.size()]));
 
         log.debug("Resources for agent #[" + agentId + "] have been fully backfilled with [" + typeString + "]");
 

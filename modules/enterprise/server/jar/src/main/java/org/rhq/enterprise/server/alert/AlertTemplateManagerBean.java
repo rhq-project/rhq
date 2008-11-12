@@ -128,10 +128,10 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                 // make sure we perform the system side-effects as the overlord
                 updateAlertDefinitionsForResource(subjectManager.getOverlord(), alertTemplate, resource.getId());
 
-                /* 
+                /*
                  * flush/clear after only 5 definitions (as opposed to a larger batch) because an alert
                  * definition is actual many objects: the definition, the condition set, the notification
-                 * set, the alert dampening rules 
+                 * set, the alert dampening rules
                  */
                 if (++definitionCount % 5 == 0) {
                     entityManager.flush();
@@ -210,7 +210,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
             // cascading is a system side effects, and so should be performed by the overlord
             List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
             alertDefinitionManager.removeAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
-                .toArray(new Integer[0]));
+                    .toArray(new Integer[alertDefinitions.size()]));
         }
         //        }
     }
@@ -224,7 +224,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
             // cascading is a system side effects, and so should be performed by the overlord
             List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
             alertDefinitionManager.enableAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
-                .toArray(new Integer[0]));
+                    .toArray(new Integer[alertDefinitions.size()]));
             //            }
         }
     }
@@ -238,7 +238,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
             // cascading is a system side effects, and so should be performed by the overlord
             List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
             alertDefinitionManager.disableAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
-                .toArray(new Integer[0]));
+                    .toArray(new Integer[alertDefinitions.size()]));
             //            }
         }
     }
@@ -288,10 +288,10 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                 LOG.error("Attempt to update a deleted template " + alertTemplate.toSimpleString());
             }
 
-            /* 
+            /*
              * flush/clear after only 5 definitions (as opposed to a larger batch) because an alert
              * definition is actual many objects: the definition, the condition set, the notification
-             * set, the alert dampening rules 
+             * set, the alert dampening rules
              */
             if (++definitionCount % 5 == 0) {
                 entityManager.flush();
@@ -308,10 +308,10 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
             for (Integer resourceId : resourceIds) {
                 updateAlertDefinitionsForResource(overlord, alertTemplate, resourceId);
 
-                /* 
+                /*
                  * flush/clear after only 5 definitions (as opposed to a larger batch) because an alert
                  * definition is actual many objects: the definition, the condition set, the notification
-                 * set, the alert dampening rules 
+                 * set, the alert dampening rules
                  */
                 if (++definitionCount % 5 == 0) {
                     entityManager.flush();

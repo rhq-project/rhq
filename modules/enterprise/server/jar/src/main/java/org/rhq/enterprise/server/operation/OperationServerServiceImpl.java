@@ -19,8 +19,10 @@
 package org.rhq.enterprise.server.operation;
 
 import java.util.Date;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.server.operation.OperationServerService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -46,8 +48,10 @@ public class OperationServerServiceImpl implements OperationServerService {
     private static final Log LOG = LogFactory.getLog(OperationServerServiceImpl.class);
 
     public void operationFailed(String jobId, ExceptionPackage error, long invocationTime, long completionTime) {
-        LOG.debug("Operation invocation [" + jobId + "] failed with error [" + error.getExceptionName() + ' '
-            + error.getMessage() + "] " + getFromStartToEndTimestampString(invocationTime, completionTime));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Operation invocation [" + jobId + "] failed with error [" + error + "] "
+                + getFromStartToEndTimestampString(invocationTime, completionTime));
+        }
 
         try {
             Subject superuser = LookupUtil.getSubjectManager().getOverlord();
@@ -74,7 +78,8 @@ public class OperationServerServiceImpl implements OperationServerService {
             operationManager.updateOperationHistory(superuser, history);
         } catch (Exception e) {
             LOG.error("Failed to update history from failed operation, jobId=[" + jobId + "]. Cause: " + e, e);
-            LOG.error("The failed operation [" + jobId + "] had an error of: " + error.getStackTraceString());
+            LOG.error("The failed operation [" + jobId + "] had an error of: "
+                + ((error != null) ? error.getStackTraceString() : "?"));
         }
     }
 

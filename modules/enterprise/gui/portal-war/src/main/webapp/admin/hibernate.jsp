@@ -42,7 +42,8 @@
     // Security check
     if (!LookupUtil.getAuthorizationManager().isSystemSuperuser(SessionUtils.getWebUser(session).getSubject())) // no one but rhqadmin can view this page
     {
-        throw new IllegalAccessException("You do not have admin permissions");
+         out.println("<b>You do not have the necessary access privileges to view this page</b>");
+         return;
     }
 
     String hql = request.getParameter("hql");

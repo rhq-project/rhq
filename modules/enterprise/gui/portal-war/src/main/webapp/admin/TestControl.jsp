@@ -1,5 +1,6 @@
 <%@ page import="java.io.ByteArrayOutputStream" %>
 <%@ page import="java.io.PrintStream" %>
+<%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils"%>
 <%@ page import="org.rhq.enterprise.server.test.CoreTestLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.DiscoveryTestLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.MeasurementTestLocal" %>
@@ -11,17 +12,32 @@
 <%@ page import="org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.core.AgentManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
+<%@ page import="org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob"%>
 <%@ page import="javax.naming.NamingException" %>
 <%@ page import="org.rhq.core.domain.util.PersistenceUtility" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
+<%
+    boolean isAdmin = LookupUtil.getAuthorizationManager().isSystemSuperuser(SessionUtils.getWebUser(session).getSubject());
+    if (!isAdmin) {
+      out.println("<b>You do not have the necessary access privileges to view this page</b>");
+      return;
+    }
+%>
+
 <html>
 <head><title>RHQ Test Control Page</title></head>
 <body>
 
-[<a href="/Dashboard.do">Go to Dashboard</a>][<a href="sql.jsp">Go to sql.jsp</a>]
+<ul>
+<li>[<a href="/Dashboard.do">Go to Dashboard</a>]</li>
+<li>[<a href="browser.jsp">Want to Browse Domain Entities?</a>]</li>
+<li>[<a href="sql.jsp">Want to Execute SQL?</a>]</li>
+<li>[<a href="hibernate.jsp">Want to Execute JPQL/ Hibernate HQL?</a>]</li>
+<li>[<a href="TestEmail.jsp">Want to test EMail Config?</a>]</li>
+</ul>
 
 <hr>
 
@@ -128,6 +144,10 @@
       {
          agentManager.checkForSuspectAgents();
       }
+      else if ("dataPurgeJob".equals(mode))
+      {
+         DataPurgeJob.purgeNow();
+      }
    }
    catch (Exception e)
    {
@@ -228,6 +248,8 @@ Send New Platform Inventory Report
       <a href="<c:out value="${url}"/>">Set RHQ Agent 'CurrentlyScheduleMetrics' to 50</a></li>
   <li><c:url var="url" value="/admin/TestControl.jsp?mode=checkForSuspectAgents"/>
       <a href="<c:out value="${url}"/>">Check For Suspect Agents</a></li>
+  <li><c:url var="url" value="/admin/TestControl.jsp?mode=dataPurgeJob"/>
+      <a href="<c:out value="${url}"/>">Force Data Purge Now</a></li>
 </ul>
 
 <h2>Alerts</h2>

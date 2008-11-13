@@ -38,9 +38,11 @@ The sendThrottled field determines if you want to throttle the messages that are
 </p>
 
 <%
-   if (SessionUtils.getWebUser(session).getSubject().getId() > 2) // no one but rhqadmin can view this page
+   boolean isAdmin = LookupUtil.getAuthorizationManager().isSystemSuperuser(SessionUtils.getWebUser(session).getSubject());
+   if (!isAdmin)
    {
-      throw new IllegalAccessException("You do not have admin permissions");
+      out.println("<b>You do not have the necessary access privileges to view this page</b>");
+      return;
    }
 
    String  agentName       = request.getParameter("agentName");

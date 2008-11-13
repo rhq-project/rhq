@@ -27,9 +27,10 @@
       
       <%
          boolean isAdmin = LookupUtil.getAuthorizationManager().isSystemSuperuser(SessionUtils.getWebUser(session).getSubject());
-         if (!isAdmin) {
-           out.println("<b>You don't have access privileges to this page</b>");
-           return;
+         if (!isAdmin)
+         {
+           out.println("<b>You do not have the necessary access privileges to view this page</b>");
+            return;
          }
    
          String  toAddresses      = request.getParameter("to");

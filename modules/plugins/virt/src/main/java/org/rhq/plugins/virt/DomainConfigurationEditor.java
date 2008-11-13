@@ -183,6 +183,12 @@ public class DomainConfigurationEditor {
      * @see {http://libvirt.org/formatdomain.html}
      */
     public static Configuration getConfiguration(String xml) {
+
+        if (xml==null) {
+            return null;
+        }
+
+
         try {
             SAXBuilder builder = new SAXBuilder();
             Document doc = builder.build(new StringReader(xml));

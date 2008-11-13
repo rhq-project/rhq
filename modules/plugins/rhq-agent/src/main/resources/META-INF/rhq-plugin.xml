@@ -128,7 +128,7 @@
               displayName="Number of Agent Restarts"
               description="Number of times the agent was restarted during the lifetime of its Java Virtual Machine"
               defaultOn="true"
-              displayType="detail"      
+              displayType="detail"
               units="none"
               category="availability"
               measurementType="dynamic" />
@@ -346,7 +346,7 @@
          </c:group>
          <c:group name="comm-security" displayName="Communication Security" hiddenByDefault="true">
             <c:description>Settings that secure the communications between the RHQ Agent and RHQ Server</c:description>
-            <c:simple-property name="rhq.communications.connector.security.secure-socket-protocol" 
+            <c:simple-property name="rhq.communications.connector.security.secure-socket-protocol"
                                type="string" activationPolicy="restart" required="false" default="TLS" displayName="Incoming: Secure Socket Protocol">
                <c:property-options allowCustomValue="true">
                   <c:option name="TLS"     value="TLS" default="true" />
@@ -355,48 +355,48 @@
                   <c:option name="SSLv3"   value="SSLv3" />
                </c:property-options>
             </c:simple-property>
-            <c:simple-property name="rhq.communications.connector.security.keystore.file" 
+            <c:simple-property name="rhq.communications.connector.security.keystore.file"
                type="string" activationPolicy="restart" required="false" default="data/keystore.dat" displayName="Incoming: Keystore File"  />
-            <c:simple-property name="rhq.communications.connector.security.keystore.algorithm" 
+            <c:simple-property name="rhq.communications.connector.security.keystore.algorithm"
                type="string" activationPolicy="restart" required="false" default="SunX509" displayName="Incoming: Keystore Algorithm" >
                <c:property-options allowCustomValue="true">
                   <c:option name="SunX509" value="SunX509" default="true" />
                   <c:option name="IbmX509" value="IbmX509" />
                </c:property-options>
             </c:simple-property>
-            <c:simple-property name="rhq.communications.connector.security.keystore.type" 
+            <c:simple-property name="rhq.communications.connector.security.keystore.type"
                type="string" activationPolicy="restart" required="false" default="JKS" displayName="Incoming: Keystore Type">
                <c:property-options allowCustomValue="true">
                   <c:option name="JKS"    value="JKS" default="true" />
                   <c:option name="PKCS12" value="PKCS12" />
                </c:property-options>
             </c:simple-property>
-            <c:simple-property name="rhq.communications.connector.security.keystore.password" 
+            <c:simple-property name="rhq.communications.connector.security.keystore.password"
                type="password" activationPolicy="restart" required="false" default="rhqpwd" displayName="Incoming: Keystore Password"/>
-            <c:simple-property name="rhq.communications.connector.security.keystore.key-password" 
+            <c:simple-property name="rhq.communications.connector.security.keystore.key-password"
                type="password" activationPolicy="restart" required="false" default="rhqpwd" displayName="Incoming: Keystore Key Password" />
-            <c:simple-property name="rhq.communications.connector.security.keystore.alias" 
+            <c:simple-property name="rhq.communications.connector.security.keystore.alias"
                type="string" activationPolicy="restart" required="false" default="rhq" displayName="Incoming: Keystore Alias " />
-            <c:simple-property name="rhq.communications.connector.security.truststore.file" 
+            <c:simple-property name="rhq.communications.connector.security.truststore.file"
                type="string" activationPolicy="restart" required="false" default="data/truststore.dat" displayName="Incoming: Truststore File"/>
-            <c:simple-property name="rhq.communications.connector.security.truststore.algorithm" 
+            <c:simple-property name="rhq.communications.connector.security.truststore.algorithm"
                type="string" activationPolicy="restart" required="false" default="SunX509" displayName="Incoming: Truststore Algorithm">
                <c:property-options allowCustomValue="true">
                   <c:option name="SunX509" value="SunX509" default="true" />
                   <c:option name="IbmX509" value="IbmX509" />
                </c:property-options>
             </c:simple-property>
-            <c:simple-property name="rhq.communications.connector.security.truststore.type" 
+            <c:simple-property name="rhq.communications.connector.security.truststore.type"
                type="string" activationPolicy="restart" required="false" default="JKS" displayName="Incoming: Truststore Type">
                <c:property-options allowCustomValue="true">
                   <c:option name="JKS"    value="JKS" default="true" />
                   <c:option name="PKCS12" value="PKCS12" />
                </c:property-options>
             </c:simple-property>
-            <c:simple-property name="rhq.communications.connector.security.truststore.password" 
+            <c:simple-property name="rhq.communications.connector.security.truststore.password"
                type="password" activationPolicy="restart" required="false" default="" displayName="Incoming: Truststore Password"/>
-            <c:simple-property name="rhq.communications.connector.security.client-auth-mode" 
-               type="string" activationPolicy="restart" required="false" default="none" displayName="Incoming: Client Authentication Mode" 
+            <c:simple-property name="rhq.communications.connector.security.client-auth-mode"
+               type="string" activationPolicy="restart" required="false" default="none" displayName="Incoming: Client Authentication Mode"
                description="Determines if the agent should authenticate a RHQ Server before accepting incoming commands from it">
                <c:property-options>
                   <c:option name="none" value="none" default="true" />
@@ -405,7 +405,7 @@
                </c:property-options>
             </c:simple-property>
 
-            <c:simple-property name="rhq.agent.client.security.secure-socket-protocol" 
+            <c:simple-property name="rhq.agent.client.security.secure-socket-protocol"
                type="string" activationPolicy="restart" required="false" default="TLS" displayName="Outgoing: Secure Socket Protocol">
                <c:property-options allowCustomValue="true">
                   <c:option name="TLS"     value="TLS" default="true" />
@@ -414,49 +414,49 @@
                   <c:option name="SSLv3"   value="SSLv3" />
                </c:property-options>
             </c:simple-property>
-            <c:simple-property name="rhq.agent.client.security.keystore.file" 
+            <c:simple-property name="rhq.agent.client.security.keystore.file"
                type="string" activationPolicy="restart" required="false" default="data/keystore.dat" displayName="Outgoing: Keystore File" />
-            <c:simple-property name="rhq.agent.client.security.keystore.algorithm" 
+            <c:simple-property name="rhq.agent.client.security.keystore.algorithm"
                type="string" activationPolicy="restart" required="false" default="SunX509" displayName="Outgoing: Keystore Algorithm">
                <c:property-options allowCustomValue="true">
                   <c:option name="SunX509" value="SunX509" default="true" />
                   <c:option name="IbmX509" value="IbmX509" />
                </c:property-options>
             </c:simple-property>
-            <c:simple-property name="rhq.agent.client.security.keystore.type" 
+            <c:simple-property name="rhq.agent.client.security.keystore.type"
                type="string" activationPolicy="restart" required="false" default="JKS" displayName="Outgoing: Keystore Type">
                <c:property-options allowCustomValue="true">
                   <c:option name="JKS"    value="JKS" default="true" />
                   <c:option name="PKCS12" value="PKCS12" />
                </c:property-options>
             </c:simple-property>
-            <c:simple-property name="rhq.agent.client.security.keystore.password" 
+            <c:simple-property name="rhq.agent.client.security.keystore.password"
                type="password" activationPolicy="restart" required="false" default="rhqpwd" displayName="Outgoing: Keystore Password"/>
-            <c:simple-property name="rhq.agent.client.security.keystore.key-password" 
+            <c:simple-property name="rhq.agent.client.security.keystore.key-password"
                type="password" activationPolicy="restart" required="false" default="rhqpwd" displayName="Outgoing: Keystore Key Password"/>
-            <c:simple-property name="rhq.agent.client.security.keystore.alias" 
+            <c:simple-property name="rhq.agent.client.security.keystore.alias"
                type="string" activationPolicy="restart" required="false" default="rhq" displayName="Outgoing: Keystore Alias"/>
-            <c:simple-property name="rhq.agent.client.security.truststore.file" 
+            <c:simple-property name="rhq.agent.client.security.truststore.file"
                type="string" activationPolicy="restart" required="false" default="data/truststore.dat" displayName="Outgoing: Truststore File"/>
-            <c:simple-property name="rhq.agent.client.security.truststore.algorithm" 
+            <c:simple-property name="rhq.agent.client.security.truststore.algorithm"
                type="string" activationPolicy="restart" required="false" default="SunX509" displayName="Outgoing: Truststore Algorithm">
                <c:property-options allowCustomValue="true">
                   <c:option name="SunX509" value="SunX509" default="true" />
                   <c:option name="IbmX509" value="IbmX509" />
                </c:property-options>
-            </c:simple-property>            
-            <c:simple-property name="rhq.agent.client.security.truststore.type" 
+            </c:simple-property>
+            <c:simple-property name="rhq.agent.client.security.truststore.type"
                type="string" activationPolicy="restart" required="false" default="JKS" displayName="Outgoing: Truststore Type">
                <c:property-options allowCustomValue="true">
                   <c:option name="JKS"    value="JKS" default="true" />
                   <c:option name="PKCS12" value="PKCS12" />
                </c:property-options>
             </c:simple-property>
-            <c:simple-property name="rhq.agent.client.security.truststore.password" 
+            <c:simple-property name="rhq.agent.client.security.truststore.password"
                type="password" activationPolicy="restart" required="false" default="" displayName="Outgoing: Truststore Password"/>
-            <c:simple-property name="rhq.agent.client.security.server-auth-mode-enabled" 
-               type="boolean" activationPolicy="restart" required="false" default="false" 
-               displayName="Outgoing: Authenticate Server?" 
+            <c:simple-property name="rhq.agent.client.security.server-auth-mode-enabled"
+               type="boolean" activationPolicy="restart" required="false" default="false"
+               displayName="Outgoing: Authenticate Server?"
                description="If true, then the agent must authenticate the RHQ Server before it can send it messages" />
          </c:group>
          <c:group name="auto-detection" displayName="Auto Detection" hiddenByDefault="true">
@@ -532,7 +532,7 @@
          </c:group>
          <c:group name="agentupdate" displayName="Agent Auto-Update" hiddenByDefault="true">
             <c:simple-property name="rhq.agent.agent-update.enabled" required="false" type="boolean" activationPolicy="immediate" default="true" displayName="Enable Agent Update" description="If true, the agent will be allowed to update itself if it finds there is a new agent update binary available. If this feature is not enabled, the agent will never be allowed to update itself." />
-            <c:simple-property name="rhq.agent.agent-update.version-url" required="false" type="string" activationPolicy="immediate" displayName="Agent Update Binary Version URL" description="If defined, this will be the URL the agent uses when it needs to retrieve information about the latest available agent update binary.  If this is not defined, the agent will ask its server for the agent update binary version information." />"
+            <c:simple-property name="rhq.agent.agent-update.version-url" required="false" type="string" activationPolicy="immediate" displayName="Agent Update Binary Version URL" description="If defined, this will be the URL the agent uses when it needs to retrieve information about the latest available agent update binary.  If this is not defined, the agent will ask its server for the agent update binary version information." />
             <c:simple-property name="rhq.agent.agent-update.download-url" required="false" type="string" activationPolicy="immediate" displayName="Agent Update Binary Download URL" description="If defined, this will be the URL the agent uses when it needs to download the latest available agent update binary.  If this is not defined, the agent will download the agent update binary from its server." />
          </c:group>
          <c:group name="misc" displayName="Miscellaneous Settings" hiddenByDefault="true">

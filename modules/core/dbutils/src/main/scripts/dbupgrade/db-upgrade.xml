@@ -926,6 +926,19 @@ DB Upgrade:
       </schema-directSQL>
    </schemaSpec>
 
+   <schemaSpec version="2.29">
+      <schema-directSQL>
+         <statement desc="Adding Trait Purge system configuration setting">
+            INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
+                   VALUES (54, 'TRAIT_PURGE', '31536000000', '31536000000')
+         </statement>
+         <statement desc="Adding Avail Purge system configuration setting">
+            INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
+                   VALUES (55, 'AVAILABILITY_PURGE', '31536000000', '31536000000')
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

@@ -156,6 +156,14 @@
         <data ID="53" PROPERTY_KEY="ENABLE_AGENT_AUTO_UPDATE" PROPERTY_VALUE="true"
               DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
 
+        <!-- How old does a trait have to be in order to get purged -->
+        <data ID="54" PROPERTY_KEY="TRAIT_PURGE" PROPERTY_VALUE="31536000000"
+              DEFAULT_PROPERTY_VALUE="31536000000" FREAD_ONLY="FALSE"/>
+
+        <!-- How old does availability have to be in order to get purged -->
+        <data ID="55" PROPERTY_KEY="AVAILABILITY_PURGE" PROPERTY_VALUE="31536000000"
+              DEFAULT_PROPERTY_VALUE="31536000000" FREAD_ONLY="FALSE"/>
+
     </table>
 
 </dbsetup>

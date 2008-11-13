@@ -98,6 +98,12 @@ public class HQConstants {
     // How long do we keep event data
     public static final String EventPurge = "EVENT_PURGE";
 
+    // How long do we keep trait data
+    public static final String TraitPurge = "TRAIT_PURGE";
+
+    // How long do we keep availability data
+    public static final String AvailabilityPurge = "AVAILABILITY_PURGE";
+
     // Baseline config options
     // The frequency to run auto-baselines, if 0, never auto-calculate baselines
     public static final String BaselineFrequency = "CAM_BASELINE_FREQUENCY";

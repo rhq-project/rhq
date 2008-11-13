@@ -107,15 +107,25 @@ public class DataPurgeJob implements StatefulJob {
         long timeEnd = System.currentTimeMillis();
         LOG.info("Measurement data compression completed in [" + (timeEnd - timeStart) + "]ms");
 
+        Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration();
+
         // PURGE OLD TRAIT DATA
         timeStart = System.currentTimeMillis();
         LOG.info("Trait data purge starting at " + new Date(timeStart));
         int traitsPurged = 0;
 
         try {
-            final long oneYearAgo = timeStart - (1000L * 60 * 60 * 24 * 365);
-            LOG.info("Purging traits that are older than " + new Date(oneYearAgo));
-            traitsPurged = measurementDataManager.purgeTraits(oneYearAgo);
+            long threshold;
+            String traitPurgeThresholdStr = systemConfig.getProperty(HQConstants.TraitPurge);
+            if (traitPurgeThresholdStr == null) {
+                threshold = timeStart - (1000L * 60 * 60 * 24 * 365);
+                LOG.debug("No purge traits threshold found - will purge traits older than one year");
+            } else {
+                threshold = timeStart - Long.parseLong(traitPurgeThresholdStr);
+            }
+
+            LOG.info("Purging traits that are older than " + new Date(threshold));
+            traitsPurged = measurementDataManager.purgeTraits(threshold);
         } catch (Exception e) {
             LOG.error("Unable to purge trait data: " + e, e);
         }
@@ -129,8 +139,16 @@ public class DataPurgeJob implements StatefulJob {
         int availsPurged = 0;
 
         try {
-            final long oneYearAgo = timeStart - (1000L * 60 * 60 * 24 * 365);
-            availsPurged = availabilityManager.purgeAvailabilities(oneYearAgo);
+            long threshold;
+            String availPurgeThresholdStr = systemConfig.getProperty(HQConstants.AvailabilityPurge);
+            if (availPurgeThresholdStr == null) {
+                threshold = timeStart - (1000L * 60 * 60 * 24 * 365);
+                LOG.debug("No purge avails threshold found - will purge availabilities older than one year");
+            } else {
+                threshold = timeStart - Long.parseLong(availPurgeThresholdStr);
+            }
+            LOG.info("Purging availablities that are older than " + new Date(threshold));
+            availsPurged = availabilityManager.purgeAvailabilities(threshold);
         } catch (Exception e) {
             LOG.error("Unable to purge availability data: " + e, e);
         }
@@ -146,9 +164,7 @@ public class DataPurgeJob implements StatefulJob {
         //
         // VACUUM will occur every day at midnight.
 
-        Properties conf = LookupUtil.getSystemManager().getSystemConfiguration();
-
-        String dataMaintenance = conf.getProperty(HQConstants.DataMaintenance);
+        String dataMaintenance = systemConfig.getProperty(HQConstants.DataMaintenance);
         if (dataMaintenance == null) {
             LOG.error("No data maintenance interval found - will not perform db maintenance");
             return;
@@ -165,7 +181,7 @@ public class DataPurgeJob implements StatefulJob {
 
             systemManager.vacuum(LookupUtil.getSubjectManager().getOverlord());
 
-            String reindexStr = conf.getProperty(HQConstants.DataReindex);
+            String reindexStr = systemConfig.getProperty(HQConstants.DataReindex);
             boolean reindexNightly = Boolean.valueOf(reindexStr);
             if (reindexNightly) {
                 LOG.info("Re-indexing data tables...");

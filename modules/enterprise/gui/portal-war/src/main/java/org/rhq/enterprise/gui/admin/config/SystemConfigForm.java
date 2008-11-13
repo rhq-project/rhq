@@ -46,6 +46,10 @@ public class SystemConfigForm extends BaseValidatorForm {
     private String alertPurge = "";
     private String eventPurgeVal = "0";
     private String eventPurge = "";
+    private String traitPurgeVal = "0";
+    private String traitPurge = "";
+    private String availPurgeVal = "0";
+    private String availPurge = "";
     private String baselineFrequencyVal = "0";
     private String baselineFrequency = "";
     private String baselineDataSetVal = "0";
@@ -130,6 +134,10 @@ public class SystemConfigForm extends BaseValidatorForm {
         alertPurgeVal = null;
         eventPurge = "";
         eventPurgeVal = null;
+        traitPurge = "";
+        traitPurgeVal = null;
+        availPurge = "";
+        availPurgeVal = null;
         baselineFrequency = "";
         baselineFrequencyVal = null;
         baselineDataSet = "";
@@ -195,6 +203,16 @@ public class SystemConfigForm extends BaseValidatorForm {
         Long eventPurgeLong = new Long(eventPurgeValStr);
         eventPurge = findTimeUnit(eventPurgeLong.longValue());
         eventPurgeVal = calcTimeUnit(eventPurgeLong.longValue());
+
+        String traitPurgeValStr = prop.getProperty(HQConstants.TraitPurge);
+        Long traitPurgeLong = new Long(traitPurgeValStr);
+        traitPurge = findTimeUnit(traitPurgeLong.longValue());
+        traitPurgeVal = calcTimeUnit(traitPurgeLong.longValue());
+
+        String availPurgeValStr = prop.getProperty(HQConstants.AvailabilityPurge);
+        Long availPurgeLong = new Long(availPurgeValStr);
+        availPurge = findTimeUnit(availPurgeLong.longValue());
+        availPurgeVal = calcTimeUnit(availPurgeLong.longValue());
 
         String baselineFrequencyValStr = prop.getProperty(HQConstants.BaselineFrequency);
         Long baselineFrequencyLong = new Long(baselineFrequencyValStr);
@@ -304,6 +322,12 @@ public class SystemConfigForm extends BaseValidatorForm {
 
         long eventPurgeLong = convertToMillisecond(Long.parseLong(eventPurgeVal), eventPurge);
         prop.setProperty(HQConstants.EventPurge, String.valueOf(eventPurgeLong));
+
+        long traitPurgeLong = convertToMillisecond(Long.parseLong(traitPurgeVal), traitPurge);
+        prop.setProperty(HQConstants.TraitPurge, String.valueOf(traitPurgeLong));
+
+        long availPurgeLong = convertToMillisecond(Long.parseLong(availPurgeVal), availPurge);
+        prop.setProperty(HQConstants.AvailabilityPurge, String.valueOf(availPurgeLong));
 
         long baselineFrequencyLong = convertToMillisecond(Integer.parseInt(baselineFrequencyVal), baselineFrequency);
         prop.setProperty(HQConstants.BaselineFrequency, String.valueOf(baselineFrequencyLong));
@@ -455,6 +479,38 @@ public class SystemConfigForm extends BaseValidatorForm {
 
     public void setEventPurge(String eventPurge) {
         this.eventPurge = eventPurge;
+    }
+
+    public String getTraitPurgeVal() {
+        return traitPurgeVal;
+    }
+
+    public void setTraitPurgeVal(String traitPurgeVal) {
+        this.traitPurgeVal = traitPurgeVal;
+    }
+
+    public String getTraitPurge() {
+        return traitPurge;
+    }
+
+    public void setTraitPurge(String traitPurge) {
+        this.traitPurge = traitPurge;
+    }
+
+    public String getAvailPurgeVal() {
+        return availPurgeVal;
+    }
+
+    public void setAvailPurgeVal(String availPurgeVal) {
+        this.availPurgeVal = availPurgeVal;
+    }
+
+    public String getAvailPurge() {
+        return availPurge;
+    }
+
+    public void setAvailPurge(String availPurge) {
+        this.availPurge = availPurge;
     }
 
     public String getBaselineFrequencyVal() {

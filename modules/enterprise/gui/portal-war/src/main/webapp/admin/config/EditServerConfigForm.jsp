@@ -277,7 +277,7 @@
       </table>
     </td>
   </tr>
-  
+
     <tr>
     <td class="BlockLabel"><fmt:message key="admin.settings.EventPurge"/></td>
     <td class="BlockContent">
@@ -288,7 +288,7 @@
             <html:text size="2" property="eventPurgeVal" />
           </td>
           <td class="ErrorField" width="100%">
-            <html:select property="alertPurge">
+            <html:select property="eventPurge">
               <html:option value="${CONST_DAYS}"><fmt:message key="admin.settings.Days"/></html:option>
             </html:select>
           </td>
@@ -312,6 +312,110 @@
         </tr>
 </logic:messagesPresent>
 <logic:messagesNotPresent property="eventPurgeVal">
+        <tr>
+          <td class="BlockContent" colspan="2">
+          </td>
+        </tr>
+</logic:messagesNotPresent>
+      </table>
+    </td>
+    <td class="BlockLabel"></td>
+    <td class="BlockContent">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="BlockContent" colspan="2">
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+    <tr>
+    <td class="BlockLabel"><fmt:message key="admin.settings.TraitPurge"/></td>
+    <td class="BlockContent">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+<logic:messagesPresent property="traitPurgeVal">
+          <td class="ErrorField">
+            <html:text size="2" property="traitPurgeVal" />
+          </td>
+          <td class="ErrorField" width="100%">
+            <html:select property="traitPurge">
+              <html:option value="${CONST_DAYS}"><fmt:message key="admin.settings.Days"/></html:option>
+            </html:select>
+          </td>
+</logic:messagesPresent>
+<logic:messagesNotPresent property="traitPurgeVal">
+          <td class="BlockContent">
+            <html:text size="2" property="traitPurgeVal" />
+          </td>
+          <td class="BlockContent" width="100%">
+            <html:select property="traitPurge">
+              <html:option value="${CONST_DAYS}"><fmt:message key="admin.settings.Days"/></html:option>
+            </html:select>
+          </td>
+</logic:messagesNotPresent>
+        </tr>
+<logic:messagesPresent property="traitPurgeVal">
+        <tr>
+          <td class="ErrorField" colspan="2">
+            <span class="ErrorFieldContent">- <html:errors property="traitPurgeVal"/></span>
+          </td>
+        </tr>
+</logic:messagesPresent>
+<logic:messagesNotPresent property="traitPurgeVal">
+        <tr>
+          <td class="BlockContent" colspan="2">
+          </td>
+        </tr>
+</logic:messagesNotPresent>
+      </table>
+    </td>
+    <td class="BlockLabel"></td>
+    <td class="BlockContent">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="BlockContent" colspan="2">
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+    <tr>
+    <td class="BlockLabel"><fmt:message key="admin.settings.AvailPurge"/></td>
+    <td class="BlockContent">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+<logic:messagesPresent property="availPurgeVal">
+          <td class="ErrorField">
+            <html:text size="2" property="availPurgeVal" />
+          </td>
+          <td class="ErrorField" width="100%">
+            <html:select property="availPurge">
+              <html:option value="${CONST_DAYS}"><fmt:message key="admin.settings.Days"/></html:option>
+            </html:select>
+          </td>
+</logic:messagesPresent>
+<logic:messagesNotPresent property="availPurgeVal">
+          <td class="BlockContent">
+            <html:text size="2" property="availPurgeVal" />
+          </td>
+          <td class="BlockContent" width="100%">
+            <html:select property="availPurge">
+              <html:option value="${CONST_DAYS}"><fmt:message key="admin.settings.Days"/></html:option>
+            </html:select>
+          </td>
+</logic:messagesNotPresent>
+        </tr>
+<logic:messagesPresent property="availPurgeVal">
+        <tr>
+          <td class="ErrorField" colspan="2">
+            <span class="ErrorFieldContent">- <html:errors property="availPurgeVal"/></span>
+          </td>
+        </tr>
+</logic:messagesPresent>
+<logic:messagesNotPresent property="availPurgeVal">
         <tr>
           <td class="BlockContent" colspan="2">
           </td>

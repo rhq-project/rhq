@@ -785,8 +785,10 @@ public interface AgentSetupInstructions {
     String SETUP_INSTRUCTION_AGENTUPDATEVERSIONURL_PROMPT = "PromptCommand.setup.instruction.agentupdateversionurl.prompt";
     @I18NMessages( { @I18NMessage("If this is defined, it will be the URL the agent uses when it\\n\\\n"
         + "needs to retrieve information about the latest available\\n\\\n"
-        + "agent update binary.  If this is not defined, the agent will\\n\\\n"
-        + "ask its server for the agent update binary version information.") })
+        + "agent update binary.  If this is not defined (i.e. left as 'null'),\\n\\\n"
+        + "the default will be a URL to the server the agent is currently\\n\\\n"
+        + "connected to at the time the version request is initiated. If you have\\n\\\n"
+        + "this set but wish to revert back to the default behavior,\\n\\\n" + "enter !* at the prompt.") })
     String SETUP_INSTRUCTION_AGENTUPDATEVERSIONURL_HELP = "PromptCommand.setup.instruction.agentupdateversionurl.help";
 
     // AGENT UPDATE DOWNLOAD URL
@@ -796,7 +798,10 @@ public interface AgentSetupInstructions {
     String SETUP_INSTRUCTION_AGENTUPDATEDOWNLOADURL_PROMPT = "PromptCommand.setup.instruction.agentupdatedownloadurl.prompt";
     @I18NMessages( { @I18NMessage("If this is defined, it will be the URL the agent uses when it\\n\\\n"
         + "needs to download the latest available agent update binary.\\n\\\n"
-        + "If this is not defined, the agent will download the agent\\n\\\n" + "update binary from its server.") })
+        + "If this is not defined (i.e. left as 'null'), the default will be\\n\\\n"
+        + "a URL to the server the agent is currently connected to at the time the\\n\\\n"
+        + "download is initiated. If you have this set but wish to revert back\\n\\\n"
+        + "to the default behavior, enter !* at the prompt.") })
     String SETUP_INSTRUCTION_AGENTUPDATEDOWNLOADURL_HELP = "PromptCommand.setup.instruction.agentupdatedownloadurl.help";
 
     // AGENT NAME

@@ -162,8 +162,8 @@ public class RtFilter implements Filter {
      * After opening the file we open a writer where we send results to. If
      * opening fails, no exceptions are thrown, as throwing any exception would cause the associated webapp to
      * fail to deploy - not something we ever want to do. Instead, the filter will simply not try to process any
-     * requests (i.e. doFilter() will call the rest of the filter chain, and then just return).  
-     * <p/> 
+     * requests (i.e. doFilter() will call the rest of the filter chain, and then just return).
+     * <p/>
      * This method will set the fileDone variable to true upon success.<br/>
      * This method will set the initialized variable to false upon failure.<br/>
      * @param serverName Name of the virtual host
@@ -176,7 +176,11 @@ public class RtFilter implements Filter {
         else
             vhost = serverName + "_";
 
-        String logFileName = this.logFilePrefix + vhost + this.contextName + "_rt.log";
+        // if this is a sub-context (e.g. news/radio), then replace the / by a _ to
+        // prevent interpretation of the / as a dir separator.
+        String contextFileName = contextName.replace('/', '_');
+
+        String logFileName = this.logFilePrefix + vhost + contextFileName + "_rt.log";
         this.logFile = new File(this.logDirectory, logFileName);
         log.info("-- Filter openFile: Writing response-time log for webapp with context root '" + this.contextName
             + "' to '" + this.logFile + "' (hashCode=" + hashCode() + ")...");
@@ -195,7 +199,7 @@ public class RtFilter implements Filter {
     /**
      * Read initialization parameters, and determine the context root.
      * The logfile name will be determined later, as we don't know the vhost yet.
-     * 
+     *
      * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
      */
     public void init(FilterConfig filterConfig) throws ServletException {

@@ -71,7 +71,7 @@
 <logic:messagesPresent property="agentMaxQuietTimeAllowedVal">
         <tr>
           <td class="ErrorField" colspan="2">
-            <span class="ErrorFieldContent">- <html:errors property="agentMaxQuietTimeAllowedVal"/></span>
+            <span class="ErrorFieldContent"> <html:errors property="agentMaxQuietTimeAllowedVal"/></span>
           </td>
         </tr>
 </logic:messagesPresent>
@@ -151,7 +151,7 @@
 <logic:messagesPresent property="maintIntervalVal">
         <tr>
           <td class="ErrorField" colspan="2">
-            <span class="ErrorFieldContent">- <html:errors property="maintIntervalVal"/></span>
+            <span class="ErrorFieldContent"> <html:errors property="maintIntervalVal"/></span>
           </td>
         </tr>
 </logic:messagesPresent>
@@ -181,7 +181,7 @@
         <tr>
 <logic:messagesPresent property="rtPurgeVal">
           <td class="ErrorField">
-            <html:text size="2" property="maintIntervalVal" />
+            <html:text size="2" property="rtPurgeVal" />
           </td>
           <td class="ErrorField" width="100%">
             <html:select property="rtPurge">
@@ -203,7 +203,7 @@
 <logic:messagesPresent property="rtPurgeVal">
         <tr>
           <td class="ErrorField" colspan="2">
-            <span class="ErrorFieldContent">- <html:errors property="rtPurgeVal"/></span>
+            <span class="ErrorFieldContent"> <html:errors property="rtPurgeVal"/></span>
           </td>
         </tr>
 </logic:messagesPresent>
@@ -255,7 +255,7 @@
 <logic:messagesPresent property="alertPurgeVal">
         <tr>
           <td class="ErrorField" colspan="2">
-            <span class="ErrorFieldContent">- <html:errors property="alertPurgeVal"/></span>
+            <span class="ErrorFieldContent"> <html:errors property="alertPurgeVal"/></span>
           </td>
         </tr>
 </logic:messagesPresent>
@@ -307,7 +307,7 @@
 <logic:messagesPresent property="eventPurgeVal">
         <tr>
           <td class="ErrorField" colspan="2">
-            <span class="ErrorFieldContent">- <html:errors property="eventPurgeVal"/></span>
+            <span class="ErrorFieldContent"> <html:errors property="eventPurgeVal"/></span>
           </td>
         </tr>
 </logic:messagesPresent>
@@ -359,7 +359,7 @@
 <logic:messagesPresent property="traitPurgeVal">
         <tr>
           <td class="ErrorField" colspan="2">
-            <span class="ErrorFieldContent">- <html:errors property="traitPurgeVal"/></span>
+            <span class="ErrorFieldContent"> <html:errors property="traitPurgeVal"/></span>
           </td>
         </tr>
 </logic:messagesPresent>
@@ -411,7 +411,7 @@
 <logic:messagesPresent property="availPurgeVal">
         <tr>
           <td class="ErrorField" colspan="2">
-            <span class="ErrorFieldContent">- <html:errors property="availPurgeVal"/></span>
+            <span class="ErrorFieldContent"> <html:errors property="availPurgeVal"/></span>
           </td>
         </tr>
 </logic:messagesPresent>
@@ -491,7 +491,7 @@
 <logic:messagesPresent property="baselineFrequencyVal">
         <tr>
           <td class="ErrorField" colspan="2">
-            <span class="ErrorFieldContent">- <html:errors property="baselineFrequencyVal"/></span>
+            <span class="ErrorFieldContent"> <html:errors property="baselineFrequencyVal"/></span>
           </td>
         </tr>
 </logic:messagesPresent>
@@ -513,13 +513,13 @@
       </table>
     </td>
   </tr>
-  <!-- Baseline dataset -->
+  <!-- Baseline dataset admin.settings.BaselineDataSet-->
   <tr>
-    <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.BaselineDataSet"/></td>
-    <td width="30%" class="BlockContent">
+    <td class="BlockLabel"><fmt:message key="admin.settings.BaselineDataSet"/></td>
+    <td class="BlockContent">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-<logic:messagesPresent property="baselineDataSet">
+<logic:messagesPresent property="baselineDataSetVal">
           <td class="ErrorField">
             <html:text size="2" property="baselineDataSetVal" />
           </td>
@@ -543,7 +543,7 @@
 <logic:messagesPresent property="baselineDataSetVal">
         <tr>
           <td class="ErrorField" colspan="2">
-            <span class="ErrorFieldContent">- <html:errors property="baselineDataSetVal"/></span>
+            <span class="ErrorFieldContent"> <html:errors property="baselineDataSetVal"/></span>
           </td>
         </tr>
 </logic:messagesPresent>
@@ -555,8 +555,8 @@
 </logic:messagesNotPresent>
       </table>
     </td>
-    <td width="20%" class="BlockLabel"/>
-    <td width="30%" class="BlockContent">
+    <td class="BlockLabel"/>
+    <td class="BlockContent">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td class="BlockContent" colspan="2">
@@ -565,5 +565,6 @@
       </table>
     </td>
   </tr>
+
 </table>
 <!--  /  -->

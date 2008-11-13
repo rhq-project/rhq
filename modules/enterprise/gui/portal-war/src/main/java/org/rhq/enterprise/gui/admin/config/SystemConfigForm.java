@@ -762,10 +762,57 @@ public class SystemConfigForm extends BaseValidatorForm {
             errors.add("snmpPrivacyPassphrase", errorMessage);
         }
 
+        if (!empty(baselineDataSetVal)) {
+            try {
+                long freq = Long.parseLong(baselineDataSetVal);
+                // 1h table holds at most 14 days worth of data, make sure we don't set a dataset more than that
+                if (freq > 14) {
+                    ActionMessage errorMessage = new ActionMessage("admin.settings.BadBaselineDataSetVal");
+                    errors.add("baselineDataSetVal", errorMessage);
+                }
+            } catch (Exception e) {
+                ActionMessage errorMessage = new ActionMessage("admin.settings.BadBaselineDataSetVal");
+                errors.add("baselineDataSetVal", errorMessage);
+            }
+        }
+
+        if (!empty(agentMaxQuietTimeAllowedVal)) {
+            try {
+                long val = Long.parseLong(agentMaxQuietTimeAllowedVal);
+                // we should never allow a quiet time threshold to be less than 2 minutes
+                if (val < 2) {
+                    ActionMessage errorMessage = new ActionMessage("admin.settings.BadAgentMaxQuietTimeAllowedVal");
+                    errors.add("agentMaxQuietTimeAllowedVal", errorMessage);
+                }
+            } catch (Exception e) {
+                ActionMessage errorMessage = new ActionMessage("admin.settings.BadAgentMaxQuietTimeAllowedVal");
+                errors.add("agentMaxQuietTimeAllowedVal", errorMessage);
+            }
+        }
+
+        checkForBadNumber(errors, this.maintIntervalVal, "maintIntervalVal");
+        checkForBadNumber(errors, this.rtPurgeVal, "rtPurgeVal");
+        checkForBadNumber(errors, this.alertPurgeVal, "alertPurgeVal");
+        checkForBadNumber(errors, this.eventPurgeVal, "eventPurgeVal");
+        checkForBadNumber(errors, this.traitPurgeVal, "traitPurgeVal");
+        checkForBadNumber(errors, this.availPurgeVal, "availPurgeVal");
+        checkForBadNumber(errors, this.baselineFrequencyVal, "baselineFrequencyVal");
+
         if (errors.isEmpty()) {
             return null;
         } else {
             return errors;
+        }
+    }
+
+    private void checkForBadNumber(ActionErrors errors, String val, String valVariableName) {
+        if (!empty(val)) {
+            try {
+                Long.parseLong(val);
+            } catch (Exception e) {
+                ActionMessage errorMessage = new ActionMessage("admin.settings.BadNumber");
+                errors.add(valVariableName, errorMessage);
+            }
         }
     }
 

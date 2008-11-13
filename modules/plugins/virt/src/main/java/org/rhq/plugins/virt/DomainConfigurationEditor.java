@@ -247,11 +247,17 @@ public class DomainConfigurationEditor {
                     dType = "block"; // see http://libvirt.org/formatdomain.html#elementsDisks -- 'either: file or block
                 disk.put(new PropertySimple("type", dType));
 
-                String driverName = diskElement.getChild("driver").getAttribute("name").getValue();
-                disk.put(new PropertySimple("driverName",driverName));
+                Element driver = diskElement.getChild("driver");
+                if (driver != null) {
+                  String driverName = driver.getAttribute("name").getValue();
+                  disk.put(new PropertySimple("driverName",driverName));
+                }
 
-                String sourceFile = diskElement.getChild("source").getAttributeValue("file");
-                disk.put(new PropertySimple("sourceFile",sourceFile));
+                Element source = diskElement.getChild("source");
+                if (source != null) {
+                  String sourceFile = source.getAttributeValue("file");
+                   disk.put(new PropertySimple("sourceFile",sourceFile));
+                }
 
                 String targetDevice = diskElement.getChild("target").getAttributeValue("dev");
                 disk.put(new PropertySimple("targetDevice",targetDevice));

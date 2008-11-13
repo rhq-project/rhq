@@ -91,7 +91,7 @@ public class DeploymentUtility {
      * This will attempt to find the deployment descriptor file where the ObjectName MBean was deployed.
      *
      * @param  connection the connection to the JBoss instance
-     *
+     * @param objectName The objectname to look for
      * @return the path to the file where the MBean was deployed, or <code>null</code> if it could not be found
      */
     public static File getDescriptorFile(EmsConnection connection, String objectName) {
@@ -183,7 +183,7 @@ public class DeploymentUtility {
         catch (Exception e) {
             return null;
         }
-        
+
         String separator = System.getProperty("file.separator");
         boolean isOnWin = separator.equals("\\");
 
@@ -203,12 +203,27 @@ public class DeploymentUtility {
 
                             String jbossWebmBeanName = jbossWebObjectName.getCanonicalName();
                             String contextRoot = getMBeanNameAttribute(jbossWebmBeanName);
-                            int lastSlashIndex = contextRoot.lastIndexOf("/");
-                            if (lastSlashIndex > 0) {
-                                int lastIndex = contextRoot.length() - 1;
-                                // If it ends in a slash, it's the root context (context root -> "/"). Otherwise, the
-                                // context root will be everything after the last slash (e.g. "jmx-console").
-                                contextRoot = (lastSlashIndex == lastIndex) ? "/" : contextRoot.substring(lastSlashIndex + 1);
+                            /*
+                            * Lets find out the real context root. The one passed is //<vhost>/<context>
+                            * If it ends in a slash, it's the root context (context root -> "/"). Otherwise, the
+                            * context root will be everything after the last slash (e.g. "jmx-console").
+                            * BUT: We need to be careful with slashes inside the context root, as jmx/console
+                            * is a valid context root as well.
+                            */
+                            if (contextRoot.startsWith("//")) {
+                                contextRoot = contextRoot.substring(2);
+                                int pos = contextRoot.indexOf("/");
+                                if (pos > -1)
+                                    contextRoot = contextRoot.substring(pos); // Skip vhost
+                                if (contextRoot.length()>1)
+                                    contextRoot = contextRoot.substring(1); // Skip leading / if cR is othern than "/"
+                            }
+                            else { // Fallback just in case
+                                int lastSlashIndex = contextRoot.lastIndexOf("/");
+                                if (lastSlashIndex > 0) {
+                                    int lastIndex = contextRoot.length() - 1;
+                                    contextRoot = (lastSlashIndex == lastIndex) ? "/" : contextRoot.substring(lastSlashIndex + 1);
+                                }
                             }
 
                             String file = getFieldValue(sdi, "url", URL.class).toString();
@@ -225,7 +240,7 @@ public class DeploymentUtility {
 
                             /*
                              * We now have a valid deployment. Go back to the MBeanServer and get *all*
-                             * applicable virtual hosts for this web app. Return deployment info for all 
+                             * applicable virtual hosts for this web app. Return deployment info for all
                              * of them.
                              * Most of the time this will only be one virtual host called 'localhost', as
                              * this is the default if no vhost is set.
@@ -316,7 +331,7 @@ public class DeploymentUtility {
         }
         return deploymentInfos;
     }
-    
+
     private static String getMBeanNameAttribute(String objectBeanName) {
         Object[] splitName = objectBeanName.split("name=");
         String retNameAttribute = "";
@@ -359,7 +374,7 @@ public class DeploymentUtility {
      * VHost MBeans have the pattern "jboss.web:host=*,path=/<ctx_root>,type=Manager".
      *
      * @param contextRoot the context root
-     * 
+     *
      * @return the list of VHost MBeans for this webapp
      */
     public static List<EmsBean> getVHosts(String contextRoot, EmsConnection emsConnection) {

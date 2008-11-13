@@ -182,6 +182,10 @@ public class SystemManagerBean implements SystemManagerLocal {
                 entityManager.persist(existingConfig);
             } else {
                 if ((existingConfig.getPropertyValue() == null) || !existingConfig.getPropertyValue().equals(value)) {
+                    if (existingConfig.getFreadOnly() != null && existingConfig.getFreadOnly().booleanValue()) {
+                        throw new IllegalArgumentException("The setting [" + name
+                            + "] is read-only - you cannot change its current value!");
+                    }
                     existingConfig.setPropertyValue(value);
                     entityManager.merge(existingConfig);
                 }

@@ -206,7 +206,7 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
             EmsAttribute att = eBean.getAttribute(property);
             if (att != null) {
                 Integer i = (Integer) att.getValue();
-                ret = new Double(i);
+                ret = Double.valueOf(i);
             }
 
         }

@@ -63,7 +63,7 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet {
             // TODO: based on the request information, you must collect the requested measurement(s)
             //       you can use the name of the measurement to determine what you actually need to collect
             try {
-                Number value = new Integer(1); // dummy measurement value - this should come from the managed resource
+                Number value = 1; // dummy measurement value - this should come from the managed resource
                 report.addData(new MeasurementDataNumeric(request, value.doubleValue()));
             } catch (Exception e) {
                 log.error("Failed to obtain measurement [" + name + "]. Cause: " + e);

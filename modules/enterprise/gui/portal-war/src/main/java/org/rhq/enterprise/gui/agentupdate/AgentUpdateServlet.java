@@ -58,7 +58,7 @@ public class AgentUpdateServlet extends HttpServlet {
     private static String SYSPROP_AGENT_DOWNLOADS_LIMIT = "rhq.server.agent-downloads-limit";
 
     // if the system property is not set or invalid, this is the default limit for number of concurrent downloads
-    private static int DEFAULT_AGENT_DOWNLOADS_LIMIT = 100;
+    private static int DEFAULT_AGENT_DOWNLOADS_LIMIT = 45;
 
     // the error code that will be returned if the server has been configured to disable agent updates
     private static final int ERROR_CODE_AGENT_UPDATE_DISABLED = HttpServletResponse.SC_FORBIDDEN;

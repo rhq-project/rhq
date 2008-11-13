@@ -38,6 +38,7 @@
 </table>
 <!--  /  -->
 
+<hq:authorization permission="MANAGE_SETTINGS">
 <!--  some empty space -->
 <br>
 <br>
@@ -81,6 +82,7 @@
       <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
    </tr>
 </table>
+</hq:authorization>
 <!--  /  -->
 
 
@@ -146,5 +148,29 @@
 </hq:authorization>
 <!--  /  -->
 
+<!--  some empty space -->
+<br>
+<br>
+<!--  /  -->
+
+<tiles:insert definition=".header.tab">
+  <tiles:put name="tabKey" value="admin.home.AgentUpdateBinary"/>
+</tiles:insert>
+
+<!--  AGENT -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+   <tr>
+      <td width="20%" class="BlockLabel"></td>
+      <td width="30%" class="BlockContent"><html:link page="/agentupdate/version"><fmt:message key="admin.home.AgentUpdateBinary.version"/></html:link></td>
+   </tr>
+   <tr>
+      <td width="20%" class="BlockLabel"></td>
+      <td width="30%" class="BlockContent"><html:link page="/agentupdate/download"><fmt:message key="admin.home.AgentUpdateBinary.download"/></html:link></td>
+   </tr>
+   <tr>
+      <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
+   </tr>
+</table>
+<!--  /  -->
 
 <tiles:insert definition=".page.footer"/>

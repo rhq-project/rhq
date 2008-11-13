@@ -18,16 +18,16 @@
  */
 package org.rhq.plugins.virt;
 
-import java.io.StringReader;
-import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.List;
 
+import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.output.XMLOutputter;
 import org.jdom.input.SAXBuilder;
+import org.jdom.output.XMLOutputter;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -68,7 +68,7 @@ public class DomainConfigurationEditor {
             updateSimpleNode(config, root, "currentMemory");
 
             updateSimpleNode(config, root, "vcpu");
-    
+
             updateSimpleNode(config, root, "on_poweroff");
             updateSimpleNode(config, root, "on_reboot");
             updateSimpleNode(config, root, "on_crash");
@@ -145,13 +145,13 @@ public class DomainConfigurationEditor {
             devices.addContent(diskElement);
             diskElement.setAttribute("type", diskMap.getSimple("type").getStringValue());
 
-            
+
             Element sourceElement = new Element("driver");
             diskElement.addContent(sourceElement);
             sourceElement.setAttribute("name",diskMap.getSimple("driverName").getStringValue());
             // TODO driverFile
 
-            
+
             Element targetElement = new Element("source");
             diskElement.addContent(targetElement);
             targetElement.setAttribute("file",diskMap.getSimple("sourceFile").getStringValue());
@@ -176,7 +176,12 @@ public class DomainConfigurationEditor {
         parent.addContent(e);
     }
 
-
+    /**
+     * Parse the XML from calling libvirts virDomainGetXMLDesc()
+     * @param xml XML String from libvirt
+     * @return The resulting configuration
+     * @see {http://libvirt.org/formatdomain.html}
+     */
     public static Configuration getConfiguration(String xml) {
         try {
             SAXBuilder builder = new SAXBuilder();
@@ -234,7 +239,13 @@ public class DomainConfigurationEditor {
             List<Element> diskElementList = devices.getChildren("disk");
             for (Element diskElement :diskElementList) {
                 PropertyMap disk = new PropertyMap("disk");
-                disk.put(new PropertySimple("type", diskElement.getAttribute("type").getValue()));
+                Attribute diskType = diskElement.getAttribute("type");
+                String dType;
+                if (diskType != null)
+                    dType = diskType.getValue();
+                else
+                    dType = "block"; // see http://libvirt.org/formatdomain.html#elementsDisks -- 'either: file or block
+                disk.put(new PropertySimple("type", dType));
 
                 String driverName = diskElement.getChild("driver").getAttribute("name").getValue();
                 disk.put(new PropertySimple("driverName",driverName));

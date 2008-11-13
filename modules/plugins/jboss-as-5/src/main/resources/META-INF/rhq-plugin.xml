@@ -800,6 +800,7 @@
                         </c:defaultValueDescription>
                     </c:simple-property>
 
+                    <!--
                     <c:simple-property name="security-domain" type="string" activationPolicy="immediate"
                                        displayName="Security Domain" required="false">
                         <c:description>Indicates Subjects from security domain are used to distinguish connections in
@@ -811,7 +812,8 @@
                             connections.
                         </c:defaultValueDescription>
                     </c:simple-property>
-
+                    -->
+                    
                     <c:simple-property name="new-connection-sql" type="longString" activationPolicy="immediate"
                                        displayName="New Connection SQL" required="false">
                         <c:description>SQL statement to execute whenever a new connection is added to the pool.
@@ -1618,60 +1620,53 @@
                 </c:group>
             </plugin-configuration>
 
-            <operation name="listAllMessages"
-                       displayName="List Messages by Selector"
-                       description="Lists the Messages in the Queue by Selector (if provided). Selector is not required.">
+            <operation name="create" displayName="Create" description="Service lifecycle operation"/>
+            <operation name="destroy" displayName="Destroy" description="Service lifecycle operation"/>
+            <operation name="listAllMessages" displayName="List All Messages" description="List all messages with selector">
                 <parameters>
-                    <c:simple-property name="selector" displayName="Selector" required="false"/>
+                    <c:simple-property name="arg#0"/>
                 </parameters>
                 <results>
-                    <c:list-property name="Messages">
-                        <c:simple-property name="message"/>
+                    <c:list-property name="result">
+                        <c:simple-property required="false" name="item"/>
                     </c:list-property>
                 </results>
             </operation>
-
-            <operation name="listDurableMessages"
-                       displayName="List Messages by Selector"
-                       description="Lists the Messages in the Queue by Selector (if provided). Selector is not required.">
+            <operation name="listDurableMessages" displayName="List Durable Messages" description="List all durable mesages using a selector">
                 <parameters>
-                    <c:simple-property name="selector" displayName="Selector" required="false"/>
+                    <c:simple-property name="arg#0"/>
                 </parameters>
                 <results>
-                    <c:list-property name="Messages">
-                        <c:simple-property name="message"/>
+                    <c:list-property name="result">
+                        <c:simple-property required="false" name="item"/>
                     </c:list-property>
                 </results>
             </operation>
-
-            <operation name="listNonDurableMessages"
-                       displayName="List Messages by Selector"
-                       description="Lists the Messages in the Queue by Selector (if provided). Selector is not required.">
+            <operation name="listMessageCounterAsHTML" displayName="List Message Counter As HTML" description="Get the message counter as HTML">
+                <results>
+                    <c:simple-property name="result"/>
+                </results>
+            </operation>
+            <operation name="listMessageCounterHistoryAsHTML" displayName="List Message Counter History As HTML" description="Get the message counter history as HTML">
+                <results>
+                    <c:simple-property name="result"/>
+                </results>
+            </operation>
+            <operation name="listNonDurableMessages" displayName="List Non Durable Messages" description="List all non durable mesages using a selector">
                 <parameters>
-                    <c:simple-property name="selector" displayName="Selector" required="false"/>
+                    <c:simple-property name="arg#0"/>
                 </parameters>
                 <results>
-                    <c:list-property name="Messages">
-                        <c:simple-property name="message"/>
+                    <c:list-property name="result">
+                        <c:simple-property required="false" name="item"/>
                     </c:list-property>
                 </results>
             </operation>
-
-            <operation name="removeAllMessages"
-                       displayName="Remove All Messages"
-                       description="Remove all messages in the Queue"
-                       timeout="0"/>
-
-            <operation name="resetMessageCounter"
-                       displayName="Reset Message Counter"
-                       description="Reset the message counter"
-                       timeout="0"/>
-
-            <operation name="resetMessageCounterHistory"
-                       displayName="Reset Message Counter History"
-                       description="Reset the message counter history"
-                       timeout="0"/>
-
+            <operation name="removeAllMessages" displayName="Remove All Messages" description="Remove all messages in the queue"/>
+            <operation name="resetMessageCounter" displayName="Reset Message Counter" description="Reset the message counter"/>
+            <operation name="resetMessageCounterHistory" displayName="Reset Message Counter History" description="Reset the message counter history"/>
+            <operation name="start" displayName="Start" description="Service lifecycle operation"/>
+            <operation name="stop" displayName="Stop" description="Service lifecycle operation"/>                        
 
             <metric property="createdProgrammatically"
                     displayName="Created Programmatically"
@@ -2354,7 +2349,7 @@
 
         </service>
 
-        <service name="Perisistence Unit (PAR)"
+        <service name="Persistence Unit (PAR)"
                  subCategory="Applications"
                  class="org.rhq.plugins.jbossas5.DeploymentResourceComponent"
                  discovery="org.rhq.plugins.jbossas5.DeploymentResourceDiscoveryComponent"

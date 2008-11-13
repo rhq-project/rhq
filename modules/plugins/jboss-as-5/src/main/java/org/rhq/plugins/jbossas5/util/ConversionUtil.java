@@ -33,7 +33,6 @@ import org.jboss.metatype.api.types.MetaType;
 import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.deployers.spi.management.KnownComponentTypes;
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
-//import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -349,17 +348,7 @@ public class ConversionUtil
 
     public static void convertManagedOperationResults(ManagedOperation operation, MetaValue result, Configuration complexResults, ResourceType resourceType)
     {
-        Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
-        OperationDefinition operationDefinition = null;
-        String operationName = operation.getName();
-        for (OperationDefinition definition : operationDefinitions)
-        {
-            if (definition.getName().equals(operationName))
-            {
-                operationDefinition = definition;
-                break;
-            }
-        }
+        OperationDefinition operationDefinition = getOperationDefinition(resourceType, operation.getName());
         if (operationDefinition != null)
         {
             ConfigurationDefinition resultDefinition = operationDefinition.getResultsConfigurationDefinition();
@@ -389,6 +378,20 @@ public class ConversionUtil
         }
     }
 
+    private static OperationDefinition getOperationDefinition(ResourceType resourceType, String operationName) {
+        Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
+        OperationDefinition operationDefinition = null;
+        for (OperationDefinition definition : operationDefinitions)
+        {
+            if (definition.getName().equals(operationName))
+            {
+                operationDefinition = definition;
+                break;
+            }
+        }
+        return operationDefinition;
+    }
+
     public static void convertMetricValuesToMeasurement(MeasurementReport report, ManagedProperty metricProperty, MeasurementScheduleRequest request, ResourceType resourceType, String deploymentName)
     {
         String metricName = metricProperty.getName();
@@ -397,16 +400,7 @@ public class ConversionUtil
         if (value != null)
         {
             MeasurementAdapter measurementAdapter = MeasurementAdapterFactory.getMeasurementPropertyAdapter(type);
-            MeasurementDefinition measurementDefinition = null;
-            for (MeasurementDefinition definition : resourceType.getMetricDefinitions())
-            {
-                if (definition.getName().equals(metricName))
-                {
-                    measurementDefinition = definition;
-                    break;
-                }
-            }
-
+            MeasurementDefinition measurementDefinition = getMeasurementDefinition(resourceType, metricName);
             if (measurementDefinition != null)
             {
                 measurementAdapter.setMeasurementData(report, value, request, measurementDefinition);
@@ -416,6 +410,18 @@ public class ConversionUtil
         {
             LOG.debug("Unable to obtain metric data for resource: " + deploymentName + " metric: " + metricName);
         }
+    }
 
+    private static MeasurementDefinition getMeasurementDefinition(ResourceType resourceType, String metricName) {
+        MeasurementDefinition measurementDefinition = null;
+        for (MeasurementDefinition definition : resourceType.getMetricDefinitions())
+        {
+            if (definition.getName().equals(metricName))
+            {
+                measurementDefinition = definition;
+                break;
+            }
+        }
+        return measurementDefinition;
     }
 }

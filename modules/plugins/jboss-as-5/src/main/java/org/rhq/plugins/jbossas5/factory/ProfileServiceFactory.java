@@ -46,6 +46,8 @@ public class ProfileServiceFactory
 {
     private static final Log LOG = LogFactory.getLog(ProfileServiceFactory.class);
 
+    private static final String PROFILE_SERVICE_JNDI_NAME = "ProfileService";
+
     private static ProfileService profileService;
 
     private static ManagementView currentProfileView;
@@ -72,15 +74,7 @@ public class ProfileServiceFactory
 
             try
             {
-                profileService = (ProfileService) initialContext.lookup("ProfileService");
-
-                /*ManagementView view = getCurrentProfileView();
-             ComponentType type = new ComponentType("DataSource", "LocalTx");
-             Set<ManagedComponent> components = view.getComponentsForType(type);*/
-            }
-            catch (NamingException e)
-            {
-                LOG.error("Could not find ProfileService Name on JBoss AS 5", e);
+                profileService = (ProfileService) initialContext.lookup(PROFILE_SERVICE_JNDI_NAME);
             }
             catch (Exception e)
             {
@@ -107,9 +101,8 @@ public class ProfileServiceFactory
     }
 
     /**
-     * This will refresh the managementView to have all the newest resources.
-     * It simply nulls out the "singleton" reference in this factory and calls
-     * getCurrentProfileView to reload the view with loadProfile();
+     * Refresh the current profile's ManagementView so it contains all the latest data.
+     * Use {@link #getCurrentProfileView()} to obtain the ManagementView.
      */
     public static void refreshCurrentProfileView()
     {
@@ -143,13 +136,17 @@ public class ProfileServiceFactory
         {
             LOG.error("Could not find " + domainName + " Profile from the Profile Service in JBoss AS 5", e);
         }
-
         return currentProfileView;
     }
 
-    public static DeploymentManager getDeploymentManager()
-    {
-        return getProfileService().getDeploymentManager();
+    public static DeploymentManager getDeploymentManager() throws Exception {
+        DeploymentManager deploymentManager = getProfileService().getDeploymentManager();
+        Profile activeProfile = getProfileService().getActiveProfile();
+        ProfileKey activeKey = activeProfile.getKey();
+        // Load and associate the given profile with the DeploymentManager for future operations. This is mandatory
+        // in order for us to be able to successfully invoke the various DeploymentManager methods.
+        deploymentManager.loadProfile(activeKey, true);
+        return deploymentManager;
     }
 
     /**
@@ -180,7 +177,6 @@ public class ProfileServiceFactory
                                                        ComponentType type, String name)
             throws Exception
     {
-
         Set<ManagedComponent> comps = mgtView.getComponentsForType(type);
         ManagedComponent mc = null;
         for (ManagedComponent comp : comps)

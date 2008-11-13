@@ -55,6 +55,10 @@ public class DeploymentResourceDiscoveryComponent implements ResourceDiscoveryCo
         log.info("Discovering " + resourceType.getName() + " Resources..." );
         String deploymentTypeString = ConversionUtil.getDeploymentTypeString(resourceType);
 
+        // TODO (ips): Only refresh the ManagementView *once* per runtime discovery scan, rather than every time this
+        //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.
+        ProfileServiceFactory.refreshCurrentProfileView();
+
         ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
 
         Set<String> deployments = null;

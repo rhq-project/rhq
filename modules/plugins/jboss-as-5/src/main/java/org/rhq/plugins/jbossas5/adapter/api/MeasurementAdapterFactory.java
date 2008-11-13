@@ -49,23 +49,23 @@ public class MeasurementAdapterFactory
         {
             measurementAdapter = new SimpleMetaValueMeasurementAdapter();
         }
-        if (metaType.isGeneric())
+        else if (metaType.isGeneric())
         {
             measurementAdapter = null;
         }
-        if (metaType.isComposite())
+        else if (metaType.isComposite())
         {
             measurementAdapter = null;
         }
-        if (metaType.isTable())
+        else if (metaType.isTable())
         {
             measurementAdapter = null;
         }
-        if (metaType.isCollection())
+        else if (metaType.isCollection())
         {
             measurementAdapter = null;
         }
-        if (metaType.isArray())
+        else if (metaType.isArray())
         {
             measurementAdapter = null;
         }

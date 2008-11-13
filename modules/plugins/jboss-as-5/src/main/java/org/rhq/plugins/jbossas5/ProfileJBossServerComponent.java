@@ -62,8 +62,8 @@ import java.io.*;
 /**
  * Component for JBoss AS Server.
  *
- * @author: Jason Dobies
- * @author: Mark Spritzler
+ * @author Jason Dobies
+ * @author Mark Spritzler
  */
 public class ProfileJBossServerComponent
         implements ResourceComponent, CreateChildResourceFacet, ConfigurationFacet, DeleteResourceFacet, ProgressListener

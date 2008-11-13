@@ -47,6 +47,7 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.ConversionUtil;
+import org.rhq.plugins.jbossas5.util.DebugUtils;
 
 import java.util.Map;
 import java.util.Set;
@@ -125,8 +126,10 @@ public class JndiResourceComponent
         {
             ManagedComponent managedComponent = getManagedComponent();
             Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
+            if (LOG.isDebugEnabled())
+                LOG.debug(DebugUtils.convertPropertiesToString(managedComponent));
 
-            ConversionUtil.convertConfigurationToManagedProperties(managedProperties, configuration, resourceType);
+            ConversionUtil.convertConfigurationToManagedProperties(managedProperties, configuration, this.resourceType);
 
             mgtView.updateComponent(managedComponent);
             mgtView.process();

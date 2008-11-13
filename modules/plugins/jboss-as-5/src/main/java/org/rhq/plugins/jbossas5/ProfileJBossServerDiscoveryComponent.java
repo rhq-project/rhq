@@ -28,11 +28,15 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
+import org.rhq.plugins.jbossas5.util.PluginDescriptorGenerator;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.io.File;
 
-/**
+import org.jboss.deployers.spi.management.ManagementView;
+
+ /**
  * Discovery component for JBossAS 5.x Servers.
  *
  * @author Mark Spritzler
@@ -104,6 +108,14 @@ public class ProfileJBossServerDiscoveryComponent
         */
         log.info("Discovered " + servers.size() + " " + context.getResourceType().getName() + " Resources." );
 
+        try {
+            ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+            File tempDir = context.getParentResourceContext().getTemporaryDirectory();
+            PluginDescriptorGenerator.generatePluginDescriptor(managementView, tempDir);
+        }
+        catch (Exception e) {
+            log.error("Failed to generate plugin descriptor.", e);
+        }
         return servers;
     }
 }

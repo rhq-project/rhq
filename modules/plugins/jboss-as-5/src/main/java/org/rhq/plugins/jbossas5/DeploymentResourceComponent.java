@@ -29,8 +29,6 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ManagedDeployment;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  * Component class for deployable resources like ear/war/jar/sar.
@@ -40,8 +38,6 @@ import org.apache.commons.logging.LogFactory;
 public class DeploymentResourceComponent
         extends ContentDeploymentComponent
         implements ResourceComponent {
-    private final Log LOG = LogFactory.getLog(DeploymentResourceComponent.class);
-
     //private final String DEPLOYMENT_PROPERTY_NAME = "deploymentName";
 
     private ResourceContext resourceContext;

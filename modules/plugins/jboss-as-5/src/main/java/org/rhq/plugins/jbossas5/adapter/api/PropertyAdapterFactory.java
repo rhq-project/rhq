@@ -58,23 +58,23 @@ public class PropertyAdapterFactory
         {
             propertyAdapter = new PropertySimpleToSimpleMetaValueAdapter();
         }
-        if (metaType.isGeneric())
+        else if (metaType.isGeneric())
         {
             propertyAdapter = new PropertySimpleToGenericMetaValueAdapter();
         }
-        if (metaType.isComposite())
+        else if (metaType.isComposite())
         {
             propertyAdapter = new PropertyMapToCompositeMetaValueAdapter();
         }
-        if (metaType.isTable())
+        else if (metaType.isTable())
         {
             propertyAdapter = new PropertyMapToTableMetaValueAdapter();
         }
-        if (metaType.isCollection())
+        else if (metaType.isCollection())
         {
             propertyAdapter = new PropertyListToCollectionMetaValueAdapter();
         }
-        if (metaType.isArray())
+        else if (metaType.isArray())
         {
             propertyAdapter = new PropertyListToArrayMetaValueAdapter();
         }

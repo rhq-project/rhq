@@ -58,16 +58,20 @@ public class JndiResourceDiscoveryComponent
         log.info("Discovering " + resourceType.getName() + " Resources..." );
         ComponentType componentType = ConversionUtil.getComponentType(resourceType);
 
-        ManagementView mgtView = ProfileServiceFactory.getCurrentProfileView();
+        // TODO (ips): Only refresh the ManagementView *once* per runtime discovery scan, rather than every time this
+        //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.
+        ProfileServiceFactory.refreshCurrentProfileView();
+
+        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
 
         Set<ManagedComponent> components = null;
         try
         {
-            components = mgtView.getComponentsForType(componentType);
+            components = managementView.getComponentsForType(componentType);
         }
         catch (Exception e)
         {
-            log.error("Unable to get component for type " + componentType, e);
+            log.error("Unable to get components for type " + componentType, e);
         }
 
         if (components != null)

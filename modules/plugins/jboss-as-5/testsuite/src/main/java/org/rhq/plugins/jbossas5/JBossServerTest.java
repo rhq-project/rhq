@@ -65,8 +65,8 @@ import java.util.Set;
 /**
  * Cactus Unit Test class to test interactivity between the PluginContainer and the AS ProfileService
  *
- * @author: Jason Dobies
- * @author: Mark Spritzler
+ * @author Jason Dobies
+ * @author Mark Spritzler
  */
 public class JBossServerTest extends ServletTestCase
 {

@@ -44,7 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author: Mark Spritzler
+ * @author Mark Spritzler
  */
 public class PropertyListToCollectionMetaValueAdapter extends AbstractPropertyListAdapter implements PropertyAdapter<PropertyList>
 {

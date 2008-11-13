@@ -27,7 +27,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.jboss.metatype.api.values.MetaValue;
 
 /**
- * @author: Mark Spritzler
+ * @author Mark Spritzler
  */
 public abstract class AbstractPropertyListAdapter implements PropertyAdapter<PropertyList>
 {

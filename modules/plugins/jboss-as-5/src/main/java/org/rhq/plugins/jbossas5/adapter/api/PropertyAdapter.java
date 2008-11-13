@@ -29,7 +29,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 
 
 /**
- * @author: Mark Spritzler
+ * @author Mark Spritzler
  */
 public interface PropertyAdapter<T extends Property>
 {

@@ -36,7 +36,7 @@ import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import java.io.Serializable;
 
 /**
- * @author: Mark Spritzler
+ * @author Mark Spritzler
  */
 public class PropertySimpleToGenericMetaValueAdapter extends AbstractPropertySimpleAdapter implements PropertyAdapter<PropertySimple>
 {

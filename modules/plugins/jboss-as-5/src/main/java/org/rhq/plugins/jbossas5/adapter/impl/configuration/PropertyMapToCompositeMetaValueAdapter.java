@@ -44,7 +44,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * @author: Mark Spritzler
+ * @author Mark Spritzler
  */
 public class PropertyMapToCompositeMetaValueAdapter extends AbstractPropertyMapAdapter implements PropertyAdapter<PropertyMap>
 {

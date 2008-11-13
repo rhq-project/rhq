@@ -12,10 +12,9 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServlet;
 import java.net.URL;
 import java.util.Set;
-//import java.util.Collection;
 
 /**
- * @author: Jason Dobies
+ * @author Jason Dobies
  */
 public class
         BootstrapServlet

@@ -36,7 +36,7 @@ import org.apache.commons.logging.LogFactory;
 import java.io.Serializable;
 
 /**
- * @author: Mark Spritzler
+ * @author Mark Spritzler
  */
 public class PropertySimpleToSimpleMetaValueAdapter extends AbstractPropertySimpleAdapter implements PropertyAdapter<PropertySimple>
 {

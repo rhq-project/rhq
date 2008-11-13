@@ -41,7 +41,7 @@ import java.util.HashSet;
 /**
  * Discovery class for discovering deployable resources like ear/war/jar/sar
  *
- * @author: Mark Spritzler
+ * @author Mark Spritzler
  */
 public class DeploymentResourceDiscoveryComponent implements ResourceDiscoveryComponent<ProfileJBossServerComponent> {
     private final Log log = LogFactory.getLog(this.getClass());

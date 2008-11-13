@@ -35,7 +35,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * @author: Mark Spritzler
+ * @author Mark Spritzler
  */
 public class PropertyAdapterFactory
 {

@@ -42,7 +42,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * @author: Mark Spritzler
+ * @author Mark Spritzler
  */
 public class PropertyMapToTableMetaValueAdapter extends AbstractPropertyMapAdapter implements PropertyAdapter<PropertyMap>
 {

@@ -530,6 +530,11 @@
             <c:simple-property name="rhq.agent.wait-for-server-at-startup-msecs" required="false" type="integer" activationPolicy="restart" default="5000" displayName="Time To Wait For RHQ Server At Startup" description="This is the number of milliseconds the agent will wait for the RHQ Server to come up" />
             <c:simple-property name="rhq.agent.update-plugins-at-startup" required="false" type="boolean" activationPolicy="restart" default="true" displayName="Update Plugins At Startup" description="This will force the agent to download plugin updates from the RHQ Server" />
          </c:group>
+         <c:group name="agentupdate" displayName="Agent Auto-Update" hiddenByDefault="true">
+            <c:simple-property name="rhq.agent.agent-update.enabled" required="false" type="boolean" activationPolicy="immediate" default="true" displayName="Enable Agent Update" description="If true, the agent will be allowed to update itself if it finds there is a new agent update binary available. If this feature is not enabled, the agent will never be allowed to update itself." />
+            <c:simple-property name="rhq.agent.agent-update.version-url" required="false" type="string" activationPolicy="immediate" displayName="Agent Update Binary Version URL" description="If defined, this will be the URL the agent uses when it needs to retrieve information about the latest available agent update binary.  If this is not defined, the agent will ask its server for the agent update binary version information." />"
+            <c:simple-property name="rhq.agent.agent-update.download-url" required="false" type="string" activationPolicy="immediate" displayName="Agent Update Binary Download URL" description="If defined, this will be the URL the agent uses when it needs to download the latest available agent update binary.  If this is not defined, the agent will download the agent update binary from its server." />
+         </c:group>
          <c:group name="misc" displayName="Miscellaneous Settings" hiddenByDefault="true">
             <c:description>Settings that usually do not need to change under normal circumstances</c:description>
             <c:simple-property name="rhq.agent.data-directory" required="false" type="string" activationPolicy="restart" default="data" displayName="Data Directory" description="Location where the agent can persist data to the file system" />
@@ -562,7 +567,6 @@
                   <c:float-constraint minimum="0.00" maximum="1.00" />
                </c:constraint>
             </c:simple-property>
-            <c:simple-property name="rhq.agent.agent-update.enabled" required="false" type="boolean" activationPolicy="immediate" default="true" displayName="Enable Agent Update" description="If true, the agent will be allowed to update itself if it finds there is a new agent update binary available. If this feature is not enabled, the agent will never be allowed to update itself." />
          </c:group>
       </resource-configuration>
 

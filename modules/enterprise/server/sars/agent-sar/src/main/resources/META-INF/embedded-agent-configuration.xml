@@ -167,10 +167,36 @@ Embedded RHQ Agent Configuration
                be allowed to update itself.
 
                EMBEDDED: we never have to worry about being up-to-date,
-                         the embedded agent will always be able to talk
-                         to the server it is embedded in.
+                         the embedded agent will always be the latest
+                         when embedded in its server.
                -->
                <entry key="rhq.agent.agent-update.enabled" value="false" />
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.agent-update.version-url
+
+               If this is defined, it will be the URL the agent uses when it
+               needs to retrieve information about the latest available
+               agent update binary.  If this is not defined, the agent will
+               ask its server for the agent update binary version information.
+               -->
+               <!--
+               <entry key="rhq.agent.agent-update.version-url" value="http://127.0.0.1:7080/agentupdate/version" />
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.agent-update.download-url
+
+               If this is defined, it will be the URL the agent uses when it
+               needs to download the latest available agent update binary.
+               If this is not defined, the agent will download the agent
+               update binary from its server.
+               -->
+               <!--
+               <entry key="rhq.agent.agent-update.download-url" value="http://127.0.0.1:7080/agentupdate/download" />
+               -->
 
                <!--
                _______________________________________________________________

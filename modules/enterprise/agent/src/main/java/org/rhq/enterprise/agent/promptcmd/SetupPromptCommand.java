@@ -52,6 +52,7 @@ import org.rhq.enterprise.communications.util.prefs.RemotingLocatorUriParamsVali
 import org.rhq.enterprise.communications.util.prefs.Setup;
 import org.rhq.enterprise.communications.util.prefs.SetupInstruction;
 import org.rhq.enterprise.communications.util.prefs.SetupValidityChecker;
+import org.rhq.enterprise.communications.util.prefs.UrlSetupValidityChecker;
 
 /**
  * Sets up the agent with configuration information that the user enters at the prompt.
@@ -480,6 +481,16 @@ public class SetupPromptCommand implements AgentPromptCommand {
             AgentSetupInstructions.SETUP_INSTRUCTION_AGENTUPDATEENABLED_DEFAULT, new BooleanSetupValidityChecker(),
             SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_AGENTUPDATEENABLED_PROMPT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_AGENTUPDATEENABLED_HELP)));
+
+        instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_AGENTUPDATEVERSIONURL_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_AGENTUPDATEVERSIONURL_DEFAULT, new UrlSetupValidityChecker(),
+            SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_AGENTUPDATEVERSIONURL_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_AGENTUPDATEVERSIONURL_HELP)));
+
+        instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_AGENTUPDATEDOWNLOADURL_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_AGENTUPDATEDOWNLOADURL_DEFAULT, new UrlSetupValidityChecker(),
+            SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_AGENTUPDATEDOWNLOADURL_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_AGENTUPDATEDOWNLOADURL_HELP)));
 
         instr.add(new DefaultSetupInstruction(
             AgentSetupInstructions.SETUP_INSTRUCTION_REGISTERWITHSERVERATSTARTUP_PREF,

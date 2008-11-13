@@ -911,6 +911,10 @@ public interface CommI18NResourceKeys {
         @I18NMessage(value = "Dies ist keine gültige Zahl: {0}", locale = "de") })
     String SETUP_NOT_A_FLOAT = "Setup.float-checker.not-a-float";
 
+    @I18NMessages( { @I18NMessage("That is not a valid URL: {0}"),
+        @I18NMessage(value = "Dies ist keine gültige URL: {0}", locale = "de") })
+    String SETUP_NOT_A_URL = "Setup.float-checker.not-a-url";
+
     @I18NMessages( {
         @I18NMessage("That new value [{0}] is too low - it must be greater than or equal to [{1}]"),
         @I18NMessage(value = "Der neue Wert [{0}] ist zu niedrig - er muss größer oder gleich [{1}] sein", locale = "de") })

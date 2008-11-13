@@ -778,6 +778,27 @@ public interface AgentSetupInstructions {
         + "If false, the agent will never apply updates; therefore any agent updates\\n\\\n" + "must be done manually.") })
     String SETUP_INSTRUCTION_AGENTUPDATEENABLED_HELP = "PromptCommand.setup.instruction.agentupdateenabled.help";
 
+    // AGENT UPDATE VERSION URL
+    String SETUP_INSTRUCTION_AGENTUPDATEVERSIONURL_PREF = AgentConfigurationConstants.AGENT_UPDATE_VERSION_URL;
+    String SETUP_INSTRUCTION_AGENTUPDATEVERSIONURL_DEFAULT = null;
+    @I18NMessages( { @I18NMessage("Agent Update Version URL") })
+    String SETUP_INSTRUCTION_AGENTUPDATEVERSIONURL_PROMPT = "PromptCommand.setup.instruction.agentupdateversionurl.prompt";
+    @I18NMessages( { @I18NMessage("If this is defined, it will be the URL the agent uses when it\\n\\\n"
+        + "needs to retrieve information about the latest available\\n\\\n"
+        + "agent update binary.  If this is not defined, the agent will\\n\\\n"
+        + "ask its server for the agent update binary version information.") })
+    String SETUP_INSTRUCTION_AGENTUPDATEVERSIONURL_HELP = "PromptCommand.setup.instruction.agentupdateversionurl.help";
+
+    // AGENT UPDATE DOWNLOAD URL
+    String SETUP_INSTRUCTION_AGENTUPDATEDOWNLOADURL_PREF = AgentConfigurationConstants.AGENT_UPDATE_DOWNLOAD_URL;
+    String SETUP_INSTRUCTION_AGENTUPDATEDOWNLOADURL_DEFAULT = null;
+    @I18NMessages( { @I18NMessage("Agent Update Download URL") })
+    String SETUP_INSTRUCTION_AGENTUPDATEDOWNLOADURL_PROMPT = "PromptCommand.setup.instruction.agentupdatedownloadurl.prompt";
+    @I18NMessages( { @I18NMessage("If this is defined, it will be the URL the agent uses when it\\n\\\n"
+        + "needs to download the latest available agent update binary.\\n\\\n"
+        + "If this is not defined, the agent will download the agent\\n\\\n" + "update binary from its server.") })
+    String SETUP_INSTRUCTION_AGENTUPDATEDOWNLOADURL_HELP = "PromptCommand.setup.instruction.agentupdatedownloadurl.help";
+
     // AGENT NAME
     String SETUP_INSTRUCTION_AGENTNAME_PREF = AgentConfigurationConstants.NAME;
     @I18NMessages( { @I18NMessage("Agent Name") })

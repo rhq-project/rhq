@@ -188,6 +188,32 @@ commands named "config", "setconfig" and "setup" and the command line options
 
                <!--
                _______________________________________________________________
+               rhq.agent.agent-update.version-url
+
+               If this is defined, it will be the URL the agent uses when it
+               needs to retrieve information about the latest available
+               agent update binary.  If this is not defined, the agent will
+               ask its server for the agent update binary version information.
+               -->
+               <!--
+               <entry key="rhq.agent.agent-update.version-url" value="http://127.0.0.1:7080/agentupdate/version" />
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.agent-update.download-url
+
+               If this is defined, it will be the URL the agent uses when it
+               needs to download the latest available agent update binary.
+               If this is not defined, the agent will download the agent
+               update binary from its server.
+               -->
+               <!--
+               <entry key="rhq.agent.agent-update.download-url" value="http://127.0.0.1:7080/agentupdate/download" />
+               -->
+
+               <!--
+               _______________________________________________________________
                rhq.agent.primary-server-switchover-check-interval-msecs
 
                The agent will periodically check to ensure that the server

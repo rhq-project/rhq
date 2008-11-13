@@ -146,6 +146,16 @@ public interface AgentConfigurationConstants {
     boolean DEFAULT_AGENT_UPDATE_ENABLED = true;
 
     /**
+     * If this preference is defined (its default is null), this will be the URL that contains the agent update version info. 
+     */
+    String AGENT_UPDATE_VERSION_URL = PROPERTY_NAME_PREFIX + "agent-update.version-url";
+
+    /**
+     * If this preference is defined (its default is null), this will be the URL the agent downloads the agent update from. 
+     */
+    String AGENT_UPDATE_DOWNLOAD_URL = PROPERTY_NAME_PREFIX + "agent-update.download-url";
+
+    /**
      * The amount of milliseconds the agent will wait at startup for the server to be detected.
      */
     String WAIT_FOR_SERVER_AT_STARTUP_MSECS = PROPERTY_NAME_PREFIX + "wait-for-server-at-startup-msecs";

@@ -32,6 +32,7 @@ import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 import org.rhq.enterprise.communications.ServiceContainerConfiguration;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderConfiguration;
 import org.rhq.enterprise.communications.command.client.PersistentFifo;
+import org.rhq.enterprise.communications.util.SecurityUtil;
 
 /**
  * Just provides some convienence methods to extract agent configuration properties.
@@ -318,6 +319,82 @@ public class AgentConfiguration {
         boolean flag = m_preferences.getBoolean(AgentConfigurationConstants.AGENT_UPDATE_ENABLED,
             AgentConfigurationConstants.DEFAULT_AGENT_UPDATE_ENABLED);
         return flag;
+    }
+
+    /**
+     * This will return the URL that the agent should use when it needs to find out
+     * the version information of the latest agent update binary.
+     * 
+     * @return version URL if defined, <code>null</code> if not defined
+     */
+    public String getAgentUpdateVersionUrlIfDefined() {
+        String str = m_preferences.get(AgentConfigurationConstants.AGENT_UPDATE_VERSION_URL, null);
+
+        return str;
+    }
+
+    /**
+     * This will return the URL that the agent should use when it needs to find out
+     * the version information of the latest agent update binary.
+     * <p>
+     * If the URL is not defined, this will return a default URL that points to this agent's server.
+     * If the {@link #getServerTransport() server transport} is secure, the URL returned
+     * will be over "https", otherwise, it will go over "http". The
+     * {@link #getServerBindAddress() server address} and {@link #getServerBindPort() server port}
+     * will be the same regardless of the security transport.
+     * </p>
+     * 
+     * @return version URL
+     */
+    public String getAgentUpdateVersionUrl() {
+        String str = m_preferences.get(AgentConfigurationConstants.AGENT_UPDATE_VERSION_URL, null);
+
+        if (str == null) {
+            String transport = SecurityUtil.isTransportSecure(getServerTransport()) ? "https" : "http";
+            String address = getServerBindAddress();
+            int port = getServerBindPort();
+            str = transport + "://" + address + ":" + port + "/agentupdate/version";
+        }
+
+        return str;
+    }
+
+    /**
+     * This will return the URL that the agent should use when it needs to download
+     * the latest agent update binary.
+     * 
+     * @return download URL if defined, <code>null</code> if not defined
+     */
+    public String getAgentUpdateDownloadUrlIfDefined() {
+        String str = m_preferences.get(AgentConfigurationConstants.AGENT_UPDATE_DOWNLOAD_URL, null);
+
+        return str;
+    }
+
+    /**
+     * This will return the URL that the agent should use when it needs to download
+     * the latest agent update binary.
+     * <p>
+     * If the URL is not defined, this will return a default URL that points to this agent's server.
+     * If the {@link #getServerTransport() server transport} is secure, the URL returned
+     * will be over "https", otherwise, it will go over "http". The
+     * {@link #getServerBindAddress() server address} and {@link #getServerBindPort() server port}
+     * will be the same regardless of the security transport.
+     * </p>
+     * 
+     * @return version URL
+     */
+    public String getAgentUpdateDownloadUrl() {
+        String str = m_preferences.get(AgentConfigurationConstants.AGENT_UPDATE_DOWNLOAD_URL, null);
+
+        if (str == null) {
+            String transport = SecurityUtil.isTransportSecure(getServerTransport()) ? "https" : "http";
+            String address = getServerBindAddress();
+            int port = getServerBindPort();
+            str = transport + "://" + address + ":" + port + "/agentupdate/download";
+        }
+
+        return str;
     }
 
     /**

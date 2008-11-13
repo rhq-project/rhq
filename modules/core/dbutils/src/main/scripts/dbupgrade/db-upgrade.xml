@@ -917,6 +917,15 @@ DB Upgrade:
       </schema-directSQL>
    </schemaSpec>
 
+   <schemaSpec version="2.28">
+      <schema-directSQL>
+         <statement desc="Adding Enable Agent Auto Update system configuration setting">
+            INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
+                   VALUES (53, 'ENABLE_AGENT_AUTO_UPDATE', 'true', 'true')
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

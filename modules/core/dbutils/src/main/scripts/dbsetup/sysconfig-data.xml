@@ -152,6 +152,10 @@
         <data ID="52" PROPERTY_KEY="AGENT_MAX_QUIET_TIME_ALLOWED" PROPERTY_VALUE="120000"
               DEFAULT_PROPERTY_VALUE="120000" FREAD_ONLY="FALSE"/>
 
+        <!-- Will our server-cloud support agents auto-updating themselves? -->
+        <data ID="53" PROPERTY_KEY="ENABLE_AGENT_AUTO_UPDATE" PROPERTY_VALUE="true"
+              DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
+
     </table>
 
 </dbsetup>

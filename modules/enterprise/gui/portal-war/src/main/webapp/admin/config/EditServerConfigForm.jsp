@@ -94,6 +94,19 @@
     </td>
   </tr>
   <tr>
+    <td class="BlockLabel"><fmt:message key="admin.settings.EnableAgentAutoUpdate"/></td>
+    <td class="BlockLabel">
+      <table cellpadding="0" cellspacing="4" border="0">
+        <tr>
+          <td align="left"><html:radio property="enableAgentAutoUpdate" value="true"/><fmt:message key="yesno.true"/></td>
+          <td align="left"><html:radio property="enableAgentAutoUpdate" value="false"/><fmt:message key="yesno.false"/></td>
+        </tr>
+      </table>
+    </td>
+    <td class="BlockLabel"></td>
+    <td class="BlockContent"></td>
+  </tr>
+  <tr>
     <td colspan="4" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>
 <!--  /  -->

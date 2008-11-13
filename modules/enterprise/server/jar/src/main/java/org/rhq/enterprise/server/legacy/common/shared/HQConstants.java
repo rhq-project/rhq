@@ -60,6 +60,9 @@ public class HQConstants {
     // how long can an agent be quiet (i.e. not send an avail report) before we consider it down and backfill it
     public static final String AgentMaxQuietTimeAllowed = "AGENT_MAX_QUIET_TIME_ALLOWED";
 
+    // how long can an agent be quiet (i.e. not send an avail report) before we consider it down and backfill it
+    public static final String EnableAgentAutoUpdate = "ENABLE_AGENT_AUTO_UPDATE";
+
     // Data storage options (All in ms)
     // How long do we keep raw metric data?
     /**

@@ -35,6 +35,7 @@ public class SystemConfigForm extends BaseValidatorForm {
     private String baseUrl = "";
     private String agentMaxQuietTimeAllowed = "";
     private String agentMaxQuietTimeAllowedVal = "0";
+    private boolean enableAgentAutoUpdate = false;
     private String helpUserId = "";
     private String helpPassword = "";
     private String maintIntervalVal = "0";
@@ -79,6 +80,7 @@ public class SystemConfigForm extends BaseValidatorForm {
 
         buf.append(" baseUrl=").append(baseUrl);
         buf.append(" agentMaxQuietTimeAllowed=").append(agentMaxQuietTimeAllowed);
+        buf.append(" enableAgentAutoUpdate=").append(enableAgentAutoUpdate);
         buf.append(" helpUserId=").append(helpUserId);
         buf.append(" helpPassword=").append(helpPassword);
         buf.append(" ldapEnabled=").append(ldapEnabled);
@@ -117,6 +119,7 @@ public class SystemConfigForm extends BaseValidatorForm {
     public void reset(ActionMapping mapping, HttpServletRequest request) {
         agentMaxQuietTimeAllowed = "";
         agentMaxQuietTimeAllowedVal = null;
+        enableAgentAutoUpdate = true;
         helpUserId = "";
         helpPassword = "";
         maintInterval = "";
@@ -166,6 +169,9 @@ public class SystemConfigForm extends BaseValidatorForm {
         Long agentMaxQuietTimeAllowedLong = new Long(agentMaxQuietTimeAllowedValStr);
         agentMaxQuietTimeAllowed = findTimeUnit(agentMaxQuietTimeAllowedLong.longValue());
         agentMaxQuietTimeAllowedVal = calcTimeUnit(agentMaxQuietTimeAllowedLong.longValue());
+
+        String enableAgentAutoUpdateStr = prop.getProperty(HQConstants.EnableAgentAutoUpdate);
+        enableAgentAutoUpdate = Boolean.valueOf(enableAgentAutoUpdateStr).booleanValue();
 
         String maintIntervalValStr = prop.getProperty(HQConstants.DataMaintenance);
         Long maintIntervalLong = new Long(maintIntervalValStr);
@@ -285,6 +291,8 @@ public class SystemConfigForm extends BaseValidatorForm {
             agentMaxQuietTimeAllowed);
         prop.setProperty(HQConstants.AgentMaxQuietTimeAllowed, String.valueOf(agentMaxQuietTimeAllowedLong));
 
+        prop.setProperty(HQConstants.EnableAgentAutoUpdate, String.valueOf(enableAgentAutoUpdate));
+
         long maintIntervalLong = convertToMillisecond(Integer.parseInt(maintIntervalVal), maintInterval);
         prop.setProperty(HQConstants.DataMaintenance, String.valueOf(maintIntervalLong));
 
@@ -375,6 +383,14 @@ public class SystemConfigForm extends BaseValidatorForm {
 
     public void setAgentMaxQuietTimeAllowedVal(String string) {
         this.agentMaxQuietTimeAllowedVal = string;
+    }
+
+    public boolean getEnableAgentAutoUpdate() {
+        return this.enableAgentAutoUpdate;
+    }
+
+    public void setEnableAgentAutoUpdate(boolean b) {
+        this.enableAgentAutoUpdate = b;
     }
 
     public String getMaintIntervalVal() {

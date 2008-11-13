@@ -24,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -42,6 +43,7 @@ import org.rhq.core.domain.util.MD5Generator;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.core.CoreServerMBean;
+import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -170,8 +172,11 @@ public class AgentUpdateServlet extends HttpServlet {
     }
 
     private int getDownloadLimit() {
-        // TODO: have SystemManager store a "agent update disable" flag in RHQ_SYSTEM_CONFIG table
-        //       read that setting and return 0 if we are disabled
+        // if the server cloud was configured to disallow updates, return 0
+        Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration();
+        if (!Boolean.parseBoolean(systemConfig.getProperty(HQConstants.EnableAgentAutoUpdate))) {
+            return 0;
+        }
 
         String limitStr = System.getProperty(SYSPROP_AGENT_DOWNLOADS_LIMIT);
         int limit;

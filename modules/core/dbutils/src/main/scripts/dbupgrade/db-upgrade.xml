@@ -908,6 +908,15 @@ DB Upgrade:
       </schema-directSQL>
    </schemaSpec>
 
+   <schemaSpec version="2.27">
+      <schema-directSQL>
+         <statement desc="Adding Agent Max Quiet Time Allowed system configuration setting">
+            INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
+                   VALUES (52, 'AGENT_MAX_QUIET_TIME_ALLOWED', '120000', '120000')
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

@@ -233,9 +233,9 @@ export JAVA_OPTS
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_CMDLINE_OPTS" ]; then
-   
+
    _PROPS_FILE_PATH=${RHQ_SERVER_HOME}/bin/rhq-server.properties
-   
+
    # convert paths if we are on Windows
    if [ -n "$_CYGWIN" ]; then
       _PROPS_FILE_PATH=`cygpath --windows --path "$_PROPS_FILE_PATH"`
@@ -285,15 +285,15 @@ case "$1" in
         echo Starting RHQ Server in console...
 
         echo "$$" > $PIDFILE
-        
-        # start the server, making sure its working directory is the JBossAS bin directory 
+
+        # start the server, making sure its working directory is the JBossAS bin directory
         cd ${RHQ_SERVER_HOME}/jbossas/bin
         $_JBOSS_RUN_SCRIPT $RHQ_SERVER_CMDLINE_OPTS
-        
+
         JBOSS_STATUS=$?
-        
+
         rm $PIDFILE
-        
+
         exit $JBOSS_STATUS
         ;;
 
@@ -307,8 +307,8 @@ case "$1" in
 
         LAUNCH_JBOSS_IN_BACKGROUND=true
         export LAUNCH_JBOSS_IN_BACKGROUND
-        
-        # start the server, making sure its working directory is the JBossAS bin directory 
+
+        # start the server, making sure its working directory is the JBossAS bin directory
         cd ${RHQ_SERVER_HOME}/jbossas/bin
         if [ -z "$RHQ_SERVER_DEBUG" ]; then
            $_JBOSS_RUN_SCRIPT $RHQ_SERVER_CMDLINE_OPTS > /dev/null 2>&1 &
@@ -317,7 +317,7 @@ case "$1" in
         fi
 
         echo "$!" > $PIDFILE
-        
+
         sleep 5
         check_status "starting"
         echo $STATUS
@@ -338,10 +338,10 @@ case "$1" in
         fi
 
         echo Trying to stop the RHQ Server...
-        
+
         if [ -n "$_SOLARIS" ]; then
-        	kill -TERM `cat ${RHQ_SERVER_HOME}/jbossas/.jboss_pid`
-        	sleep 3
+           kill -TERM `cat ${RHQ_SERVER_HOME}/jbossas/.jboss_pid`
+           sleep 3
         fi
 
         echo "RHQ Server (pid=${PID}) is stopping..."
@@ -369,10 +369,10 @@ case "$1" in
         fi
 
         echo Trying to kill the RHQ Server...
-        
+
         if [ -n "$_SOLARIS" ]; then
-        	kill -9 `cat ${RHQ_SERVER_HOME}/jbossas/.jboss_pid`
-        	sleep 3
+           kill -9 `cat ${RHQ_SERVER_HOME}/jbossas/.jboss_pid`
+           sleep 3
         fi
 
         echo "RHQ Server (pid=${PID}) is being killed..."

@@ -32,8 +32,7 @@
     <properties>
         <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
 
-        <jboss5.version>5.0.0-SNAPSHOT</jboss5.version>
-        <jboss-managed.version>2.0.0-SNAPSHOT</jboss-managed.version>
+        <jbas5.version>5.0.0-SNAPSHOT</jbas5.version>        
     </properties>
 
     <dependencies>
@@ -45,18 +44,10 @@
             <scope>provided</scope>
 		</dependency>
     
-        <!-- External Dependencies -->
-        <dependency>
-            <groupId>org.jboss.man</groupId>
-            <artifactId>jboss-managed</artifactId>
-            <version>${jboss-managed.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
             <artifactId>jboss-as-profileservice</artifactId>
-            <version>${jboss5.version}</version>
+            <version>${jbas5.version}</version>
             <scope>provided</scope>
         </dependency>
     

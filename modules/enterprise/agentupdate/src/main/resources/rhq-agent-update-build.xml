@@ -25,6 +25,10 @@
       <copy todir="${rhq.agent.update.update-agent-dir}" overwrite="true">
         <fileset dir="${java.io.tmpdir}/rhq-agent-update-backup"/>
       </copy>
+      <chmod dir="${rhq.agent.update.update-agent-dir}/bin" perm="ug+rx" includes="*.sh"/>
+      <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.s0"/>
+      <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.sl"/>
+      <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.dylib"/>
       <echo>=== RESTORE OF OLD AGENT COMPLETE ===</echo>
    </target>
 
@@ -66,6 +70,7 @@
               failonerror="false"/>
 
       <!-- at this point, we have the new but raw agent extracted to the ${_update.tmp.dir}/rhq-agent -->
+      <!-- the old, existing agent (the one we are upgrading) is at ${rhq.agent.update.update-agent-dir} -->
 
       <!-- if there are plugins, keep them -->
       <copy todir="${_update.tmp.dir}/rhq-agent/plugins">
@@ -76,6 +81,14 @@
       <copy file="${rhq.agent.update.update-agent-dir}/data/failover-list.dat"
             tofile="${_update.tmp.dir}/rhq-agent/data/failover-list.dat"
             failonerror="false" />
+
+      <!-- if there are any Windows wrapper environment or include files, copy them -->
+      <copy todir="${_update.tmp.dir}/rhq-agent/bin/wrapper">
+         <fileset dir="${rhq.agent.update.update-agent-dir}/bin/wrapper">
+            <include name="*.env"/>
+            <include name="*.inc"/>
+         </fileset>
+      </copy>
 
       <!-- copy any custom launch scripts (if we copy, we lose our UNIX +x permission bits) -->
       <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/bin"
@@ -125,6 +138,10 @@
       <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.s0"/>
       <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.sl"/>
       <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.dylib"/>
+
+      <!-- agent is updated, we don't need the backup anymore, so remove it -->
+      <delete dir="${java.io.tmpdir}/rhq-agent-update-backup" failonerror="false" verbose="false"/>
+
    </target>
 
    <!-- makes sure the jar file where the agent distro is supposed to be actually exists -->

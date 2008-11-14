@@ -47,7 +47,6 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
-import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
@@ -60,15 +59,16 @@ import java.util.Map;
 import java.io.*;
 
 /**
- * Component for JBoss AS Server.
+ * Component for JBoss AS 5.x Server.
  *
  * @author Jason Dobies
  * @author Mark Spritzler
+ * @author Ian Springer
  */
 public class ProfileJBossServerComponent
-        implements ResourceComponent, CreateChildResourceFacet, ConfigurationFacet, DeleteResourceFacet, ProgressListener
+        implements ResourceComponent, CreateChildResourceFacet, ConfigurationFacet, ProgressListener
 {
-    private final Log LOG = LogFactory.getLog(ProfileJBossServerComponent.class);
+    private final Log log = LogFactory.getLog(this.getClass());
 
     // Constants  --------------------------------------------
 
@@ -143,9 +143,8 @@ public class ProfileJBossServerComponent
         return createResourceReport;
     }
 
-    public void deleteResource()
-    {
-        // Deletes are done on the resource itself.
+    public void progressEvent(ProgressEvent eventInfo) {
+        log.debug(eventInfo);
     }
 
     private void handleMiscManagedProperties(Collection<PropertyDefinition> managedPropertyGroup,
@@ -202,65 +201,55 @@ public class ProfileJBossServerComponent
 
         // Convert resource type into template name
         ConfigurationDefinition configDef = resourceType.getPluginConfigurationDefinition();
-        ConfigurationTemplate template = configDef.getDefaultTemplate();
-        Configuration pluginConfiguration = template.getConfiguration();
-        PropertySimple resourceNameProperty = pluginConfiguration.getSimple(RESOURCE_NAME_PROPERTY);
-        PropertySimple templateProperty = pluginConfiguration.getSimple(TEMPLATE_NAME_PROPERTY);
-        Collection<PropertyDefinition> managedPropertyGroup = configDef.getPropertiesInGroup(MANAGED_PROPERTY_GROUP);
-
+        Configuration defaultPluginConfig = getDefaultPluginConfiguration(resourceType);
+        PropertySimple resourceNameProperty = defaultPluginConfig.getSimple(RESOURCE_NAME_PROPERTY);
         String resourceName = getResourceName(resourceNameProperty, configuration);
-        if (!ProfileServiceFactory.isManagedComponent(resourceName, ConversionUtil.getComponentType(resourceType)))
+        if (ProfileServiceFactory.isManagedComponent(resourceName, ConversionUtil.getComponentType(resourceType))) {
+            createResourceReport.setStatus(CreateResourceStatus.FAILURE);
+            createResourceReport.setErrorMessage("Duplicate JNDI Name, a resource with that name already exists");
+            return;
+        }
+
+        createResourceReport.setResourceName(resourceName);
+        String resourceKey = getResourceKey(resourceType, resourceName);
+        createResourceReport.setResourceKey(resourceKey);
+
+        PropertySimple templateNameProperty = defaultPluginConfig.getSimple(TEMPLATE_NAME_PROPERTY);
+        String templateName = templateNameProperty.getStringValue();
+
+        DeploymentTemplateInfo deploymentTemplateInfo;
+        try
         {
-
-            createResourceReport.setResourceName(resourceName);
-
-            String resourceKey = getResourceKey(resourceType, resourceName);
-            createResourceReport.setResourceKey(resourceKey);
-
-            String templateName = templateProperty.getStringValue();
-
-            DeploymentTemplateInfo deploymentTemplateInfo;
+            deploymentTemplateInfo = profileView.getTemplate(templateName);
+            Map<String, ManagedProperty> managedProperties = deploymentTemplateInfo.getProperties();
+            Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(defaultPluginConfig);
+            ConversionUtil.convertConfigurationToManagedProperties(managedProperties, configuration, resourceType, customProps);
+            Collection<PropertyDefinition> managedPropertyGroup = configDef.getPropertiesInGroup(MANAGED_PROPERTY_GROUP);
+            handleMiscManagedProperties(managedPropertyGroup, managedProperties, defaultPluginConfig);
             try
             {
-                deploymentTemplateInfo = profileView.getTemplate(templateName);
-                Map<String, ManagedProperty> managedProperties = deploymentTemplateInfo.getProperties();
-
-                Configuration defaultPluginConfig = getDefaultPluginConfiguration(resourceType);
-                Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(defaultPluginConfig);
-                ConversionUtil.convertConfigurationToManagedProperties(managedProperties, configuration, resourceType, customProps);
-                handleMiscManagedProperties(managedPropertyGroup, managedProperties, pluginConfiguration);
-
-                try
-                {
-                    profileView.applyTemplate(ManagedDeployment.DeploymentPhase.APPLICATION, resourceName, deploymentTemplateInfo);
-                    profileView.process();
-                    createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
-                }
-                catch (Exception e)
-                {
-                    LOG.error("Unable to apply Template and process through Profile View", e);
-                    createResourceReport.setStatus(CreateResourceStatus.FAILURE);
-                    createResourceReport.setException(e);
-                }
-
-            }
-            catch (NoSuchDeploymentException e)
-            {
-                LOG.error("Unable to find Template " + templateName + " In profile view", e);
-                createResourceReport.setStatus(CreateResourceStatus.FAILURE);
-                createResourceReport.setException(e);
+                profileView.applyTemplate(ManagedDeployment.DeploymentPhase.APPLICATION, resourceName, deploymentTemplateInfo);
+                profileView.process();
+                createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
             }
             catch (Exception e)
             {
-                LOG.error("Unable to process create request", e);
+                log.error("Unable to apply Template and process through Profile View", e);
                 createResourceReport.setStatus(CreateResourceStatus.FAILURE);
                 createResourceReport.setException(e);
             }
         }
-        else
+        catch (NoSuchDeploymentException e)
         {
+            log.error("Unable to find Template " + templateName + " In profile view", e);
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
-            createResourceReport.setErrorMessage("Duplicate JNDI Name, a resource with that name already exists");
+            createResourceReport.setException(e);
+        }
+        catch (Exception e)
+        {
+            log.error("Unable to process create request", e);
+            createResourceReport.setStatus(CreateResourceStatus.FAILURE);
+            createResourceReport.setException(e);
         }
     }
 
@@ -292,7 +281,7 @@ public class ProfileJBossServerComponent
             createResourceReport.setResourceKey(archiveName);
             createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
         } catch (Throwable t) {
-            LOG.error("Error deploying application for report: " + createResourceReport, t);
+            log.error("Error deploying application for report: " + createResourceReport, t);
             createResourceReport.setException(t);
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
         }
@@ -317,10 +306,10 @@ public class ProfileJBossServerComponent
 
     private void deployArchive(File tempFile, CreateResourceReport createResourceReport) throws Exception
     {
-        DeploymentManager manager = ProfileServiceFactory.getDeploymentManager();
+        DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
         String archiveName = tempFile.getName();
         boolean copyContent = true;
-        DeploymentProgress progress = manager.distribute(archiveName, ManagedDeployment.DeploymentPhase.APPLICATION,
+        DeploymentProgress progress = deploymentManager.distribute(archiveName, ManagedDeployment.DeploymentPhase.APPLICATION,
                 tempFile.toURL(), copyContent);
         progress.addProgressListener(this);
         progress.run();        
@@ -333,7 +322,7 @@ public class ProfileJBossServerComponent
             if (exceptionThrown != null)
             {
                 createResourceReport.setException(exceptionThrown);
-                LOG.error("", exceptionThrown);
+                log.error("", exceptionThrown);
             }
             else
             {
@@ -342,7 +331,7 @@ public class ProfileJBossServerComponent
         }
 
         String[] names = {archiveName};
-        progress = manager.start(ManagedDeployment.DeploymentPhase.APPLICATION, names);
+        progress = deploymentManager.start(ManagedDeployment.DeploymentPhase.APPLICATION, names);
         progress.addProgressListener(this);
         progress.run();
 
@@ -352,10 +341,6 @@ public class ProfileJBossServerComponent
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
             createResourceReport.setErrorMessage(status.getMessage());
         }
-    }
-
-    public void progressEvent(ProgressEvent eventInfo) {
-        
     }
 }
 

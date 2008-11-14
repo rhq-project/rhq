@@ -44,9 +44,7 @@ import java.util.HashSet;
  * @author Mark Spritzler
  */
 public class DeploymentResourceDiscoveryComponent implements ResourceDiscoveryComponent<ProfileJBossServerComponent> {
-    private final Log log = LogFactory.getLog(this.getClass());
-
-    private final String DEPLOYMENT_PROPERTY_NAME = "deploymentName";
+    private final Log log = LogFactory.getLog(this.getClass());    
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ProfileJBossServerComponent> resourceDiscoveryContext)
     {
@@ -61,52 +59,52 @@ public class DeploymentResourceDiscoveryComponent implements ResourceDiscoveryCo
 
         ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
 
-        Set<String> deployments = null;
+        Set<String> deploymentNames = null;
         try
         {
-            deployments = managementView.getDeploymentNamesForType(deploymentTypeString);
+            deploymentNames = managementView.getDeploymentNamesForType(deploymentTypeString);
         }
         catch (Exception e)
         {
             log.error("Unable to get deployment for type " + deploymentTypeString, e);
         }
 
-        if (deployments != null)
+        if (deploymentNames != null)
         {
-
-            discoveredResources = new HashSet<DiscoveredResourceDetails>(deployments.size());
+            discoveredResources = new HashSet<DiscoveredResourceDetails>(deploymentNames.size());
             /* Create a resource for each managed component found. We know all managed components will be of a
                type we're interested in, so we can just add them all. There may be need for multiple iterations
                over lists retrieved from different component types, but that is possible through the current API.
             */
-            for (String deployment : deployments)
+            for (String deploymentName : deploymentNames)
             {
                 try
                 {
-                    ManagedDeployment managedDeployment = managementView.getDeployment(deployment, ManagedDeployment.DeploymentPhase.APPLICATION);
+                    ManagedDeployment managedDeployment = managementView.getDeployment(deploymentName, ManagedDeployment.DeploymentPhase.APPLICATION);
                     String resourceName = managedDeployment.getSimpleName();
                     // @TODO remove this when AS5 actually implements this for sars, and some other DeploymentTypes that haven't implemented getSimpleName()
                     if (resourceName.equals("%Generated%"))
                     {
-                        resourceName = getResourceName(deployment);
+                        resourceName = getResourceName(deploymentName);
                     }
                     String version = "?"; // TODO
                     DiscoveredResourceDetails resource =
                             new DiscoveredResourceDetails(resourceType,
-                                    deployment,
+                                    deploymentName,
                                     resourceName,
                                     version,
                                     resourceType.getDescription(),
                                     resourceDiscoveryContext.getDefaultPluginConfiguration(),
                                     null);
-
-                    resource.getPluginConfiguration().put(new PropertySimple(DEPLOYMENT_PROPERTY_NAME, deployment));
+                    // example of a deployment name: vfszip:/C:/opt/jboss-5.0.0.GA/server/default/deploy/foo.war
+                    resource.getPluginConfiguration().put(
+                            new PropertySimple(DeploymentResourceComponent.DEPLOYMENT_NAME_PROPERTY, deploymentName));
                     discoveredResources.add(resource);
                 }
                 catch (NoSuchDeploymentException e)
                 {
                     // This is a bug in the profile service that occurs often, so don't log the stack trace.
-                    log.error("ManagementView.getDeploymentNamesForType() returned [" + deployment
+                    log.error("ManagementView.getDeploymentNamesForType() returned [" + deploymentName
                             + "] as a deployment name, but calling getDeployment() with that name failed.");
                 }
                 catch (Exception e)

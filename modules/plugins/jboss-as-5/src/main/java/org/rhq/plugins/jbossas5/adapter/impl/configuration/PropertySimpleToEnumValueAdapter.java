@@ -23,10 +23,11 @@
 package org.rhq.plugins.jbossas5.adapter.impl.configuration;
 
 import org.jboss.metatype.api.values.MetaValue;
-import org.jboss.metatype.api.values.SimpleValueSupport;
-import org.jboss.metatype.api.values.SimpleValue;
+import org.jboss.metatype.api.values.EnumValueSupport;
+import org.jboss.metatype.api.values.EnumValue;
 import org.jboss.metatype.api.types.MetaType;
-import org.jboss.metatype.api.types.SimpleMetaType;
+import org.jboss.metatype.api.types.EnumMetaType;
+
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.plugins.jbossas5.adapter.api.AbstractPropertySimpleAdapter;
@@ -35,22 +36,22 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
  /**
- * @author Mark Spritzler
+ * @author Ian Springer
  */
-public class PropertySimpleToSimpleMetaValueAdapter extends AbstractPropertySimpleAdapter implements PropertyAdapter<PropertySimple, PropertyDefinitionSimple>
+public class PropertySimpleToEnumValueAdapter extends AbstractPropertySimpleAdapter implements PropertyAdapter<PropertySimple, PropertyDefinitionSimple>
 {
-    private static final Log LOG = LogFactory.getLog(PropertySimpleToSimpleMetaValueAdapter.class);
+    private static final Log LOG = LogFactory.getLog(PropertySimpleToEnumValueAdapter.class);
 
     public void setMetaValues(PropertySimple property, MetaValue metaValue, PropertyDefinitionSimple propertyDefinition)
     {
-        SimpleValueSupport simpleValueSupport = (SimpleValueSupport) metaValue;
+        EnumValueSupport enumValueSupport = (EnumValueSupport) metaValue;
         if (property != null)
         {
             String value = property.getStringValue();
             if (value != null && !value.equals(""))
             {
                 if (metaValue != null)
-                    simpleValueSupport.setValue(property.getStringValue());
+                    enumValueSupport.setValue(property.getStringValue());
             }
         }
     }
@@ -59,7 +60,7 @@ public class PropertySimpleToSimpleMetaValueAdapter extends AbstractPropertySimp
     {
         if (metaValue != null)
         {
-            Object value = ((SimpleValue) metaValue).getValue();
+            Object value = ((EnumValue) metaValue).getValue();
             property.setValue(value);
         }
     }
@@ -70,7 +71,7 @@ public class PropertySimpleToSimpleMetaValueAdapter extends AbstractPropertySimp
         MetaValue metaValue = null;
         if (value != null && !value.equals(""))
         {
-            metaValue = new SimpleValueSupport((SimpleMetaType) type, value);
+            metaValue = new EnumValueSupport((EnumMetaType) type, value);
             setMetaValues(property, metaValue, propertyDefinition);
             LOG.debug("Delegating property adapter because metaValue was passed in as null for property: " + property.getName() + " value: " + property.getStringValue());
         }

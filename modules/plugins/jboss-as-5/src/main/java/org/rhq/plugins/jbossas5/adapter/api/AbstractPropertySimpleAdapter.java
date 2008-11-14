@@ -1,4 +1,4 @@
- /*
+/*
   * Jopr Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.
@@ -24,63 +24,62 @@ package org.rhq.plugins.jbossas5.adapter.api;
 
 import org.jboss.metatype.api.values.MetaValue;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 
 import java.io.Serializable;
 
-
-public abstract class AbstractPropertySimpleAdapter implements PropertyAdapter<PropertySimple>
+/**
+ * A base class for PropertySimple <-> ???MetaValue adapters.
+ */
+public abstract class AbstractPropertySimpleAdapter implements PropertyAdapter<PropertySimple, PropertyDefinitionSimple>
 {
-
-    public PropertySimple getProperty(MetaValue metaValue, PropertyDefinition propertyDefinition)
+    public PropertySimple getProperty(MetaValue metaValue, PropertyDefinitionSimple propDef)
     {
-        String key = propertyDefinition.getName();
-        PropertySimple property = new PropertySimple(key, null);
-        setPropertyValues(property, metaValue, propertyDefinition);
-        return property;
+        String key = propDef.getName();
+        PropertySimple prop = new PropertySimple(key, null);
+        setPropertyValues(prop, metaValue, propDef);
+        return prop;
     }
 
-    public Serializable getSimplePropertyValue(PropertySimple property, PropertyDefinition definition)
+    public Serializable getSimplePropertyValue(PropertySimple prop, PropertyDefinitionSimple propDef)
     {
         Serializable value = null;
-        if (definition != null)
+        if (propDef != null)
         {
-            PropertyDefinitionSimple simpleDefinition = (PropertyDefinitionSimple) definition;
-            PropertySimpleType type = simpleDefinition.getType();
+            PropertySimpleType type = propDef.getType();
             switch (type)
             {
                 case BOOLEAN:
                 {
-                    value = property.getBooleanValue();
+                    value = prop.getBooleanValue();
                     break;
                 }
                 case INTEGER:
                 {
-                    value = property.getIntegerValue();
+                    value = prop.getIntegerValue();
                     break;
                 }
                 case LONG:
                 {
-                    value = property.getLongValue();
+                    value = prop.getLongValue();
                     break;
                 }
                 case FLOAT:
                 {
-                    value = property.getFloatValue();
+                    value = prop.getFloatValue();
                     break;
                 }
                 case DOUBLE:
                 {
-                    value = property.getDoubleValue();
+                    value = prop.getDoubleValue();
                     break;
                 }
             }
         }
         if (value == null)
         {
-            value = property.getStringValue();
+            value = prop.getStringValue();
         }
         return value;
     }

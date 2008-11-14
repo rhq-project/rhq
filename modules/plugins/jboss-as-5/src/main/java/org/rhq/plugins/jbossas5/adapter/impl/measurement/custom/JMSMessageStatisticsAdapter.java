@@ -20,31 +20,18 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
-package org.rhq.plugins.jbossas5.adapter.impl.custom;
+ package org.rhq.plugins.jbossas5.adapter.impl.measurement.custom;
 
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
+import org.rhq.plugins.jbossas5.adapter.api.MeasurementAdapter;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.jboss.metatype.api.values.MetaValue;
-import org.jboss.metatype.api.types.MetaType;
 
-public class JMSSecurityConfigAdapter implements PropertyAdapter<PropertyList>
+public class JMSMessageStatisticsAdapter implements MeasurementAdapter
 {
-    public MetaValue getMetaValue(PropertyList property, PropertyDefinition propertyDefinition, MetaType type)
+    public void setMeasurementData(MeasurementReport report, MetaValue metaValue, MeasurementScheduleRequest request, MeasurementDefinition measurementDefinition)
     {
-        return null;
-    }
-
-    public PropertyList getProperty(MetaValue metaValue, PropertyDefinition propertyDefinition)
-    {
-        return null;
-    }
-
-    public void setMetaValues(PropertyList property, MetaValue metaValue, PropertyDefinition propertyDefinition)
-    {
-    }
-
-    public void setPropertyValues(PropertyList property, MetaValue metaValue, PropertyDefinition propertyDefinition)
-    {
+        // TODO
     }
 }

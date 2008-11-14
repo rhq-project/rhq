@@ -49,8 +49,6 @@ public class JndiResourceDiscoveryComponent
 {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private final String DEPLOYMENT_PROPERTY_NAME = "deploymentName";
-
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ProfileJBossServerComponent> resourceDiscoveryContext)
     {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
@@ -82,22 +80,25 @@ public class JndiResourceDiscoveryComponent
                type we're interested in, so we can just add them all. There may be need for multiple iterations
                over lists retrieved from different component types, but that is possible through the current API.
             */
-            for (ManagedComponent comp : components)
+            for (ManagedComponent component : components)
             {
-                String name = comp.getName();
+                String resourceName = component.getName();
 
                 String resourceKey = componentType.getType() + ":" +
-                        componentType.getSubtype() + ":" + name;
+                        componentType.getSubtype() + ":" + resourceName;
 
-                String version = "?"; // TODO
+                String version = "?"; // TODO                
                 DiscoveredResourceDetails resource =
                         new DiscoveredResourceDetails(resourceType,
                                 resourceKey,
-                                name,
+                                resourceName,
                                 version,
-                                resourceType.getDescription(), null, null);
+                                resourceType.getDescription(),
+                                resourceDiscoveryContext.getDefaultPluginConfiguration(),
+                                null);
 
-                resource.getPluginConfiguration().put(new PropertySimple(DEPLOYMENT_PROPERTY_NAME, name));
+                resource.getPluginConfiguration().put(new PropertySimple(JndiResourceComponent.COMPONENT_NAME_PROPERTY,
+                        component.getName()));
 
                 discoveredResources.add(resource);
             }

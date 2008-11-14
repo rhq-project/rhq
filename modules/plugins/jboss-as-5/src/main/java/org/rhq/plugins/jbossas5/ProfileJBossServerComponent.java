@@ -130,9 +130,7 @@ public class ProfileJBossServerComponent
 
     public CreateResourceReport createResource(CreateResourceReport createResourceReport)
     {
-
         ResourceType resourceType = createResourceReport.getResourceType();
-
         if (resourceType.getName().equals(RESOURCE_TYPE_EAR) || resourceType.getName().equals(RESOURCE_TYPE_WAR) || resourceType.getName().equals(RESOURCE_TYPE_JAR))
         {
             createContentBasedResource(createResourceReport, resourceType);
@@ -227,7 +225,9 @@ public class ProfileJBossServerComponent
                 deploymentTemplateInfo = profileView.getTemplate(templateName);
                 Map<String, ManagedProperty> managedProperties = deploymentTemplateInfo.getProperties();
 
-                ConversionUtil.convertConfigurationToManagedProperties(managedProperties, configuration, resourceType);
+                Configuration defaultPluginConfig = getDefaultPluginConfiguration(resourceType);
+                Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(defaultPluginConfig);
+                ConversionUtil.convertConfigurationToManagedProperties(managedProperties, configuration, resourceType, customProps);
                 handleMiscManagedProperties(managedPropertyGroup, managedProperties, pluginConfiguration);
 
                 try
@@ -262,6 +262,12 @@ public class ProfileJBossServerComponent
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
             createResourceReport.setErrorMessage("Duplicate JNDI Name, a resource with that name already exists");
         }
+    }
+
+    private static Configuration getDefaultPluginConfiguration(ResourceType resourceType) {
+        ConfigurationTemplate pluginConfigDefaultTemplate = resourceType.getPluginConfigurationDefinition().getDefaultTemplate();
+        Configuration defaultPluginConfig = (pluginConfigDefaultTemplate != null) ? pluginConfigDefaultTemplate.createConfiguration() : new Configuration();
+        return defaultPluginConfig;
     }
 
     private void createContentBasedResource(CreateResourceReport createResourceReport, ResourceType resourceType)

@@ -22,34 +22,30 @@
   */
 package org.rhq.plugins.jbossas5.adapter.impl.configuration;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.jboss.metatype.api.values.CompositeValue;
-import org.jboss.metatype.api.values.CompositeValueSupport;
-import org.jboss.metatype.api.values.MetaValue;
-import org.jboss.metatype.api.values.SimpleValueSupport;
-import org.jboss.metatype.api.values.TableValueSupport;
-import org.jboss.metatype.api.types.MetaType;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
-import org.rhq.plugins.jbossas5.adapter.api.AbstractPropertyMapAdapter;
-import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
-import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
+ import java.util.Collection;
+ import java.util.Map;
 
-import java.util.Collection;
-import java.util.Map;
+ import org.jboss.metatype.api.types.MetaType;
+ import org.jboss.metatype.api.values.CompositeValue;
+ import org.jboss.metatype.api.values.CompositeValueSupport;
+ import org.jboss.metatype.api.values.MetaValue;
+ import org.jboss.metatype.api.values.SimpleValueSupport;
+ import org.jboss.metatype.api.values.TableValueSupport;
+
+ import org.rhq.core.domain.configuration.Property;
+ import org.rhq.core.domain.configuration.PropertyMap;
+ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
+ import org.rhq.plugins.jbossas5.adapter.api.AbstractPropertyMapAdapter;
+ import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
+ import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 
 /**
  * @author Mark Spritzler
  */
-public class PropertyMapToTableMetaValueAdapter extends AbstractPropertyMapAdapter implements PropertyAdapter<PropertyMap>
+public class PropertyMapToTableMetaValueAdapter extends AbstractPropertyMapAdapter implements PropertyAdapter<PropertyMap, PropertyDefinitionMap>
 {
-
-    private static final Log LOG = LogFactory.getLog(PropertyMapToTableMetaValueAdapter.class);
-
-    public PropertyMap getProperty(MetaValue metaValue, PropertyDefinition propertyDefinition)
+    public PropertyMap getProperty(MetaValue metaValue, PropertyDefinitionMap propertyDefinition)
     {
         PropertyMap property = new PropertyMap();
         setPropertyValues(property, metaValue, propertyDefinition);
@@ -57,13 +53,12 @@ public class PropertyMapToTableMetaValueAdapter extends AbstractPropertyMapAdapt
     }
 
     //@todo need to implement this like the other Map to Composite, but not until there is an actual property that needs this
-    public void setMetaValues(PropertyMap property, MetaValue metaValue, PropertyDefinition propertyDefinition)
+    public void setMetaValues(PropertyMap property, MetaValue metaValue, PropertyDefinitionMap propertyDefinition)
     {
         if (metaValue != null)
         {
-            PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap) propertyDefinition;
             TableValueSupport tableValueSupport = (TableValueSupport) metaValue;
-            Map<String, PropertyDefinition> map = propertyDefinitionMap.getPropertyDefinitions();
+            Map<String, PropertyDefinition> map = propertyDefinition.getPropertyDefinitions();
             Map<String, Property> properties = property.getMap();
             for (String key : map.keySet())
             {
@@ -78,17 +73,16 @@ public class PropertyMapToTableMetaValueAdapter extends AbstractPropertyMapAdapt
     }
 
     //@todo need to implement this like the other Map to Composite, but not until there is an actual property that needs this
-    public MetaValue getMetaValue(PropertyMap property, PropertyDefinition propertyDefinition, MetaType type)
+    public MetaValue getMetaValue(PropertyMap property, PropertyDefinitionMap propertyDefinition, MetaType type)
     {
         return null;
     }
 
-    public void setPropertyValues(PropertyMap property, MetaValue metaValue, PropertyDefinition propertyDefinition)
+    public void setPropertyValues(PropertyMap property, MetaValue metaValue, PropertyDefinitionMap propertyDefinition)
     {
         // Not important at this moment to implement as there sin't a need for this mapping yet.
         if (metaValue != null)
         {
-            PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap) propertyDefinition;
             TableValueSupport valueSupport = (TableValueSupport) metaValue;
             Collection<CompositeValue> values = valueSupport.values();
             for (CompositeValue value : values)

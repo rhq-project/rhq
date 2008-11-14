@@ -36,7 +36,7 @@ import java.io.File;
 
 import org.jboss.deployers.spi.management.ManagementView;
 
- /**
+/**
  * Discovery component for JBossAS 5.x Servers.
  *
  * @author Mark Spritzler
@@ -46,9 +46,9 @@ public class ProfileJBossServerDiscoveryComponent
 {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context)
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
     {
-        log.info("Discovering " + context.getResourceType().getName() + " Resources..." );
+        log.info("Discovering " + resourceDiscoveryContext.getResourceType().getName() + " Resources..." );
 
         Set<DiscoveredResourceDetails> servers = new HashSet<DiscoveredResourceDetails>();
         // Not just the one that it finds when in the embedded console
@@ -74,11 +74,13 @@ public class ProfileJBossServerDiscoveryComponent
 
         DiscoveredResourceDetails server =
                 new DiscoveredResourceDetails(
-                        context.getResourceType(),
+                        resourceDiscoveryContext.getResourceType(),
                         resourceKey,
                         resourceKey,
                         "5.0 CR1", //activeProfile.getVersion(),
-                        "JBoss App Server", null, null);
+                        "JBoss App Server",
+                        resourceDiscoveryContext.getDefaultPluginConfiguration(),
+                        null);
         servers.add(server);
 /*
       } catch (NoSuchProfileException e)
@@ -106,11 +108,11 @@ public class ProfileJBossServerDiscoveryComponent
            servers.add( server );
         }
         */
-        log.info("Discovered " + servers.size() + " " + context.getResourceType().getName() + " Resources." );
+        log.info("Discovered " + servers.size() + " " + resourceDiscoveryContext.getResourceType().getName() + " Resources." );
 
         try {
             ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
-            File tempDir = context.getParentResourceContext().getTemporaryDirectory();
+            File tempDir = resourceDiscoveryContext.getParentResourceContext().getTemporaryDirectory();
             PluginDescriptorGenerator.generatePluginDescriptor(managementView, tempDir);
         }
         catch (Exception e) {

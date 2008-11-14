@@ -20,7 +20,7 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
-package org.rhq.plugins.jbossas5.adapter.impl.custom;
+ package org.rhq.plugins.jbossas5.adapter.impl.measurement.custom;
 
 import org.jboss.metatype.api.values.CompositeValueSupport;
 import org.jboss.metatype.api.values.MetaValue;
@@ -37,6 +37,7 @@ public class JMSMessageCounterAdapter implements MeasurementAdapter
 {
     public void setMeasurementData(MeasurementReport report, MetaValue metaValue, MeasurementScheduleRequest request, MeasurementDefinition measurementDefinition)
     {
+        // TODO: fix this
         CompositeValueSupport compositeValue = (CompositeValueSupport) metaValue;
         DataType dataType = measurementDefinition.getDataType();
         String metricName = request.getName();

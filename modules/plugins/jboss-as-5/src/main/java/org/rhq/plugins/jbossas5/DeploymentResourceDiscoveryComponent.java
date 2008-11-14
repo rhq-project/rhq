@@ -96,7 +96,9 @@ public class DeploymentResourceDiscoveryComponent implements ResourceDiscoveryCo
                                     deployment,
                                     resourceName,
                                     version,
-                                    resourceType.getDescription(), null, null);
+                                    resourceType.getDescription(),
+                                    resourceDiscoveryContext.getDefaultPluginConfiguration(),
+                                    null);
 
                     resource.getPluginConfiguration().put(new PropertySimple(DEPLOYMENT_PROPERTY_NAME, deployment));
                     discoveredResources.add(resource);

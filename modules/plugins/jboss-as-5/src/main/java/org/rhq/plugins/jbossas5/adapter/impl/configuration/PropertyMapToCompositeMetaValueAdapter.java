@@ -46,18 +46,17 @@ import java.util.Set;
 /**
  * @author Mark Spritzler
  */
-public class PropertyMapToCompositeMetaValueAdapter extends AbstractPropertyMapAdapter implements PropertyAdapter<PropertyMap>
+public class PropertyMapToCompositeMetaValueAdapter extends AbstractPropertyMapAdapter implements PropertyAdapter<PropertyMap, PropertyDefinitionMap>
 {
 
     private static final Log LOG = LogFactory.getLog(PropertyMapToCompositeMetaValueAdapter.class);
 
-    public void setMetaValues(PropertyMap property, MetaValue metaValue, PropertyDefinition propertyDefinition)
+    public void setMetaValues(PropertyMap property, MetaValue metaValue, PropertyDefinitionMap propertyDefinition)
     {
-        PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap) propertyDefinition;
         MapCompositeValueSupport valueSupport = (MapCompositeValueSupport) metaValue;
         Map<String, Property> mapProperty = property.getMap();
 
-        Map<String, PropertyDefinition> definitionsInMap = propertyDefinitionMap.getPropertyDefinitions();
+        Map<String, PropertyDefinition> definitionsInMap = propertyDefinition.getPropertyDefinitions();
         Set<String> keySet = mapProperty.keySet();
         for (String key : keySet)
         {
@@ -69,7 +68,7 @@ public class PropertyMapToCompositeMetaValueAdapter extends AbstractPropertyMapA
         }
     }
 
-    public MetaValue getMetaValue(PropertyMap property, PropertyDefinition propertyDefinition, MetaType type)
+    public MetaValue getMetaValue(PropertyMap property, PropertyDefinitionMap propertyDefinition, MetaType type)
     {
         LOG.debug("GetMetaValue for property: " + property.getName() + " keys: " + property.getMap().keySet().toString() + "\n values " + property.getMap().values().toString());
         SimpleValue simpleValue = SimpleValueSupport.wrap("");
@@ -79,7 +78,7 @@ public class PropertyMapToCompositeMetaValueAdapter extends AbstractPropertyMapA
         return valueSupport;
     }
 
-    public void setPropertyValues(PropertyMap property, MetaValue metaValue, PropertyDefinition propertyDefinition)
+    public void setPropertyValues(PropertyMap property, MetaValue metaValue, PropertyDefinitionMap propertyDefinition)
     {
         /* This really should be going the other direction, but you can't get a collection of keys
         * from the CompositeValue object
@@ -87,8 +86,7 @@ public class PropertyMapToCompositeMetaValueAdapter extends AbstractPropertyMapA
         if (metaValue != null)
         {
             MapCompositeValueSupport valueSupport = (MapCompositeValueSupport) metaValue;
-            PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap) propertyDefinition;
-            Map<String, PropertyDefinition> definitionsInMap = propertyDefinitionMap.getPropertyDefinitions();
+            Map<String, PropertyDefinition> definitionsInMap = propertyDefinition.getPropertyDefinitions();
             Map<String, Property> map = property.getMap();
             Set<String> keySet = valueSupport.getMetaType().keySet();
             // There won't be any keys when loading a configuration for the first time.

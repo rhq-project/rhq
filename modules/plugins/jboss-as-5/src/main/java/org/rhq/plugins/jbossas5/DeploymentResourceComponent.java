@@ -44,7 +44,7 @@ public class DeploymentResourceComponent
 
     // ResourceComponent implementation
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
-        this.resourceContext = resourceContext;
+        this.resourceContext = resourceContext;        
     }
 
     public void stop() {

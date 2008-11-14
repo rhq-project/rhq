@@ -22,19 +22,22 @@
   */
 package org.rhq.plugins.jbossas5.adapter.api;
 
-import org.jboss.metatype.api.types.MetaType;
-import org.jboss.metatype.api.values.MetaValue;
-import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToArrayMetaValueAdapter;
-import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToCollectionMetaValueAdapter;
-import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToCompositeMetaValueAdapter;
-import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToTableMetaValueAdapter;
-import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToGenericMetaValueAdapter;
-import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToSimpleMetaValueAdapter;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+ import org.apache.commons.logging.Log;
+ import org.apache.commons.logging.LogFactory;
 
-/**
+ import org.jboss.metatype.api.types.MetaType;
+ import org.jboss.metatype.api.values.MetaValue;
+
+ import org.rhq.core.domain.configuration.PropertySimple;
+ import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToArrayMetaValueAdapter;
+ import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToCollectionMetaValueAdapter;
+ import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToCompositeMetaValueAdapter;
+ import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToTableMetaValueAdapter;
+ import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToSimpleMetaValueAdapter;
+ import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToGenericValueAdapter;
+ import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToEnumValueAdapter;
+
+ /**
  * @author Mark Spritzler
  */
 public class PropertyAdapterFactory
@@ -45,7 +48,8 @@ public class PropertyAdapterFactory
     {
         if (metaValue == null)
         {
-            LOG.debug("The MetaValue passed in is null");
+            LOG.debug("The MetaValue passed in is null.");
+            return null;
         }
         MetaType metaType = metaValue.getMetaType();
         return getPropertyAdapter(metaType);
@@ -60,7 +64,7 @@ public class PropertyAdapterFactory
         }
         else if (metaType.isGeneric())
         {
-            propertyAdapter = new PropertySimpleToGenericMetaValueAdapter();
+            propertyAdapter = new PropertyMapToGenericValueAdapter();
         }
         else if (metaType.isComposite())
         {
@@ -78,32 +82,31 @@ public class PropertyAdapterFactory
         {
             propertyAdapter = new PropertyListToArrayMetaValueAdapter();
         }
+        else if (metaType.isEnum())
+        {
+            propertyAdapter = new PropertySimpleToEnumValueAdapter();
+        }
+        else
+        {
+            LOG.warn("Unsupported MetaType: " + metaType);
+        }
         return propertyAdapter;
     }
 
-    public static PropertyAdapter getCustomPropertyAdapter(PropertyDefinitionSimple definition)
+    public static PropertyAdapter getCustomPropertyAdapter(PropertySimple customProp)
     {
-        String adapterClassName = definition.getDefaultValue();
-        String propertyName = definition.getName();
+        String propertyName = customProp.getName();
+        String adapterClassName = customProp.getStringValue();
         PropertyAdapter propertyAdapter = null;
         try
         {
-            Class clazz = Class.forName(adapterClassName);
-            propertyAdapter = (PropertyAdapter) clazz.newInstance();
+            Class adapterClass = Class.forName(adapterClassName);
+            propertyAdapter = (PropertyAdapter) adapterClass.newInstance();
         }
-        catch (InstantiationException e)
+        catch (Exception e)
         {
-            LOG.error("Unable to create custom adapter class for " + propertyName, e);
+            LOG.error("Unable to create custom adapter class for property [" + propertyName + "].", e);
         }
-        catch (IllegalAccessException e)
-        {
-            LOG.error("Illegal Access Exception thrown when creating custom adapter class for " + propertyName, e);
-        }
-        catch (ClassNotFoundException e)
-        {
-            LOG.error("Class not found for custom adapter class for " + propertyName, e);
-        }
-
         return propertyAdapter;
     }
 }

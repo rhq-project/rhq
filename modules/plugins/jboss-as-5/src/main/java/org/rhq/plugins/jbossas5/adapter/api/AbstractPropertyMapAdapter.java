@@ -1,4 +1,4 @@
- /*
+/*
   * Jopr Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.
@@ -22,21 +22,18 @@
   */
 package org.rhq.plugins.jbossas5.adapter.api;
 
-import org.jboss.metatype.api.values.CompositeValueSupport;
 import org.jboss.metatype.api.values.MetaValue;
-import org.rhq.core.domain.configuration.Property;
+
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-
-import java.util.Map;
-import java.util.Set;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 
 /**
  * @author Mark Spritzler
  */
-public abstract class AbstractPropertyMapAdapter implements PropertyAdapter<PropertyMap>
+public abstract class AbstractPropertyMapAdapter implements PropertyAdapter<PropertyMap, PropertyDefinitionMap>
 {
-    public PropertyMap getProperty(MetaValue metaValue, PropertyDefinition propertyDefinition)
+    public PropertyMap getProperty(MetaValue metaValue, PropertyDefinitionMap propertyDefinition)
     {
         PropertyMap property = new PropertyMap();
         setPropertyValues(property, metaValue, propertyDefinition);

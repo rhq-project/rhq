@@ -19,6 +19,10 @@
 package org.rhq.plugins.jbossas5.util;
 
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Collections;
+import java.util.Comparator;
 
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedProperty;
@@ -31,7 +35,9 @@ public class DebugUtils {
         StringBuilder buf = new StringBuilder();
         buf.append("Properties for managed component [").append(managedComponent.getName()).append("]:");
         Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
-        for (ManagedProperty managedProperty : managedProperties.values()) {
+        List<ManagedProperty> props = new ArrayList<ManagedProperty>(managedProperties.values());
+        Collections.sort(props, new ManagedPropertyComparator()); // sort by name
+        for (ManagedProperty managedProperty : props) {
             buf.append("\n\tname=").append(managedProperty.getName());
             buf.append(", value=").append(managedProperty.getValue());
             if (!managedProperty.getName().equals(managedProperty.getMappedName()))
@@ -39,6 +45,12 @@ public class DebugUtils {
             buf.append(", required=").append(managedProperty.isMandatory());
         }
         return buf.toString();
+    }
+
+    private static class ManagedPropertyComparator implements Comparator<ManagedProperty> {
+        public int compare(ManagedProperty prop1, ManagedProperty prop2) {
+            return prop1.getName().compareTo(prop2.getName());
+        }
     }
 
     private DebugUtils() {

@@ -1,4 +1,4 @@
- /*
+/*
   * Jopr Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.
@@ -20,17 +20,32 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
-package org.rhq.plugins.jbossas5.adapter.impl.custom;
+package org.rhq.plugins.jbossas5.adapter.impl.configuration.custom;
 
-import org.rhq.plugins.jbossas5.adapter.api.MeasurementAdapter;
-import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
+
 import org.jboss.metatype.api.values.MetaValue;
+import org.jboss.metatype.api.types.MetaType;
 
-public class JMSMessageStatisticsAdapter implements MeasurementAdapter
+public class JMSSecurityConfigAdapter implements PropertyAdapter<PropertyList, PropertyDefinitionList>
 {
-    public void setMeasurementData(MeasurementReport report, MetaValue metaValue, MeasurementScheduleRequest request, MeasurementDefinition measurementDefinition)
+    public MetaValue getMetaValue(PropertyList property, PropertyDefinitionList propertyDefinition, MetaType type)
+    {
+        return null;
+    }
+
+    public PropertyList getProperty(MetaValue metaValue, PropertyDefinitionList propertyDefinition)
+    {
+        return null;
+    }
+
+    public void setMetaValues(PropertyList property, MetaValue metaValue, PropertyDefinitionList propertyDefinition)
+    {
+    }
+
+    public void setPropertyValues(PropertyList property, MetaValue metaValue, PropertyDefinitionList propertyDefinition)
     {
     }
 }

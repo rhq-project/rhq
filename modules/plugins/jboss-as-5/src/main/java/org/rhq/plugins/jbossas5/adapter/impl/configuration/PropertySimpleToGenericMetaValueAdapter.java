@@ -29,21 +29,18 @@ import org.jboss.metatype.api.types.MetaType;
 import org.jboss.metatype.api.values.GenericValueSupport;
 import org.jboss.metatype.api.values.MetaValue;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.plugins.jbossas5.adapter.api.AbstractPropertySimpleAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
-
-import java.io.Serializable;
 
 /**
  * @author Mark Spritzler
  */
-public class PropertySimpleToGenericMetaValueAdapter extends AbstractPropertySimpleAdapter implements PropertyAdapter<PropertySimple>
+public class PropertySimpleToGenericMetaValueAdapter extends AbstractPropertySimpleAdapter implements PropertyAdapter<PropertySimple, PropertyDefinitionSimple>
 {
-
     private static final Log LOG = LogFactory.getLog(PropertySimpleToGenericMetaValueAdapter.class);
 
-    public PropertySimple getProperty(MetaValue metaValue, PropertyDefinition propertyDefinition)
+    public PropertySimple getProperty(MetaValue metaValue, PropertyDefinitionSimple propertyDefinition)
     {
         String key = propertyDefinition.getName();
         PropertySimple property = new PropertySimple(key, null);
@@ -51,7 +48,7 @@ public class PropertySimpleToGenericMetaValueAdapter extends AbstractPropertySim
         return property;
     }
 
-    public void setMetaValues(PropertySimple property, MetaValue metaValue, PropertyDefinition propertyDefinition)
+    public void setMetaValues(PropertySimple property, MetaValue metaValue, PropertyDefinitionSimple propertyDefinition)
     {
         GenericValueSupport valueSupport = (GenericValueSupport) metaValue;
 
@@ -69,7 +66,7 @@ public class PropertySimpleToGenericMetaValueAdapter extends AbstractPropertySim
         }
     }
 
-    public void setPropertyValues(PropertySimple property, MetaValue metaValue, PropertyDefinition propertyDefinition)
+    public void setPropertyValues(PropertySimple property, MetaValue metaValue, PropertyDefinitionSimple propertyDefinition)
     {
         if (metaValue != null)
         {
@@ -78,7 +75,7 @@ public class PropertySimpleToGenericMetaValueAdapter extends AbstractPropertySim
         }
     }
 
-    public MetaValue getMetaValue(PropertySimple property, PropertyDefinition propertyDefinition, MetaType type)
+    public MetaValue getMetaValue(PropertySimple property, PropertyDefinitionSimple propertyDefinition, MetaType type)
     {
         String value = property.getStringValue();
         GenericValueSupport metaValue = null;

@@ -46,15 +46,14 @@ import java.util.List;
 /**
  * @author Mark Spritzler
  */
-public class PropertyListToCollectionMetaValueAdapter extends AbstractPropertyListAdapter implements PropertyAdapter<PropertyList>
+public class PropertyListToCollectionMetaValueAdapter extends AbstractPropertyListAdapter implements PropertyAdapter<PropertyList, PropertyDefinitionList>
 {
 
     private static final Log LOG = LogFactory.getLog(PropertyListToCollectionMetaValueAdapter.class);
 
-    public void setMetaValues(PropertyList property, MetaValue metaValue, PropertyDefinition propertyDefinition)
+    public void setMetaValues(PropertyList property, MetaValue metaValue, PropertyDefinitionList propertyDefinition)
     {
-        PropertyDefinitionList definitionList = (PropertyDefinitionList) propertyDefinition;
-        PropertyDefinition memberDefinition = definitionList.getMemberDefinition();
+        PropertyDefinition memberDefinition = propertyDefinition.getMemberDefinition();
         List<Property> properties = property.getList();
         CollectionValueSupport valueSupport = (CollectionValueSupport) metaValue;
 
@@ -71,7 +70,7 @@ public class PropertyListToCollectionMetaValueAdapter extends AbstractPropertyLi
         valueSupport.setElements((MetaValue[]) values.toArray());
     }
 
-    public MetaValue getMetaValue(PropertyList property, PropertyDefinition propertyDefinition, MetaType type)
+    public MetaValue getMetaValue(PropertyList property, PropertyDefinitionList propertyDefinition, MetaType type)
     {
         LOG.debug("GetMetaValue for property: " + property.getName() + " values: " + property.getList().toString());
         SimpleValue simpleValue = SimpleValueSupport.wrap("");
@@ -82,7 +81,7 @@ public class PropertyListToCollectionMetaValueAdapter extends AbstractPropertyLi
         return valueSupport;
     }
 
-    public void setPropertyValues(PropertyList property, MetaValue metaValue, PropertyDefinition propertyDefinition)
+    public void setPropertyValues(PropertyList property, MetaValue metaValue, PropertyDefinitionList propertyDefinition)
     {
         PropertyDefinitionList definitionList = (PropertyDefinitionList) propertyDefinition;
         PropertyDefinition memberDefinition = definitionList.getMemberDefinition();

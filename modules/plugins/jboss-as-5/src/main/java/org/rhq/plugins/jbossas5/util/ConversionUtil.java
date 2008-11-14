@@ -22,23 +22,27 @@
   */
 package org.rhq.plugins.jbossas5.util;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.jboss.deployers.spi.management.KnownComponentTypes;
+import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.managed.api.ComponentType;
-import org.jboss.managed.api.Fields;
 import org.jboss.managed.api.ManagedOperation;
 import org.jboss.managed.api.ManagedParameter;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.metatype.api.types.MetaType;
 import org.jboss.metatype.api.values.MetaValue;
-import org.jboss.deployers.spi.management.KnownComponentTypes;
-import org.jboss.deployers.spi.management.KnownDeploymentTypes;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -49,11 +53,7 @@ import org.rhq.plugins.jbossas5.adapter.api.MeasurementAdapterFactory;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.HashMap;
-
-/**
+ /**
  * Utility class to convert some basic Profile Service objects to JON objects, and some basic
  * manipulation and data gathering of Profile Service objects.
  * <p/>
@@ -120,7 +120,6 @@ public class ConversionUtil
     public static String getDeploymentTypeString(ResourceType resourceType)
     {
         return getDeploymentTypeString(resourceType.getName());
-
     }
 
     public static String getDeploymentTypeString(String resourceType)
@@ -128,22 +127,21 @@ public class ConversionUtil
         return KNOWN_DEPLOYMENT_TYPES.get(resourceType);
     }
 
-    public static void convertManagedObjectToConfiguration(Map<String, ManagedProperty> managedProperties, Configuration configuration, ResourceType resourceType)
+    public static Configuration convertManagedObjectToConfiguration(Map<String, ManagedProperty> managedProperties, Map<String, PropertySimple> customProps, ResourceType resourceType)
     {
-        /* Deal with the custom properties first, then hold on to the name of these properties so that
-           the loop will skip over a property if it is the customKeys set */
-        Map<String, PropertyDefinition> pluginConfigurationProperties = resourceType.getPluginConfigurationDefinition().getPropertyDefinitions();
-        PropertyDefinitionMap customPropertyDefinition = (PropertyDefinitionMap) pluginConfigurationProperties.get("customProperties");
-        Map<String, PropertyDefinition> customProperties = customPropertyDefinition.getPropertyDefinitions();
-        handleCustomPropertiesFromManagedProperties(managedProperties, configuration, customProperties);
+        Configuration config = new Configuration();
+        ConfigurationDefinition configDef = resourceType.getResourceConfigurationDefinition();
 
-        ConfigurationDefinition configDefinition = resourceType.getResourceConfigurationDefinition();
-        Map<String, PropertyDefinition> configurationProperties = configDefinition.getPropertyDefinitions();
+        /* Deal with the custom properties first, then hold on to the name of these properties, so that
+           the loop will skip over a property if it is in the customKeys set. */
+        handleCustomPropertiesFromManagedProperties(managedProperties, customProps, config, configDef);
+
+        Map<String, PropertyDefinition> configurationProperties = configDef.getPropertyDefinitions();
 
         Set<String> keys = managedProperties.keySet();
         for (String key : keys)
         {
-            if (customProperties.containsKey(key))
+            if (customProps.containsKey(key))
             {
                 continue;
             }
@@ -178,7 +176,7 @@ public class ConversionUtil
                         LOG.error("Unable to get the PropertyAdapter from the factory for type: " + metaValue.getMetaType().getTypeName() + " for ResourceType: " + resourceType.getName());
                     }
 
-                    Property property = configuration.get(key);
+                    Property property = customProps.get(key);
                     if (property != null)
                     {
                         propertyAdapter.setPropertyValues(property, metaValue, definition);
@@ -189,56 +187,53 @@ public class ConversionUtil
                         property.setName(definition.getName());
                     }
 
-                    configuration.put(property);
+                    config.put(property);
                 }
             }
         }
+        return config;
     }
 
-    private static void handleCustomPropertiesFromManagedProperties(Map<String, ManagedProperty> managedProperties, Configuration configuration, Map<String, PropertyDefinition> customProperties)
+    private static void handleCustomPropertiesFromManagedProperties(Map<String, ManagedProperty> managedProperties,
+                                                                    Map<String, PropertySimple> customProps,
+                                                                    Configuration config,
+                                                                    ConfigurationDefinition configDef)
     {
-
-        for (PropertyDefinition definition : customProperties.values())
+        for (PropertySimple customProp : customProps.values())
         {
-            PropertyDefinitionSimple customDefinition = (PropertyDefinitionSimple) definition;
-            ManagedProperty managedProperty = managedProperties.get(customDefinition.getName());
-            Property property = configuration.get(customDefinition.getName());
+            ManagedProperty managedProperty = managedProperties.get(customProp.getName());
             if (managedProperty != null)
             {
-                PropertyAdapter propertyAdapter = PropertyAdapterFactory.getCustomPropertyAdapter(customDefinition);
-                if (property != null)
+                PropertyAdapter propAdapter = PropertyAdapterFactory.getCustomPropertyAdapter(customProp);
+                Property prop = config.get(customProp.getName());
+                PropertyDefinition propDef = configDef.getPropertyDefinitions().get(customProp.getName());
+                if (prop != null)
                 {
-                    propertyAdapter.setPropertyValues(property, (MetaValue) managedProperty.getValue(), null);
+                    propAdapter.setPropertyValues(prop, (MetaValue) managedProperty.getValue(), propDef);
                 }
                 else
                 {
-                    property = propertyAdapter.getProperty((MetaValue) managedProperty.getValue(), null);
-                    property.setName(definition.getName());
+                    prop = propAdapter.getProperty((MetaValue) managedProperty.getValue(), propDef);
+                    prop.setName(customProp.getName());
                 }
-                configuration.put(property);
+                config.put(prop);
             }
         }
     }
 
-    public static void convertConfigurationToManagedProperties(Map<String, ManagedProperty> managedProperties, Configuration configuration, ResourceType resourceType)
+    public static void convertConfigurationToManagedProperties(Map<String, ManagedProperty> managedProperties, Configuration configuration, ResourceType resourceType, Map<String, PropertySimple> customProps)
     {
-
         /* Deal with the custom properties first, then hold on to the name of these properties so that
-        the loop will skip over a property if it is the customKeys set */
-        Map<String, PropertyDefinition> pluginConfigurationProperties = resourceType.getPluginConfigurationDefinition().getPropertyDefinitions();
-        PropertyDefinitionMap customPropertyDefinition = (PropertyDefinitionMap) pluginConfigurationProperties.get("customProperties");
-        Map<String, PropertyDefinition> customProperties = customPropertyDefinition.getPropertyDefinitions();
-        handleCustomProperties(managedProperties, configuration, customProperties);
+           the loop will skip over a property if it is the customKeys set */
+        handleCustomProperties(managedProperties, configuration, customProps);
 
         ConfigurationDefinition configDefinition = resourceType.getResourceConfigurationDefinition();
         Map<String, PropertyDefinition> configurationProperties = configDefinition.getPropertyDefinitions();
         for (Property property : configuration.getProperties())
         {
             String key = property.getName();
-            if (customProperties.containsKey(key) || pluginConfigurationProperties.containsKey(key))
-            {
+            if (customProps.containsKey(key))
                 continue;
-            }
 
             ManagedProperty managedProperty = managedProperties.get(key);
 
@@ -270,8 +265,7 @@ public class ConversionUtil
                 }
                 else
                 {
-                    Fields fields = managedProperty.getFields();
-                    MetaType metaType = (MetaType) fields.getField("metaType");
+                    MetaType metaType = managedProperty.getMetaType();
                     propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaType);
                     metaValue = propertyAdapter.getMetaValue(property, definition, metaType);
                     if (metaValue != null)
@@ -284,17 +278,16 @@ public class ConversionUtil
         return;
     }
 
-
-    private static void handleCustomProperties(Map<String, ManagedProperty> managedProperties, Configuration configuration, Map<String, PropertyDefinition> customProperties)
+    private static void handleCustomProperties(Map<String, ManagedProperty> managedProperties, Configuration resourceConfig, Map<String, PropertySimple> customProps)
     {
-        for (PropertyDefinition definition : customProperties.values())
+        for (PropertySimple customProp : customProps.values())
         {
-            PropertyDefinitionSimple customDefinition = (PropertyDefinitionSimple) definition;
-            ManagedProperty managedProperty = managedProperties.get(definition.getName());
-            Property property = configuration.get(definition.getName());
+            ManagedProperty managedProperty = managedProperties.get(customProp.getName());
+            // NOTE: For now, we assume that the custom property name refers to a top-level property.
+            Property property = resourceConfig.get(customProp.getName());
             if (managedProperty != null && property != null)
             {
-                PropertyAdapter propertyAdapter = PropertyAdapterFactory.getCustomPropertyAdapter(customDefinition);
+                PropertyAdapter propertyAdapter = PropertyAdapterFactory.getCustomPropertyAdapter(customProp);
                 propertyAdapter.setMetaValues(property, (MetaValue) managedProperty.getValue(), null);
             }
         }
@@ -349,32 +342,31 @@ public class ConversionUtil
     public static void convertManagedOperationResults(ManagedOperation operation, MetaValue result, Configuration complexResults, ResourceType resourceType)
     {
         OperationDefinition operationDefinition = getOperationDefinition(resourceType, operation.getName());
-        if (operationDefinition != null)
-        {
-            ConfigurationDefinition resultDefinition = operationDefinition.getResultsConfigurationDefinition();
-            if (resultDefinition != null)
-            {
-                Map<String, PropertyDefinition> resultPropertyDefinitions = resultDefinition.getPropertyDefinitions();
-                PropertyDefinition propertyDefinition = null;
-                // There should and must be only one definition to map to the results from the Profile Service, otherwise there will be a huge mismatch
-                for (PropertyDefinition definition : resultPropertyDefinitions.values())
-                {
-                    propertyDefinition = definition;
-                }
-
-                MetaType type = operation.getReturnType();
-                PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(type);
-
-                if (propertyDefinition != null)
-                {
-                    Property property = propertyAdapter.getProperty(result, propertyDefinition);
-                    complexResults.put(property);
-                }
-            }
+        if (operationDefinition == null) {
+            LOG.warn("ConversionUtil was not able to find the operation " + operation.getName()
+                    + ", so no results can be reported.");
+            return;
         }
-        else
+        ConfigurationDefinition resultDefinition = operationDefinition.getResultsConfigurationDefinition();
+        if (resultDefinition != null)
         {
-            LOG.warn("ConversionUtil was not able to find the operation " + operation.getName() + ". So no results can be reported");
+            Map<String, PropertyDefinition> resultPropertyDefinitions = resultDefinition.getPropertyDefinitions();
+            PropertyDefinition propertyDefinition = null;
+            // There should and must be only one definition to map to the results from the Profile Service,
+            // otherwise there will be a huge mismatch
+            for (PropertyDefinition definition : resultPropertyDefinitions.values())
+            {
+                propertyDefinition = definition;
+            }
+
+            MetaType type = operation.getReturnType();
+            PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(type);
+
+            if (propertyDefinition != null)
+            {
+                Property property = propertyAdapter.getProperty(result, propertyDefinition);
+                complexResults.put(property);
+            }
         }
     }
 

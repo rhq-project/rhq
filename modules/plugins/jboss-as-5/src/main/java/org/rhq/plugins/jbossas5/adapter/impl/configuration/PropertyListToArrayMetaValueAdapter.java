@@ -40,14 +40,12 @@ import java.util.List;
 /**
  * @author Mark Spritzler
  */
-public class PropertyListToArrayMetaValueAdapter extends AbstractPropertyListAdapter implements PropertyAdapter<PropertyList>
+public class PropertyListToArrayMetaValueAdapter extends AbstractPropertyListAdapter implements PropertyAdapter<PropertyList, PropertyDefinitionList>
 {
-
     //@todo need to implement this like the other List to Collection, but not until there is an actual property that needs this
-    public void setMetaValues(PropertyList property, MetaValue metaValue, PropertyDefinition propertyDefinition)
+    public void setMetaValues(PropertyList property, MetaValue metaValue, PropertyDefinitionList propertyDefinition)
     {
-        PropertyDefinitionList definitionList = (PropertyDefinitionList) propertyDefinition;
-        PropertyDefinition memberDefinition = definitionList.getMemberDefinition();
+        PropertyDefinition memberDefinition = propertyDefinition.getMemberDefinition();
         List<Property> properties = property.getList();
         if (metaValue != null)
         {
@@ -66,15 +64,14 @@ public class PropertyListToArrayMetaValueAdapter extends AbstractPropertyListAda
     }
 
     //@todo need to implement this like the other List to Collection, but not until there is an actual property that needs this
-    public MetaValue getMetaValue(PropertyList property, PropertyDefinition propertyDefinition, MetaType type)
+    public MetaValue getMetaValue(PropertyList property, PropertyDefinitionList propertyDefinition, MetaType type)
     {
         return null;
     }
 
-    public void setPropertyValues(PropertyList property, MetaValue metaValue, PropertyDefinition propertyDefinition)
+    public void setPropertyValues(PropertyList property, MetaValue metaValue, PropertyDefinitionList propertyDefinition)
     {
-        PropertyDefinitionList definitionList = (PropertyDefinitionList) propertyDefinition;
-        PropertyDefinition memberDefinition = definitionList.getMemberDefinition();
+        PropertyDefinition memberDefinition = propertyDefinition.getMemberDefinition();
         List<Property> properties = property.getList();
 
         // Since we want to load the PropertyList with fresh values, we want it cleared out

@@ -27,17 +27,47 @@ import org.jboss.metatype.api.values.MetaValue;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 
-
 /**
+ * TODO: Javadoc!
+ *
  * @author Mark Spritzler
- */
-public interface PropertyAdapter<T extends Property>
+ */ 
+public interface PropertyAdapter<P extends Property, D extends PropertyDefinition>
 {
-    public void setMetaValues(T property, MetaValue metaValue, PropertyDefinition propertyDefinition);
+    /**
+     * TODO: Javadoc!
+     *
+     * @param property
+     * @param metaValue
+     * @param propertyDefinition
+     */
+    public void setMetaValues(P property, MetaValue metaValue, D propertyDefinition);
 
-    public MetaValue getMetaValue(T property, PropertyDefinition propertyDefinition, MetaType type);
+    /**
+     * TODO: Javadoc!
+     *
+     * @param property
+     * @param propertyDefinition
+     * @param type
+     * @return
+     */
+    public MetaValue getMetaValue(P property, D propertyDefinition, MetaType type);
 
-    public void setPropertyValues(T property, MetaValue metaValue, PropertyDefinition propertyDefinition);
+    /**
+     * TODO: Javadoc!
+     *
+     * @param property
+     * @param metaValue
+     * @param propertyDefinition
+     */
+    public void setPropertyValues(P property, MetaValue metaValue, D propertyDefinition);
 
-    public T getProperty(MetaValue metaValue, PropertyDefinition propertyDefinition);
+    /**
+     * TODO: Javadoc!
+     *
+     * @param metaValue
+     * @param propertyDefinition
+     * @return
+     */
+    public P getProperty(MetaValue metaValue, D propertyDefinition);
 }

@@ -52,7 +52,7 @@
             <plugin-configuration>
                 <c:simple-property name="componentParentType" default="DataSource" readOnly="true"/>
                 <c:simple-property name="componentSubType" default="NoTX" readOnly="true"/>
-                <c:simple-property name="deploymentName" readOnly="true"/>
+                <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="NoTxDataSourceTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="jndi-name">
                     <c:defaultValueDescription>This holds the property in the configuration to use
@@ -318,7 +318,7 @@
             <plugin-configuration>
                 <c:simple-property name="componentParentType" default="DataSource" readOnly="true"/>
                 <c:simple-property name="componentSubType" default="LocalTx" readOnly="true"/>
-                <c:simple-property name="deploymentName" readOnly="true"/>
+                <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="LocalTxDataSourceTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="jndi-name">
                     <c:defaultValueDescription>This holds the property in the configuration to use
@@ -335,12 +335,22 @@
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
                     </c:map-property>
                     <c:map-property name="customMetrics"
-                                    description="Holds a list of custom Metrics, and the Adapter class to use">
+                                    description="Holds a list of custom metrics, and the Adapter class to use">
                     </c:map-property>
                 </c:group>
             </plugin-configuration>
 
-            <operation name="flush" displayName="flush" description="Executes the flush operation on this datasource."/>
+            <operation name="flush" displayName="Flush" description="Flush the connections in the pool"/>
+            <operation name="listFormattedSubPoolStatistics" displayName="List Formatted Sub Pool Statistics" description="Obtain a formatted statistics report">
+                <results>
+                    <c:simple-property name="result"/>
+                </results>
+            </operation>
+            <operation name="listStatistics" displayName="List Statistics" description="Obtain a statistics report">
+                <results>
+                    <c:simple-property name="result"/>
+                </results>
+            </operation>
 
             <metric displayName="Connection Count" property="connectionCount" displayType="summary"/>
             <metric displayName="Available Connection Count" property="availableConnectionCount" displayType="summary"/>
@@ -510,17 +520,30 @@
                         </c:defaultValueDescription>
                     </c:simple-property>
 
-                    <c:simple-property name="security-domain" type="string" activationPolicy="immediate"
-                                       displayName="Security Domain" required="false">
-                        <c:description>Indicates Subjects from security domain are used to distinguish connections in
-                            this
-                            pool.
+                    <c:map-property name="security-domain"
+                                    displayName="Security Domain" required="false">
+                        <!-- XXXX -->
+                        <c:description>Indicates whether Subjects from a certain security domain are used to distinguish
+                            connections in this pool.
                         </c:description>
-                        <c:defaultValueDescription>If nothing is specified, the default will be to use a single pool of
-                            equivalent
-                            connections.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
+
+                        <c:simple-property name="domain" type="string"
+                                           description="the name of the security domain"
+                                           required="false">
+                        </c:simple-property>
+
+                        <c:simple-property name="securityDeploymentType" type="string"
+                                           description="the type of security deployment"
+                                           required="false">
+                            <c:property-options>
+                                <c:option name="None" value="NONE"/>
+                                <c:option name="Application" value="APPLICATION"/>
+                                <c:option name="Domain" value="DOMAIN"/>
+                                <c:option name="Domain and Application" value="DOMAIN_AND_APPLICATION"/>
+                            </c:property-options>
+                        </c:simple-property>
+
+                    </c:map-property>
 
                     <c:simple-property name="new-connection-sql" type="longString" activationPolicy="immediate"
                                        displayName="New Connection SQL" required="false">
@@ -608,7 +631,7 @@
             <plugin-configuration>
                 <c:simple-property name="componentParentType" default="DataSource" readOnly="true"/>
                 <c:simple-property name="componentSubType" default="XA" readOnly="true"/>
-                <c:simple-property name="deploymentName" readOnly="true"/>
+                <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="XADataSourceTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="jndi-name">
                     <c:defaultValueDescription>This holds the property in the configuration to use
@@ -915,7 +938,7 @@
             <plugin-configuration>
                 <c:simple-property name="componentParentType" default="ConnectionFactory" readOnly="true"/>
                 <c:simple-property name="componentSubType" default="NoTX" readOnly="true"/>
-                <c:simple-property name="deploymentName" readOnly="true"/>
+                <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="NoTxConnectionFactoryTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="jndi-name">
                     <c:defaultValueDescription>This holds the property in the configuration to use
@@ -1235,7 +1258,7 @@
             <plugin-configuration>
                 <c:simple-property name="componentParentType" default="ConnectionFactory" readOnly="true"/>
                 <c:simple-property name="componentSubType" default="XA" readOnly="true"/>
-                <c:simple-property name="deploymentName" readOnly="true"/>
+                <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="TxConnectionFactoryTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="jndi-name">
                     <c:defaultValueDescription>This holds the property in the configuration to use
@@ -1582,7 +1605,7 @@
             <plugin-configuration>
                 <c:simple-property name="componentParentType" default="JMSDestination" readOnly="true"/>
                 <c:simple-property name="componentSubType" default="Queue" readOnly="true"/>
-                <c:simple-property name="deploymentName" readOnly="true"/>
+                <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="QueueTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="jndi-name">
                     <c:defaultValueDescription>This holds the property in the configuration to use
@@ -1594,28 +1617,28 @@
                     <c:map-property name="customProperties"
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
                         <c:simple-property name="securityConfig"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSSecurityConfigAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
                     </c:map-property>
                     <c:map-property name="customMetrics"
                                     description="Holds a list of custom Metrics, and the Adapter class to use">
                         <c:simple-property name="count"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="countDelta"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="destinationDurable"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="destinationSubscription"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="destinationTopic"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="historyLimit"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="lastUpdate"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="messageCount"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="messageCountDelta"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                     </c:map-property>
                 </c:group>
             </plugin-configuration>
@@ -1900,7 +1923,7 @@
             <plugin-configuration>
                 <c:simple-property name="componentParentType" default="JMSDestination" readOnly="true"/>
                 <c:simple-property name="componentSubType" default="Topic" readOnly="true"/>
-                <c:simple-property name="deploymentName" readOnly="true"/>
+                <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="TopicTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="jndi-name">
                     <c:defaultValueDescription>This holds the property in the configuration to use
@@ -1912,28 +1935,28 @@
                     <c:map-property name="customProperties"
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
                         <c:simple-property name="securityConfig"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSSecurityConfigAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
                     </c:map-property>
                     <c:map-property name="customMetrics"
                                     description="Holds a list of custom Metrics, and the Adapter class to use">
                         <c:simple-property name="count"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="countDelta"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="destinationDurable"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="destinationSubscription"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="destinationTopic"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="historyLimit"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="lastUpdate"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="messageCount"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                         <c:simple-property name="messageCountDelta"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.JMSMessageCounterAdapter"/>
+                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                     </c:map-property>
                 </c:group>
             </plugin-configuration>

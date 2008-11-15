@@ -208,6 +208,12 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Failed to download the plugin [{0}]")
     String DOWNLOAD_PLUGIN_FAILURE = "PluginUpdate.download-failure";
 
+    @I18NMessage("Failed to download the plugin [{0}]. This was attempt #[{1}]. Will retry again in [{2}]ms. Cause: [{3}]")
+    String DOWNLOAD_PLUGIN_FAILURE_WILL_RETRY = "PluginUpdate.download-failure-will-retry";
+
+    @I18NMessage("Failed to download the plugin [{0}]. This was attempt #[{1}] - will no longer retry. This plugin will not be deployed in the agent. Cause: {2}")
+    String DOWNLOAD_PLUGIN_FAILURE_WILL_NOT_RETRY = "PluginUpdate.download-failure-will-not-retry";
+
     @I18NMessage("The plugin [{0}] has been updated.")
     String DOWNLOADING_PLUGIN_COMPLETE = "PluginUpdate.downloading-complete";
 

@@ -26,14 +26,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import mazz.i18n.Logger;
+
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.util.MD5Generator;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
+import org.rhq.enterprise.communications.command.client.RemoteIOException;
 
 /**
  * This object's job is to update any and all plugin jars that need to be updated. If this object determines that a
@@ -168,17 +172,14 @@ public class PluginUpdate {
 
             deleteIllegitimatePlugins(current_plugins, latest_plugins_map);
 
-            // let's go ahead and download all the plugins that we need
+            // Let's go ahead and download all the plugins that we need.
+            // Try to update all plugins, even if one or more fails to update. At the end,
+            // if an exception was thrown, we'll rethrow it but only after all update attempts were made
             Exception last_error = null;
 
             for (Plugin updated_plugin : updated_plugins) {
-                LOG.info(AgentI18NResourceKeys.DOWNLOADING_PLUGIN, updated_plugin.getPath());
-
-                // Try to update all plugins, even if one or more fails to update. At the end,
-                // if an exception was thrown, we'll rethrow it but only after all update attempts were made
                 try {
-                    getPluginArchive(updated_plugin);
-                    LOG.info(AgentI18NResourceKeys.DOWNLOADING_PLUGIN_COMPLETE, updated_plugin.getPath());
+                    downloadPluginWithRetries(updated_plugin); // tries our very best to get it
                 } catch (Exception e) {
                     last_error = e;
                 }
@@ -213,6 +214,56 @@ public class PluginUpdate {
         }
 
         return current_plugins;
+    }
+
+    /**
+     * This method will perform multiple attempts to try to get the plugin successfully.
+     * The purpose of this method is to try our very best to get the plugin, even if it means
+     * retrying several times to download it (i.e. this method tries to never throw an exception
+     * if it can help it).  This is to prevent the case when lots of agents start hitting a server
+     * at the same time which causes an outage that forces our agent to failover to another
+     * server in the middle of streaming the plugin.  If a failover occurs while in the middle
+     * of streaming the plugin, the download will fail.  When this happens, this method will simply
+     * attempt to download the plugin again (this time, hopefully, we will remain connected to the
+     * new server and the download will succeed).
+     * 
+     * @param plugin the plugin to download
+     * 
+     * @throws Exception if, despite our best efforts, the plugin could not be downloaded
+     */
+    private void downloadPluginWithRetries(Plugin plugin) throws Exception {
+        LOG.info(AgentI18NResourceKeys.DOWNLOADING_PLUGIN, plugin.getPath());
+        int attempt = 0;
+        boolean keep_trying = true;
+        while (keep_trying) {
+            try {
+                attempt++;
+                getPluginArchive(plugin);
+                keep_trying = false;
+            } catch (Exception e) {
+                // This error might be because the server is so loaded down with agent downloads
+                // that a problem occurred on the server that caused us to failover.  To help spread
+                // the load, let's sleep a random amount of time between 10s and 70s.
+                // Note that we always retry at least 3 times - after that, we only retry if it looks
+                // like we are getting remote IO exceptions (which happens when our remote streaming fails).
+                // To make sure the agent never hangs indefinitely, we'll never retry more than 10 times.
+                long sleep = ((long) (Math.random() * 60000L)) + 10000L;
+                String errors = ThrowableUtil.getAllMessages(e);
+                if ((attempt < 3 || errors.contains(RemoteIOException.class.getName())) && attempt < 10) {
+                    LOG.warn(AgentI18NResourceKeys.DOWNLOAD_PLUGIN_FAILURE_WILL_RETRY, plugin.getPath(), attempt,
+                        sleep, errors);
+                    try {
+                        Thread.sleep(sleep);
+                    } catch (Exception e2) {
+                    }
+                } else {
+                    LOG.warn(AgentI18NResourceKeys.DOWNLOAD_PLUGIN_FAILURE_WILL_NOT_RETRY, plugin.getPath(), attempt,
+                        errors);
+                    throw e; // abort! no more retries - we tried our best but failed to download the plugin
+                }
+            }
+        }
+        LOG.info(AgentI18NResourceKeys.DOWNLOADING_PLUGIN_COMPLETE, plugin.getPath());
     }
 
     /**
@@ -334,8 +385,7 @@ public class PluginUpdate {
         return;
     }
 
-    private void deleteIllegitimatePlugins(Map<String, Plugin> current_plugins,
-                                           Map<String, Plugin> latest_plugins_map) {
+    private void deleteIllegitimatePlugins(Map<String, Plugin> current_plugins, Map<String, Plugin> latest_plugins_map) {
         for (Plugin current_plugin : current_plugins.values()) {
             if (!latest_plugins_map.containsKey(current_plugin.getPath())) {
                 File plugin_dir = this.config.getPluginDirectory();
@@ -349,11 +399,12 @@ public class PluginUpdate {
                         boolean renamed = plugin.renameTo(plugin_backup);
                         // note that we don't fail if we can't backup the plugin, but we will log it
                         if (!renamed) {
-                            LOG.error(AgentI18NResourceKeys.PLUGIN_RENAME_FAILED, plugin_filename, plugin_backup.getName());
+                            LOG.error(AgentI18NResourceKeys.PLUGIN_RENAME_FAILED, plugin_filename, plugin_backup
+                                .getName());
                         }
-                    }
-                    catch (RuntimeException e) {
-                        LOG.error(e, AgentI18NResourceKeys.PLUGIN_RENAME_FAILED, plugin_filename, plugin_backup.getName());
+                    } catch (RuntimeException e) {
+                        LOG.error(e, AgentI18NResourceKeys.PLUGIN_RENAME_FAILED, plugin_filename, plugin_backup
+                            .getName());
                     }
                 }
             }

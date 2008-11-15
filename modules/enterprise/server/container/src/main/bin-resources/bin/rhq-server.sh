@@ -339,20 +339,11 @@ case "$1" in
 
         echo Trying to stop the RHQ Server...
 
-        if [ -n "$_SOLARIS" ]; then
-           kill -TERM `cat ${RHQ_SERVER_HOME}/jbossas/.jboss_pid`
-           sleep 3
-        fi
-
         echo "RHQ Server (pid=${PID}) is stopping..."
 
         while [ "$RUNNING" = "1"  ]; do
            kill -TERM $PID
            sleep 2
-           if [ -n "$_SOLARIS" ]; then
-               kill -9 $PID
-               sleep 2
-           fi
            check_status "stopping..."
         done
 
@@ -370,20 +361,11 @@ case "$1" in
 
         echo Trying to kill the RHQ Server...
 
-        if [ -n "$_SOLARIS" ]; then
-           kill -9 `cat ${RHQ_SERVER_HOME}/jbossas/.jboss_pid`
-           sleep 3
-        fi
-
         echo "RHQ Server (pid=${PID}) is being killed..."
 
         while [ "$RUNNING" = "1"  ]; do
            kill -9 $PID
            sleep 2
-           if [ -n "$_SOLARIS" ]; then
-               kill -9 $PID
-               sleep 2
-           fi
            check_status "killing..."
         done
 

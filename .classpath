@@ -1,30 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/core/util/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/mock-jboss/target/generated-sources/xjc"/>
-	<classpathentry kind="src" path="modules/plugins/perftest/target/generated-sources/xjc"/>
-	<classpathentry kind="src" path="modules/plugins/perftest/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/mock-jboss/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/perftest/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/mock-jboss/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/bluetooth/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/bluetooth/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/jira/target/generated-sources/axistools/wsdl2java"/>
-	<classpathentry kind="src" path="modules/plugins/jira/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/apt/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/hosts/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/sshd/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/sshd/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/hardware/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/oracle/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/grub/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/grub/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/hudson/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/platform/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/apt/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/hosts/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/virt/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/util/src/test/java"/>
 	<classpathentry kind="src" path="modules/core/dbutils/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/dbutils/src/test/java"/>
@@ -71,13 +47,37 @@
 	<classpathentry kind="src" path="modules/plugins/apache/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/netservices/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/iis/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/mock-jboss/target/generated-sources/xjc"/>
+	<classpathentry kind="src" path="modules/plugins/perftest/target/generated-sources/xjc"/>
+	<classpathentry kind="src" path="modules/plugins/perftest/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/mock-jboss/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/perftest/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/mock-jboss/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/bluetooth/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/bluetooth/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/jira/target/generated-sources/axistools/wsdl2java"/>
+	<classpathentry kind="src" path="modules/plugins/jira/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/apt/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/hosts/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/sshd/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/sshd/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/hardware/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/oracle/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/grub/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/grub/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/hudson/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/platform/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/apt/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/hosts/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/virt/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/skeleton-plugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/custom-serverplugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/agentspawn/src/main/java"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/comm/src/test/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/main/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/test/resources"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6">
 		<accessrules>
 			<accessrule kind="accessible" pattern="sun/misc/**"/>
 			<accessrule kind="accessible" pattern="sun/security/**"/>

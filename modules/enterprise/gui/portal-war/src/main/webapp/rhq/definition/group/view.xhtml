@@ -17,15 +17,10 @@
 <ui:composition template="/rhq/definition/layout/main.xhtml">
 
 <ui:param name="pageTitle" value="JON Group Definition - '#{GroupDefinitionUIBean.name}'"/>
-<ui:param name="selectedTabName" value="Inventory"/>
 
 <ui:define name="content">
 
 <!-- =================== GENERAL PROPERTIES =================== -->
-
-<h:outputLink value="/rhq/definition/group/list.xhtml">
-   <h:outputText value="Back to Group Definitions"/>
-</h:outputLink>
 
 <rich:panel styleClass="BlockContent">
 
@@ -216,10 +211,6 @@
          </rich:panel>
       </h:form>
 </rich:panel>
-
-<h:outputLink value="/rhq/definition/group/list.xhtml">
-   <h:outputText value="Back to Group Definitions"/>
-</h:outputLink>
 
 </ui:define>
 

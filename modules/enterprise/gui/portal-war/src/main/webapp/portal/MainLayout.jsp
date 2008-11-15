@@ -13,6 +13,7 @@
 
       <link rel="stylesheet" type="text/css" media="screen" href="/css/leftMenu.css"/>
       <link rel="stylesheet" type="text/css" media="screen" href="/css/win.css"/>
+      <link rel="stylesheet" type="text/css" media="screen" href="/css/layout.css"/>
 
       <script type="text/javascript" src="/js/functions.js"></script>
       <script type="text/javascript" src="/js/prototype.js"></script>
@@ -54,16 +55,15 @@
       <tiles:put name="location" beanName="location"/>
    </tiles:insert>
 
-   <div class="brandBackground">
-      <table cellpadding="0" cellspacing="0" width="100%">
-         <tr>
-            <td align="left">
-               <tiles:insert attribute='body'/>
-            </td>
-         </tr>
-      </table>
+   <div id="content-full" class="brandBackground">
+	   <div id="Breadcrumb">
+	      <tiles:insert attribute="breadcrumb">
+	         <tiles:put name="location" beanName="location"/>
+	      </tiles:insert>
+	   </div>
+	   <tiles:insert attribute='body'/>
    </div>
 
-   <tiles:insert attribute="footer"/>
+   <!--<tiles:insert attribute="footer"/>-->
    </body>
 </html:html>

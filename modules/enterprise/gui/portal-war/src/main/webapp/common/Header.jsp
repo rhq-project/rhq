@@ -12,15 +12,26 @@
 
 <div id="PageHeader">
 
-    <table width="100%">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" height="70px">
         <tr valign="bottom">
-            <td align="left">
+            <td align="left" rowspan="2">
                 <fmt:message var="urlDomain" key="product.url.domain"/>
                 <fmt:message var="productName" key="product.fullName"/>
                 <html:link page="http://${urlDomain}">
                     <html:img page="/images/logo_header.gif" title="${productName}"/>
                 </html:link>
             </td>
+            <td valign="top" align="right">
+               <map name="redhat-jboss-logo-map">
+                  <area href="http://www.redhat.com/" alt="Red Hat Homepage" title="Red Hat" shape="rect" coords="0,0,100,42" />
+                  <area href="http://www.jboss.org/" alt="JBoss Homepage" title="JBoss" shape="rect" coords="100,0,200,42" />
+               </map>
+               <div>
+                  <img src="/images/redhat-jboss-logo.gif" usemap="#redhat-jboss-logo-map" />
+               </div>
+            </td>
+        </tr>
+        <tr>
             <td align="right">
                <script type="text/javascript" src="/js/popup.js"></script>
                <div id="resMenu" class="headerresourcemenu">
@@ -42,6 +53,9 @@
                     |
                     <html:link href="" onclick="window.open('${helpBaseURL}','help','width=940,height=730,scrollbars=yes,toolbar=yes,left=40,top=40,resizable=yes'); return false;"><fmt:message key="header.help.link"/></html:link>
                     |
+                    <script language="JavaScript" type="text/javascript">var aboutWindowTitle = '<fmt:message key="about.Title"/>';</script>
+                    <a href="#" onclick="openAbout(aboutWindowTitle)"><fmt:message key="header.about.link"/></a>
+                    |
                     <html:link page="/Logout.do"><fmt:message key="header.logout.link"/></html:link>
                </div>
             </td>
@@ -50,19 +64,24 @@
 
     <hr style="margin-top: 6px; background-color: #090909; color: #090909" size="1" noshade="noshade"/>
 
-        <%--
-       <c:if test="${not empty pageHelpURL}">
-          <a href=""
-             onclick="window.open(help,'help','width=800,height=650,scrollbars=yes,toolbar=yes,left=80,top=80,resizable=yes'); return false;"><img
-                src="/images/title_pagehelp.gif" alt="Page Help" align="right"/></a>
-       </c:if>
-        --%>
-
-    <div id="Breadcrumb">
-        <tiles:insert attribute="breadcrumb">
-          <tiles:put name="location" beanName="location"/>
-        </tiles:insert>
-    </div>
-
 </div>
 
+<div id="about" class="dialog" style="display: none; position: absolute; top: 0; left: 0">
+   <div class="DisplayContent" style="margin:0">
+      <div style="margin:5px">
+         <p class="compact">
+            <span class="DisplaySubhead"><fmt:message key="footer.aboutLink"/></span><br/>
+            <span class="DisplayLabel"><fmt:message key="footer.version"/>: <fmt:message key="product.version"/></span><br/>
+            <span class="DisplayLabel"><fmt:message key="footer.buildNumber"/>: <fmt:message key="product.buildNumber"/></span>            
+         </p>
+         <p class="compact">
+            <fmt:message key="footer.shortCopyright"/> <fmt:message key="about.Copyright.Content"/>
+         </p>
+         <p class="compact">
+            <fmt:message key="about.MoreInfo.Label"/><br/>
+            <a href="mailto:<fmt:message key="about.MoreInfo.LinkSales"/>"><fmt:message key="about.MoreInfo.LinkSales"/></a><br/>
+            <a href="mailto:<fmt:message key="about.MoreInfo.LinkSupport"/>"><fmt:message key="about.MoreInfo.LinkSupport"/></a>
+         </p>
+      </div>
+   </div>
+</div>

@@ -15,14 +15,9 @@
 <ui:composition template="/rhq/definition/layout/main.xhtml">
 
    <ui:param name="pageTitle" value="List Group Definitions"/>
-   <ui:param name="selectedTabName" value="Inventory"/>
-   
+ 
    <ui:define name="content">
-   
-      <h:outputLink value="/ResourceHub.do">
-         <h:outputText value="Back to Resource Browser"/>
-      </h:outputLink>
-   
+
       <h:form id="groupDefinitionsListForm">
          <input type="hidden" name="id" value="${param.id}"/>
          
@@ -153,10 +148,6 @@
             
          </rich:panel>
       </h:form>
-
-      <h:outputLink value="/ResourceHub.do">
-         <h:outputText value="Back to Resource Browser"/>
-      </h:outputLink>
 
    </ui:define>
 </ui:composition>

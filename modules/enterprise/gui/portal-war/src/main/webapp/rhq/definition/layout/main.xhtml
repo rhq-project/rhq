@@ -13,22 +13,7 @@
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function">
 
-THIS TEXT WILL BE REMOVED.
-
-The template for all Resource Group pages (i.e. the Monitor/Inventory/etc. tabbed pages).
-
-TEMPLATE PARAMETERS:
-content - the page content
-
-CONTEXT PARAMETERS:
-pageTitle - the page title
-pageHelpURL - a context-sensitive help URL for the page (optional)
-selectedTabName - the name of the tab/subTab to select in the following format: tabName[.subtabName]
-(e.g. "Inventory" or "Monitor.Visibility")
-
-<ui:composition template="/rhq/entity/layout/main.xhtml">
-
-THIS TEXT WILL BE REMOVED AS WELL.
+<ui:composition template="/rhq/layout/main.xhtml">
 
 <ui:param name="defaultPageTitle" value="Group Definition '#{GroupDefinitionUIBean.name}'"/>
 
@@ -55,46 +40,10 @@ THIS TEXT WILL BE REMOVED AS WELL.
 
 </ui:define>
 
-<ui:define name="summary">
-
-   <ui:remove>
-      <!-- NOTE: Besides being included here, summary.xhtml is also leveraged by JSP-based pages. Specifically, it is
-                 included (via an AJAX request) in /common/components/PageTitle.jsp. -->
-   </ui:remove>
-
-</ui:define>
-
-<ui:define name="tabBar">
-
-   <onc:tabBar selectedTabName="#{selectedTabName}">
-
-      <onc:tab name="Inventory" url="/rhq/definition/group/list.xhtml" />
-
-   </onc:tabBar>
-
-</ui:define>
-
-   <!-- Shows the results of the last action executed. -->
-   <h:messages showSummary="true"
-               showDetail="true"
-               infoClass="InfoBlock"
-               warnClass="WarnBlock"
-               errorClass="ErrorBlock"
-               fatalClass="FatalBlock"
-               globalOnly="false"
-               layout="table"
-               width="100%"/>
-
-<ui:define name="content">
-   <p/>
-
-   <h1>Default Definition Content</h1>
-
-   <p/>
+<ui:define name="body">
+   <ui:insert name="content">Default Group Definition Body</ui:insert>
 </ui:define>
 
 </ui:composition>
-
-THIS TEXT WILL BE REMOVED AS WELL.
 
 </html>

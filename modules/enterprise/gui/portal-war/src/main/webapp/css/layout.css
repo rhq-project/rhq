@@ -1,0 +1,92 @@
+
+#PageHeader {
+   position: absolute;
+   top: 0px;
+   left: 0px;
+   margin: 0px;
+   padding: 0px;
+   border: 0px;
+   width: 100%;
+}
+
+#PageHeader h1 {
+   font: bold 16px Verdana, Helvetica, Arial, sans-serif;
+   text-align: right;
+}
+
+#AppMenu {
+   margin: 10px 10px 0px 0px;
+   color: #d8d8d8;
+   font: 8pt Verdana, Helvetica, Arial, sans-serif;
+   text-align: right;
+}
+
+#AppMenu a {
+   color: #666666;
+   text-decoration: none;
+   margin: 0px 5px 0px 5px;
+}
+
+#AppMenu a:hover {
+   text-decoration: underline;
+}
+
+#Breadcrumb {
+   color: #333333;
+   font-size: 8pt;
+   margin-left: 20px;
+   margin-right: 7px;
+   margin-top: 7px;
+   margin-bottom: 0px;
+}
+
+#Breadcrumb span.root {
+   color: #666666;
+   font-weight: bold;
+}
+
+#Breadcrumb a {
+   color: #008FD6;
+   text-decoration: none;
+}
+
+#Breadcrumb a:hover {
+   text-decoration: underline;
+}
+
+#content
+	{
+	position: absolute;
+	top: 85px;
+	left: 225px;
+	margin: 0px;
+	padding: 0px;
+	border: 0px;
+	height: 100%;
+	z-index: -1;
+	}
+
+#content-full
+	{
+	position: absolute;
+	top: 85px;
+	left: 0px;
+	margin: 0px;
+	padding: 0px;
+	border: 0px;
+	height: 100%;
+	z-index: -1;
+	}
+
+#sidebar-left
+	{
+	position: absolute;
+	top: 85px;
+	left: 0px;
+	margin: 0px;
+	padding: 0px;
+	border: 0px;
+	width: 225px;
+	height: 100%;
+	z-index: -1;
+	}

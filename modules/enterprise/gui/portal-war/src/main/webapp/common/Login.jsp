@@ -26,6 +26,7 @@
 <title><fmt:message key="login.title"/></title>
 <link rel=stylesheet href="<html:rewrite page="/css/win.css"/>" type="text/css">
 <script language="JavaScript" src="<html:rewrite page="/js/functions.js"/>" type="text/javascript"></script>
+<script language="JavaScript" src="<html:rewrite page="/js/rhq.js"/>" type="text/javascript"></script>
 <script language="JavaScript" type="text/javascript">
   if (top != self)
     top.location.href = self.document.location;
@@ -49,22 +50,35 @@
     		width: 35em; text-align: left; /* to realign your text */
      	}
    </style>
-
+<script language="JavaScript" type="text/javascript">var aboutWindowTitle = '<fmt:message key="about.Title"/>';</script>
 </head>
 
 <body>
 
 <div id="PageHeader">
 
-    <table width="100%">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" height="70px">
         <tr valign="bottom">
-            <td align="left">
+            <td align="left" rowspan="2">
                 <fmt:message var="urlDomain" key="product.url.domain"/>
                 <fmt:message var="productName" key="product.fullName"/>
-                <html:link page="http://${urlDomain}">
+
+                <a href="#" onclick="openAbout(aboutWindowTitle)">
                     <html:img page="/images/logo_header.gif" title="${productName}"/>
-                </html:link>
+                </a>
             </td>
+            <td valign="top" align="right">
+               <map name="redhat-jboss-logo-map">
+                  <area href="http://www.redhat.com/" alt="Red Hat Homepage" title="Red Hat" shape="rect" coords="0,0,100,42" />
+                  <area href="http://www.jboss.org/" alt="JBoss Homepage" title="JBoss" shape="rect" coords="100,0,200,42" />
+               </map>
+               <div>
+                  <img src="/images/redhat-jboss-logo.gif" usemap="#redhat-jboss-logo-map" />
+               </div>
+            </td>
+        </tr>
+        <tr>
+            <td align="right">&nbsp;</td>
         </tr>
     </table>
 

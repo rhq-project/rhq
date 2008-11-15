@@ -29,7 +29,7 @@ selectedTabName - the name of the tab/subTab to select in the following format: 
 REQUEST PARAMETERS:
 groupId - the id of the ResourceGroup being accessed
 
-<ui:composition template="/rhq/entity/layout/main.xhtml">
+<ui:composition template="${(param.category eq 'COMPATIBLE') ? '/rhq/entity/layout/main.xhtml' : '/rhq/entity/layout/main-wide.xhtml'}">
 
 THIS TEXT WILL BE REMOVED AS WELL.
 
@@ -84,6 +84,12 @@ THIS TEXT WILL BE REMOVED AS WELL.
 
 </ui:define>
 
+	<ui:define name="nav">
+	   <p/>
+	   Empty Cluster-Group Tree
+	   <p/>
+	</ui:define>
+
 <ui:define name="content">
    <p/>
 
@@ -91,7 +97,6 @@ THIS TEXT WILL BE REMOVED AS WELL.
 
    <p/>
 </ui:define>
-
 </ui:composition>
 
 THIS TEXT WILL BE REMOVED AS WELL.

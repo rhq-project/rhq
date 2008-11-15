@@ -35,10 +35,6 @@ REQUEST PARAMETERS:
 
    <ui:define name="body-area">
 
-      <div id="sidebar-left">
-         <ui:insert name="nav"><p>Default Entity Navigation</p></ui:insert>
-      </div>
-
       <!-- Shows the results of the last action executed. -->
       <h:messages showSummary="true"
                   showDetail="true"
@@ -50,7 +46,7 @@ REQUEST PARAMETERS:
                   layout="table"
                   width="100%"/>
       
-      <div id="content">
+      <div id="content-full">
          <div id="Breadcrumb">
             <ui:insert name="breadcrumbs">Default Breadcrumbs</ui:insert>
          </div>

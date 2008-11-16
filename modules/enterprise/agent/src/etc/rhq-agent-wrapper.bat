@@ -59,7 +59,9 @@ rem                          precedence over RHQ_AGENT_RUN_AS.
 rem                       
 rem Note that you cannot define custom Java VM parameters or agent
 rem command line arguments to pass to the RHQ Agent VM.  If you wish to
-rem pass in specific arguments, modify the rhq-agent-wrapper.conf file.
+rem pass in specific arguments, modify the rhq-agent-wrapper.conf file
+rem or create a rhq-agent-wrapper.inc include file and place it in the same
+rem directory as the rhq-agent-wrapper.conf file.
 rem
 rem If the embedded JRE is to be used but is not available, the fallback
 rem JRE to be used will be determined by the JAVA_HOME environment variable.

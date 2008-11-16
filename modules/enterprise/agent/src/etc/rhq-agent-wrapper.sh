@@ -16,8 +16,9 @@
 # This script is customizable by setting the environment variables that
 # are accepted by the rhq-agent.sh script - see that script for more info.
 #
-# Note that if this script is to be used as an init.d script, you must set
-# RHQ_AGENT_HOME so this script knows where to find the agent installation.
+# Note that if this script is to be used as an init.d script, you must ensure
+# this script has the RHQ_AGENT_HOME set so it knows where to find the
+# agent installation.
 #
 # You may optionally set the RHQ_AGENT_PIDFILE_DIR environment variable if
 # you want to write the pidfile to a specific location.  This value must
@@ -25,8 +26,16 @@
 # be stored there.  If not set, its default is the agent's bin directory.
 # =============================================================================
 
+RHQ_AGENT_WRAPPER_BIN_DIR_PATH=`dirname $0`
+
+# Read in the rhq-agent-env.sh file so we get the configured agent environment
+if [ -f "${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh" ]; then
+   . ${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh $*
+fi
+
 # Here are some environment variables you can set to customize the launch
-# of the RHQ Agent.
+# of the RHQ Agent. Consider setting them in the rhq-agent-env.sh before
+# setting them here, it is probably better setting them in the env file instead.
 
 # RHQ_AGENT_HOME=/path/to/agent/home
 # RHQ_AGENT_PIDFILE_DIR=/var/run
@@ -37,10 +46,12 @@
 # export RHQ_AGENT_ADDITIONAL_JAVA_OPTS=additional VM options
 
 # The --daemon argument is required, but you can add additional arguments as appropriate
-export RHQ_AGENT_CMDLINE_OPTS=--daemon
+if [ "x$RHQ_AGENT_CMDLINE_OPTS" = "x" ]; then
+   export RHQ_AGENT_CMDLINE_OPTS=--daemon
+fi
 
 # Determine where this script is, and change to its directory
-cd `dirname $0`
+cd $RHQ_AGENT_WRAPPER_BIN_DIR_PATH
 THIS_SCRIPT_DIR=`pwd`
 THIS_SCRIPT=${THIS_SCRIPT_DIR}/`basename $0`
 

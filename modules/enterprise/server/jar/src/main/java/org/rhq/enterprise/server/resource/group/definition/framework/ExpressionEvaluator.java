@@ -573,7 +573,6 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         context = ParseContext.StringMatch;
     }
 
-    @SuppressWarnings("unchecked")
     public void execute() {
         if (isInvalid) {
             throw new IllegalStateException("This evaluator previously threw an exception and can no longer be used");
@@ -637,6 +636,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             return firstTime;
         }
 
+        @SuppressWarnings("unchecked")
         public ExpressionEvaluator.Result next() {
             log.debug("SingleQueryIterator: '" + computedJPQLStatement + "'");
             List<Integer> results = getSingleResultList(computedJPQLStatement);
@@ -659,7 +659,6 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         List uniqueTuples;
         int index;
 
-        @SuppressWarnings("unchecked")
         public MultipleQueryIterator() {
             log.debug("MultipleQueryIterator: '" + computedJPQLStatement + "'");
             this.uniqueTuples = getSingleResultList(computedJPQLStatement);
@@ -670,6 +669,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             return (index < uniqueTuples.size());
         }
 
+        @SuppressWarnings("unchecked")
         public ExpressionEvaluator.Result next() {
             int i = 0;
             Object nextResult = uniqueTuples.get(index++);
@@ -683,6 +683,13 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 groupByExpression = (Object[]) nextResult;
             } else {
                 groupByExpression = new Object[] { nextResult };
+            }
+
+            // RHQ-1115 - filter out results with NULL elements
+            for (Object next : groupByExpression) {
+                if (next == null) {
+                    return null;
+                }
             }
 
             /*
@@ -710,11 +717,11 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     /*
      * given a JPQL query in string form, and assuming the predicate map whereRepalcements is populated correctly,
      * return the result list:  -- if no groupBy expressions are present, this will return a collection of Resource
-     * objects   -- if at least one groupBy expression was used, it will return an Object[] representing a     unique
+     * objects   -- if at least one groupBy expression was used, it will return an Object[] representing a unique
      * combination of value N-tuples returned from the set of N-pivoted expressions
      */
     @SuppressWarnings("unchecked")
-    private List<Integer> getSingleResultList(String queryStr) {
+    private List getSingleResultList(String queryStr) {
         if (isTestMode) {
             return Collections.emptyList();
         }
@@ -774,21 +781,25 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             JoinCondition.AVAILABILITY, JoinCondition.SCHEDULES, JoinCondition.PLUGIN_CONFIGURATION,
             JoinCondition.RESOURCE_CONFIGURATION };
 
+        /* 
+         * process JoinConditions in a specific order, because hibernate AST parsing requires
+         * tokens to have been identified in the JPQL before their first use; in this case,
+         * JoinCondition.RESOURCE_CHILD must be first because ANY of the others might be joining 
+         * down the resource hierarchy (note: joining up the resource hierarchy doesn't require 
+         * any special processing because it follows from the "many" to the "one" side of the 
+         * relationship, for instance "resource.parent.parent" for grandparents. 
+         */
         for (JoinCondition joinCondition : orderedConditionProcessing) {
             ResourceRelativeContext context = joinConditions.get(joinCondition);
             if (context == null) {
                 continue;
             }
-            // add simple joins to the beginning of the JOIN clause
             result += " JOIN " + context.pathToken + joinCondition.subexpression + " " + joinCondition.alias;
             if (joinCondition == JoinCondition.SCHEDULES) {
-                // add simple joins to the beginning of the JOIN clause
                 result += " JOIN " + joinCondition.alias + ".definition " + METRIC_DEF_ALIAS;
-                // add complex joins to the end of the JOIN clause
                 result += ", MeasurementDataTrait " + TRAIT_ALIAS + " ";
             } else if (joinCondition == JoinCondition.PLUGIN_CONFIGURATION
                 || joinCondition == JoinCondition.RESOURCE_CONFIGURATION) {
-                // add complex joins to the end of the JOIN clause
                 result += ", PropertySimple " + PROP_SIMPLE_ALIAS + " ";
             }
         }

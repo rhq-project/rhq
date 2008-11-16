@@ -28,6 +28,21 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
+    @I18NMessage("Failed to get the agent update version from [{0}]. Cause: {1}")
+    String UPDATE_VERSION_FAILURE = "AgentUpdateCheck.update-version-failure";
+
+    @I18NMessage("Getting the agent update version failed - server temporarily rejecting our request [{0}]")
+    String UPDATE_VERSION_UNAVAILABLE = "AgentUpdateCheck.update-version-unavailable";
+
+    @I18NMessage("Getting the agent update version via URL [{0}]")
+    String UPDATE_VERSION_RETRIEVAL = "AgentUpdateCheck.update-version-retrieval";
+
+    @I18NMessage("Cannot get agent update version - agent is configured to disable updates")
+    String UPDATE_VERSION_DISABLED_BY_AGENT = "AgentUpdateCheck.update-version-disabled-by-agent";
+
+    @I18NMessage("Cannot get agent update version - agent updates have been disabled by the server [{0}]")
+    String UPDATE_VERSION_DISABLED_BY_SERVER = "AgentUpdateCheck.update-version-disabled-by-server";
+
     @I18NMessage("Version=[{0}], Build Number=[{1}], Build Date=[{2,date,medium} {2,time,short}]")
     String IDENTIFY_VERSION = "AgentMain.identify-version";
 
@@ -648,6 +663,46 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("Failed to switch over to server [{0}]. See log file for details.")
     String FAILOVER_IMMEDIATE_SWITCH_FAILED = "PromptCommand.failover.immediate_switch-failed";
+
+    @I18NMessage("update")
+    String UPDATE = "PromptCommand.update";
+
+    @I18NMessage("update <--version | --enable | --disable | --status>")
+    String UPDATE_SYNTAX = "PromptCommand.update.syntax";
+
+    @I18NMessage("Provides agent update functionality")
+    String UPDATE_HELP = "PromptCommand.update.help";
+
+    @I18NMessage("Provides agent update functionality.\\n\\\n"
+        + "-v, --version: Checks the version information for the available agent update\\n\\\n"
+        + "-e, --enable:  Enables the agent to be able to update itself\\n\\\n"
+        + "-d, --disable: Disallow the agent from being able to update itself\\n\\\n"
+        + "-s, --status:  Indicates if the agent is allowed to update itself or not")
+    String UPDATE_DETAILED_HELP = "PromptCommand.update.detailed-help";
+
+    @I18NMessage("Agent update version as obtained from [{0}]:\\n\\\n" //
+        + "Agent Update Binary Version: {1} ({2})\\n\\\n" //
+        + "\\         This Agent Version: {3} ({4})")
+    String UPDATE_CHECK_INFO = "PromptCommand.update.check-info";
+
+    @I18NMessage("Agent is up to date.")
+    String UPDATE_CHECK_NOT_OOD = "PromptCommand.update.check-not-ood";
+
+    @I18NMessage("Agent is out of date and needs to be updated!")
+    String UPDATE_CHECK_OOD = "PromptCommand.update.check-ood";
+
+    @I18NMessage("Agent is technically up to date with the same version as the agent update\\n\\\n"
+        + "binary, however, it has a different build as the update so it may not be identical.")
+    String UPDATE_CHECK_OOD_STRICT = "PromptCommand.update.check-ood-strict";
+
+    @I18NMessage("Failed to get the agent update version from [{0}]. Cause: {1}")
+    String UPDATE_CHECK_FAILED = "PromptCommand.update.check-failed";
+
+    @I18NMessage("Agent updates are enabled.")
+    String UPDATE_ENABLED = "PromptCommand.update.enabled";
+
+    @I18NMessage("Agent updates are disabled.")
+    String UPDATE_DISABLED = "PromptCommand.update.disabled";
 
     @I18NMessage("quit")
     String QUIT = "PromptCommand.quit";

@@ -39,13 +39,17 @@
 # The --daemon argument is required, but you can add additional arguments as appropriate
 export RHQ_AGENT_CMDLINE_OPTS=--daemon
 
+# Determine where this script is, and change to its directory
+cd `dirname $0`
+THIS_SCRIPT_DIR=`pwd`
+THIS_SCRIPT=${THIS_SCRIPT_DIR}/`basename $0`
+
 # Figure out where the RHQ Agent's home directory is and cd to it.
 # If RHQ_AGENT_HOME is not defined, we will assume we are running
 # directly from the agent installation's bin directory
 
 if [ "x$RHQ_AGENT_HOME" = "x" ]; then
-   cd `dirname $0`
-   RHQ_AGENT_START_SCRIPT_DIR=`pwd`
+   RHQ_AGENT_START_SCRIPT_DIR=${THIS_SCRIPT_DIR}
    cd ..
    RHQ_AGENT_HOME=`pwd`
 else
@@ -189,8 +193,8 @@ case "$1" in
         ;;
 
 'restart')
-        $0 stop
-        $0 start
+        ${THIS_SCRIPT} stop
+        ${THIS_SCRIPT} start
         exit 0
         ;;
 

@@ -63,7 +63,7 @@ THIS TEXT WILL BE REMOVED AS WELL.
       <f:param name="groupId" value="#{param.groupId}"/>
       <f:param name="category" value="#{param.category}"/>
 
-      <onc:tab name="Monitor" rendered="#{monitorEnabled and param.category ne 'MIXED'}">
+      <onc:tab name="Monitor" rendered="#{monitorEnabled and param.category eq 'COMPATIBLE'}">
          <onc:subtab name="Visibility" url="/resource/group/monitor/Visibility.do">
             <f:param name="mode" value="currentHealth"/>
          </onc:subtab>
@@ -72,13 +72,19 @@ THIS TEXT WILL BE REMOVED AS WELL.
          </onc:subtab>
       </onc:tab>
       
-      <onc:tab name="Events">
+      <onc:tab name="Monitor+" rendered="#{param.category eq 'COMPATIBLE'}">
+         <onc:subtab name="Graphs" url="/rhq/group/monitor/graphs.xhtml"/>
+         <onc:subtab name="Tables" url="/rhq/group/monitor/tables.xhtml"/>
+         <onc:subtab name="Schedules" url="/rhq/group/monitor/schedules.xhtml"/>
+      </onc:tab>
+      
+      <onc:tab name="Events" rendered="#{param.category eq 'COMPATIBLE'}">
          <onc:subtab name="History" url="/rhq/group/events/history.xhtml"/>
       </onc:tab>
 
       <onc:tab name="Inventory" url="/rhq/group/inventory/view.xhtml"/>
       
-      <onc:tab name="Control" rendered="#{!empty ResourceGroupUIBean.resourceType}">
+      <onc:tab name="Control" rendered="#{param.category eq 'COMPATIBLE'}">
          <onc:subtab name="New" url="/rhq/group/operation/groupOperationScheduleNew.xhtml"/>
          <onc:subtab name="Schedules" url="/rhq/group/operation/groupOperationSchedules.xhtml"/>
          <onc:subtab name="History" url="/rhq/group/operation/groupOperationHistory.xhtml"/>

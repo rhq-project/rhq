@@ -28,10 +28,12 @@ import java.util.prefs.Preferences;
 
 import mazz.i18n.Msg;
 
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.agent.AgentConfigurationConstants;
 import org.rhq.enterprise.agent.AgentMain;
-import org.rhq.enterprise.agent.AgentUpdateCheck;
+import org.rhq.enterprise.agent.AgentUpdateDownload;
 import org.rhq.enterprise.agent.AgentUpdateInformation;
+import org.rhq.enterprise.agent.AgentUpdateVersion;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 
@@ -73,10 +75,11 @@ public class UpdatePromptCommand implements AgentPromptCommand {
             return;
         }
 
-        String sopts = "vdes";
+        String sopts = "vdeos";
         LongOpt[] lopts = { new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'v'), // check the version info
             new LongOpt("disable", LongOpt.NO_ARGUMENT, null, 'd'), // disable agent updates
             new LongOpt("enable", LongOpt.NO_ARGUMENT, null, 'e'), // enable agent updates
+            new LongOpt("download", LongOpt.NO_ARGUMENT, null, 'o'), // downloads the agent update binary
             new LongOpt("status", LongOpt.NO_ARGUMENT, null, 's') // status as to whether its enabled/disabled
         };
 
@@ -95,8 +98,8 @@ public class UpdatePromptCommand implements AgentPromptCommand {
             case 'v': {
                 URL url = null;
                 try {
-                    AgentUpdateCheck check = new AgentUpdateCheck(agent);
-                    url = check.getUrl();
+                    AgentUpdateVersion check = new AgentUpdateVersion(agent);
+                    url = check.getVersionUrl();
                     AgentUpdateInformation info = check.getAgentUpdateInformation();
                     out.println(MSG.getMsg(AgentI18NResourceKeys.UPDATE_CHECK_INFO, url, info.getUpdateVersion(), info
                         .getUpdateBuild(), info.getAgentVersion(), info.getAgentBuild()));
@@ -141,6 +144,19 @@ public class UpdatePromptCommand implements AgentPromptCommand {
                     out.println(MSG.getMsg(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES, prefName, prefValue));
                 }
                 out.println(MSG.getMsg(AgentI18NResourceKeys.UPDATE_ENABLED));
+                break;
+            }
+
+            case 'o': {
+                try {
+                    AgentUpdateDownload aud = new AgentUpdateDownload(agent);
+                    aud.download();
+                    aud.validate();
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.UPDATE_DOWNLOADED, aud.getAgentUpdateBinaryFile()));
+                } catch (Exception e) {
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.UPDATE_DOWNLOAD_FAILED, ThrowableUtil
+                        .getAllMessages(e)));
+                }
                 break;
             }
 

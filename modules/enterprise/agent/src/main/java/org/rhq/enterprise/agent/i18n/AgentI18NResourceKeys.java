@@ -28,20 +28,56 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
+    @I18NMessage("Cannot validate agent update binary - it has not been downloaded yet [{0}]")
+    String UPDATE_DOWNLOAD_MD5_MISSING_FILE = "AgentUpdateDownload.md5.missing-file";
+
+    @I18NMessage("The downloaded agent update binary [{0}] did NOT validate with the expected MD5")
+    String UPDATE_DOWNLOAD_MD5_INVALID = "AgentUpdateDownload.md5.invalid";
+
+    @I18NMessage("Cannot download agent update binary - agent is configured to disable updates")
+    String UPDATE_DOWNLOAD_DISABLED_BY_AGENT = "AgentUpdateDownload.update-download-disabled-by-agent";
+
+    @I18NMessage("Cannot download agent update binary - agent updates have been disabled by the server [{0}]")
+    String UPDATE_DOWNLOAD_DISABLED_BY_SERVER = "AgentUpdateDownload.update-download-disabled-by-server";
+
+    @I18NMessage("Server did not tell us what filename to give our download, will use [{0}]")
+    String UPDATE_DOWNLOAD_NO_NAME = "AgentUpdateDownload.update-download-no-name";
+
+    @I18NMessage("Server told us an invalid name to call our agent update binary file: [{0}]")
+    String UPDATE_DOWNLOAD_BAD_NAME = "AgentUpdateDownload.update-download-bad-name";
+
+    @I18NMessage("Already have the agent binary update from a previous download at [{0}]")
+    String UPDATE_DOWNLOAD_ALREADY_HAVE_IT = "AgentUpdateDownload.update-download-already-have-it";
+
+    @I18NMessage("Failed to download the agent update binary from [{0}]. Cause: {1}")
+    String UPDATE_DOWNLOAD_FAILURE = "AgentUpdateDownload.update-download-failure";
+
+    @I18NMessage("Downloading the agent update binary [{0}] via URL [{1}]")
+    String UPDATE_DOWNLOAD_RETRIEVAL = "AgentUpdateDownload.update-download-retrieval";
+
+    @I18NMessage("Agent update binary [{0}] downloaded from URL [{1}] and stored at [{2}]")
+    String UPDATE_DOWNLOAD_DONE = "AgentUpdateDownload.update-download-done";
+
+    @I18NMessage("Downloading the agent update binary [{0}] failed - server temporarily rejecting our request [{1}]")
+    String UPDATE_DOWNLOAD_UNAVAILABLE = "AgentUpdateDownload.update-download-unavailable";
+
     @I18NMessage("Failed to get the agent update version from [{0}]. Cause: {1}")
-    String UPDATE_VERSION_FAILURE = "AgentUpdateCheck.update-version-failure";
+    String UPDATE_VERSION_FAILURE = "AgentUpdateVersion.update-version-failure";
 
     @I18NMessage("Getting the agent update version failed - server temporarily rejecting our request [{0}]")
-    String UPDATE_VERSION_UNAVAILABLE = "AgentUpdateCheck.update-version-unavailable";
+    String UPDATE_VERSION_UNAVAILABLE = "AgentUpdateVersion.update-version-unavailable";
 
     @I18NMessage("Getting the agent update version via URL [{0}]")
-    String UPDATE_VERSION_RETRIEVAL = "AgentUpdateCheck.update-version-retrieval";
+    String UPDATE_VERSION_RETRIEVAL = "AgentUpdateVersion.update-version-retrieval";
+
+    @I18NMessage("Agent update version retrieved via URL [{0}]: {1}")
+    String UPDATE_VERSION_RETRIEVED = "AgentUpdateVersion.update-version-retrieved";
 
     @I18NMessage("Cannot get agent update version - agent is configured to disable updates")
-    String UPDATE_VERSION_DISABLED_BY_AGENT = "AgentUpdateCheck.update-version-disabled-by-agent";
+    String UPDATE_VERSION_DISABLED_BY_AGENT = "AgentUpdateVersion.update-version-disabled-by-agent";
 
     @I18NMessage("Cannot get agent update version - agent updates have been disabled by the server [{0}]")
-    String UPDATE_VERSION_DISABLED_BY_SERVER = "AgentUpdateCheck.update-version-disabled-by-server";
+    String UPDATE_VERSION_DISABLED_BY_SERVER = "AgentUpdateVersion.update-version-disabled-by-server";
 
     @I18NMessage("Version=[{0}], Build Number=[{1}], Build Date=[{2,date,medium} {2,time,short}]")
     String IDENTIFY_VERSION = "AgentMain.identify-version";
@@ -667,20 +703,21 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("update")
     String UPDATE = "PromptCommand.update";
 
-    @I18NMessage("update <--version | --enable | --disable | --status>")
+    @I18NMessage("update <--version | --enable | --disable | --download | --status>")
     String UPDATE_SYNTAX = "PromptCommand.update.syntax";
 
     @I18NMessage("Provides agent update functionality")
     String UPDATE_HELP = "PromptCommand.update.help";
 
     @I18NMessage("Provides agent update functionality.\\n\\\n"
-        + "-v, --version: Checks the version information for the available agent update\\n\\\n"
-        + "-e, --enable:  Enables the agent to be able to update itself\\n\\\n"
-        + "-d, --disable: Disallow the agent from being able to update itself\\n\\\n"
-        + "-s, --status:  Indicates if the agent is allowed to update itself or not")
+        + "-v, --version:  Checks the version information for the available agent update\\n\\\n"
+        + "-e, --enable:   Enables the agent to be able to update itself\\n\\\n"
+        + "-d, --disable:  Disallow the agent from being able to update itself\\n\\\n"
+        + "-o, --download: Downloads the agent update binary\\n\\\n"
+        + "-s, --status:   Indicates if the agent is allowed to update itself or not")
     String UPDATE_DETAILED_HELP = "PromptCommand.update.detailed-help";
 
-    @I18NMessage("Agent update version as obtained from [{0}]:\\n\\\n" //
+    @I18NMessage("Agent update version obtained from [{0}]:\\n\\\n" //
         + "Agent Update Binary Version: {1} ({2})\\n\\\n" //
         + "\\         This Agent Version: {3} ({4})")
     String UPDATE_CHECK_INFO = "PromptCommand.update.check-info";
@@ -703,6 +740,12 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("Agent updates are disabled.")
     String UPDATE_DISABLED = "PromptCommand.update.disabled";
+
+    @I18NMessage("Downloaded the agent update binary to [{0}]")
+    String UPDATE_DOWNLOADED = "PromptCommand.update.downloaded";
+
+    @I18NMessage("Failed to download the agent update binary. Cause: {0}")
+    String UPDATE_DOWNLOAD_FAILED = "PromptCommand.update.download-failed";
 
     @I18NMessage("quit")
     String QUIT = "PromptCommand.quit";

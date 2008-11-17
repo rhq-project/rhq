@@ -130,4 +130,15 @@ public class AgentUpdateInformation {
     public String getUpdateMd5() {
         return updateMd5;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder("AgentUpdateInformation: ");
+        str.append("Version=[");
+        str.append(getUpdateVersion());
+        str.append("]; Build=[");
+        str.append(getUpdateBuild());
+        str.append("]");
+        return str.toString();
+    }
 }

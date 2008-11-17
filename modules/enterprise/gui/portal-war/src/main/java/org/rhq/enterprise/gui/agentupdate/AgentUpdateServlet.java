@@ -148,12 +148,6 @@ public class AgentUpdateServlet extends HttpServlet {
     }
 
     private void getVersion(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        int limit = getDownloadLimit();
-        if (limit <= 0) {
-            sendErrorAgentUpdateDisabled(resp);
-            return;
-        }
-
         try {
             File versionFile = getAgentUpdateVersionFile();
             resp.setContentType("text/plain");

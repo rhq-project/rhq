@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.agent;
 
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Properties;
@@ -29,21 +30,20 @@ import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 
 /**
- * Checks to see if there is an software update for the agent. In other words,
- * this checks to see if the current agent's version is older than the latest
- * available agent. If there is a newer agent available, this object will
- * tell you that.
+ * Checks to see if there is an software update for the agent and if so,
+ * retrieves the {@link #getAgentUpdateInformation() information} on it.
  *  
  * @author John Mazzitelli
- *
  */
-public class AgentUpdateCheck {
-    private static final Logger LOG = AgentI18NFactory.getLogger(AgentUpdateCheck.class);
+public class AgentUpdateVersion {
+    private static final Logger LOG = AgentI18NFactory.getLogger(AgentUpdateVersion.class);
 
     private AgentMain agent;
+    private AgentUpdateInformation agentUpdateInformation;
 
-    public AgentUpdateCheck(AgentMain agent) {
+    public AgentUpdateVersion(AgentMain agent) {
         this.agent = agent;
+        this.agentUpdateInformation = null; // we will lazy load this
     }
 
     /**
@@ -53,18 +53,36 @@ public class AgentUpdateCheck {
      * 
      * @throws Exception if for some reason a valid URL could not be obtained
      */
-    public URL getUrl() throws Exception {
+    public URL getVersionUrl() throws Exception {
         return new URL(this.agent.getConfiguration().getAgentUpdateVersionUrl());
     }
 
     /**
-     * Returns the agent update version information.
+     * Returns the last known agent update version information. Note that the agent update
+     * information is cached; if you want this object to ask the server again for the version
+     * information, call {@link #refresh()}.  This method will, however, call {@link #refresh()}
+     * for you if the information has not been retrieved at all yet.
      * 
      * @return version information of both the update and the current agent
      * 
      * @throws Exception if agent has disabled updates or it failed to get the update version information
      */
     public AgentUpdateInformation getAgentUpdateInformation() throws Exception {
+        if (this.agentUpdateInformation == null) {
+            refresh();
+        }
+        return this.agentUpdateInformation;
+    }
+
+    /**
+     * Forces this object to refresh the agent update information by asking the server for the data again.
+     * This always sends a request to the server in order to force the update information to be retrieved again.
+     * After this method is called, you can retrieve the new information by calling the method
+     * {@link #getAgentUpdateInformation()}.
+     *  
+     * @throws Exception if agent has disabled updates or it failed to get the update version information
+     */
+    public void refresh() throws Exception {
 
         if (!agent.getConfiguration().isAgentUpdateEnabled()) {
             throw new Exception(this.agent.getI18NMsg().getMsg(AgentI18NResourceKeys.UPDATE_VERSION_DISABLED_BY_AGENT));
@@ -72,17 +90,20 @@ public class AgentUpdateCheck {
 
         Properties versionProps = null;
         URL url = null;
-        HttpURLConnection conn = null;
         boolean keep_going = true;
 
         while (keep_going) {
+            HttpURLConnection conn = null;
+            InputStream inStream = null;
+
             try {
                 // we only support http/s
-                url = getUrl();
+                url = getVersionUrl();
                 LOG.debug(AgentI18NResourceKeys.UPDATE_VERSION_RETRIEVAL, url);
                 conn = (HttpURLConnection) url.openConnection();
                 versionProps = new Properties();
-                versionProps.load(conn.getInputStream());
+                inStream = conn.getInputStream();
+                versionProps.load(inStream);
                 keep_going = false;
             } catch (Exception e) {
                 if (conn != null) {
@@ -105,10 +126,20 @@ public class AgentUpdateCheck {
                     LOG.warn(AgentI18NResourceKeys.UPDATE_VERSION_FAILURE, url, ThrowableUtil.getAllMessages(e));
                     throw e;
                 }
+            } finally {
+                if (inStream != null) {
+                    try {
+                        inStream.close();
+                    } catch (Exception ioe) {
+                    }
+                }
             }
         }
 
         // we only ever get here when we are successful
-        return new AgentUpdateInformation(versionProps);
+        this.agentUpdateInformation = new AgentUpdateInformation(versionProps);
+        LOG.debug(AgentI18NResourceKeys.UPDATE_VERSION_RETRIEVED, url, this.agentUpdateInformation);
+
+        return;
     }
 }

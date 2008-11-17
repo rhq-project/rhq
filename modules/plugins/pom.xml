@@ -80,11 +80,13 @@
 		</plugins>
 	</build>
     
-    <profile>
-  		<id>embedded</id>
-  		<modules>
-            <module>jboss-as-5</module>
-  		</modules>
-  	</profile>    
+    <profiles>
+        <profile>
+      		<id>embedded</id>
+      		<modules>
+                <module>jboss-as-5</module>
+      		</modules>
+      	</profile>    
+    </profiles>
     
 </project>

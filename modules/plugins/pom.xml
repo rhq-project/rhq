@@ -42,7 +42,8 @@
       <module>rhq-server</module>    
       <module>jboss-cache</module>  
       <!-- NOTE: The jboss-as-5 plugin is not included for now, because all its deps are
-                 snapshots, which the maven release plugin would deeply frown upon.-->		        
+                 snapshots, which the maven release plugin would deeply frown upon
+                 (to include it, activate the embedded profile). -->		        
 	</modules>
     
 	<build>
@@ -78,5 +79,12 @@
 			</plugin>
 		</plugins>
 	</build>
+    
+    <profile>
+  		<id>embedded</id>
+  		<modules>
+            <module>jboss-as-5</module>
+  		</modules>
+  	</profile>    
     
 </project>

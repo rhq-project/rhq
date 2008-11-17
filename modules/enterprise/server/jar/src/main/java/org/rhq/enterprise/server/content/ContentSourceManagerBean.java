@@ -199,6 +199,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
 
         ContentSource cs = entityManager.find(ContentSource.class, contentSourceId);
         if (cs != null) {
+            if (cs.getConfiguration() != null) {
+                entityManager.remove(cs.getConfiguration());
+            }
             entityManager.remove(cs);
             log.debug("User [" + subject + "] deleted content source [" + cs + "]");
 
@@ -410,6 +413,15 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
         throws ContentSourceException {
 
         log.debug("User [" + subject + "] is updating content source [" + contentSource + "]");
+
+        if (contentSource.getConfiguration() == null) {
+            // this is a one-to-one and hibernate can't auto delete this orphan (HHH-2608), we manually do it here
+            ContentSource loaded = entityManager.find(ContentSource.class, contentSource.getId());
+            if (loaded.getConfiguration() != null) {
+                entityManager.remove(loaded.getConfiguration());
+            }
+        }
+
         contentSource = entityManager.merge(contentSource);
         log.debug("User [" + subject + "] updated content source [" + contentSource + "]");
 

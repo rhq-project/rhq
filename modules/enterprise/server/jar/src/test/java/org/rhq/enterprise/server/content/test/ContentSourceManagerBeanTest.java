@@ -811,6 +811,9 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
                 contentSourceManager.createContentSource(overlord, dup);
                 assert false : "Should not have been able to create the same content source";
             } catch (Exception expected) {
+            } finally {
+                contentSourceManager.deleteContentSource(overlord, contentSourceId);
+                contentSourceMetadataManager.registerTypes(new HashSet<ContentSourceType>());
             }
         } catch (Exception e) {
             e.printStackTrace();

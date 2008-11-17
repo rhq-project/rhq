@@ -33,24 +33,47 @@
         <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
 
         <jbas5.version>5.0.0-SNAPSHOT</jbas5.version>        
+        <jboss-man.version>2.0.0-SNAPSHOT</jboss-man.version>        
     </properties>
 
     <dependencies>
 
 		<dependency>
-			<groupId>${rhq.groupId}</groupId>
-			<artifactId>rhq-core-client-api</artifactId>
-			<version>${rhq.version}</version>			
-            <scope>provided</scope>
+		  <groupId>${rhq.groupId}</groupId>
+		  <artifactId>rhq-core-client-api</artifactId>
+		  <version>${rhq.version}</version>			
+          <scope>provided</scope>
 		</dependency>
-    
+
         <dependency>
-            <groupId>org.jboss.jbossas</groupId>
-            <artifactId>jboss-as-profileservice</artifactId>
-            <version>${jbas5.version}</version>
-            <scope>provided</scope>
+          <groupId>org.jboss.jbossas</groupId>
+          <artifactId>jboss-as-system</artifactId>
+          <classifier>profileservice-spi</classifier> 
+          <version>${jbas5.version}</version>
+          <scope>provided</scope>
         </dependency>
-    
+
+        <dependency>
+          <groupId>org.jboss.man</groupId>
+          <artifactId>jboss-managed</artifactId>
+          <version>${jboss-man.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        
+        <dependency>
+          <groupId>org.jboss.man</groupId>
+          <artifactId>jboss-metatype</artifactId>
+          <version>${jboss-man.version}</version>
+          <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>stax</groupId>
+          <artifactId>stax-api</artifactId>
+          <version>1.0</version>
+          <scope>provided</scope>
+        </dependency>    
+            
     </dependencies>
 
     <build>

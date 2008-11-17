@@ -1,31 +1,36 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.configuration.test;
 
+import java.util.HashMap;
 import java.util.List;
+
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.transaction.TransactionManager;
+
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
@@ -48,52 +53,59 @@ public class ConfigurationDefinitionTest extends AbstractEJB3Test {
         TransactionManager transactionManager = getTransactionManager();
         transactionManager.begin();
 
-        EntityManager em = getEntityManager();
-        ConfigurationDefinition definition = new ConfigurationDefinition(CONFIG_NAME, "Config definition for the thing");
-        definition
-            .put(new PropertyDefinitionSimple("SimpleProp", "My Simple Property", true, PropertySimpleType.STRING));
+        try {
+            EntityManager em = getEntityManager();
+            ConfigurationDefinition definition = new ConfigurationDefinition(CONFIG_NAME,
+                "Config definition for the thing");
+            definition.put(new PropertyDefinitionSimple("SimpleProp", "My Simple Property", true,
+                PropertySimpleType.STRING));
 
-        definition.put(new PropertyDefinitionMap("MapProp", "Map Properties", true, new PropertyDefinitionSimple(
-            "IntInMap", "Integer In Map", true, PropertySimpleType.INTEGER)));
+            definition.put(new PropertyDefinitionMap("MapProp", "Map Properties", true, new PropertyDefinitionSimple(
+                "IntInMap", "Integer In Map", true, PropertySimpleType.INTEGER)));
 
-        PropertyDefinitionSimple enumeratedString = new PropertyDefinitionSimple("ConnectionType", "My conn type",
-            true, PropertySimpleType.STRING);
-        enumeratedString.addEnumeratedValues(new PropertyDefinitionEnumeration("Local", "local"),
-            new PropertyDefinitionEnumeration("JSR160", "jsr160"), new PropertyDefinitionEnumeration("JBoss", "jboss"));
-        enumeratedString.setAllowCustomEnumeratedValue(true);
+            PropertyDefinitionSimple enumeratedString = new PropertyDefinitionSimple("ConnectionType", "My conn type",
+                true, PropertySimpleType.STRING);
+            enumeratedString.addEnumeratedValues(new PropertyDefinitionEnumeration("Local", "local"),
+                new PropertyDefinitionEnumeration("JSR160", "jsr160"), new PropertyDefinitionEnumeration("JBoss",
+                    "jboss"));
+            enumeratedString.setAllowCustomEnumeratedValue(true);
 
-        PropertyGroupDefinition basicGroup = new PropertyGroupDefinition("Basic Group");
-        enumeratedString.setPropertyGroupDefinition(basicGroup);
+            PropertyGroupDefinition basicGroup = new PropertyGroupDefinition("Basic Group");
+            enumeratedString.setPropertyGroupDefinition(basicGroup);
 
-        definition.put(enumeratedString);
+            definition.put(enumeratedString);
 
-        PropertyDefinitionSimple secondGroupedProperty = new PropertyDefinitionSimple("SimpleBool", "bool", false,
-            PropertySimpleType.BOOLEAN);
-        secondGroupedProperty.setPropertyGroupDefinition(basicGroup);
-        definition.put(secondGroupedProperty);
+            PropertyDefinitionSimple secondGroupedProperty = new PropertyDefinitionSimple("SimpleBool", "bool", false,
+                PropertySimpleType.BOOLEAN);
+            secondGroupedProperty.setPropertyGroupDefinition(basicGroup);
+            definition.put(secondGroupedProperty);
 
-        em.persist(definition);
+            em.persist(definition);
 
-        transactionManager.commit();
+            testReadDefinition(em);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            transactionManager.rollback();
+        }
     }
 
-    @Test(groups = "integration.ejb3", dependsOnMethods = "testStoreDefinition")
-    public void testReadDefinition() throws Exception {
-        TransactionManager transactionManager = getTransactionManager();
-        transactionManager.begin();
+    private void testReadDefinition(EntityManager em) throws Exception {
+        Query query = em.createQuery("select e from ConfigurationDefinition e where e.name = :name");
+        List<ConfigurationDefinition> definitions = query.setParameter("name", CONFIG_NAME).getResultList();
 
-        EntityManager em = getEntityManager();
-
-        List<ConfigurationDefinition> definitions = em.createQuery(
-            "select e from ConfigurationDefinition e where e.name = :name").setParameter("name", CONFIG_NAME)
-            .getResultList();
-
+        HashMap<Integer, PropertyGroupDefinition> doomedGroups = new HashMap<Integer, PropertyGroupDefinition>();
         for (ConfigurationDefinition definition : definitions) {
             prettyPrintConfigurationDefinition(definition);
+            for (PropertyGroupDefinition def : definition.getGroupDefinitions()) {
+                doomedGroups.put(def.getId(), def);
+            }
             em.remove(definition);
         }
-
-        transactionManager.commit();
+        for (PropertyGroupDefinition doomed : doomedGroups.values()) {
+            em.remove(doomed);
+        }
     }
 
     @Test(groups = "integration.ejb3")
@@ -101,42 +113,44 @@ public class ConfigurationDefinitionTest extends AbstractEJB3Test {
         TransactionManager transactionManager = getTransactionManager();
         transactionManager.begin();
 
-        EntityManager em = getEntityManager();
+        try {
+            EntityManager em = getEntityManager();
 
-        String testDefName = "CONFIG_ENUM_VAL_TEST";
+            String testDefName = "CONFIG_ENUM_VAL_TEST";
 
-        ConfigurationDefinition def = new ConfigurationDefinition(testDefName, "test data");
+            ConfigurationDefinition def = new ConfigurationDefinition(testDefName, "test data");
 
-        PropertyDefinitionSimple prop = new PropertyDefinitionSimple("EnumeratedProperty", "", true,
-            PropertySimpleType.STRING);
-        prop.addEnumeratedValues(new PropertyDefinitionEnumeration("A", "a"), new PropertyDefinitionEnumeration("B",
-            "b"));
+            PropertyDefinitionSimple prop = new PropertyDefinitionSimple("EnumeratedProperty", "", true,
+                PropertySimpleType.STRING);
+            prop.addEnumeratedValues(new PropertyDefinitionEnumeration("A", "a"), new PropertyDefinitionEnumeration(
+                "B", "b"));
 
-        def.put(prop);
-        em.persist(def);
+            def.put(prop);
+            em.persist(def);
 
-        List<ConfigurationDefinition> definitions = em.createQuery(
-            "select e from ConfigurationDefinition e where e.name = :name").setParameter("name", testDefName)
-            .getResultList();
+            List<ConfigurationDefinition> definitions = em.createQuery(
+                "select e from ConfigurationDefinition e where e.name = :name").setParameter("name", testDefName)
+                .getResultList();
 
-        for (ConfigurationDefinition definition : definitions) {
-            prettyPrintConfigurationDefinition(definition);
-            PropertyDefinitionSimple propDef = definition.getPropertyDefinitionSimple("EnumeratedProperty");
-            System.out.println("Before: " + propDef.getEnumeratedValues());
+            for (ConfigurationDefinition definition : definitions) {
+                prettyPrintConfigurationDefinition(definition);
+                PropertyDefinitionSimple propDef = definition.getPropertyDefinitionSimple("EnumeratedProperty");
+                System.out.println("Before: " + propDef.getEnumeratedValues());
 
-            PropertyDefinitionEnumeration enumVal = propDef.getEnumeratedValues().remove(0);
-            propDef.getEnumeratedValues().add(enumVal);
+                PropertyDefinitionEnumeration enumVal = propDef.getEnumeratedValues().remove(0);
+                propDef.getEnumeratedValues().add(enumVal);
 
-            definition = em.merge(definition);
-            System.out.println("After: "
-                + definition.getPropertyDefinitionSimple("EnumeratedProperty").getEnumeratedValues());
+                definition = em.merge(definition);
+                System.out.println("After: "
+                    + definition.getPropertyDefinitionSimple("EnumeratedProperty").getEnumeratedValues());
 
-            assert (definition.getPropertyDefinitionSimple("EnumeratedProperty").getEnumeratedValues().get(0)
-                .getValue().equals("b")) : "Values were not properly reordered";
-            em.remove(definition);
+                assert (definition.getPropertyDefinitionSimple("EnumeratedProperty").getEnumeratedValues().get(0)
+                    .getValue().equals("b")) : "Values were not properly reordered";
+                em.remove(definition);
+            }
+        } finally {
+            transactionManager.rollback();
         }
-
-        transactionManager.commit();
     }
 
     @Test(groups = "integration.ejb3")
@@ -153,39 +167,28 @@ public class ConfigurationDefinitionTest extends AbstractEJB3Test {
             prop.addConstraints(new FloatRangeConstraint(1d, 3d));
             def.put(prop);
             em.persist(def);
-            transactionManager.commit();
+            testReadConstraints(em);
         } catch (Exception e) {
-            transactionManager.rollback();
+            e.printStackTrace();
             throw e;
+        } finally {
+            transactionManager.rollback();
         }
     }
 
-    @Test(groups = "integration.ejb3", dependsOnMethods = "testStoreConstraints")
-    public void testReadConstraints() throws Exception {
-        TransactionManager transactionManager = getTransactionManager();
-        transactionManager.begin();
+    private void testReadConstraints(EntityManager em) throws Exception {
+        Query query = em.createQuery("select e from ConfigurationDefinition e where e.name = :name");
+        List<ConfigurationDefinition> definitions = query.setParameter("name", TEST_CONFIG_CONSTRAINT_NAME)
+            .getResultList();
 
-        try {
-            EntityManager em = getEntityManager();
-
-            List<ConfigurationDefinition> definitions = em.createQuery(
-                "select e from ConfigurationDefinition e where e.name = :name").setParameter("name",
-                TEST_CONFIG_CONSTRAINT_NAME).getResultList();
-
-            for (ConfigurationDefinition definition : definitions) {
-                prettyPrintConfigurationDefinition(definition);
-                PropertyDefinitionSimple propDef = definition.getPropertyDefinitionSimple("ConstrainedProperty");
-                for (Constraint constraint : propDef.getConstraints()) {
-                    System.out.println("Constraint: " + constraint);
-                }
-
-                em.remove(definition);
+        for (ConfigurationDefinition definition : definitions) {
+            prettyPrintConfigurationDefinition(definition);
+            PropertyDefinitionSimple propDef = definition.getPropertyDefinitionSimple("ConstrainedProperty");
+            for (Constraint constraint : propDef.getConstraints()) {
+                System.out.println("Constraint: " + constraint);
             }
 
-            transactionManager.commit();
-        } catch (Exception e) {
-            transactionManager.rollback();
-            throw e;
+            em.remove(definition);
         }
     }
 

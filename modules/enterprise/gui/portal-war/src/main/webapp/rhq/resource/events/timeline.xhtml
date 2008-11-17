@@ -5,21 +5,23 @@
       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:jsp="http://java.sun.com/JSP/Page"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
-   <ui:param name="pageTitle" value="Resource Timeline: '#{ResourceUIBean.name}'"/>
-   <ui:param name="selectedTabName" value="Monitor.Timeline"/>
-   <ui:define name="content">
-   
-      <h:form id="alertDefinitionsListForm">
+<ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Timeline"/>
+<ui:param name="selectedTabName" value="Events.Timeline"/>
+
+<ui:define name="content">
+
+      <h:form id="resourceTimelineForm">
          <input type="hidden" name="id" value="${param.id}"/>
 
          <rich:panel>
@@ -38,7 +40,8 @@
          </rich:panel>
       </h:form>
 
-   </ui:define>
+</ui:define>
+
 </ui:composition>
 
 </html>

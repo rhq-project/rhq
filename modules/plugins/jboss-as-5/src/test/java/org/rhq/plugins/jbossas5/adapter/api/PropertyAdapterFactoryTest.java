@@ -31,9 +31,8 @@ import org.jboss.metatype.api.values.SimpleValueSupport;
 import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToArrayMetaValueAdapter;
 import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToCollectionMetaValueAdapter;
 import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToCompositeMetaValueAdapter;
-import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToTableMetaValueAdapter;
-import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToGenericMetaValueAdapter;
 import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToSimpleMetaValueAdapter;
+import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToGenericValueAdapter;
 import org.rhq.plugins.jbossas5.util.ProfileServiceTestUtil;
 import org.testng.annotations.Test;
 
@@ -47,7 +46,7 @@ public class PropertyAdapterFactoryTest
         MetaType genericMetaType = ProfileServiceTestUtil.createMetaTypes().get(ProfileServiceTestUtil.GENERIC_TYPE);
         GenericValue genericValue = new GenericValueSupport((GenericMetaType) genericMetaType, "GenericValue");
         PropertyAdapter adapter1 = PropertyAdapterFactory.getPropertyAdapter(genericValue);
-        assert adapter1 instanceof PropertySimpleToGenericMetaValueAdapter : "Should be the PropertySimple to Generic adapter";
+        assert adapter1 instanceof PropertyMapToGenericValueAdapter : "Should be the PropertyMap to Generic adapter";
 
         SimpleValue simpleValue = SimpleValueSupport.wrap("SimpleValue");
         PropertyAdapter adapter2 = PropertyAdapterFactory.getPropertyAdapter(simpleValue);
@@ -61,7 +60,7 @@ public class PropertyAdapterFactoryTest
         Map<String, MetaType> metaTypeInstances = ProfileServiceTestUtil.createMetaTypes();
 
         PropertyAdapter adapter1 = PropertyAdapterFactory.getPropertyAdapter(metaTypeInstances.get(ProfileServiceTestUtil.GENERIC_TYPE));
-        assert adapter1 instanceof PropertySimpleToGenericMetaValueAdapter : "Should be the PropertySimple to Generic adapter";
+        assert adapter1 instanceof PropertyMapToGenericValueAdapter : "Should be the PropertyMap to Generic adapter";
 
         MetaType simpleMetaType = metaTypeInstances.get(ProfileServiceTestUtil.SIMPLE_TYPE);
         PropertyAdapter adapter2 = PropertyAdapterFactory.getPropertyAdapter(simpleMetaType);

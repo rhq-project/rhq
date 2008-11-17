@@ -32,8 +32,9 @@
     <properties>
         <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
 
-        <jbas5.version>5.0.0-SNAPSHOT</jbas5.version>        
-        <jboss-man.version>2.0.0-SNAPSHOT</jboss-man.version>        
+        <jbas5.version>5.0.0-SNAPSHOT</jbas5.version>      
+        <!-- NOTE: Do *not* use 2.0.0-SNAPSHOT here anymore! - snapshots are no longer being produced -->
+        <jboss-man.version>2.0.0.CR4</jboss-man.version>        
     </properties>
 
     <dependencies>
@@ -67,13 +68,22 @@
           <scope>provided</scope>
         </dependency>
 
+        <!-- Needed for the plugin descriptor generator code -->
         <dependency>
-          <groupId>stax</groupId>
-          <artifactId>stax-api</artifactId>
-          <version>1.0</version>
+          <groupId>apache-xerces</groupId>
+          <artifactId>xml-apis</artifactId>
+          <version>2.9.1</version>
           <scope>provided</scope>
         </dependency>    
-            
+
+        <!-- Needed for the plugin descriptor generator code -->
+        <dependency>
+          <groupId>sun-jaxb</groupId>
+          <artifactId>jaxb-api</artifactId>
+          <version>2.1.4</version>
+          <scope>provided</scope>
+        </dependency>    
+        
     </dependencies>
 
     <build>

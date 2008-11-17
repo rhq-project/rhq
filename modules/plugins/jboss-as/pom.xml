@@ -45,6 +45,13 @@
       </dependency>
       
       <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-jmx-plugin</artifactId>
+         <version>${rhq.version}</version>
+         <scope>provided</scope>
+      </dependency>
+   
+      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>jopr-tomcat-plugin</artifactId>
          <version>${project.version}</version>

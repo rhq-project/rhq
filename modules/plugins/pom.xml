@@ -25,14 +25,23 @@
 		<scm.module.path>modules/plugins/</scm.module.path>
 	</properties>
     
-    <!-- plugins, order is important -->
+    <dependencies>
+        <dependency>
+          <groupId>${rhq.groupId}</groupId>
+          <artifactId>rhq-jmx-plugin</artifactId>
+          <version>${rhq.version}</version>
+          <scope>test</scope>
+        </dependency>
+    </dependencies>
+   
+    <!-- plugins - order is important -->
 	<modules>
       <module>tomcat</module>
       <module>jboss-as</module>      
       <module>hibernate</module>
       <module>rhq-server</module>    
       <module>jboss-cache</module>  
-      <!-- NOTE: The jboss-as5 plugin is not included for now, because all its deps are
+      <!-- NOTE: The jboss-as-5 plugin is not included for now, because all its deps are
                  snapshots, which the maven release plugin would deeply frown upon.-->		        
 	</modules>
     

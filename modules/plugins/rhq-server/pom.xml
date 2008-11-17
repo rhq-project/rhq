@@ -25,6 +25,15 @@
       <scm.module.path>modules/plugins/rhq-server/</scm.module.path>
    </properties>
 
+   <dependencies>
+        <dependency>
+          <groupId>${rhq.groupId}</groupId>
+          <artifactId>rhq-jmx-plugin</artifactId>
+          <version>${rhq.version}</version>
+          <scope>provided</scope>
+        </dependency>
+   </dependencies>
+   
    <profiles>
       <profile>
          <id>integration-tests</id>

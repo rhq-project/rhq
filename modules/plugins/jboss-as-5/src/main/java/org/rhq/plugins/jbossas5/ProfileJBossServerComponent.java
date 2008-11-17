@@ -41,6 +41,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
@@ -100,13 +101,7 @@ public class ProfileJBossServerComponent
 
     public void stop()
     {
-
-    }
-
-    public boolean isConnected()
-    {
-        // Not fully sure what this method's purpose is.
-        return false;
+        return;
     }
 
     // ConfigurationComponent  --------------------------------------------
@@ -131,7 +126,7 @@ public class ProfileJBossServerComponent
     public CreateResourceReport createResource(CreateResourceReport createResourceReport)
     {
         ResourceType resourceType = createResourceReport.getResourceType();
-        if (resourceType.getName().equals(RESOURCE_TYPE_EAR) || resourceType.getName().equals(RESOURCE_TYPE_WAR) || resourceType.getName().equals(RESOURCE_TYPE_JAR))
+        if (resourceType.getCreationDataType() == ResourceCreationDataType.CONTENT)
         {
             createContentBasedResource(createResourceReport, resourceType);
         }

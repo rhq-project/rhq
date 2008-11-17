@@ -68,6 +68,8 @@ import org.rhq.enterprise.server.util.SessionTestHelper;
  */
 @Test
 public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
+    private static final boolean ENABLE_TESTS = true;
+
     private ConfigurationManagerLocal configurationManager;
     private ResourceManagerLocal resourceManager;
     private Resource newResource1;
@@ -193,6 +195,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testLastestConfiguration() throws Exception {
         int resourceId = newResource1.getId();
 
@@ -245,12 +248,14 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert myprop.getLongValue() == 7000L;
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testDeleteType() throws Exception {
         // the purpose of this little test is to test an error condition I'm getting when attempting to delete
         // a resource type - just forces a run with before/afterMethod
         return;
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testPluginConfigurationUpdateCallbackSuccess() throws Exception {
         Resource resource = newResource1;
 
@@ -293,6 +298,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert current.getSimple("bar") == null : current; // this is gone now
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testPluginConfigurationUpdateCallbackFailure() throws Exception {
         Resource resource = newResource1;
 
@@ -319,19 +325,19 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert current.getProperties().size() != 0 : current.toString();
     }
 
-    //@Test
+    @Test(enabled = false)
     public void testAggregatePluginConfigurationUpdateWorkflowSuccess() throws Exception {
         // TODO (joseph): Fix and then re-enable this test.
         //testAggregatePluginConfigurationUpdateWorkflowHelper(false);
     }
 
-    //@Test
+    @Test(enabled = false)
     public void testAggregatePluginConfigurationUpdateWorkflowFailure() throws Exception {
         // TODO (joseph): Fix and then re-enable this test.
         //testAggregatePluginConfigurationUpdateWorkflowHelper(true);
     }
 
-    //@Test
+    @Test(enabled = false)
     public void testAggregatePluginConfigurationUpdateMergeAlgorithmPerformance() throws Exception {
         Configuration configuration = new Configuration();
         configuration.put(new PropertySimple("foo1", "1"));
@@ -511,6 +517,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testResourceConfigurationUpdateCallbackFailure() throws Exception {
         Resource resource = newResource1;
 
@@ -583,6 +590,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testResourceConfigurationUpdateCallbackSuccess() throws Exception {
         Resource resource = newResource1;
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -649,6 +657,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert requests.size() == 1; // it will create one for us from the "live" configuration
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testConfigurationRollback() throws Exception {
         Resource resource = newResource1;
 
@@ -713,6 +722,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert current.getConfiguration().getId() == newConfigUpdate.getConfiguration().getId();
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testPurgeConfigurationHistorySame() throws Exception {
         Resource resource = newResource1;
 
@@ -739,6 +749,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert requests.size() == 1 : "Got " + requests.size() + " config update requests - expected 1.";
     }
 
+    @Test(enabled = true)
     public void testPurgeConfigurationHistoryDifferent() throws Exception {
         Resource resource = newResource1;
 
@@ -751,10 +762,13 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         Configuration configuration2 = new Configuration();
         configuration2.put(new PropertySimple("myboolean", "false"));
 
-        configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration1);
+        ResourceConfigurationUpdate up;
+        up = configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration1);
         Thread.sleep(2000); // wait for the test agent to complete the request
-        configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration2);
+        assert configuration1.equals(configurationManager.getActiveResourceConfiguration(resource.getId()));
+        up = configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration2);
         Thread.sleep(2000); // wait for the test agent to complete the request
+        assert configuration2.equals(configurationManager.getActiveResourceConfiguration(resource.getId()));
 
         // at this point in time, the round trip messaging is done and we have the agent response
         List<ResourceConfigurationUpdate> requests;
@@ -778,6 +792,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert requests.get(0).getId() == savedRequest.getId();
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testPurgeConfigurationHistoryWithFailedUpdateRequest() throws Exception {
         Resource resource = newResource1;
 
@@ -845,6 +860,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert mybool.getErrorMessage().indexOf("Not a valid boolean") > 0;
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testNoPermissionCallback() throws Exception {
         Subject superuser = LookupUtil.getSubjectManager().getOverlord();
         Subject noPermSubject = new Subject("userWithNoPermissions", true, false);
@@ -874,6 +890,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
+    @Test(enabled = ENABLE_TESTS)
     public void testInvalidUpdateCallback() throws Exception {
         ConfigurationUpdateResponse response = new ConfigurationUpdateResponse(Integer.MAX_VALUE, new Configuration(),
             ConfigurationUpdateStatus.SUCCESS, null);

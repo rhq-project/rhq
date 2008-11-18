@@ -201,10 +201,12 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public int delete(Subject subject, Integer[] affinityGroupIds) {
 
-        // audit the ag removal
+        // A deleted affinity group forces a cloud repartitioning. Note, it is ok to request multiple
+        // cloud repartitions, they will be consolidated by the cloud manager job.   
         for (Integer agId : affinityGroupIds) {
             AffinityGroup ag = entityManager.find(AffinityGroup.class, agId);
-            partitionEventManager.auditPartitionEvent(subject, PartitionEventType.AFFINITY_GROUP_DELETE, ag.getName());
+            partitionEventManager.cloudPartitionEventRequest(subject, PartitionEventType.AFFINITY_GROUP_DELETE, ag
+                .getName());
         }
 
         Query updateAgentsQuery = entityManager.createNamedQuery(AffinityGroup.QUERY_UPDATE_REMOVE_AGENTS);
@@ -223,10 +225,6 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
 
         log.debug("Removed " + removedAffinityGroups + " AffinityGroups: " + updatedAgents + " agents and "
             + updatedServers + " were updated");
-
-        // Now, request a cloud repartitioning due to the successful affinity group changes
-        partitionEventManager.cloudPartitionEventRequest(subject, PartitionEventType.AFFINITY_GROUP_CHANGE,
-            PartitionEventType.AFFINITY_GROUP_DELETE.name());
 
         return removedAffinityGroups;
     }

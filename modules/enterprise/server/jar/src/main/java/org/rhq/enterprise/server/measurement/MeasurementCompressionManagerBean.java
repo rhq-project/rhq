@@ -82,7 +82,6 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
     @EJB
     private MeasurementProblemManagerLocal measurementProblemManager;
 
-    private boolean purgeDefaultsLoaded = false;
     private long purge1h;
     private long purge6h;
     private long purge1d;
@@ -107,8 +106,6 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
             this.purgeCallTime = Long.parseLong(conf.getProperty(HQConstants.RtDataPurge));
             this.purgeAlert = Long.parseLong(conf.getProperty(HQConstants.AlertPurge));
             this.purgeEvent = Long.parseLong(conf.getProperty(HQConstants.EventPurge));
-
-            this.purgeDefaultsLoaded = true;
         } catch (NumberFormatException e) {
             // Shouldn't happen unless the config table was manually edited.
             throw new IllegalArgumentException("Invalid purge interval: " + e);
@@ -116,9 +113,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
     }
 
     public void compressData() throws SQLException {
-        if (!this.purgeDefaultsLoaded) {
-            loadPurgeDefaults();
-        }
+        loadPurgeDefaults();
 
         // current time rounded down to the start of this hour.
         long now = TimingVoodoo.roundDownTime(System.currentTimeMillis(), HOUR);

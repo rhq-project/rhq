@@ -79,8 +79,6 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
     private CallTimeDataManagerLocal callTimeDataManager;
     @EJB
     private EventManagerLocal eventManager;
-    @EJB
-    private MeasurementProblemManagerLocal measurementProblemManager;
 
     private long purge1h;
     private long purge6h;

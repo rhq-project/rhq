@@ -64,6 +64,7 @@ public class PropertySimple extends Property implements Externalizable {
 
     /**
      * Constructor for {@link PropertySimple} that stores a <code>null</code> value.
+     * NOTE: When using this constructor, you need to supply a name via #setName manually.
      */
     public PropertySimple() {
         override = Boolean.FALSE;

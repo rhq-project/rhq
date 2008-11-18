@@ -74,8 +74,12 @@ public class DataPurgeJob implements StatefulJob {
     public void execute(JobExecutionContext context) throws JobExecutionException {
         long start = System.currentTimeMillis();
         LOG.info("Data Purge Job STARTING");
-        compressData();
-        calculateAutoBaselines();
+        try {
+            compressData();
+            calculateAutoBaselines();
+        } catch (Exception e) {
+            LOG.error("Data Purge Job Failed. Cause: " + e);
+        }
         LOG.info("Data Purge Job FINISHED [" + (System.currentTimeMillis() - start) + "]ms");
     }
 

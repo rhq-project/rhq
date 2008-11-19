@@ -48,6 +48,7 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.ConversionUtil;
+import org.rhq.plugins.jbossas5.util.DebugUtils;
 
 import java.util.Map;
 import java.util.Set;
@@ -128,12 +129,13 @@ public class JndiResourceComponent
             ManagedComponent managedComponent = getManagedComponent();
             Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
 
-            //if (log.isDebugEnabled()) log.debug("BEFORE:\n" + DebugUtils.convertPropertiesToString(managedComponent));
+            if (log.isDebugEnabled()) log.debug("BEFORE:\n" + DebugUtils.convertPropertiesToString(managedComponent));
 
             Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(pluginConfig);
-            ConversionUtil.convertConfigurationToManagedProperties(managedProperties, resourceConfig, this.resourceType, customProps);
+            ConversionUtil.convertConfigurationToManagedProperties(managedProperties, resourceConfig, this.resourceType,
+                    customProps);
 
-            //if (log.isDebugEnabled()) log.debug("AFTER:\n" + DebugUtils.convertPropertiesToString(managedComponent));
+            if (log.isDebugEnabled()) log.debug("AFTER:\n" + DebugUtils.convertPropertiesToString(managedComponent));
 
             managementView.updateComponent(managedComponent);
             managementView.process();

@@ -34,12 +34,11 @@ import java.io.Serializable;
  */
 public abstract class AbstractPropertySimpleAdapter implements PropertyAdapter<PropertySimple, PropertyDefinitionSimple>
 {
-    public PropertySimple getProperty(MetaValue metaValue, PropertyDefinitionSimple propDef)
+    public PropertySimple getProperty(MetaValue metaValue, PropertyDefinitionSimple propDefSimple)
     {
-        String key = propDef.getName();
-        PropertySimple prop = new PropertySimple(key, null);
-        setPropertyValues(prop, metaValue, propDef);
-        return prop;
+        PropertySimple propSimple = new PropertySimple(propDefSimple.getName(), null);
+        setPropertyValues(propSimple, metaValue, propDefSimple);
+        return propSimple;
     }
 
     public Serializable getSimplePropertyValue(PropertySimple prop, PropertyDefinitionSimple propDef)

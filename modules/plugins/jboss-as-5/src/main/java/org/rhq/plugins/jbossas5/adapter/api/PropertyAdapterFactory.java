@@ -26,16 +26,18 @@ package org.rhq.plugins.jbossas5.adapter.api;
  import org.apache.commons.logging.LogFactory;
 
  import org.jboss.metatype.api.types.MetaType;
+ import org.jboss.metatype.api.types.MapCompositeMetaType;
  import org.jboss.metatype.api.values.MetaValue;
 
  import org.rhq.core.domain.configuration.PropertySimple;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToArrayMetaValueAdapter;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToCollectionMetaValueAdapter;
- import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToCompositeMetaValueAdapter;
+ import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToMapCompositeValueSupportAdapter;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToTableMetaValueAdapter;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToSimpleMetaValueAdapter;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToGenericValueAdapter;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToEnumValueAdapter;
+ import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToCompositeValueSupportAdapter;
 
  /**
  * @author Mark Spritzler
@@ -68,7 +70,10 @@ public class PropertyAdapterFactory
         }
         else if (metaType.isComposite())
         {
-            propertyAdapter = new PropertyMapToCompositeMetaValueAdapter();
+            if (metaType instanceof MapCompositeMetaType)
+                propertyAdapter = new PropertyMapToMapCompositeValueSupportAdapter();
+            else
+                propertyAdapter = new PropertyMapToCompositeValueSupportAdapter();
         }
         else if (metaType.isTable())
         {

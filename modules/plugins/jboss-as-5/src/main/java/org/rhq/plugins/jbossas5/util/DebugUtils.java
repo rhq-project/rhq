@@ -26,11 +26,15 @@ import java.util.Comparator;
 
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedProperty;
+import org.jboss.metatype.api.values.MetaValue;
+import org.jboss.metatype.api.values.CollectionValue;
 
 /**
+ * Utility methods for converting various Profile Service objects into Strings for debugging purposes.
+ *
  * @author Ian Springer
  */
-public class DebugUtils {
+public abstract class DebugUtils {
     public static String convertPropertiesToString(ManagedComponent managedComponent) {
         StringBuilder buf = new StringBuilder();
         buf.append("Properties for managed component [").append(managedComponent.getName()).append("]:");
@@ -39,12 +43,31 @@ public class DebugUtils {
         Collections.sort(props, new ManagedPropertyComparator()); // sort by name
         for (ManagedProperty managedProperty : props) {
             buf.append("\n\tname=").append(managedProperty.getName());
-            buf.append(", value=").append(managedProperty.getValue());
             if (!managedProperty.getName().equals(managedProperty.getMappedName()))
                 buf.append(", mappedName=").append(managedProperty.getMappedName());
             buf.append(", required=").append(managedProperty.isMandatory());
+            Object value = managedProperty.getValue();
+            if (value instanceof MetaValue)
+                value = convertMetaValueToString((MetaValue)value);
+            buf.append(", value=").append(value);
         }
         return buf.toString();
+    }
+
+    public static String convertMetaValueToString(MetaValue metaValue) {
+        if (metaValue == null)
+            return "null";
+        StringBuilder buffer = new StringBuilder();
+        if (metaValue.getMetaType().isCollection()) {
+            CollectionValue collectionValue = (CollectionValue)metaValue;
+            buffer.append(collectionValue).append("\n");
+            buffer.append("\t").append("Elements:\n");
+            for (MetaValue elementMetaValue : collectionValue.getElements())
+                buffer.append("\t").append(convertMetaValueToString(elementMetaValue)).append("\n");
+        } else {
+            buffer.append(metaValue);
+        }
+        return buffer.toString();
     }
 
     private static class ManagedPropertyComparator implements Comparator<ManagedProperty> {

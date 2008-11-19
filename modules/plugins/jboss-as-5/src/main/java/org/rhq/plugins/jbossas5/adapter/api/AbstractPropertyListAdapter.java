@@ -33,10 +33,10 @@ import org.jboss.metatype.api.values.MetaValue;
  */
 public abstract class AbstractPropertyListAdapter implements PropertyAdapter<PropertyList, PropertyDefinitionList>
 {
-    public PropertyList getProperty(MetaValue metaValue, PropertyDefinitionList propertyDefinition)
+    public PropertyList getProperty(MetaValue metaValue, PropertyDefinitionList propDefList)
     {
-        PropertyList property = new PropertyList();
-        setPropertyValues(property, metaValue, propertyDefinition);
-        return property;
+        PropertyList propList = new PropertyList(propDefList.getName());
+        setPropertyValues(propList, metaValue, propDefList);
+        return propList;
     }
 }

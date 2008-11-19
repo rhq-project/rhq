@@ -25,7 +25,6 @@ package org.rhq.plugins.jbossas5.adapter.api;
 import org.jboss.metatype.api.values.MetaValue;
 
 import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 
 /**
@@ -33,10 +32,10 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
  */
 public abstract class AbstractPropertyMapAdapter implements PropertyAdapter<PropertyMap, PropertyDefinitionMap>
 {
-    public PropertyMap getProperty(MetaValue metaValue, PropertyDefinitionMap propertyDefinition)
+    public PropertyMap getProperty(MetaValue metaValue, PropertyDefinitionMap propDefMap)
     {
-        PropertyMap property = new PropertyMap();
-        setPropertyValues(property, metaValue, propertyDefinition);
-        return property;
+        PropertyMap propMap = new PropertyMap(propDefMap.getName());
+        setPropertyValues(propMap, metaValue, propDefMap);
+        return propMap;
     }
 }

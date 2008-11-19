@@ -58,11 +58,8 @@ public class PropertySimpleToEnumValueAdapter extends AbstractPropertySimpleAdap
 
     public void setPropertyValues(PropertySimple property, MetaValue metaValue, PropertyDefinitionSimple propertyDefinition)
     {
-        if (metaValue != null)
-        {
-            Object value = ((EnumValue) metaValue).getValue();
-            property.setValue(value);
-        }
+        Object value = (metaValue != null) ? ((EnumValue) metaValue).getValue() : null;
+        property.setValue(value);
     }
 
     public MetaValue getMetaValue(PropertySimple property, PropertyDefinitionSimple propertyDefinition, MetaType type)

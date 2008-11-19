@@ -365,12 +365,12 @@
 
                     <c:simple-property name="jndi-name"
                                        displayName="JNDI Name"
-                                       description="The JNDI Name under which the DataSource wrapper will be bound."
+                                       description="The global JNDI Name under which to bind the datasource"
                                        type="string"/>
 
                     <c:simple-property name="driver-class"
-                                       displayName="DataSource Class"
-                                       description="The fully qualified name of the JDBC datasource class."
+                                       displayName="JDBC Driver Class"
+                                       description="The fully qualified name of the JDBC driver class."
                                        type="string"
                                        activationPolicy="immediate"/>
 
@@ -463,7 +463,7 @@
 
                     <c:simple-property name="set-tx-query-timeout"
                                        displayName="Set Tx Query Timeout"
-                                       description="whether to set the query timeout based on the time remaining until transaction timeout,
+                                       description="whether to set the query timeout based on the time remaining until transaction timeout;
                                   any configured query timeout will be used if there is no transaction. The default is false."
                                        type="boolean"
                                        required="false"
@@ -471,7 +471,7 @@
 
                     <c:simple-property name="query-timeout"
                                        displayName="Query Timeout"
-                                       description="Any configured query timeout in seconds The default is no timeout"
+                                       description="Any configured query timeout in seconds; the default is no timeout."
                                        type="integer"
                                        required="false"
                                        activationPolicy="immediate"/>
@@ -485,11 +485,12 @@
                     </c:simple-property>
 
                     <c:simple-property name="share-prepared-statements" displayName="Share Prepared Statements"
+                                       description="Should prepared statements be shared? (default is false)"
                                        type="boolean"
                                        required="false">
                         <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
+                            <c:option name="yes" value="true"/>
+                            <c:option name="no" value="false"/>
                         </c:property-options>
                         <c:defaultValueDescription>If nothing is specified, the default of false will be used.
                         </c:defaultValueDescription>
@@ -498,20 +499,22 @@
                     <c:simple-property name="valid-connection-checker-class-name" type="string"
                                        activationPolicy="immediate"
                                        displayName="Valid Connection Checker Class Name" required="false">
-                        <c:description>Java class used to validate if a connection is valid.</c:description>
+                        <c:description>Fully qualified name of the Java class used to validate if a connection is valid.</c:description>
                     </c:simple-property>
 
                     <c:simple-property name="stale-connection-checker-class-name"
                                        displayName="Stale Connection Checker Class Name"
-                                       description="Name of the class to use to check if a Connection has become stale"
+                                       description="Fully qualified name of the Java class used to check if a connection has become stale."
                                        type="string"
                                        required="false"/>
 
                     <c:simple-property name="use-java-context"
                                        displayName="Use Java Context"
-                                       description="Indicates if the JNDI name should be prefixed with java:."
                                        type="boolean"
                                        required="false">
+                        <c:description>Indicates whether the JNDI name should be bound under the java context,
+                            which causes the DataSource to only be accessible from within the JBoss server VM.
+                            The default is true.</c:description>
                         <c:property-options>
                             <c:option name="True" value="true"/>
                             <c:option name="False" value="false"/>
@@ -547,7 +550,8 @@
 
                     <c:simple-property name="new-connection-sql" type="longString" activationPolicy="immediate"
                                        displayName="New Connection SQL" required="false">
-                        <c:description>SQL statement to execute whenever a new connection is added to the pool.
+                        <c:description>SQL statement to execute whenever a new connection is added to the pool;
+                            this can be used to set the connection schema, etc.
                         </c:description>
                     </c:simple-property>
 
@@ -576,10 +580,11 @@
                         </c:defaultValueDescription>
                     </c:simple-property>
 
+                    <!-- TODO -->
                     <!--<c:map-property name="connection-properties" displayName="Connection Properties" required="false">
                        <c:description>
                           Properties used to configure the DataSource. Each property should be on a separate
-                          line, with the name separated from the value by an equals sign =.
+                          line, with the name separated from the value by an equals sign.
                        </c:description>
                     </c:map-property>-->
 
@@ -605,6 +610,33 @@
 
                     <c:simple-property name="type-mapping" displayName="Type Mappings" required="false"/>
 
+                    <c:simple-property type="integer" required="false" name="allocation-retry"/>
+                    <c:simple-property type="long" required="false" name="allocation-retry-wait-millis"/>
+                    <c:simple-property type="boolean" required="false" name="background-validation"/>
+                    <c:simple-property type="long" required="false" name="background-validation-millis"/>
+
+                    <c:list-property required="false" name="config-property" displayName="Connection Factory Properties"
+                                     description="The connection factory configuration properties">
+                        <c:map-property name="org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData"
+                                        description="Map&lt;String,MetaValue&gt;">
+                            <c:simple-property name="type"/>
+                            <c:simple-property name="name"/>
+                            <c:simple-property name="value"/>
+                        </c:map-property>
+                    </c:list-property>
+
+                    <c:simple-property required="false" name="connection-definition"/>
+                    <c:simple-property type="boolean" required="false" name="isSameRM-override-value"/>
+                    <c:simple-property required="false" name="jmx-invoker-name"/>
+                    <c:map-property required="false" name="metadata"/> <!-- no child props means this is an "open map" -->
+                    <c:simple-property type="boolean" required="false" name="prefill"/>
+                    <c:simple-property required="false" name="rar-name"/>
+                    <c:simple-property required="false" name="statistics-formatter"/>
+                    <c:simple-property required="false" name="url-delimiter" description="The DataSource url delimiter"/>
+                    <c:simple-property required="false" name="url-selector-strategy-class-name" description="The DataSource url selector strategy class name"/>
+                    <c:simple-property type="boolean" required="false" name="use-strict-min"/>
+                    <c:simple-property type="long" required="true" name="use-try-lock" description="The internal lock timeout"/>
+                    <c:simple-property type="boolean" required="false" name="validate-on-match"/>
                 </c:group>
 
                 <c:template name="Oracle Local TX" description="Local Transaction Template for Oracle">

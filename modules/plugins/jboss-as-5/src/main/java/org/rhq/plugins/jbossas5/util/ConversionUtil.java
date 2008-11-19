@@ -35,14 +35,25 @@ import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedOperation;
 import org.jboss.managed.api.ManagedParameter;
 import org.jboss.managed.api.ManagedProperty;
+import org.jboss.managed.api.ManagedObject;
 import org.jboss.metatype.api.types.MetaType;
+import org.jboss.metatype.api.types.GenericMetaType;
+import org.jboss.metatype.api.types.CollectionMetaType;
+import org.jboss.metatype.api.types.MapCompositeMetaType;
+import org.jboss.metatype.api.types.SimpleMetaType;
 import org.jboss.metatype.api.values.MetaValue;
+import org.jboss.metatype.api.values.CompositeValue;
+import org.jboss.metatype.plugins.types.MutableCompositeMetaType;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -138,17 +149,15 @@ public class ConversionUtil
 
         Map<String, PropertyDefinition> configurationProperties = configDef.getPropertyDefinitions();
 
-        Set<String> keys = managedProperties.keySet();
-        for (String key : keys)
+        Set<String> propNames = managedProperties.keySet();
+        for (String propName : propNames)
         {
-            if (customProps.containsKey(key))
-            {
+            if (customProps.containsKey(propName))
                 continue;
-            }
 
-            PropertyDefinition definition = configurationProperties.get(key);
-            ManagedProperty managedProperty = managedProperties.get(key);
-            if (managedProperty != null && definition != null)
+            PropertyDefinition propertyDefinition = configurationProperties.get(propName);
+            ManagedProperty managedProperty = managedProperties.get(propName);
+            if (managedProperty != null && propertyDefinition != null)
             {
                 MetaValue metaValue = null;
                 try
@@ -157,37 +166,38 @@ public class ConversionUtil
                     if (managedProperty.getValue() != null && !(managedProperty.getValue() instanceof MetaValue))
                     {
                         LOG.debug("convertManagedObjectToConfiguration: ManagedProperty.getValue() returned: " + managedProperty.getValue().getClass().getSimpleName()
-                                + " for property: " + key);
+                                + " for property: " + propName);
                     }
                     metaValue = (MetaValue) managedProperty.getValue();
                 }
                 catch (ClassCastException e)
                 {
                     LOG.error("convertManagedObjectToConfiguration: ManagedProperty.getValue() did not return a MetaValue, it returned: " + managedProperty.getValue().getClass().getSimpleName()
-                            + " for property: " + key, e);
+                            + " for property: " + propName, e);
                 }
 
                 if (metaValue != null)
                 {
                     PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaValue);
-
                     if (propertyAdapter == null)
                     {
-                        LOG.error("Unable to get the PropertyAdapter from the factory for type: " + metaValue.getMetaType().getTypeName() + " for ResourceType: " + resourceType.getName());
+                        LOG.error("Unable to get the PropertyAdapter from the factory for type: "
+                                + metaValue.getMetaType().getTypeName() + " for ResourceType: " + resourceType.getName());
+                        continue;
                     }
-
-                    Property property = customProps.get(key);
-                    if (property != null)
+                    LOG.debug("Converting MetaValue [" + metaValue + "] to property of type [" + propertyDefinition
+                            + "] using adapter [" + propertyAdapter.getClass().getSimpleName() + "]...");
+                    Property customProp = customProps.get(propName);
+                    if (customProp != null)
                     {
-                        propertyAdapter.setPropertyValues(property, metaValue, definition);
+                        propertyAdapter.setPropertyValues(customProp, metaValue, propertyDefinition);
                     }
                     else
                     {
-                        property = propertyAdapter.getProperty(metaValue, definition);
-                        property.setName(definition.getName());
+                        customProp = propertyAdapter.getProperty(metaValue, propertyDefinition);
+                        customProp.setName(propertyDefinition.getName());
                     }
-
-                    config.put(property);
+                    config.put(customProp);
                 }
             }
         }
@@ -223,59 +233,104 @@ public class ConversionUtil
 
     public static void convertConfigurationToManagedProperties(Map<String, ManagedProperty> managedProperties, Configuration configuration, ResourceType resourceType, Map<String, PropertySimple> customProps)
     {
-        /* Deal with the custom properties first, then hold on to the name of these properties so that
-           the loop will skip over a property if it is the customKeys set */
+        // Deal with the custom properties first, then hold on to the names of these properties so the processing
+        // loop can skip over them.
         handleCustomProperties(managedProperties, configuration, customProps);
-
         ConfigurationDefinition configDefinition = resourceType.getResourceConfigurationDefinition();
-        Map<String, PropertyDefinition> configurationProperties = configDefinition.getPropertyDefinitions();
         for (Property property : configuration.getProperties())
         {
-            String key = property.getName();
-            if (customProps.containsKey(key))
+            String propName = property.getName();
+            if (customProps.containsKey(propName))
                 continue;
-
-            ManagedProperty managedProperty = managedProperties.get(key);
-
+            ManagedProperty managedProperty = managedProperties.get(propName);
             if (managedProperty != null)
             {
-                MetaValue metaValue = null;
-                try
-                {
-                    // Temporary check to see which properties are returning MetaValue object and which aren't
-                    if (managedProperty.getValue() != null)
-                    {
-                        LOG.debug("convertConfigurationToManagedProperties: ManagedProperty.getValue() returned: " + managedProperty.getValue().getClass().getSimpleName()
-                                + " for property: " + key);
-                    }
-                    metaValue = (MetaValue) managedProperty.getValue();
-                }
-                catch (ClassCastException e)
-                {
-                    LOG.error("convertConfigurationToManagedProperties: ManagedProperty.getValue() did not return a MetaValue, it returned: " + managedProperty.getValue().getClass().getSimpleName()
-                            + " for property: " + key, e);
-                }
-
-                PropertyDefinition definition = configurationProperties.get(key);
-                PropertyAdapter propertyAdapter;
+                MetaValue metaValue = getValue(managedProperty);
+                PropertyDefinition propertyDefinition = configDefinition.get(propName);
                 if (metaValue != null)
                 {
-                    propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaValue);
-                    propertyAdapter.setMetaValues(property, metaValue, definition);
+                    PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaValue);
+                    propertyAdapter.setMetaValues(property, metaValue, propertyDefinition);
                 }
                 else
                 {
                     MetaType metaType = managedProperty.getMetaType();
-                    propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaType);
-                    metaValue = propertyAdapter.getMetaValue(property, definition, metaType);
-                    if (metaValue != null)
-                    {
-                        managedProperty.setValue(metaValue);
-                    }
+                    // TODO (ips, 11/18/08): The below if-blocks are hacks to workaround the template returning the
+                    //                       wrong MetaTypes.
+                    if (propName.equals("security-domain")) metaType = new GenericMetaType(ManagedObject.class.getName(),
+                            ManagedObject.class.getName());
+                    if (propName.equals("config-property")) metaType = new CollectionMetaType(CompositeValue.class.getName(),
+                            new MutableCompositeMetaType(
+                                    "org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData",
+                                    "org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData"));
+                    PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaType);
+                    LOG.debug("Converting property " + property + " with definition " + propertyDefinition
+                            + " to MetaValue with type " + metaType + "...");
+                    metaValue = propertyAdapter.getMetaValue(property, propertyDefinition, metaType);
+                    managedProperty.setValue(metaValue);
                 }
             }
         }
         return;
+    }
+
+    public static MetaType convertPropertyDefinitionToMetaType(PropertyDefinition propDef) {
+        MetaType memberMetaType;
+        if (propDef instanceof PropertyDefinitionSimple) {
+            PropertySimpleType propSimpleType = ((PropertyDefinitionSimple)propDef).getType();
+            memberMetaType = convertPropertySimpleTypeToSimpleMetaType(propSimpleType);
+        } else if (propDef instanceof PropertyDefinitionList) {
+            // TODO (very low priority, since lists of lists are not going to be at all common)
+            memberMetaType = null;
+        } else if (propDef instanceof PropertyDefinitionMap) {
+            Map<String,PropertyDefinition> memberPropDefs = ((PropertyDefinitionMap)propDef).getPropertyDefinitions();
+            if (memberPropDefs.isEmpty())
+                throw new IllegalStateException("PropertyDefinitionMap doesn't contain any member PropertyDefinitions.");
+            // NOTE: We assume member prop defs are all of the same type, since for MapCompositeMetaTypes, they have to be.
+            PropertyDefinition mapMemberPropDef = memberPropDefs.values().iterator().next();
+            MetaType mapMemberMetaType = convertPropertyDefinitionToMetaType(mapMemberPropDef);
+            memberMetaType = new MapCompositeMetaType(mapMemberMetaType);
+        } else {
+            throw new IllegalStateException("List member PropertyDefinition has unknown type: "
+                    + propDef.getClass().getName());
+        }
+        return memberMetaType;
+    }
+
+    private static MetaType convertPropertySimpleTypeToSimpleMetaType(PropertySimpleType memberSimpleType) {
+        MetaType memberMetaType;
+        Class memberClass;
+        switch (memberSimpleType) {
+            case BOOLEAN: memberClass = Boolean.class; break;
+            case INTEGER: memberClass = Integer.class; break;
+            case LONG: memberClass = Long.class; break;
+            case FLOAT: memberClass = Float.class; break;
+            case DOUBLE: memberClass = Double.class; break;
+            default: memberClass = String.class; break;
+        }
+        memberMetaType = SimpleMetaType.resolve(memberClass.getName());
+        return memberMetaType;
+    }
+
+    private static MetaValue getValue(ManagedProperty managedProperty) {
+        MetaValue metaValue = null;
+        if (managedProperty.getValue() != null)
+        {
+            LOG.debug("convertConfigurationToManagedProperties: ManagedProperty.getValue() returned: " + managedProperty.getValue().getClass().getSimpleName()
+                    + " for property: " + managedProperty.getName());
+        }
+        try
+        {
+            // Temporary check to see which properties are returning MetaValue object and which aren't
+            metaValue = (MetaValue) managedProperty.getValue();
+        }
+        catch (ClassCastException e)
+        {
+            LOG.error("convertConfigurationToManagedProperties: ManagedProperty.getValue() did not return a MetaValue; it returned: "
+                    + managedProperty.getValue().getClass().getName()
+                    + " for property: " + managedProperty.getName(), e);
+        }
+        return metaValue;
     }
 
     private static void handleCustomProperties(Map<String, ManagedProperty> managedProperties, Configuration resourceConfig, Map<String, PropertySimple> customProps)

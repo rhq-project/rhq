@@ -57,11 +57,8 @@ public class PropertySimpleToSimpleMetaValueAdapter extends AbstractPropertySimp
 
     public void setPropertyValues(PropertySimple property, MetaValue metaValue, PropertyDefinitionSimple propertyDefinition)
     {
-        if (metaValue != null)
-        {
-            Object value = ((SimpleValue) metaValue).getValue();
-            property.setValue(value);
-        }
+        Object value = (metaValue != null) ? ((SimpleValue) metaValue).getValue() : null;
+        property.setValue(value);
     }
 
     public MetaValue getMetaValue(PropertySimple property, PropertyDefinitionSimple propertyDefinition, MetaType type)

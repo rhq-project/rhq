@@ -1,5 +1,348 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
+<!-- NOTE: For ManagedProperty annotations, see:
+     https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/main/org/jboss/resource/metadata/mcf/DataSourceDeploymentMetaData.java
+     Descriptions of datasource config props can also be culled from:
+     https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/resources/dtd/jboss-ds_5_0.dtd -->
+
+<!DOCTYPE plugin [
+
+<!ENTITY datasourceConnectionResourceConfigProps '
+    <c:simple-property name="jndi-name"
+                       displayName="JNDI Name"
+                       description="The global JNDI Name under which to bind the datasource"
+                       type="string"/>
+
+    <c:simple-property name="user-name"
+                       displayName="Username"
+                       description="The default username when creating a new connection."
+                       type="string"
+                       activationPolicy="immediate"
+                       required="false"/>
+
+    <c:simple-property name="password"
+                       displayName="Password"
+                       description="The default password when creating a new connection."
+                       type="password"
+                       activationPolicy="immediate"
+                       required="false"/>
+
+    <c:simple-property name="min-pool-size"
+                       displayName="Minimum Pool Size"
+                       description="Indicates the minimum number of connections the pool should hold."
+                       type="integer"
+                       activationPolicy="immediate"
+                       required="false">
+        <c:constraint>
+            <c:integer-constraint minimum="0"/>
+        </c:constraint>
+        <c:defaultValueDescription>If nothing is specified, the default of 0 will be used.
+        </c:defaultValueDescription>
+    </c:simple-property>
+
+    <c:simple-property name="max-pool-size"
+                       displayName="Maximum Pool Size"
+                       description="Indicates the maximum number of connections the pool should hold."
+                       activationPolicy="immediate"
+                       type="integer"
+                       required="false">
+        <c:constraint>
+            <c:integer-constraint minimum="0"/>
+        </c:constraint>
+        <c:defaultValueDescription>If nothing is specified, the default of 20 will be used.
+        </c:defaultValueDescription>
+    </c:simple-property>
+'>
+
+<!ENTITY datasourceAdvancedResourceConfigProps '
+    <c:simple-property name="transaction-isolation" required="false"
+                       description="The Transaction Isolation level. The default setting is to use whichever isolation level is provided by default by the database.">
+        <c:property-options>
+            <c:option value="TRANSACTION_READ_UNCOMMITTED" name="Read Uncommitted"/>
+            <c:option value="TRANSACTION_READ_COMMITTED" default="true" name="Read Committed"/>
+            <c:option value="TRANSACTION_REPEATABLE_READ" name="Repeatable Read"/>
+            <c:option value="TRANSACTION_SERIALIZABLE" name="Serializable"/>
+            <c:option value="TRANSACTION_NONE" name="None"/>
+        </c:property-options>
+    </c:simple-property>
+
+    <c:simple-property name="blocking-timeout-millis" displayName="Blocking Timeout in Milliseconds"
+                       units="milliseconds"
+                       activationPolicy="immediate" type="integer" required="false">
+        <c:description>
+            Indicates the maximum time in milliseconds to block while waiting for a connection before
+            throwing
+            an exception. Note that this blocks only while waiting for a permit for a connection, and
+            will never
+            throw an exception if creating a new connection takes an inordinately long time. If nothing
+            is specified
+            the default of 30000 milliseconds is used.
+        </c:description>
+        <c:constraint>
+            <c:integer-constraint minimum="0"/>
+        </c:constraint>
+    </c:simple-property>
+
+    <c:simple-property name="idle-timeout-minutes" type="integer" activationPolicy="immediate"
+                       displayName="Idle Timeout" units="minutes" required="false">
+        <c:description>Maximum time in minutes a connection can be idle before it is closed.
+        </c:description>
+        <c:constraint>
+            <c:integer-constraint minimum="0"/>
+        </c:constraint>
+    </c:simple-property>
+
+    <c:simple-property name="set-tx-query-timeout"
+                       displayName="Set Tx Query Timeout"
+                       description="whether to set the query timeout based on the time remaining until transaction timeout;
+                  any configured query timeout will be used if there is no transaction. The default is false."
+                       type="boolean"
+                       required="false"
+                       activationPolicy="immediate"/>
+
+    <c:simple-property name="query-timeout"
+                       displayName="Query Timeout"
+                       description="Any configured query timeout in seconds; the default is no timeout."
+                       type="integer"
+                       required="false"
+                       activationPolicy="immediate"/>
+
+    <c:simple-property name="prepared-statement-cache-size" type="integer" activationPolicy="immediate"
+                       displayName="Prepared Statement Cache Size" required="false">
+        <c:description>The number of prepared statements per connection.</c:description>
+        <c:constraint>
+            <c:integer-constraint minimum="0"/>
+        </c:constraint>
+    </c:simple-property>
+
+    <c:simple-property name="share-prepared-statements" displayName="Share Prepared Statements"
+                       description="Should prepared statements be shared? (default is false)"
+                       type="boolean"
+                       required="false">
+        <c:property-options>
+            <c:option name="yes" value="true"/>
+            <c:option name="no" value="false"/>
+        </c:property-options>
+        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
+        </c:defaultValueDescription>
+    </c:simple-property>
+
+    <c:simple-property name="valid-connection-checker-class-name" type="string"
+                       activationPolicy="immediate"
+                       displayName="Valid Connection Checker Class Name" required="false">
+        <c:description>Fully qualified name of the Java class used to validate if a connection is valid.</c:description>
+    </c:simple-property>
+
+    <c:simple-property name="stale-connection-checker-class-name"
+                       displayName="Stale Connection Checker Class Name"
+                       description="Fully qualified name of the Java class used to check if a connection has become stale."
+                       type="string"
+                       required="false"/>
+
+    <c:simple-property name="use-java-context"
+                       displayName="Use Java Context"
+                       type="boolean"
+                       required="false">
+        <c:description>Indicates whether the JNDI name should be bound under the java context,
+            which causes the DataSource to only be accessible from within the JBoss server VM.
+            The default is true.</c:description>
+        <c:property-options>
+            <c:option name="True" value="true"/>
+            <c:option name="False" value="false"/>
+        </c:property-options>
+        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
+        </c:defaultValueDescription>
+    </c:simple-property>
+
+    <c:map-property name="security-domain" displayName="Security Settings" required="false">
+        <c:description>
+            Security settings
+        </c:description>
+
+        <c:simple-property name="domain" type="string"
+                           required="false">
+            <c:description>
+                The name of the JAAS security manager that will handle
+                authentication (only required if security deployment type is DOMAIN or DOMAIN_AND_APPLICATION).
+                This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute.
+            </c:description>
+        </c:simple-property>
+
+        <c:simple-property name="securityDeploymentType" type="string"
+                           description="the type of security deployment"
+                           required="false">
+            <c:description>
+                Indicates whether Subject (from security domain), application-supplied parameters
+                (such as from getConnection(user, pw)), both Subject and app-supplied parameters,
+                or neither Subject nor app-supplied parameters are used to distinguish connections
+                in the pool.
+            </c:description>
+            <c:property-options>
+                <c:option name="None" value="NONE"/>
+                <c:option name="Application" value="APPLICATION"/>
+                <c:option name="Domain" value="DOMAIN"/>
+                <c:option name="Domain and Application" value="DOMAIN_AND_APPLICATION"/>
+            </c:property-options>
+        </c:simple-property>
+
+    </c:map-property>
+
+    <c:simple-property name="new-connection-sql" type="longString" activationPolicy="immediate"
+                       displayName="New Connection SQL" required="false">
+        <c:description>SQL statement to execute whenever a new connection is added to the pool;
+            this can be used to set the connection schema, etc.
+        </c:description>
+    </c:simple-property>
+
+    <c:simple-property name="exception-sorter-class-name" type="string" activationPolicy="immediate"
+                       displayName="Exception Sorter Class Name" required="false">
+        <c:description>Java class to check if an exception should be broadcast.</c:description>
+    </c:simple-property>
+
+    <c:simple-property name="check-valid-connection-sql" type="longString" activationPolicy="immediate"
+                       displayName="Check Valid Connection SQL" required="false">
+        <c:description>SQL to check the validity of a pool connection.</c:description>
+    </c:simple-property>
+
+    <c:simple-property name="track-statements" type="string" activationPolicy="immediate"
+                       displayName="Track Statements" required="false">
+        <c:description>Whether to check for unclosed statements when the connection is returned to the
+            pool.
+        </c:description>
+        <c:property-options>
+            <c:option name="No" value="no"/>
+            <c:option name="Yes" value="yes"/>
+            <c:option name="Yes, but no warnings" value="yes-no-warnings" default="true"/>
+        </c:property-options>
+        <c:defaultValueDescription>If nothing is specified, the default of &quot;Yes, but not warnings&quot; will
+            be used.
+        </c:defaultValueDescription>
+    </c:simple-property>
+
+    <!-- TODO -->
+    <!--<c:map-property name="connection-properties" displayName="Connection Properties" required="false">
+       <c:description>
+          Properties used to configure the DataSource. Each property should be on a separate
+          line, with the name separated from the value by an equals sign.
+       </c:description>
+    </c:map-property>-->
+
+    <c:simple-property name="noTxSeparatePools" type="boolean" activationPolicy="immediate"
+                       displayName="No Tx Separate Pools" required="false">
+        <c:description>Whether or not to use separate pools.</c:description>
+        <c:property-options>
+            <c:option name="True" value="true"/>
+            <c:option name="False" value="false"/>
+        </c:property-options>
+        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
+        </c:defaultValueDescription>
+    </c:simple-property>
+
+    <c:simple-property name="track-connection-by-tx" type="boolean" activationPolicy="immediate"
+                       displayName="Track Connection By Transaction" required="false">
+        <c:description>Whether the connection should be locked into the transaction.</c:description>
+        <c:property-options>
+            <c:option name="True" value="true"/>
+            <c:option name="False" value="false"/>
+        </c:property-options>
+    </c:simple-property>
+
+    <c:simple-property name="type-mapping" displayName="Type Mappings" required="false"/>
+
+    <c:simple-property type="integer" required="false" name="allocation-retry"/>
+    <c:simple-property type="long" required="false" name="allocation-retry-wait-millis"/>
+    <c:simple-property type="boolean" required="false" name="background-validation"/>
+    <c:simple-property type="long" required="false" name="background-validation-millis"/>
+
+    <c:list-property required="false" name="config-property" displayName="Connection Factory Properties"
+                     description="The connection factory configuration properties">
+        <c:map-property name="org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData"
+                        description="Map&lt;String,MetaValue&gt;">
+            <c:simple-property name="type"/>
+            <c:simple-property name="name"/>
+            <c:simple-property name="value"/>
+        </c:map-property>
+    </c:list-property>
+
+    <c:simple-property required="false" name="connection-definition"/>
+    <c:simple-property type="boolean" required="false" name="isSameRM-override-value"/>
+    <c:simple-property required="false" name="jmx-invoker-name"/>
+    <c:map-property required="false" name="metadata">
+        <c:simple-property required="true" name="typeMapping"
+                           description="The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml">
+            <c:property-options>
+                <c:option name="FirstSQL/J" value="FirstSQL/J"/>
+                <c:option name="Ingres" value="Ingres"/>
+                <c:option name="McKoi" value="McKoi"/>
+                <c:option name="Firebird" value="Firebird"/>
+                <c:option name="InterBase" value="InterBase"/>
+                <c:option name="DB2" value="DB2"/>
+                <c:option name="Derby" value="Derby"/>
+                <c:option name="Oracle9i" value="Oracle9i"/>
+                <c:option name="Oracle8" value="Oracle8"/>
+                <c:option name="Oracle7" value="Oracle7"/>
+                <c:option name="Sybase" value="Sybase"/>
+                <c:option name="PostgreSQL" value="PostgreSQL"/>
+                <c:option name="PostgreSQL 8.0" value="PostgreSQL 8.0"/>
+                <c:option name="PostgreSQL 7.2" value="PostgreSQL 7.2"/>
+                <c:option name="Hypersonic SQL" value="Hypersonic SQL"/>
+                <c:option name="PointBase" value="PointBase"/>
+                <c:option name="SOLID" value="SOLID"/>
+                <c:option name="MS SQLSERVER" value="MS SQLSERVER"/>
+                <c:option name="MS SQLSERVER2000" value="MS SQLSERVER2000"/>
+                <c:option name="DB2/400" value="DB2/400"/>
+                <c:option name="SapDB" value="SapDB"/>
+                <c:option name="MaxDB" value="MaxDB"/>
+                <c:option name="Cloudscape" value="Cloudscape"/>
+                <c:option name="InformixDB" value="InformixDB"/>
+                <c:option name="Mimer SQL" value="Mimer SQL"/>
+            </c:property-options>
+        </c:simple-property>
+    </c:map-property>
+
+    <!-- no child props means this is an "open map" -->
+    <c:simple-property type="boolean" required="false" name="prefill"/>
+    <c:simple-property required="false" name="rar-name"/>
+    <c:simple-property required="false" name="statistics-formatter"/>
+    <c:simple-property required="false" name="url-delimiter" description="The DataSource url delimiter"/>
+    <c:simple-property required="false" name="url-selector-strategy-class-name" description="The DataSource url selector strategy class name"/>
+    <c:simple-property type="boolean" required="false" name="use-strict-min"/>
+    <c:simple-property type="long" required="true" name="use-try-lock" default="60000"
+                       description="Any configured timeout for internal locks on the resource adapter objects in milliseconds - the default is a 60 seconds."/>
+    <c:simple-property type="boolean" required="false" name="validate-on-match"/>
+'>
+
+<!ENTITY nonXaDatasourceConnectionResourceConfigProps '
+    <c:simple-property name="driver-class"
+                       displayName="JDBC Driver Class"
+                       description="The fully qualified name of the JDBC driver class."
+                       type="string"
+                       activationPolicy="immediate"/>
+
+    <c:simple-property name="connection-url"
+                       displayName="Connection URL"
+                       description="The JDBC driver URL string."
+                       type="string"
+                       activationPolicy="immediate"/>
+'>
+
+<!ENTITY nonXaDatasourceOracleTemplateProps '
+    <c:simple-property name="type" default="local-tx-datasource"/>
+    <c:simple-property name="jndi-name" default="OracleDS"/>
+    <c:simple-property name="driver-class" default="oracle.jdbc.driver.OracleDriver"/>
+    <c:simple-property name="connection-url" default="jdbc:oracle:oci:@youroracle-tns-name"/>
+    <c:simple-property name="exception-sorter-class-name"
+                       default="org.jboss.resource.adapter.jdbc.vendor.OracleExceptionSorter"/>
+    <c:simple-property name="check-valid-connection-sql" default="SELECT * FROM DUAL"/>
+    <c:simple-property name="type-mapping" default="oracle.jdbc.driver.OracleDriver"/>
+    <c:simple-property name="use-try-lock" default="60000"/>
+    <c:map-property name="metadata">
+        <c:simple-property name="typeMapping" default="Oracle9i"/>
+    </c:map-property>
+'>
+
+]>
+
 <plugin name="ProfileService" displayName="JBoss AS 5 ProfileService" package="org.rhq.plugins.jbossas5"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
@@ -42,7 +385,7 @@
             </configuration>
         </content>-->
 
-        <service name="No Transaction"
+        <service name="No TX Datasource"
                  class="JndiResourceComponent"
                  discovery="JndiResourceDiscoveryComponent"
                  createDeletePolicy="both"
@@ -85,230 +428,27 @@
 
             <resource-configuration>
 
+                <!-- For ManagedProperty annotations, see:
+                     https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/main/org/jboss/resource/metadata/mcf/NoTXDataSourceDeploymentMetaData.java -->
+
                 <c:group name="connection" displayName="Connection Information">
-
-                    <c:simple-property name="jndi-name"
-                                       displayName="JNDI Name"
-                                       description="The JNDI Name under which the DataSource wrapper will be bound."
-                                       type="string"/>
-
-                    <c:simple-property name="driver-class"
-                                       displayName="DataSource Class"
-                                       description="The fully qualified name of the JDBC datasource class."
-                                       type="string"
-                                       activationPolicy="immediate"/>
-
-                    <c:simple-property name="connection-url"
-                                       displayName="Connection URL"
-                                       description="The JDBC driver URL string."
-                                       type="string"
-                                       activationPolicy="immediate"/>
-
-                    <c:simple-property name="user-name"
-                                       displayName="Username"
-                                       description="The default username when creating a new connection."
-                                       type="string"
-                                       activationPolicy="immediate"
-                                       required="false"/>
-
-                    <c:simple-property name="password"
-                                       displayName="Password"
-                                       description="The default password when creating a new connection."
-                                       type="password"
-                                       activationPolicy="immediate"
-                                       required="false"/>
-
-                    <c:simple-property name="min-pool-size"
-                                       displayName="Minimum Pool Size"
-                                       description="Indicates the minimum number of connections the pool should hold."
-                                       type="integer"
-                                       activationPolicy="immediate"
-                                       required="false">
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                        <c:defaultValueDescription>If nothing is specified, the default of 0 will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="max-pool-size"
-                                       displayName="Maximum Pool Size"
-                                       description="Indicates the maximum number of connections the pool should hold."
-                                       activationPolicy="immediate"
-                                       type="integer"
-                                       required="false">
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                        <c:defaultValueDescription>If nothing is specified, the default of 20 will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
+                    &datasourceConnectionResourceConfigProps;
+                    &nonXaDatasourceConnectionResourceConfigProps;
                 </c:group>
 
                 <c:group name="advanced" displayName="Advanced">
-
-                    <c:simple-property name="transaction-isolation" required="false"
-                                       description="The Transaction Isolation level. The default setting is to use whichever isolation level is provided by default by the database.">
-                        <c:property-options>
-                            <c:option value="TRANSACTION_READ_UNCOMMITTED" name="Read Uncommitted"/>
-                            <c:option value="TRANSACTION_READ_COMMITTED" default="true" name="Read Committed"/>
-                            <c:option value="TRANSACTION_REPEATABLE_READ" name="Repeatable Read"/>
-                            <c:option value="TRANSACTION_SERIALIZABLE" name="Serializable"/>
-                            <c:option value="TRANSACTION_NONE" name="None"/>
-                        </c:property-options>
-                    </c:simple-property>
-
-                    <c:simple-property name="blocking-timeout-millis" displayName="Blocking Timeout in Milliseconds"
-                                       units="milliseconds"
-                                       activationPolicy="immediate" type="integer" required="false">
-                        <c:description>
-                            Indicates the maximum time in milliseconds to block while waiting for a connection before
-                            throwing
-                            an exception. Note that this blocks only while waiting for a permit for a connection, and
-                            will never
-                            throw an exception if creating a new connection takes an inordinately long time. If nothing
-                            is specified
-                            the default of 30000 milliseconds is used.
-                        </c:description>
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-                    <c:simple-property name="idle-timeout-minutes" type="integer" activationPolicy="immediate"
-                                       displayName="Idle Timeout" units="minutes" required="false">
-                        <c:description>Maximum time in minutes a connection can be idle before it is closed.
-                        </c:description>
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-                    <c:simple-property name="set-tx-query-timeout"
-                                       displayName="Set Tx Query Timeout"
-                                       description="whether to set the query timeout based on the time remaining until transaction timeout,
-                                  any configured query timeout will be used if there is no transaction. The default is false."
-                                       type="boolean"
-                                       required="false"
-                                       activationPolicy="immediate"/>
-
-                    <c:simple-property name="query-timeout"
-                                       displayName="Query Timeout"
-                                       description="Any configured query timeout in seconds The default is no timeout"
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"/>
-
-                    <c:simple-property name="prepared-statement-cache-size" type="integer" activationPolicy="immediate"
-                                       displayName="Prepared Statement Cache Size" required="false">
-                        <c:description>The number of prepared statements per connection.</c:description>
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-                    <c:simple-property name="share-prepared-statements" displayName="Share Prepared Statements"
-                                       type="boolean"
-                                       required="false">
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="valid-connection-checker-class-name" type="string"
-                                       activationPolicy="immediate"
-                                       displayName="Valid Connection Checker Class Name" required="false">
-                        <c:description>Java class used to validate if a connection is valid.</c:description>
-                    </c:simple-property>
-
-                    <c:simple-property name="stale-connection-checker-class-name"
-                                       displayName="Stale Connection Checker Class Name"
-                                       description="Name of the class to use to check if a Connection has become stale"
-                                       type="string"
-                                       required="false"/>
-
-                    <c:simple-property name="use-java-context"
-                                       displayName="Use Java Context"
-                                       description="Indicates if the JNDI name should be prefixed with java:."
-                                       type="boolean"
-                                       required="false">
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="security-domain" type="string" activationPolicy="immediate"
-                                       displayName="Security Domain" required="false">
-                        <c:description>Indicates Subjects from security domain are used to distinguish connections in
-                            this
-                            pool.
-                        </c:description>
-                        <c:defaultValueDescription>If nothing is specified, the default will be to use a single pool of
-                            equivalent
-                            connections.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="new-connection-sql"
-                                       type="longString"
-                                       activationPolicy="immediate"
-                                       displayName="New Connection SQL"
-                                       required="false">
-                        <c:description>SQL statement to execute whenever a new connection is added to the pool.
-                        </c:description>
-                    </c:simple-property>
-
-                    <c:simple-property name="exception-sorter-class-name"
-                                       type="string"
-                                       activationPolicy="immediate"
-                                       displayName="Exception Sorter Class Name"
-                                       required="false">
-                        <c:description>Java class to check if an exception should be broadcast.</c:description>
-                    </c:simple-property>
-
-                    <c:simple-property name="check-valid-connection-sql" type="longString" activationPolicy="immediate"
-                                       displayName="Check Valid Connection SQL" required="false">
-                        <c:description>SQL to check the validity of a pool connection.</c:description>
-                    </c:simple-property>
-
-                    <c:simple-property name="track-statements" type="string" activationPolicy="immediate"
-                                       displayName="Track Statements" required="false">
-                        <c:description>Whether to check for unclosed statements when the connection is returned to the
-                            pool.
-                        </c:description>
-                        <c:property-options>
-                            <c:option name="No" value="no"/>
-                            <c:option name="Yes" value="yes"/>
-                            <c:option name="Yes, but no warnings" value="yes-no-warnings" default="true"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of 'Yes, but not warnings' will
-                            be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <!--<c:map-property name="connection-properties" displayName="Connection Properties" required="false">
-                       <c:description>
-                          Properties used to configure the DataSource. Each property should be on a separate
-                          line, with the name separated from the value by an equals sign =.
-                       </c:description>
-                    </c:map-property>-->
-
-                    <c:simple-property name="type-mapping" displayName="Type Mappings" required="false"/>
-
+                    &datasourceAdvancedResourceConfigProps;
                 </c:group>
+
+                <c:template name="Oracle No TX" description="No Transaction Template for Oracle">
+                    &nonXaDatasourceOracleTemplateProps;
+                </c:template>
 
             </resource-configuration>
 
         </service>
 
-        <service name="Local Transaction"
+        <service name="Local TX Datasource"
                  class="JndiResourceComponent"
                  discovery="JndiResourceDiscoveryComponent"
                  createDeletePolicy="both"
@@ -361,299 +501,27 @@
 
             <resource-configuration>
 
+                <!-- For ManagedProperty annotations, see:
+                     https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/main/org/jboss/resource/metadata/mcf/LocalDataSourceDeploymentMetaData.java -->
+                
                 <c:group name="connection" displayName="Connection Information">
-
-                    <c:simple-property name="jndi-name"
-                                       displayName="JNDI Name"
-                                       description="The global JNDI Name under which to bind the datasource"
-                                       type="string"/>
-
-                    <c:simple-property name="driver-class"
-                                       displayName="JDBC Driver Class"
-                                       description="The fully qualified name of the JDBC driver class."
-                                       type="string"
-                                       activationPolicy="immediate"/>
-
-                    <c:simple-property name="connection-url"
-                                       displayName="Connection URL"
-                                       description="The JDBC driver URL string."
-                                       type="string"
-                                       activationPolicy="immediate"/>
-
-                    <c:simple-property name="user-name"
-                                       displayName="Username"
-                                       description="The default username when creating a new connection."
-                                       type="string"
-                                       activationPolicy="immediate"
-                                       required="false"/>
-
-                    <c:simple-property name="password"
-                                       displayName="Password"
-                                       description="The default password when creating a new connection."
-                                       type="password"
-                                       activationPolicy="immediate"
-                                       required="false"/>
-
-                    <c:simple-property name="min-pool-size"
-                                       displayName="Minimum Pool Size"
-                                       description="Indicates the minimum number of connections the pool should hold."
-                                       type="integer"
-                                       activationPolicy="immediate"
-                                       required="false">
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                        <c:defaultValueDescription>If nothing is specified, the default of 0 will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="max-pool-size"
-                                       displayName="Maximum Pool Size"
-                                       description="Indicates the maximum number of connections the pool should hold."
-                                       activationPolicy="immediate"
-                                       type="integer"
-                                       required="false">
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                        <c:defaultValueDescription>If nothing is specified, the default of 20 will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
+                    &datasourceConnectionResourceConfigProps;
+                    &nonXaDatasourceConnectionResourceConfigProps;
                 </c:group>
 
                 <c:group name="advanced" displayName="Advanced">
-
-                    <c:simple-property name="transaction-isolation" required="false"
-                                       description="The Transaction Isolation level. The default setting is to use whichever isolation level is provided by default by the database.">
-                        <c:property-options>
-                            <c:option value="TRANSACTION_READ_UNCOMMITTED" name="Read Uncommitted"/>
-                            <c:option value="TRANSACTION_READ_COMMITTED" default="true" name="Read Committed"/>
-                            <c:option value="TRANSACTION_REPEATABLE_READ" name="Repeatable Read"/>
-                            <c:option value="TRANSACTION_SERIALIZABLE" name="Serializable"/>
-                            <c:option value="TRANSACTION_NONE" name="None"/>
-                        </c:property-options>
-                    </c:simple-property>
-
-                    <c:simple-property name="blocking-timeout-millis" displayName="Blocking Timeout in Milliseconds"
-                                       units="milliseconds"
-                                       activationPolicy="immediate" type="integer" required="false">
-                        <c:description>
-                            Indicates the maximum time in milliseconds to block while waiting for a connection before
-                            throwing
-                            an exception. Note that this blocks only while waiting for a permit for a connection, and
-                            will never
-                            throw an exception if creating a new connection takes an inordinately long time. If nothing
-                            is specified
-                            the default of 30000 milliseconds is used.
-                        </c:description>
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-                    <c:simple-property name="idle-timeout-minutes" type="integer" activationPolicy="immediate"
-                                       displayName="Idle Timeout" units="minutes" required="false">
-                        <c:description>Maximum time in minutes a connection can be idle before it is closed.
-                        </c:description>
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-                    <c:simple-property name="set-tx-query-timeout"
-                                       displayName="Set Tx Query Timeout"
-                                       description="whether to set the query timeout based on the time remaining until transaction timeout;
-                                  any configured query timeout will be used if there is no transaction. The default is false."
-                                       type="boolean"
-                                       required="false"
-                                       activationPolicy="immediate"/>
-
-                    <c:simple-property name="query-timeout"
-                                       displayName="Query Timeout"
-                                       description="Any configured query timeout in seconds; the default is no timeout."
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"/>
-
-                    <c:simple-property name="prepared-statement-cache-size" type="integer" activationPolicy="immediate"
-                                       displayName="Prepared Statement Cache Size" required="false">
-                        <c:description>The number of prepared statements per connection.</c:description>
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-                    <c:simple-property name="share-prepared-statements" displayName="Share Prepared Statements"
-                                       description="Should prepared statements be shared? (default is false)"
-                                       type="boolean"
-                                       required="false">
-                        <c:property-options>
-                            <c:option name="yes" value="true"/>
-                            <c:option name="no" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="valid-connection-checker-class-name" type="string"
-                                       activationPolicy="immediate"
-                                       displayName="Valid Connection Checker Class Name" required="false">
-                        <c:description>Fully qualified name of the Java class used to validate if a connection is valid.</c:description>
-                    </c:simple-property>
-
-                    <c:simple-property name="stale-connection-checker-class-name"
-                                       displayName="Stale Connection Checker Class Name"
-                                       description="Fully qualified name of the Java class used to check if a connection has become stale."
-                                       type="string"
-                                       required="false"/>
-
-                    <c:simple-property name="use-java-context"
-                                       displayName="Use Java Context"
-                                       type="boolean"
-                                       required="false">
-                        <c:description>Indicates whether the JNDI name should be bound under the java context,
-                            which causes the DataSource to only be accessible from within the JBoss server VM.
-                            The default is true.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:map-property name="security-domain"
-                                    displayName="Security Domain" required="false">
-                        <!-- XXXX -->
-                        <c:description>Indicates whether Subjects from a certain security domain are used to distinguish
-                            connections in this pool.
-                        </c:description>
-
-                        <c:simple-property name="domain" type="string"
-                                           description="the name of the security domain"
-                                           required="false">
-                        </c:simple-property>
-
-                        <c:simple-property name="securityDeploymentType" type="string"
-                                           description="the type of security deployment"
-                                           required="false">
-                            <c:property-options>
-                                <c:option name="None" value="NONE"/>
-                                <c:option name="Application" value="APPLICATION"/>
-                                <c:option name="Domain" value="DOMAIN"/>
-                                <c:option name="Domain and Application" value="DOMAIN_AND_APPLICATION"/>
-                            </c:property-options>
-                        </c:simple-property>
-
-                    </c:map-property>
-
-                    <c:simple-property name="new-connection-sql" type="longString" activationPolicy="immediate"
-                                       displayName="New Connection SQL" required="false">
-                        <c:description>SQL statement to execute whenever a new connection is added to the pool;
-                            this can be used to set the connection schema, etc.
-                        </c:description>
-                    </c:simple-property>
-
-                    <c:simple-property name="exception-sorter-class-name" type="string" activationPolicy="immediate"
-                                       displayName="Exception Sorter Class Name" required="false">
-                        <c:description>Java class to check if an exception should be broadcast.</c:description>
-                    </c:simple-property>
-
-                    <c:simple-property name="check-valid-connection-sql" type="longString" activationPolicy="immediate"
-                                       displayName="Check Valid Connection SQL" required="false">
-                        <c:description>SQL to check the validity of a pool connection.</c:description>
-                    </c:simple-property>
-
-                    <c:simple-property name="track-statements" type="string" activationPolicy="immediate"
-                                       displayName="Track Statements" required="false">
-                        <c:description>Whether to check for unclosed statements when the connection is returned to the
-                            pool.
-                        </c:description>
-                        <c:property-options>
-                            <c:option name="No" value="no"/>
-                            <c:option name="Yes" value="yes"/>
-                            <c:option name="Yes, but no warnings" value="yes-no-warnings" default="true"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of 'Yes, but not warnings' will
-                            be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <!-- TODO -->
-                    <!--<c:map-property name="connection-properties" displayName="Connection Properties" required="false">
-                       <c:description>
-                          Properties used to configure the DataSource. Each property should be on a separate
-                          line, with the name separated from the value by an equals sign.
-                       </c:description>
-                    </c:map-property>-->
-
-                    <c:simple-property name="noTxSeparatePools" type="boolean" activationPolicy="immediate"
-                                       displayName="No Tx Separate Pools" required="false">
-                        <c:description>Whether or not to use separate pools.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="track-connection-by-tx" type="boolean" activationPolicy="immediate"
-                                       displayName="Track Connection By Transaction" required="false">
-                        <c:description>Whether the connection should be locked into the transaction.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                    </c:simple-property>
-
-                    <c:simple-property name="type-mapping" displayName="Type Mappings" required="false"/>
-
-                    <c:simple-property type="integer" required="false" name="allocation-retry"/>
-                    <c:simple-property type="long" required="false" name="allocation-retry-wait-millis"/>
-                    <c:simple-property type="boolean" required="false" name="background-validation"/>
-                    <c:simple-property type="long" required="false" name="background-validation-millis"/>
-
-                    <c:list-property required="false" name="config-property" displayName="Connection Factory Properties"
-                                     description="The connection factory configuration properties">
-                        <c:map-property name="org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData"
-                                        description="Map&lt;String,MetaValue&gt;">
-                            <c:simple-property name="type"/>
-                            <c:simple-property name="name"/>
-                            <c:simple-property name="value"/>
-                        </c:map-property>
-                    </c:list-property>
-
-                    <c:simple-property required="false" name="connection-definition"/>
-                    <c:simple-property type="boolean" required="false" name="isSameRM-override-value"/>
-                    <c:simple-property required="false" name="jmx-invoker-name"/>
-                    <c:map-property required="false" name="metadata"/> <!-- no child props means this is an "open map" -->
-                    <c:simple-property type="boolean" required="false" name="prefill"/>
-                    <c:simple-property required="false" name="rar-name"/>
-                    <c:simple-property required="false" name="statistics-formatter"/>
-                    <c:simple-property required="false" name="url-delimiter" description="The DataSource url delimiter"/>
-                    <c:simple-property required="false" name="url-selector-strategy-class-name" description="The DataSource url selector strategy class name"/>
-                    <c:simple-property type="boolean" required="false" name="use-strict-min"/>
-                    <c:simple-property type="long" required="true" name="use-try-lock" description="The internal lock timeout"/>
-                    <c:simple-property type="boolean" required="false" name="validate-on-match"/>
+                    &datasourceAdvancedResourceConfigProps;
                 </c:group>
 
                 <c:template name="Oracle Local TX" description="Local Transaction Template for Oracle">
-                    <c:simple-property name="type" default="local-tx-datasource"/>
-                    <c:simple-property name="jndi-name" default="OracleDS"/>
-                    <c:simple-property name="driver-class" default="oracle.jdbc.driver.OracleDriver"/>
-                    <c:simple-property name="connection-url" default="jdbc:oracle:oci:@youroracle-tns-name"/>
-                    <c:simple-property name="exception-sorter-class-name"
-                                       default="org.jboss.resource.adapter.jdbc.vendor.OracleExceptionSorter"/>
-                    <c:simple-property name="check-valid-connection-sql" default="SELECT * FROM DUAL"/>
+                    &nonXaDatasourceOracleTemplateProps;
                 </c:template>
 
             </resource-configuration>
 
         </service>
 
-        <service name="XA Transaction"
+        <service name="XA Datasource"
                  class="JndiResourceComponent"
                  discovery="JndiResourceDiscoveryComponent"
                  createDeletePolicy="both"
@@ -696,253 +564,48 @@
 
             <resource-configuration>
 
+                <!-- For ManagedProperty annotations, see:
+                     https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/main/org/jboss/resource/metadata/mcf/XADataSourceDeploymentMetaData.java -->
                 <c:group name="connection" displayName="Connection Information">
-
-                    <c:simple-property name="jndi-name"
-                                       displayName="JNDI Name"
-                                       description="The JNDI Name under which the DataSource wrapper will be bound."
-                                       type="string"/>
+                    &datasourceConnectionResourceConfigProps;
 
                     <c:simple-property name="xa-datasource-class"
                                        displayName="XA DataSource Class"
-                                       description="The fully qualified name of the JDBC XA datasource class."
-                                       type="string"
+                                       description="The fully qualified name of the javax.sql.XADataSource implementation class."
                                        activationPolicy="immediate"/>
 
-                    <c:simple-property name="connection-url"
-                                       displayName="Connection URL"
-                                       description="The JDBC driver URL string."
-                                       type="string"
+                    <c:map-property name="xa-datasource-properties" displayName="XA Datasource Properties" required="true"
+                            description="Properties used to configure the XADataSource.">
+                        <c:description>
+                            Specify properties to assign to the XADataSource implementation class.
+                            Each property is mapped
+                            onto the XADataSource implementation by looking for a JavaBeans style
+                            getter method for the property name. If found, the value of the property is
+                            set using the JavaBeans setter with the element text translated to the true
+                            property type using the java.beans.PropertyEditor for the type.
+                        </c:description>
+                    </c:map-property>
+
+                    <c:simple-property name="xa-resource-timeout"
+                                       displayName="XA Resource Timeout"
+                                       required="false"
+                                       type="integer"
+                                       activationPolicy="immediate">
+                        <c:description>
+                            XA transaction timeout, in seconds (passed to XAResource.setTransactionTimeout()) -
+                            default is zero which does not invoke the setter.
+                        </c:description>
+                    </c:simple-property>
+
+                    <c:simple-property name="url-property"
+                                       displayName="URL Property"
+                                       required="false"
+                                       description="For HA XA datasource, specifies the name of an XA Datasource Property that contains a list of URLs."
                                        activationPolicy="immediate"/>
-
-                    <c:simple-property name="user-name"
-                                       displayName="Username"
-                                       description="The default username when creating a new connection."
-                                       type="string"
-                                       activationPolicy="immediate"
-                                       required="false"/>
-
-                    <c:simple-property name="password"
-                                       displayName="Password"
-                                       description="The default password when creating a new connection."
-                                       type="password"
-                                       activationPolicy="immediate"
-                                       required="false"/>
-
-                    <c:simple-property name="min-pool-size"
-                                       displayName="Minimum Pool Size"
-                                       description="Indicates the minimum number of connections the pool should hold."
-                                       type="integer"
-                                       activationPolicy="immediate"
-                                       required="false">
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                        <c:defaultValueDescription>If nothing is specified, the default of 0 will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="max-pool-size"
-                                       displayName="Maximum Pool Size"
-                                       description="Indicates the maximum number of connections the pool should hold."
-                                       activationPolicy="immediate"
-                                       type="integer"
-                                       required="false">
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                        <c:defaultValueDescription>If nothing is specified, the default of 20 will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
                 </c:group>
 
                 <c:group name="advanced" displayName="Advanced">
-
-                    <c:simple-property name="transaction-isolation" required="false"
-                                       description="The Transaction Isolation level. The default setting is to use whichever isolation level is provided by default by the database.">
-                        <c:property-options>
-                            <c:option value="TRANSACTION_READ_UNCOMMITTED" name="Read Uncommitted"/>
-                            <c:option value="TRANSACTION_READ_COMMITTED" default="true" name="Read Committed"/>
-                            <c:option value="TRANSACTION_REPEATABLE_READ" name="Repeatable Read"/>
-                            <c:option value="TRANSACTION_SERIALIZABLE" name="Serializable"/>
-                            <c:option value="TRANSACTION_NONE" name="None"/>
-                        </c:property-options>
-                    </c:simple-property>
-
-                    <c:simple-property name="blocking-timeout-millis" displayName="Blocking Timeout in Milliseconds"
-                                       units="milliseconds"
-                                       activationPolicy="immediate" type="integer" required="false">
-                        <c:description>
-                            Indicates the maximum time in milliseconds to block while waiting for a connection before
-                            throwing
-                            an exception. Note that this blocks only while waiting for a permit for a connection, and
-                            will never
-                            throw an exception if creating a new connection takes an inordinately long time. If nothing
-                            is specified
-                            the default of 30000 milliseconds is used.
-                        </c:description>
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-                    <c:simple-property name="idle-timeout-minutes" type="integer" activationPolicy="immediate"
-                                       displayName="Idle Timeout" units="minutes" required="false">
-                        <c:description>Maximum time in minutes a connection can be idle before it is closed.
-                        </c:description>
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-                    <c:simple-property name="set-tx-query-timeout"
-                                       displayName="Set Tx Query Timeout"
-                                       description="whether to set the query timeout based on the time remaining until transaction timeout,
-                                  any configured query timeout will be used if there is no transaction. The default is false."
-                                       type="boolean"
-                                       required="false"
-                                       activationPolicy="immediate"/>
-
-                    <c:simple-property name="query-timeout"
-                                       displayName="Query Timeout"
-                                       description="Any configured query timeout in seconds The default is no timeout"
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"/>
-
-                    <c:simple-property name="prepared-statement-cache-size" type="integer" activationPolicy="immediate"
-                                       displayName="Prepared Statement Cache Size" required="false">
-                        <c:description>The number of prepared statements per connection.</c:description>
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-                    <c:simple-property name="share-prepared-statements" displayName="Share Prepared Statements"
-                                       type="boolean"
-                                       required="false">
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="valid-connection-checker-class-name" type="string"
-                                       activationPolicy="immediate"
-                                       displayName="Valid Connection Checker Class Name" required="false">
-                        <c:description>Java class used to validate if a connection is valid.</c:description>
-                    </c:simple-property>
-
-                    <c:simple-property name="stale-connection-checker-class-name"
-                                       displayName="Stale Connection Checker Class Name"
-                                       description="Name of the class to use to check if a Connection has become stale"
-                                       type="string"
-                                       required="false"/>
-
-                    <c:simple-property name="use-java-context"
-                                       displayName="Use Java Context"
-                                       description="Indicates if the JNDI name should be prefixed with java:."
-                                       type="boolean"
-                                       required="false">
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <!--
-                    <c:simple-property name="security-domain" type="string" activationPolicy="immediate"
-                                       displayName="Security Domain" required="false">
-                        <c:description>Indicates Subjects from security domain are used to distinguish connections in
-                            this
-                            pool.
-                        </c:description>
-                        <c:defaultValueDescription>If nothing is specified, the default will be to use a single pool of
-                            equivalent
-                            connections.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-                    -->
-                    
-                    <c:simple-property name="new-connection-sql" type="longString" activationPolicy="immediate"
-                                       displayName="New Connection SQL" required="false">
-                        <c:description>SQL statement to execute whenever a new connection is added to the pool.
-                        </c:description>
-                    </c:simple-property>
-
-                    <c:simple-property name="exception-sorter-class-name" type="string" activationPolicy="immediate"
-                                       displayName="Exception Sorter Class Name" required="false">
-                        <c:description>Java class to check if an exception should be broadcast.</c:description>
-                    </c:simple-property>
-
-                    <c:simple-property name="check-valid-connection-sql" type="longString" activationPolicy="immediate"
-                                       displayName="Check Valid Connection SQL" required="false">
-                        <c:description>SQL to check the validity of a pool connection.</c:description>
-                    </c:simple-property>
-
-                    <c:simple-property name="track-statements" type="string" activationPolicy="immediate"
-                                       displayName="Track Statements" required="false">
-                        <c:description>Whether to check for unclosed statements when the connection is returned to the
-                            pool.
-                        </c:description>
-                        <c:property-options>
-                            <c:option name="No" value="no"/>
-                            <c:option name="Yes" value="yes"/>
-                            <c:option name="Yes, but no warnings" value="yes-no-warnings" default="true"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of 'Yes, but not warnings' will
-                            be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <!--<c:map-property name="xa-datasource-properties" displayName="XA Datasource Properties" required="false">
-                       <c:description>
-                          Properties used to configure the XADataSource. Each property should be on a separate
-                          line, with the name separated from the value by an equals sign =.
-                       </c:description>
-                    </c:map-property>-->
-
-                    <c:simple-property name="noTxSeparatePools" type="boolean" activationPolicy="immediate"
-                                       displayName="No Tx Separate Pools" required="false">
-                        <c:description>Whether or not to use separate pools.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="track-connection-by-tx" type="boolean" activationPolicy="immediate"
-                                       displayName="Track Connection By Transaction" required="false">
-                        <c:description>Whether the connection should be locked into the transaction.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                    </c:simple-property>
-
-                    <c:simple-property name="type-mapping" displayName="Type Mappings" required="false"/>
-
-                    <c:simple-property name="isSameRM" type="boolean" activationPolicy="immediate"
-                                       displayName="isSameRM Override Value" required="false">
-                        <c:description>Allows one to unconditionally set whether the
-                            javax.transaction.xa.XAResource.isSameRMXAResource returns true or false. The default is not
-                            to
-                            override the return value.
-                        </c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
+                    &datasourceAdvancedResourceConfigProps;
                 </c:group>
 
                 <c:template name="Oracle XA" description="XA Transaction Template for Oracle">
@@ -955,6 +618,10 @@
                                        default="org.jboss.resource.adapter.jdbc.vendor.OracleExceptionSorter"/>
                     <!-- Oracles XA datasource cannot reuse a connection outside a transaction once enlisted in a global transaction and vice-versa -->
                     <c:simple-property name="no-tx-separate-pools" default="true"/>
+                    <c:simple-property name="use-try-lock" default="60000"/>
+                    <c:map-property name="metadata">
+                        <c:simple-property name="typeMapping" default="Oracle9i"/>
+                    </c:map-property>
                 </c:template>
 
             </resource-configuration>

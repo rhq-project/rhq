@@ -113,10 +113,10 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
 
     @Test(groups = "integration.session")
     public void testImplicitGroupMembershipFromComplexGroupUpdates() throws Throwable {
-        Subject subject;
-        Role role;
-        ResourceGroup recursiveGroup;
-        List<Resource> fullTree;
+        Subject subject = null;
+        Role role = null;
+        ResourceGroup recursiveGroup = null;
+        List<Resource> fullTree = null;
 
         Resource nodeBigA;
         Resource nodeOne;
@@ -129,195 +129,185 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
         List<Resource> expectedImplicit = null;
         List<Resource> expectedExplicit = new ArrayList<Resource>();
 
-        getTransactionManager().begin();
         try {
-            EntityManager em = getEntityManager();
-            // setup simple test structures
-            subject = SessionTestHelper.createNewSubject(em, "fake subject");
-            role = SessionTestHelper.createNewRoleForSubject(em, subject, "fake role", Permission.MANAGE_INVENTORY);
-            recursiveGroup = SessionTestHelper.createNewMixedGroupForRole(em, role, "fake group", true);
-
-            // setup the test tree
-            fullTree = getSimpleTree(em);
-
-            ResourceTreeHelper.printForest(fullTree);
-
-            // get the resources from the tree we want to explicitly add
-            nodeBigA = ResourceTreeHelper.findNode(fullTree, "A");
-            nodeOne = ResourceTreeHelper.findNode(fullTree, "1");
-            nodeThree = ResourceTreeHelper.findNode(fullTree, "3");
-            nodeLittleA = ResourceTreeHelper.findNode(fullTree, "a");
-            nodeTripleLittleI = ResourceTreeHelper.findNode(fullTree, "iii");
-
-            // adding nodeLittleA should give us the subtree under nodeLittleA
-            expectedImplicit = ResourceTreeHelper.getSubtree(nodeLittleA);
-            implicitGroupMembershipAddHelper(subject, recursiveGroup, nodeLittleA, expectedImplicit);
-            resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup, PageControl
-                .getUnlimitedInstance());
-            expectedExplicit.add(nodeLittleA);
-            verifyEqualByIds("explicit add 1", expectedExplicit, resultsExplicit);
-
-            // adding nodeThree should give us the union of the subtrees under nodeLittleA and nodeThree
-            expectedImplicit.add(nodeThree);
-            implicitGroupMembershipAddHelper(subject, recursiveGroup, nodeThree, expectedImplicit);
-            resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup, PageControl
-                .getUnlimitedInstance());
-            expectedExplicit.add(nodeThree);
-            verifyEqualByIds("explicit add 2", expectedExplicit, resultsExplicit);
-
-            // adding nodeBigA should give us the union of the entire A tree with the nodeThree subtree
-            expectedImplicit = ResourceTreeHelper.getSubtree(nodeBigA);
-            expectedImplicit.addAll(ResourceTreeHelper.getSubtree(nodeThree));
-            implicitGroupMembershipAddHelper(subject, recursiveGroup, nodeBigA, expectedImplicit);
-            resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup, PageControl
-                .getUnlimitedInstance());
-            expectedExplicit.add(nodeBigA);
-            verifyEqualByIds("explicit add 3", expectedExplicit, resultsExplicit);
-
-            // adding nodeOne, which is a child of nodeBigA, shouldn't effect the expected results
-            implicitGroupMembershipAddHelper(subject, recursiveGroup, nodeOne, expectedImplicit);
-            resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup, PageControl
-                .getUnlimitedInstance());
-            expectedExplicit.add(nodeOne);
-            verifyEqualByIds("explicit add 4", expectedExplicit, resultsExplicit);
-
-            // adding nodeTripleLittleI shouldn't effect the expected results either
-            implicitGroupMembershipAddHelper(subject, recursiveGroup, nodeTripleLittleI, expectedImplicit);
-            resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup, PageControl
-                .getUnlimitedInstance());
-            expectedExplicit.add(nodeTripleLittleI);
-            verifyEqualByIds("explicit add 5", expectedExplicit, resultsExplicit);
-        } catch (Throwable t) {
-            t.printStackTrace();
-            throw t;
-        } finally {
-            getTransactionManager().commit();
-        }
-
-        getTransactionManager().begin();
-        try {
-            // removing the subtree nodeTripleLittleI shouldn't affect the expected set
-            implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeTripleLittleI, expectedImplicit);
-        } catch (Throwable t) {
-            t.printStackTrace();
-            throw t;
-        } finally {
-            getTransactionManager().commit();
-        }
-
-        getTransactionManager().begin();
-        try {
-            // removing a descendant of a node that is also in the explicit list should be a no-op
-            implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeOne, expectedImplicit);
-
-            expectedImplicit.remove(nodeThree);
-            // removing the wandering nodeThree, so that results will be the complete nodeBigA subtree
-            implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeThree, expectedImplicit);
-
-            // removing a root node should remove all descendants that aren't still in the explicit list
-            implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeBigA, ResourceTreeHelper
-                .getSubtree(nodeLittleA));
-        } catch (Throwable t) {
-            t.printStackTrace();
-            throw t;
-        } finally {
-            getTransactionManager().commit();
-        }
-
-        getTransactionManager().begin();
-        try {
-            // remove a node that wasn't in the group - negative testing
+            getTransactionManager().begin();
             try {
-                // passing the "real" expected list for the results; this way, if the exception doesn't happen, the helper returns true
-                implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeBigA, ResourceTreeHelper
-                    .getSubtree(nodeLittleA));
-                assert false : "Failed: removed non-existent successfully: node = " + nodeBigA.getName();
-            } catch (ResourceGroupUpdateException rgue) {
-                // expected
-            }
-        } catch (Throwable t) {
-            t.printStackTrace();
-            throw t;
-        } finally {
-            // throwing the RGUE will already mark this xaction for rollback
-            //getTransactionManager().commit();
-            getTransactionManager().rollback();
-        }
+                EntityManager em = getEntityManager();
+                // setup simple test structures
+                subject = SessionTestHelper.createNewSubject(em, "fake subject");
+                role = SessionTestHelper.createNewRoleForSubject(em, subject, "fake role", Permission.MANAGE_INVENTORY);
+                recursiveGroup = SessionTestHelper.createNewMixedGroupForRole(em, role, "fake group", true);
 
-        getTransactionManager().begin();
-        try {
-            // removing the last resource should leave an empty list
-            implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeLittleA, new ArrayList<Resource>());
-        } catch (Throwable t) {
-            t.printStackTrace();
-            throw t;
-        } finally {
-            getTransactionManager().commit();
-        }
+                // setup the test tree
+                fullTree = getSimpleTree(em);
 
-        getTransactionManager().begin();
-        try {
-            // remove a node that wasn't in the group - negative testing
-            try {
-                // passing the "real" expected list for the results; this way, if the exception doesn't happen, the helper returns true
-                Resource nodeBigB = ResourceTreeHelper.findNode(fullTree, "B");
-                implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeBigB, ResourceTreeHelper
-                    .getSubtree(nodeBigA));
-                assert false : "Failed: removed non-existent successfully: node = " + nodeBigB.getName();
-            } catch (ResourceGroupUpdateException rgue) {
-                // expected
+                ResourceTreeHelper.printForest(fullTree);
+
+                // get the resources from the tree we want to explicitly add
+                nodeBigA = ResourceTreeHelper.findNode(fullTree, "A");
+                nodeOne = ResourceTreeHelper.findNode(fullTree, "1");
+                nodeThree = ResourceTreeHelper.findNode(fullTree, "3");
+                nodeLittleA = ResourceTreeHelper.findNode(fullTree, "a");
+                nodeTripleLittleI = ResourceTreeHelper.findNode(fullTree, "iii");
+
+                // adding nodeLittleA should give us the subtree under nodeLittleA
+                expectedImplicit = ResourceTreeHelper.getSubtree(nodeLittleA);
+                implicitGroupMembershipAddHelper(subject, recursiveGroup, nodeLittleA, expectedImplicit);
                 resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup,
                     PageControl.getUnlimitedInstance());
-                verifyEqualByIds("explicit remove 0", new ArrayList<Resource>(), resultsExplicit);
+                expectedExplicit.add(nodeLittleA);
+                verifyEqualByIds("explicit add 1", expectedExplicit, resultsExplicit);
+
+                // adding nodeThree should give us the union of the subtrees under nodeLittleA and nodeThree
+                expectedImplicit.add(nodeThree);
+                implicitGroupMembershipAddHelper(subject, recursiveGroup, nodeThree, expectedImplicit);
+                resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup,
+                    PageControl.getUnlimitedInstance());
+                expectedExplicit.add(nodeThree);
+                verifyEqualByIds("explicit add 2", expectedExplicit, resultsExplicit);
+
+                // adding nodeBigA should give us the union of the entire A tree with the nodeThree subtree
+                expectedImplicit = ResourceTreeHelper.getSubtree(nodeBigA);
+                expectedImplicit.addAll(ResourceTreeHelper.getSubtree(nodeThree));
+                implicitGroupMembershipAddHelper(subject, recursiveGroup, nodeBigA, expectedImplicit);
+                resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup,
+                    PageControl.getUnlimitedInstance());
+                expectedExplicit.add(nodeBigA);
+                verifyEqualByIds("explicit add 3", expectedExplicit, resultsExplicit);
+
+                // adding nodeOne, which is a child of nodeBigA, shouldn't effect the expected results
+                implicitGroupMembershipAddHelper(subject, recursiveGroup, nodeOne, expectedImplicit);
+                resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup,
+                    PageControl.getUnlimitedInstance());
+                expectedExplicit.add(nodeOne);
+                verifyEqualByIds("explicit add 4", expectedExplicit, resultsExplicit);
+
+                // adding nodeTripleLittleI shouldn't effect the expected results either
+                implicitGroupMembershipAddHelper(subject, recursiveGroup, nodeTripleLittleI, expectedImplicit);
+                resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup,
+                    PageControl.getUnlimitedInstance());
+                expectedExplicit.add(nodeTripleLittleI);
+                verifyEqualByIds("explicit add 5", expectedExplicit, resultsExplicit);
+            } catch (Throwable t) {
+                t.printStackTrace();
+                throw t;
+            } finally {
+                getTransactionManager().commit();
             }
-        } catch (Throwable t) {
-            t.printStackTrace();
-            throw t;
+
+            getTransactionManager().begin();
+            try {
+                // removing the subtree nodeTripleLittleI shouldn't affect the expected set
+                implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeTripleLittleI, expectedImplicit);
+            } catch (Throwable t) {
+                t.printStackTrace();
+                throw t;
+            } finally {
+                getTransactionManager().commit();
+            }
+
+            getTransactionManager().begin();
+            try {
+                // removing a descendant of a node that is also in the explicit list should be a no-op
+                implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeOne, expectedImplicit);
+
+                expectedImplicit.remove(nodeThree);
+                // removing the wandering nodeThree, so that results will be the complete nodeBigA subtree
+                implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeThree, expectedImplicit);
+
+                // removing a root node should remove all descendants that aren't still in the explicit list
+                implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeBigA, ResourceTreeHelper
+                    .getSubtree(nodeLittleA));
+            } catch (Throwable t) {
+                t.printStackTrace();
+                throw t;
+            } finally {
+                getTransactionManager().commit();
+            }
+
+            getTransactionManager().begin();
+            try {
+                // remove a node that wasn't in the group - negative testing
+                try {
+                    // passing the "real" expected list for the results; this way, if the exception doesn't happen, the helper returns true
+                    implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeBigA, ResourceTreeHelper
+                        .getSubtree(nodeLittleA));
+                    assert false : "Failed: removed non-existent successfully: node = " + nodeBigA.getName();
+                } catch (ResourceGroupUpdateException rgue) {
+                    // expected
+                }
+            } catch (Throwable t) {
+                t.printStackTrace();
+                throw t;
+            } finally {
+                // throwing the RGUE will already mark this xaction for rollback
+                //getTransactionManager().commit();
+                getTransactionManager().rollback();
+            }
+
+            getTransactionManager().begin();
+            try {
+                // removing the last resource should leave an empty list
+                implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeLittleA, new ArrayList<Resource>());
+            } catch (Throwable t) {
+                t.printStackTrace();
+                throw t;
+            } finally {
+                getTransactionManager().commit();
+            }
+
+            getTransactionManager().begin();
+            try {
+                // remove a node that wasn't in the group - negative testing
+                try {
+                    // passing the "real" expected list for the results; this way, if the exception doesn't happen, the helper returns true
+                    Resource nodeBigB = ResourceTreeHelper.findNode(fullTree, "B");
+                    implicitGroupMembershipRemoveHelper(subject, recursiveGroup, nodeBigB, ResourceTreeHelper
+                        .getSubtree(nodeBigA));
+                    assert false : "Failed: removed non-existent successfully: node = " + nodeBigB.getName();
+                } catch (ResourceGroupUpdateException rgue) {
+                    // expected
+                    resultsExplicit = resourceManager.getExplicitResourcesByResourceGroup(subject, recursiveGroup,
+                        PageControl.getUnlimitedInstance());
+                    verifyEqualByIds("explicit remove 0", new ArrayList<Resource>(), resultsExplicit);
+                }
+            } catch (Throwable t) {
+                t.printStackTrace();
+                throw t;
+            } finally {
+                // throwing the RGUE will already mark this xaction for rollback
+                //getTransactionManager().commit();
+                getTransactionManager().rollback();
+            }
+
         } finally {
-            // throwing the RGUE will already mark this xaction for rollback
-            //getTransactionManager().commit();
-            getTransactionManager().rollback();
-        }
+            // clean up anything that may have gotten created
+            getTransactionManager().begin();
+            try {
+                EntityManager em = getEntityManager();
 
-        getTransactionManager().begin();
-        try {
-            EntityManager em = getEntityManager();
+                Subject overlord = subjectManager.getOverlord();
 
-            Subject overlord = subjectManager.getOverlord();
+                if (null != subject) {
+                    subjectManager.deleteUsers(overlord, new Integer[] { subject.getId() });
+                }
+                if (null != role) {
+                    roleManager.deleteRoles(overlord, new Integer[] { role.getId() });
+                }
+                if (null != recursiveGroup) {
+                    resourceGroupManager.deleteResourceGroup(overlord, recursiveGroup.getId());
+                }
 
-            subjectManager.deleteUsers(overlord, new Integer[] { subject.getId() });
-            roleManager.deleteRoles(overlord, new Integer[] { role.getId() });
-            resourceGroupManager.deleteResourceGroup(overlord, recursiveGroup.getId());
+                if (null != fullTree) {
+                    ResourceTreeHelper.deleteForest(em, fullTree);
+                }
 
-            List<Resource> resources = new ArrayList<Resource>();
-            for (Resource res : resources) {
-                resources.addAll(ResourceTreeHelper.getSubtree(res));
+            } catch (Throwable t) {
+                t.printStackTrace();
+                throw t;
+            } finally {
+                getTransactionManager().commit();
             }
-            for (Resource next : resources) {
-                next.setParentResource(null);
-                next.getChildResources().clear();
-            }
-            for (Resource doomed : resources) {
-                em.remove(doomed);
-            }
-
-            //            Role attachedRole = em.find(Role.class, role.getId());
-            //            Subject attachedSubject = em.find(Subject.class, subject.getId());
-            //
-            //            attachedSubject.getRoles().clear();
-            //            attachedRole.getSubjects().clear();
-            //
-            //            attachedSubject = em.merge(attachedSubject);
-            //            attachedRole = em.merge(attachedRole);
-            //
-            //            em.remove(attachedRole);
-            //            em.remove(attachedSubject);
-
-        } catch (Throwable t) {
-            t.printStackTrace();
-            throw t;
-        } finally {
-            getTransactionManager().commit();
         }
     }
 

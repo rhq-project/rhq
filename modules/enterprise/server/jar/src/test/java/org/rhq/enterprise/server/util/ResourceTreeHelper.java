@@ -124,6 +124,32 @@ public class ResourceTreeHelper {
         return roots;
     }
 
+    public static void deleteForest(EntityManager entityManager, List<Resource> roots) {
+
+        for (Resource root : roots) {
+            Resource doomedRoot = entityManager.find(Resource.class, root.getId());
+
+            if (null != doomedRoot) {
+                ResourceType doomedResourceType = doomedRoot.getResourceType();
+
+                deleteTree(entityManager, root);
+
+                if (null != doomedResourceType) {
+                    doomedResourceType = entityManager.find(ResourceType.class, doomedResourceType.getId());
+                    entityManager.remove(doomedResourceType);
+                }
+            }
+        }
+    }
+
+    private static void deleteTree(EntityManager entityManager, Resource root) {
+        for (Resource child : root.getChildResources()) {
+            deleteTree(entityManager, child);
+        }
+        Resource doomedResource = entityManager.find(Resource.class, root.getId());
+        entityManager.remove(doomedResource);
+    }
+
     public static Resource findNode(List<Resource> roots, String name) {
         Resource node = null;
         for (Resource root : roots) {

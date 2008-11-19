@@ -1054,6 +1054,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         DiscoveryServerService serverService = this.configuration.getServerServices().getDiscoveryServerService();
         if (serverService != null) {
             try {
+                // use light-weight proxy to Resource, so that the entire hierarchy doesn't get serialized
+                resourceError.setResource(new Resource(resourceError.getResource().getId()));
                 serverService.setResourceError(resourceError);
                 errorSent = true;
             } catch (RuntimeException e) {

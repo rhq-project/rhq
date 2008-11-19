@@ -91,6 +91,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Heiko W. Rupp
  * @author Ian Springer
+ * @author Joseph Marques
  */
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
@@ -423,7 +424,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         // pageControl.initDefaultOrderingField(); // this is ignored, as this method eventually uses native queries
 
         ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
-        Set<Resource> resources = group.getExplicitResources();
+        Set<Resource> resources = group.getImplicitResources();
         ResourceType resType = group.getResourceType();
         Set<MeasurementDefinition> definitions = resType.getMetricDefinitions();
 
@@ -456,7 +457,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 + "   where s.definition = d.id "
                 + "     and d.id IN (@@DEFINITIONS@@) "
                 + "     and s.resource_id IN (@@RESOURCES@@) "
-                + "   group by d.id " + " ) as foo " + " where defi.id = foo.did ";
+                + "   group by d.id " + " ) as foo " + " where defi.id = foo.did order by defi.display_name";
         } else if (type instanceof OracleDatabaseType) {
             queryString = "select defi.id, defi.display_name, defi.description, defi.category, coMin, coMax, coAny, coAll "
                 + " from RHQ_measurement_def defi, "
@@ -466,7 +467,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 + "   where s.definition = d.id "
                 + "     and d.id IN (@@DEFINITIONS@@) "
                 + "     and s.resource_id IN (@@RESOURCES@@) "
-                + "   group by d.id " + " ) " + " where defi.id = did ";
+                + "   group by d.id " + " ) " + " where defi.id = did order by defi.display_name";
         } else {
             throw new IllegalArgumentException("unknown database type, imlement this: " + type.toString());
         }
@@ -509,12 +510,12 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 int maxInterval = resultSet.getInt(5);
                 int minInterval = resultSet.getInt(6);
                 int collectionInterval = (maxInterval == minInterval) ? maxInterval : 0; // 0 will be flagged as "DIFFERENT"
-                boolean collectionEnabled = false;
+                Boolean collectionEnabled = null;
                 if (type instanceof PostgresqlDatabaseType) {
                     boolean bOr = resultSet.getBoolean(7);
                     boolean bAnd = resultSet.getBoolean(8);
                     if (bOr == bAnd) {
-                        collectionEnabled = bOr;
+                        collectionEnabled = (bOr) ? true : false;
                     } else {
                         collectionInterval = 0; // will be flagged as "DIFFERENT"
                     }

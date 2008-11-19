@@ -70,6 +70,7 @@ import org.rhq.enterprise.gui.inventory.resource.ListChildResourcesUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListContainingGroupsUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListCreateResourceHistoryUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListDeleteResourceHistoryUIBean;
+import org.rhq.enterprise.gui.measurement.schedule.group.ListResourceGroupMeasurementScheduleUIBean;
 import org.rhq.enterprise.gui.measurement.schedule.resource.ListResourceMeasurementScheduleUIBean;
 import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationCompletedHistoryUIBean;
 import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationHistoryDetailsUIBean;
@@ -226,7 +227,9 @@ public enum PageControlView {
     // Monitor
 
     /** */
-    ResourceMeasuremntScheduleList(ListResourceMeasurementScheduleUIBean.class, true);
+    ResourceMeasuremntScheduleList(ListResourceMeasurementScheduleUIBean.class, true),
+    /** */
+    ResourceGroupMeasuremntScheduleList(ListResourceGroupMeasurementScheduleUIBean.class, true);
 
     private Class<? extends PagedDataTableUIBean> beanClass;
     private boolean showAll = false;;

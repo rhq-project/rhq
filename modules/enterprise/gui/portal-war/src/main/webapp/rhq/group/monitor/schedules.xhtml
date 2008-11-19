@@ -21,7 +21,111 @@
 
 <ui:define name="content">
 
-Not Implemented Yet
+      <h:form id="resourceGroupSchedulesForm">
+         <input type="hidden" name="groupId" value="${param.groupId}"/>
+         
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Configure Metric Collection Schedules"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+            <ui:param name="resourceGroupSchedulesDataModel" value="#{ListResourceGroupMeasurementScheduleUIBean.dataModel}"/>
+            <rich:dataTable binding="#{ListResourceGroupMeasurementScheduleUIBean.dataTable}"
+                            id="resourceGroupSchedulesDataTable"
+                            rows="#{PageControl.ResourceGroupMeasuremntScheduleList.pageSize}"
+                            value="#{resourceGroupSchedulesDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 20%, 30%, 20%, 9%, 20%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ResourceGroupMeasuremntScheduleList" />
+               </f:facet>
+      
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedResourceGroupSchedules" />
+                  </f:facet>
+                  
+                  <onc:select name="selectedResourceGroupSchedules" value="#{item.measurementDefinition.id}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Metric" />
+                  </f:facet>
+                 
+                  <h:outputText value="#{item.measurementDefinition.displayName}"/>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Description" />
+                  </f:facet>
+
+                  <h:outputText value="#{item.measurementDefinition.description}"/>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Category" />
+                  </f:facet>
+               
+                  <h:outputText value="#{item.measurementDefinition.category}"/>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Enabled" />
+                  </f:facet>
+                  <h:outputText value="#{(empty item.collectionEnabled) ? 'SOME' : (item.collectionEnabled ? 'Yes' : 'No')}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Collection Interval" />
+                  </f:facet>
+                  
+                  <h:outputText value="#{item.collectionInterval}" rendered="#{item.collectionInterval ne 0}">
+                     <f:converter converterId="DurationConverter" />
+                  </h:outputText>
+                  <h:outputText value="DIFFERENT" rendered="#{item.collectionInterval eq 0}" />
+               </rich:column>
+
+               <f:facet name="footer" rendered="false">
+                  <rich:columnGroup>
+                     <rich:column colspan="6">
+                        <h:panelGrid columns="4">
+                           <onc:selectCommandButton action="#{ListResourceGroupMeasurementScheduleUIBean.disableSelected}"
+                                                    value="DISABLE" target="selectedResourceGroupSchedules" 
+                                                    styleClass="on-pager-button buttonsmall"
+                                                    rendered="#{ResourceGroupUIBean.permissions.measure}" />
+                           <h:outputText value="&nbsp;&nbsp;&nbsp;Collection Interval: " />
+                           <onc:duration binding="#{ListResourceGroupMeasurementScheduleUIBean.duration}"
+                                         optionList="s,m,h" />
+                           <onc:selectCommandButton action="#{ListResourceGroupMeasurementScheduleUIBean.enableAndSetSelected}"
+                                                    value="SET" target="selectedResourceGroupSchedules"
+                                                    styleClass="on-pager-button buttonsmall"
+                                                    rendered="#{ResourceGroupUIBean.permissions.measure}" />
+                        </h:panelGrid>
+                        <ui:param name="paginationDataTableName" value="resourceGroupSchedulesDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{resourceGroupSchedulesDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ResourceGroupMeasuremntScheduleList}"/>
+                        <ui:include src="/rhq/resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+ 
+            </h:panelGrid>
+
+         </rich:panel>
+      </h:form>
 
 </ui:define>
 

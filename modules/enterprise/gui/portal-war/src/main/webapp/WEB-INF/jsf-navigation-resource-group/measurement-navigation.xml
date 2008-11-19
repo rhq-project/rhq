@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+   
+   <!-- ResourceGroup Measurement Schedules -->
+   <navigation-rule>
+      <from-view-id>/rhq/group/monitor/schedules.xhtml</from-view-id>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/group/monitor/schedules.xhtml?groupId=#{param.groupId}&amp;category=COMPATIBLE</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/group/monitor/schedules.xhtml?groupId=#{param.groupId}&amp;category=COMPATIBLE</to-view-id>
+         <redirect/>
+      </navigation-case> 
+      
+   </navigation-rule>
+   
+</faces-config>

@@ -30,4 +30,9 @@
       <phase-listener>org.rhq.core.gui.util.IdChunkGeneratorPhaseListener</phase-listener>
    </lifecycle>
    
+   <converter>
+      <converter-id>DurationConverter</converter-id>
+      <converter-class>org.rhq.enterprise.gui.common.time.converter.DurationConverter</converter-class>
+   </converter>
+   
 </faces-config>

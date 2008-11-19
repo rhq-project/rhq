@@ -21,7 +21,118 @@
 
 <ui:define name="content">
 
-Not Implemented Yet
+      <h:form id="resourceSchedulesForm">
+         <input type="hidden" name="id" value="${param.id}"/>
+         
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Configure Metric Collection Schedules"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+            <ui:param name="resourceSchedulesDataModel" value="#{ListResourceMeasurementScheduleUIBean.dataModel}"/>
+            <rich:dataTable binding="#{ListResourceMeasurementScheduleUIBean.dataTable}"
+                            id="resourceSchedulesDataTable"
+                            rows="#{PageControl.ResourceMeasuremntScheduleList.pageSize}"
+                            value="#{resourceSchedulesDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 20%, 30%, 20%, 9%, 20%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ResourceMeasuremntScheduleList" />
+               </f:facet>
+      
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedResourceSchedules" />
+                  </f:facet>
+                  
+                  <onc:select name="selectedResourceSchedules" value="#{item.definition.id}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="ms.definition.displayName">
+                        <h:outputText styleClass="headerText" value="Metric" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                 
+                  <h:outputText value="#{item.definition.displayName}"/>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Description" />
+                  </f:facet>
+
+                  <h:outputText value="#{item.definition.description}"/>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="ms.definition.category">
+                        <h:outputText styleClass="headerText" value="Category" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{item.definition.category}"/>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="ms.enabled">
+                        <h:outputText styleClass="headerText" value="Enabled" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  <h:outputText value="#{item.enabled ? 'Yes' : 'No'}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="ms.interval">
+                        <h:outputText styleClass="headerText" value="Collection Interval" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputText value="#{item.interval}">
+                     <f:converter converterId="DurationConverter" />
+                  </h:outputText>
+               </rich:column>
+
+               <f:facet name="footer" rendered="false">
+                  <rich:columnGroup>
+                     <rich:column colspan="6">
+                        <h:panelGrid columns="4">
+                           <onc:selectCommandButton action="#{ListResourceMeasurementScheduleUIBean.disableSelected}"
+                                                    value="DISABLE" target="selectedResourceSchedules" 
+                                                    styleClass="on-pager-button buttonsmall"
+                                                    rendered="#{ResourceUIBean.permissions.measure}" />
+                           <h:outputText value="&nbsp;&nbsp;&nbsp;Collection Interval: " />
+                           <onc:duration binding="#{ListResourceMeasurementScheduleUIBean.duration}"
+                                         optionList="s,m,h" />
+                           <onc:selectCommandButton action="#{ListResourceMeasurementScheduleUIBean.enableAndSetSelected}"
+                                                    value="SET" target="selectedResourceSchedules"
+                                                    styleClass="on-pager-button buttonsmall"
+                                                    rendered="#{ResourceUIBean.permissions.measure}" />
+                        </h:panelGrid>
+                        <ui:param name="paginationDataTableName" value="resourceSchedulesDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{resourceSchedulesDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ResourceMeasuremntScheduleList}"/>
+                        <ui:include src="/rhq/resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+ 
+            </h:panelGrid>
+
+         </rich:panel>
+      </h:form>
 
 </ui:define>
 

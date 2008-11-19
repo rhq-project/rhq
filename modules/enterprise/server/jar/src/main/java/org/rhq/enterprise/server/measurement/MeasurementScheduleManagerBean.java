@@ -553,9 +553,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<MeasurementScheduleComposite> getMeasurementSchedulesForResource(Subject subject, int resourceId,
-        @Nullable
-        DataType dataType, PageControl pageControl) {
+    public PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesForResource(Subject subject,
+        int resourceId, @Nullable DataType dataType, PageControl pageControl) {
         pageControl.addDefaultOrderingField("ms.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -567,6 +566,21 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     @SuppressWarnings("unchecked")
+    public PageList<MeasurementSchedule> getMeasurementSchedulesForResource(Subject subject, int resourceId,
+        @Nullable DataType dataType, @Nullable DisplayType displayType, @Nullable Boolean enabled,
+        PageControl pageControl) {
+        pageControl.addDefaultOrderingField("ms.id");
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            MeasurementSchedule.FIND_ALL_FOR_RESOURCE_ID, pageControl);
+        query.setParameter("resourceId", resourceId);
+        query.setParameter("dataType", dataType);
+        query.setParameter("displayType", displayType);
+        query.setParameter("enabled", enabled);
+        List<MeasurementSchedule> results = query.getResultList();
+        return new PageList<MeasurementSchedule>(results, pageControl);
+    }
+
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void disableDefaultCollectionForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds,
         boolean updateSchedules) {

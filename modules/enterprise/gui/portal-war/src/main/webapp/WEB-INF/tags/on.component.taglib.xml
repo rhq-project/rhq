@@ -135,5 +135,13 @@
          <renderer-type>org.jboss.on.DynamicPanelGroup</renderer-type>
       </component>
    </tag> 
+
+   <tag>
+      <tag-name>duration</tag-name>
+      <component>
+         <component-type>org.jboss.on.Duration</component-type>
+         <renderer-type>org.jboss.on.Duration</renderer-type>
+      </component>
+   </tag> 
    
 </facelet-taglib>

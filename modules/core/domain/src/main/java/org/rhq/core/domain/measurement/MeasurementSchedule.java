@@ -89,7 +89,7 @@ import org.rhq.core.domain.resource.Resource;
 @Table(name = "RHQ_MEASUREMENT_SCHED", uniqueConstraints = { @UniqueConstraint(columnNames = { "DEFINITION",
     "RESOURCE_ID" }) })
 public class MeasurementSchedule implements Serializable {
-    @SuppressWarnings("unused")
+
     private static final long serialVersionUID = 1L;
 
     /**

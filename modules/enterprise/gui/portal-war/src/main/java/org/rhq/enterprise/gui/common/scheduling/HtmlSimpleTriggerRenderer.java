@@ -20,10 +20,12 @@ package org.rhq.enterprise.gui.common.scheduling;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
+
 import com.sun.faces.util.MessageUtils;
 
 public class HtmlSimpleTriggerRenderer extends Renderer {
@@ -32,7 +34,6 @@ public class HtmlSimpleTriggerRenderer extends Renderer {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void decode(FacesContext context, UIComponent component) {
         super.decode(context, component);
         if (context == null) {

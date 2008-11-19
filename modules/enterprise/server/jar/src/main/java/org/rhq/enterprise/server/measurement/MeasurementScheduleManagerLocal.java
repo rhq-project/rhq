@@ -164,9 +164,24 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return the metric collection schedules for the given resource
      */
-    PageList<MeasurementScheduleComposite> getMeasurementSchedulesForResource(Subject subject, int resourceId,
-        @Nullable
-        DataType dataType, PageControl pageControl);
+    PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesForResource(Subject subject, int resourceId,
+        @Nullable DataType dataType, PageControl pageControl);
+
+    /**
+     * Retrieves the metric collection schedules for the given resource.
+     *
+     * @param  subject     the current user
+     * @param  resourceId  a {@link Resource} id
+     * @param  dataType    the data type to limit results to, or null to not limit results to a particular data type
+     * @param  dataType    the display type to limit results to, or null to not limit results to a particular display type
+     * @param  enable      limit the results by enabled state, or null to not limit results by enabled state
+     * @param  pageControl the page control for the results
+     *
+     * @return the metric collection schedules for the given resource
+     */
+    PageList<MeasurementSchedule> getMeasurementSchedulesForResource(Subject subject, int resourceId,
+        @Nullable DataType dataType, @Nullable DisplayType displayType, @Nullable Boolean enabled,
+        PageControl pageControl);
 
     /**
      * Disables all collection schedules in the given measurement definition IDs. This only disables the "templates", it
@@ -177,7 +192,8 @@ public interface MeasurementScheduleManagerLocal {
      * @param measurementDefinitionIds
      * @param updateSchedules TODO
      */
-    void disableDefaultCollectionForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds, boolean updateSchedules);
+    void disableDefaultCollectionForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds,
+        boolean updateSchedules);
 
     /**
      * Disables all collection schedules attached to the given resource whose schedules are based off the given

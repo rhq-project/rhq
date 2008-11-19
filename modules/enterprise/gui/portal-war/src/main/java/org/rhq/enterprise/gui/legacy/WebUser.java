@@ -503,7 +503,12 @@ public class WebUser {
 
         List<String> pageControlProperties = getPreferenceAsList(view.toString());
         if (pageControlProperties.size() == 0) {
-            PageControl defaultControl = new PageControl(0, 15);
+            PageControl defaultControl = null;
+            if (view.getShowAll()) {
+                defaultControl = PageControl.getUnlimitedInstance();
+            } else {
+                defaultControl = new PageControl(0, 15);
+            }
             setPageControl(view, defaultControl);
             return defaultControl;
         } else {

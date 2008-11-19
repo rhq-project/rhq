@@ -50,19 +50,19 @@ import org.rhq.enterprise.gui.content.ShowContentServiceRequestUIBean;
 import org.rhq.enterprise.gui.definition.group.GroupDefinitionUIBean;
 import org.rhq.enterprise.gui.definition.group.ListGroupDefinitionsUIBean;
 import org.rhq.enterprise.gui.discovery.AutoDiscoveryQueueUIBean;
+import org.rhq.enterprise.gui.ha.AffinityGroupSubscribedAgentsUIBean;
+import org.rhq.enterprise.gui.ha.AffinityGroupSubscribedServersUIBean;
+import org.rhq.enterprise.gui.ha.AffinityGroupUnsubscribedAgentsUIBean;
+import org.rhq.enterprise.gui.ha.AffinityGroupUnsubscribedServersUIBean;
 import org.rhq.enterprise.gui.ha.ListAffinityGroupsUIBean;
 import org.rhq.enterprise.gui.ha.ListAgentsUIBean;
+import org.rhq.enterprise.gui.ha.ListPartitionEventsUIBean;
 import org.rhq.enterprise.gui.ha.ListServersUIBean;
 import org.rhq.enterprise.gui.ha.ViewAffinityGroupAgentMembersUIBean;
 import org.rhq.enterprise.gui.ha.ViewAffinityGroupServerMembersUIBean;
-import org.rhq.enterprise.gui.ha.ViewServerUIBean;
 import org.rhq.enterprise.gui.ha.ViewAgentUIBean;
-import org.rhq.enterprise.gui.ha.AffinityGroupSubscribedAgentsUIBean;
-import org.rhq.enterprise.gui.ha.AffinityGroupUnsubscribedAgentsUIBean;
-import org.rhq.enterprise.gui.ha.AffinityGroupUnsubscribedServersUIBean;
-import org.rhq.enterprise.gui.ha.AffinityGroupSubscribedServersUIBean;
-import org.rhq.enterprise.gui.ha.ListPartitionEventsUIBean;
 import org.rhq.enterprise.gui.ha.ViewPartitionEventUIBean;
+import org.rhq.enterprise.gui.ha.ViewServerUIBean;
 import org.rhq.enterprise.gui.inventory.group.ListResourceGroupMembersUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyDetailsUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyHistoryUIBean;
@@ -70,6 +70,7 @@ import org.rhq.enterprise.gui.inventory.resource.ListChildResourcesUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListContainingGroupsUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListCreateResourceHistoryUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListDeleteResourceHistoryUIBean;
+import org.rhq.enterprise.gui.measurement.schedule.resource.ListResourceMeasurementScheduleUIBean;
 import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationCompletedHistoryUIBean;
 import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationHistoryDetailsUIBean;
 import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationPendingHistoryUIBean;
@@ -220,9 +221,15 @@ public enum PageControlView {
     /** */
     ListPartitionEventsView(ListPartitionEventsUIBean.class),
     /** */
-    PartitionEventsDetailsView(ViewPartitionEventUIBean.class);
+    PartitionEventsDetailsView(ViewPartitionEventUIBean.class),
+
+    // Monitor
+
+    /** */
+    ResourceMeasuremntScheduleList(ListResourceMeasurementScheduleUIBean.class, true);
 
     private Class<? extends PagedDataTableUIBean> beanClass;
+    private boolean showAll = false;;
 
     private PageControlView() {
         this.beanClass = null;
@@ -232,8 +239,17 @@ public enum PageControlView {
         this.beanClass = beanClass;
     }
 
+    private <T extends PagedDataTableUIBean> PageControlView(Class<T> beanClass, boolean showAll) {
+        this.beanClass = beanClass;
+        this.showAll = showAll;
+    }
+
     public PagedDataTableUIBean getPagedDataTableUIBean() {
         PagedDataTableUIBean uiBean = FacesContextUtility.getBean(beanClass);
         return uiBean;
+    }
+
+    public boolean getShowAll() {
+        return showAll;
     }
 }

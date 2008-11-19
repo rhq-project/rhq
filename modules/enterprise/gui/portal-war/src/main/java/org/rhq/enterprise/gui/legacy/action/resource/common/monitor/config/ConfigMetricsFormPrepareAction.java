@@ -113,7 +113,7 @@ public class ConfigMetricsFormPrepareAction extends TilesAction {
                 request.setAttribute(AttrConstants.MONITOR_ENABLED_ATTR, monitoringConfigured);
                 if (monitoringConfigured) {
                     log.debug("Obtaining metric schedules for resource " + resourceId + "...");
-                    measurementSchedules = scheduleManager.getMeasurementSchedulesForResource(subject, resourceId,
+                    measurementSchedules = scheduleManager.getMeasurementScheduleCompositesForResource(subject, resourceId,
                         null, pageControl);
                 }
             } else if (groupId > 0) {

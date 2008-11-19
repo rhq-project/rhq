@@ -67,6 +67,7 @@
          /WEB-INF/jsf-components/pagination-components.xml,
          /WEB-INF/jsf-components/sorting-components.xml,
          /WEB-INF/jsf-components/table-components.xml,
+         /WEB-INF/jsf-components/time-components.xml,
          /WEB-INF/jsf-components/trigger-components.xml,
          /WEB-INF/jsf-components/upload-components.xml,
 
@@ -95,6 +96,7 @@
          /WEB-INF/jsf-navigation/inventory-navigation.xml,
          /WEB-INF/jsf-navigation/admin-navigation.xml,
          /WEB-INF/jsf-navigation/operation-navigation.xml,
+         /WEB-INF/jsf-navigation/measurement-navigation.xml,
          /WEB-INF/jsf-navigation/test-navigation.xml,
 
          /WEB-INF/jsf-navigation-definition/group-definition-navigation.xml,

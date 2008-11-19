@@ -568,42 +568,6 @@
          </properties>
       </profile>
 
-      <!-- Require dist builds be done using JDK5. -->
-      <profile>
-         <id>dist</id>
-         
-         <activation>
-            <property>
-               <name>dist</name>
-            </property>
-         </activation>
-         
-         <build>
-           <plugins>                             
-              <plugin>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <executions>
-                  <execution>
-                    <id>enforce-versions</id>
-                    <goals>
-                      <!-- IMPORTANT: Use enforce goal, rather than enforce-once goal, otherwise reactor
-                                      builds will fail due to http://jira.codehaus.org/browse/MENFORCER-11 -->
-                      <goal>enforce</goal>
-                    </goals>
-                    <configuration>
-                      <rules>
-                        <requireJavaVersion>
-                          <version>[1.5,1.6)</version> <!-- 1.5.x -->
-                        </requireJavaVersion>
-                      </rules>
-                    </configuration>
-                  </execution>
-                </executions>
-              </plugin>                         
-            </plugins>  
-          </build>              
-      </profile>
-
       <!-- Set the java5.home prop to a Java5 JRE dir to enforce that only Java5 APIs are used. -->
       <profile>
          <id>check-java-api</id>

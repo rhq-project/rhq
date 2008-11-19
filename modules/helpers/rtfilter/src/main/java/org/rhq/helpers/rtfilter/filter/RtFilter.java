@@ -22,6 +22,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,6 +83,7 @@ public class RtFilter implements Filter {
     private String contextName;
 
     private final Object lock = new Object();
+    private Properties vhostMappings = new Properties();
 
     /**
      * Does the real magic. If a fatal exception occurs during processing, the filter will revert to an uninitialized
@@ -169,12 +172,24 @@ public class RtFilter implements Filter {
      * @param serverName Name of the virtual host
      */
     private void openFile(String serverName) {
-
         String vhost;
         if ("localhost".equals(serverName) || "127.0.0.1".equals(serverName))
             vhost = "";
-        else
-            vhost = serverName + "_";
+        else {
+            // try to see if the user provided a mapping for this server name
+            if (vhostMappings.containsKey(serverName)) {
+                vhost = vhostMappings.getProperty(serverName);
+                if (vhost==null || vhost.equals(""))
+                    vhost = "" ; // It is in the mapping, but no value set -> no vhost
+                else
+                    vhost += "_"; // Othewise take it and append the separator
+                if (log.isDebugEnabled())
+                    log.debug("Vhost determined from mapping >" + vhost + "<");
+            }
+            else {
+                vhost = serverName + "_" ; // Not found in mapping? Take it literal + separator
+            }
+        }
 
         // if this is a sub-context (e.g. news/radio), then replace the / by a _ to
         // prevent interpretation of the / as a dir separator.
@@ -376,6 +391,38 @@ public class RtFilter implements Filter {
                 this.maxLogFileSize = DEFAULT_MAX_LOG_FILE_SIZE;
             }
         }
+
+        /*
+         * Read mappings from a vhost mapping file in the format of a properties file
+         * inputhost = mapped host
+         * This file needs to live in the search path - e.g. in server/<config>/conf/
+         * The name of it must be passed as init-param to the filter. Otherwise the mapping
+         * will not be used.
+         *  <param-name>vHostMappingFile</param-name>
+         */
+        String vhostMappingFileString = conf.getInitParameter(InitParams.VHOST_MAPPING_FILE);
+        if (vhostMappingFileString != null) {
+            InputStream stream = getClass().getClassLoader().getResourceAsStream(vhostMappingFileString);
+            if (stream != null) {
+                try {
+                    vhostMappings.load(stream);
+                } catch (IOException e) {
+                    log.warn("Can't read vhost mappings from " + vhostMappingFileString + " :" + e.getMessage());
+                }
+                finally {
+                    if (stream != null)
+                        try {
+                            stream.close();
+                        }
+                        catch (Exception e) {
+                            log.debug(e);
+                        }
+                }
+            }
+            else {
+                log.warn("Can't read vhost mappings from " + vhostMappingFileString );
+            }
+        }
     }
 
     /**
@@ -478,5 +525,6 @@ public class RtFilter implements Filter {
         public static final String MATCH_ON_URI_ONLY = "matchOnUriOnly";
         public static final String FLUSH_AFTER_LINES = "flushAfterLines";
         public static final String MAX_LOG_FILE_SIZE = "maxLogFileSize";
+        public static final String VHOST_MAPPING_FILE = "vHostMappingFile";
     }
 }

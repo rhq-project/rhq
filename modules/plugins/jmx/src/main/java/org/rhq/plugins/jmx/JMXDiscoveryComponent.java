@@ -154,13 +154,17 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
         DiscoveredResourceDetails details = null;
         if (port != null) {
 
-            String name = null;
+            String name = "JMX Server";
             for (int i = 1; i < process.getCommandLine().length; i++) {
                 String arg = process.getCommandLine()[i];
 
                 if (!arg.startsWith("-")) {
-                    name = arg;
-                    break;
+                    if (arg.length() < 200) { // don't use it if its really long, that's an ugly resource name
+                        name = arg;
+                        break;
+                    }
+                } else if (arg.equals("-cp") || arg.equals("-classpath")) {
+                    i++; // skip the next arg, its the classpath, we don't want that as the name
                 }
             }
 

@@ -20,7 +20,7 @@ import org.rhq.plugins.mock.jboss.scenario.ScenarioPropertyConfigurationError;
  * error messages to the @see ConfigurationUpdateReport. If there are no errors in the handler, then nothing is added
  * to the update report and the status is set at SUCCESS.
  *
- * @author: Mark Spritzler
+ * @author Mark Spritzler
  */
 public class ConfigurationHandler {
 

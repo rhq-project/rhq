@@ -22,7 +22,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 
 /**
- * @author: Mark Spritzler
+ * @author Mark Spritzler
  */
 public class BluetoothDiscoveryComponent implements ResourceDiscoveryComponent {
     private final Log log = LogFactory.getLog(BluetoothDiscoveryComponent.class);

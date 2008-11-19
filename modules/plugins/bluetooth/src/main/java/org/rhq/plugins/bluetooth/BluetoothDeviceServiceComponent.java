@@ -16,7 +16,7 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 
 /**
- * @author: Mark Spritzler
+ * @author Mark Spritzler
  */
 public class BluetoothDeviceServiceComponent implements ResourceComponent {
     private final Log log = LogFactory.getLog(BluetoothDeviceServiceComponent.class);

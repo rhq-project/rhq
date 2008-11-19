@@ -18,7 +18,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 
 /**
- * @author: Mark Spritzler
+ * @author Mark Spritzler
  */
 public class BluetoothDeviceComponent implements ResourceComponent, MeasurementFacet {
     private final Log log = LogFactory.getLog(BluetoothDeviceServiceComponent.class);

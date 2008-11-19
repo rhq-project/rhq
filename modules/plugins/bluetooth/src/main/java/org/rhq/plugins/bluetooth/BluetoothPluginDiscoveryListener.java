@@ -12,7 +12,7 @@ import javax.bluetooth.RemoteDevice;
 import javax.bluetooth.ServiceRecord;
 
 /**
- * @author: Mark Spritzler
+ * @author Mark Spritzler
  */
 public class BluetoothPluginDiscoveryListener implements DiscoveryListener {
 

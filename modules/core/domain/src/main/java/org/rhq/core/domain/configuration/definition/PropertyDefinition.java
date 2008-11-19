@@ -241,7 +241,7 @@ public abstract class PropertyDefinition implements Serializable {
 
     @Override
     public String toString() {
-        return "PropertyDefinition[id=" + this.id + ", name=" + this.name
+        return this.getClass().getSimpleName() + "[id=" + this.id + ", name=" + this.name
             + ((this.configurationDefinition != null) ? (", config=" + this.configurationDefinition.getName()) : "")
             + ((this.propertyGroupDefinition != null) ? (", group=" + this.propertyGroupDefinition.getName()) : "")
             + "]";

@@ -1159,6 +1159,8 @@ public final class AlertConditionCache {
                 AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(-1);
             } else if (inverseCacheElement.lefty instanceof MeasurementNumericCacheElement) {
                 AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(-1);
+            } else if (inverseCacheElement.lefty instanceof MeasurementBaselineCacheElement) {
+                AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(-1);
             } else {
                 log.info("AlertConditionCacheMonitor does not yet remove/reset cache counts for elements of type '"
                     + inverseCacheElement.lefty.getClass() + "'");

@@ -27,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.PluginDescriptorGenerator;
 
@@ -108,8 +109,14 @@ public class ProfileJBossServerDiscoveryComponent
            servers.add( server );
         }
         */
-        log.info("Discovered " + servers.size() + " " + resourceDiscoveryContext.getResourceType().getName() + " Resources." );
+        ResourceType resourceType = resourceDiscoveryContext.getResourceType();
+        log.info("Discovered " + servers.size() + " " + resourceType.getName() + " Resources." );
 
+        generatePluginDescriptor(resourceDiscoveryContext);
+        return servers;
+    }
+
+    private void generatePluginDescriptor(ResourceDiscoveryContext resourceDiscoveryContext) {
         try {
             ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
             File tempDir = resourceDiscoveryContext.getParentResourceContext().getTemporaryDirectory();
@@ -118,6 +125,5 @@ public class ProfileJBossServerDiscoveryComponent
         catch (Exception e) {
             log.error("Failed to generate plugin descriptor.", e);
         }
-        return servers;
     }
 }

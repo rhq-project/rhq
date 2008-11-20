@@ -7,6 +7,33 @@
 
 <!DOCTYPE plugin [
 
+<!ENTITY datasourceOperations '
+    <operation name="flush" displayName="Flush" description="Flush the connections in the pool"/>
+    <operation name="listFormattedSubPoolStatistics" displayName="List Formatted Sub Pool Statistics" description="Obtain a formatted statistics report">
+        <results>
+            <c:simple-property name="result"/>
+        </results>
+    </operation>
+    <operation name="listStatistics" displayName="List Statistics" description="Obtain a statistics report">
+        <results>
+            <c:simple-property name="result"/>
+        </results>
+    </operation>
+'>
+
+<!ENTITY datasourceMetrics '
+    <metric property="availableConnectionCount" measurementType="dynamic" displayType="summary" displayName="Available Connection Count" description="number of available connection" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+    <metric property="connectionCount" measurementType="dynamic" displayType="summary" displayName="Connection Count" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+    <metric property="connectionCreatedCount" measurementType="dynamic" displayType="detail" displayName="Connection Created Count" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+    <metric property="connectionDestroyedCount" measurementType="dynamic" displayType="detail" displayName="Connection Destroyed Count" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+    <metric property="inUseConnectionCount" measurementType="dynamic" displayType="detail" displayName="In Use Connection Count" description="number of connections currently in use" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+    <metric property="local-transaction" displayType="summary" displayName="Local Transaction" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
+    <metric property="maxConnectionsInUseCount" measurementType="dynamic" displayType="detail" displayName="Max Connections In Use Count" description="number of maximum connections in use" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+    <metric property="maxSize" measurementType="dynamic" displayType="detail" displayName="Max Size" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+    <metric property="minSize" measurementType="dynamic" displayType="detail" displayName="Min Size" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+    <metric property="poolJndiName" displayType="summary" displayName="Pool Jndi Name" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
+'>
+
 <!ENTITY datasourceConnectionResourceConfigProps '
     <c:simple-property name="jndi-name"
                        displayName="JNDI Name"
@@ -254,16 +281,6 @@
     <c:simple-property type="boolean" required="false" name="background-validation"/>
     <c:simple-property type="long" required="false" name="background-validation-millis"/>
 
-    <c:list-property required="false" name="config-property" displayName="Connection Factory Properties"
-                     description="The connection factory configuration properties">
-        <c:map-property name="org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData"
-                        description="Map&lt;String,MetaValue&gt;">
-            <c:simple-property name="type"/>
-            <c:simple-property name="name"/>
-            <c:simple-property name="value"/>
-        </c:map-property>
-    </c:list-property>
-
     <c:simple-property required="false" name="connection-definition"/>
     <c:simple-property type="boolean" required="false" name="isSameRM-override-value"/>
     <c:simple-property required="false" name="jmx-invoker-name"/>
@@ -417,14 +434,9 @@
                 </c:group>
             </plugin-configuration>
 
-            <operation name="flush" displayName="flush" description="Executes the flush operation on this datasource."/>
+            &datasourceOperations;
 
-            <metric displayName="Connection Count" property="connectionCount" displayType="summary"/>
-            <metric displayName="Available Connection Count" property="availableConnectionCount" displayType="summary"/>
-            <metric displayName="Maximum Connections in Use Count" property="maxConnectionsInUseCount"/>
-            <metric displayName="In Use Connection Count" property="inUseConnectionCount"/>
-            <metric displayName="Connection Created Count" property="connectionCreatedCount"/>
-            <metric displayName="Connection Destroyed Count" property="connectionDestroyedCount"/>
+            &datasourceMetrics;
 
             <resource-configuration>
 
@@ -438,6 +450,9 @@
 
                 <c:group name="advanced" displayName="Advanced">
                     &datasourceAdvancedResourceConfigProps;
+
+                    <c:map-property required="false" name="config-property" displayName="Connection Factory Properties"
+                                    description="The managed connection factory configuration properties"/>
                 </c:group>
 
                 <c:template name="Oracle No TX" description="No Transaction Template for Oracle">
@@ -480,17 +495,9 @@
                 </c:group>
             </plugin-configuration>
 
-            <operation name="flush" displayName="Flush" description="Flush the connections in the pool"/>
-            <operation name="listFormattedSubPoolStatistics" displayName="List Formatted Sub Pool Statistics" description="Obtain a formatted statistics report">
-                <results>
-                    <c:simple-property name="result"/>
-                </results>
-            </operation>
-            <operation name="listStatistics" displayName="List Statistics" description="Obtain a statistics report">
-                <results>
-                    <c:simple-property name="result"/>
-                </results>
-            </operation>
+            &datasourceOperations;
+
+            &datasourceMetrics;
 
             <metric displayName="Connection Count" property="connectionCount" displayType="summary"/>
             <metric displayName="Available Connection Count" property="availableConnectionCount" displayType="summary"/>
@@ -511,6 +518,16 @@
 
                 <c:group name="advanced" displayName="Advanced">
                     &datasourceAdvancedResourceConfigProps;
+
+                    <c:list-property required="false" name="config-property" displayName="Connection Factory Properties"
+                                     description="The managed connection factory configuration properties">
+                        <c:map-property name="org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData"
+                                        description="Map&lt;String,MetaValue&gt;">
+                            <c:simple-property name="type"/>
+                            <c:simple-property name="name"/>
+                            <c:simple-property name="value"/>
+                        </c:map-property>
+                    </c:list-property>
                 </c:group>
 
                 <c:template name="Oracle Local TX" description="Local Transaction Template for Oracle">
@@ -553,7 +570,9 @@
                 </c:group>
             </plugin-configuration>
 
-            <operation name="flush" displayName="flush" description="Executes the flush operation on this datasource."/>
+            &datasourceOperations;
+
+            &datasourceMetrics;
 
             <metric displayName="Connection Count" property="connectionCount" displayType="summary"/>
             <metric displayName="Available Connection Count" property="availableConnectionCount" displayType="summary"/>
@@ -606,6 +625,9 @@
 
                 <c:group name="advanced" displayName="Advanced">
                     &datasourceAdvancedResourceConfigProps;
+
+                    <c:map-property required="false" name="config-property" displayName="Connection Factory Properties"
+                                    description="The managed connection factory configuration properties"/>
                 </c:group>
 
                 <c:template name="Oracle XA" description="XA Transaction Template for Oracle">
@@ -1306,7 +1328,7 @@
                 <c:simple-property name="componentSubType" default="Queue" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="QueueTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="jndi-name">
+                <c:simple-property name="resourceName" default="JNDIName">
                     <c:defaultValueDescription>This holds the property in the configuration to use
                         to define the filename that the profile service should use in the creation of a file
                     </c:defaultValueDescription>
@@ -1315,29 +1337,13 @@
                     <c:simple-property name="jms-type" default="queue"/>
                     <c:map-property name="customProperties"
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
+                        <!--
                         <c:simple-property name="securityConfig"
                                            defaultValue="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
+                         -->
                     </c:map-property>
                     <c:map-property name="customMetrics"
                                     description="Holds a list of custom Metrics, and the Adapter class to use">
-                        <c:simple-property name="count"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="countDelta"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="destinationDurable"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="destinationSubscription"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="destinationTopic"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="historyLimit"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="lastUpdate"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="messageCount"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="messageCountDelta"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                     </c:map-property>
                 </c:group>
             </plugin-configuration>
@@ -1384,232 +1390,110 @@
                     </c:list-property>
                 </results>
             </operation>
-            <operation name="removeAllMessages" displayName="Remove All Messages" description="Remove all messages in the queue"/>
-            <operation name="resetMessageCounter" displayName="Reset Message Counter" description="Reset the message counter"/>
-            <operation name="resetMessageCounterHistory" displayName="Reset Message Counter History" description="Reset the message counter history"/>
-            <operation name="start" displayName="Start" description="Service lifecycle operation"/>
-            <operation name="stop" displayName="Stop" description="Service lifecycle operation"/>                        
+            <operation name="removeAllMessages" displayName="Remove All Messages"
+                       description="Remove all messages in the queue"/>
+            <operation name="resetMessageCounter" displayName="Reset Message Counter"
+                       description="Reset the message counter"/>
+            <operation name="resetMessageCounterHistory" displayName="Reset Message Counter History"
+                       description="Reset the message counter history"/>
+            <operation name="start" displayName="Start"
+                       description="Start the queue service"/>
+            <operation name="stop" displayName="Stop"
+                       description="Stop the queue service"/>
 
-            <metric property="createdProgrammatically"
-                    displayName="Created Programmatically"
-                    dataType="trait"
-                    displayType="summary"/>
+            <!-- Traits -->
+            <metric property="name" displayType="detail" displayName="Name"
+                    description="The queue name" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
+            <metric property="createdProgrammatically" displayType="detail" displayName="Created Programmatically"
+                    description="True if this queue was created programmatically" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
 
-            <!--
-            Maps?
-            messageCounter
-            messageStatistics-->
+            <!-- Numerics -->
+            <metric property="consumerCount" measurementType="dynamic" displayType="detail" displayName="Consumer Count"
+                    description="The number of consumers on the queue" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+            <metric property="deliveringCount" measurementType="dynamic" displayType="detail" displayName="Delivering Count"
+                    description="The number of messages currently being delivered" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+            <metric property="messageCount" measurementType="dynamic" displayType="detail" displayName="Message Count"
+                    description="The number of messages in the queue" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+            <metric property="scheduledMessageCount" measurementType="dynamic" displayType="detail" displayName="Scheduled Message Count"
+                    description="The number of scheduled messages in the queue" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
 
-            <metric property="consumerCount"
-                    displayName="Consumer Count"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="utilization"
-                    displayType="summary"/>
-            <metric property="messageCount"
-                    displayName="Message Count"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"
-                    displayType="summary"/>
-            <metric property="deliveringCount"
-                    displayName="Delivering Count"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"
-                    displayType="summary"/>
-            <metric property="scheduledMessageCount"
-                    displayName="Scheduled Message Count"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"/>
-            <metric property="countDelta"
-                    displayName="Count Delta from MessageCounters"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"/>
-            <metric property="destinationDurable"
-                    displayName="Destination Durable from MessageCounters"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"/>
-            <metric property="destinationSubscription"
-                    displayName="Destination Subscription from MessageCounters"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"/>
-            <metric property="destinationTopic"
-                    displayName="Destination Topic from MessageCounters"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"/>
-            <metric property="historyLimit"
-                    displayName="History Limit from MessageCounters"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="utilization"/>
-            <metric property="lastUpdate"
-                    displayName="Last Update from MessageCounters"
-                    dataType="trait"
-                    defaultOn="true"/>
-            <metric property="messageCount"
-                    displayName="Message Count from MessageCounters"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"/>
-            <metric property="messageCountDelta"
-                    displayName="Message Count Delta from MessageCounters"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"/>
-
-
+            <metric property="messageStatistics.count" measurementType="dynamic" displayType="detail" displayName="Count"
+                    description="The total message count since startup or last counter reset" defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"/>
+            <metric property="messageStatistics.countDelta" measurementType="dynamic" displayType="detail" displayName="Count Delta"
+                    description="The message count delta since last method call" defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"/>
+            <metric property="messageStatistics.depth" measurementType="dynamic" displayType="detail" displayName="Depth"
+                    description="The current message count of pending messages within the queue waiting for dispatch" defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"/>
+            <metric property="messageStatistics.depthDelta" measurementType="dynamic" displayType="detail" displayName="Depth Delta"
+                    description="The message count delta of pending messages since last method call" defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"/>
+            <metric property="messageStatistics.timeLastUpdate" measurementType="dynamic" displayType="detail" displayName="Time Last Update"
+                    description="The timestamp of the last message add" defaultOn="true" defaultInterval="60000" dataType="measurement" category="utilization"/>
+            
             <resource-configuration>
 
-                <c:group name="optional-attribute-name" displayName="Optional Attributes">
-                    <c:simple-property name="serverPeer" required="false"/>
-                </c:group>
+                <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/QueueServiceMO.java -->
 
-                <c:group name="attribute" displayName="attributes">
-                    <c:simple-property name="jndi-name"
-                                       displayName="JNDI Name"
-                                       description="The JNDI Name under which the Destination will be bound."
-                                       type="string"
-                                       required="true"
-                                       activationPolicy="immediate"
-                                       summary="true"
-                                       units="none"/>
+                <c:simple-property required="true" name="JNDIName"
+                                   description="The queue's JNDI name; default is '/queue/{queueName}'"/>
+                <c:simple-property type="boolean" required="false" name="clustered"
+                                   description="Is this a clustered destination?"/>
+                <c:simple-property type="integer" required="false" name="downCacheSize"
+                                   description="The write-cache size, can only be set when queue is stopped"/>
+                <c:simple-property type="integer" required="false" name="fullSize"
+                                   description="The in-memory message limit, can only be set when queue is stopped"/>
+                <c:simple-property type="integer" required="false" name="maxDeliveryAttempts"
+                                   description="The maximum delivery attempts to the queue"/>
+                <c:simple-property type="integer" required="false" name="maxSize"
+                                   description="The maximum number of messages this queue can hold before they are dropped"/>
+                <c:simple-property type="integer" required="false" name="messageCounterHistoryDayLimit"
+                                   description="The day limit for the message counter"/>
+                <c:simple-property type="integer" required="false" name="pageSize"
+                                   description="The paging size; can only be set when queue is stopped"/>
+                <c:simple-property type="long" required="false" name="redeliveryDelay"
+                                   description="The delay before redelivering"/>
+                <!--
+                <c:map-property required="false" name="DLQ"
+                                description="The ObjectName of the DLQ for this queue, overrides the default DLQ on the server peer"/>
+                <c:map-property required="false" name="expiryQueue"
+                                description="The ObjectName of the expiry queue for this queue, overrides the default expiry queue on the server peer"/>
+                <c:map-property required="false" name="serverPeer"
+                                description="The ObjectName of the server peer this queue was deployed on"/>                                
+                <c:map-property required="false" name="securityConfig"
+                                description="The queue's security configuration"/>
+                -->
+                <!--
+                <c:list-property name="securityConfig" max="4" min="2"
+                                 displayName="Security Configurations"
+                                 description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
+                    <c:map-property name="role"
+                                    displayName="Security Configuration Attributes"
+                                    description="These are the attributes that define the role name, and if the role is allowed to read, write or create Messages on this Queue">
+                        <c:simple-property name="name"
+                                           displayName="Name"
+                                           description="Name of the Security Role. e.g. Guest"
+                                           summary="true"
+                                           required="true"/>
+                        <c:simple-property name="read"
+                                           displayName="Read"
+                                           description="Is this role allowed to read messages?"
+                                           summary="true"
+                                           required="false"
+                                           type="boolean"/>
+                        <c:simple-property name="write"
+                                           displayName="Write"
+                                           description="Is this role allowed to write messages?"
+                                           summary="true"
+                                           required="false"
+                                           type="boolean"/>
+                        <c:simple-property name="create"
+                                           displayName="Create"
+                                           description="Is this role allowed to create messages?"
+                                           summary="true"
+                                           required="false"
+                                           type="boolean"/>
+                    </c:map-property>
 
-                    <c:simple-property name="expiryQueue"
-                                       displayName="Expiry Queue"
-                                       description="blah blah blah blah blah"
-                                       type="string"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="DLQ"
-                                       displayName="Dead Letter Queue"
-                                       description="Queue that will act as the dead letter queue. Blah blah blah blah."
-                                       type="string"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="maxSize"
-                                       displayName="Max Size"
-                                       description="Size that is the Max, blah blah blah blah."
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="fullSize"
-                                       displayName="Full Size"
-                                       description="Size that is the full, not to be confused with the Max size, blah blah blah blah."
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="pageSize"
-                                       displayName="Page Size"
-                                       description="Size of the Page, blah blah blah blah."
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="downCacheSize"
-                                       displayName="Down Cache Size"
-                                       description="Size of the Down Cache, blah blah blah blah."
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="clustered"
-                                       displayName="Clustered"
-                                       description="Is this destination clustered. Does it need to be replicated across a cluster of servers."
-                                       type="boolean"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="messageCounterHistoryDayLimit"
-                                       displayName="Message Counter History Day Limit"
-                                       description="blah blah blah blah blah."
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="maxDeliveryAttempts"
-                                       displayName="Max Delivery Attempts"
-                                       description="The maximum number of attempts for delivering a message. Blah blah blah blah."
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="redeliveryDelay"
-                                       displayName="Redelivery Delay"
-                                       description="Time in milliseconds delay between redelivery attempts."
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="milliseconds">
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-                </c:group>
-
-                <c:group name="securityConf" displayName="Security Role Configurations">
-                    <c:list-property name="SecurityConf" max="4" min="2"
-                                     displayName="Security Configurations"
-                                     description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
-                        <c:map-property name="role"
-                                        displayName="Security Configuration Attributes"
-                                        description="These are the attributes that define the role name, and if the role is allowed to read, write or create Messages on this Queue">
-                            <c:simple-property name="name"
-                                               displayName="Name"
-                                               description="Name of the Security Role. e.g. Guest"
-                                               summary="true"
-                                               required="true"/>
-                            <c:simple-property name="read"
-                                               displayName="Read"
-                                               description="Is this role allowed to read messages?"
-                                               summary="true"
-                                               required="false"
-                                               type="boolean"/>
-                            <c:simple-property name="write"
-                                               displayName="Write"
-                                               description="Is this role allowed to write messages?"
-                                               summary="true"
-                                               required="false"
-                                               type="boolean"/>
-                            <c:simple-property name="create"
-                                               displayName="Create"
-                                               description="Is this role allowed to create messages?"
-                                               summary="true"
-                                               required="false"
-                                               type="boolean"/>
-                        </c:map-property>
-
-                    </c:list-property>
-                </c:group>
+                </c:list-property>
+                -->
             </resource-configuration>
         </service>
 
@@ -1624,7 +1508,7 @@
                 <c:simple-property name="componentSubType" default="Topic" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="TopicTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="jndi-name">
+                <c:simple-property name="resourceName" default="JNDIName">
                     <c:defaultValueDescription>This holds the property in the configuration to use
                         to define the filename that the profile service should use in the creation of a file
                     </c:defaultValueDescription>
@@ -1633,323 +1517,192 @@
                     <c:simple-property name="jms-type" default="topic"/>
                     <c:map-property name="customProperties"
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
+                        <!--
                         <c:simple-property name="securityConfig"
                                            defaultValue="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
+                        -->
                     </c:map-property>
                     <c:map-property name="customMetrics"
                                     description="Holds a list of custom Metrics, and the Adapter class to use">
-                        <c:simple-property name="count"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="countDelta"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="destinationDurable"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="destinationSubscription"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="destinationTopic"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="historyLimit"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="lastUpdate"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="messageCount"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
-                        <c:simple-property name="messageCountDelta"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.measurement.custom.JMSMessageCounterAdapter"/>
                     </c:map-property>
                 </c:group>
             </plugin-configuration>
 
-            <operation name="listAllMessages"
-                       displayName="List Messages by Selector"
-                       description="Lists the Messages in the Queue by Selector (if provided). Selector is not required.">
+            <operation name="create" displayName="Create"
+                       description="Service lifecycle operation"/>
+            <operation name="destroy" displayName="Destroy"
+                       description="Service lifecycle operation"/>
+            <operation name="listAllMessages" displayName="List All Messages"
+                       description="List all messages for the specified subscription with the specified selector">
                 <parameters>
-                    <c:simple-property name="selector" displayName="Selector" required="false"/>
+                    <c:simple-property name="arg#0"/>
+                    <c:simple-property name="arg#1"/>
                 </parameters>
                 <results>
-                    <c:list-property name="Messages">
-                        <c:simple-property name="message"/>
+                    <c:list-property name="result">
+                        <c:simple-property required="false" name="item"/>
                     </c:list-property>
                 </results>
             </operation>
-
-            <operation name="listDurableMessages"
-                       displayName="List Messages by Selector"
-                       description="Lists the Messages in the Queue by Selector (if provided). Selector is not required.">
-                <parameters>
-                    <c:simple-property name="selector" displayName="Selector" required="false"/>
-                </parameters>
+            <operation name="listAllSubscriptions" displayName="List All Subscriptions"
+                       description="Return all subscriptions for the topic">
                 <results>
-                    <c:list-property name="Messages">
-                        <c:simple-property name="message"/>
+                    <c:list-property name="result">
+                        <c:simple-property required="false" name="item"/>
                     </c:list-property>
                 </results>
             </operation>
-
-            <operation name="listNonDurableMessages"
-                       displayName="List Messages by Selector"
-                       description="Lists the Messages in the Queue by Selector (if provided). Selector is not required.">
+            <operation name="listAllSubscriptionsAsHTML" displayName="List All Subscriptions As HTML"
+                       description="Return all subscriptions for the topic in HTML">
+                <results>
+                    <c:simple-property name="result"/>
+                </results>
+            </operation>
+            <operation name="listDurableMessages" displayName="List Durable Messages"
+                       description="List all durable messages for the specified subscription with the specified selector">
                 <parameters>
-                    <c:simple-property name="selector" displayName="Selector" required="false"/>
+                    <c:simple-property name="arg#0"/>
+                    <c:simple-property name="arg#1"/>
                 </parameters>
                 <results>
-                    <c:list-property name="Messages">
-                        <c:simple-property name="message"/>
+                    <c:list-property name="result">
+                        <c:simple-property required="false" name="item"/>
                     </c:list-property>
                 </results>
             </operation>
+            <operation name="listDurableSubscriptions" displayName="List Durable Subscriptions"
+                       description="Return all durable subscriptions for the topic">
+                <results>
+                    <c:list-property name="result">
+                        <c:simple-property required="false" name="item"/>
+                    </c:list-property>
+                </results>
+            </operation>
+            <operation name="listDurableSubscriptionsAsHTML" displayName="List Durable Subscriptions As HTML"
+                       description="Return all durable subscriptions for the topic in HTML">
+                <results>
+                    <c:simple-property name="result"/>
+                </results>
+            </operation>
+            <operation name="listNonDurableMessages" displayName="List Non Durable Messages"
+                       description="List all non durable messages for the specified subscription">
+                <parameters>
+                    <c:simple-property name="arg#0"/>
+                </parameters>
+                <results>
+                    <c:list-property name="result">
+                        <c:simple-property required="false" name="item"/>
+                    </c:list-property>
+                </results>
+            </operation>
+            <operation name="listNonDurableSubscriptions" displayName="List Non Durable Subscriptions"
+                       description="Return all non durable subscriptions for the topic">
+                <results>
+                    <c:list-property name="result">
+                        <c:simple-property required="false" name="item"/>
+                    </c:list-property>
+                </results>
+            </operation>
+            <operation name="listNonDurableSubscriptionsAsHTML" displayName="List Non Durable Subscriptions As HTML"
+                       description="Return all non durable subscriptions for the topic in HTML">
+                <results>
+                    <c:simple-property name="result"/>
+                </results>
+            </operation>
+            <operation name="removeAllMessages" displayName="Remove All Messages" description="Remove all messages"/>
+            <operation name="start" displayName="Start" description="Start the topic service"/>
+            <operation name="stop" displayName="Stop" description="Stop the topic service"/>
 
-            <operation name="removeAllMessages"
-                       displayName="Remove All Messages"
-                       description="Remove all messages in the Queue"
-                       timeout="0"/>
+            <!-- Traits -->
+            <metric property="name" displayType="summary" displayName="Name"
+                    description="The destination name" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
+            <metric property="createdProgrammatically" displayType="summary" displayName="Created Programmatically"
+                    description="True if this destination was created programmatically" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
 
-            <operation name="resetMessageCounter"
-                       displayName="Reset Message Counter"
-                       description="Reset the message counter"
-                       timeout="0"/>
-
-            <operation name="resetMessageCounterHistory"
-                       displayName="Reset Message Counter History"
-                       description="Reset the message counter history"
-                       timeout="0"/>
-
-            <operation name="listDurableSubscriptions" displayName="List Durable Subscriptions"/>
-            <operation name="listNonDurableSubscriptions" displayName="List Non-durable Subscriptions"/>
-
-
-            <metric property="createdProgrammatically"
-                    displayName="Created Programmatically"
-                    dataType="trait"
-                    displayType="summary"/>
-
-            <metric property="allMessageCount"
-                    displayName="All Message Count"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"
-                    displayType="summary"/>
-            <metric property="durableMessageCount"
-                    displayName="Durable Message Count"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"
-                    displayType="detail"/>
-            <metric property="nonDurableMessageCount"
-                    displayName="Non-durable Message Count"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"
-                    displayType="detail"/>
-            <metric property="allSubscriptionCount"
-                    displayName="All Subscription Count"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="utilization"
-                    displayType="summary"/>
-            <metric property="durableSubscriptionCount"
-                    displayName="Durable Subscription Count"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="utilization"
-                    displayType="detail"/>
-            <metric property="nonDurableSubscriptionCount"
-                    displayName="Non-durable Subscription Count"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="utilization"
-                    displayType="detail"/>
-
-            <metric property="countDelta"
-                    displayName="Count Delta from MessageCounters"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"/>
-            <metric property="destinationDurable"
-                    displayName="Destination Durable from MessageCounters"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"/>
-            <metric property="destinationSubscription"
-                    displayName="Destination Subscription from MessageCounters"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"/>
-            <metric property="destinationTopic"
-                    displayName="Destination Topic from MessageCounters"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"/>
-            <metric property="historyLimit"
-                    displayName="History Limit from MessageCounters"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="utilization"/>
-            <metric property="lastUpdate"
-                    displayName="Last Update from MessageCounters"
-                    dataType="trait"
-                    defaultOn="true"/>
-            <metric property="messageCount"
-                    displayName="Message Count from MessageCounters"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"/>
-            <metric property="messageCountDelta"
-                    displayName="Message Count Delta from MessageCounters"
-                    dataType="measurement"
-                    defaultOn="true"
-                    category="throughput"/>
-
+            <!-- Numerics -->
+            <metric property="allMessageCount" measurementType="dynamic" displayType="detail" displayName="All Message Count"
+                    description="The count of all messages in all subscriptions of this topic" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+            <metric property="allSubscriptionsCount" measurementType="dynamic" displayType="detail" displayName="All Subscriptions Count"
+                    description="The count of all subscriptions of this topic" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+            <metric property="durableMessageCount" measurementType="dynamic" displayType="detail" displayName="Durable Message Count"
+                    description="The count of all messages in all durable subscriptions of this topic" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+            <metric property="durableSubscriptionsCount" measurementType="dynamic" displayType="detail" displayName="Durable Subscriptions Count"
+                    description="The count of all durable subscriptions of this topic" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+            <metric property="nonDurableMessageCount" measurementType="dynamic" displayType="detail" displayName="Non Durable Message Count"
+                    description="The count of all messages in all non durable subscriptions of this topic" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+            <metric property="nonDurableSubscriptionsCount" measurementType="dynamic" displayType="detail" displayName="Non Durable Subscriptions Count"
+                    description="The count of all non durable subscriptions of this topic" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
+            
             <resource-configuration>
 
-                <c:group name="optional-attribute-name" displayName="Optional Attributes">
-                    <c:simple-property name="serverPeer" required="false"/>
-                </c:group>
+                <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/TopicServiceMO.java -->
 
-                <c:group name="attribute" displayName="attributes">
-                    <c:simple-property name="jndi-name"
-                                       displayName="JNDI Name"
-                                       description="The JNDI Name under which the Destination will be bound."
-                                       type="string"
-                                       required="true"
-                                       activationPolicy="immediate"
-                                       summary="true"
-                                       units="none"/>
-
-                    <c:simple-property name="expiryQueue"
-                                       displayName="Expiry Queue"
-                                       description="blah blah blah blah blah"
-                                       type="string"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="DLQ"
-                                       displayName="Dead Letter Queue"
-                                       description="Queue that will act as the dead letter queue. Blah blah blah blah."
-                                       type="string"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="maxSize"
-                                       displayName="Max Size"
-                                       description="Size that is the Max, blah blah blah blah."
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="fullSize"
-                                       displayName="Full Size"
-                                       description="Size that is the full, not to be confused with the Max size, blah blah blah blah."
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="pageSize"
-                                       displayName="Page Size"
-                                       description="Size of the Page, blah blah blah blah."
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="downCacheSize"
-                                       displayName="Down Cache Size"
-                                       description="Size of the Down Cache, blah blah blah blah."
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="clustered"
-                                       displayName="Clustered"
-                                       description="Is this destination clustered. Does it need to be replicated across a cluster of servers."
-                                       type="boolean"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="messageCounterHistoryDayLimit"
-                                       displayName="Message Counter History Day Limit"
-                                       description="blah blah blah blah blah."
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="maxDeliveryAttempts"
-                                       displayName="Max Delivery Attempts"
-                                       description="The maximum number of attempts for delivering a message. Blah blah blah blah."
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="none"/>
-
-                    <c:simple-property name="redeliveryDelay"
-                                       displayName="Redelivery Delay"
-                                       description="Time in milliseconds delay between redelivery attempts."
-                                       type="integer"
-                                       required="false"
-                                       activationPolicy="immediate"
-                                       summary="false"
-                                       units="milliseconds">
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-                </c:group>
-
-                <c:group name="securityConf" displayName="Security Role Configurations">
-                    <c:list-property name="SecurityConf" max="4" min="2"
-                                     displayName="Security Configurations"
-                                     description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
-                        <c:map-property name="role"
-                                        displayName="Security Configuration Attributes"
-                                        description="These are the attributes that define the role name, and if the role is allowed to read, write or create Messages on this Queue">
-                            <c:simple-property name="name"
-                                               displayName="Name"
-                                               description="Name of the Security Role. e.g. Guest"
-                                               summary="true"
-                                               required="true"/>
-                            <c:simple-property name="read"
-                                               displayName="Read"
-                                               description="Is this role allowed to read messages?"
-                                               summary="true"
-                                               required="false"
-                                               type="boolean"/>
-                            <c:simple-property name="write"
-                                               displayName="Write"
-                                               description="Is this role allowed to write messages?"
-                                               summary="true"
-                                               required="false"
-                                               type="boolean"/>
-                            <c:simple-property name="create"
-                                               displayName="Create"
-                                               description="Is this role allowed to create messages?"
-                                               summary="true"
-                                               required="false"
-                                               type="boolean"/>
-                        </c:map-property>
-
-                    </c:list-property>
-                </c:group>
-
+                <c:simple-property required="true" name="JNDIName"
+                                   description="The topic's JNDI name; default is '/topic/{topicName}'"/>
+                <c:simple-property type="boolean" required="false" name="clustered"
+                                   description="Is this a clustered destination?"/>
+                <c:simple-property type="integer" required="false" name="downCacheSize"
+                                   description="The write-cache size, can only be set when topic is stopped"/>
+                <c:simple-property type="integer" required="false" name="fullSize"
+                                   description="The in-memory message limit, can only be set when topic is stopped"/>
+                <c:simple-property type="integer" required="false" name="maxDeliveryAttempts"
+                                   description="The maximum delivery attempts to the topic"/>
+                <c:simple-property type="integer" required="false" name="maxSize"
+                                   description="The maximum number of messages this topic can hold before they are dropped"/>
+                <c:simple-property type="integer" required="false" name="messageCounterHistoryDayLimit"
+                                   description="The day limit for the message counter"/>
+                <c:simple-property type="integer" required="false" name="pageSize"
+                                   description="The paging size, can only be set when topic is stopped"/>
+                <c:simple-property type="long" required="false" name="redeliveryDelay"
+                                   description="The delay before redelivering"/>
+                <!--
+                <c:map-property required="false" name="DLQ"
+                                description="The ObjectName of the DLQ for this topic, overrides the default DLQ on the server peer"/>
+                <c:map-property required="false" name="expiryQueue"
+                                description="The ObjectName of the expiry queue for this topic, overrides the default expiry queue on the server peer"/>
+                <c:map-property required="false" name="serverPeer"
+                                description="The ObjectName of the server peer this topic was deployed on"/>
+                <c:map-property required="false" name="securityConfig"
+                                description="The topic's security configuration"/>
+                -->
+                <!--
+                <c:list-property name="securityConfig" max="4" min="2"
+                                 displayName="Security Configurations"
+                                 description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
+                    <c:map-property name="role"
+                                    displayName="Security Configuration Attributes"
+                                    description="These are the attributes that define the role name, and if the role is allowed to read, write or create Messages on this Queue">
+                        <c:simple-property name="name"
+                                           displayName="Name"
+                                           description="Name of the Security Role. e.g. Guest"
+                                           summary="true"
+                                           required="true"/>
+                        <c:simple-property name="read"
+                                           displayName="Read"
+                                           description="Is this role allowed to read messages?"
+                                           summary="true"
+                                           required="false"
+                                           type="boolean"/>
+                        <c:simple-property name="write"
+                                           displayName="Write"
+                                           description="Is this role allowed to write messages?"
+                                           summary="true"
+                                           required="false"
+                                           type="boolean"/>
+                        <c:simple-property name="create"
+                                           displayName="Create"
+                                           description="Is this role allowed to create messages?"
+                                           summary="true"
+                                           required="false"
+                                           type="boolean"/>
+                    </c:map-property>
+                </c:list-property>
+                -->
             </resource-configuration>
         </service>
 
+
+        <!-- ======================================== Deployment types ======================================= -->
 
         <service name="Enterprise Application (EAR)"
                  subCategory="Applications"

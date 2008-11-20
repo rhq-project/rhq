@@ -29,6 +29,7 @@ import org.jboss.managed.api.ManagedProperty;
 import org.jboss.managed.api.DeploymentTemplateInfo;
 import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.values.CollectionValue;
+import org.jboss.metatype.api.values.CompositeValue;
 
 /**
  * Utility methods for converting various Profile Service objects into Strings for debugging purposes.
@@ -53,18 +54,8 @@ public abstract class DebugUtils {
     }
 
     public static String convertMetaValueToString(MetaValue metaValue) {
-        if (metaValue == null)
-            return "null";
         StringBuilder buffer = new StringBuilder();
-        if (metaValue.getMetaType().isCollection()) {
-            CollectionValue collectionValue = (CollectionValue)metaValue;
-            buffer.append(collectionValue).append("\n");
-            buffer.append("    ").append("Elements:\n");
-            for (MetaValue elementMetaValue : collectionValue.getElements())
-                buffer.append("    ").append(convertMetaValueToString(elementMetaValue)).append("\n");
-        } else {
-            buffer.append(metaValue);
-        }
+        convertMetaValueToString(metaValue, buffer, true, 0);
         return buffer.toString();
     }
 
@@ -78,13 +69,45 @@ public abstract class DebugUtils {
                 buf.append(", mappedName=").append(managedProperty.getMappedName());
             buf.append(", required=").append(managedProperty.isMandatory());
             Object value = managedProperty.getValue();
-            if (value instanceof MetaValue)
-                value = convertMetaValueToString((MetaValue)value);
-            buf.append(", value=").append(value).append("\n");
+            if (value != null && !(value instanceof MetaValue))
+                throw new IllegalStateException("Value of ManagedProperty [" + managedProperty.getName()
+                        + "] is not a MetaValue - it is a " + value.getClass().getName() + ".");
+            if (value == null)
+                buf.append(", type=").append(managedProperty.getMetaType().getClass().getSimpleName());
+            buf.append(", value=").append(convertMetaValueToString((MetaValue)value));
         }
         return buf.toString();
     }
-    
+
+    private static void convertMetaValueToString(MetaValue metaValue, StringBuilder buffer, boolean indentFirstLine,
+                                                 int indentLevel) {
+        if (indentFirstLine) for (int i = 0; i < indentLevel; i++) buffer.append("  ");
+        if (metaValue == null) {
+            buffer.append("<<<null>>>\n"); // make it stand out a bit
+        } else if (metaValue.getMetaType().isCollection()) {
+            CollectionValue collectionValue = (CollectionValue)metaValue;
+            buffer.append(collectionValue).append("\n");
+            for (int i = 0; i < indentLevel; i++) buffer.append("  ");
+            buffer.append("Elements:\n");
+            for (MetaValue elementMetaValue : collectionValue.getElements()) {
+                convertMetaValueToString(elementMetaValue, buffer, true, indentLevel++);
+            }
+        } else if (metaValue.getMetaType().isComposite()) {
+            CompositeValue compositeValue = (CompositeValue)metaValue;
+            buffer.append(compositeValue).append("\n");
+            for (int i = 0; i < indentLevel; i++) buffer.append("  ");
+            buffer.append("Items:\n");
+            indentLevel++;
+            for (String key : compositeValue.getMetaType().keySet()) {
+                for (int i = 0; i < indentLevel; i++) buffer.append("  ");
+                buffer.append(key).append("=");
+                convertMetaValueToString(compositeValue.get(key), buffer, false, indentLevel);
+            }
+        } else {
+            buffer.append(metaValue).append("\n");
+        }
+    }
+
     private static class ManagedPropertyComparator implements Comparator<ManagedProperty> {
         public int compare(ManagedProperty prop1, ManagedProperty prop2) {
             return prop1.getName().compareTo(prop2.getName());

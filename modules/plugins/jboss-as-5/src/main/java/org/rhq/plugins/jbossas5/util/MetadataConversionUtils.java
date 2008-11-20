@@ -179,9 +179,10 @@ public class MetadataConversionUtils {
                 continue;
             if (property.getMetaType().isSimple()) {
                 DataType dataType = (property.hasViewUse(ViewUse.STATISTIC)) ? DataType.MEASUREMENT : DataType.TRAIT;
+                DisplayType displayType = (property.hasViewUse(ViewUse.STATISTIC)) ? DisplayType.DETAIL : DisplayType.SUMMARY;
                 MeasurementDefinition measurementDef = new MeasurementDefinition(property.getName(),
                             MeasurementCategory.PERFORMANCE, MeasurementUnits.NONE, dataType, true, 60000,
-                            DisplayType.DETAIL);
+                            displayType);
                 measurementDefs.add(measurementDef);
                 measurementDef.setDisplayName(StringUtils.deCamelCase(property.getName()));
                 String desc = (!property.getName().equals(property.getDescription())) ? property.getDescription() : null;

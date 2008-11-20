@@ -31,12 +31,18 @@ import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.managed.api.ManagedOperation;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.metatype.api.values.MetaValue;
+import org.jboss.metatype.api.values.SimpleValue;
+import org.jboss.metatype.api.values.CompositeValue;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
@@ -63,10 +69,10 @@ import java.util.Set;
 public class JndiResourceComponent
         implements ResourceComponent, ConfigurationFacet, DeleteResourceFacet, OperationFacet, MeasurementFacet
 {
-    private final Log log = LogFactory.getLog(this.getClass());
     static final String COMPONENT_NAME_PROPERTY = "componentName";
 
-    // Attributes  --------------------------------------------
+    private final Log log = LogFactory.getLog(this.getClass());
+
     private String componentName;
     private ComponentType componentType;
     private ResourceContext resourceContext;
@@ -105,15 +111,10 @@ public class JndiResourceComponent
 
     public Configuration loadResourceConfiguration()
     {
-        ManagedComponent managedComponent;
-        try {
-            managedComponent = getManagedComponent();
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Failed to load ManagedComponent.", e);
-        }
+        ManagedComponent managedComponent = getManagedComponent();
         Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
         Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(this.resourceContext.getPluginConfiguration());
+        if (log.isDebugEnabled()) log.debug("*** BEFORE LOAD:\n" + DebugUtils.convertPropertiesToString(managedComponent));
         @SuppressWarnings({"UnnecessaryLocalVariable"})
         Configuration resourceConfig = ConversionUtil.convertManagedObjectToConfiguration(managedProperties,
                 customProps, this.resourceType);
@@ -130,12 +131,10 @@ public class JndiResourceComponent
             ManagedComponent managedComponent = getManagedComponent();
             Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
             Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(pluginConfig);
-
-            if (log.isDebugEnabled()) log.debug("BEFORE:\n" + DebugUtils.convertPropertiesToString(managedComponent));
+            if (log.isDebugEnabled()) log.debug("*** BEFORE UPDATE:\n" + DebugUtils.convertPropertiesToString(managedComponent));
             ConversionUtil.convertConfigurationToManagedProperties(managedProperties, resourceConfig, this.resourceType,
                     customProps);
-            if (log.isDebugEnabled()) log.debug("AFTER:\n" + DebugUtils.convertPropertiesToString(managedComponent));
-
+            if (log.isDebugEnabled()) log.debug("*** AFTER UPDATE:\n" + DebugUtils.convertPropertiesToString(managedComponent));
             managementView.updateComponent(managedComponent);
             managementView.process();
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.SUCCESS);
@@ -193,17 +192,70 @@ public class JndiResourceComponent
         ManagedComponent managedComponent = getManagedComponent();
         for (MeasurementScheduleRequest request : metrics)
         {
-            String metricName = request.getName();
-            ManagedProperty metricProperty = managedComponent.getProperty(metricName);
-            ConversionUtil.convertMetricValuesToMeasurement(report, metricProperty, request, this.resourceType,
-                    this.componentName);
+            try {
+                SimpleValue simpleValue = getSimpleValue(managedComponent, request);
+                if (simpleValue != null)
+                    addSimpleValueToMeasurementReport(report, request, simpleValue);
+            }
+            catch (Exception e) {
+                log.error("Failed to collect metric for " + request, e);
+            }
         }
     }
 
-    private ManagedComponent getManagedComponent() throws Exception
+    // ------------------------------------------------------------------------------
+
+    private SimpleValue getSimpleValue(ManagedComponent managedComponent, MeasurementScheduleRequest request) {
+        String metricName = request.getName();
+        int dotIndex = metricName.indexOf('.');
+        String metricPropName = (dotIndex == -1) ? metricName : metricName.substring(0, dotIndex);
+        ManagedProperty metricProp = managedComponent.getProperty(metricPropName);
+        SimpleValue simpleValue;
+        if (dotIndex == -1)
+            simpleValue = (SimpleValue)metricProp.getValue();
+        else {
+            CompositeValue compositeValue = (CompositeValue)metricProp.getValue();
+            String key = metricName.substring(dotIndex + 1);
+            simpleValue = (SimpleValue)compositeValue.get(key);
+        }
+        if (simpleValue == null)
+            log.debug("Profile service returned null value for metric [" + request.getName() + "].");
+        return simpleValue;
+    }
+
+    private void addSimpleValueToMeasurementReport(MeasurementReport report, MeasurementScheduleRequest request, SimpleValue simpleValue) {
+        DataType dataType = request.getDataType();
+        switch (dataType) {
+            case MEASUREMENT:
+                try {
+                    MeasurementDataNumeric dataNumeric = new MeasurementDataNumeric(request,
+                            Double.valueOf(simpleValue.getValue().toString()));
+                    report.addData(dataNumeric);
+                }
+                catch (NumberFormatException e) {
+                    log.error("Profile service did not return a numeric value as expected for metric ["
+                            + request.getName() + "] - value returned was " + simpleValue + ".", e);
+                }
+                break;
+            case TRAIT:
+                MeasurementDataTrait dataTrait = new MeasurementDataTrait(request,
+                        String.valueOf(simpleValue.getValue()));
+                report.addData(dataTrait);
+                break;
+            default:
+                throw new IllegalStateException("Unsupported measurement data type: " + dataType);
+        }
+    }
+
+    private ManagedComponent getManagedComponent()
     {
-        ProfileServiceFactory.refreshCurrentProfileView();
-        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
-        return ProfileServiceFactory.getManagedComponent(managementView, this.componentType, this.componentName);
+        try {
+            ProfileServiceFactory.refreshCurrentProfileView();
+            ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+            return ProfileServiceFactory.getManagedComponent(managementView, this.componentType, this.componentName);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Failed to load ManagedComponent [" + this.componentName + "].", e);
+        }
     }
 }

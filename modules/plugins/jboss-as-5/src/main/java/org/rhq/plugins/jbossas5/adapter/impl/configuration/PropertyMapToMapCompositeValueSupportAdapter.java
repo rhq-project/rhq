@@ -22,16 +22,15 @@
 */
 package org.rhq.plugins.jbossas5.adapter.impl.configuration;
 
+import org.jboss.metatype.api.types.MapCompositeMetaType;
 import org.jboss.metatype.api.types.MetaType;
 import org.jboss.metatype.api.values.CompositeValue;
 import org.jboss.metatype.api.values.MapCompositeValueSupport;
 import org.jboss.metatype.api.values.MetaValue;
 
 import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
-import org.rhq.plugins.jbossas5.util.ConversionUtil;
 
 /**
  * This class provides code that maps back and forth between a {@link PropertyMap} and
@@ -48,8 +47,8 @@ public class PropertyMapToMapCompositeValueSupportAdapter extends AbstractProper
     }
 
     protected CompositeValue createCompositeValue(PropertyDefinitionMap propDefMap, MetaType metaType) {
-        PropertyDefinition mapMemberPropDef = propDefMap.getPropertyDefinitions().values().iterator().next();
-        MetaType mapMemberMetaType = ConversionUtil.convertPropertyDefinitionToMetaType(mapMemberPropDef);
+        MapCompositeMetaType mapCompositeMetaType = (MapCompositeMetaType)metaType;        
+        MetaType mapMemberMetaType = mapCompositeMetaType.getValueType();
         return new MapCompositeValueSupport(mapMemberMetaType);
     }
 }

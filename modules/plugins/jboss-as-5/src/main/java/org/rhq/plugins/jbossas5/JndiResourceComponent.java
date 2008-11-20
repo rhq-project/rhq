@@ -115,7 +115,8 @@ public class JndiResourceComponent
         Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
         Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(this.resourceContext.getPluginConfiguration());
         @SuppressWarnings({"UnnecessaryLocalVariable"})
-        Configuration resourceConfig = ConversionUtil.convertManagedObjectToConfiguration(managedProperties, customProps, resourceType);
+        Configuration resourceConfig = ConversionUtil.convertManagedObjectToConfiguration(managedProperties,
+                customProps, this.resourceType);
         return resourceConfig;
     }
 
@@ -128,18 +129,15 @@ public class JndiResourceComponent
         {
             ManagedComponent managedComponent = getManagedComponent();
             Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
+            Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(pluginConfig);
 
             if (log.isDebugEnabled()) log.debug("BEFORE:\n" + DebugUtils.convertPropertiesToString(managedComponent));
-
-            Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(pluginConfig);
             ConversionUtil.convertConfigurationToManagedProperties(managedProperties, resourceConfig, this.resourceType,
                     customProps);
-
             if (log.isDebugEnabled()) log.debug("AFTER:\n" + DebugUtils.convertPropertiesToString(managedComponent));
 
             managementView.updateComponent(managedComponent);
             managementView.process();
-
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.SUCCESS);
         }
         catch (Exception e)
@@ -153,11 +151,12 @@ public class JndiResourceComponent
 
     public void deleteResource() throws Exception
     {
-        ManagementView mgtView = ProfileServiceFactory.getCurrentProfileView();
+        log.debug("Deleting ManagedComponent [" + this.componentName + "]...");
+        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
         ManagedComponent managedComponent = getManagedComponent();
         ManagedDeployment deployment = managedComponent.getDeployment();
-        mgtView.removeDeployment(deployment.getName(), ManagedDeployment.DeploymentPhase.APPLICATION);
-        mgtView.process();
+        deployment.removeComponent(this.componentName);
+        managementView.process();
     }
 
     // OperationFacet Implementation  --------------------------------------------
@@ -172,17 +171,16 @@ public class JndiResourceComponent
             String operationName = operation.getName();
             if (operationName.equals(name))
             {
-                //Convert parameters into MetaValue[]
-
-                MetaValue[] params = ConversionUtil.convertOperationsParametersToMetaValues(operation, parameters, resourceType);
+                // Convert parameters into MetaValue array.
+                MetaValue[] params = ConversionUtil.convertOperationsParametersToMetaValues(operation, parameters,
+                        this.resourceType);
                 if (params == null)
-                {
                     params = new MetaValue[0];
-                }
                 Object result = operation.invoke(params);
                 //Convert result to Correct Property type
                 Configuration complexResults = results.getComplexResults();
-                ConversionUtil.convertManagedOperationResults(operation, (MetaValue) result, complexResults, resourceType);
+                ConversionUtil.convertManagedOperationResults(operation, (MetaValue) result, complexResults,
+                        this.resourceType);
             }
         }
         return results;
@@ -197,7 +195,8 @@ public class JndiResourceComponent
         {
             String metricName = request.getName();
             ManagedProperty metricProperty = managedComponent.getProperty(metricName);
-            ConversionUtil.convertMetricValuesToMeasurement(report, metricProperty, request, resourceType, componentName);
+            ConversionUtil.convertMetricValuesToMeasurement(report, metricProperty, request, this.resourceType,
+                    this.componentName);
         }
     }
 

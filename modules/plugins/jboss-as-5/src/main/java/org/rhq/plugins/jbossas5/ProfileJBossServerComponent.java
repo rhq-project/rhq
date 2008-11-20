@@ -54,13 +54,14 @@ import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.ConversionUtil;
+import org.rhq.plugins.jbossas5.util.DebugUtils;
 
 import java.util.Collection;
 import java.util.Map;
 import java.io.*;
 
 /**
- * Component for JBoss AS 5.x Server.
+ * ResourceComponent for a JBossAS 5.x Server.
  *
  * @author Jason Dobies
  * @author Mark Spritzler
@@ -79,7 +80,6 @@ public class ProfileJBossServerComponent
 
     private static final String RESOURCE_TYPE_EAR = "Enterprise Application (EAR)";
     private static final String RESOURCE_TYPE_WAR = "Web Application (WAR)";
-    private static final String RESOURCE_TYPE_JAR = "EJB Application (JAR)";
 
     private ResourceContext resourceContext;
     //private ContentContext contentContext;
@@ -88,6 +88,7 @@ public class ProfileJBossServerComponent
 
     public AvailabilityType getAvailability()
     {
+        // TODO: Always returning UP is fine for Embedded, but we'll need to actually check avail for Enterprise.
         return AvailabilityType.UP;
     }
 
@@ -120,23 +121,19 @@ public class ProfileJBossServerComponent
         // See above comment on server configuration.
     }
 
-    // ServiceFactoryComponent  --------------------------------------------
-
+    // CreateChildResourceFacet  --------------------------------------------
 
     public CreateResourceReport createResource(CreateResourceReport createResourceReport)
     {
         ResourceType resourceType = createResourceReport.getResourceType();
         if (resourceType.getCreationDataType() == ResourceCreationDataType.CONTENT)
-        {
             createContentBasedResource(createResourceReport, resourceType);
-        }
         else
-        {
             createConfigurationBasedResource(createResourceReport, resourceType);
-        }
-
         return createResourceReport;
     }
+
+    // ProgressListener  --------------------------------------------
 
     public void progressEvent(ProgressEvent eventInfo) {
         log.debug(eventInfo);
@@ -159,49 +156,38 @@ public class ProfileJBossServerComponent
         }
     }
 
-    private String getResourceName(PropertySimple resourceNameProperty, Configuration configuration)
+    private static String getResourceName(Configuration pluginConfig, Configuration resourceConfig)
     {
-        String resourceName = "bar";
-
-        if (resourceNameProperty != null)
-        {
-            String value = resourceNameProperty.getStringValue();
-            if (value != null)
-            {
-                PropertySimple propertyToUseAsResourceName = configuration.getSimple(value);
-                if (propertyToUseAsResourceName != null)
-                {
-                    resourceName = propertyToUseAsResourceName.getStringValue();
-                }
-            }
-        }
-        return resourceName;
+        PropertySimple resourceNameProp = pluginConfig.getSimple(RESOURCE_NAME_PROPERTY);
+        if (resourceNameProp == null || resourceNameProp.getStringValue() == null)
+            throw new IllegalStateException("Property [" + RESOURCE_NAME_PROPERTY
+                    + "] is not defined in the default plugin configuration.");
+        String resourceNamePropName = resourceNameProp.getStringValue();
+        PropertySimple propToUseAsResourceName = resourceConfig.getSimple(resourceNamePropName);
+        if (propToUseAsResourceName == null)
+            throw new IllegalStateException("Property [" + resourceNamePropName
+                    + "] is not defined in initial Resource configuration.");
+        return propToUseAsResourceName.getStringValue();
     }
 
     private String getResourceKey(ResourceType resourceType, String resourceName)
     {
-        String resourceKey = "foo";
         ComponentType componentType = ConversionUtil.getComponentType(resourceType);
-        if (componentType != null)
-        {
-            resourceKey = componentType.getType() + ":" + componentType.getSubtype() + ":" + resourceName;
-        }
-        return resourceKey;
+        if (componentType == null)
+            throw new IllegalStateException("Unable to map " + resourceType + " to a ComponentType.");
+        // TODO (ips): I think the key can just be the resource name.
+        return componentType.getType() + ":" + componentType.getSubtype() + ":" + resourceName;
     }
 
     private void createConfigurationBasedResource(CreateResourceReport createResourceReport, ResourceType resourceType)
     {
-        Configuration configuration = createResourceReport.getResourceConfiguration();
-        ManagementView profileView = ProfileServiceFactory.getCurrentProfileView();
-
-        // Convert resource type into template name
-        ConfigurationDefinition configDef = resourceType.getPluginConfigurationDefinition();
         Configuration defaultPluginConfig = getDefaultPluginConfiguration(resourceType);
-        PropertySimple resourceNameProperty = defaultPluginConfig.getSimple(RESOURCE_NAME_PROPERTY);
-        String resourceName = getResourceName(resourceNameProperty, configuration);
+        Configuration resourceConfig = createResourceReport.getResourceConfiguration();
+        String resourceName = getResourceName(defaultPluginConfig, resourceConfig);
         if (ProfileServiceFactory.isManagedComponent(resourceName, ConversionUtil.getComponentType(resourceType))) {
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
-            createResourceReport.setErrorMessage("Duplicate JNDI Name, a resource with that name already exists");
+            createResourceReport.setErrorMessage("A " + resourceType.getName() + " named '" + resourceName
+                    + "' already exists.");
             return;
         }
 
@@ -212,31 +198,37 @@ public class ProfileJBossServerComponent
         PropertySimple templateNameProperty = defaultPluginConfig.getSimple(TEMPLATE_NAME_PROPERTY);
         String templateName = templateNameProperty.getStringValue();
 
-        DeploymentTemplateInfo deploymentTemplateInfo;
+        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        DeploymentTemplateInfo template;
         try
         {
-            deploymentTemplateInfo = profileView.getTemplate(templateName);
-            Map<String, ManagedProperty> managedProperties = deploymentTemplateInfo.getProperties();
+            template = managementView.getTemplate(templateName);
+            Map<String, ManagedProperty> managedProperties = template.getProperties();
             Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(defaultPluginConfig);
-            ConversionUtil.convertConfigurationToManagedProperties(managedProperties, configuration, resourceType, customProps);
-            Collection<PropertyDefinition> managedPropertyGroup = configDef.getPropertiesInGroup(MANAGED_PROPERTY_GROUP);
+
+            //if (log.isDebugEnabled()) log.debug("BEFORE:\n" + DebugUtils.convertPropertiesToString(template));
+            ConversionUtil.convertConfigurationToManagedProperties(managedProperties, resourceConfig, resourceType, customProps);
+            if (log.isDebugEnabled()) log.debug("AFTER:\n" + DebugUtils.convertPropertiesToString(template));
+
+            ConfigurationDefinition pluginConfigDef = resourceType.getPluginConfigurationDefinition();
+            Collection<PropertyDefinition> managedPropertyGroup = pluginConfigDef.getPropertiesInGroup(MANAGED_PROPERTY_GROUP);
             handleMiscManagedProperties(managedPropertyGroup, managedProperties, defaultPluginConfig);
             try
             {
-                profileView.applyTemplate(ManagedDeployment.DeploymentPhase.APPLICATION, resourceName, deploymentTemplateInfo);
-                profileView.process();
+                managementView.applyTemplate(ManagedDeployment.DeploymentPhase.APPLICATION, resourceName, template);
+                managementView.process();
                 createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
             }
             catch (Exception e)
             {
-                log.error("Unable to apply Template and process through Profile View", e);
+                log.error("Unable to apply template [" + templateName + "].", e);
                 createResourceReport.setStatus(CreateResourceStatus.FAILURE);
                 createResourceReport.setException(e);
             }
         }
         catch (NoSuchDeploymentException e)
         {
-            log.error("Unable to find Template " + templateName + " In profile view", e);
+            log.error("Unable to find template [" + templateName + "].", e);
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
             createResourceReport.setException(e);
         }

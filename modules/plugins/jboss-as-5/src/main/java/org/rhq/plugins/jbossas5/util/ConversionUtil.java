@@ -72,6 +72,7 @@ import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
  * should be in the corresponding Adapter classes.
  *
  * @author Mark Spritzler
+ * @author Ian Springer
  */
 public class ConversionUtil
 {
@@ -81,9 +82,9 @@ public class ConversionUtil
     private static final Map<String, ComponentType> KNOWN_COMPONENT_TYPES = new HashMap<String, ComponentType>();
 
     static {
-        KNOWN_COMPONENT_TYPES.put("No Transaction", KnownComponentTypes.DataSourceTypes.NoTx.getType());
-        KNOWN_COMPONENT_TYPES.put("Local Transaction", KnownComponentTypes.DataSourceTypes.LocalTx.getType());
-        KNOWN_COMPONENT_TYPES.put("XA Transaction", KnownComponentTypes.DataSourceTypes.XA.getType());
+        KNOWN_COMPONENT_TYPES.put("No TX Datasource", KnownComponentTypes.DataSourceTypes.NoTx.getType());
+        KNOWN_COMPONENT_TYPES.put("Local TX Datasource", KnownComponentTypes.DataSourceTypes.LocalTx.getType());
+        KNOWN_COMPONENT_TYPES.put("XA Datasource", KnownComponentTypes.DataSourceTypes.XA.getType());
         KNOWN_COMPONENT_TYPES.put("No TX ConnectionFactory", KnownComponentTypes.ConnectionFactoryTypes.NoTx.getType());
         KNOWN_COMPONENT_TYPES.put("Transaction ConnectionFactory", KnownComponentTypes.ConnectionFactoryTypes.XA.getType());
         KNOWN_COMPONENT_TYPES.put("Queue", KnownComponentTypes.JMSDestination.Queue.getType());

@@ -26,6 +26,7 @@ import java.util.Comparator;
 
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedProperty;
+import org.jboss.managed.api.DeploymentTemplateInfo;
 import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.values.CollectionValue;
 
@@ -37,20 +38,17 @@ import org.jboss.metatype.api.values.CollectionValue;
 public abstract class DebugUtils {
     public static String convertPropertiesToString(ManagedComponent managedComponent) {
         StringBuilder buf = new StringBuilder();
-        buf.append("Properties for managed component [").append(managedComponent.getName()).append("]:");
-        Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
-        List<ManagedProperty> props = new ArrayList<ManagedProperty>(managedProperties.values());
-        Collections.sort(props, new ManagedPropertyComparator()); // sort by name
-        for (ManagedProperty managedProperty : props) {
-            buf.append("\n\tname=").append(managedProperty.getName());
-            if (!managedProperty.getName().equals(managedProperty.getMappedName()))
-                buf.append(", mappedName=").append(managedProperty.getMappedName());
-            buf.append(", required=").append(managedProperty.isMandatory());
-            Object value = managedProperty.getValue();
-            if (value instanceof MetaValue)
-                value = convertMetaValueToString((MetaValue)value);
-            buf.append(", value=").append(value);
-        }
+        String componentTypeName = managedComponent.getType().getSubtype() + " " + managedComponent.getType().getType();
+        buf.append("Properties for [").append(componentTypeName).append("] ManagedComponent [");
+        buf.append(managedComponent.getName()).append("]:\n");
+        buf.append(convertPropertiesToString(managedComponent.getProperties()));
+        return buf.toString();
+    }
+
+    public static String convertPropertiesToString(DeploymentTemplateInfo template) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("Properties for DeploymentTemplateInfo [").append(template.getName()).append("]:\n");
+        buf.append(convertPropertiesToString(template.getProperties()));
         return buf.toString();
     }
 
@@ -61,15 +59,32 @@ public abstract class DebugUtils {
         if (metaValue.getMetaType().isCollection()) {
             CollectionValue collectionValue = (CollectionValue)metaValue;
             buffer.append(collectionValue).append("\n");
-            buffer.append("\t").append("Elements:\n");
+            buffer.append("    ").append("Elements:\n");
             for (MetaValue elementMetaValue : collectionValue.getElements())
-                buffer.append("\t").append(convertMetaValueToString(elementMetaValue)).append("\n");
+                buffer.append("    ").append(convertMetaValueToString(elementMetaValue)).append("\n");
         } else {
             buffer.append(metaValue);
         }
         return buffer.toString();
     }
 
+    private static String convertPropertiesToString(Map<String, ManagedProperty> managedProps) {
+        StringBuilder buf = new StringBuilder();
+        List<ManagedProperty> props = new ArrayList<ManagedProperty>(managedProps.values());
+        Collections.sort(props, new ManagedPropertyComparator()); // sort by name
+        for (ManagedProperty managedProperty : props) {
+            buf.append("  name=").append(managedProperty.getName());
+            if (!managedProperty.getName().equals(managedProperty.getMappedName()))
+                buf.append(", mappedName=").append(managedProperty.getMappedName());
+            buf.append(", required=").append(managedProperty.isMandatory());
+            Object value = managedProperty.getValue();
+            if (value instanceof MetaValue)
+                value = convertMetaValueToString((MetaValue)value);
+            buf.append(", value=").append(value).append("\n");
+        }
+        return buf.toString();
+    }
+    
     private static class ManagedPropertyComparator implements Comparator<ManagedProperty> {
         public int compare(ManagedProperty prop1, ManagedProperty prop2) {
             return prop1.getName().compareTo(prop2.getName());

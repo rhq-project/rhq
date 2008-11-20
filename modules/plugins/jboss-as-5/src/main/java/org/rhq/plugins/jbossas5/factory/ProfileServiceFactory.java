@@ -152,10 +152,10 @@ public class ProfileServiceFactory
     /**
      * Locate the given ComponentType with the given component name.
      *
-     * @param type - ComponentType of the component to get
-     * @param name - String name of the component
+     * @param type ComponentType of the component to get
+     * @param name String name of the component
      * @return the matching ManagedComponent if found, null otherwise
-     * @throws Exception -
+     * @throws Exception on error
      */
     public static ManagedComponent getManagedComponent(ComponentType type, String name)
             throws Exception
@@ -167,30 +167,32 @@ public class ProfileServiceFactory
     /**
      * Locate the given ComponentType with the given component name.
      *
-     * @param mgtView -
-     * @param type    -
-     * @param name    -
+     * @param managementView
+     * @param type
+     * @param name
      * @return the matching ManagedComponent if found, null otherwise
-     * @throws Exception -
+     * @throws Exception on error
      */
-    public static ManagedComponent getManagedComponent(ManagementView mgtView,
+    public static ManagedComponent getManagedComponent(ManagementView managementView,
                                                        ComponentType type, String name)
             throws Exception
     {
-        Set<ManagedComponent> comps = mgtView.getComponentsForType(type);
-        ManagedComponent mc = null;
-        for (ManagedComponent comp : comps)
-        {
-            String cname = comp.getName();
-            if (cname.equals(name))
-            {
-                mc = comp;
-                break;
+        Set<ManagedComponent> managedComponents = managementView.getComponentsForType(type);
+        if (managedComponents != null) {
+            for (ManagedComponent managedComponent : managedComponents) {
+                if (managedComponent.getName().equals(name))
+                    return managedComponent;
             }
         }
-        return mc;
+        return null;
     }
 
+    /**
+     * 
+     * @param name
+     * @param componentType
+     * @return
+     */
     public static boolean isManagedComponent(String name, ComponentType componentType)
     {
         boolean isDeployed = false;
@@ -200,20 +202,15 @@ public class ProfileServiceFactory
             {
                 ManagedComponent component = getManagedComponent(componentType, name);
                 if (component != null)
-                {
                     isDeployed = true;
-                }
             }
             catch (Exception e)
             {
-                /* Setting it to true to be safe than sorry, since there might be a component
-                 * already deployed in the AS
-                 */
+                // Setting it to true to be safe than sorry, since there might be a component
+                // already deployed in the AS. TODO (ips): I don't think I like this.
                 isDeployed = true;
             }
-
         }
         return isDeployed;
     }
-
 }

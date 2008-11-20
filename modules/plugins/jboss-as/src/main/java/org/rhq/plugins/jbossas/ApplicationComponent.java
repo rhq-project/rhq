@@ -243,9 +243,7 @@ public class ApplicationComponent
             throw new Exception("Cannot find application file to delete: " + fullFileName);
         }
 
-        if (file.isDirectory()) {
-            FileUtils.purge(file, true);
-        }
+        FileUtils.purge(file, true);        
     }
 
     // MeasurementFacet Implementation  --------------------------------------------
@@ -347,7 +345,7 @@ public class ApplicationComponent
         return response;
     }
 
-    private void persistApplicationVersion(ResourcePackageDetails packageDetails, File appFile) {        
+    private void persistApplicationVersion(ResourcePackageDetails packageDetails, File appFile) {
         String packageName = appFile.getName();
         PackageVersions versions = loadApplicationVersions();
         versions.putVersion(packageName, packageDetails.getVersion());

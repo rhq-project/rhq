@@ -120,8 +120,11 @@ public class SystemInfoFactory {
      * native libraries - even if the native library {@link #isNativeSystemInfoAvailable() is available}.
      */
     public static synchronized void disableNativeSystemInfo() {
+        // if we are switching, clear the cached system info so we'll get a new one later
+        if (!disabled) {
+            cachedSystemInfo = null;
+        }
         disabled = true;
-        cachedSystemInfo = null;
     }
 
     /**
@@ -130,6 +133,10 @@ public class SystemInfoFactory {
      * {@link #isNativeSystemInfoAvailable() available}.
      */
     public static synchronized void enableNativeSystemInfo() {
+        // if we are switching, clear the cached system info so we'll get a new one later
+        if (disabled) {
+            cachedSystemInfo = null;
+        }
         disabled = false;
     }
 

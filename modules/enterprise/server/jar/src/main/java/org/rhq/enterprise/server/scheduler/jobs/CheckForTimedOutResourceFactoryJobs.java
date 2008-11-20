@@ -20,7 +20,7 @@ package org.rhq.enterprise.server.scheduler.jobs;
 
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.quartz.StatefulJob;
+
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -29,10 +29,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Jason Dobies
  */
-public class CheckForTimedOutResourceFactoryJobs implements StatefulJob {
-    // StatefulJob Implementation  --------------------------------------------
-
-    public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
+public class CheckForTimedOutResourceFactoryJobs extends AbstractStatefulJob {
+    @Override
+    public void executeJobCode(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
         resourceFactoryManager.checkForTimedOutRequests();
     }

@@ -43,7 +43,7 @@ import org.rhq.enterprise.server.util.TimingVoodoo;
  * This implements {@link StatefulJob} (as opposed to {@link Job}) because we do not need nor want this job triggered
  * concurrently. That is, we don't want multiple data purge jobs performing the data purge at the same time.
  */
-public class DataPurgeJob implements StatefulJob {
+public class DataPurgeJob extends AbstractStatefulJob {
     private static final Log LOG = LogFactory.getLog(DataPurgeJob.class);
 
     private static long HOUR = 60 * 60 * 1000L;
@@ -68,10 +68,8 @@ public class DataPurgeJob implements StatefulJob {
         scheduler.scheduleJob(trigger);
     }
 
-    /**
-     * Public interface for quartz
-     */
-    public void execute(JobExecutionContext context) throws JobExecutionException {
+    @Override
+    public void executeJobCode(JobExecutionContext context) throws JobExecutionException {
         long start = System.currentTimeMillis();
         LOG.info("Data Purge Job STARTING");
         try {

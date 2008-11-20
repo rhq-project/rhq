@@ -24,14 +24,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.quartz.StatefulJob;
 
 import org.rhq.core.domain.cluster.Server;
 import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-public class ClusterManagerJob implements StatefulJob {
+public class ClusterManagerJob extends AbstractStatefulJob {
 
     private final Log log = LogFactory.getLog(ClusterManagerJob.class);
 
@@ -39,7 +38,8 @@ public class ClusterManagerJob implements StatefulJob {
     // job updating the server mtimes. See StartupServlet. 
     static private final long SERVER_DOWN_INTERVAL = 1000L * 2 * 60;
 
-    public void execute(JobExecutionContext arg0) throws JobExecutionException {
+    @Override
+    public void executeJobCode(JobExecutionContext arg0) throws JobExecutionException {
 
         ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
         PartitionEventManagerLocal partitionEventManager = LookupUtil.getPartitionEventManager();

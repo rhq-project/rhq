@@ -22,6 +22,7 @@ import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.StatefulJob;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -34,8 +35,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author John Mazzitelli
  */
-public class CheckForTimedOutContentRequestsJob implements StatefulJob {
-    public void execute(JobExecutionContext context) throws JobExecutionException {
+public class CheckForTimedOutContentRequestsJob extends AbstractStatefulJob {
+    @Override
+    public void executeJobCode(JobExecutionContext context) throws JobExecutionException {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         LookupUtil.getContentManager().checkForTimedOutRequests(overlord);
     }

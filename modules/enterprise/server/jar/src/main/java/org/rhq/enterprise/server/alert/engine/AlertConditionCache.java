@@ -1003,6 +1003,8 @@ public final class AlertConditionCache {
                 AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(-1);
             } else if (inverseCacheElement.lefty instanceof MeasurementNumericCacheElement) {
                 AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(-1);
+            } else if (inverseCacheElement.lefty instanceof MeasurementBaselineCacheElement) {
+                AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(-1);
             } else if (inverseCacheElement.lefty instanceof ResourceConfigurationCacheElement) {
                 AlertConditionCacheMonitor.getMBean().incrementResourceConfigurationCacheElementCount(-1);
             } else {

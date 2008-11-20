@@ -85,19 +85,16 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
 
     public ConfigurationUpdateResponse call() throws Exception {
         ConfigurationUpdateResponse response;
-
         int requestId = request.getConfigurationUpdateId();
+        ConfigurationUpdateReport report = new ConfigurationUpdateReport(request.getConfiguration());
         try {
-            ConfigurationUpdateReport report = new ConfigurationUpdateReport(request.getConfiguration());
-
             configurationFacet.updateResourceConfiguration(report);
 
             response = new ConfigurationUpdateResponse(requestId, report.getConfiguration(), report.getStatus(), report
                 .getErrorMessage());
 
             if (response.getStatus() == ConfigurationUpdateStatus.INPROGRESS) {
-                response.setErrorMessage("Configuration facet [" + configurationFacet.getClass().getInterfaces()
-                    + "] did not indicate success or failure, assuming failure");
+                response.setErrorMessage("Configuration facet did not indicate success or failure - assuming failure.");
             }
 
             ConfigurationDefinition configurationDefinition = resourceType.getResourceConfigurationDefinition();
@@ -107,7 +104,7 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
             List<String> errorMessages = ConfigurationUtility.validateConfiguration(response.getConfiguration(),
                 configurationDefinition);
             for (String errorMessage : errorMessages) {
-                log.warn("Plugin Error: Invalid " + resourceType.getName() + " resource configuration returned by "
+                log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "
                     + resourceType.getPlugin() + " plugin - " + errorMessage);
             }
 
@@ -118,7 +115,9 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
                 response.setConfiguration(null);
             }
         } catch (Throwable t) {
-            response = new ConfigurationUpdateResponse(requestId, null, t);
+            log.error("Plugin Error: Exception thrown while updating Resource configuration for "
+                    + resourceType.getName() + " Resource with id [" + request.getResourceId() + "].", t);
+            response = new ConfigurationUpdateResponse(requestId, report.getConfiguration(), t);            
         }
 
         if (this.configurationServerService != null) {

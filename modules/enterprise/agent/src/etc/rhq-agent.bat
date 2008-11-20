@@ -36,17 +36,17 @@ rem ----------------------------------------------------------------------
 
 set RHQ_AGENT_BIN_DIR_PATH=%~dp0
 
-if exist %RHQ_AGENT_BIN_DIR_PATH%\rhq-agent-env.bat (
+if exist "%RHQ_AGENT_BIN_DIR_PATH%\rhq-agent-env.bat" (
    if defined RHQ_AGENT_DEBUG echo Loading environment script: %RHQ_AGENT_BIN_DIR_PATH%\rhq-agent-env.bat
-   call %RHQ_AGENT_BIN_DIR_PATH%\rhq-agent-env.bat %*
+   call "%RHQ_AGENT_BIN_DIR_PATH%\rhq-agent-env.bat" %*
 ) else (
    if defined RHQ_AGENT_DEBUG echo No environment script found at: %RHQ_AGENT_BIN_DIR_PATH%\rhq-agent-env.bat
 )
 
 if not defined RHQ_AGENT_HOME (
-   cd %RHQ_AGENT_BIN_DIR_PATH%\..
+   cd "%RHQ_AGENT_BIN_DIR_PATH%\.."
 ) else (
-   cd %RHQ_AGENT_HOME% || (
+   cd "%RHQ_AGENT_HOME%" || (
       echo Cannot go to the RHQ_AGENT_HOME directory: %RHQ_AGENT_HOME%
       exit /B 1
       )

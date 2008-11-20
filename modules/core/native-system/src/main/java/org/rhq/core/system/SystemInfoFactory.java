@@ -121,6 +121,7 @@ public class SystemInfoFactory {
      */
     public static synchronized void disableNativeSystemInfo() {
         disabled = true;
+        cachedSystemInfo = null;
     }
 
     /**
@@ -234,6 +235,7 @@ public class SystemInfoFactory {
             //         }
 
             initialized = false;
+            cachedSystemInfo = null;
         }
     }
 

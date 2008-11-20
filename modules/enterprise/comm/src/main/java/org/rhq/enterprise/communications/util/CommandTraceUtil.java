@@ -18,11 +18,14 @@
  */
 package org.rhq.enterprise.communications.util;
 
+import java.io.NotSerializableException;
+import java.io.Serializable;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Properties;
 
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.impl.remotepojo.RemotePojoInvocationCommand;
@@ -41,6 +44,12 @@ public class CommandTraceUtil {
 
     // name of system property that, when set to anything, dumps the results of all command responses
     private static final String SYSPROP_TRACE_COMMAND_RESPONSE_RESULTS = "rhq.trace-command-response-results";
+
+    // name of system property that, when set to a number, dumps the size of the command when larger than the prop value
+    private static final String SYSPROP_TRACE_COMMAND_SIZE_THRESHOLD = "rhq.trace-command-size-threshold";
+
+    // name of system property that, when set to a number, dumps the size of the command response when larger than the prop value
+    private static final String SYSPROP_TRACE_COMMAND_RESPONSE_SIZE_THRESHOLD = "rhq.trace-command-response-size-threshold";
 
     // just a simple cache so we can avoid having to parse the interface names all the time
     private static Map<String, String> interfaceSimpleNames = null;
@@ -132,6 +141,70 @@ public class CommandTraceUtil {
     }
 
     /**
+     * Returns the actual size, in bytes, of the given command but only if it
+     * exceeds the given configured threshold (-1 is returned otherwise).
+     * If size tracing threshold is disabled, this will not perform any
+     * serialization and simply return -1
+     * ({@link #SYSPROP_TRACE_COMMAND_SIZE_THRESHOLD} defines this threshold).
+     * Note that if the command is not serializable, an exception is thrown.
+     * All commands <b>must</b> be serializable; therefore, if we trace a command that is
+     * not, it is appropriate for us to draw attention to it by throwing an
+     * exception from this method.
+     * 
+     * @param command
+     * 
+     * @return the size of the command or -1 if not configured to perform size tracing
+     * 
+     * @throws NotSerializableException if failed to serialize the command
+     */
+    public static int getCommandSize(Command command) throws NotSerializableException {
+        int threshold = getPropertyInt(SYSPROP_TRACE_COMMAND_SIZE_THRESHOLD);
+        if (threshold > -1) {
+            try {
+                int size = StreamUtil.serialize(command).length;
+                if (size > threshold) {
+                    return size;
+                }
+            } catch (Exception e) {
+                throw new NotSerializableException(ThrowableUtil.getAllMessages(e));
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Returns the actual size, in bytes, of the given response but only if it
+     * exceeds the given configured threshold (-1 is returned otherwise).
+     * If size tracing threshold is disabled, this will not perform any
+     * serialization and simply return -1
+     * (see {@link #SYSPROP_TRACE_COMMAND_RESPONSE_SIZE_THRESHOLD} defines this threshold).
+     * Note that if the response is not serializable, a runtime exception is thrown.
+     * All responses <b>must</b> be serializable; therefore, if we trace a response that is
+     * not, it is appropriate for us to draw attention to it by throwing an
+     * exception from this method.
+     * 
+     * @param response
+     * 
+     * @return the size of the response or -1 if not configured to perform size tracing
+     * 
+     * @throws NotSerializableException if failed to serialize the response
+     */
+    public static int getCommandResponseSize(Object response) throws NotSerializableException {
+        int threshold = getPropertyInt(SYSPROP_TRACE_COMMAND_RESPONSE_SIZE_THRESHOLD);
+        if (threshold > -1) {
+            try {
+                int size = StreamUtil.serialize((Serializable) response).length;
+                if (size > threshold) {
+                    return size;
+                }
+            } catch (Exception e) {
+                throw new NotSerializableException(ThrowableUtil.getAllMessages(e));
+            }
+        }
+        return -1;
+    }
+
+    /**
      * Returns a stringified form of a command response results object.  This makes it so
      * the string isn't really long and doesn't contain newlines so we can show it on a single
      * line in the log file.
@@ -201,5 +274,25 @@ public class CommandTraceUtil {
         }
 
         return simpleName;
+    }
+
+    /**
+     * Returns the given system property's value as a number. If the property
+     * isn't set or is invalid, -1 is returned.
+     * 
+     * @param propertyName
+     * 
+     * @return the property's value as a number
+     */
+    private static int getPropertyInt(String propertyName) {
+        String propertyValue = System.getProperty(propertyName);
+        if (propertyValue != null) {
+            try {
+                return Integer.parseInt(propertyValue, 10);
+            } catch (Exception e) {
+                System.setProperty(propertyName, "-1"); // invalid number, just disable it so we don't keep checking
+            }
+        }
+        return -1;
     }
 }

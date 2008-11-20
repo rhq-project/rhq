@@ -950,6 +950,18 @@ public interface CommI18NResourceKeys {
     @I18NMessages( { @I18NMessage("Transport must be one of the following: servlet, sslservlet") })
     String NOT_SERVLET_TRANSPORT = "Setup.not-servlet-transport";
 
+    @I18NMessage("Command was not serializable [{0}]. Cause: {1}")
+    String TRACE_NOT_SERIALIZABLE_COMMAND = "trace.not-serializable.command";
+
+    @I18NMessage("Command response was not serializable [{0}]. Cause: {1}")
+    String TRACE_NOT_SERIALIZABLE_COMMAND_RESPONSE = "trace.not-serializable.command-response";
+
+    @I18NMessage("Command [{0}] has size of [{1}] which exceeds the threshold")
+    String TRACE_SIZE_THRESHOLD_EXCEEDED_COMMAND = "trace.size-threshold-exceeded.command";
+
+    @I18NMessage("Command response [{0}] has size of [{1}] which exceeds the threshold")
+    String TRACE_SIZE_THRESHOLD_EXCEEDED_COMMAND_RESPONSE = "trace.size-threshold-exceeded.command-response";
+
     @I18NMessage("==>{0}|{1}")
     String TRACE_OUTGOING_COMMAND_START = "send.initiate";
 

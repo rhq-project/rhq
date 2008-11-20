@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.communications.command.server;
 
+import java.io.NotSerializableException;
+
 import mazz.i18n.Logger;
 
 import org.rhq.enterprise.communications.command.Command;
@@ -44,6 +46,15 @@ public class IncomingCommandTrace {
                 String cmdStr = CommandTraceUtil.getCommandString(command);
                 String config = CommandTraceUtil.getConfigString(command);
                 LOG.trace(CommI18NResourceKeys.TRACE_INCOMING_COMMAND_START, cmdStr, config);
+
+                try {
+                    int size = CommandTraceUtil.getCommandSize(command);
+                    if (size > -1) {
+                        LOG.warn(CommI18NResourceKeys.TRACE_SIZE_THRESHOLD_EXCEEDED_COMMAND, cmdStr, size);
+                    }
+                } catch (NotSerializableException nse) {
+                    LOG.error(CommI18NResourceKeys.TRACE_NOT_SERIALIZABLE_COMMAND, cmdStr, nse);
+                }
             } catch (Throwable t) {
                 // don't bomb if for some reason we fail to log the trace message (should never happen)
             }
@@ -64,6 +75,16 @@ public class IncomingCommandTrace {
                 String config = CommandTraceUtil.getConfigString(command);
                 String respStr = CommandTraceUtil.getCommandResponseString(response);
                 LOG.trace(CommI18NResourceKeys.TRACE_INCOMING_COMMAND_FINISH, cmdStr, config, respStr);
+
+                try {
+                    int size = CommandTraceUtil.getCommandResponseSize(response);
+                    if (size > -1) {
+                        LOG.warn(CommI18NResourceKeys.TRACE_SIZE_THRESHOLD_EXCEEDED_COMMAND_RESPONSE, respStr, size);
+                    }
+                } catch (NotSerializableException nse) {
+                    LOG.error(CommI18NResourceKeys.TRACE_NOT_SERIALIZABLE_COMMAND_RESPONSE, respStr, nse);
+                }
+
             } catch (Throwable t) {
                 // don't bomb if for some reason we fail to log the trace message (should never happen)
             }

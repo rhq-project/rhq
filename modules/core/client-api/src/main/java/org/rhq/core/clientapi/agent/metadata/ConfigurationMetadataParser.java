@@ -44,6 +44,8 @@ import org.rhq.core.clientapi.descriptor.configuration.RegexConstraintType;
 import org.rhq.core.clientapi.descriptor.configuration.SimpleProperty;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.AbstractPropertyMap;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.definition.ActivationPolicy;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
@@ -71,8 +73,8 @@ public class ConfigurationMetadataParser {
             return null;
         }
 
-        ConfigurationDefinition configurationDefinition = new ConfigurationDefinition(configurationName, descriptor
-            .getNotes());
+        ConfigurationDefinition configurationDefinition = new ConfigurationDefinition(configurationName,
+                descriptor.getNotes());
 
         for (ConfigurationTemplateDescriptor templateDescriptor : descriptor.getTemplate()) {
             configurationDefinition.putTemplate(parseTemplate(templateDescriptor));
@@ -124,8 +126,8 @@ public class ConfigurationMetadataParser {
             int propertyOrderIndex = 0;
             for (JAXBElement<? extends ConfigurationProperty> jaxbProperty : groupProperties) {
                 ConfigurationProperty uncastedProperty = jaxbProperty.getValue();
-                PropertyDefinition propertyDefinition = parseProperty(uncastedProperty, defaultConfiguration,
-                    propertyOrderIndex);
+                PropertyDefinition propertyDefinition = parseProperty(uncastedProperty, propertyOrderIndex, defaultConfiguration
+                );
                 if (configurationDefinition != null) {
                     propertyDefinition.setPropertyGroupDefinition(groupDef);
                     configurationDefinition.put(propertyDefinition);
@@ -137,8 +139,8 @@ public class ConfigurationMetadataParser {
         int propertyOrderIndex = 0;
         for (JAXBElement<? extends ConfigurationProperty> jaxbProperty : properties) {
             ConfigurationProperty uncastedProperty = jaxbProperty.getValue();
-            PropertyDefinition propertyDefinition = parseProperty(uncastedProperty, defaultConfiguration,
-                propertyOrderIndex);
+            PropertyDefinition propertyDefinition = parseProperty(uncastedProperty, propertyOrderIndex, defaultConfiguration
+            );
             if (configurationDefinition != null) {
                 configurationDefinition.put(propertyDefinition);
                 propertyOrderIndex++;
@@ -159,18 +161,19 @@ public class ConfigurationMetadataParser {
 
     private static PropertyDefinition parseProperty(ConfigurationProperty uncastedProperty, int orderIndex)
         throws InvalidPluginDescriptorException {
-        return parseProperty(uncastedProperty, null, orderIndex);
+        return parseProperty(uncastedProperty, orderIndex, null);
     }
 
     private static PropertyDefinition parseProperty(ConfigurationProperty uncastedProperty,
-        Configuration defaultConfiguration, int orderIndex) throws InvalidPluginDescriptorException {
+                                                    int orderIndex, AbstractPropertyMap defaultConfigurationParentMap)
+            throws InvalidPluginDescriptorException {
         PropertyDefinition property = null;
         if (uncastedProperty instanceof SimpleProperty) {
-            property = parseSimpleProperty((SimpleProperty) uncastedProperty, defaultConfiguration);
+            property = parseSimpleProperty((SimpleProperty) uncastedProperty, defaultConfigurationParentMap);
         } else if (uncastedProperty instanceof ListProperty) {
             property = parseListProperty((ListProperty) uncastedProperty);
         } else if (uncastedProperty instanceof MapProperty) {
-            property = parseMapProperty((MapProperty) uncastedProperty);
+            property = parseMapProperty((MapProperty) uncastedProperty, defaultConfigurationParentMap);
         }
 
         if (property != null) {
@@ -181,7 +184,7 @@ public class ConfigurationMetadataParser {
     }
 
     private static PropertyDefinitionSimple parseSimpleProperty(SimpleProperty simpleProperty,
-        Configuration defaultConfiguration) throws InvalidPluginDescriptorException {
+        AbstractPropertyMap defaultConfigurationParentMap) throws InvalidPluginDescriptorException {
         String description = parseMultiValue(simpleProperty.getDescription(), simpleProperty.getLongDescription());
         String displayName = (simpleProperty.getDisplayName() != null) ? simpleProperty.getDisplayName() : StringUtils
             .deCamelCase(simpleProperty.getName());
@@ -197,10 +200,9 @@ public class ConfigurationMetadataParser {
         property.setDefaultValue(simpleProperty.getDefaultValue());
         property.setUnits(MetricsMetadataParser.getMeasurementUnits(simpleProperty.getUnits(), null));
 
-        // TODO We only load default values at the top level right now...
         String initialValue = simpleProperty.getInitialValue();
-        if ((defaultConfiguration != null) && (initialValue != null)) {
-            defaultConfiguration.put(new PropertySimple(simpleProperty.getName(), initialValue));
+        if ((defaultConfigurationParentMap != null) && (initialValue != null)) {
+            defaultConfigurationParentMap.put(new PropertySimple(simpleProperty.getName(), initialValue));
         }
 
         // Load the enumeration of options
@@ -255,28 +257,38 @@ public class ConfigurationMetadataParser {
         return list;
     }
 
-    private static PropertyDefinitionMap parseMapProperty(MapProperty mapProperty)
+    private static PropertyDefinitionMap parseMapProperty(MapProperty mapProperty,
+                                                          AbstractPropertyMap defaultConfigurationParentMap)
         throws InvalidPluginDescriptorException {
         String description = parseMultiValue(mapProperty.getDescription(), mapProperty.getLongDescription());
-        List<JAXBElement<? extends ConfigurationProperty>> nestedProperties = mapProperty.getConfigurationProperty();
-        PropertyDefinition[] propDefs = new PropertyDefinition[nestedProperties.size()];
-        int propertyOrderIndex = 0;
-        for (JAXBElement<? extends ConfigurationProperty> jaxbProperty : nestedProperties) {
-            ConfigurationProperty uncastedProperty = jaxbProperty.getValue();
-            PropertyDefinition propertyDefinition = parseProperty(uncastedProperty, propertyOrderIndex);
-            propDefs[propertyOrderIndex++] = propertyDefinition;
-        }
 
-        PropertyDefinitionMap map = new PropertyDefinitionMap(mapProperty.getName(), description, mapProperty
-            .isRequired(), propDefs);
+        PropertyDefinitionMap propDefMap = new PropertyDefinitionMap(mapProperty.getName(), description, mapProperty
+            .isRequired());
 
         String displayName = (mapProperty.getDisplayName() != null) ? mapProperty.getDisplayName() : StringUtils
             .deCamelCase(mapProperty.getName());
-        map.setDisplayName(displayName);
-        map.setReadOnly(mapProperty.isReadOnly());
-        map.setSummary(mapProperty.isSummary());
+        propDefMap.setDisplayName(displayName);
+        propDefMap.setReadOnly(mapProperty.isReadOnly());
+        propDefMap.setSummary(mapProperty.isSummary());
 
-        return map;
+        // Add an instance of the map to the default config, if appropriate.
+        PropertyMap propMap;
+        if (defaultConfigurationParentMap != null) {
+            propMap = new PropertyMap(propDefMap.getName());
+            defaultConfigurationParentMap.put(propMap);
+        } else {
+            propMap = null;
+        }
+
+        // Process the map's nested properties.
+        List<JAXBElement<? extends ConfigurationProperty>> nestedProperties = mapProperty.getConfigurationProperty();
+        int propertyOrderIndex = 0;
+        for (JAXBElement<? extends ConfigurationProperty> jaxbProperty : nestedProperties) {
+            ConfigurationProperty uncastedProperty = jaxbProperty.getValue();
+            PropertyDefinition propertyDefinition = parseProperty(uncastedProperty, propertyOrderIndex, propMap);
+            propDefMap.put(propertyDefinition);
+        }
+        return propDefMap;
     }
 
     private static PropertySimpleType translatePropertyType(PropertyType fromType)

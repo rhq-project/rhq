@@ -24,10 +24,7 @@ package org.rhq.core.system;
 
 import java.util.Arrays;
 
-import org.hyperic.sigar.Cpu;
-import org.hyperic.sigar.CpuInfo;
-import org.hyperic.sigar.CpuPerc;
-import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -45,9 +42,11 @@ public class CpuInformation {
     private CpuInfo cpuInfo;
     private CpuPerc cpuPercentage;
     private boolean enabled;
+    private SigarProxy sigar;
 
-    public CpuInformation(int index) {
+    public CpuInformation(int index, SigarProxy sigar) {
         cpuIndex = index;
+        this.sigar = sigar;
         refresh();
     }
 
@@ -72,7 +71,6 @@ public class CpuInformation {
     }
 
     public void refresh() {
-        Sigar sigar = new Sigar();
         try {
             // This is supposed to return one CpuInfo per *socket*, but on some platforms, it will return one per *core*.
             // In either case, all CpuInfo's in the list should be identical.
@@ -114,8 +112,6 @@ public class CpuInformation {
             }            
         } catch (Exception e) {
             throw new SystemInfoException("Cannot refresh the native CPU information", e);
-        } finally {
-            sigar.close();
         }
 
         this.enabled = ((this.cpuInfo != null) && (this.cpu != null) && (this.cpuPercentage != null));

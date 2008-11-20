@@ -32,15 +32,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hyperic.sigar.FileSystem;
-import org.hyperic.sigar.FileSystemMap;
-import org.hyperic.sigar.Mem;
-import org.hyperic.sigar.NetInterfaceStat;
-import org.hyperic.sigar.NetStat;
-import org.hyperic.sigar.OperatingSystem;
-import org.hyperic.sigar.Sigar;
-import org.hyperic.sigar.SigarException;
-import org.hyperic.sigar.Swap;
+import org.hyperic.sigar.*;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.system.pquery.ProcessInfoQuery;
@@ -57,6 +49,8 @@ import org.rhq.core.system.pquery.ProcessInfoQuery;
  */
 public class NativeSystemInfo implements SystemInfo {
     private final Log log = LogFactory.getLog(NativeSystemInfo.class);
+
+    private SigarProxy sigar;
 
     /**
      * Always returns <code>true</code> to indicate that the native library is available.
@@ -109,7 +103,6 @@ public class NativeSystemInfo implements SystemInfo {
     }
 
     public String getHostname() throws SystemInfoException {
-        Sigar sigar = new Sigar();
         try {
             return sigar.getNetInfo().getHostName();
         } catch (Exception e) {
@@ -122,15 +115,12 @@ public class NativeSystemInfo implements SystemInfo {
             } catch (UnknownHostException uhe) {
                 throw new SystemInfoException(e);
             }
-        } finally {
-            sigar.close();
         }
     }
 
     public List<NetworkAdapterInfo> getAllNetworkAdapters() throws SystemInfoException {
         ArrayList<NetworkAdapterInfo> adapters = new ArrayList<NetworkAdapterInfo>();
 
-        Sigar sigar = new Sigar();
 
         try {
             String[] interfaceNames = sigar.getNetInterfaceList();
@@ -146,37 +136,29 @@ public class NativeSystemInfo implements SystemInfo {
             }
         } catch (Exception e) {
             throw new SystemInfoException(e);
-        } finally {
-            sigar.close();
         }
 
         return adapters;
     }
 
     public NetworkAdapterStats getNetworkAdapterStats(String interfaceName) {
-        Sigar sigar = new Sigar();
         try {
             NetInterfaceStat interfaceStat = sigar.getNetInterfaceStat(interfaceName);
             return new NetworkAdapterStats(interfaceStat);
         } catch (SigarException e) {
             throw new SystemInfoException(e);
-        } finally {
-            sigar.close();
         }
     }
 
     public NetworkStats getNetworkStats(String addressName, int port) {
-        Sigar sigar = new Sigar();
         try {
             InetAddress address = InetAddress.getByName(addressName);
-            NetStat interfaceStat = sigar.getNetStat(address.getAddress(), port);
+            NetStat interfaceStat = sigar.getNetStat();// TODO GH: ?? address.getAddress(), port);
             return new NetworkStats(interfaceStat);
         } catch (SigarException e) {
             throw new SystemInfoException(e);
         } catch (UnknownHostException e) {
             throw new SystemInfoException(e);
-        } finally {
-            sigar.close();
         }
     }
 
@@ -242,33 +224,25 @@ public class NativeSystemInfo implements SystemInfo {
     }
 
     public int getNumberOfCpus() {
-        Sigar sigar = new Sigar();
 
         try {
             // NOTE: This will return the number of cores, not the number of sockets.
             return sigar.getCpuPercList().length;
         } catch (Exception e) {
             throw new UnsupportedOperationException("Cannot get number of CPUs from native layer", e);
-        } finally {
-            sigar.close();
         }
     }
 
     public Mem getMemoryInfo() {
-        Sigar sigar = new Sigar();
-
         try {
             return sigar.getMem();
         } catch (Exception e) {
             throw new UnsupportedOperationException("Cannot get memory info from native layer", e);
-        } finally {
-            sigar.close();
         }
     }
 
     @Nullable
     public Swap getSwapInfo() {
-        Sigar sigar = new Sigar();
 
         try {
             // TODO: Remove this check once http://jira.jboss.com/jira/browse/JBNADM-3400 is fixed.
@@ -282,8 +256,6 @@ public class NativeSystemInfo implements SystemInfo {
             return sigar.getSwap();
         } catch (Exception e) {
             throw new UnsupportedOperationException("Cannot get swap info from native layer", e);
-        } finally {
-            sigar.close();
         }
     }
 
@@ -304,20 +276,17 @@ public class NativeSystemInfo implements SystemInfo {
     }
 
     public CpuInformation getCpu(int cpuIndex) {
-        return new CpuInformation(cpuIndex);
+        return new CpuInformation(cpuIndex, sigar);
     }
 
     public List<FileSystemInfo> getFileSystems() {
         List<String> mountPoints = new ArrayList<String>();
-        Sigar sigar = new Sigar();
 
         try {
             FileSystemMap map = sigar.getFileSystemMap();
             mountPoints.addAll(map.keySet());
         } catch (Exception e) {
             log.warn("Cannot obtain native file system information", e); // ignore native error otherwise
-        } finally {
-            sigar.close();
         }
 
         List<FileSystemInfo> infos = new ArrayList<FileSystemInfo>();
@@ -330,7 +299,6 @@ public class NativeSystemInfo implements SystemInfo {
 
     public FileSystemInfo getFileSystem(String path) {
         String mountPoint = null;
-        Sigar sigar = new Sigar();
 
         try {
             FileSystem mountPointForPath = sigar.getFileSystemMap().getMountPoint(path);
@@ -338,8 +306,6 @@ public class NativeSystemInfo implements SystemInfo {
                 mountPoint = mountPointForPath.getDirName();
         } catch (Throwable e) {
             log.warn("Cannot obtain native file system information for [" + path + "]", e); // ignore native error otherwise
-        } finally {
-            sigar.close();
         }
 
         FileSystemInfo fileSystem = new FileSystemInfo(mountPoint);
@@ -355,6 +321,7 @@ public class NativeSystemInfo implements SystemInfo {
      * Constructor for {@link NativeSystemInfo} with package scope so only the {@link SystemInfoFactory} can instantiate
      * this object.
      */
-    NativeSystemInfo() {
+    public NativeSystemInfo() {
+        this.sigar = SigarProxyCache.newInstance(new Sigar(), 1000);
     }
 }

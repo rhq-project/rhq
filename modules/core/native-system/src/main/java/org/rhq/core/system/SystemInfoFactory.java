@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+* RHQ Management Platform
+* Copyright (C) 2005-2008 Red Hat, Inc.
+* All rights reserved.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License, version 2, as
+* published by the Free Software Foundation, and/or the GNU Lesser
+* General Public License, version 2.1, also as published by the Free
+* Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License and the GNU Lesser General Public License
+* for more details.
+*
+* You should have received a copy of the GNU General Public License
+* and the GNU Lesser General Public License along with this program;
+* if not, write to the Free Software Foundation, Inc.,
+* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+*/
 package org.rhq.core.system;
 
 import java.io.File;
@@ -29,6 +29,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -46,6 +47,8 @@ public class SystemInfoFactory {
     private static boolean nativeLibraryLoadable;
     private static boolean disabled;
     private static boolean initialized = false;
+
+    private static SystemInfo cachedSystemInfo;
 
     // to avoid having this class need the native JNI classes at compile or load time, we'll build up
     // the small amount of methods/constants we need to call via reflection and store them here
@@ -94,8 +97,8 @@ public class SystemInfoFactory {
         if (isNativeSystemInfoAvailable() && !isNativeSystemInfoDisabled()) {
             try {
                 version = "Version=" + invokeApi(NativeApi.VERSION_STRING) + " (" + invokeApi(NativeApi.BUILD_DATE)
-                    + "); Native version=" + invokeApi(NativeApi.NATIVE_VERSION_STRING) + " ("
-                    + invokeApi(NativeApi.NATIVE_BUILD_DATE) + ")";
+                        + "); Native version=" + invokeApi(NativeApi.NATIVE_VERSION_STRING) + " ("
+                        + invokeApi(NativeApi.NATIVE_BUILD_DATE) + ")";
             } catch (Throwable t) {
                 error = t;
             }
@@ -146,8 +149,7 @@ public class SystemInfoFactory {
      * only {@link SystemInfo} implementation that is available is {@link JavaSystemInfo}).
      *
      * @return <code>true</code> if there are native library APIs available for the JVM platform
-     *
-     * @see    JavaSystemInfo
+     * @see JavaSystemInfo
      */
     public static boolean isNativeSystemInfoAvailable() {
         return nativeLibraryLoadable;
@@ -174,26 +176,29 @@ public class SystemInfoFactory {
      *         {@link #disableNativeSystemInfo() disabled}.
      */
     public static synchronized SystemInfo createSystemInfo() {
-        initialize(); // make sure we've loaded the native libraries, if appropriate
+        if (cachedSystemInfo == null) {
+            initialize(); // make sure we've loaded the native libraries, if appropriate
 
-        SystemInfo nativePlatform = null;
+            SystemInfo nativePlatform = null;
 
-        if (isNativeSystemInfoAvailable() && !isNativeSystemInfoDisabled()) {
-            // we could use SIGAR here, but this should be enough
-            if (System.getProperty("os.name").toLowerCase().indexOf("windows") > -1) {
-                nativePlatform = new WindowsNativeSystemInfo();
-            } else {
-                // we either don't know what OS it is or we don't have a specific native subclass for it;
-                // but we know we have a native library for it! so just create the generic NativePlatform to represent it.
-                nativePlatform = new NativeSystemInfo();
+            if (isNativeSystemInfoAvailable() && !isNativeSystemInfoDisabled()) {
+                // we could use SIGAR here, but this should be enough
+                if (System.getProperty("os.name").toLowerCase().indexOf("windows") > -1) {
+                    nativePlatform = new WindowsNativeSystemInfo();
+                } else {
+                    // we either don't know what OS it is or we don't have a specific native subclass for it;
+                    // but we know we have a native library for it! so just create the generic NativePlatform to represent it.
+                    nativePlatform = new NativeSystemInfo();
+                }
             }
-        }
 
-        if (nativePlatform == null) {
-            nativePlatform = new JavaSystemInfo();
-        }
+            if (nativePlatform == null) {
+                nativePlatform = new JavaSystemInfo();
+            }
 
-        return nativePlatform;
+            cachedSystemInfo = nativePlatform;
+        }
+        return cachedSystemInfo;
     }
 
     /**
@@ -259,11 +264,9 @@ public class SystemInfoFactory {
      * invoke static methods on SIGAR's main class. This allows applications that want to use this factory but be able
      * to work even if an exception occurs when loading SIGAR.
      *
-     * @param  api  the static method to invoke or a constant name whose value is to be retrieved
-     * @param  args optional set of arguments to pass to the static method (may be <code>null</code>)
-     *
+     * @param api  the static method to invoke or a constant name whose value is to be retrieved
+     * @param args optional set of arguments to pass to the static method (may be <code>null</code>)
      * @return the return object of the call to the static method or the value of the static constant
-     *
      * @throws Throwable if failed to invoke the static method or get the static constant value for any reason (Java JNI
      *                   jar not available, native library not available, etc)
      */
@@ -285,7 +288,6 @@ public class SystemInfoFactory {
      * found.
      *
      * @return the root directory
-     *
      * @throws Exception if the root directory could not be determined or does not exist
      */
     private static String findNativeLibrariesRootDirectory() throws Exception {
@@ -297,7 +299,7 @@ public class SystemInfoFactory {
             rootDir = System.getProperty("rhq.native-libraries-root-directory");
             if (rootDir == null) {
                 jarLocation = Class.forName(NATIVE_LIBRARY_CLASS_NAME).getProtectionDomain().getCodeSource()
-                    .getLocation();
+                        .getLocation();
                 if (jarLocation != null) {
                     // the root directory where all JNI libraries are located is the
                     // same directory as where the SIGAR jar is found
@@ -308,7 +310,7 @@ public class SystemInfoFactory {
                     rootDir = jniLocation.getAbsolutePath();
                 } else {
                     throw new Exception("Native JNI libraries cannot be found: " + "jar-location=[" + jarLocation
-                        + "], jni-location=[" + jniLocation + "]");
+                            + "], jni-location=[" + jniLocation + "]");
                 }
             }
         }

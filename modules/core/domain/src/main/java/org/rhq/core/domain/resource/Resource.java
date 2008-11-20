@@ -904,7 +904,13 @@ public class Resource implements Comparable<Resource>, Externalizable {
         this.id = id;
     }
 
-    public Resource(@NotNull String resourceKey, @NotNull String name, @NotNull ResourceType type) {
+    public Resource( //
+        @NotNull
+        String resourceKey, //
+        @NotNull
+        String name, //
+        @NotNull
+        ResourceType type) {
         this.resourceKey = resourceKey;
         this.name = name;
         this.resourceType = type;
@@ -937,7 +943,8 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return this.name;
     }
 
-    public void setName(@NotNull String name) {
+    public void setName(@NotNull
+    String name) {
         this.name = name;
     }
 
@@ -1082,7 +1089,8 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return parentResource;
     }
 
-    public void setParentResource(@Nullable Resource parentResource) {
+    public void setParentResource(@Nullable
+    Resource parentResource) {
         this.parentResource = parentResource;
     }
 
@@ -1456,13 +1464,14 @@ public class Resource implements Comparable<Resource>, Externalizable {
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
+        // Note that a Resource may have been constructed with id only. Check for uninitialized fields. 
         out.writeInt(id);
         out.writeUTF(uuid);
-        out.writeUTF(resourceKey);
-        out.writeUTF(name);
+        out.writeUTF((null == resourceKey) ? "" : resourceKey);
+        out.writeUTF((null == name) ? "" : name);
         out.writeInt(inventoryStatus.ordinal());
-        out.writeUTF((version == null) ? "" : version);
-        out.writeUTF((description == null) ? "" : description);
+        out.writeUTF((null == version) ? "" : version);
+        out.writeUTF((null == description) ? "" : description);
         out.writeLong(ctime);
         out.writeLong(mtime);
         out.writeLong(itime);
@@ -1472,9 +1481,15 @@ public class Resource implements Comparable<Resource>, Externalizable {
         //String location;
         out.writeObject(parentResource);
 
-        out.writeUTF(resourceType.getName());
-        out.writeUTF(resourceType.getPlugin());
-        out.writeObject(resourceType.getCategory());
+        if (null == resourceType) {
+            out.writeUTF("");
+            out.writeUTF("");
+            out.writeObject(null);
+        } else {
+            out.writeUTF(resourceType.getName());
+            out.writeUTF(resourceType.getPlugin());
+            out.writeObject(resourceType.getCategory());
+        }
 
         if (childResources.getClass().getName().contains("hibernate")) {
             out.writeObject(new LinkedHashSet<Resource>(childResources));

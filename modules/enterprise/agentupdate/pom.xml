@@ -170,8 +170,10 @@ rhq-agent.latest.build-number=${buildNumber}
                   <configuration>
                     <tasks>
                       <echo>*** Cleaning old ${rhq.deploymentDir}...</echo>
-                      <delete dir="${rhq.deploymentDir}" />
                       <mkdir dir="${rhq.deploymentDir}" />
+                      <delete failonerror="false">
+                        <fileset dir="${rhq.deploymentDir}" includes="*.properties"/>
+                      </delete>
                       <property name="deployment.file" location="${rhq.deploymentDir}/${rhq.deploymentJar}" />
                       <echo>*** Updating ${deployment.file}...</echo>
                       <copy file="${basedir}/target/${rhq.projectJar}" toFile="${deployment.file}" />
@@ -185,16 +187,18 @@ rhq-agent.latest.build-number=${buildNumber}
                   <id>undeploy</id>
                   <phase>clean</phase>
                   <configuration>
-                  <tasks>
-                    <echo>*** Deleting ${rhq.deploymentDir}...</echo>
-                    <delete dir="${rhq.deploymentDir}" />
-                  </tasks>
-                </configuration>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-              </execution>
-            </executions>
+                    <tasks>
+                      <echo>*** Deleting ${rhq.deploymentDir}...</echo>
+                      <delete failonerror="false">
+                        <fileset dir="${rhq.deploymentDir}" includes="*"/>
+                      </delete>
+                    </tasks>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+             </executions>
           </plugin>
         </plugins>
       </build>

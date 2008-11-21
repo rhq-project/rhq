@@ -19,15 +19,19 @@
 package org.rhq.enterprise.server.test;
 
 import java.util.List;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Restrictions;
+
+import org.rhq.core.clientapi.server.core.AgentNotSupportedException;
 import org.rhq.core.clientapi.server.core.AgentRegistrationException;
 import org.rhq.core.clientapi.server.core.AgentRegistrationRequest;
 import org.rhq.core.clientapi.server.core.AgentRegistrationResults;
@@ -143,12 +147,14 @@ public class DiscoveryTestBean implements DiscoveryTestLocal {
 
     public void sendNewPlatform(String platformAddress, int servers, int servicesPerServer) {
         AgentRegistrationRequest registrationRequest = new AgentRegistrationRequest("TestAgent", platformAddress, 2144,
-            "socket://" + platformAddress + ":" + 2144, true, null);
+            "socket://" + platformAddress + ":" + 2144, true, null, null);
         try {
             @SuppressWarnings("unused")
             AgentRegistrationResults results = this.coreServerService.registerAgent(registrationRequest);
         } catch (AgentRegistrationException e1) {
             throw new RuntimeException(e1);
+        } catch (AgentNotSupportedException e2) {
+            throw new RuntimeException(e2);
         }
 
         Resource platform = createTestPlatform(platformAddress, servers, servicesPerServer);

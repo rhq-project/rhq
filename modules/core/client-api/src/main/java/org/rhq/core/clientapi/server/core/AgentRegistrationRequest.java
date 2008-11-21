@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.clientapi.server.core;
 
 import java.io.Serializable;
@@ -33,19 +33,20 @@ import java.io.Serializable;
 public class AgentRegistrationRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String name;
-    private String address;
-    private int port;
-    private String remoteEndpoint;
-    private boolean regenerateTokenFlag;
-    private String originalToken;
+    private final String name;
+    private final String address;
+    private final int port;
+    private final String remoteEndpoint;
+    private final boolean regenerateTokenFlag;
+    private final String originalToken;
+    private final AgentVersion agentVersion;
 
     /**
      * Creates a new {@link AgentRegistrationRequest} object. Note that <code>address</code> and <code>port</code> must
      * be specified, even though <code>remoteEndpoint</code> might also encode address and port. The <code>
      * originalToken</code> may be <code>null</code> even if the agent was already registered (this can happen in the
      * case if the token file was deleted on the agent machine; or if the agent was reinstalled which caused the loss of
-     * the token file).
+     * the token). The version information helps the server determine if this agent is obsolete or not.
      *
      * @param name                unique name of the agent; usually just the <code>address</code>, but doesn't have to
      *                            be
@@ -56,15 +57,17 @@ public class AgentRegistrationRequest implements Serializable {
      * @param regenerateTokenFlag if <code>true</code>, the agent will be assigned a new token. If <code>false</code>
      *                            and the agent already exists, its current token is returned.
      * @param originalToken       the agent's original token, if this is a re-registration (may be <code>null</code>)
+     * @param agentVersion        the agent's version information
      */
     public AgentRegistrationRequest(String name, String address, int port, String remoteEndpoint,
-        boolean regenerateTokenFlag, String originalToken) {
+        boolean regenerateTokenFlag, String originalToken, AgentVersion agentVersion) {
         this.name = name;
         this.address = address;
         this.port = port;
         this.remoteEndpoint = remoteEndpoint;
         this.regenerateTokenFlag = regenerateTokenFlag;
         this.originalToken = originalToken;
+        this.agentVersion = agentVersion;
     }
 
     /**
@@ -79,15 +82,6 @@ public class AgentRegistrationRequest implements Serializable {
     }
 
     /**
-     * Sets the agent name. See {@link #getName()} for more information on name.
-     *
-     * @param name
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
      * Returns the address that the agent is bound to in which it listens for requests. This address is the address as
      * seen by the server (which may or may not be the same as the address as seen by the agent).
      *
@@ -98,30 +92,12 @@ public class AgentRegistrationRequest implements Serializable {
     }
 
     /**
-     * Sets the address that the agent is bound to in which it listens for requests.
-     *
-     * @param address the address that the server should use when connecting to the agent
-     */
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    /**
      * Returns the port that the agent is listening to. The server should connect to the agent on this port.
      *
      * @return the port the agent listens to for incoming requests
      */
     public int getPort() {
         return port;
-    }
-
-    /**
-     * Sets the port that the agent is listening to. The server should connect to the agent on this port.
-     *
-     * @param port port the agent listens to for incoming requests
-     */
-    public void setPort(int port) {
-        this.port = port;
     }
 
     /**
@@ -135,16 +111,6 @@ public class AgentRegistrationRequest implements Serializable {
     }
 
     /**
-     * Sets the remote endpoint string that fully describes how to connect to the agent. It typically encodes and
-     * overrides the {@link #getAddress() address} and {@link #getPort() port} values.
-     *
-     * @param remoteEndpoint full remote endpoint to describe how to connect to the agent
-     */
-    public void setRemoteEndpoint(String remoteEndpoint) {
-        this.remoteEndpoint = remoteEndpoint;
-    }
-
-    /**
      * Returns the agent's original token, as it was known to the agent. This may be <code>null</code> if the agent was
      * never registered before or the agent lost its token.
      *
@@ -152,16 +118,6 @@ public class AgentRegistrationRequest implements Serializable {
      */
     public String getOriginalToken() {
         return originalToken;
-    }
-
-    /**
-     * Sets the token if the agent was already registered and it knows its token. If the agent was never registered or
-     * it does not know what its token was, this can be <code>null</code>.
-     *
-     * @param originalToken the agent's currently known token, or <code>null</code>
-     */
-    public void setOriginalToken(String originalToken) {
-        this.originalToken = originalToken;
     }
 
     /**
@@ -176,21 +132,28 @@ public class AgentRegistrationRequest implements Serializable {
     }
 
     /**
-     * If the agent wants to get a new, different token (even if it already has one), set this to <code>true</code>.
-     * Setting this to <code>false</code> tells the server to keep the old token assigned to the agent.
-     *
-     * @param regenerateToken
+     * Returns the information that identifies the version of the agent asking to be registered.
+     * 
+     * @return agent version information
      */
-    public void setRegenerateToken(boolean regenerateToken) {
-        this.regenerateTokenFlag = regenerateToken;
+    public AgentVersion getAgentVersion() {
+        return agentVersion;
     }
 
     /**
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString() {
-        return "AgentRegistrationRequest: [name=" + this.name + ",address=" + this.address + ",port=" + this.port
-            + ",remote-endpoint=" + this.remoteEndpoint + ",regenerate-token=" + this.regenerateTokenFlag
-            + ",original-token=<was " + ((this.originalToken == null) ? "" : "not ") + "null" + "]";
+        StringBuilder str = new StringBuilder("AgentRegistrationRequest: [");
+        str.append("name=[" + this.name);
+        str.append("]; address=" + this.address);
+        str.append("]; port=" + this.port);
+        str.append("]; remote-endpoint=" + this.remoteEndpoint);
+        str.append("]; regenerate-token=" + this.regenerateTokenFlag);
+        str.append("]; original-token=<was " + ((this.originalToken == null) ? "" : "not ") + "null>");
+        str.append("]; agent-version=" + this.agentVersion);
+        str.append("]");
+        return str.toString();
     }
 }

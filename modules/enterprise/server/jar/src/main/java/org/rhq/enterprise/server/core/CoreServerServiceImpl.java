@@ -32,9 +32,12 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.server.core.AgentNotSupportedException;
 import org.rhq.core.clientapi.server.core.AgentRegistrationException;
 import org.rhq.core.clientapi.server.core.AgentRegistrationRequest;
 import org.rhq.core.clientapi.server.core.AgentRegistrationResults;
+import org.rhq.core.clientapi.server.core.AgentVersion;
+import org.rhq.core.clientapi.server.core.ConnectAgentRequest;
 import org.rhq.core.clientapi.server.core.ConnectAgentResults;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.domain.cluster.PartitionEventType;
@@ -71,7 +74,16 @@ public class CoreServerServiceImpl implements CoreServerService {
     /**
      * @see CoreServerService#registerAgent(AgentRegistrationRequest)
      */
-    public AgentRegistrationResults registerAgent(AgentRegistrationRequest request) throws AgentRegistrationException {
+    public AgentRegistrationResults registerAgent(AgentRegistrationRequest request) throws AgentRegistrationException,
+        AgentNotSupportedException {
+
+        // fail-fast if we can't even support this agent
+        if (!getAgentManager().isAgentVersionSupported(request.getAgentVersion())) {
+            log.warn("Agent [" + request.getName() + "][" + request.getAddress() + ':' + request.getPort() + "]["
+                + request.getAgentVersion() + "] would like to register with this server but it is not supported");
+            throw new AgentNotSupportedException("Unsupported agent version: " + request.getAgentVersion());
+        }
+
         // Make a very quick test to verify the agent's remote endpoint can be connected to.
         // If not, no point in continuing - the server won't be able to talk to the agent anyway.
         pingEndpoint(request.getRemoteEndpoint());
@@ -130,8 +142,8 @@ public class CoreServerServiceImpl implements CoreServerService {
 
         if (agentByName != null) {
             log.info("Got agent registration request for existing agent: " + agentByName.getName() + "["
-                + agentByName.getAddress() + ":" + agentByName.getPort() + "] - Will "
-                + (request.getRegenerateToken() ? "" : "not") + " regenerate a new token");
+                + agentByName.getAddress() + ":" + agentByName.getPort() + "][" + request.getAgentVersion()
+                + "] - Will " + (request.getRegenerateToken() ? "" : "not") + " regenerate a new token");
 
             agentByName.setServer(registeringServer);
             agentByName.setAddress(request.getAddress());
@@ -150,7 +162,7 @@ public class CoreServerServiceImpl implements CoreServerService {
             }
         } else {
             log.info("Got agent registration request for new agent: " + request.getName() + "[" + request.getAddress()
-                + ":" + request.getPort() + "]");
+                + ":" + request.getPort() + "][" + request.getAgentVersion() + "]");
 
             // the agent does not yet exist, we need to create it
             try {
@@ -178,14 +190,26 @@ public class CoreServerServiceImpl implements CoreServerService {
     }
 
     /**
-     * @see CoreServerService#connectAgent()
+     * @see CoreServerService#connectAgent(ConnectAgentRequest)
      */
-    public ConnectAgentResults connectAgent(String agentName) {
-        log.info("Agent [" + agentName + "] would like to connect to this server");
+    public ConnectAgentResults connectAgent(ConnectAgentRequest request) throws AgentRegistrationException,
+        AgentNotSupportedException {
+
+        String agentName = request.getAgentName();
+        AgentVersion agentVersion = request.getAgentVersion();
+
+        log.info("Agent [" + agentName + "][" + agentVersion + "] would like to connect to this server");
+
+        if (!getAgentManager().isAgentVersionSupported(agentVersion)) {
+            throw new AgentNotSupportedException("Agent [" + agentName + "] is an unsupported agent: " + agentVersion);
+        }
 
         Agent agent = getAgentManager().getAgentByName(agentName);
-        Server server = getServerManager().getServer();
+        if (agent == null) {
+            throw new AgentRegistrationException("Agent [" + agentName + "] is not registered");
+        }
 
+        Server server = getServerManager().getServer();
         agent.setServer(server);
         getAgentManager().updateAgent(agent);
 
@@ -194,9 +218,8 @@ public class CoreServerServiceImpl implements CoreServerService {
         getPartitionEventManager().auditPartitionEvent(getSubjectManager().getOverlord(),
             PartitionEventType.AGENT_CONNECT, agentName + " - " + server.getName());
 
-        Date now = new Date();
-        log.info("Agent [" + agentName + "] has connected to this server at " + now);
-        return new ConnectAgentResults(now.getTime());
+        log.info("Agent [" + agentName + "] has connected to this server at " + new Date());
+        return new ConnectAgentResults(System.currentTimeMillis());
     }
 
     /**

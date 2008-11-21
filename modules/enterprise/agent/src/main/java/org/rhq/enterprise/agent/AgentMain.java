@@ -65,9 +65,12 @@ import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.content.ContentServerService;
+import org.rhq.core.clientapi.server.core.AgentNotSupportedException;
 import org.rhq.core.clientapi.server.core.AgentRegistrationException;
 import org.rhq.core.clientapi.server.core.AgentRegistrationRequest;
 import org.rhq.core.clientapi.server.core.AgentRegistrationResults;
+import org.rhq.core.clientapi.server.core.AgentVersion;
+import org.rhq.core.clientapi.server.core.ConnectAgentRequest;
 import org.rhq.core.clientapi.server.core.ConnectAgentResults;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
@@ -1109,8 +1112,11 @@ public class AgentMain {
                             String address = server_config.getConnectorBindAddress();
                             int port = server_config.getConnectorBindPort();
                             String remote_endpoint = server_config.getConnectorRemoteEndpoint();
+                            String version = Version.getProductVersion();
+                            String build = Version.getBuildNumber();
+                            AgentVersion agentVersion = new AgentVersion(version, build);
                             AgentRegistrationRequest request = new AgentRegistrationRequest(agent_name, address, port,
-                                remote_endpoint, regenerate_token, token);
+                                remote_endpoint, regenerate_token, token, agentVersion);
 
                             Thread.sleep(retry_interval);
 
@@ -1168,6 +1174,15 @@ public class AgentMain {
                                 }
                             }
                         }
+                    } catch (AgentNotSupportedException anse) {
+                        m_registration = null;
+                        retry = false;
+
+                        String cause = ThrowableUtil.getAllMessages(anse);
+                        LOG.fatal(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, cause);
+
+                        // TODO: THIS AGENT IS DEAD IN THE WATER! it needs to be updated
+                        getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, cause));
                     } catch (AgentRegistrationException are) {
                         m_registration = null;
                         retry = false;
@@ -1748,7 +1763,14 @@ public class AgentMain {
                 // should never happen, should always cast to non-null ConnectAgentResults
                 LOG.error(AgentI18NResourceKeys.TIME_UNKNOWN, ThrowableUtil.getAllMessages(t));
             }
+        } catch (AgentNotSupportedException anse) {
+            LOG.fatal(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, ThrowableUtil.getAllMessages(anse));
 
+            // TODO: THIS AGENT IS DEAD IN THE WATER! It can never connect, we need to shutdown and update the agent!
+            // for now, aimlessly loop until someone kills the agent
+            m_lastSentConnectAgent.timestamp = 0L;
+            Thread.sleep(60000L);
+            throw anse;
         } catch (Throwable t) {
             // error, so allow any quick call back to this method to try it again
             m_lastSentConnectAgent.timestamp = 0L;
@@ -1763,9 +1785,12 @@ public class AgentMain {
     private Command createConnectAgentCommand() throws Exception {
         AgentConfiguration config = getConfiguration();
         String agentName = config.getAgentName();
+        AgentVersion version = new AgentVersion(Version.getProductVersion(), Version.getBuildNumber());
+        ConnectAgentRequest request = new ConnectAgentRequest(agentName, version);
+
         RemotePojoInvocationCommand connectCommand = new RemotePojoInvocationCommand();
-        Method connectMethod = CoreServerService.class.getMethod("connectAgent", String.class);
-        NameBasedInvocation inv = new NameBasedInvocation(connectMethod, new Object[] { agentName });
+        Method connectMethod = CoreServerService.class.getMethod("connectAgent", ConnectAgentRequest.class);
+        NameBasedInvocation inv = new NameBasedInvocation(connectMethod, new Object[] { request });
         connectCommand.setNameBasedInvocation(inv);
         connectCommand.setTargetInterfaceName(CoreServerService.class.getName());
         return connectCommand;

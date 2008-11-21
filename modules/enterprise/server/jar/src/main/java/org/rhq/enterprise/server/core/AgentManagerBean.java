@@ -18,12 +18,23 @@
  */
 package org.rhq.enterprise.server.core;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.ExcludeDefaultInterceptors;
+import javax.management.MBeanServer;
+import javax.management.MBeanServerInvocationHandler;
+import javax.management.ObjectName;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -31,17 +42,24 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import org.jboss.annotation.IgnoreDependency;
+import org.jboss.mx.util.MBeanServerLocator;
+import org.jboss.system.server.ServerConfig;
 
+import org.rhq.core.clientapi.server.core.AgentVersion;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite;
+import org.rhq.core.domain.util.MD5Generator;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.util.ObjectNameFactory;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -51,6 +69,7 @@ import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
 
 /**
@@ -76,6 +95,13 @@ public class AgentManagerBean implements AgentManagerLocal {
 
     @EJB
     private SystemManagerLocal systemManager;
+
+    // constants used for the agent update version file
+    private static final String RHQ_SERVER_VERSION = "rhq-server.version";
+    private static final String RHQ_SERVER_BUILD_NUMBER = "rhq-server.build-number";
+    private static final String RHQ_AGENT_LATEST_VERSION = "rhq-agent.latest.version";
+    private static final String RHQ_AGENT_LATEST_BUILD_NUMBER = "rhq-agent.latest.build-number";
+    private static final String RHQ_AGENT_LATEST_MD5 = "rhq-agent.latest.md5";
 
     public void createAgent(Agent agent) {
         entityManager.persist(agent);
@@ -315,5 +341,104 @@ public class AgentManagerBean implements AgentManagerLocal {
         }
 
         return agent;
+    }
+
+    public boolean isAgentVersionSupported(AgentVersion agentVersionInfo) {
+        try {
+            Properties properties = getAgentUpdateVersionFileContent();
+
+            // Prime Directive: whatever agent update the server has installed is the one we support
+            // TODO: for developers, we might want to be less strict, use build-number if it helps
+            //String supportedAgentBuild = properties.getProperty(RHQ_AGENT_LATEST_BUILD_NUMBER);
+            String supportedAgentVersion = properties.getProperty(RHQ_AGENT_LATEST_VERSION);
+            if (supportedAgentVersion == null) {
+                throw new NullPointerException("no agent version in file");
+            }
+            ComparableVersion agent = new ComparableVersion(agentVersionInfo.getVersion());
+            ComparableVersion server = new ComparableVersion(supportedAgentVersion);
+            return agent.equals(server);
+        } catch (Exception e) {
+            log.warn("Cannot determine if agent version [" + agentVersionInfo + "] is supported. Cause: " + e);
+            return false; // assume we can't talk to it
+        }
+    }
+
+    public File getAgentUpdateVersionFile() throws Exception {
+        File agentDownloadDir = getAgentDownloadDir();
+        File versionFile = new File(agentDownloadDir, "rhq-server-agent-versions.properties");
+        if (!versionFile.exists()) {
+            // we do not have the version properties file yet, let's extract some info and create one
+            StringBuilder serverVersionInfo = new StringBuilder();
+
+            // first, get the server version info (by asking our server for the info)
+            CoreServerMBean coreServer = LookupUtil.getCoreServer();
+            serverVersionInfo.append(RHQ_SERVER_VERSION + '=').append(coreServer.getVersion()).append('\n');
+            serverVersionInfo.append(RHQ_SERVER_BUILD_NUMBER + '=').append(coreServer.getBuildNumber()).append('\n');
+
+            // calculate the MD5 of the agent update binary file
+            File binaryFile = getAgentUpdateBinaryFile();
+            String md5Property = RHQ_AGENT_LATEST_MD5 + '=' + MD5Generator.getDigestString(binaryFile) + '\n';
+
+            // second, get the agent version info (by peeking into the agent update binary jar)
+            JarFile binaryJarFile = new JarFile(binaryFile);
+            JarEntry binaryJarFileEntry = binaryJarFile.getJarEntry("rhq-agent-update-version.properties");
+            InputStream binaryJarFileEntryStream = binaryJarFile.getInputStream(binaryJarFileEntry);
+
+            // now write the server and agent version info in our internal version file our servlet will use
+            FileOutputStream versionFileOutputStream = new FileOutputStream(versionFile);
+            try {
+                versionFileOutputStream.write(serverVersionInfo.toString().getBytes());
+                versionFileOutputStream.write(md5Property.getBytes());
+                StreamUtil.copy(binaryJarFileEntryStream, versionFileOutputStream, false);
+            } finally {
+                try {
+                    versionFileOutputStream.close();
+                } catch (Exception e) {
+                }
+                try {
+                    binaryJarFileEntryStream.close();
+                } catch (Exception e) {
+                }
+            }
+        }
+
+        return versionFile;
+    }
+
+    public Properties getAgentUpdateVersionFileContent() throws Exception {
+        FileInputStream stream = new FileInputStream(getAgentUpdateVersionFile());
+        try {
+            Properties props = new Properties();
+            props.load(stream);
+            return props;
+        } finally {
+            try {
+                stream.close();
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    public File getAgentUpdateBinaryFile() throws Exception {
+        File agentDownloadDir = getAgentDownloadDir();
+        for (File file : agentDownloadDir.listFiles()) {
+            if (file.getName().endsWith(".jar")) {
+                return file;
+            }
+        }
+
+        throw new FileNotFoundException("Missing agent update binary in [" + agentDownloadDir + "]");
+    }
+
+    public File getAgentDownloadDir() throws Exception {
+        MBeanServer mbs = MBeanServerLocator.locateJBoss();
+        ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
+        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
+        File serverHomeDir = ((ServerConfig) mbean).getServerHomeDir();
+        File agentDownloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/rhq-agent");
+        if (!agentDownloadDir.exists()) {
+            throw new FileNotFoundException("Missing agent downloads directory at [" + agentDownloadDir + "]");
+        }
+        return agentDownloadDir;
     }
 }

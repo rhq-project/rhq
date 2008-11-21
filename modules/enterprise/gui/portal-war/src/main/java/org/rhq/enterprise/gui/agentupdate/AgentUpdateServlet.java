@@ -20,29 +20,16 @@ package org.rhq.enterprise.gui.agentupdate;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Properties;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
-import javax.management.MBeanServer;
-import javax.management.MBeanServerInvocationHandler;
-import javax.management.ObjectName;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.jboss.mx.util.MBeanServerLocator;
-import org.jboss.system.server.ServerConfig;
-
-import org.rhq.core.domain.util.MD5Generator;
-import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.stream.StreamUtil;
-import org.rhq.enterprise.server.core.CoreServerMBean;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -67,6 +54,8 @@ public class AgentUpdateServlet extends HttpServlet {
     private static final int ERROR_CODE_TOO_MANY_DOWNLOADS = HttpServletResponse.SC_SERVICE_UNAVAILABLE;
 
     private static int numActiveDownloads = 0;
+
+    private AgentManagerLocal agentManager = null;
 
     @Override
     public void init() throws ServletException {
@@ -203,71 +192,17 @@ public class AgentUpdateServlet extends HttpServlet {
     }
 
     private File getAgentUpdateVersionFile() throws Exception {
-        File agentDownloadDir = getAgentDownloadDir();
-        File versionFile = new File(agentDownloadDir, "rhq-server-agent-versions.properties");
-        if (!versionFile.exists()) {
-            // we do not have the version properties file yet, let's extract some info and create one
-            StringBuilder serverVersionInfo = new StringBuilder();
-
-            // first, get the server version info (by asking our server for the info)
-            CoreServerMBean coreServer = LookupUtil.getCoreServer();
-            serverVersionInfo.append("rhq-server.version=").append(coreServer.getVersion()).append('\n');
-            serverVersionInfo.append("rhq-server.build-number=").append(coreServer.getBuildNumber()).append('\n');
-
-            // calculate the MD5 of the agent update binary file
-            File binaryFile = getAgentUpdateBinaryFile();
-            String md5Property = "rhq-agent.latest.md5=" + MD5Generator.getDigestString(binaryFile) + '\n';
-
-            // second, get the agent version info (by peeking into the agent update binary jar)
-            JarFile binaryJarFile = new JarFile(binaryFile);
-            JarEntry binaryJarFileEntry = binaryJarFile.getJarEntry("rhq-agent-update-version.properties");
-            InputStream binaryJarFileEntryStream = binaryJarFile.getInputStream(binaryJarFileEntry);
-
-            // now write the server and agent version info in our internal version file our servlet will use
-            FileOutputStream versionFileOutputStream = new FileOutputStream(versionFile);
-            try {
-                versionFileOutputStream.write(serverVersionInfo.toString().getBytes());
-                versionFileOutputStream.write(md5Property.getBytes());
-                StreamUtil.copy(binaryJarFileEntryStream, versionFileOutputStream, false);
-            } finally {
-                try {
-                    versionFileOutputStream.close();
-                } catch (Exception e) {
-                }
-                try {
-                    binaryJarFileEntryStream.close();
-                } catch (Exception e) {
-                }
-            }
-        }
-
-        return versionFile;
+        return getAgentManager().getAgentUpdateVersionFile();
     }
 
     private File getAgentUpdateBinaryFile() throws Exception {
-        File agentDownloadDir = getAgentDownloadDir();
-        for (File file : agentDownloadDir.listFiles()) {
-            if (file.getName().endsWith(".jar")) {
-                return file;
-            }
-        }
-
-        throw new FileNotFoundException("Missing agent update binary in [" + agentDownloadDir + "]");
+        return getAgentManager().getAgentUpdateBinaryFile();
     }
 
-    private File getAgentDownloadDir() throws Exception {
-        MBeanServer mbs = getMBeanServer();
-        ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
-        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
-        File serverHomeDir = ((ServerConfig) mbean).getServerHomeDir();
-        File agentDownloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/rhq-agent");
-        if (!agentDownloadDir.exists()) {
-            throw new FileNotFoundException("Missing agent downloads directory at [" + agentDownloadDir + "]");
+    private AgentManagerLocal getAgentManager() {
+        if (this.agentManager == null) {
+            this.agentManager = LookupUtil.getAgentManager();
         }
-        return agentDownloadDir;
-    }
-
-    private MBeanServer getMBeanServer() {
-        return MBeanServerLocator.locateJBoss();
+        return this.agentManager;
     }
 }

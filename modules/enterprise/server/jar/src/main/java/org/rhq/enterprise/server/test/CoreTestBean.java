@@ -23,10 +23,13 @@ import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.util.List;
 import java.util.Properties;
+
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+
+import org.rhq.core.clientapi.server.core.AgentNotSupportedException;
 import org.rhq.core.clientapi.server.core.AgentRegistrationException;
 import org.rhq.core.clientapi.server.core.AgentRegistrationRequest;
 import org.rhq.core.clientapi.server.core.AgentRegistrationResults;
@@ -70,11 +73,13 @@ public class CoreTestBean implements CoreTestLocal {
      */
     public AgentRegistrationResults registerTestAgent() {
         AgentRegistrationRequest registrationRequest = new AgentRegistrationRequest(TEST_AGENT_ADDRESS,
-            TEST_AGENT_ADDRESS, TEST_AGENT_PORT, TEST_AGENT_REMOTE_ENDPOINT, true, null);
+            TEST_AGENT_ADDRESS, TEST_AGENT_PORT, TEST_AGENT_REMOTE_ENDPOINT, true, null, null);
         try {
             return this.coreServerService.registerAgent(registrationRequest);
         } catch (AgentRegistrationException e) {
             throw new RuntimeException(e);
+        } catch (AgentNotSupportedException e2) {
+            throw new RuntimeException(e2);
         }
     }
 

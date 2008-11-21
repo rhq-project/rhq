@@ -73,6 +73,13 @@ public class Version {
     public static final String PROP_BUILD_OS_VERSION = "Build-OS-Version";
 
     /**
+     * Caches the version properties so we don't have to keep reading the file.
+     * These properties should never change during the lifetime of the agent, so
+     * we can cache these forever in memory.
+     */
+    private static Properties propertiesCache = null;
+
+    /**
      * A main method that can be used to determine the version information from a command line.
      *
      * @param args the version properties to print to stdout; if no arguments are given then all version properties are
@@ -171,17 +178,23 @@ public class Version {
      * @throws RuntimeException if there is no VERSION file found in the current thread's class loader
      */
     public static Properties getVersionProperties() {
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        InputStream stream = cl.getResourceAsStream("rhq-agent-version.properties");
+        if (propertiesCache == null) {
+            ClassLoader cl = Thread.currentThread().getContextClassLoader();
+            InputStream stream = cl.getResourceAsStream("rhq-agent-version.properties");
 
-        Properties retProps = new Properties();
+            Properties newProps = new Properties();
 
-        try {
-            retProps.load(stream);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            try {
+                newProps.load(stream);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            propertiesCache = newProps;
         }
 
+        Properties retProps = new Properties();
+        retProps.putAll(propertiesCache);
         return retProps;
     }
 

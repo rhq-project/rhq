@@ -178,7 +178,7 @@ public class AgentUpdateDownload {
                     if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
                         // server is overloaded with other agents downloading, we must wait
                         LOG.info(AgentI18NResourceKeys.UPDATE_DOWNLOAD_UNAVAILABLE, info, url);
-                        Thread.sleep(10000L); // sleep alittle bit to give the server some time (allow us to be interrupted!)
+                        Thread.sleep(getRetryAfter(conn)); // sleep alittle bit to give the server some time (allow us to be interrupted!)
                         keep_going = true;
                     } else if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) {
                         // server has disabled agent updates
@@ -209,6 +209,24 @@ public class AgentUpdateDownload {
         LOG.info(AgentI18NResourceKeys.UPDATE_DOWNLOAD_DONE, info, url, binaryFile);
         this.downloadedFile = binaryFile;
         return;
+    }
+
+    /**
+     * Gets the "Retry-After" header and returns its value as a long to indicate how long
+     * we should wait before retrying. If can't get the header, a default time interval will be returned.
+     * 
+     * @param conn the connection where the header can be found
+     * 
+     * @return the header value, as a long
+     */
+    private long getRetryAfter(HttpURLConnection conn) {
+        try {
+            // get the header - by spec, it must be in seconds
+            int retryAfter = conn.getHeaderFieldInt("Retry-After", 30);
+            return 1000L * retryAfter;
+        } catch (Exception e) {
+            return 30000L;
+        }
     }
 
     /**

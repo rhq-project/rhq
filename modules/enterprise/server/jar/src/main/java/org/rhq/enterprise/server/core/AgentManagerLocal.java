@@ -18,12 +18,15 @@
  */
 package org.rhq.enterprise.server.core;
 
+import java.io.File;
 import java.util.List;
+import java.util.Properties;
 
 import javax.ejb.Local;
 
 import org.jetbrains.annotations.NotNull;
 
+import org.rhq.core.clientapi.server.core.AgentVersion;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Agent;
@@ -69,8 +72,7 @@ public interface AgentManagerLocal {
      * @return an agent client that can be used to send commands to the specified JON agent
      */
     @NotNull
-    AgentClient getAgentClient(@NotNull
-    Agent agent);
+    AgentClient getAgentClient(@NotNull Agent agent);
 
     /**
      * Returns an agent client that can be used to send commands to the JON agent that managed the specified resource.
@@ -179,4 +181,59 @@ public interface AgentManagerLocal {
      * scheduled job {@link org.rhq.enterprise.server.scheduler.jobs.CheckForSuspectedAgentsJob}.
      */
     void checkForSuspectAgents();
+
+    /**
+     * Determines if the given agent version is supported by this server. In other words, this will
+     * return <code>true</code> if this server can talk to any agent of the given version.
+     * 
+     * @param agentVersion the version of the agent to verify
+     * 
+     * @return <code>true</code> if this server can support an agent with the given version; if the server
+     *         knows it cannot communicate successfully with an agent of that version, <code>false</code>
+     *         will be returned
+     */
+    boolean isAgentVersionSupported(AgentVersion agentVersion);
+
+    /**
+     * Returns the path on the server's file system where the agent update version file is found.
+     * The agent update version file contains information about the agent update binary, such
+     * as what version it is.
+     * 
+     * @return agent update version file location
+     *  
+     * @throws Exception if the file could not be created or found
+     */
+    File getAgentUpdateVersionFile() throws Exception;
+
+    /**
+     * Returns the content of the agent update version file, which simply consists
+     * of some name/value pairs.
+     * The agent update version file contains information about the agent update binary, such
+     * as what version it is.
+     * 
+     * @return version properties found in the agent update version file.
+     * 
+     * @throws Exception if cannot read the agent update version file
+     */
+    Properties getAgentUpdateVersionFileContent() throws Exception;
+
+    /**
+     * Returns the path on the server's file system where the agent update binary is found.
+     * This is the actual agent distribution that can be installed on the agent machines.
+     * 
+     * @return agent update binary location
+     * 
+     * @throws Exception if the binary file does not exist
+     */
+    File getAgentUpdateBinaryFile() throws Exception;
+
+    /**
+     * The directory on the server's file system where the agent update version file
+     * and binary file are found.
+     * 
+     * @return directory where the agent downloads are found
+     *
+     * @throws Exception if could not determine the location or it does not exist
+     */
+    File getAgentDownloadDir() throws Exception;
 }

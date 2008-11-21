@@ -549,7 +549,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // cause us to send a full report next time.
             this.inventoryLock.readLock().lock();
             try {
-                Availability[] avails = reportAvails.toArray(new Availability[0]);
+                Availability[] avails = reportAvails.toArray(new Availability[reportAvails.size()]);
                 for (Availability avail : avails) {
                     ResourceContainer container = getResourceContainer(avail.getResource());
                     if ((container == null)
@@ -1134,6 +1134,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         resource.setAgent(this.agent);
         ResourceContainer container = getResourceContainer(resource.getId());
+        if (container==null) {
+            if (log.isDebugEnabled())
+                log.debug("Could not find a container for resource " + resource);
+            return;
+        }
         if (container.getSynchronizationState() != ResourceContainer.SynchronizationState.SYNCHRONIZED) {
             if (log.isDebugEnabled()) {
                 log.debug("Stopped activating resources at unsynchronized resource [" + resource + "]");
@@ -1152,6 +1157,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    /**
+     * Tries to load an existing inventory from the file data/inventory.dat
+     */
     private void loadFromDisk() {
         this.inventoryLock.writeLock().lock();
 
@@ -1182,6 +1190,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     /**
      * Shutdown the ResourceComponents from the bottom up.
+     * @param resource The resource to deactivate
      */
     private void deactivateResource(Resource resource) {
         this.inventoryLock.writeLock().lock();
@@ -1228,6 +1237,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * Detects the top platform resource and starts its ResourceComponent.
      *
      * TODO GH: Move this to another class (this one is getting too big)
+     * @return The discovered platform (which might be a dummy in case of testing)
      */
     @SuppressWarnings("unchecked")
     private Resource discoverPlatform() {
@@ -1309,6 +1319,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * If for some reason the platform plugin is not available, this method can be called to add a "dummy" platform
      * resource. This is normally only used during tests.
+     * @return A dummy platform for testing purposes only.
      */
     private Resource createTestPlatform() {
         ResourceType type = PluginContainer.getInstance().getPluginManager().getMetadataManager().addTestPlatformType();

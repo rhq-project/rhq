@@ -94,6 +94,10 @@ public class AgentUpdateDownload {
         AgentUpdateInformation info = this.agentUpdateVersion.getAgentUpdateInformation();
         String md5 = info.getUpdateMd5();
         if (!validateFile(this.downloadedFile, md5)) {
+            // its invalid, move it out of the way so we can download a new one
+            File invalidFile = new File(fileToValidate.getParentFile(), fileToValidate.getName() + ".invalid");
+            invalidFile.delete(); // remove any old one that might be hanging around
+            fileToValidate.renameTo(invalidFile);
             throw new IllegalStateException(this.agent.getI18NMsg().getMsg(
                 AgentI18NResourceKeys.UPDATE_DOWNLOAD_MD5_INVALID, fileToValidate));
 
